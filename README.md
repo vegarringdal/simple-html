@@ -1,9 +1,9 @@
 # @simple-html/{packages}
 
 ### Custom mono repo for :
-* [`@simple-html/grid`](https://github.com/vegarringdal/simple-html/tree/master/packages/grid)
-* [`@simple-html/core`](https://github.com/vegarringdal/simple-html/tree/master/packages/core)
-* [`@simple-html/router`](https://github.com/vegarringdal/simple-html/tree/master/packages/router)
+* [`@simple-html/grid`](https://github.com/simple-html/simple-html/tree/master/packages/grid)
+* [`@simple-html/core`](https://github.com/simple-html/simple-html/tree/master/packages/core)
+* [`@simple-html/router`](https://github.com/simple-html/simple-html/tree/master/packages/router)
 
 
 ## Development on current packages
