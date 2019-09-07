@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+    
+        {
+            // node --inspect-brk ./src/somefile.js
+            "name": "Debug dev server",
+            "type": "node",
+            "request": "attach",
+            "stopOnEntry": false,
+            "port": 9229,
+            "restart": true, 
+            "smartStep": true,
+            "sourceMaps": true
+        }
+    ]
+}

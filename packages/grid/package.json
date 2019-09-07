@@ -1,0 +1,26 @@
+{
+    "name": "@simple-html/grid",
+    "version": "1.0.0-alpha.1",
+    "description": "Lit html data grid",
+    "main": "dist/esm/index.js",
+    "module": "dist/esm/index.js",
+    "typings": "src/index.ts",
+    "local:main": "src/index.ts",
+    "author": "Vegar Ringdal <vegar.ringdal@gmail.com>",
+    "license": "MIT",
+    "homepage": "https://github.com/vegarringdal/simple-html",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/vegarringdal/simple-html"
+    },
+    "bugs": {
+        "url": "https://github.com/vegarringdal/simple-html/issues"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "devDependencies": {},
+    "dependencies": {
+        "lit-html": "^1.1.1"
+    }
+}

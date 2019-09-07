@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+      "target": "es2018",
+      "module": "esNext",
+      "lib":["es2017", "dom"],
+      "moduleResolution": "node",
+      "isolatedModules": false,
+      "preserveConstEnums": true,
+      "allowSyntheticDefaultImports": true,
+      "skipLibCheck": true,
+      "sourceMap": true,
+      "declaration": true,
+      "noImplicitAny": true,
+      "noImplicitReturns": true,
+      "noImplicitUseStrict": true,
+      "noUnusedParameters": true,
+      "suppressImplicitAnyIndexErrors": true,
+      "noFallthroughCasesInSwitch": true,
+      "noImplicitThis": false,
+      "noUnusedLocals": true,
+      "allowUnreachableCode": false,
+      "removeComments": true,
+      "emitDecoratorMetadata": true,
+      "importHelpers": true,
+      "strictNullChecks": false,
+      "experimentalDecorators": true,
+      "baseUrl": "./",
+        "paths": {
+            "@simple-html*": ["packages*"]
+        }
+  } ,
+  "exclude": [
+    "node_modules"
+  ]
+}

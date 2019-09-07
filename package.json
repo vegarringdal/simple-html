@@ -1,0 +1,30 @@
+{
+  "name": "simple-html",
+  "version": "1.0.0-alpha.1",
+  "description": "lit html tools",
+  "scripts": {
+    "build": "node ./scripts/build && node ./scripts/syncPackages",
+    "sync": "node ./scripts/syncPackages",
+    "pub-now": "node ./scripts/publish",
+    "pub-test": "node ./scripts/publishTest",
+    "core-sample": "node ./samples/core-sample/fuse",
+    "grid-sample": "node ./samples/grid-sample/fuse",
+    "router-sample": "node ./samples/router-sample/fuse",
+    "realworld-sample": "node ./samples/realworld-sample/fuse",
+    "format:fix": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\""
+  },
+  "author": "vegar Ringdal",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/marked": "^0.6.5",
+    "custom-elements-hmr-polyfill": "^1.0.0-beta.3",
+    "fuse-box": "^4.0.0-next.132",
+    "fuse-box-typechecker": "^3.0.0-next.29",
+    "lit-html": "^1.1.2",
+    "marked": "^0.7.0",
+    "prettier": "^1.18.2",
+    "tslib": "^1.10.0",
+    "typescript": "^3.6.2"
+  },
+  "dependencies": {}
+}
