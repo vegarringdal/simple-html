@@ -1,14 +1,17 @@
-import { applyPolyfill, ReflowStrategy, rerenderInnerHTML } from 'custom-elements-hmr-polyfill';
+import {
+    applyPolyfill,
+    ReflowStrategy,
+    rerenderInnerHTML
+} from 'custom-elements-hmr-polyfill';
 
-// apply polly fill
+import { clearInstance } from '@simple-html/core';
+
+// resetting all so we get a fresh start
+clearInstance(null);
+
 rerenderInnerHTML();
 
-// if you want to customize...
-applyPolyfill(
-    /* no reflowing */ ReflowStrategy.NONE,
-    /* ignored, because reflowing is disabled */ -1,
-    /* gets called for every re-definition of a web component */
-    (elementName: string) => {
-        console.log(elementName, 'updated');
-    }
-);
+applyPolyfill(ReflowStrategy.NONE, 0, (elementName: string) => {
+    // rerenderInnerHTML();
+    console.log('updated', elementName);
+});

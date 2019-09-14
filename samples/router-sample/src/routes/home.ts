@@ -1,11 +1,11 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
 
-@customElement('notfound-component')
+@customElement('home-route')
 export default class extends HTMLElement {
     public render() {
         return html`
-            notfound
+            <section><h1>home</h1></section>
         `;
     }
 }

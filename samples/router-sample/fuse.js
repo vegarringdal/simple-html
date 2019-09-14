@@ -1,4 +1,4 @@
-const { fusebox, sparky } = require('fuse-box');
+const { fusebox, sparky, pluginPostCSS } = require('fuse-box');
 const { pluginTypeChecker } = require('fuse-box-typechecker');
 const PATH = '.' + __dirname.replace(process.cwd(), '').split()[0];
 
@@ -23,10 +23,20 @@ class Context {
             hmr: true,
             devServer: this.runServer,
             plugins: [
+                pluginPostCSS(/\.css$/, {
+                    stylesheet: {
+                        postCSS: {
+                            plugins: [
+                                require('tailwindcss'),
+                                require('autoprefixer')
+                            ]
+                        }
+                    }
+                }),
                 pluginTypeChecker({
                     basePath: PATH,
                     tsConfig: './tsconfig.json',
-                    skipTsErrors:[6059]
+                    skipTsErrors: [6059]
                 })
             ]
         });

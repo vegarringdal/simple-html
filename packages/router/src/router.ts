@@ -15,6 +15,7 @@ export interface IRoutes {
 }
 
 export interface ActivateObject {
+    children: boolean;
     name: string;
     isNav: boolean;
     href: string;
@@ -305,7 +306,21 @@ export class RouterInternal {
 
                             if (verified) {
                                 y = r_config.length;
+                                let oldRef = true;
+
+                                if (this.activeRoute) {
+                                    // we need to check if regex matches just incase we use parent component in child routes
+                                    let regex = new RegExp(
+                                        createRouteRegex(
+                                            parsePattern(this.activeRoute.href),
+                                            this.activeRoute.children
+                                        )
+                                    );
+                                    oldRef = regex.test(hash);
+                                }
+
                                 const reUse =
+                                    oldRef &&
                                     routerElements[i].children.length &&
                                     this.activeRoute &&
                                     this.activeRoute.componentName === route.componentName;
@@ -324,7 +339,8 @@ export class RouterInternal {
                                     href: route.path,
                                     isNav: route.isNav ? true : false,
                                     data: Object.assign({}, route.data),
-                                    componentName: route.componentName
+                                    componentName: route.componentName,
+                                    children: route.children
                                 } as ActivateObject;
                                 logger(
                                     'router-hashChange',
