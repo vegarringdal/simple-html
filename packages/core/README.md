@@ -8,7 +8,7 @@ Helpers to get make lit-html a little easier
 
 ### Sample
 
-https://stackblitz.com/edit/simple-html-router?file=routersConfig.ts
+https://codesandbox.io/s/github/simple-html/codesandbox/tree/master/sample-core
 
 ### Bundle size:
 

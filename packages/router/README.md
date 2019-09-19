@@ -9,7 +9,7 @@ time to refactor/clean up all code Im extperimenting with
 
 ### Sample
 
-https://stackblitz.com/edit/simple-html-router?file=routersConfig.ts
+https://codesandbox.io/s/github/simple-html/codesandbox/tree/master/sample-router
 
 ### Bundle size:
 
