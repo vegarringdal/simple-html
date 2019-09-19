@@ -14,7 +14,7 @@ Simple data grid made with lit-html Makes displaying a local array very easy. Su
 
 ### Sample
 
-https://stackblitz.com/edit/simple-html-grid-alpha?file=colSetup.ts
+https://codesandbox.io/s/github/simple-html/codesandbox/tree/master/sample-grid
 
 ### Bundle size:
 
