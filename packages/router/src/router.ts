@@ -4,7 +4,8 @@ import { instance } from '@simple-html/core';
 export interface IRoutes {
     path: string;
     load: () => Promise<any>;
-    name: string;
+    name: string; // unique
+    title?: string; //can be used for navs etc
     componentName: string;
     isNav?: boolean;
     /**I need to know if end out route needs to be open */
@@ -17,6 +18,7 @@ export interface IRoutes {
 export interface ActivateObject {
     children: boolean;
     name: string;
+    title: string;
     isNav: boolean;
     href: string;
     data: any;
@@ -154,6 +156,7 @@ export class RouterInternal {
             r_config.forEach(r => {
                 result.push({
                     name: r.name,
+                    title: r.title,
                     isNav: r.isNav === false ? false : true,
                     href: (this.usehash ? '#' : '') + r.path,
                     data: r.data,
@@ -186,6 +189,7 @@ export class RouterInternal {
                 if (r.name === pathname) {
                     result = {
                         name: r.name,
+                        title: r.title,
                         isNav: r.isNav === false ? false : true,
                         href: (this.usehash ? '#' : '') + r.path,
                         data: r.data,
@@ -337,6 +341,7 @@ export class RouterInternal {
                                 this.activeRoute = {
                                     name: route.name,
                                     href: route.path,
+                                    title: route.title,
                                     isNav: route.isNav ? true : false,
                                     data: Object.assign({}, route.data),
                                     componentName: route.componentName,
@@ -538,7 +543,7 @@ export class RouterInternal {
     public addRouterConfig(name: string, routes: IRoutes[]) {
         console.log('routerconfig added', name);
         if (this.routers.indexOf(name) !== -1) {
-            console.error('can not have 2 routers with same name');
+            console.error('can not have 2 routers with same name, this needs to be unique');
             // throw new Error('can not have 2 routers with same name');
         } else {
             let currentRoutes: string[] = [];
