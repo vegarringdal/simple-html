@@ -20,7 +20,8 @@ export function property(): Function {
                 if (oldValue !== x) {
                     requestRender(this);
                 }
-            }
+            },
+            configurable: true
         });
     };
 }

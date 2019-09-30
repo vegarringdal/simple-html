@@ -24,7 +24,8 @@ export function attribute(): Function {
                 if (oldValue !== x) {
                     requestRender(this);
                 }
-            }
+            },
+            configurable: true
         });
 
         // replace uppercase with lower and add '-'
