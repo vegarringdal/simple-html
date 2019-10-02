@@ -294,14 +294,11 @@ export class RouterInternal {
                             }
 
                             if (verified && route.isAuth) {
-                                if (
-                                    !this.routeAuth(
-                                        this.getNavLink(
-                                            route.name,
-                                            this.active[this.active.length - 1]
-                                        )
-                                    )
-                                ) {
+                                const result = await this.routeAuth(
+                                    this.getNavLink(route.name, this.active[this.active.length - 1])
+                                );
+
+                                if (!result) {
                                     this.foundRoute = true;
                                     verified = false;
                                     y = r_config.length;
