@@ -26,15 +26,19 @@ unknowRouteHandler(() => {
     goto(href(RoutesMain.Unknown));
 });
 
-authRouteHandler(() => {
-    const appState = instance(AppState);
-    if (!appState.isAutenticated) {
-        alert('you have no access, forwarding you to login');
-        goto(href(RoutesMain.Login));
-        return false;
-    } else {
-        return true;
-    }
+authRouteHandler(async () => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const appState = instance(AppState);
+            if (!appState.isAutenticated) {
+                alert('you have no access, forwarding you to login');
+                goto(href(RoutesMain.Login));
+                resolve(false);
+            } else {
+                resolve(true);
+            }
+        }, 2000);
+    });
 });
 
 /**
