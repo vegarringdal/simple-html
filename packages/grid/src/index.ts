@@ -154,6 +154,17 @@ export class FreeGrid extends HTMLElement {
                 `,
                 this
             );
+
+            if (this.config.lastScrollTop) {
+                // set initial scroll top/left
+                // nice when reloading a page etc
+                const node = this.getElementsByTagName('free-grid-body')[0];
+                if (node && node.scrollTop !== this.config.lastScrollTop) {
+                    node.scrollTop = this.config.lastScrollTop;
+                    node.scrollLeft = this.config.scrollLeft;
+                    this.config.lastScrollTop = 0;
+                }
+            }
         } else {
             if (this.isConnected) {
                 console.error('no config set');

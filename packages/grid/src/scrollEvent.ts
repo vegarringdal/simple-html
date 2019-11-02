@@ -7,11 +7,13 @@ export function scrollEvent(
     }[]
 ) {
     return (e: CallbackEvent) => {
-        if (freeGrid.config.scrollLeft !== e.target.scrollLeft) {
+        if (freeGrid.config.scrollLeft && freeGrid.config.scrollLeft !== e.target.scrollLeft && freeGrid.config.lastScrollTop == e.target.scrollTop) {
             freeGrid.config.scrollLeft = e.target.scrollLeft;
             freeGrid.reRender();
         } else {
-            window.focus();
+
+           // window.focus();
+           freeGrid.config.scrollLeft = e.target.scrollLeft;
             if (document.activeElement) {
                 (document.activeElement as any).blur();
             }
