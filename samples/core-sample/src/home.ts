@@ -36,7 +36,7 @@ export default class extends HTMLElement {
     public render() {
         console.log('render called home component');
         return html`
-            <p>My attibute: ${this.myAttribute}</p>
+            <p>My attibutes: ${this.myAttribute}</p>
             <br />
             <button @click=${this.click}>add five (will drop)</button>
         `;

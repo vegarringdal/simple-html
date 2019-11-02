@@ -24,7 +24,8 @@ export class Person {
 @inject(Person, Company)
 @customElement('app-component')
 export default class extends HTMLElement {
-    @property() public counterApp: number = 0;
+    @property() public counterApp: number = (<any>window).count || 0;
+    time: NodeJS.Timeout;
 
     constructor(private person: Person, private company: Company) {
         super();
@@ -42,10 +43,16 @@ export default class extends HTMLElement {
     }
 
     connectedCallback() {
-        setInterval(() => {
+        this.time = setInterval(() => {
             console.log('timer app-component');
             this.counterApp++;
+            (<any>window).count = this.counterApp;
         }, 3000);
+    }
+
+    disconnectedCallback(){
+        console.log('remoooooooooooooooooooooooooooooooooooooooved')
+        clearInterval(this.time);
     }
 
     updated() {
