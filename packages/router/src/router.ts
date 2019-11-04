@@ -38,19 +38,19 @@ export interface Router {
 export type IRouterHTMLElement = IFreeRouterElement & HTMLElement;
 
 export class RouterInternal {
-    public active: string[] = [];
-    private routers: string[] = [];
-    private routersConfig: IRoutes[][] = [];
-    private backEventtriggered: boolean;
-    private lastpop: string;
+    private activeRoutes: string[] = [];
+    private routerNames: string[] = [];
+    private routerConfigs: IRoutes[][] = [];
+    private canDeactivateRejection: boolean;
+    private lastActiveRoute: string;
     private haltedActivate: string;
-    private foundRoute: boolean;
-    public activeRoute: ActivateObject;
-    public usehash = true;
-    private routeNotFoundCallback: (hash: string) => void;
+    private foundNextRoute: boolean;
+    private currentActiveRoute: ActivateObject;
+    private usehash = true;
+    private routeNotFoundCallback: (path: string) => void;
     private routeAuthCallback: (options: ActivateObject) => void;
-    public loadingHandlerCallback: (options: string, activeRouter: string) => void;
-    public routeChangeHandlerCallback: (options: ActivateObject, activeRouter: string) => void;
+    private loadingHandlerCallback: (options: string, activeRouter: string) => void;
+    private routeChangeHandlerCallback: (options: ActivateObject, activeRouter: string) => void;
 
     constructor() {
         this.addListeners();
@@ -67,15 +67,15 @@ export class RouterInternal {
 
     //helper for hmr
     cleanUp(evenListeners: boolean) {
-        this.routers = [];
+        this.routerNames = [];
         this.usehash = true;
-        this.active = [];
-        this.routersConfig = [];
-        this.backEventtriggered = null;
-        this.lastpop = null;
+        this.activeRoutes = [];
+        this.routerConfigs = [];
+        this.canDeactivateRejection = null;
+        this.lastActiveRoute = null;
         this.haltedActivate = null;
-        this.activeRoute = null;
-        this.foundRoute = null;
+        this.currentActiveRoute = null;
+        this.foundNextRoute = null;
         if (evenListeners) {
             this.removeListeners();
         }
@@ -88,20 +88,23 @@ export class RouterInternal {
      * @param name
      */
     public activateRouterElement(name: string) {
-        if (this.active.indexOf(name) === -1) {
-            this.active.push(name);
+        if (this.activeRoutes.indexOf(name) === -1) {
+            this.activeRoutes.push(name);
         }
         if (this.loadingHandlerCallback) {
-            this.loadingHandlerCallback(location.hash, this.active[this.active.length - 1]);
+            this.loadingHandlerCallback(
+                location.hash,
+                this.activeRoutes[this.activeRoutes.length - 1]
+            );
         }
-        this.dowork().then(() => {
-            if (this.foundRoute === false) {
+        this.updateRouter().then(() => {
+            if (this.foundNextRoute === false) {
                 this.routeNotFound();
             }
             if (this.routeChangeHandlerCallback) {
                 this.routeChangeHandlerCallback(
-                    this.activeRoute,
-                    this.active[this.active.length - 1]
+                    this.currentActiveRoute,
+                    this.activeRoutes[this.activeRoutes.length - 1]
                 );
             }
         });
@@ -113,19 +116,19 @@ export class RouterInternal {
      * @param name
      */
     public deactivateRouterElement(name: string) {
-        let i = this.active.indexOf(name);
+        let i = this.activeRoutes.indexOf(name);
         if (i !== -1) {
-            this.active.splice(i, 1);
+            this.activeRoutes.splice(i, 1);
         }
     }
 
     /**
      * Helper with going to a url with params
-     * @param hash sample: 'something/:arg1/:arg2'
+     * @param path sample: 'something/:arg1/:arg2'
      * @param params sample: {arg1:person, arg2:22}
      */
-    public goto(hash: string, params: any = {}) {
-        const urls = hash.split('/').filter(x => (x ? true : false));
+    public goto(path: string, params: any = {}) {
+        const urls = path.split('/').filter(x => (x ? true : false));
         let newUrl = '';
         urls.forEach((val, i) => {
             if (val[0] === ':' && params[val.substr(1, val.length)] !== undefined) {
@@ -149,19 +152,21 @@ export class RouterInternal {
      */
     public getNavLinks(routerName: string | undefined, active?: boolean): ActivateObject[] {
         let result: any = [];
-        let r_config = this.routersConfig[
-            this.routers.indexOf(active ? this.active[this.active.length - 1] : routerName)
+        let routerConfig = this.routerConfigs[
+            this.routerNames.indexOf(
+                active ? this.activeRoutes[this.activeRoutes.length - 1] : routerName
+            )
         ];
-        if (r_config) {
-            r_config.forEach(r => {
+        if (routerConfig) {
+            routerConfig.forEach(config => {
                 result.push({
-                    name: r.name,
-                    title: r.title,
-                    isNav: r.isNav === false ? false : true,
-                    href: (this.usehash ? '#' : '') + r.path,
-                    data: r.data,
-                    componentName: r.componentName,
-                    isAuth: r.isAuth
+                    name: config.name,
+                    title: config.title,
+                    isNav: config.isNav === false ? false : true,
+                    href: (this.usehash ? '#' : '') + config.path,
+                    data: config.data,
+                    componentName: config.componentName,
+                    isAuth: config.isAuth
                 });
             });
         }
@@ -181,20 +186,22 @@ export class RouterInternal {
         active?: boolean
     ): ActivateObject {
         let result: any = {};
-        let r_config = this.routersConfig[
-            this.routers.indexOf(active ? this.active[this.active.length - 1] : routerName)
+        const routerConfig = this.routerConfigs[
+            this.routerNames.indexOf(
+                active ? this.activeRoutes[this.activeRoutes.length - 1] : routerName
+            )
         ];
-        if (r_config) {
-            r_config.forEach(r => {
-                if (r.name === pathname) {
+        if (routerConfig) {
+            routerConfig.forEach(config => {
+                if (config.name === pathname) {
                     result = {
-                        name: r.name,
-                        title: r.title,
-                        isNav: r.isNav === false ? false : true,
-                        href: (this.usehash ? '#' : '') + r.path,
-                        data: r.data,
-                        componentName: r.componentName,
-                        isAuth: r.isAuth
+                        name: config.name,
+                        title: config.title,
+                        isNav: config.isNav === false ? false : true,
+                        href: (this.usehash ? '#' : '') + config.path,
+                        data: config.data,
+                        componentName: config.componentName,
+                        isAuth: config.isAuth
                     };
                 }
             });
@@ -205,37 +212,41 @@ export class RouterInternal {
 
     /**
      * Infernal - do not use
-     * Called on hash chnage event
+     * Called on hash change event
      */
     private async hashChange() {
-        this.lastpop = null;
-        logger('router-hashChange', 'start', this.active[this.active.length - 1]);
+        this.lastActiveRoute = null;
+        logger('hashChange event ---> ', this.activeRoutes[this.activeRoutes.length - 1]);
 
         if (this.loadingHandlerCallback) {
-            this.loadingHandlerCallback(location.hash, this.active[this.active.length - 1]);
+            this.loadingHandlerCallback(
+                location.hash,
+                this.activeRoutes[this.activeRoutes.length - 1]
+            );
         }
 
-        if (this.backEventtriggered) {
-            this.backEventtriggered = false;
+        if (this.canDeactivateRejection) {
+            this.canDeactivateRejection = false;
         } else {
-            await this.dowork();
-            if (this.foundRoute === false) {
-                if (this.active.length > 1) {
-                    let y = this.active.pop();
-                    if (y !== this.lastpop) {
-                        this.lastpop = y;
-                        await this.dowork();
+            await this.updateRouter();
+            if (this.foundNextRoute === false) {
+                // if route not found we need to go back a step if active is a child router
+                if (this.activeRoutes.length > 1) {
+                    let y = this.activeRoutes.pop();
+                    if (y !== this.lastActiveRoute) {
+                        this.lastActiveRoute = y;
+                        await this.updateRouter();
                     }
                 }
-                if (this.active.length === 1 && !this.foundRoute) {
+                if (this.activeRoutes.length === 1 && !this.foundNextRoute) {
                     // todo
                     this.routeNotFound();
                 }
             }
             if (this.routeChangeHandlerCallback) {
                 this.routeChangeHandlerCallback(
-                    this.activeRoute,
-                    this.active[this.active.length - 1]
+                    this.currentActiveRoute,
+                    this.activeRoutes[this.activeRoutes.length - 1]
                 );
             }
         }
@@ -245,61 +256,82 @@ export class RouterInternal {
      * internal - do not use
      * called by hash change event or when setting new active router
      */
-    private async dowork() {
-        this.foundRoute = null;
-        let hash = location.hash ? location.hash.substring(1, location.hash.length) : '';
+    private async updateRouter() {
+        logger('updateRouter call ---> ', this.activeRoutes[this.activeRoutes.length - 1]);
+        this.foundNextRoute = null;
+        const currentPath = location.hash ? location.hash.substring(1, location.hash.length) : '';
         let routerElements = document.getElementsByTagName('free-router');
-        let ok = true;
+        let canDeactivate = true;
+
+        // loop router elements and check if we can deactivate
+        // if we cant then we go back
         for (let i = 0; routerElements.length > i; i++) {
-            if (routerElements[i].getAttribute('name') === this.active[this.active.length - 1]) {
+            if (
+                routerElements[i].getAttribute('name') ===
+                this.activeRoutes[this.activeRoutes.length - 1]
+            ) {
                 let firstchild = (routerElements[i] as IRouterHTMLElement).children[0];
                 if (firstchild) {
                     if ((firstchild as IRouterHTMLElement).canDeactivate) {
-                        ok = await (firstchild as IRouterHTMLElement).canDeactivate();
-                        if (ok !== true) {
-                            this.backEventtriggered = true;
+                        canDeactivate = await (firstchild as IRouterHTMLElement).canDeactivate();
+                        if (canDeactivate !== true) {
+                            this.canDeactivateRejection = true;
+                            logger(
+                                'canDeactivateRejection',
+                                this.activeRoutes[this.activeRoutes.length - 1],
+                                currentPath
+                            );
                             history.back();
                         }
                     } else {
-                        ok = true;
+                        canDeactivate = true;
                     }
                 }
             }
         }
 
-        if (ok === true) {
-            this.foundRoute = false;
-            logger('router-hashChange', 'routeSearch', this.active[this.active.length - 1]);
+        // back trigger is allowed, lets find if new path is valid
+        if (canDeactivate === true) {
+            this.foundNextRoute = false;
+            logger(
+                'canDeactivate OK, verifying path',
+                this.activeRoutes[this.activeRoutes.length - 1]
+            );
+
             for (let i = 0; routerElements.length > i; i++) {
                 if (
-                    !this.foundRoute &&
-                    routerElements[i].getAttribute('name') === this.active[this.active.length - 1]
+                    !this.foundNextRoute &&
+                    routerElements[i].getAttribute('name') ===
+                        this.activeRoutes[this.activeRoutes.length - 1]
                 ) {
-                    let r_config = this.routersConfig[
-                        this.routers.indexOf(this.active[this.active.length - 1])
+                    let r_config = this.routerConfigs[
+                        this.routerNames.indexOf(this.activeRoutes[this.activeRoutes.length - 1])
                     ];
                     if (r_config) {
                         for (let y = 0; y < r_config.length; y++) {
                             const route = r_config[y];
                             let verified = false;
-                            if (hash === '' || route.path === '') {
-                                verified = hash === route.path;
+                            if (currentPath === '' || route.path === '') {
+                                verified = currentPath === route.path;
                             } else {
                                 let regex = new RegExp(
                                     createRouteRegex(parsePattern(route.path), route.children)
                                 );
-                                if (regex.test(hash)) {
+                                if (regex.test(currentPath)) {
                                     verified = true;
                                 }
                             }
 
                             if (verified && route.isAuth) {
                                 const result = await this.routeAuth(
-                                    this.getNavLink(route.name, this.active[this.active.length - 1])
+                                    this.getNavLink(
+                                        route.name,
+                                        this.activeRoutes[this.activeRoutes.length - 1]
+                                    )
                                 );
 
                                 if (!result) {
-                                    this.foundRoute = true;
+                                    this.foundNextRoute = true;
                                     verified = false;
                                     y = r_config.length;
                                 }
@@ -309,33 +341,32 @@ export class RouterInternal {
                                 y = r_config.length;
                                 let oldRef = true;
 
-                                if (this.activeRoute) {
+                                if (this.currentActiveRoute) {
                                     // we need to check if regex matches just incase we use parent component in child routes
                                     let regex = new RegExp(
                                         createRouteRegex(
-                                            parsePattern(this.activeRoute.href),
-                                            this.activeRoute.children
+                                            parsePattern(this.currentActiveRoute.href),
+                                            this.currentActiveRoute.children
                                         )
                                     );
-                                    oldRef = regex.test(hash);
+                                    oldRef = regex.test(currentPath);
                                 }
 
                                 const reUse =
                                     oldRef &&
                                     routerElements[i].children.length &&
-                                    this.activeRoute &&
-                                    this.activeRoute.componentName === route.componentName;
+                                    this.currentActiveRoute &&
+                                    this.currentActiveRoute.componentName === route.componentName;
 
                                 if (reUse) {
                                     logger(
-                                        'router-hashChange',
                                         'verified, but reuse activated',
-                                        this.active[this.active.length - 1],
-                                        hash,
+                                        this.activeRoutes[this.activeRoutes.length - 1],
+                                        currentPath,
                                         route.name
                                     );
                                 }
-                                this.activeRoute = {
+                                this.currentActiveRoute = {
                                     name: route.name,
                                     href: route.path,
                                     title: route.title,
@@ -345,22 +376,20 @@ export class RouterInternal {
                                     children: route.children
                                 } as ActivateObject;
                                 logger(
-                                    'router-hashChange',
                                     'verified',
-                                    this.active[this.active.length - 1],
-                                    hash,
-                                    route.name
+                                    this.activeRoutes[this.activeRoutes.length - 1],
+                                    `current path: ${currentPath}`,
+                                    `path on route: ${route.path}`
                                 );
-                                this.foundRoute = true;
+                                this.foundNextRoute = true;
                                 if (route.load && !reUse) {
                                     await route.load();
                                 }
                                 if (!reUse && routerElements[i].children.length) {
                                     logger(
-                                        'router-hashChange',
                                         'removing child',
-                                        this.active[this.active.length - 1],
-                                        hash
+                                        this.activeRoutes[this.activeRoutes.length - 1],
+                                        currentPath
                                     );
                                     routerElements[i].removeChild(routerElements[i].children[0]);
                                 }
@@ -368,10 +397,9 @@ export class RouterInternal {
                                 if (!reUse) {
                                     el = document.createElement(route.componentName.toUpperCase());
                                     logger(
-                                        'router-hashChange',
-                                        'chreate element',
-                                        this.active[this.active.length - 1],
-                                        hash
+                                        'create element',
+                                        this.activeRoutes[this.activeRoutes.length - 1],
+                                        currentPath
                                     );
                                 }
                                 if (this.haltedActivate) {
@@ -381,26 +409,25 @@ export class RouterInternal {
                                 let elToUse = reUse ? routerElements[i].children[0] : el;
 
                                 if ((<IRouterHTMLElement>elToUse).activate) {
-                                    let active = this.active[this.active.length - 1];
+                                    let active = this.activeRoutes[this.activeRoutes.length - 1];
                                     this.haltedActivate = route.path;
                                     // todo: do I need a timeout to be able to abort?
                                     await (<IRouterHTMLElement>elToUse).activate(
                                         route.path,
-                                        <any>getVariables(parsePattern(route.path), hash),
-                                        this.activeRoute
+                                        <any>getVariables(parsePattern(route.path), currentPath),
+                                        this.currentActiveRoute
                                     );
                                     if (reUse) {
-                                        logger('router-hashChange', 'reUse activated');
+                                        logger('reUse activated');
                                         if ((<any>elToUse).connectedCallback) {
                                             (<any>elToUse).connectedCallback();
                                         }
                                     } else {
                                         if (this.haltedActivate === route.path) {
                                             logger(
-                                                'router-hashChange',
                                                 'append child',
-                                                this.active[this.active.length - 1],
-                                                hash
+                                                this.activeRoutes[this.activeRoutes.length - 1],
+                                                currentPath
                                             );
                                             (<any>el).classList.add('free-router-view');
                                             routerElements[i].appendChild(el);
@@ -408,35 +435,28 @@ export class RouterInternal {
                                             (<any>el).disconnectedCallback
                                                 ? (<any>el).disconnectedCallback()
                                                 : null;
-                                            logger(
-                                                'router-hashChange',
-                                                'skipping append child',
-                                                active,
-                                                hash
-                                            );
+                                            logger('skipping append child', active, currentPath);
                                         }
                                     }
                                 } else {
                                     if (!reUse) {
                                         logger(
-                                            'router-hashChange',
                                             'append child',
-                                            this.active[this.active.length - 1],
-                                            hash
+                                            this.activeRoutes[this.activeRoutes.length - 1],
+                                            currentPath
                                         );
                                         (<any>el).classList.add('free-router-view');
                                         routerElements[i].appendChild(el);
                                     } else {
-                                        logger('router-hashChange', 'reUse activated');
+                                        logger('reUse activated');
                                     }
                                 }
                             } else {
                                 logger(
-                                    'router-hashChange',
                                     'not-verified',
-                                    this.active[this.active.length - 1],
-                                    hash,
-                                    route.name
+                                    this.activeRoutes[this.activeRoutes.length - 1],
+                                    `current path: ${currentPath}`,
+                                    `path on route: ${route.path}`
                                 );
                             }
                         }
@@ -459,7 +479,7 @@ export class RouterInternal {
      *  Call to set handler for when router does not find view
      * @param x
      */
-    public registerUnknowRouteHandler(callback: (hash: string) => void) {
+    public registerUnknowRouteHandler(callback: (path: string) => void) {
         this.routeNotFoundCallback = callback;
     }
 
@@ -480,7 +500,7 @@ export class RouterInternal {
      */
     public href(name: string, params?: object, clean?: boolean) {
         let result = 'unknown';
-        this.routersConfig.forEach(x => {
+        this.routerConfigs.forEach(x => {
             x.forEach(y => {
                 if (y.name === name) {
                     result = y.path;
@@ -518,7 +538,7 @@ export class RouterInternal {
      * handler for when its loading
      * @param callback
      */
-    public registerLoadingHandler(callback: (hash: string, activeRouter: string) => void) {
+    public registerLoadingHandler(callback: (path: string, activeRouter: string) => void) {
         this.loadingHandlerCallback = callback;
     }
 
@@ -539,7 +559,7 @@ export class RouterInternal {
      */
     public addRouterConfig(name: string, routes: IRoutes[]) {
         console.log('routerconfig added', name);
-        if (this.routers.indexOf(name) !== -1) {
+        if (this.routerNames.indexOf(name) !== -1) {
             console.error('can not have 2 routers with same name, this needs to be unique');
             // throw new Error('can not have 2 routers with same name');
         } else {
@@ -560,8 +580,8 @@ export class RouterInternal {
                 }
                 currentRoutes.push(y.name);
             });
-            this.routers.push(name);
-            this.routersConfig.push(routes);
+            this.routerNames.push(name);
+            this.routerConfigs.push(routes);
         }
     }
 
@@ -570,10 +590,10 @@ export class RouterInternal {
      * @param name
      */
     public removeRouterConfig(name: string) {
-        let i = this.routers.indexOf(name);
+        let i = this.routerNames.indexOf(name);
         if (i !== -1) {
-            this.routers.splice(i, 1);
-            this.routersConfig.splice(i, 1);
+            this.routerNames.splice(i, 1);
+            this.routerConfigs.splice(i, 1);
         }
     }
 }
@@ -598,7 +618,7 @@ export function removeRouterConfig(name: string) {
     return getRouter().removeRouterConfig(name);
 }
 
-export function unknowRouteHandler(callback: (hash: string) => void) {
+export function unknowRouteHandler(callback: (path: string) => void) {
     return getRouter().registerUnknowRouteHandler(callback);
 }
 
@@ -606,6 +626,6 @@ export function authRouteHandler(callback: (options: ActivateObject) => void) {
     return getRouter().registerAuthRouteHandler(callback);
 }
 
-export function goto(hash: string, params: any = {}) {
-    return getRouter().goto(hash, params);
+export function goto(path: string, params: any = {}) {
+    return getRouter().goto(path, params);
 }

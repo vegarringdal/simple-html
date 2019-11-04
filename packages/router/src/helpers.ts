@@ -84,7 +84,7 @@ let loggerStatus = false;
 
 export const logger = (...message: any) => {
     if (loggerStatus) {
-        console.log('Logger ---', message);
+        console.log('[simple-router]', message);
     }
 };
 
