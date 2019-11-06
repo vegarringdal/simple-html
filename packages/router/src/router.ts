@@ -375,33 +375,40 @@ export class RouterInternal {
                                     componentName: route.componentName,
                                     children: route.children
                                 } as ActivateObject;
+
                                 logger(
                                     'verified',
                                     this.activeRoutes[this.activeRoutes.length - 1],
                                     `current path: ${currentPath}`,
                                     `path on route: ${route.path}`
                                 );
+
                                 this.foundNextRoute = true;
                                 if (route.load && !reUse) {
                                     await route.load();
                                 }
+
                                 if (!reUse && routerElements[i].children.length) {
                                     logger(
                                         'removing child',
                                         this.activeRoutes[this.activeRoutes.length - 1],
                                         currentPath
                                     );
+
                                     routerElements[i].removeChild(routerElements[i].children[0]);
                                 }
+
                                 let el;
                                 if (!reUse) {
-                                    el = document.createElement(route.componentName.toUpperCase());
                                     logger(
                                         'create element',
                                         this.activeRoutes[this.activeRoutes.length - 1],
                                         currentPath
                                     );
+
+                                    el = document.createElement(route.componentName.toUpperCase());
                                 }
+
                                 if (this.haltedActivate) {
                                     this.haltedActivate = null;
                                 }
@@ -417,8 +424,10 @@ export class RouterInternal {
                                         <any>getVariables(parsePattern(route.path), currentPath),
                                         this.currentActiveRoute
                                     );
+
                                     if (reUse) {
                                         logger('reUse activated');
+
                                         if ((<any>elToUse).connectedCallback) {
                                             (<any>elToUse).connectedCallback();
                                         }
@@ -429,12 +438,14 @@ export class RouterInternal {
                                                 this.activeRoutes[this.activeRoutes.length - 1],
                                                 currentPath
                                             );
+
                                             (<any>el).classList.add('free-router-view');
                                             routerElements[i].appendChild(el);
                                         } else {
                                             (<any>el).disconnectedCallback
                                                 ? (<any>el).disconnectedCallback()
                                                 : null;
+
                                             logger('skipping append child', active, currentPath);
                                         }
                                     }
@@ -445,6 +456,7 @@ export class RouterInternal {
                                             this.activeRoutes[this.activeRoutes.length - 1],
                                             currentPath
                                         );
+
                                         (<any>el).classList.add('free-router-view');
                                         routerElements[i].appendChild(el);
                                     } else {
