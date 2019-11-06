@@ -216,7 +216,7 @@ export class RouterInternal {
      */
     private async hashChange() {
         this.lastActiveRoute = null;
-        logger('hashChange event ---> ', this.activeRoutes[this.activeRoutes.length - 1]);
+        logger('hashChange event ---> ', this.activeRoutes[this.activeRoutes.length - 1], location.hash);
 
         if (this.loadingHandlerCallback) {
             this.loadingHandlerCallback(
@@ -257,7 +257,7 @@ export class RouterInternal {
      * called by hash change event or when setting new active router
      */
     private async updateRouter() {
-        logger('updateRouter call ---> ', this.activeRoutes[this.activeRoutes.length - 1]);
+        logger('updateRouter call ---> ', this.activeRoutes[this.activeRoutes.length - 1], location.hash);
         this.foundNextRoute = null;
         const currentPath = location.hash ? location.hash.substring(1, location.hash.length) : '';
         let routerElements = document.getElementsByTagName('free-router');
