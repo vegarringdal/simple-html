@@ -16,8 +16,8 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
         Object.defineProperty(elementClass, 'observedAttributes', {
             get: function() {
                 return elementClass.prototype[getObservedAttributesSymbol()];
-            }
-        });
+            },configurable: true
+        } );
 
         const getinject = (args: any): any[] => {
             const classes: any[] = [];
