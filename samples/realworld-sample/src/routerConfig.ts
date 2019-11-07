@@ -1,7 +1,7 @@
-import { enableLogger, getRouter, addRouterConfig } from '@simple-html/router';
+import {  getRouter, addRouterConfig } from '@simple-html/router';
 import { publish } from '@simple-html/core';
 
-enableLogger();
+// enableLogger();
 getRouter().registerRouteChangeHandler((options: any, activeRouter: any) => {
     publish('routeChange', { options, activeRouter });
 });

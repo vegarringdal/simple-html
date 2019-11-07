@@ -1,6 +1,6 @@
 import { html } from 'lit-html';
 
-import { customElement, instance, property } from '@simple-html/core';
+import { customElement, property, inject } from '@simple-html/core';
 import { ArticleService } from 'src/resources/services/articleservice';
 import { SharedState } from 'src/resources/state/sharedstate';
 import { href } from '@simple-html/router';
@@ -13,16 +13,14 @@ function format(date: Date) {
     });
 }
 
+@inject(ArticleService, SharedState)
 @customElement('article-preview')
 export default class extends HTMLElement {
-    public articleService: ArticleService;
-    public sharedState: SharedState;
     @property() public article: any;
 
-    constructor() {
+    constructor(public articleService: ArticleService, public sharedState: SharedState) {
         super();
-        this.articleService = instance(ArticleService);
-        this.sharedState = instance(SharedState);
+
     }
 
     public async onToggleFavorited() {
@@ -59,7 +57,7 @@ export default class extends HTMLElement {
                         >
                             ${this.article.author.username}</a
                         >
-                        <span class="date">${this.article.createdAt}</span>
+                        <span class="date">${format(this.article.createdAt)}</span>
                     </div>
 
                     <button

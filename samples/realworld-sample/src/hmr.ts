@@ -1,6 +1,10 @@
 import { applyPolyfill, ReflowStrategy, rerenderInnerHTML } from 'custom-elements-hmr-polyfill';
+import { getRouter } from '@simple-html/router';
+import { clearInstance } from '@simple-html/core/dist/ts';
 
 // apply polly fill
+getRouter().cleanUp(false);
+clearInstance(null);
 rerenderInnerHTML();
 
 // if you want to customize...
