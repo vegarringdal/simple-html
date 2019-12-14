@@ -1,8 +1,8 @@
 import { html } from 'lit-html';
 
 import { customElement, property, inject } from '@simple-html/core';
-import { ArticleService } from 'src/resources/services/articleservice';
-import { SharedState } from 'src/resources/state/sharedstate';
+import { ArticleService } from '../resources/services/articleservice';
+import { SharedState } from '../resources/state/sharedstate';
 import { href } from '@simple-html/router';
 
 function format(date: Date) {

@@ -1,6 +1,6 @@
 import { html } from 'lit-html';
 import { customElement, instance } from '@simple-html/core';
-import { ArticleService } from 'src/resources/services/articleservice';
+import { ArticleService } from '../resources/services/articleservice';
 import { getRouter } from '@simple-html/router';
 
 @customElement('editor-comp')

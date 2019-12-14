@@ -1,11 +1,7 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "rootDir": "./src",
-        "baseUrl": "./",
-        "paths": {
-            "@simple-html*": ["../../packages*"]
-        }
+        "rootDir": "./src"
     },
     "include": ["src"]
 }

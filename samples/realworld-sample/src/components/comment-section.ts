@@ -1,6 +1,6 @@
 import { html } from 'lit-html';
 import { customElement, instance } from '@simple-html/core';
-import { SharedState } from 'src/resources/state/sharedstate';
+import { SharedState } from '../resources/state/sharedstate';
 import { href } from '@simple-html/router';
 function format(date: Date) {
     return new Date(date).toLocaleDateString('en', {

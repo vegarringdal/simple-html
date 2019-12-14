@@ -1,9 +1,9 @@
 import { html } from 'lit-html';
 import { href } from '@simple-html/router';
 import { customElement, instance } from '@simple-html/core';
-import { SharedState } from 'src/resources/state/sharedstate';
-import { TagService } from 'src/resources/services/tagservice';
-import { ArticleService } from 'src/resources/services/articleservice';
+import { SharedState } from '../resources/state/sharedstate';
+import { TagService } from '../resources/services/tagservice';
+import { ArticleService } from '../resources/services/articleservice';
 import '../components/article-list';
 
 @customElement('home-comp')

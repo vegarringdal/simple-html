@@ -1,6 +1,6 @@
 import { html } from 'lit-html';
 import { customElement, instance, property } from '@simple-html/core';
-import { ArticleService } from 'src/resources/services/articleservice';
+import { ArticleService } from '../resources/services/articleservice';
 import '../components/article-list';
 
 @customElement('profile-favorites-route')

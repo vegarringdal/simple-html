@@ -1,11 +1,11 @@
 import { html } from 'lit-html';
 import '../components/comment-section';
 import { customElement, instance } from '@simple-html/core';
-import { ArticleService } from 'src/resources/services/articleservice';
-import { CommentService } from 'src/resources/services/commentservice';
-import { UserService } from 'src/resources/services/userservice';
-import { SharedState } from 'src/resources/state/sharedstate';
-import { ProfileService } from 'src/resources/services/profileservice';
+import { ArticleService } from '../resources/services/articleservice';
+import { CommentService } from '../resources/services/commentservice';
+import { UserService } from '../resources/services/userservice';
+import { SharedState } from '../resources/state/sharedstate';
+import { ProfileService } from '../resources/services/profileservice';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
 import * as marked from 'marked';
 import { href } from '@simple-html/router';

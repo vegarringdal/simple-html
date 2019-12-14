@@ -1,7 +1,7 @@
 import { html } from 'lit-html';
 import { customElement, instance } from '@simple-html/core';
-import { UserService } from 'src/resources/services/userservice';
-import { SharedState } from 'src/resources/state/sharedstate';
+import { UserService } from '../resources/services/userservice';
+import { SharedState } from '../resources/state/sharedstate';
 import { href } from '@simple-html/router';
 
 @customElement('auth-comp')

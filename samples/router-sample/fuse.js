@@ -17,7 +17,7 @@ class Context {
             log: false,
             cache: {
                 root: '.cache',
-                enabled: false
+                enabled: true
             },
             watch: { ignored: ['dist', 'dev'] },
             hmr: true,

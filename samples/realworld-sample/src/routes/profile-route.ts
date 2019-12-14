@@ -1,7 +1,7 @@
 import { html } from 'lit-html';
 import { customElement, instance, subscribe } from '@simple-html/core';
-import { ProfileService } from 'src/resources/services/profileservice';
-import { SharedState } from 'src/resources/state/sharedstate';
+import { ProfileService } from '../resources/services/profileservice';
+import { SharedState } from '../resources/state/sharedstate';
 import * as marked from 'marked';
 
 import { unsafeHTML } from 'lit-html/directives/unsafe-html';
