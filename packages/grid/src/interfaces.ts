@@ -112,7 +112,7 @@ export interface ISortObjectInterface {
 }
 
 export type IDataRow = {
-    __fg_key?: string | number;
+    __KEY?: string | number;
     __group?: boolean;
     __groupID?: string;
     __groupName?: string;

@@ -165,13 +165,13 @@ export class Selection {
      * todo, optional key
      */
     private getRowKey(row: number): number {
-        return (this.grid.viewRows[row] as any) && (this.grid.viewRows[row] as any).__fg_key;
+        return (this.grid.viewRows[row] as any) && (this.grid.viewRows[row] as any).__KEY;
     }
 
     private getRowKeys(): any[] {
         const keys: any[] = [];
         (this.grid.viewRows as any).forEach((data: any) => {
-            keys.push(data.__fg_key);
+            keys.push(data.__KEY);
         });
 
         return keys;

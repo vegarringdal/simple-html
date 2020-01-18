@@ -4,6 +4,7 @@ export { IGridConfig } from './interfaces';
 import { gridTemplate } from './templates/gridTemplate';
 import { Selection } from './selection';
 import { ArrayUtils } from './arrayUtils';
+import { Entity } from './entity';
 
 export class FreeGrid extends HTMLElement {
     // private
@@ -45,17 +46,17 @@ export class FreeGrid extends HTMLElement {
         const oldValue = this.data;
 
         // set key to data - need to have option for user key
-        value.forEach((x, i) => {
-            if (x && !(<any>x).__fg_key) {
-                (<any>x).__fg_key = this.selection.getKey();
+
+        this._DATASET_ALL = Array.from(value, o => new Proxy(o, new Entity() as any)); // <- do I want to update user array Im allready setting a key on it ?
+        this._DATASET_ALL.forEach((entity, i) => {
+            if (entity && !(<any>entity).__KEY) {
+                (<any>entity).__KEY = this.selection.getKey();
             } else {
-                if (!value[i]) {
-                    value[i] = { __fg_key: this.selection.getKey() };
+                if (!this._DATASET_ALL[i]) {
+                    this._DATASET_ALL[i] = { __KEY: this.selection.getKey() };
                 }
             }
         });
-
-        this._DATASET_ALL = Array.from(value, o => Object.assign({}, o)); // <- do I want to update user array Im allready setting a key on it ?
         this._DATASET_FILTERED = this._DATASET_ALL.slice();
         this._DATASET_VIEW = this._DATASET_ALL.slice();
         if (oldValue.length !== this._DATASET_ALL.length) {
