@@ -25,7 +25,7 @@ export class Person {
 @customElement('app-component')
 export default class extends HTMLElement {
     @property() public counterApp: number = (<any>window).count || 0;
-    time: NodeJS.Timeout;
+    time: number;
 
     constructor(private person: Person, private company: Company) {
         super();
