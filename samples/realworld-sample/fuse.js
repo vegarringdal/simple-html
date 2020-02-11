@@ -26,7 +26,7 @@ class Context {
             devServer: this.runServer,
             plugins: [
                 pluginTypeChecker({
-                    basePath: PATH,
+                    basePath: './',
                     tsConfig: './tsconfig.json',
                     skipTsErrors:[6059]
                 })
