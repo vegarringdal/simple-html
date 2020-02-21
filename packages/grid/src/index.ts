@@ -147,7 +147,7 @@ export class FreeGrid extends HTMLElement {
     // main render function called by lit.html
     public render() {
         // render always need to request animation frame, else click events will get skipped
-
+        
         if (this.config) {
             render(
                 html`
@@ -185,7 +185,7 @@ export class FreeGrid extends HTMLElement {
     }
 }
 
-if (!(<any>globalThis).hmrCache) {
+if ((<any>globalThis).hmrCache) {
     customElements.define('free-grid', FreeGrid);
 } else {
     if (!customElements.get('free-grid')) {
