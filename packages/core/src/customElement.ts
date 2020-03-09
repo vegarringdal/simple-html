@@ -2,10 +2,8 @@ import { render } from 'lit-html';
 import { requestRender } from './requestRender';
 import {
     getObservedAttributesSymbol,
-    getObservedAttributesMapSymbol,
-    getInjectSymbol
+    getObservedAttributesMapSymbol
 } from './symbols';
-import { instance } from './instance';
 
 /**
  * @customElement- decorator
@@ -19,28 +17,24 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             },configurable: true
         } );
 
-        const getinject = (args: any): any[] => {
-            const classes: any[] = [];
-            if (Array.isArray(args)) {
-                args.forEach(element => {
-                    classes.push(instance(element));
-                });
-            }
-            return classes;
-        };
 
-        const base = class extends elementClass {
+        const base:any = class extends elementClass {
             constructor() {
-                super(...getinject(elementClass.prototype[getInjectSymbol()]));
+                super();
             }
             render(...result: any[]) {
-                render(super.render.call(this, ...result), <any>this, { eventContext: <any>this });
-                if (super.updated) {
-                    //delay so it actually get a chance to update
-                    setTimeout(() => {
-                        super.updated();
-                    });
-                }
+                const template = super.render.call(this, ...result);
+                Promise.resolve(template).then((templates)=>{
+                    render(templates, <any>this, { eventContext: <any>this });
+                    if (super.updated) {
+                        //delay so it actually get a chance to update
+                        setTimeout(() => {
+                            super.updated();
+                        });
+                    }
+                })
+
+                
             }
             connectedCallback() {
                 if (super.connectedCallback) {

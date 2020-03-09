@@ -7,7 +7,8 @@ import {
 
 /**
  * @attibute- decorator
- *
+ * simple decorator for tracking custom element attribute changes
+ * PS! do not set value manually, does not do anything
  */
 export function attribute(): Function {
     return function reg(_class: any, prop: string): void {
@@ -18,7 +19,7 @@ export function attribute(): Function {
             set: function(x: any) {
                 const oldValue = this[getPropSymbol(this.tagName + '_' + prop)];
                 this[getPropSymbol(this.tagName + '_' + prop)] = x;
-                if (this.valuesChanged && oldValue !== x) {
+                if (this.valuesChanged && oldValue !== x) {                   
                     this.valuesChanged('property', prop, oldValue, x);
                 }
                 if (oldValue !== x) {
