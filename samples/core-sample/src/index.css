@@ -1,7 +1,4 @@
-.nav {
-    display: flex;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.navitem {
-    margin:5px;
-}

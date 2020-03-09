@@ -1,4 +1,4 @@
-const { fusebox, sparky } = require('fuse-box');
+const { fusebox, sparky, pluginPostCSS } = require('fuse-box');
 const { pluginTypeChecker } = require('fuse-box-typechecker');
 
 class Context {
@@ -25,10 +25,20 @@ class Context {
             hmr : { plugin : "./src/fuseHmrPlugin.ts"},
             devServer: this.runServer,
             plugins: [
+                pluginPostCSS(/\.css$/, {
+                    stylesheet: {
+                        postCSS: {
+                            plugins: [
+                                require('tailwindcss'),
+                                require('autoprefixer')
+                            ]
+                        }
+                    }
+                }),
                 pluginTypeChecker({
                     basePath: './',
                     tsConfig: './tsconfig.json',
-                    skipTsErrors:[6059]
+                    skipTsErrors: [6059]
                 })
             ]
         });

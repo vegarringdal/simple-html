@@ -1,6 +1,5 @@
-import './hmr'
 import { html } from 'lit-html';
-import { customElement } from '@simple-html/core';
+import { customElement } from '@cte/core';
 
 import { userFormState, userFormStateType } from './state/userForm';
 import { mainUIState } from './state/mainUI';
