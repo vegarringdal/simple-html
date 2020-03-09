@@ -1,5 +1,6 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
+import { navs, href } from './routes/routerConfig';
 
 
 @customElement('app-comp')
@@ -15,8 +16,8 @@ export default class extends HTMLElement {
                             <li class="mr-6">
                                 <a
                                     class="text-teal-200 hover:text-white"
-                                    href="${route.href}"
-                                    >${route.name}</a
+                                    href="${route.path}"
+                                    >${route.title}</a
                                 >
                             </li>
                         `;
@@ -28,9 +29,9 @@ export default class extends HTMLElement {
                 <li style="margin-left: auto;" class="mr-6">
                     <a
                         class="text-teal-200 hover:text-white"
-                        href=${href('Login')}
+                        href=${href('#login')}
                     >
-                        ${this.appState.isAutenticated ? 'Logout' : 'Login'}</a
+                        ${this ? 'Logout' : 'Login'}</a
                     >
                 </li>
             </ul>
