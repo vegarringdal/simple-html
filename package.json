@@ -19,14 +19,14 @@
     "@types/marked": "^0.7.2",
     "autoprefixer": "^9.7.4",
     "custom-elements-hmr-polyfill": "^1.0.0",
-    "fuse-box": "^4.0.0-alpha.304",
-    "fuse-box-typechecker": "^3.0.0-next.30",
+    "fuse-box": "^4.0.0-alpha.328",
+    "fuse-box-typechecker": "^3.0.0-next.31",
     "lit-html": "^1.1.2",
     "marked": "^0.8.0",
     "prettier": "^1.19.1",
     "tailwindcss": "^1.2.0",
-    "tslib": "^1.10.0",
-    "typescript": "^3.7.5"
+    "tslib": "^1.11.1",
+    "typescript": "^3.8.3"
   },
   "dependencies": {}
 }
