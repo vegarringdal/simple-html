@@ -24,6 +24,7 @@
       "importHelpers": true,
       "strictNullChecks": false,
       "experimentalDecorators": true,
+      "rootDir": "",
       "baseUrl": "./",
         "paths": {
             "@simple-html*": ["packages*"]

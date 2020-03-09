@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { customElement } from '@cte/core';
+import { customElement } from '@simple-html/core';
 
 import { userFormState, userFormStateType } from './state/userForm';
 import { mainUIState } from './state/mainUI';

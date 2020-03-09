@@ -1,18 +1,10 @@
 import { html } from 'lit-html';
-import { navs, href } from '@simple-html/router';
-import { customElement, instance, subscribe } from '@simple-html/core';
-import { AppState } from './app-state';
+import { customElement } from '@simple-html/core';
+
 
 @customElement('app-comp')
 export default class extends HTMLElement {
-    private appState: AppState;
 
-    connectedCallback() {
-        console.log("wow")
-        this.appState = instance(AppState);
-        subscribe('autentication-changed', this, this.render.bind(this));
-        // if this was a component that would be removed you would need to unsubscribe too
-    }
 
     public render() {
         return html`
