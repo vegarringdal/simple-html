@@ -2,14 +2,15 @@ import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
 import { subscribeCanDeactivateEvent, unSubscribeCanDeactivateEvent, stopCanDeactivate } from '@simple-html/router/src';
 
+
 @customElement('settings-route')
 export default class extends HTMLElement {
     private locked = true;
 
 
-    connect() {
-        subscribeCanDeactivateEvent(this, ()=>{
-            console.log("trigger settings event")
+    connectedCallback() {
+        subscribeCanDeactivateEvent(this, function(){
+            console.log("trigger settings event", this.counter)
             stopCanDeactivate(new Promise((resolve)=>{
 
                 if(this.locked){
@@ -23,12 +24,12 @@ export default class extends HTMLElement {
             }))
         });
     }
-    disconnect() {
+    disconnectedCallback() {
         unSubscribeCanDeactivateEvent(this)
     }
 
 
-    click() {
+    clicker() {
         this.locked = this.locked ? false : true;
     }
 
@@ -39,7 +40,7 @@ export default class extends HTMLElement {
                 <br />
                 Locked:<input
                     type="checkbox"
-                    @click=${this.click}
+                    @click=${this.clicker}
                     .checked=${this.locked}
                 />
             </section>

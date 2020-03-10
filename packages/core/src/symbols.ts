@@ -50,4 +50,14 @@ export function getiInjectSymbol() {
     }
 }
 
+
+export function getCustomSymbol(customSymbol: string) {
+    if (!(<any>globalThis)._LHF_SYMBOL.inject) {
+        (<any>globalThis)._LHF_SYMBOL.inject = Symbol(customSymbol);
+        return (<any>globalThis)._LHF_SYMBOL.inject;
+    } else {
+        return (<any>globalThis)._LHF_SYMBOL.inject;
+    }
+}
+
 initSymbolCache();

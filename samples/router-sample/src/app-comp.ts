@@ -1,25 +1,21 @@
-import { html, directive } from 'lit-html';
+import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
-import { navs, href } from './routes/routerConfig';
-import { routeMatch, subscribeHashEvent, unSubscribeHashEvent } from '@simple-html/router';
+import { navs } from './routes/routerConfig';
+import { subscribeHashEvent, unSubscribeHashEvent, gotoURL } from '@simple-html/router';
 import { routeMatchAsync } from '@simple-html/router';
-
-
-
 
 @customElement('app-comp')
 export default class extends HTMLElement {
     
 
-    connect() {
+    connectedCallback() {
         subscribeHashEvent(this, ()=>{
             this.render()
         })
     }
-    disconnect() {
+    disconnectedCallback() {
         unSubscribeHashEvent(this)
     }
-
 
     public render() {
         return html`
@@ -38,9 +34,12 @@ export default class extends HTMLElement {
                 })}
 
                 <li style="margin-left: auto;" class="mr-6">
-                    <a class="text-teal-200 hover:text-white" href=${href('#login')}>
-                        ${this ? 'Logout' : 'Login'}</a
-                    >
+                    <span 
+                        class="text-teal-200 hover:text-white"
+                        @click=${()=>{gotoURL('#:cool', {cool:'settings'})}}
+                        >
+                        ${this ? 'Logout' : 'Login'}
+                    </span>
                 </li>
             </ul>
 
@@ -51,4 +50,3 @@ export default class extends HTMLElement {
         `;
     }
 }
-// ${routeMatch('')? resolvePromise(import('./routes/home'), html`<home-route></home-route>`):''}
