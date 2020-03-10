@@ -2,22 +2,10 @@ import { html, directive } from 'lit-html';
 import { customElement } from '@simple-html/core';
 import { navs, href } from './routes/routerConfig';
 import { routeMatch, subscribeHashEvent, unSubscribeHashEvent } from '@simple-html/router';
-
-import './routes/home'
-import './routes/childrouter'
-import './routes/settings'
+import { routeMatchAsync } from '@simple-html/router';
 
 
-const resolvePromise = directive((promise, htmlTemplate) => (part: any) => {
-    // This first setValue call is synchronous, so 
-    // doesn't need the commit
-    part.setValue("Waiting for promise to resolve.");
-  
-    Promise.resolve(promise).then(() => {
-      part.setValue(htmlTemplate);
-      part.commit();
-    });
-  });
+
 
 @customElement('app-comp')
 export default class extends HTMLElement {
@@ -45,9 +33,8 @@ export default class extends HTMLElement {
                                 >
                             </li>
                         `;
-                    } else {
-                        return '';
-                    }
+                    } 
+                    return ''
                 })}
 
                 <li style="margin-left: auto;" class="mr-6">
@@ -57,9 +44,10 @@ export default class extends HTMLElement {
                 </li>
             </ul>
 
-            ${routeMatch('')? resolvePromise(import('./routes/home'), html`<home-route></home-route>`):''}
-            ${routeMatch('#settings')? html`<settings-route></settings-route>`:''}
-            ${routeMatch('#child')? html`<childrouter-route></childrouter-route>`:''}
+            ${routeMatchAsync('',import('./routes/home'), html`<home-route></home-route>`)}
+            ${routeMatchAsync('#settings',import('./routes/settings'), html`<settings-route></settings-route>`)}
+            ${routeMatchAsync('#child',import('./routes/childrouter'), html`<childrouter-route></childrouter-route>`)}
+
         `;
     }
 }
