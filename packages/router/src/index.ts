@@ -1,4 +1,4 @@
-import { publish, subscribe, unSubscribe, publishSync } from '@simple-html/core';
+import { publish, subscribe, unSubscribe } from '@simple-html/core';
 // exports
 export { routeMatch } from './routeMatch';
 export { gotoURL } from './gotoUrl';
@@ -58,9 +58,7 @@ export function init() {
         let isBackEvent = false;
         window.addEventListener('hashchange', function() {
             if (!isBackEvent) {
-                console.log('canDeactivate hashchange')
                 canDeactivate().then(result => {
-                    console.log('canDeactivate  hashchange done', result)
                     if (result) {
                         oldhash = window.location.hash;
                         publish(HASH_RENDER_EVENT);
