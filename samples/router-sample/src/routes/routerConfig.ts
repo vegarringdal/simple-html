@@ -1,7 +1,5 @@
-/**
- * Main router
- */
-
+import { init } from '@simple-html/router';
+init();
 export const routerconfig = {
     home: {
         path: '#',
