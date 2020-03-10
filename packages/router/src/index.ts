@@ -58,7 +58,6 @@ export function init() {
         let isBackEvent = false;
         window.addEventListener('hashchange', function() {
             if (!isBackEvent) {
-                isBackEvent = false;
                 console.log('canDeactivate hashchange')
                 canDeactivate().then(result => {
                     console.log('canDeactivate  hashchange done', result)
@@ -70,6 +69,8 @@ export function init() {
                         window.location.hash = oldhash;
                     }
                 });
+            } else{
+                isBackEvent = false;
             }
         });
     } else {
