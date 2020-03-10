@@ -7,7 +7,7 @@ export default class extends HTMLElement {
     private locked = true;
 
 
-    con() {
+    connect() {
         subscribeCanDeactivateEvent(this, ()=>{
             console.log("trigger settings event")
             stopCanDeactivate(new Promise((resolve)=>{
@@ -23,7 +23,7 @@ export default class extends HTMLElement {
             }))
         });
     }
-    dis() {
+    disconnect() {
         unSubscribeCanDeactivateEvent(this)
     }
 
