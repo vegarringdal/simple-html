@@ -12,16 +12,15 @@ import './routes/settings'
 export default class extends HTMLElement {
     
 
-    con() {
+    connect() {
         subscribeHashEvent(this, ()=>{
             this.render()
         })
     }
-    dis() {
+    disconnect() {
         unSubscribeHashEvent(this)
     }
 
- 
 
     public render() {
         return html`
