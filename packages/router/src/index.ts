@@ -4,7 +4,6 @@ export { routeMatch, routeMatchAsync } from './routeMatch';
 export { gotoURL } from './gotoUrl';
 export { getRouteParams } from './getRouteParams';
 
-
 const HASH_RENDER_EVENT = 'HASH_RENDER_EVENT';
 export function subscribeHashEvent(ctx: any, call: Function) {
     subscribe(HASH_RENDER_EVENT, ctx, call);
@@ -35,11 +34,11 @@ export let canDeactivateCallers: any[] = [];
 const canDeactivate = function() {
     return new Promise(async resolve => {
         canDeactivateCallers = [];
-        publishCanDeactivateEvent()
+        publishCanDeactivateEvent();
 
         setTimeout(async () => {
             let result = true;
-            console.log(canDeactivateCallers)
+            console.log(canDeactivateCallers);
             for (let i = 0; i < canDeactivateCallers.length; i++) {
                 let y = await Promise.resolve(canDeactivateCallers[i]);
                 if (y === false) {
@@ -52,29 +51,40 @@ const canDeactivate = function() {
 };
 
 export function init() {
-    if (!(<any>window).simpleHTMLRouter) {
-        (<any>window).simpleHTMLRouter = true;
-        let oldhash = window.location.hash;
-        let isBackEvent = false;
-        window.addEventListener('hashchange', function() {
-            if (!isBackEvent) {
-                canDeactivate().then(result => {
-                    if (result) {
-                        oldhash = window.location.hash;
-                        publish(HASH_RENDER_EVENT);
-                    } else {
-                        isBackEvent = true;
-                        window.location.hash = oldhash;
-                    }
-                });
-            } else{
-                isBackEvent = false;
-            }
-        });
-    } else {
-    }
+    
+    let oldhash = window.location.hash;
+    let isBackEvent = false;
+
+    const hashChange = function() {
+        if (!isBackEvent) {
+            canDeactivate().then(result => {
+                if (result) {
+                    oldhash = window.location.hash;
+                    publish(HASH_RENDER_EVENT);
+                } else {
+                    isBackEvent = true;
+                    window.location.hash = oldhash;
+                }
+            });
+        } else {
+            isBackEvent = false;
+        }
+    };
+
+    window.addEventListener('hashchange', hashChange);
+
+    // clean up during HMR
+    const cleanUp = {
+        handleEvent: function() {
+            console.log('remove')
+            window.removeEventListener('HMR-FUSEBOX', cleanUp);
+            window.removeEventListener('hashchange', hashChange);
+        }
+    };
+
+    window.addEventListener('HMR-FUSEBOX', cleanUp);
 }
 
-export const stopCanDeactivate = function (promise: Promise<Boolean>) {
+export const stopCanDeactivate = function(promise: Promise<Boolean>) {
     canDeactivateCallers.push(promise);
 };

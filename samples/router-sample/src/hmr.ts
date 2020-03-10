@@ -4,7 +4,6 @@ import {
     rerenderInnerHTML
 } from 'custom-elements-hmr-polyfill';
 
-
 rerenderInnerHTML();
 
 applyPolyfill(ReflowStrategy.NONE, 0, (elementName: string) => {
