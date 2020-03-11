@@ -1,8 +1,8 @@
 import { html } from 'lit-html';
 import { IColumns } from '../interfaces';
-import { FreeGrid } from '..';
+import { GridInterface } from '../gridInterface';
 
-export function resizeColumnElement(freeGrid: FreeGrid, col: IColumns) {
+export function resizeColumnElement(connector: GridInterface, col: IColumns) {
     let originX: number = null;
     const originalColumnWidth = col.width;
 
@@ -15,7 +15,7 @@ export function resizeColumnElement(freeGrid: FreeGrid, col: IColumns) {
                 const newColumnWidth = originalColumnWidth - movementX;
                 col.width = newColumnWidth > 10 ? newColumnWidth : 10;
                 requestAnimationFrame(() => {
-                    freeGrid.reRender();
+                    connector.reRender();
                 });
             }
         }

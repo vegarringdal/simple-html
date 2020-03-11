@@ -1,23 +1,23 @@
-import { FreeGrid } from '../';
 import { html } from 'lit-html';
-import { IDataRow } from '../interfaces';
+import { IEntity } from '../interfaces';
+import { GridInterface } from '../gridInterface';
 
 export function rowElementsCustomRender(
     freeGridRowStyle: string,
     rowClick: Function,
-    freeGrid: FreeGrid,
+    connector: GridInterface,
     rowNo: number,
-    rowData: IDataRow
+    rowData: IEntity
 ) {
     return html`
         <free-grid-row
             style=${freeGridRowStyle}
-            class="free-grid-row ${freeGrid.selection.isSelected(rowNo)
+            class="free-grid-row ${connector.selection.isSelected(rowNo)
                 ? 'free-grid-selected-row'
                 : ''}"
             @click=${rowClick}
         >
-            ${freeGrid.config.rowRenderCallBackFn(html, null, rowNo, rowData, freeGrid)}
+            ${connector.config.rowRenderCallBackFn(html, null, rowNo, rowData, connector)}
         </free-grid-row>
     `;
 }

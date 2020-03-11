@@ -4,12 +4,14 @@ import { ArrayGrouping } from './arrayGrouping';
 import {
     ISortObjectInterface,
     IFilterObj,
-    IDataRow,
+    IEntity,
     IGroupingObj,
     CallbackEvent,
-    IColumns
+    IColumns,
+    IGridConfig
 } from './interfaces';
-import { FreeGrid } from './';
+import { GridInterface } from './gridInterface';
+
 
 /**
  * Helper class for calling internal sort, filter and grouping classes
@@ -19,17 +21,17 @@ export class ArrayUtils {
     public arrayFilter: ArrayFilter;
     public arraySort: ArraySort;
     public arrayGrouping: ArrayGrouping;
-    public sortCallbackBinded: (event: CallbackEvent, col: IColumns, freeGrid: FreeGrid) => void;
-    public filterCallbackBinded: (event: CallbackEvent, col: IColumns, freeGrid: FreeGrid) => void;
-    public groupingCallbackBinded: (
+    public sortCallbackBinded: (event: CallbackEvent, col: IColumns) => void;
+    public filterCallbackBinded: (
         event: CallbackEvent,
         col: IColumns,
-        freeGrid: FreeGrid
+        config: IGridConfig
     ) => void;
-    private freeGrid: FreeGrid;
+    public groupingCallbackBinded: (event: CallbackEvent, col: IColumns) => void;
+    private gridInterface: GridInterface;
     public removeGroupBinded: any;
 
-    constructor(freeGrid: FreeGrid) {
+    constructor(gridInterface: GridInterface) {
         this.arrayFilter = new ArrayFilter();
         this.arraySort = new ArraySort();
         this.arrayGrouping = new ArrayGrouping();
@@ -37,17 +39,17 @@ export class ArrayUtils {
         this.filterCallbackBinded = this.filterCallback.bind(this);
         this.groupingCallbackBinded = this.groupingCallback.bind(this);
         this.removeGroupBinded = this.removeGroup.bind(this);
-        this.freeGrid = freeGrid;
+        this.gridInterface = gridInterface;
     }
 
     public orderBy(
-        collection: IDataRow[],
+        collection: IEntity[],
         attribute: string | ISortObjectInterface,
         addToCurrentSort?: boolean
-    ): { fixed: IDataRow[]; full: IDataRow[] } {
+    ): { fixed: IEntity[]; full: IEntity[] } {
         const groupingFields = this.getGrouping().map((data: IGroupingObj) => data.field);
         const grouping = this.getGrouping();
-        let result: { fixed: IDataRow[]; full: IDataRow[] } = {
+        let result: { fixed: IEntity[]; full: IEntity[] } = {
             fixed: null,
             full: null
         };
@@ -128,7 +130,7 @@ export class ArrayUtils {
                 };
             }
         }
-        this.freeGrid.config.sortingSet = this.arraySort.getOrderBy();
+        this.gridInterface.config.sortingSet = this.arraySort.getOrderBy();
 
         return result;
     }
@@ -150,15 +152,15 @@ export class ArrayUtils {
     }
 
     public groupCollapse(id: string): void {
-        this.freeGrid.viewRows = this.arrayGrouping.collapseOneOrAll(id);
-        this.freeGrid.config.groupingExpanded = this.arrayGrouping.getExpanded();
-        this.freeGrid.reRender();
+        this.gridInterface.displayedDataset = this.arrayGrouping.collapseOneOrAll(id);
+        this.gridInterface.config.groupingExpanded = this.arrayGrouping.getExpanded();
+        this.gridInterface.publishEvent('collecton-grouping');
     }
 
     public groupExpand(id: string): void {
-        this.freeGrid.viewRows = this.arrayGrouping.expandOneOrAll(id);
-        this.freeGrid.config.groupingExpanded = this.arrayGrouping.getExpanded();
-        this.freeGrid.reRender();
+        this.gridInterface.displayedDataset = this.arrayGrouping.expandOneOrAll(id);
+        this.gridInterface.config.groupingExpanded = this.arrayGrouping.getExpanded();
+        this.gridInterface.publishEvent('collecton-grouping');
     }
 
     public getOrderBy(): ISortObjectInterface[] {
@@ -176,7 +178,7 @@ export class ArrayUtils {
         this.arraySort.setOrderBy(attribute, addToCurrentSort);
     }
 
-    public runOrderbyOn(array: IDataRow[]): void {
+    public runOrderbyOn(array: IEntity[]): void {
         this.arraySort.runOrderbyOn(array);
     }
 
@@ -192,9 +194,9 @@ export class ArrayUtils {
         return this.arrayFilter.getLastFilter();
     }
 
-    private group(array: IDataRow[], grouping: IGroupingObj[], keepExpanded: boolean): IDataRow[] {
+    private group(array: IEntity[], grouping: IGroupingObj[], keepExpanded: boolean): IEntity[] {
         const x = this.arrayGrouping.group(array, grouping, keepExpanded);
-        this.freeGrid.config.groupingExpanded = this.arrayGrouping.getExpanded();
+        this.gridInterface.config.groupingExpanded = this.arrayGrouping.getExpanded();
 
         return x;
     }
@@ -207,17 +209,17 @@ export class ArrayUtils {
         }
 
         if (currentGrouping.length) {
-            const newdata = this.group(this.freeGrid.activeData, currentGrouping, true);
-            this.freeGrid.viewRows = newdata;
+            const newdata = this.group(this.gridInterface.filteredDataset, currentGrouping, true);
+            this.gridInterface.displayedDataset = newdata;
         } else {
-            this.freeGrid.viewRows = this.freeGrid.activeData;
+            this.gridInterface.displayedDataset = this.gridInterface.filteredDataset;
         }
-        this.freeGrid.reRender();
+        this.gridInterface.publishEvent('collecton-grouping');
     }
 
-    private groupingCallback(_event: CallbackEvent, col: IColumns, freeGrid: FreeGrid) {
+    private groupingCallback(_event: CallbackEvent, col: IColumns) {
         let newF = col ? true : false;
-        const groupings: IGroupingObj[] = this.freeGrid.config.groupingSet || [];
+        const groupings: IGroupingObj[] = this.gridInterface.config.groupingSet || [];
         col &&
             groupings.forEach(g => {
                 if (g.field === col.attribute) {
@@ -228,45 +230,45 @@ export class ArrayUtils {
         if (newF) {
             groupings.push({ title: col.header, field: col.attribute });
         }
-        this.arraySort.clearConfigSort(freeGrid.config.columns);
+        this.arraySort.clearConfigSort(this.gridInterface.config.columns);
         this.arraySort.reset();
         groupings.forEach((group: IGroupingObj) => {
             this.arraySort.setOrderBy(group.field, true);
         });
-        this.arraySort.runOrderbyOn(this.freeGrid.activeData);
-        this.arraySort.SetConfigSort(freeGrid.config.columns);
+        this.arraySort.runOrderbyOn(this.gridInterface.filteredDataset);
+        this.arraySort.SetConfigSort(this.gridInterface.config.columns);
         if (groupings.length) {
-            const result = this.group(this.freeGrid.activeData, groupings, true);
-            this.freeGrid.config.groupingSet = this.getGrouping();
-            this.freeGrid.config.sortingSet = this.getOrderBy();
-            this.freeGrid.viewRows = result;
+            const result = this.group(this.gridInterface.filteredDataset, groupings, true);
+            this.gridInterface.config.groupingSet = this.getGrouping();
+            this.gridInterface.config.sortingSet = this.getOrderBy();
+            this.gridInterface.displayedDataset = result;
         } else {
-            this.freeGrid.viewRows = this.freeGrid.activeData;
+            this.gridInterface.displayedDataset = this.gridInterface.filteredDataset;
         }
-        freeGrid.reRender();
+        this.gridInterface.publishEvent('collecton-grouping');
     }
 
-    private sortCallback(event: CallbackEvent, col: IColumns, freeGrid: FreeGrid) {
+    private sortCallback(event: CallbackEvent, col: IColumns) {
         // toggle sort
         const sortAsc =
             col.sortable.sortAscending === null ? true : col.sortable.sortAscending ? false : true;
 
         // clear config, so it can be set after new sort
-        this.arraySort.clearConfigSort(freeGrid.config.columns);
+        this.arraySort.clearConfigSort(this.gridInterface.config.columns);
 
         // sort, update config, set viewRows and rerender
         const result = this.orderBy(
-            freeGrid.activeData,
+            this.gridInterface.filteredDataset,
             { attribute: col.attribute, asc: sortAsc },
             (<any>event).shiftKey
         );
-        this.freeGrid.config.sortingSet = this.getOrderBy();
-        this.arraySort.SetConfigSort(freeGrid.config.columns);
-        this.freeGrid.viewRows = result.fixed;
-        freeGrid.reRender();
+        this.gridInterface.config.sortingSet = this.getOrderBy();
+        this.arraySort.SetConfigSort(this.gridInterface.config.columns);
+        this.gridInterface.displayedDataset = result.fixed;
+        this.gridInterface.publishEvent('collecton-sort');
     }
 
-    private filterCallback(event: CallbackEvent, col: IColumns, freeGrid: FreeGrid) {
+    private filterCallback(event: CallbackEvent, col: IColumns, config: IGridConfig) {
         // depending on col type we need to get data from correct value
         switch (col.type) {
             case 'date':
@@ -285,9 +287,9 @@ export class ArrayUtils {
         }
 
         const filter: IFilterObj[] = [];
-        freeGrid.config.columns.forEach(col => {
+        config.columns.forEach(col => {
             const f = col.filterable;
-            if (f && (f.currentValue !== null && f.currentValue !== undefined)) {
+            if (f && f.currentValue !== null && f.currentValue !== undefined) {
                 filter.push({
                     attribute: col.attribute,
                     type: col.type || 'text',
@@ -298,10 +300,10 @@ export class ArrayUtils {
                 });
             }
         });
-        freeGrid.activeData = this.arrayFilter.runQueryOn(freeGrid.data, filter);
-        const result = this.orderBy(freeGrid.activeData, null, false);
-        this.arraySort.SetConfigSort(freeGrid.config.columns);
-        this.freeGrid.viewRows = result.fixed;
-        this.freeGrid.reRender();
+        this.gridInterface.filteredDataset = this.arrayFilter.runQueryOn(this.gridInterface.completeDataset, filter);
+        const result = this.orderBy(this.gridInterface.filteredDataset, null, false);
+        this.arraySort.SetConfigSort(this.gridInterface.config.columns);
+        this.gridInterface.displayedDataset = result.fixed;
+        this.gridInterface.publishEvent('collecton-filter');
     }
 }

@@ -1,14 +1,25 @@
+import { IEntity } from './interfaces';
 
 /**
  * Entity will keep track of edited properties of the row object
  */
 
-export class Entity {
-    __editedProps = {};
-    __originalValues = {};
-    __currentValues = {};
-    __newprops = {};
-    __edited = false;
+export class EntityHandler {
+    __editedProps? = {};
+    __originalValues? = {};
+    __currentValues? = {};
+    __newprops? = {};
+    __edited? = false;
+    __controller ?: EntityHandler;
+    __KEY?: string | number;
+    __group?: boolean;
+    __groupID?: string;
+    __groupName?: string;
+    __groupLvl?: number;
+    __groupTotal?: number;
+    __groupChildren?: IEntity[];
+    __groupExpanded?: boolean;
+    
 
     get(target: object, prop: string) {
         if (prop === '__controller') {

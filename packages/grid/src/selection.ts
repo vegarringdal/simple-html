@@ -1,4 +1,4 @@
-import { FreeGrid } from '.';
+import { GridInterface } from './gridInterface';
 
 export class Selection {
     // private mode: 'none' | 'single' | 'multiple';
@@ -7,10 +7,10 @@ export class Selection {
     private lastRowSelected: number;
     private lastKeyKodeUsed: string;
     private key = 0;
-    private grid: FreeGrid;
+    private gridInterface: GridInterface;
 
-    constructor(grid: FreeGrid) {
-        this.grid = grid;
+    constructor(gridInterface: GridInterface) {
+        this.gridInterface = gridInterface;
         this.selectedRows = 0;
         this.selection = new Set([]);
     }
@@ -35,16 +35,20 @@ export class Selection {
         this.selectedRows = this.selection.size;
     }
 
-    public highlightRow(e: MouseEvent, currentRow: number, freeGrid: FreeGrid): void {
+    public highlightRow(e: MouseEvent, currentRow: number): void {
         let isSel: boolean;
         let currentselectedRows = this.getSelectedRows();
         let currentKeyKode = '';
 
+        this.gridInterface.__selectInternal(currentRow)
+
+        
+
         if (currentRow !== this.lastRowSelected || currentselectedRows[0] !== currentRow) {
-            if (currentRow <= freeGrid.viewRows.length - 1) {
+            if (currentRow <= this.gridInterface.displayedDataset.length - 1) {
                 // do I need to check this?
 
-                if (freeGrid.config.selectionMode === 'multiple') {
+                if (this.gridInterface.config.selectionMode === 'multiple') {
                     // if multiselect duh!
 
                     if (e.shiftKey) {
@@ -136,7 +140,7 @@ export class Selection {
                 this.lastKeyKodeUsed = currentKeyKode;
 
                 // update selection on rows
-                freeGrid.reRender();
+                this.gridInterface.publishEvent('selectionChange');
             }
         } else {
             // same row clicked again
@@ -157,7 +161,7 @@ export class Selection {
                 this.select(currentRow, false);
             }
             // update selection on rows
-            freeGrid.reRender();
+            this.gridInterface.publishEvent('selectionChange');
         }
     }
 
@@ -165,12 +169,12 @@ export class Selection {
      * todo, optional key
      */
     private getRowKey(row: number): number {
-        return (this.grid.viewRows[row] as any) && (this.grid.viewRows[row] as any).__KEY;
+        return (this.gridInterface.displayedDataset[row] as any) && (this.gridInterface.displayedDataset[row] as any).__KEY;
     }
 
     private getRowKeys(): any[] {
         const keys: any[] = [];
-        (this.grid.viewRows as any).forEach((data: any) => {
+        (this.gridInterface.displayedDataset as any).forEach((data: any) => {
             keys.push(data.__KEY);
         });
 
@@ -183,7 +187,7 @@ export class Selection {
     }
 
     private select(row: number, add?: boolean): void {
-        switch (this.grid.config.selectionMode) {
+        switch (this.gridInterface.config.selectionMode) {
             case 'none':
             case null:
             case undefined:
@@ -209,7 +213,7 @@ export class Selection {
     }
 
     private selectRange(start: number, end: number): void {
-        if (this.grid.config.selectionMode === 'multiple') {
+        if (this.gridInterface.config.selectionMode === 'multiple') {
             this.selection.clear();
             for (let i = start; i < end + 1; i++) {
                 this.selection.add(this.getRowKey(i));

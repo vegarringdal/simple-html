@@ -1,4 +1,5 @@
-import { IFilterObj } from './interfaces';
+import { IFilterObj, IEntity } from './interfaces';
+
 
 export class ArrayFilter {
     private lastFilter: IFilterObj[];
@@ -35,7 +36,7 @@ export class ArrayFilter {
         }
     }
 
-    public runQueryOn(objArray: object[], ObjFilter: IFilterObj[]) {
+    public runQueryOn(objArray: IEntity[], ObjFilter: IFilterObj[]) {
         this.lastFilter = ObjFilter;
 
         const resultArray = objArray.filter(data => {

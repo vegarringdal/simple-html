@@ -1,20 +1,20 @@
 import { html } from 'lit-html';
 import { CallbackEvent, rowCache } from '../interfaces';
-import { FreeGrid } from '..';
 import { rowElement } from './rowElement';
+import { GridInterface } from '../gridInterface';
 
 export function bodyElement(
     scroll: (e: CallbackEvent) => void,
-    freeGrid: FreeGrid,
+    connector: GridInterface,
     rowPositionCache: rowCache[]
 ) {
     const styleBody = `
-            top:${freeGrid.config.panelHeight + freeGrid.config.headerHeight}px;
-            bottom:${freeGrid.config.footerHeight}px`;
+            top:${connector.config.panelHeight + connector.config.headerHeight}px;
+            bottom:${connector.config.footerHeight}px`;
 
     const styleBodyContent = `
-            height:${(freeGrid.viewRows.length || 0) * freeGrid.config.rowHeight}px;
-            width:${freeGrid.config.columns
+            height:${(connector.displayedDataset.length || 0) * connector.config.rowHeight}px;
+            width:${connector.config.columns
                 .map(col => col.width || 100)
                 .reduce((total, num) => total + num)}px`;
 
@@ -22,7 +22,7 @@ export function bodyElement(
         <free-grid-body @scroll=${scroll} style=${styleBody} class="free-grid-body">
             <free-grid-body-content style=${styleBodyContent} class="free-grid-content">
                 ${rowPositionCache.map(rowPosition => {
-                    return rowElement(freeGrid, freeGrid.viewRows[rowPosition.i], rowPosition);
+                    return rowElement(connector, connector.displayedDataset[rowPosition.i], rowPosition);
                 })}
             </free-grid-body-content>
         </free-grid-body>

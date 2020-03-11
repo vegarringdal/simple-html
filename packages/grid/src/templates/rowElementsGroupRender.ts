@@ -1,19 +1,19 @@
-import { FreeGrid } from '../';
 import { html, svg } from 'lit-html';
-import { IDataRow } from '../interfaces';
+import { IEntity } from '../interfaces';
+import { GridInterface } from '../gridInterface';
 
 export function rowElementsGroupRender(
     freeGridRowStyle: string,
     _rowClick: Function,
-    _freeGrid: FreeGrid,
+    _connector: GridInterface,
     _rowNo: number,
-    rowData: IDataRow
+    rowData: IEntity
 ) {
     const changeGrouping = () => {
         if (rowData.__groupExpanded) {
-            _freeGrid.arrayUtils.groupCollapse(rowData.__groupID);
+            _connector.groupCollapse(rowData.__groupID);
         } else {
-            _freeGrid.arrayUtils.groupExpand(rowData.__groupID);
+            _connector.groupExpand(rowData.__groupID);
         }
     };
 

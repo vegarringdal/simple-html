@@ -117,7 +117,7 @@ export type CellCallbackFn = (
     e: CallbackEvent,
     col: IColumns,
     row: number,
-    data: IDataRow,
+    data: Entity,
     freeGrid: FreeGrid
 ) => void;
 export type RowCallBackFn = (e: CallbackEvent, row: number, freeGrid: FreeGrid) => void;
@@ -125,7 +125,7 @@ export type renderCallBackFn = (
     html: any,
     col: IColumns,
     row: number,
-    data: IDataRow,
+    data: Entity,
     freeGrid: FreeGrid
 ) => void;
 

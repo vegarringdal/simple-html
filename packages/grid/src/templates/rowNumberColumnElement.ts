@@ -1,12 +1,12 @@
 import { html } from 'lit-html';
-import { IColumns, IDataRow } from '../interfaces';
+import { IColumns, IEntity } from '../interfaces';
 import { eventIF } from '../eventIF';
 
 export function rowNumberColumnElement(
     colStyle: string,
     col: IColumns,
     updateCallback: Function,
-    _data: IDataRow
+    _data: IEntity
 ) {
     return html`
         <free-grid-row-col style=${colStyle} class="free-grid-col">

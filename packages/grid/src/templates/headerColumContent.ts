@@ -1,17 +1,17 @@
 import { IColumns, CallbackEvent } from '../interfaces';
-import { FreeGrid } from '..';
 import { headerWithFilterElements } from './headerWithFilterElements';
 import { headerWithoutFilterElement } from './headerWithoutFilterElement';
 import { html } from 'lit-html';
+import { GridInterface } from '../gridInterface';
 
-export function headerColumContent(freeGrid: FreeGrid, col: IColumns) {
+export function headerColumContent(connector: GridInterface, col: IColumns) {
     // not using click for sort since I can override it so easly if I add drag/drop of columns
 
     const mouseup = (e: MouseEvent) => {
         col.sortable.beforeSortCallbackFn &&
-            col.sortable.beforeSortCallbackFn(<any>e, col, freeGrid);
+            col.sortable.beforeSortCallbackFn(<any>e, col, connector);
         if (col.sortable.auto !== false) {
-            freeGrid.arrayUtils.sortCallbackBinded(<any>e, col, freeGrid);
+            connector.sortCallback(<any>e, col);
         }
     };
 
@@ -31,17 +31,17 @@ export function headerColumContent(freeGrid: FreeGrid, col: IColumns) {
         }
     };
     if (col.headerRenderCallBackFn) {
-        return col.headerRenderCallBackFn(html, col, null, null, freeGrid);
+        return col.headerRenderCallBackFn(html, col, null, null, connector);
     } else {
         if (col.filterable) {
             return headerWithFilterElements(
                 col,
-                freeGrid,
+                connector,
                 sortCallback,
                 col.filterable.filterOverLabel
             );
         } else {
-            return headerWithoutFilterElement(col, freeGrid, sortCallback);
+            return headerWithoutFilterElement(col, connector, sortCallback);
         }
     }
 }

@@ -1,4 +1,4 @@
-import { FreeGrid } from '.';
+import { GridInterface } from '.';
 import { IColumns } from './interfaces';
 
 let dragColumn: null | number = null;
@@ -19,14 +19,13 @@ function offset(el: HTMLElement, width: number) {
     };
 }
 
-export const columnDragDropPanel = (event: string, _freeGrid: FreeGrid) => {
+export const columnDragDropPanel = (event: string, _connector: GridInterface) => {
     const drop = (e: any) => {
         e.target.removeEventListener('mouseup', drop);
-        if (_freeGrid.config.columns[dragColumn].allowGrouping) {
-            _freeGrid.arrayUtils.groupingCallbackBinded(
+        if (_connector.config.columns[dragColumn].allowGrouping) {
+            _connector.groupingCallback(
                 e,
-                _freeGrid.config.columns[dragColumn],
-                _freeGrid
+                _connector.config.columns[dragColumn]
             );
         }
         (e.target as any).classList.remove('free-grid-candrop');
@@ -35,7 +34,7 @@ export const columnDragDropPanel = (event: string, _freeGrid: FreeGrid) => {
     return (_e: MouseEvent) => {
         if (event === 'enter' && dragColumn) {
             _e.target.addEventListener('mouseup', drop);
-            if (_freeGrid.config.columns[dragColumn].allowGrouping) {
+            if (_connector.config.columns[dragColumn].allowGrouping) {
                 (_e.target as any).classList.add('free-grid-candrop');
             }
         }
@@ -47,7 +46,7 @@ export const columnDragDropPanel = (event: string, _freeGrid: FreeGrid) => {
     };
 };
 
-export const columnDragDrop = (event: string, _col: IColumns, _i: number, _freeGrid: FreeGrid) => {
+export const columnDragDrop = (event: string, _col: IColumns, _i: number, _connector: GridInterface) => {
     // here we will clean up eevnt listeners
     const mouseUp = function() {
         document.removeEventListener('mouseup', mouseUp);
@@ -72,14 +71,14 @@ export const columnDragDrop = (event: string, _col: IColumns, _i: number, _freeG
             const cursor = e.clientX + document.documentElement.scrollLeft;
 
             if (cursor + 15 > rect.center && cursor - 15 < rect.center) {
-                const columns = _freeGrid.config.columns;
+                const columns = _connector.config.columns;
                 const b = columns[dragColumn];
                 columns[dragColumn] = columns[enterColumn];
                 columns[enterColumn] = b;
                 dragColumn = enterColumn;
                 enterColumn = null;
 
-                _freeGrid.reRender();
+                _connector.reRender();
             }
         }
     };
