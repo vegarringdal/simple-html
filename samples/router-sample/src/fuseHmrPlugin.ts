@@ -4,8 +4,6 @@ export default function(payload: HMRPayload, helper: HMRHelper) {
 
   window.dispatchEvent(new CustomEvent('HMR-FUSEBOX'))
 
-
-
   if (helper.isStylesheeetUpdate) {
     helper.flushModules(updates);
 
