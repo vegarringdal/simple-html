@@ -1,6 +1,7 @@
 import { init } from '@simple-html/router';
 import { html } from 'lit-html';
 init();
+
 export const routerConfig = {
     home: {
         path: '',
@@ -36,7 +37,7 @@ export const routerConfig = {
     },
     child: {
         path: '#child/*',
-        href: '#child',
+        href: '#child/',
         title: 'ChildRoute',
         isNav: true,
         children: {

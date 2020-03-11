@@ -14,7 +14,7 @@ export default class extends HTMLElement {
                     if (route.isNav) {
                         return html`
                             <li class="mr-6">
-                                <a class="text-teal-200 hover:text-white" href="${route.path}"
+                                <a class="text-teal-200 hover:text-white" href="${route.href}"
                                     >${route.title}</a
                                 >
                             </li>
