@@ -1,12 +1,12 @@
 import { getTransmitterSymbol } from './symbols';
 
 // we need this to survive hmr so parts can unsubsribe
-if(!(<any>window)[getTransmitterSymbol('transmitter')]){
-    (<any>window)[getTransmitterSymbol('transmitter')] = {};
+if(!(<any>globalThis)[getTransmitterSymbol('transmitter')]){
+    (<any>globalThis)[getTransmitterSymbol('transmitter')] = {};
 }
 
 function transmitter(){
-    return (<any>window)[getTransmitterSymbol('transmitter')];
+    return (<any>globalThis)[getTransmitterSymbol('transmitter')];
 }
 
 

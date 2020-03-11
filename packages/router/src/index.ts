@@ -4,6 +4,10 @@ export { routeMatch, routeMatchAsync } from './routeMatch';
 export { gotoURL } from './gotoUrl';
 export { getRouteParams } from './getRouteParams';
 
+/**
+ * Simple functions used for subcribing hash event
+ */
+
 const HASH_RENDER_EVENT = 'HASH_RENDER_EVENT';
 export function subscribeHashEvent(ctx: any, call: Function) {
     subscribe(HASH_RENDER_EVENT, ctx, call);
@@ -16,6 +20,10 @@ export function unSubscribeHashEvent(ctx: any) {
 export function publishHashEvent() {
     publish(HASH_RENDER_EVENT);
 }
+
+/**
+ * Simple functions used for can deactivate event
+ */
 
 const CAN_DEACTIVATE_EVENT = 'CAN_DEACTIVATE_EVENT';
 export function subscribeCanDeactivateEvent(ctx: any, call: Function) {
@@ -48,6 +56,17 @@ const canDeactivate = function() {
         }, 0);
     });
 };
+
+// you call this during a CAN_DEACTIVATE_EVENT to stop navigation
+export const stopCanDeactivate = function(promise: Promise<Boolean>) {
+    canDeactivateCallers.push(promise);
+};
+
+
+/**
+ * starts router
+ */
+
 
 export function init() {
     
@@ -84,6 +103,3 @@ export function init() {
     window.addEventListener('HMR-FUSEBOX', cleanUp);
 }
 
-export const stopCanDeactivate = function(promise: Promise<Boolean>) {
-    canDeactivateCallers.push(promise);
-};
