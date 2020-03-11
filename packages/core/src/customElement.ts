@@ -1,9 +1,6 @@
 import { render } from 'lit-html';
 import { requestRender } from './requestRender';
-import {
-    getObservedAttributesSymbol,
-    getObservedAttributesMapSymbol
-} from './symbols';
+import { getObservedAttributesSymbol, getObservedAttributesMapSymbol } from './symbols';
 
 /**
  * @customElement- decorator
@@ -11,20 +8,30 @@ import {
  */
 export function customElement(elementName: string, extended?: ElementDefinitionOptions) {
     return function reg(elementClass: any) {
+        let observedAttributes = elementClass.observedAttributes;
         Object.defineProperty(elementClass, 'observedAttributes', {
+            set: function(value) {
+                elementClass.prototype[getObservedAttributesSymbol()] = value;
+                return true;
+            },
             get: function() {
                 return elementClass.prototype[getObservedAttributesSymbol()];
-            },configurable: true
-        } );
+            },
+            configurable: true
+        });
+        if (Array.isArray(observedAttributes) && Array.isArray(elementClass.observedAttributes)) {
+            elementClass.observedAttributes = elementClass.observedAttributes.concat(
+                observedAttributes
+            );
+        }
 
-
-        const base:any = class extends elementClass {
+        const base: any = class extends elementClass {
             constructor() {
                 super();
             }
             render(...result: any[]) {
                 const template = super.render.call(this, ...result);
-                Promise.resolve(template).then((templates)=>{
+                Promise.resolve(template).then(templates => {
                     render(templates, <any>this, { eventContext: <any>this });
                     if (super.updated) {
                         //delay so it actually get a chance to update
@@ -32,9 +39,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                             super.updated();
                         });
                     }
-                })
-
-                
+                });
             }
             connectedCallback() {
                 if (super.connectedCallback) {
@@ -49,6 +54,16 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             }
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
                 //get map
+
+                if (!this[getObservedAttributesMapSymbol()]) {
+                    const attribute = name
+                        .replace(/([a-z])([A-Z])/g, '$1-$2')
+                        .replace(/\s+/g, '-')
+                        .toLowerCase();
+                    this[getObservedAttributesMapSymbol()] = new Map();
+                    this[getObservedAttributesMapSymbol()].set(attribute, name);
+                }
+
                 const nameProp = this[getObservedAttributesMapSymbol()].get(name);
                 this[nameProp] = newValue || '';
                 // if normal attributeChanged is set
