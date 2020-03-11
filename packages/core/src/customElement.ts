@@ -40,18 +40,11 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 if (super.connectedCallback) {
                     super.connectedCallback.call(this);
                 }
-
-                if (super.connect) {
-                    super.connect.call(this);
-                }
                 this.render(this);
             }
             disconnectedCallback() {
                 if (super.disconnectedCallback) {
                     super.disconnectedCallback.call(this);
-                }
-                if (super.disconnect) {
-                    super.disconnect.call(this);
                 }
             }
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
