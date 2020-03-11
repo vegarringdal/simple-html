@@ -1,76 +1,61 @@
 import { init } from '@simple-html/router';
+import { html } from 'lit-html';
 init();
-export const routerconfig = {
+export const routerConfig = {
     home: {
-        path: '#',
+        path: '',
+        href: '#',
         title: 'Home',
-        load: () => {
-            return import('./home');
-        },
-        componentName: 'home-route',
+        load: () => import('./home'),
+        html: html`
+                <home-route></home-route>
+            `,
         isNav: true
     },
     settings: {
         path: '#settings',
+        href: '#settings',
         title: 'Settings',
-        load: () => {
-            return import('./settings');
-        },
-        componentName: 'settings-route',
+        load: () => import('./settings'),
+        html: html`
+                <settings-route></settings-route>
+            `,
         isNav: true
     },
     login: {
         path: '#login',
+        href: '#login',
         title: 'Login',
-        load: () => {
-            return import('./login');
-        },
-        componentName: 'login-route',
         isNav: false
     },
     unknown: {
         path: 'unknown',
+        href: 'unknown',
         title: 'Unknown',
-        load: () => {
-            return import('./unknown');
-        },
-        componentName: 'unknown-route',
         isNav: false
     },
     child: {
-        path: '#child',
+        path: '#child/*',
+        href: '#child',
         title: 'ChildRoute',
-        load: () => {
-            return import('./childrouter');
-        },
-        componentName: 'childrouter-route',
         isNav: true,
         children: {
-            sub: {
+            subHome: {
                 path: '#child/',
-                title: 'Home',
-                load: () => {
-                    return import('./home');
-                },
-                componentName: 'home-route',
+                href: '#child/',
+                title: 'SubHome',
                 isNav: true
             },
-            settings: {
+            subSettings: {
                 path: '#child/settings',
-                title: 'Settings',
-                load: () => {
-                    return import('./settings');
-                },
-                componentName: 'settings-route',
+                href: '#child/settings',
+                title: 'Sub Settings',
                 isNav: true
             },
             protected: {
                 path: '#child/protected',
-                title: 'Protected',
-                load: () => {
-                    return import('./protected');
-                },
-                componentName: 'protected-route',
+                href: '#child/protected',
+                title: 'sub Protected',
                 isNav: true
             }
         }
@@ -79,11 +64,10 @@ export const routerconfig = {
 
 export function navs(router: 'sub' | 'main') {
     if (router === 'main') {
-        return Object.keys(routerconfig).map(key => routerconfig[key]);
+        return Object.keys(routerConfig).map(key => routerConfig[key]);
     } else {
-        return Object.keys(routerconfig.child.children).map(
-            key => routerconfig.child.children[key]
-        );
+        const childRoutes = routerConfig.child.children;
+        return Object.keys(childRoutes).map(key => childRoutes[key]);
     }
 }
 

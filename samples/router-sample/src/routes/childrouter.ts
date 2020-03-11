@@ -1,7 +1,9 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
-import { navs } from './routerConfig';
+import { navs, routerConfig } from './routerConfig';
 import { routeMatchAsync } from '@simple-html/router';
+
+const childRoute = routerConfig.child.children;
 
 @customElement('childrouter-route')
 export default class extends HTMLElement {
@@ -22,9 +24,30 @@ export default class extends HTMLElement {
                     }
                 })}
             </ul>
-            ${routeMatchAsync('#child',import('./home'), html`<home-route></home-route>`)}        
-            ${routeMatchAsync('#child/settings',import('./settings'), html`<settings-route></settings-route>`)}
-            ${routeMatchAsync('#child/protected',import('./protected'), html`<protected-route></protected-route>`)}
+
+            ${routeMatchAsync(
+                childRoute.subHome.path,
+                import('./home'),
+                html`
+                    <home-route></home-route>
+                `
+            )}
+
+            ${routeMatchAsync(
+                childRoute.subSettings.path,
+                import('./settings'),
+                html`
+                    <settings-route></settings-route>
+                `
+            )}
+
+            ${routeMatchAsync(
+                childRoute.protected.path,
+                import('./protected'),
+                html`
+                    <protected-route></protected-route>
+                `
+            )}
         `;
     }
 }
