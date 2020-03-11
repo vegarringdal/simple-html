@@ -45,7 +45,7 @@ export default class extends HTMLElement {
 
             ${routeMatchAsync('',import('./routes/home'), html`<home-route></home-route>`)}
             ${routeMatchAsync('#settings',import('./routes/settings'), html`<settings-route></settings-route>`)}
-            ${routeMatchAsync('#child',import('./routes/childrouter'), html`<childrouter-route></childrouter-route>`)}
+            ${routeMatchAsync('#child*',import('./routes/childrouter'), html`<childrouter-route></childrouter-route>`)}
 
         `;
     }

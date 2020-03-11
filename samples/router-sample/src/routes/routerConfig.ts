@@ -45,7 +45,35 @@ export const routerconfig = {
         },
         componentName: 'childrouter-route',
         isNav: true,
-        children: true
+        children: {
+            sub: {
+                path: '#child/',
+                title: 'Home',
+                load: () => {
+                    return import('./home');
+                },
+                componentName: 'home-route',
+                isNav: true
+            },
+            settings: {
+                path: '#child/settings',
+                title: 'Settings',
+                load: () => {
+                    return import('./settings');
+                },
+                componentName: 'settings-route',
+                isNav: true
+            },
+            protected: {
+                path: '#child/protected',
+                title: 'Protected',
+                load: () => {
+                    return import('./protected');
+                },
+                componentName: 'protected-route',
+                isNav: true
+            }
+        }
     }
 };
 
@@ -53,7 +81,9 @@ export function navs(router: 'sub' | 'main') {
     if (router === 'main') {
         return Object.keys(routerconfig).map(key => routerconfig[key]);
     } else {
-        return Object.keys(routerconfig).map(key => routerconfig[key]);
+        return Object.keys(routerconfig.child.children).map(
+            key => routerconfig.child.children[key]
+        );
     }
 }
 

@@ -1,6 +1,7 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
 import { navs } from './routerConfig';
+import { routeMatchAsync } from '@simple-html/router';
 
 @customElement('childrouter-route')
 export default class extends HTMLElement {
@@ -11,8 +12,8 @@ export default class extends HTMLElement {
                     if (route.isNav) {
                         return html`
                             <li class="mr-6">
-                                <a class="text-teal-200 hover:text-white" href="${route.href}"
-                                    >${route.name}</a
+                                <a class="text-teal-200 hover:text-white" href="${route.path}"
+                                    >${route.title}</a
                                 >
                             </li>
                         `;
@@ -21,7 +22,9 @@ export default class extends HTMLElement {
                     }
                 })}
             </ul>
-            <free-router name="sub"></free-router>
+            ${routeMatchAsync('#child',import('./home'), html`<home-route></home-route>`)}        
+            ${routeMatchAsync('#child/settings',import('./settings'), html`<settings-route></settings-route>`)}
+            ${routeMatchAsync('#child/protected',import('./protected'), html`<protected-route></protected-route>`)}
         `;
     }
 }

@@ -5,7 +5,7 @@ import { subscribeCanDeactivateEvent, unSubscribeCanDeactivateEvent, stopCanDeac
 
 @customElement('settings-route')
 export default class extends HTMLElement {
-    private locked = true;
+    private locked = false;
 
 
     connectedCallback() {
