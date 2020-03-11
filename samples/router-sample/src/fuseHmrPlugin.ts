@@ -1,19 +1,19 @@
-import { HMRHelper, HMRPayload } from "fuse-box/types/hmr";
+import { HMRHelper, HMRPayload } from 'fuse-box/types/hmr';
 export default function(payload: HMRPayload, helper: HMRHelper) {
-  const { updates } = payload;
+    const { updates } = payload;
 
-  window.dispatchEvent(new CustomEvent('HMR-FUSEBOX'))
+    window.dispatchEvent(new CustomEvent('HMR-FUSEBOX'));
 
-  if (helper.isStylesheeetUpdate) {
-    helper.flushModules(updates);
+    if (helper.isStylesheeetUpdate) {
+        helper.flushModules(updates);
 
-    helper.updateModules()
+        helper.updateModules();
 
-    helper.callModules(updates);
-  } else {
-    helper.flushAll();
-    helper.updateModules()
+        helper.callModules(updates);
+    } else {
+        helper.flushAll();
+        helper.updateModules();
 
-    helper.callEntries();
-  }
+        helper.callEntries();
+    }
 }
