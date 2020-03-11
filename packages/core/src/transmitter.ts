@@ -57,7 +57,6 @@ export function unSubscribe(channel: string, ctx: any): void {
         });
         transmitter()[channel] = events;
     }
-    console.log(channel, transmitter()[channel])
 }
 
 // sync

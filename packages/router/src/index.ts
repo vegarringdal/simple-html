@@ -38,7 +38,6 @@ const canDeactivate = function() {
 
         setTimeout(async () => {
             let result = true;
-            console.log(canDeactivateCallers);
             for (let i = 0; i < canDeactivateCallers.length; i++) {
                 let y = await Promise.resolve(canDeactivateCallers[i]);
                 if (y === false) {
