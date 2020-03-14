@@ -6,6 +6,12 @@
 * [`@simple-html/router`](https://github.com/simple-html/simple-html/tree/master/packages/router)
 
 
+## Production use
+I only use it for very simple pages, if you use it make sure to lock down versions. Since breaking changes comes to router/core and grid when needed until version 1.0.0
+When I get there I will start using semver. (maybe even at version 0.1.0)
+
+
+
 ## Development on current packages
 * Run `npm install`
 * see how to run samples and start coding
