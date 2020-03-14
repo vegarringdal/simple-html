@@ -1,9 +1,9 @@
 import { html } from 'lit-html';
 import { IColumns, CallbackEvent } from '../interfaces';
-import { FreeGrid } from '..';
 import { eventIF } from '../eventIF';
+import { GridInterface } from '../gridInterface';
 
-export function filterInputElement(col: IColumns, freeGrid: FreeGrid, isTop: boolean) {
+export function filterInputElement(col: IColumns, connector: GridInterface, isTop: boolean) {
     const value = col.filterable.currentValue || null;
     const placeholder = col.filterable.placeholder || '';
 
@@ -44,9 +44,9 @@ export function filterInputElement(col: IColumns, freeGrid: FreeGrid, isTop: boo
             }
         }
         col.filterable.beforeFilterCallbackFn &&
-            col.filterable.beforeFilterCallbackFn(e, col, freeGrid);
+            col.filterable.beforeFilterCallbackFn(e, col, connector);
         if (col.filterable.auto !== false) {
-            freeGrid.arrayUtils.filterCallbackBinded(e, col, freeGrid);
+            connector.filterCallback(e, col);
         }
     };
 
@@ -72,7 +72,7 @@ export function filterInputElement(col: IColumns, freeGrid: FreeGrid, isTop: boo
     }
 
     return col.headerRenderInputCallBackFn
-        ? col.headerRenderInputCallBackFn(html, col, null, null, freeGrid)
+        ? col.headerRenderInputCallBackFn(html, col, null, null, connector)
         : html`
               <input
                   type=${coltype}

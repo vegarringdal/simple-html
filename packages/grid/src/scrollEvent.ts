@@ -1,29 +1,29 @@
 import { CallbackEvent } from './interfaces';
-import { FreeGrid } from '.';
+import { GridInterface } from './gridInterface';
 export function scrollEvent(
-    freeGrid: FreeGrid,
+    connector: GridInterface,
     rowPositionCache: {
         i: number;
     }[]
 ) {
     return (e: CallbackEvent) => {
-        if (freeGrid.config.scrollLeft && freeGrid.config.scrollLeft !== e.target.scrollLeft && freeGrid.config.lastScrollTop == e.target.scrollTop) {
-            freeGrid.config.scrollLeft = e.target.scrollLeft;
-            freeGrid.reRender();
+        if (connector.config.scrollLeft && connector.config.scrollLeft !== e.target.scrollLeft && connector.config.lastScrollTop == e.target.scrollTop) {
+            connector.config.scrollLeft = e.target.scrollLeft;
+            connector.reRender();
         } else {
 
            // window.focus();
-           freeGrid.config.scrollLeft = e.target.scrollLeft;
+           connector.config.scrollLeft = e.target.scrollLeft;
             if (document.activeElement) {
                 (document.activeElement as any).blur();
             }
-            const rowHeight = freeGrid.config.rowHeight || 25;
+            const rowHeight = connector.config.rowHeight || 25;
             const cacheLength = rowPositionCache.length;
-            const collectionLength = freeGrid.viewRows.length;
+            const collectionLength = connector.displayedDataset.length;
             const cacheTotalHeight = rowHeight * cacheLength;
             const contentHeight = e.target.clientHeight;
             const scrolltop = e.target.scrollTop;
-            const lastScrollTop = freeGrid.config.lastScrollTop;
+            const lastScrollTop = connector.config.lastScrollTop;
             let isDownScroll = true;
             if (scrolltop < lastScrollTop) {
                 isDownScroll = false;
@@ -32,7 +32,7 @@ export function scrollEvent(
             if (Math.abs(scrolltop - lastScrollTop) > 100) {
                 scrollbars = true;
             }
-            freeGrid.config.lastScrollTop = scrolltop;
+            connector.config.lastScrollTop = scrolltop;
             let currentRow = Math.floor(scrolltop / rowHeight);
             if (scrollbars) {
                 for (let i = 0; i < cacheLength; i++) {
@@ -69,7 +69,7 @@ export function scrollEvent(
                 rowPositionCache.sort();
             }
             // need to call render directly so it updates right away
-            freeGrid.render();
+            connector.render();
         }
     };
 }

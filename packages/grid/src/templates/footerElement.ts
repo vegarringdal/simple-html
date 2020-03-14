@@ -1,18 +1,19 @@
 import { html, TemplateResult } from 'lit-html';
-import { FreeGrid } from '..';
+import { GridInterface } from '..';
 
-export function footerElement(freeGrid: FreeGrid): TemplateResult {
-    if (freeGrid.config.footerHeight < 1) {
-        freeGrid.config.footerHeight = 1; // always have 1 px
+
+export function footerElement(connector: GridInterface): TemplateResult {
+    if (connector.config.footerHeight < 1) {
+        connector.config.footerHeight = 1; // always have 1 px
     }
 
-    if (freeGrid.config.footerRenderCallBackFn) {
+    if (connector.config.footerRenderCallBackFn) {
         return html`
             <free-grid-footer
-                style="height:${freeGrid.config.footerHeight}px"
+                style="height:${connector.config.footerHeight}px"
                 class="free-grid-footer"
-                >${freeGrid.config.footerRenderCallBackFn(
-                    freeGrid,
+                >${connector.config.footerRenderCallBackFn(
+                    connector,
                     null,
                     null,
                     null,
@@ -23,7 +24,7 @@ export function footerElement(freeGrid: FreeGrid): TemplateResult {
     } else {
         return html`
             <free-grid-footer
-                style="height:${freeGrid.config.footerHeight}px"
+                style="height:${connector.config.footerHeight}px"
                 class="free-grid-footer"
             ></free-grid-footer>
         `;

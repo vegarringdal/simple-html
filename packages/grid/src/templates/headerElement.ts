@@ -1,27 +1,27 @@
 import { html } from 'lit-html';
-import { FreeGrid } from '..';
 import { headerColumnElements } from './headerColumnElements';
+import { GridInterface } from '../gridInterface';
 
-export function headerElement(freeGrid: FreeGrid) {
+export function headerElement(connector: GridInterface) {
     const style = `left:${
-        freeGrid.config.scrollLeft !== undefined ? -freeGrid.config.scrollLeft : 0
+        connector.config.scrollLeft !== undefined ? -connector.config.scrollLeft : 0
     }px;
-                   top:${freeGrid.config.panelHeight}px;
-                   height:${freeGrid.config.headerHeight}px;
-                   width:${freeGrid.config.columns
+                   top:${connector.config.panelHeight}px;
+                   height:${connector.config.headerHeight}px;
+                   width:${connector.config.columns
                        .map(col => col.width || 100)
                        .reduce((total, num) => total + num) + 25}px`;
-    const config = freeGrid.config;
+    const config = connector.config;
 
     return config.headerRenderCallBackFn
         ? html`
               <free-grid-header style=${style} class="free-grid-header">
-                  ${config.headerRenderCallBackFn(html, null, null, null, freeGrid)}
+                  ${config.headerRenderCallBackFn(html, null, null, null, connector)}
               </free-grid-header>
           `
         : html`
               <free-grid-header style=${style} class="free-grid-header">
-                  ${headerColumnElements(freeGrid)}
+                  ${headerColumnElements(connector)}
               </free-grid-header>
           `;
 }

@@ -1,18 +1,35 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
+import { subscribeCanDeactivateEvent, unSubscribeCanDeactivateEvent, stopCanDeactivate } from '@simple-html/router/src';
+
 
 @customElement('settings-route')
 export default class extends HTMLElement {
-    private locked = true;
+    private locked = false;
 
-    canDeactivate() {
-        if (this.locked) {
-            alert('unlock first, see the checkbox called "locked"');
-        }
-        return this.locked ? false : true;
+
+    connectedCallback() {
+        subscribeCanDeactivateEvent(this, function(){
+            console.log("trigger settings event", this.counter)
+            stopCanDeactivate(new Promise((resolve)=>{
+
+                if(this.locked){
+                    alert('sorry')
+                    resolve(false)
+                } else {
+                    resolve(true)
+                }
+                console.log('stopevent')
+
+            }))
+        });
+    }
+    disconnectedCallback() {
+        unSubscribeCanDeactivateEvent(this)
     }
 
-    click() {
+
+    clicker() {
         this.locked = this.locked ? false : true;
     }
 
@@ -23,7 +40,7 @@ export default class extends HTMLElement {
                 <br />
                 Locked:<input
                     type="checkbox"
-                    @click=${this.click}
+                    @click=${this.clicker}
                     .checked=${this.locked}
                 />
             </section>

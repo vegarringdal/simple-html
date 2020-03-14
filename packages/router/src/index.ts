@@ -1,33 +1,105 @@
-import { getRouter, RouterInternal } from './router';
-import { logger } from './helpers';
-import { customElement } from '@simple-html/core';
-export { enableLogger, disableLogger } from './helpers';
+import { publish, subscribe, unSubscribe } from '@simple-html/core';
+// exports
+export { routeMatch, routeMatchAsync } from './routeMatch';
+export { gotoURL } from './gotoUrl';
+export { getRouteParams } from './getRouteParams';
 
-export {
-    getRouter,
-    href,
-    authRouteHandler,
-    unknowRouteHandler,
-    addRouterConfig,
-    goto,
-    navs,
-    removeRouterConfig
-} from './router';
-@customElement('free-router')
-export class FreeRouter extends HTMLElement {
-    router: RouterInternal;
-    // private
+/**
+ * Simple functions used for subcribing hash event
+ */
 
-    connectedCallback() {
-        this.router = getRouter();
-        logger('FreeRouter-connectedcallback', this.getAttribute('name'));
-        this.router.activateRouterElement(this.getAttribute('name'));
-    }
-
-    render() {}
-
-    disconnectedCallback() {
-        logger('FreeRouter-disconnectedcallback', this.getAttribute('name'));
-        this.router.deactivateRouterElement(this.getAttribute('name'));
-    }
+const HASH_RENDER_EVENT = 'HASH_RENDER_EVENT';
+export function subscribeHashEvent(ctx: any, call: Function) {
+    subscribe(HASH_RENDER_EVENT, ctx, call);
 }
+
+export function unSubscribeHashEvent(ctx: any) {
+    unSubscribe(HASH_RENDER_EVENT, ctx);
+}
+
+export function publishHashEvent() {
+    publish(HASH_RENDER_EVENT);
+}
+
+/**
+ * Simple functions used for can deactivate event
+ */
+
+const CAN_DEACTIVATE_EVENT = 'CAN_DEACTIVATE_EVENT';
+export function subscribeCanDeactivateEvent(ctx: any, call: Function) {
+    subscribe(CAN_DEACTIVATE_EVENT, ctx, call);
+}
+
+export function unSubscribeCanDeactivateEvent(ctx: any) {
+    unSubscribe(CAN_DEACTIVATE_EVENT, ctx);
+}
+
+export function publishCanDeactivateEvent() {
+    publish(CAN_DEACTIVATE_EVENT);
+}
+
+export let canDeactivateCallers: any[] = [];
+const canDeactivate = function() {
+    return new Promise(async resolve => {
+        canDeactivateCallers = [];
+        publishCanDeactivateEvent();
+
+        setTimeout(async () => {
+            let result = true;
+            for (let i = 0; i < canDeactivateCallers.length; i++) {
+                let y = await Promise.resolve(canDeactivateCallers[i]);
+                if (y === false) {
+                    result = y;
+                }
+            }
+            resolve(result);
+        }, 0);
+    });
+};
+
+// you call this during a CAN_DEACTIVATE_EVENT to stop navigation
+export const stopCanDeactivate = function(promise: Promise<Boolean>) {
+    canDeactivateCallers.push(promise);
+};
+
+
+/**
+ * starts router
+ */
+
+
+export function init() {
+    
+    let oldhash = window.location.hash;
+    let isBackEvent = false;
+
+    const hashChange = function() {
+        if (!isBackEvent) {
+            canDeactivate().then(result => {
+                if (result) {
+                    oldhash = window.location.hash;
+                    publish(HASH_RENDER_EVENT);
+                } else {
+                    isBackEvent = true;
+                    window.location.hash = oldhash;
+                }
+            });
+        } else {
+            isBackEvent = false;
+        }
+    };
+
+    window.addEventListener('hashchange', hashChange);
+
+    // clean up during HMR
+    const cleanUp = {
+        handleEvent: function() {
+            console.log('remove')
+            window.removeEventListener('HMR-FUSEBOX', cleanUp);
+            window.removeEventListener('hashchange', hashChange);
+        }
+    };
+
+    window.addEventListener('HMR-FUSEBOX', cleanUp);
+}
+

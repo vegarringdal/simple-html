@@ -5,8 +5,8 @@ export const COL_SETUP: IGridConfig = {
     panelHeight: 25,
     headerHeight: 50,
     footerHeight: 25,
-    /* lastScrollTop:25*300,
-    scrollLeft:150, */
+    lastScrollTop:25*300,
+    //scrollLeft:150, 
     /* sortingSet: [
         {
             attribute: 'last',

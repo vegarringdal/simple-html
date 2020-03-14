@@ -1,20 +1,12 @@
 import { html } from 'lit-html';
-import { customElement, instance } from '@simple-html/core';
-import { AppState } from '../app-state';
-import { RoutesMain, RoutesSub } from '../routerConfig';
-import { href, goto } from '@simple-html/router';
+import { customElement } from '@simple-html/core';
+
+
 
 @customElement('login-route')
 export default class extends HTMLElement {
     public click() {
-        const appState = instance(AppState);
-        if (!appState.isAutenticated) {
-            appState.login();
-            goto(href(RoutesSub.Protected));
-        } else {
-            appState.logout();
-            goto(href(RoutesMain.Home));
-        }
+     
     }
 
     public render() {

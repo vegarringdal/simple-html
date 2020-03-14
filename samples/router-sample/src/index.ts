@@ -1,4 +1,4 @@
 import './hmr';
 import './index.css';
-import './routerConfig';
+import './routes/routerConfig';
 import './app-comp';

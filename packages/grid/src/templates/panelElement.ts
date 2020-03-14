@@ -1,10 +1,10 @@
 import { html, svg } from 'lit-html';
-import { FreeGrid } from '..';
 import { eventIF } from '../eventIF';
 import { columnDragDropPanel } from '../dragEvent';
+import { GridInterface } from '../gridInterface';
 
-export function panelElement(freeGrid: FreeGrid) {
-    const grouping = freeGrid.config.groupingSet || [];
+export function panelElement(connector: GridInterface) {
+    const grouping = connector.config.groupingSet || [];
 
     const mouseEnter = (e: MouseEvent) => {
         (<HTMLElement>e.target)
@@ -18,19 +18,19 @@ export function panelElement(freeGrid: FreeGrid) {
             .classList.add('free-grid-iconhidden');
     };
 
-    const enter = columnDragDropPanel('enter', freeGrid);
-    const leave = columnDragDropPanel('leave', freeGrid);
+    const enter = columnDragDropPanel('enter', connector);
+    const leave = columnDragDropPanel('leave', connector);
 
     return html`
         <free-grid-panel
             @custom-1=${eventIF(true, 'mouseleave', leave)}
             @custom-2=${eventIF(true, 'mouseenter', enter)}
-            style="height:${freeGrid.config.panelHeight}px"
+            style="height:${connector.config.panelHeight}px"
             class="free-grid-panel"
         >
             ${grouping.map(group => {
                 const click = () => {
-                    freeGrid.arrayUtils.removeGroupBinded(group);
+                    connector.removeGroup(group);
                 };
 
                 return html`

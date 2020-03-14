@@ -23,14 +23,6 @@ export function getObservedAttributesSymbol() {
     }
 }
 
-export function getInjectSymbol() {
-    if (!(<any>globalThis)._LHF_SYMBOL.inject) {
-        (<any>globalThis)._LHF_SYMBOL.inject = Symbol('inject');
-        return (<any>globalThis)._LHF_SYMBOL.inject;
-    } else {
-        return (<any>globalThis)._LHF_SYMBOL.inject;
-    }
-}
 
 export function getPropSymbol(name: string) {
     if (!(<any>globalThis)._LHF_PROP_SYMBOL[name]) {
@@ -41,12 +33,14 @@ export function getPropSymbol(name: string) {
     }
 }
 
-export function getiInjectSymbol() {
-    if (!(<any>globalThis)._LHF_SYMBOL.inject) {
-        (<any>globalThis)._LHF_SYMBOL.inject = Symbol('inject');
-        return (<any>globalThis)._LHF_SYMBOL.inject;
+
+
+export function getTransmitterSymbol(customSymbol: string) {
+    if (!(<any>globalThis)._LHF_SYMBOL.transmitter) {
+        (<any>globalThis)._LHF_SYMBOL.transmitter = Symbol(customSymbol);
+        return (<any>globalThis)._LHF_SYMBOL.transmitter;
     } else {
-        return (<any>globalThis)._LHF_SYMBOL.inject;
+        return (<any>globalThis)._LHF_SYMBOL.transmitter;
     }
 }
 

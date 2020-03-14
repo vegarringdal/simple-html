@@ -1,32 +1,31 @@
 {
   "name": "simple-html",
-  "version": "1.0.0-alpha.6",
+  "version": "1.0.0-alpha.7",
   "description": "lit html tools",
   "scripts": {
     "build": "node ./scripts/build && node ./scripts/syncPackages",
     "sync": "node ./scripts/syncPackages",
     "pub-now": "node ./scripts/publish",
     "pub-test": "node ./scripts/publishTest",
-    "core-sample": "node ./samples/core-sample/fuse",
-    "grid-sample": "node ./samples/grid-sample/fuse",
-    "router-sample": "node ./samples/router-sample/fuse",
-    "realworld-sample": "node ./samples/realworld-sample/fuse",
+    "sample-core": "node ./samples/core-sample/fuse",
+    "sample-grid": "node ./samples/grid-sample/fuse",
+    "sample-router": "node ./samples/router-sample/fuse",
     "format:fix": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\""
   },
   "author": "vegar Ringdal",
   "license": "MIT",
   "devDependencies": {
-    "@types/marked": "^0.7.2",
+    "@types/marked": "^0.7.3",
     "autoprefixer": "^9.7.4",
     "custom-elements-hmr-polyfill": "^1.0.0",
-    "fuse-box": "^4.0.0-next.165",
-    "fuse-box-typechecker": "^3.0.0-next.29",
+    "fuse-box": "^4.0.0-next.409",
+    "fuse-box-typechecker": "^3.0.0-next.31",
     "lit-html": "^1.1.2",
     "marked": "^0.8.0",
     "prettier": "^1.19.1",
     "tailwindcss": "^1.2.0",
-    "tslib": "^1.10.0",
-    "typescript": "^3.7.5"
+    "tslib": "^1.11.1",
+    "typescript": "^3.8.3"
   },
   "dependencies": {}
 }

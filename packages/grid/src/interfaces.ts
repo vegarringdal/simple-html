@@ -1,21 +1,36 @@
-import { FreeGrid } from '.';
+import { GridInterface } from './gridInterface';
+import { EntityHandler } from './entity';
+
+
+export interface IEntity  {
+    __controller ?: EntityHandler;
+    __KEY?: string | number;
+    __group?: boolean;
+    __groupID?: string;
+    __groupName?: string;
+    __groupLvl?: number;
+    __groupTotal?: number;
+    __groupChildren?: IEntity[];
+    __groupExpanded?: boolean;
+}
+
 
 export type CallbackEvent = { target: HTMLInputElement };
-export type ColumnCallBackFn = (e: CallbackEvent, col: IColumns, freeGrid: FreeGrid) => void;
+export type ColumnCallBackFn = (e: CallbackEvent, col: IColumns, connector: GridInterface) => void;
 export type CellCallbackFn = (
     e: CallbackEvent,
     col: IColumns,
     row: number,
-    data: IDataRow,
-    freeGrid: FreeGrid
+    data: IEntity,
+    connector: GridInterface
 ) => void;
-export type RowCallBackFn = (e: CallbackEvent, row: number, freeGrid: FreeGrid) => void;
+export type RowCallBackFn = (e: CallbackEvent, row: number, connector: GridInterface) => void;
 export type renderCallBackFn = (
     html: any,
     col: IColumns,
     row: number,
-    data: IDataRow,
-    freeGrid: FreeGrid
+    data: IEntity,
+    connector: GridInterface
 ) => void;
 
 export type FilterOperator =
@@ -33,6 +48,13 @@ export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date';
 export type Triggers = 'input' | 'change';
 export type SelectionMode = 'none' | 'single' | 'multiple';
 export type rowCache = { i: number };
+
+
+export interface IAttributes{
+    attribute: string;
+    type?: DataTypes; //defaults to text if not set
+}
+
 
 export interface IColumns {
     header?: string;
@@ -111,16 +133,6 @@ export interface ISortObjectInterface {
     no?: number;
 }
 
-export type IDataRow = {
-    __fg_key?: string | number;
-    __group?: boolean;
-    __groupID?: string;
-    __groupName?: string;
-    __groupLvl?: number;
-    __groupTotal?: number;
-    __groupChildren?: IDataRow[];
-    __groupExpanded?: boolean;
-} & object;
 
 export interface IGroupingObj {
     title: string;

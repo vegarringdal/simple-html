@@ -1,6 +1,5 @@
 const { fusebox, sparky } = require('fuse-box');
 const { pluginTypeChecker } = require('fuse-box-typechecker');
-const PATH = '.' + __dirname.replace(process.cwd(), '').split()[0];
 
 class Context {
     isProduction;
@@ -8,9 +7,8 @@ class Context {
     getConfig() {
         return fusebox({
             target: 'browser',
-            homeDir: '../../',
             output: `dev`,
-            entry: `${PATH}/src/index.ts`,
+            entry: `./src/index.ts`,
             webIndex: {
                 template: `src/index.html`
             },
@@ -19,12 +17,16 @@ class Context {
                 root: '.cache',
                 enabled: true
             },
-            watch: { ignored: ['dist', 'dev'] },
-            hmr: true,
+            watcher: { 
+                enabled:true,
+                include:['../../packages', './src'],
+                ignored: ['dist', 'dev'] 
+            },
+            hmr : { plugin : "./src/fuseHmrPlugin.ts"},
             devServer: this.runServer,
             plugins: [
                 pluginTypeChecker({
-                    basePath: PATH,
+                    basePath: './',
                     tsConfig: './tsconfig.json',
                     skipTsErrors:[6059]
                 })
