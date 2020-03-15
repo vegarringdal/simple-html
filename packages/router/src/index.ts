@@ -1,7 +1,7 @@
 import { publish, subscribe, unSubscribe } from '@simple-html/core';
 // exports
 export { routeMatch, routeMatchAsync } from './routeMatch';
-export { gotoURL } from './gotoUrl';
+export { gotoURL } from './gotoURL';
 export { getRouteParams } from './getRouteParams';
 
 /**
