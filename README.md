@@ -54,19 +54,10 @@ You need to read development first before trying to run these.
 
 ### HMR info
 
-When using the samples all of the `@simple-html` packages also gets reset. But this will not be the case if you use them in your own project.
-
-Here is how the `hmr.ts` file need to look like to reset the router.
-You dont need to use `clearInstance(null)` but might be useful to reset everything.
+Load before everything
 
 ```
 import { applyPolyfill, reflowDOM } from 'custom-elements-hmr-polyfill';
-import { clearInstance } from '@simple-html/core';
-import { getRouter } from '@simple-html/router';
-
-//cleanup
-getRouter().cleanUp(true);
-clearInstance(null);
 
 // apply polly fill
 applyPolyfill();
