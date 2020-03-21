@@ -4,10 +4,6 @@ import { TemplateResult, directive } from 'lit-html';
 
 const resolvePromise = directive(
     (promise: Promise<null>, htmlTemplate: TemplateResult) => (part: any) => {
-        // This first setValue call is synchronous, so
-        // doesn't need the commit
-        part.setValue('Waiting for promise to resolve.');
-
         Promise.resolve(promise).then(() => {
             part.setValue(htmlTemplate);
             part.commit();
