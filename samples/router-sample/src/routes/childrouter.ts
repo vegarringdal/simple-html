@@ -27,7 +27,7 @@ export default class extends HTMLElement {
 
             ${routeMatchAsync(
                 childRoute.subHome.path,
-                import('./home'),
+                () => import('./home'),
                 html`
                     <home-route></home-route>
                 `
@@ -35,7 +35,7 @@ export default class extends HTMLElement {
 
             ${routeMatchAsync(
                 childRoute.subSettings.path,
-                import('./settings'),
+                () => import('./settings'),
                 html`
                     <settings-route></settings-route>
                 `
@@ -43,7 +43,7 @@ export default class extends HTMLElement {
 
             ${routeMatchAsync(
                 childRoute.protected.path,
-                import('./protected'),
+                () => import('./protected'),
                 html`
                     <protected-route></protected-route>
                 `

@@ -45,17 +45,17 @@ export default class extends HTMLElement {
 
             ${routeMatchAsync(
                 routerConfig.home.path,
-                routerConfig.home.load(),
+                routerConfig.home.load,
                 routerConfig.home.html
             )}
             ${routeMatchAsync(
                 routerConfig.settings.path,
-                routerConfig.settings.load(),
+                routerConfig.settings.load,
                 routerConfig.settings.html
             )}
             ${routeMatchAsync(
                 routerConfig.child.path,
-                import('./routes/childrouter'),
+                () => import('./routes/childrouter'),
                 html`
                     <childrouter-route></childrouter-route>
                 `
