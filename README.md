@@ -66,3 +66,49 @@ applyPolyfill();
 reflowDOM();
 ```
 
+
+### I need EdgeHTML browser to work in 2020...
+
+Your really should consider updating to newest Edge
+
+```html
+ <script>
+            // so it works in edge
+
+            if (this.customElements) {
+                try {
+                    // feature detect browsers that "forgot" 🙄 to implement built-in extends
+                    customElements.define('built-in', document.createElement('p').constructor, {
+                        extends: 'p'
+                    });
+                } catch (_) {
+                    // only WebKit or Safari
+                    document.write(
+                        '<script src="//unpkg.com/@ungap/custom-elements-builtin"><\x2fscript>'
+                    );
+                }
+            } else {
+                // only legacy browsers
+
+                if (!window.globalThis) {
+                    window.globalThis = window;
+                }
+
+                if (!('isConnected' in Node.prototype)) {
+                    Object.defineProperty(Node.prototype, 'isConnected', {
+                        get() {
+                            return (
+                                !this.ownerDocument ||
+                                !(
+                                    this.ownerDocument.compareDocumentPosition(this) &
+                                    this.DOCUMENT_POSITION_DISCONNECTED
+                                )
+                            );
+                        }
+                    });
+                }
+
+                document.write('<script src="//unpkg.com/document-register-element"><\x2fscript>');
+            }
+        </script>
+```
