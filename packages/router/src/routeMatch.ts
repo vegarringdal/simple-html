@@ -13,11 +13,11 @@ const resolvePromise = directive(
 
 export const routeMatchAsync = function(
     hash = '',
-    importStatement: Promise<any>,
+    importStatement: ()=>Promise<any>,
     htmlTemplate: TemplateResult
 ) {
     if (routeMatch(hash)) {
-        return resolvePromise(importStatement, htmlTemplate);
+        return resolvePromise(importStatement(), htmlTemplate);
     } else {
         return '';
     }
