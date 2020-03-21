@@ -4,8 +4,8 @@ export function requestRender(ctx: any) {
         if (ctx.__wait) {
         } else {
             ctx.__wait = true;
-            requestAnimationFrame(() => {
-                Promise.resolve(true);
+            requestAnimationFrame(async () => {
+                await Promise.resolve(true);
                 ctx.render();
                 ctx.__wait = false;
             });
