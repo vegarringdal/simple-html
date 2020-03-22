@@ -2,7 +2,8 @@ import { html } from 'lit-html';
 import { COL_SETUP as gridConfig } from './colSetup';
 import { DummyDataGenerator } from './dummyDataGenerator';
 import { GridInterface } from '@simple-html/grid';
-import { customElement } from '@simple-html/core';
+import { customElement, property } from '@simple-html/core';
+import { requestRender } from '@simple-html/core/src/requestRender';
 
 
 @customElement('app-component')
@@ -10,6 +11,7 @@ export default class extends HTMLElement {
     private data: any = [];
     private connector: GridInterface;
     private dummyDataGenerator: DummyDataGenerator;
+    @property() private entity:any = null
 
 
     constructor() {
@@ -18,6 +20,12 @@ export default class extends HTMLElement {
         this.data = this.dummyDataGenerator.generateData(1000);
         this.connector = new GridInterface(gridConfig)
         this.connector.setData(this.data, false);
+        this.connector.addEventListener(()=>{
+            this.entity = this.connector.currentEntity;
+            console.log('connected', this.isConnected)
+            requestRender(this)
+            return this.isConnected;
+        })
     }
 
     public replaceData(x: number) {
@@ -79,6 +87,7 @@ export default class extends HTMLElement {
             >
                 clear grouping/sorting etc
             </button>
+                       
             <button
                 @click=${() => {
                     this.group();
@@ -201,6 +210,28 @@ export default class extends HTMLElement {
                 .interface=${this.connector}
             >
             </free-grid>
+
+            <label>first<input .value=${this.entity?.first || ''} @change=${(e: any)=>{
+                if(this.entity && this.entity.first){
+                    this.entity.first = e.target.value
+                    this.connector.reRender();
+                }
+                
+            }}></label>
+            <label>last<input .value=${this.entity?.last || ''} @change=${(e: any)=>{
+                if(this.entity && this.entity.last){
+                    this.entity.last = e.target.value
+                    this.connector.reRender();
+                }
+                
+            }}></label>
+            <label>index<input .value=${this.entity?.index || ''} @change=${(e: any)=>{
+                if(this.entity && this.entity.index){
+                    this.entity.index = e.target.value
+                    this.connector.reRender();
+                }
+                
+            }}></label>
         `;
     }
 }
