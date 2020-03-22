@@ -34,10 +34,10 @@ Fusebox is in watch mode when running the samples. Any changes to packages/* fil
 
 You need to read development first before trying to run these.
 
-* `npm run core-sample`
-* `npm run grid-sample`
-* `npm run router-sample`
-* `npm run realworld-sample`
+* `npm run sample-core`
+* `npm run sample-grid`
+* `npm run sample-router`
+
 
 ## Make new sample
 * copy folder `./samples/template-starter` and give it a new name
