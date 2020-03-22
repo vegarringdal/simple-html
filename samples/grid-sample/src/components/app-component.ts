@@ -20,7 +20,7 @@ export default class extends HTMLElement {
         this.connector.setData(this.data, false);
         this.connector.addEventListener(() => {
             this.entity = this.connector.currentEntity;
-            console.log('connected', this.isConnected);
+            //console.log('connected', this.isConnected);
             requestRender(this);
             return this.isConnected;
         });

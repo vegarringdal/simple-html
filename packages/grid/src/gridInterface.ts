@@ -151,7 +151,7 @@ export class GridInterface {
 
     public __selectInternal(row: number){
         this.currentEntity = this.displayedDataset[row];
-        console.log('new current entity:', this.currentEntity)
+        //console.log('new current entity:', this.currentEntity)
     }
 
     public select(row: number){
