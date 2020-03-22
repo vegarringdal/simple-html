@@ -23,7 +23,7 @@ export class FreeGrid extends HTMLElement {
     }
 
     public disconnectedCallback() {
-        this.__DATASOURCE_INTERFACE.disconnectGrid();
+        this.__DATASOURCE_INTERFACE  && this.__DATASOURCE_INTERFACE.disconnectGrid();
     }
 
     public reRender() {
@@ -37,6 +37,9 @@ export class FreeGrid extends HTMLElement {
     }
 
     public resetRowCache() {
+        if(this.interface){
+
+        
         const cacheLength =
             this.interface.displayedDataset.length > 40
                 ? 40
@@ -45,11 +48,14 @@ export class FreeGrid extends HTMLElement {
         for (let i = 0; i < cacheLength; i++) {
             this.rowCache.push({ i: i });
         }
+        } else{
+            this.rowCache = [];
+        }
     }
 
     public render() {
         return new Promise(() => {
-            console.time('render');
+            // console.time('render');
             if (this.interface) {
                 render(
                     html`
@@ -75,7 +81,7 @@ export class FreeGrid extends HTMLElement {
                     render(html``, this);
                 }
             }
-            console.timeEnd('render');
+            //console.timeEnd('render');
         });
     }
 }
