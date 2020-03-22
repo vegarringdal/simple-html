@@ -66,7 +66,9 @@ export function rowElementsStandardRender(
                                 default:
                                     rowData[col.attribute] = e.target.value;
                             }
+                            connector.publishEvent('attribute-change')
                         }
+                        
 
                         col.afterEditCallbackFn &&
                             col.afterEditCallbackFn(e, col, rowNo, rowData, connector);
