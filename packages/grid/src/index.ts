@@ -2,8 +2,10 @@ import { render, html } from 'lit-html';
 export { IGridConfig } from './interfaces';
 import { gridTemplate } from './templates/gridTemplate';
 import { GridInterface } from './gridInterface';
+import { customElement } from '@simple-html/core';
 export { GridInterface } from './gridInterface';
 
+@customElement('free-grid')
 export class FreeGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
     public rowCache: { i: number }[] = [];
@@ -23,7 +25,7 @@ export class FreeGrid extends HTMLElement {
     }
 
     public disconnectedCallback() {
-        this.__DATASOURCE_INTERFACE  && this.__DATASOURCE_INTERFACE.disconnectGrid();
+        this.__DATASOURCE_INTERFACE && this.__DATASOURCE_INTERFACE.disconnectGrid();
     }
 
     public reRender() {
@@ -37,18 +39,16 @@ export class FreeGrid extends HTMLElement {
     }
 
     public resetRowCache() {
-        if(this.interface){
-
-        
-        const cacheLength =
-            this.interface.displayedDataset.length > 40
-                ? 40
-                : this.interface.displayedDataset.length;
-        this.rowCache = [];
-        for (let i = 0; i < cacheLength; i++) {
-            this.rowCache.push({ i: i });
-        }
-        } else{
+        if (this.interface) {
+            const cacheLength =
+                this.interface.displayedDataset.length > 40
+                    ? 40
+                    : this.interface.displayedDataset.length;
+            this.rowCache = [];
+            for (let i = 0; i < cacheLength; i++) {
+                this.rowCache.push({ i: i });
+            }
+        } else {
             this.rowCache = [];
         }
     }
@@ -86,10 +86,11 @@ export class FreeGrid extends HTMLElement {
     }
 }
 
-if (!(<any>globalThis).hmrCache) {
+/* if (!(<any>globalThis).hmrCache) {
     customElements.define('free-grid', FreeGrid);
 } else {
     if (!customElements.get('free-grid')) {
         customElements.define('free-grid', FreeGrid);
     }
 }
+ */

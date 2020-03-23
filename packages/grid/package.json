@@ -19,8 +19,8 @@
     "publishConfig": {
         "access": "public"
     },
-    "devDependencies": {},
     "dependencies": {
-        "lit-html": "^1.1.1"
-    }
+        "@simple-html/core": "latest"
+    },
+    "devDependencies": {}
 }
