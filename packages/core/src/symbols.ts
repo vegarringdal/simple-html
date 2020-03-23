@@ -34,10 +34,28 @@ export function getPropSymbol(name: string) {
 }
 
 
+export function getLoggerSymbol() {
+    if (!(<any>globalThis)._LHF_SYMBOL.logger) {
+        (<any>globalThis)._LHF_SYMBOL.logger = Symbol('logger');
+        return (<any>globalThis)._LHF_SYMBOL.logger;
+    } else {
+        return (<any>globalThis)._LHF_SYMBOL.logger;
+    }
+}
 
-export function getTransmitterSymbol(customSymbol: string) {
+export function getLoggerCountSymbol() {
+    if (!(<any>globalThis)._LHF_SYMBOL.loggerCount) {
+        (<any>globalThis)._LHF_SYMBOL.loggerCount = Symbol('loggerCount');
+        return (<any>globalThis)._LHF_SYMBOL.loggerCount;
+    } else {
+        return (<any>globalThis)._LHF_SYMBOL.loggerCount;
+    }
+}
+
+
+export function getTransmitterSymbol() {
     if (!(<any>globalThis)._LHF_SYMBOL.transmitter) {
-        (<any>globalThis)._LHF_SYMBOL.transmitter = Symbol(customSymbol);
+        (<any>globalThis)._LHF_SYMBOL.transmitter = Symbol('transmitter');
         return (<any>globalThis)._LHF_SYMBOL.transmitter;
     } else {
         return (<any>globalThis)._LHF_SYMBOL.transmitter;
