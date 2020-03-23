@@ -1,12 +1,22 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
 import { navs, routerConfig } from './routerConfig';
-import { routeMatchAsync } from '@simple-html/router';
+import { routeMatchAsync, subscribeHashEvent, unSubscribeHashEvent } from '@simple-html/router';
 
 const childRoute = routerConfig.child.children;
 
 @customElement('childrouter-route')
 export default class extends HTMLElement {
+
+    connectedCallback() {
+        subscribeHashEvent(this, () => {
+            this.render();
+        });
+    }
+    disconnectedCallback() {
+        unSubscribeHashEvent(this);
+    }
+
     public render() {
         return html`
             <ul class="ani flex bg-indigo-500 p-6">
