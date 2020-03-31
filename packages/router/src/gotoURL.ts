@@ -27,7 +27,7 @@ export const gotoURL = function(path: string, params: any = {}, query: any = nul
                 urlparams.append(k, params[k]);
             }
         }
-        location.hash = `${newUrl}?${urlparams}`;
+        location.hash = `${newUrl}?${urlparams.toString()}`;
     } else {
         location.hash = newUrl;
     }
