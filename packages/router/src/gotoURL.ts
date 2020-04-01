@@ -22,9 +22,9 @@ export const gotoURL = function(path: string, params: any = {}, query: any = nul
     let urlparams;
     if (query) {
         urlparams = new URLSearchParams();
-        for (const k in params) {
-            if (params[k]) {
-                urlparams.append(k, params[k]);
+        for (const k in query) {
+            if (query[k]) {
+                urlparams.append(k, query[k]);
             }
         }
         location.hash = `${newUrl}?${urlparams.toString()}`;
