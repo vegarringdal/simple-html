@@ -118,6 +118,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     border: 0;
     border-right: 1px solid var(--main-bg-border);
+    border-top: 1px solid var(--main-bg-border);
 }
 
 .free-grid .free-grid-group-label {
@@ -127,15 +128,18 @@ free-grid-body::-webkit-scrollbar-thumb {
     border-right: 1px solid var(--main-bg-border);
 }
 
+
+
+
 .free-grid .free-grid-cell-label {
     position: absolute;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    border-bottom: 1px solid var(--main-bg-border);
-    border-right: 1px solid var(--main-bg-border);
-    background-color: var(--main-bg-color);
+    border-top: 1px solid var(--sec-bg-border);
+    border-right: 1px solid var(--sec-bg-border);
+    background-color: var(--sec-bg-color);
     margin: initial;
     transition: initial;
     outline-color: var(--main-bg-color);
@@ -161,7 +165,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     font-size: inherit;
 }
 
-.free-grid .free-grid-cell {
+.free-grid .free-grid-cell-row {
     position: absolute;
     box-sizing: border-box;
     border: 0;

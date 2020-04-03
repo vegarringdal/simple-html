@@ -1,5 +1,7 @@
 import './free-grid-body';
-import './free-grid-cell';
+import './free-grid-cell-row';
+import './free-grid-cell-filter';
+import './free-grid-cell-label';
 import './free-grid-group-filter';
 import './free-grid-group-label';
 import './free-grid-group-row';

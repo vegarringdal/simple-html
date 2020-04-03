@@ -50,10 +50,18 @@ export class FreeGrid extends HTMLElement {
     }
 
     public resetRowCache() {
+
+     
+
         if (this.interface) {
+
+            let rowsNeeded = Math.round(Math.floor(850 / this.interface.config.__rowHeight))
+            if (rowsNeeded > 40) {
+                rowsNeeded = 40
+            }
             const cacheLength =
-                this.interface.displayedDataset.length > 40
-                    ? 40
+                this.interface.displayedDataset.length > rowsNeeded
+                    ? rowsNeeded
                     : this.interface.displayedDataset.length;
             this.rowCache = [];
             for (let i = 0; i < cacheLength; i++) {

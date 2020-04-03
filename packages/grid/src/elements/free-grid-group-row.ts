@@ -1,12 +1,14 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface, FreeGrid } from '../';
 import { IgridConfigGroups } from '../interfaces';
+import { html } from 'lit-html';
+import { property } from '@simple-html/core/dist/esm';
 
 @customElement('free-grid-group-row')
 export default class extends HTMLElement {
     classList: any = 'free-grid-group-row';
     connector: GridInterface;
-    rowNo: number
+    @property() rowNo: number;
     ref: FreeGrid;
     currentHeight: number;
     group: IgridConfigGroups;
@@ -20,6 +22,19 @@ export default class extends HTMLElement {
     }
 
     render() {
-        return 'row';
+        return html`
+            ${this.group.rows.map((cell, i) => {
+                return html`
+                    <free-grid-cell-row
+                        .connector=${this.connector}
+                        .rowNo=${this.rowNo}
+                        .cell=${cell}
+                        .group=${this.group}
+                        .ref=${this.ref}
+                        .cellPosition=${i}
+                    ></free-grid-cell-row>
+                `;
+            })}
+        `;
     }
 }
