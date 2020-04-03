@@ -148,6 +148,15 @@ free-grid-body::-webkit-scrollbar-thumb {
     font-size: inherit;
 }
 
+.free-grid .free-grid-image-round {
+    border-radius: 50%;
+    height: 100%;
+    box-sizing: border-box;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
 .free-grid .free-grid-cell-filter {
     position: absolute;
     box-sizing: border-box;
