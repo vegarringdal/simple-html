@@ -110,22 +110,22 @@ free-grid-body::-webkit-scrollbar-thumb {
     position: absolute;
     box-sizing: border-box;
     border: 0;
-    border-right: 1px solid var(--main-bg-border);
+    border-right: 1px solid var(--sec-bg-border);
 }
 
 .free-grid .free-grid-group-filter {
     position: absolute;
     box-sizing: border-box;
     border: 0;
-    border-right: 1px solid var(--main-bg-border);
-    border-top: 1px solid var(--main-bg-border);
+    border-right: 1px solid var(--sec-bg-border);
+
 }
 
 .free-grid .free-grid-group-label {
     position: absolute;
     box-sizing: border-box;
     border: 0;
-    border-right: 1px solid var(--main-bg-border);
+    border-right: 1px solid var(--sec-bg-border);
 }
 
 
@@ -137,7 +137,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    border-top: 1px solid var(--sec-bg-border);
+    border-bottom: 1px solid var(--sec-bg-border);
     border-right: 1px solid var(--sec-bg-border);
     background-color: var(--sec-bg-color);
     margin: initial;
@@ -180,7 +180,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    border-top: 1px solid var(--sec-bg-border);
+    border-bottom: 1px solid var(--sec-bg-border);
     border-right: 1px solid var(--sec-bg-border);
    
     margin: initial;
