@@ -47,9 +47,9 @@ export const COL_SETUP: IGridConfig = {
             width: 100,
             rows:[
                 {
-                    header: 'index',
-                    attribute: 'index',
-                    type: 'number',
+                    header: 'date',
+                    attribute: 'date',
+                    type: 'date',
                     width: 120,
                     filterable: {},
                     sortable: {}

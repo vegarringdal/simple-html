@@ -52,7 +52,7 @@ export class DummyDataGenerator {
                 name: i % 7 === 0 ? null : this.first[random4] + ' ' + this.last[random3],
                 first: this.first[random4],
                 last: this.last[random3],
-                images: this.images[random2],
+                image: `https://robohash.org/${this.first[random4]}${this.last[random3]}`,
                 color: this.color[random4],
                 number: Math.floor(Math.random() * 9000) + 0,
                 bool: random1 % 3 ? true : false,
