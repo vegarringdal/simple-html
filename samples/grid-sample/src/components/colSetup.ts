@@ -4,6 +4,7 @@ export const COL_SETUP: IGridConfig = {
     cellHeight: 20,
     panelHeight: 25,
     footerHeight: 20,
+    selectionMode:'multiple',
 
     groups:[
         {

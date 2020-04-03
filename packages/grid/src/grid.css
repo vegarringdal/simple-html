@@ -173,7 +173,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-shadow: initial;
     border-top: 1px solid var(--sec-bg-border);
     border-right: 1px solid var(--sec-bg-border);
-    background-color: var(--sec-bg-color);
+   
     margin: initial;
     transition: initial;
     outline-color: var(--main-bg-color);
