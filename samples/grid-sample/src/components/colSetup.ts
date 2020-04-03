@@ -54,22 +54,7 @@ export const COL_SETUP: IGridConfig = {
                     filterable: {},
                     sortable: {}
                 },
-                {
-                    header: 'First',
-                    attribute: 'first',
-                    width: 500,
-                    filterable: {},
-                    sortable: {},
-                    allowGrouping: true
-                },
-                {
-                    header: 'Bool',
-                    attribute: 'bool',
-                    width: 100,
-                    type: 'boolean',
-                    filterable: {},
-                    sortable: {}
-                },
+            
                 {
                     header: 'Number',
                     attribute: 'number',
@@ -127,30 +112,6 @@ export const COL_SETUP: IGridConfig = {
                     width: 120,
                     filterable: {},
                     sortable: {}
-                },
-                {
-                    header: 'First',
-                    attribute: 'first',
-                    width: 500,
-                    filterable: {},
-                    sortable: {},
-                    allowGrouping: true
-                },
-                {
-                    header: 'Bool',
-                    attribute: 'bool',
-                    width: 100,
-                    type: 'boolean',
-                    filterable: {},
-                    sortable: {}
-                },
-                {
-                    header: 'Number',
-                    attribute: 'number',
-                    type: 'number',
-                    width: 100,
-                    filterable: {},
-                    sortable: {}
                 }
                 
             ]
@@ -178,14 +139,6 @@ export const COL_SETUP: IGridConfig = {
                     attribute: 'bool',
                     width: 100,
                     type: 'boolean',
-                    filterable: {},
-                    sortable: {}
-                },
-                {
-                    header: 'Number',
-                    attribute: 'number',
-                    type: 'number',
-                    width: 100,
                     filterable: {},
                     sortable: {}
                 }
