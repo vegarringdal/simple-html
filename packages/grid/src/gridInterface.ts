@@ -40,9 +40,32 @@ export class GridInterface {
      **/
     private __subscribers: Function[] = [];
 
-    currentEntity:IEntity = null;
+    currentEntity: IEntity = null;
 
     constructor(private __CONFIG: IGridConfig) {
+
+        // set groupheight
+        let cellheight = 1;
+        __CONFIG.groups.forEach(group => {
+            if (group.rows) {
+                group.rows.forEach((_c, i) => {
+                    if (cellheight < i + 1) {
+                        cellheight = i + 1;
+                    }
+                });
+            }
+        });
+        __CONFIG.__cellRows = cellheight;
+        __CONFIG.__rowHeight = __CONFIG.cellHeight* cellheight;
+
+        //set left on groups
+        __CONFIG.groups.reduce((agg, element) => {
+                element.__left = agg;
+                return element.__left + element.width;
+        }, 0);
+        
+       
+
         this.__arrayUtils = new ArrayUtils(this);
         this.__selection = new Selection(this);
         if (this.__CONFIG.sortingSet) {
@@ -56,7 +79,7 @@ export class GridInterface {
         }
     }
 
-    manualConfigChange(){
+    manualConfigChange() {
         if (this.config) {
             if (this.config.sortingSet) {
                 this.__arrayUtils.setOrderBy(this.config.sortingSet);
@@ -69,7 +92,13 @@ export class GridInterface {
             }
 
             const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-            this.__arrayUtils.arraySort.SetConfigSort(this.config.columns);
+            this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x)=>{
+                if(x.rows){
+                    return x.rows
+                } else{
+                    x
+                }
+            }));
             this.displayedDataset = result.fixed;
         }
         this.reRender();
@@ -113,7 +142,13 @@ export class GridInterface {
         }
 
         const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-        this.__arrayUtils.arraySort.SetConfigSort(this.__CONFIG.columns);
+        this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x)=>{
+            if(x.rows){
+                return x.rows
+            } else{
+                x
+            }
+        }));
         this.displayedDataset = result.fixed;
         this.publishEvent('collection-change');
     }
@@ -149,43 +184,41 @@ export class GridInterface {
         return this.__selection;
     }
 
-    public __selectInternal(row: number){
+    public __selectInternal(row: number) {
         this.currentEntity = this.displayedDataset[row];
         //console.log('new current entity:', this.currentEntity)
     }
 
-    public select(row: number){
-        this.selection.highlightRow({} as any, row-1)
+    public select(row: number) {
+        this.selection.highlightRow({} as any, row - 1);
     }
 
-    public next(){
+    public next() {
         const row = this.displayedDataset.indexOf(this.currentEntity);
-        this.selection.highlightRow({} as any, row+1)
+        this.selection.highlightRow({} as any, row + 1);
     }
 
-    public prev(){
+    public prev() {
         const row = this.displayedDataset.indexOf(this.currentEntity);
-        this.selection.highlightRow({} as any, row-1)
+        this.selection.highlightRow({} as any, row - 1);
     }
 
-    public first(){
-
-        this.selection.highlightRow({} as any, 0)
+    public first() {
+        this.selection.highlightRow({} as any, 0);
     }
 
-    public last(){
-        
-        this.selection.highlightRow({} as any, this.displayedDataset.length-1)
+    public last() {
+        this.selection.highlightRow({} as any, this.displayedDataset.length - 1);
     }
-    
-    public edited(){
-        return this.__DATASET_ALL.filter((entity)=>{
-            if(entity.__controller.__edited){
+
+    public edited() {
+        return this.__DATASET_ALL.filter(entity => {
+            if (entity.__controller.__edited) {
                 return true;
             } else {
                 return false;
             }
-        })
+        });
     }
 
     publishEvent(event: string) {

@@ -1,8 +1,8 @@
 import { render, html } from 'lit-html';
 export { IGridConfig } from './interfaces';
-import { gridTemplate } from './templates/gridTemplate';
 import { GridInterface } from './gridInterface';
 import { customElement } from '@simple-html/core';
+import { generate } from './elements/generate';
 export { GridInterface } from './gridInterface';
 
 @customElement('free-grid')
@@ -38,6 +38,17 @@ export class FreeGrid extends HTMLElement {
         console.log('not implemented');
     }
 
+    public triggerEvent(eventName: string, data?: any){
+        console.log(eventName)
+        const event = new CustomEvent(eventName, {
+            bubbles:true,
+            detail: {
+                data
+            }
+          });
+          this.dispatchEvent(event);
+    }
+
     public resetRowCache() {
         if (this.interface) {
             const cacheLength =
@@ -59,7 +70,7 @@ export class FreeGrid extends HTMLElement {
             if (this.interface) {
                 render(
                     html`
-                        ${gridTemplate(this.interface, this.rowCache)}
+                        ${generate(this.interface, this.rowCache, this)}
                     `,
                     this
                 );
@@ -86,11 +97,3 @@ export class FreeGrid extends HTMLElement {
     }
 }
 
-/* if (!(<any>globalThis).hmrCache) {
-    customElements.define('free-grid', FreeGrid);
-} else {
-    if (!customElements.get('free-grid')) {
-        customElements.define('free-grid', FreeGrid);
-    }
-}
- */

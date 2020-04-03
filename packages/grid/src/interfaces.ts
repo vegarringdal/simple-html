@@ -1,9 +1,7 @@
-import { GridInterface } from './gridInterface';
 import { EntityHandler } from './entity';
 
-
-export interface IEntity  {
-    __controller ?: EntityHandler;
+export interface IEntity {
+    __controller?: EntityHandler;
     __KEY?: string | number;
     __group?: boolean;
     __groupID?: string;
@@ -13,25 +11,6 @@ export interface IEntity  {
     __groupChildren?: IEntity[];
     __groupExpanded?: boolean;
 }
-
-
-export type CallbackEvent = { target: HTMLInputElement };
-export type ColumnCallBackFn = (e: CallbackEvent, col: IColumns, connector: GridInterface) => void;
-export type CellCallbackFn = (
-    e: CallbackEvent,
-    col: IColumns,
-    row: number,
-    data: IEntity,
-    connector: GridInterface
-) => void;
-export type RowCallBackFn = (e: CallbackEvent, row: number, connector: GridInterface) => void;
-export type renderCallBackFn = (
-    html: any,
-    col: IColumns,
-    row: number,
-    data: IEntity,
-    connector: GridInterface
-) => void;
 
 export type FilterOperator =
     | 'EQUAL'
@@ -49,14 +28,12 @@ export type Triggers = 'input' | 'change';
 export type SelectionMode = 'none' | 'single' | 'multiple';
 export type rowCache = { i: number };
 
-
-export interface IAttributes{
+export interface IAttributes {
     attribute: string;
     type?: DataTypes; //defaults to text if not set
 }
 
-
-export interface IColumns {
+export interface ICell {
     header?: string;
     attribute: string;
     /**Default FALSE */
@@ -67,10 +44,11 @@ export interface IColumns {
     hide?: boolean;
     /**Default 100 */
     width?: number;
+    //filter
     filterable?: {
         /**Default FALSE */
         filterOverLabel?: boolean;
-        beforeFilterCallbackFn?: ColumnCallBackFn;
+        beforeFilterCallbackFn?: () => any;
         /**Default TRUE */
         auto?: boolean;
         /**Default CHANGE */
@@ -86,38 +64,45 @@ export interface IColumns {
         sortAscending?: boolean;
         /**Internal used for making sort icon on header*/
         sortNo?: number;
-        beforeSortCallbackFn?: ColumnCallBackFn;
+        beforeSortCallbackFn?: () => any;
         /**Default TRUE */
         auto?: boolean;
     };
     type?: DataTypes;
-    beforeEditCallbackFn?: CellCallbackFn;
+    beforeEditCallbackFn?: () => any;
     /**Default TRUE */
     autoUpdateData?: boolean;
-    afterEditCallbackFn?: CellCallbackFn;
+    afterEditCallbackFn?: () => any;
     editEventType?: Triggers;
-    rowRenderCallBackFn?: renderCallBackFn;
-    headerRenderCallBackFn?: renderCallBackFn;
-    headerRenderLabelCallBackFn?: renderCallBackFn;
-    headerRenderInputCallBackFn?: renderCallBackFn;
+    rowRenderCallBackFn?: () => any;
+    headerRenderCallBackFn?: () => any;
+    headerRenderLabelCallBackFn?: () => any;
+    headerRenderInputCallBackFn?: () => any;
     disableDragDrop?: boolean;
     allowGrouping?: boolean;
 }
 
+export type IgridConfigRows = ICell | ICell[];
+export type IgridConfigGroups = {
+    width: number;
+    //internal
+    __left?: number;
+    rows: IgridConfigRows[];
+};
+
 export interface IGridConfig {
-    columns: IColumns[];
-    rowHeight: number;
-    panelHeight?: number;
-    headerHeight: number;
+    groups: IgridConfigGroups[];
+    cellHeight: number;
     footerHeight: number;
+    panelHeight?: number;
     scrollLeft?: number;
     lastScrollTop?: number;
-    selectionMode?: SelectionMode;
-    beforeSelectionChangeCallBackFn?: RowCallBackFn;
-    afterSelectionChangeCallBackFn?: RowCallBackFn;
-    rowRenderCallBackFn?: renderCallBackFn;
-    footerRenderCallBackFn?: renderCallBackFn;
-    headerRenderCallBackFn?: renderCallBackFn;
+    selectionMode?: 'multiple' | 'single' | 'none';
+
+    // internals
+    __cellRows?: number;
+    __rowHeight?: number;
+
     /**
      * you need to set new or config for this to work
      * You can use this to save current sorting/grouping for later
@@ -132,7 +117,6 @@ export interface ISortObjectInterface {
     asc?: boolean;
     no?: number;
 }
-
 
 export interface IGroupingObj {
     title: string;

@@ -6,9 +6,8 @@ import {
     IFilterObj,
     IEntity,
     IGroupingObj,
-    CallbackEvent,
-    IColumns,
-    IGridConfig
+    IGridConfig,
+    ICell
 } from './interfaces';
 import { GridInterface } from './gridInterface';
 
@@ -21,13 +20,13 @@ export class ArrayUtils {
     public arrayFilter: ArrayFilter;
     public arraySort: ArraySort;
     public arrayGrouping: ArrayGrouping;
-    public sortCallbackBinded: (event: CallbackEvent, col: IColumns) => void;
+    public sortCallbackBinded: any
     public filterCallbackBinded: (
-        event: CallbackEvent,
-        col: IColumns,
+        event: any,
+        col: ICell,
         config: IGridConfig
     ) => void;
-    public groupingCallbackBinded: (event: CallbackEvent, col: IColumns) => void;
+    public groupingCallbackBinded: (event: any, col: ICell) => void;
     private gridInterface: GridInterface;
     public removeGroupBinded: any;
 
@@ -218,7 +217,7 @@ export class ArrayUtils {
     }
 
     private groupingCallback(_event: CallbackEvent, col: IColumns) {
-        let newF = col ? true : false;
+        /* let newF = col ? true : false;
         const groupings: IGroupingObj[] = this.gridInterface.config.groupingSet || [];
         col &&
             groupings.forEach(g => {
@@ -245,12 +244,12 @@ export class ArrayUtils {
         } else {
             this.gridInterface.displayedDataset = this.gridInterface.filteredDataset;
         }
-        this.gridInterface.publishEvent('collecton-grouping');
+        this.gridInterface.publishEvent('collecton-grouping'); */
     }
 
     private sortCallback(event: CallbackEvent, col: IColumns) {
         // toggle sort
-        const sortAsc =
+       /*  const sortAsc =
             col.sortable.sortAscending === null ? true : col.sortable.sortAscending ? false : true;
 
         // clear config, so it can be set after new sort
@@ -265,12 +264,12 @@ export class ArrayUtils {
         this.gridInterface.config.sortingSet = this.getOrderBy();
         this.arraySort.SetConfigSort(this.gridInterface.config.columns);
         this.gridInterface.displayedDataset = result.fixed;
-        this.gridInterface.publishEvent('collecton-sort');
+        this.gridInterface.publishEvent('collecton-sort'); */
     }
 
     private filterCallback(event: CallbackEvent, col: IColumns, config: IGridConfig) {
         // depending on col type we need to get data from correct value
-        switch (col.type) {
+       /*  switch (col.type) {
             case 'date':
                 col.filterable.currentValue = new Date(event.target.valueAsDate);
                 break;
@@ -304,6 +303,6 @@ export class ArrayUtils {
         const result = this.orderBy(this.gridInterface.filteredDataset, null, false);
         this.arraySort.SetConfigSort(this.gridInterface.config.columns);
         this.gridInterface.displayedDataset = result.fixed;
-        this.gridInterface.publishEvent('collecton-filter');
+        this.gridInterface.publishEvent('collecton-filter'); */
     }
 }

@@ -1,12 +1,14 @@
-import { CallbackEvent } from './interfaces';
 import { GridInterface } from './gridInterface';
+import { FreeGrid } from '.';
+
 export function scrollEvent(
     connector: GridInterface,
     rowPositionCache: {
         i: number;
-    }[]
+    }[],
+    ref:FreeGrid
 ) {
-    return (e: CallbackEvent) => {
+    return (e: any) => {
         if (connector.config.scrollLeft && connector.config.scrollLeft !== e.target.scrollLeft && connector.config.lastScrollTop == e.target.scrollTop) {
             connector.config.scrollLeft = e.target.scrollLeft;
             connector.reRender();
@@ -17,7 +19,7 @@ export function scrollEvent(
             if (document.activeElement) {
                 (document.activeElement as any).blur();
             }
-            const rowHeight = connector.config.rowHeight || 25;
+            const rowHeight = connector.config.__rowHeight;
             const cacheLength = rowPositionCache.length;
             const collectionLength = connector.displayedDataset.length;
             const cacheTotalHeight = rowHeight * cacheLength;
@@ -69,7 +71,7 @@ export function scrollEvent(
                 rowPositionCache.sort();
             }
             // need to call render directly so it updates right away
-            connector.render();
+            ref.triggerEvent('scrolled');
         }
     };
 }

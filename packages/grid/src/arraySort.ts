@@ -1,4 +1,4 @@
-import { IColumns, ISortObjectInterface } from './interfaces';
+import { ICell, ISortObjectInterface } from './interfaces';
 
 export class ArraySort {
     private lastSort: ISortObjectInterface[];
@@ -28,7 +28,7 @@ export class ArraySort {
         }
     }
 
-    public SetConfigSort(configColumns: IColumns[]) {
+    public SetConfigSort(configColumns: ICell[]) {
         const attribute: string[] = [];
         const asc: boolean[] = [];
         const no: number[] = [];
@@ -49,7 +49,7 @@ export class ArraySort {
         });
     }
 
-    public clearConfigSort(configColumns: IColumns[]) {
+    public clearConfigSort(configColumns: ICell[]) {
         configColumns.forEach(col => {
             if (col.sortable) {
                 col.sortable.sortAscending = null;

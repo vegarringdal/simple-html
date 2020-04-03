@@ -2,6 +2,7 @@
     --main-bg-color: #f5f5f5;
     --sec-bg-color: #ffffff;
     --main-bg-border: #e6e5e5;
+    --sec-bg-border: #e6e5e5;
     --main-bg-selected: #eceff1;
     --main-font-color: #424141;
     border: 0;
@@ -37,11 +38,13 @@ free-grid-body::-webkit-scrollbar-thumb {
     border-bottom: 1px solid var(--main-bg-border);
     box-sizing: border-box;
     position: absolute;
+    overflow: hidden;
 }
 
 .free-grid .free-grid-col {
     border: 0;
     border-right: 1px solid var(--main-bg-border);
+    border-top: 1px solid var(--main-bg-border);
     box-sizing: border-box;
     position: absolute;
     height: 100%;
@@ -83,7 +86,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     border-top: 1px solid var(--main-bg-border);
 }
 
-
 .free-grid .free-grid-body {
     position: absolute;
     box-sizing: border-box;
@@ -104,35 +106,53 @@ free-grid-body::-webkit-scrollbar-thumb {
     overflow-y: hidden;
 }
 
-.free-grid .free-grid-header-input-top {
+.free-grid .free-grid-group-row {
+    position: absolute;
     box-sizing: border-box;
     border: 0;
+    border-right: 1px solid var(--main-bg-border);
+}
+
+.free-grid .free-grid-group-filter {
+    position: absolute;
+    box-sizing: border-box;
+    border: 0;
+    border-right: 1px solid var(--main-bg-border);
+}
+
+.free-grid .free-grid-group-label {
+    position: absolute;
+    box-sizing: border-box;
+    border: 0;
+    border-right: 1px solid var(--main-bg-border);
+}
+
+.free-grid .free-grid-cell-label {
+    position: absolute;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: initial;
+    box-shadow: initial;
     border-bottom: 1px solid var(--main-bg-border);
-    border-radius: initial;
-    box-shadow: initial;
-    height: 50%;
-    width: 100%;
-    background-color: var(--sec-bg-color);
-    padding: 5px 10px;
+    border-right: 1px solid var(--main-bg-border);
+    background-color: var(--main-bg-color);
     margin: initial;
     transition: initial;
     outline-color: var(--main-bg-color);
     color: var(--main-font-color);
     font-family: inherit;
     font-size: inherit;
-
 }
 
-.free-grid .free-grid-header-input-bottom {
+.free-grid .free-grid-cell-filter {
+    position: absolute;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    border-top: 1px solid var(--main-bg-border);
-    height: 50%;
-    width: 100%;
-    background-color: var(--sec-bg-color);
-    padding: 5px 10px;
+    border-top: 1px solid var(--sec-bg-border);
+    border-right: 1px solid var(--sec-bg-border);
+    background-color: var(--alt-bg-color);
     margin: initial;
     transition: initial;
     outline-color: var(--main-bg-color);
@@ -141,24 +161,31 @@ free-grid-body::-webkit-scrollbar-thumb {
     font-size: inherit;
 }
 
-.free-grid .free-grid-row-checkbox-100 {
-    height: 100%;
-    width: initial;
-    left: initial;
-    position: initial;
-    display: block;
-    opacity: initial;
-    margin: auto;
+.free-grid .free-grid-cell {
+    position: absolute;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: initial;
+    box-shadow: initial;
+    border-top: 1px solid var(--sec-bg-border);
+    border-right: 1px solid var(--sec-bg-border);
+    background-color: var(--sec-bg-color);
+    margin: initial;
+    transition: initial;
+    outline-color: var(--main-bg-color);
+    color: var(--main-font-color);
+    font-family: inherit;
+    font-size: inherit;
 }
 
-.free-grid .free-grid-row-checkbox-50 {
-    height: 50%;
+.free-grid .free-grid-row-checkbox {
     width: initial;
     opacity: initial;
-    left: initial;
     position: initial;
     display: block;
     margin: auto;
+    padding-top: 2px;
+    height: 100%;
     background-color: var(--sec-bg-color);
     color: var(--main-font-color);
 }
@@ -166,51 +193,28 @@ free-grid-body::-webkit-scrollbar-thumb {
 .free-grid .free-grid-row-input {
     box-sizing: border-box;
     border: 0;
+    position: absolute;
     border-radius: initial;
     box-shadow: initial;
-    height: 100%;
     width: 100%;
+    height: 100%;
+    padding-left: 5px;
     background-color: transparent;
-    padding: 5px 10px;
     outline-color: var(--main-bg-color);
     color: var(--main-font-color);
     font-family: inherit;
     font-size: inherit;
 }
 
-.free-grid .free-grid-image-round {
-    border-radius: 50%;
+.free-grid .free-grid-label {
+    box-sizing: border-box;
+    border: 0;
+    border-radius: initial;
+    box-shadow: initial;
     height: 100%;
-    box-sizing: border-box;
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);
-    padding-top: 5px;
-}
-
-.free-grid .free-grid-label-bottom {
-    box-sizing: border-box;
-    border: 0;
-    border-radius: initial;
-    box-shadow: initial;
-    height: 50%;
     width: 100%;
-    position: relative;
-    text-align: center;
-    overflow: hidden;
-    user-select: none;
-    margin: initial;
-    font-weight: 700;
-}
-
-.free-grid .free-grid-label-top {
-    box-sizing: border-box;
-    border: 0;
-    border-radius: initial;
-    box-shadow: initial;
-    height: 50%;
-    width: 100%;
-    position: relative;
+    padding: 5px;
+    position: absolute;
     text-align: center;
     overflow: hidden;
     user-select: none;
@@ -221,20 +225,6 @@ free-grid-body::-webkit-scrollbar-thumb {
 .free-grid .free-grid-selected-row {
     box-shadow: none;
     background-color: var(--main-bg-selected);
-}
-
-.free-grid .free-grid-label-full {
-    box-sizing: border-box;
-    border: 0;
-    border-radius: initial;
-    box-shadow: initial;
-    height: 100%;
-    width: 100%;
-    position: relative;
-    text-align: center;
-    user-select: none;
-    margin: initial;
-    font-weight: 700;
 }
 
 .free-grid .free-grid-draggable-handler {
@@ -251,7 +241,6 @@ free-grid-body::-webkit-scrollbar-thumb {
 .free-grid .free-grid-vGridDragHandle {
     cursor: move;
 }
-
 
 .free-grid .free-grid-fa-sort-number[data-vgridsort]:after {
     font: x-small;
@@ -345,7 +334,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     margin: 0;
     display: flex;
     text-align: center;
-
 }
 
 .free-grid .free-grid-candrop {
