@@ -23,6 +23,7 @@
     font-size: var(--freegrid-font-size);
     font-weight: var(--freegrid-font-weight);
     color: var(--freegrid-main-font-color);
+    background-color: var(--freegrid-main-bg-color);
 }
 
 free-grid-body::-webkit-scrollbar {
@@ -95,6 +96,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     position: absolute;
     box-sizing: border-box;
     border-top: 1px solid var(--freegrid-main-bg-border);
+    
     min-width: 100%;
     overflow-y: auto;
 }
