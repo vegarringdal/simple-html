@@ -40,7 +40,7 @@ export class FreeGrid extends HTMLElement {
     }
 
     public triggerEvent(eventName: string, data?: any){
-        console.log(eventName)
+       // console.log(eventName)
         const event = new CustomEvent(eventName, {
             bubbles:true,
             detail: {
