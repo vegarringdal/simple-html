@@ -5,6 +5,9 @@
     --sec-bg-border: #e6e5e5;
     --main-bg-selected: #eceff1;
     --main-font-color: #424141;
+    --grid-font-size: 11px;
+    --grid-font-weight: 500;
+    --grid-font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
     border: 0;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -15,8 +18,9 @@
     display: block;
     position: relative;
     outline-color: var(--main-bg-color);
-    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    font-size: 12px;
+    font-family: var(--grid-font-family);
+    font-size: var(--grid-font-size);
+    font-weight: var(--grid-font-weight);
     color: var(--main-font-color);
 }
 
@@ -144,8 +148,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     transition: initial;
     outline-color: var(--main-bg-color);
     color: var(--main-font-color);
-    font-family: inherit;
-    font-size: inherit;
+ 
 }
 
 .free-grid .free-grid-image-round {
@@ -170,8 +173,10 @@ free-grid-body::-webkit-scrollbar-thumb {
     transition: initial;
     outline-color: var(--main-bg-color);
     color: var(--main-font-color);
-    font-family: inherit;
-    font-size: inherit;
+    font-family: var(--grid-font-family);
+    font-size: var(--grid-font-size);
+    font-weight: var(--grid-font-weight);
+
 }
 
 .free-grid .free-grid-cell-row {
@@ -187,8 +192,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     transition: initial;
     outline-color: var(--main-bg-color);
     color: var(--main-font-color);
-    font-family: inherit;
-    font-size: inherit;
+
 }
 
 .free-grid .free-grid-row-checkbox {
@@ -215,8 +219,9 @@ free-grid-body::-webkit-scrollbar-thumb {
     background-color: transparent;
     outline-color: var(--main-bg-color);
     color: var(--main-font-color);
-    font-family: inherit;
-    font-size: inherit;
+    font-family: var(--grid-font-family);
+    font-size: var(--grid-font-size);
+    font-weight: var(--grid-font-weight);
 }
 
 .free-grid .free-grid-label {
@@ -232,7 +237,9 @@ free-grid-body::-webkit-scrollbar-thumb {
     overflow: hidden;
     user-select: none;
     margin: initial;
-    font-weight: 700;
+    font-family: var(--grid-font-family);
+    font-size: var(--grid-font-size);
+    font-weight: var(--grid-font-weight);
 }
 
 .free-grid .free-grid-selected-row {
