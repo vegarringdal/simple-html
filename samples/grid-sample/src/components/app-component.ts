@@ -76,6 +76,133 @@ export default class extends HTMLElement {
                 <free-grid style="height:800px" class="free-grid" .interface=${this.connector}>
              
                 </free-grid>
+                <div class="m-1">
+                       <button
+                        @click=${() => {
+                            this.clear();
+                        }}
+                    >
+                        clear grouping/sorting etc
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.group();
+                        }}
+                    >
+                        group
+                    </button>
+                </div>
+                <div class="p-1">
+                    <button
+                        @click=${() => {
+                            this.replaceData(100);
+                        }}
+                    >
+                        set 100
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.replaceData(50);
+                        }}
+                    >
+                        set 50
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.replaceData(10);
+                        }}
+                    >
+                        set 10
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.replaceData(1);
+                        }}
+                    >
+                        set 1
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.replaceData(0);
+                        }}
+                    >
+                        set 0
+                    </button>
+                    <button
+                        @click=${() => {
+                            console.log(this.connector.edited());
+                        }}
+                    >
+                        edited
+                    </button>
+                </div>
+                <div class="m-1">
+                    <button
+                        @click=${() => {
+                            this.addData(1);
+                        }}
+                    >
+                        add 1
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.addData(10);
+                        }}
+                    >
+                        add 10
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.addData(100);
+                        }}
+                    >
+                        add 100
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.addData(1000);
+                        }}
+                    >
+                        add 1000
+                    </button>
+                </div>
+                <div>
+                    <button
+                        @click=${() => {
+                            this.connector.first();
+                        }}
+                    >
+                        first
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.connector.prev();
+                        }}
+                    >
+                        prev
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.connector.select(5);
+                        }}
+                    >
+                        select row 5
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.connector.next();
+                        }}
+                    >
+                        next
+                    </button>
+                    <button
+                        @click=${() => {
+                            this.connector.last();
+                        }}
+                    >
+                        last
+                    </button>
+                </div>
             </div>
         `;
     }
