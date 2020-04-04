@@ -37,9 +37,6 @@ export default class extends HTMLElement {
     render() {
         const config = this.connector.config;
         const scrollheight = this.connector.displayedDataset.length * config.__rowHeight;
-
-        console.log("wow")
-
         return html`
             <free-grid-body-content style="height:${scrollheight}px;width:${config.__rowWidth}px" class="free-grid-content">
                 ${this.rowPositionCache.map(row => html`<free-grid-row .connector=${this.connector} .row=${row} .ref=${this.ref}></free-grid-row>`)}
