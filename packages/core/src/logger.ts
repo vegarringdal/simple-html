@@ -4,13 +4,15 @@ import { getLoggerSymbol, getLoggerCountSymbol } from './symbols';
 // but this will give
 
 let log = false;
+let skipElements: string[] = [];
 
 if (!(<any>globalThis)[getLoggerSymbol()]) {
     (<any>globalThis)[getLoggerSymbol()] = new WeakMap();
     (<any>globalThis)[getLoggerCountSymbol()] = 0;
 }
 
-export function enableInternalLogger() {
+export function enableInternalLogger(skip: string[] = []) {
+    skipElements = skip;
     log = true;
 }
 
@@ -40,7 +42,7 @@ function getID(ctx: any) {
 }
 
 export function logger(name: string, ctx: any, tag: string) {
-    if (log) {
+    if (log && skipElements.indexOf(tag) === -1) {
         let id = getID(ctx);
         if (!id) {
             registerLoggerContext(ctx);
