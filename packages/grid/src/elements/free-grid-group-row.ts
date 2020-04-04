@@ -1,8 +1,8 @@
-import { customElement } from '@simple-html/core';
+import { customElement, property } from '@simple-html/core';
 import { GridInterface, FreeGrid } from '../';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
-import { property } from '@simple-html/core/dist/esm';
+
 
 @customElement('free-grid-group-row')
 export default class extends HTMLElement {
