@@ -21,7 +21,6 @@ export default class extends HTMLElement {
         this.style.height = config.cellHeight + 'px';
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
-        //@ts-ignore fix later- might add options for columns in cell rows
         this.col = this.group.rows[this.cellPosition];
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);

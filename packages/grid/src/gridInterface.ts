@@ -1,5 +1,5 @@
 import { FreeGrid } from '.';
-import { CallbackEvent, IColumns, IGroupingObj, IGridConfig, IEntity } from './interfaces';
+import { IGroupingObj, IGridConfig, IEntity, ICell } from './interfaces';
 import { ArrayUtils } from './arrayUtils';
 import { Selection } from './selection';
 import { EntityHandler } from './entity';
@@ -144,13 +144,7 @@ export class GridInterface {
         }
 
         const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-        this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x)=>{
-            if(x.rows){
-                return x.rows
-            } else{
-                x
-            }
-        }));
+        this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap(x=> x.rows));
         this.displayedDataset = result.fixed;
         this.publishEvent('collection-change');
     }
@@ -243,15 +237,15 @@ export class GridInterface {
         if (this.__freeGrid) this.__freeGrid.render();
     }
 
-    groupingCallback(event: CallbackEvent, col: IColumns) {
+    groupingCallback(event: any, col: ICell) {
         this.__arrayUtils.groupingCallbackBinded(event, col);
     }
 
-    filterCallback(event: CallbackEvent, col: IColumns) {
+    filterCallback(event: any, col: ICell) {
         this.__arrayUtils.filterCallbackBinded(event, col, this.__CONFIG);
     }
 
-    sortCallback(event: CallbackEvent, col: IColumns) {
+    sortCallback(event: any, col: ICell) {
         this.__arrayUtils.sortCallbackBinded(event, col);
     }
 
