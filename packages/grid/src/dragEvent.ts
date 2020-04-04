@@ -20,10 +20,7 @@ let delayDragEventTimer: any = null;
 export const columnDragDropPanel = (event: string, _connector: GridInterface) => {
     const drop = (e: any) => {
         if (dragCell.allowGrouping) {
-            _connector.groupingCallback(
-                e,
-                dragCell
-            );
+            _connector.groupingCallback(e, dragCell);
         }
         e.target.removeEventListener('mouseup', drop);
         (e.target as any).classList.remove('free-grid-candrop');
@@ -31,6 +28,7 @@ export const columnDragDropPanel = (event: string, _connector: GridInterface) =>
 
     return (_e: MouseEvent) => {
         if (event === 'enter' && dragCell) {
+            (_e.target as any).classList.add('free-grid-candrop');
             _e.target.addEventListener('mouseup', drop);
         }
 
@@ -56,8 +54,12 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
 
     // this will just move our label
     const mouseMove = function(e: MouseEvent) {
-        dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
-        dragColumnBlock.style.left = e.clientX + document.documentElement.scrollLeft + 'px';
+        setTimeout(()=>{
+            dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
+            dragColumnBlock.style.left = e.clientX + document.documentElement.scrollLeft + 'px';
+        },10)
+
+        
     };
 
     // main event binded to column
@@ -70,16 +72,14 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
             // register mouseup so we can clean up
             document.addEventListener('mouseup', mouseUp);
 
-            delayDragEventTimer = setTimeout(() => {
-                dragColumnBlock = document.createElement('div');
-                dragColumnBlock.style.top = -1200 + 'px'; // hide it
-                dragColumnBlock.style.left = -1200 + 'px';
-                dragColumnBlock.classList.add('free-grid');
-                dragColumnBlock.classList.add('free-grid-drag');
-                dragColumnBlock.textContent = _col.header;
-                document.body.appendChild(dragColumnBlock);
-                document.addEventListener('mousemove', mouseMove);
-            }, 500);
+            dragColumnBlock = document.createElement('div');
+            dragColumnBlock.style.top = -1200 + 'px'; // hide it
+            dragColumnBlock.style.left = -1200 + 'px';
+            dragColumnBlock.classList.add('free-grid');
+            dragColumnBlock.classList.add('free-grid-drag');
+            dragColumnBlock.textContent = _col.header;
+            document.body.appendChild(dragColumnBlock);
+            document.addEventListener('mousemove', mouseMove);
         }
 
         if (event === 'enter' && dragCell !== null) {

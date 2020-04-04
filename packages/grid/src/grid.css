@@ -356,6 +356,6 @@ free-grid-body::-webkit-scrollbar-thumb {
 }
 
 .free-grid .free-grid-candrop {
-    box-shadow: none;
-    background-color: var(--freegrid-main-bg-selected);
+
+    background-color: var(--freegrid-alt-bg-color);
 }
