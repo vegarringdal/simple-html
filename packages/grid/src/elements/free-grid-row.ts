@@ -55,7 +55,17 @@ export default class extends HTMLElement {
             this.classList.remove('free-grid-selected-row');
         }
 
+        const grouping =
+            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+
         return html`
+            <free-grid-col
+                class="free-grid-grouping-row"
+                style="width:${grouping ? grouping * 15 : 0}px;left:0; display:${grouping
+                    ? 'block'
+                    : 'none'}"
+            >
+            </free-grid-col>
             ${config.groups.map(group => {
                 return html`
                     <free-grid-group-row

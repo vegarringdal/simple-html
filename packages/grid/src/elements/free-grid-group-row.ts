@@ -3,7 +3,6 @@ import { GridInterface, FreeGrid } from '../';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 
-
 @customElement('free-grid-group-row')
 export default class extends HTMLElement {
     classList: any = 'free-grid-group-row';
@@ -15,21 +14,27 @@ export default class extends HTMLElement {
 
     connectedCallback() {
         const config = this.connector.config;
+        const grouping =
+            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+        let curleft = grouping ? grouping * 15 : 0;
         this.style.display = 'block';
         this.style.height = config.__rowHeight + 'px';
         this.style.width = this.group.width + 'px';
-        this.style.left = this.group.__left + 'px';
+        this.style.left = this.group.__left + curleft + 'px';
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: any) {
-        if (e.type === 'column-resize') {
+        if (e.type === 'column-resize' || e.type === 'reRender') {
+            const grouping =
+                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+            let curleft = grouping ? grouping * 15 : 0;
             this.style.width = this.group.width + 'px';
-            this.style.left = this.group.__left + 'px';
+            this.style.left = this.group.__left + curleft + 'px';
         }
         if (e.type === 'reRender') {
-            this.render()
+            this.render();
         }
     }
 

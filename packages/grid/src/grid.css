@@ -50,7 +50,7 @@ free-grid-body::-webkit-scrollbar-thumb {
 .free-grid .free-grid-col {
     border: 0;
     border-right: 1px solid var(--freegrid-main-bg-border);
-    border-top: 1px solid var(--freegrid-main-bg-border);
+    /* border-top: 1px solid var(--freegrid-main-bg-border); */
     box-sizing: border-box;
     position: absolute;
     height: 100%;
@@ -319,19 +319,14 @@ free-grid-body::-webkit-scrollbar-thumb {
     border: 1px solid var(--freegrid-main-bg-border);
 }
 
-.free-grid .free-grid-grouping-row {
-    height: 100%;
-    box-sizing: border-box;
-    position: absolute;
-    background-color: var(--freegrid-main-bg-color);
-}
+
 
 .free-grid .free-grid-grouping-row {
     height: 100%;
     box-sizing: border-box;
     position: absolute;
     background-color: var(--freegrid-main-bg-color);
-    border-left: 1px solid var(--freegrid-main-bg-border);
+    border-right: 1px solid var(--freegrid-main-bg-border);
 }
 
 .free-grid .free-grid-col-group {

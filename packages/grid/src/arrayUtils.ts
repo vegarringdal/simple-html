@@ -212,6 +212,7 @@ export class ArrayUtils {
     }
 
     private groupingCallback(_event: any, _col: ICell) {
+        console.log("grouping")
         /* let newF = col ? true : false;
         const groupings: IGroupingObj[] = this.gridInterface.config.groupingSet || [];
         col &&
