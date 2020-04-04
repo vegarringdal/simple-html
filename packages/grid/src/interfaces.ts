@@ -82,7 +82,7 @@ export interface ICell {
     allowGrouping?: boolean;
 }
 
-export type IgridConfigRows = ICell | ICell[];
+export type IgridConfigRows = ICell;
 export type IgridConfigGroups = {
     width: number;
     //internal

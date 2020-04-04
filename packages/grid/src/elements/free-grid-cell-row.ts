@@ -24,16 +24,21 @@ export default class extends HTMLElement {
         //@ts-ignore fix later- might add options for columns in cell rows
         this.col = this.group.rows[this.cellPosition];
         this.ref.addEventListener('column-resize', this);
+        this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: any) {
         if (e.type === 'column-resize') {
             this.style.width = this.group.width + 'px';
         }
+        if (e.type === 'reRender') {
+            this.render()
+        }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
+        this.ref.removeEventListener('reRender', this);
     }
 
     render() {

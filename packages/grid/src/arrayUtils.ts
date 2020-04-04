@@ -247,13 +247,19 @@ export class ArrayUtils {
         this.gridInterface.publishEvent('collecton-grouping'); */
     }
 
-    private sortCallback(event: CallbackEvent, col: IColumns) {
+    private sortCallback(event: any, col: ICell) {
         // toggle sort
-       /*  const sortAsc =
+        const sortAsc =
             col.sortable.sortAscending === null ? true : col.sortable.sortAscending ? false : true;
 
         // clear config, so it can be set after new sort
-        this.arraySort.clearConfigSort(this.gridInterface.config.columns);
+        this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap((x)=>{
+            if(x.rows){
+                return x.rows
+            } else{
+                x
+            }
+        }));
 
         // sort, update config, set viewRows and rerender
         const result = this.orderBy(
@@ -262,9 +268,15 @@ export class ArrayUtils {
             (<any>event).shiftKey
         );
         this.gridInterface.config.sortingSet = this.getOrderBy();
-        this.arraySort.SetConfigSort(this.gridInterface.config.columns);
+        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap((x)=>{
+            if(x.rows){
+                return x.rows
+            } else{
+                x
+            }
+        }));
         this.gridInterface.displayedDataset = result.fixed;
-        this.gridInterface.publishEvent('collecton-sort'); */
+        this.gridInterface.publishEvent('collecton-sort'); 
     }
 
     private filterCallback(event: CallbackEvent, col: IColumns, config: IGridConfig) {

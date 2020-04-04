@@ -1,5 +1,5 @@
 import { customElement } from '@simple-html/core';
-import { GridInterface, FreeGrid } from '@simple-html/grid/dist/esm';
+import { GridInterface, FreeGrid } from '../';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 
@@ -21,16 +21,21 @@ export default class extends HTMLElement {
         //@ts-ignore fix later- might add options for columns in cell rows
         this.attribute = this.group.rows[this.cellPosition].attribute;
         this.ref.addEventListener('column-resize', this);
+        this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: any) {
         if (e.type === 'column-resize') {
             this.style.width = this.group.width + 'px';
         }
+        if (e.type === 'reRender') {
+            this.render()
+        }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
+        this.ref.removeEventListener('reRender', this);
     }
 
     render() {

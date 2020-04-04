@@ -37,7 +37,7 @@ export class DummyDataGenerator {
             // up count
             this.totalGenerated++;
             const random1 = Math.floor(Math.random() * 27) + 0;
-            const random2 = Math.floor(Math.random() * 27) + 0;
+            //const random2 = Math.floor(Math.random() * 27) + 0;
             const random3 = Math.floor(Math.random() * 27) + 0;
             const random4 = Math.floor(Math.random() * 27) + 0;
             const date = new Date(
