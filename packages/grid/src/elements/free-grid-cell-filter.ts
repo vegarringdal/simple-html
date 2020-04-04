@@ -13,6 +13,7 @@ export default class extends HTMLElement {
     currentHeight: number;
     group: IgridConfigGroups;
     label: string;
+    attribute: string;
 
     connectedCallback() {
         const config = this.connector.config;

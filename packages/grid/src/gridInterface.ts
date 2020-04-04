@@ -94,13 +94,7 @@ export class GridInterface {
             }
 
             const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-            this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x)=>{
-                if(x.rows){
-                    return x.rows
-                } else{
-                    x
-                }
-            }));
+            this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap(x=> x.rows));
             this.displayedDataset = result.fixed;
         }
         this.reRender();

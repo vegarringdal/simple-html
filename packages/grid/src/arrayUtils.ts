@@ -211,7 +211,7 @@ export class ArrayUtils {
         this.gridInterface.publishEvent('collecton-grouping');
     }
 
-    private groupingCallback(_event: any, col: ICell) {
+    private groupingCallback(_event: any, _col: ICell) {
         /* let newF = col ? true : false;
         const groupings: IGroupingObj[] = this.gridInterface.config.groupingSet || [];
         col &&

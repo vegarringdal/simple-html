@@ -12,7 +12,7 @@ import '@simple-html/grid';
 // import our app
 import './components/app-component';
 
-import { enableInternalLogger } from '@simple-html/core';
+// import { enableInternalLogger } from '@simple-html/core';
  //enableInternalLogger();
 
 console.log('sample-v:', 1);
