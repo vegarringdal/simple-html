@@ -73,7 +73,7 @@ export default class extends HTMLElement {
     public render() {
         return html`
             <div class="flex flex-col">
-                <free-grid style="height:800px" class="free-grid" .interface=${this.connector}>
+                <free-grid style="height:700px" class="free-grid" .interface=${this.connector}>
              
                 </free-grid>
                 <div class="m-1">
