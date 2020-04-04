@@ -66,8 +66,8 @@ export default class extends HTMLElement {
     }
 
     public addData(x: number) {
-        this.data = this.data.concat(this.dummyDataGenerator.generateData(x));
-        this.connector.setData(this.data);
+        //this.data = this.data.concat(this.dummyDataGenerator.generateData(x));
+        this.connector.setData(this.dummyDataGenerator.generateData(x), true);
     }
 
     public render() {

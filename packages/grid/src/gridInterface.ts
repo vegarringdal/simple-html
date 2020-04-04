@@ -107,6 +107,15 @@ export class GridInterface {
             const x = Array.from(data, o => new Proxy(o, new EntityHandler() as any));
             this.__DATASET_ALL.push(...x);
             this.__DATASET_FILTERED.push(...x);
+            this.__DATASET_ALL.forEach((entity, i) => {
+                if (entity && !(<any>entity).__KEY) {
+                    (<any>entity).__KEY = this.selection.getKey();
+                } else {
+                    if (!this.__DATASET_ALL[i]) {
+                        this.__DATASET_ALL[i] = { __KEY: this.selection.getKey() };
+                    }
+                }
+            });
         } else {
             this.__DATASET_ALL = Array.from(data, o => new Proxy(o, new EntityHandler() as any)); // <- do I want to update user array Im allready setting a key on it ?
             this.__DATASET_ALL.forEach((entity, i) => {
