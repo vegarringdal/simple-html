@@ -31,6 +31,7 @@ export class FreeGrid extends HTMLElement {
     public reRender() {
         requestAnimationFrame(() => {
             this.render();
+            this.triggerEvent('reRender');
         });
     }
 
@@ -103,5 +104,7 @@ export class FreeGrid extends HTMLElement {
             //console.timeEnd('render');
         });
     }
+
+    
 }
 

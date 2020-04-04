@@ -18,16 +18,21 @@ export default class extends HTMLElement {
         this.currentHeight = this.row.i * config.__rowHeight;
         this.style.transform = `translate3d(0px, ${this.currentHeight}px, 0px)`;
         this.ref.addEventListener('vertical-scroll', this);
+        this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: any) {
         if (e.type === 'vertical-scroll') {
             this.render();
         }
+        if (e.type === 'reRender') {
+            this.render();
+        }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('vertical-scroll', this);
+        this.ref.removeEventListener('reRender', this);
     }
 
     render() {
