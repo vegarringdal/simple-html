@@ -6,7 +6,7 @@ import { html } from 'lit-html';
 
 @customElement('free-grid-group-label')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-group-label'
+    classList: any = 'free-grid-group-label';
     connector: GridInterface;
     ref: FreeGrid;
     currentHeight: number;
@@ -18,6 +18,18 @@ export default class extends HTMLElement {
         this.style.height = config.__rowHeight + 'px';
         this.style.width = this.group.width + 'px';
         this.style.left = this.group.__left + 'px';
+        this.ref.addEventListener('column-resize', this);
+    }
+
+    handleEvent(e: any) {
+        if (e.type === 'column-resize') {
+            this.style.width = this.group.width + 'px';
+            this.style.left = this.group.__left + 'px';
+        }
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('column-resize', this);
     }
 
     render() {

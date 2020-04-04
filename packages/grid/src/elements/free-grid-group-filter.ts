@@ -6,9 +6,9 @@ import { html } from 'lit-html';
 
 @customElement('free-grid-group-filter')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-group-filter'
+    classList: any = 'free-grid-group-filter';
     connector: GridInterface;
-    rowNo: number
+    rowNo: number;
     ref: FreeGrid;
     currentHeight: number;
     group: IgridConfigGroups;
@@ -20,6 +20,18 @@ export default class extends HTMLElement {
         this.style.width = this.group.width + 'px';
         this.style.left = this.group.__left + 'px';
         this.style.top = config.__rowHeight + 'px';
+        this.ref.addEventListener('column-resize', this);
+    }
+
+    handleEvent(e: any) {
+        if (e.type === 'column-resize') {
+            this.style.width = this.group.width + 'px';
+            this.style.left = this.group.__left + 'px';
+        }
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('column-resize', this);
     }
 
     render() {

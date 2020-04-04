@@ -23,9 +23,23 @@ export default class extends HTMLElement {
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         //@ts-ignore fix later- might add options for columns in cell rows
         this.col = this.group.rows[this.cellPosition];
+        this.ref.addEventListener('column-resize', this);
+    }
+
+    handleEvent(e: any) {
+        if (e.type === 'column-resize') {
+            this.style.width = this.group.width + 'px';
+        }
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('column-resize', this);
     }
 
     render() {
+
+        
+
         if (this.connector.displayedDataset[this.rowNo]) {
             const col = this.col;
             const data = this.connector.displayedDataset[this.rowNo][col.attribute];

@@ -20,9 +20,22 @@ export default class extends HTMLElement {
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         //@ts-ignore fix later- might add options for columns in cell rows
         this.attribute = this.group.rows[this.cellPosition].attribute;
+        this.ref.addEventListener('column-resize', this);
+    }
+
+    handleEvent(e: any) {
+        if (e.type === 'column-resize') {
+            this.style.width = this.group.width + 'px';
+        }
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('column-resize', this);
     }
 
     render() {
+        
+
         return html`
             <input class="free-grid-row-input" />
         `;
