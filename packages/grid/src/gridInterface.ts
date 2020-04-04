@@ -184,13 +184,21 @@ export class GridInterface {
     }
 
     public next() {
-        const row = this.displayedDataset.indexOf(this.currentEntity);
-        this.selection.highlightRow({} as any, row + 1);
+        let row = this.displayedDataset.indexOf(this.currentEntity) +1;
+        if(this.displayedDataset.length-1 < row){
+            row = 0
+        }
+        this.selection.highlightRow({} as any, row);
     }
 
     public prev() {
-        const row = this.displayedDataset.indexOf(this.currentEntity);
-        this.selection.highlightRow({} as any, row - 1);
+        let row = this.displayedDataset.indexOf(this.currentEntity) -1;
+        if(row < 0){
+            row = this.displayedDataset.length -1
+            this.selection.highlightRow({} as any, row);
+        }
+        this.selection.highlightRow({} as any, row);
+        
     }
 
     public first() {
