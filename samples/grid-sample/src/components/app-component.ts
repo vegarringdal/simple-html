@@ -2,8 +2,8 @@ import { html } from 'lit-html';
 import { COL_SETUP as gridConfig } from './colSetup';
 import { DummyDataGenerator } from './dummyDataGenerator';
 import { GridInterface } from '@simple-html/grid';
-import { customElement, property } from '@simple-html/core';
-import { requestRender } from '@simple-html/core/src/requestRender';
+import { customElement, property, requestRender } from '@simple-html/core';
+
 
 @customElement('app-component')
 export default class extends HTMLElement {
