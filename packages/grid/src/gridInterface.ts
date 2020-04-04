@@ -59,11 +59,13 @@ export class GridInterface {
         __CONFIG.__rowHeight = __CONFIG.cellHeight* cellheight;
 
         //set left on groups
+        let totalWidth = 0;
         __CONFIG.groups.reduce((agg, element) => {
                 element.__left = agg;
+                totalWidth = totalWidth + element.width
                 return element.__left + element.width;
         }, 0);
-        
+        __CONFIG.__rowWidth =  totalWidth;
        
 
         this.__arrayUtils = new ArrayUtils(this);

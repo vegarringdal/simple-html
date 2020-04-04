@@ -17,17 +17,17 @@ export default class extends HTMLElement {
         this.style.height = config.__rowHeight + 'px';
         this.currentHeight = this.row.i * config.__rowHeight;
         this.style.transform = `translate3d(0px, ${this.currentHeight}px, 0px)`;
-        this.ref.addEventListener('scrolled', this);
+        this.ref.addEventListener('vertical-scroll', this);
     }
 
     handleEvent(e: any) {
-        if (e.type === 'scrolled') {
+        if (e.type === 'vertical-scroll') {
             this.render();
         }
     }
 
     disconnectedCallback() {
-        this.ref.removeEventListener('scrolled', this);
+        this.ref.removeEventListener('vertical-scroll', this);
     }
 
     render() {
@@ -41,7 +41,7 @@ export default class extends HTMLElement {
 
         const rowClick = (e: any) => {
             this.connector.selection.highlightRow(<any>e, this.row.i);
-            this.ref.triggerEvent('scrolled');
+            this.ref.triggerEvent('vertical-scroll');
         };
 
         if (this.connector.selection.isSelected(this.row.i)) {

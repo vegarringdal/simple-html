@@ -102,6 +102,7 @@ export interface IGridConfig {
     // internals
     __cellRows?: number;
     __rowHeight?: number;
+    __rowWidth?: number;
 
     /**
      * you need to set new or config for this to work

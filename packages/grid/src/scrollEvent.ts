@@ -11,7 +11,7 @@ export function scrollEvent(
     return (e: any) => {
         if (connector.config.scrollLeft && connector.config.scrollLeft !== e.target.scrollLeft && connector.config.lastScrollTop == e.target.scrollTop) {
             connector.config.scrollLeft = e.target.scrollLeft;
-            connector.reRender();
+            ref.triggerEvent('horizontal-scroll');
         } else {
 
            // window.focus();
@@ -71,7 +71,7 @@ export function scrollEvent(
                 rowPositionCache.sort();
             }
             // need to call render directly so it updates right away
-            ref.triggerEvent('scrolled');
+            ref.triggerEvent('vertical-scroll');
         }
     };
 }

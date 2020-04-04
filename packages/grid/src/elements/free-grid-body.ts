@@ -25,7 +25,7 @@ export default class extends HTMLElement {
         console.log("wow")
 
         return html`
-            <free-grid-body-content style="height:${scrollheight}px;width:500px" class="free-grid-content">
+            <free-grid-body-content style="height:${scrollheight}px;width:${config.__rowWidth}px" class="free-grid-content">
                 ${this.rowPositionCache.map(row => html`<free-grid-row .connector=${this.connector} .row=${row} .ref=${this.ref}></free-grid-row>`)}
             </free-grid-body-content>
         `;
