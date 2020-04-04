@@ -93,6 +93,7 @@ export default class extends HTMLElement {
                 <input value=${data} class="free-grid-row-input" />
             `;
         } else {
+            console.log(this.rowNo)
             return '';
         }
     }

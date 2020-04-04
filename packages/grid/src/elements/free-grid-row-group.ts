@@ -39,13 +39,13 @@ export default class extends HTMLElement {
         const config = this.connector.config;
 
         // check if height is changed
-        if (this.currentHeight !== this.row.i * config.__rowHeight) {
+      //  if (this.currentHeight !== this.row.i * config.__rowHeight) {
             this.currentHeight = this.row.i * config.__rowHeight;
             this.style.transform = `translate3d(0px, ${this.row.i * config.__rowHeight}px, 0px)`;
-        }
+       // }
         const entity = this.connector.displayedDataset[this.row.i] ;
 
-
+        if(entity){
         const changeGrouping = () => {
             if (entity.__groupExpanded) {
                 this.connector.groupCollapse(entity.__groupID);
@@ -83,5 +83,8 @@ export default class extends HTMLElement {
                 </free-grid-col>
             `}
         `;
+        } else{
+            return ''
+        }
     }
 }

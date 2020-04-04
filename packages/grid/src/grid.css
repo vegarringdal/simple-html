@@ -339,6 +339,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-shadow: initial;
     padding: 5px 10px;
     height: 100%;
+    background-color: var(--freegrid-main-bg-color);
 }
 
 .free-grid .free-grid-grouping-panel-p {

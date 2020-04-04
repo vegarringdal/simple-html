@@ -16,6 +16,7 @@ export default class extends HTMLElement {
         this.style.top = config.panelHeight + config.__rowHeight * 2 + 'px';
         this.style.bottom = config.footerHeight + 'px';
         this.ref.addEventListener('column-resize', this);
+        this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
     }
 
@@ -26,9 +27,14 @@ export default class extends HTMLElement {
         if (e.type === 'reRender') {
             this.render();
         }
+        if (e.type === 'vertical-scroll') {
+            this.render();
+        }
+
     }
 
     disconnectedCallback() {
+        this.ref.removeEventListener('vertical-scroll', this);
         this.ref.removeEventListener('column-resize', this);
         this.ref.removeEventListener('reRender', this);
     }
@@ -45,7 +51,7 @@ export default class extends HTMLElement {
                     const entity = this.connector.displayedDataset[row.i];
                     const data = entity && entity.__group;
                     if (data) {
-                        return html`
+                         return html`
                             <free-grid-row-group
                                 .connector=${this.connector}
                                 .row=${row}
