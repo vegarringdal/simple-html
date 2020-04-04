@@ -1,20 +1,33 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { html, svg } from 'lit-html';
+import { FreeGrid } from '..';
 
 @customElement('free-grid-panel')
 export default class extends HTMLElement {
     classList: any = 'free-grid-panel';
     connector: GridInterface;
+    ref: FreeGrid;
 
     connectedCallback() {
         const config = this.connector.config;
         this.style.height = config.panelHeight + 'px';
+        this.ref.addEventListener('reRender', this);
     }
 
+    handleEvent(e: any) {
+        if (e.type === 'reRender') {
+            this.render();
+        }
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('reRender', this);
+    }
+    
     render() {
         const grouping = this.connector.config.groupingSet || [];
-        
+
         const mouseEnter = (e: MouseEvent) => {
             (<HTMLElement>e.target)
                 .getElementsByClassName('free-grid-icon')[0]

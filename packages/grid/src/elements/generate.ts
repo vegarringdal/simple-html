@@ -15,12 +15,21 @@ import { GridInterface } from '../gridInterface';
 import { rowCache } from '../interfaces';
 import { html } from 'lit-html';
 import { FreeGrid } from '../';
+import { columnDragDropPanel } from '../dragEvent';
+import { eventIF } from '../eventIF';
 
 export function generate(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
     const scroll = scrollEvent(connector, rowPositionCache, ref);
-
+    const enter = columnDragDropPanel('enter', connector);
+    const leave = columnDragDropPanel('leave', connector);
+    
     return html`
-        <free-grid-panel .connector=${connector} .ref=${ref}></free-grid-panel>
+        <free-grid-panel
+            .connector=${connector}
+            .ref=${ref}
+            @custom-1=${eventIF(true, 'mouseleave', leave)}
+            @custom-2=${eventIF(true, 'mouseenter', enter)}
+        ></free-grid-panel>
         <free-grid-header .connector=${connector} .ref=${ref}></free-grid-header>
         <free-grid-body
             .connector=${connector}

@@ -1,10 +1,11 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface, FreeGrid } from '..';
-import { IgridConfigGroups, ICell } from '../interfaces';
+import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
 import { eventIF } from '../eventIF';
+import { columnDragDrop } from '../dragEvent';
 
 @customElement('free-grid-cell-label')
 export default class extends HTMLElement {
@@ -24,6 +25,7 @@ export default class extends HTMLElement {
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         //@ts-ignore fix later- might add options for columns in cell rows
         this.label = this.group.rows[this.cellPosition].header;
+
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);
     }
@@ -43,18 +45,17 @@ export default class extends HTMLElement {
     }
 
     render() {
-        const col: ICell = this.group.rows[this.cellPosition];
+        const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
         const mouseup = (e: MouseEvent) => {
-            if (col.sortable.auto !== false) {
+            if (cell.sortable.auto !== false) {
                 console.log('sort');
-                connector.sortCallback(<any>e, col);
+                connector.sortCallback(<any>e, cell);
             }
         };
 
         const sortCallback = (e: any) => {
             console.log(e.type);
-
             if ((<any>e).button === 0) {
                 e.target.addEventListener('mouseup', mouseup);
                 setTimeout(() => {
@@ -65,12 +66,18 @@ export default class extends HTMLElement {
             }
         };
 
+        const mousedown = columnDragDrop('dragstart', cell, connector);
+        const mouseenter = columnDragDrop('enter', cell, connector);
+
         this.style.width = this.group.width + 'px';
 
         return html`
             <span
+                .cell=${cell}
                 class="free-grid-label"
-                @custom=${eventIF(col.sortable, 'mousedown', sortCallback)}
+                @custom=${eventIF(cell.sortable, 'mousedown', sortCallback)}
+                @custom-1=${eventIF(!cell.disableDragDrop, 'mousedown', mousedown)}
+                @custom-2=${eventIF(!cell.disableDragDrop, 'mouseenter', mouseenter)}
                 >${this.label}
                 ${sorticonElement(this.connector, this.group.rows[this.cellPosition])}</span
             >

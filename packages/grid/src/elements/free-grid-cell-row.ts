@@ -13,7 +13,7 @@ export default class extends HTMLElement {
     currentHeight: number;
     @property() rowNo: number;
     group: IgridConfigGroups;
-    col: ICell;
+    cell: ICell;
 
     connectedCallback() {
         const config = this.connector.config;
@@ -21,7 +21,7 @@ export default class extends HTMLElement {
         this.style.height = config.cellHeight + 'px';
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
-        this.col = this.group.rows[this.cellPosition];
+        this.cell = this.group.rows[this.cellPosition];
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);
     }
@@ -45,15 +45,15 @@ export default class extends HTMLElement {
         
 
         if (this.connector.displayedDataset[this.rowNo]) {
-            const col = this.col;
-            const data = this.connector.displayedDataset[this.rowNo][col.attribute];
-            switch (col.type) {
+            const cell = this.cell;
+            const data = this.connector.displayedDataset[this.rowNo][cell.attribute];
+            switch (cell.type) {
                 case 'boolean':
                     return html`
                         <input
-                            ?readonly=${col.readonly}
-                            ?disabled=${col.disabled}
-                            @custom=${eventIF(true, col.editEventType || 'change', () => {})}
+                            ?readonly=${cell.readonly}
+                            ?disabled=${cell.disabled}
+                            @custom=${eventIF(true, cell.editEventType || 'change', () => {})}
                             type="checkbox"
                             .checked=${data}
                             class="free-grid-row-checkbox"
@@ -67,10 +67,10 @@ export default class extends HTMLElement {
                 case 'date':
                     return html`
                         <input
-                            ?readonly=${col.readonly}
-                            ?disabled=${col.disabled}
-                            @custom=${eventIF(true, col.editEventType || 'change', () => {})}
-                            type=${col.type}
+                            ?readonly=${cell.readonly}
+                            ?disabled=${cell.disabled}
+                            @custom=${eventIF(true, cell.editEventType || 'change', () => {})}
+                            type=${cell.type}
                             .valueAsDate=${data || null}
                             class="free-grid-row-input"
                         />
@@ -78,10 +78,10 @@ export default class extends HTMLElement {
                 case 'number':
                     return html`
                         <input
-                            ?readonly=${col.readonly}
-                            ?disabled=${col.disabled}
-                            @custom=${eventIF(true, col.editEventType || 'change', () => {})}
-                            type=${col.type}
+                            ?readonly=${cell.readonly}
+                            ?disabled=${cell.disabled}
+                            @custom=${eventIF(true, cell.editEventType || 'change', () => {})}
+                            type=${cell.type}
                             .valueAsNumber=${data}
                             class="free-grid-row-input"
                         />

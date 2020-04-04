@@ -211,9 +211,9 @@ export class ArrayUtils {
         this.gridInterface.publishEvent('collecton-grouping');
     }
 
-    private groupingCallback(_event: any, _col: ICell) {
-        console.log("grouping")
-        /* let newF = col ? true : false;
+    private groupingCallback(_event: any, col: ICell) {
+
+        let newF = col ? true : false;
         const groupings: IGroupingObj[] = this.gridInterface.config.groupingSet || [];
         col &&
             groupings.forEach(g => {
@@ -225,13 +225,13 @@ export class ArrayUtils {
         if (newF) {
             groupings.push({ title: col.header, field: col.attribute });
         }
-        this.arraySort.clearConfigSort(this.gridInterface.config.columns);
+        this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap(x => x.rows));
         this.arraySort.reset();
         groupings.forEach((group: IGroupingObj) => {
             this.arraySort.setOrderBy(group.field, true);
         });
         this.arraySort.runOrderbyOn(this.gridInterface.filteredDataset);
-        this.arraySort.SetConfigSort(this.gridInterface.config.columns);
+        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap(x => x.rows));
         if (groupings.length) {
             const result = this.group(this.gridInterface.filteredDataset, groupings, true);
             this.gridInterface.config.groupingSet = this.getGrouping();
@@ -240,7 +240,7 @@ export class ArrayUtils {
         } else {
             this.gridInterface.displayedDataset = this.gridInterface.filteredDataset;
         }
-        this.gridInterface.publishEvent('collecton-grouping'); */
+        this.gridInterface.publishEvent('collecton-grouping'); 
     }
 
     private sortCallback(event: any, col: ICell) {
