@@ -6,7 +6,7 @@ import { logger } from './logger';
  * @property decorator
  *
  */
-export function property(): Function {
+export function property(options:{skipRender: boolean}=({}as any)): Function {
     return function reg(_class: Function, prop: string): void {
         Object.defineProperty(_class, prop, {
             get: function() {
@@ -21,7 +21,7 @@ export function property(): Function {
                 if (this.valuesChanged && oldValue !== x) {
                     this.valuesChanged('property', prop, oldValue, x);
                 }
-                if (oldValue !== x) {
+                if (oldValue !== x && !options.skipRender) {
                     requestRender(this);
                 }
             },

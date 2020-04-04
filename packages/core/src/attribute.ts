@@ -11,7 +11,7 @@ import { logger } from './logger';
  * simple decorator for tracking custom element attribute changes
  * PS! do not set value manually, does not do anything
  */
-export function attribute(): Function {
+export function attribute(options:{skipRender: boolean}=({}as any)): Function {
     return function reg(_class: any, prop: string): void {
         Object.defineProperty(_class, prop, {
             get: function() {
@@ -26,7 +26,7 @@ export function attribute(): Function {
                 if (this.valuesChanged && oldValue !== x) {                   
                     this.valuesChanged('property', prop, oldValue, x);
                 }
-                if (oldValue !== x) {
+                if (oldValue !== x && !options.skipRender) {
                     requestRender(this);
                 }
             },
