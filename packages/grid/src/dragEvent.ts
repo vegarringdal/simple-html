@@ -30,7 +30,6 @@ export const columnDragDropPanel = (event: string, _connector: GridInterface) =>
     };
 
     return (_e: MouseEvent) => {
-        console.log('enter');
         if (event === 'enter' && dragCell) {
             _e.target.addEventListener('mouseup', drop);
         }
