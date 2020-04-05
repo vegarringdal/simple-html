@@ -1,4 +1,5 @@
 import { IGridConfig } from '@simple-html/grid';
+import { ICell } from '@simple-html/grid/src/interfaces';
 
 export const COL_SETUP: IGridConfig = {
     cellHeight: 20,
@@ -59,6 +60,15 @@ export const COL_SETUP: IGridConfig = {
                     header: 'Number',
                     attribute: 'number',
                     type: 'number',
+                    renderRowCallBackFn:(cell: ICell)=>{
+                        return cell.attribute
+                    },
+                    renderLabelCallBackFn:()=>{
+                        return 'my label'
+                    },
+                    renderFilterCallBackFn:()=>{
+                        return 'filter'
+                    },
                     width: 100,
                     filterable: {},
                     sortable: {}
@@ -342,6 +352,7 @@ export const COL_SETUP: IGridConfig = {
                 {
                     header: 'First',
                     attribute: 'first',
+                    
                     width: 500,
                     filterable: {},
                     sortable: {},
