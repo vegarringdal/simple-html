@@ -20,13 +20,8 @@
         }
     },
     "lint-staged": {
-        "packages/**/*.{json,md,ts}": [
-            "prettier --write",
-            "git add"
-        ],
-        "samples/**/*.{json,md,ts}": [
-            "prettier --write",
-            "git add"
+        "*.ts": [
+            "prettier --write", "git add"
         ]
     },
     "devDependencies": {
