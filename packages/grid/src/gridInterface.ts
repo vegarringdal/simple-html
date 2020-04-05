@@ -190,9 +190,10 @@ export class GridInterface {
         let count = 0;
         this.__DATASET_VIEW.forEach((ent) => {
             let height = ent.__group ? cell : row;
-            count = count + height;
+
             this.__SCROLL_TOPS.push(count);
             this.__SCROLL_HEIGHTS.push(height);
+            count = count + height;
         });
         this.__SCROLL_HEIGHT = count;
     }
