@@ -255,7 +255,7 @@ export class ArrayGrouping {
                     const gidm = child[groupBy] || ' blank';
                     const gidc = element.__groupID || ' blank';
                     curGroup = {
-                        __groupName: child[groupBy],
+                        __groupName: child[groupBy] || ' blank',
                         __groupID: gidc + '-' + gidm,
                         __group: true,
                         __groupLvl: groupNo,
