@@ -215,11 +215,11 @@ export class ArrayGrouping {
         array.forEach(element => {
             let gidm = element[groupBy];
             gidm = typeof gidm === 'boolean' ? gidm.toString() : gidm;
-            gidm = gidm || ' blank';
+            gidm = gidm || 'blank';
 
             if (gidm !== tempValue) {
                 curGroup = {
-                    __groupName: gidm || ' blank',
+                    __groupName: gidm || 'blank',
                     __group: true,
                     __groupID: gidm,
                     __groupLvl: groupNo,
@@ -252,10 +252,10 @@ export class ArrayGrouping {
             const rebuiltChildrenArray: IEntity[] = [];
             element.__groupChildren.forEach((child: IEntity) => {
                 if (child[groupBy] !== tempValue) {
-                    const gidm = child[groupBy] || ' blank';
-                    const gidc = element.__groupID || ' blank';
+                    const gidm = child[groupBy] || 'blank';
+                    const gidc = element.__groupID || 'blank';
                     curGroup = {
-                        __groupName: child[groupBy] || ' blank',
+                        __groupName: child[groupBy],
                         __groupID: gidc + '-' + gidm,
                         __group: true,
                         __groupLvl: groupNo,

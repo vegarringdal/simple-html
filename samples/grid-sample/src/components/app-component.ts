@@ -18,7 +18,6 @@ export default class extends HTMLElement {
         this.dummyDataGenerator = new DummyDataGenerator();
         this.data = this.dummyDataGenerator.generateData(1000);
         this.connector = new GridInterface(gridConfig);
-        console.log(this.data[0])
         this.connector.setData(this.data, false);
         this.connector.addEventListener(() => {
             this.entity = this.connector.currentEntity;

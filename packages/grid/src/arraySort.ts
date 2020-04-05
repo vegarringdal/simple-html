@@ -140,7 +140,6 @@ export class ArraySort {
         
         // super simple for now.. atleast I have som form for sort
         const thisSort = this.getOrderBy();
-        console.log(thisSort)
 
         // this is mix from different sources... from what I can tell it works now
         array.sort((obj1: object, obj2: object) => {
