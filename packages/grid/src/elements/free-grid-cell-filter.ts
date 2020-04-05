@@ -106,26 +106,36 @@ export default class extends HTMLElement {
         const input = cell.editEventType === 'input' ? filterCallback : null;
 
         if (cell.renderFilterCallBackFn) {
-            return cell.renderFilterCallBackFn(
-                cell,
-                this.connector,
-                filterCallback
-            );
+            return cell.renderFilterCallBackFn(cell, this.connector, filterCallback);
         }
 
-        return html`
-            <input
-                type=${coltype || 'text'}
-                style=${boolstyle}
-                .indeterminate=${indeterminate}
-                .state=${setState}
-                class=${classname}
-                @change=${change}
-                @input=${input}
-                @keydown=${enterKeyDown}
-                .value=${value}
-                placeholder=${placeholder}
-            />
-        `;
+        if (coltype === 'date') {
+            return html`
+                <input
+                    type=${coltype}
+                    style=${boolstyle}
+                    class=${classname}
+                    @input=${input}
+                    @keydown=${enterKeyDown}
+                    .valueAsDate=${value}
+                    placeholder=${placeholder}
+                />
+            `;
+        } else {
+            return html`
+                <input
+                    type=${coltype || 'text'}
+                    style=${boolstyle}
+                    .indeterminate=${indeterminate}
+                    .state=${setState}
+                    class=${classname}
+                    @change=${change}
+                    @input=${input}
+                    @keydown=${enterKeyDown}
+                    .value=${value}
+                    placeholder=${placeholder}
+                />
+            `;
+        }
     }
 }
