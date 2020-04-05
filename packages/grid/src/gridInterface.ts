@@ -41,6 +41,9 @@ export class GridInterface {
     private __subscribers: Function[] = [];
 
     currentEntity: IEntity = null;
+    private __SCROLL_TOPS: any[];
+    private __SCROLL_HEIGHTS: any[];
+    private __SCROLL_HEIGHT: number;
 
     constructor(private __CONFIG: IGridConfig) {
         // set groupheight
@@ -169,8 +172,29 @@ export class GridInterface {
         return this.__DATASET_FILTERED;
     }
 
+    get getScrollVars() {
+        return {
+            __SCROLL_HEIGHT: this.__SCROLL_HEIGHT,
+            __SCROLL_HEIGHTS: this.__SCROLL_HEIGHTS,
+            __SCROLL_TOPS: this.__SCROLL_TOPS
+        };
+    }
+
     set displayedDataset(value) {
         this.__DATASET_VIEW = value;
+        this.__SCROLL_TOPS = [];
+        this.__SCROLL_HEIGHTS = [];
+        this.__SCROLL_HEIGHT = 0;
+        const cell = this.config.cellHeight;
+        const row = this.config.__rowHeight;
+        let count = 0;
+        this.__DATASET_VIEW.forEach((ent) => {
+            let height = ent.__group ? cell : row;
+            count = count + height;
+            this.__SCROLL_TOPS.push(count);
+            this.__SCROLL_HEIGHTS.push(height);
+        });
+        this.__SCROLL_HEIGHT = count;
     }
 
     get displayedDataset() {
