@@ -46,7 +46,7 @@ let setup: IGridConfig = {
 };
 
 let word = 0;
-for (let i = 1; i < 20; i++) {
+for (let i = 1; i < 10; i++) {
 
     let x: any = [];
     for (let y = 0; y < 4; y++) {

@@ -206,34 +206,34 @@ export default class extends HTMLElement {
                     </div>
                     <div class="flex flex-col">
                     <label class="p-1 m-2"
-                        >first:
+                        >word1:
                         <input
-                            .value=${this.entity?.first || ''}
+                            .value=${this.entity?.word1 || ''}
                             @change=${(e: any) => {
-                                if (this.entity && this.entity.first) {
-                                    this.entity.first = e.target.value;
+                                if (this.entity) {
+                                     this.entity.word1 = e.target.value;
                                     this.connector.reRender();
                                 }
                             }}
                     /></label>
                     <label class="p-1 m-2"
-                        >last:
+                        >word2:
                         <input
-                            .value=${this.entity?.last || ''}
+                            .value=${this.entity?.word2 || ''}
                             @change=${(e: any) => {
-                                if (this.entity && this.entity.last) {
-                                    this.entity.last = e.target.value;
+                                if (this.entity) {
+                                    this.entity.word2 = e.target.value;
                                     this.connector.reRender();
                                 }
                             }}
                     /></label>
                     <label class="p-1 m-2"
-                        >index:
+                        >word3:
                         <input
-                            .value=${this.entity?.index || ''}
+                            .value=${this.entity?.word3 || ''}
                             @change=${(e: any) => {
-                                if (this.entity && this.entity.index) {
-                                    this.entity.index = e.target.value;
+                                if (this.entity) {
+                                    this.entity.word3 = e.target.value;
                                     this.connector.reRender();
                                 }
                             }}
