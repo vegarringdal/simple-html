@@ -90,7 +90,6 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
                 let keys = Object.assign(dragCell, _col);
 
                 for (const key in keys) {
-                    console.log(key);
                     dragCell[key] = doCell[key];
                     _col[key] = daCell[key];
                 }
