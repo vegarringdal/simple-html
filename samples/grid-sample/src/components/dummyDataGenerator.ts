@@ -37,6 +37,7 @@ export class DummyDataGenerator {
 
             dummyArray.push({
                 index: this.totalGenerated,
+                mod: Math.floor(this.totalGenerated / 10),
                 word1: data[random()],
                 word2: data[random()],
                 word3: data[random()],

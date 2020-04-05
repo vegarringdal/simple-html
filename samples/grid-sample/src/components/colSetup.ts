@@ -41,6 +41,19 @@ let setup: IGridConfig = {
                     sortable: {}
                 }
             ]
+        },
+        {
+            width: 120,
+            rows: [
+                {
+                    header: 'mod',
+                    attribute: 'mod',
+                    type: 'number',
+                    sortable: {},
+                    filterable: {},
+                    allowGrouping: true
+                }
+            ]
         }
     ]
 };

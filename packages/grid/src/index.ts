@@ -30,9 +30,9 @@ export class FreeGrid extends HTMLElement {
 
     public reRender() {
         requestAnimationFrame(() => {
-            this.resetRowCache();
             this.render();
             this.triggerEvent('reRender');
+            this.cleanup();
         });
     }
 
@@ -51,6 +51,42 @@ export class FreeGrid extends HTMLElement {
         this.dispatchEvent(event);
     }
 
+    public cleanup() {
+        const node = this.getElementsByTagName('free-grid-body')[0];
+        if (node && node.scrollTop !== undefined) {
+            let newTopPosition = node.scrollTop;
+            if (this.interface.displayedDataset.length <= this.rowCache.length) {
+                newTopPosition = 0;
+            }
+
+            let rowTopState: any = this.interface.getScrollVars.__SCROLL_TOPS;
+
+            let currentRow = 0;
+
+            let i = 0;
+
+            if (newTopPosition !== 0) {
+                // need to do some looping here, need to figure out where we are..
+                while (i < rowTopState.length) {
+                    let checkValue = Math.floor(newTopPosition - rowTopState[i]);
+                    if (checkValue < 0) {
+                        currentRow = i - 2;
+                        break;
+                    }
+                    i++;
+                }
+            }
+
+            for (let i = 0; i < this.rowCache.length; i++) {
+                this.rowCache[i].i = currentRow + i;
+            }
+            this.rowCache.sort();
+            //console.log(this.rowCache.map((x) => x));
+
+            this.triggerEvent('vertical-scroll');
+        }
+    }
+
     public resetRowCache() {
         if (this.interface) {
             let rowsNeeded = 30; //Math.round(Math.floor(850 / this.interface.config.__rowHeight));
@@ -62,7 +98,7 @@ export class FreeGrid extends HTMLElement {
                 this.interface.displayedDataset.length > rowsNeeded
                     ? rowsNeeded
                     : this.interface.displayedDataset.length;
-            console.log(cacheLength);
+            //console.log(cacheLength);
             this.rowCache = [];
             for (let i = 0; i < cacheLength; i++) {
                 this.rowCache.push({ i: i });

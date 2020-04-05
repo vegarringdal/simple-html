@@ -43,7 +43,7 @@ export function scrollEvent(
                 }
 
                 let rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
-                let x = 1000;
+
                 let currentRow = 0;
 
                 let i = 0;
@@ -51,15 +51,14 @@ export function scrollEvent(
                 if (newTopPosition !== 0) {
                     // need to do some looping here, need to figure out where we are..
                     while (i < rowTopState.length) {
-                        let checkValue = Math.abs(newTopPosition - rowTopState[i]);
-                        if (checkValue === x) {
+                        let checkValue = Math.floor(newTopPosition - rowTopState[i]);
+
+                        if (checkValue < 0) {
                             currentRow = i - 1;
-                        } else {
-                            if (checkValue < x) {
-                                currentRow = i - 1;
-                                x = checkValue;
-                            }
+
+                            break;
                         }
+
                         i++;
                     }
                 }
@@ -68,6 +67,9 @@ export function scrollEvent(
                     rowPositionCache[i].i = currentRow + i;
                 }
                 rowPositionCache.sort();
+                //requestAnimationFrame(() => {
+                ref.triggerEvent('vertical-scroll');
+                //});
             } else {
                 let rowHeightState: any = connector.getScrollVars.__SCROLL_HEIGHTS;
                 let rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
@@ -96,14 +98,15 @@ export function scrollEvent(
                         currentRow >= 0 &&
                         currentRow <= connector.displayedDataset.length - 1
                     ) {
-                        console.log(i, currentRow);
                         rowPositionCache[i].i = currentRow;
                     }
                 }
                 rowPositionCache.sort();
+                // requestAnimationFrame(() => {
+                ref.triggerEvent('vertical-scroll');
+                // });
             }
             // need to call render directly so it updates right away
-            ref.triggerEvent('vertical-scroll');
         }
     };
 }
