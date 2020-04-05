@@ -1,31 +1,44 @@
 {
-  "name": "simple-html",
-  "version": "1.0.0-alpha.9",
-  "description": "lit html tools",
-  "scripts": {
-    "build": "node ./scripts/build && node ./scripts/syncPackages",
-    "sync": "node ./scripts/syncPackages",
-    "pub-now": "node ./scripts/publish",
-    "pub-test": "node ./scripts/publishTest",
-    "sample-core": "node ./samples/core-sample/fuse",
-    "sample-grid": "node ./samples/grid-sample/fuse",
-    "sample-router": "node ./samples/router-sample/fuse",
-    "format:fix": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\""
-  },
-  "author": "vegar Ringdal",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/marked": "^0.7.3",
-    "autoprefixer": "^9.7.5",
-    "custom-elements-hmr-polyfill": "^1.0.0",
-    "fuse-box": "^4.0.0-next.424",
-    "fuse-box-typechecker": "^3.0.0-next.31",
-    "lit-html": "^1.2.1",
-    "marked": "^0.8.2",
-    "prettier": "^2.0.2",
-    "tailwindcss": "^1.2.0",
-    "tslib": "^1.11.1",
-    "typescript": "^3.8.3"
-  },
-  "dependencies": {}
+    "name": "simple-html",
+    "version": "1.0.0-alpha.9",
+    "description": "lit html tools",
+    "scripts": {
+        "build": "node ./scripts/build && node ./scripts/syncPackages",
+        "sync": "node ./scripts/syncPackages",
+        "pub-now": "node ./scripts/publish",
+        "pub-test": "node ./scripts/publishTest",
+        "sample-core": "node ./samples/core-sample/fuse",
+        "sample-grid": "node ./samples/grid-sample/fuse",
+        "sample-router": "node ./samples/router-sample/fuse",
+        "format:fix": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\""
+    },
+    "author": "vegar Ringdal",
+    "license": "MIT",
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "lint-staged": {
+        "src/**/*.{json,md,ts}": [
+            "prettier --write",
+            "git add"
+        ]
+    },
+    "devDependencies": {
+        "@types/marked": "^0.7.3",
+        "autoprefixer": "^9.7.5",
+        "custom-elements-hmr-polyfill": "^1.0.0",
+        "fuse-box": "^4.0.0-next.424",
+        "fuse-box-typechecker": "^3.0.0-next.31",
+        "husky": "^4.2.3",
+        "lint-staged": "^10.1.2",
+        "lit-html": "^1.2.1",
+        "marked": "^0.8.2",
+        "prettier": "^2.0.2",
+        "tailwindcss": "^1.2.0",
+        "tslib": "^1.11.1",
+        "typescript": "^3.8.3"
+    },
+    "dependencies": {}
 }
