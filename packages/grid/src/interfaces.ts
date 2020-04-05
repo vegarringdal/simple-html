@@ -40,7 +40,7 @@ export interface ICell {
     readonly?: boolean;
     /**Default FALSE */
     disabled?: boolean;
-    /**Default 100 */
+    /**NOT IN USE */
     width?: number;
     //filter
     filterable?: {
