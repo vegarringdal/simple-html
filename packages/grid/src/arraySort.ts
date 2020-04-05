@@ -137,8 +137,10 @@ export class ArraySort {
     }
 
     public runOrderbyOn(array: object[]): void {
+        
         // super simple for now.. atleast I have som form for sort
         const thisSort = this.getOrderBy();
+        console.log(thisSort)
 
         // this is mix from different sources... from what I can tell it works now
         array.sort((obj1: object, obj2: object) => {
@@ -147,8 +149,8 @@ export class ArraySort {
             for (let i = 0; i < thisSort.length && result === 0; ++i) {
                 // loop until all are sorted
                 const currentObj = thisSort[i];
-                const v1 = obj1[currentObj.attribute];
-                const v2 = obj2[currentObj.attribute];
+                const v1 = obj1[currentObj.attribute] || '';
+                const v2 = obj2[currentObj.attribute] || '';
 
                 // compares with locale
                 const getLocaleCompareResult = (x1: string, x2: string): number => {
