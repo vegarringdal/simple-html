@@ -52,8 +52,8 @@ export default class extends HTMLElement {
                             .cellPosition=${i}
                         ></free-grid-cell-filter>
                     `;
-                } else{
-                    return ''
+                } else {
+                    return '';
                 }
             })}
         `;

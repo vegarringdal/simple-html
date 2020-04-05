@@ -54,12 +54,12 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
 
     // this will just move our label
     const mouseMove = function(e: MouseEvent) {
-        setTimeout(()=>{
-            dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
-            dragColumnBlock.style.left = e.clientX + document.documentElement.scrollLeft + 'px';
-        },10)
-
-        
+        setTimeout(() => {
+            if (dragColumnBlock) {
+                dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
+                dragColumnBlock.style.left = e.clientX + document.documentElement.scrollLeft + 'px';
+            }
+        }, 10);
     };
 
     // main event binded to column
@@ -82,8 +82,34 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
             document.addEventListener('mousemove', mouseMove);
         }
 
-        if (event === 'enter' && dragCell !== null) {
-            //console.log('enter', dragColumn.header, _e.target.cell && _e.target.cell.header)
+        if (dragCell !== null) {
+            // not very fancy, but betteer then nothing
+            const drop = (e: any) => {
+                let daCell = Object.assign({}, dragCell);
+                let doCell = Object.assign({}, _col);
+                let keys = Object.assign(dragCell, _col);
+
+                for (const key in keys) {
+                    console.log(key);
+                    dragCell[key] = doCell[key];
+                    _col[key] = daCell[key];
+                }
+
+                _connector.reRender();
+
+                e.target.removeEventListener('mouseup', drop);
+                (e.target as any).classList.remove('free-grid-candrop');
+            };
+
+            if (event === 'enter' && dragCell) {
+                (_e.target as any).classList.add('free-grid-candrop');
+                _e.target.addEventListener('mouseup', drop);
+            }
+
+            if (event === 'leave' && dragCell) {
+                _e.target.removeEventListener('mouseup', drop);
+                (_e.target as any).classList.remove('free-grid-candrop');
+            }
         }
     };
 };

@@ -22,9 +22,6 @@ export default class extends HTMLElement {
         this.style.height = config.cellHeight + 'px';
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
-        //@ts-ignore fix later- might add options for columns in cell rows
-        this.label = this.group.rows[this.cellPosition].header;
-
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);
     }
@@ -46,6 +43,7 @@ export default class extends HTMLElement {
     render() {
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
+        const label = this.group.rows[this.cellPosition].header;
 
         const sortCallback = (e: any) => {
             const mouseup = (e: MouseEvent) => {
@@ -69,6 +67,7 @@ export default class extends HTMLElement {
 
         const mousedown = columnDragDrop('dragstart', cell, connector);
         const mouseenter = columnDragDrop('enter', cell, connector);
+        const mouseleave = columnDragDrop('leave', cell, connector);
 
         this.style.width = this.group.width + 'px';
 
@@ -81,7 +80,8 @@ export default class extends HTMLElement {
                     !cell.disableDragDrop && mousedown(e);
                 }}
                 @mouseenter=${!cell.disableDragDrop && mouseenter}
-                >${this.label}
+                @mouseleave=${!cell.disableDragDrop && mouseleave}
+                >${label}
                 ${sorticonElement(this.connector, this.group.rows[this.cellPosition])}</span
             >
             ${resizeColumnElement(this.ref, this.group)}
