@@ -55,7 +55,8 @@ for (let i = 1; i < 20; i++) {
             header: 'word' + word,
             attribute: 'word' + word,
             filterable: {},
-            sortable: {}
+            sortable: {},
+            allowGrouping: true
         });
     }
 
