@@ -2,7 +2,6 @@ import { customElement, property } from '@simple-html/core';
 import { FreeGrid, GridInterface } from '..';
 import { IgridConfigGroups, ICell } from '../interfaces';
 import { html } from 'lit-html';
-import { eventIF } from '../eventIF';
 
 @customElement('free-grid-cell-row')
 export default class extends HTMLElement {
@@ -75,18 +74,17 @@ export default class extends HTMLElement {
         if (this.connector.displayedDataset[this.rowNo]) {
             const cell = this.cell;
             const data = this.connector.displayedDataset[this.rowNo];
+            const change = this.cell.editEventType !== 'input' ? this.updateCallback : null;
+            const input = this.cell.editEventType === 'input' ? this.updateCallback : null;
+
             switch (cell.type) {
                 case 'boolean':
                     return html`
                         <input
                             ?readonly=${cell.readonly}
                             ?disabled=${cell.disabled}
-                            @custom=${eventIF(
-                                true,
-                                cell.editEventType || 'change',
-                                this.updateCallback,
-                                this
-                            )}
+                            @change=${change}
+                            @input=${input}
                             type="checkbox"
                             .checked=${data[cell.attribute]}
                             class="free-grid-row-checkbox"
@@ -102,12 +100,8 @@ export default class extends HTMLElement {
                         <input
                             ?readonly=${cell.readonly}
                             ?disabled=${cell.disabled}
-                            @custom=${eventIF(
-                                true,
-                                cell.editEventType || 'change',
-                                this.updateCallback,
-                                this
-                            )}
+                            @change=${change}
+                            @input=${input}
                             type=${cell.type}
                             .valueAsDate=${data[cell.attribute] || null}
                             class="free-grid-row-input"
@@ -118,12 +112,8 @@ export default class extends HTMLElement {
                         <input
                             ?readonly=${cell.readonly}
                             ?disabled=${cell.disabled}
-                            @custom=${eventIF(
-                                true,
-                                cell.editEventType || 'change',
-                                this.updateCallback,
-                                this
-                            )}
+                            @change=${change}
+                            @input=${input}
                             type=${cell.type}
                             .valueAsNumber=${data[cell.attribute]}
                             class="free-grid-row-input"
@@ -136,12 +126,8 @@ export default class extends HTMLElement {
                 <input
                     ?readonly=${cell.readonly}
                     ?disabled=${cell.disabled}
-                    @custom=${eventIF(
-                        true,
-                        cell.editEventType || 'change',
-                        this.updateCallback,
-                        this
-                    )}
+                    @change=${change}
+                    @input=${input}
                     type=${cell.type}
                     .value=${data[cell.attribute]}
                     class="free-grid-row-input"

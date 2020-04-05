@@ -4,7 +4,6 @@ import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
-import { eventIF } from '../eventIF';
 import { columnDragDrop } from '../dragEvent';
 
 @customElement('free-grid-cell-label')
@@ -47,18 +46,17 @@ export default class extends HTMLElement {
     render() {
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
-        
-        const mouseup = (e: MouseEvent) => {
-            cell.sortable.beforeSortCallbackFn &&
-            cell.sortable.beforeSortCallbackFn(<any>e, cell, connector);
-            if (cell.sortable.auto !== false) {
-                console.log('sort');
-                connector.sortCallback(<any>e, cell);
-            }
-        };
 
         const sortCallback = (e: any) => {
-            
+            const mouseup = (e: MouseEvent) => {
+                cell.sortable.beforeSortCallbackFn &&
+                    cell.sortable.beforeSortCallbackFn(<any>e, cell, connector);
+                if (cell.sortable.auto !== false) {
+                    console.log('sort');
+                    connector.sortCallback(<any>e, cell);
+                }
+            };
+
             if ((<any>e).button === 0) {
                 e.target.addEventListener('mouseup', mouseup);
                 setTimeout(() => {
@@ -78,9 +76,11 @@ export default class extends HTMLElement {
             <span
                 .cell=${cell}
                 class="free-grid-label"
-                @custom=${eventIF(cell.sortable, 'mousedown', sortCallback, this)}
-                @custom-1=${eventIF(!cell.disableDragDrop, 'mousedown', mousedown, this)}
-                @custom-2=${eventIF(!cell.disableDragDrop, 'mouseenter', mouseenter, this)}
+                @mousedown=${(e: any) => {
+                    cell.sortable && sortCallback(e);
+                    !cell.disableDragDrop && mousedown(e);
+                }}
+                @mouseenter=${!cell.disableDragDrop && mouseenter}
                 >${this.label}
                 ${sorticonElement(this.connector, this.group.rows[this.cellPosition])}</span
             >

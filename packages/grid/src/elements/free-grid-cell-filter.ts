@@ -2,7 +2,6 @@ import { customElement } from '@simple-html/core';
 import { GridInterface, FreeGrid } from '../';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
-import { eventIF } from '../eventIF';
 
 @customElement('free-grid-cell-filter')
 export default class extends HTMLElement {
@@ -70,7 +69,7 @@ export default class extends HTMLElement {
                 }
             }
             col.filterable.beforeFilterCallbackFn &&
-            col.filterable.beforeFilterCallbackFn(e, col, this.connector);
+                col.filterable.beforeFilterCallbackFn(e, col, this.connector);
             if (col.filterable.auto !== false) {
                 this.connector.filterCallback(e, col);
             }
@@ -102,6 +101,9 @@ export default class extends HTMLElement {
             classname = 'free-grid-row-checkbox';
         }
 
+        const change = col.editEventType !== 'input' ? filterCallback : null;
+        const input = col.editEventType === 'input' ? filterCallback : null;
+
         return html`
             <input
                 type=${coltype}
@@ -109,8 +111,9 @@ export default class extends HTMLElement {
                 .indeterminate=${indeterminate}
                 .state=${setState}
                 class=${classname}
-                @custom=${eventIF(true, col.filterable.filterTrigger || 'change', filterCallback, this)}
-                @custom-keydown=${eventIF(true, 'keydown', enterKeyDown, this)}
+                @change=${change}
+                @input=${input}
+                @keydown=${enterKeyDown}
                 .value=${value}
                 placeholder=${placeholder}
             />
