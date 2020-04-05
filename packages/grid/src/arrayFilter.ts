@@ -1,6 +1,5 @@
 import { IFilterObj, IEntity } from './interfaces';
 
-
 export class ArrayFilter {
     private lastFilter: IFilterObj[];
     public operators: any = {
@@ -48,7 +47,13 @@ export class ArrayFilter {
                 let filterValue: any;
                 let filterOperator = x.operator;
                 let newFilterOperator: number;
-                const type: string = x.type;
+                let type: string = x.type;
+
+                if (x.value === 'null') {
+                    type = 'null';
+                }
+
+                rowValue = data[x.attribute];
 
                 // helper for boolean
                 const typeBool: { true: boolean; false: boolean } = {
@@ -58,8 +63,11 @@ export class ArrayFilter {
 
                 // lets set some defaults/corrections if its all wrong
                 switch (type) {
+                    case 'null':
+                        filterOperator = 1;
+
+                        break;
                     case 'number':
-                        rowValue = data[x.attribute];
                         filterValue = Number(x.value);
                         if (!filterValue) {
                             // needs to be 0
@@ -70,11 +78,11 @@ export class ArrayFilter {
                             filterOperator = 1;
                         }
                         break;
-                    case 'string':
-                        if (data[x.attribute] === null || data[x.attribute] === undefined) {
+                    case 'text':
+                        if (rowValue === null || rowValue === undefined) {
                             rowValue = '';
                         } else {
-                            rowValue = data[x.attribute].toLowerCase();
+                            rowValue = rowValue.toLowerCase();
                         }
                         filterValue = x.value.toLowerCase();
                         filterOperator = filterOperator || 9;
@@ -120,7 +128,6 @@ export class ArrayFilter {
                         }
                         break;
                     case 'boolean':
-                        rowValue = data[x.attribute];
                         filterValue = typeBool[x.value];
                         filterOperator = 1;
                         break;
@@ -129,9 +136,9 @@ export class ArrayFilter {
                         // todo: take the stuff under equal to and put in a function
                         // and also call i from here.. or just make it fail?
                         try {
-                            rowValue = data[x.attribute].toLowerCase();
+                            rowValue = rowValue.toLowerCase();
                         } catch (err) {
-                            rowValue = data[x.attribute];
+                            rowValue = rowValue;
                         }
                         try {
                             filterValue = x.value.toLowerCase();
@@ -204,7 +211,7 @@ export class ArrayFilter {
                             result = false;
                         }
                 }
-                if (type === 'string') {
+                if (type === 'text') {
                     if (x.value.charAt(0) === '*' && x.value.length === 1) {
                         result = true;
                     }
