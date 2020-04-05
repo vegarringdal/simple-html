@@ -21,7 +21,7 @@ export class DummyDataGenerator {
             // up count
             this.totalGenerated++;
 
-            const random = function() {
+            const random = function () {
                 const x1 = Math.floor(Math.random() * 3) + 0;
                 const x2 = Math.floor(Math.random() * 9) + 0;
                 const x3 = Math.floor(Math.random() * 9) + 0;

@@ -8,9 +8,7 @@ export const routerConfig = {
         href: '#',
         title: 'Home',
         load: () => import('./home'),
-        html: html`
-                <home-route></home-route>
-            `,
+        html: html` <home-route></home-route> `,
         isNav: true
     },
     settings: {
@@ -18,9 +16,7 @@ export const routerConfig = {
         href: '#settings',
         title: 'Settings',
         load: () => import('./settings'),
-        html: html`
-                <settings-route></settings-route>
-            `,
+        html: html` <settings-route></settings-route> `,
         isNav: true
     },
     login: {
@@ -65,10 +61,10 @@ export const routerConfig = {
 
 export function navs(router: 'sub' | 'main') {
     if (router === 'main') {
-        return Object.keys(routerConfig).map(key => routerConfig[key]);
+        return Object.keys(routerConfig).map((key) => routerConfig[key]);
     } else {
         const childRoutes = routerConfig.child.children;
-        return Object.keys(childRoutes).map(key => childRoutes[key]);
+        return Object.keys(childRoutes).map((key) => childRoutes[key]);
     }
 }
 

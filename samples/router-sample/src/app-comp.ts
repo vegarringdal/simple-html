@@ -18,7 +18,7 @@ export default class extends HTMLElement {
     public render() {
         return html`
             <ul class="flex bg-teal-500 p-6">
-                ${navs('main').map(route => {
+                ${navs('main').map((route) => {
                     if (route.isNav) {
                         return html`
                             <li class="mr-6">
@@ -56,9 +56,7 @@ export default class extends HTMLElement {
             ${routeMatchAsync(
                 routerConfig.child.path,
                 () => import('./routes/childrouter'),
-                html`
-                    <childrouter-route></childrouter-route>
-                `
+                html` <childrouter-route></childrouter-route> `
             )}
         `;
     }

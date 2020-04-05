@@ -42,7 +42,5 @@ export function resizeColumnElement(ref: FreeGrid, group: IgridConfigGroups) {
         document.addEventListener('mouseup', mouseUp);
     };
 
-    return html`
-        <div class="free-grid-draggable-handler" @mousedown=${mouseDown}></div>
-    `;
+    return html` <div class="free-grid-draggable-handler" @mousedown=${mouseDown}></div> `;
 }

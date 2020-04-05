@@ -1,8 +1,4 @@
-import {
-    applyPolyfill,
-    ReflowStrategy,
-    rerenderInnerHTML
-} from 'custom-elements-hmr-polyfill';
+import { applyPolyfill, ReflowStrategy, rerenderInnerHTML } from 'custom-elements-hmr-polyfill';
 
 rerenderInnerHTML();
 

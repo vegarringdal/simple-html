@@ -28,12 +28,11 @@ export default class extends HTMLElement {
                 this.connector.config.groupingSet && this.connector.config.groupingSet.length;
             let curleft = grouping ? grouping * 15 : 0;
             this.style.width = this.group.width + 'px';
-            this.style.left = this.group.__left +curleft+ 'px';
+            this.style.left = this.group.__left + curleft + 'px';
         }
         if (e.type === 'reRender') {
-            this.render()
+            this.render();
         }
-       
     }
 
     disconnectedCallback() {

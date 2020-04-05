@@ -45,7 +45,7 @@ export default class extends HTMLElement {
                     : 'none'}"
             >
             </free-grid-col>
-            ${config.groups.map(group => {
+            ${config.groups.map((group) => {
                 return html`
                     <free-grid-group-label
                         .connector=${this.connector}

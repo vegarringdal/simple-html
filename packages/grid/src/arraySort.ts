@@ -32,12 +32,12 @@ export class ArraySort {
         const attribute: string[] = [];
         const asc: boolean[] = [];
         const no: number[] = [];
-        this.lastSort.forEach(x => {
+        this.lastSort.forEach((x) => {
             attribute.push(x.attribute);
             asc.push(x.asc);
             no.push(x.no);
         });
-        configColumns.forEach(col => {
+        configColumns.forEach((col) => {
             const i = attribute.indexOf(col.attribute);
             if (col.sortable) {
                 if (i !== -1) {
@@ -52,7 +52,7 @@ export class ArraySort {
     }
 
     public clearConfigSort(configColumns: ICell[]) {
-        configColumns.forEach(col => {
+        configColumns.forEach((col) => {
             if (col.sortable) {
                 col.sortable.sortAscending = null;
                 col.sortable.sortNo = null;
@@ -101,7 +101,7 @@ export class ArraySort {
                 let exist = false;
 
                 // loop to se if it exist from before
-                this.curSort.forEach(x => {
+                this.curSort.forEach((x) => {
                     if (x.attribute === sort.attribute) {
                         exist = true;
                         x.asc = sort.asc;
@@ -137,7 +137,6 @@ export class ArraySort {
     }
 
     public runOrderbyOn(array: object[]): void {
-        
         // super simple for now.. atleast I have som form for sort
         const thisSort = this.getOrderBy();
 

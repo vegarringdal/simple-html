@@ -6,16 +6,19 @@ export function scrollEvent(
     rowPositionCache: {
         i: number;
     }[],
-    ref:FreeGrid
+    ref: FreeGrid
 ) {
     return (e: any) => {
-        if (connector.config.scrollLeft && connector.config.scrollLeft !== e.target.scrollLeft && connector.config.lastScrollTop == e.target.scrollTop) {
+        if (
+            connector.config.scrollLeft &&
+            connector.config.scrollLeft !== e.target.scrollLeft &&
+            connector.config.lastScrollTop == e.target.scrollTop
+        ) {
             connector.config.scrollLeft = e.target.scrollLeft;
             ref.triggerEvent('horizontal-scroll');
         } else {
-
-           // window.focus();
-           connector.config.scrollLeft = e.target.scrollLeft;
+            // window.focus();
+            connector.config.scrollLeft = e.target.scrollLeft;
             if (document.activeElement) {
                 (document.activeElement as any).blur();
             }

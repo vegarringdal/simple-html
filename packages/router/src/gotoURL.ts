@@ -1,9 +1,9 @@
-export const gotoURL = function(path: string, params: any = {}, query: any = null) {
+export const gotoURL = function (path: string, params: any = {}, query: any = null) {
     if (path[0] === '#') {
         path = path.substr(1, path.length);
     }
 
-    const urls = path.split('/').filter(x => (x ? true : false));
+    const urls = path.split('/').filter((x) => (x ? true : false));
     let newUrl = '';
     urls.forEach((val, i) => {
         if (val[0] === ':' && params[val.substr(1, val.length)] !== undefined) {

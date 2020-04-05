@@ -39,26 +39,22 @@ export class FreeGrid extends HTMLElement {
         console.log('not implemented');
     }
 
-    public triggerEvent(eventName: string, data?: any){
-       // console.log(eventName)
+    public triggerEvent(eventName: string, data?: any) {
+        // console.log(eventName)
         const event = new CustomEvent(eventName, {
-            bubbles:true,
+            bubbles: true,
             detail: {
                 data
             }
-          });
-          this.dispatchEvent(event);
+        });
+        this.dispatchEvent(event);
     }
 
     public resetRowCache() {
-
-     
-
         if (this.interface) {
-
-            let rowsNeeded = Math.round(Math.floor(850 / this.interface.config.__rowHeight))
+            let rowsNeeded = Math.round(Math.floor(850 / this.interface.config.__rowHeight));
             if (rowsNeeded > 40) {
-                rowsNeeded = 40
+                rowsNeeded = 40;
             }
             const cacheLength =
                 this.interface.displayedDataset.length > rowsNeeded
@@ -77,12 +73,7 @@ export class FreeGrid extends HTMLElement {
         return new Promise(() => {
             // console.time('render');
             if (this.interface) {
-                render(
-                    html`
-                        ${generate(this.interface, this.rowCache, this)}
-                    `,
-                    this
-                );
+                render(html` ${generate(this.interface, this.rowCache, this)} `, this);
 
                 if (this.interface.config.lastScrollTop) {
                     // set initial scroll top/left
@@ -104,7 +95,4 @@ export class FreeGrid extends HTMLElement {
             //console.timeEnd('render');
         });
     }
-
-    
 }
-

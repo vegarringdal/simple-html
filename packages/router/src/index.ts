@@ -39,8 +39,8 @@ export function publishCanDeactivateEvent() {
 }
 
 export let canDeactivateCallers: any[] = [];
-const canDeactivate = function() {
-    return new Promise(async resolve => {
+const canDeactivate = function () {
+    return new Promise(async (resolve) => {
         canDeactivateCallers = [];
         publishCanDeactivateEvent();
 
@@ -58,24 +58,21 @@ const canDeactivate = function() {
 };
 
 // you call this during a CAN_DEACTIVATE_EVENT to stop navigation
-export const stopCanDeactivate = function(promise: Promise<Boolean>) {
+export const stopCanDeactivate = function (promise: Promise<Boolean>) {
     canDeactivateCallers.push(promise);
 };
-
 
 /**
  * starts router
  */
 
-
 export function init() {
-    
     let oldhash = window.location.hash;
     let isBackEvent = false;
 
-    const hashChange = function() {
+    const hashChange = function () {
         if (!isBackEvent) {
-            canDeactivate().then(result => {
+            canDeactivate().then((result) => {
                 if (result) {
                     oldhash = window.location.hash;
                     publish(HASH_RENDER_EVENT);
@@ -93,8 +90,8 @@ export function init() {
 
     // clean up during HMR
     const cleanUp = {
-        handleEvent: function() {
-            console.log('remove')
+        handleEvent: function () {
+            console.log('remove');
             window.removeEventListener('HMR-FUSEBOX', cleanUp);
             window.removeEventListener('hashchange', hashChange);
         }
@@ -102,4 +99,3 @@ export function init() {
 
     window.addEventListener('HMR-FUSEBOX', cleanUp);
 }
-

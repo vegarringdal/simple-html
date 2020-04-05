@@ -75,11 +75,11 @@ export interface ICell {
     disableDragDrop?: boolean;
     allowGrouping?: boolean;
 
-     // needs more work
-     renderRowCallBackFn?: any; //cell, data, connector, updatecallback
+    // needs more work
+    renderRowCallBackFn?: any; //cell, data, connector, updatecallback
 
-     renderLabelCallBackFn?: any;
-     renderFilterCallBackFn?: any;
+    renderLabelCallBackFn?: any;
+    renderFilterCallBackFn?: any;
 }
 
 export type IgridConfigRows = ICell;
@@ -111,8 +111,6 @@ export interface IGridConfig {
     groupingSet?: IGroupingObj[];
     sortingSet?: ISortObjectInterface[];
     groupingExpanded?: string[];
-
-   
 }
 
 export interface ISortObjectInterface {

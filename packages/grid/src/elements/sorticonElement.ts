@@ -1,4 +1,3 @@
-
 import { html, svg } from 'lit-html';
 import { ICell } from '../interfaces';
 import { GridInterface } from '../gridInterface';

@@ -8,9 +8,9 @@ Helpers to get make lit-html a little easier
 
 ### Sample
 
-- `git clone https://github.com/simple-html/simple-html`
-- `npm install`
-- `npm run sample-core`
+-   `git clone https://github.com/simple-html/simple-html`
+-   `npm install`
+-   `npm run sample-core`
 
 ### Bundle size:
 

@@ -58,7 +58,7 @@ export class ArrayGrouping {
             }
         } else {
             // set all rows to 0 grouping
-            arrayToGroup.forEach(row => {
+            arrayToGroup.forEach((row) => {
                 row.__groupLvl = 0;
             });
 
@@ -212,7 +212,7 @@ export class ArrayGrouping {
         let tempValue: string = null;
 
         // first level, here we use array
-        array.forEach(element => {
+        array.forEach((element) => {
             let gidm = element[groupBy];
             gidm = typeof gidm === 'boolean' ? gidm.toString() : gidm;
             gidm = gidm || ' blank';

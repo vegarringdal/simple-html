@@ -17,18 +17,17 @@ import { html } from 'lit-html';
 import { FreeGrid } from '../';
 import { columnDragDropPanel } from '../dragEvent';
 
-
 export function generate(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
     const scroll = scrollEvent(connector, rowPositionCache, ref);
     const enter = columnDragDropPanel('enter', connector);
     const leave = columnDragDropPanel('leave', connector);
-    
+
     return html`
         <free-grid-panel
             .connector=${connector}
             .ref=${ref}
-            @mouseleave =${leave}
-            @mouseenter =${enter}
+            @mouseleave=${leave}
+            @mouseenter=${enter}
         ></free-grid-panel>
         <free-grid-header .connector=${connector} .ref=${ref}></free-grid-header>
         <free-grid-body

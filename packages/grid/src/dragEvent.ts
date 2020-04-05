@@ -41,7 +41,7 @@ export const columnDragDropPanel = (event: string, _connector: GridInterface) =>
 
 export const columnDragDrop = (event: string, _col: ICell, _connector: GridInterface) => {
     // here we will clean up eevnt listeners
-    const mouseUp = function() {
+    const mouseUp = function () {
         document.removeEventListener('mouseup', mouseUp);
         document.removeEventListener('mousemove', mouseMove);
         clearTimeout(delayDragEventTimer);
@@ -53,7 +53,7 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
     };
 
     // this will just move our label
-    const mouseMove = function(e: MouseEvent) {
+    const mouseMove = function (e: MouseEvent) {
         setTimeout(() => {
             if (dragColumnBlock) {
                 dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
@@ -101,7 +101,7 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
             };
 
             if (event === 'enter' && dragCell) {
-                if(_col.type === 'empty'){
+                if (_col.type === 'empty') {
                     (_e.target as any).classList.toggle('hideme');
                 }
 
@@ -110,7 +110,7 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
             }
 
             if (event === 'leave' && dragCell) {
-                if(_col.type === 'empty'){
+                if (_col.type === 'empty') {
                     (_e.target as any).classList.toggle('hideme');
                 }
                 _e.target.removeEventListener('mouseup', drop);

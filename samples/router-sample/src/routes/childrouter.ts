@@ -7,7 +7,6 @@ const childRoute = routerConfig.child.children;
 
 @customElement('childrouter-route')
 export default class extends HTMLElement {
-
     connectedCallback() {
         subscribeHashEvent(this, () => {
             this.render();
@@ -20,7 +19,7 @@ export default class extends HTMLElement {
     public render() {
         return html`
             <ul class="ani flex bg-indigo-500 p-6">
-                ${navs('sub').map(route => {
+                ${navs('sub').map((route) => {
                     if (route.isNav) {
                         return html`
                             <li class="mr-6">
@@ -38,25 +37,17 @@ export default class extends HTMLElement {
             ${routeMatchAsync(
                 childRoute.subHome.path,
                 () => import('./home'),
-                html`
-                    <home-route></home-route>
-                `
+                html` <home-route></home-route> `
             )}
-
             ${routeMatchAsync(
                 childRoute.subSettings.path,
                 () => import('./settings'),
-                html`
-                    <settings-route></settings-route>
-                `
+                html` <settings-route></settings-route> `
             )}
-
             ${routeMatchAsync(
                 childRoute.protected.path,
                 () => import('./protected'),
-                html`
-                    <protected-route></protected-route>
-                `
+                html` <protected-route></protected-route> `
             )}
         `;
     }

@@ -1,5 +1,5 @@
-import { pathPatternType } from "./pathPatternType";
-import { getUrlVars } from "./getUrlVars";
+import { pathPatternType } from './pathPatternType';
+import { getUrlVars } from './getUrlVars';
 
 export function getVariables(pathPattern: pathPatternType[], pattern: string) {
     // split away the query params if any

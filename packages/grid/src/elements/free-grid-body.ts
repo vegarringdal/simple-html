@@ -30,7 +30,6 @@ export default class extends HTMLElement {
         if (e.type === 'vertical-scroll') {
             this.render();
         }
-
     }
 
     disconnectedCallback() {
@@ -47,11 +46,11 @@ export default class extends HTMLElement {
                 style="height:${scrollheight}px;width:${config.__rowWidth}px"
                 class="free-grid-content"
             >
-                ${this.rowPositionCache.map(row => {
+                ${this.rowPositionCache.map((row) => {
                     const entity = this.connector.displayedDataset[row.i];
                     const data = entity && entity.__group;
                     if (data) {
-                         return html`
+                        return html`
                             <free-grid-row-group
                                 .connector=${this.connector}
                                 .row=${row}

@@ -38,7 +38,7 @@ export class ArrayFilter {
     public runQueryOn(objArray: IEntity[], ObjFilter: IFilterObj[]) {
         this.lastFilter = ObjFilter;
 
-        const resultArray = objArray.filter(data => {
+        const resultArray = objArray.filter((data) => {
             // lets have true as default, so all that should not be there we set false..
             let result = true;
             ObjFilter.forEach((x: IFilterObj) => {

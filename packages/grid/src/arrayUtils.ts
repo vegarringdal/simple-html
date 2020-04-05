@@ -212,11 +212,10 @@ export class ArrayUtils {
     }
 
     private groupingCallback(_event: any, col: ICell) {
-
         let newF = col ? true : false;
         const groupings: IGroupingObj[] = this.gridInterface.config.groupingSet || [];
         col &&
-            groupings.forEach(g => {
+            groupings.forEach((g) => {
                 if (g.field === col.attribute) {
                     newF = false;
                 }
@@ -225,13 +224,13 @@ export class ArrayUtils {
         if (newF) {
             groupings.push({ title: col.header, field: col.attribute });
         }
-        this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap(x => x.rows));
+        this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
         this.arraySort.reset();
         groupings.forEach((group: IGroupingObj) => {
             this.arraySort.setOrderBy(group.field, true);
         });
         this.arraySort.runOrderbyOn(this.gridInterface.filteredDataset);
-        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap(x => x.rows));
+        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
         if (groupings.length) {
             const result = this.group(this.gridInterface.filteredDataset, groupings, true);
             this.gridInterface.config.groupingSet = this.getGrouping();
@@ -240,7 +239,7 @@ export class ArrayUtils {
         } else {
             this.gridInterface.displayedDataset = this.gridInterface.filteredDataset;
         }
-        this.gridInterface.publishEvent('collecton-grouping'); 
+        this.gridInterface.publishEvent('collecton-grouping');
     }
 
     private sortCallback(event: any, col: ICell) {
@@ -249,7 +248,7 @@ export class ArrayUtils {
             col.sortable.sortAscending === null ? true : col.sortable.sortAscending ? false : true;
 
         // clear config, so it can be set after new sort
-        this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap(x => x.rows));
+        this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
 
         // sort, update config, set viewRows and rerender
         const result = this.orderBy(
@@ -258,7 +257,7 @@ export class ArrayUtils {
             (<any>event).shiftKey
         );
         this.gridInterface.config.sortingSet = this.getOrderBy();
-        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap(x => x.rows));
+        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
         this.gridInterface.displayedDataset = result.fixed;
         this.gridInterface.publishEvent('collecton-sort');
     }
@@ -283,8 +282,8 @@ export class ArrayUtils {
         }
 
         const filter: IFilterObj[] = [];
-        let columns = config.groups.flatMap(x => x.rows);
-        columns.forEach(col => {
+        let columns = config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
             const f = col.filterable;
             if (f && f.currentValue !== null && f.currentValue !== undefined) {
                 filter.push({
@@ -302,7 +301,7 @@ export class ArrayUtils {
             filter
         );
         const result = this.orderBy(this.gridInterface.filteredDataset, null, false);
-        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap(x => x.rows));
+        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
         this.gridInterface.displayedDataset = result.fixed;
         this.gridInterface.publishEvent('collecton-filter');
     }

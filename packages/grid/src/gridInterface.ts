@@ -43,10 +43,9 @@ export class GridInterface {
     currentEntity: IEntity = null;
 
     constructor(private __CONFIG: IGridConfig) {
-
         // set groupheight
         let cellheight = 1;
-        __CONFIG.groups.forEach(group => {
+        __CONFIG.groups.forEach((group) => {
             if (group.rows) {
                 group.rows.forEach((_c, i) => {
                     if (cellheight < i + 1) {
@@ -56,17 +55,16 @@ export class GridInterface {
             }
         });
         __CONFIG.__cellRows = cellheight;
-        __CONFIG.__rowHeight = __CONFIG.cellHeight* cellheight;
+        __CONFIG.__rowHeight = __CONFIG.cellHeight * cellheight;
 
         //set left on groups
         let totalWidth = 0;
         __CONFIG.groups.reduce((agg, element) => {
-                element.__left = agg;
-                totalWidth = totalWidth + element.width
-                return element.__left + element.width;
+            element.__left = agg;
+            totalWidth = totalWidth + element.width;
+            return element.__left + element.width;
         }, 0);
-        __CONFIG.__rowWidth =  totalWidth;
-       
+        __CONFIG.__rowWidth = totalWidth;
 
         this.__arrayUtils = new ArrayUtils(this);
         this.__selection = new Selection(this);
@@ -94,7 +92,7 @@ export class GridInterface {
             }
 
             const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-            this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap(x=> x.rows));
+            this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
             this.displayedDataset = result.fixed;
         }
         this.reRender();
@@ -104,7 +102,7 @@ export class GridInterface {
         const olddataSetlength = this.__DATASET_ALL.length;
 
         if (add) {
-            const x = Array.from(data, o => new Proxy(o, new EntityHandler() as any));
+            const x = Array.from(data, (o) => new Proxy(o, new EntityHandler() as any));
             this.__DATASET_ALL.push(...x);
             this.__DATASET_FILTERED.push(...x);
             this.__DATASET_ALL.forEach((entity, i) => {
@@ -117,7 +115,7 @@ export class GridInterface {
                 }
             });
         } else {
-            this.__DATASET_ALL = Array.from(data, o => new Proxy(o, new EntityHandler() as any)); // <- do I want to update user array Im allready setting a key on it ?
+            this.__DATASET_ALL = Array.from(data, (o) => new Proxy(o, new EntityHandler() as any)); // <- do I want to update user array Im allready setting a key on it ?
             this.__DATASET_ALL.forEach((entity, i) => {
                 if (entity && !(<any>entity).__KEY) {
                     (<any>entity).__KEY = this.selection.getKey();
@@ -147,7 +145,7 @@ export class GridInterface {
         }
 
         const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-        this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap(x=> x.rows));
+        this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
         this.displayedDataset = result.fixed;
         this.publishEvent('collection-change');
     }
@@ -193,21 +191,20 @@ export class GridInterface {
     }
 
     public next() {
-        let row = this.displayedDataset.indexOf(this.currentEntity) +1;
-        if(this.displayedDataset.length-1 < row){
-            row = 0
+        let row = this.displayedDataset.indexOf(this.currentEntity) + 1;
+        if (this.displayedDataset.length - 1 < row) {
+            row = 0;
         }
         this.selection.highlightRow({} as any, row);
     }
 
     public prev() {
-        let row = this.displayedDataset.indexOf(this.currentEntity) -1;
-        if(row < 0){
-            row = this.displayedDataset.length -1
+        let row = this.displayedDataset.indexOf(this.currentEntity) - 1;
+        if (row < 0) {
+            row = this.displayedDataset.length - 1;
             this.selection.highlightRow({} as any, row);
         }
         this.selection.highlightRow({} as any, row);
-        
     }
 
     public first() {
@@ -219,7 +216,7 @@ export class GridInterface {
     }
 
     public edited() {
-        return this.__DATASET_ALL.filter(entity => {
+        return this.__DATASET_ALL.filter((entity) => {
             if (entity.__controller.__edited) {
                 return true;
             } else {
@@ -230,7 +227,7 @@ export class GridInterface {
 
     publishEvent(event: string) {
         this.reRender();
-        let keep = this.__subscribers.filter(element => {
+        let keep = this.__subscribers.filter((element) => {
             return element(event);
         });
         this.__subscribers = keep;

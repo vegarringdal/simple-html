@@ -39,52 +39,58 @@ export default class extends HTMLElement {
         const config = this.connector.config;
 
         // check if height is changed
-      //  if (this.currentHeight !== this.row.i * config.__rowHeight) {
-            this.currentHeight = this.row.i * config.__rowHeight;
-            this.style.transform = `translate3d(0px, ${this.row.i * config.__rowHeight}px, 0px)`;
-       // }
-        const entity = this.connector.displayedDataset[this.row.i] ;
+        //  if (this.currentHeight !== this.row.i * config.__rowHeight) {
+        this.currentHeight = this.row.i * config.__rowHeight;
+        this.style.transform = `translate3d(0px, ${this.row.i * config.__rowHeight}px, 0px)`;
+        // }
+        const entity = this.connector.displayedDataset[this.row.i];
 
-        if(entity){
-        const changeGrouping = () => {
-            if (entity.__groupExpanded) {
-                this.connector.groupCollapse(entity.__groupID);
-            } else {
-                this.connector.groupExpand(entity.__groupID);
-            }
-        };
-    
-        const defaultMarkup = html`
-            <i @click=${changeGrouping}>
-                <svg class="free-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                    ${entity.__groupExpanded
-                        ? svg`<path d="M4.8 7.5h6.5v1H4.8z" />`
-                        : svg`<path d="M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z" />`}
-                </svg></i
-            ><span> ${entity.__groupName} (${entity.__groupTotal})</span>
-        `;
+        if (entity) {
+            const changeGrouping = () => {
+                if (entity.__groupExpanded) {
+                    this.connector.groupCollapse(entity.__groupID);
+                } else {
+                    this.connector.groupExpand(entity.__groupID);
+                }
+            };
 
-        return html`
-             ${entity.__groupLvl
-                ? html`
-                      <free-grid-col
-                          class="free-grid-col free-grid-grouping-row"
-                          style="width:${entity.__groupLvl ? entity.__groupLvl * 15 : 0}px;left:0"
-                      >
-                      </free-grid-col>
-                  `
-                : ''}
-            ${html`
-                <free-grid-col
-                    class="free-grid-col-group"
-                    style="left:${entity.__groupLvl ? entity.__groupLvl * 15 : 0}px;right:0"
-                >
-                    ${defaultMarkup}
-                </free-grid-col>
-            `}
-        `;
-        } else{
-            return ''
+            const defaultMarkup = html`
+                <i @click=${changeGrouping}>
+                    <svg
+                        class="free-grid-icon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 16 16"
+                    >
+                        ${entity.__groupExpanded
+                            ? svg`<path d="M4.8 7.5h6.5v1H4.8z" />`
+                            : svg`<path d="M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z" />`}
+                    </svg></i
+                ><span> ${entity.__groupName} (${entity.__groupTotal})</span>
+            `;
+
+            return html`
+                ${entity.__groupLvl
+                    ? html`
+                          <free-grid-col
+                              class="free-grid-col free-grid-grouping-row"
+                              style="width:${entity.__groupLvl
+                                  ? entity.__groupLvl * 15
+                                  : 0}px;left:0"
+                          >
+                          </free-grid-col>
+                      `
+                    : ''}
+                ${html`
+                    <free-grid-col
+                        class="free-grid-col-group"
+                        style="left:${entity.__groupLvl ? entity.__groupLvl * 15 : 0}px;right:0"
+                    >
+                        ${defaultMarkup}
+                    </free-grid-col>
+                `}
+            `;
+        } else {
+            return '';
         }
     }
 }

@@ -4,7 +4,6 @@ import { DummyDataGenerator } from './dummyDataGenerator';
 import { GridInterface } from '@simple-html/grid';
 import { customElement, property, requestRender } from '@simple-html/core';
 
-
 @customElement('app-component')
 export default class extends HTMLElement {
     private data: any = [];
@@ -33,7 +32,6 @@ export default class extends HTMLElement {
     }
     public group() {
         gridConfig.sortingSet = [
-   
             {
                 attribute: 'word1',
                 asc: true,
@@ -74,7 +72,6 @@ export default class extends HTMLElement {
     public render() {
         return html`
             <div class="flex flex-row">
-               
                 <div>
                     <div class="m-1 p-1">
                         <button
@@ -205,42 +202,46 @@ export default class extends HTMLElement {
                         </button>
                     </div>
                     <div class="flex flex-col">
-                    <label class="p-1 m-2"
-                        >word1:
-                        <input
-                            .value=${this.entity?.word1 || ''}
-                            @change=${(e: any) => {
-                                if (this.entity) {
-                                     this.entity.word1 = e.target.value;
-                                    this.connector.reRender();
-                                }
-                            }}
-                    /></label>
-                    <label class="p-1 m-2"
-                        >word2:
-                        <input
-                            .value=${this.entity?.word2 || ''}
-                            @change=${(e: any) => {
-                                if (this.entity) {
-                                    this.entity.word2 = e.target.value;
-                                    this.connector.reRender();
-                                }
-                            }}
-                    /></label>
-                    <label class="p-1 m-2"
-                        >word3:
-                        <input
-                            .value=${this.entity?.word3 || ''}
-                            @change=${(e: any) => {
-                                if (this.entity) {
-                                    this.entity.word3 = e.target.value;
-                                    this.connector.reRender();
-                                }
-                            }}
-                    /></label>
+                        <label class="p-1 m-2"
+                            >word1:
+                            <input
+                                .value=${this.entity?.word1 || ''}
+                                @change=${(e: any) => {
+                                    if (this.entity) {
+                                        this.entity.word1 = e.target.value;
+                                        this.connector.reRender();
+                                    }
+                                }}
+                        /></label>
+                        <label class="p-1 m-2"
+                            >word2:
+                            <input
+                                .value=${this.entity?.word2 || ''}
+                                @change=${(e: any) => {
+                                    if (this.entity) {
+                                        this.entity.word2 = e.target.value;
+                                        this.connector.reRender();
+                                    }
+                                }}
+                        /></label>
+                        <label class="p-1 m-2"
+                            >word3:
+                            <input
+                                .value=${this.entity?.word3 || ''}
+                                @change=${(e: any) => {
+                                    if (this.entity) {
+                                        this.entity.word3 = e.target.value;
+                                        this.connector.reRender();
+                                    }
+                                }}
+                        /></label>
+                    </div>
                 </div>
-                </div>
-                <free-grid style="height:700px;width:100%" class="free-grid" .interface=${this.connector}>
+                <free-grid
+                    style="height:700px;width:100%"
+                    class="free-grid"
+                    .interface=${this.connector}
+                >
                 </free-grid>
             </div>
         `;

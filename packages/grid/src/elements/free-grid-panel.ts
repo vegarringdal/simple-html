@@ -24,7 +24,7 @@ export default class extends HTMLElement {
     disconnectedCallback() {
         this.ref.removeEventListener('reRender', this);
     }
-    
+
     render() {
         const grouping = this.connector.config.groupingSet || [];
 
@@ -41,7 +41,7 @@ export default class extends HTMLElement {
         };
 
         return html`
-            ${grouping.map(group => {
+            ${grouping.map((group) => {
                 const click = () => {
                     this.connector.removeGroup(group);
                 };

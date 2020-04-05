@@ -4,8 +4,7 @@ export function isVariable(path: string): boolean {
             console.error(`route argument contains illigal string: ${path}, please fix`);
         }
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
