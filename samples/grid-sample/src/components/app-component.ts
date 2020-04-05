@@ -34,25 +34,26 @@ export default class extends HTMLElement {
     }
     public group() {
         gridConfig.sortingSet = [
+   
             {
-                attribute: 'last',
+                attribute: 'word1',
                 asc: true,
                 no: 1
             },
             {
-                attribute: 'first',
+                attribute: 'word2',
                 asc: true,
                 no: 2
             },
             {
-                attribute: 'index',
+                attribute: 'word3',
                 asc: true,
                 no: 3
             }
         ];
         gridConfig.groupingSet = [
-            { title: 'Last', field: 'last' },
-            { title: 'First', field: 'first' }
+            { title: 'Word1', field: 'word1' },
+            { title: 'Word2', field: 'word2' }
         ];
         gridConfig.groupingExpanded = ['Barton', 'Barton-Aida'];
 
