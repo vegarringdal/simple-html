@@ -31,6 +31,7 @@ export default class extends HTMLElement {
             let curleft = grouping ? grouping * 15 : 0;
             this.style.width = this.group.width + 'px';
             this.style.left = this.group.__left + curleft + 'px';
+            this.render();
         }
     }
 
@@ -42,7 +43,7 @@ export default class extends HTMLElement {
     render() {
         return html`
             ${this.group.rows.map((cell, i) => {
-                if (cell.filterable) {
+                if (cell.filterable && cell.type !== 'empty') {
                     return html`
                         <free-grid-cell-filter
                             .connector=${this.connector}

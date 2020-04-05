@@ -101,11 +101,18 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
             };
 
             if (event === 'enter' && dragCell) {
+                if(_col.type === 'empty'){
+                    (_e.target as any).classList.toggle('hideme');
+                }
+
                 (_e.target as any).classList.add('free-grid-candrop');
                 _e.target.addEventListener('mouseup', drop);
             }
 
             if (event === 'leave' && dragCell) {
+                if(_col.type === 'empty'){
+                    (_e.target as any).classList.toggle('hideme');
+                }
                 _e.target.removeEventListener('mouseup', drop);
                 (_e.target as any).classList.remove('free-grid-candrop');
             }

@@ -83,20 +83,39 @@ export default class extends HTMLElement {
             );
         }
 
-        return html`
-            <span
-                .cell=${cell}
-                class="free-grid-label"
-                @mousedown=${(e: any) => {
-                    cell.sortable && sortCallback(e);
-                    !cell.disableDragDrop && mousedown(e);
-                }}
-                @mouseenter=${!cell.disableDragDrop && mouseenter}
-                @mouseleave=${!cell.disableDragDrop && mouseleave}
-                >${label}
-                ${sorticonElement(this.connector, cell)}</span
-            >
-            ${resizeColumnElement(this.ref, this.group)}
-        `;
+        if (cell.type === 'empty') {
+            return html`
+                <style>
+                    .free-grid .hideme {
+                        background-color: ${getComputedStyle(this.ref).getPropertyValue(
+                            '--freegrid-main-bg-color'
+                        )};
+                    }
+                </style>
+                <span
+                    .cell=${cell}
+                    class="free-grid-label hideme"
+                    @mouseenter=${!cell.disableDragDrop && mouseenter}
+                    @mouseleave=${!cell.disableDragDrop && mouseleave}
+                >
+                </span>
+                ${resizeColumnElement(this.ref, this.group)}
+            `;
+        } else {
+            return html`
+                <span
+                    .cell=${cell}
+                    class="free-grid-label"
+                    @mousedown=${(e: any) => {
+                        cell.sortable && sortCallback(e);
+                        !cell.disableDragDrop && mousedown(e);
+                    }}
+                    @mouseenter=${!cell.disableDragDrop && mouseenter}
+                    @mouseleave=${!cell.disableDragDrop && mouseleave}
+                    >${label} ${sorticonElement(this.connector, cell)}</span
+                >
+                ${resizeColumnElement(this.ref, this.group)}
+            `;
+        }
     }
 }

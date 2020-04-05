@@ -26,9 +26,9 @@ let setup: IGridConfig = {
                     allowGrouping: true
                 },
                 {
-                    header: 'Bool',
-                    attribute: 'bool',
-                    type: 'boolean',
+                    header: '',
+                    attribute: '',
+                    type: 'empty',
                     filterable: {},
                     sortable: {},
                     allowGrouping: true

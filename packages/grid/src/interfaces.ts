@@ -23,7 +23,7 @@ export type FilterOperator =
     | 'DOES_NOT_CONTAIN'
     | 'BEGIN_WITH'
     | 'END_WITH';
-export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date';
+export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
 export type Triggers = 'input' | 'change';
 export type SelectionMode = 'none' | 'single' | 'multiple';
 export type rowCache = { i: number };
