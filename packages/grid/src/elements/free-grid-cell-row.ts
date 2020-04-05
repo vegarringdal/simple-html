@@ -139,7 +139,7 @@ export default class extends HTMLElement {
                     @change=${change}
                     @input=${input}
                     type=${cell.type || 'text'}
-                    .value=${data[cell.attribute]}
+                    .value=${data[cell.attribute] || null}
                     class="free-grid-row-input"
                 />
             `;
