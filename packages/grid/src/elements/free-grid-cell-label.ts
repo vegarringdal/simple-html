@@ -71,6 +71,18 @@ export default class extends HTMLElement {
 
         this.style.width = this.group.width + 'px';
 
+        if (cell.renderLabelCallBackFn) {
+            return cell.renderLabelCallBackFn(
+                cell,
+                this.connector,
+                sorticonElement,
+                resizeColumnElement,
+                mousedown,
+                mouseenter,
+                mouseleave
+            );
+        }
+
         return html`
             <span
                 .cell=${cell}
@@ -82,7 +94,7 @@ export default class extends HTMLElement {
                 @mouseenter=${!cell.disableDragDrop && mouseenter}
                 @mouseleave=${!cell.disableDragDrop && mouseleave}
                 >${label}
-                ${sorticonElement(this.connector, this.group.rows[this.cellPosition])}</span
+                ${sorticonElement(this.connector, cell)}</span
             >
             ${resizeColumnElement(this.ref, this.group)}
         `;

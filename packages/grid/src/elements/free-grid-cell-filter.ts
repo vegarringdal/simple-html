@@ -105,6 +105,14 @@ export default class extends HTMLElement {
         const change = cell.editEventType !== 'input' ? filterCallback : null;
         const input = cell.editEventType === 'input' ? filterCallback : null;
 
+        if (cell.renderFilterCallBackFn) {
+            return cell.renderFilterCallBackFn(
+                cell,
+                this.connector,
+                filterCallback
+            );
+        }
+
         return html`
             <input
                 type=${coltype || 'text'}

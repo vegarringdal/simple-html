@@ -77,6 +77,16 @@ export default class extends HTMLElement {
             const change = this.cell.editEventType !== 'input' ? this.updateCallback : null;
             const input = this.cell.editEventType === 'input' ? this.updateCallback : null;
 
+            if (cell.renderRowCallBackFn) {
+                return cell.renderRowCallBackFn(
+                    cell,
+                    data,
+                    this.rowNo,
+                    this.connector,
+                    this.updateCallback
+                );
+            }
+
             switch (cell.type) {
                 case 'boolean':
                     return html`
