@@ -3,12 +3,12 @@ const weakmap = new WeakMap();
 
 // soemthing
 export const eventIF = directive(
-    (arg: any | null | undefined, event: string, call: Function) => (part: any) => {
+    (arg: any | null | undefined, event: string, call: Function, ctx:any) => (part: any) => {
+
         const EventHandler = class {
             private part: any;
             private event: string;
             private caller: Function;
-            private handlerBinded: EventListenerOrEventListenerObject;
             private arg: boolean;
 
             constructor(part: any, arg: any, event: any, call: any) {
@@ -19,15 +19,15 @@ export const eventIF = directive(
                     this.arg = arg;
                     this.event = event;
                     this.caller = call;
-                    this.handlerBinded = this.handler.bind(this);
+                   
                     if (arg) {
-                        part.element.addEventListener(event, this.handlerBinded);
+                        part.element.addEventListener(event, this);
                     }
                 }
             }
 
-            public handler(e: any) {
-                this.caller(e);
+            public handleEvent(e: any) {
+                this.caller.apply(ctx, [e]);
             }
 
             public update(arg: any, event: any, call: any) {
@@ -35,18 +35,18 @@ export const eventIF = directive(
                 this.caller = call;
                 if (this.arg && arg) {
                     if (this.event !== event) {
-                        this.part.element.removeEventLister(this.event, this.handlerBinded);
+                        this.part.element.removeEventLister(this.event, this);
                         this.event = event;
-                        this.part.element.addEventListener(event, this.handlerBinded);
+                        this.part.element.addEventListener(event, this);
                     }
                 } else {
                     if (this.arg && !arg) {
-                        this.part.element.removeEventLister(this.event, this.handlerBinded);
+                        this.part.element.removeEventLister(this.event, this);
                         this.event = event;
                     }
                     if (!this.arg && arg) {
                         this.event = event;
-                        this.part.element.addEventListener(event, this.handlerBinded);
+                        this.part.element.addEventListener(event, this);
                     }
                 }
             }

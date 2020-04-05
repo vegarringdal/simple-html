@@ -31,7 +31,7 @@ export default class extends HTMLElement {
             this.style.width = this.group.width + 'px';
         }
         if (e.type === 'reRender') {
-            this.render()
+            this.render();
         }
     }
 
@@ -40,28 +40,61 @@ export default class extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
+    updateCallback(e: any) {
+        const data = this.connector.displayedDataset[this.rowNo];
+        const cell = this.cell;
+
+        cell.beforeEditCallbackFn &&
+            cell.beforeEditCallbackFn(e, cell, this.rowNo, data, this.connector);
+        // filter out based on type so we know what type to use
+        if (cell.autoUpdateData !== false) {
+            switch (this.cell.type) {
+                case 'boolean':
+                    data[cell.attribute] = e.target.checked;
+                    break;
+                case 'image':
+                    // rowData[col.attribute] = e.target.checked;
+                    // we need this ever ?
+                    break;
+                case 'date':
+                    data[cell.attribute] = e.target.valueAsDate;
+                    break;
+                case 'number':
+                    data[cell.attribute] = e.target.valueAsNumber;
+                    break;
+                default:
+                    data[cell.attribute] = e.target.value;
+            }
+            this.connector.publishEvent('attribute-change');
+        }
+        cell.afterEditCallbackFn &&
+            cell.afterEditCallbackFn(e, cell, this.rowNo, data, this.connector);
+    }
+
     render() {
-
-        
-
         if (this.connector.displayedDataset[this.rowNo]) {
             const cell = this.cell;
-            const data = this.connector.displayedDataset[this.rowNo][cell.attribute];
+            const data = this.connector.displayedDataset[this.rowNo];
             switch (cell.type) {
                 case 'boolean':
                     return html`
                         <input
                             ?readonly=${cell.readonly}
                             ?disabled=${cell.disabled}
-                            @custom=${eventIF(true, cell.editEventType || 'change', () => {})}
+                            @custom=${eventIF(
+                                true,
+                                cell.editEventType || 'change',
+                                this.updateCallback,
+                                this
+                            )}
                             type="checkbox"
-                            .checked=${data}
+                            .checked=${data[cell.attribute]}
                             class="free-grid-row-checkbox"
                         />
                     `;
                 case 'image':
                     return html`
-                        <img .src=${data || ''} class="free-grid-image-round" />
+                        <img .src=${data[cell.attribute] || ''} class="free-grid-image-round" />
                     `;
 
                 case 'date':
@@ -69,9 +102,14 @@ export default class extends HTMLElement {
                         <input
                             ?readonly=${cell.readonly}
                             ?disabled=${cell.disabled}
-                            @custom=${eventIF(true, cell.editEventType || 'change', () => {})}
+                            @custom=${eventIF(
+                                true,
+                                cell.editEventType || 'change',
+                                this.updateCallback,
+                                this
+                            )}
                             type=${cell.type}
-                            .valueAsDate=${data || null}
+                            .valueAsDate=${data[cell.attribute] || null}
                             class="free-grid-row-input"
                         />
                     `;
@@ -80,9 +118,14 @@ export default class extends HTMLElement {
                         <input
                             ?readonly=${cell.readonly}
                             ?disabled=${cell.disabled}
-                            @custom=${eventIF(true, cell.editEventType || 'change', () => {})}
+                            @custom=${eventIF(
+                                true,
+                                cell.editEventType || 'change',
+                                this.updateCallback,
+                                this
+                            )}
                             type=${cell.type}
-                            .valueAsNumber=${data}
+                            .valueAsNumber=${data[cell.attribute]}
                             class="free-grid-row-input"
                         />
                     `;
@@ -90,7 +133,19 @@ export default class extends HTMLElement {
             }
 
             return html`
-                <input value=${data} class="free-grid-row-input" />
+                <input
+                    ?readonly=${cell.readonly}
+                    ?disabled=${cell.disabled}
+                    @custom=${eventIF(
+                        true,
+                        cell.editEventType || 'change',
+                        this.updateCallback,
+                        this
+                    )}
+                    type=${cell.type}
+                    .value=${data[cell.attribute]}
+                    class="free-grid-row-input"
+                />
             `;
         } else {
             return '';

@@ -47,7 +47,10 @@ export default class extends HTMLElement {
     render() {
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
+        
         const mouseup = (e: MouseEvent) => {
+            cell.sortable.beforeSortCallbackFn &&
+            cell.sortable.beforeSortCallbackFn(<any>e, cell, connector);
             if (cell.sortable.auto !== false) {
                 console.log('sort');
                 connector.sortCallback(<any>e, cell);
@@ -55,7 +58,7 @@ export default class extends HTMLElement {
         };
 
         const sortCallback = (e: any) => {
-            console.log(e.type);
+            
             if ((<any>e).button === 0) {
                 e.target.addEventListener('mouseup', mouseup);
                 setTimeout(() => {
@@ -75,9 +78,9 @@ export default class extends HTMLElement {
             <span
                 .cell=${cell}
                 class="free-grid-label"
-                @custom=${eventIF(cell.sortable, 'mousedown', sortCallback)}
-                @custom-1=${eventIF(!cell.disableDragDrop, 'mousedown', mousedown)}
-                @custom-2=${eventIF(!cell.disableDragDrop, 'mouseenter', mouseenter)}
+                @custom=${eventIF(cell.sortable, 'mousedown', sortCallback, this)}
+                @custom-1=${eventIF(!cell.disableDragDrop, 'mousedown', mousedown, this)}
+                @custom-2=${eventIF(!cell.disableDragDrop, 'mouseenter', mouseenter, this)}
                 >${this.label}
                 ${sorticonElement(this.connector, this.group.rows[this.cellPosition])}</span
             >

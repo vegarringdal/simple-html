@@ -40,15 +40,13 @@ export interface ICell {
     readonly?: boolean;
     /**Default FALSE */
     disabled?: boolean;
-    /**Default FALSE */
-    hide?: boolean;
     /**Default 100 */
     width?: number;
     //filter
     filterable?: {
         /**Default FALSE */
         filterOverLabel?: boolean;
-        beforeFilterCallbackFn?: () => any;
+        beforeFilterCallbackFn?: any;
         /**Default TRUE */
         auto?: boolean;
         /**Default CHANGE */
@@ -64,20 +62,16 @@ export interface ICell {
         sortAscending?: boolean;
         /**Internal used for making sort icon on header*/
         sortNo?: number;
-        beforeSortCallbackFn?: () => any;
+        beforeSortCallbackFn?: any;
         /**Default TRUE */
         auto?: boolean;
     };
     type?: DataTypes;
-    beforeEditCallbackFn?: () => any;
+    beforeEditCallbackFn?: any;
     /**Default TRUE */
     autoUpdateData?: boolean;
-    afterEditCallbackFn?: () => any;
+    afterEditCallbackFn?: any;
     editEventType?: Triggers;
-    rowRenderCallBackFn?: () => any;
-    headerRenderCallBackFn?: () => any;
-    headerRenderLabelCallBackFn?: () => any;
-    headerRenderInputCallBackFn?: () => any;
     disableDragDrop?: boolean;
     allowGrouping?: boolean;
 }

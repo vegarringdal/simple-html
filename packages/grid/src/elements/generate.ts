@@ -27,8 +27,8 @@ export function generate(connector: GridInterface, rowPositionCache: rowCache[],
         <free-grid-panel
             .connector=${connector}
             .ref=${ref}
-            @custom-1=${eventIF(true, 'mouseleave', leave)}
-            @custom-2=${eventIF(true, 'mouseenter', enter)}
+            @custom-1=${eventIF(true, 'mouseleave', leave, this)}
+            @custom-2=${eventIF(true, 'mouseenter', enter, this)}
         ></free-grid-panel>
         <free-grid-header .connector=${connector} .ref=${ref}></free-grid-header>
         <free-grid-body

@@ -69,7 +69,8 @@ export default class extends HTMLElement {
                         t.indeterminate = true;
                 }
             }
-
+            col.filterable.beforeFilterCallbackFn &&
+            col.filterable.beforeFilterCallbackFn(e, col, this.connector);
             if (col.filterable.auto !== false) {
                 this.connector.filterCallback(e, col);
             }
@@ -108,8 +109,8 @@ export default class extends HTMLElement {
                 .indeterminate=${indeterminate}
                 .state=${setState}
                 class=${classname}
-                @custom=${eventIF(true, col.filterable.filterTrigger || 'change', filterCallback)}
-                @custom-keydown=${eventIF(true, 'keydown', enterKeyDown)}
+                @custom=${eventIF(true, col.filterable.filterTrigger || 'change', filterCallback, this)}
+                @custom-keydown=${eventIF(true, 'keydown', enterKeyDown, this)}
                 .value=${value}
                 placeholder=${placeholder}
             />
