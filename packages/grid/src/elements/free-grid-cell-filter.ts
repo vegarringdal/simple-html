@@ -39,15 +39,15 @@ export default class extends HTMLElement {
     }
 
     render() {
-        const col = this.group.rows[this.cellPosition];
+        const cell = this.group.rows[this.cellPosition];
 
-        const coltype = col.type === 'boolean' ? 'checkbox' : col.type;
-        const value = col.filterable.currentValue || null;
-        const placeholder = col.filterable.placeholder || '';
+        const coltype = cell.type === 'boolean' ? 'checkbox' : cell.type;
+        const value = cell.filterable.currentValue || null;
+        const placeholder = cell.filterable.placeholder || '';
 
         const filterCallback = (e: any) => {
             // if boolean column we to to overide how it behaves
-            if (col.type === 'boolean') {
+            if (cell.type === 'boolean') {
                 const t: any = e.target;
                 switch (t.state) {
                     case 0:
@@ -68,10 +68,10 @@ export default class extends HTMLElement {
                         t.indeterminate = true;
                 }
             }
-            col.filterable.beforeFilterCallbackFn &&
-                col.filterable.beforeFilterCallbackFn(e, col, this.connector);
-            if (col.filterable.auto !== false) {
-                this.connector.filterCallback(e, col);
+            cell.filterable.beforeFilterCallbackFn &&
+                cell.filterable.beforeFilterCallbackFn(e, cell, this.connector);
+            if (cell.filterable.auto !== false) {
+                this.connector.filterCallback(e, cell);
             }
         };
 
@@ -85,24 +85,24 @@ export default class extends HTMLElement {
         let boolstyle = null;
         let indeterminate = false;
         let setState = 0;
-        if (col.type === 'boolean' && col.filterable) {
+        if (cell.type === 'boolean' && cell.filterable) {
             // if no value is set then its "blank state, nothing filtered
-            if (col.filterable.currentValue !== false && col.filterable.currentValue !== true) {
+            if (cell.filterable.currentValue !== false && cell.filterable.currentValue !== true) {
                 boolstyle = 'opacity:0.3';
                 indeterminate = true;
                 setState = 0;
             } else {
-                setState = col.filterable.currentValue ? 2 : 3;
+                setState = cell.filterable.currentValue ? 2 : 3;
             }
         }
 
         let classname = 'free-grid-row-input';
-        if (col.type === 'boolean') {
+        if (cell.type === 'boolean') {
             classname = 'free-grid-row-checkbox';
         }
 
-        const change = col.editEventType !== 'input' ? filterCallback : null;
-        const input = col.editEventType === 'input' ? filterCallback : null;
+        const change = cell.editEventType !== 'input' ? filterCallback : null;
+        const input = cell.editEventType === 'input' ? filterCallback : null;
 
         return html`
             <input
