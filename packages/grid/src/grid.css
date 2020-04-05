@@ -6,6 +6,7 @@
     --freegrid-sec-bg-border:#565656;
     --freegrid-main-bg-selected: #4b4d4e;
     --freegrid-main-font-color: #eae6e6;
+    --freegrid-sec-font-color: #979494;
     --freegrid-font-size: 11px;
     --freegrid-font-weight: 500;
     --freegrid-font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
@@ -37,6 +38,8 @@ free-grid-body::-webkit-scrollbar-thumb {
     outline: 1px solid var(--freegrid-main-bg-border);
 }
 
+
+
 .free-grid .free-grid-row {
     border: 0;
     width: 100%;
@@ -46,6 +49,12 @@ free-grid-body::-webkit-scrollbar-thumb {
     position: absolute;
     overflow: hidden;
 }
+
+
+.free-grid input::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: var(--freegrid-sec-font-color);;
+    opacity: 1; /* Firefox */
+  }
 
 .free-grid .free-grid-col {
     border: 0;
