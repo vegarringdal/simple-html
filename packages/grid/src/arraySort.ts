@@ -39,12 +39,14 @@ export class ArraySort {
         });
         configColumns.forEach(col => {
             const i = attribute.indexOf(col.attribute);
-            if (i !== -1) {
-                col.sortable.sortAscending = asc[i] === true;
-                col.sortable.sortNo = no[i];
-            } else {
-                col.sortable.sortAscending = null;
-                col.sortable.sortNo = null;
+            if (col.sortable) {
+                if (i !== -1) {
+                    col.sortable.sortAscending = asc[i] === true;
+                    col.sortable.sortNo = no[i];
+                } else {
+                    col.sortable.sortAscending = null;
+                    col.sortable.sortNo = null;
+                }
             }
         });
     }

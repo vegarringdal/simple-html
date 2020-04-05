@@ -128,7 +128,7 @@ export default class extends HTMLElement {
                     ?disabled=${cell.disabled}
                     @change=${change}
                     @input=${input}
-                    type=${cell.type}
+                    type=${cell.type || 'text'}
                     .value=${data[cell.attribute]}
                     class="free-grid-row-input"
                 />

@@ -42,6 +42,7 @@ export default class extends HTMLElement {
         const cell = this.group.rows[this.cellPosition];
 
         const coltype = cell.type === 'boolean' ? 'checkbox' : cell.type;
+
         const value = cell.filterable.currentValue || null;
         const placeholder = cell.filterable.placeholder || '';
 
@@ -106,7 +107,7 @@ export default class extends HTMLElement {
 
         return html`
             <input
-                type=${coltype}
+                type=${coltype || 'text'}
                 style=${boolstyle}
                 .indeterminate=${indeterminate}
                 .state=${setState}

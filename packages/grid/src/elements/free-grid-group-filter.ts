@@ -42,15 +42,19 @@ export default class extends HTMLElement {
     render() {
         return html`
             ${this.group.rows.map((cell, i) => {
-                return html`
-                    <free-grid-cell-filter
-                        .connector=${this.connector}
-                        .cell=${cell}
-                        .group=${this.group}
-                        .ref=${this.ref}
-                        .cellPosition=${i}
-                    ></free-grid-cell-filter>
-                `;
+                if (cell.filterable) {
+                    return html`
+                        <free-grid-cell-filter
+                            .connector=${this.connector}
+                            .cell=${cell}
+                            .group=${this.group}
+                            .ref=${this.ref}
+                            .cellPosition=${i}
+                        ></free-grid-cell-filter>
+                    `;
+                } else{
+                    return ''
+                }
             })}
         `;
     }

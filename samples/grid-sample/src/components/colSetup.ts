@@ -15,14 +15,14 @@ export const COL_SETUP: IGridConfig = {
                     attribute: 'index',
                     type: 'number',
                     width: 120,
-                    filterable: {},
+                    //filterable: {},
                     sortable: {}
                 },
                 {
                     header: 'First',
                     attribute: 'first',
                     width: 500,
-                    filterable: {},
+                    filterable: {placeholder:'wow'},
                     sortable: {},
                     allowGrouping: true
                 },
@@ -32,7 +32,7 @@ export const COL_SETUP: IGridConfig = {
                     width: 100,
                     type: 'boolean',
                     filterable: {},
-                    sortable: {}
+                    //sortable: {}
                 },
                 {
                     header: 'Number',
