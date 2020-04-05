@@ -9,14 +9,10 @@ export default class extends HTMLElement {
     connector: GridInterface;
     row: { i: number };
     ref: FreeGrid;
-    currentHeight: number;
 
     connectedCallback() {
-        const config = this.connector.config;
         this.style.display = 'block';
-        this.style.height = config.__rowHeight + 'px';
-        this.currentHeight = this.row.i * config.__rowHeight;
-        this.style.transform = `translate3d(0px, ${this.currentHeight}px, 0px)`;
+
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
     }
@@ -36,12 +32,12 @@ export default class extends HTMLElement {
     }
 
     render() {
-        const config = this.connector.config;
-
         // check if height is changed
         //  if (this.currentHeight !== this.row.i * config.__rowHeight) {
-        this.currentHeight = this.row.i * config.__rowHeight;
-        this.style.transform = `translate3d(0px, ${this.row.i * config.__rowHeight}px, 0px)`;
+        this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
+        this.style.transform = `translate3d(0px, ${
+            this.connector.getScrollVars.__SCROLL_TOPS[this.row.i]
+        }px, 0px)`;
         // }
         const entity = this.connector.displayedDataset[this.row.i];
 

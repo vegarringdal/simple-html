@@ -40,10 +40,10 @@ export default class extends HTMLElement {
 
     render() {
         const config = this.connector.config;
-        const scrollheight = this.connector.displayedDataset.length * config.__rowHeight;
         return html`
             <free-grid-body-content
-                style="height:${scrollheight}px;width:${config.__rowWidth}px"
+                style="height:${this.connector.getScrollVars
+                    .__SCROLL_HEIGHT}px;width:${config.__rowWidth}px"
                 class="free-grid-content"
             >
                 ${this.rowPositionCache.map((row) => {

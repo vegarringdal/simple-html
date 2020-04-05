@@ -30,6 +30,7 @@ export class FreeGrid extends HTMLElement {
 
     public reRender() {
         requestAnimationFrame(() => {
+            this.resetRowCache();
             this.render();
             this.triggerEvent('reRender');
         });
@@ -52,14 +53,16 @@ export class FreeGrid extends HTMLElement {
 
     public resetRowCache() {
         if (this.interface) {
-            let rowsNeeded = Math.round(Math.floor(850 / this.interface.config.__rowHeight));
-            if (rowsNeeded > 40) {
-                rowsNeeded = 40;
+            let rowsNeeded = 30; //Math.round(Math.floor(850 / this.interface.config.__rowHeight));
+            if (rowsNeeded > 30) {
+                rowsNeeded = 30;
             }
+
             const cacheLength =
                 this.interface.displayedDataset.length > rowsNeeded
                     ? rowsNeeded
                     : this.interface.displayedDataset.length;
+            console.log(cacheLength);
             this.rowCache = [];
             for (let i = 0; i < cacheLength; i++) {
                 this.rowCache.push({ i: i });
