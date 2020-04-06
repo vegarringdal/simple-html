@@ -40,10 +40,18 @@ export default class extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
+    capalize(text: string) {
+        if (text) {
+            return text[0].toUpperCase() + text.substring(1, text.length);
+        } else {
+            return text;
+        }
+    }
+
     render() {
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
-        const label = this.group.rows[this.cellPosition].header;
+        const label = this.capalize(this.group.rows[this.cellPosition].header || '');
 
         const sortCallback = (e: any) => {
             const mouseup = (e: MouseEvent) => {
