@@ -36,7 +36,7 @@ export class FreeGrid extends HTMLElement {
             }
             this.render();
             this.triggerEvent('reRender');
-            //this.cleanup();
+            this.cleanup();
         });
     }
 
