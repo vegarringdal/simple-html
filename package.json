@@ -9,6 +9,7 @@
         "pub-test": "node ./scripts/publishTest",
         "sample-core": "node ./samples/core-sample/fuse",
         "sample-grid": "node ./samples/grid-sample/fuse",
+        "sample-grid:build": "node ./samples/grid-sample/fuse dist",
         "sample-router": "node ./samples/router-sample/fuse",
         "format:fix": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\""
     },
