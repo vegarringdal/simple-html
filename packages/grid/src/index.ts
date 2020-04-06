@@ -53,7 +53,7 @@ export class FreeGrid extends HTMLElement {
 
     public cleanup() {
         const node = this.getElementsByTagName('free-grid-body')[0];
-        if (node && node.scrollTop !== undefined) {
+        if (node && node.scrollTop !== undefined && this.interface) {
             let newTopPosition = node.scrollTop;
             if (this.interface.displayedDataset.length <= this.rowCache.length) {
                 newTopPosition = 0;
@@ -77,11 +77,16 @@ export class FreeGrid extends HTMLElement {
                 }
             }
 
+            let rowFound = currentRow;
             for (let i = 0; i < this.rowCache.length; i++) {
-                this.rowCache[i].i = currentRow + i;
+                let newRow = currentRow + i;
+                if (newRow > this.interface.displayedDataset.length - 1) {
+                    rowFound--;
+                    this.rowCache[i].i = rowFound;
+                } else {
+                    this.rowCache[i].i = newRow;
+                }
             }
-            this.rowCache.sort();
-            //console.log(this.rowCache.map((x) => x));
 
             this.triggerEvent('vertical-scroll');
         }
@@ -98,7 +103,6 @@ export class FreeGrid extends HTMLElement {
                 this.interface.displayedDataset.length > rowsNeeded
                     ? rowsNeeded
                     : this.interface.displayedDataset.length;
-            //console.log(cacheLength);
             this.rowCache = [];
             for (let i = 0; i < cacheLength; i++) {
                 this.rowCache.push({ i: i });
@@ -110,7 +114,6 @@ export class FreeGrid extends HTMLElement {
 
     public render() {
         return new Promise(() => {
-            // console.time('render');
             if (this.interface) {
                 render(html` ${generate(this.interface, this.rowCache, this)} `, this);
 
@@ -131,7 +134,6 @@ export class FreeGrid extends HTMLElement {
                     render(html``, this);
                 }
             }
-            //console.timeEnd('render');
         });
     }
 }

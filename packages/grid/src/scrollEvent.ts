@@ -17,7 +17,6 @@ export function scrollEvent(
             connector.config.scrollLeft = e.target.scrollLeft;
             ref.triggerEvent('horizontal-scroll');
         } else {
-            // window.focus();
             connector.config.scrollLeft = e.target.scrollLeft;
             if (document.activeElement) {
                 (document.activeElement as any).blur();
@@ -32,11 +31,14 @@ export function scrollEvent(
             }
 
             let scrollbars = false;
-            if (Math.abs(scrolltop - lastScrollTop) > 100) {
+            if (Math.abs(scrolltop - lastScrollTop) > 150) {
                 scrollbars = true;
             }
 
             if (scrollbars) {
+                /**
+                 * Scrollbar scrolling
+                 */
                 let newTopPosition = scrolltop;
                 if (connector.displayedDataset.length <= rowPositionCache.length) {
                     newTopPosition = 0;
@@ -55,7 +57,6 @@ export function scrollEvent(
 
                         if (checkValue < 0) {
                             currentRow = i - 1;
-
                             break;
                         }
 
@@ -63,14 +64,22 @@ export function scrollEvent(
                     }
                 }
 
+                let rowFound = currentRow;
                 for (let i = 0; i < rowPositionCache.length; i++) {
-                    rowPositionCache[i].i = currentRow + i;
+                    let newRow = currentRow + i;
+                    if (newRow > connector.displayedDataset.length - 1) {
+                        rowFound--;
+                        rowPositionCache[i].i = rowFound;
+                    } else {
+                        rowPositionCache[i].i = newRow;
+                    }
                 }
-                rowPositionCache.sort();
-                //requestAnimationFrame(() => {
+
                 ref.triggerEvent('vertical-scroll');
-                //});
             } else {
+                /**
+                 * Normal scrolling (not scrollbar)
+                 */
                 let rowHeightState: any = connector.getScrollVars.__SCROLL_HEIGHTS;
                 let rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
 
@@ -88,7 +97,6 @@ export function scrollEvent(
                     } else {
                         if (currentTop < scrolltop - rowHeightState[currentRow]) {
                             update = true;
-                            //newTop = rowHeightState[currentRow + rowPositionCache.length];
                             currentRow = currentRow + rowPositionCache.length;
                         }
                     }
@@ -101,12 +109,20 @@ export function scrollEvent(
                         rowPositionCache[i].i = currentRow;
                     }
                 }
-                rowPositionCache.sort();
-                // requestAnimationFrame(() => {
+
+                // fix rows to high
+                let rowFound = rowPositionCache[0].i;
+                let currentRow = rowFound;
+                for (let i = 0; i < rowPositionCache.length; i++) {
+                    let newRow = currentRow + i;
+                    if (newRow > connector.displayedDataset.length - 1) {
+                        rowFound--;
+                        rowPositionCache[i].i = rowFound;
+                    }
+                }
+
                 ref.triggerEvent('vertical-scroll');
-                // });
             }
-            // need to call render directly so it updates right away
         }
     };
 }
