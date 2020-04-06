@@ -2,23 +2,26 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { FreeGrid } from '../';
 import { html } from 'lit-html';
+import { rowCache } from '../interfaces';
 
 @customElement('free-grid-row')
 export default class extends HTMLElement {
     classList: any = 'free-grid-row';
     connector: GridInterface;
-    row: { i: number };
+    row: rowCache;
     ref: FreeGrid;
 
     connectedCallback() {
-        this.style.display = 'block';
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: any) {
         if (e.type === 'vertical-scroll') {
-            this.render();
+            if (this.row.update) {
+                this.row.update = false;
+                this.render();
+            }
         }
         if (e.type === 'reRender') {
             this.render();
@@ -39,40 +42,50 @@ export default class extends HTMLElement {
             this.connector.getScrollVars.__SCROLL_TOPS[this.row.i]
         }px, 0px)`;
 
-        const rowClick = (e: any) => {
-            this.connector.selection.highlightRow(<any>e, this.row.i);
-            this.ref.triggerEvent('vertical-scroll');
-        };
+        const entity = this.connector.displayedDataset[this.row.i];
 
-        if (this.connector.selection.isSelected(this.row.i)) {
-            this.classList.add('free-grid-selected-row');
+        if (entity && !entity.__group) {
+            this.style.display = 'block';
+
+            const rowClick = (e: any) => {
+                this.connector.selection.highlightRow(<any>e, this.row.i);
+                this.ref.triggerEvent('vertical-scroll');
+            };
+
+            if (this.connector.selection.isSelected(this.row.i)) {
+                this.classList.add('free-grid-selected-row');
+            } else {
+                this.classList.remove('free-grid-selected-row');
+            }
+
+            const grouping =
+                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+
+            return html`
+                <free-grid-col
+                    class="free-grid-grouping-row"
+                    style="width:${grouping ? grouping * 15 : 0}px;left:0; display:${grouping
+                        ? 'block'
+                        : 'none'}"
+                >
+                </free-grid-col>
+                ${config.groups.map((group) => {
+                    return html`
+                        <free-grid-group-row
+                            @click=${rowClick}
+                            .connector=${this.connector}
+                            .rowNo=${this.row.i}
+                            .ref=${this.ref}
+                            .group=${group}
+                        >
+                        </free-grid-group-row>
+                    `;
+                })}
+            `;
         } else {
-            this.classList.remove('free-grid-selected-row');
+            this.style.display = 'none';
+
+            return '';
         }
-
-        const grouping =
-            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
-
-        return html`
-            <free-grid-col
-                class="free-grid-grouping-row"
-                style="width:${grouping ? grouping * 15 : 0}px;left:0; display:${grouping
-                    ? 'block'
-                    : 'none'}"
-            >
-            </free-grid-col>
-            ${config.groups.map((group) => {
-                return html`
-                    <free-grid-group-row
-                        @click=${rowClick}
-                        .connector=${this.connector}
-                        .rowNo=${this.row.i}
-                        .ref=${this.ref}
-                        .group=${group}
-                    >
-                    </free-grid-group-row>
-                `;
-            })}
-        `;
     }
 }

@@ -27,9 +27,6 @@ export default class extends HTMLElement {
         if (e.type === 'reRender') {
             this.render();
         }
-        if (e.type === 'vertical-scroll') {
-            this.render();
-        }
     }
 
     disconnectedCallback() {
@@ -40,6 +37,7 @@ export default class extends HTMLElement {
 
     render() {
         const config = this.connector.config;
+
         return html`
             <free-grid-body-content
                 style="height:${this.connector.getScrollVars
@@ -47,25 +45,18 @@ export default class extends HTMLElement {
                 class="free-grid-content"
             >
                 ${this.rowPositionCache.map((row) => {
-                    const entity = this.connector.displayedDataset[row.i];
-                    const data = entity && entity.__group;
-                    if (data) {
-                        return html`
-                            <free-grid-row-group
-                                .connector=${this.connector}
-                                .row=${row}
-                                .ref=${this.ref}
-                            ></free-grid-row-group>
-                        `;
-                    } else {
-                        return html`
-                            <free-grid-row
-                                .connector=${this.connector}
-                                .row=${row}
-                                .ref=${this.ref}
-                            ></free-grid-row>
-                        `;
-                    }
+                    return html`
+                        <free-grid-row-group
+                            .connector=${this.connector}
+                            .row=${row}
+                            .ref=${this.ref}
+                        ></free-grid-row-group>
+                        <free-grid-row
+                            .connector=${this.connector}
+                            .row=${row}
+                            .ref=${this.ref}
+                        ></free-grid-row>
+                    `;
                 })}
             </free-grid-body-content>
         `;

@@ -137,7 +137,6 @@ export class GridInterface {
             if (node) {
                 node.scrollTop = 0;
             }
-            this.__freeGrid.resetRowCache();
         }
 
         if (this.config.sortingSet) {
@@ -147,6 +146,7 @@ export class GridInterface {
             this.__arrayUtils.setGrouping(this.config.groupingSet);
         }
 
+        this.__freeGrid && this.__freeGrid.resetRowCache();
         const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
         this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
         this.displayedDataset = result.fixed;

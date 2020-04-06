@@ -26,7 +26,7 @@ export type FilterOperator =
 export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
 export type Triggers = 'input' | 'change';
 export type SelectionMode = 'none' | 'single' | 'multiple';
-export type rowCache = { i: number };
+export type rowCache = { i: number; update: boolean };
 
 export interface IAttributes {
     attribute: string;

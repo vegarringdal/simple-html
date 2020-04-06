@@ -3,12 +3,13 @@ export { IGridConfig } from './interfaces';
 import { GridInterface } from './gridInterface';
 import { customElement } from '@simple-html/core';
 import { generate } from './elements/generate';
+import { rowCache } from './interfaces';
 export { GridInterface } from './gridInterface';
 
 @customElement('free-grid')
 export class FreeGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
-    public rowCache: { i: number }[] = [];
+    public rowCache: rowCache[] = [];
 
     set interface(value: GridInterface) {
         this.__DATASOURCE_INTERFACE = value;
@@ -30,9 +31,12 @@ export class FreeGrid extends HTMLElement {
 
     public reRender() {
         requestAnimationFrame(() => {
+            for (let i = 0; i < this.rowCache.length; i++) {
+                this.rowCache[i].update = true;
+            }
             this.render();
             this.triggerEvent('reRender');
-            this.cleanup();
+            //this.cleanup();
         });
     }
 
@@ -86,6 +90,7 @@ export class FreeGrid extends HTMLElement {
                 } else {
                     this.rowCache[i].i = newRow;
                 }
+                this.rowCache[i].update = true;
             }
 
             this.triggerEvent('vertical-scroll');
@@ -94,9 +99,13 @@ export class FreeGrid extends HTMLElement {
 
     public resetRowCache() {
         if (this.interface) {
-            let rowsNeeded = 30; //Math.round(Math.floor(850 / this.interface.config.__rowHeight));
-            if (rowsNeeded > 30) {
-                rowsNeeded = 30;
+            const node = this.getElementsByTagName('free-grid-body')[0];
+            let height = node?.clientHeight || this.interface.config.cellHeight * 30;
+
+            let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2; //(buffer);
+            console.log(rowsNeeded);
+            if (rowsNeeded > 40) {
+                rowsNeeded = 40;
             }
 
             const cacheLength =
@@ -105,7 +114,7 @@ export class FreeGrid extends HTMLElement {
                     : this.interface.displayedDataset.length;
             this.rowCache = [];
             for (let i = 0; i < cacheLength; i++) {
-                this.rowCache.push({ i: i });
+                this.rowCache.push({ i: i, update: true });
             }
         } else {
             this.rowCache = [];

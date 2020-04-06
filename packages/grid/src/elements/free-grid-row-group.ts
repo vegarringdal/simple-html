@@ -2,17 +2,16 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { FreeGrid } from '..';
 import { html, svg } from 'lit-html';
+import { rowCache } from '../interfaces';
 
 @customElement('free-grid-row-group')
 export default class extends HTMLElement {
     classList: any = 'free-grid-row';
     connector: GridInterface;
-    row: { i: number };
+    row: rowCache;
     ref: FreeGrid;
 
     connectedCallback() {
-        this.style.display = 'block';
-
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
     }
@@ -41,7 +40,9 @@ export default class extends HTMLElement {
         // }
         const entity = this.connector.displayedDataset[this.row.i];
 
-        if (entity) {
+        if (entity && entity.__group) {
+            this.style.display = 'block';
+
             const changeGrouping = () => {
                 if (entity.__groupExpanded) {
                     this.connector.groupCollapse(entity.__groupID);
@@ -86,6 +87,8 @@ export default class extends HTMLElement {
                 `}
             `;
         } else {
+            this.style.display = 'none';
+
             return '';
         }
     }

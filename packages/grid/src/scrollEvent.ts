@@ -1,13 +1,8 @@
 import { GridInterface } from './gridInterface';
 import { FreeGrid } from '.';
+import { rowCache } from './interfaces';
 
-export function scrollEvent(
-    connector: GridInterface,
-    rowPositionCache: {
-        i: number;
-    }[],
-    ref: FreeGrid
-) {
+export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
     return (e: any) => {
         if (
             connector.config.scrollLeft &&
@@ -31,7 +26,7 @@ export function scrollEvent(
             }
 
             let scrollbars = false;
-            if (Math.abs(scrolltop - lastScrollTop) > 150) {
+            if (Math.abs(scrolltop - lastScrollTop) > 300) {
                 scrollbars = true;
             }
 
@@ -73,6 +68,7 @@ export function scrollEvent(
                     } else {
                         rowPositionCache[i].i = newRow;
                     }
+                    rowPositionCache[i].update = true;
                 }
 
                 ref.triggerEvent('vertical-scroll');
@@ -107,6 +103,7 @@ export function scrollEvent(
                         currentRow <= connector.displayedDataset.length - 1
                     ) {
                         rowPositionCache[i].i = currentRow;
+                        rowPositionCache[i].update = true;
                     }
                 }
 
@@ -118,6 +115,7 @@ export function scrollEvent(
                     if (newRow > connector.displayedDataset.length - 1) {
                         rowFound--;
                         rowPositionCache[i].i = rowFound;
+                        rowPositionCache[i].update = true;
                     }
                 }
 
