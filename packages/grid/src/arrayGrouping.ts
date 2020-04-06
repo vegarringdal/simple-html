@@ -85,6 +85,14 @@ export class ArrayGrouping {
         this.grouping = g;
     }
 
+    private toUppercase(text: string) {
+        if (text) {
+            return text[0].toUpperCase() + text.substring(1, text.length);
+        } else {
+            return text;
+        }
+    }
+
     public expandOneOrAll(id: string, array?: Set<string>) {
         let all = id ? false : true; // if no id, then all
         if (!id) {
@@ -219,7 +227,7 @@ export class ArrayGrouping {
 
             if (gidm !== tempValue) {
                 curGroup = {
-                    __groupName: gidm,
+                    __groupName: this.toUppercase(groupBy) + ': ' + gidm,
                     __group: true,
                     __groupID: gidm,
                     __groupLvl: groupNo,
@@ -251,11 +259,12 @@ export class ArrayGrouping {
             // loop children
             const rebuiltChildrenArray: IEntity[] = [];
             element.__groupChildren.forEach((child: IEntity) => {
-                const gidm = child[groupBy] || ' blank';
+                let gidm = child[groupBy] || ' blank';
+
                 if (gidm !== tempValue) {
                     const gidc = element.__groupID;
                     curGroup = {
-                        __groupName: gidm,
+                        __groupName: this.toUppercase(groupBy) + ': ' + gidm,
                         __groupID: gidc + '-' + gidm,
                         __group: true,
                         __groupLvl: groupNo,
