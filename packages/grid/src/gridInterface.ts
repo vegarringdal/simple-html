@@ -105,7 +105,7 @@ export class GridInterface {
         this.reRender();
     }
 
-    setData(data: any[], add: boolean = false) {
+    setData(data: any[], add = false) {
         const olddataSetlength = this.completeDataset.length;
 
         if (add) {
@@ -176,7 +176,7 @@ export class GridInterface {
         const row = this.config.__rowHeight;
         let count = 0;
         this.__DATASET_VIEW.forEach((ent) => {
-            let height = ent.__group ? cell : row;
+            const height = ent.__group ? cell : row;
 
             this.__SCROLL_TOPS.push(count);
             this.__SCROLL_HEIGHTS.push(height);
@@ -239,7 +239,7 @@ export class GridInterface {
 
     publishEvent(event: string) {
         this.reRender();
-        let keep = this.__subscribers.filter((element) => {
+        const keep = this.__subscribers.filter((element) => {
             return element(event);
         });
         this.__subscribers = keep;

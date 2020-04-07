@@ -47,7 +47,7 @@ const canDeactivate = function () {
         setTimeout(async () => {
             let result = true;
             for (let i = 0; i < canDeactivateCallers.length; i++) {
-                let y = await Promise.resolve(canDeactivateCallers[i]);
+                const y = await Promise.resolve(canDeactivateCallers[i]);
                 if (y === false) {
                     result = y;
                 }
@@ -58,7 +58,7 @@ const canDeactivate = function () {
 };
 
 // you call this during a CAN_DEACTIVATE_EVENT to stop navigation
-export const stopCanDeactivate = function (promise: Promise<Boolean>) {
+export const stopCanDeactivate = function (promise: Promise<boolean>) {
     canDeactivateCallers.push(promise);
 };
 

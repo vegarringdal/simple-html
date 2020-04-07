@@ -9,7 +9,7 @@ import { logger } from './logger';
  */
 export function customElement(elementName: string, extended?: ElementDefinitionOptions) {
     return function reg(elementClass: any) {
-        let observedAttributes = elementClass.observedAttributes;
+        const observedAttributes = elementClass.observedAttributes;
         Object.defineProperty(elementClass, 'observedAttributes', {
             set: function (value) {
                 elementClass.prototype[getObservedAttributesSymbol()] = value;
@@ -26,7 +26,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             );
         }
 
-        const base: any = class extends elementClass {
+        const Base: any = class extends elementClass {
             constructor() {
                 super();
                 logger('constructor', this, super.tagName);
@@ -35,7 +35,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 logger('render', this, super.tagName);
                 const template = super.render.call(this, ...result);
                 Promise.resolve(template).then((templates) => {
-                    render(templates, <any>this, { eventContext: <any>this });
+                    render(templates, this as any, { eventContext: this as any });
                     if (super.updated) {
                         //delay so it actually get a chance to update
                         setTimeout(() => {
@@ -85,16 +85,16 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
         };
         if (!customElements.get(elementName)) {
             if (extended) {
-                customElements.define(elementName, base, extended);
+                customElements.define(elementName, Base, extended);
             } else {
-                customElements.define(elementName, base);
+                customElements.define(elementName, Base);
             }
         } else {
-            if ((<any>globalThis).hmrCache) {
+            if ((globalThis as any).hmrCache) {
                 if (extended) {
-                    customElements.define(elementName, base, extended);
+                    customElements.define(elementName, Base, extended);
                 } else {
-                    customElements.define(elementName, base);
+                    customElements.define(elementName, Base);
                 }
             }
         }

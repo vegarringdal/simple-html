@@ -48,7 +48,7 @@ export default class extends HTMLElement {
             this.style.display = 'block';
 
             const rowClick = (e: any) => {
-                this.connector.selection.highlightRow(<any>e, this.row.i);
+                this.connector.selection.highlightRow(e as any, this.row.i);
                 this.ref.triggerEvent('vertical-scroll');
             };
 

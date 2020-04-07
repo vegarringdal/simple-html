@@ -56,14 +56,14 @@ export default class extends HTMLElement {
         const sortCallback = (e: any) => {
             const mouseup = (e: MouseEvent) => {
                 cell.sortable.beforeSortCallbackFn &&
-                    cell.sortable.beforeSortCallbackFn(<any>e, cell, connector);
+                    cell.sortable.beforeSortCallbackFn(e as any, cell, connector);
                 if (cell.sortable.auto !== false) {
                     console.log('sort');
-                    connector.sortCallback(<any>e, cell);
+                    connector.sortCallback(e as any, cell);
                 }
             };
 
-            if ((<any>e).button === 0) {
+            if ((e as any).button === 0) {
                 e.target.addEventListener('mouseup', mouseup);
                 setTimeout(() => {
                     e.target.removeEventListener('mouseup', mouseup);

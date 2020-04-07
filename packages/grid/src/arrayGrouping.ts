@@ -104,14 +104,14 @@ export class ArrayGrouping {
         if (!array) {
             array = new Set([]);
         }
-        let subGroup: Function;
+
         const collection: IEntity[] = [];
         const mainGroups = this.groups[0];
 
         // loop children
         // g = group
         // sg = subgroup
-        subGroup = (g: IEntity) => {
+        const subGroup = (g: IEntity) => {
             g.__groupChildren.forEach((sg: IEntity) => {
                 collection.push(sg);
                 switch (true) {
@@ -158,12 +158,12 @@ export class ArrayGrouping {
     public collapseOneOrAll(id?: string) {
         const all = id ? false : true; // if no id, then all
         id = id === undefined ? null : id;
-        let subGroup: Function;
+
         const collection: IEntity[] = [];
         const mainGroups = this.groups[0];
 
         // lopp children
-        subGroup = (g: IEntity) => {
+        const subGroup = (g: IEntity) => {
             g.__groupChildren.forEach((sg: IEntity) => {
                 switch (true) {
                     case all:
@@ -259,7 +259,7 @@ export class ArrayGrouping {
             // loop children
             const rebuiltChildrenArray: IEntity[] = [];
             element.__groupChildren.forEach((child: IEntity) => {
-                let gidm = child[groupBy] || ' blank';
+                const gidm = child[groupBy] || ' blank';
 
                 if (gidm !== tempValue) {
                     const gidc = element.__groupID;

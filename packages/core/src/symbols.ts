@@ -1,61 +1,61 @@
 export function initSymbolCache() {
-    if (!(<any>globalThis)._LHF_SYMBOL) {
-        (<any>globalThis)._LHF_SYMBOL = {};
-        (<any>globalThis)._LHF_PROP_SYMBOL = {};
+    if (!(globalThis as any)._LHF_SYMBOL) {
+        (globalThis as any)._LHF_SYMBOL = {};
+        (globalThis as any)._LHF_PROP_SYMBOL = {};
     }
 }
 
 export function getObservedAttributesMapSymbol() {
-    if (!(<any>globalThis)._LHF_SYMBOL.observedAttributesMap) {
-        (<any>globalThis)._LHF_SYMBOL.observedAttributesMap = Symbol('observedAttributesMap');
-        return (<any>globalThis)._LHF_SYMBOL.observedAttributesMap;
+    if (!(globalThis as any)._LHF_SYMBOL.observedAttributesMap) {
+        (globalThis as any)._LHF_SYMBOL.observedAttributesMap = Symbol('observedAttributesMap');
+        return (globalThis as any)._LHF_SYMBOL.observedAttributesMap;
     } else {
-        return (<any>globalThis)._LHF_SYMBOL.observedAttributesMap;
+        return (globalThis as any)._LHF_SYMBOL.observedAttributesMap;
     }
 }
 
 export function getObservedAttributesSymbol() {
-    if (!(<any>globalThis)._LHF_SYMBOL.observedAttributes) {
-        (<any>globalThis)._LHF_SYMBOL.observedAttributes = Symbol('observedAttributes');
-        return (<any>globalThis)._LHF_SYMBOL.observedAttributes;
+    if (!(globalThis as any)._LHF_SYMBOL.observedAttributes) {
+        (globalThis as any)._LHF_SYMBOL.observedAttributes = Symbol('observedAttributes');
+        return (globalThis as any)._LHF_SYMBOL.observedAttributes;
     } else {
-        return (<any>globalThis)._LHF_SYMBOL.observedAttributes;
+        return (globalThis as any)._LHF_SYMBOL.observedAttributes;
     }
 }
 
 export function getPropSymbol(name: string) {
-    if (!(<any>globalThis)._LHF_PROP_SYMBOL[name]) {
-        (<any>globalThis)._LHF_PROP_SYMBOL[name] = Symbol(name);
-        return (<any>globalThis)._LHF_PROP_SYMBOL[name];
+    if (!(globalThis as any)._LHF_PROP_SYMBOL[name]) {
+        (globalThis as any)._LHF_PROP_SYMBOL[name] = Symbol(name);
+        return (globalThis as any)._LHF_PROP_SYMBOL[name];
     } else {
-        return (<any>globalThis)._LHF_PROP_SYMBOL[name];
+        return (globalThis as any)._LHF_PROP_SYMBOL[name];
     }
 }
 
 export function getLoggerSymbol() {
-    if (!(<any>globalThis)._LHF_SYMBOL.logger) {
-        (<any>globalThis)._LHF_SYMBOL.logger = Symbol('logger');
-        return (<any>globalThis)._LHF_SYMBOL.logger;
+    if (!(globalThis as any)._LHF_SYMBOL.logger) {
+        (globalThis as any)._LHF_SYMBOL.logger = Symbol('logger');
+        return (globalThis as any)._LHF_SYMBOL.logger;
     } else {
-        return (<any>globalThis)._LHF_SYMBOL.logger;
+        return (globalThis as any)._LHF_SYMBOL.logger;
     }
 }
 
 export function getLoggerCountSymbol() {
-    if (!(<any>globalThis)._LHF_SYMBOL.loggerCount) {
-        (<any>globalThis)._LHF_SYMBOL.loggerCount = Symbol('loggerCount');
-        return (<any>globalThis)._LHF_SYMBOL.loggerCount;
+    if (!(globalThis as any)._LHF_SYMBOL.loggerCount) {
+        (globalThis as any)._LHF_SYMBOL.loggerCount = Symbol('loggerCount');
+        return (globalThis as any)._LHF_SYMBOL.loggerCount;
     } else {
-        return (<any>globalThis)._LHF_SYMBOL.loggerCount;
+        return (globalThis as any)._LHF_SYMBOL.loggerCount;
     }
 }
 
 export function getTransmitterSymbol() {
-    if (!(<any>globalThis)._LHF_SYMBOL.transmitter) {
-        (<any>globalThis)._LHF_SYMBOL.transmitter = Symbol('transmitter');
-        return (<any>globalThis)._LHF_SYMBOL.transmitter;
+    if (!(globalThis as any)._LHF_SYMBOL.transmitter) {
+        (globalThis as any)._LHF_SYMBOL.transmitter = Symbol('transmitter');
+        return (globalThis as any)._LHF_SYMBOL.transmitter;
     } else {
-        return (<any>globalThis)._LHF_SYMBOL.transmitter;
+        return (globalThis as any)._LHF_SYMBOL.transmitter;
     }
 }
 

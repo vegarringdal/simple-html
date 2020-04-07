@@ -16,7 +16,7 @@ export default class extends HTMLElement {
         const config = this.connector.config;
         const grouping =
             this.connector.config.groupingSet && this.connector.config.groupingSet.length;
-        let curleft = grouping ? grouping * 15 : 0;
+        const curleft = grouping ? grouping * 15 : 0;
         this.style.display = 'block';
         this.style.height = config.__rowHeight + 'px';
         this.style.width = this.group.width + 'px';
@@ -29,7 +29,7 @@ export default class extends HTMLElement {
         if (e.type === 'column-resize' || e.type === 'reRender') {
             const grouping =
                 this.connector.config.groupingSet && this.connector.config.groupingSet.length;
-            let curleft = grouping ? grouping * 15 : 0;
+            const curleft = grouping ? grouping * 15 : 0;
             this.style.width = this.group.width + 'px';
             this.style.left = this.group.__left + curleft + 'px';
         }

@@ -6,8 +6,8 @@ export class DataSource {
      * Have all the data
      **/
     private __DATASET_ALL: IEntity[] = [];
-    private __KEY_ATTRIBUTE: string = '';
-    private __KEY_COUNT: number = 0;
+    private __KEY_ATTRIBUTE = '';
+    private __KEY_COUNT = 0;
 
     constructor(UniqueKeyAttribute?: string) {
         // we want to add sufix just incase its something like a new
@@ -23,7 +23,7 @@ export class DataSource {
         return this.__KEY_COUNT;
     }
 
-    setData(data: any[], add: boolean = false): IEntity[] | void {
+    setData(data: any[], add = false): IEntity[] | void {
         if (add) {
             const x = Array.from(
                 data,
@@ -32,8 +32,8 @@ export class DataSource {
             this.__DATASET_ALL.push(...x);
 
             this.__DATASET_ALL.forEach((entity, i) => {
-                if (entity && !(<any>entity).__KEY) {
-                    (<any>entity).__KEY = this.getKey();
+                if (entity && !(entity as any).__KEY) {
+                    (entity as any).__KEY = this.getKey();
                 } else {
                     if (!this.__DATASET_ALL[i]) {
                         this.__DATASET_ALL[i] = { __KEY: this.getKey() };
@@ -47,8 +47,8 @@ export class DataSource {
                 (o) => new Proxy(o, new EntityHandler(this.__KEY_ATTRIBUTE) as any)
             ); // <- do I want to update user array Im allready setting a key on it ?
             this.__DATASET_ALL.forEach((entity, i) => {
-                if (entity && !(<any>entity).__KEY) {
-                    (<any>entity).__KEY = this.getKey();
+                if (entity && !(entity as any).__KEY) {
+                    (entity as any).__KEY = this.getKey();
                 } else {
                     if (!this.__DATASET_ALL[i]) {
                         this.__DATASET_ALL[i] = { __KEY: this.getKey() };

@@ -254,7 +254,7 @@ export class ArrayUtils {
         const result = this.orderBy(
             this.gridInterface.filteredDataset,
             { attribute: col.attribute, asc: sortAsc },
-            (<any>event).shiftKey
+            (event as any).shiftKey
         );
         this.gridInterface.config.sortingSet = this.getOrderBy();
         this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
@@ -282,7 +282,7 @@ export class ArrayUtils {
         }
 
         const filter: IFilterObj[] = [];
-        let columns = config.groups.flatMap((x) => x.rows);
+        const columns = config.groups.flatMap((x) => x.rows);
         columns.forEach((col) => {
             const f = col.filterable;
             if (f && f.currentValue !== null && f.currentValue !== undefined) {

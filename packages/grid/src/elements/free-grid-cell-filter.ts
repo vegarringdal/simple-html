@@ -79,7 +79,7 @@ export default class extends HTMLElement {
         const enterKeyDown = (e: KeyboardEvent) => {
             const keycode = e.keyCode ? e.keyCode : e.which;
             if (keycode === 13) {
-                filterCallback(<any>e);
+                filterCallback(e as any);
             }
         };
 

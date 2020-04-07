@@ -69,7 +69,7 @@ export class FreeGrid extends HTMLElement {
                 newTopPosition = 0;
             }
 
-            let rowTopState: any = this.interface.getScrollVars.__SCROLL_TOPS;
+            const rowTopState: any = this.interface.getScrollVars.__SCROLL_TOPS;
 
             let currentRow = 0;
 
@@ -78,7 +78,7 @@ export class FreeGrid extends HTMLElement {
             if (newTopPosition !== 0) {
                 // need to do some looping here, need to figure out where we are..
                 while (i < rowTopState.length) {
-                    let checkValue = Math.floor(newTopPosition - rowTopState[i]);
+                    const checkValue = Math.floor(newTopPosition - rowTopState[i]);
                     if (checkValue < 0) {
                         currentRow = i - 2;
                         break;
@@ -89,7 +89,7 @@ export class FreeGrid extends HTMLElement {
 
             let rowFound = currentRow;
             for (let i = 0; i < this.rowCache.length; i++) {
-                let newRow = currentRow + i;
+                const newRow = currentRow + i;
                 if (newRow > this.interface.displayedDataset.length - 1) {
                     rowFound--;
                     this.rowCache[i].i = rowFound;
@@ -106,7 +106,7 @@ export class FreeGrid extends HTMLElement {
     public resetRowCache() {
         if (this.interface) {
             const node = this.getElementsByTagName('free-grid-body')[0];
-            let height = node?.clientHeight || this.interface.config.cellHeight * 30;
+            const height = node?.clientHeight || this.interface.config.cellHeight * 30;
 
             let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2; //(buffer);
             console.log(rowsNeeded);

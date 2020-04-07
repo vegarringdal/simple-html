@@ -39,7 +39,7 @@ export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache
                     newTopPosition = 0;
                 }
 
-                let rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
+                const rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
 
                 let currentRow = 0;
 
@@ -48,7 +48,7 @@ export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache
                 if (newTopPosition !== 0) {
                     // need to do some looping here, need to figure out where we are..
                     while (i < rowTopState.length) {
-                        let checkValue = Math.floor(newTopPosition - rowTopState[i]);
+                        const checkValue = Math.floor(newTopPosition - rowTopState[i]);
 
                         if (checkValue < 0) {
                             currentRow = i - 1;
@@ -61,7 +61,7 @@ export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache
 
                 let rowFound = currentRow;
                 for (let i = 0; i < rowPositionCache.length; i++) {
-                    let newRow = currentRow + i;
+                    const newRow = currentRow + i;
                     if (newRow > connector.displayedDataset.length - 1) {
                         rowFound--;
                         rowPositionCache[i].i = rowFound;
@@ -76,12 +76,12 @@ export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache
                 /**
                  * Normal scrolling (not scrollbar)
                  */
-                let rowHeightState: any = connector.getScrollVars.__SCROLL_HEIGHTS;
-                let rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
+                const rowHeightState: any = connector.getScrollVars.__SCROLL_HEIGHTS;
+                const rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
 
                 for (let i = 0; i < rowPositionCache.length; i++) {
                     let currentRow = rowPositionCache[i].i;
-                    let currentTop = rowTopState[rowPositionCache[i].i];
+                    const currentTop = rowTopState[rowPositionCache[i].i];
 
                     let update = false;
 
@@ -109,9 +109,9 @@ export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache
 
                 // fix rows to high
                 let rowFound = rowPositionCache[0].i;
-                let currentRow = rowFound;
+                const currentRow = rowFound;
                 for (let i = 0; i < rowPositionCache.length; i++) {
-                    let newRow = currentRow + i;
+                    const newRow = currentRow + i;
                     if (newRow > connector.displayedDataset.length - 1) {
                         rowFound--;
                         rowPositionCache[i].i = rowFound;

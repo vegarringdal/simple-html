@@ -3,7 +3,7 @@ import { ICell } from '../interfaces';
 
 let dragCell: ICell = null;
 let dragColumnBlock: HTMLElement = null;
-let delayDragEventTimer: any = null;
+const delayDragEventTimer: any = null;
 
 /* function offset(el: HTMLElement, width: number) {
     const rect = el.getBoundingClientRect();
@@ -41,8 +41,10 @@ export const columnDragDropPanel = (event: string, _connector: GridInterface) =>
 
 export const columnDragDrop = (event: string, _col: ICell, _connector: GridInterface) => {
     // here we will clean up eevnt listeners
+
     const mouseUp = function () {
         document.removeEventListener('mouseup', mouseUp);
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         document.removeEventListener('mousemove', mouseMove);
         clearTimeout(delayDragEventTimer);
         dragCell = null;
@@ -85,9 +87,9 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
         if (dragCell !== null) {
             // not very fancy, but betteer then nothing
             const drop = (e: any) => {
-                let daCell = Object.assign({}, dragCell);
-                let doCell = Object.assign({}, _col);
-                let keys = Object.assign(dragCell, _col);
+                const daCell = Object.assign({}, dragCell);
+                const doCell = Object.assign({}, _col);
+                const keys = Object.assign(dragCell, _col);
 
                 for (const key in keys) {
                     dragCell[key] = doCell[key];

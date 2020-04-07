@@ -11,18 +11,6 @@ const resolvePromise = directive(
     }
 );
 
-export const routeMatchAsync = function (
-    hash = '',
-    importStatement: () => Promise<any>,
-    htmlTemplate: TemplateResult
-) {
-    if (routeMatch(hash)) {
-        return resolvePromise(importStatement(), htmlTemplate);
-    } else {
-        return '';
-    }
-};
-
 export const routeMatch = function (hash = '', locationhash = window.location.hash) {
     if (!hash && (locationhash === '' || locationhash === '#')) {
         return true;
@@ -36,4 +24,16 @@ export const routeMatch = function (hash = '', locationhash = window.location.ha
     const regexString = createRouteRegex(pattern, openEnd);
     const regex = new RegExp(regexString);
     return regex.test(locationhash);
+};
+
+export const routeMatchAsync = function (
+    hash = '',
+    importStatement: () => Promise<any>,
+    htmlTemplate: TemplateResult
+) {
+    if (routeMatch(hash)) {
+        return resolvePromise(importStatement(), htmlTemplate);
+    } else {
+        return '';
+    }
 };

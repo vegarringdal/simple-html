@@ -29,13 +29,13 @@ export default class extends HTMLElement {
         const grouping = this.connector.config.groupingSet || [];
 
         const mouseEnter = (e: MouseEvent) => {
-            (<HTMLElement>e.target)
+            (e.target as HTMLElement)
                 .getElementsByClassName('free-grid-icon')[0]
                 .classList.remove('free-grid-iconhidden');
         };
 
         const mouseLeave = (e: MouseEvent) => {
-            (<HTMLElement>e.target)
+            (e.target as HTMLElement)
                 .getElementsByClassName('free-grid-icon')[0]
                 .classList.add('free-grid-iconhidden');
         };

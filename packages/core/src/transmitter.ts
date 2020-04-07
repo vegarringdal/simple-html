@@ -1,12 +1,12 @@
 import { getTransmitterSymbol } from './symbols';
 
 // we need this to survive hmr so parts can unsubsribe
-if (!(<any>globalThis)[getTransmitterSymbol()]) {
-    (<any>globalThis)[getTransmitterSymbol()] = {};
+if (!(globalThis as any)[getTransmitterSymbol()]) {
+    (globalThis as any)[getTransmitterSymbol()] = {};
 }
 
 function transmitter() {
-    return (<any>globalThis)[getTransmitterSymbol()];
+    return (globalThis as any)[getTransmitterSymbol()];
 }
 
 // microtask
@@ -46,7 +46,7 @@ export function publishNext(channel: string, ...args: any[]): void {
 // sync
 export function unSubscribe(channel: string, ctx: any): void {
     if (Array.isArray(transmitter()[channel])) {
-        let events = transmitter()[channel].filter((event: any) => {
+        const events = transmitter()[channel].filter((event: any) => {
             if (event.ctx !== ctx) {
                 return true;
             } else {
