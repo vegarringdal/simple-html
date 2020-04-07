@@ -10,6 +10,7 @@ export { GridInterface } from './gridInterface';
 export class FreeGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
     public rowCache: rowCache[] = [];
+    private currentScrollHeight: number;
 
     set interface(value: GridInterface) {
         this.__DATASOURCE_INTERFACE = value;
@@ -23,6 +24,7 @@ export class FreeGrid extends HTMLElement {
     public connectedCallback() {
         this.resetRowCache();
         this.render();
+        this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;
     }
 
     public disconnectedCallback() {
@@ -34,9 +36,15 @@ export class FreeGrid extends HTMLElement {
             for (let i = 0; i < this.rowCache.length; i++) {
                 this.rowCache[i].update = true;
             }
+
             this.render();
+            if (this.currentScrollHeight !== this.interface.getScrollVars.__SCROLL_HEIGHT) {
+                // if callention length is changed we need to make sure all rows are within viewport
+                this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;
+                this.cleanup();
+            }
+
             this.triggerEvent('reRender');
-            this.cleanup();
         });
     }
 
