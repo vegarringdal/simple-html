@@ -4,7 +4,7 @@ import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
-import { columnDragDrop } from '../dragEvent';
+import { columnDragDrop } from './dragEvent';
 
 @customElement('free-grid-cell-label')
 export default class extends HTMLElement {

@@ -10,12 +10,12 @@ import './free-grid-footer';
 import './free-grid-panel';
 import './free-grid-row';
 import './free-grid-row-group';
-import { scrollEvent } from '../scrollEvent';
+import { scrollEvent } from './scrollEvent';
 import { GridInterface } from '../gridInterface';
 import { rowCache } from '../interfaces';
 import { html } from 'lit-html';
 import { FreeGrid } from '../';
-import { columnDragDropPanel } from '../dragEvent';
+import { columnDragDropPanel } from './dragEvent';
 
 export function generate(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
     const scroll = scrollEvent(connector, rowPositionCache, ref);

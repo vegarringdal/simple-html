@@ -1,6 +1,6 @@
-import { GridInterface } from './gridInterface';
-import { FreeGrid } from '.';
-import { rowCache } from './interfaces';
+import { GridInterface } from '../gridInterface';
+import { FreeGrid } from '..';
+import { rowCache } from '../interfaces';
 
 export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
     return (e: any) => {
