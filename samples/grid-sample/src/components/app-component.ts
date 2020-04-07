@@ -235,6 +235,13 @@ export default class extends HTMLElement {
                                     }
                                 }}
                         /></label>
+                        <button
+                            @click=${() => {
+                                console.log(this.connector.edited());
+                            }}
+                        >
+                            edited
+                        </button>
                     </div>
                 </div>
                 <free-grid
