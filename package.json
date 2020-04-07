@@ -4,6 +4,7 @@
     "description": "lit html tools",
     "scripts": {
         "build": "node ./scripts/build && node ./scripts/syncPackages",
+        "clean-dist": "node ./scripts/clean",
         "sync": "node ./scripts/syncPackages",
         "pub-now": "node ./scripts/publish",
         "pub-test": "node ./scripts/publishTest",
@@ -11,6 +12,8 @@
         "sample-grid": "node ./samples/grid-sample/fuse",
         "sample-grid:build": "node ./samples/grid-sample/fuse dist",
         "sample-router": "node ./samples/router-sample/fuse",
+        "eslint": "npm run clean-dist && npm run eslint:run",
+        "eslint:run": "./node_modules/.bin/eslint --fix ./packages/**/*.ts",
         "format:fix": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\""
     },
     "author": "vegar Ringdal",
@@ -42,7 +45,12 @@
         "prettier": "^2.0.4",
         "tailwindcss": "^1.2.0",
         "tslib": "^1.11.1",
-        "typescript": "^3.8.3"
+        "typescript": "^3.8.3",
+        "@typescript-eslint/eslint-plugin": "^2.27.0",
+        "@typescript-eslint/parser": "^2.27.0",
+        "eslint": "^6.8.0",
+        "eslint-config-prettier": "^6.10.1",
+        "eslint-plugin-prettier": "^3.1.2"
     },
     "dependencies": {}
 }
