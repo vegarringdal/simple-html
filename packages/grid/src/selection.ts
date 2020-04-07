@@ -6,19 +6,12 @@ export class Selection {
     private selection: Set<number>;
     private lastRowSelected: number;
     private lastKeyKodeUsed: string;
-    private key = 0;
     private gridInterface: GridInterface;
 
     constructor(gridInterface: GridInterface) {
         this.gridInterface = gridInterface;
         this.selectedRows = 0;
         this.selection = new Set([]);
-    }
-
-    public getKey() {
-        this.key++;
-
-        return this.key;
     }
 
     public isSelected(row: number): boolean {

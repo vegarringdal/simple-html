@@ -2,13 +2,13 @@ import { FreeGrid } from '.';
 import { IGroupingObj, IGridConfig, IEntity, ICell } from './interfaces';
 import { ArrayUtils } from './arrayUtils';
 import { Selection } from './selection';
-import { EntityHandler } from './entity';
+import { DataSource } from './dataSource';
 
 export class GridInterface {
     /**
      * Have all the data
      **/
-    private __DATASET_ALL: IEntity[] = [];
+    private __DATASOURCE: DataSource;
 
     /**
      * filtered data only
@@ -45,7 +45,11 @@ export class GridInterface {
     private __SCROLL_HEIGHTS: any[];
     private __SCROLL_HEIGHT: number;
 
-    constructor(private __CONFIG: IGridConfig) {
+    constructor(private __CONFIG: IGridConfig, datasource?: DataSource) {
+        if (!datasource) {
+            this.__DATASOURCE = new DataSource();
+        }
+
         // set groupheight
         let cellheight = 1;
         __CONFIG.groups.forEach((group) => {
@@ -102,37 +106,20 @@ export class GridInterface {
     }
 
     setData(data: any[], add: boolean = false) {
-        const olddataSetlength = this.__DATASET_ALL.length;
+        const olddataSetlength = this.completeDataset.length;
 
         if (add) {
-            const x = Array.from(data, (o) => new Proxy(o, new EntityHandler() as any));
-            this.__DATASET_ALL.push(...x);
-            this.__DATASET_FILTERED.push(...x);
-            this.__DATASET_ALL.forEach((entity, i) => {
-                if (entity && !(<any>entity).__KEY) {
-                    (<any>entity).__KEY = this.selection.getKey();
-                } else {
-                    if (!this.__DATASET_ALL[i]) {
-                        this.__DATASET_ALL[i] = { __KEY: this.selection.getKey() };
-                    }
-                }
-            });
+            const x = this.__DATASOURCE.setData(data, add);
+            if (x) {
+                this.__DATASET_FILTERED.push(...x);
+            }
         } else {
-            this.__DATASET_ALL = Array.from(data, (o) => new Proxy(o, new EntityHandler() as any)); // <- do I want to update user array Im allready setting a key on it ?
-            this.__DATASET_ALL.forEach((entity, i) => {
-                if (entity && !(<any>entity).__KEY) {
-                    (<any>entity).__KEY = this.selection.getKey();
-                } else {
-                    if (!this.__DATASET_ALL[i]) {
-                        this.__DATASET_ALL[i] = { __KEY: this.selection.getKey() };
-                    }
-                }
-            });
-            this.__DATASET_FILTERED = this.__DATASET_ALL.slice();
-            this.__DATASET_VIEW = this.__DATASET_ALL.slice();
+            this.__DATASOURCE.setData(data, add);
+            this.__DATASET_FILTERED = this.completeDataset.slice();
+            this.__DATASET_VIEW = this.completeDataset.slice();
         }
 
-        if (this.__freeGrid && olddataSetlength !== this.__DATASET_ALL.length) {
+        if (this.__freeGrid && olddataSetlength !== this.completeDataset.length) {
             const node = this.__freeGrid.getElementsByTagName('free-grid-body')[0];
             if (node) {
                 node.scrollTop = 0;
@@ -162,7 +149,7 @@ export class GridInterface {
     }
 
     get completeDataset() {
-        return this.__DATASET_ALL;
+        return this.__DATASOURCE.DATA_SET;
     }
 
     set filteredDataset(value) {
@@ -241,7 +228,7 @@ export class GridInterface {
     }
 
     public edited() {
-        return this.__DATASET_ALL.filter((entity) => {
+        return this.completeDataset.filter((entity) => {
             if (entity.__controller.__edited) {
                 return true;
             } else {

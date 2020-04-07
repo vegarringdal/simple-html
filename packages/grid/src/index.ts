@@ -5,6 +5,7 @@ import { customElement } from '@simple-html/core';
 import { generate } from './elements/generate';
 import { rowCache } from './interfaces';
 export { GridInterface } from './gridInterface';
+export { DataSource } from './dataSource';
 
 @customElement('free-grid')
 export class FreeGrid extends HTMLElement {
