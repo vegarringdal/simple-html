@@ -58,7 +58,7 @@ export class ArrayGrouping {
             }
         } else {
             // set all rows to 0 grouping
-            arrayToGroup.forEach(row => {
+            arrayToGroup.forEach((row) => {
                 row.__groupLvl = 0;
             });
 
@@ -83,6 +83,14 @@ export class ArrayGrouping {
 
     public setGrouping(g: IGroupingObj[]) {
         this.grouping = g;
+    }
+
+    private toUppercase(text: string) {
+        if (text) {
+            return text[0].toUpperCase() + text.substring(1, text.length);
+        } else {
+            return text;
+        }
     }
 
     public expandOneOrAll(id: string, array?: Set<string>) {
@@ -212,14 +220,14 @@ export class ArrayGrouping {
         let tempValue: string = null;
 
         // first level, here we use array
-        array.forEach(element => {
+        array.forEach((element) => {
             let gidm = element[groupBy];
             gidm = typeof gidm === 'boolean' ? gidm.toString() : gidm;
-            gidm = gidm || 'blank';
+            gidm = gidm || ' blank';
 
             if (gidm !== tempValue) {
                 curGroup = {
-                    __groupName: gidm || 'blank',
+                    __groupName: this.toUppercase(groupBy) + ': ' + gidm,
                     __group: true,
                     __groupID: gidm,
                     __groupLvl: groupNo,
@@ -251,11 +259,12 @@ export class ArrayGrouping {
             // loop children
             const rebuiltChildrenArray: IEntity[] = [];
             element.__groupChildren.forEach((child: IEntity) => {
-                if (child[groupBy] !== tempValue) {
-                    const gidm = child[groupBy] || 'blank';
-                    const gidc = element.__groupID || 'blank';
+                let gidm = child[groupBy] || ' blank';
+
+                if (gidm !== tempValue) {
+                    const gidc = element.__groupID;
                     curGroup = {
-                        __groupName: child[groupBy],
+                        __groupName: this.toUppercase(groupBy) + ': ' + gidm,
                         __groupID: gidc + '-' + gidm,
                         __group: true,
                         __groupLvl: groupNo,
@@ -265,7 +274,7 @@ export class ArrayGrouping {
                     };
                     child.__groupLvl = groupNo + 1;
 
-                    tempValue = child[groupBy];
+                    tempValue = gidm;
                     rebuiltChildrenArray.push(curGroup);
                     tempGroupArray.push(curGroup);
                 } else {

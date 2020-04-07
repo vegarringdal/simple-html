@@ -40,9 +40,7 @@ export class Selection {
         let currentselectedRows = this.getSelectedRows();
         let currentKeyKode = '';
 
-        this.gridInterface.__selectInternal(currentRow)
-
-        
+        this.gridInterface.__selectInternal(currentRow);
 
         if (currentRow !== this.lastRowSelected || currentselectedRows[0] !== currentRow) {
             if (currentRow <= this.gridInterface.displayedDataset.length - 1) {
@@ -169,7 +167,10 @@ export class Selection {
      * todo, optional key
      */
     private getRowKey(row: number): number {
-        return (this.gridInterface.displayedDataset[row] as any) && (this.gridInterface.displayedDataset[row] as any).__KEY;
+        return (
+            (this.gridInterface.displayedDataset[row] as any) &&
+            (this.gridInterface.displayedDataset[row] as any).__KEY
+        );
     }
 
     private getRowKeys(): any[] {

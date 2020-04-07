@@ -23,7 +23,6 @@ export function getObservedAttributesSymbol() {
     }
 }
 
-
 export function getPropSymbol(name: string) {
     if (!(<any>globalThis)._LHF_PROP_SYMBOL[name]) {
         (<any>globalThis)._LHF_PROP_SYMBOL[name] = Symbol(name);
@@ -32,7 +31,6 @@ export function getPropSymbol(name: string) {
         return (<any>globalThis)._LHF_PROP_SYMBOL[name];
     }
 }
-
 
 export function getLoggerSymbol() {
     if (!(<any>globalThis)._LHF_SYMBOL.logger) {
@@ -51,7 +49,6 @@ export function getLoggerCountSymbol() {
         return (<any>globalThis)._LHF_SYMBOL.loggerCount;
     }
 }
-
 
 export function getTransmitterSymbol() {
     if (!(<any>globalThis)._LHF_SYMBOL.transmitter) {

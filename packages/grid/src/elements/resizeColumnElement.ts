@@ -1,10 +1,10 @@
 import { html } from 'lit-html';
-import { IColumns } from '../interfaces';
-import { GridInterface } from '../gridInterface';
+import { IgridConfigGroups } from '../interfaces';
+import { FreeGrid } from '../';
 
-export function resizeColumnElement(connector: GridInterface, col: IColumns) {
+export function resizeColumnElement(ref: FreeGrid, group: IgridConfigGroups) {
     let originX: number = null;
-    const originalColumnWidth = col.width;
+    const originalColumnWidth = group.width;
 
     const mouseMove = (e: MouseEvent) => {
         e.preventDefault();
@@ -13,9 +13,19 @@ export function resizeColumnElement(connector: GridInterface, col: IColumns) {
             if (movment % 2 === 0) {
                 const movementX = originX - e.screenX;
                 const newColumnWidth = originalColumnWidth - movementX;
-                col.width = newColumnWidth > 10 ? newColumnWidth : 10;
+                group.width = newColumnWidth > 10 ? newColumnWidth : 10;
+
+                // fix config before trigger
+                let totalWidth = 0;
+                ref.interface.config.groups.reduce((agg, element) => {
+                    element.__left = agg;
+                    totalWidth = totalWidth + element.width;
+                    return element.__left + element.width;
+                }, 0);
+                ref.interface.config.__rowWidth = totalWidth;
+
                 requestAnimationFrame(() => {
-                    connector.reRender();
+                    ref.triggerEvent('column-resize');
                 });
             }
         }
@@ -32,7 +42,5 @@ export function resizeColumnElement(connector: GridInterface, col: IColumns) {
         document.addEventListener('mouseup', mouseUp);
     };
 
-    return html`
-        <div class="free-grid-draggable-handler" @mousedown=${mouseDown}></div>
-    `;
+    return html` <div class="free-grid-draggable-handler" @mousedown=${mouseDown}></div> `;
 }

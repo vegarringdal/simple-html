@@ -10,7 +10,7 @@ export class EntityHandler {
     __currentValues? = {};
     __newprops? = {};
     __edited? = false;
-    __controller ?: EntityHandler;
+    __controller?: EntityHandler;
     __KEY?: string | number;
     __group?: boolean;
     __groupID?: string;
@@ -19,7 +19,6 @@ export class EntityHandler {
     __groupTotal?: number;
     __groupChildren?: IEntity[];
     __groupExpanded?: boolean;
-    
 
     get(target: object, prop: string) {
         if (prop === '__controller') {

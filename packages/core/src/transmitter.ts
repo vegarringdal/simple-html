@@ -1,15 +1,13 @@
 import { getTransmitterSymbol } from './symbols';
 
 // we need this to survive hmr so parts can unsubsribe
-if(!(<any>globalThis)[getTransmitterSymbol()]){
+if (!(<any>globalThis)[getTransmitterSymbol()]) {
     (<any>globalThis)[getTransmitterSymbol()] = {};
 }
 
-function transmitter(){
+function transmitter() {
     return (<any>globalThis)[getTransmitterSymbol()];
 }
-
-
 
 // microtask
 export function publish(channel: string, ...args: any[]): void {

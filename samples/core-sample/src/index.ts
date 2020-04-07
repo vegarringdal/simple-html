@@ -1,4 +1,4 @@
-import './hmr'
+import './hmr';
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
 
