@@ -1,13 +1,9 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
 
-
-
 @customElement('login-route')
 export default class extends HTMLElement {
-    public click() {
-     
-    }
+    public click() {}
 
     public render() {
         return html`

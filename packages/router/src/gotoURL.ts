@@ -1,9 +1,9 @@
-export const gotoURL = function(path: string, params: any = {}, query: any = null) {
+export const gotoURL = function (path: string, params: any = {}, query: any = null) {
     if (path[0] === '#') {
         path = path.substr(1, path.length);
     }
 
-    const urls = path.split('/').filter(x => (x ? true : false));
+    const urls = path.split('/').filter((x) => (x ? true : false));
     let newUrl = '';
     urls.forEach((val, i) => {
         if (val[0] === ':' && params[val.substr(1, val.length)] !== undefined) {
@@ -22,12 +22,12 @@ export const gotoURL = function(path: string, params: any = {}, query: any = nul
     let urlparams;
     if (query) {
         urlparams = new URLSearchParams();
-        for (const k in params) {
-            if (params[k]) {
-                urlparams.append(k, params[k]);
+        for (const k in query) {
+            if (query[k]) {
+                urlparams.append(k, query[k]);
             }
         }
-        location.hash = `${newUrl}?${urlparams}`;
+        location.hash = `${newUrl}?${urlparams.toString()}`;
     } else {
         location.hash = newUrl;
     }

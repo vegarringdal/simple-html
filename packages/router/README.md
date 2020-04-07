@@ -9,9 +9,9 @@ time to refactor/clean up all code Im extperimenting with
 
 ### Sample
 
-- `git clone https://github.com/simple-html/simple-html`
-- `npm install`
-- `npm run sample-core`
+-   `git clone https://github.com/simple-html/simple-html`
+-   `npm install`
+-   `npm run sample-core`
 
 ### Bundle size:
 
@@ -20,4 +20,3 @@ https://bundlephobia.com/result?p=@simple-html/router
 ### Docs
 
 ..todo, for now se sample
-

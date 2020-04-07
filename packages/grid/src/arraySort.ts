@@ -1,4 +1,4 @@
-import { IColumns, ISortObjectInterface } from './interfaces';
+import { ICell, ISortObjectInterface } from './interfaces';
 
 export class ArraySort {
     private lastSort: ISortObjectInterface[];
@@ -28,29 +28,31 @@ export class ArraySort {
         }
     }
 
-    public SetConfigSort(configColumns: IColumns[]) {
+    public SetConfigSort(configColumns: ICell[]) {
         const attribute: string[] = [];
         const asc: boolean[] = [];
         const no: number[] = [];
-        this.lastSort.forEach(x => {
+        this.lastSort.forEach((x) => {
             attribute.push(x.attribute);
             asc.push(x.asc);
             no.push(x.no);
         });
-        configColumns.forEach(col => {
+        configColumns.forEach((col) => {
             const i = attribute.indexOf(col.attribute);
-            if (i !== -1) {
-                col.sortable.sortAscending = asc[i] === true;
-                col.sortable.sortNo = no[i];
-            } else {
-                col.sortable.sortAscending = null;
-                col.sortable.sortNo = null;
+            if (col.sortable) {
+                if (i !== -1) {
+                    col.sortable.sortAscending = asc[i] === true;
+                    col.sortable.sortNo = no[i];
+                } else {
+                    col.sortable.sortAscending = null;
+                    col.sortable.sortNo = null;
+                }
             }
         });
     }
 
-    public clearConfigSort(configColumns: IColumns[]) {
-        configColumns.forEach(col => {
+    public clearConfigSort(configColumns: ICell[]) {
+        configColumns.forEach((col) => {
             if (col.sortable) {
                 col.sortable.sortAscending = null;
                 col.sortable.sortNo = null;
@@ -99,7 +101,7 @@ export class ArraySort {
                 let exist = false;
 
                 // loop to se if it exist from before
-                this.curSort.forEach(x => {
+                this.curSort.forEach((x) => {
                     if (x.attribute === sort.attribute) {
                         exist = true;
                         x.asc = sort.asc;
@@ -145,8 +147,8 @@ export class ArraySort {
             for (let i = 0; i < thisSort.length && result === 0; ++i) {
                 // loop until all are sorted
                 const currentObj = thisSort[i];
-                const v1 = obj1[currentObj.attribute];
-                const v2 = obj2[currentObj.attribute];
+                const v1 = obj1[currentObj.attribute] || '';
+                const v2 = obj2[currentObj.attribute] || '';
 
                 // compares with locale
                 const getLocaleCompareResult = (x1: string, x2: string): number => {

@@ -1,82 +1,78 @@
 import { IGridConfig } from '@simple-html/grid';
 
-export const COL_SETUP: IGridConfig = {
-    rowHeight: 25,
+let setup: IGridConfig = {
+    cellHeight: 20,
     panelHeight: 25,
-    headerHeight: 50,
-    footerHeight: 25,
-    lastScrollTop:25*300,
-    //scrollLeft:150, 
-    /* sortingSet: [
-        {
-            attribute: 'last',
-            asc: true,
-            no: 1
-        },
-        {
-            attribute: 'first',
-            asc: true,
-            no: 2
-        },
-        {
-            attribute: 'index',
-            asc: true,
-            no: 3
-        }
-    ],
-    groupingSet: [{ title: 'Last', field: 'last' }, { title: 'First', field: 'first' }],
-    groupingExpanded: ['Barton', 'Barton-Aida'], */
-
+    footerHeight: 20,
     selectionMode: 'multiple',
-    columns: [
+
+    groups: [
         {
-            header: 'index',
-            attribute: 'index',
-            type: 'number',
             width: 120,
-            filterable: {},
-            sortable: {}
+            rows: [
+                {
+                    header: 'index',
+                    attribute: 'index',
+                    type: 'number',
+                    sortable: {},
+                    filterable: {}
+                },
+                {
+                    header: 'date',
+                    attribute: 'date',
+                    type: 'date',
+                    sortable: {},
+                    filterable: {},
+                    allowGrouping: true
+                },
+                {
+                    header: '',
+                    attribute: '',
+                    type: 'empty',
+                    filterable: {},
+                    sortable: {},
+                    allowGrouping: true
+                },
+                {
+                    header: 'Number',
+                    attribute: 'number',
+                    type: 'number',
+                    filterable: {},
+                    sortable: {}
+                }
+            ]
         },
         {
-            header: 'First',
-            attribute: 'first',
-            width: 500,
-            filterable: {},
-            sortable: {},
-            allowGrouping: true
-        },
-        {
-            header: 'Last',
-            attribute: 'last',
-            type: 'text',
-            width: 100,
-            filterable: {},
-            sortable: {},
-            allowGrouping: true
-        },
-        {
-            header: 'Dates',
-            attribute: 'date',
-            type: 'date',
-            width: 150,
-            filterable: {},
-            sortable: {}
-        },
-        {
-            header: 'Bool',
-            attribute: 'bool',
-            width: 100,
-            type: 'boolean',
-            filterable: {},
-            sortable: {}
-        },
-        {
-            header: 'Number',
-            attribute: 'number',
-            type: 'number',
-            width: 100,
-            filterable: {},
-            sortable: {}
+            width: 120,
+            rows: [
+                {
+                    header: 'mod',
+                    attribute: 'mod',
+                    type: 'number',
+                    sortable: {},
+                    filterable: {},
+                    allowGrouping: true
+                }
+            ]
         }
     ]
 };
+
+let word = 0;
+for (let i = 1; i < 17; i++) {
+    let x: any = [];
+    for (let y = 0; y < 4; y++) {
+        word++;
+        x.push({
+            header: 'word' + word,
+            attribute: 'word' + word,
+            filterable: {},
+            sortable: {},
+            allowGrouping: true
+        });
+    }
+
+    setup.groups.push({ width: 120, rows: x });
+}
+
+export const COL_SETUP = setup;

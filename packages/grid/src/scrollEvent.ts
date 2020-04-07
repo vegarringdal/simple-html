@@ -1,75 +1,126 @@
-import { CallbackEvent } from './interfaces';
 import { GridInterface } from './gridInterface';
-export function scrollEvent(
-    connector: GridInterface,
-    rowPositionCache: {
-        i: number;
-    }[]
-) {
-    return (e: CallbackEvent) => {
-        if (connector.config.scrollLeft && connector.config.scrollLeft !== e.target.scrollLeft && connector.config.lastScrollTop == e.target.scrollTop) {
-            connector.config.scrollLeft = e.target.scrollLeft;
-            connector.reRender();
-        } else {
+import { FreeGrid } from '.';
+import { rowCache } from './interfaces';
 
-           // window.focus();
-           connector.config.scrollLeft = e.target.scrollLeft;
+export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
+    return (e: any) => {
+        if (
+            connector.config.scrollLeft &&
+            connector.config.scrollLeft !== e.target.scrollLeft &&
+            connector.config.lastScrollTop == e.target.scrollTop
+        ) {
+            connector.config.scrollLeft = e.target.scrollLeft;
+            ref.triggerEvent('horizontal-scroll');
+        } else {
+            connector.config.scrollLeft = e.target.scrollLeft;
             if (document.activeElement) {
                 (document.activeElement as any).blur();
             }
-            const rowHeight = connector.config.rowHeight || 25;
-            const cacheLength = rowPositionCache.length;
-            const collectionLength = connector.displayedDataset.length;
-            const cacheTotalHeight = rowHeight * cacheLength;
-            const contentHeight = e.target.clientHeight;
+
             const scrolltop = e.target.scrollTop;
             const lastScrollTop = connector.config.lastScrollTop;
+            connector.config.lastScrollTop = scrolltop;
             let isDownScroll = true;
             if (scrolltop < lastScrollTop) {
                 isDownScroll = false;
             }
+
             let scrollbars = false;
-            if (Math.abs(scrolltop - lastScrollTop) > 100) {
+            if (Math.abs(scrolltop - lastScrollTop) > 300) {
                 scrollbars = true;
             }
-            connector.config.lastScrollTop = scrolltop;
-            let currentRow = Math.floor(scrolltop / rowHeight);
+
             if (scrollbars) {
-                for (let i = 0; i < cacheLength; i++) {
-                    rowPositionCache[i].i = currentRow;
-                    currentRow++;
+                /**
+                 * Scrollbar scrolling
+                 */
+                let newTopPosition = scrolltop;
+                if (connector.displayedDataset.length <= rowPositionCache.length) {
+                    newTopPosition = 0;
                 }
+
+                let rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
+
+                let currentRow = 0;
+
+                let i = 0;
+
+                if (newTopPosition !== 0) {
+                    // need to do some looping here, need to figure out where we are..
+                    while (i < rowTopState.length) {
+                        let checkValue = Math.floor(newTopPosition - rowTopState[i]);
+
+                        if (checkValue < 0) {
+                            currentRow = i - 1;
+                            break;
+                        }
+
+                        i++;
+                    }
+                }
+
+                let rowFound = currentRow;
+                for (let i = 0; i < rowPositionCache.length; i++) {
+                    let newRow = currentRow + i;
+                    if (newRow > connector.displayedDataset.length - 1) {
+                        rowFound--;
+                        rowPositionCache[i].i = rowFound;
+                    } else {
+                        rowPositionCache[i].i = newRow;
+                    }
+                    rowPositionCache[i].update = true;
+                }
+
+                ref.triggerEvent('vertical-scroll');
             } else {
-                for (let i = 0; i < cacheLength; i++) {
-                    const cache = rowPositionCache[i];
-                    const currentTop = cache.i * rowHeight;
-                    let needToUpdate = false;
-                    let newTop: number;
+                /**
+                 * Normal scrolling (not scrollbar)
+                 */
+                let rowHeightState: any = connector.getScrollVars.__SCROLL_HEIGHTS;
+                let rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
+
+                for (let i = 0; i < rowPositionCache.length; i++) {
+                    let currentRow = rowPositionCache[i].i;
+                    let currentTop = rowTopState[rowPositionCache[i].i];
+
+                    let update = false;
+
                     if (!isDownScroll) {
-                        if (currentTop > scrolltop + contentHeight) {
-                            needToUpdate = true;
-                            newTop = currentTop - cacheTotalHeight;
-                            currentRow = (currentTop - cacheTotalHeight) / rowHeight;
+                        if (currentTop > scrolltop + e.target.clientHeight) {
+                            currentRow = currentRow - rowPositionCache.length;
+                            update = true;
                         }
                     } else {
-                        if (currentTop < scrolltop - rowHeight) {
-                            needToUpdate = true;
-                            newTop = currentTop + cacheTotalHeight;
-                            currentRow = (currentTop + cacheTotalHeight) / rowHeight;
+                        if (currentTop < scrolltop - rowHeightState[currentRow]) {
+                            update = true;
+                            currentRow = currentRow + rowPositionCache.length;
                         }
                     }
+
                     if (
-                        needToUpdate === true &&
+                        update === true &&
                         currentRow >= 0 &&
-                        currentRow <= collectionLength
+                        currentRow <= connector.displayedDataset.length - 1
                     ) {
-                        rowPositionCache[i].i = newTop / rowHeight;
+                        rowPositionCache[i].i = currentRow;
+                        rowPositionCache[i].update = true;
                     }
                 }
-                rowPositionCache.sort();
+
+                // fix rows to high
+                let rowFound = rowPositionCache[0].i;
+                let currentRow = rowFound;
+                for (let i = 0; i < rowPositionCache.length; i++) {
+                    let newRow = currentRow + i;
+                    if (newRow > connector.displayedDataset.length - 1) {
+                        rowFound--;
+                        rowPositionCache[i].i = rowFound;
+                        rowPositionCache[i].update = true;
+                    }
+                }
+
+                ref.triggerEvent('vertical-scroll');
             }
-            // need to call render directly so it updates right away
-            connector.render();
         }
     };
 }

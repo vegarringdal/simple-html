@@ -3,11 +3,6 @@ import { requestRender } from './requestRender';
 import { getObservedAttributesSymbol, getObservedAttributesMapSymbol } from './symbols';
 import { logger } from './logger';
 
-
-
-
-
-
 /**
  * @customElement- decorator
  *
@@ -16,11 +11,11 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
     return function reg(elementClass: any) {
         let observedAttributes = elementClass.observedAttributes;
         Object.defineProperty(elementClass, 'observedAttributes', {
-            set: function(value) {
+            set: function (value) {
                 elementClass.prototype[getObservedAttributesSymbol()] = value;
                 return true;
             },
-            get: function() {
+            get: function () {
                 return elementClass.prototype[getObservedAttributesSymbol()];
             },
             configurable: true
@@ -30,16 +25,16 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 observedAttributes
             );
         }
-        
+
         const base: any = class extends elementClass {
             constructor() {
                 super();
-                logger('constructor', this, super.tagName)
+                logger('constructor', this, super.tagName);
             }
             render(...result: any[]) {
-                logger('render', this, super.tagName)
+                logger('render', this, super.tagName);
                 const template = super.render.call(this, ...result);
-                Promise.resolve(template).then(templates => {
+                Promise.resolve(template).then((templates) => {
                     render(templates, <any>this, { eventContext: <any>this });
                     if (super.updated) {
                         //delay so it actually get a chance to update
@@ -50,20 +45,20 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 });
             }
             connectedCallback() {
-                logger('connectedCallback', this, super.tagName)
+                logger('connectedCallback', this, super.tagName);
                 if (super.connectedCallback) {
                     super.connectedCallback.call(this);
                 }
                 this.render(this);
             }
             disconnectedCallback() {
-               logger('disconnectedCallback', this, super.tagName)
+                logger('disconnectedCallback', this, super.tagName);
                 if (super.disconnectedCallback) {
                     super.disconnectedCallback.call(this);
                 }
             }
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-                logger('attributeChangedCallback', this, super.tagName)
+                logger('attributeChangedCallback', this, super.tagName);
                 //get map
 
                 if (!this[getObservedAttributesMapSymbol()]) {

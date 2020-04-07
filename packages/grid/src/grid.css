@@ -1,9 +1,15 @@
 .free-grid {
-    --main-bg-color: #f5f5f5;
-    --sec-bg-color: #ffffff;
-    --main-bg-border: #e6e5e5;
-    --main-bg-selected: #eceff1;
-    --main-font-color: #424141;
+    --freegrid-main-bg-color: #5a5a5a;
+    --freegrid-sec-bg-color: #616060;
+    --freegrid-alt-bg-color: #797979;
+    --freegrid-main-bg-border: #464444;
+    --freegrid-sec-bg-border:#565656;
+    --freegrid-main-bg-selected: #4b4d4e;
+    --freegrid-main-font-color: #eae6e6;
+    --freegrid-sec-font-color: #979494;
+    --freegrid-font-size: 11px;
+    --freegrid-font-weight: 500;
+    --freegrid-font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
     border: 0;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -13,10 +19,12 @@
     overflow: hidden;
     display: block;
     position: relative;
-    outline-color: var(--main-bg-color);
-    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    font-size: 12px;
-    color: var(--main-font-color);
+    outline-color: var(--freegrid-main-bg-color);
+    font-family: var(--freegrid-font-family);
+    font-size: var(--freegrid-font-size);
+    font-weight: var(--freegrid-font-weight);
+    color: var(--freegrid-main-font-color);
+    background-color: var(--freegrid-main-bg-color);
 }
 
 free-grid-body::-webkit-scrollbar {
@@ -26,22 +34,32 @@ free-grid-body::-webkit-scrollbar-track {
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
 }
 free-grid-body::-webkit-scrollbar-thumb {
-    background-color: var(--main-bg-selected);
-    outline: 1px solid var(--main-bg-border);
+    background-color: var(--freegrid-main-bg-selected);
+    outline: 1px solid var(--freegrid-main-bg-border);
 }
+
+
 
 .free-grid .free-grid-row {
     border: 0;
     width: 100%;
     min-width: 100%; /*without this left scrolltop will not be set when hidden*/
-    border-bottom: 1px solid var(--main-bg-border);
+    border-bottom: 1px solid var(--freegrid-main-bg-border);
     box-sizing: border-box;
     position: absolute;
+    overflow: hidden;
 }
+
+
+.free-grid input::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: var(--freegrid-sec-font-color);;
+    opacity: 1; /* Firefox */
+  }
 
 .free-grid .free-grid-col {
     border: 0;
-    border-right: 1px solid var(--main-bg-border);
+    border-right: 1px solid var(--freegrid-main-bg-border);
+    /* border-top: 1px solid var(--freegrid-main-bg-border); */
     box-sizing: border-box;
     position: absolute;
     height: 100%;
@@ -53,10 +71,10 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     width: 100%;
     top: 0;
-    background-color: var(--main-bg-color);
-    border-left: 1px solid var(--main-bg-border);
-    border-right: 1px solid var(--main-bg-border);
-    border-top: 1px solid var(--main-bg-border);
+    background-color: var(--freegrid-main-bg-color);
+    border-left: 1px solid var(--freegrid-main-bg-border);
+    border-right: 1px solid var(--freegrid-main-bg-border);
+    border-top: 1px solid var(--freegrid-main-bg-border);
 }
 
 .free-grid .free-grid-footer {
@@ -65,11 +83,11 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     width: 100%;
     bottom: 0;
-    border-top: 1px solid var(--main-bg-border);
-    background-color: var(--main-bg-color);
-    border-left: 1px solid var(--main-bg-border);
-    border-right: 1px solid var(--main-bg-border);
-    border-bottom: 1px solid var(--main-bg-border);
+    border-top: 1px solid var(--freegrid-main-bg-border);
+    background-color: var(--freegrid-main-bg-color);
+    border-left: 1px solid var(--freegrid-main-bg-border);
+    border-right: 1px solid var(--freegrid-main-bg-border);
+    border-bottom: 1px solid var(--freegrid-main-bg-border);
 }
 
 .free-grid .free-grid-header {
@@ -78,22 +96,22 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     display: inline-block;
     min-width: 100%;
-    background-color: var(--main-bg-color);
-    border-right: 1px solid var(--main-bg-border);
-    border-top: 1px solid var(--main-bg-border);
+    background-color: var(--freegrid-main-bg-color);
+    border-right: 1px solid var(--freegrid-main-bg-border);
+    border-top: 1px solid var(--freegrid-main-bg-border);
 }
-
 
 .free-grid .free-grid-body {
     position: absolute;
     box-sizing: border-box;
-    border-top: 1px solid var(--main-bg-border);
+    border-top: 1px solid var(--freegrid-main-bg-border);
+    
     min-width: 100%;
     overflow-y: auto;
 }
 
 .free-grid .free-grid-content {
-    background-color: var(--sec-bg-color);
+    background-color: var(--freegrid-sec-bg-color);
     min-width: 100%;
     z-index: 6;
     position: absolute;
@@ -104,78 +122,45 @@ free-grid-body::-webkit-scrollbar-thumb {
     overflow-y: hidden;
 }
 
-.free-grid .free-grid-header-input-top {
+.free-grid .free-grid-group-row {
+    position: absolute;
     box-sizing: border-box;
     border: 0;
-    border-bottom: 1px solid var(--main-bg-border);
+    border-right: 1px solid var(--freegrid-sec-bg-border);
+}
+
+.free-grid .free-grid-group-filter {
+    position: absolute;
+    box-sizing: border-box;
+    border: 0;
+    border-right: 1px solid var(--freegrid-sec-bg-border);
+
+}
+
+.free-grid .free-grid-group-label {
+    position: absolute;
+    box-sizing: border-box;
+    border: 0;
+    border-right: 1px solid var(--freegrid-sec-bg-border);
+}
+
+
+
+
+.free-grid .free-grid-cell-label {
+    position: absolute;
+    box-sizing: border-box;
+    border: 0;
     border-radius: initial;
     box-shadow: initial;
-    height: 50%;
-    width: 100%;
-    background-color: var(--sec-bg-color);
-    padding: 5px 10px;
+    border-bottom: 1px solid var(--freegrid-sec-bg-border);
+    border-right: 1px solid var(--freegrid-sec-bg-border);
+    background-color: var(--freegrid-sec-bg-color);
     margin: initial;
     transition: initial;
-    outline-color: var(--main-bg-color);
-    color: var(--main-font-color);
-    font-family: inherit;
-    font-size: inherit;
-
-}
-
-.free-grid .free-grid-header-input-bottom {
-    box-sizing: border-box;
-    border: 0;
-    border-radius: initial;
-    box-shadow: initial;
-    border-top: 1px solid var(--main-bg-border);
-    height: 50%;
-    width: 100%;
-    background-color: var(--sec-bg-color);
-    padding: 5px 10px;
-    margin: initial;
-    transition: initial;
-    outline-color: var(--main-bg-color);
-    color: var(--main-font-color);
-    font-family: inherit;
-    font-size: inherit;
-}
-
-.free-grid .free-grid-row-checkbox-100 {
-    height: 100%;
-    width: initial;
-    left: initial;
-    position: initial;
-    display: block;
-    opacity: initial;
-    margin: auto;
-}
-
-.free-grid .free-grid-row-checkbox-50 {
-    height: 50%;
-    width: initial;
-    opacity: initial;
-    left: initial;
-    position: initial;
-    display: block;
-    margin: auto;
-    background-color: var(--sec-bg-color);
-    color: var(--main-font-color);
-}
-
-.free-grid .free-grid-row-input {
-    box-sizing: border-box;
-    border: 0;
-    border-radius: initial;
-    box-shadow: initial;
-    height: 100%;
-    width: 100%;
-    background-color: transparent;
-    padding: 5px 10px;
-    outline-color: var(--main-bg-color);
-    color: var(--main-font-color);
-    font-family: inherit;
-    font-size: inherit;
+    outline-color: var(--freegrid-main-bg-color);
+    color: var(--freegrid-main-font-color);
+ 
 }
 
 .free-grid .free-grid-image-round {
@@ -185,56 +170,93 @@ free-grid-body::-webkit-scrollbar-thumb {
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    padding-top: 5px;
 }
 
-.free-grid .free-grid-label-bottom {
+.free-grid .free-grid-cell-filter {
+    position: absolute;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    height: 50%;
-    width: 100%;
-    position: relative;
-    text-align: center;
-    overflow: hidden;
-    user-select: none;
+    border-top: 1px solid var(--freegrid-sec-bg-border);
+    border-right: 1px solid var(--freegrid-sec-bg-border);
+    background-color: var(--freegrid-alt-bg-color);
     margin: initial;
-    font-weight: 700;
+    transition: initial;
+    outline-color: var(--freegrid-main-bg-color);
+    color: var(--freegrid-main-font-color);
+    font-family: var(--freegrid-font-family);
+    font-size: var(--freegrid-font-size);
+    font-weight: var(--freegrid-font-weight);
+
 }
 
-.free-grid .free-grid-label-top {
+.free-grid .free-grid-cell-row {
+    position: absolute;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    height: 50%;
-    width: 100%;
-    position: relative;
-    text-align: center;
-    overflow: hidden;
-    user-select: none;
+    border-bottom: 1px solid var(--freegrid-sec-bg-border);
+    border-right: 1px solid var(--freegrid-sec-bg-border);
+   
     margin: initial;
-    font-weight: 700;
+    transition: initial;
+    outline-color: var(--freegrid-main-bg-color);
+    color: var(--freegrid-main-font-color);
+
 }
 
-.free-grid .free-grid-selected-row {
-    box-shadow: none;
-    background-color: var(--main-bg-selected);
+.free-grid .free-grid-row-checkbox {
+    width: initial;
+    opacity: initial;
+    position: initial;
+    display: block;
+    margin: auto;
+    padding-top: 2px;
+    height: 100%;
+    background-color: var(--freegrid-sec-bg-color);
+    color: var(--freegrid-main-font-color);
 }
 
-.free-grid .free-grid-label-full {
+.free-grid .free-grid-row-input {
+    box-sizing: border-box;
+    border: 0;
+    position: absolute;
+    border-radius: initial;
+    box-shadow: initial;
+    width: 100%;
+    height: 100%;
+    padding-left: 5px;
+    background-color: transparent;
+    outline-color: var(--freegrid-main-bg-color);
+    color: var(--freegrid-main-font-color);
+    font-family: var(--freegrid-font-family);
+    font-size: var(--freegrid-font-size);
+    font-weight: var(--freegrid-font-weight);
+}
+
+.free-grid .free-grid-label {
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     box-shadow: initial;
     height: 100%;
     width: 100%;
-    position: relative;
+    padding: 5px;
+    position: absolute;
     text-align: center;
+    overflow: hidden;
     user-select: none;
     margin: initial;
-    font-weight: 700;
+    font-family: var(--freegrid-font-family);
+    font-size: var(--freegrid-font-size);
+    font-weight: var(--freegrid-font-weight);
+}
+
+.free-grid .free-grid-selected-row {
+    box-shadow: none;
+    background-color: var(--freegrid-main-bg-selected);
 }
 
 .free-grid .free-grid-draggable-handler {
@@ -251,7 +273,6 @@ free-grid-body::-webkit-scrollbar-thumb {
 .free-grid .free-grid-vGridDragHandle {
     cursor: move;
 }
-
 
 .free-grid .free-grid-fa-sort-number[data-vgridsort]:after {
     font: x-small;
@@ -277,12 +298,12 @@ free-grid-body::-webkit-scrollbar-thumb {
 }
 
 .free-grid.free-grid-drag {
-    border: 1px solid var(--main-bg-border);
+    border: 1px solid var(--freegrid-main-bg-border);
     box-sizing: border-box;
     box-shadow: initial;
     line-height: 50%;
     pointer-events: none;
-    background-color: var(--main-bg-selected);
+    background-color: var(--freegrid-main-bg-selected);
     height: 25px;
     display: block;
     min-width: 100px;
@@ -291,11 +312,11 @@ free-grid-body::-webkit-scrollbar-thumb {
     text-align: center;
     z-index: 50;
     font-weight: 700;
-    color: var(--main-font-color);
+    color: var(--freegrid-main-font-color);
 }
 
 .free-grid .free-grid-grouping-panel-container {
-    background-color: var(--main-bg-color);
+    background-color: var(--freegrid-main-bg-color);
     position: relative;
     margin: 3px;
     height: 80%;
@@ -304,22 +325,17 @@ free-grid-body::-webkit-scrollbar-thumb {
     padding-right: 10px;
     display: block;
     float: left;
-    border: 1px solid var(--main-bg-border);
+    border: 1px solid var(--freegrid-main-bg-border);
 }
+
+
 
 .free-grid .free-grid-grouping-row {
     height: 100%;
     box-sizing: border-box;
     position: absolute;
-    background-color: var(--main-bg-color);
-}
-
-.free-grid .free-grid-grouping-row {
-    height: 100%;
-    box-sizing: border-box;
-    position: absolute;
-    background-color: var(--main-bg-color);
-    border-left: 1px solid var(--main-bg-border);
+    background-color: var(--freegrid-main-bg-color);
+    border-right: 1px solid var(--freegrid-main-bg-border);
 }
 
 .free-grid .free-grid-col-group {
@@ -332,6 +348,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-shadow: initial;
     padding: 5px 10px;
     height: 100%;
+    background-color: var(--freegrid-main-bg-color);
 }
 
 .free-grid .free-grid-grouping-panel-p {
@@ -345,10 +362,9 @@ free-grid-body::-webkit-scrollbar-thumb {
     margin: 0;
     display: flex;
     text-align: center;
-
 }
 
 .free-grid .free-grid-candrop {
-    box-shadow: none;
-    background-color: var(--main-bg-selected);
+
+    background-color: var(--freegrid-alt-bg-color);
 }

@@ -11,9 +11,9 @@ const resolvePromise = directive(
     }
 );
 
-export const routeMatchAsync = function(
+export const routeMatchAsync = function (
     hash = '',
-    importStatement: ()=>Promise<any>,
+    importStatement: () => Promise<any>,
     htmlTemplate: TemplateResult
 ) {
     if (routeMatch(hash)) {
@@ -23,7 +23,7 @@ export const routeMatchAsync = function(
     }
 };
 
-export const routeMatch = function(hash = '', locationhash = window.location.hash) {
+export const routeMatch = function (hash = '', locationhash = window.location.hash) {
     if (!hash && (locationhash === '' || locationhash === '#')) {
         return true;
     }

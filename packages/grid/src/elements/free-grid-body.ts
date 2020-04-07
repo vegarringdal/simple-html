@@ -1,0 +1,64 @@
+import { customElement } from '@simple-html/core';
+import { html } from 'lit-html';
+import { GridInterface } from '../gridInterface';
+import { FreeGrid } from '../';
+import { rowCache } from '../interfaces';
+
+@customElement('free-grid-body')
+export default class extends HTMLElement {
+    classList: any = 'free-grid-body';
+    connector: GridInterface;
+    rowPositionCache: rowCache[];
+    ref: FreeGrid;
+
+    connectedCallback() {
+        const config = this.connector.config;
+        this.style.top = config.panelHeight + config.__rowHeight * 2 + 'px';
+        this.style.bottom = config.footerHeight + 'px';
+        this.ref.addEventListener('column-resize', this);
+        this.ref.addEventListener('vertical-scroll', this);
+        this.ref.addEventListener('reRender', this);
+    }
+
+    handleEvent(e: any) {
+        if (e.type === 'column-resize') {
+            this.render();
+        }
+        if (e.type === 'reRender') {
+            this.render();
+        }
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('vertical-scroll', this);
+        this.ref.removeEventListener('column-resize', this);
+        this.ref.removeEventListener('reRender', this);
+    }
+
+    render() {
+        const config = this.connector.config;
+
+        return html`
+            <free-grid-body-content
+                style="height:${this.connector.getScrollVars
+                    .__SCROLL_HEIGHT}px;width:${config.__rowWidth}px"
+                class="free-grid-content"
+            >
+                ${this.rowPositionCache.map((row) => {
+                    return html`
+                        <free-grid-row-group
+                            .connector=${this.connector}
+                            .row=${row}
+                            .ref=${this.ref}
+                        ></free-grid-row-group>
+                        <free-grid-row
+                            .connector=${this.connector}
+                            .row=${row}
+                            .ref=${this.ref}
+                        ></free-grid-row>
+                    `;
+                })}
+            </free-grid-body-content>
+        `;
+    }
+}

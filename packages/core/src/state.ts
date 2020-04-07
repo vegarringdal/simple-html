@@ -32,11 +32,11 @@ export function stateContainer<T>(
     }
 
     const currentState = state[key];
-    const setter = function(value: T) {
+    const setter = function (value: T) {
         state[key] = value;
     };
 
-    const middleware = function(value: any) {
+    const middleware = function (value: any) {
         setter(value);
         publish(key, value);
     };

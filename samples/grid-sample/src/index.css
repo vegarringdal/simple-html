@@ -1,5 +1,5 @@
 .m-1 {
-    margin: 2px;
+    margin-top: 10px;
 }
 
 .p-1 {
@@ -15,9 +15,6 @@
 }
 
 .free-grid{
-    --main-bg-color: #5a5a5a;
-    --sec-bg-color: #616060;
-    --main-bg-border: #464444;
-    --main-bg-selected: #4b4d4e;
-    --main-font-color: #eae6e6;
+ 
+    
 }
