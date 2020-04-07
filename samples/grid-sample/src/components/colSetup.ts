@@ -1,6 +1,6 @@
 import { IGridConfig } from '@simple-html/grid';
 
-let setup: IGridConfig = {
+const setup: IGridConfig = {
     cellHeight: 20,
     panelHeight: 25,
     footerHeight: 20,
@@ -60,7 +60,7 @@ let setup: IGridConfig = {
 
 let word = 0;
 for (let i = 1; i < 17; i++) {
-    let x: any = [];
+    const x: any = [];
     for (let y = 0; y < 4; y++) {
         word++;
         x.push({

@@ -9,7 +9,6 @@ export default class extends HTMLElement {
     private data: any = [];
     private connector: GridInterface;
     private dummyDataGenerator: DummyDataGenerator;
-    //@ts-ignore
     @property() private entity: any = null;
 
     constructor() {

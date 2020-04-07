@@ -20,7 +20,7 @@ export class AppRoot extends HTMLElement {
                 <button
                     class="bg-blue-500 p-2 m-2"
                     @click=${() => {
-                        setUiState(Object.assign({ show_dialog: true }, userForm));
+                        setUiState(Object.assign({ showDialog: true }, userForm));
                         this.render();
                     }}
                 >
@@ -35,7 +35,7 @@ export class AppRoot extends HTMLElement {
                         .email=${userForm.email}
                         .action=${(userForm: userFormStateType) => {
                             setUserForm(userForm);
-                            setUiState(Object.assign({ show_dialog: false }, userForm));
+                            setUiState(Object.assign({ showDialog: false }, userForm));
                             this.render();
                         }}
                     ></profile-form>

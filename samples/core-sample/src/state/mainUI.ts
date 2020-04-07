@@ -13,7 +13,7 @@ export function mainUIStateUnsubscribe(context: any): void {
     unSubscribe(STATE_KEY, context);
 }
 
-export type mainUIStateType = { show_dialog: string; loading: string };
+export type mainUIStateType = { showDialog: string; loading: string };
 
 export function mainUIState(
     defaultValue: mainUIStateType = {} as mainUIStateType

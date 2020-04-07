@@ -5,6 +5,7 @@
     "main": "dist/esm/index.js",
     "module": "dist/esm/index.js",
     "local:main": "src/index.ts",
+    "ts:main": "src/index.ts",
     "typings": "src/index.ts",
     "author": "Vegar Ringdal <vegar.ringdal@gmail.com>",
     "license": "MIT",

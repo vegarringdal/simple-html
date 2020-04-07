@@ -3,7 +3,9 @@ import { customElement } from '@simple-html/core';
 
 @customElement('login-route')
 export default class extends HTMLElement {
-    public click() {}
+    public click() {
+        /**todo */
+    }
 
     public render() {
         return html`

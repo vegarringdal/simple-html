@@ -4,7 +4,7 @@ import { html } from 'lit-html';
 export type formReturn = { firstName: string; lastName: string; email: string };
 
 @customElement('profile-form')
-export class form1 extends HTMLElement {
+export class Form1 extends HTMLElement {
     @property() public firstName: string;
     @property() public lastName: string;
     @property() public email: string;

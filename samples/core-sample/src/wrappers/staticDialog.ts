@@ -3,7 +3,7 @@ import { mainUIState } from '../state/mainUI';
 
 export function staticDialog(children: TemplateResult) {
     const [UiState] = mainUIState();
-    if (UiState.show_dialog) {
+    if (UiState.showDialog) {
         return html`
             <style>
                 .outer-dialog {
