@@ -22,7 +22,7 @@ task('default', async context => {
                         rootDir: `./src`,
                         target: 'es2018',
                         module: 'esNext',
-                        lib: ['es2017', 'dom'],
+                        lib: ['es2019', 'dom'],
                         moduleResolution: 'node',
                         isolatedModules: false,
                         preserveConstEnums: true,
