@@ -12,7 +12,7 @@
         "sample:grid": "node ./samples/grid-sample/fuse",
         "sample:grid:build": "node ./samples/grid-sample/fuse dist",
         "sample:router": "node ./samples/router-sample/fuse",
-        "eslint": "npm run clean-dist && npm run eslint:run:packages",
+        "eslint": "npm run eslint:run:packages && npm run eslint:run:samples",
         "eslint:run:packages": "./node_modules/.bin/eslint --fix ./packages/**/*.ts",
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
         "prettier:run": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\""
@@ -28,6 +28,7 @@
     "lint-staged": {
         "*.ts": [
             "prettier --write",
+            "npm run eslint:run:packages && npm run eslint:run:samples",
             "git add"
         ]
     },

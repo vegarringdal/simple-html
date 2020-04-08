@@ -34,9 +34,9 @@ Fusebox is in watch mode when running the samples. Any changes to packages/* fil
 
 You need to read development first before trying to run these.
 
-* `npm run sample-core`
-* `npm run sample-grid`
-* `npm run sample-router`
+* `npm run sample:core`
+* `npm run sample:grid`
+* `npm run sample:router`
 
 
 ## Make new sample
@@ -45,18 +45,18 @@ You need to read development first before trying to run these.
 
 ## To build all packages
 * Set new package version in root `package.json`
-* Run `npm run build` - this will now build all packages and sync package json version in all. 
+* Run `npm run build:all` - this will now build all packages and sync package json version in all. 
 
 ## To publish all packages
-* Run `pub-now` to publish 
-  * Or `pub-test` to run publish with `--dry-run` option
+* Run `pubblish:all` to publish 
+  * Or `publish:test` to run publish with `--dry-run` option
 
 
 ### HMR info
 
 Load before everything
 
-```
+```ts
 import { applyPolyfill, reflowDOM } from 'custom-elements-hmr-polyfill';
 
 // apply polly fill
