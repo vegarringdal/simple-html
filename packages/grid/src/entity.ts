@@ -44,8 +44,6 @@ export class EntityHandler {
             if (prop === '__KEY') {
                 if (this.__KEYSTRING) {
                     return target[this.__KEYSTRING];
-                } else {
-                    return target[prop];
                 }
             }
             return this[prop];
