@@ -105,16 +105,7 @@ export default class extends HTMLElement {
                         <img .src=${data[cell.attribute] || ''} class="free-grid-image-round" />
                     `;
                 case 'empty':
-                    return html`
-                        <style>
-                            .free-grid .hideme {
-                                background-color: ${getComputedStyle(this.ref).getPropertyValue(
-                                    '--freegrid-main-bg-color'
-                                )};
-                            }
-                        </style>
-                        <div class="free-grid-row-input hideme"></div>
-                    `;
+                    return html`<div class="free-grid-row-input "></div>`;
 
                 case 'date':
                     return html`
