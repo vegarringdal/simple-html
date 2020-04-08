@@ -22,7 +22,7 @@ export class FreeGrid extends HTMLElement {
     public connectedCallback() {
         this.resetRowCache();
         this.render();
-        this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;
+        //this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;
     }
 
     public disconnectedCallback() {
