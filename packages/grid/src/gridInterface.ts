@@ -48,6 +48,8 @@ export class GridInterface {
     constructor(private __CONFIG: IGridConfig, datasource?: DataSource) {
         if (!datasource) {
             this.__DATASOURCE = new DataSource();
+        } else {
+            this.__DATASOURCE = datasource;
         }
 
         // set groupheight
@@ -116,7 +118,6 @@ export class GridInterface {
         } else {
             this.__DATASOURCE.setData(data, add);
             this.__DATASET_FILTERED = this.completeDataset.slice();
-            this.__DATASET_VIEW = this.completeDataset.slice();
         }
 
         if (this.__freeGrid && olddataSetlength !== this.completeDataset.length) {
@@ -133,10 +134,10 @@ export class GridInterface {
             this.__arrayUtils.setGrouping(this.config.groupingSet);
         }
 
-        this.__freeGrid && this.__freeGrid.resetRowCache();
         const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
         this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
         this.displayedDataset = result.fixed;
+        this.__freeGrid && this.__freeGrid.resetRowCache();
         this.publishEvent('collection-change');
     }
 
