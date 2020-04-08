@@ -28,7 +28,6 @@
     "lint-staged": {
         "*.ts": [
             "prettier --write",
-            "npm run eslint:run:packages && npm run eslint:run:samples",
             "git add"
         ]
     },
