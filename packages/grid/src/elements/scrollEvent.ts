@@ -2,6 +2,8 @@ import { GridInterface } from '../gridInterface';
 import { FreeGrid } from '..';
 import { rowCache } from '../interfaces';
 
+let scrollBarTimer: number;
+
 export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
     return (e: any) => {
         if (
@@ -30,48 +32,53 @@ export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache
                 scrollbars = true;
             }
 
-            if (scrollbars) {
+            if (scrollbars || scrollBarTimer) {
                 /**
                  * Scrollbar scrolling
                  */
-                let newTopPosition = scrolltop;
-                if (connector.displayedDataset.length <= rowPositionCache.length) {
-                    newTopPosition = 0;
+                if (scrollBarTimer) {
+                    clearTimeout(scrollBarTimer);
                 }
+                scrollBarTimer = setTimeout(() => {
+                    scrollBarTimer = null;
+                    let newTopPosition = scrolltop;
+                    if (connector.displayedDataset.length <= rowPositionCache.length) {
+                        newTopPosition = 0;
+                    }
 
-                const rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
+                    const rowTopState: any = connector.getScrollVars.__SCROLL_TOPS;
 
-                let currentRow = 0;
+                    let currentRow = 0;
 
-                let i = 0;
+                    let i = 0;
 
-                if (newTopPosition !== 0) {
-                    // need to do some looping here, need to figure out where we are..
-                    while (i < rowTopState.length) {
-                        const checkValue = Math.floor(newTopPosition - rowTopState[i]);
+                    if (newTopPosition !== 0) {
+                        // need to do some looping here, need to figure out where we are..
+                        while (i < rowTopState.length) {
+                            const checkValue = Math.floor(newTopPosition - rowTopState[i]);
 
-                        if (checkValue < 0) {
-                            currentRow = i - 1;
-                            break;
+                            if (checkValue < 0) {
+                                currentRow = i - 1;
+                                break;
+                            }
+
+                            i++;
                         }
-
-                        i++;
                     }
-                }
 
-                let rowFound = currentRow;
-                for (let i = 0; i < rowPositionCache.length; i++) {
-                    const newRow = currentRow + i;
-                    if (newRow > connector.displayedDataset.length - 1) {
-                        rowFound--;
-                        rowPositionCache[i].i = rowFound;
-                    } else {
-                        rowPositionCache[i].i = newRow;
+                    let rowFound = currentRow;
+                    for (let i = 0; i < rowPositionCache.length; i++) {
+                        const newRow = currentRow + i;
+                        if (newRow > connector.displayedDataset.length - 1) {
+                            rowFound--;
+                            rowPositionCache[i].i = rowFound;
+                        } else {
+                            rowPositionCache[i].i = newRow;
+                        }
+                        rowPositionCache[i].update = true;
                     }
-                    rowPositionCache[i].update = true;
-                }
-
-                ref.triggerEvent('vertical-scroll');
+                    ref.triggerEvent('vertical-scroll');
+                }, 90);
             } else {
                 /**
                  * Normal scrolling (not scrollbar)
