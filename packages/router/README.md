@@ -11,7 +11,7 @@ time to refactor/clean up all code Im extperimenting with
 
 -   `git clone https://github.com/simple-html/simple-html`
 -   `npm install`
--   `npm run sample-core`
+-   `npm run sample:router`
 
 ### Bundle size:
 

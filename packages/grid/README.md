@@ -16,11 +16,9 @@ Grid adds a wrapper around each element and track changes with proxy
 
 ### Sample
 
-### Sample
-
 -   `git clone https://github.com/simple-html/simple-html`
 -   `npm install`
--   `npm run sample-core`
+-   `npm run sample:grid`
 
 ### Bundle size:
 
