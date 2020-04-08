@@ -38,6 +38,7 @@ class Context {
 const { task, rm } = sparky(Context);
 
 task('default', async (ctx) => {
+    await rm('./.cache');
     ctx.runServer = true;
     const fuse = ctx.getConfig();
     await fuse.runDev();
