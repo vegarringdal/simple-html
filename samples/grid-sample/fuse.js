@@ -18,18 +18,18 @@ class Context {
                 root: '.cache',
                 enabled: !prod
             },
-            watcher: { 
-                enabled:!prod,
-                include:['../../packages', './src'],
-                ignored: ['dist', 'dev'] 
+            watcher: {
+                enabled: !prod,
+                include: ['../../packages', './src'],
+                ignored: ['dist', 'dev']
             },
-            hmr : { plugin : "./src/fuseHmrPlugin.ts"},
+            hmr: { plugin: './src/fuseHmrPlugin.ts' },
             devServer: !prod && this.runServer,
             plugins: [
                 pluginTypeChecker({
                     basePath: './',
                     tsConfig: './tsconfig.json',
-                    skipTsErrors:[6059]
+                    skipTsErrors: [6059]
                 })
             ]
         });
@@ -37,15 +37,17 @@ class Context {
 }
 const { task, rm } = sparky(Context);
 
-task('default', async ctx => {
+task('default', async (ctx) => {
     ctx.runServer = true;
     const fuse = ctx.getConfig();
     await fuse.runDev();
 });
 
-task('dist', async ctx => {
+task('dist', async (ctx) => {
     await rm('./dist');
     const frontendConfig = ctx.getConfig(true);
-    await frontendConfig.runProd({ uglify: true, bundles: { distRoot: 'dist/frontend', app: 'app.js' } });
-
+    await frontendConfig.runProd({
+        uglify: true,
+        bundles: { distRoot: 'dist/frontend', app: 'app.js' }
+    });
 });

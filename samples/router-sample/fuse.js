@@ -4,7 +4,7 @@ const { pluginTypeChecker } = require('fuse-box-typechecker');
 class Context {
     isProduction;
     runServer;
-    getConfig() {
+    getConfig(prod) {
         return fusebox({
             target: 'browser',
             output: `dev`,
@@ -15,23 +15,20 @@ class Context {
             log: false,
             cache: {
                 root: '.cache',
-                enabled: true
+                enabled: !prod
             },
-            watcher: { 
-                enabled:true,
-                include:['../../packages', './src'],
-                ignored: ['dist', 'dev'] 
+            watcher: {
+                enabled: !prod,
+                include: ['../../packages', './src'],
+                ignored: ['dist', 'dev']
             },
-            hmr : { plugin : "./src/fuseHmrPlugin.ts"},
-            devServer: this.runServer,
+            hmr: { plugin: './src/fuseHmrPlugin.ts' },
+            devServer: !prod,
             plugins: [
                 pluginPostCSS(/\.css$/, {
                     stylesheet: {
                         postCSS: {
-                            plugins: [
-                                require('tailwindcss'),
-                                require('autoprefixer')
-                            ]
+                            plugins: [require('tailwindcss'), require('autoprefixer')]
                         }
                     }
                 }),
@@ -44,10 +41,21 @@ class Context {
         });
     }
 }
-const { task } = sparky(Context);
 
-task('default', async ctx => {
+const { task, rm } = sparky(Context);
+
+task('default', async (ctx) => {
+    await rm('./.cache');
     ctx.runServer = true;
-    const fuse = ctx.getConfig();
+    const fuse = ctx.getConfig(false);
     await fuse.runDev();
+});
+
+task('dist', async (ctx) => {
+    await rm('./dist');
+    const frontendConfig = ctx.getConfig(true);
+    await frontendConfig.runProd({
+        uglify: true,
+        bundles: { distRoot: 'dist/', app: 'app.js' }
+    });
 });
