@@ -2,7 +2,6 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -18,16 +17,7 @@
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
    sodipodi:docname="simple.svg">
   <defs
-     id="defs2">
-    <linearGradient
-       id="linearGradient4546"
-       osb:paint="solid">
-      <stop
-         style="stop-color:#000000;stop-opacity:1;"
-         offset="0"
-         id="stop4544" />
-    </linearGradient>
-  </defs>
+     id="defs2" />
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -35,15 +25,15 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="199.71865"
-     inkscape:cy="1021.2697"
+     inkscape:zoom="2.8"
+     inkscape:cx="127.87876"
+     inkscape:cy="1002.8362"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1920"
      inkscape:window-height="1017"
-     inkscape:window-x="-8"
+     inkscape:window-x="1912"
      inkscape:window-y="-8"
      inkscape:window-maximized="1" />
   <metadata
@@ -63,61 +53,27 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="fill:#ffffff;fill-opacity:0;stroke-width:0.25151747"
-       id="rect4579"
-       width="41.159508"
-       height="41.159508"
-       x="24.187893"
-       y="4.5403194"
-       inkscape:export-xdpi="144.55283"
-       inkscape:export-ydpi="144.55283" />
+       id="rect3788"
+       width="59.153275"
+       height="59.153271"
+       x="-6.2366071"
+       y="-4.4360123"
+       style="fill:none;stroke-width:0.29382023"
+       inkscape:export-xdpi="219.39612"
+       inkscape:export-ydpi="219.39612" />
     <flowRoot
        xml:space="preserve"
        id="flowRoot3713"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
-       transform="matrix(0.26458333,0,0,0.26319762,0,0.14764218)"><flowRegion
+       transform="matrix(0.29948468,0,0,1.2321466,-23.944048,-305.74628)"
+       inkscape:export-xdpi="219.39612"
+       inkscape:export-ydpi="219.39612"><flowRegion
          id="flowRegion3715"><rect
            id="rect3717"
-           width="188.57143"
-           height="191.42857"
-           x="105.71429"
-           y="99.662544" /></flowRegion><flowPara
-         id="flowPara3719">SimpleHte,</flowPara></flowRoot>    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:13.41447926px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.33536196"
-       x="35.758854"
-       y="15.758821"
-       id="text4571"
-       transform="scale(0.76055137,1.3148356)"
-       inkscape:export-xdpi="144.55283"
-       inkscape:export-ydpi="144.55283"><tspan
-         sodipodi:role="line"
-         id="tspan4569"
-         x="35.758854"
-         y="15.758821"
-         style="stroke-width:0.33536196">Simple</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:13.43236446px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.33580911"
-       x="40.122631"
-       y="32.262497"
-       id="text4575"
-       transform="scale(0.75953851,1.3165889)"
-       inkscape:export-xdpi="144.55283"
-       inkscape:export-ydpi="144.55283"><tspan
-         sodipodi:role="line"
-         id="tspan4573"
-         x="40.122631"
-         y="32.262497"
-         style="stroke-width:0.33580911">HTML</tspan></text>
-    <rect
-       style="fill:#000000;fill-opacity:1;stroke-width:0.67247564"
-       id="rect4577"
-       width="33.726547"
-       height="4.4980154"
-       x="27.843294"
-       y="24.52573"
-       inkscape:export-xdpi="144.55283"
-       inkscape:export-ydpi="144.55283" />
-  </g>
+           width="649.99994"
+           height="333.57141"
+           x="82.85714"
+           y="245.37683" /></flowRegion><flowPara
+         id="flowPara3780"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Ravie;-inkscape-font-specification:Ravie">&lt;S-H/&gt;</flowPara></flowRoot>  </g>
 </svg>
