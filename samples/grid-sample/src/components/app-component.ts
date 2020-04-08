@@ -1,8 +1,10 @@
 import { html } from 'lit-html';
 import { COL_SETUP as gridConfig } from './colSetup';
 import { DummyDataGenerator } from './dummyDataGenerator';
-import { GridInterface } from '@simple-html/grid';
+import { GridInterface, DataSource } from '@simple-html/grid';
 import { customElement, property, requestRender } from '@simple-html/core';
+
+const datasource = new DataSource();
 
 @customElement('app-component')
 export default class extends HTMLElement {
@@ -14,9 +16,7 @@ export default class extends HTMLElement {
     constructor() {
         super();
         this.dummyDataGenerator = new DummyDataGenerator();
-        this.data = this.dummyDataGenerator.generateData(1000);
-        this.connector = new GridInterface(gridConfig);
-        this.connector.setData(this.data, false);
+        this.connector = new GridInterface(gridConfig, datasource);
         this.connector.addEventListener(() => {
             this.entity = this.connector.currentEntity;
             //console.log('connected', this.isConnected);
