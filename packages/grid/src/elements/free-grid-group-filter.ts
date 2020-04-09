@@ -43,7 +43,7 @@ export default class extends HTMLElement {
     render() {
         return html`
             ${this.group.rows.map((cell, i) => {
-                if (cell.filterable && cell.type !== 'empty') {
+                if (cell.filterable) {
                     return html`
                         <free-grid-cell-filter
                             .connector=${this.connector}

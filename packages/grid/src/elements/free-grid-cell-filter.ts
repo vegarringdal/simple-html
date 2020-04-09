@@ -109,6 +109,10 @@ export default class extends HTMLElement {
             return cell.renderFilterCallBackFn(cell, this.connector, filterCallback);
         }
 
+        if (coltype === 'empty') {
+            return html`<div style=${boolstyle} class="${classname} hideme"></div>`;
+        }
+
         if (coltype === 'date') {
             return html`
                 <input
