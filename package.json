@@ -15,7 +15,9 @@
         "eslint": "npm run eslint:run:packages && npm run eslint:run:samples",
         "eslint:run:packages": "./node_modules/.bin/eslint --fix ./packages/**/*.ts",
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
-        "prettier:run": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\""
+        "prettier:run": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\"",
+        "test": "jest --verbose",
+        "test-ci": "jest --verbose --runInBand"
     },
     "author": "vegar Ringdal",
     "license": "MIT",
@@ -34,24 +36,27 @@
     "devDependencies": {
         "@commitlint/cli": "^8.3.5",
         "@commitlint/config-conventional": "^8.3.4",
+        "@types/jest": "^25.2.1",
         "@types/marked": "^0.7.3",
+        "@typescript-eslint/eslint-plugin": "^2.27.0",
+        "@typescript-eslint/parser": "^2.27.0",
         "autoprefixer": "^9.7.6",
         "custom-elements-hmr-polyfill": "^1.0.0",
+        "eslint": "^6.8.0",
+        "eslint-config-prettier": "^6.10.1",
+        "eslint-plugin-prettier": "^3.1.2",
         "fuse-box": "^4.0.0-next.424",
         "fuse-box-typechecker": "^3.0.0-next.31",
         "husky": "^4.2.3",
+        "jest": "^25.3.0",
         "lint-staged": "^10.1.2",
         "lit-html": "^1.2.1",
         "marked": "^0.8.2",
         "prettier": "^2.0.4",
         "tailwindcss": "^1.2.0",
+        "ts-jest": "^25.3.1",
         "tslib": "^1.11.1",
-        "typescript": "^3.8.3",
-        "@typescript-eslint/eslint-plugin": "^2.27.0",
-        "@typescript-eslint/parser": "^2.27.0",
-        "eslint": "^6.8.0",
-        "eslint-config-prettier": "^6.10.1",
-        "eslint-plugin-prettier": "^3.1.2"
+        "typescript": "^3.8.3"
     },
     "dependencies": {}
 }
