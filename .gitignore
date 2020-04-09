@@ -5,3 +5,4 @@ samples/*/dist
 .idea
 .cache
 packages/*/dist
+coverage

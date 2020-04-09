@@ -17,7 +17,8 @@
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
         "prettier:run": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\"",
         "test": "jest --verbose",
-        "test-ci": "jest --verbose --runInBand"
+        "test-ci": "jest --verbose --runInBand",
+        "coverage": "jest --verbose --collectCoverage --runInBand"
     },
     "author": "vegar Ringdal",
     "license": "MIT",
