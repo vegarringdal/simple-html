@@ -107,7 +107,7 @@ export class GridInterface {
         this.reRender();
     }
 
-    setData(data: any[], add = false) {
+    setData(data: any[], add = false, reRunFilter = false) {
         const olddataSetlength = this.completeDataset.length;
 
         if (add) {
@@ -127,7 +127,7 @@ export class GridInterface {
             }
         }
 
-        this.dataSourceUpdated();
+        this.dataSourceUpdated(reRunFilter);
     }
 
     reloadDatasource() {
@@ -140,7 +140,11 @@ export class GridInterface {
         this.dataSourceUpdated();
     }
 
-    dataSourceUpdated() {
+    dataSourceUpdated(reRunFilter = false) {
+        if (reRunFilter) {
+            this.__arrayUtils.reRunFilter();
+        }
+
         if (this.config.sortingSet) {
             this.__arrayUtils.setOrderBy(this.config.sortingSet);
         }
