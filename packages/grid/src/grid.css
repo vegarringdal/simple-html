@@ -9,6 +9,7 @@
     --freegrid-sec-font-color: #979494;
     --freegrid-font-size: 11px;
     --freegrid-font-weight: 500;
+    --freegrid-font-weight-header: 700;
     --freegrid-font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
     border: 0;
     -webkit-touch-callout: none;
@@ -152,7 +153,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-shadow: initial;
     border-bottom: 1px solid var(--freegrid-sec-bg-border);
     border-right: 1px solid var(--freegrid-sec-bg-border);
-    background-color: var(--freegrid-sec-bg-color);
+    background-color: var(--freegrid-main-bg-color);
     margin: initial;
     transition: initial;
     outline-color: var(--freegrid-main-bg-color);
@@ -245,7 +246,7 @@ free-grid-body::-webkit-scrollbar-thumb {
     margin: initial;
     font-family: var(--freegrid-font-family);
     font-size: var(--freegrid-font-size);
-    font-weight: var(--freegrid-font-weight);
+    font-weight: var(--freegrid-font-weight-header);
 }
 
 .free-grid .free-grid-selected-row {
