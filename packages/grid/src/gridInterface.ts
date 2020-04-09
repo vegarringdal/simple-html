@@ -127,6 +127,20 @@ export class GridInterface {
             }
         }
 
+        this.dataSourceUpdated();
+    }
+
+    reloadDatasource() {
+        const node = this.__freeGrid.getElementsByTagName('free-grid-body')[0];
+        if (node) {
+            node.scrollTop = 0;
+        }
+
+        this.__arrayUtils.reRunFilter();
+        this.dataSourceUpdated();
+    }
+
+    dataSourceUpdated() {
         if (this.config.sortingSet) {
             this.__arrayUtils.setOrderBy(this.config.sortingSet);
         }
