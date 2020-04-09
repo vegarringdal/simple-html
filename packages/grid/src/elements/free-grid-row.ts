@@ -14,6 +14,10 @@ export default class extends HTMLElement {
     connectedCallback() {
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
+
+        if (this.connector.config.__rowHeight > this.connector.config.cellHeight) {
+            this.classList.add('grouping-row-border');
+        }
     }
 
     handleEvent(e: any) {

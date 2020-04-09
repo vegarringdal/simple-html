@@ -3,7 +3,7 @@
     --freegrid-sec-bg-color: #616060;
     --freegrid-alt-bg-color: #797979;
     --freegrid-main-bg-border: #464444;
-    --freegrid-sec-bg-border:#565656;
+    --freegrid-sec-bg-border: #565656;
     --freegrid-main-bg-selected: #4b4d4e;
     --freegrid-main-font-color: #eae6e6;
     --freegrid-sec-font-color: #979494;
@@ -25,6 +25,7 @@
     font-weight: var(--freegrid-font-weight);
     color: var(--freegrid-main-font-color);
     background-color: var(--freegrid-main-bg-color);
+    border: 1px solid var(--freegrid-main-bg-border);
 }
 
 free-grid-body::-webkit-scrollbar {
@@ -38,8 +39,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     outline: 1px solid var(--freegrid-main-bg-border);
 }
 
-
-
 .free-grid .free-grid-row {
     border: 0;
     width: 100%;
@@ -50,11 +49,15 @@ free-grid-body::-webkit-scrollbar-thumb {
     overflow: hidden;
 }
 
+/* when we have many rows within row */
+.free-grid .grouping-row-border {
+    border-bottom: 2px solid var(--freegrid-main-bg-border);
+}
 
-.free-grid input::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-    color: var(--freegrid-sec-font-color);;
+.free-grid input::placeholder {
+    color: var(--freegrid-sec-font-color);
     opacity: 1; /* Firefox */
-  }
+}
 
 .free-grid .free-grid-col {
     border: 0;
@@ -72,9 +75,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     width: 100%;
     top: 0;
     background-color: var(--freegrid-main-bg-color);
-    border-left: 1px solid var(--freegrid-main-bg-border);
-    border-right: 1px solid var(--freegrid-main-bg-border);
-    border-top: 1px solid var(--freegrid-main-bg-border);
 }
 
 .free-grid .free-grid-footer {
@@ -85,9 +85,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     bottom: 0;
     border-top: 1px solid var(--freegrid-main-bg-border);
     background-color: var(--freegrid-main-bg-color);
-    border-left: 1px solid var(--freegrid-main-bg-border);
-    border-right: 1px solid var(--freegrid-main-bg-border);
-    border-bottom: 1px solid var(--freegrid-main-bg-border);
 }
 
 .free-grid .free-grid-header {
@@ -99,13 +96,14 @@ free-grid-body::-webkit-scrollbar-thumb {
     background-color: var(--freegrid-main-bg-color);
     border-right: 1px solid var(--freegrid-main-bg-border);
     border-top: 1px solid var(--freegrid-main-bg-border);
+    border-bottom: 1px solid var(--freegrid-main-bg-border);
+    overflow: hidden;
 }
 
 .free-grid .free-grid-body {
     position: absolute;
     box-sizing: border-box;
     border-top: 1px solid var(--freegrid-main-bg-border);
-    
     min-width: 100%;
     overflow-y: auto;
 }
@@ -134,7 +132,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     border: 0;
     border-right: 1px solid var(--freegrid-sec-bg-border);
-
 }
 
 .free-grid .free-grid-group-label {
@@ -143,9 +140,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     border: 0;
     border-right: 1px solid var(--freegrid-sec-bg-border);
 }
-
-
-
 
 .free-grid .free-grid-cell-label {
     position: absolute;
@@ -160,7 +154,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     transition: initial;
     outline-color: var(--freegrid-main-bg-color);
     color: var(--freegrid-main-font-color);
- 
 }
 
 .free-grid .free-grid-image-round {
@@ -188,7 +181,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     font-family: var(--freegrid-font-family);
     font-size: var(--freegrid-font-size);
     font-weight: var(--freegrid-font-weight);
-
 }
 
 .free-grid .free-grid-cell-row {
@@ -198,13 +190,11 @@ free-grid-body::-webkit-scrollbar-thumb {
     border-radius: initial;
     box-shadow: initial;
     border-bottom: 1px solid var(--freegrid-sec-bg-border);
-    border-right: 1px solid var(--freegrid-sec-bg-border);
-   
+
     margin: initial;
     transition: initial;
     outline-color: var(--freegrid-main-bg-color);
     color: var(--freegrid-main-font-color);
-
 }
 
 .free-grid .free-grid-row-checkbox {
@@ -328,14 +318,11 @@ free-grid-body::-webkit-scrollbar-thumb {
     border: 1px solid var(--freegrid-main-bg-border);
 }
 
-
-
 .free-grid .free-grid-grouping-row {
     height: 100%;
     box-sizing: border-box;
     position: absolute;
     background-color: var(--freegrid-main-bg-color);
-    border-right: 1px solid var(--freegrid-main-bg-border);
 }
 
 .free-grid .free-grid-col-group {
@@ -365,6 +352,5 @@ free-grid-body::-webkit-scrollbar-thumb {
 }
 
 .free-grid .free-grid-candrop {
-
     background-color: var(--freegrid-alt-bg-color);
 }
