@@ -305,4 +305,16 @@ export class ArrayUtils {
         this.gridInterface.displayedDataset = result.fixed;
         this.gridInterface.publishEvent('collecton-filter');
     }
+
+    public reRunFilter() {
+        // depending on col type we need to get data from correct value
+        this.gridInterface.filteredDataset = this.arrayFilter.runQueryOn(
+            this.gridInterface.completeDataset,
+            this.arrayFilter.getLastFilter()
+        );
+        const result = this.orderBy(this.gridInterface.filteredDataset, null, false);
+        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
+        this.gridInterface.displayedDataset = result.fixed;
+        this.gridInterface.publishEvent('collecton-filter');
+    }
 }
