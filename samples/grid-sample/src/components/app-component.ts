@@ -19,9 +19,7 @@ export default class extends HTMLElement {
         this.dummyDataGenerator = new DummyDataGenerator();
         this.connector = new GridInterface(gridConfig, datasource);
         this.connector2 = new GridInterface(gridConfig2, datasource);
-        this.data = this.dummyDataGenerator.generateData(100);
-        this.connector.setData(this.data);
-        this.connector2.setData(this.data);
+
         this.connector.addEventListener(() => {
             this.entity = this.connector.currentEntity;
             //console.log('connected', this.isConnected);
@@ -69,6 +67,14 @@ export default class extends HTMLElement {
         this.connector.manualConfigChange();
     }
 
+    public loadDatasource() {
+        this.data = this.dummyDataGenerator.generateData(100);
+        datasource.setData(this.data);
+
+        this.connector.reloadDatasource();
+        this.connector2.reloadDatasource();
+    }
+
     public addData(x: number) {
         //this.data = this.data.concat(this.dummyDataGenerator.generateData(x));
         this.connector.setData(this.dummyDataGenerator.generateData(x), true);
@@ -93,6 +99,13 @@ export default class extends HTMLElement {
                             }}
                         >
                             group
+                        </button>
+                        <button
+                            @click=${() => {
+                                this.loadDatasource();
+                            }}
+                        >
+                            load data
                         </button>
                     </div>
 
