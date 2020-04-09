@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { COL_SETUP as gridConfig } from './colSetup';
+import { COL_SETUP as gridConfig, COL_SETUP2 as gridConfig2 } from './colSetup';
 import { DummyDataGenerator } from './dummyDataGenerator';
 import { GridInterface, DataSource } from '@simple-html/grid';
 import { customElement, property, requestRender } from '@simple-html/core';
@@ -12,11 +12,16 @@ export default class extends HTMLElement {
     private connector: GridInterface;
     private dummyDataGenerator: DummyDataGenerator;
     @property() private entity: any = null;
+    connector2: GridInterface;
 
     constructor() {
         super();
         this.dummyDataGenerator = new DummyDataGenerator();
         this.connector = new GridInterface(gridConfig, datasource);
+        this.connector2 = new GridInterface(gridConfig2, datasource);
+        this.data = this.dummyDataGenerator.generateData(100);
+        this.connector.setData(this.data);
+        this.connector2.setData(this.data);
         this.connector.addEventListener(() => {
             this.entity = this.connector.currentEntity;
             //console.log('connected', this.isConnected);
@@ -244,9 +249,15 @@ export default class extends HTMLElement {
                     </div>
                 </div>
                 <free-grid
-                    style="height:700px;width:100%"
+                    style="height:700px;width:500px;margin-right:10px"
                     class="free-grid"
                     .interface=${this.connector}
+                >
+                </free-grid>
+                <free-grid
+                    style="height:700px;width:500px;margin-left:10px"
+                    class="free-grid"
+                    .interface=${this.connector2}
                 >
                 </free-grid>
             </div>
