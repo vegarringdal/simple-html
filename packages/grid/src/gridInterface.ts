@@ -151,7 +151,6 @@ export class GridInterface {
         const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
         this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
         this.displayedDataset = result.fixed;
-        this.__freeGrid && this.__freeGrid.resetRowCache();
         this.publishEvent('collection-change');
     }
 
@@ -253,6 +252,15 @@ export class GridInterface {
     }
 
     publishEvent(event: string) {
+        if (
+            event === 'collecton-filter' ||
+            event === 'collection-change' ||
+            event === 'collecton-grouping'
+        ) {
+            // changes that make collection change needs rowcache to be updated
+            this.__freeGrid && this.__freeGrid.resetRowCache();
+        }
+
         this.reRender();
         const keep = this.__subscribers.filter((element) => {
             return element(event);
