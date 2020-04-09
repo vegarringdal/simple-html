@@ -33,6 +33,7 @@ export default class extends HTMLElement {
     public replaceData(x: number) {
         this.data = this.dummyDataGenerator.generateData(x);
         this.connector.setData(this.data);
+        this.connector2.setData(this.data);
     }
     public group() {
         gridConfig.sortingSet = [
@@ -71,6 +72,7 @@ export default class extends HTMLElement {
     public addData(x: number) {
         //this.data = this.data.concat(this.dummyDataGenerator.generateData(x));
         this.connector.setData(this.dummyDataGenerator.generateData(x), true);
+        this.connector2.setData(this.dummyDataGenerator.generateData(x), true);
     }
 
     public render() {
