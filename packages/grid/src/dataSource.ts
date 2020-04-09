@@ -24,11 +24,17 @@ export class DataSource {
     }
 
     setData(data: any[], add = false): IEntity[] | void {
+        // todo
+        // do I want to have a set to check we dont have duplicates on keys?
+
         if (add) {
-            const x = Array.from(
-                data,
-                (o) => new Proxy(o, new EntityHandler(this.__KEY_ATTRIBUTE) as any)
-            );
+            const x = Array.from(data, (o: any | IEntity) => {
+                if (o && o.__controller) {
+                    return o;
+                } else {
+                    return new Proxy(o, new EntityHandler(this.__KEY_ATTRIBUTE) as any);
+                }
+            });
             this.__DATASET_ALL.push(...x);
 
             this.__DATASET_ALL.forEach((entity, i) => {
@@ -42,10 +48,14 @@ export class DataSource {
             });
             return x;
         } else {
-            this.__DATASET_ALL = Array.from(
-                data,
-                (o) => new Proxy(o, new EntityHandler(this.__KEY_ATTRIBUTE) as any)
-            ); // <- do I want to update user array Im allready setting a key on it ?
+            this.__DATASET_ALL = Array.from(data, (o: any | IEntity) => {
+                if (o && o.__controller) {
+                    return o;
+                } else {
+                    return new Proxy(o, new EntityHandler(this.__KEY_ATTRIBUTE) as any);
+                }
+            });
+
             this.__DATASET_ALL.forEach((entity, i) => {
                 if (entity && !(entity as any).__KEY) {
                     (entity as any).__KEY = this.getKey();
