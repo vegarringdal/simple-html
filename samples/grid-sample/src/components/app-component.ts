@@ -68,8 +68,8 @@ export default class extends HTMLElement {
     }
 
     public loadDatasource() {
-        this.data = this.dummyDataGenerator.generateData(100);
-        datasource.setData(this.data);
+        /*  this.data = this.dummyDataGenerator.generateData(100);
+        datasource.setData(this.data); */
 
         this.connector.reloadDatasource();
         this.connector2.reloadDatasource();
@@ -105,7 +105,7 @@ export default class extends HTMLElement {
                                 this.loadDatasource();
                             }}
                         >
-                            load data
+                            load all in datasource
                         </button>
                     </div>
 
@@ -159,28 +159,28 @@ export default class extends HTMLElement {
                                 this.addData(1);
                             }}
                         >
-                            add 1
+                            add 1 (to each)
                         </button>
                         <button
                             @click=${() => {
                                 this.addData(10);
                             }}
                         >
-                            add 10
+                            add 10 (to each)
                         </button>
                         <button
                             @click=${() => {
                                 this.addData(100);
                             }}
                         >
-                            add 100
+                            add 100 (to each)
                         </button>
                         <button
                             @click=${() => {
                                 this.addData(1000);
                             }}
                         >
-                            add 1000
+                            add 1000 (to each)
                         </button>
                     </div>
                     <div class="m-1 p-1">
