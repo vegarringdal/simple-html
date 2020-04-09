@@ -2,7 +2,7 @@ import { GridInterface } from '../gridInterface';
 import { FreeGrid } from '..';
 import { rowCache } from '../interfaces';
 
-let scrollBarTimer: number;
+let scrollBarTimer: any;
 
 export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
     return (e: any) => {
