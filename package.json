@@ -1,6 +1,6 @@
 {
     "name": "simple-html",
-    "version": "1.0.0-alpha.14",
+    "version": "1.0.0-alpha.15",
     "description": "lit html tools",
     "scripts": {
         "build:all": "node ./scripts/build && node ./scripts/syncPackages",
