@@ -23,6 +23,34 @@ export class DataSource {
         return this.__KEY_COUNT;
     }
 
+    removeData(data: IEntity | IEntity[], all = false) {
+        if (all) {
+            const removed = this.__DATASET_ALL.slice();
+            this.__DATASET_ALL = [];
+            return removed;
+        }
+
+        if (data) {
+            if (Array.isArray(data)) {
+                const removed: IEntity[] = [];
+                data.forEach((d) => {
+                    const i = this.__DATASET_ALL.indexOf(d);
+                    if (i !== -1) {
+                        removed.push(this.__DATASET_ALL.splice(i, 1)[0]);
+                    }
+                });
+                return removed;
+            } else {
+                const i = this.__DATASET_ALL.indexOf(data);
+                if (i !== -1) {
+                    return this.__DATASET_ALL.splice(i, 1);
+                }
+            }
+        }
+
+        return [];
+    }
+
     setData(data: any[], add = false): IEntity[] | void {
         // todo
         // do I want to have a set to check we dont have duplicates on keys?
