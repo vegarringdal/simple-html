@@ -1,20 +1,15 @@
 import { parseUrlPattern } from './parseUrlPattern';
 import { createRouteRegex } from './createRouteRegex';
-import { TemplateResult, directive } from 'lit-html';
-
-const resolvePromise = directive(
-    (promise: Promise<null>, htmlTemplate: TemplateResult) => (part: any) => {
-        Promise.resolve(promise).then(() => {
-            part.setValue(htmlTemplate);
-            part.commit();
-        });
-    }
-);
 
 export const routeMatch = function (hash = '', locationhash = window.location.hash) {
     if (!hash && (locationhash === '' || locationhash === '#')) {
         return true;
     }
+
+    if (locationhash.indexOf('?') !== -1) {
+        locationhash = locationhash.split('?')[0];
+    }
+
     let openEnd = false;
     if (hash[hash.length - 1] === '*') {
         hash = hash.substring(0, hash.length - 1);
@@ -24,16 +19,4 @@ export const routeMatch = function (hash = '', locationhash = window.location.ha
     const regexString = createRouteRegex(pattern, openEnd);
     const regex = new RegExp(regexString);
     return regex.test(locationhash);
-};
-
-export const routeMatchAsync = function (
-    hash = '',
-    importStatement: () => Promise<any>,
-    htmlTemplate: TemplateResult
-) {
-    if (routeMatch(hash)) {
-        return resolvePromise(importStatement(), htmlTemplate);
-    } else {
-        return '';
-    }
 };
