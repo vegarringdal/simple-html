@@ -1,12 +1,7 @@
 import './hmr';
 import './index.css';
 
-import { customElement } from '@simple-html/core';
-import { html } from 'lit-html';
+import { enableInternalLogger } from '@simple-html/core';
+enableInternalLogger();
 
-@customElement('app-root')
-export class AppRoot extends HTMLElement {
-    render() {
-        html`app root`;
-    }
-}
+import './elements/app-root';
