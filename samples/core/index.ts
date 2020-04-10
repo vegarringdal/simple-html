@@ -1,46 +1,12 @@
 import './hmr';
-import { html } from 'lit-html';
-import { customElement } from '@simple-html/core';
-
-import { userFormState, userFormStateType } from './state/userForm';
-import { mainUIState } from './state/mainUI';
-import { staticDialog } from './wrappers/staticDialog';
-
 import './index.css';
-import './userForm';
+
+import { customElement } from '@simple-html/core';
+import { html } from 'lit-html';
 
 @customElement('app-root')
 export class AppRoot extends HTMLElement {
     render() {
-        const [userForm, setUserForm] = userFormState();
-        const [, setUiState] = mainUIState();
-
-        return html`
-            <div>
-                <button
-                    class="bg-blue-500 p-2 m-2"
-                    @click=${() => {
-                        setUiState(Object.assign({ showDialog: true }, userForm));
-                        this.render();
-                    }}
-                >
-                    Open dialog
-                </button>
-
-                ${staticDialog(html`
-                    <profile-form
-                        class=""
-                        .firstName=${userForm.firstName}
-                        .lastName=${userForm.lastName}
-                        .email=${userForm.email}
-                        .action=${(userForm: userFormStateType) => {
-                            setUserForm(userForm);
-                            setUiState(Object.assign({ showDialog: false }, userForm));
-                            this.render();
-                        }}
-                    ></profile-form>
-                `)}
-            </div>
-        `;
+        html`app root`;
     }
 }

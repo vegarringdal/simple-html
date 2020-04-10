@@ -4,7 +4,7 @@ import {
     subscribeCanDeactivateEvent,
     unSubscribeCanDeactivateEvent,
     stopCanDeactivate
-} from '@simple-html/router/src';
+} from '@simple-html/router';
 
 @customElement('settings-route')
 export default class extends HTMLElement {
