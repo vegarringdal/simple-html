@@ -5,7 +5,7 @@ import { getElementMarkup } from './getElementMarkup';
 
 @customElement('app-root')
 export default class extends HTMLElement {
-    elements = ['element-no1', 'element-no2', 'element-no3', 'element-no4'];
+    elements = ['sample-default', 'sample-no1', 'sample-no2', 'sample-no3', 'sample-no4'];
 
     connectedCallback() {
         connectViewState(this, this.render);

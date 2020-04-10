@@ -1,21 +1,21 @@
 import { html } from 'lit-html';
-import './element-default';
-import './element-no1';
-import './element-no2';
-import './element-no3';
-import './element-no4';
+import './sample-default';
+import './sample-no1';
+import './sample-no2';
+import './sample-no3';
+import './sample-no4';
 
 export function getElementMarkup(element: string) {
     switch (element) {
-        case 'element-no1':
-            return html`<element-no1></element-no1>`;
-        case 'element-no2':
-            return html`<element-no2></element-no2>`;
-        case 'element-no3':
-            return html`<element-no3></element-no3>`;
-        case 'element-no4':
-            return html`<element-no4></element-no4>`;
+        case 'sample-no1':
+            return html`<sample-no1></sample-no1>`;
+        case 'sample-no2':
+            return html`<sample-no2></sample-no2>`;
+        case 'sample-no3':
+            return html`<sample-no3></sample-no3>`;
+        case 'sample-no4':
+            return html`<sample-no4></sample-no4>`;
         default:
-            return html`<element-default></element-default>`;
+            return html`<sample-default></sample-default>`;
     }
 }
