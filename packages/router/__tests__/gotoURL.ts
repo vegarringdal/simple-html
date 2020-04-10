@@ -82,4 +82,10 @@ describe('gotoURL', () => {
         gotoURL('#home/:option', { option: 'awsome' }, { name: '1' });
         expect(globalThis.location.hash).toEqual('#home/awsome?name=1');
     });
+
+    it('test query added and params', () => {
+        clearLocationHash();
+        gotoURL('#home/:option', { option: 'awsome' }, { name: '1', option: '1' });
+        expect(globalThis.location.hash).toEqual('#home/awsome?name=1&option=1');
+    });
 });
