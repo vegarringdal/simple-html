@@ -3,14 +3,12 @@
     "version": "1.0.0-alpha.15",
     "description": "lit html tools",
     "scripts": {
+        "start": "node fuse",
         "build:all": "node ./scripts/build && node ./scripts/syncPackages",
         "clean:dist": "node ./scripts/clean",
         "sync": "node ./scripts/syncPackages",
         "publish:all": "node ./scripts/publish",
         "publish:test": "node ./scripts/publishTest",
-        "sample:core": "node fuse core",
-        "sample:grid": "node fuse grid",
-        "sample:router": "node fuse router",
         "eslint": "npm run eslint:run:packages && npm run eslint:run:samples",
         "eslint:run:packages": "./node_modules/.bin/eslint --fix ./packages/**/*.ts",
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
@@ -30,7 +28,7 @@
     },
     "lint-staged": {
         "*.ts": [
-            "prettier --write",
+            "npm run eslint",
             "git add"
         ]
     },

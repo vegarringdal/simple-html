@@ -2,7 +2,7 @@ import './hmr';
 
 import '@simple-html/grid/src/grid.css';
 // import main css
-import './index.css';
+import './index.c ss';
 
 // import grid and its css
 import '@simple-html/grid';
