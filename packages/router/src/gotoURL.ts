@@ -16,8 +16,8 @@ export const gotoURL = function (path: string, params: any = {}, query: any = nu
         }
     });
 
-    // make sure we have the #
-    newUrl = newUrl[0] === '#' ? newUrl : `#${newUrl}`;
+    // make sure we have the # - is removed in the start...
+    newUrl = `#${newUrl}`;
 
     let urlparams;
     if (query) {
