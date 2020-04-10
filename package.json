@@ -9,6 +9,7 @@
         "sync": "node ./scripts/syncPackages",
         "publish:all": "node ./scripts/publish",
         "publish:test": "node ./scripts/publishTest",
+        "typecheck": "node typecheck",
         "eslint": "npm run eslint:run:packages && npm run eslint:run:samples",
         "eslint:run:packages": "./node_modules/.bin/eslint --fix ./packages/**/*.ts",
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
@@ -28,7 +29,7 @@
     },
     "lint-staged": {
         "*.ts": [
-            "npm run eslint",
+            "npm run typecheck && npm run eslint",
             "git add"
         ]
     },
