@@ -34,6 +34,9 @@ export default class extends HTMLElement {
     }
 }
 
+/**
+ * <ele-1></ele-1>
+ */
 @customElement('ele-1')
 export class Ele1 extends HTMLElement {
     @property() myvalue = 0;
@@ -43,6 +46,9 @@ export class Ele1 extends HTMLElement {
     }
 }
 
+/**
+ * <ele-2></ele-2>
+ */
 @customElement('ele-2')
 export class Ele2 extends HTMLElement {
     @attribute() myValue = 0;
@@ -52,6 +58,9 @@ export class Ele2 extends HTMLElement {
     }
 }
 
+/**
+ * <ele-3></ele-3>
+ */
 @customElement('ele-3')
 export class Ele3 extends HTMLElement {
     @property({ skipRender: true }) myvalue = 0;
@@ -61,7 +70,7 @@ export class Ele3 extends HTMLElement {
         //small delay see it
         setTimeout(() => {
             this.render();
-        }, 2000);
+        }, 700);
     }
 
     render() {
@@ -69,6 +78,9 @@ export class Ele3 extends HTMLElement {
     }
 }
 
+/**
+ * <ele-4></ele-4>
+ */
 @customElement('ele-4')
 export class Ele4F extends HTMLElement {
     @attribute({ skipRender: true }) myValue = 0;
@@ -78,7 +90,7 @@ export class Ele4F extends HTMLElement {
         //small delay see it
         setTimeout(() => {
             this.render();
-        }, 3000);
+        }, 1000);
     }
 
     render() {
