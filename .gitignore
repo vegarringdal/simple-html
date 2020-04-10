@@ -1,8 +1,7 @@
 node_modules/
 npm-debug.log
-samples/*/dev
-samples/*/dist
 .idea
 .cache
+dist
 packages/*/dist
 coverage

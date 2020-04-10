@@ -1,6 +1,6 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
-import { navs, routerConfig } from './routes/routerConfig';
+import { navs, routerConfig } from './routerConfig';
 import { subscribeHashEvent, unSubscribeHashEvent, gotoURL } from '@simple-html/router';
 import { routeMatchAsync } from '@simple-html/router';
 
@@ -18,7 +18,7 @@ export default class extends HTMLElement {
     public render() {
         return html`
             <ul class="flex bg-teal-500 p-6">
-                ${navs('main').map((route) => {
+                ${navs('main').map((route: any) => {
                     if (route.isNav) {
                         return html`
                             <li class="mr-6">
