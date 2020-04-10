@@ -94,7 +94,6 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 if (super.valuesChangedMethod) {
                     super.valuesChangedMethod('attribute', name, oldValue, newValue);
                 }
-                requestRender(this);
             }
         };
         if (!customElements.get(elementName)) {
