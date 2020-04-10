@@ -1,5 +1,4 @@
 import { render } from 'lit-html';
-import { requestRender } from './requestRender';
 import { getObservedAttributesSymbol, getObservedAttributesMapSymbol } from './symbols';
 import { logger } from './logger';
 
