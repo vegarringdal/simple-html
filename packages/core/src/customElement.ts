@@ -51,8 +51,22 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 }
                 this.render(this);
             }
+
+            register(call: Function) {
+                if (this.callers) {
+                    this.callers.push(call);
+                } else {
+                    this.callers = [];
+                    this.callers.push(call);
+                }
+            }
+
             disconnectedCallback() {
                 logger('disconnectedCallback', this, super.tagName);
+                if (this.callers) {
+                    this.callers.forEach((call: Function) => call());
+                }
+                this.callers = [];
                 if (super.disconnectedCallback) {
                     super.disconnectedCallback.call(this);
                 }
