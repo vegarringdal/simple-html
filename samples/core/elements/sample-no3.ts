@@ -8,29 +8,28 @@ export default class extends HTMLElement {
     @property() count = 0;
 
     render() {
-        return html`<br />
-            <div class="flex flex-col">
-                <button
-                    class="bg-green-500 p-2"
-                    @click=${() => {
-                        this.count = this.count + 1;
-                    }}
-                >
-                    count ++
-                </button>
+        return html` <div class="flex flex-col">
+            <button
+                class="bg-green-500 p-2"
+                @click=${() => {
+                    this.count = this.count + 1;
+                }}
+            >
+                count ++
+            </button>
 
-                <span>ele-one - using property - auto rerender</span>
-                <ele-1 .myvalue=${this.count}></ele-1>
+            <span>ele-one - using property - auto rerender</span>
+            <ele-1 .myvalue=${this.count}></ele-1>
 
-                <span>ele-two- using attribute - auto rerender</span>
-                <ele-2 my-value=${this.count}></ele-2>
+            <span>ele-two- using attribute - auto rerender</span>
+            <ele-2 my-value=${this.count}></ele-2>
 
-                <span>ele-one - using property - manual rerender</span>
-                <ele-3 .myvalue=${this.count}></ele-3>
+            <span>ele-one - using property - manual rerender</span>
+            <ele-3 .myvalue=${this.count}></ele-3>
 
-                <span>ele-two- using attribute - manual rerender</span>
-                <ele-4 my-value=${this.count}></ele-4>
-            </div>`;
+            <span>ele-two- using attribute - manual rerender</span>
+            <ele-4 my-value=${this.count}></ele-4>
+        </div>`;
     }
 }
 
