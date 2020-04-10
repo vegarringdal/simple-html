@@ -75,9 +75,4 @@ describe('routeMatch', () => {
         clearLocationHash('#');
         expect(routeMatch('')).toEqual(true);
     });
-
-    it('null === #', () => {
-        clearLocationHash('#');
-        expect(routeMatch()).toEqual(true);
-    });
 });
