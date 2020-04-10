@@ -9,9 +9,9 @@ class Context {
             target: 'browser',
             entry: `./samples/${folderInSamples}/index.ts`,
             webIndex: {
-                template: `./samples/${folderInSamples}/index.html`
+                template: `./samples/${folderInSamples}/index.html`,
+                publicPath: './'
             },
-            log: false,
             cache: {
                 root: `./.cache/${folderInSamples}`,
                 enabled: !prod
@@ -44,33 +44,17 @@ class Context {
         });
     }
 }
-
-const { task, rm } = sparky(Context);
-
+const { rm } = sparky(Context);
 // commen runner for all samples
 async function run(folderInSamples, ctx) {
     await rm(`./.cache/${folderInSamples}`);
     await rm(`./dist/${folderInSamples}`);
     ctx.runServer = true;
     const fuse = ctx.getConfig(folderInSamples, false);
-    await fuse.runDev();
+    await fuse.runDev({ bundles: { distRoot: `./dist/${folderInSamples}`, app: 'app.js' } });
 }
 
-/**
- *  under is start points for all samples
- */
-
-task('core', async (ctx) => {
-    run('core', ctx);
-});
-
-task('grid', async (ctx) => {
-    run('grid', ctx);
-});
-
-task('router', async (ctx) => {
-    run('router', ctx);
-});
+run(process.argv[2], new Context());
 
 /* 
 task('dist', async (ctx) => {
