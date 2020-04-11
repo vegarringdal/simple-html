@@ -108,12 +108,12 @@ export class SimpleHtmlGrid extends HTMLElement {
     public resetRowCache() {
         if (this.interface) {
             const node = this.getElementsByTagName('simple-html-grid-body')[0];
-            const height = node?.clientHeight || this.interface.config.cellHeight * 30;
+            const height = node?.clientHeight || this.interface.config.cellHeight * 50;
 
             let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2; //(buffer);
             console.log(rowsNeeded);
-            if (rowsNeeded > 40) {
-                rowsNeeded = 40;
+            if (rowsNeeded > 50) {
+                rowsNeeded = 50;
             }
 
             const cacheLength =
