@@ -1,9 +1,10 @@
 import { publish } from '.';
 
-const state = (window as any).state || {};
+let state = (window as any).state || {};
 const keys = new Set();
 type valueSetter = (value: any) => void;
 
+// helper for fusebox hmr event
 if (!(window as any).state) {
     window.addEventListener('HMR-FUSEBOX', () => {
         (window as any).state = state;
@@ -13,14 +14,28 @@ if (!(window as any).state) {
 
 export type stateResult<T> = [T, valueSetter];
 
-export function getState(newState: any) {
-    (window as any).state = newState;
+/**
+ * Get current glabal state
+ * great for saving state for next time user opens website
+ */
+export function getState() {
+    state;
 }
 
-export function setState() {
-    return state;
+/**
+ * overide current state
+ * great for restoring state time user opens website
+ */
+export function setState(newState: any) {
+    state = newState;
 }
 
+/**
+ * simple state container
+ * @param key key used in state container and event
+ * @param defaultValue default state value
+ * @param customPublishedTrigger if you do not want it to publish update event
+ */
 export function stateContainer<T>(
     key: string,
     defaultValue: T,
@@ -44,6 +59,10 @@ export function stateContainer<T>(
     return [currentState, customPublishedTrigger ? setter : middleware];
 }
 
+/**
+ * simple warning if you reuse a key by accident
+ * @param key
+ */
 export function validateKey(key: string) {
     if (keys.has(key)) {
         throw new Error(`state key used allready, use another name`);
