@@ -1,7 +1,7 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 
-import { property, attribute } from '@simple-html/core/dist/esm';
+import { property, attribute } from '@simple-html/core';
 import { viewState } from '../state/viewState';
 
 @customElement('sample-no3')

@@ -1,4 +1,4 @@
-import { gotoURL } from '../src/gotoURL';
+import { gotoURL } from '../gotoURL';
 
 const clearLocationHash = () => {
     (globalThis as any).location = { hash: '' };

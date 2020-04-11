@@ -3,7 +3,7 @@ const { readFiles, spawner, logInfo, logError } = require('./utils');
 
 const { sparky } = require('fuse-box');
 class Context {}
-const { task, src } = sparky(Context);
+const { task, src, rm } = sparky(Context);
 
 task('default', async context => {
     const files = await readFiles('./packages');
@@ -11,14 +11,13 @@ task('default', async context => {
         const file = files[i];
         if (file.isDirectory() && file.name !== 'template-package') {
             logInfo(`\n\n ${file.name}: Remove old dist folder`);
-            await src(`../packages/${file.name}/dist/**/*.*`)
-                .clean()
-                .exec();
+            rm(`../packages/${file.name}/dist/`)
+              
 
             const checker = require('fuse-box-typechecker').TypeChecker({
                 tsConfigOverride: {
                     compilerOptions: {
-                        outDir: `./dist/esm`,
+                        outDir: `./dist`,
                         rootDir: `./src`,
                         target: 'es2018',
                         module: 'esNext',
@@ -59,16 +58,11 @@ task('default', async context => {
             const x = result.oldProgram.emit();
 
             const PATH = require('path').resolve(__dirname, '../packages');
-            //copy ts build
-            logInfo(`${file.name}: copy ts`);
-            await src(`${PATH}/${file.name}/src/**/*.*`)
-                .dest(`${PATH}/${file.name}/dist/ts`, `src`)
-                .exec();
 
             //copy css files
             logInfo(`${file.name}: copy css if any`);
             await src(`${PATH}/${file.name}/src/**/*.css`)
-                .dest(`${PATH}/${file.name}/dist/esm`, `src`)
+                .dest(`${PATH}/${file.name}/dist`, `src`)
                 .exec();
         }
     }

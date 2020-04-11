@@ -1,7 +1,7 @@
 import { customElement, unSubscribe } from '@simple-html/core';
 import { html } from 'lit-html';
 
-import { property, publish, subscribe } from '@simple-html/core/dist/esm';
+import { property, publish, subscribe } from '@simple-html/core';
 import { viewState } from '../state/viewState';
 
 @customElement('sample-no4')
