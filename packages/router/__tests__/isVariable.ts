@@ -1,4 +1,4 @@
-import { isVariable } from '../isVariable';
+import { isVariable } from '../src/isVariable';
 
 describe('isVariable', () => {
     it('should :name is variable', () => {

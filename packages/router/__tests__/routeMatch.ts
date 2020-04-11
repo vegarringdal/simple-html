@@ -1,4 +1,4 @@
-import { routeMatch } from '../routeMatch';
+import { routeMatch } from '../src/routeMatch';
 
 const clearLocationHash = (hash = '') => {
     (globalThis as any).location = { hash };
