@@ -11,6 +11,7 @@ export default class extends HTMLElement {
     @property() ele7 = 0;
 
     connectedCallback() {
+        // you could use 1 here and pass name back..
         subscribe('ele-5', this, (newValue: any) => {
             this.ele5 = newValue;
         });
@@ -31,6 +32,12 @@ export default class extends HTMLElement {
     render() {
         const [view] = viewState();
         return html` <span class="text-xl">${view.toUpperCase()}</span>
+            <p class="mt-2 mb-2">
+                Shows send data between elements, some elements arn always connected, so this will
+                help with this if you do not want to create a state container
+            </p>
+            <p class="mt-2 mb-2">Edit and go to sample 1</p>
+
             <div class="flex flex-col">
                 <span>ele-5-external: ${this.ele5}</span>
                 <span>ele-6-external: ${this.ele6}</span>

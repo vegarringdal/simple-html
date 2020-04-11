@@ -11,6 +11,11 @@ export default class extends HTMLElement {
     render() {
         const [view] = viewState();
         return html` <span class="text-xl">${view.toUpperCase()}</span>
+            <p class="mt-2 mb-2">
+                Shows how to use @property and @attribute to trigger rerendering on changes
+            </p>
+            <p class="mt-2 mb-2">Edit and go to sample 1</p>
+
             <div class="flex flex-col">
                 <button
                     class="bg-green-500 p-2"
