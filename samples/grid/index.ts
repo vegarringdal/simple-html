@@ -12,18 +12,18 @@ import './components/app-component';
 
 import { enableInternalLogger } from '@simple-html/core';
 enableInternalLogger([
-    'FREE-GRID-ROW-GROUP',
-    'FREE-GRID-CELL-ROW',
-    'FREE-GRID-GROUP-ROW',
-    'FREE-GRID-CELL-LABEL',
-    'FREE-GRID-CELL-FILTER',
-    'FREE-GRID-ROW',
-    'FREE-GRID-GROUP-FILTER',
-    'FREE-GRID-GROUP-LABEL',
-    'FREE-GRID-PANEL',
-    'FREE-GRID-FOOTER',
-    'FREE-GRID-BODY',
-    'FREE-GRID-HEADER'
+    'SIMPLE-HTML-GRID-ROW-GROUP',
+    'SIMPLE-HTML-GRID-CELL-ROW',
+    'SIMPLE-HTML-GRID-GROUP-ROW',
+    'SIMPLE-HTML-GRID-CELL-LABEL',
+    'SIMPLE-HTML-GRID-CELL-FILTER',
+    'SIMPLE-HTML-GRID-ROW',
+    'SIMPLE-HTML-GRID-GROUP-FILTER',
+    'SIMPLE-HTML-GRID-GROUP-LABEL',
+    'SIMPLE-HTML-GRID-PANEL',
+    'SIMPLE-HTML-GRID-FOOTER',
+    'SIMPLE-HTML-GRID-BODY',
+    'SIMPLE-HTML-GRID-HEADER'
 ]);
 
 console.log('sample-v:', 1);
