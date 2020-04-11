@@ -1,15 +1,15 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
-import { FreeGrid } from '..';
+import { SimpleHtmlGrid } from '..';
 import { html, svg } from 'lit-html';
 import { rowCache } from '../interfaces';
 
-@customElement('free-grid-row-group')
+@customElement('simple-html-grid-row-group')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-row';
+    classList: any = 'simple-html-grid-row';
     connector: GridInterface;
     row: rowCache;
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
 
     connectedCallback() {
         this.ref.addEventListener('vertical-scroll', this);
@@ -54,7 +54,7 @@ export default class extends HTMLElement {
             const defaultMarkup = html`
                 <i @click=${changeGrouping}>
                     <svg
-                        class="free-grid-icon"
+                        class="simple-html-grid-icon"
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 16 16"
                     >
@@ -68,22 +68,22 @@ export default class extends HTMLElement {
             return html`
                 ${entity.__groupLvl
                     ? html`
-                          <free-grid-col
-                              class="free-grid-col free-grid-grouping-row"
+                          <simple-html-grid-col
+                              class="simple-html-grid-col simple-html-grid-grouping-row"
                               style="width:${entity.__groupLvl
                                   ? entity.__groupLvl * 15
                                   : 0}px;left:0"
                           >
-                          </free-grid-col>
+                          </simple-html-grid-col>
                       `
                     : ''}
                 ${html`
-                    <free-grid-col
-                        class="free-grid-col-group"
+                    <simple-html-grid-col
+                        class="simple-html-grid-col-group"
                         style="left:${entity.__groupLvl ? entity.__groupLvl * 15 : 0}px;right:0"
                     >
                         ${defaultMarkup}
-                    </free-grid-col>
+                    </simple-html-grid-col>
                 `}
             `;
         } else {

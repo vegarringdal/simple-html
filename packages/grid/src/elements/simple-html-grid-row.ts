@@ -1,15 +1,15 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
-import { FreeGrid } from '../';
+import { SimpleHtmlGrid } from '..';
 import { html } from 'lit-html';
 import { rowCache } from '../interfaces';
 
-@customElement('free-grid-row')
+@customElement('simple-html-grid-row')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-row';
+    classList: any = 'simple-html-grid-row';
     connector: GridInterface;
     row: rowCache;
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
 
     connectedCallback() {
         this.ref.addEventListener('vertical-scroll', this);
@@ -57,32 +57,32 @@ export default class extends HTMLElement {
             };
 
             if (this.connector.selection.isSelected(this.row.i)) {
-                this.classList.add('free-grid-selected-row');
+                this.classList.add('simple-html-grid-selected-row');
             } else {
-                this.classList.remove('free-grid-selected-row');
+                this.classList.remove('simple-html-grid-selected-row');
             }
 
             const grouping =
                 this.connector.config.groupingSet && this.connector.config.groupingSet.length;
 
             return html`
-                <free-grid-col
-                    class="free-grid-grouping-row"
+                <simple-html-grid-col
+                    class="simple-html-grid-grouping-row"
                     style="width:${grouping ? grouping * 15 : 0}px;left:0; display:${grouping
                         ? 'block'
                         : 'none'}"
                 >
-                </free-grid-col>
+                </simple-html-grid-col>
                 ${config.groups.map((group) => {
                     return html`
-                        <free-grid-group-row
+                        <simple-html-grid-group-row
                             @click=${rowClick}
                             .connector=${this.connector}
                             .rowNo=${this.row.i}
                             .ref=${this.ref}
                             .group=${group}
                         >
-                        </free-grid-group-row>
+                        </simple-html-grid-group-row>
                     `;
                 })}
             `;

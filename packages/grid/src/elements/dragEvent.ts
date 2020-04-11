@@ -23,18 +23,18 @@ export const columnDragDropPanel = (event: string, _connector: GridInterface) =>
             _connector.groupingCallback(e, dragCell);
         }
         e.target.removeEventListener('mouseup', drop);
-        (e.target as any).classList.remove('free-grid-candrop');
+        (e.target as any).classList.remove('simple-html-grid-candrop');
     };
 
     return (_e: MouseEvent) => {
         if (event === 'enter' && dragCell) {
-            (_e.target as any).classList.add('free-grid-candrop');
+            (_e.target as any).classList.add('simple-html-grid-candrop');
             _e.target.addEventListener('mouseup', drop);
         }
 
         if (event === 'leave' && dragCell) {
             _e.target.removeEventListener('mouseup', drop);
-            (_e.target as any).classList.remove('free-grid-candrop');
+            (_e.target as any).classList.remove('simple-html-grid-candrop');
         }
     };
 };
@@ -77,8 +77,8 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
             dragColumnBlock = document.createElement('div');
             dragColumnBlock.style.top = -1200 + 'px'; // hide it
             dragColumnBlock.style.left = -1200 + 'px';
-            dragColumnBlock.classList.add('free-grid');
-            dragColumnBlock.classList.add('free-grid-drag');
+            dragColumnBlock.classList.add('simple-html-grid');
+            dragColumnBlock.classList.add('simple-html-grid-drag');
             dragColumnBlock.textContent = _col.header;
             document.body.appendChild(dragColumnBlock);
             document.addEventListener('mousemove', mouseMove);
@@ -99,7 +99,7 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
                 _connector.reRender();
 
                 e.target.removeEventListener('mouseup', drop);
-                (e.target as any).classList.remove('free-grid-candrop');
+                (e.target as any).classList.remove('simple-html-grid-candrop');
             };
 
             if (event === 'enter' && dragCell) {
@@ -107,7 +107,7 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
                     (_e.target as any).classList.toggle('hideme');
                 }
 
-                (_e.target as any).classList.add('free-grid-candrop');
+                (_e.target as any).classList.add('simple-html-grid-candrop');
                 _e.target.addEventListener('mouseup', drop);
             }
 
@@ -116,7 +116,7 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
                     (_e.target as any).classList.toggle('hideme');
                 }
                 _e.target.removeEventListener('mouseup', drop);
-                (_e.target as any).classList.remove('free-grid-candrop');
+                (_e.target as any).classList.remove('simple-html-grid-candrop');
             }
         }
     };

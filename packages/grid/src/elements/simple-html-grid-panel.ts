@@ -1,13 +1,13 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { html, svg } from 'lit-html';
-import { FreeGrid } from '..';
+import { SimpleHtmlGrid } from '..';
 
-@customElement('free-grid-panel')
+@customElement('simple-html-grid-panel')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-panel';
+    classList: any = 'simple-html-grid-panel';
     connector: GridInterface;
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
 
     connectedCallback() {
         const config = this.connector.config;
@@ -30,14 +30,14 @@ export default class extends HTMLElement {
 
         const mouseEnter = (e: MouseEvent) => {
             (e.target as HTMLElement)
-                .getElementsByClassName('free-grid-icon')[0]
-                .classList.remove('free-grid-iconhidden');
+                .getElementsByClassName('simple-html-grid-icon')[0]
+                .classList.remove('simple-html-grid-iconhidden');
         };
 
         const mouseLeave = (e: MouseEvent) => {
             (e.target as HTMLElement)
-                .getElementsByClassName('free-grid-icon')[0]
-                .classList.add('free-grid-iconhidden');
+                .getElementsByClassName('simple-html-grid-icon')[0]
+                .classList.add('simple-html-grid-iconhidden');
         };
 
         return html`
@@ -49,14 +49,14 @@ export default class extends HTMLElement {
                     <div
                         @mouseenter=${mouseEnter}
                         @mouseleave=${mouseLeave}
-                        class="free-grid-grouping-panel-container"
+                        class="simple-html-grid-grouping-panel-container"
                     >
-                        <p class="free-grid-grouping-panel-p">
+                        <p class="simple-html-grid-grouping-panel-p">
                             ${group.title || group.field}
                             <i>
                                 <svg
                                     @click=${click}
-                                    class="free-grid-icon free-grid-iconhidden"
+                                    class="simple-html-grid-icon simple-html-grid-iconhidden"
                                     xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 16 16"
                                 >

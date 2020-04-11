@@ -1,14 +1,14 @@
 import { customElement, property } from '@simple-html/core';
-import { FreeGrid, GridInterface } from '..';
+import { SimpleHtmlGrid, GridInterface } from '..';
 import { IgridConfigGroups, ICell } from '../interfaces';
 import { html } from 'lit-html';
 
-@customElement('free-grid-cell-row')
+@customElement('simple-html-grid-cell-row')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-cell-row';
+    classList: any = 'simple-html-grid-cell-row';
     connector: GridInterface;
     cellPosition: number;
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
     currentHeight: number;
     @property() rowNo: number;
     group: IgridConfigGroups;
@@ -97,15 +97,18 @@ export default class extends HTMLElement {
                             @input=${input}
                             type="checkbox"
                             .checked=${data[cell.attribute]}
-                            class="free-grid-row-checkbox"
+                            class="simple-html-grid-row-checkbox"
                         />
                     `;
                 case 'image':
                     return html`
-                        <img .src=${data[cell.attribute] || ''} class="free-grid-image-round" />
+                        <img
+                            .src=${data[cell.attribute] || ''}
+                            class="simple-html-grid-image-round"
+                        />
                     `;
                 case 'empty':
-                    return html`<div class="free-grid-row-input "></div>`;
+                    return html`<div class="simple-html-grid-row-input "></div>`;
 
                 case 'date':
                     return html`
@@ -116,7 +119,7 @@ export default class extends HTMLElement {
                             @input=${input}
                             type=${cell.type}
                             .valueAsDate=${data[cell.attribute] || null}
-                            class="free-grid-row-input"
+                            class="simple-html-grid-row-input"
                         />
                     `;
                 case 'number':
@@ -128,7 +131,7 @@ export default class extends HTMLElement {
                             @input=${input}
                             type=${cell.type}
                             .valueAsNumber=${data[cell.attribute]}
-                            class="free-grid-row-input"
+                            class="simple-html-grid-row-input"
                         />
                     `;
                 default:
@@ -142,7 +145,7 @@ export default class extends HTMLElement {
                     @input=${input}
                     type=${cell.type || 'text'}
                     .value=${data[cell.attribute] || null}
-                    class="free-grid-row-input"
+                    class="simple-html-grid-row-input"
                 />
             `;
         } else {

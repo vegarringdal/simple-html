@@ -1,9 +1,9 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 
-@customElement('free-grid-footer')
+@customElement('simple-html-grid-footer')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-footer';
+    classList: any = 'simple-html-grid-footer';
     connector: GridInterface;
 
     connectedCallback() {

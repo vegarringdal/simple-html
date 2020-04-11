@@ -1,16 +1,16 @@
-.free-grid {
-    --freegrid-main-bg-color: #f5f5f5;
-    --freegrid-sec-bg-color: #ffffff;
-    --freegrid-alt-bg-color: #ffffff;
-    --freegrid-main-bg-border: #e6e5e5;
-    --freegrid-sec-bg-border: #e6e5e5;
-    --freegrid-main-bg-selected: #f5f5f5;
-    --freegrid-main-font-color: #2e2d2d;
-    --freegrid-sec-font-color: #979494;
-    --freegrid-font-size: 11px;
-    --freegrid-font-weight: 500;
-    --freegrid-font-weight-header: 700;
-    --freegrid-font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+.simple-html-grid {
+    --simple-html-grid-main-bg-color: #f5f5f5;
+    --simple-html-grid-sec-bg-color: #ffffff;
+    --simple-html-grid-alt-bg-color: #ffffff;
+    --simple-html-grid-main-bg-border: #e6e5e5;
+    --simple-html-grid-sec-bg-border: #e6e5e5;
+    --simple-html-grid-main-bg-selected: #f5f5f5;
+    --simple-html-grid-main-font-color: #2e2d2d;
+    --simple-html-grid-sec-font-color: #979494;
+    --simple-html-grid-font-size: 11px;
+    --simple-html-grid-font-weight: 500;
+    --simple-html-grid-font-weight-header: 700;
+    --simple-html-grid-font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
     border: 0;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -20,98 +20,98 @@
     overflow: hidden;
     display: block;
     position: relative;
-    outline-color: var(--freegrid-main-bg-color);
-    font-family: var(--freegrid-font-family);
-    font-size: var(--freegrid-font-size);
-    font-weight: var(--freegrid-font-weight);
-    color: var(--freegrid-main-font-color);
-    background-color: var(--freegrid-main-bg-color);
-    border: 1px solid var(--freegrid-main-bg-border);
+    outline-color: var(--simple-html-grid-main-bg-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-main-bg-color);
+    border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-free-grid-body::-webkit-scrollbar {
+simple-html-grid-body::-webkit-scrollbar {
     width: 1em;
 }
-free-grid-body::-webkit-scrollbar-track {
+simple-html-grid-body::-webkit-scrollbar-track {
     
 }
-free-grid-body::-webkit-scrollbar-thumb {
-    background-color: var(--freegrid-main-bg-selected);
+simple-html-grid-body::-webkit-scrollbar-thumb {
+    background-color: var(--simple-html-grid-main-bg-selected);
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-    outline: 1px solid var(--freegrid-main-bg-border);
+    outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.free-grid .free-grid-row {
+.simple-html-grid .simple-html-grid-row {
     border: 0;
     width: 100%;
     min-width: 100%; /*without this left scrolltop will not be set when hidden*/
-    border-bottom: 1px solid var(--freegrid-main-bg-border);
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
     box-sizing: border-box;
     position: absolute;
     overflow: hidden;
 }
 
 /* when we have many rows within row */
-.free-grid .grouping-row-border {
-    border-bottom: 2px solid var(--freegrid-main-bg-border);
+.simple-html-grid .grouping-row-border {
+    border-bottom: 2px solid var(--simple-html-grid-main-bg-border);
 }
 
-.free-grid input::placeholder {
-    color: var(--freegrid-sec-font-color);
+.simple-html-grid input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
     opacity: 1; /* Firefox */
 }
 
-.free-grid .free-grid-col {
+.simple-html-grid .simple-html-grid-col {
     border: 0;
-    border-right: 1px solid var(--freegrid-main-bg-border);
-    /* border-top: 1px solid var(--freegrid-main-bg-border); */
+    border-right: 1px solid var(--simple-html-grid-main-bg-border);
+    /* border-top: 1px solid var(--simple-html-grid-main-bg-border); */
     box-sizing: border-box;
     position: absolute;
     height: 100%;
 }
 
-.free-grid .free-grid-panel {
+.simple-html-grid .simple-html-grid-panel {
     border: 0;
     position: absolute;
     box-sizing: border-box;
     width: 100%;
     top: 0;
-    background-color: var(--freegrid-main-bg-color);
+    background-color: var(--simple-html-grid-main-bg-color);
 }
 
-.free-grid .free-grid-footer {
+.simple-html-grid .simple-html-grid-footer {
     border: 0;
     position: absolute;
     box-sizing: border-box;
     width: 100%;
     bottom: 0;
-    border-top: 1px solid var(--freegrid-main-bg-border);
-    background-color: var(--freegrid-main-bg-color);
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    background-color: var(--simple-html-grid-main-bg-color);
 }
 
-.free-grid .free-grid-header {
+.simple-html-grid .simple-html-grid-header {
     border: 0;
     position: absolute;
     box-sizing: border-box;
     display: inline-block;
     min-width: 100%;
-    background-color: var(--freegrid-main-bg-color);
-    border-right: 1px solid var(--freegrid-main-bg-border);
-    border-top: 1px solid var(--freegrid-main-bg-border);
-    border-bottom: 1px solid var(--freegrid-main-bg-border);
+    background-color: var(--simple-html-grid-main-bg-color);
+    border-right: 1px solid var(--simple-html-grid-main-bg-border);
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
     overflow: hidden;
 }
 
-.free-grid .free-grid-body {
+.simple-html-grid .simple-html-grid-body {
     position: absolute;
     box-sizing: border-box;
-    border-top: 1px solid var(--freegrid-main-bg-border);
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
     min-width: 100%;
     overflow-y: auto;
 }
 
-.free-grid .free-grid-content {
-    background-color: var(--freegrid-sec-bg-color);
+.simple-html-grid .simple-html-grid-content {
+    background-color: var(--simple-html-grid-sec-bg-color);
     min-width: 100%;
     z-index: 6;
     position: absolute;
@@ -122,45 +122,45 @@ free-grid-body::-webkit-scrollbar-thumb {
     overflow-y: hidden;
 }
 
-.free-grid .free-grid-group-row {
+.simple-html-grid .simple-html-grid-group-row {
     position: absolute;
     box-sizing: border-box;
     border: 0;
-    border-right: 1px solid var(--freegrid-sec-bg-border);
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
 }
 
-.free-grid .free-grid-group-filter {
+.simple-html-grid .simple-html-grid-group-filter {
     position: absolute;
     box-sizing: border-box;
     border: 0;
-    border-right: 1px solid var(--freegrid-sec-bg-border);
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
 }
 
-.free-grid .free-grid-group-label {
+.simple-html-grid .simple-html-grid-group-label {
     position: absolute;
     box-sizing: border-box;
     border: 0;
-    border-right: 1px solid var(--freegrid-sec-bg-border);
-    border-bottom: 1px solid var(--freegrid-sec-bg-border);
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
     overflow:hidden
 }
 
-.free-grid .free-grid-cell-label {
+.simple-html-grid .simple-html-grid-cell-label {
     position: absolute;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    border-bottom: 1px solid var(--freegrid-sec-bg-border);
-    border-right: 1px solid var(--freegrid-sec-bg-border);
-    background-color: var(--freegrid-main-bg-color);
+    border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
+    background-color: var(--simple-html-grid-main-bg-color);
     margin: initial;
     transition: initial;
-    outline-color: var(--freegrid-main-bg-color);
-    color: var(--freegrid-main-font-color);
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
 }
 
-.free-grid .free-grid-image-round {
+.simple-html-grid .simple-html-grid-image-round {
     border-radius: 50%;
     height: 100%;
     box-sizing: border-box;
@@ -169,40 +169,40 @@ free-grid-body::-webkit-scrollbar-thumb {
     transform: translateX(-50%);
 }
 
-.free-grid .free-grid-cell-filter {
+.simple-html-grid .simple-html-grid-cell-filter {
     position: absolute;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    border-bottom: 1px solid var(--freegrid-sec-bg-border);
-    border-right: 1px solid var(--freegrid-sec-bg-border);
-    background-color: var(--freegrid-alt-bg-color);
+    border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
+    background-color: var(--simple-html-grid-alt-bg-color);
     margin: initial;
     transition: initial;
-    outline-color: var(--freegrid-main-bg-color);
-    color: var(--freegrid-main-font-color);
-    font-family: var(--freegrid-font-family);
-    font-size: var(--freegrid-font-size);
-    font-weight: var(--freegrid-font-weight);
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
 }
 
-.free-grid .free-grid-cell-row {
+.simple-html-grid .simple-html-grid-cell-row {
     position: absolute;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    border-bottom: 1px solid var(--freegrid-sec-bg-border);
+    border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
 
     margin: initial;
     transition: initial;
-    outline-color: var(--freegrid-main-bg-color);
-    color: var(--freegrid-main-font-color);
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
 }
 
 
-.free-grid .free-grid-row-checkbox {
+.simple-html-grid .simple-html-grid-row-checkbox {
     width: initial;
     opacity: initial;
     position: initial;
@@ -210,11 +210,11 @@ free-grid-body::-webkit-scrollbar-thumb {
     margin: auto;
     padding-top: 2px;
     height: 100%;
-    background-color: var(--freegrid-sec-bg-color);
-    color: var(--freegrid-main-font-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
 }
 
-.free-grid .free-grid-row-input {
+.simple-html-grid .simple-html-grid-row-input {
     box-sizing: border-box;
     border: 0;
     position: absolute;
@@ -224,14 +224,14 @@ free-grid-body::-webkit-scrollbar-thumb {
     height: 100%;
     padding-left: 5px;
     background-color: transparent;
-    outline-color: var(--freegrid-main-bg-color);
-    color: var(--freegrid-main-font-color);
-    font-family: var(--freegrid-font-family);
-    font-size: var(--freegrid-font-size);
-    font-weight: var(--freegrid-font-weight);
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
 }
 
-.free-grid .free-grid-label {
+.simple-html-grid .simple-html-grid-label {
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
@@ -244,17 +244,17 @@ free-grid-body::-webkit-scrollbar-thumb {
     overflow: hidden;
     user-select: none;
     margin: initial;
-    font-family: var(--freegrid-font-family);
-    font-size: var(--freegrid-font-size);
-    font-weight: var(--freegrid-font-weight-header);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
 }
 
-.free-grid .free-grid-selected-row {
+.simple-html-grid .simple-html-grid-selected-row {
     box-shadow: none;
-    background-color: var(--freegrid-main-bg-selected);
+    background-color: var(--simple-html-grid-main-bg-selected);
 }
 
-.free-grid .free-grid-draggable-handler {
+.simple-html-grid .simple-html-grid-draggable-handler {
     position: absolute;
     cursor: w-resize;
     width: 15px;
@@ -265,17 +265,17 @@ free-grid-body::-webkit-scrollbar-thumb {
     border: initial;
 }
 
-.free-grid .free-grid-vGridDragHandle {
+.simple-html-grid .simple-html-grid-vGridDragHandle {
     cursor: move;
 }
 
-.free-grid .free-grid-fa-sort-number[data-vgridsort]:after {
+.simple-html-grid .simple-html-grid-fa-sort-number[data-vgridsort]:after {
     font: x-small;
     font-size: 8px;
     content: attr(data-vgridsort);
 }
 
-.free-grid .free-grid-icon {
+.simple-html-grid .simple-html-grid-icon {
     fill: currentColor;
     width: 1em;
     height: 1em;
@@ -284,21 +284,21 @@ free-grid-body::-webkit-scrollbar-thumb {
     display: initial;
 }
 
-.free-grid .free-grid-iconhidden {
+.simple-html-grid .simple-html-grid-iconhidden {
     display: none;
 }
 
-.free-grid .free-grid-dragHandle {
+.simple-html-grid .simple-html-grid-dragHandle {
     cursor: move;
 }
 
-.free-grid.free-grid-drag {
-    border: 1px solid var(--freegrid-main-bg-border);
+.simple-html-grid.simple-html-grid-drag {
+    border: 1px solid var(--simple-html-grid-main-bg-border);
     box-sizing: border-box;
     box-shadow: initial;
     line-height: 50%;
     pointer-events: none;
-    background-color: var(--freegrid-main-bg-selected);
+    background-color: var(--simple-html-grid-main-bg-selected);
     height: 25px;
     display: block;
     min-width: 100px;
@@ -307,11 +307,11 @@ free-grid-body::-webkit-scrollbar-thumb {
     text-align: center;
     z-index: 50;
     font-weight: 700;
-    color: var(--freegrid-main-font-color);
+    color: var(--simple-html-grid-main-font-color);
 }
 
-.free-grid .free-grid-grouping-panel-container {
-    background-color: var(--freegrid-main-bg-color);
+.simple-html-grid .simple-html-grid-grouping-panel-container {
+    background-color: var(--simple-html-grid-main-bg-color);
     position: relative;
     margin: 3px;
     height: 80%;
@@ -320,18 +320,18 @@ free-grid-body::-webkit-scrollbar-thumb {
     padding-right: 10px;
     display: block;
     float: left;
-    border: 1px solid var(--freegrid-main-bg-border);
+    border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.free-grid .free-grid-grouping-row {
+.simple-html-grid .simple-html-grid-grouping-row {
     height: 100%;
     box-sizing: border-box;
     position: absolute;
-    background-color: var(--freegrid-main-bg-color);
-    border-right: 1px solid var(--freegrid-main-bg-border);
+    background-color: var(--simple-html-grid-main-bg-color);
+    border-right: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.free-grid .free-grid-col-group {
+.simple-html-grid .simple-html-grid-col-group {
     pointer-events: all;
     box-sizing: border-box;
     white-space: nowrap;
@@ -341,10 +341,10 @@ free-grid-body::-webkit-scrollbar-thumb {
     box-shadow: initial;
     padding: 5px 10px;
     height: 100%;
-    background-color: var(--freegrid-main-bg-color);
+    background-color: var(--simple-html-grid-main-bg-color);
 }
 
-.free-grid .free-grid-grouping-panel-p {
+.simple-html-grid .simple-html-grid-grouping-panel-p {
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
@@ -357,6 +357,6 @@ free-grid-body::-webkit-scrollbar-thumb {
     text-align: center;
 }
 
-.free-grid .free-grid-candrop {
-    background-color: var(--freegrid-alt-bg-color);
+.simple-html-grid .simple-html-grid-candrop {
+    background-color: var(--simple-html-grid-alt-bg-color);
 }

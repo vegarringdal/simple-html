@@ -1,15 +1,14 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
-import { FreeGrid } from '..';
+import { SimpleHtmlGrid } from '..';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 
-@customElement('free-grid-group-filter')
+@customElement('simple-html-grid-group-label')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-group-filter';
+    classList: any = 'simple-html-grid-group-label';
     connector: GridInterface;
-    rowNo: number;
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
     currentHeight: number;
     group: IgridConfigGroups;
 
@@ -19,7 +18,6 @@ export default class extends HTMLElement {
         this.style.height = config.__rowHeight + 'px';
         this.style.width = this.group.width + 'px';
         this.style.left = this.group.__left + 'px';
-        this.style.top = config.__rowHeight + 'px';
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);
     }
@@ -31,6 +29,8 @@ export default class extends HTMLElement {
             const curleft = grouping ? grouping * 15 : 0;
             this.style.width = this.group.width + 'px';
             this.style.left = this.group.__left + curleft + 'px';
+        }
+        if (e.type === 'reRender') {
             this.render();
         }
     }
@@ -43,19 +43,15 @@ export default class extends HTMLElement {
     render() {
         return html`
             ${this.group.rows.map((cell, i) => {
-                if (cell.filterable) {
-                    return html`
-                        <free-grid-cell-filter
-                            .connector=${this.connector}
-                            .cell=${cell}
-                            .group=${this.group}
-                            .ref=${this.ref}
-                            .cellPosition=${i}
-                        ></free-grid-cell-filter>
-                    `;
-                } else {
-                    return '';
-                }
+                return html`
+                    <simple-html-grid-cell-label
+                        .connector=${this.connector}
+                        .cell=${cell}
+                        .group=${this.group}
+                        .ref=${this.ref}
+                        .cellPosition=${i}
+                    ></simple-html-grid-cell-label>
+                `;
             })}
         `;
     }

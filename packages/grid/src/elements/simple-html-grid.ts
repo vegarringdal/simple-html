@@ -1,11 +1,11 @@
 import { render, html } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { customElement } from '@simple-html/core';
-import { generate } from '../elements/generate';
+import { generate } from './generate';
 import { rowCache } from '../interfaces';
 
-@customElement('free-grid')
-export class FreeGrid extends HTMLElement {
+@customElement('simple-html-grid')
+export class SimpleHtmlGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
     public rowCache: rowCache[] = [];
     private currentScrollHeight: number;
@@ -64,7 +64,7 @@ export class FreeGrid extends HTMLElement {
     }
 
     public cleanup() {
-        const node = this.getElementsByTagName('free-grid-body')[0];
+        const node = this.getElementsByTagName('simple-html-grid-body')[0];
         if (node && node.scrollTop !== undefined && this.interface) {
             let newTopPosition = node.scrollTop;
             if (this.interface.displayedDataset.length <= this.rowCache.length) {
@@ -107,7 +107,7 @@ export class FreeGrid extends HTMLElement {
 
     public resetRowCache() {
         if (this.interface) {
-            const node = this.getElementsByTagName('free-grid-body')[0];
+            const node = this.getElementsByTagName('simple-html-grid-body')[0];
             const height = node?.clientHeight || this.interface.config.cellHeight * 30;
 
             let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2; //(buffer);
@@ -137,7 +137,7 @@ export class FreeGrid extends HTMLElement {
                 if (this.interface.config.lastScrollTop) {
                     // set initial scroll top/left
                     // nice when reloading a page etc
-                    const node = this.getElementsByTagName('free-grid-body')[0];
+                    const node = this.getElementsByTagName('simple-html-grid-body')[0];
                     if (node && node.scrollTop !== this.interface.config.lastScrollTop) {
                         node.scrollTop = this.interface.config.lastScrollTop;
                         node.scrollLeft = this.interface.config.scrollLeft;

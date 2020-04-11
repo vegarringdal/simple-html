@@ -1,13 +1,13 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 import { GridInterface } from '../gridInterface';
-import { FreeGrid } from '..';
+import { SimpleHtmlGrid } from '..';
 
-@customElement('free-grid-header')
+@customElement('simple-html-grid-header')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-header';
+    classList: any = 'simple-html-grid-header';
     connector: GridInterface;
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
 
     connectedCallback() {
         const config = this.connector.config;
@@ -38,27 +38,27 @@ export default class extends HTMLElement {
             this.connector.config.groupingSet && this.connector.config.groupingSet.length;
 
         return html`
-            <free-grid-col
-                class=" free-grid-grouping-row"
+            <simple-html-grid-col
+                class=" simple-html-grid-grouping-row"
                 style="width:${grouping ? grouping * 15 : 0}px;left:0; display:${grouping
                     ? 'block'
                     : 'none'}"
             >
-            </free-grid-col>
+            </simple-html-grid-col>
             ${config.groups.map((group) => {
                 return html`
-                    <free-grid-group-label
+                    <simple-html-grid-group-label
                         .connector=${this.connector}
                         .ref=${this.ref}
                         .group=${group}
                     >
-                    </free-grid-group-label>
-                    <free-grid-group-filter
+                    </simple-html-grid-group-label>
+                    <simple-html-grid-group-filter
                         .connector=${this.connector}
                         .ref=${this.ref}
                         .group=${group}
                     >
-                    </free-grid-group-filter>
+                    </simple-html-grid-group-filter>
                 `;
             })}
         `;

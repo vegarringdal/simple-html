@@ -1,14 +1,14 @@
 import { customElement } from '@simple-html/core';
-import { GridInterface, FreeGrid } from '../';
+import { GridInterface, SimpleHtmlGrid } from '..';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 
-@customElement('free-grid-cell-filter')
+@customElement('simple-html-grid-cell-filter')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-cell-filter';
+    classList: any = 'simple-html-grid-cell-filter';
     connector: GridInterface;
     cellPosition: number;
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
     currentHeight: number;
     group: IgridConfigGroups;
     label: string;
@@ -97,9 +97,9 @@ export default class extends HTMLElement {
             }
         }
 
-        let classname = 'free-grid-row-input';
+        let classname = 'simple-html-grid-row-input';
         if (cell.type === 'boolean') {
-            classname = 'free-grid-row-checkbox';
+            classname = 'simple-html-grid-row-checkbox';
         }
 
         const change = cell.editEventType !== 'input' ? filterCallback : null;

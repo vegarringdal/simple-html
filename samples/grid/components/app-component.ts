@@ -263,18 +263,18 @@ export default class extends HTMLElement {
                         </button>
                     </div>
                 </div>
-                <free-grid
+                <simple-html-grid
                     style="height:700px;width:500px;margin-right:10px"
-                    class="free-grid"
+                    class="simple-html-grid"
                     .interface=${this.connector}
                 >
-                </free-grid>
-                <free-grid
+                </simple-html-grid>
+                <simple-html-grid
                     style="height:700px;width:500px;margin-left:10px"
-                    class="free-grid"
+                    class="simple-html-grid"
                     .interface=${this.connector2}
                 >
-                </free-grid>
+                </simple-html-grid>
             </div>
         `;
     }

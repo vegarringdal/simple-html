@@ -1,23 +1,26 @@
-import { customElement } from '@simple-html/core';
-import { GridInterface } from '../gridInterface';
-import { FreeGrid } from '..';
+import { customElement, property } from '@simple-html/core';
+import { GridInterface, SimpleHtmlGrid } from '..';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 
-@customElement('free-grid-group-label')
+@customElement('simple-html-grid-group-row')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-group-label';
+    classList: any = 'simple-html-grid-group-row';
     connector: GridInterface;
-    ref: FreeGrid;
+    @property() rowNo: number;
+    ref: SimpleHtmlGrid;
     currentHeight: number;
     group: IgridConfigGroups;
 
     connectedCallback() {
         const config = this.connector.config;
+        const grouping =
+            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+        const curleft = grouping ? grouping * 15 : 0;
         this.style.display = 'block';
         this.style.height = config.__rowHeight + 'px';
         this.style.width = this.group.width + 'px';
-        this.style.left = this.group.__left + 'px';
+        this.style.left = this.group.__left + curleft + 'px';
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);
     }
@@ -44,13 +47,14 @@ export default class extends HTMLElement {
         return html`
             ${this.group.rows.map((cell, i) => {
                 return html`
-                    <free-grid-cell-label
+                    <simple-html-grid-cell-row
                         .connector=${this.connector}
+                        .rowNo=${this.rowNo}
                         .cell=${cell}
                         .group=${this.group}
                         .ref=${this.ref}
                         .cellPosition=${i}
-                    ></free-grid-cell-label>
+                    ></simple-html-grid-cell-row>
                 `;
             })}
         `;

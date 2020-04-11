@@ -1,10 +1,14 @@
 import { GridInterface } from '../gridInterface';
-import { FreeGrid } from '..';
+import { SimpleHtmlGrid } from '..';
 import { rowCache } from '../interfaces';
 
 let scrollBarTimer: any;
 
-export function scrollEvent(connector: GridInterface, rowPositionCache: rowCache[], ref: FreeGrid) {
+export function scrollEvent(
+    connector: GridInterface,
+    rowPositionCache: rowCache[],
+    ref: SimpleHtmlGrid
+) {
     return (e: any) => {
         if (
             connector.config.scrollLeft &&

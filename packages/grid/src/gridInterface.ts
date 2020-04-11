@@ -1,4 +1,4 @@
-import { FreeGrid } from '.';
+import { SimpleHtmlGrid } from '.';
 import { IGroupingObj, IGridConfig, IEntity, ICell } from './interfaces';
 import { ArrayUtils } from './arrayUtils';
 import { Selection } from './selection';
@@ -33,7 +33,7 @@ export class GridInterface {
     /**
      * connected grid
      **/
-    private __freeGrid: FreeGrid;
+    private __SimpleHtmlGrid: SimpleHtmlGrid;
 
     /**
      * for subscribing event (current entity etc)
@@ -120,8 +120,8 @@ export class GridInterface {
             this.__DATASET_FILTERED = this.completeDataset.slice();
         }
 
-        if (this.__freeGrid && olddataSetlength !== this.completeDataset.length) {
-            const node = this.__freeGrid.getElementsByTagName('free-grid-body')[0];
+        if (this.__SimpleHtmlGrid && olddataSetlength !== this.completeDataset.length) {
+            const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
             if (node) {
                 node.scrollTop = 0;
             }
@@ -131,7 +131,7 @@ export class GridInterface {
     }
 
     reloadDatasource() {
-        const node = this.__freeGrid.getElementsByTagName('free-grid-body')[0];
+        const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
         if (node) {
             node.scrollTop = 0;
         }
@@ -262,7 +262,7 @@ export class GridInterface {
             event === 'collecton-grouping'
         ) {
             // changes that make collection change needs rowcache to be updated
-            this.__freeGrid && this.__freeGrid.resetRowCache();
+            this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
         }
 
         this.reRender();
@@ -277,11 +277,11 @@ export class GridInterface {
     }
 
     reRender() {
-        if (this.__freeGrid) this.__freeGrid.reRender();
+        if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.reRender();
     }
 
     render() {
-        if (this.__freeGrid) this.__freeGrid.render();
+        if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.render();
     }
 
     groupingCallback(event: any, col: ICell) {
@@ -308,11 +308,11 @@ export class GridInterface {
         this.__arrayUtils.groupCollapse(id);
     }
 
-    connectGrid(freeGrid: FreeGrid) {
-        this.__freeGrid = freeGrid;
+    connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
+        this.__SimpleHtmlGrid = SimpleHtmlGrid;
     }
 
     disconnectGrid() {
-        this.__freeGrid = null;
+        this.__SimpleHtmlGrid = null;
     }
 }

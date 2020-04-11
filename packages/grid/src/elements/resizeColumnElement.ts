@@ -1,8 +1,8 @@
 import { html } from 'lit-html';
 import { IgridConfigGroups } from '../interfaces';
-import { FreeGrid } from '../';
+import { SimpleHtmlGrid } from '../';
 
-export function resizeColumnElement(ref: FreeGrid, group: IgridConfigGroups) {
+export function resizeColumnElement(ref: SimpleHtmlGrid, group: IgridConfigGroups) {
     let originX: number = null;
     const originalColumnWidth = group.width;
 
@@ -42,5 +42,5 @@ export function resizeColumnElement(ref: FreeGrid, group: IgridConfigGroups) {
         document.addEventListener('mouseup', mouseUp);
     };
 
-    return html` <div class="free-grid-draggable-handler" @mousedown=${mouseDown}></div> `;
+    return html` <div class="simple-html-grid-draggable-handler" @mousedown=${mouseDown}></div> `;
 }

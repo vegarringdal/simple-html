@@ -1,17 +1,17 @@
 import { customElement } from '@simple-html/core';
-import { GridInterface, FreeGrid } from '..';
+import { GridInterface, SimpleHtmlGrid } from '..';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
 import { columnDragDrop } from './dragEvent';
 
-@customElement('free-grid-cell-label')
+@customElement('simple-html-grid-cell-label')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-cell-label';
+    classList: any = 'simple-html-grid-cell-label';
     connector: GridInterface;
     cellPosition: number;
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
     currentHeight: number;
     group: IgridConfigGroups;
     label: string;
@@ -94,15 +94,15 @@ export default class extends HTMLElement {
         if (cell.type === 'empty') {
             return html`
                 <style>
-                    .free-grid .hideme {
+                    .simple-html-grid .hideme {
                         background-color: ${getComputedStyle(this.ref).getPropertyValue(
-                            '--freegrid-main-bg-color'
+                            '--SimpleHtmlGrid-main-bg-color'
                         )};
                     }
                 </style>
                 <span
                     .cell=${cell}
-                    class="free-grid-label hideme"
+                    class="simple-html-grid-label hideme"
                     @mouseenter=${!cell.disableDragDrop && mouseenter}
                     @mouseleave=${!cell.disableDragDrop && mouseleave}
                 >
@@ -113,7 +113,7 @@ export default class extends HTMLElement {
             return html`
                 <span
                     .cell=${cell}
-                    class="free-grid-label"
+                    class="simple-html-grid-label"
                     @mousedown=${(e: any) => {
                         cell.sortable && sortCallback(e);
                         !cell.disableDragDrop && mousedown(e);

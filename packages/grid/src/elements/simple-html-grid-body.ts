@@ -1,15 +1,15 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 import { GridInterface } from '../gridInterface';
-import { FreeGrid } from '../';
+import { SimpleHtmlGrid } from '..';
 import { rowCache } from '../interfaces';
 
-@customElement('free-grid-body')
+@customElement('simple-html-grid-body')
 export default class extends HTMLElement {
-    classList: any = 'free-grid-body';
+    classList: any = 'simple-html-grid-body';
     connector: GridInterface;
     rowPositionCache: rowCache[];
-    ref: FreeGrid;
+    ref: SimpleHtmlGrid;
 
     connectedCallback() {
         const config = this.connector.config;
@@ -39,26 +39,26 @@ export default class extends HTMLElement {
         const config = this.connector.config;
 
         return html`
-            <free-grid-body-content
+            <simple-html-grid-body-content
                 style="height:${this.connector.getScrollVars
                     .__SCROLL_HEIGHT}px;width:${config.__rowWidth}px"
-                class="free-grid-content"
+                class="simple-html-grid-content"
             >
                 ${this.rowPositionCache.map((row) => {
                     return html`
-                        <free-grid-row-group
+                        <simple-html-grid-row-group
                             .connector=${this.connector}
                             .row=${row}
                             .ref=${this.ref}
-                        ></free-grid-row-group>
-                        <free-grid-row
+                        ></simple-html-grid-row-group>
+                        <simple-html-grid-row
                             .connector=${this.connector}
                             .row=${row}
                             .ref=${this.ref}
-                        ></free-grid-row>
+                        ></simple-html-grid-row>
                     `;
                 })}
-            </free-grid-body-content>
+            </simple-html-grid-body-content>
         `;
     }
 }
