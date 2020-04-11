@@ -48,7 +48,7 @@ task('default', async context => {
                     },
                     exclude: ['dist', '_node_modules']
                 },
-                skipTsErrors: [2307], // I dont care about modules
+                skipTsErrors: [2307, 6059], // I dont care about modules (2307) or tests (6059) outside src folder
                 basePath: `./packages/${file.name}`,
                 name: `build ${file.name}`
             });
