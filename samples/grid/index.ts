@@ -1,16 +1,8 @@
 import './hmr';
-
-import '@simple-html/grid/src/grid.css';
-// import main css
 import './index.css';
 
-// import grid and its css
-import '@simple-html/grid';
-
-// import our app
-import './components/app-component';
-
 import { enableInternalLogger } from '@simple-html/core';
+// we need to disable loggin on some of the grid elements so we dont drown
 enableInternalLogger([
     'SIMPLE-HTML-GRID-ROW-GROUP',
     'SIMPLE-HTML-GRID-CELL-ROW',
@@ -26,4 +18,18 @@ enableInternalLogger([
     'SIMPLE-HTML-GRID-HEADER'
 ]);
 
-console.log('sample-v:', 1);
+// add our sample parts
+import './elements/app-root';
+import './elements/sample-default';
+import './elements/sample-no1';
+import './elements/sample-no2';
+import './elements/sample-no3';
+import './elements/sample-no4';
+
+// extra
+import './elements/data-buttons';
+import './elements/nav-buttons';
+
+// add our grid
+import '@simple-html/grid';
+import '@simple-html/grid/dist/grid.css';

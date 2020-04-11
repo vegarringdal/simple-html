@@ -2,7 +2,6 @@ import { HMRHelper, HMRPayload } from 'fuse-box/types/hmr';
 export default function (payload: HMRPayload, helper: HMRHelper) {
     const { updates } = payload;
 
-    // publish event so state container saves state before we flush everything
     window.dispatchEvent(new CustomEvent('HMR-FUSEBOX'));
 
     if (helper.isStylesheeetUpdate) {

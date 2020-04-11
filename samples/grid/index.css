@@ -1,20 +1,11 @@
-.m-1 {
-    margin-top: 10px;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.p-1 {
-    padding: 2px;
-}
-
-.flex{
-    display: flex;
-}
-
-.flex-col{
-    flex-direction: column;
-}
-
-.simple-html-grid{
- 
-    
+body{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
