@@ -43,6 +43,7 @@ export default class extends HTMLElement {
                 </li>
             </ul>
 
+            <!--  if you want you could show more then 1 -->
             ${routeMatchAsync(
                 routerConfig.home.path,
                 routerConfig.home.load,
@@ -53,8 +54,10 @@ export default class extends HTMLElement {
                 routerConfig.settings.load,
                 routerConfig.settings.html
             )}
+
+            <!--  if you want you could show more then 1 -->
             ${routeMatchAsync(
-                routerConfig.child.path,
+                '#child/*' /**use * in the end since there will be sub modules  */,
                 () => import('./routes/childrouter'),
                 html` <childrouter-route></childrouter-route> `
             )}

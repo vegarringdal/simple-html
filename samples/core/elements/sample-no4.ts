@@ -12,15 +12,12 @@ export default class extends HTMLElement {
 
     connectedCallback() {
         subscribe('ele-5', this, (newValue: any) => {
-            console.log(newValue);
             this.ele5 = newValue;
         });
         subscribe('ele-6', this, (newValue: any) => {
-            console.log(newValue);
             this.ele6 = newValue;
         });
         subscribe('ele-7', this, (newValue: any) => {
-            console.log(newValue);
             this.ele7 = newValue;
         });
     }
@@ -35,8 +32,12 @@ export default class extends HTMLElement {
         const [view] = viewState();
         return html` <span class="text-xl">${view.toUpperCase()}</span>
             <div class="flex flex-col">
+                <span>ele-5-external: ${this.ele5}</span>
+                <span>ele-6-external: ${this.ele6}</span>
+                <span>ele-7-external: ${this.ele7}</span>
+
                 <button
-                    class="bg-green-500 p-2"
+                    class="bg-green-500 p-2 w-56"
                     @click=${() => {
                         publish('update');
                     }}
@@ -44,15 +45,11 @@ export default class extends HTMLElement {
                     publish all +1 to all
                 </button>
 
+                <ele-5 class="flex flex-col w-56 bg-indigo-200 mt-2"></ele-5>
 
-                <span>ele-5-external: ${this.ele5}</span>
-                <ele-5 class="flex flex-col"></ele-5>
+                <ele-6 class="flex flex-col w-56 bg-indigo-400 mt-2"></ele-6>
 
-                <span>ele-6-external:  ${this.ele6}</span>
-                <ele-6 class="flex flex-col"></ele-6>
-
-                <span>ele-7-external: ${this.ele7}</<span>
-                <ele-7 class="flex flex-col"></ele-7>
+                <ele-7 class="flex flex-col w-56 bg-indigo-300 mt-2"></ele-7>
             </div>`;
     }
 }
@@ -83,7 +80,8 @@ export class Ele5 extends HTMLElement {
                     publish('ele-5', this.count);
                 }}
             >
-                send from ele-5
+                1+ and <br />
+                send back current count
             </button>`;
     }
 }
@@ -115,7 +113,8 @@ export class Ele6 extends HTMLElement {
                     publish('ele-6', this.count);
                 }}
             >
-                send from ele-6
+                1+ and <br />
+                send back current count
             </button>`;
     }
 }
@@ -128,7 +127,7 @@ export class Ele6 extends HTMLElement {
 export class Ele7 extends HTMLElement {
     @property() count = 0;
 
-    connctedCallback() {
+    connectedCallback() {
         subscribe('update', this, () => {
             this.count++;
         });
@@ -147,7 +146,8 @@ export class Ele7 extends HTMLElement {
                     publish('ele-7', this.count);
                 }}
             >
-                send from ele-7
+                1+ and <br />
+                send back current count
             </button>`;
     }
 }
