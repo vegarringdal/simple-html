@@ -131,9 +131,11 @@ export class GridInterface {
     }
 
     reloadDatasource() {
-        const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
-        if (node) {
-            node.scrollTop = 0;
+        if (this.__SimpleHtmlGrid) {
+            const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
+            if (node) {
+                node.scrollTop = 0;
+            }
         }
 
         this.__arrayUtils.reRunFilter();
