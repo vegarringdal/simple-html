@@ -1,19 +1,25 @@
 import { customElement } from '../src';
 
-describe('html', () => {
-    it('#home === #home', (done) => {
-        const deco = customElement('app-root');
-        deco(
+describe('customElement', () => {
+    it('renders on connected', (done) => {
+        const decorator = customElement('app-root');
+
+        decorator(
             class extends HTMLElement {
+                connectedCallback() {
+                    this.id = 'cool';
+                }
                 render() {
                     return 'wow';
                 }
             }
         );
+
+        // add custom element
         document.body.innerHTML = '<app-root></app-root>';
 
         setTimeout(() => {
-            expect(document.body.innerHTML).toEqual('<app-root><!---->wow<!----></app-root>');
+            expect(document.getElementById('cool').textContent).toEqual('wow');
             done();
         }, 30);
     });
