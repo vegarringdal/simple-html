@@ -9,9 +9,9 @@ export default class extends HTMLElement {
     connector1: GridInterface;
     connector2: GridInterface;
     connectedCallback() {
-        this.connector1 = new GridInterface(setup(4, 20), WordDatasource03);
+        this.connector1 = new GridInterface(setup(1, 10), WordDatasource03);
         this.connector1.reloadDatasource();
-        this.connector2 = new GridInterface(setup(4, 20), WordDatasource04);
+        this.connector2 = new GridInterface(setup(1, 10), WordDatasource04);
         this.connector2.reloadDatasource();
     }
 
