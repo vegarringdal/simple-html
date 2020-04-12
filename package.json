@@ -9,15 +9,16 @@
         "sync": "node ./scripts/syncPackages",
         "publish:all": "node ./scripts/publish",
         "publish:test": "node ./scripts/publishTest",
+        "rollup": "./node_modules/.bin/rollup -c",
         "typecheck": "node typecheck",
         "eslint": "npm run eslint:run:packages && npm run eslint:run:samples",
         "eslint:run:packages": "./node_modules/.bin/eslint --fix ./packages/**/*.ts",
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
         "prettier:run": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\"",
-        "test": "jest --verbose",
-        "test:watch": "jest --watch",
-        "test-ci": "jest --verbose --runInBand",
-        "coverage": "jest --verbose --collectCoverage --runInBand"
+        "test": "jest --verbose --env jest-environment-jsdom-sixteen",
+        "test:watch": "jest --runInBand --watch --verbose --env jest-environment-jsdom-sixteen ",
+        "test-ci": "jest --verbose --runInBand --env jest-environment-jsdom-sixteen",
+        "coverage": "jest --collectCoverage --runInBand --verbose --env jest-environment-jsdom-sixteen"
     },
     "author": "vegar Ringdal",
     "license": "MIT",
@@ -50,6 +51,7 @@
         "fuse-box-typechecker": "^3.0.0-next.31",
         "husky": "^4.2.3",
         "jest": "^25.3.0",
+        "jest-environment-jsdom-sixteen": "^1.0.3",
         "lint-staged": "^10.1.2",
         "lit-html": "^1.2.1",
         "marked": "^0.8.2",
@@ -59,5 +61,9 @@
         "tslib": "^1.11.1",
         "typescript": "^3.8.3"
     },
-    "dependencies": {}
+    "dependencies": {
+        "rollup": "^2.6.0",
+        "rollup-plugin-filesize": "^7.0.0",
+        "rollup-plugin-terser": "^5.3.0"
+    }
 }
