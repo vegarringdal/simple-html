@@ -239,7 +239,6 @@ export class ArrayGrouping {
                 tempValue = gidm;
                 tempGroupArray.push(curGroup);
             } else {
-                element.__groupLvl = groupNo + 1;
                 curGroup.__groupChildren.push(element);
                 curGroup.__groupTotal++;
             }
@@ -278,7 +277,6 @@ export class ArrayGrouping {
                     rebuiltChildrenArray.push(curGroup);
                     tempGroupArray.push(curGroup);
                 } else {
-                    child.__groupLvl = groupNo + 1;
                     curGroup.__groupChildren.push(child);
                     curGroup.__groupTotal++;
                 }
