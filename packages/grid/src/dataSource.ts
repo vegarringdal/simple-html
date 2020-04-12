@@ -1,13 +1,20 @@
 import { IEntity } from './interfaces';
 import { EntityHandler } from './entity';
 
+let globalKeyCount = 0;
+
+// we need 1 for all datasources not using uniqueKeyAttribute
+export const getNextKey = function () {
+    globalKeyCount++;
+    return globalKeyCount;
+};
+
 export class DataSource {
     /**
      * Have all the data
      **/
     private __DATASET_ALL: IEntity[] = [];
     private __KEY_ATTRIBUTE = '';
-    private __KEY_COUNT = 0;
 
     constructor(UniqueKeyAttribute?: string) {
         // we want to add sufix just incase its something like a new
@@ -19,8 +26,7 @@ export class DataSource {
     }
 
     private getKey() {
-        this.__KEY_COUNT++;
-        return this.__KEY_COUNT;
+        return getNextKey();
     }
 
     removeData(data: IEntity | IEntity[], all = false) {
