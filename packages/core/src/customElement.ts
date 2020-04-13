@@ -19,10 +19,15 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             },
             configurable: true
         });
+
         if (Array.isArray(observedAttributes) && Array.isArray(elementClass.observedAttributes)) {
             elementClass.observedAttributes = elementClass.observedAttributes.concat(
                 observedAttributes
             );
+        }
+        // if @attribute is not used we just use the standard if any
+        if (Array.isArray(observedAttributes) && !Array.isArray(elementClass.observedAttributes)) {
+            elementClass.observedAttributes = observedAttributes;
         }
 
         const Base: any = class extends elementClass {
@@ -89,9 +94,9 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 if (super.attributeChangedCallback) {
                     super.attributeChangedCallback.call(this, name, oldValue, newValue);
                 }
-                //if our simpler method is set
-                if (super.valuesChangedMethod) {
-                    super.valuesChangedMethod('attribute', name, oldValue, newValue);
+                //if our simpler method is set (this is used by the @attribute and @property decorators)
+                if (super.valuesChanged) {
+                    super.valuesChanged('attribute', name, oldValue, newValue);
                 }
             }
         };
