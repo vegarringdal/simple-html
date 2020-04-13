@@ -14,10 +14,10 @@
         "eslint:run:packages": "./node_modules/.bin/eslint --fix ./packages/**/*.ts",
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
         "prettier:run": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\"",
-        "test": "jest --verbose",
-        "test:watch": "jest --watch",
-        "test-ci": "jest --verbose --runInBand",
-        "coverage": "jest --verbose --collectCoverage --runInBand"
+        "test": "jest --verbose --env jest-environment-jsdom-sixteen",
+        "test:watch": "jest --runInBand --watch --verbose --env jest-environment-jsdom-sixteen ",
+        "test-ci": "jest --verbose --runInBand --env jest-environment-jsdom-sixteen",
+        "coverage": "jest --collectCoverage --runInBand --verbose --env jest-environment-jsdom-sixteen"
     },
     "author": "vegar Ringdal",
     "license": "MIT",
@@ -50,6 +50,7 @@
         "fuse-box-typechecker": "^3.0.0-next.31",
         "husky": "^4.2.3",
         "jest": "^25.3.0",
+        "jest-environment-jsdom-sixteen": "^1.0.3",
         "lint-staged": "^10.1.2",
         "lit-html": "^1.2.1",
         "marked": "^0.8.2",
@@ -57,7 +58,10 @@
         "tailwindcss": "^1.2.0",
         "ts-jest": "^25.3.1",
         "tslib": "^1.11.1",
-        "typescript": "^3.8.3"
+        "typescript": "^3.8.3",
+        "@babel/core": "^7.9.0",
+        "@babel/preset-env": "^7.9.5",
+        "@babel/preset-typescript": "^7.9.0"
     },
     "dependencies": {}
 }

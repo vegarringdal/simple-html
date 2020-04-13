@@ -27,8 +27,9 @@
         "baseUrl": "./",
         "rootDir": "",
         "paths": {
-            "@simple-html*": ["packages*"]
+            "@simple-html*": ["packages*"],
+            "lit-html": ["./lit-html.js"]
         }
-    },
-    "exclude": ["node_modules"]
+    }
+    // "exclude": ["node_modules"]
 }
