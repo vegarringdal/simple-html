@@ -22,8 +22,8 @@ describe('gotoURL', () => {
     });
 
     it('# adds # is #', () => {
-        gotoURL('#t');
-        expect(globalThis.location.hash).toEqual('#t');
+        gotoURL('#');
+        expect(globalThis.location.hash).toEqual('');
     });
 
     it('test with 1 param passed', () => {

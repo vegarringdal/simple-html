@@ -62,9 +62,9 @@ describe('routeMatch', () => {
         expect(routeMatch('#home/any/whatever')).toEqual(true);
     });
 
-    it('# === #', () => {
-        gotoURL('#x');
-        expect(routeMatch('#x')).toEqual(true);
+    it('# === ""', () => {
+        gotoURL('#');
+        expect(routeMatch('')).toEqual(true);
     });
 
     it(' === #', () => {
