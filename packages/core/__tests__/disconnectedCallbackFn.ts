@@ -1,16 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { customElement, disconnectedCallback } from '../src';
 
 describe('customElement', () => {
     it('disconnectedCallback FN', (done) => {
-        //lets keep the other lifecycle so we know its triggered on the right place
-
-        // get decorator function
-        const decorator = customElement('app-root3');
-
         const events: string[] = [];
 
         // our element with minimum config
-        const Ele = class extends HTMLElement {
+        @customElement('app-root3')
+        class Ele extends HTMLElement {
             data = 'none';
 
             constructor() {
@@ -35,10 +32,7 @@ describe('customElement', () => {
             disconnectedCallback() {
                 events.push('disconnectedCallback');
             }
-        };
-
-        // trigger decorator
-        decorator(Ele);
+        }
 
         // add custom element
         document.body.innerHTML = '<app-root3 id="my-element"></app-root3>';

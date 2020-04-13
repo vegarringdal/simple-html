@@ -1,19 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { customElement } from '../src';
 
 describe('customElement', () => {
     it('renders on connected', (done) => {
         // get decorator function
-        const decorator = customElement('app-root1');
-
-        // our element with minimum config
-        const Ele = class extends HTMLElement {
+        @customElement('app-root1')
+        class Ele extends HTMLElement {
             render() {
                 return 'render works';
             }
-        };
-
-        // trigger decorator
-        decorator(Ele);
+        }
 
         // add custom element
         document.body.innerHTML = '<app-root1 id="my-element"></app-root1>';
