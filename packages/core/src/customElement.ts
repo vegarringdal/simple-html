@@ -37,7 +37,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                     render(templates, this as any, { eventContext: this as any });
                     if (super.updated) {
                         //delay so it actually get a chance to update
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             super.updated();
                         });
                     }
