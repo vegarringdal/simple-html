@@ -32,4 +32,4 @@ import './elements/nav-buttons';
 
 // add our grid
 import '@simple-html/grid';
-import '@simple-html/grid/dist/grid.css';
+import '@simple-html/grid/src/grid.css';
