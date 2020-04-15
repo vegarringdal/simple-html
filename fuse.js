@@ -37,7 +37,8 @@ class Context {
                         extends: './tsconfig.json',
                         compilerOptions: {
                             rootDirs: [`./samples/${folderInSamples}`, './packages']
-                        }
+                        },
+                        exclude: ['**/__tests__']
                     }
                 })
             ]
