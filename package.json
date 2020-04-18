@@ -15,7 +15,7 @@
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
         "prettier:run": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\"",
         "test": "npm run rollup && jest",
-        "test:watch": "npm run rollup jest --watch ",
+        "test:watch": "npm run rollup && jest --watch ",
         "test-ci": "npm run rollup && jest",
         "coverage": "npm run rollup && jest --collectCoverage",
         "rollup": "./node_modules/.bin/rollup -c"
