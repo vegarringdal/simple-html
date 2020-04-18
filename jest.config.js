@@ -1,7 +1,8 @@
 module.exports = {
     preset: 'ts-jest',
-    testEnvironment: 'node',
+    testEnvironment: 'jest-environment-jsdom-sixteen',
     maxConcurrency: 1,
+    verbose: true,
     moduleDirectories: ['node_modules'],
     transformIgnorePatterns: [
         // Change MODULE_NAME_HERE to your module that isn't being compiled

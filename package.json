@@ -14,10 +14,10 @@
         "eslint:run:packages": "./node_modules/.bin/eslint --fix ./packages/**/*.ts",
         "eslint:run:samples": "./node_modules/.bin/eslint --fix ./samples/**/*.ts",
         "prettier:run": "node ./node_modules/prettier/bin-prettier --write \"packages/**/*.{json,md,ts}\" \"samples/**/*.{json,md,ts}\"",
-        "test": "jest --verbose --env jest-environment-jsdom-sixteen",
-        "test:watch": "jest --runInBand --watch --verbose --env jest-environment-jsdom-sixteen ",
-        "test-ci": "jest --verbose --runInBand --env jest-environment-jsdom-sixteen",
-        "coverage": "jest --collectCoverage --runInBand --verbose --env jest-environment-jsdom-sixteen"
+        "test": "jest",
+        "test:watch": "jest --watch ",
+        "test-ci": "jest",
+        "coverage": "jest --collectCoverage"
     },
     "author": "vegar Ringdal",
     "license": "MIT",
