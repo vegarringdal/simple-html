@@ -4,11 +4,13 @@ module.exports = {
     maxConcurrency: 1,
     verbose: true,
     moduleDirectories: ['node_modules'],
-    transformIgnorePatterns: [
-        // Change MODULE_NAME_HERE to your module that isn't being compiled
-        '/node_modules/(?!lit-html).+\\.js$'
-    ],
-    transform: {
-        '^.+\\.(js|jsx|ts|tsx)$': '<rootDir>/node_modules/babel-jest'
+    moduleNameMapper: {
+        'lit-html': '<rootDir>/.cache/lit-html/lit-html.js'
+    },
+    globals: {
+        'ts-jest': {
+            diagnostics: false,
+            tsConfig: './tsconfig.json'
+        }
     }
 };

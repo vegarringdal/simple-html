@@ -66,7 +66,6 @@ describe('customElement attributeChangedCallback native', () => {
         // simple variable for holding value so we can check in the end
         const attributeChangedCallback: string[] = [];
         const valuesChanged: string[] = [];
-        const localVariable: string[] = [];
 
         // our element with minimum config
         @customElement('app-root2')
@@ -75,11 +74,6 @@ describe('customElement attributeChangedCallback native', () => {
 
             constructor() {
                 super();
-                localVariable.push(this.myAtt);
-            }
-
-            connectedCallback() {
-                localVariable.push(this.myAtt);
             }
 
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -87,7 +81,6 @@ describe('customElement attributeChangedCallback native', () => {
             }
 
             valuesChanged(type: string, name: string, oldValue: string, newValue: string) {
-                localVariable.push(this.myAtt);
                 valuesChanged.push(type, name, oldValue, newValue);
             }
 
@@ -116,22 +109,32 @@ describe('customElement attributeChangedCallback native', () => {
                 expect(attributeChangedCallback[5]).toEqual('newvalue');
 
                 // init set
-                expect(valuesChanged[0]).toEqual('attribute');
-                expect(valuesChanged[1]).toEqual('my-att');
-                expect(valuesChanged[2]).toEqual(null);
-                expect(valuesChanged[3]).toEqual('initvalue');
+
+                expect(valuesChanged[0]).toEqual('property');
+                expect(valuesChanged[1]).toEqual('myAtt');
+                expect(valuesChanged[2]).toEqual(undefined);
+                expect(valuesChanged[3]).toEqual('whatever');
+
+                expect(valuesChanged[4]).toEqual('property');
+                expect(valuesChanged[5]).toEqual('myAtt');
+                expect(valuesChanged[6]).toEqual('whatever');
+                expect(valuesChanged[7]).toEqual('initvalue');
+
+                expect(valuesChanged[8]).toEqual('attribute');
+                expect(valuesChanged[9]).toEqual('my-att');
+                expect(valuesChanged[10]).toEqual(null);
+                expect(valuesChanged[11]).toEqual('initvalue');
                 // after edit
-                expect(valuesChanged[4]).toEqual('attribute');
-                expect(valuesChanged[5]).toEqual('my-att');
-                expect(valuesChanged[6]).toEqual('initvalue');
-                expect(valuesChanged[7]).toEqual('newvalue');
 
-                // out myAtt set by @decorator
-                expect(localVariable[0]).toEqual('whatever'); // constructor
-                expect(localVariable[1]).toEqual('initvalue'); //connected it set
-                expect(localVariable[2]).toEqual('initvalue'); // first trigger to tell us it set
-                expect(localVariable[3]).toEqual('newvalue'); // first change
+                expect(valuesChanged[12]).toEqual('property');
+                expect(valuesChanged[13]).toEqual('myAtt');
+                expect(valuesChanged[14]).toEqual('initvalue');
+                expect(valuesChanged[15]).toEqual('newvalue');
 
+                expect(valuesChanged[16]).toEqual('attribute');
+                expect(valuesChanged[17]).toEqual('my-att');
+                expect(valuesChanged[18]).toEqual('initvalue');
+                expect(valuesChanged[19]).toEqual('newvalue');
                 done();
             });
         });
