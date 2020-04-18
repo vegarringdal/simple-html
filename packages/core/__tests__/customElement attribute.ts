@@ -85,7 +85,7 @@ describe('customElement attributeChangedCallback native', () => {
             }
 
             render() {
-                return 'render works';
+                return 'render works:' + this.myAtt;
             }
         }
 
@@ -93,7 +93,9 @@ describe('customElement attributeChangedCallback native', () => {
         document.body.innerHTML = '<app-root2 id="my-element" my-att="initvalue" ></app-root2>';
 
         requestAnimationFrame(() => {
-            expect(document.getElementById('my-element').textContent).toEqual('render works');
+            expect(document.getElementById('my-element').textContent).toEqual(
+                'render works:initvalue'
+            );
 
             // set newvalue so we can also test change trigger
             document.getElementById('my-element').setAttribute('my-att', 'newvalue');
