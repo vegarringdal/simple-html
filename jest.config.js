@@ -5,7 +5,8 @@ module.exports = {
     verbose: true,
     moduleDirectories: ['node_modules'],
     moduleNameMapper: {
-        'lit-html': '<rootDir>/.cache/lit-html/lit-html.js'
+        'lit-html': '<rootDir>/.cache/lit-html/lit-html.js',
+        '@simple-html/core': '<rootDir>/packages/core/src/index.ts'
     },
     globals: {
         'ts-jest': {
