@@ -12,5 +12,6 @@ module.exports = {
             diagnostics: false,
             tsConfig: './tsconfig.json'
         }
-    }
+    },
+    collectCoverageFrom: ['packages/core/src/**/*.ts', 'packages/router/src/**/*.ts']
 };

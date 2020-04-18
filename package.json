@@ -17,7 +17,7 @@
         "test": "npm run rollup && jest",
         "test:watch": "npm run rollup jest --watch ",
         "test-ci": "npm run rollup && jest",
-        "coverage": "npm run rollup jest --collectCoverage",
+        "coverage": "npm run rollup && jest --collectCoverage",
         "rollup": "./node_modules/.bin/rollup -c"
     },
     "author": "vegar Ringdal",
