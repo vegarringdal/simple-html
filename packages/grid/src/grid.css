@@ -4,7 +4,7 @@
     --simple-html-grid-alt-bg-color: #ffffff;
     --simple-html-grid-main-bg-border: #e6e5e5;
     --simple-html-grid-sec-bg-border: #e6e5e5;
-    --simple-html-grid-main-bg-selected: #f5f5f5;
+    --simple-html-grid-main-bg-selected: #dbd7dc;
     --simple-html-grid-main-font-color: #2e2d2d;
     --simple-html-grid-sec-font-color: #979494;
     --simple-html-grid-font-size: 11px;
@@ -339,7 +339,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     border: 0;
     border-radius: initial;
     box-shadow: initial;
-    padding: 5px 10px;
+    padding: 2px 10px;
     height: 100%;
     background-color: var(--simple-html-grid-main-bg-color);
 }
