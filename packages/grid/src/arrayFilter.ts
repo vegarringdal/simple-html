@@ -82,6 +82,7 @@ export class ArrayFilter {
                         if (rowValue === null || rowValue === undefined) {
                             rowValue = '';
                         } else {
+                            rowValue = rowValue + ''; // incase we got something else
                             rowValue = rowValue.toLowerCase();
                         }
                         filterValue = x.value.toLowerCase();
