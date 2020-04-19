@@ -15,13 +15,24 @@ export function setup(rows: number, columns: number) {
         for (let y = 0; y < rows; y++) {
             word++;
 
-            if (i === 1 && y === 0) {
-                x.push({
-                    header: 'index',
-                    attribute: 'index',
-                    filterable: {},
-                    sortable: {}
-                });
+            if ((i === 1 && y === 0) || (i === 2 && y === 0) || (i === 2 && y === 1)) {
+                if (i === 1 && y === 0) {
+                    x.push({
+                        header: 'index',
+                        attribute: 'index',
+                        type: 'number',
+                        filterable: {},
+                        sortable: {}
+                    });
+                } else {
+                    x.push({
+                        header: 'date',
+                        attribute: 'date',
+                        type: 'date',
+                        filterable: {},
+                        sortable: {}
+                    });
+                }
             } else {
                 x.push({
                     header: 'word' + word,

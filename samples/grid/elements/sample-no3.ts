@@ -2,7 +2,7 @@ import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 import { GridInterface } from '@simple-html/grid';
 import { setup } from '../gridSetup/setup';
-import { WordDatasource03, WordDatasource04, set, add } from '../data/datasources';
+import { WordDatasource03, set, add } from '../data/datasources';
 
 @customElement('sample-no3')
 export default class extends HTMLElement {
@@ -11,7 +11,7 @@ export default class extends HTMLElement {
     connectedCallback() {
         this.connector1 = new GridInterface(setup(1, 10), WordDatasource03);
         this.connector1.reloadDatasource();
-        this.connector2 = new GridInterface(setup(1, 10), WordDatasource04);
+        this.connector2 = new GridInterface(setup(1, 10), WordDatasource03);
         this.connector2.reloadDatasource();
     }
 

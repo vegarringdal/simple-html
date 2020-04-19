@@ -14,8 +14,7 @@ WordDatasource01.setData(generator.generateData(50));
 WordDatasource02.setData(generator.generateData(10));
 //same data into both
 const y = generator.generateData(10);
-WordDatasource03.setData(y);
-WordDatasource04.setData(WordDatasource03.DATA_SET);
+WordDatasource03.setData(generator.generateData(10));
 
 export function add(ds: DataSource | GridInterface, howMany: number) {
     if (ds.setData) {
