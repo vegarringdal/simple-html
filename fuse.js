@@ -50,17 +50,25 @@ const { rm } = sparky(Context);
 async function run(folderInSamples, ctx) {
     await rm(`./.cache/${folderInSamples}`);
     await rm(`./dist/${folderInSamples}`);
-    ctx.runServer = true;
-    const fuse = ctx.getConfig(folderInSamples, false);
-    await fuse.runDev({ bundles: { distRoot: `./dist/${folderInSamples}`, app: 'app.js' } });
+    if (process.argv[3] === 'build') {
+        const frontendConfig = ctx.getConfig(folderInSamples, true);
+        await frontendConfig.runProd({
+            uglify: true,
+            bundles: { distRoot: `dist/${folderInSamples}`, app: 'app.js' }
+        });
+    } else {
+        ctx.runServer = true;
+
+        const fuse = ctx.getConfig(folderInSamples, false);
+        await fuse.runDev({ bundles: { distRoot: `./dist/${folderInSamples}`, app: 'app.js' } });
+    }
 }
 
 run(process.argv[2], new Context());
 
-/* 
-task('dist', async (ctx) => {
+/* task('dist', async (ctx) => {
     await rm('./dist');
-    const frontendConfig = ctx.getConfig('core', true);
+    const frontendConfig = ctx.getConfig('dist', true);
     await frontendConfig.runProd({
         uglify: true,
         bundles: { distRoot: 'dist/', app: 'app.js' }
