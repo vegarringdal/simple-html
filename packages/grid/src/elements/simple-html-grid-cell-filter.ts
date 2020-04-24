@@ -105,6 +105,12 @@ export default class extends HTMLElement {
         const change = cell.editEventType !== 'input' ? filterCallback : null;
         const input = cell.editEventType === 'input' ? filterCallback : null;
 
+        const contentMenu = function (e: any) {
+            if ((e as any).button !== 0) {
+                console.log('open menu filter');
+            }
+        };
+
         if (cell.renderFilterCallBackFn) {
             return cell.renderFilterCallBackFn(cell, this.connector, filterCallback);
         }
@@ -121,6 +127,11 @@ export default class extends HTMLElement {
                     class=${classname}
                     @input=${input}
                     @keydown=${enterKeyDown}
+                    @contextmenu=${(e: any) => {
+                        e.preventDefault();
+                        contentMenu(e);
+                        return false;
+                    }}
                     .valueAsDate=${value}
                     placeholder=${placeholder}
                 />
@@ -134,6 +145,11 @@ export default class extends HTMLElement {
                     .state=${setState}
                     class=${classname}
                     @change=${change}
+                    @contextmenu=${(e: any) => {
+                        e.preventDefault();
+                        contentMenu(e);
+                        return false;
+                    }}
                     @input=${input}
                     @keydown=${enterKeyDown}
                     .value=${value}

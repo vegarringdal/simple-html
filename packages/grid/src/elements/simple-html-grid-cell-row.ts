@@ -77,6 +77,12 @@ export default class extends HTMLElement {
             const change = this.cell.editEventType !== 'input' ? this.updateCallback : null;
             const input = this.cell.editEventType === 'input' ? this.updateCallback : null;
 
+            const contentMenu = function (e: any) {
+                if ((e as any).button !== 0) {
+                    console.log('open menu row');
+                }
+            };
+
             if (cell.renderRowCallBackFn) {
                 return cell.renderRowCallBackFn(
                     cell,
@@ -96,6 +102,11 @@ export default class extends HTMLElement {
                             @change=${change}
                             @input=${input}
                             type="checkbox"
+                            @contextmenu=${(e: any) => {
+                                e.preventDefault();
+                                contentMenu(e);
+                                return false;
+                            }}
                             .checked=${data[cell.attribute]}
                             class="simple-html-grid-row-checkbox"
                         />
@@ -118,6 +129,11 @@ export default class extends HTMLElement {
                             @change=${change}
                             @input=${input}
                             type=${cell.type}
+                            @contextmenu=${(e: any) => {
+                                e.preventDefault();
+                                contentMenu(e);
+                                return false;
+                            }}
                             .valueAsDate=${data[cell.attribute] || null}
                             class="simple-html-grid-row-input"
                         />
@@ -130,6 +146,11 @@ export default class extends HTMLElement {
                             @change=${change}
                             @input=${input}
                             type=${cell.type}
+                            @contextmenu=${(e: any) => {
+                                e.preventDefault();
+                                contentMenu(e);
+                                return false;
+                            }}
                             .valueAsNumber=${data[cell.attribute]}
                             class="simple-html-grid-row-input"
                         />
@@ -143,6 +164,11 @@ export default class extends HTMLElement {
                     ?disabled=${cell.disabled}
                     @change=${change}
                     @input=${input}
+                    @contextmenu=${(e: any) => {
+                        e.preventDefault();
+                        contentMenu(e);
+                        return false;
+                    }}
                     type=${cell.type || 'text'}
                     .value=${data[cell.attribute] || null}
                     class="simple-html-grid-row-input"

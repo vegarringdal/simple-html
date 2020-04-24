@@ -69,13 +69,20 @@ export default class extends HTMLElement {
                     e.target.removeEventListener('mouseup', mouseup);
                 }, 500);
             } else {
-                console.log('open menu');
+                // do not do anything, we use context event here
+                //console.log('open menu');
             }
         };
 
         const mousedown = columnDragDrop('dragstart', cell, connector);
         const mouseenter = columnDragDrop('enter', cell, connector);
         const mouseleave = columnDragDrop('leave', cell, connector);
+
+        const contentMenu = function (e: any) {
+            if ((e as any).button !== 0) {
+                console.log('open menu label');
+            }
+        };
 
         this.style.width = this.group.width + 'px';
 
@@ -105,6 +112,11 @@ export default class extends HTMLElement {
                     class="simple-html-grid-label hideme"
                     @mouseenter=${!cell.disableDragDrop && mouseenter}
                     @mouseleave=${!cell.disableDragDrop && mouseleave}
+                    @contextmenu=${(e: any) => {
+                        e.preventDefault();
+                        contentMenu(e);
+                        return false;
+                    }}
                 >
                 </span>
                 ${resizeColumnElement(this.ref, this.group)}
@@ -117,6 +129,11 @@ export default class extends HTMLElement {
                     @mousedown=${(e: any) => {
                         cell.sortable && sortCallback(e);
                         !cell.disableDragDrop && mousedown(e);
+                    }}
+                    @contextmenu=${(e: any) => {
+                        e.preventDefault();
+                        contentMenu(e);
+                        return false;
                     }}
                     @mouseenter=${!cell.disableDragDrop && mouseenter}
                     @mouseleave=${!cell.disableDragDrop && mouseleave}
