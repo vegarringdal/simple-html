@@ -196,15 +196,24 @@ export class ArrayUtils {
     }
 
     private removeGroup(group: IGroupingObj) {
-        const currentGrouping = this.getGrouping();
-        const x = currentGrouping.indexOf(group);
+        const groupings = this.getGrouping();
+        const x = groupings.indexOf(group);
         if (x !== -1) {
-            currentGrouping.splice(x, 1);
+            groupings.splice(x, 1);
         }
 
-        if (currentGrouping.length) {
-            const newdata = this.group(this.gridInterface.filteredDataset, currentGrouping, true);
-            this.gridInterface.displayedDataset = newdata;
+        this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
+        this.arraySort.reset();
+        groupings.forEach((group: IGroupingObj) => {
+            this.arraySort.setOrderBy(group.field, true);
+        });
+        this.arraySort.runOrderbyOn(this.gridInterface.filteredDataset);
+        this.arraySort.SetConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
+        if (groupings.length) {
+            const result = this.group(this.gridInterface.filteredDataset, groupings, true);
+            this.gridInterface.config.groupingSet = this.getGrouping();
+            this.gridInterface.config.sortingSet = this.getOrderBy();
+            this.gridInterface.displayedDataset = result;
         } else {
             this.gridInterface.displayedDataset = this.gridInterface.filteredDataset;
         }
