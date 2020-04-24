@@ -295,23 +295,14 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid.simple-html-grid-drag {
-    border: 1px solid var(--simple-html-grid-main-bg-border);
-    box-sizing: border-box;
-    box-shadow: initial;
-    line-height: 50%;
+
     pointer-events: none;
     background-color: var(--simple-html-grid-main-bg-color);
-    height: 25px;
-    display: block;
     min-width: 100px;
     position: absolute;
-    padding-top: 5px;
     text-align: center;
     z-index: 50;
-    font-weight: 700;
-    color: var(--simple-html-grid-main-font-color);
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
-  
+
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight-header);

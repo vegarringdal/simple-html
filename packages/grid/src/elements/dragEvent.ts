@@ -77,8 +77,10 @@ export const columnDragDrop = (event: string, _col: ICell, _connector: GridInter
             dragColumnBlock = document.createElement('div');
             dragColumnBlock.style.top = -1200 + 'px'; // hide it
             dragColumnBlock.style.left = -1200 + 'px';
+            dragColumnBlock.style.height = _connector.config.cellHeight + 'px';
             dragColumnBlock.classList.add('simple-html-grid');
             dragColumnBlock.classList.add('simple-html-grid-drag');
+            dragColumnBlock.classList.add('simple-html-grid-cell-label');
             dragColumnBlock.textContent = _col.header;
             document.body.appendChild(dragColumnBlock);
             document.addEventListener('mousemove', mouseMove);
