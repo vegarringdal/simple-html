@@ -50,6 +50,9 @@ const { rm } = sparky(Context);
 async function run(folderInSamples, ctx) {
     await rm(`./.cache/${folderInSamples}`);
     await rm(`./dist/${folderInSamples}`);
+    await rm(`./packages/core/dist/`);
+    await rm(`./packages/grid/dist/`);
+    await rm(`./packages/router/dist/`);
     if (process.argv[3] === 'build') {
         const frontendConfig = ctx.getConfig(folderInSamples, true);
         await frontendConfig.runProd({
