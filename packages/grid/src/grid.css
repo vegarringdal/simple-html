@@ -33,7 +33,6 @@ simple-html-grid-body::-webkit-scrollbar {
     width: 1em;
 }
 simple-html-grid-body::-webkit-scrollbar-track {
-    
 }
 simple-html-grid-body::-webkit-scrollbar-thumb {
     background-color: var(--simple-html-grid-main-bg-selected);
@@ -144,7 +143,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     border: 0;
     border-right: 1px solid var(--simple-html-grid-sec-bg-border);
     border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
-    overflow:hidden
+    overflow: hidden;
 }
 
 .simple-html-grid .simple-html-grid-cell-label {
@@ -202,7 +201,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 }
-
 
 .simple-html-grid .simple-html-grid-row-checkbox {
     width: initial;
@@ -295,7 +293,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid.simple-html-grid-drag {
-
     pointer-events: none;
     background-color: var(--simple-html-grid-main-bg-color);
     min-width: 100px;
@@ -364,4 +361,40 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 input.simple-html-grid-row-input:focus {
     border: 1px dashed;
     outline: hidden;
+}
+
+.simple-html-grid-menu {
+    position: absolute;
+    z-index: 901;
+    background-color: rgb(240, 240, 240);
+    min-width: 150px;
+    border-top: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-left: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
+    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+}
+.simple-html-grid-menu-item {
+    box-sizing: border-box;
+    border: 0;
+    border-radius: initial;
+    
+    height: 20px;
+    text-align: center;
+    overflow: hidden;
+    user-select: none;
+    margin: initial;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-cell);
+    background-color: var(--simple-html-grid-main-bg-color);
+    margin: initial;
+    transition: initial;
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid-menu-item:hover {
+
+    background-color: var(--simple-html-grid-main-bg-selected);
 }

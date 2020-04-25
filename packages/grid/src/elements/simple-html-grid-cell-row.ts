@@ -2,6 +2,7 @@ import { customElement, property } from '@simple-html/core';
 import { SimpleHtmlGrid, GridInterface } from '..';
 import { IgridConfigGroups, ICell } from '../interfaces';
 import { html } from 'lit-html';
+import { generateMenu } from './generateMenu';
 
 @customElement('simple-html-grid-cell-row')
 export default class extends HTMLElement {
@@ -74,23 +75,20 @@ export default class extends HTMLElement {
         if (this.connector.displayedDataset[this.rowNo]) {
             const cell = this.cell;
             const data = this.connector.displayedDataset[this.rowNo];
+            const connector = this.connector;
+            const rowNo = this.rowNo;
+            const ref = this.ref;
             const change = this.cell.editEventType !== 'input' ? this.updateCallback : null;
             const input = this.cell.editEventType === 'input' ? this.updateCallback : null;
 
             const contentMenu = function (e: any) {
                 if ((e as any).button !== 0) {
-                    console.log('open menu row');
+                    generateMenu('simple-html-grid-menu-row', e, connector, ref, cell, rowNo, data);
                 }
             };
 
             if (cell.renderRowCallBackFn) {
-                return cell.renderRowCallBackFn(
-                    cell,
-                    data,
-                    this.rowNo,
-                    this.connector,
-                    this.updateCallback
-                );
+                return cell.renderRowCallBackFn(cell, data, rowNo, connector, this.updateCallback);
             }
 
             switch (cell.type) {

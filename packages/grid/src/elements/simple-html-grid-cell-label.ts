@@ -5,6 +5,7 @@ import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
 import { columnDragDrop } from './dragEvent';
+import { generateMenu } from './generateMenu';
 
 @customElement('simple-html-grid-cell-label')
 export default class extends HTMLElement {
@@ -51,6 +52,7 @@ export default class extends HTMLElement {
     render() {
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
+        const ref = this.ref;
         const label = this.capalize(this.group.rows[this.cellPosition].header || '');
 
         const sortCallback = (e: any) => {
@@ -80,7 +82,7 @@ export default class extends HTMLElement {
 
         const contentMenu = function (e: any) {
             if ((e as any).button !== 0) {
-                console.log('open menu label');
+                generateMenu('simple-html-grid-menu-label', e, connector, ref, cell);
             }
         };
 

@@ -2,6 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
+import { generateMenu } from './generateMenu';
 
 @customElement('simple-html-grid-cell-filter')
 export default class extends HTMLElement {
@@ -40,6 +41,8 @@ export default class extends HTMLElement {
 
     render() {
         const cell = this.group.rows[this.cellPosition];
+        const connector = this.connector;
+        const ref = this.ref;
 
         const coltype = cell.type === 'boolean' ? 'checkbox' : cell.type;
 
@@ -107,7 +110,7 @@ export default class extends HTMLElement {
 
         const contentMenu = function (e: any) {
             if ((e as any).button !== 0) {
-                console.log('open menu filter');
+                generateMenu('simple-html-grid-menu-filter', e, connector, ref, cell);
             }
         };
 

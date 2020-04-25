@@ -2,6 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { html, svg } from 'lit-html';
 import { SimpleHtmlGrid } from '..';
+import { generateMenu } from './generateMenu';
 
 @customElement('simple-html-grid-panel')
 export default class extends HTMLElement {
@@ -13,15 +14,21 @@ export default class extends HTMLElement {
         const config = this.connector.config;
         this.style.height = config.panelHeight + 'px';
         this.ref.addEventListener('reRender', this);
+        this.addEventListener('contextmenu', this);
     }
 
     handleEvent(e: any) {
         if (e.type === 'reRender') {
             this.render();
         }
+        if (e.type === 'contextmenu') {
+            e.preventDefault();
+            generateMenu('simple-html-grid-menu-panel', e, this.connector, this.ref);
+        }
     }
 
     disconnectedCallback() {
+        this.removeEventListener('contextmenu', this);
         this.ref.removeEventListener('reRender', this);
     }
 
