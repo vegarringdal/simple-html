@@ -1,5 +1,6 @@
 import 'tslib';
 export { attribute } from './attribute';
+export { value } from './value';
 export { enableInternalLogger, disableInternalLogger } from './logger';
 export { property } from './property';
 export { customElement } from './customElement';
