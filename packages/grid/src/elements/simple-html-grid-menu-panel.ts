@@ -26,13 +26,24 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: any) {
-        console.log(e.target);
         if (e.target !== this) {
             this.removeSelf();
         }
     }
 
     select(_type: string) {
+        if (_type === 'clear') {
+            this.connector.config.groupingExpanded = [];
+            this.connector.config.sortingSet = [];
+            this.connector.config.groupingSet = [];
+            this.connector.manualConfigChange();
+        }
+        if (_type === 'collapse') {
+            this.connector.groupCollapse(null);
+        }
+        if (_type === 'expand') {
+            this.connector.groupExpand(null);
+        }
         this.removeSelf();
     }
 

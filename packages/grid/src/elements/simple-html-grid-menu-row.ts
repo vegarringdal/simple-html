@@ -4,11 +4,14 @@ import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { ICell } from '../interfaces';
 
+let dataClip: any = null; // firefox hack
 @customElement('simple-html-grid-menu-row')
 export default class extends HTMLElement {
     @value() connector: GridInterface;
     @value() cell: ICell;
     @value() ref: SimpleHtmlGrid;
+    @value() rowNo: number;
+    @value() rowData: any;
 
     connectedCallback() {
         (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
@@ -26,14 +29,48 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: any) {
-        console.log(e.target);
         if (e.target !== this) {
             this.removeSelf();
         }
     }
 
-    select(_type: string) {
-        this.removeSelf();
+    async select(_type: string) {
+        if (_type === 'copy' && this.rowData) {
+            try {
+                dataClip = this.rowData[this.cell.attribute]; // firefox hack
+                await navigator.clipboard.writeText(this.rowData[this.cell.attribute]);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        if (_type === 'paste') {
+            try {
+                let data;
+                if (navigator.clipboard.readText) {
+                    data = await navigator.clipboard.readText();
+                } else {
+                    data = dataClip; // firefox hack
+                }
+
+                if (data === 'undefined' || data === 'null') {
+                    data = null;
+                }
+                this.pasteIntoCells(data);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        if (_type === 'clear') {
+            this.pasteIntoCells(null);
+        }
+    }
+
+    pasteIntoCells(data: any) {
+        this.connector.selection.getSelectedRows().forEach((row: number) => {
+            this.connector.filteredDataset[row][this.cell.attribute] = data;
+        });
+        this.connector.reRender();
+        console.log(data);
     }
 
     removeSelf() {
@@ -42,13 +79,13 @@ export default class extends HTMLElement {
 
     render() {
         return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('copy')}>
-                Coapy cell value
+                Copy cell value
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('paste')}>
-                Paste into cells
+                Paste into selected rows
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('clear')}>
-                Clear cells
+                Clear selected rows
             </p>`;
     }
 }

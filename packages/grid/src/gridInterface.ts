@@ -104,6 +104,7 @@ export class GridInterface {
             this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
             this.displayedDataset = result.fixed;
         }
+        this.__SimpleHtmlGrid.resetRowCache();
         this.reRender();
     }
 

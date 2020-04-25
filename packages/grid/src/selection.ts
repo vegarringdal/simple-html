@@ -216,7 +216,7 @@ export class Selection {
         }
     }
 
-    private getSelectedRows(): number[] {
+    public getSelectedRows(): number[] {
         const array: number[] = [];
         const keys = this.getRowKeys();
         if (this.selectedRows > 0) {

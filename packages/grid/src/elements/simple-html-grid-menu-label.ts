@@ -26,13 +26,25 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: any) {
-        console.log(e.target);
         if (e.target !== this) {
             this.removeSelf();
         }
     }
 
-    select(_type: string) {
+    select(_type: string, asc?: boolean, add?: boolean) {
+        if (_type === 'sort') {
+            if (this.cell.sortable) {
+                this.cell.sortable.sortAscending = true;
+            } else {
+                this.cell.sortable = { sortAscending: asc };
+            }
+            this.connector.sortCallback({ shiftKey: add }, this.cell);
+        }
+        if (_type === 'groupBy') {
+            if (this.cell.allowGrouping) {
+                this.connector.groupingCallback(null, this.cell);
+            }
+        }
         this.removeSelf();
     }
 
@@ -41,16 +53,19 @@ export default class extends HTMLElement {
     }
 
     render() {
-        return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('sortAsc')}>
+        return html`<p
+                class="simple-html-grid-menu-item"
+                @click=${() => this.select('sort', false, false)}
+            >
                 Sort asc
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sortDesc')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, false)}>
                 Sort desc
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sortAscAdd')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
                 Sort asc (add)
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sortDescAdd')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
                 Sort desc (add)
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('groupBy')}>

@@ -2,7 +2,7 @@ import { customElement, value } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell } from '../interfaces';
+import { ICell, FilterOperator } from '../interfaces';
 
 @customElement('simple-html-grid-menu-filter')
 export default class extends HTMLElement {
@@ -26,13 +26,15 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: any) {
-        console.log(e.target);
         if (e.target !== this) {
             this.removeSelf();
         }
     }
 
-    select(_type: string) {
+    select(_type: FilterOperator) {
+        if (this.cell.filterable) {
+            this.cell.filterable.operator = _type;
+        }
         this.removeSelf();
     }
 
@@ -41,34 +43,40 @@ export default class extends HTMLElement {
     }
 
     render() {
-        return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('=')}>
+        return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('EQUAL')}>
                 Equal to
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('!=')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('NOT_EQUAL_TO')}>
                 Not equal to
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('*x')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('BEGIN_WITH')}>
                 Starts with
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('>')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('GREATER_THAN')}>
                 Greater than
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('>=')}>
+            <p
+                class="simple-html-grid-menu-item"
+                @click=${() => this.select('GREATER_THAN_OR_EQUAL_TO')}
+            >
                 Greater than or equal
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('<')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('LESS_THAN')}>
                 Less than
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('<=')}>
+            <p
+                class="simple-html-grid-menu-item"
+                @click=${() => this.select('LESS_THAN_OR_EQUAL_TO')}
+            >
                 Less than or equal
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('x*')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('END_WITH')}>
                 End with
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('*')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('CONTAINS')}>
                 Contains
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('!*')}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('DOES_NOT_CONTAIN')}>
                 Does not contain
             </p>`;
     }
