@@ -1,4 +1,4 @@
-import { customElement, value } from '@simple-html/core';
+import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
@@ -7,11 +7,16 @@ import { ICell } from '../interfaces';
 let dataClip: any = null; // firefox hack
 @customElement('simple-html-grid-menu-row')
 export default class extends HTMLElement {
-    @value() connector: GridInterface;
-    @value() cell: ICell;
-    @value() ref: SimpleHtmlGrid;
-    @value() rowNo: number;
-    @value() rowData: any;
+    connector: GridInterface;
+    cell: ICell;
+    ref: SimpleHtmlGrid;
+    rowNo: number;
+    rowData: any;
+
+    constructor() {
+        super();
+        console.log('cion');
+    }
 
     connectedCallback() {
         (this.classList as any) = 'simple-html-grid simple-html-grid-menu';

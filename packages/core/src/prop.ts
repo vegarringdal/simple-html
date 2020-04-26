@@ -1,13 +1,14 @@
 import { getPropSymbol } from './symbols';
 
 /**
- * @property value
- * To get around this issue: I get this when class have properties and I use createElement
- * Uncaught DOMException: Failed to construct 'CustomElement': The result must not have attributes
+ * @property prop
+ * TODO combine this to cover property and attribute decorators
+ *
  *
  */
-export function value(): Function {
+export function prop(): Function {
     return function reg(_class: Function, prop: string): void {
+        console.log('prop');
         Object.defineProperty(_class, prop, {
             get: function () {
                 return this[getPropSymbol(this.tagName + '_' + prop)];

@@ -1,4 +1,4 @@
-import { customElement, value } from '@simple-html/core';
+import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
@@ -6,9 +6,9 @@ import { ICell } from '../interfaces';
 
 @customElement('simple-html-grid-menu-label')
 export default class extends HTMLElement {
-    @value() connector: GridInterface;
-    @value() cell: ICell;
-    @value() ref: SimpleHtmlGrid;
+    connector: GridInterface;
+    cell: ICell;
+    ref: SimpleHtmlGrid;
 
     connectedCallback() {
         (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
