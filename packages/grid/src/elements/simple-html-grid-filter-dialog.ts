@@ -5,11 +5,21 @@ import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { ICell } from '../interfaces';
 
+function generateMenu(event: any, rows: any[]) {
+    const menu = document.createElement('simple-html-grid-menu-custom');
+    menu.style.top = event.clientY + document.documentElement.scrollTop + 'px'; // hide it
+    menu.style.left = event.clientX + document.documentElement.scrollLeft + 'px';
+    (menu as any).rows = rows;
+
+    document.body.appendChild(menu);
+}
+
 @customElement('simple-html-grid-filter-dialog')
 export default class extends HTMLElement {
     connector: GridInterface;
     cell: ICell;
     ref: SimpleHtmlGrid;
+    width: number;
 
     connectedCallback() {
         /* (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
@@ -21,7 +31,7 @@ export default class extends HTMLElement {
     }
 
     render() {
-        return html`<div class="simple-html-grid simple-html-filter-dialog">
+        return html`<div style="width:550px" class="simple-html-grid simple-html-filter-dialog">
             ${group(x, this, 0)}
         </div>`;
     }
@@ -58,16 +68,38 @@ function group(g: OperatorObject, ctx: any, level: number, parent?: any[]) {
             <button
                 class="dialog-item-x"
                 style="width:15px"
-                @click=${() => {
-                    g.operatorObject.push({
-                        type: 'CONDITION',
-                        groupType: 'NONE',
-                        attribute: 'job',
-                        operator: '==',
-                        valueType: 'VALUE',
-                        value: 'wow'
-                    });
-                    ctx.render();
+                @click=${(e: any) => {
+                    generateMenu(e, [
+                        {
+                            title: 'Add Group',
+                            callback: () => {
+                                g.operatorObject.push({
+                                    type: 'GROUP',
+                                    groupType: 'AND',
+                                    attribute: 'job',
+                                    operator: '==',
+                                    valueType: 'VALUE',
+                                    operatorObject: [],
+                                    value: 'wow'
+                                });
+                                ctx.render();
+                            }
+                        },
+                        {
+                            title: 'Add condition',
+                            callback: () => {
+                                g.operatorObject.push({
+                                    type: 'CONDITION',
+                                    groupType: 'NONE',
+                                    attribute: 'job',
+                                    operator: '==',
+                                    valueType: 'VALUE',
+                                    value: 'wow'
+                                });
+                                ctx.render();
+                            }
+                        }
+                    ]);
                 }}
             >
                 <svg
@@ -86,6 +118,9 @@ function group(g: OperatorObject, ctx: any, level: number, parent?: any[]) {
                 style="width:15px"
                 @click=${() => {
                     parent && parent.splice(parent.indexOf(g), 1);
+                    if (!parent) {
+                        g.operatorObject = [];
+                    }
                     ctx.render();
                 }}
             >
@@ -108,6 +143,8 @@ function group(g: OperatorObject, ctx: any, level: number, parent?: any[]) {
 }
 
 function condition(g: OperatorObject[], ctx: any, level: number): any {
+    ctx.width = level + ctx.width;
+    console.log(ctx.width);
     if (Array.isArray(g)) {
         return g.map((element, i) => {
             if (element.type === 'GROUP') {
@@ -116,8 +153,54 @@ function condition(g: OperatorObject[], ctx: any, level: number): any {
                 return html` <div class="dialog-row">
                     <div style="width:${level}px" class="dialog-item-block"></div>
                     <div class="dialog-item">
-                        <button class="dialog-item-y">${element.attribute}</button>
-                        <button class="dialog-item-y"><b>${element.operator}</b></button>
+                        <button
+                            class="dialog-item-y"
+                            @click=${(e: any) => {
+                                generateMenu(e, [
+                                    {
+                                        title: 'Attributes todo',
+                                        callback: () => {
+                                            ctx.render();
+                                        }
+                                    }
+                                ]);
+                            }}
+                        >
+                            ${element.attribute}
+                        </button>
+                        <button
+                            class="dialog-item-y"
+                            @click=${(e: any) => {
+                                generateMenu(e, [
+                                    {
+                                        title: 'Equal to',
+                                        callback: () => {
+                                            ctx.render();
+                                        }
+                                    },
+                                    {
+                                        title: 'Not equal to',
+                                        callback: () => {
+                                            ctx.render();
+                                        }
+                                    },
+                                    {
+                                        title: 'Starts with',
+                                        callback: () => {
+                                            ctx.render();
+                                        }
+                                    },
+                                    {
+                                        title: 'Greater than',
+                                        callback: () => {
+                                            ctx.render();
+                                        }
+                                    }
+                                ]);
+                            }}
+                        >
+                            <b>${element.operator}</b>
+                        </button>
                         ${element.valueType === 'VALUE'
                             ? html`<input
                                   class="dialog-item-y"
@@ -127,9 +210,31 @@ function condition(g: OperatorObject[], ctx: any, level: number): any {
                                       element.value = e.target.value;
                                   }}
                               />`
-                            : html`<button class="dialog-item-y">${element.attribute}</button> `}
+                            : html`<button
+                                  class="dialog-item-y"
+                                  @click=${(e: any) => {
+                                      generateMenu(e, [
+                                          {
+                                              title: 'Attributes todo',
+                                              callback: () => {
+                                                  ctx.render();
+                                              }
+                                          }
+                                      ]);
+                                  }}
+                              >
+                                  ${element.attribute}
+                              </button> `}
 
-                        <button class="dialog-item-x" style="width:15px">
+                        <button
+                            class="dialog-item-x"
+                            style="width:15px"
+                            @click=${() => {
+                                g[i].valueType =
+                                    element.valueType === 'VALUE' ? 'ATTRIBUTE' : 'VALUE';
+                                ctx.render();
+                            }}
+                        >
                             <svg
                                 fill="none"
                                 stroke-linecap="round"
