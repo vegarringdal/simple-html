@@ -16,10 +16,10 @@ function generateMenu(event: any, rows: any[]) {
 
 const OPERATORS = {
     EQUAL: '===',
-    LESS_THAN_OR_EQUAL_TO: '>=',
-    GREATER_THAN_OR_EQUAL_TO: '<=',
-    LESS_THAN: '>',
-    GREATER_THAN: '<',
+    LESS_THAN_OR_EQUAL_TO: '<=',
+    GREATER_THAN_OR_EQUAL_TO: '>=',
+    LESS_THAN: '<',
+    GREATER_THAN: '>',
     CONTAINS: '*',
     NOT_EQUAL_TO: '!==',
     DOES_NOT_CONTAIN: '!*',
@@ -37,7 +37,7 @@ export default class extends HTMLElement {
     filter: OperatorObject;
 
     connectedCallback() {
-        this.filter = {
+        this.filter = this.connector.__arrayUtils.getCurrentFilter() || {
             type: 'GROUP',
             groupType: 'AND',
             attribute: null,
@@ -63,15 +63,37 @@ export default class extends HTMLElement {
 
     render() {
         return html`<div style="width:550px" class="simple-html-grid simple-html-filter-dialog">
-            <button
-                class="dialog-item-x"
-                @click=${() => {
-                    this.removeSelf();
-                }}
-            >
-                <b> close</b>
-            </button>
-            ${group(this.connector.__arrayUtils.getCurrentFilter() || this.filter, this, 0)}
+            <div class="dialog-row main-group">
+                <button
+                    class="dialog-item-x"
+                    @click=${() => {
+                        this.removeSelf();
+                    }}
+                >
+                    <b> Close</b>
+                </button>
+                <button
+                    class="dialog-item-x"
+                    @click=${() => {
+                        this.connector.__arrayUtils.arrayFilter.setLastFilter(this.filter);
+                        this.connector.__arrayUtils.reRunFilter();
+                        this.removeSelf();
+                    }}
+                >
+                    <b> Query & close</b>
+                </button>
+                <button
+                    class="dialog-item-x"
+                    @click=${() => {
+                        this.connector.__arrayUtils.arrayFilter.setLastFilter(this.filter);
+                        this.connector.__arrayUtils.reRunFilter();
+                    }}
+                >
+                    <b> Query only</b>
+                </button>
+            </div>
+
+            ${group(this.filter, this, 0)}
         </div>`;
     }
 }

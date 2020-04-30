@@ -149,7 +149,7 @@ export type OperatorObject = {
     type: ObjectType;
     groupType: GroupType;
     attribute: string | null;
-    operator: Operator | null;
+    operator: FilterOperator | null;
     value: string | null;
     valueType: ValueType | null;
     attributeType: DataTypes;

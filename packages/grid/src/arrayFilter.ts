@@ -24,6 +24,10 @@ export class ArrayFilter {
         return this.lastFilter;
     }
 
+    public setLastFilter(filter: OperatorObject) {
+        this.lastFilter = filter;
+    }
+
     public getFilterFromType(type: string) {
         switch (type) {
             case 'date':
@@ -60,22 +64,22 @@ export class ArrayFilter {
             for (let i = 0; i < ObjFilter.operatorObject.length; i++) {
                 const filter = ObjFilter.operatorObject[i];
                 if (filter.groupType === 'AND') {
-                    return this.andStatement(rowData, ObjFilter);
+                    return this.andStatement(rowData, filter);
                 }
                 if (filter.groupType === 'OR') {
-                    return this.orStatement(rowData, ObjFilter);
+                    return this.orStatement(rowData, filter);
                 }
                 if (filter.groupType === 'NONE') {
-                    let value;
-                    if (ObjFilter.valueType === 'ATTRIBUTE') {
-                        value = rowData[ObjFilter.value];
+                    let value = filter.value;
+                    if (filter.valueType === 'ATTRIBUTE') {
+                        value = rowData[filter.value];
                     }
 
                     const result = objectFilter(rowData, {
                         value: value,
-                        operator: this.operators[ObjFilter.operator],
-                        attribute: ObjFilter.attribute,
-                        type: ObjFilter.type
+                        operator: this.operators[filter.operator],
+                        attribute: filter.attribute,
+                        type: filter.attributeType
                     });
                     // noo need to check all
                     if (result) {
@@ -93,22 +97,22 @@ export class ArrayFilter {
             for (let i = 0; i < ObjFilter.operatorObject.length; i++) {
                 const filter = ObjFilter.operatorObject[i];
                 if (filter.groupType === 'AND') {
-                    return this.andStatement(rowData, ObjFilter);
+                    return this.andStatement(rowData, filter);
                 }
                 if (filter.groupType === 'OR') {
-                    return this.orStatement(rowData, ObjFilter);
+                    return this.orStatement(rowData, filter);
                 }
                 if (filter.groupType === 'NONE') {
-                    let value;
-                    if (ObjFilter.valueType === 'ATTRIBUTE') {
-                        value = rowData[ObjFilter.value];
+                    let value = filter.value;
+                    if (filter.valueType === 'ATTRIBUTE') {
+                        value = rowData[filter.value];
                     }
 
                     const result = objectFilter(rowData, {
                         value: value,
-                        operator: this.operators[ObjFilter.operator],
-                        attribute: ObjFilter.attribute,
-                        type: ObjFilter.type
+                        operator: this.operators[filter.operator],
+                        attribute: filter.attribute,
+                        type: filter.attributeType
                     });
                     // noo need to check all
                     if (!result) {

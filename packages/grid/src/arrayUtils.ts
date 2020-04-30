@@ -3,7 +3,6 @@ import { ArraySort } from './arraySort';
 import { ArrayGrouping } from './arrayGrouping';
 import {
     ISortObjectInterface,
-    IFilterObj,
     IEntity,
     IGroupingObj,
     IGridConfig,
@@ -301,6 +300,7 @@ export class ArrayUtils {
             attributeType: null,
             operatorObject: []
         };
+
         const columns = config.groups.flatMap((x) => x.rows);
         columns.forEach((col) => {
             const f = col.filterable;
@@ -311,13 +311,33 @@ export class ArrayUtils {
                     valueType: 'VALUE',
                     attribute: col.attribute,
                     attributeType: (col.type as any) || 'text',
-                    operator: f.operator
-                        ? this.arrayFilter.operators[f.operator]
-                        : this.arrayFilter.operators[this.arrayFilter.getFilterFromType(col.type)],
+                    operator: f.operator || this.arrayFilter.getFilterFromType(col.type),
                     value: f.currentValue as any
                 });
             }
         });
+
+        const existingFilter = this.arrayFilter.getLastFilter();
+        if (
+            existingFilter &&
+            existingFilter.operatorObject &&
+            existingFilter.operatorObject.length
+        ) {
+            if (existingFilter.groupType === 'AND') {
+                filter.operatorObject.concat(existingFilter.operatorObject);
+                const attributes: string[] = [];
+                const keep: any[] = [];
+                filter.operatorObject.forEach((element) => {
+                    if (attributes.indexOf(element.attribute) === -1) {
+                        keep.push(element);
+                    }
+                });
+                filter.operatorObject = keep;
+            } else {
+                filter.operatorObject.push(existingFilter);
+            }
+        }
+
         this.gridInterface.filteredDataset = this.arrayFilter.runQueryOn(
             this.gridInterface.completeDataset,
             filter

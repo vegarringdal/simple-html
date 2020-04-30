@@ -8,7 +8,7 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
     let filterValue: any;
     let filterOperator = filter.operator;
     let newFilterOperator: number;
-    let type: string = filter.type;
+    let type: string = filter.type || 'text';
 
     if (filter.value === 'null') {
         type = 'null';
