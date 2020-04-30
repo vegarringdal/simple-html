@@ -71,7 +71,7 @@ export default class extends HTMLElement {
             >
                 <b> close</b>
             </button>
-            ${group(this.filter, this, 0)}
+            ${group(this.connector.__arrayUtils.getCurrentFilter() || this.filter, this, 0)}
         </div>`;
     }
 }

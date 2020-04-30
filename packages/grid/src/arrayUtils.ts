@@ -7,7 +7,8 @@ import {
     IEntity,
     IGroupingObj,
     IGridConfig,
-    ICell
+    ICell,
+    OperatorObject
 } from './interfaces';
 import { GridInterface } from './gridInterface';
 
@@ -184,7 +185,7 @@ export class ArrayUtils {
         this.arrayGrouping.reset();
     }
 
-    public getCurrentFilter(): IFilterObj[] {
+    public getCurrentFilter(): OperatorObject {
         return this.arrayFilter.getLastFilter();
     }
 
@@ -290,18 +291,30 @@ export class ArrayUtils {
                 col.filterable.currentValue = event.target.value;
         }
 
-        const filter: IFilterObj[] = [];
+        const filter: OperatorObject = {
+            type: 'GROUP',
+            groupType: 'AND',
+            attribute: null,
+            operator: null,
+            valueType: null,
+            value: null,
+            attributeType: null,
+            operatorObject: []
+        };
         const columns = config.groups.flatMap((x) => x.rows);
         columns.forEach((col) => {
             const f = col.filterable;
             if (f && f.currentValue !== null && f.currentValue !== undefined) {
-                filter.push({
+                filter.operatorObject.push({
+                    type: 'CONDITION',
+                    groupType: 'NONE',
+                    valueType: 'VALUE',
                     attribute: col.attribute,
-                    type: col.type || 'text',
+                    attributeType: (col.type as any) || 'text',
                     operator: f.operator
                         ? this.arrayFilter.operators[f.operator]
                         : this.arrayFilter.operators[this.arrayFilter.getFilterFromType(col.type)],
-                    value: f.currentValue
+                    value: f.currentValue as any
                 });
             }
         });
