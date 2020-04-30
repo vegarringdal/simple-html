@@ -14,6 +14,10 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
         type = 'null';
     }
 
+    if (filter.value === null || filter.value === undefined) {
+        type = 'null';
+    }
+
     rowValue = rowData[filter.attribute];
 
     // helper for boolean
