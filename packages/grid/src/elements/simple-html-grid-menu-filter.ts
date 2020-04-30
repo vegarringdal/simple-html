@@ -3,6 +3,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { ICell, FilterOperator } from '../interfaces';
+import { generateMenu } from './generateMenu';
 
 @customElement('simple-html-grid-menu-filter')
 export default class extends HTMLElement {
@@ -78,6 +79,21 @@ export default class extends HTMLElement {
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('DOES_NOT_CONTAIN')}>
                 Does not contain
-            </p>`;
+            </p>
+            <p
+                class="simple-html-grid-menu-item"
+                @click=${(e: any) =>
+                    generateMenu(
+                        'simple-html-grid-filter-dialog',
+                        e,
+                        this.connector,
+                        this.ref,
+                        null,
+                        null,
+                        null
+                    )}
+            >
+                Advanced
+            </p> `;
     }
 }

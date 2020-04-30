@@ -130,3 +130,28 @@ export interface IFilterObj {
     attribute: string;
     type: string;
 }
+
+export type GroupType = 'AND' | 'OR' | 'NONE';
+export type ObjectType = 'CONDITION' | 'GROUP';
+export type ValueType = 'ATTRIBUTE' | 'VALUE';
+export type Operator =
+    | 'BEGIN_WITH'
+    | 'EQUAL'
+    | 'NOT_EQUAL_TO'
+    | 'CONTAINS'
+    | 'GREATER_THAN'
+    | 'GREATER_THAN_OR_EQUAL_TO'
+    | 'LESS_THAN'
+    | 'LESS_THAN_OR_EQUAL_TO'
+    | 'DOES_NOT_CONTAIN'
+    | 'END_WITH';
+export type OperatorObject = {
+    type: ObjectType;
+    groupType: GroupType;
+    attribute: string | null;
+    operator: Operator | null;
+    value: string | null;
+    valueType: ValueType | null;
+    attributeType: DataTypes;
+    operatorObject?: OperatorObject[];
+};

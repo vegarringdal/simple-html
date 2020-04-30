@@ -3,7 +3,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell } from '../interfaces';
+import { ICell, OperatorObject } from '../interfaces';
 
 function generateMenu(event: any, rows: any[]) {
     const menu = document.createElement('simple-html-grid-menu-custom');
@@ -14,42 +14,67 @@ function generateMenu(event: any, rows: any[]) {
     document.body.appendChild(menu);
 }
 
+const OPERATORS = {
+    EQUAL: '===',
+    LESS_THAN_OR_EQUAL_TO: '>=',
+    GREATER_THAN_OR_EQUAL_TO: '<=',
+    LESS_THAN: '>',
+    GREATER_THAN: '<',
+    CONTAINS: '*',
+    NOT_EQUAL_TO: '!==',
+    DOES_NOT_CONTAIN: '!*',
+    BEGIN_WITH: 'x*',
+    END_WITH: '*x'
+};
+
 @customElement('simple-html-grid-filter-dialog')
 export default class extends HTMLElement {
     connector: GridInterface;
     cell: ICell;
     ref: SimpleHtmlGrid;
     width: number;
+    filterAttributes: ICell[];
+    filter: OperatorObject;
 
     connectedCallback() {
-        /* (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
-        document.addEventListener('click', this);
-        this.ref.addEventListener('vertical-scroll', this);
-        setTimeout(() => {
-            document.addEventListener('contextmenu', this);
-        }, 50); */
+        this.filter = {
+            type: 'GROUP',
+            groupType: 'AND',
+            attribute: null,
+            operator: null,
+            valueType: null,
+            value: null,
+            attributeType: 'text',
+            operatorObject: []
+        };
+        (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
+        this.filterAttributes = this.connector.config.groups.flatMap((y) => y.rows);
+    }
+
+    handleEvent(e: any) {
+        if (e.target !== this) {
+            this.removeSelf();
+        }
+    }
+
+    removeSelf() {
+        document.body.removeChild(this);
     }
 
     render() {
         return html`<div style="width:550px" class="simple-html-grid simple-html-filter-dialog">
-            ${group(x, this, 0)}
+            <button
+                class="dialog-item-x"
+                @click=${() => {
+                    this.removeSelf();
+                }}
+            >
+                <b> close</b>
+            </button>
+            ${group(this.filter, this, 0)}
         </div>`;
     }
 }
-
-type GroupType = 'AND' | 'OR' | 'NONE';
-type ObjectType = 'CONDITION' | 'GROUP';
-type ValueType = 'ATTRIBUTE' | 'VALUE';
-type Operator = '==' | '=>' | '=<' | '>' | '<' | '*=' | '=*' | 'IN' | null;
-type OperatorObject = {
-    type: ObjectType;
-    groupType: GroupType;
-    attribute: string | null;
-    operator: Operator | null;
-    value: string | null;
-    valueType: ValueType | null;
-    operatorObject?: OperatorObject[];
-};
 
 function group(g: OperatorObject, ctx: any, level: number, parent?: any[]) {
     return html`
@@ -76,11 +101,12 @@ function group(g: OperatorObject, ctx: any, level: number, parent?: any[]) {
                                 g.operatorObject.push({
                                     type: 'GROUP',
                                     groupType: 'AND',
-                                    attribute: 'job',
-                                    operator: '==',
+                                    attribute: 'select',
+                                    operator: 'EQUAL',
                                     valueType: 'VALUE',
+                                    attributeType: 'text',
                                     operatorObject: [],
-                                    value: 'wow'
+                                    value: ''
                                 });
                                 ctx.render();
                             }
@@ -91,10 +117,12 @@ function group(g: OperatorObject, ctx: any, level: number, parent?: any[]) {
                                 g.operatorObject.push({
                                     type: 'CONDITION',
                                     groupType: 'NONE',
-                                    attribute: 'job',
-                                    operator: '==',
+                                    attribute: 'select',
+                                    operator: 'EQUAL',
                                     valueType: 'VALUE',
-                                    value: 'wow'
+                                    attributeType: 'text',
+                                    operatorObject: [],
+                                    value: ''
                                 });
                                 ctx.render();
                             }
@@ -144,7 +172,6 @@ function group(g: OperatorObject, ctx: any, level: number, parent?: any[]) {
 
 function condition(g: OperatorObject[], ctx: any, level: number): any {
     ctx.width = level + ctx.width;
-    console.log(ctx.width);
     if (Array.isArray(g)) {
         return g.map((element, i) => {
             if (element.type === 'GROUP') {
@@ -156,14 +183,19 @@ function condition(g: OperatorObject[], ctx: any, level: number): any {
                         <button
                             class="dialog-item-y"
                             @click=${(e: any) => {
-                                generateMenu(e, [
-                                    {
-                                        title: 'Attributes todo',
-                                        callback: () => {
-                                            ctx.render();
-                                        }
-                                    }
-                                ]);
+                                generateMenu(
+                                    e,
+                                    ctx.filterAttributes.map((e: ICell) => {
+                                        return {
+                                            title: e.attribute,
+                                            callback: () => {
+                                                element.attribute = e.attribute;
+                                                element.attributeType = e.type;
+                                                ctx.render();
+                                            }
+                                        };
+                                    })
+                                );
                             }}
                         >
                             ${element.attribute}
@@ -173,33 +205,72 @@ function condition(g: OperatorObject[], ctx: any, level: number): any {
                             @click=${(e: any) => {
                                 generateMenu(e, [
                                     {
-                                        title: 'Equal to',
+                                        title: 'BEGIN WITH',
                                         callback: () => {
+                                            element.operator = 'BEGIN_WITH';
                                             ctx.render();
                                         }
                                     },
                                     {
-                                        title: 'Not equal to',
+                                        title: 'EQUAL',
                                         callback: () => {
+                                            element.operator = 'EQUAL';
                                             ctx.render();
                                         }
                                     },
                                     {
-                                        title: 'Starts with',
+                                        title: 'CONTAINS',
                                         callback: () => {
+                                            element.operator = 'CONTAINS';
                                             ctx.render();
                                         }
                                     },
                                     {
-                                        title: 'Greater than',
+                                        title: 'DOES NOT CONTAIN',
                                         callback: () => {
+                                            element.operator = 'DOES_NOT_CONTAIN';
+                                            ctx.render();
+                                        }
+                                    },
+                                    {
+                                        title: 'END WITH',
+                                        callback: () => {
+                                            element.operator = 'END_WITH';
+                                            ctx.render();
+                                        }
+                                    },
+                                    {
+                                        title: 'GREATER THAN',
+                                        callback: () => {
+                                            element.operator = 'GREATER_THAN';
+                                            ctx.render();
+                                        }
+                                    },
+                                    {
+                                        title: 'LESS THAN',
+                                        callback: () => {
+                                            element.operator = 'LESS_THAN';
+                                            ctx.render();
+                                        }
+                                    },
+                                    {
+                                        title: 'LESS THAN OR EQUAL TO',
+                                        callback: () => {
+                                            element.operator = 'LESS_THAN_OR_EQUAL_TO';
+                                            ctx.render();
+                                        }
+                                    },
+                                    {
+                                        title: 'NOT EQUAL TO',
+                                        callback: () => {
+                                            element.operator = 'NOT_EQUAL_TO';
                                             ctx.render();
                                         }
                                     }
                                 ]);
                             }}
                         >
-                            <b>${element.operator}</b>
+                            <b>${OPERATORS[element.operator]}</b>
                         </button>
                         ${element.valueType === 'VALUE'
                             ? html`<input
@@ -213,17 +284,22 @@ function condition(g: OperatorObject[], ctx: any, level: number): any {
                             : html`<button
                                   class="dialog-item-y"
                                   @click=${(e: any) => {
-                                      generateMenu(e, [
-                                          {
-                                              title: 'Attributes todo',
-                                              callback: () => {
-                                                  ctx.render();
-                                              }
-                                          }
-                                      ]);
+                                      generateMenu(
+                                          e,
+                                          ctx.filterAttributes.map((e: ICell) => {
+                                              return {
+                                                  title: e.attribute,
+                                                  callback: () => {
+                                                      element.value = e.attribute;
+                                                      element.attributeType = e.type;
+                                                      ctx.render();
+                                                  }
+                                              };
+                                          })
+                                      );
                                   }}
                               >
-                                  ${element.attribute}
+                                  ${element.value}
                               </button> `}
 
                         <button
@@ -277,7 +353,7 @@ function condition(g: OperatorObject[], ctx: any, level: number): any {
     return '';
 }
 
-export const x: OperatorObject = {
+/* export const x: OperatorObject = {
     type: 'GROUP',
     groupType: 'AND',
     attribute: null,
@@ -354,3 +430,4 @@ export const x: OperatorObject = {
         }
     ]
 };
+ */
