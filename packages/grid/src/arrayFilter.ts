@@ -44,7 +44,7 @@ export class ArrayFilter {
         this.lastFilter = ObjFilter;
 
         if (!ObjFilter) {
-            return objArray;
+            return objArray.slice();
         }
 
         const resultArray = objArray.filter((rowData) => {
