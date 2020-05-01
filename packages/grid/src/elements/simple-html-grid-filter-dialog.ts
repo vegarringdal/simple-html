@@ -64,11 +64,18 @@ export default class extends HTMLElement {
                         this.removeSelf();
                     }}
                 >
-                    <b> Cancel</b>
+                    <b> Close</b>
                 </button>
                 <button
                     class="dialog-item-x"
                     @click=${() => {
+                        const columns = this.connector.config.groups.flatMap((x) => x.rows);
+                        columns.forEach((col) => {
+                            const f = col.filterable;
+                            if (f) {
+                                f.currentValue = null;
+                            }
+                        });
                         this.connector.setCurrentFilter(this.filter);
                         this.connector.reRunFilter();
                         this.removeSelf();
@@ -79,6 +86,13 @@ export default class extends HTMLElement {
                 <button
                     class="dialog-item-x"
                     @click=${() => {
+                        const columns = this.connector.config.groups.flatMap((x) => x.rows);
+                        columns.forEach((col) => {
+                            const f = col.filterable;
+                            if (f) {
+                                f.currentValue = null;
+                            }
+                        });
                         this.connector.setCurrentFilter(this.filter);
                         this.connector.reRunFilter();
                     }}

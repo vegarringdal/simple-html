@@ -43,6 +43,19 @@ export default class extends HTMLElement {
         document.body.removeChild(this);
     }
 
+    clearAll() {
+        this.connector.setCurrentFilter(null);
+        const columns = this.connector.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f) {
+                f.currentValue = null;
+            }
+        });
+        this.connector.reRender();
+        this.connector.reRunFilter();
+    }
+
     render() {
         return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('EQUAL')}>
                 Equal to
@@ -80,6 +93,7 @@ export default class extends HTMLElement {
             <p class="simple-html-grid-menu-item" @click=${() => this.select('DOES_NOT_CONTAIN')}>
                 Does not contain
             </p>
+            <hr />
             <p
                 class="simple-html-grid-menu-item"
                 @click=${(e: any) =>
@@ -94,6 +108,10 @@ export default class extends HTMLElement {
                     )}
             >
                 Advanced
-            </p> `;
+            </p>
+            <hr />
+            <p class="simple-html-grid-menu-item" @click=${this.clearAll}>
+                clear filters
+            </p>`;
     }
 }

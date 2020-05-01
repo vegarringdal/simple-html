@@ -333,13 +333,14 @@ export class ArrayUtils {
             existingFilter.operatorObject.length
         ) {
             if (existingFilter.groupType === 'AND') {
-                filter.operatorObject.concat(existingFilter.operatorObject);
+                filter.operatorObject = filter.operatorObject.concat(existingFilter.operatorObject);
                 const attributes: string[] = [];
                 const keep: any[] = [];
                 filter.operatorObject.forEach((element) => {
                     if (attributes.indexOf(element.attribute) === -1) {
                         keep.push(element);
                     }
+                    attributes.push(element.attribute);
                 });
                 filter.operatorObject = keep;
             } else {
