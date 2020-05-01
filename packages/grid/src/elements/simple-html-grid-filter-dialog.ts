@@ -29,6 +29,8 @@ export default class extends HTMLElement {
     filter: OperatorObject;
 
     connectedCallback() {
+        this.style.top = 0;
+        this.style.left = 0;
         this.filter = this.connector.getCurrentFilter() || {
             type: 'GROUP',
             groupType: 'AND',
@@ -39,7 +41,7 @@ export default class extends HTMLElement {
             attributeType: 'text',
             operatorObject: []
         };
-        (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
+        (this.classList as any) = 'simple-html-grid-menu-full';
         this.filterAttributes = this.connector.config.groups.flatMap((y) => y.rows);
     }
 
@@ -62,7 +64,7 @@ export default class extends HTMLElement {
                         this.removeSelf();
                     }}
                 >
-                    <b> Close</b>
+                    <b> Cancel</b>
                 </button>
                 <button
                     class="dialog-item-x"
@@ -72,7 +74,7 @@ export default class extends HTMLElement {
                         this.removeSelf();
                     }}
                 >
-                    <b> Query & close</b>
+                    <b> Run query & close</b>
                 </button>
                 <button
                     class="dialog-item-x"
@@ -81,7 +83,7 @@ export default class extends HTMLElement {
                         this.connector.reRunFilter();
                     }}
                 >
-                    <b> Query only</b>
+                    <b> Run query</b>
                 </button>
             </div>
 
