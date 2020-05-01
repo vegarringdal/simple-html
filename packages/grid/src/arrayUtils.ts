@@ -253,8 +253,17 @@ export class ArrayUtils {
 
     private sortCallback(event: any, col: ICell) {
         // toggle sort
-        const sortAsc =
-            col.sortable.sortAscending === null ? true : col.sortable.sortAscending ? false : true;
+        let sortAsc;
+        if (!col.sortable.noToggle) {
+            sortAsc =
+                col.sortable.sortAscending === null
+                    ? true
+                    : col.sortable.sortAscending
+                    ? false
+                    : true;
+        } else {
+            sortAsc = col.sortable.sortAscending;
+        }
 
         // clear config, so it can be set after new sort
         this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));

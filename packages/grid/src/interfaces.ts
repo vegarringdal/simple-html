@@ -63,6 +63,7 @@ export interface ICell {
         /**Internal used for making sort icon on header*/
         sortNo?: number;
         beforeSortCallbackFn?: any;
+        noToggle?: boolean;
         /**Default TRUE */
         auto?: boolean;
     };

@@ -118,15 +118,15 @@ export class ArraySort {
                 // if not adding, just set it
                 this.curSort = [sort];
                 this.curSort[0].no = 1;
-                if (this.lastSort[0]) {
+                /*   if (this.lastSort[0]) {
                     if (this.lastSort[0].attribute === this.curSort[0].attribute) {
                         if (this.lastSort[0].asc === this.curSort[0].asc) {
                             if (!useSetValue) {
-                                this.curSort[0].asc = this.curSort[0].asc === true ? false : true;
+                               // this.curSort[0].asc = this.curSort[0].asc === true ? false : true;
                             }
                         }
-                    }
-                }
+                    } 
+                } */
                 this.lastSort = this.curSort;
             }
         }
