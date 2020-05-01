@@ -5,7 +5,7 @@ import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
 import { columnDragDrop } from './dragEvent';
-import { generateMenu } from './generateMenu';
+import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-cell-label')
 export default class extends HTMLElement {
@@ -82,7 +82,13 @@ export default class extends HTMLElement {
 
         const contentMenu = function (e: any) {
             if ((e as any).button !== 0) {
-                generateMenu('simple-html-grid-menu-label', e, connector, ref, cell);
+                generateMenuWithComponentName(
+                    'simple-html-grid-menu-label',
+                    e,
+                    connector,
+                    ref,
+                    cell
+                );
             }
         };
 

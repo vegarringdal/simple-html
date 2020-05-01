@@ -3,7 +3,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { ICell, FilterOperator } from '../interfaces';
-import { generateMenu } from './generateMenu';
+import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-menu-filter')
 export default class extends HTMLElement {
@@ -83,7 +83,7 @@ export default class extends HTMLElement {
             <p
                 class="simple-html-grid-menu-item"
                 @click=${(e: any) =>
-                    generateMenu(
+                    generateMenuWithComponentName(
                         'simple-html-grid-filter-dialog',
                         e,
                         this.connector,
