@@ -29,8 +29,8 @@ export default class extends HTMLElement {
     filter: OperatorObject;
 
     connectedCallback() {
-        this.style.top = 0;
-        this.style.left = 0;
+        this.style.top = '0';
+        this.style.left = '0';
         this.filter = this.connector.getCurrentFilter() || {
             type: 'GROUP',
             groupType: 'AND',

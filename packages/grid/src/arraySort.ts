@@ -74,7 +74,7 @@ export class ArraySort {
             this.curSort = param;
         } else {
             let sort: any;
-            const useSetValue = false;
+            //const useSetValue = false;
             if (typeof param === 'string') {
                 sort = {
                     attribute: param,
