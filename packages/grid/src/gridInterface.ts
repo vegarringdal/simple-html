@@ -1,5 +1,5 @@
 import { SimpleHtmlGrid } from '.';
-import { IGroupingObj, IGridConfig, IEntity, ICell } from './interfaces';
+import { IGroupingObj, IGridConfig, IEntity, ICell, OperatorObject } from './interfaces';
 import { ArrayUtils } from './arrayUtils';
 import { Selection } from './selection';
 import { DataSource } from './dataSource';
@@ -317,5 +317,16 @@ export class GridInterface {
 
     disconnectGrid() {
         this.__SimpleHtmlGrid = null;
+    }
+
+    getCurrentFilter() {
+        return this.__arrayUtils.getCurrentFilter();
+    }
+    setCurrentFilter(filter: OperatorObject) {
+        this.__arrayUtils.arrayFilter.setLastFilter(filter);
+    }
+
+    reRunFilter() {
+        this.__arrayUtils.reRunFilter();
     }
 }

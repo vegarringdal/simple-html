@@ -1,4 +1,4 @@
-import { IEntity, OperatorObject } from './interfaces';
+import { IEntity, OperatorObject, FilterOperator } from './interfaces';
 import { objectFilter } from './objectFilter';
 
 export class ArrayFilter {
@@ -28,13 +28,13 @@ export class ArrayFilter {
         this.lastFilter = filter;
     }
 
-    public getFilterFromType(type: string) {
+    public getFilterFromType(type: string): FilterOperator {
         switch (type) {
             case 'date':
             case 'number':
                 return 'GREATER_THAN';
             case 'bool':
-                return 'EQUAL_TO';
+                return 'EQUAL';
             default:
                 return 'BEGIN_WITH';
         }

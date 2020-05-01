@@ -37,7 +37,7 @@ export default class extends HTMLElement {
     filter: OperatorObject;
 
     connectedCallback() {
-        this.filter = this.connector.__arrayUtils.getCurrentFilter() || {
+        this.filter = this.connector.getCurrentFilter() || {
             type: 'GROUP',
             groupType: 'AND',
             attribute: null,
@@ -75,8 +75,8 @@ export default class extends HTMLElement {
                 <button
                     class="dialog-item-x"
                     @click=${() => {
-                        this.connector.__arrayUtils.arrayFilter.setLastFilter(this.filter);
-                        this.connector.__arrayUtils.reRunFilter();
+                        this.connector.setCurrentFilter(this.filter);
+                        this.connector.reRunFilter();
                         this.removeSelf();
                     }}
                 >
@@ -85,8 +85,8 @@ export default class extends HTMLElement {
                 <button
                     class="dialog-item-x"
                     @click=${() => {
-                        this.connector.__arrayUtils.arrayFilter.setLastFilter(this.filter);
-                        this.connector.__arrayUtils.reRunFilter();
+                        this.connector.setCurrentFilter(this.filter);
+                        this.connector.reRunFilter();
                     }}
                 >
                     <b> Query only</b>
