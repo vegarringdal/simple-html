@@ -107,14 +107,56 @@ export function filterDialogConditionTemplate(g: OperatorObject[], ctx: any, lev
                             <b>${OPERATORS[element.operator]}</b>
                         </button>
                         ${element.valueType === 'VALUE'
-                            ? html`<input
-                                  class="dialog-item-y"
-                                  style="text-align: center;"
-                                  value=${element.value}
-                                  @input=${(e: any) => {
-                                      element.value = e.target.value;
-                                  }}
-                              />`
+                            ? (() => {
+                                  switch (element.attributeType) {
+                                      case 'boolean':
+                                          return html`<input
+                                              class="dialog-item-y"
+                                              style="text-align: center;"
+                                              type="checkbox"
+                                              .checked=${element.value}
+                                              @change=${(e: any) => {
+                                                  element.value = e.target.checked;
+                                              }}
+                                              @input=${(e: any) => {
+                                                  element.value = e.target.checked;
+                                              }}
+                                          />`;
+                                      case 'image':
+
+                                      case 'empty':
+
+                                      case 'date':
+                                          return html`<input
+                                              class="dialog-item-y"
+                                              style="text-align: center;"
+                                              type="date"
+                                              .valueAsDate=${element.value || null}
+                                              @input=${(e: any) => {
+                                                  element.value = e.target.valueAsDate;
+                                              }}
+                                          />`;
+                                      case 'number':
+                                          return html`<input
+                                              class="dialog-item-y"
+                                              style="text-align: center;"
+                                              type="number"
+                                              .valueAsNumber=${element.value}
+                                              @input=${(e: any) => {
+                                                  element.value = e.target.valueAsNumber;
+                                              }}
+                                          />`;
+                                      default:
+                                          return html`<input
+                                              class="dialog-item-y"
+                                              style="text-align: center;"
+                                              value=${element.value}
+                                              @input=${(e: any) => {
+                                                  element.value = e.target.value;
+                                              }}
+                                          />`;
+                                  }
+                              })()
                             : html`<button
                                   class="dialog-item-y"
                                   @click=${(e: any) => {
