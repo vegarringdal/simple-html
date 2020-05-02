@@ -3,11 +3,11 @@ import { ArraySort } from './arraySort';
 import { ArrayGrouping } from './arrayGrouping';
 import {
     ISortObjectInterface,
-    IFilterObj,
     IEntity,
     IGroupingObj,
     IGridConfig,
-    ICell
+    ICell,
+    OperatorObject
 } from './interfaces';
 import { GridInterface } from './gridInterface';
 
@@ -184,7 +184,7 @@ export class ArrayUtils {
         this.arrayGrouping.reset();
     }
 
-    public getCurrentFilter(): IFilterObj[] {
+    public getCurrentFilter(): OperatorObject {
         return this.arrayFilter.getLastFilter();
     }
 
@@ -253,8 +253,17 @@ export class ArrayUtils {
 
     private sortCallback(event: any, col: ICell) {
         // toggle sort
-        const sortAsc =
-            col.sortable.sortAscending === null ? true : col.sortable.sortAscending ? false : true;
+        let sortAsc;
+        if (!col.sortable.noToggle) {
+            sortAsc =
+                col.sortable.sortAscending === null
+                    ? true
+                    : col.sortable.sortAscending
+                    ? false
+                    : true;
+        } else {
+            sortAsc = col.sortable.sortAscending;
+        }
 
         // clear config, so it can be set after new sort
         this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
@@ -290,21 +299,55 @@ export class ArrayUtils {
                 col.filterable.currentValue = event.target.value;
         }
 
-        const filter: IFilterObj[] = [];
+        const filter: OperatorObject = {
+            type: 'GROUP',
+            groupType: 'AND',
+            attribute: null,
+            operator: null,
+            valueType: null,
+            value: null,
+            attributeType: null,
+            operatorObject: []
+        };
+
         const columns = config.groups.flatMap((x) => x.rows);
         columns.forEach((col) => {
             const f = col.filterable;
             if (f && f.currentValue !== null && f.currentValue !== undefined) {
-                filter.push({
+                filter.operatorObject.push({
+                    type: 'CONDITION',
+                    groupType: 'NONE',
+                    valueType: 'VALUE',
                     attribute: col.attribute,
-                    type: col.type || 'text',
-                    operator: f.operator
-                        ? this.arrayFilter.operators[f.operator]
-                        : this.arrayFilter.operators[this.arrayFilter.getFilterFromType(col.type)],
-                    value: f.currentValue
+                    attributeType: (col.type as any) || 'text',
+                    operator: f.operator || this.arrayFilter.getFilterFromType(col.type),
+                    value: f.currentValue as any
                 });
             }
         });
+
+        const existingFilter = this.arrayFilter.getLastFilter();
+        if (
+            existingFilter &&
+            existingFilter.operatorObject &&
+            existingFilter.operatorObject.length
+        ) {
+            if (existingFilter.groupType === 'AND') {
+                filter.operatorObject = filter.operatorObject.concat(existingFilter.operatorObject);
+                const attributes: string[] = [];
+                const keep: any[] = [];
+                filter.operatorObject.forEach((element) => {
+                    if (attributes.indexOf(element.attribute) === -1) {
+                        keep.push(element);
+                    }
+                    attributes.push(element.attribute);
+                });
+                filter.operatorObject = keep;
+            } else {
+                filter.operatorObject.push(existingFilter);
+            }
+        }
+
         this.gridInterface.filteredDataset = this.arrayFilter.runQueryOn(
             this.gridInterface.completeDataset,
             filter

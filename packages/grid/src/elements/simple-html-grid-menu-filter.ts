@@ -3,6 +3,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { ICell, FilterOperator } from '../interfaces';
+import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-menu-filter')
 export default class extends HTMLElement {
@@ -42,6 +43,19 @@ export default class extends HTMLElement {
         document.body.removeChild(this);
     }
 
+    clearAll() {
+        this.connector.setCurrentFilter(null);
+        const columns = this.connector.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f) {
+                f.currentValue = null;
+            }
+        });
+        this.connector.reRender();
+        this.connector.reRunFilter();
+    }
+
     render() {
         return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('EQUAL')}>
                 Equal to
@@ -78,6 +92,26 @@ export default class extends HTMLElement {
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('DOES_NOT_CONTAIN')}>
                 Does not contain
+            </p>
+            <hr />
+            <p
+                class="simple-html-grid-menu-item"
+                @click=${(e: any) =>
+                    generateMenuWithComponentName(
+                        'simple-html-grid-filter-dialog',
+                        e,
+                        this.connector,
+                        this.ref,
+                        null,
+                        null,
+                        null
+                    )}
+            >
+                Advanced
+            </p>
+            <hr />
+            <p class="simple-html-grid-menu-item" @click=${this.clearAll}>
+                clear filters
             </p>`;
     }
 }

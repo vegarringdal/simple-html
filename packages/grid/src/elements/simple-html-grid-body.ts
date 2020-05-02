@@ -13,7 +13,7 @@ export default class extends HTMLElement {
 
     connectedCallback() {
         const config = this.connector.config;
-        this.style.top = config.panelHeight + config.__rowHeight * 2 + 'px';
+        this.style.top = config.panelHeight + config.__rowHeight * 2 + 2 + 'px';
         this.style.bottom = config.footerHeight + 'px';
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('vertical-scroll', this);

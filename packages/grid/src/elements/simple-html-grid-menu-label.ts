@@ -34,9 +34,10 @@ export default class extends HTMLElement {
     select(_type: string, asc?: boolean, add?: boolean) {
         if (_type === 'sort') {
             if (this.cell.sortable) {
-                this.cell.sortable.sortAscending = true;
+                this.cell.sortable.sortAscending = asc;
+                this.cell.sortable.noToggle = true;
             } else {
-                this.cell.sortable = { sortAscending: asc };
+                this.cell.sortable = { sortAscending: asc, noToggle: true };
             }
             this.connector.sortCallback({ shiftKey: add }, this.cell);
         }
@@ -55,17 +56,17 @@ export default class extends HTMLElement {
     render() {
         return html`<p
                 class="simple-html-grid-menu-item"
-                @click=${() => this.select('sort', false, false)}
+                @click=${() => this.select('sort', true, false)}
             >
                 Sort asc
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, false)}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, false)}>
                 Sort desc
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
                 Sort asc (add)
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, true)}>
                 Sort desc (add)
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('groupBy')}>

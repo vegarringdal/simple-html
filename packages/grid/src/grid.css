@@ -394,7 +394,57 @@ input.simple-html-grid-row-input:focus {
     color: var(--simple-html-grid-main-font-color);
 }
 
+.simple-html-grid-menu-full{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 901;
+    background-color: rgba(240, 240, 240, 0.5);
+    min-width: 150px;
+    border-top: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-left: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
+    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+}
+
 .simple-html-grid-menu-item:hover {
 
     background-color: var(--simple-html-grid-main-bg-selected);
+}
+
+
+.simple-html-filter-dialog {
+    box-shadow: 1px 1px 3px 0px #000000b5;
+    top: 30%;
+    position: relative;
+    margin: auto;
+}
+
+.dialog-row {
+    display: flex;
+    height: 20px;
+    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
+}
+
+.dialog-item-block {
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
+}
+
+.dialog-item {
+    display: flex;
+    text-align: center;
+}
+
+.dialog-item-y {
+    min-width: 100px;
+    max-width: 100px;
+    margin-left: 25px;
+}
+
+.dialog-item-x {
+    margin-left: 25px;
 }

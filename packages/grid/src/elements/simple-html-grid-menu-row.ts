@@ -13,11 +13,6 @@ export default class extends HTMLElement {
     rowNo: number;
     rowData: any;
 
-    constructor() {
-        super();
-        console.log('cion');
-    }
-
     connectedCallback() {
         (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
         document.addEventListener('click', this);
@@ -75,7 +70,6 @@ export default class extends HTMLElement {
             this.connector.filteredDataset[row][this.cell.attribute] = data;
         });
         this.connector.reRender();
-        console.log(data);
     }
 
     removeSelf() {

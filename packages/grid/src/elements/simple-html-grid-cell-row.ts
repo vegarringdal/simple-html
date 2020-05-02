@@ -2,7 +2,7 @@ import { customElement, property } from '@simple-html/core';
 import { SimpleHtmlGrid, GridInterface } from '..';
 import { IgridConfigGroups, ICell } from '../interfaces';
 import { html } from 'lit-html';
-import { generateMenu } from './generateMenu';
+import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-cell-row')
 export default class extends HTMLElement {
@@ -83,7 +83,15 @@ export default class extends HTMLElement {
 
             const contentMenu = function (e: any) {
                 if ((e as any).button !== 0) {
-                    generateMenu('simple-html-grid-menu-row', e, connector, ref, cell, rowNo, data);
+                    generateMenuWithComponentName(
+                        'simple-html-grid-menu-row',
+                        e,
+                        connector,
+                        ref,
+                        cell,
+                        rowNo,
+                        data
+                    );
                 }
             };
 

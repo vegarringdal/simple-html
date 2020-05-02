@@ -8,7 +8,6 @@ import { getPropSymbol } from './symbols';
  */
 export function prop(): Function {
     return function reg(_class: Function, prop: string): void {
-        console.log('prop');
         Object.defineProperty(_class, prop, {
             get: function () {
                 return this[getPropSymbol(this.tagName + '_' + prop)];

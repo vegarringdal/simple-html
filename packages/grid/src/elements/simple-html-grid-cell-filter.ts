@@ -2,7 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { IgridConfigGroups } from '../interfaces';
 import { html } from 'lit-html';
-import { generateMenu } from './generateMenu';
+import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-cell-filter')
 export default class extends HTMLElement {
@@ -110,7 +110,13 @@ export default class extends HTMLElement {
 
         const contentMenu = function (e: any) {
             if ((e as any).button !== 0) {
-                generateMenu('simple-html-grid-menu-filter', e, connector, ref, cell);
+                generateMenuWithComponentName(
+                    'simple-html-grid-menu-filter',
+                    e,
+                    connector,
+                    ref,
+                    cell
+                );
             }
         };
 

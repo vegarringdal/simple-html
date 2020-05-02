@@ -92,7 +92,6 @@ export function init() {
     // clean up during HMR
     const cleanUp = {
         handleEvent: function () {
-            console.log('remove');
             window.removeEventListener('HMR-FUSEBOX', cleanUp);
             window.removeEventListener('hashchange', hashChange);
         }
