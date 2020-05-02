@@ -31,7 +31,6 @@ export default class extends HTMLElement {
     }
 
     render() {
-        console.log(this.rows);
         return this.rows.map((row) => {
             return html`
                 <p class="simple-html-grid-menu-item" @click=${() => row.callback(row)}>

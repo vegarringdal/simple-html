@@ -53,7 +53,6 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public triggerEvent(eventName: string, data?: any) {
-        // console.log(eventName)
         const event = new CustomEvent(eventName, {
             bubbles: true,
             detail: {
@@ -111,7 +110,6 @@ export class SimpleHtmlGrid extends HTMLElement {
             const height = node?.clientHeight || this.interface.config.cellHeight * 50;
 
             let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2; //(buffer);
-            console.log(rowsNeeded);
             if (rowsNeeded > 50) {
                 rowsNeeded = 50;
             }
