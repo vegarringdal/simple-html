@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { gotoURL } from '../src/gotoURL';
 import { customElement } from '@simple-html/core';
 import { routeMatchAsync, subscribeHashEvent, unSubscribeHashEvent, init } from '../src';
