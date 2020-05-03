@@ -19,20 +19,12 @@ export class ArrayUtils {
     public arrayFilter: ArrayFilter;
     public arraySort: ArraySort;
     public arrayGrouping: ArrayGrouping;
-    public sortCallbackBinded: (event: any, col: ICell) => void;
-    public filterCallbackBinded: (event: any, col: ICell, config: IGridConfig) => void;
-    public groupingCallbackBinded: (event: any, col: ICell) => void;
     private gridInterface: GridInterface;
-    public removeGroupBinded: any;
 
     constructor(gridInterface: GridInterface) {
         this.arrayFilter = new ArrayFilter();
         this.arraySort = new ArraySort();
         this.arrayGrouping = new ArrayGrouping();
-        this.sortCallbackBinded = this.sortCallback.bind(this);
-        this.filterCallbackBinded = this.filterCallback.bind(this);
-        this.groupingCallbackBinded = this.groupingCallback.bind(this);
-        this.removeGroupBinded = this.removeGroup.bind(this);
         this.gridInterface = gridInterface;
     }
 
@@ -195,7 +187,7 @@ export class ArrayUtils {
         return x;
     }
 
-    private removeGroup(group: IGroupingObj) {
+    public removeGroup(group: IGroupingObj) {
         const groupings = this.getGrouping();
         const x = groupings.indexOf(group);
         if (x !== -1) {
@@ -220,7 +212,7 @@ export class ArrayUtils {
         this.gridInterface.publishEvent('collecton-grouping');
     }
 
-    private groupingCallback(_event: any, col: ICell) {
+    public groupingCallback(_event: any, col: ICell) {
         let newF = col ? true : false;
         const groupings: IGroupingObj[] = this.gridInterface.config.groupingSet || [];
         col &&
@@ -251,7 +243,7 @@ export class ArrayUtils {
         this.gridInterface.publishEvent('collecton-grouping');
     }
 
-    private sortCallback(event: any, col: ICell) {
+    public sortCallback(event: any, col: ICell) {
         // toggle sort
         let sortAsc;
         if (!col.sortable.noToggle) {
@@ -280,7 +272,7 @@ export class ArrayUtils {
         this.gridInterface.publishEvent('collecton-sort');
     }
 
-    private filterCallback(event: any, col: ICell, config: IGridConfig) {
+    public filterCallback(event: any, col: ICell, config: IGridConfig) {
         // depending on col type we need to get data from correct value
 
         switch (col.type) {

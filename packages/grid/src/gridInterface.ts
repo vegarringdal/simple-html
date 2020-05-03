@@ -288,19 +288,19 @@ export class GridInterface {
     }
 
     groupingCallback(event: any, col: ICell) {
-        this.__arrayUtils.groupingCallbackBinded(event, col);
+        this.__arrayUtils.groupingCallback(event, col);
     }
 
     filterCallback(event: any, col: ICell) {
-        this.__arrayUtils.filterCallbackBinded(event, col, this.__CONFIG);
+        this.__arrayUtils.filterCallback(event, col, this.__CONFIG);
     }
 
     sortCallback(event: any, col: ICell) {
-        this.__arrayUtils.sortCallbackBinded(event, col);
+        this.__arrayUtils.sortCallback(event, col);
     }
 
     removeGroup(group: IGroupingObj) {
-        this.__arrayUtils.removeGroupBinded(group);
+        this.__arrayUtils.removeGroup(group);
     }
 
     groupExpand(id: string) {
