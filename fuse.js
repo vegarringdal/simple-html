@@ -21,6 +21,7 @@ class Context {
                 include: ['./packages', `./samples/${folderInSamples}`],
                 ignored: ['dist']
             },
+            sourceMap: !prod,
             hmr: { plugin: `./samples/${folderInSamples}/fuseHmrPlugin.ts` },
             devServer: !prod,
             plugins: [
