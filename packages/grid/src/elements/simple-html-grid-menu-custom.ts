@@ -7,7 +7,7 @@ export default class extends HTMLElement {
     rows: any[];
 
     connectedCallback() {
-        this.classList.add(...['simple-html-grid', 'simple-html-grid-menu']);
+        this.classList.add('simple-html-grid', 'simple-html-grid-menu');
 
         setTimeout(() => {
             document.addEventListener('click', this);
