@@ -67,7 +67,7 @@ export default class extends HTMLElement {
 
     pasteIntoCells(data: any) {
         this.connector.selection.getSelectedRows().forEach((row: number) => {
-            this.connector.filteredDataset[row][this.cell.attribute] = data;
+            this.connector.displayedDataset[row][this.cell.attribute] = data;
         });
         this.connector.reRender();
     }
