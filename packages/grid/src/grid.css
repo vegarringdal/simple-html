@@ -449,5 +449,6 @@ input.simple-html-grid-row-input:focus {
 }
 
 .dialog-item-x {
+    min-width: 15px; /* due to icon */
     margin-left: 25px;
 }

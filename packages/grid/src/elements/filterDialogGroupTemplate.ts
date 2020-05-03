@@ -1,6 +1,6 @@
 import { html } from 'lit-html';
 import { OperatorObject } from '../interfaces';
-import { filterDialogConditionTemplate } from './filterDialogConditionTemplate';
+import { filterDialogConditionTemplate } from './filterDialogCondition/filterDialogConditionTemplate';
 import { generateMenu } from './generateMenu';
 export function filterDialogGroupTemplate(
     g: OperatorObject,
@@ -23,7 +23,6 @@ export function filterDialogGroupTemplate(
 
             <button
                 class="dialog-item-x"
-                style="width:15px"
                 @click=${(e: any) => {
                     generateMenu(e, [
                         {
@@ -74,7 +73,6 @@ export function filterDialogGroupTemplate(
             </button>
             <button
                 class="dialog-item-x"
-                style="width:15px"
                 @click=${() => {
                     parent && parent.splice(parent.indexOf(g), 1);
                     if (!parent) {

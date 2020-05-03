@@ -6,19 +6,6 @@ import { html } from 'lit-html';
 import { ICell, OperatorObject } from '../interfaces';
 import { filterDialogGroupTemplate } from './filterDialogGroupTemplate';
 
-export const OPERATORS = {
-    EQUAL: '===',
-    LESS_THAN_OR_EQUAL_TO: '<=',
-    GREATER_THAN_OR_EQUAL_TO: '>=',
-    LESS_THAN: '<',
-    GREATER_THAN: '>',
-    CONTAINS: '*',
-    NOT_EQUAL_TO: '!==',
-    DOES_NOT_CONTAIN: '!*',
-    BEGIN_WITH: 'x*',
-    END_WITH: '*x'
-};
-
 @customElement('simple-html-grid-filter-dialog')
 export default class extends HTMLElement {
     connector: GridInterface;
