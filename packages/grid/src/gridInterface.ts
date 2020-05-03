@@ -261,7 +261,8 @@ export class GridInterface {
         if (
             event === 'collecton-filter' ||
             event === 'collection-change' ||
-            event === 'collecton-grouping'
+            event === 'collecton-grouping' ||
+            event === 'collecton-sort'
         ) {
             // changes that make collection change needs rowcache to be updated
             this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
