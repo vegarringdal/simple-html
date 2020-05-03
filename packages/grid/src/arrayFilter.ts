@@ -59,7 +59,7 @@ export class ArrayFilter {
         return resultArray;
     }
 
-    orStatement(rowData: IEntity, ObjFilter: OperatorObject): boolean {
+    private orStatement(rowData: IEntity, ObjFilter: OperatorObject): boolean {
         if (Array.isArray(ObjFilter.operatorObject)) {
             for (let i = 0; i < ObjFilter.operatorObject.length; i++) {
                 const filter = ObjFilter.operatorObject[i];
@@ -92,7 +92,7 @@ export class ArrayFilter {
         return false;
     }
 
-    andStatement(rowData: IEntity, ObjFilter: OperatorObject): boolean {
+    private andStatement(rowData: IEntity, ObjFilter: OperatorObject): boolean {
         if (Array.isArray(ObjFilter.operatorObject)) {
             for (let i = 0; i < ObjFilter.operatorObject.length; i++) {
                 const filter = ObjFilter.operatorObject[i];

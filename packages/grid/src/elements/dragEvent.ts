@@ -5,20 +5,8 @@ let dragCell: ICell = null;
 let dragColumnBlock: HTMLElement = null;
 const delayDragEventTimer: any = null;
 
-/* function offset(el: HTMLElement, width: number) {
-    const rect = el.getBoundingClientRect();
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
-        scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-    return {
-        top: rect.top + scrollTop,
-        left: rect.left + scrollLeft,
-        center: rect.left + width / 2 + scrollLeft
-    };
-} */
-
 export const columnDragDropPanel = (event: string, _connector: GridInterface) => {
-    const drop = (e: any) => {
+    const drop = (e: MouseEvent) => {
         if (dragCell.allowGrouping) {
             _connector.groupingCallback(e, dragCell);
         }

@@ -5,11 +5,11 @@ import { html } from 'lit-html';
 
 @customElement('simple-html-grid-footer')
 export default class extends HTMLElement {
-    classList: any = 'simple-html-grid-footer';
     connector: GridInterface;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
+        this.classList.add('simple-html-grid-footer');
         const config = this.connector.config;
         this.style.height = config.footerHeight + 'px';
         this.ref.addEventListener('reRender', this);
@@ -19,7 +19,7 @@ export default class extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.type === 'reRender') {
             this.render();
         }

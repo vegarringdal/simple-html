@@ -62,7 +62,9 @@ export interface ICell {
         sortAscending?: boolean;
         /**Internal used for making sort icon on header*/
         sortNo?: number;
+        /**Internal used for making sort icon on header*/
         beforeSortCallbackFn?: any;
+        /**Internal used for making sort icon on header*/
         noToggle?: boolean;
         /**Default TRUE */
         auto?: boolean;
@@ -78,7 +80,6 @@ export interface ICell {
 
     // needs more work
     renderRowCallBackFn?: any; //cell, data, connector, updatecallback
-
     renderLabelCallBackFn?: any;
     renderFilterCallBackFn?: any;
 }

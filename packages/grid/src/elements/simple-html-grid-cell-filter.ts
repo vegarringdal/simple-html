@@ -6,7 +6,6 @@ import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-cell-filter')
 export default class extends HTMLElement {
-    classList: any = 'simple-html-grid-cell-filter';
     connector: GridInterface;
     cellPosition: number;
     ref: SimpleHtmlGrid;
@@ -16,6 +15,7 @@ export default class extends HTMLElement {
     attribute: string;
 
     connectedCallback() {
+        this.classList.add('simple-html-grid-cell-filter');
         const config = this.connector.config;
         this.style.height = config.cellHeight + 'px';
         this.style.width = this.group.width + 'px';
@@ -25,7 +25,7 @@ export default class extends HTMLElement {
         this.ref.addEventListener('reRender', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.type === 'column-resize') {
             this.style.width = this.group.width + 'px';
         }

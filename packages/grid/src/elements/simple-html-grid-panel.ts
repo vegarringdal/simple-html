@@ -6,18 +6,18 @@ import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-panel')
 export default class extends HTMLElement {
-    classList: any = 'simple-html-grid-panel';
     connector: GridInterface;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
+        this.classList.add('simple-html-grid-panel');
         const config = this.connector.config;
         this.style.height = config.panelHeight + 'px';
         this.ref.addEventListener('reRender', this);
         this.addEventListener('contextmenu', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.type === 'reRender') {
             this.render();
         }

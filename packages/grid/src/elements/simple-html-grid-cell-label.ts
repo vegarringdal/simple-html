@@ -9,7 +9,6 @@ import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-cell-label')
 export default class extends HTMLElement {
-    classList: any = 'simple-html-grid-cell-label';
     connector: GridInterface;
     cellPosition: number;
     ref: SimpleHtmlGrid;
@@ -18,6 +17,7 @@ export default class extends HTMLElement {
     label: string;
 
     connectedCallback() {
+        this.classList.add('simple-html-grid-cell-label');
         const config = this.connector.config;
         this.style.display = 'block';
         this.style.height = config.cellHeight + 'px';
@@ -27,7 +27,7 @@ export default class extends HTMLElement {
         this.ref.addEventListener('reRender', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.type === 'column-resize') {
             this.render();
         }

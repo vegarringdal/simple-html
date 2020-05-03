@@ -11,7 +11,7 @@ export default class extends HTMLElement {
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
-        (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
+        this.classList.add('simple-html-grid', 'simple-html-grid-menu');
         document.addEventListener('click', this);
         this.ref.addEventListener('vertical-scroll', this);
         setTimeout(() => {
@@ -25,7 +25,7 @@ export default class extends HTMLElement {
         document.removeEventListener('contextmenu', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.target !== this) {
             this.removeSelf();
         }

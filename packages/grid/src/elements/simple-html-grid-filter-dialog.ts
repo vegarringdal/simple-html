@@ -41,11 +41,11 @@ export default class extends HTMLElement {
             attributeType: 'text',
             operatorObject: []
         };
-        (this.classList as any) = 'simple-html-grid-menu-full';
+        this.classList.add('simple-html-grid-menu-full');
         this.filterAttributes = this.connector.config.groups.flatMap((y) => y.rows);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.target !== this) {
             this.removeSelf();
         }

@@ -19,7 +19,7 @@ export class ArrayUtils {
     public arrayFilter: ArrayFilter;
     public arraySort: ArraySort;
     public arrayGrouping: ArrayGrouping;
-    public sortCallbackBinded: any;
+    public sortCallbackBinded: (event: any, col: ICell) => void;
     public filterCallbackBinded: (event: any, col: ICell, config: IGridConfig) => void;
     public groupingCallbackBinded: (event: any, col: ICell) => void;
     private gridInterface: GridInterface;

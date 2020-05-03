@@ -7,7 +7,7 @@ export default class extends HTMLElement {
     rows: any[];
 
     connectedCallback() {
-        (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
+        this.classList.add(...['simple-html-grid', 'simple-html-grid-menu']);
 
         setTimeout(() => {
             document.addEventListener('click', this);
@@ -20,7 +20,7 @@ export default class extends HTMLElement {
         document.removeEventListener('contextmenu', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.target !== this) {
             this.removeSelf();
         }

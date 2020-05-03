@@ -6,12 +6,12 @@ import { rowCache } from '../interfaces';
 
 @customElement('simple-html-grid-body')
 export default class extends HTMLElement {
-    classList: any = 'simple-html-grid-body';
     connector: GridInterface;
     rowPositionCache: rowCache[];
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
+        this.classList.add('simple-html-grid-body');
         const config = this.connector.config;
         this.style.top = config.panelHeight + config.__rowHeight * 2 + 2 + 'px';
         this.style.bottom = config.footerHeight + 'px';

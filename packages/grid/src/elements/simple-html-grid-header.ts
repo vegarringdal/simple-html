@@ -5,11 +5,11 @@ import { SimpleHtmlGrid } from '..';
 
 @customElement('simple-html-grid-header')
 export default class extends HTMLElement {
-    classList: any = 'simple-html-grid-header';
     connector: GridInterface;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
+        this.classList.add('simple-html-grid-header');
         const config = this.connector.config;
         this.style.top = config.panelHeight + 'px';
         this.style.height = config.__rowHeight * 2 + 2 + 'px';
@@ -17,7 +17,7 @@ export default class extends HTMLElement {
         this.ref.addEventListener('reRender', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.type === 'horizontal-scroll' || e.type === 'reRender') {
             this.render();
         }

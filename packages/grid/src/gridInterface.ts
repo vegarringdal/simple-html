@@ -41,8 +41,8 @@ export class GridInterface {
     private __subscribers: Function[] = [];
 
     currentEntity: IEntity = null;
-    private __SCROLL_TOPS: any[];
-    private __SCROLL_HEIGHTS: any[];
+    private __SCROLL_TOPS: number[];
+    private __SCROLL_HEIGHTS: number[];
     private __SCROLL_HEIGHT: number;
 
     constructor(private __CONFIG: IGridConfig, datasource?: DataSource) {

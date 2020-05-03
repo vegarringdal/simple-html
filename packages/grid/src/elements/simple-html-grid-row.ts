@@ -6,12 +6,12 @@ import { rowCache } from '../interfaces';
 
 @customElement('simple-html-grid-row')
 export default class extends HTMLElement {
-    classList: any = 'simple-html-grid-row';
     connector: GridInterface;
     row: rowCache;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
+        this.classList.add('simple-html-grid-row');
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
 
@@ -20,7 +20,7 @@ export default class extends HTMLElement {
         }
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.type === 'vertical-scroll') {
             if (this.row.update) {
                 this.row.update = false;

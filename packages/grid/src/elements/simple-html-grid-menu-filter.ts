@@ -12,7 +12,7 @@ export default class extends HTMLElement {
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
-        (this.classList as any) = 'simple-html-grid simple-html-grid-menu';
+        this.classList.add('simple-html-grid', 'simple-html-grid-menu');
         document.addEventListener('click', this);
         this.ref.addEventListener('vertical-scroll', this);
         setTimeout(() => {
@@ -26,7 +26,7 @@ export default class extends HTMLElement {
         this.ref.removeEventListener('vertical-scroll', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.target !== this) {
             this.removeSelf();
         }
@@ -60,40 +60,51 @@ export default class extends HTMLElement {
         return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('EQUAL')}>
                 Equal to
             </p>
+
             <p class="simple-html-grid-menu-item" @click=${() => this.select('NOT_EQUAL_TO')}>
                 Not equal to
             </p>
+
             <p class="simple-html-grid-menu-item" @click=${() => this.select('BEGIN_WITH')}>
                 Starts with
             </p>
+
             <p class="simple-html-grid-menu-item" @click=${() => this.select('GREATER_THAN')}>
                 Greater than
             </p>
+
             <p
                 class="simple-html-grid-menu-item"
                 @click=${() => this.select('GREATER_THAN_OR_EQUAL_TO')}
             >
                 Greater than or equal
             </p>
+
             <p class="simple-html-grid-menu-item" @click=${() => this.select('LESS_THAN')}>
                 Less than
             </p>
+
             <p
                 class="simple-html-grid-menu-item"
                 @click=${() => this.select('LESS_THAN_OR_EQUAL_TO')}
             >
                 Less than or equal
             </p>
+
             <p class="simple-html-grid-menu-item" @click=${() => this.select('END_WITH')}>
                 End with
             </p>
+
             <p class="simple-html-grid-menu-item" @click=${() => this.select('CONTAINS')}>
                 Contains
             </p>
+
             <p class="simple-html-grid-menu-item" @click=${() => this.select('DOES_NOT_CONTAIN')}>
                 Does not contain
             </p>
+
             <hr />
+
             <p
                 class="simple-html-grid-menu-item"
                 @click=${(e: any) =>
@@ -109,7 +120,9 @@ export default class extends HTMLElement {
             >
                 Advanced
             </p>
+
             <hr />
+
             <p class="simple-html-grid-menu-item" @click=${this.clearAll}>
                 clear filters
             </p>`;

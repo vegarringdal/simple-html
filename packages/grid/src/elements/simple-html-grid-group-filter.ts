@@ -6,7 +6,6 @@ import { html } from 'lit-html';
 
 @customElement('simple-html-grid-group-filter')
 export default class extends HTMLElement {
-    classList: any = 'simple-html-grid-group-filter';
     connector: GridInterface;
     rowNo: number;
     ref: SimpleHtmlGrid;
@@ -14,6 +13,7 @@ export default class extends HTMLElement {
     group: IgridConfigGroups;
 
     connectedCallback() {
+        this.classList.add('simple-html-grid-group-label');
         const config = this.connector.config;
         this.style.display = 'block';
         this.style.height = config.__rowHeight + 'px';
@@ -24,7 +24,7 @@ export default class extends HTMLElement {
         this.ref.addEventListener('reRender', this);
     }
 
-    handleEvent(e: any) {
+    handleEvent(e: Event) {
         if (e.type === 'column-resize' || e.type === 'reRender') {
             const grouping =
                 this.connector.config.groupingSet && this.connector.config.groupingSet.length;
