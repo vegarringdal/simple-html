@@ -110,7 +110,7 @@ export interface IGridConfig {
      * you need to set new or config for this to work
      * You can use this to save current sorting/grouping for later
      */
-    groupingSet?: IGroupingObj[];
+    groupingSet?: IGroupingConfig[];
     sortingSet?: ISortObjectInterface[];
     groupingExpanded?: string[];
 }
@@ -121,7 +121,7 @@ export interface ISortObjectInterface {
     no?: number;
 }
 
-export interface IGroupingObj {
+export interface IGroupingConfig {
     title: string;
     field: string;
 }

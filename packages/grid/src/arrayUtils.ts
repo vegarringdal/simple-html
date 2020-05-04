@@ -4,7 +4,7 @@ import { ArrayGrouping } from './arrayGrouping';
 import {
     ISortObjectInterface,
     IEntity,
-    IGroupingObj,
+    IGroupingConfig,
     IGridConfig,
     ICell,
     OperatorObject
@@ -33,7 +33,7 @@ export class ArrayUtils {
         attribute: string | ISortObjectInterface,
         addToCurrentSort?: boolean
     ): { fixed: IEntity[]; full: IEntity[] } {
-        const groupingFields = this.getGrouping().map((data: IGroupingObj) => data.field);
+        const groupingFields = this.getGrouping().map((data: IGroupingConfig) => data.field);
         const grouping = this.getGrouping();
         let result: { fixed: IEntity[]; full: IEntity[] } = {
             fixed: null,
@@ -121,11 +121,11 @@ export class ArrayUtils {
         return result;
     }
 
-    public getGrouping(): IGroupingObj[] {
+    public getGrouping(): IGroupingConfig[] {
         return this.arrayGrouping.getGrouping();
     }
 
-    public setGrouping(g: IGroupingObj[]) {
+    public setGrouping(g: IGroupingConfig[]) {
         this.arrayGrouping.setGrouping(g);
     }
 
@@ -180,23 +180,24 @@ export class ArrayUtils {
         return this.arrayFilter.getLastFilter();
     }
 
-    private group(array: IEntity[], grouping: IGroupingObj[], keepExpanded: boolean): IEntity[] {
+    private group(array: IEntity[], grouping: IGroupingConfig[], keepExpanded: boolean): IEntity[] {
         const x = this.arrayGrouping.group(array, grouping, keepExpanded);
         this.gridInterface.config.groupingExpanded = this.arrayGrouping.getExpanded();
 
         return x;
     }
 
-    public removeGroup(group: IGroupingObj) {
+    public removeGroup(group: IGroupingConfig) {
         const groupings = this.getGrouping();
-        const x = groupings.indexOf(group);
-        if (x !== -1) {
-            groupings.splice(x, 1);
+
+        const oldGroupIndex = groupings.indexOf(group);
+        if (oldGroupIndex !== -1) {
+            groupings.splice(oldGroupIndex, 1);
         }
 
         this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
         this.arraySort.reset();
-        groupings.forEach((group: IGroupingObj) => {
+        groupings.forEach((group: IGroupingConfig) => {
             this.arraySort.setOrderBy(group.field, true);
         });
         this.arraySort.runOrderbyOn(this.gridInterface.filteredDataset);
@@ -214,7 +215,7 @@ export class ArrayUtils {
 
     public groupingCallback(_event: any, col: ICell) {
         let newF = col ? true : false;
-        const groupings: IGroupingObj[] = this.gridInterface.config.groupingSet || [];
+        const groupings: IGroupingConfig[] = this.gridInterface.config.groupingSet || [];
         col &&
             groupings.forEach((g) => {
                 if (g.field === col.attribute) {
@@ -227,7 +228,7 @@ export class ArrayUtils {
         }
         this.arraySort.clearConfigSort(this.gridInterface.config.groups.flatMap((x) => x.rows));
         this.arraySort.reset();
-        groupings.forEach((group: IGroupingObj) => {
+        groupings.forEach((group: IGroupingConfig) => {
             this.arraySort.setOrderBy(group.field, true);
         });
         this.arraySort.runOrderbyOn(this.gridInterface.filteredDataset);

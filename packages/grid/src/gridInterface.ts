@@ -1,5 +1,5 @@
 import { SimpleHtmlGrid } from '.';
-import { IGroupingObj, IGridConfig, IEntity, ICell, OperatorObject } from './interfaces';
+import { IGroupingConfig, IGridConfig, IEntity, ICell, OperatorObject } from './interfaces';
 import { ArrayUtils } from './arrayUtils';
 import { Selection } from './selection';
 import { DataSource } from './dataSource';
@@ -299,7 +299,7 @@ export class GridInterface {
         this.__arrayUtils.sortCallback(event, col);
     }
 
-    removeGroup(group: IGroupingObj) {
+    removeGroup(group: IGroupingConfig) {
         this.__arrayUtils.removeGroup(group);
     }
 
