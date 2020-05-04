@@ -4,7 +4,7 @@ import { navs, routerConfig } from './routerConfig';
 import { subscribeHashEvent, unSubscribeHashEvent, gotoURL } from '@simple-html/router';
 import { routeMatchAsync } from '@simple-html/router';
 
-@customElement('app-comp')
+@customElement('app-root')
 export default class extends HTMLElement {
     connectedCallback() {
         subscribeHashEvent(this, () => {

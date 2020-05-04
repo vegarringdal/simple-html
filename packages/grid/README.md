@@ -1,6 +1,8 @@
 # @simple-html/grid
 
-Simple data grid made with lit-html Makes displaying a local array very easy. Support:
+Simple data grid made with lit-html & @simple-html/core.
+
+Makes displaying a local array very easy. Support:
 
 -   Grouping
 -   filtering
@@ -18,7 +20,7 @@ Grid adds a wrapper around each element and track changes with proxy
 
 -   `git clone https://github.com/simple-html/simple-html`
 -   `npm install`
--   `npm run sample:grid`
+-   `npm start grid`
 
 ### Bundle size:
 

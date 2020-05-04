@@ -1,8 +1,11 @@
-import { applyPolyfill, ReflowStrategy, rerenderInnerHTML } from 'custom-elements-hmr-polyfill';
+import { applyPolyfill, ReflowStrategy } from 'custom-elements-hmr-polyfill';
 
-rerenderInnerHTML();
+if (document.body) {
+    // I just want every thing to be rebuild from main element during hmr
+    document.body.innerHTML = '';
+    setTimeout(() => {
+        document.body.innerHTML = '<app-root></app-root>';
+    }, 0);
+}
 
-applyPolyfill(ReflowStrategy.NONE, 0, (elementName: string) => {
-    // rerenderInnerHTML();
-    console.log('updated', elementName);
-});
+applyPolyfill(ReflowStrategy.NONE);

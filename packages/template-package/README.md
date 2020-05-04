@@ -1,19 +1,21 @@
-# @simple-html/core
+# simple-html-<template>
 
-Helpers to get make lit-html a little easier
+rename : <template>
 
 ### Install
 
--   `npm install @simple-html/core`
+-   `npm install @simple-html/<template>`
 
 ### Sample
 
-https://stackblitz.com/edit/simple-html-router?file=routersConfig.ts
+-   `git clone https://github.com/simple-html/simple-html`
+-   `npm install`
+-   `npm start <template>`
 
-### Under 5kb with lit-html/tslib included
+### Bundle size:
 
-https://bundlephobia.com/result?p=@simple-html/core
+https://bundlephobia.com/result?p=@simple-html/<template>
 
 ### Docs
 
-...todo
+..todo, for now se sample

@@ -1,6 +1,6 @@
 # simple-html-router
 
-work in progress, very simple docs, se demo for more info api changing a lot- will do untill I get
+Work in progress, very simple docs, se demo for more info api changing a lot- will do untill I get
 time to refactor/clean up all code Im extperimenting with
 
 ### Install
@@ -11,7 +11,7 @@ time to refactor/clean up all code Im extperimenting with
 
 -   `git clone https://github.com/simple-html/simple-html`
 -   `npm install`
--   `npm run sample:router`
+-   `npm start router`
 
 ### Bundle size:
 

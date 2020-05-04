@@ -5,6 +5,6 @@ import { customElement } from '@simple-html/core';
 @customElement('app-component')
 export default class extends HTMLElement {
     public render() {
-        return html` hello world `;
+        return html` hello world <template> </template> `;
     }
 }

@@ -1,6 +1,6 @@
 # @simple-html/core
 
-Helpers to get make lit-html a little easier
+Helper lib using lit-html
 
 ### Install
 
@@ -10,7 +10,7 @@ Helpers to get make lit-html a little easier
 
 -   `git clone https://github.com/simple-html/simple-html`
 -   `npm install`
--   `npm run sample:core`
+-   `npm start core`
 
 ### Bundle size:
 
