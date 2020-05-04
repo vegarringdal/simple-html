@@ -1,11 +1,15 @@
 import './hmr';
-import { html } from 'lit-html';
-import { customElement } from '@simple-html/core';
 import './index.css';
 
-@customElement('app-root')
-export default class extends HTMLElement {
-    public render() {
-        return html` hello world - edit me`;
-    }
-}
+import { enableInternalLogger } from '@simple-html/core';
+enableInternalLogger();
+
+// add our sample parts
+import './elements/app-root';
+import './elements/sample-default';
+import './elements/sample-no1';
+import './elements/sample-no2';
+import './elements/sample-no3';
+import './elements/sample-no4';
+
+// add our your widget ?
