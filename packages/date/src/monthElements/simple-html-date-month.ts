@@ -14,7 +14,11 @@ export default class extends HTMLElement {
         return html`<!---->
 
             <!--  header for the month -->
-            <simple-html-date-month-header .config=${this.config}></simple-html-date-month-header>
+            <simple-html-date-month-header
+                .month=${this.month}
+                .year=${this.year}
+                .config=${this.config}
+            ></simple-html-date-month-header>
 
             <!--  header for the days -->
             <simple-html-date-header-row .config=${this.config}></simple-html-date-header-row>
@@ -22,6 +26,8 @@ export default class extends HTMLElement {
             <!-- rows to hold the days -->
             ${rows.map((_x, i) => {
                 return html`<simple-html-date-day-row
+                    .month=${this.month}
+                    .year=${this.year}
                     .row=${i}
                     .config=${this.config}
                 ></simple-html-date-day-row>`;

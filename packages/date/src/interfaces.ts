@@ -1,6 +1,7 @@
 export interface IDateConfig {
     /**default 1 */
-    months?: number;
+    monthsToShow?: number;
+    monthHeader?: string[];
 
     /* default 1st of current month*/
     startDate?: number;

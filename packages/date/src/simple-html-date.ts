@@ -8,9 +8,9 @@ export class SimpleHtmlDate extends HTMLElement {
 
     render() {
         const config = this.config;
-        let month = 2; // todo
-        let year = 2020; // todo
-        const months = new Array(config.months || 1).fill('x');
+        let month = this.config.startMonth;
+        let year = this.config.startYear;
+        const months = new Array(config.monthsToShow || 1).fill('x');
 
         // -----------------------------------------------------------
         // -> simple-html-date-header -> only if more then 1 month
@@ -44,6 +44,8 @@ export class SimpleHtmlDate extends HTMLElement {
                 if (month === 12) {
                     month = 1;
                     year = year + 1;
+                } else {
+                    month = month + 1;
                 }
 
                 return template;

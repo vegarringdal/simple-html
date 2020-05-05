@@ -5,10 +5,26 @@ import { IDateConfig } from '@simple-html/date/src/interfaces';
 @customElement('sample-default')
 export default class extends HTMLElement {
     dateconfig: IDateConfig = {
-        months: 2,
-        showWeek: true,
+        monthsToShow: 4,
+        startMonth: 0, //0-11
+        startYear: 2020,
+        showWeek: false,
         weekHeader: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
-        weekStart: 1
+        monthHeader: [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December'
+        ],
+        weekStart: 1 // not in use
     };
 
     render() {
