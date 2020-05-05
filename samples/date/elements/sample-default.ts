@@ -28,6 +28,37 @@ export default class extends HTMLElement {
     };
 
     render() {
-        return html`<simple-html-date .config=${this.dateconfig}></simple-html-date>`;
+        return html`<!-- x -->
+            <button
+                class="p-2 m-2 bg-gray-200"
+                @click=${() => {
+                    if (this.dateconfig.startMonth === 11) {
+                        this.dateconfig.startMonth = 0;
+                        this.dateconfig.startYear++;
+                    } else {
+                        this.dateconfig.startMonth++;
+                    }
+                    this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                    this.render();
+                }}
+            >
+                next
+            </button>
+            <button
+                class="p-2 m-2 bg-gray-200"
+                @click=${() => {
+                    if (this.dateconfig.startMonth === 0) {
+                        this.dateconfig.startMonth = 11;
+                        this.dateconfig.startYear--;
+                    } else {
+                        this.dateconfig.startMonth--;
+                    }
+                    this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                    this.render();
+                }}
+            >
+                prev
+            </button>
+            <simple-html-date .config=${this.dateconfig}></simple-html-date>`;
     }
 }
