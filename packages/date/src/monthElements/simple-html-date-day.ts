@@ -1,9 +1,10 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 
-@customElement('sample-no1')
+@customElement('simple-html-date-day')
 export default class extends HTMLElement {
+    monthBlock: number;
     render() {
-        return html` sample01 `;
+        return html`<span>${this.monthBlock}</span>`;
     }
 }

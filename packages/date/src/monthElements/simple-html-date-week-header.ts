@@ -1,9 +1,9 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 
-@customElement('sample-no1')
+@customElement('simple-html-date-week-header')
 export default class extends HTMLElement {
     render() {
-        return html` sample01 `;
+        return html`W`;
     }
 }
