@@ -6,7 +6,7 @@ import { IDateConfig } from '@simple-html/date/src/interfaces';
 export default class extends HTMLElement {
     dateconfig: IDateConfig = {
         monthsToShow: 4,
-        startMonth: 0, //0-11
+        startMonth: 9, //0-11
         startYear: 2020,
         showWeek: false,
         weekHeader: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],

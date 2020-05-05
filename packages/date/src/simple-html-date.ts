@@ -41,8 +41,8 @@ export class SimpleHtmlDate extends HTMLElement {
                 ></simple-html-date-month>`;
 
                 // push up month
-                if (month === 12) {
-                    month = 1;
+                if (month === 11) {
+                    month = 0;
                     year = year + 1;
                 } else {
                     month = month + 1;
