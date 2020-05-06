@@ -48,7 +48,7 @@ export default class extends HTMLElement {
         const FirstDateOfMonth = new Date(year, month, 1);
         const lastDayOfMonth = new Date(year, month === 11 ? 0 : month + 1, 0);
 
-        let dayOfWeek = FirstDateOfMonth.getDay() - (config.isoWeek ? 1 : 0);
+        let dayOfWeek = FirstDateOfMonth.getDay() - (config.isoWeek ? 1 : 0); // we only want monday or sunday
         if (dayOfWeek < 0) {
             // if less than 0, we need to push it out 1 week. so we always show entire month
             dayOfWeek = dayOfWeek + 7;

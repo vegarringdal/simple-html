@@ -23,6 +23,7 @@ simple-html-date-month-header {
 
 simple-html-date-day-row {
     display: flex;
+    box-sizing: border-box;
 }
 
 simple-html-date-header-row {
@@ -71,13 +72,28 @@ simple-html-date-day {
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 simple-html-date-day:hover {
     background-color: rgb(236, 227, 227);
     color: black;
+    transition: transform 0.3s;
+    transform: rotateY(360deg);
+
 }
 
 .simple-html-date-day-dimmed {
     color: rgb(230, 223, 223);
+
 }
+
+.simple-html-date-day-selected {
+    background-color: rgb(201, 195, 195);
+    box-sizing: border-box;
+}
+
