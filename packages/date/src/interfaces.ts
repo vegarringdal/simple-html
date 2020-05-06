@@ -15,4 +15,6 @@ export interface IDateConfig {
     rowHeight: string;
     monthWidth: string;
     monthMargin: string;
+
+    hideDimmedDates: boolean;
 }

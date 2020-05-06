@@ -141,6 +141,15 @@ export default class extends HTMLElement {
             this.classList.remove('simple-html-date-day-selected');
         }
 
+        if (this.ref.config.hideDimmedDates && dimmedCell) {
+            day = '' as any;
+            if (!this.classList.contains('simple-html-date-day-hidden')) {
+                this.classList.add('simple-html-date-day-hidden');
+            }
+        } else {
+            this.classList.remove('simple-html-date-day-hidden');
+        }
+
         return html`<span>${day}</span>`;
     }
 }
