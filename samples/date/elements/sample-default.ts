@@ -33,93 +33,121 @@ export default class extends HTMLElement {
     };
 
     render() {
+        this.style.display = 'flex';
         return html`<!-- x -->
-            <button
-                class="p-2 m-2 bg-gray-200"
-                @click=${() => {
-                    if (this.dateconfig.startMonth === 0) {
-                        this.dateconfig.startMonth = 11;
-                        this.dateconfig.startYear--;
-                    } else {
-                        this.dateconfig.startMonth--;
-                    }
-                    this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
-                    this.render();
-                }}
-            >
-                prev
-            </button>
-
-            <label class="p-2 m-2 bg-gray-200"
-                >monthsToShow:
-                <input
-                    type="number"
-                    .valueAsNumber=${this.dateconfig.monthsToShow}
-                    @input=${(e: any) => {
-                        this.dateconfig.monthsToShow = e.target.valueAsNumber;
-
+            <div class="flex flex-col">
+                <button
+                    class="p-2 m-2 bg-gray-200"
+                    @click=${() => {
+                        if (this.dateconfig.startMonth === 0) {
+                            this.dateconfig.startMonth = 11;
+                            this.dateconfig.startYear--;
+                        } else {
+                            this.dateconfig.startMonth--;
+                        }
                         this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
                         this.render();
                     }}
-            /></label>
+                >
+                    prev
+                </button>
 
-            <label class="p-2 m-2 bg-gray-200"
-                >columns:
-                <input
-                    type="number"
-                    .valueAsNumber=${this.dateconfig.monthColumns}
-                    @input=${(e: any) => {
-                        this.dateconfig.monthColumns = e.target.valueAsNumber;
+                <label class="p-2 m-2 bg-gray-200"
+                    >monthsToShow:
+                    <input
+                        type="number"
+                        .valueAsNumber=${this.dateconfig.monthsToShow}
+                        @input=${(e: any) => {
+                            this.dateconfig.monthsToShow = e.target.valueAsNumber;
 
+                            this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                            this.render();
+                        }}
+                /></label>
+
+                <label class="p-2 m-2 bg-gray-200"
+                    >columns:
+                    <input
+                        type="number"
+                        .valueAsNumber=${this.dateconfig.monthColumns}
+                        @input=${(e: any) => {
+                            this.dateconfig.monthColumns = e.target.valueAsNumber;
+
+                            this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                            this.render();
+                        }}
+                /></label>
+
+                <label class="p-2 m-2 bg-gray-200"
+                    >weekStart:
+                    <input
+                        type="number"
+                        min="0"
+                        max="6"
+                        .valueAsNumber=${this.dateconfig.weekStart}
+                        @input=${(e: any) => {
+                            this.dateconfig.weekStart = e.target.valueAsNumber;
+
+                            this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                            this.render();
+                        }}
+                /></label>
+
+                <label class="p-2 m-2 bg-gray-200"
+                    >rowHeight:
+                    <input
+                        type="number"
+                        .valueAsNumber=${25}
+                        @input=${(e: any) => {
+                            this.dateconfig.rowHeight = e.target.valueAsNumber + 'px';
+
+                            this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                            this.render();
+                        }}
+                /></label>
+
+                <label class="p-2 m-2 bg-gray-200"
+                    >monthWidth:
+                    <input
+                        type="number"
+                        .valueAsNumber=${250}
+                        @input=${(e: any) => {
+                            this.dateconfig.monthWith = e.target.valueAsNumber + 'px';
+
+                            this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                            this.render();
+                        }}
+                /></label>
+
+                <label class="p-2 m-2 bg-gray-200"
+                    >showweek(iso week):
+                    <input
+                        type="checkbox"
+                        .checked=${this.dateconfig.showWeek}
+                        @click=${(e: any) => {
+                            this.dateconfig.showWeek = e.target.checked;
+
+                            this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                            this.render();
+                        }}
+                /></label>
+
+                <button
+                    class="p-2 m-2 bg-gray-200"
+                    @click=${() => {
+                        if (this.dateconfig.startMonth === 11) {
+                            this.dateconfig.startMonth = 0;
+                            this.dateconfig.startYear++;
+                        } else {
+                            this.dateconfig.startMonth++;
+                        }
                         this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
                         this.render();
                     }}
-            /></label>
-
-            <label class="p-2 m-2 bg-gray-200"
-                >weekStart:
-                <input
-                    type="number"
-                    min="0"
-                    max="6"
-                    .valueAsNumber=${this.dateconfig.weekStart}
-                    @input=${(e: any) => {
-                        this.dateconfig.weekStart = e.target.valueAsNumber;
-
-                        this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
-                        this.render();
-                    }}
-            /></label>
-
-            <label class="p-2 m-2 bg-gray-200"
-                >showweek(iso week):
-                <input
-                    type="checkbox"
-                    .checked=${this.dateconfig.showWeek}
-                    @click=${(e: any) => {
-                        this.dateconfig.showWeek = e.target.checked;
-
-                        this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
-                        this.render();
-                    }}
-            /></label>
-
-            <button
-                class="p-2 m-2 bg-gray-200"
-                @click=${() => {
-                    if (this.dateconfig.startMonth === 11) {
-                        this.dateconfig.startMonth = 0;
-                        this.dateconfig.startYear++;
-                    } else {
-                        this.dateconfig.startMonth++;
-                    }
-                    this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
-                    this.render();
-                }}
-            >
-                next
-            </button>
-
+                >
+                    next
+                </button>
+            </div>
             <simple-html-date style="margin:10px;" .config=${this.dateconfig}></simple-html-date>`;
     }
 }
