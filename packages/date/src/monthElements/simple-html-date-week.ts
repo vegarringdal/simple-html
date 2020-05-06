@@ -1,18 +1,18 @@
 import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
-import { IDateConfig } from '../interfaces';
+import { SimpleHtmlDate } from '../simple-html-date';
 
 @customElement('simple-html-date-week')
 export default class extends HTMLElement {
     monthBlock: number;
-    config: IDateConfig;
+    ref: SimpleHtmlDate;
     @property() month: number;
     @property() year: number;
 
     getWeek(date: Date) {
         /*getWeek() was developed by Nick Baicoianu at MeanFreePath: http://www.epoch-calendar.com */
 
-        const dowOffset = this.config.isoWeek ? 1 : 0;
+        const dowOffset = this.ref.config.isoWeek ? 1 : 0;
         const newYear = new Date(date.getFullYear(), 0, 1);
         let day = newYear.getDay() - dowOffset; //the day of week the year begins on
         day = day >= 0 ? day : day + 7;
@@ -44,7 +44,7 @@ export default class extends HTMLElement {
     render() {
         let year = this.year;
         let month = this.month;
-        const config = this.config;
+        const config = this.ref.config;
         const FirstDateOfMonth = new Date(year, month, 1);
         const lastDayOfMonth = new Date(year, month === 11 ? 0 : month + 1, 0);
 

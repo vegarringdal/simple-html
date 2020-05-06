@@ -6,8 +6,21 @@ import { IDateConfig } from './interfaces';
 export class SimpleHtmlDate extends HTMLElement {
     @property() config: IDateConfig;
 
+    public triggerEvent(eventName: string, data?: any) {
+        const event = new CustomEvent(eventName, {
+            bubbles: true,
+            detail: {
+                data
+            }
+        });
+        this.dispatchEvent(event);
+    }
+
+    valuesChanged() {
+        this.triggerEvent('update');
+    }
+
     render() {
-        const config = this.config;
         let month = this.config.startMonth;
         let year = this.config.startYear;
         const months = [];
@@ -20,9 +33,9 @@ export class SimpleHtmlDate extends HTMLElement {
                 i++;
                 if (i <= this.config.monthsToShow) {
                     const template = html`<simple-html-date-month
+                        .ref=${this}
                         .month=${month}
                         .year=${year}
-                        .config=${config}
                     ></simple-html-date-month>`;
 
                     // push up month
@@ -41,7 +54,7 @@ export class SimpleHtmlDate extends HTMLElement {
         return html`<!-- -->
 
             <!-- main header for entire calender -->
-            <simple-html-date-header></simple-html-date-header>
+            <simple-html-date-header .ref=${this}></simple-html-date-header>
 
             <!-- create a block for each month -->
             ${months.map((x) => {

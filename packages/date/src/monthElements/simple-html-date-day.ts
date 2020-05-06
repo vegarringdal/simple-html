@@ -1,19 +1,33 @@
 import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
-import { IDateConfig } from '../interfaces';
+import { SimpleHtmlDate } from '../simple-html-date';
 
 @customElement('simple-html-date-day')
 export default class extends HTMLElement {
     monthBlock: number; // starts with 1
-    config: IDateConfig;
+    ref: SimpleHtmlDate;
     @property() month: number;
     @property() year: number;
+
+    connectedCallback() {
+        this.ref.addEventListener('update', this);
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('update', this);
+    }
+
+    handleEvent(e: Event) {
+        if (e.type === 'update') {
+            this.render();
+        }
+    }
 
     render() {
         // lets just add silly datecalc so we get correct days
         const FirstDateOfMonth = new Date(this.year, this.month, 1);
         const lastDayOfMonth = new Date(this.year, this.month === 11 ? 0 : this.month + 1, 0);
-        let dayOfWeek = FirstDateOfMonth.getDay() - this.config.weekStart;
+        let dayOfWeek = FirstDateOfMonth.getDay() - this.ref.config.weekStart;
         if (dayOfWeek < 0) {
             // if less than 0, we need to push it out 1 week. so we always show entire month
             dayOfWeek = dayOfWeek + 7;
@@ -31,7 +45,7 @@ export default class extends HTMLElement {
         // if less that first we need to count downwards
         if (day < 1) {
             FirstDateOfMonth.setDate(
-                FirstDateOfMonth.getDate() - Math.abs(day) - this.config.weekStart
+                FirstDateOfMonth.getDate() - Math.abs(day) - this.ref.config.weekStart
             );
             day = FirstDateOfMonth.getDate();
             dimmedCell = true;

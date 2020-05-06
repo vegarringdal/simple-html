@@ -1,14 +1,28 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
-import { IDateConfig } from '../interfaces';
+import { SimpleHtmlDate } from '../simple-html-date';
 
 @customElement('simple-html-date-day-header')
 export default class extends HTMLElement {
-    config: IDateConfig;
+    ref: SimpleHtmlDate;
     blockDay: number;
 
+    connectedCallback() {
+        this.ref.addEventListener('update', this);
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('update', this);
+    }
+
+    handleEvent(e: Event) {
+        if (e.type === 'update') {
+            this.render();
+        }
+    }
+
     getDayHeaders(blockDay: number) {
-        let start = this.config.weekStart;
+        let start = this.ref.config.weekStart;
         const newArr = [];
         for (let i = 0; i < 7; i++) {
             newArr.push(start);
@@ -17,11 +31,11 @@ export default class extends HTMLElement {
                 start = 0;
             }
         }
-        return this.config.weekHeader[newArr[blockDay]];
+        return this.ref.config.weekHeader[newArr[blockDay]];
     }
 
     render() {
-        this.style.height = this.config.rowHeight;
+        this.style.height = this.ref.config.rowHeight;
         return html`${this.getDayHeaders(this.blockDay)}`;
     }
 }

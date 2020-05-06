@@ -1,31 +1,31 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
-import { IDateConfig } from '../interfaces';
+import { SimpleHtmlDate } from '../simple-html-date';
 
 @customElement('simple-html-date-header-row')
 export default class extends HTMLElement {
-    config: IDateConfig;
+    ref: SimpleHtmlDate;
 
     render() {
         const rows = new Array(8).fill('x');
-        this.style.height = this.config.rowHeight;
+        this.style.height = this.ref.config.rowHeight;
 
         return html`<!---->
 
             <!-- rows to hold the days -->
             ${rows.map((_x, i) => {
                 if (i === 0) {
-                    if (this.config.showWeek) {
+                    if (this.ref.config.showWeek) {
                         return html`<simple-html-date-week-header
+                            .ref=${this.ref}
                             .row=${i}
-                            .config=${this.config}
                         ></simple-html-date-week-header>`;
                     }
                     return '';
                 } else {
                     return html`<simple-html-date-day-header
+                        .ref=${this.ref}
                         .blockDay=${i - 1}
-                        .config=${this.config}
                     ></simple-html-date-day-header>`;
                 }
             })} `;
