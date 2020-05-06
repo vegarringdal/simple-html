@@ -9,10 +9,10 @@ export default class extends HTMLElement {
     @property() month: number;
     @property() year: number;
 
-    getIsoWeek(date: Date) {
+    getWeek(date: Date) {
         /*getWeek() was developed by Nick Baicoianu at MeanFreePath: http://www.epoch-calendar.com */
 
-        const dowOffset = this.config.weekStart;
+        const dowOffset = this.config.isoWeek ? 1 : 0;
         const newYear = new Date(date.getFullYear(), 0, 1);
         let day = newYear.getDay() - dowOffset; //the day of week the year begins on
         day = day >= 0 ? day : day + 7;
@@ -42,6 +42,43 @@ export default class extends HTMLElement {
     }
 
     render() {
-        return html`${this.monthBlock}`;
+        let year = this.year;
+        let month = this.month;
+        const config = this.config;
+        const FirstDateOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month === 11 ? 0 : month + 1, 0);
+
+        let dayOfWeek = FirstDateOfMonth.getDay() - (config.isoWeek ? 1 : 0);
+        if (dayOfWeek < 0) {
+            // if less than 0, we need to push it out 1 week. so we always show entire month
+            dayOfWeek = dayOfWeek + 7;
+        }
+
+        let day = this.monthBlock - dayOfWeek + 1;
+
+        // if more then last day of month
+        if (day > lastDayOfMonth.getDate()) {
+            day = day - lastDayOfMonth.getDate();
+            if (month === 11) {
+                month = 0;
+                year++;
+            } else {
+                month++;
+            }
+        }
+
+        // if less that first we need to count downwards
+        if (day < 1) {
+            FirstDateOfMonth.setDate(FirstDateOfMonth.getDate() - Math.abs(day) - config.weekStart);
+            day = FirstDateOfMonth.getDate();
+            if (month === 0) {
+                month = 11;
+                year--;
+            } else {
+                month--;
+            }
+        }
+
+        return html`${this.getWeek(new Date(year, month, day))}`;
     }
 }

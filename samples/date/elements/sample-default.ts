@@ -9,7 +9,7 @@ export default class extends HTMLElement {
         monthColumns: 3,
         startMonth: 0, //0-11
         startYear: 2020,
-        showWeek: false, // not working
+        showWeek: true, // not working
         isoWeek: true, // not working
         weekHeader: ['Sun', 'Mon', 'Tue', 'Wen', 'Thr', 'Fri', 'Sat'], // must be in js order, widget reorder them if you have other start day
         monthHeader: [
