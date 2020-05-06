@@ -49,6 +49,32 @@ export default class extends HTMLElement {
             >
                 prev
             </button>
+            <label class="p-2 m-2 bg-gray-200"
+                >monthsToShow:
+                <input
+                    type="number"
+                    .valueAsNumber=${this.dateconfig.monthsToShow}
+                    @input=${(e: any) => {
+                        this.dateconfig.monthsToShow = e.target.value;
+
+                        this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                        this.render();
+                    }}
+            /></label>
+
+            <label class="p-2 m-2 bg-gray-200"
+                >columns:
+                <input
+                    type="number"
+                    .valueAsNumber=${this.dateconfig.monthColumns}
+                    @input=${(e: any) => {
+                        this.dateconfig.monthColumns = e.target.value;
+
+                        this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                        this.render();
+                    }}
+            /></label>
+
             <button
                 class="p-2 m-2 bg-gray-200"
                 @click=${() => {
