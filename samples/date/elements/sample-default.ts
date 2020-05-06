@@ -11,7 +11,7 @@ export default class extends HTMLElement {
         startYear: 2020,
         showWeek: false, // not working
         isoWeek: true, // not working
-        weekHeader: ['Sun', 'Mon', 'Tue', 'Wen', 'Thr', 'Fri', 'Sat'], // must be in js order, widget reorder them if you have other start day
+        weekHeader: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], // must be in js order, widget reorder them if you have other start day
         monthHeader: [
             'January',
             'February',
