@@ -60,6 +60,9 @@ simple-html-date-week {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 100;
+    font-style: italic;
+    
 }
 
 simple-html-date-day {

@@ -13,6 +13,6 @@ export interface IDateConfig {
     isoWeek: boolean;
 
     rowHeight: string;
-    monthWith: string;
+    monthWidth: string;
     monthMargin: string;
 }

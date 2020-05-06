@@ -8,9 +8,24 @@ export default class extends HTMLElement {
     @property() month: number;
     @property() year: number;
 
+    connectedCallback() {
+        this.ref.addEventListener('update', this);
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('update', this);
+    }
+
+    handleEvent(e: Event) {
+        if (e.type === 'update') {
+            this.style.width = this.ref.config.monthWidth;
+            this.style.margin = this.ref.config.monthMargin;
+        }
+    }
+
     render() {
         const rows = new Array(6).fill('x');
-        this.style.width = this.ref.config.monthWith;
+        this.style.width = this.ref.config.monthWidth;
         this.style.margin = this.ref.config.monthMargin;
 
         return html`<!---->
