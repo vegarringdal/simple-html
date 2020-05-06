@@ -18,21 +18,22 @@ export class SimpleHtmlDate extends HTMLElement {
             for (let y = 0; y < this.config.monthColumns; y++) {
                 // add to i so we dont get to many
                 i++;
+                if (i <= this.config.monthsToShow) {
+                    const template = html`<simple-html-date-month
+                        .month=${month}
+                        .year=${year}
+                        .config=${config}
+                    ></simple-html-date-month>`;
 
-                const template = html`<simple-html-date-month
-                    .month=${month}
-                    .year=${year}
-                    .config=${config}
-                ></simple-html-date-month>`;
-
-                // push up month
-                if (month === 11) {
-                    month = 0;
-                    year = year + 1;
-                } else {
-                    month = month + 1;
+                    // push up month
+                    if (month === 11) {
+                        month = 0;
+                        year = year + 1;
+                    } else {
+                        month = month + 1;
+                    }
+                    columns.push(template);
                 }
-                columns.push(template);
             }
             months.push(html`<div class="simple-html-date-col">${columns.map((x) => x)}</div>`);
         }
