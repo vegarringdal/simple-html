@@ -11,6 +11,7 @@ export default class extends HTMLElement {
 
     render() {
         const rows = new Array(8).fill('x');
+        this.style.height = this.config.rowHeight;
 
         return html`<!---->
 

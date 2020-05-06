@@ -10,6 +10,8 @@ export default class extends HTMLElement {
 
     render() {
         const rows = new Array(6).fill('x');
+        this.style.width = this.config.monthWith;
+        this.style.margin = this.config.monthMargin;
 
         return html`<!---->
 

@@ -10,30 +10,15 @@ export class SimpleHtmlDate extends HTMLElement {
         const config = this.config;
         let month = this.config.startMonth;
         let year = this.config.startYear;
-        const months = new Array(config.monthsToShow || 1).fill('x');
+        const months = [];
 
-        // -----------------------------------------------------------
-        // -> simple-html-date-header -> only if more then 1 month
-        // -> simple-html-date-month * 1 per month (option)
-        // // -> simple-html-date-month-header * 1
+        let i = 0;
+        while (i < this.config.monthsToShow) {
+            const columns = [];
+            for (let y = 0; y < this.config.monthColumns; y++) {
+                // add to i so we dont get to many
+                i++;
 
-        // // -> simple-html-date-header-row * 1
-        // // // -> simple-html-date-week-header * 1
-        // // // -> simple-html-date-day-header * 7
-
-        // // -> simple-html-date-day-row * 6
-        // // // -> simple-html-date-week * 1
-        // // // -> simple-html-date-day * 7
-        // -----------------------------------------------------------
-
-        return html`<!-- -->
-
-            <!-- main header for entire calender -->
-            <simple-html-date-header></simple-html-date-header>
-
-            <!-- create a block for each month -->
-            ${months.map(() => {
-                //generate template
                 const template = html`<simple-html-date-month
                     .month=${month}
                     .year=${year}
@@ -47,8 +32,21 @@ export class SimpleHtmlDate extends HTMLElement {
                 } else {
                     month = month + 1;
                 }
+                columns.push(template);
+            }
+            months.push(html`<div class="simple-html-date-col">${columns.map((x) => x)}</div>`);
+        }
 
-                return template;
+        return html`<!-- -->
+
+            <!-- main header for entire calender -->
+            <simple-html-date-header></simple-html-date-header>
+
+            <!-- create a block for each month -->
+            ${months.map((x) => {
+                //generate template
+
+                return x;
             })} `;
     }
 }

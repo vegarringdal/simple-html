@@ -1,18 +1,18 @@
 export interface IDateConfig {
-    /**default 1 */
-    monthsToShow?: number;
-    monthHeader?: string[];
+    monthsToShow: number;
+    monthColumns: number;
+    monthHeader: string[]; //'January' etc
 
-    /* default 1st of current month*/
-    startDate?: number;
+    startMonth: number; // 1-12
+    startYear: number;
 
-    // alternative to start date
-    startMonth?: number; // 1-12
-    startYear?: number;
-
-    weekHeader: string[];
+    weekHeader: string[]; // 'Mon', 'Tue' etc
     weekStart: number;
 
-    /* default true*/
-    showWeek?: boolean;
+    showWeek: boolean;
+    isoWeek: boolean;
+
+    rowHeight: string;
+    monthWith: string;
+    monthMargin: string;
 }

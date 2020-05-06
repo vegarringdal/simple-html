@@ -1,24 +1,35 @@
+simple-html-date {
+    display: flex;
+    flex-direction: column;
+}
+
+.simple-html-date-col {
+    display: flex;
+    flex-direction: row;
+}
+
 simple-html-date-month {
     position: relative;
-    width: 200px;
     display: flex;
     flex-direction: column;
 }
 simple-html-date-month-header {
-    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 500;
+    border-bottom: 1px solid rgb(167, 158, 158);
 }
 
 simple-html-date-day-row {
-    height: 25px;
     display: flex;
 }
 
 simple-html-date-header-row {
-    height: 25px;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid rgb(167, 158, 158);
 }
 
 simple-html-date-week-header {
@@ -29,7 +40,9 @@ simple-html-date-week-header {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 500;
 }
+
 simple-html-date-day-header {
     position: relative;
     margin-left: 1px;
@@ -38,6 +51,7 @@ simple-html-date-day-header {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 500;
 }
 
 simple-html-date-week {
@@ -54,4 +68,13 @@ simple-html-date-day {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+simple-html-date-day:hover {
+    background-color: rgb(236, 227, 227);
+    color: black;
+}
+
+.simple-html-date-day-dimmed {
+    color: rgb(230, 223, 223);
 }
