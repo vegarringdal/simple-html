@@ -9,7 +9,7 @@ export default class extends HTMLElement {
         monthColumns: 3,
         startMonth: 0, //0-11
         startYear: 2020,
-        showWeek: true, // not working
+        showWeek: false, // not working
         isoWeek: true, // not working
         weekHeader: ['Sun', 'Mon', 'Tue', 'Wen', 'Thr', 'Fri', 'Sat'], // must be in js order, widget reorder them if you have other start day
         monthHeader: [
@@ -28,7 +28,7 @@ export default class extends HTMLElement {
         ],
         weekStart: 1,
         rowHeight: '25px',
-        monthWith: '280px',
+        monthWidth: '280px',
         monthMargin: '10px'
     };
 
@@ -97,7 +97,7 @@ export default class extends HTMLElement {
                     >rowHeight:
                     <input
                         type="number"
-                        .valueAsNumber=${25}
+                        .valueAsNumber=${parseInt(this.dateconfig.rowHeight)}
                         @input=${(e: any) => {
                             this.dateconfig.rowHeight = e.target.valueAsNumber + 'px';
 
@@ -110,9 +110,9 @@ export default class extends HTMLElement {
                     >monthWidth:
                     <input
                         type="number"
-                        .valueAsNumber=${250}
+                        .valueAsNumber=${parseInt(this.dateconfig.monthWidth)}
                         @input=${(e: any) => {
-                            this.dateconfig.monthWith = e.target.valueAsNumber + 'px';
+                            this.dateconfig.monthWidth = e.target.valueAsNumber + 'px';
 
                             this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
                             this.render();
