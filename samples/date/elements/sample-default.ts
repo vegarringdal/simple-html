@@ -29,7 +29,8 @@ export default class extends HTMLElement {
         weekStart: 1,
         rowHeight: '25px',
         monthWidth: '280px',
-        monthMargin: '10px'
+        monthMargin: '10px',
+        hideDimmedDates: false
     };
 
     render() {
@@ -120,12 +121,25 @@ export default class extends HTMLElement {
                 /></label>
 
                 <label class="p-2 m-2 bg-gray-200"
-                    >showweek(iso week):
+                    >show week(iso week):
                     <input
                         type="checkbox"
                         .checked=${this.dateconfig.showWeek}
                         @click=${(e: any) => {
                             this.dateconfig.showWeek = e.target.checked;
+
+                            this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
+                            this.render();
+                        }}
+                /></label>
+
+                <label class="p-2 m-2 bg-gray-200"
+                    >hideDimmedDates:
+                    <input
+                        type="checkbox"
+                        .checked=${this.dateconfig.hideDimmedDates}
+                        @click=${(e: any) => {
+                            this.dateconfig.hideDimmedDates = e.target.checked;
 
                             this.dateconfig = Object.assign({}, this.dateconfig); //reassign so lit-html knows its a new value... will add methods for this..
                             this.render();
