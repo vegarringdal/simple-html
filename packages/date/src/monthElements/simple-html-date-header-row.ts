@@ -5,6 +5,19 @@ import { SimpleHtmlDate } from '../simple-html-date';
 @customElement('simple-html-date-header-row')
 export default class extends HTMLElement {
     ref: SimpleHtmlDate;
+    connectedCallback() {
+        this.ref.addEventListener('update', this);
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('update', this);
+    }
+
+    handleEvent(e: Event) {
+        if (e.type === 'update') {
+            this.render();
+        }
+    }
 
     render() {
         const rows = new Array(8).fill('x');

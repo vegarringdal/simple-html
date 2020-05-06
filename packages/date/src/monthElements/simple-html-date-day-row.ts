@@ -8,6 +8,19 @@ export default class extends HTMLElement {
     @property() row: number;
     @property() month: number;
     @property() year: number;
+    connectedCallback() {
+        this.ref.addEventListener('update', this);
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('update', this);
+    }
+
+    handleEvent(e: Event) {
+        if (e.type === 'update') {
+            this.render();
+        }
+    }
 
     render() {
         const rows = new Array(8).fill('x');
