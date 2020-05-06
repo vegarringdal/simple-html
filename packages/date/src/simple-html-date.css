@@ -63,7 +63,6 @@ simple-html-date-week {
     justify-content: center;
     font-weight: 100;
     font-style: italic;
-    
 }
 
 simple-html-date-day {
@@ -77,23 +76,26 @@ simple-html-date-day {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    border: 1px solid rgba(201, 195, 195, 0);
+    margin: 1px;
 }
 
 simple-html-date-day:hover {
     background-color: rgb(236, 227, 227);
     color: black;
-    transition: transform 0.3s;
-    transform: rotateY(360deg);
-
+    transition: all 0.3s ease-in;
 }
 
 .simple-html-date-day-dimmed {
     color: rgb(230, 223, 223);
-
 }
 
 .simple-html-date-day-selected {
-    background-color: rgb(201, 195, 195);
+    border: 1px solid rgb(201, 195, 195);
     box-sizing: border-box;
+    border-radius: 50%;
 }
 
+.simple-html-date-day-hidden {
+    pointer-events: none; /* disable hover */
+}
