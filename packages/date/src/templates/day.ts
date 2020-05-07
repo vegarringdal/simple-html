@@ -2,48 +2,44 @@ import { IDateConfig } from '../interfaces';
 import { html } from 'lit-html';
 import { SimpleHtmlDate } from '../simple-html-date';
 
-// lets keep it simple while we test
-const selected = new Set();
-let lastSelected: Date = null;
-
-function clicked(event: MouseEvent, currentDate: Date) {
+function clicked(event: MouseEvent, ctx: SimpleHtmlDate, currentDate: Date) {
     let added = false;
-    if (selected.has(currentDate.getTime())) {
+    if (ctx.selected.has(currentDate.getTime())) {
         added = false;
-        selected.delete(currentDate.getTime());
+        ctx.selected.delete(currentDate.getTime());
     } else {
         added = true;
-        selected.add(currentDate.getTime());
+        ctx.selected.add(currentDate.getTime());
     }
 
-    if (event.shiftKey && lastSelected) {
-        if (lastSelected < currentDate) {
-            selected.clear();
-            selected.add(lastSelected.getTime());
-            while (lastSelected < currentDate) {
-                lastSelected.setDate(lastSelected.getDate() + 1);
-                if (!selected.has(lastSelected.getTime())) {
-                    selected.add(lastSelected.getTime());
+    if (event.shiftKey && ctx.lastSelected) {
+        if (ctx.lastSelected < currentDate) {
+            ctx.selected.clear();
+            ctx.selected.add(ctx.lastSelected.getTime());
+            while (ctx.lastSelected < currentDate) {
+                ctx.lastSelected.setDate(ctx.lastSelected.getDate() + 1);
+                if (!ctx.selected.has(ctx.lastSelected.getTime())) {
+                    ctx.selected.add(ctx.lastSelected.getTime());
                 }
             }
         }
 
-        if (lastSelected > currentDate) {
-            selected.clear();
-            selected.add(lastSelected.getTime());
-            while (lastSelected > currentDate) {
-                lastSelected.setDate(lastSelected.getDate() - 1);
-                if (!selected.has(lastSelected.getTime())) {
-                    selected.add(lastSelected.getTime());
+        if (ctx.lastSelected > currentDate) {
+            ctx.selected.clear();
+            ctx.selected.add(ctx.lastSelected.getTime());
+            while (ctx.lastSelected > currentDate) {
+                ctx.lastSelected.setDate(ctx.lastSelected.getDate() - 1);
+                if (!ctx.selected.has(ctx.lastSelected.getTime())) {
+                    ctx.selected.add(ctx.lastSelected.getTime());
                 }
             }
         }
     }
 
     if (added) {
-        lastSelected = currentDate;
+        ctx.lastSelected = currentDate;
     } else {
-        lastSelected = null;
+        ctx.lastSelected = null;
     }
 }
 
@@ -98,7 +94,7 @@ export function day(
 
     const currentDate = new Date(year, month, day);
     this.dimmed = dimmedCell;
-    if (selected.has(currentDate.getTime()) && !dimmedCell) {
+    if (context.selected.has(currentDate.getTime()) && !dimmedCell) {
         classList.push('simple-html-date-day-selected');
     }
 
@@ -111,7 +107,7 @@ export function day(
         <simple-html-date-day
             class=${classList.join(' ')}
             @click=${(e: MouseEvent) => {
-                clicked(e, currentDate);
+                clicked(e, context, currentDate);
                 context.render();
             }}
         >

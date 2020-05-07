@@ -6,6 +6,8 @@ import { header } from './templates/header';
 
 @customElement('simple-html-date')
 export class SimpleHtmlDate extends HTMLElement {
+    selected = new Set();
+    lastSelected: Date = null;
     @property() config: IDateConfig;
 
     render() {
