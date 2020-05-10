@@ -77,25 +77,25 @@ simple-html-date-day {
     -moz-user-select: none;
     -ms-user-select: none;
     border: 1px solid rgba(201, 195, 195, 0);
-    margin: 1px;
 }
 
-simple-html-date-day:hover {
-    background-color: rgb(236, 227, 227);
-    color: black;
-    transition: all 0.3s ease-in;
-}
+
 
 .simple-html-date-day-dimmed {
     color: rgb(230, 223, 223);
 }
 
 .simple-html-date-day-selected {
-    border: 1px solid rgb(201, 195, 195);
+
+    background-color: rgb(236, 227, 227);
     box-sizing: border-box;
-    border-radius: 50%;
+   
 }
 
 .simple-html-date-day-hidden {
     pointer-events: none; /* disable hover */
+}
+simple-html-date-day:hover {
+    border: 1px solid rgb(100, 100, 100);
+    color: black;
 }

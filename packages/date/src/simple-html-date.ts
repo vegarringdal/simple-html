@@ -1,6 +1,6 @@
 import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
-import { IDateConfig } from './interfaces';
+import { IDateConfig, IStyle } from './interfaces';
 import { month } from './templates/month';
 import { header } from './templates/header';
 
@@ -9,6 +9,29 @@ export class SimpleHtmlDate extends HTMLElement {
     selected = new Set();
     lastSelected: Date = null;
     @property() config: IDateConfig;
+
+    selectRangeWithFromTo(fromDate: Date, toDate: Date) {
+        console.warn('Not implemented', fromDate, toDate);
+    }
+
+    styleRange(StyleArray: IStyle[]) {
+        // rerun in you have priorty colors, start with lowest
+        console.warn('Not implemented', StyleArray);
+    }
+
+    getSelected() {
+        return Array.from(this.selected);
+    }
+
+    clearSelection() {
+        this.selected = new Set();
+        this.render();
+    }
+
+    setSelected(newSelectedDates: Date[]) {
+        this.selected = new Set(newSelectedDates);
+        this.render();
+    }
 
     render() {
         let currentMonth = this.config.startMonth;

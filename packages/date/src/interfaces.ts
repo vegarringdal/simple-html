@@ -18,3 +18,12 @@ export interface IDateConfig {
 
     hideDimmedDates: boolean;
 }
+
+export interface IStyle {
+    date: Date;
+    fontColor?: string;
+    backgroundColor?: string;
+    bold?: string;
+    borderColor?: string;
+    addClass?: string | string[];
+}
