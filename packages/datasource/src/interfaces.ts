@@ -42,7 +42,7 @@ export type FilterLogicalOperator = 'AND' | 'OR' | 'NONE';
 export type FilterExpressionType = 'CONDITION' | 'GROUP';
 export type FilterValueType = 'ATTRIBUTE' | 'VALUE';
 
-export type FilterParam = {
+export type FilterArgument = {
     type: FilterExpressionType;
     groupType: FilterLogicalOperator;
     attribute: string | null;
@@ -50,7 +50,7 @@ export type FilterParam = {
     value: string | null;
     valueType: FilterValueType | null;
     attributeType: DataTypes;
-    operatorObject?: FilterParam[];
+    operatorObject?: FilterArgument[];
 };
 
 export interface FilterAttributeSimple {

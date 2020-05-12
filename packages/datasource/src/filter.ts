@@ -1,18 +1,18 @@
-import { Entity, FilterParam, FilterComparisonOperator } from './interfaces';
+import { Entity, FilterArgument, FilterComparisonOperator } from './interfaces';
 import { objectFilter } from './objectFilter';
 
 export class Filter {
-    private currentFilter: FilterParam;
+    private currentFilter: FilterArgument;
 
     constructor() {
         this.currentFilter = null;
     }
 
-    public getFilter(): FilterParam {
+    public getFilter(): FilterArgument {
         return this.currentFilter;
     }
 
-    public setFilter(filter: FilterParam) {
+    public setFilter(filter: FilterArgument) {
         this.currentFilter = filter;
     }
 
@@ -28,7 +28,7 @@ export class Filter {
         }
     }
 
-    public filter(objArray: Entity[], ObjFilter: FilterParam) {
+    public filter(objArray: Entity[], ObjFilter: FilterArgument) {
         this.currentFilter = ObjFilter;
 
         if (!ObjFilter) {
@@ -47,7 +47,7 @@ export class Filter {
         return resultArray;
     }
 
-    private orStatement(rowData: Entity, ObjFilter: FilterParam): boolean {
+    private orStatement(rowData: Entity, ObjFilter: FilterArgument): boolean {
         if (Array.isArray(ObjFilter.operatorObject)) {
             for (let i = 0; i < ObjFilter.operatorObject.length; i++) {
                 const filter = ObjFilter.operatorObject[i];
@@ -80,7 +80,7 @@ export class Filter {
         return false;
     }
 
-    private andStatement(rowData: Entity, ObjFilter: FilterParam): boolean {
+    private andStatement(rowData: Entity, ObjFilter: FilterArgument): boolean {
         if (Array.isArray(ObjFilter.operatorObject)) {
             for (let i = 0; i < ObjFilter.operatorObject.length; i++) {
                 const filter = ObjFilter.operatorObject[i];

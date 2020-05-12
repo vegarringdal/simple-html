@@ -4,7 +4,6 @@ import { Grouping } from './grouping';
 import { Selection } from './selection';
 import { Entity, DatasourceConfigOptions, SelectionMode, SortArgument } from './interfaces';
 import { DataContainer } from './dataContainer';
-import { ISortObjectInterface } from '@simple-html/grid/src/interfaces';
 
 type callable = Function | { handleEvent: Function };
 
@@ -64,10 +63,25 @@ export class Datasource {
         if (reRunFilter) {
             // re-run filer?
         }
+
+        this.sort();
     }
 
-    sort() {
+    sort(args?: SortArgument | SortArgument[], add?: boolean) {
         // sort
+        if (args) {
+            this.__sorting.setOrderBy(args, add);
+            this.__sorting.runOrderBy(this.__collectionFiltered);
+        } else {
+            //if nothing the reuse last config
+            const lastSort = this.__sorting.getLastSort();
+            if (lastSort.length) {
+                this.__sorting.runOrderBy(this.__collectionFiltered);
+            }
+        }
+
+        //set sorted collection to display
+        this.__collectionDisplayed = this.__collectionFiltered.slice();
         // group if any config set
         this.__callSubscribers('collection-sorted');
     }
@@ -157,8 +171,8 @@ export class Datasource {
         return this.__collectionDisplayed;
     }
 
-    public select(row: number): void {
-        this.__selection.highlightRow({} as any, row - 1);
+    public select(row?: number): void {
+        this.__selection.highlightRow({} as any, row ? row - 1 : 0);
     }
 
     public selectFirst(): void {

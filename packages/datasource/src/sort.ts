@@ -29,9 +29,13 @@ export class Sort {
         }
     }
 
-    public setLastSort(array: SortArgument[]): void {
+    public overrideSort(array: SortArgument[]): void {
         this.lastSorting = array;
         this.currentSorting = array;
+    }
+
+    public getLastSort(): SortArgument[] {
+        return this.lastSorting;
     }
 
     public setOrderBy(param: SortArgument | SortArgument[], add?: boolean): void {
@@ -39,20 +43,6 @@ export class Sort {
             this.lastSorting = param;
             this.currentSorting = param;
         } else {
-            let sort: any;
-
-            if (param.ascending === undefined) {
-                sort = {
-                    attribute: param.attribute,
-                    asc: true
-                };
-            } else {
-                sort = {
-                    attribute: param.attribute,
-                    asc: param.ascending
-                };
-            }
-
             // do we add or is it the first one
             if (add && this.lastSorting.length > 0) {
                 // its adding, so lets get last one
@@ -61,20 +51,20 @@ export class Sort {
 
                 // loop to se if it exist from before
                 this.currentSorting.forEach((x) => {
-                    if (x.attribute === sort.attribute) {
+                    if (x.attribute === param.attribute) {
                         exist = true;
-                        x.ascending = sort.asc;
+                        x.ascending = param.ascending;
                     }
                 });
 
                 // if it dont exist we add it, else there isnt anythin else to do for now
                 if (!exist) {
-                    this.currentSorting.push(sort);
+                    this.currentSorting.push(param);
                 }
                 this.lastSorting = this.currentSorting;
             } else {
                 // if not adding, just set it
-                this.currentSorting = [sort];
+                this.currentSorting = [param];
                 this.lastSorting = this.currentSorting;
             }
         }
@@ -84,7 +74,7 @@ export class Sort {
         return this.currentSorting;
     }
 
-    public runOrderbyOn(array: IEntity[]): void {
+    public runOrderBy(array: IEntity[]): void {
         // super simple for now.. atleast I have som form for sort
         const thisSort = this.getOrderBy();
 
@@ -115,7 +105,7 @@ export class Sort {
                 };
 
                 if (v1 !== v2) {
-                    if (currentObj.ascending) {
+                    if (currentObj.ascending === true) {
                         // ASC
                         if (typeof v1 === 'string' && typeof v1 === 'string') {
                             if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
