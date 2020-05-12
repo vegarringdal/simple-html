@@ -199,4 +199,13 @@ export class Datasource {
     public selectLast(): void {
         this.__selection.highlightRow({} as any, this.__collectionDisplayed.length - 1);
     }
+
+    public setLocalCompare(code: string, options?: any) {
+        // should we also use this for filter ?
+        this.__sorting.setLocaleCompare(code, options);
+    }
+
+    public resetSort(defaultSortAttribute?: string): void {
+        this.__sorting.reset(defaultSortAttribute);
+    }
 }

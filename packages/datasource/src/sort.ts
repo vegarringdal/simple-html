@@ -4,19 +4,16 @@ import { IEntity } from '@simple-html/grid/src/interfaces';
 export class Sort {
     private lastSorting: SortArgument[];
     private currentSorting: SortArgument[];
-    private localeCompareCode: string;
-    private localeCompareOptions: any;
+    private localeCompareCode: Intl.Collator;
 
     constructor() {
         this.lastSorting = [];
         this.currentSorting = [];
         this.localeCompareCode = null;
-        this.localeCompareOptions = { sensitivity: 'base' };
     }
 
     public setLocaleCompare(code: string, options?: any): void {
-        this.localeCompareCode = code ? code : null;
-        this.localeCompareOptions = options ? options : { sensitivity: 'base' };
+        this.localeCompareCode = new Intl.Collator(code, options);
     }
 
     public reset(defaultSortAttribute?: string): void {
@@ -91,12 +88,10 @@ export class Sort {
                 // compares with locale if set so it handles æ ø etc if needed
                 const localCompare = (v1: string, v2: string): number => {
                     let resultLocale = null;
+
                     if (this.localeCompareCode) {
-                        resultLocale = v1.localeCompare(
-                            v2,
-                            this.localeCompareCode,
-                            this.localeCompareOptions
-                        );
+                        // this just isnt behaving like expecte with norwegian..
+                        resultLocale = this.localeCompareCode.compare(v1, v2);
                     } else {
                         resultLocale = v1.localeCompare(v2);
                     }

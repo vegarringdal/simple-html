@@ -1,11 +1,12 @@
 import { Datasource } from '../src/dataSource';
 
+// localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
-    { name: 'person2', group: 'group2' },
-    { name: 'person1', group: 'group2' },
-    { name: 'person3', group: 'group1' },
-    { name: 'person5', group: 'group1' },
-    { name: 'person4', group: 'group1' }
+    { name: 'person2', group: 'group2', localCompare: 'a' },
+    { name: 'person1', group: 'group2', localCompare: 'b' },
+    { name: 'person3', group: 'group1', localCompare: 'ø' },
+    { name: 'person5', group: 'group1', localCompare: 'æ' },
+    { name: 'person4', group: 'group1', localCompare: 'å' }
 ];
 
 let datasource: Datasource;
@@ -82,6 +83,31 @@ describe('datasource sort', () => {
         obj = datasource.getRow(0);
         expect(obj.name).toEqual('person5');
 
+        done();
+    });
+
+    it('local compare on string', (done) => {
+        datasource.setLocalCompare('no'); // need node 14.xx.xx or new browser for this to work
+
+        datasource.sort([{ attribute: 'localCompare', ascending: true }]);
+        const arr: string[] = datasource.getRows().map((x: any) => x.localCompare);
+        expect(arr).toEqual(['a', 'b', 'æ', 'ø', 'å']);
+        done();
+    });
+
+    it('local compare on string2', (done) => {
+        datasource.setLocalCompare('no'); // need node 14.xx.xx or new browser for this to work
+
+        datasource.sort([{ attribute: 'localCompare', ascending: false }]);
+        const arr: string[] = datasource.getRows().map((x: any) => x.localCompare);
+        expect(arr).toEqual(['å', 'ø', 'æ', 'b', 'a']);
+        done();
+    });
+
+    it('reset sort with default attribute', (done) => {
+        datasource.resetSort('name');
+        datasource.sort();
+        expect((datasource.getRow(0) as any).name).toEqual('person1');
         done();
     });
 });
