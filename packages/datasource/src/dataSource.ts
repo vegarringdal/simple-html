@@ -12,18 +12,54 @@ type callable = Function | { handleEvent: Function };
  *
  */
 export class Datasource {
+    /**
+     * filter controller, holds all logic for filtering
+     */
     private __filter: Filter;
+
+    /**
+     * sorting controller, holds all logic for sorting
+     */
     private __sorting: Sort;
+
+    /**
+     * grouping contoller, holds all logic for grouping
+     */
     private __grouping: Grouping;
+
+    /**
+     * this holds the filtered data, used when sorting and grouping
+     */
     private __collectionFiltered: Entity[] = [];
+
+    /**
+     * This is the data that is sorted/filtered and grouped
+     */
     private __collectionDisplayed: Entity[] = [];
 
+    /**
+     * datacontainer is holding the data, you can have many datasources sharing 1 datacontainer
+     */
     private __dataContainer: DataContainer;
+
+    /**
+     * selection controller, holds selection
+     */
     private __selection: Selection;
+
+    /**
+     * selection mode used by the selection controller
+     */
     private __selectionMode: SelectionMode = 'multiple';
 
+    /**
+     * subscribed listerners, gets called when collection changes/is sorted/filtered etc
+     */
     private __listeners: Set<callable> = new Set();
 
+    /**
+     * current entity, use this with form etc if you have a grid with detail form
+     */
     public currentEntity: Entity | null = null;
 
     constructor(dataContainer?: DataContainer, options?: DatasourceConfigOptions) {
@@ -35,6 +71,9 @@ export class Datasource {
         this.__grouping = new Grouping();
     }
 
+    /**
+     * This is the data in the dataContainer
+     */
     public getAllData(): Entity[] {
         return this.__dataContainer.getDataSet();
     }
@@ -48,6 +87,13 @@ export class Datasource {
         this.__callSubscribers('currentEntity');
     }
 
+    /**
+     * for adding data to datasource, this will also be sendt to dataContainer
+     * so if you replace data the data in the datacontainer also gets replaced
+     * @param data js object
+     * @param add add to current, if false it replaces current collections
+     * @param reRunFilter rerun current filter, grouping/sorting will run automatically
+     */
     public setData(data: any[], add = false, reRunFilter = false) {
         if (add) {
             const x = this.__dataContainer.setData(data, add);
@@ -67,9 +113,16 @@ export class Datasource {
         this.sort();
     }
 
+    /**
+     * sorts current displayed selection
+     * @param args obj/obj array must have attribute and ascending
+     * @param add add to previous sort arguments
+     */
     sort(args?: SortArgument | SortArgument[], add?: boolean) {
         // sort
         if (args) {
+            // TODO: if we have grouping we need to add it to this..
+
             this.__sorting.setOrderBy(args, add);
             this.__sorting.runOrderBy(this.__collectionFiltered);
         } else {
@@ -99,7 +152,11 @@ export class Datasource {
         this.__callSubscribers('collection-grouped');
     }
 
-    expandGroup(id: string) {
+    /**
+     * expand 1 or all groups
+     * @param id null/undefined = all
+     */
+    expandGroup(id?: string) {
         // TODO: not started yet
         if (!id) {
             //all
@@ -109,7 +166,11 @@ export class Datasource {
         this.__callSubscribers('collection-expand');
     }
 
-    collapseGroup(id: string) {
+    /**
+     * collapse 1 or all groups
+     * @param id null/undefined = all
+     */
+    collapseGroup(id?: string) {
         // TODO: not started yet
         if (!id) {
             //all
@@ -119,6 +180,11 @@ export class Datasource {
         this.__callSubscribers('collection-collapse');
     }
 
+    /**
+     * used to call subscribers, used by selection/sorting/filter/grouping controller
+     * @param event
+     * @param data
+     */
     public __callSubscribers(event: string, data = {}): void {
         this.__listeners.forEach((callable) => {
             if (typeof callable === 'function') {
@@ -131,6 +197,10 @@ export class Datasource {
         });
     }
 
+    /**
+     * adds event listener, this is called when collection is changed by sorting/grouping etc
+     * @param callable
+     */
     public addEventListner(callable: callable): void {
         if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
             throw new Error('callable sent to datasource event listner is wrong type');
@@ -141,12 +211,20 @@ export class Datasource {
         }
     }
 
+    /**
+     * removes listener from datasource
+     * @param callable
+     */
     public removeEventListner(callable: callable): void {
         if (this.__listeners.has(callable)) {
             this.__listeners.delete(callable);
         }
     }
 
+    /**
+     *  returns lenght of sorted/filtered collection
+     * @param onlyDataRows use this to skip grouping rows
+     */
     public length(onlyDataRows?: boolean): number {
         if (onlyDataRows) {
             return this.__collectionFiltered.length;
@@ -155,30 +233,53 @@ export class Datasource {
         }
     }
 
+    /**
+     * return selection mode used
+     */
     public getSelectionMode(): SelectionMode {
         return this.__selectionMode;
     }
 
+    /**
+     * replace selection mode used, if blank it will be set to 'none'
+     */
     public setSelectionMode(mode: SelectionMode): void {
-        this.__selectionMode = mode;
+        this.__selectionMode = mode || 'none';
     }
 
+    /**
+     * returns 1 row sorted/grouped/filtered, start on 0
+     * @param rowNo
+     */
     public getRow(rowNo: number): Entity {
         return this.__collectionDisplayed[rowNo];
     }
 
+    /**
+     * returns all rows sorted/grouped/filtered
+     */
     public getRows(): Entity[] {
         return this.__collectionDisplayed;
     }
 
+    /**
+     * sets current entity and selection, start on 1 not 0
+     * @param row, if skipped we select the first
+     */
     public select(row?: number): void {
         this.__selection.highlightRow({} as any, row ? row - 1 : 0);
     }
 
+    /**
+     * updates current entity to first
+     */
     public selectFirst(): void {
         this.__selection.highlightRow({} as any, 0);
     }
 
+    /**
+     * updates current entity, if first when running this it will select the last
+     */
     public selectPrev(): void {
         let row = this.__collectionDisplayed.indexOf(this.currentEntity) - 1;
         if (row < 0) {
@@ -188,6 +289,9 @@ export class Datasource {
         this.__selection.highlightRow({} as any, row);
     }
 
+    /**
+     * updates current entity, if on last it will end on up the first
+     */
     public selectNext(): void {
         let row = this.__collectionDisplayed.indexOf(this.currentEntity) + 1;
         if (this.__collectionDisplayed.length - 1 < row) {
@@ -196,15 +300,27 @@ export class Datasource {
         this.__selection.highlightRow({} as any, row);
     }
 
+    /**
+     * updates current entity to last entity
+     */
     public selectLast(): void {
         this.__selection.highlightRow({} as any, this.__collectionDisplayed.length - 1);
     }
 
+    /**
+     * sets Intl Collator , this is used for sorting
+     * @param code
+     * @param options
+     */
     public setLocalCompare(code: string, options?: any) {
         // should we also use this for filter ?
         this.__sorting.setLocaleCompare(code, options);
     }
 
+    /**
+     * resets current sort
+     * @param defaultSortAttribute attribute name if you have a default you want to use
+     */
     public resetSort(defaultSortAttribute?: string): void {
         this.__sorting.reset(defaultSortAttribute);
     }
