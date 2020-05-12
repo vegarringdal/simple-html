@@ -2,8 +2,9 @@ import { Filter } from './filter';
 import { Sort } from './sort';
 import { Grouping } from './grouping';
 import { Selection } from './selection';
-import { IEntity, DatasourceConfigOptions, SelectionMode } from './interfaces';
+import { Entity, DatasourceConfigOptions, SelectionMode, SortArgument } from './interfaces';
 import { DataContainer } from './dataContainer';
+import { ISortObjectInterface } from '@simple-html/grid/src/interfaces';
 
 type callable = Function | { handleEvent: Function };
 
@@ -15,8 +16,8 @@ export class Datasource {
     private __filter: Filter;
     private __sorting: Sort;
     private __grouping: Grouping;
-    private __collectionFiltered: IEntity[] = [];
-    private __collectionDisplayed: IEntity[] = [];
+    private __collectionFiltered: Entity[] = [];
+    private __collectionDisplayed: Entity[] = [];
 
     private __dataContainer: DataContainer;
     private __selection: Selection;
@@ -24,7 +25,7 @@ export class Datasource {
 
     private __listeners: Set<callable> = new Set();
 
-    public currentEntity: IEntity | null = null;
+    public currentEntity: Entity | null = null;
 
     constructor(dataContainer?: DataContainer, options?: DatasourceConfigOptions) {
         this.__dataContainer = dataContainer || new DataContainer();
@@ -35,7 +36,7 @@ export class Datasource {
         this.__grouping = new Grouping();
     }
 
-    public getAllData(): IEntity[] {
+    public getAllData(): Entity[] {
         return this.__dataContainer.getDataSet();
     }
 
@@ -60,21 +61,27 @@ export class Datasource {
         }
 
         // TODO:  rerun filter ?
+        if (reRunFilter) {
+            // re-run filer?
+        }
     }
 
     sort() {
-        // TODO: not started yet
-
+        // sort
+        // group if any config set
         this.__callSubscribers('collection-sorted');
     }
 
     filter() {
-        // TODO: not started yet
+        // filter
+        // sort if any config set
+        // group if any config set
         this.__callSubscribers('collection-filtered');
     }
 
     group() {
-        // TODO: not started yet
+        // sort
+        // group
         this.__callSubscribers('collection-grouped');
     }
 
@@ -88,7 +95,7 @@ export class Datasource {
         this.__callSubscribers('collection-expand');
     }
 
-    collpseGroup(id: string) {
+    collapseGroup(id: string) {
         // TODO: not started yet
         if (!id) {
             //all
@@ -142,11 +149,11 @@ export class Datasource {
         this.__selectionMode = mode;
     }
 
-    public getRow(rowNo: number): IEntity {
+    public getRow(rowNo: number): Entity {
         return this.__collectionDisplayed[rowNo];
     }
 
-    public getRows(): IEntity[] {
+    public getRows(): Entity[] {
         return this.__collectionDisplayed;
     }
 

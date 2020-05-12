@@ -1,4 +1,4 @@
-import { IEntity } from './index';
+import { Entity } from './index';
 import { EntityHandler } from './entity';
 
 let globalKeyCount = 0;
@@ -10,7 +10,7 @@ export const getNextKey = function () {
 };
 
 export class DataContainer {
-    private __collection: IEntity[] = [];
+    private __collection: Entity[] = [];
     private __keyAttribute = '';
 
     constructor(UniqueKeyAttribute?: string) {
@@ -30,7 +30,7 @@ export class DataContainer {
         return this.__collection;
     }
 
-    public removeData(data: IEntity | IEntity[], all = false) {
+    public removeData(data: Entity | Entity[], all = false) {
         if (all) {
             const removed = this.__collection.slice();
             this.__collection = [];
@@ -39,7 +39,7 @@ export class DataContainer {
 
         if (data) {
             if (Array.isArray(data)) {
-                const removed: IEntity[] = [];
+                const removed: Entity[] = [];
                 data.forEach((d) => {
                     const i = this.__collection.indexOf(d);
                     if (i !== -1) {
@@ -58,9 +58,9 @@ export class DataContainer {
         return [];
     }
 
-    public setData(data: any[], add = false): IEntity[] | void {
+    public setData(data: any[], add = false): Entity[] | void {
         if (add) {
-            const x = Array.from(data, (o: any | IEntity) => {
+            const x = Array.from(data, (o: any | Entity) => {
                 if (o && o.__controller) {
                     return o;
                 } else {
@@ -80,7 +80,7 @@ export class DataContainer {
             });
             return x;
         } else {
-            this.__collection = Array.from(data, (o: any | IEntity) => {
+            this.__collection = Array.from(data, (o: any | Entity) => {
                 if (o && o.__controller) {
                     return o;
                 } else {

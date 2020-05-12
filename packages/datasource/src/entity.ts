@@ -1,4 +1,4 @@
-import { IEntity } from './interfaces';
+import { Entity } from './interfaces';
 
 /**
  * Entity will keep track of edited properties of the row object
@@ -18,7 +18,7 @@ export class EntityHandler {
     __groupName?: string;
     __groupLvl?: number;
     __groupTotal?: number;
-    __groupChildren?: IEntity[];
+    __groupChildren?: Entity[];
     __groupExpanded?: boolean;
 
     constructor(keyString?: string) {

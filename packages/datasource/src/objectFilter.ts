@@ -1,13 +1,13 @@
-import { IFilterObj, FilterOperator } from './interfaces';
+import { FilterAttributeSimple, FilterComparisonOperator } from './interfaces';
 
-export function objectFilter(rowData: any, filter: IFilterObj) {
+export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     let result = true;
 
     // vars
     let rowValue: any;
     let filterValue: any;
     let filterOperator = filter.operator;
-    let newFilterOperator: FilterOperator;
+    let newFilterOperator: FilterComparisonOperator;
     let type: string = filter.type || 'text';
 
     if (filter.value === 'null') {

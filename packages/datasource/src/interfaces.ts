@@ -10,7 +10,7 @@ export type SelectionMode = 'none' | 'single' | 'multiple';
  */
 export type DatasourceConfigOptions = { selectionMode: SelectionMode };
 
-export interface IEntity {
+export interface Entity {
     __controller?: EntityHandler;
     __KEY?: string | number;
     __group?: boolean;
@@ -18,15 +18,14 @@ export interface IEntity {
     __groupName?: string;
     __groupLvl?: number;
     __groupTotal?: number;
-    __groupChildren?: IEntity[];
+    __groupChildren?: Entity[];
     __groupExpanded?: boolean;
 }
 
 /**
  *  filtering interfaces
  */
-
-export type FilterOperator =
+export type FilterComparisonOperator =
     | 'EQUAL'
     | 'LESS_THAN_OR_EQUAL_TO'
     | 'GREATER_THAN_OR_EQUAL_TO'
@@ -39,42 +38,41 @@ export type FilterOperator =
     | 'END_WITH';
 
 export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
-export type GroupType = 'AND' | 'OR' | 'NONE';
-export type ObjectType = 'CONDITION' | 'GROUP';
-export type ValueType = 'ATTRIBUTE' | 'VALUE';
-export type OperatorObject = {
-    type: ObjectType;
-    groupType: GroupType;
+export type FilterLogicalOperator = 'AND' | 'OR' | 'NONE';
+export type FilterExpressionType = 'CONDITION' | 'GROUP';
+export type FilterValueType = 'ATTRIBUTE' | 'VALUE';
+
+export type FilterParam = {
+    type: FilterExpressionType;
+    groupType: FilterLogicalOperator;
     attribute: string | null;
-    operator: FilterOperator | null;
+    operator: FilterComparisonOperator | null;
     value: string | null;
-    valueType: ValueType | null;
+    valueType: FilterValueType | null;
     attributeType: DataTypes;
-    operatorObject?: OperatorObject[];
+    operatorObject?: FilterParam[];
 };
 
-export interface IFilterObj {
-    operator: FilterOperator;
+export interface FilterAttributeSimple {
+    operator: FilterComparisonOperator;
     value: any;
     attribute: string;
     type: string;
 }
 
 /**
- *  sorting
+ *  sorting interfaces
  */
 
-export interface ISortObjectInterface {
+export interface SortArgument {
     attribute: string;
-    asc?: boolean;
-    no?: number;
+    ascending: boolean;
 }
 
 /**
- *  grouping
+ * grouping interfaces
  */
-
-export interface IGroupingConfig {
+export interface GroupArgument {
     title: string;
-    field: string;
+    attribute: string;
 }

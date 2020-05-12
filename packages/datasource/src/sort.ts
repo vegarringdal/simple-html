@@ -1,8 +1,9 @@
-import { ISortObjectInterface } from './interfaces';
+import { SortArgument } from './interfaces';
+import { IEntity } from '@simple-html/grid/src/interfaces';
 
 export class Sort {
-    private lastSorting: ISortObjectInterface[];
-    private currentSorting: ISortObjectInterface[];
+    private lastSorting: SortArgument[];
+    private currentSorting: SortArgument[];
     private localeCompareCode: string;
     private localeCompareOptions: any;
 
@@ -20,45 +21,36 @@ export class Sort {
 
     public reset(defaultSortAttribute?: string): void {
         if (defaultSortAttribute) {
-            this.lastSorting = [{ attribute: defaultSortAttribute, asc: true, no: 0 }];
-            this.currentSorting = [{ attribute: defaultSortAttribute, asc: true, no: 0 }];
+            this.lastSorting = [{ attribute: defaultSortAttribute, ascending: true }];
+            this.currentSorting = [{ attribute: defaultSortAttribute, ascending: true }];
         } else {
             this.lastSorting = [];
             this.currentSorting = [];
         }
     }
 
-    public setLastSort(array: ISortObjectInterface[]): void {
+    public setLastSort(array: SortArgument[]): void {
         this.lastSorting = array;
         this.currentSorting = array;
     }
 
-    public setOrderBy(
-        param: ISortObjectInterface | string | ISortObjectInterface[],
-        add?: boolean
-    ): void {
+    public setOrderBy(param: SortArgument | SortArgument[], add?: boolean): void {
         if (Array.isArray(param)) {
             this.lastSorting = param;
             this.currentSorting = param;
         } else {
             let sort: any;
-            if (typeof param === 'string') {
+
+            if (param.ascending === undefined) {
                 sort = {
-                    attribute: param,
+                    attribute: param.attribute,
                     asc: true
                 };
             } else {
-                if (param.asc === undefined) {
-                    sort = {
-                        attribute: param.attribute,
-                        asc: true
-                    };
-                } else {
-                    sort = {
-                        attribute: param.attribute,
-                        asc: param.asc
-                    };
-                }
+                sort = {
+                    attribute: param.attribute,
+                    asc: param.ascending
+                };
             }
 
             // do we add or is it the first one
@@ -71,31 +63,28 @@ export class Sort {
                 this.currentSorting.forEach((x) => {
                     if (x.attribute === sort.attribute) {
                         exist = true;
-                        x.asc = sort.asc;
+                        x.ascending = sort.asc;
                     }
                 });
 
                 // if it dont exist we add it, else there isnt anythin else to do for now
                 if (!exist) {
                     this.currentSorting.push(sort);
-                    const lastItem = this.currentSorting.length - 1;
-                    this.currentSorting[lastItem].no = this.currentSorting.length;
                 }
                 this.lastSorting = this.currentSorting;
             } else {
                 // if not adding, just set it
                 this.currentSorting = [sort];
-                this.currentSorting[0].no = 1;
                 this.lastSorting = this.currentSorting;
             }
         }
     }
 
-    public getOrderBy(): ISortObjectInterface[] {
+    public getOrderBy(): SortArgument[] {
         return this.currentSorting;
     }
 
-    public runOrderbyOn(array: object[]): void {
+    public runOrderbyOn(array: IEntity[]): void {
         // super simple for now.. atleast I have som form for sort
         const thisSort = this.getOrderBy();
 
@@ -126,7 +115,7 @@ export class Sort {
                 };
 
                 if (v1 !== v2) {
-                    if (currentObj.asc) {
+                    if (currentObj.ascending) {
                         // ASC
                         if (typeof v1 === 'string' && typeof v1 === 'string') {
                             if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
