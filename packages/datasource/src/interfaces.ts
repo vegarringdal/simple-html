@@ -43,14 +43,14 @@ export type FilterExpressionType = 'CONDITION' | 'GROUP';
 export type FilterValueType = 'ATTRIBUTE' | 'VALUE';
 
 export type FilterArgument = {
-    type: FilterExpressionType;
-    groupType: FilterLogicalOperator;
-    attribute: string | null;
-    operator: FilterComparisonOperator | null;
-    value: string | null;
-    valueType: FilterValueType | null;
-    attributeType: DataTypes;
-    operatorObject?: FilterArgument[];
+    type?: FilterExpressionType;
+    logicalOperator?: FilterLogicalOperator;
+    attribute?: string | null; //only optional if type is group
+    operator?: FilterComparisonOperator | null; //only optional if type is group
+    value?: string | number | null | Date; //only optional if type is group
+    valueType?: FilterValueType | null;
+    attributeType?: DataTypes;
+    filterArguments?: FilterArgument[];
 };
 
 export interface FilterAttributeSimple {

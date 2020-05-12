@@ -37,7 +37,7 @@ export class Filter {
 
         const resultArray = objArray.filter((rowData) => {
             // lets have true as default, so all that should not be there we set false..
-            if (ObjFilter.groupType === 'AND') {
+            if (ObjFilter.logicalOperator === 'AND') {
                 return this.andStatement(rowData, ObjFilter);
             } else {
                 return this.orStatement(rowData, ObjFilter);
@@ -48,19 +48,29 @@ export class Filter {
     }
 
     private orStatement(rowData: Entity, ObjFilter: FilterArgument): boolean {
-        if (Array.isArray(ObjFilter.operatorObject)) {
-            for (let i = 0; i < ObjFilter.operatorObject.length; i++) {
-                const filter = ObjFilter.operatorObject[i];
-                if (filter.groupType === 'AND') {
+        if (Array.isArray(ObjFilter.filterArguments)) {
+            for (let i = 0; i < ObjFilter.filterArguments.length; i++) {
+                const filter = ObjFilter.filterArguments[i];
+                if (filter.logicalOperator === 'AND') {
                     return this.andStatement(rowData, filter);
                 }
-                if (filter.groupType === 'OR') {
+                if (filter.logicalOperator === 'OR') {
                     return this.orStatement(rowData, filter);
                 }
-                if (filter.groupType === 'NONE') {
+                if (
+                    filter.logicalOperator === 'NONE' ||
+                    filter.logicalOperator === null ||
+                    filter.logicalOperator == undefined
+                ) {
                     let value = filter.value;
                     if (filter.valueType === 'ATTRIBUTE') {
-                        value = rowData[filter.value];
+                        if (typeof filter.value === 'string') {
+                            value = rowData[filter.value];
+                        } else {
+                            console.error(
+                                'filtervalue needs to be string if you are comparing attributes'
+                            );
+                        }
                     }
 
                     const result = objectFilter(rowData, {
@@ -81,19 +91,29 @@ export class Filter {
     }
 
     private andStatement(rowData: Entity, ObjFilter: FilterArgument): boolean {
-        if (Array.isArray(ObjFilter.operatorObject)) {
-            for (let i = 0; i < ObjFilter.operatorObject.length; i++) {
-                const filter = ObjFilter.operatorObject[i];
-                if (filter.groupType === 'AND') {
+        if (Array.isArray(ObjFilter.filterArguments)) {
+            for (let i = 0; i < ObjFilter.filterArguments.length; i++) {
+                const filter = ObjFilter.filterArguments[i];
+                if (filter.logicalOperator === 'AND') {
                     return this.andStatement(rowData, filter);
                 }
-                if (filter.groupType === 'OR') {
+                if (filter.logicalOperator === 'OR') {
                     return this.orStatement(rowData, filter);
                 }
-                if (filter.groupType === 'NONE') {
+                if (
+                    filter.logicalOperator === 'NONE' ||
+                    filter.logicalOperator === null ||
+                    filter.logicalOperator == undefined
+                ) {
                     let value = filter.value;
                     if (filter.valueType === 'ATTRIBUTE') {
-                        value = rowData[filter.value];
+                        if (typeof filter.value === 'string') {
+                            value = rowData[filter.value];
+                        } else {
+                            console.error(
+                                'filtervalue needs to be string if you are comparing attributes'
+                            );
+                        }
                     }
 
                     const result = objectFilter(rowData, {

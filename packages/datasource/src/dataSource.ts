@@ -2,7 +2,14 @@ import { Filter } from './filter';
 import { Sort } from './sort';
 import { Grouping } from './grouping';
 import { Selection } from './selection';
-import { Entity, DatasourceConfigOptions, SelectionMode, SortArgument } from './interfaces';
+import {
+    Entity,
+    DatasourceConfigOptions,
+    SelectionMode,
+    SortArgument,
+    FilterArgument,
+    FilterArgumentSimple
+} from './interfaces';
 import { DataContainer } from './dataContainer';
 
 type callable = Function | { handleEvent: Function };
@@ -105,12 +112,32 @@ export class Datasource {
             this.__collectionFiltered = this.getAllData().slice();
         }
 
-        // TODO:  rerun filter ?
-        if (reRunFilter) {
-            // re-run filer?
+        this.__internalUpdate(reRunFilter);
+    }
+
+    /**
+     * runs sorting/grouping, used by setdata/and filter, so we dont rerun sort/grouping many times
+     * this also does not call any events
+     */
+    private __internalUpdate(reRunFilter: boolean) {
+        if (reRunFilter && this.__filter.getFilter()) {
+            this.__collectionFiltered = this.__filter.filter(
+                this.getAllData(),
+                this.__filter.getFilter()
+            );
         }
 
-        this.sort();
+        const lastSort = this.__sorting.getLastSort();
+        if (lastSort.length) {
+            this.__sorting.runOrderBy(this.__collectionFiltered);
+        }
+
+        if (this.__grouping.getGrouping().length) {
+            // if grouping is set
+        } else {
+            //set sorted collection to display
+            this.__collectionDisplayed = this.__collectionFiltered.slice();
+        }
     }
 
     /**
@@ -133,16 +160,52 @@ export class Datasource {
             }
         }
 
-        //set sorted collection to display
-        this.__collectionDisplayed = this.__collectionFiltered.slice();
+        if (this.__grouping.getGrouping().length) {
+            // if grouping is set
+        } else {
+            //set sorted collection to display
+            this.__collectionDisplayed = this.__collectionFiltered.slice();
+        }
+
         // group if any config set
         this.__callSubscribers('collection-sorted');
     }
 
-    filter() {
-        // filter
-        // sort if any config set
-        // group if any config set
+    filter(ObjFilter?: FilterArgument | FilterArgument[]) {
+        if (ObjFilter) {
+            if (Array.isArray(ObjFilter)) {
+                // FilterArgumentSimple[]
+                this.__filter.setFilter({
+                    type: 'GROUP',
+                    logicalOperator: 'AND',
+                    attribute: null,
+                    operator: null,
+                    value: null,
+                    valueType: null,
+                    attributeType: null,
+                    filterArguments: ObjFilter as FilterArgument[]
+                });
+            } else {
+                if (!ObjFilter.filterArguments || ObjFilter?.filterArguments?.length === 0) {
+                    // FilterArgumentSimple
+                    this.__filter.setFilter({
+                        type: 'GROUP',
+                        logicalOperator: 'AND',
+                        attribute: null,
+                        operator: null,
+                        value: null,
+                        valueType: null,
+                        attributeType: null,
+                        filterArguments: [ObjFilter as FilterArgument]
+                    });
+                } else {
+                    // FilterArgument
+                    // todo, check more and warn if missing options _
+                    this.__filter.setFilter(ObjFilter as FilterArgument);
+                }
+            }
+        }
+        this.__internalUpdate(true);
         this.__callSubscribers('collection-filtered');
     }
 
