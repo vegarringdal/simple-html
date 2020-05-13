@@ -23,6 +23,10 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
         type = 'date';
     }
 
+    if (Number(filter.value) === filter.value) {
+        type = 'number';
+    }
+
     rowValue = rowData[filter.attribute];
 
     // helper for boolean
