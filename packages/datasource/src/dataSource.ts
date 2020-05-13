@@ -182,11 +182,6 @@ export class Datasource {
                 this.__filter.setFilter({
                     type: 'GROUP',
                     logicalOperator: 'AND',
-                    attribute: null,
-                    operator: null,
-                    value: null,
-                    valueType: null,
-                    attributeType: null,
                     filterArguments: ObjFilter as FilterArgument[]
                 });
             } else {
@@ -195,11 +190,6 @@ export class Datasource {
                     this.__filter.setFilter({
                         type: 'GROUP',
                         logicalOperator: 'AND',
-                        attribute: null,
-                        operator: null,
-                        value: null,
-                        valueType: null,
-                        attributeType: null,
                         filterArguments: [ObjFilter as FilterArgument]
                     });
                 } else {
