@@ -105,4 +105,49 @@ describe('number filter', () => {
         ]);
         done();
     });
+
+    it('number contains will use greater or equal to ', (done) => {
+        ds.filter({
+            attribute: 'age',
+            operator: 'CONTAINS',
+            value: 40
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: 'person1', group: 'group1', age: 40, born: new Date(1990, 0, 1), index: 3 },
+            { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
+            { name: 'person4', group: 'group1', age: 67, born: new Date(2000, 0, 1), index: 5 }
+        ]);
+        done();
+    });
+
+    it('number begin with will use greater or equal to ', (done) => {
+        ds.filter({
+            attribute: 'age',
+            operator: 'BEGIN_WITH',
+            value: 40
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: 'person1', group: 'group1', age: 40, born: new Date(1990, 0, 1), index: 3 },
+            { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
+            { name: 'person4', group: 'group1', age: 67, born: new Date(2000, 0, 1), index: 5 }
+        ]);
+        done();
+    });
+
+    it('number end with will use greater or equal to ', (done) => {
+        ds.filter({
+            attribute: 'age',
+            operator: 'END_WITH',
+            value: 40
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: 'person1', group: 'group1', age: 40, born: new Date(1990, 0, 1), index: 3 },
+            { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
+            { name: 'person4', group: 'group1', age: 67, born: new Date(2000, 0, 1), index: 5 }
+        ]);
+        done();
+    });
 });

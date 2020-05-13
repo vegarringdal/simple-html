@@ -54,9 +54,15 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             } catch (err) {
                 filterValue = filter.value;
             }
-            filterOperator = filterOperator || 'EQUAL';
-            if (filterOperator === 'CONTAINS') {
-                filterOperator = 'EQUAL';
+
+            filterOperator = filterOperator || 'GREATER_THAN_OR_EQUAL_TO';
+            if (
+                filterOperator === 'CONTAINS' ||
+                filterOperator === 'BEGIN_WITH' ||
+                filterOperator === 'END_WITH' ||
+                filterOperator === 'DOES_NOT_CONTAIN'
+            ) {
+                filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
             }
             break;
         case 'number':
@@ -65,9 +71,14 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 // needs to be 0
                 filterValue = 0;
             }
-            filterOperator = filterOperator || 'EQUAL';
-            if (filterOperator === 'CONTAINS') {
-                filterOperator = 'EQUAL';
+            filterOperator = filterOperator || 'GREATER_THAN_OR_EQUAL_TO';
+            if (
+                filterOperator === 'CONTAINS' ||
+                filterOperator === 'BEGIN_WITH' ||
+                filterOperator === 'END_WITH' ||
+                filterOperator === 'DOES_NOT_CONTAIN'
+            ) {
+                filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
             }
             break;
         case 'text':
