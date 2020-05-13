@@ -100,6 +100,14 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 filterValue = filterValue.substr(0, filterValue.length - 1);
             }
 
+            if (
+                filter.value.charAt(filter.value.length - 1) === '*' &&
+                (filterOperator === 'END_WITH' || newFilterOperator === 'END_WITH')
+            ) {
+                newFilterOperator = 'CONTAINS';
+                filterValue = filterValue.substr(0, filterValue.length - 1);
+            }
+
             // begin with since wildcard is in the end
             if (
                 filter.value.charAt(filter.value.length - 1) === '*' &&
