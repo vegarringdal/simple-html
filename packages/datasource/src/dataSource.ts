@@ -170,6 +170,11 @@ export class Datasource {
         this.__callSubscribers('collection-sorted');
     }
 
+    /**
+     * filters using the connected data container, result is sorted also if this is set
+     * if you need to set sort then do this before calling filter
+     * @param ObjFilter
+     */
     filter(ObjFilter?: FilterArgument | FilterArgument[]) {
         if (ObjFilter) {
             if (Array.isArray(ObjFilter)) {
@@ -385,5 +390,21 @@ export class Datasource {
      */
     public resetSort(defaultSortAttribute?: string): void {
         this.__sorting.reset(defaultSortAttribute);
+    }
+
+    /**
+     * Sets order by, if you plan to filter with new sorting order you need to use this first
+     * @param param
+     * @param add
+     */
+    public setOrderBy(param: SortArgument | SortArgument[], add?: boolean) {
+        this.__sorting.setOrderBy(param, add);
+    }
+
+    /**
+     * returns current sortorder config
+     */
+    public getOrderBy() {
+        return this.__sorting.getOrderBy();
     }
 }
