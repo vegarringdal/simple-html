@@ -52,10 +52,16 @@ export class Filter {
             for (let i = 0; i < ObjFilter.filterArguments.length; i++) {
                 const filter = ObjFilter.filterArguments[i];
                 if (filter.logicalOperator === 'AND') {
-                    return this.andStatement(rowData, filter);
+                    const result = this.andStatement(rowData, filter);
+                    if (result) {
+                        return true;
+                    }
                 }
                 if (filter.logicalOperator === 'OR') {
-                    return this.orStatement(rowData, filter);
+                    const result = this.orStatement(rowData, filter);
+                    if (result) {
+                        return true;
+                    }
                 }
                 if (
                     filter.logicalOperator === 'NONE' ||
@@ -95,10 +101,16 @@ export class Filter {
             for (let i = 0; i < ObjFilter.filterArguments.length; i++) {
                 const filter = ObjFilter.filterArguments[i];
                 if (filter.logicalOperator === 'AND') {
-                    return this.andStatement(rowData, filter);
+                    const result = this.andStatement(rowData, filter);
+                    if (!result) {
+                        return false;
+                    }
                 }
                 if (filter.logicalOperator === 'OR') {
-                    return this.orStatement(rowData, filter);
+                    const result = this.orStatement(rowData, filter);
+                    if (!result) {
+                        return false;
+                    }
                 }
                 if (
                     filter.logicalOperator === 'NONE' ||
