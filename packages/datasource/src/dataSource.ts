@@ -7,8 +7,7 @@ import {
     DatasourceConfigOptions,
     SelectionMode,
     SortArgument,
-    FilterArgument,
-    FilterArgumentSimple
+    FilterArgument
 } from './interfaces';
 import { DataContainer } from './dataContainer';
 

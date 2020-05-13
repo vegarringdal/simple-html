@@ -18,6 +18,11 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
         type = 'null';
     }
 
+    if (filter.value instanceof Date) {
+        // little chance someone sends in date if they do not want to query for it
+        type = 'date';
+    }
+
     rowValue = rowData[filter.attribute];
 
     // helper for boolean
@@ -31,6 +36,24 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
         case 'null':
             filterOperator = 'EQUAL';
 
+            break;
+
+        case 'date':
+            try {
+                rowValue = rowValue.toISOString();
+            } catch (err) {
+                rowValue = rowValue;
+            }
+
+            try {
+                filterValue = filter.value.toISOString();
+            } catch (err) {
+                filterValue = filter.value;
+            }
+            filterOperator = filterOperator || 'EQUAL';
+            if (filterOperator === 'CONTAINS') {
+                filterOperator = 'EQUAL';
+            }
             break;
         case 'number':
             filterValue = Number(filter.value);

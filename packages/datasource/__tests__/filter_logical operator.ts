@@ -11,13 +11,13 @@ const simpleArray = [
 
 let ds: Datasource;
 
-describe('datasource filter', () => {
+describe('datasource filter with ', () => {
     beforeAll(() => {
         ds = new Datasource();
         ds.setData(simpleArray.slice());
     });
 
-    it('simple 1 argument', (done) => {
+    it('single', (done) => {
         ds.filter({ attribute: 'name', operator: 'EQUAL', value: 'person1' });
         expect(ds.getRows()).toEqual([
             { name: 'person1', group: 'group2', age: 34, index: 2 },
@@ -27,7 +27,7 @@ describe('datasource filter', () => {
         done();
     });
 
-    it('simple 2 arguments', (done) => {
+    it('2 attributes, default to and', (done) => {
         ds.filter([
             { attribute: 'group', operator: 'EQUAL', value: 'group1' },
             { attribute: 'name', operator: 'EQUAL', value: 'person1' }
