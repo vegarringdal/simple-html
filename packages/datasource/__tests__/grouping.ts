@@ -70,4 +70,13 @@ describe('string filter', () => {
         expect(rows3.length).toEqual(3);
         done();
     });
+
+    it('remove groups', (done) => {
+        ds.group([{ attribute: 'company', title: 'Company' }]);
+        const rows1 = ds.getRows();
+        expect(rows1.length).toEqual(3);
+        ds.removeGroup();
+        expect(ds.getRows().length).toEqual(5);
+        done();
+    });
 });

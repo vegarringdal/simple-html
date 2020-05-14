@@ -239,7 +239,7 @@ export class Datasource {
      * Removed group
      * @param group undefined = remove all groups
      */
-    public removeGroup(group: GroupArgument) {
+    public removeGroup(group?: GroupArgument) {
         if (group) {
             const groupings = this.__grouping.getGrouping();
 
