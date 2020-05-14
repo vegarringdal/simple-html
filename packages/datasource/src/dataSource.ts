@@ -7,7 +7,8 @@ import {
     DatasourceConfigOptions,
     SelectionMode,
     SortArgument,
-    FilterArgument
+    FilterArgument,
+    GroupArgument
 } from './interfaces';
 import { DataContainer } from './dataContainer';
 
@@ -144,7 +145,7 @@ export class Datasource {
      * @param args obj/obj array must have attribute and ascending
      * @param add add to previous sort arguments
      */
-    sort(args?: SortArgument | SortArgument[], add?: boolean) {
+    public sort(args?: SortArgument | SortArgument[], add?: boolean) {
         // sort
         if (args) {
             // TODO: if we have grouping we need to add it to this..
@@ -175,7 +176,7 @@ export class Datasource {
      * if you need to set sort then do this before calling filter
      * @param ObjFilter
      */
-    filter(ObjFilter?: FilterArgument | FilterArgument[]) {
+    public filter(ObjFilter?: FilterArgument | FilterArgument[]) {
         if (ObjFilter) {
             if (Array.isArray(ObjFilter)) {
                 // FilterArgumentSimple[]
@@ -203,23 +204,61 @@ export class Datasource {
         this.__callSubscribers('collection-filtered');
     }
 
-    group() {
-        // sort
+    /**
+     * Groups filtered collection
+     * @param group
+     * @param add
+     */
+    public group(group: GroupArgument[], add?: boolean) {
+        let groupings: GroupArgument[];
+        if (add) {
+            groupings = this.__grouping.getGrouping();
+            groupings = groupings.concat(group);
+        } else {
+            groupings = group;
+        }
+
+        this.__sorting.reset();
+
+        groupings.forEach((group: GroupArgument) => {
+            this.__sorting.setOrderBy({ attribute: group.attribute, ascending: true }, true);
+        });
+        this.__sorting.runOrderBy(this.__collectionFiltered);
+        if (groupings.length) {
+            const result = this.__grouping.group(this.__collectionFiltered, groupings, true);
+            this.__collectionDisplayed = result;
+        } else {
+            this.__collectionDisplayed = this.__collectionFiltered;
+        }
+
         // group
         this.__callSubscribers('collection-grouped');
+    }
+
+    /**
+     * Removed group
+     * @param group undefined = remove all groups
+     */
+    public removeGroup(group: GroupArgument) {
+        if (group) {
+            const groupings = this.__grouping.getGrouping();
+
+            const oldGroupIndex = groupings.indexOf(group);
+            if (oldGroupIndex !== -1) {
+                groupings.splice(oldGroupIndex, 1);
+            }
+            this.group(groupings);
+        } else {
+            this.group([]);
+        }
     }
 
     /**
      * expand 1 or all groups
      * @param id null/undefined = all
      */
-    expandGroup(id?: string) {
-        // TODO: not started yet
-        if (!id) {
-            //all
-        } else {
-            // just the id
-        }
+    public expandGroup(id?: string) {
+        this.__collectionDisplayed = this.__grouping.expandOneOrAll(id);
         this.__callSubscribers('collection-expand');
     }
 
@@ -227,13 +266,8 @@ export class Datasource {
      * collapse 1 or all groups
      * @param id null/undefined = all
      */
-    collapseGroup(id?: string) {
-        // TODO: not started yet
-        if (!id) {
-            //all
-        } else {
-            // just the id
-        }
+    public collapseGroup(id?: string) {
+        this.__collectionDisplayed = this.__grouping.collapseOneOrAll(id);
         this.__callSubscribers('collection-collapse');
     }
 

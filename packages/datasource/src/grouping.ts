@@ -37,7 +37,8 @@ export class Grouping {
                     const mainGroup = this.createMainGrouping(
                         arrayToGroup,
                         groupBy.attribute,
-                        groupNo
+                        groupNo,
+                        groupBy.title
                     );
                     groups.push(mainGroup);
                 } else {
@@ -46,7 +47,8 @@ export class Grouping {
                     const newSubGroup = this.groupChildren(
                         childGroupArray,
                         groupBy.attribute,
-                        groupNo
+                        groupNo,
+                        groupBy.title
                     );
                     groups.push(newSubGroup);
                 }
@@ -224,7 +226,7 @@ export class Grouping {
         return collection;
     }
 
-    private createMainGrouping(array: Entity[], groupBy: string, groupNo: number) {
+    private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string) {
         const tempGroupArray: Entity[] = [];
         let curGroup: Entity = {} as Entity;
         let lastGroupID: string = null;
@@ -237,7 +239,7 @@ export class Grouping {
 
             if (groupID !== lastGroupID) {
                 curGroup = {
-                    __groupName: this.toUppercase(groupBy) + ': ' + groupID,
+                    __groupName: this.toUppercase(title) + ': ' + groupID,
                     __group: true,
                     __groupID: groupID,
                     __groupLvl: groupNo,
@@ -257,7 +259,12 @@ export class Grouping {
         return tempGroupArray;
     }
 
-    private groupChildren(childGroupArray: Entity[], groupBy: string, groupNo: number) {
+    private groupChildren(
+        childGroupArray: Entity[],
+        groupBy: string,
+        groupNo: number,
+        title: string
+    ) {
         const tempGroupArray: Entity[] = [];
 
         let curGroup: Entity = {} as Entity;
@@ -273,7 +280,7 @@ export class Grouping {
                 if (groupID !== tempValue) {
                     const gidc = element.__groupID;
                     curGroup = {
-                        __groupName: this.toUppercase(groupBy) + ': ' + groupID,
+                        __groupName: this.toUppercase(title) + ': ' + groupID,
                         __groupID: gidc + '-' + groupID,
                         __group: true,
                         __groupLvl: groupNo,
