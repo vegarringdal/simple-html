@@ -52,11 +52,11 @@ export default class extends HTMLElement {
             this.style.display = 'block';
 
             const rowClick = (e: any) => {
-                this.connector.selection.highlightRow(e as any, this.row.i);
+                this.connector.highlightRow(e as any, this.row.i);
                 this.ref.triggerEvent('vertical-scroll');
             };
 
-            if (this.connector.selection.isSelected(this.row.i)) {
+            if (this.connector.isSelected(this.row.i)) {
                 this.classList.add('simple-html-grid-selected-row');
             } else {
                 this.classList.remove('simple-html-grid-selected-row');

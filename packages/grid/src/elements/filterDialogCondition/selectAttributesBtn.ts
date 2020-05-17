@@ -1,11 +1,11 @@
 import { html } from 'lit-html';
-import { ICell, OperatorObject } from '../../interfaces';
+import { ICell, FilterArgument } from '../../interfaces';
 import { generateMenu } from '../generateMenu';
 
 /**
  * returns list if attributes from config
  */
-export function selectAttributesBtn(operatorObject: OperatorObject, ctx: any, isValue?: boolean) {
+export function selectAttributesBtn(operatorObject: FilterArgument, ctx: any, isValue?: boolean) {
     return html` <button
         class="dialog-item-y"
         @click=${(e: any) => {

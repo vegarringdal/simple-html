@@ -1,5 +1,5 @@
 import { html, svg } from 'lit-html';
-import { IEntity } from '../interfaces';
+import { Entity } from '../interfaces';
 import { GridInterface } from '../gridInterface';
 
 export function rowElementsGroupRender(
@@ -7,7 +7,7 @@ export function rowElementsGroupRender(
     _rowClick: Function,
     _connector: GridInterface,
     _rowNo: number,
-    rowData: IEntity
+    rowData: Entity
 ) {
     const changeGrouping = () => {
         if (rowData.__groupExpanded) {

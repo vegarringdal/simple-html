@@ -1,34 +1,12 @@
 import { SimpleHtmlGrid } from '.';
-import { IGroupingConfig, IGridConfig, IEntity, ICell, OperatorObject } from './interfaces';
-import { ArrayUtils } from './arrayUtils';
-import { Selection } from './selection';
-import { DataSource } from './dataSource';
+import { GroupArgument, IGridConfig, ICell, FilterArgument } from './interfaces';
+import { Datasource, DataContainer } from '@simple-html/datasource';
 
 export class GridInterface {
     /**
      * Have all the data
      **/
-    private __DATASOURCE: DataSource;
-
-    /**
-     * filtered data only
-     **/
-    private __DATASET_FILTERED: IEntity[] = [];
-
-    /**
-     * displayed dataset, with grouping etc
-     **/
-    private __DATASET_VIEW: IEntity[] = [];
-
-    /**
-     * utils for sorting/filter/grouping data
-     **/
-    private __arrayUtils: ArrayUtils;
-
-    /**
-     * keep track of selected rows
-     **/
-    private __selection: Selection;
+    private __ds: Datasource;
 
     /**
      * connected grid
@@ -40,16 +18,20 @@ export class GridInterface {
      **/
     private __subscribers: Function[] = [];
 
-    currentEntity: IEntity = null;
     private __SCROLL_TOPS: number[];
     private __SCROLL_HEIGHTS: number[];
     private __SCROLL_HEIGHT: number;
 
-    constructor(private __CONFIG: IGridConfig, datasource?: DataSource) {
+    constructor(private __CONFIG: IGridConfig, datasource?: Datasource | DataContainer) {
         if (!datasource) {
-            this.__DATASOURCE = new DataSource();
+            this.__ds = new Datasource();
         } else {
-            this.__DATASOURCE = datasource;
+            if (datasource instanceof Datasource) {
+                this.__ds = datasource;
+            }
+            if (datasource instanceof DataContainer) {
+                this.__ds = new Datasource(datasource);
+            }
         }
 
         // set groupheight
@@ -75,51 +57,58 @@ export class GridInterface {
         }, 0);
         __CONFIG.__rowWidth = totalWidth;
 
-        this.__arrayUtils = new ArrayUtils(this);
-        this.__selection = new Selection(this);
         if (this.__CONFIG.sortingSet) {
-            this.__arrayUtils.setOrderBy(this.__CONFIG.sortingSet);
+            this.__ds.setOrderBy(this.__CONFIG.sortingSet);
         }
         if (this.__CONFIG.groupingSet) {
-            this.__arrayUtils.setGrouping(this.__CONFIG.groupingSet);
+            this.__ds.setGrouping(this.__CONFIG.groupingSet);
         }
         if (this.__CONFIG.groupingExpanded) {
-            this.__arrayUtils.setExpanded(this.__CONFIG.groupingExpanded);
+            this.__ds.setExpanded(this.__CONFIG.groupingExpanded);
         }
     }
 
     manualConfigChange() {
         if (this.config) {
             if (this.config.sortingSet) {
-                this.__arrayUtils.setOrderBy(this.config.sortingSet);
+                this.__ds.setOrderBy(this.config.sortingSet);
             }
             if (this.config.groupingSet) {
-                this.__arrayUtils.setGrouping(this.config.groupingSet);
+                this.__ds.setGrouping(this.config.groupingSet);
             }
             if (this.config.groupingExpanded) {
-                this.__arrayUtils.setExpanded(this.config.groupingExpanded);
+                this.__ds.setExpanded(this.config.groupingExpanded);
             }
 
-            const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-            this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
-            this.displayedDataset = result.fixed;
+            /*   this.__ds.sort(this.filteredDataset, false);
+            this.__ds.setOrderBy(this.config.groups.flatMap((x) => x.rows));
+            this.displayedDataset = this.__ds.getRows(); */
+            console.log('code skipped');
         }
         this.__SimpleHtmlGrid.resetRowCache();
         this.reRender();
     }
 
-    setData(data: any[], add = false, reRunFilter = false) {
-        const olddataSetlength = this.completeDataset.length;
+    get completeDataset() {
+        return this.__ds.getAllData();
+    }
 
-        if (add) {
-            const x = this.__DATASOURCE.setData(data, add);
-            if (x) {
-                this.__DATASET_FILTERED.push(...x);
-            }
-        } else {
-            this.__DATASOURCE.setData(data, add);
-            this.__DATASET_FILTERED = this.completeDataset.slice();
-        }
+    get filteredDataset() {
+        return this.__ds.getRows(true);
+    }
+
+    get displayedDataset() {
+        return this.__ds.getRows();
+    }
+
+    /* get selection() {
+        return this.__ds.getSelection();
+    } */
+
+    setData(data: any[], add = false, reRunFilter = false) {
+        const olddataSetlength = this.__ds.getAllData().length;
+
+        this.__ds.setData(data, add, reRunFilter);
 
         if (this.__SimpleHtmlGrid && olddataSetlength !== this.completeDataset.length) {
             const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
@@ -128,7 +117,7 @@ export class GridInterface {
             }
         }
 
-        this.dataSourceUpdated(reRunFilter);
+        this.dataSourceUpdated();
     }
 
     reloadDatasource() {
@@ -138,26 +127,24 @@ export class GridInterface {
                 node.scrollTop = 0;
             }
         }
-
-        this.__arrayUtils.reRunFilter();
         this.dataSourceUpdated();
     }
 
-    dataSourceUpdated(reRunFilter = false) {
-        if (reRunFilter) {
-            this.__arrayUtils.reRunFilter();
-        }
+    dataSourceUpdated() {
+        this.__SCROLL_TOPS = [];
+        this.__SCROLL_HEIGHTS = [];
+        this.__SCROLL_HEIGHT = 0;
+        const cell = this.config.cellHeight;
+        const row = this.config.__rowHeight;
+        let count = 0;
+        this.displayedDataset.forEach((ent) => {
+            const height = ent.__group ? cell : row;
 
-        if (this.config.sortingSet) {
-            this.__arrayUtils.setOrderBy(this.config.sortingSet);
-        }
-        if (this.config.groupingSet) {
-            this.__arrayUtils.setGrouping(this.config.groupingSet);
-        }
-
-        const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-        this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
-        this.displayedDataset = result.fixed;
+            this.__SCROLL_TOPS.push(count);
+            this.__SCROLL_HEIGHTS.push(height);
+            count = count + height;
+        });
+        this.__SCROLL_HEIGHT = count;
         this.publishEvent('collection-change');
     }
 
@@ -169,17 +156,6 @@ export class GridInterface {
         this.__CONFIG = config;
     }
 
-    get completeDataset() {
-        return this.__DATASOURCE.DATA_SET;
-    }
-
-    set filteredDataset(value) {
-        this.__DATASET_FILTERED = value;
-    }
-    get filteredDataset() {
-        return this.__DATASET_FILTERED;
-    }
-
     get getScrollVars() {
         return {
             __SCROLL_HEIGHT: this.__SCROLL_HEIGHT,
@@ -188,67 +164,13 @@ export class GridInterface {
         };
     }
 
-    set displayedDataset(value) {
-        this.__DATASET_VIEW = value;
-        this.__SCROLL_TOPS = [];
-        this.__SCROLL_HEIGHTS = [];
-        this.__SCROLL_HEIGHT = 0;
-        const cell = this.config.cellHeight;
-        const row = this.config.__rowHeight;
-        let count = 0;
-        this.__DATASET_VIEW.forEach((ent) => {
-            const height = ent.__group ? cell : row;
-
-            this.__SCROLL_TOPS.push(count);
-            this.__SCROLL_HEIGHTS.push(height);
-            count = count + height;
-        });
-        this.__SCROLL_HEIGHT = count;
-    }
-
-    get displayedDataset() {
-        return this.__DATASET_VIEW;
-    }
-
-    get selection() {
-        return this.__selection;
-    }
-
-    public __selectInternal(row: number) {
-        this.currentEntity = this.displayedDataset[row];
-    }
-
     public select(row: number) {
-        this.selection.highlightRow({} as any, row - 1);
-    }
-
-    public next() {
-        let row = this.displayedDataset.indexOf(this.currentEntity) + 1;
-        if (this.displayedDataset.length - 1 < row) {
-            row = 0;
-        }
-        this.selection.highlightRow({} as any, row);
-    }
-
-    public prev() {
-        let row = this.displayedDataset.indexOf(this.currentEntity) - 1;
-        if (row < 0) {
-            row = this.displayedDataset.length - 1;
-            this.selection.highlightRow({} as any, row);
-        }
-        this.selection.highlightRow({} as any, row);
-    }
-
-    public first() {
-        this.selection.highlightRow({} as any, 0);
-    }
-
-    public last() {
-        this.selection.highlightRow({} as any, this.displayedDataset.length - 1);
+        console.log('click');
+        this.__ds.select(row);
     }
 
     public edited() {
-        return this.completeDataset.filter((entity) => {
+        return this.__ds.getAllData().filter((entity) => {
             if (entity.__controller.__edited) {
                 return true;
             } else {
@@ -288,27 +210,33 @@ export class GridInterface {
     }
 
     groupingCallback(event: any, col: ICell) {
-        this.__arrayUtils.groupingCallback(event, col);
+        console.error('not implemeted:setCurrentFilter', event, col);
+        //this.__arrayUtils.groupingCallback(event, col);
     }
 
     filterCallback(event: any, col: ICell) {
-        this.__arrayUtils.filterCallback(event, col, this.__CONFIG);
+        console.error('not implemeted:setCurrentFilter', event, col);
+        //this.__arrayUtils.filterCallback(event, col, this.__CONFIG);
     }
 
     sortCallback(event: any, col: ICell) {
-        this.__arrayUtils.sortCallback(event, col);
+        console.error('not implemeted:setCurrentFilter', event, col);
+        //this.__arrayUtils.sortCallback(event, col);
     }
 
-    removeGroup(group: IGroupingConfig) {
-        this.__arrayUtils.removeGroup(group);
+    removeGroup(group: GroupArgument) {
+        console.error('not implemeted:setCurrentFilter', group);
+        // this.__arrayUtils.removeGroup(group);
     }
 
     groupExpand(id: string) {
-        this.__arrayUtils.groupExpand(id);
+        console.error('not implemeted:setCurrentFilter', id);
+        //  this.__arrayUtils.groupExpand(id);
     }
 
     groupCollapse(id: string) {
-        this.__arrayUtils.groupCollapse(id);
+        console.error('not implemeted:setCurrentFilter', id);
+        //this.__arrayUtils.groupCollapse(id);
     }
 
     connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
@@ -320,13 +248,31 @@ export class GridInterface {
     }
 
     getCurrentFilter() {
-        return this.__arrayUtils.getCurrentFilter();
+        return this.__ds.getFilter();
     }
-    setCurrentFilter(filter: OperatorObject) {
-        this.__arrayUtils.arrayFilter.setLastFilter(filter);
+    setCurrentFilter(_filter: FilterArgument) {
+        console.error('not implemeted:setCurrentFilter');
+        // this.__arrayUtils.arrayFilter.setLastFilter(filter);
     }
 
     reRunFilter() {
-        this.__arrayUtils.reRunFilter();
+        console.error('not implemeted:reRunFilter');
+        //this.__arrayUtils.reRunFilter();
+    }
+
+    /**
+     * new added
+     */
+
+    isSelected(row: number) {
+        return this.__ds.getSelection().isSelected(row);
+    }
+
+    highlightRow(e: MouseEvent, currentRow: number) {
+        this.__ds.getSelection().highlightRow(e, currentRow);
+    }
+
+    getSelectedRows() {
+        return this.__ds.getSelection().getSelectedRows();
     }
 }

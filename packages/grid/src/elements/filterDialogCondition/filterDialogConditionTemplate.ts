@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { OperatorObject } from '../../interfaces';
+import { FilterArgument } from '../../interfaces';
 import { filterDialogGroupTemplate } from '../filterDialogGroupTemplate';
 import { deleteBtn } from './deleteBtn';
 import { selectAttributeOrInputBtn } from './selectAttributeOrInputBtn';
@@ -11,7 +11,7 @@ import { selectAttributesBtn } from './selectAttributesBtn';
  * returns condition template
  */
 export function filterDialogConditionTemplate(
-    operatorObjectArr: OperatorObject[],
+    operatorObjectArr: FilterArgument[],
     ctx: any,
     level: number
 ): any {

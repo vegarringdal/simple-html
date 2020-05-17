@@ -1,10 +1,10 @@
 import { html } from 'lit-html';
-import { OperatorObject } from '../../interfaces';
+import { FilterArgument } from '../../interfaces';
 
 /**
  * returns input based on type
  */
-export function valueInput(operatorObject: OperatorObject) {
+export function valueInput(operatorObject: FilterArgument) {
     switch (operatorObject.attributeType) {
         case 'boolean':
             return html`<input

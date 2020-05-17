@@ -1,31 +1,24 @@
-import { EntityHandler } from './entity';
+export { Entity } from '@simple-html/datasource';
+import {
+    SortArgument,
+    GroupArgument,
+    FilterComparisonOperator,
+    DataTypes
+} from '@simple-html/datasource';
+export {
+    FilterComparisonOperator,
+    FilterAttributeSimple,
+    SortArgument,
+    GroupArgument,
+    FilterLogicalOperator,
+    FilterExpressionType,
+    FilterValueType,
+    FilterArgument,
+    SelectionMode,
+    DataTypes
+} from '@simple-html/datasource';
 
-export interface IEntity {
-    __controller?: EntityHandler;
-    __KEY?: string | number;
-    __group?: boolean;
-    __groupID?: string;
-    __groupName?: string;
-    __groupLvl?: number;
-    __groupTotal?: number;
-    __groupChildren?: IEntity[];
-    __groupExpanded?: boolean;
-}
-
-export type FilterOperator =
-    | 'EQUAL'
-    | 'LESS_THAN_OR_EQUAL_TO'
-    | 'GREATER_THAN_OR_EQUAL_TO'
-    | 'LESS_THAN'
-    | 'GREATER_THAN'
-    | 'CONTAINS'
-    | 'NOT_EQUAL_TO'
-    | 'DOES_NOT_CONTAIN'
-    | 'BEGIN_WITH'
-    | 'END_WITH';
-export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
 export type Triggers = 'input' | 'change';
-export type SelectionMode = 'none' | 'single' | 'multiple';
 export type rowCache = { i: number; update: boolean };
 
 export interface IAttributes {
@@ -55,7 +48,7 @@ export interface ICell {
         currentValue?: string | number | boolean | Date;
         placeholder?: string;
         /**Default BEGIN WITH */
-        operator?: FilterOperator;
+        operator?: FilterComparisonOperator;
     };
     sortable?: {
         /**Internal used for making sort icon on header*/
@@ -110,50 +103,7 @@ export interface IGridConfig {
      * you need to set new or config for this to work
      * You can use this to save current sorting/grouping for later
      */
-    groupingSet?: IGroupingConfig[];
-    sortingSet?: ISortObjectInterface[];
+    groupingSet?: GroupArgument[];
+    sortingSet?: SortArgument[];
     groupingExpanded?: string[];
 }
-
-export interface ISortObjectInterface {
-    attribute: string;
-    asc?: boolean;
-    no?: number;
-}
-
-export interface IGroupingConfig {
-    title: string;
-    field: string;
-}
-
-export interface IFilterObj {
-    operator: number;
-    value: any;
-    attribute: string;
-    type: string;
-}
-
-export type GroupType = 'AND' | 'OR' | 'NONE';
-export type ObjectType = 'CONDITION' | 'GROUP';
-export type ValueType = 'ATTRIBUTE' | 'VALUE';
-export type Operator =
-    | 'BEGIN_WITH'
-    | 'EQUAL'
-    | 'NOT_EQUAL_TO'
-    | 'CONTAINS'
-    | 'GREATER_THAN'
-    | 'GREATER_THAN_OR_EQUAL_TO'
-    | 'LESS_THAN'
-    | 'LESS_THAN_OR_EQUAL_TO'
-    | 'DOES_NOT_CONTAIN'
-    | 'END_WITH';
-export type OperatorObject = {
-    type: ObjectType;
-    groupType: GroupType;
-    attribute: string | null;
-    operator: FilterOperator | null;
-    value: string | null;
-    valueType: ValueType | null;
-    attributeType: DataTypes;
-    operatorObject?: OperatorObject[];
-};

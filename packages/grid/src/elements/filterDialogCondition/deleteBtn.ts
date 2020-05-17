@@ -1,10 +1,10 @@
 import { html } from 'lit-html';
-import { OperatorObject } from '../../interfaces';
+import { FilterArgument } from '../../interfaces';
 
 /**
  * delete btn, removes condition
  */
-export function deleteBtn(ctx: any, operatorObjectArr: OperatorObject[], i: number) {
+export function deleteBtn(ctx: any, operatorObjectArr: FilterArgument[], i: number) {
     return html` <button
         class="dialog-item-x"
         @click=${() => {

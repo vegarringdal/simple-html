@@ -3,7 +3,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell, OperatorObject } from '../interfaces';
+import { ICell, FilterArgument } from '../interfaces';
 import { filterDialogGroupTemplate } from './filterDialogGroupTemplate';
 
 @customElement('simple-html-grid-filter-dialog')
@@ -13,20 +13,20 @@ export default class extends HTMLElement {
     ref: SimpleHtmlGrid;
     width: number;
     filterAttributes: ICell[];
-    filter: OperatorObject;
+    filter: FilterArgument;
 
     connectedCallback() {
         this.style.top = '0';
         this.style.left = '0';
         this.filter = this.connector.getCurrentFilter() || {
             type: 'GROUP',
-            groupType: 'AND',
+            logicalOperator: 'AND',
             attribute: null,
             operator: null,
             valueType: null,
             value: null,
             attributeType: 'text',
-            operatorObject: []
+            filterArguments: []
         };
         this.classList.add('simple-html-grid-menu-full');
         this.filterAttributes = this.connector.config.groups.flatMap((y) => y.rows);
