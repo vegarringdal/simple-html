@@ -134,7 +134,11 @@ export class Datasource {
         }
 
         if (this.__grouping.getGrouping().length) {
-            // if grouping is set
+            this.__collectionDisplayed = this.__grouping.group(
+                this.__collectionFiltered,
+                this.__grouping.getGrouping(),
+                true
+            );
         } else {
             //set sorted collection to display
             this.__collectionDisplayed = this.__collectionFiltered.slice();
