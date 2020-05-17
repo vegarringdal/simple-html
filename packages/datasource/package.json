@@ -5,6 +5,7 @@
     "main": "dist/index.js",
     "module": "dist/index.js",
     "jsnext:main": "dist/index.js",
+    "typings": "src/index.ts",
     "ts:main": "src/index.ts",
     "local:main": "src/index.ts",
     "author": "vegar.ringdal@gmail.com",
