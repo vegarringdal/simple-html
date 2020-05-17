@@ -348,9 +348,14 @@ export class Datasource {
 
     /**
      * returns all rows sorted/grouped/filtered
+     * @param onlyDataRows only get sorted/filtered and skip group
      */
-    public getRows(): Entity[] {
-        return this.__collectionDisplayed;
+    public getRows(onlyDataRows?: boolean): Entity[] {
+        if (onlyDataRows) {
+            return this.__collectionFiltered;
+        } else {
+            return this.__collectionDisplayed;
+        }
     }
 
     /**
@@ -458,5 +463,13 @@ export class Datasource {
      */
     public getExpanded() {
         return this.__grouping.getExpanded();
+    }
+
+    public getFilter() {
+        return this.__filter.getFilter();
+    }
+
+    public getSelection() {
+        return this.__selection;
     }
 }

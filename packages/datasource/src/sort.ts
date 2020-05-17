@@ -1,5 +1,5 @@
 import { SortArgument } from './interfaces';
-import { IEntity } from '@simple-html/grid/src/interfaces';
+import { Entity } from '@simple-html/grid/src/interfaces';
 
 export class Sort {
     private lastSorting: SortArgument[];
@@ -71,7 +71,7 @@ export class Sort {
         return this.currentSorting;
     }
 
-    public runOrderBy(array: IEntity[]): void {
+    public runOrderBy(array: Entity[]): void {
         // super simple for now.. atleast I have som form for sort
         const thisSort = this.getOrderBy();
 
