@@ -479,4 +479,21 @@ export class Datasource {
     public getSelection() {
         return this.__selection;
     }
+
+    public sortReset() {
+        return this.__sorting.reset();
+    }
+
+    public getFilterFromType(type: string) {
+        return this.__filter.getFilterFromType(type);
+    }
+
+    public setFilter(filter: FilterArgument) {
+        return this.__filter.setFilter(filter);
+    }
+
+    public reloadDatasource() {
+        this.__collectionFiltered = this.getAllData();
+        this.__internalUpdate(true);
+    }
 }

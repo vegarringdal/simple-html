@@ -39,7 +39,7 @@ export default class extends HTMLElement {
             } else {
                 this.cell.sortable = { sortAscending: asc, noToggle: true };
             }
-            this.connector.sortCallback({ shiftKey: add }, this.cell);
+            this.connector.sortCallback({ shiftKey: add } as MouseEvent, this.cell);
         }
         if (_type === 'groupBy') {
             if (this.cell.allowGrouping) {

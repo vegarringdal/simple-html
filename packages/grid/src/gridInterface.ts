@@ -70,8 +70,9 @@ export class GridInterface {
     }
 
     handleEvent(event: string) {
-        console.log(event);
+        console.log(event, this.displayedDataset.length);
         this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
+        this.dataSourceUpdated();
         this.__SimpleHtmlGrid && this.reRender();
         return true;
     }
@@ -87,11 +88,6 @@ export class GridInterface {
             if (this.config.groupingExpanded) {
                 this.__ds.setExpanded(this.config.groupingExpanded);
             }
-
-            /*   this.__ds.sort(this.filteredDataset, false);
-            this.__ds.setOrderBy(this.config.groups.flatMap((x) => x.rows));
-            this.displayedDataset = this.__ds.getRows(); */
-            console.log('code skipped');
         }
         this.__SimpleHtmlGrid.resetRowCache();
         this.reRender();
@@ -135,6 +131,7 @@ export class GridInterface {
                 node.scrollTop = 0;
             }
         }
+        this.__ds.reloadDatasource();
         this.dataSourceUpdated();
     }
 
@@ -219,12 +216,89 @@ export class GridInterface {
 
     groupingCallback(event: any, col: ICell) {
         console.error('not implemeted:setCurrentFilter', event, col);
+        let newGrouping = col ? true : false;
+        const groupings = this.__ds.getGrouping();
+        col &&
+            groupings.forEach((g) => {
+                if (g.attribute === col.attribute) {
+                    newGrouping = false;
+                }
+            });
+
+        if (newGrouping) {
+            groupings.push({ title: col.header, attribute: col.attribute });
+        }
+        this.clearConfigSort(this.config.groups.flatMap((x) => x.rows));
+        this.__ds.sortReset();
+        groupings.forEach((group: GroupArgument) => {
+            this.__ds.setOrderBy({ attribute: group.attribute, ascending: true }, true);
+        });
+
+        const columns = this.config.groups.flatMap((x) => x.rows);
+        const attributes = this.__ds.getGrouping().flatMap((x) => x.attribute);
+        const sorting = this.__ds.getOrderBy();
+        columns.forEach((col) => {
+            const index = attributes.indexOf(col.attribute);
+            if (index !== -1) {
+                if (!col.sortable) {
+                    col.sortable = {};
+                }
+                col.sortable.sortAscending = sorting[index].ascending;
+                col.sortable.sortNo = index + 1;
+            }
+        });
+
+        this.config.groupingSet = this.__ds.getGrouping();
+        this.__ds.group(groupings);
+
         //this.__arrayUtils.groupingCallback(event, col);
     }
 
     filterCallback(event: any, col: ICell) {
-        console.error('not implemeted:setCurrentFilter', event, col);
-        //this.__arrayUtils.filterCallback(event, col, this.__CONFIG);
+        switch (col.type) {
+            case 'date':
+                col.filterable.currentValue = new Date(event.target.valueAsDate);
+                break;
+            case 'number':
+                col.filterable.currentValue = event.target.valueAsNumber;
+                break;
+            case 'boolean':
+                col.filterable.currentValue = event.target.indeterminate
+                    ? null
+                    : event.target.checked;
+                break;
+            default:
+                col.filterable.currentValue = event.target.value;
+        }
+
+        const filter: FilterArgument = {
+            type: 'GROUP',
+            logicalOperator: 'AND',
+            attribute: null,
+            operator: null,
+            valueType: null,
+            value: null,
+            attributeType: null,
+            filterArguments: []
+        };
+
+        const columns = this.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f && f.currentValue !== null && f.currentValue !== undefined) {
+                filter.filterArguments.push({
+                    type: 'CONDITION',
+                    logicalOperator: 'NONE',
+                    valueType: 'VALUE',
+                    attribute: col.attribute,
+                    attributeType: (col.type as any) || 'text',
+                    operator: f.operator || this.__ds.getFilterFromType(col.type),
+                    value: f.currentValue as any
+                });
+            }
+        });
+
+        this.__ds.filter(filter);
     }
 
     public clearConfigSort(configColumns: ICell[]) {
@@ -287,17 +361,17 @@ export class GridInterface {
     }
 
     groupExpand(id: string) {
-        console.error('not implemeted:setCurrentFilter', id);
-        //  this.__arrayUtils.groupExpand(id);
+        this.__ds.expandGroup(id);
     }
 
     groupCollapse(id: string) {
-        console.error('not implemeted:setCurrentFilter', id);
-        //this.__arrayUtils.groupCollapse(id);
+        this.__ds.collapseGroup(id);
     }
 
     connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
         this.__SimpleHtmlGrid = SimpleHtmlGrid;
+        this.dataSourceUpdated();
+        this.reRender();
     }
 
     disconnectGrid() {
@@ -307,14 +381,13 @@ export class GridInterface {
     getCurrentFilter() {
         return this.__ds.getFilter();
     }
-    setCurrentFilter(_filter: FilterArgument) {
-        console.error('not implemeted:setCurrentFilter');
-        // this.__arrayUtils.arrayFilter.setLastFilter(filter);
+
+    setCurrentFilter(filter: FilterArgument) {
+        this.__ds.setFilter(filter);
     }
 
     reRunFilter() {
-        console.error('not implemeted:reRunFilter');
-        //this.__arrayUtils.reRunFilter();
+        this.__ds.filter();
     }
 
     /**
