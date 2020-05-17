@@ -113,6 +113,7 @@ export class Datasource {
         }
 
         this.__internalUpdate(reRunFilter);
+        this.__callSubscribers('collection-changed', { added: !!add });
     }
 
     /**
@@ -277,15 +278,21 @@ export class Datasource {
      * @param data
      */
     public __callSubscribers(event: string, data = {}): void {
+        const keeping: any = [];
         this.__listeners.forEach((callable) => {
+            let keep: boolean;
             if (typeof callable === 'function') {
-                callable({ type: event, data: data });
+                keep = callable({ type: event, data: data });
             } else {
                 if (typeof callable?.handleEvent === 'function') {
-                    callable.handleEvent({ type: event, data: data });
+                    keep = callable.handleEvent({ type: event, data: data });
                 }
             }
+            if (keep) {
+                keeping.push(callable);
+            }
         });
+        this.__listeners = keeping;
     }
 
     /**
