@@ -431,4 +431,32 @@ export class Datasource {
     public getOrderBy() {
         return this.__sorting.getOrderBy();
     }
+
+    /**
+     * returns current grouing config
+     */
+    public getGrouping() {
+        return this.__grouping.getGrouping();
+    }
+
+    /**
+     * sets current grouing config
+     */
+    public setGrouping(group: GroupArgument[]) {
+        this.__grouping.setGrouping(group);
+    }
+
+    /**
+     * sets current expanded ids
+     */
+    public setExpanded(x: string[]) {
+        this.__grouping.setExpanded(x);
+    }
+
+    /**
+     * gets current expanded ids
+     */
+    public getExpanded() {
+        return this.__grouping.getExpanded();
+    }
 }
