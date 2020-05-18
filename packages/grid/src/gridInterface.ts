@@ -70,8 +70,8 @@ export class GridInterface {
         }
     }
 
-    handleEvent(event: string) {
-        console.log(event, this.displayedDataset.length);
+    handleEvent(_event: string) {
+        // console.log(_event, this.displayedDataset.length);
         if (this.__handleEvent === null) {
             // only trigger once..
             this.__handleEvent = 1;
@@ -99,6 +99,7 @@ export class GridInterface {
             }
         }
         this.__SimpleHtmlGrid.resetRowCache();
+        this.__updateSortConfig();
         this.__ds.reloadDatasource();
         this.dataSourceUpdated();
         this.reRender();
@@ -227,19 +228,7 @@ export class GridInterface {
             this.__ds.setOrderBy({ attribute: group.attribute, ascending: true }, true);
         });
 
-        const columns = this.config.groups.flatMap((x) => x.rows);
-        const attributes = this.__ds.getGrouping().flatMap((x) => x.attribute);
-        const sorting = this.__ds.getOrderBy();
-        columns.forEach((col) => {
-            const index = attributes.indexOf(col.attribute);
-            if (index !== -1) {
-                if (!col.sortable) {
-                    col.sortable = {};
-                }
-                col.sortable.sortAscending = sorting[index].ascending;
-                col.sortable.sortNo = index + 1;
-            }
-        });
+        this.__updateSortConfig();
 
         this.config.groupingSet = this.__ds.getGrouping();
         this.__ds.group(groupings);
@@ -296,6 +285,27 @@ export class GridInterface {
         });
     }
 
+    private __updateSortConfig() {
+        const columns = this.config.groups.flatMap((x) => x.rows);
+        const attributes = this.__ds.getOrderBy().flatMap((x) => x.attribute);
+        const sorting = this.__ds.getOrderBy();
+        columns.forEach((col) => {
+            const index = attributes.indexOf(col.attribute);
+            if (index !== -1) {
+                if (!col.sortable) {
+                    col.sortable = {};
+                }
+                col.sortable.sortAscending = sorting[index].ascending;
+                col.sortable.sortNo = index + 1;
+            } else {
+                if (col.sortable) {
+                    col.sortable.sortAscending;
+                    col.sortable.sortNo = null;
+                }
+            }
+        });
+    }
+
     sortCallback(event: MouseEvent, col: CellConfig) {
         // get data we need
         let sorting = this.__ds.getOrderBy();
@@ -324,21 +334,11 @@ export class GridInterface {
             sorting = [{ attribute: attribute, ascending: ascending ? false : true }];
         }
 
-        // add to config, grid uses this atm - need to orginize this better, but atm just getting all to work
-        const columns = this.config.groups.flatMap((x) => x.rows);
-        const attributes = sorting.flatMap((x) => x.attribute);
-        columns.forEach((col) => {
-            const index = attributes.indexOf(col.attribute);
-            if (index !== -1) {
-                if (!col.sortable) {
-                    col.sortable = {};
-                }
-                col.sortable.sortAscending = sorting[index].ascending;
-                col.sortable.sortNo = index + 1;
-            }
-        });
+        this.__ds.setOrderBy(sorting);
 
-        this.__ds.sort(sorting, add);
+        this.__updateSortConfig();
+
+        this.__ds.sort();
     }
 
     removeGroup(group: GroupArgument) {

@@ -60,7 +60,6 @@ export default class extends HTMLElement {
                 cell.sortable.beforeSortCallbackFn &&
                     cell.sortable.beforeSortCallbackFn(e as any, cell, connector);
                 if (cell.sortable.auto !== false) {
-                    console.log('sort');
                     connector.sortCallback(e as any, cell);
                 }
             };

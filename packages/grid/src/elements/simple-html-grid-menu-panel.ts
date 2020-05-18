@@ -34,7 +34,7 @@ export default class extends HTMLElement {
     select(_type: string) {
         if (_type === 'clear') {
             this.connector.config.groupingExpanded = [];
-            this.connector.config.sortingSet = [];
+            // this.connector.config.sortingSet = []; --keep
             this.connector.config.groupingSet = [];
             this.connector.manualConfigChange();
         }
