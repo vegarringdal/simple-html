@@ -21,6 +21,7 @@ export class GridInterface {
     private __SCROLL_TOPS: number[];
     private __SCROLL_HEIGHTS: number[];
     private __SCROLL_HEIGHT: number;
+    private __handleEvent: any = null;
 
     constructor(private __CONFIG: IGridConfig, datasource?: Datasource | DataContainer) {
         if (!datasource) {
@@ -71,9 +72,17 @@ export class GridInterface {
 
     handleEvent(event: string) {
         console.log(event, this.displayedDataset.length);
-        this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
-        this.dataSourceUpdated();
-        this.__SimpleHtmlGrid && this.reRender();
+        if (this.__handleEvent === null) {
+            // only trigger once..
+            this.__handleEvent = 1;
+            Promise.resolve().then(() => {
+                this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
+                this.dataSourceUpdated();
+                this.__SimpleHtmlGrid && this.reRender();
+                this.__handleEvent = null;
+            });
+        }
+
         return true;
     }
 
@@ -90,6 +99,8 @@ export class GridInterface {
             }
         }
         this.__SimpleHtmlGrid.resetRowCache();
+        this.__ds.reloadDatasource();
+        this.dataSourceUpdated();
         this.reRender();
     }
 
@@ -104,10 +115,6 @@ export class GridInterface {
     get displayedDataset() {
         return this.__ds.getRows();
     }
-
-    /* get selection() {
-        return this.__ds.getSelection();
-    } */
 
     setData(data: any[], add = false, reRunFilter = false) {
         const olddataSetlength = this.__ds.getAllData().length;
@@ -150,7 +157,6 @@ export class GridInterface {
             count = count + height;
         });
         this.__SCROLL_HEIGHT = count;
-        this.publishEvent('collection-change');
     }
 
     get config() {
@@ -170,7 +176,6 @@ export class GridInterface {
     }
 
     public select(row: number) {
-        console.log('click');
         this.__ds.select(row);
     }
 
@@ -185,17 +190,6 @@ export class GridInterface {
     }
 
     publishEvent(event: string) {
-        if (
-            event === 'collecton-filter' ||
-            event === 'collection-change' ||
-            event === 'collecton-grouping' ||
-            event === 'collecton-sort'
-        ) {
-            // changes that make collection change needs rowcache to be updated
-            this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
-        }
-
-        this.reRender();
         const keep = this.__subscribers.filter((element) => {
             return element(event);
         });
@@ -214,8 +208,7 @@ export class GridInterface {
         if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.render();
     }
 
-    groupingCallback(event: any, col: ICell) {
-        console.error('not implemeted:setCurrentFilter', event, col);
+    groupingCallback(_event: any, col: ICell) {
         let newGrouping = col ? true : false;
         const groupings = this.__ds.getGrouping();
         col &&
@@ -250,8 +243,6 @@ export class GridInterface {
 
         this.config.groupingSet = this.__ds.getGrouping();
         this.__ds.group(groupings);
-
-        //this.__arrayUtils.groupingCallback(event, col);
     }
 
     filterCallback(event: any, col: ICell) {
@@ -274,11 +265,6 @@ export class GridInterface {
         const filter: FilterArgument = {
             type: 'GROUP',
             logicalOperator: 'AND',
-            attribute: null,
-            operator: null,
-            valueType: null,
-            value: null,
-            attributeType: null,
             filterArguments: []
         };
 
@@ -356,8 +342,8 @@ export class GridInterface {
     }
 
     removeGroup(group: GroupArgument) {
-        console.error('not implemeted:setCurrentFilter', group);
-        // this.__arrayUtils.removeGroup(group);
+        debugger;
+        this.__ds.removeGroup(group);
     }
 
     groupExpand(id: string) {
