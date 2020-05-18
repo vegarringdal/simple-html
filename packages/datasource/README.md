@@ -1,6 +1,9 @@
 # simple-html-datasource
 
-this will be the datasource for the grid (total refactor needed for the grid, but its a mess...)
+IMPORTANT! -> very early state of developement..
+
+Helps sorting/filtering/grouping of array object data.
+Puts a proxy around objects for tracking changes
 
 ### Install
 

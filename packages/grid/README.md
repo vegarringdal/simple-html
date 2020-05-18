@@ -1,16 +1,19 @@
 # @simple-html/grid
 
-Simple data grid made with lit-html & @simple-html/core.
+IMPORTANT! -> very early state of developement..
 
-Makes displaying a local array very easy. Support:
+Simple data grid made with lit-html & @simple-html/core & @simple-html/datasource.
+This grid is made for desktop, not mobile.
+
+
+Features:
 
 -   Grouping
--   filtering
+-   Filtering
 -   multi sorting
 -   mulitiselect rows
--   get/set setting - inluding sorting/grouping with expaned
 
-Grid adds a wrapper around each element and track changes with proxy
+Grid uses @simple-html/datasorce to for sorting/filtering/sorting/tracking changes
 
 ### Install
 
