@@ -3,7 +3,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { CellConfig, FilterArgument } from '../interfaces';
+import { CellConfig, FilterArgument } from '../types';
 import { filterDialogGroupTemplate } from './filterDialogGroupTemplate';
 
 @customElement('simple-html-grid-filter-dialog')

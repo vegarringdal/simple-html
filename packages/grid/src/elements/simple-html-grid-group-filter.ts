@@ -1,7 +1,7 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
-import { GridGroupConfig } from '../interfaces';
+import { GridGroupConfig } from '../types';
 import { html } from 'lit-html';
 
 @customElement('simple-html-grid-group-filter')

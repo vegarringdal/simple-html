@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { FilterArgument } from '../../interfaces';
+import { FilterArgument } from '../../types';
 import { filterDialogGroupTemplate } from '../filterDialogGroupTemplate';
 import { deleteBtn } from './deleteBtn';
 import { selectAttributeOrInputBtn } from './selectAttributeOrInputBtn';

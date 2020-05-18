@@ -1,5 +1,5 @@
 import { GridInterface } from '..';
-import { CellConfig } from '../interfaces';
+import { CellConfig } from '../types';
 
 let dragCell: CellConfig = null;
 let dragColumnBlock: HTMLElement = null;

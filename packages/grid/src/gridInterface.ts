@@ -1,7 +1,8 @@
 import { SimpleHtmlGrid } from '.';
-import { GroupArgument, GridConfig, CellConfig, FilterArgument } from './interfaces';
+import { GroupArgument, GridConfig, CellConfig, FilterArgument } from './types';
 import { Datasource, DataContainer } from '@simple-html/datasource';
 
+// TODO: check what methods are internal used by grid and public for user
 export class GridInterface {
     /**
      * Have all the data
@@ -110,6 +111,10 @@ export class GridInterface {
         return true;
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     manualConfigChange() {
         if (this.config) {
             if (this.config.sortingSet) {
@@ -129,6 +134,10 @@ export class GridInterface {
         this.reRender();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     setData(data: any[], add = false, reRunFilter = false) {
         const olddataSetlength = this.__ds.getAllData().length;
 
@@ -144,6 +153,10 @@ export class GridInterface {
         this.dataSourceUpdated();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     reloadDatasource() {
         if (this.__SimpleHtmlGrid) {
             const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
@@ -155,6 +168,10 @@ export class GridInterface {
         this.dataSourceUpdated();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     dataSourceUpdated() {
         this.__SCROLL_TOPS = [];
         this.__SCROLL_HEIGHTS = [];
@@ -172,15 +189,27 @@ export class GridInterface {
         this.__SCROLL_HEIGHT = count;
     }
 
-    get config() {
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public get config() {
         return this.__CONFIG;
     }
 
-    set config(config: GridConfig) {
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public set config(config: GridConfig) {
         this.__CONFIG = config;
     }
 
-    get getScrollVars() {
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public get getScrollVars() {
         return {
             __SCROLL_HEIGHT: this.__SCROLL_HEIGHT,
             __SCROLL_HEIGHTS: this.__SCROLL_HEIGHTS,
@@ -188,10 +217,18 @@ export class GridInterface {
         };
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public select(row: number) {
         this.__ds.select(row);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public edited() {
         return this.__ds.getAllData().filter((entity) => {
             if (entity.__controller.__edited) {
@@ -202,6 +239,10 @@ export class GridInterface {
         });
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     publishEvent(event: string) {
         const keep = this.__subscribers.filter((element) => {
             return element(event);
@@ -209,18 +250,34 @@ export class GridInterface {
         this.__subscribers = keep;
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     addEventListener(callable: (event: string) => boolean) {
         this.__subscribers.push(callable);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     reRender() {
         if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.reRender();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     render() {
         if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.render();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     groupingCallback(_event: any, col: CellConfig) {
         let newGrouping = col ? true : false;
         const groupings = this.__ds.getGrouping();
@@ -246,6 +303,10 @@ export class GridInterface {
         this.__ds.group(groupings);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     filterCallback(event: any, col: CellConfig) {
         switch (col.type) {
             case 'date':
@@ -288,6 +349,10 @@ export class GridInterface {
         this.__ds.filter(filter);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public clearConfigSort(configColumns: CellConfig[]) {
         configColumns.forEach((col) => {
             if (col.sortable) {
@@ -297,6 +362,10 @@ export class GridInterface {
         });
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     private __updateSortConfig() {
         const columns = this.config.groups.flatMap((x) => x.rows);
         const attributes = this.__ds.getOrderBy().flatMap((x) => x.attribute);
@@ -318,6 +387,10 @@ export class GridInterface {
         });
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public sortCallback(event: MouseEvent, col: CellConfig) {
         // get data we need
         let sorting = this.__ds.getOrderBy();
@@ -353,19 +426,35 @@ export class GridInterface {
         this.__ds.sort();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public removeGroup(group: GroupArgument) {
         debugger;
         this.__ds.removeGroup(group);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public groupExpand(id: string) {
         this.__ds.expandGroup(id);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public groupCollapse(id: string) {
         this.__ds.collapseGroup(id);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
         this.__SimpleHtmlGrid = SimpleHtmlGrid;
         this.__ds.addEventListner(this);
@@ -373,32 +462,60 @@ export class GridInterface {
         this.reRender();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public disconnectGrid() {
         this.__SimpleHtmlGrid = null;
         this.__ds.removeEventListner(this);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public getCurrentFilter() {
         return this.__ds.getFilter();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public setCurrentFilter(filter: FilterArgument) {
         this.__ds.setFilter(filter);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public reRunFilter() {
         this.__ds.filter();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public isSelected(row: number) {
         return this.__ds.getSelection().isSelected(row);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public highlightRow(e: MouseEvent, currentRow: number) {
         this.__ds.getSelection().highlightRow(e, currentRow);
         this.reRender();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public getSelectedRows() {
         return this.__ds.getSelection().getSelectedRows();
     }

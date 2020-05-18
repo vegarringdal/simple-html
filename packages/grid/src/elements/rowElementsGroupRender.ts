@@ -1,5 +1,5 @@
 import { html, svg } from 'lit-html';
-import { Entity } from '../interfaces';
+import { Entity } from '../types';
 import { GridInterface } from '../gridInterface';
 
 export function rowElementsGroupRender(

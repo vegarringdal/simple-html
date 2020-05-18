@@ -18,7 +18,7 @@ import './simple-html-grid-filter-dialog';
 import './simple-html-grid-menu-custom';
 import { scrollEvent } from './scrollEvent';
 import { GridInterface } from '../gridInterface';
-import { RowCache } from '../interfaces';
+import { RowCache } from '../types';
 import { html } from 'lit-html';
 import { SimpleHtmlGrid } from '../';
 import { columnDragDropPanel } from './dragEvent';

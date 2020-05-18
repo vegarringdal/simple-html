@@ -1,6 +1,6 @@
 import { customElement, property } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
-import { GridGroupConfig } from '../interfaces';
+import { GridGroupConfig } from '../types';
 import { html } from 'lit-html';
 
 @customElement('simple-html-grid-group-row')

@@ -2,7 +2,7 @@ import { render, html } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { customElement } from '@simple-html/core';
 import { generate } from './generate';
-import { RowCache } from '../interfaces';
+import { RowCache } from '../types';
 
 @customElement('simple-html-grid')
 export class SimpleHtmlGrid extends HTMLElement {

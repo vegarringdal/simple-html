@@ -1,6 +1,6 @@
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
-import { RowCache } from '../interfaces';
+import { RowCache } from '../types';
 
 let scrollBarTimer: any;
 

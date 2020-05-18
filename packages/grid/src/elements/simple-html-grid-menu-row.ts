@@ -2,7 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { CellConfig, Entity } from '../interfaces';
+import { CellConfig, Entity } from '../types';
 
 let dataClip: any = null; // firefox hack
 @customElement('simple-html-grid-menu-row')

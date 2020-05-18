@@ -1,5 +1,5 @@
 import { html, svg } from 'lit-html';
-import { CellConfig } from '../interfaces';
+import { CellConfig } from '../types';
 import { GridInterface } from '../gridInterface';
 
 export function sorticonElement(_connector: GridInterface, col: CellConfig) {

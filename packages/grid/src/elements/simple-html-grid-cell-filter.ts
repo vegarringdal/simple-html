@@ -1,6 +1,6 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
-import { GridGroupConfig } from '../interfaces';
+import { GridGroupConfig } from '../types';
 import { html } from 'lit-html';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 

@@ -9,7 +9,7 @@ import {
     SortArgument,
     FilterArgument,
     GroupArgument
-} from './interfaces';
+} from './types';
 import { DataContainer } from './dataContainer';
 
 type callable = Function | { handleEvent: Function };

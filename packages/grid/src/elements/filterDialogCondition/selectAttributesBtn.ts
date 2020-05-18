@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { CellConfig, FilterArgument } from '../../interfaces';
+import { CellConfig, FilterArgument } from '../../types';
 import { generateMenu } from '../generateMenu';
 
 /**

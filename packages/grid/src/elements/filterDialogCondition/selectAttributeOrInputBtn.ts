@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { FilterArgument } from '../../interfaces';
+import { FilterArgument } from '../../types';
 
 /**
  * sets if value is input or btn to select attibutes

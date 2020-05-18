@@ -2,7 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { CellConfig } from '../interfaces';
+import { CellConfig } from '../types';
 
 @customElement('simple-html-grid-menu-panel')
 export default class extends HTMLElement {

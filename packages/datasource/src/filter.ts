@@ -1,4 +1,4 @@
-import { Entity, FilterArgument, FilterComparisonOperator } from './interfaces';
+import { Entity, FilterArgument, FilterComparisonOperator } from './types';
 import { objectFilter } from './objectFilter';
 
 export class Filter {

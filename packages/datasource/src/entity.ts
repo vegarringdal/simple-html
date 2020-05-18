@@ -1,4 +1,4 @@
-import { Entity } from './interfaces';
+import { Entity } from './types';
 
 /**
  * Entity will keep track of edited properties of the row object

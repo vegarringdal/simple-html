@@ -1,6 +1,6 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
-import { GridGroupConfig } from '../interfaces';
+import { GridGroupConfig } from '../types';
 import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';

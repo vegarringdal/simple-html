@@ -1,4 +1,4 @@
-import { GroupArgument, Entity } from './interfaces';
+import { GroupArgument, Entity } from './types';
 
 /**
  * This takes care the generating the flat array the grid can use for grouping

@@ -1,4 +1,4 @@
-import { FilterAttributeSimple, FilterComparisonOperator } from './interfaces';
+import { FilterAttributeSimple, FilterComparisonOperator } from './types';
 
 export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     let result = true;

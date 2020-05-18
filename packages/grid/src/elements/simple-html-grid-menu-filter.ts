@@ -2,7 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { CellConfig, FilterComparisonOperator } from '../interfaces';
+import { CellConfig, FilterComparisonOperator } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-menu-filter')

@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { GridGroupConfig } from '../interfaces';
+import { GridGroupConfig } from '../types';
 import { SimpleHtmlGrid } from '../';
 
 export function resizeColumnElement(ref: SimpleHtmlGrid, group: GridGroupConfig) {

@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { FilterArgument } from '../../interfaces';
+import { FilterArgument } from '../../types';
 import { generateMenu } from '../generateMenu';
 
 export const OPERATORS = {

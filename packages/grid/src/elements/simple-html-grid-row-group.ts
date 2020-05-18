@@ -2,7 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { html, svg } from 'lit-html';
-import { RowCache } from '../interfaces';
+import { RowCache } from '../types';
 
 @customElement('simple-html-grid-row-group')
 export default class extends HTMLElement {
