@@ -18,14 +18,14 @@ import './simple-html-grid-filter-dialog';
 import './simple-html-grid-menu-custom';
 import { scrollEvent } from './scrollEvent';
 import { GridInterface } from '../gridInterface';
-import { rowCache } from '../interfaces';
+import { RowCache } from '../types';
 import { html } from 'lit-html';
 import { SimpleHtmlGrid } from '../';
 import { columnDragDropPanel } from './dragEvent';
 
 export function generate(
     connector: GridInterface,
-    rowPositionCache: rowCache[],
+    rowPositionCache: RowCache[],
     ref: SimpleHtmlGrid
 ) {
     const scroll = scrollEvent(connector, rowPositionCache, ref);

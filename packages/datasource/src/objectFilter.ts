@@ -1,13 +1,13 @@
-import { IFilterObj } from './interfaces';
+import { FilterAttributeSimple, FilterComparisonOperator } from './types';
 
-export function objectFilter(rowData: any, filter: IFilterObj) {
+export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     let result = true;
 
     // vars
     let rowValue: any;
     let filterValue: any;
     let filterOperator = filter.operator;
-    let newFilterOperator: number;
+    let newFilterOperator: FilterComparisonOperator;
     let type: string = filter.type || 'text';
 
     if (filter.value === 'null') {
@@ -16,6 +16,15 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
 
     if (filter.value === null || filter.value === undefined) {
         type = 'null';
+    }
+
+    if (filter.value instanceof Date) {
+        // little chance someone sends in date if they do not want to query for it
+        type = 'date';
+    }
+
+    if (Number(filter.value) === filter.value) {
+        type = 'number';
     }
 
     rowValue = rowData[filter.attribute];
@@ -29,8 +38,32 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
     // lets set some defaults/corrections if its all wrong
     switch (type) {
         case 'null':
-            filterOperator = 1;
+            filterOperator = 'EQUAL';
 
+            break;
+
+        case 'date':
+            try {
+                rowValue = rowValue.toISOString();
+            } catch (err) {
+                rowValue = rowValue;
+            }
+
+            try {
+                filterValue = filter.value.toISOString();
+            } catch (err) {
+                filterValue = filter.value;
+            }
+
+            filterOperator = filterOperator || 'GREATER_THAN_OR_EQUAL_TO';
+            if (
+                filterOperator === 'CONTAINS' ||
+                filterOperator === 'BEGIN_WITH' ||
+                filterOperator === 'END_WITH' ||
+                filterOperator === 'DOES_NOT_CONTAIN'
+            ) {
+                filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
+            }
             break;
         case 'number':
             filterValue = Number(filter.value);
@@ -38,9 +71,14 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
                 // needs to be 0
                 filterValue = 0;
             }
-            filterOperator = filterOperator || 1;
-            if (filterOperator === 6) {
-                filterOperator = 1;
+            filterOperator = filterOperator || 'GREATER_THAN_OR_EQUAL_TO';
+            if (
+                filterOperator === 'CONTAINS' ||
+                filterOperator === 'BEGIN_WITH' ||
+                filterOperator === 'END_WITH' ||
+                filterOperator === 'DOES_NOT_CONTAIN'
+            ) {
+                filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
             }
             break;
         case 'text':
@@ -51,40 +89,48 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
                 rowValue = rowValue.toLowerCase();
             }
             filterValue = filter.value.toLowerCase();
-            filterOperator = filterOperator || 9;
+            filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
 
             // if filter operator is BEGIN WITH
-            if (filter.value.charAt(0) === '*' && filterOperator === 9) {
-                newFilterOperator = 6;
+            if (filter.value.charAt(0) === '*' && filterOperator === 'BEGIN_WITH') {
+                newFilterOperator = 'CONTAINS';
                 filterValue = filterValue.substr(1, filterValue.length);
             }
 
             // if filter operator is EQUAL TO
             // wildcard first = end with
-            if (filter.value.charAt(0) === '*' && filterOperator === 1) {
-                newFilterOperator = 10;
+            if (filter.value.charAt(0) === '*' && filterOperator === 'EQUAL') {
+                newFilterOperator = 'END_WITH';
                 filterValue = filterValue.substr(1, filterValue.length);
             }
 
             // wildcard end and first = contains
             if (
                 filter.value.charAt(filter.value.length - 1) === '*' &&
-                filterOperator === 1 &&
-                newFilterOperator === 10
+                filterOperator === 'EQUAL' &&
+                newFilterOperator === 'END_WITH'
             ) {
-                newFilterOperator = 6;
+                newFilterOperator = 'CONTAINS';
+                filterValue = filterValue.substr(0, filterValue.length - 1);
+            }
+
+            if (
+                filter.value.charAt(filter.value.length - 1) === '*' &&
+                (filterOperator === 'END_WITH' || newFilterOperator === 'END_WITH')
+            ) {
+                newFilterOperator = 'CONTAINS';
                 filterValue = filterValue.substr(0, filterValue.length - 1);
             }
 
             // begin with since wildcard is in the end
             if (
                 filter.value.charAt(filter.value.length - 1) === '*' &&
-                filterOperator === 1 &&
-                newFilterOperator !== 10 &&
-                newFilterOperator !== 6
+                filterOperator === 'EQUAL' &&
+                newFilterOperator !== 'END_WITH' &&
+                newFilterOperator !== 'CONTAINS'
             ) {
-                newFilterOperator = 9;
+                newFilterOperator = 'BEGIN_WITH';
                 filterValue = filterValue.substr(0, filterValue.length - 1);
             }
 
@@ -95,7 +141,7 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
             break;
         case 'boolean':
             filterValue = typeBool[filter.value];
-            filterOperator = 1;
+            filterOperator = 'EQUAL';
             break;
 
         default:
@@ -111,58 +157,58 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
             } catch (err) {
                 filterValue = filter.value;
             }
-            filterOperator = filterOperator || 1;
+            filterOperator = filterOperator || 'EQUAL';
             break;
     }
 
     // filter from what operator used
     switch (filterOperator) {
-        case 1: // equal
+        case 'EQUAL':
             if (rowValue !== filterValue) {
                 result = false;
             }
             break;
-        case 2: // less or equal
+        case 'LESS_THAN_OR_EQUAL_TO':
             if (!(rowValue <= filterValue)) {
                 result = false;
             }
             break;
-        case 3: // greater or equal
+        case 'GREATER_THAN_OR_EQUAL_TO':
             if (!(rowValue >= filterValue)) {
                 result = false;
             }
             break;
-        case 4: // greate
+        case 'LESS_THAN':
             if (!(rowValue < filterValue)) {
                 result = false;
             }
             break;
-        case 5: // greater
+        case 'GREATER_THAN':
             if (!(rowValue > filterValue)) {
                 result = false;
             }
             break;
-        case 6: // contains
+        case 'CONTAINS':
             if (rowValue.indexOf(filterValue) === -1) {
                 result = false;
             }
             break;
-        case 7: // not equal to
+        case 'NOT_EQUAL_TO':
             if (rowValue === filterValue) {
                 result = false;
             }
             break;
-        case 8: // does not contain
+        case 'DOES_NOT_CONTAIN':
             if (rowValue.indexOf(filterValue) !== -1) {
                 result = false;
             }
             break;
-        case 9: // begin with
+        case 'BEGIN_WITH':
             if (rowValue.substring(0, filterValue.length) !== filterValue) {
                 result = false;
             }
             break;
-        case 10: // end with
+        case 'END_WITH':
             if (
                 rowValue.substring(rowValue.length - filterValue.length, rowValue.length) !==
                 filterValue
@@ -176,7 +222,7 @@ export function objectFilter(rowData: any, filter: IFilterObj) {
             }
     }
     if (type === 'text') {
-        if (filter.value.charAt(0) === '*' && filter.value.length === 1) {
+        if (filter.value.charAt(0) === '*' && filter.value.length === 'EQUAL') {
             result = true;
         }
     }

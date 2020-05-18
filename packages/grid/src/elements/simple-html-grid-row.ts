@@ -2,12 +2,12 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { html } from 'lit-html';
-import { rowCache } from '../interfaces';
+import { RowCache } from '../types';
 
 @customElement('simple-html-grid-row')
 export default class extends HTMLElement {
     connector: GridInterface;
-    row: rowCache;
+    row: RowCache;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
@@ -52,11 +52,11 @@ export default class extends HTMLElement {
             this.style.display = 'block';
 
             const rowClick = (e: any) => {
-                this.connector.selection.highlightRow(e as any, this.row.i);
+                this.connector.highlightRow(e as any, this.row.i);
                 this.ref.triggerEvent('vertical-scroll');
             };
 
-            if (this.connector.selection.isSelected(this.row.i)) {
+            if (this.connector.isSelected(this.row.i)) {
                 this.classList.add('simple-html-grid-selected-row');
             } else {
                 this.classList.remove('simple-html-grid-selected-row');

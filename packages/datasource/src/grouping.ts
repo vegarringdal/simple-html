@@ -1,12 +1,12 @@
-import { IGroupingConfig, IEntity } from './interfaces';
+import { GroupArgument, Entity } from './types';
 
 /**
  * This takes care the generating the flat array the grid can use for grouping
  *
  */
-export class ArrayGrouping {
-    private currentGroups: IEntity[][];
-    private groupingConfig: IGroupingConfig[];
+export class Grouping {
+    private currentGroups: Entity[][];
+    private groupingConfig: GroupArgument[];
     private expandedGroupIDs: Set<string>;
 
     constructor() {
@@ -20,11 +20,7 @@ export class ArrayGrouping {
         this.expandedGroupIDs = new Set([]);
     }
 
-    public group(
-        arrayToGroup: IEntity[],
-        groupingConfig: IGroupingConfig[],
-        keepExpanded?: boolean
-    ) {
+    public group(arrayToGroup: Entity[], groupingConfig: GroupArgument[], keepExpanded?: boolean) {
         // if grouping
         if (groupingConfig.length > 0) {
             // temp holder for groups as we create them
@@ -33,17 +29,27 @@ export class ArrayGrouping {
             }
 
             // variable to hold our groups
-            const groups: IEntity[][] = [];
+            const groups: Entity[][] = [];
 
             groupingConfig.forEach((groupBy, groupNo) => {
                 if (groupNo === 0) {
                     // create main group and add to groups array
-                    const mainGroup = this.createMainGrouping(arrayToGroup, groupBy.field, groupNo);
+                    const mainGroup = this.createMainGrouping(
+                        arrayToGroup,
+                        groupBy.attribute,
+                        groupNo,
+                        groupBy.title
+                    );
                     groups.push(mainGroup);
                 } else {
                     // get last group created, and group children
                     const childGroupArray = groups[groups.length - 1];
-                    const newSubGroup = this.groupChildren(childGroupArray, groupBy.field, groupNo);
+                    const newSubGroup = this.groupChildren(
+                        childGroupArray,
+                        groupBy.attribute,
+                        groupNo,
+                        groupBy.title
+                    );
                     groups.push(newSubGroup);
                 }
             });
@@ -81,11 +87,11 @@ export class ArrayGrouping {
         this.expandedGroupIDs = new Set(x);
     }
 
-    public getGrouping(): IGroupingConfig[] {
+    public getGrouping(): GroupArgument[] {
         return this.groupingConfig;
     }
 
-    public setGrouping(groupingConfig: IGroupingConfig[]) {
+    public setGrouping(groupingConfig: GroupArgument[]) {
         this.groupingConfig = groupingConfig;
     }
 
@@ -109,12 +115,12 @@ export class ArrayGrouping {
             array = new Set([]);
         }
 
-        const collection: IEntity[] = [];
+        const collection: Entity[] = [];
         const mainGroups = this.currentGroups[0];
 
         // loop children
-        const traverseSubGroups = (group: IEntity) => {
-            group.__groupChildren.forEach((subGroup: IEntity) => {
+        const traverseSubGroups = (group: Entity) => {
+            group.__groupChildren.forEach((subGroup: Entity) => {
                 collection.push(subGroup);
                 switch (true) {
                     case all:
@@ -135,7 +141,7 @@ export class ArrayGrouping {
         };
 
         // loop main groups
-        mainGroups.forEach((group: IEntity) => {
+        mainGroups.forEach((group: Entity) => {
             collection.push(group);
             switch (true) {
                 case all:
@@ -165,12 +171,12 @@ export class ArrayGrouping {
         const all = id ? false : true; // if no id, then all
         id = id === undefined ? null : id;
 
-        const collection: IEntity[] = [];
+        const collection: Entity[] = [];
         const mainGroups = this.currentGroups[0];
 
         // loop children
-        const traverseSubGroup = (group: IEntity) => {
-            group.__groupChildren.forEach((subGroup: IEntity) => {
+        const traverseSubGroup = (group: Entity) => {
+            group.__groupChildren.forEach((subGroup: Entity) => {
                 switch (true) {
                     case all:
                         if (subGroup.__groupChildren) {
@@ -195,7 +201,7 @@ export class ArrayGrouping {
         };
 
         // loop main groups
-        mainGroups.forEach((group: IEntity) => {
+        mainGroups.forEach((group: Entity) => {
             collection.push(group);
             switch (true) {
                 case all:
@@ -220,9 +226,9 @@ export class ArrayGrouping {
         return collection;
     }
 
-    private createMainGrouping(array: IEntity[], groupBy: string, groupNo: number) {
-        const tempGroupArray: IEntity[] = [];
-        let curGroup: IEntity = {} as IEntity;
+    private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string) {
+        const tempGroupArray: Entity[] = [];
+        let curGroup: Entity = {} as Entity;
         let lastGroupID: string = null;
 
         // first level, here we use array
@@ -233,7 +239,7 @@ export class ArrayGrouping {
 
             if (groupID !== lastGroupID) {
                 curGroup = {
-                    __groupName: this.toUppercase(groupBy) + ': ' + groupID,
+                    __groupName: this.toUppercase(title) + ': ' + groupID,
                     __group: true,
                     __groupID: groupID,
                     __groupLvl: groupNo,
@@ -253,23 +259,28 @@ export class ArrayGrouping {
         return tempGroupArray;
     }
 
-    private groupChildren(childGroupArray: IEntity[], groupBy: string, groupNo: number) {
-        const tempGroupArray: IEntity[] = [];
+    private groupChildren(
+        childGroupArray: Entity[],
+        groupBy: string,
+        groupNo: number,
+        title: string
+    ) {
+        const tempGroupArray: Entity[] = [];
 
-        let curGroup: IEntity = {} as IEntity;
+        let curGroup: Entity = {} as Entity;
 
         // loop groups
-        childGroupArray.forEach((element: IEntity) => {
+        childGroupArray.forEach((element: Entity) => {
             let tempValue: string = null;
             // loop children
-            const rebuiltChildrenArray: IEntity[] = [];
-            element.__groupChildren.forEach((child: IEntity) => {
+            const rebuiltChildrenArray: Entity[] = [];
+            element.__groupChildren.forEach((child: Entity) => {
                 const groupID = child[groupBy] || ' blank';
 
                 if (groupID !== tempValue) {
                     const gidc = element.__groupID;
                     curGroup = {
-                        __groupName: this.toUppercase(groupBy) + ': ' + groupID,
+                        __groupName: this.toUppercase(title) + ': ' + groupID,
                         __groupID: gidc + '-' + groupID,
                         __group: true,
                         __groupLvl: groupNo,

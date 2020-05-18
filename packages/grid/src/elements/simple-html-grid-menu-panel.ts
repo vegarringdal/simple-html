@@ -2,12 +2,12 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell } from '../interfaces';
+import { CellConfig } from '../types';
 
 @customElement('simple-html-grid-menu-panel')
 export default class extends HTMLElement {
     connector: GridInterface;
-    cell: ICell;
+    cell: CellConfig;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
@@ -34,7 +34,7 @@ export default class extends HTMLElement {
     select(_type: string) {
         if (_type === 'clear') {
             this.connector.config.groupingExpanded = [];
-            this.connector.config.sortingSet = [];
+            // this.connector.config.sortingSet = []; --keep
             this.connector.config.groupingSet = [];
             this.connector.manualConfigChange();
         }

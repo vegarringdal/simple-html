@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { OperatorObject } from '../../interfaces';
+import { FilterArgument } from '../../types';
 import { generateMenu } from '../generateMenu';
 
 export const OPERATORS = {
@@ -18,7 +18,7 @@ export const OPERATORS = {
 /**
  * returns list of operators user can use
  */
-export function selectOperatorBtn(operatorObject: OperatorObject, ctx: any) {
+export function selectOperatorBtn(operatorObject: FilterArgument, ctx: any) {
     return html` <button
         class="dialog-item-y"
         @click=${(e: any) => {

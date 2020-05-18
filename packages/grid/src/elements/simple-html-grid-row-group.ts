@@ -2,12 +2,12 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { html, svg } from 'lit-html';
-import { rowCache } from '../interfaces';
+import { RowCache } from '../types';
 
 @customElement('simple-html-grid-row-group')
 export default class extends HTMLElement {
     connector: GridInterface;
-    row: rowCache;
+    row: RowCache;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {

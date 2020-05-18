@@ -1,10 +1,10 @@
 import { html } from 'lit-html';
-import { OperatorObject } from '../../interfaces';
+import { FilterArgument } from '../../types';
 
 /**
  * sets if value is input or btn to select attibutes
  */
-export function selectAttributeOrInputBtn(operatorObject: OperatorObject, ctx: any) {
+export function selectAttributeOrInputBtn(operatorObject: FilterArgument, ctx: any) {
     return html` <button
         class="dialog-item-x"
         @click=${() => {

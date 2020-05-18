@@ -1,34 +1,13 @@
 import { SimpleHtmlGrid } from '.';
-import { IGroupingConfig, IGridConfig, IEntity, ICell, OperatorObject } from './interfaces';
-import { ArrayUtils } from './arrayUtils';
-import { Selection } from './selection';
-import { DataSource } from './dataSource';
+import { GroupArgument, GridConfig, CellConfig, FilterArgument } from './types';
+import { Datasource, DataContainer } from '@simple-html/datasource';
 
+// TODO: check what methods are internal used by grid and public for user
 export class GridInterface {
     /**
      * Have all the data
      **/
-    private __DATASOURCE: DataSource;
-
-    /**
-     * filtered data only
-     **/
-    private __DATASET_FILTERED: IEntity[] = [];
-
-    /**
-     * displayed dataset, with grouping etc
-     **/
-    private __DATASET_VIEW: IEntity[] = [];
-
-    /**
-     * utils for sorting/filter/grouping data
-     **/
-    private __arrayUtils: ArrayUtils;
-
-    /**
-     * keep track of selected rows
-     **/
-    private __selection: Selection;
+    private __ds: Datasource;
 
     /**
      * connected grid
@@ -40,16 +19,21 @@ export class GridInterface {
      **/
     private __subscribers: Function[] = [];
 
-    currentEntity: IEntity = null;
     private __SCROLL_TOPS: number[];
     private __SCROLL_HEIGHTS: number[];
     private __SCROLL_HEIGHT: number;
+    private __handleEvent: any = null;
 
-    constructor(private __CONFIG: IGridConfig, datasource?: DataSource) {
+    constructor(private __CONFIG: GridConfig, datasource?: Datasource | DataContainer) {
         if (!datasource) {
-            this.__DATASOURCE = new DataSource();
+            this.__ds = new Datasource();
         } else {
-            this.__DATASOURCE = datasource;
+            if (datasource instanceof Datasource) {
+                this.__ds = datasource;
+            }
+            if (datasource instanceof DataContainer) {
+                this.__ds = new Datasource(datasource);
+            }
         }
 
         // set groupheight
@@ -75,51 +59,89 @@ export class GridInterface {
         }, 0);
         __CONFIG.__rowWidth = totalWidth;
 
-        this.__arrayUtils = new ArrayUtils(this);
-        this.__selection = new Selection(this);
         if (this.__CONFIG.sortingSet) {
-            this.__arrayUtils.setOrderBy(this.__CONFIG.sortingSet);
+            this.__ds.setOrderBy(this.__CONFIG.sortingSet);
         }
         if (this.__CONFIG.groupingSet) {
-            this.__arrayUtils.setGrouping(this.__CONFIG.groupingSet);
+            this.__ds.setGrouping(this.__CONFIG.groupingSet);
         }
         if (this.__CONFIG.groupingExpanded) {
-            this.__arrayUtils.setExpanded(this.__CONFIG.groupingExpanded);
+            this.__ds.setExpanded(this.__CONFIG.groupingExpanded);
         }
     }
 
+    /**
+     * datasource dataContainer data
+     */
+    get completeDataset() {
+        return this.__ds.getAllData();
+    }
+
+    /**
+     * filtered data- no groups here, just pure data
+     */
+    get filteredDataset() {
+        return this.__ds.getRows(true);
+    }
+
+    /**
+     * this is the rows the grid is displaying
+     */
+    get displayedDataset() {
+        return this.__ds.getRows();
+    }
+
+    /**
+     * event handler for the grid.
+     * @param _event string
+     */
+    handleEvent(_event: any) {
+        // console.log(_event, this.displayedDataset.length);
+        if (this.__handleEvent === null) {
+            // only trigger once..
+            this.__handleEvent = 1;
+            Promise.resolve().then(() => {
+                this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
+                this.dataSourceUpdated();
+                this.__SimpleHtmlGrid && this.reRender();
+                this.__handleEvent = null;
+            });
+        }
+
+        return true;
+    }
+
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     manualConfigChange() {
         if (this.config) {
             if (this.config.sortingSet) {
-                this.__arrayUtils.setOrderBy(this.config.sortingSet);
+                this.__ds.setOrderBy(this.config.sortingSet);
             }
             if (this.config.groupingSet) {
-                this.__arrayUtils.setGrouping(this.config.groupingSet);
+                this.__ds.setGrouping(this.config.groupingSet);
             }
             if (this.config.groupingExpanded) {
-                this.__arrayUtils.setExpanded(this.config.groupingExpanded);
+                this.__ds.setExpanded(this.config.groupingExpanded);
             }
-
-            const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-            this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
-            this.displayedDataset = result.fixed;
         }
         this.__SimpleHtmlGrid.resetRowCache();
+        this.__updateSortConfig();
+        this.__ds.reloadDatasource();
+        this.dataSourceUpdated();
         this.reRender();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     setData(data: any[], add = false, reRunFilter = false) {
-        const olddataSetlength = this.completeDataset.length;
+        const olddataSetlength = this.__ds.getAllData().length;
 
-        if (add) {
-            const x = this.__DATASOURCE.setData(data, add);
-            if (x) {
-                this.__DATASET_FILTERED.push(...x);
-            }
-        } else {
-            this.__DATASOURCE.setData(data, add);
-            this.__DATASET_FILTERED = this.completeDataset.slice();
-        }
+        this.__ds.setData(data, add, reRunFilter);
 
         if (this.__SimpleHtmlGrid && olddataSetlength !== this.completeDataset.length) {
             const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
@@ -128,9 +150,13 @@ export class GridInterface {
             }
         }
 
-        this.dataSourceUpdated(reRunFilter);
+        this.dataSourceUpdated();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     reloadDatasource() {
         if (this.__SimpleHtmlGrid) {
             const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
@@ -138,65 +164,22 @@ export class GridInterface {
                 node.scrollTop = 0;
             }
         }
-
-        this.__arrayUtils.reRunFilter();
+        this.__ds.reloadDatasource();
         this.dataSourceUpdated();
     }
 
-    dataSourceUpdated(reRunFilter = false) {
-        if (reRunFilter) {
-            this.__arrayUtils.reRunFilter();
-        }
-
-        if (this.config.sortingSet) {
-            this.__arrayUtils.setOrderBy(this.config.sortingSet);
-        }
-        if (this.config.groupingSet) {
-            this.__arrayUtils.setGrouping(this.config.groupingSet);
-        }
-
-        const result = this.__arrayUtils.orderBy(this.filteredDataset, null, false);
-        this.__arrayUtils.arraySort.SetConfigSort(this.config.groups.flatMap((x) => x.rows));
-        this.displayedDataset = result.fixed;
-        this.publishEvent('collection-change');
-    }
-
-    get config() {
-        return this.__CONFIG;
-    }
-
-    set config(config: IGridConfig) {
-        this.__CONFIG = config;
-    }
-
-    get completeDataset() {
-        return this.__DATASOURCE.DATA_SET;
-    }
-
-    set filteredDataset(value) {
-        this.__DATASET_FILTERED = value;
-    }
-    get filteredDataset() {
-        return this.__DATASET_FILTERED;
-    }
-
-    get getScrollVars() {
-        return {
-            __SCROLL_HEIGHT: this.__SCROLL_HEIGHT,
-            __SCROLL_HEIGHTS: this.__SCROLL_HEIGHTS,
-            __SCROLL_TOPS: this.__SCROLL_TOPS
-        };
-    }
-
-    set displayedDataset(value) {
-        this.__DATASET_VIEW = value;
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    dataSourceUpdated() {
         this.__SCROLL_TOPS = [];
         this.__SCROLL_HEIGHTS = [];
         this.__SCROLL_HEIGHT = 0;
         const cell = this.config.cellHeight;
         const row = this.config.__rowHeight;
         let count = 0;
-        this.__DATASET_VIEW.forEach((ent) => {
+        this.displayedDataset.forEach((ent) => {
             const height = ent.__group ? cell : row;
 
             this.__SCROLL_TOPS.push(count);
@@ -206,49 +189,48 @@ export class GridInterface {
         this.__SCROLL_HEIGHT = count;
     }
 
-    get displayedDataset() {
-        return this.__DATASET_VIEW;
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public get config() {
+        return this.__CONFIG;
     }
 
-    get selection() {
-        return this.__selection;
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public set config(config: GridConfig) {
+        this.__CONFIG = config;
     }
 
-    public __selectInternal(row: number) {
-        this.currentEntity = this.displayedDataset[row];
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public get getScrollVars() {
+        return {
+            __SCROLL_HEIGHT: this.__SCROLL_HEIGHT,
+            __SCROLL_HEIGHTS: this.__SCROLL_HEIGHTS,
+            __SCROLL_TOPS: this.__SCROLL_TOPS
+        };
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public select(row: number) {
-        this.selection.highlightRow({} as any, row - 1);
+        this.__ds.select(row);
     }
 
-    public next() {
-        let row = this.displayedDataset.indexOf(this.currentEntity) + 1;
-        if (this.displayedDataset.length - 1 < row) {
-            row = 0;
-        }
-        this.selection.highlightRow({} as any, row);
-    }
-
-    public prev() {
-        let row = this.displayedDataset.indexOf(this.currentEntity) - 1;
-        if (row < 0) {
-            row = this.displayedDataset.length - 1;
-            this.selection.highlightRow({} as any, row);
-        }
-        this.selection.highlightRow({} as any, row);
-    }
-
-    public first() {
-        this.selection.highlightRow({} as any, 0);
-    }
-
-    public last() {
-        this.selection.highlightRow({} as any, this.displayedDataset.length - 1);
-    }
-
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     public edited() {
-        return this.completeDataset.filter((entity) => {
+        return this.__ds.getAllData().filter((entity) => {
             if (entity.__controller.__edited) {
                 return true;
             } else {
@@ -257,76 +239,284 @@ export class GridInterface {
         });
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     publishEvent(event: string) {
-        if (
-            event === 'collecton-filter' ||
-            event === 'collection-change' ||
-            event === 'collecton-grouping' ||
-            event === 'collecton-sort'
-        ) {
-            // changes that make collection change needs rowcache to be updated
-            this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
-        }
-
-        this.reRender();
         const keep = this.__subscribers.filter((element) => {
             return element(event);
         });
         this.__subscribers = keep;
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     addEventListener(callable: (event: string) => boolean) {
         this.__subscribers.push(callable);
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     reRender() {
         if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.reRender();
     }
 
+    /**
+     * todo
+     * Used by grid, do not call
+     */
     render() {
         if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.render();
     }
 
-    groupingCallback(event: any, col: ICell) {
-        this.__arrayUtils.groupingCallback(event, col);
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    groupingCallback(_event: any, col: CellConfig) {
+        let newGrouping = col ? true : false;
+        const groupings = this.__ds.getGrouping();
+        col &&
+            groupings.forEach((g) => {
+                if (g.attribute === col.attribute) {
+                    newGrouping = false;
+                }
+            });
+
+        if (newGrouping) {
+            groupings.push({ title: col.header, attribute: col.attribute });
+        }
+        this.clearConfigSort(this.config.groups.flatMap((x) => x.rows));
+        this.__ds.sortReset();
+        groupings.forEach((group: GroupArgument) => {
+            this.__ds.setOrderBy({ attribute: group.attribute, ascending: true }, true);
+        });
+
+        this.__updateSortConfig();
+
+        this.config.groupingSet = this.__ds.getGrouping();
+        this.__ds.group(groupings);
     }
 
-    filterCallback(event: any, col: ICell) {
-        this.__arrayUtils.filterCallback(event, col, this.__CONFIG);
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    filterCallback(event: any, col: CellConfig) {
+        switch (col.type) {
+            case 'date':
+                col.filterable.currentValue = new Date(event.target.valueAsDate);
+                break;
+            case 'number':
+                col.filterable.currentValue = event.target.valueAsNumber;
+                break;
+            case 'boolean':
+                col.filterable.currentValue = event.target.indeterminate
+                    ? null
+                    : event.target.checked;
+                break;
+            default:
+                col.filterable.currentValue = event.target.value;
+        }
+
+        const filter: FilterArgument = {
+            type: 'GROUP',
+            logicalOperator: 'AND',
+            filterArguments: []
+        };
+
+        const columns = this.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f && f.currentValue !== null && f.currentValue !== undefined) {
+                filter.filterArguments.push({
+                    type: 'CONDITION',
+                    logicalOperator: 'NONE',
+                    valueType: 'VALUE',
+                    attribute: col.attribute,
+                    attributeType: (col.type as any) || 'text',
+                    operator: f.operator || this.__ds.getFilterFromType(col.type),
+                    value: f.currentValue as any
+                });
+            }
+        });
+
+        this.__ds.filter(filter);
     }
 
-    sortCallback(event: any, col: ICell) {
-        this.__arrayUtils.sortCallback(event, col);
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public clearConfigSort(configColumns: CellConfig[]) {
+        configColumns.forEach((col) => {
+            if (col.sortable) {
+                col.sortable.sortAscending = null;
+                col.sortable.sortNo = null;
+            }
+        });
     }
 
-    removeGroup(group: IGroupingConfig) {
-        this.__arrayUtils.removeGroup(group);
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    private __updateSortConfig() {
+        const columns = this.config.groups.flatMap((x) => x.rows);
+        const attributes = this.__ds.getOrderBy().flatMap((x) => x.attribute);
+        const sorting = this.__ds.getOrderBy();
+        columns.forEach((col) => {
+            const index = attributes.indexOf(col.attribute);
+            if (index !== -1) {
+                if (!col.sortable) {
+                    col.sortable = {};
+                }
+                col.sortable.sortAscending = sorting[index].ascending;
+                col.sortable.sortNo = index + 1;
+            } else {
+                if (col.sortable) {
+                    col.sortable.sortAscending;
+                    col.sortable.sortNo = null;
+                }
+            }
+        });
     }
 
-    groupExpand(id: string) {
-        this.__arrayUtils.groupExpand(id);
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public sortCallback(event: MouseEvent, col: CellConfig) {
+        // get data we need
+        let sorting = this.__ds.getOrderBy();
+        const attribute = col.attribute;
+        const ascending = col.sortable?.sortAscending;
+        const add = event.shiftKey;
+
+        // clear config sort
+        this.clearConfigSort(this.config.groups.flatMap((x) => x.rows));
+
+        if (add) {
+            let exist = false;
+            sorting.forEach((el) => {
+                if (el.attribute === attribute) {
+                    exist = true;
+                    el.ascending = el.ascending ? false : true;
+                }
+            });
+            if (!exist) {
+                sorting.push({ attribute, ascending: true });
+            } else {
+                col.sortable.sortAscending = true;
+                col.sortable.sortNo = sorting.length;
+            }
+        } else {
+            sorting = [{ attribute: attribute, ascending: ascending ? false : true }];
+        }
+
+        this.__ds.setOrderBy(sorting);
+
+        this.__updateSortConfig();
+
+        this.__ds.sort();
     }
 
-    groupCollapse(id: string) {
-        this.__arrayUtils.groupCollapse(id);
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public removeGroup(group: GroupArgument) {
+        debugger;
+        this.__ds.removeGroup(group);
     }
 
-    connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public groupExpand(id: string) {
+        this.__ds.expandGroup(id);
+    }
+
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public groupCollapse(id: string) {
+        this.__ds.collapseGroup(id);
+    }
+
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
         this.__SimpleHtmlGrid = SimpleHtmlGrid;
+        this.__ds.addEventListner(this);
+        this.dataSourceUpdated();
+        this.reRender();
     }
 
-    disconnectGrid() {
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public disconnectGrid() {
         this.__SimpleHtmlGrid = null;
+        this.__ds.removeEventListner(this);
     }
 
-    getCurrentFilter() {
-        return this.__arrayUtils.getCurrentFilter();
-    }
-    setCurrentFilter(filter: OperatorObject) {
-        this.__arrayUtils.arrayFilter.setLastFilter(filter);
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public getCurrentFilter() {
+        return this.__ds.getFilter();
     }
 
-    reRunFilter() {
-        this.__arrayUtils.reRunFilter();
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public setCurrentFilter(filter: FilterArgument) {
+        this.__ds.setFilter(filter);
+    }
+
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public reRunFilter() {
+        this.__ds.filter();
+    }
+
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public isSelected(row: number) {
+        return this.__ds.getSelection().isSelected(row);
+    }
+
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public highlightRow(e: MouseEvent, currentRow: number) {
+        this.__ds.getSelection().highlightRow(e, currentRow);
+        this.reRender();
+    }
+
+    /**
+     * todo
+     * Used by grid, do not call
+     */
+    public getSelectedRows() {
+        return this.__ds.getSelection().getSelectedRows();
     }
 }

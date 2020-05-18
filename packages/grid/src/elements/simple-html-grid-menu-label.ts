@@ -2,12 +2,12 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell } from '../interfaces';
+import { CellConfig } from '../types';
 
 @customElement('simple-html-grid-menu-label')
 export default class extends HTMLElement {
     connector: GridInterface;
-    cell: ICell;
+    cell: CellConfig;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
@@ -39,7 +39,7 @@ export default class extends HTMLElement {
             } else {
                 this.cell.sortable = { sortAscending: asc, noToggle: true };
             }
-            this.connector.sortCallback({ shiftKey: add }, this.cell);
+            this.connector.sortCallback({ shiftKey: add } as MouseEvent, this.cell);
         }
         if (_type === 'groupBy') {
             if (this.cell.allowGrouping) {

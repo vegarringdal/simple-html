@@ -14,5 +14,11 @@ module.exports = {
             tsConfig: './tsconfig.json'
         }
     },
-    collectCoverageFrom: ['packages/core/src/**/*.ts', 'packages/router/src/**/*.ts']
+    collectCoverageFrom: [
+        'packages/core/src/**/*.ts',
+        'packages/router/src/**/*.ts',
+        'packages/datasource/src/**/*.ts'
+        // todo: grid,
+        // todo: datepaicker
+    ]
 };

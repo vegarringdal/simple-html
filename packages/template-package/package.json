@@ -4,6 +4,7 @@
     "description": "template-package",
     "main": "dist/index.js",
     "module": "dist/index.js",
+    "typings": "src/index.ts",
     "jsnext:main": "dist/index.js",
     "ts:main": "src/index.ts",
     "local:main": "src/index.ts",

@@ -2,13 +2,13 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell, FilterOperator } from '../interfaces';
+import { CellConfig, FilterComparisonOperator } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-menu-filter')
 export default class extends HTMLElement {
     connector: GridInterface;
-    cell: ICell;
+    cell: CellConfig;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {
@@ -32,7 +32,7 @@ export default class extends HTMLElement {
         }
     }
 
-    select(_type: FilterOperator) {
+    select(_type: FilterComparisonOperator) {
         if (this.cell.filterable) {
             this.cell.filterable.operator = _type;
         }

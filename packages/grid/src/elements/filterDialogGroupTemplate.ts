@@ -1,9 +1,9 @@
 import { html } from 'lit-html';
-import { OperatorObject } from '../interfaces';
+import { FilterArgument } from '../types';
 import { filterDialogConditionTemplate } from './filterDialogCondition/filterDialogConditionTemplate';
 import { generateMenu } from './generateMenu';
 export function filterDialogGroupTemplate(
-    g: OperatorObject,
+    g: FilterArgument,
     ctx: any,
     level: number,
     parent?: any[]
@@ -14,11 +14,11 @@ export function filterDialogGroupTemplate(
             <button
                 class="dialog-item-x"
                 @click=${() => {
-                    g.groupType = g.groupType === 'AND' ? 'OR' : 'AND';
+                    g.logicalOperator = g.logicalOperator === 'AND' ? 'OR' : 'AND';
                     ctx.render();
                 }}
             >
-                <b> ${g.groupType}</b>
+                <b> ${g.logicalOperator}</b>
             </button>
 
             <button
@@ -28,14 +28,14 @@ export function filterDialogGroupTemplate(
                         {
                             title: 'Add Group',
                             callback: () => {
-                                g.operatorObject.push({
+                                g.filterArguments.push({
                                     type: 'GROUP',
-                                    groupType: 'AND',
+                                    logicalOperator: 'AND',
                                     attribute: 'select',
                                     operator: 'EQUAL',
                                     valueType: 'VALUE',
                                     attributeType: 'text',
-                                    operatorObject: [],
+                                    filterArguments: [],
                                     value: ''
                                 });
                                 ctx.render();
@@ -44,14 +44,14 @@ export function filterDialogGroupTemplate(
                         {
                             title: 'Add condition',
                             callback: () => {
-                                g.operatorObject.push({
+                                g.filterArguments.push({
                                     type: 'CONDITION',
-                                    groupType: 'NONE',
+                                    logicalOperator: 'NONE',
                                     attribute: 'select',
                                     operator: 'EQUAL',
                                     valueType: 'VALUE',
                                     attributeType: 'text',
-                                    operatorObject: [],
+                                    filterArguments: [],
                                     value: ''
                                 });
                                 ctx.render();
@@ -76,7 +76,7 @@ export function filterDialogGroupTemplate(
                 @click=${() => {
                     parent && parent.splice(parent.indexOf(g), 1);
                     if (!parent) {
-                        g.operatorObject = [];
+                        g.filterArguments = [];
                     }
                     ctx.render();
                 }}
@@ -95,6 +95,6 @@ export function filterDialogGroupTemplate(
                 </svg>
             </button>
         </div>
-        ${filterDialogConditionTemplate(g.operatorObject, ctx, level + 10)}
+        ${filterDialogConditionTemplate(g.filterArguments, ctx, level + 10)}
     `;
 }

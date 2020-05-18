@@ -1,17 +1,17 @@
 import { html } from 'lit-html';
-import { ICell, OperatorObject } from '../../interfaces';
+import { CellConfig, FilterArgument } from '../../types';
 import { generateMenu } from '../generateMenu';
 
 /**
  * returns list if attributes from config
  */
-export function selectAttributesBtn(operatorObject: OperatorObject, ctx: any, isValue?: boolean) {
+export function selectAttributesBtn(operatorObject: FilterArgument, ctx: any, isValue?: boolean) {
     return html` <button
         class="dialog-item-y"
         @click=${(e: any) => {
             generateMenu(
                 e,
-                ctx.filterAttributes.map((e: ICell) => {
+                ctx.filterAttributes.map((e: CellConfig) => {
                     return {
                         title: e.attribute,
                         callback: () => {

@@ -64,7 +64,7 @@ export default class extends HTMLElement {
                         class="simple-html-grid-grouping-panel-container"
                     >
                         <p class="simple-html-grid-grouping-panel-p">
-                            ${group.title || group.field}
+                            ${group.title || group.attribute}
                             <i>
                                 <svg
                                     @click=${click}

@@ -1,6 +1,6 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
-import { IgridConfigGroups } from '../interfaces';
+import { GridGroupConfig } from '../types';
 import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
@@ -13,7 +13,7 @@ export default class extends HTMLElement {
     cellPosition: number;
     ref: SimpleHtmlGrid;
     currentHeight: number;
-    group: IgridConfigGroups;
+    group: GridGroupConfig;
     label: string;
 
     connectedCallback() {
@@ -60,7 +60,6 @@ export default class extends HTMLElement {
                 cell.sortable.beforeSortCallbackFn &&
                     cell.sortable.beforeSortCallbackFn(e as any, cell, connector);
                 if (cell.sortable.auto !== false) {
-                    console.log('sort');
                     connector.sortCallback(e as any, cell);
                 }
             };

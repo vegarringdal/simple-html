@@ -1,15 +1,14 @@
-import { GridInterface } from './gridInterface';
+import { Datasource } from './dataSource';
 
 export class Selection {
-    // private mode: 'none' | 'single' | 'multiple';
     private selectedRows: number;
-    private selection: Set<number>;
+    private selection: Set<number | string>;
     private lastRowSelected: number;
     private lastKeyKodeUsed: string;
-    private gridInterface: GridInterface;
+    private dataSource: Datasource;
 
-    constructor(gridInterface: GridInterface) {
-        this.gridInterface = gridInterface;
+    constructor(dataSource: Datasource) {
+        this.dataSource = dataSource;
         this.selectedRows = 0;
         this.selection = new Set([]);
     }
@@ -33,13 +32,13 @@ export class Selection {
         let currentselectedRows = this.getSelectedRows();
         let currentKeyKode = '';
 
-        this.gridInterface.__selectInternal(currentRow);
+        this.dataSource.__select(currentRow);
 
         if (currentRow !== this.lastRowSelected || currentselectedRows[0] !== currentRow) {
-            if (currentRow <= this.gridInterface.displayedDataset.length - 1) {
+            if (currentRow <= this.dataSource.length() - 1) {
                 // do I need to check this?
 
-                if (this.gridInterface.config.selectionMode === 'multiple') {
+                if (this.dataSource.getSelectionMode() === 'multiple') {
                     // if multiselect duh!
 
                     if (e.shiftKey) {
@@ -131,7 +130,7 @@ export class Selection {
                 this.lastKeyKodeUsed = currentKeyKode;
 
                 // update selection on rows
-                this.gridInterface.publishEvent('selectionChange');
+                this.dataSource.__callSubscribers('selectionChange');
             }
         } else {
             // same row clicked again
@@ -152,23 +151,20 @@ export class Selection {
                 this.select(currentRow, false);
             }
             // update selection on rows
-            this.gridInterface.publishEvent('selectionChange');
+            this.dataSource.__callSubscribers('selectionChange');
         }
     }
 
     /**
      * todo, optional key
      */
-    private getRowKey(row: number): number {
-        return (
-            (this.gridInterface.displayedDataset[row] as any) &&
-            (this.gridInterface.displayedDataset[row] as any).__KEY
-        );
+    private getRowKey(row: number): string | number {
+        return this.dataSource.getRow(row) && this.dataSource.getRow(row).__KEY;
     }
 
     private getRowKeys(): any[] {
         const keys: any[] = [];
-        (this.gridInterface.displayedDataset as any).forEach((data: any) => {
+        this.dataSource.getRows().forEach((data: any) => {
             keys.push(data.__KEY);
         });
 
@@ -181,7 +177,7 @@ export class Selection {
     }
 
     private select(row: number, add?: boolean): void {
-        switch (this.gridInterface.config.selectionMode) {
+        switch (this.dataSource.getSelectionMode()) {
             case 'none':
             case null:
             case undefined:
@@ -207,7 +203,7 @@ export class Selection {
     }
 
     private selectRange(start: number, end: number): void {
-        if (this.gridInterface.config.selectionMode === 'multiple') {
+        if (this.dataSource.getSelectionMode() === 'multiple') {
             this.selection.clear();
             for (let i = start; i < end + 1; i++) {
                 this.selection.add(this.getRowKey(i));
