@@ -1,8 +1,8 @@
 import { html } from 'lit-html';
-import { IgridConfigGroups } from '../interfaces';
+import { GridGroupConfig } from '../interfaces';
 import { SimpleHtmlGrid } from '../';
 
-export function resizeColumnElement(ref: SimpleHtmlGrid, group: IgridConfigGroups) {
+export function resizeColumnElement(ref: SimpleHtmlGrid, group: GridGroupConfig) {
     let originX: number = null;
     const originalColumnWidth = group.width;
 

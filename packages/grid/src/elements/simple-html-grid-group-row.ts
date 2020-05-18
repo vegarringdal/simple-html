@@ -1,6 +1,6 @@
 import { customElement, property } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
-import { IgridConfigGroups } from '../interfaces';
+import { GridGroupConfig } from '../interfaces';
 import { html } from 'lit-html';
 
 @customElement('simple-html-grid-group-row')
@@ -9,7 +9,7 @@ export default class extends HTMLElement {
     @property() rowNo: number;
     ref: SimpleHtmlGrid;
     currentHeight: number;
-    group: IgridConfigGroups;
+    group: GridGroupConfig;
 
     connectedCallback() {
         this.classList.add('simple-html-grid-group-row');

@@ -2,12 +2,12 @@ import { render, html } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { customElement } from '@simple-html/core';
 import { generate } from './generate';
-import { rowCache } from '../interfaces';
+import { RowCache } from '../interfaces';
 
 @customElement('simple-html-grid')
 export class SimpleHtmlGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
-    public rowCache: rowCache[] = [];
+    public rowCache: RowCache[] = [];
     private currentScrollHeight: number;
 
     set interface(value: GridInterface) {

@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { ICell, FilterArgument } from '../../interfaces';
+import { CellConfig, FilterArgument } from '../../interfaces';
 import { generateMenu } from '../generateMenu';
 
 /**
@@ -11,7 +11,7 @@ export function selectAttributesBtn(operatorObject: FilterArgument, ctx: any, is
         @click=${(e: any) => {
             generateMenu(
                 e,
-                ctx.filterAttributes.map((e: ICell) => {
+                ctx.filterAttributes.map((e: CellConfig) => {
                     return {
                         title: e.attribute,
                         callback: () => {

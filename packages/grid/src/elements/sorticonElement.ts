@@ -1,8 +1,8 @@
 import { html, svg } from 'lit-html';
-import { ICell } from '../interfaces';
+import { CellConfig } from '../interfaces';
 import { GridInterface } from '../gridInterface';
 
-export function sorticonElement(_connector: GridInterface, col: ICell) {
+export function sorticonElement(_connector: GridInterface, col: CellConfig) {
     const ascTemplate = svg`
         <svg class="simple-html-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
             <path d="M7.4 6L3 10h1.5L8 7l3.4 3H13L8.5 6h-1z"/>

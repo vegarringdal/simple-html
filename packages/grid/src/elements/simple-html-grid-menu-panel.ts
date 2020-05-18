@@ -2,12 +2,12 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell } from '../interfaces';
+import { CellConfig } from '../interfaces';
 
 @customElement('simple-html-grid-menu-panel')
 export default class extends HTMLElement {
     connector: GridInterface;
-    cell: ICell;
+    cell: CellConfig;
     ref: SimpleHtmlGrid;
 
     connectedCallback() {

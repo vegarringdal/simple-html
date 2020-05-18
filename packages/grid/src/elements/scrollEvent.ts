@@ -1,12 +1,12 @@
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
-import { rowCache } from '../interfaces';
+import { RowCache } from '../interfaces';
 
 let scrollBarTimer: any;
 
 export function scrollEvent(
     connector: GridInterface,
-    rowPositionCache: rowCache[],
+    rowPositionCache: RowCache[],
     ref: SimpleHtmlGrid
 ) {
     return (e: any) => {

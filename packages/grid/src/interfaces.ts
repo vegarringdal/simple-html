@@ -18,15 +18,15 @@ export {
     DataTypes
 } from '@simple-html/datasource';
 
-export type Triggers = 'input' | 'change';
-export type rowCache = { i: number; update: boolean };
+export type InputTriggers = 'input' | 'change';
+export type RowCache = { i: number; update: boolean };
 
 export interface IAttributes {
     attribute: string;
     type?: DataTypes; //defaults to text if not set
 }
 
-export interface ICell {
+export interface CellConfig {
     header?: string;
     attribute: string;
     /**Default FALSE */
@@ -43,7 +43,7 @@ export interface ICell {
         /**Default TRUE */
         auto?: boolean;
         /**Default CHANGE */
-        filterTrigger?: Triggers;
+        filterTrigger?: InputTriggers;
         /**Default STRING/TEXT */
         currentValue?: string | number | boolean | Date;
         placeholder?: string;
@@ -67,7 +67,7 @@ export interface ICell {
     /**Default TRUE */
     autoUpdateData?: boolean;
     afterEditCallbackFn?: any;
-    editEventType?: Triggers;
+    editEventType?: InputTriggers;
     disableDragDrop?: boolean;
     allowGrouping?: boolean;
 
@@ -77,16 +77,16 @@ export interface ICell {
     renderFilterCallBackFn?: any;
 }
 
-export type IgridConfigRows = ICell;
-export type IgridConfigGroups = {
+export type GridRowConfig = CellConfig;
+export type GridGroupConfig = {
     width: number;
     //internal
     __left?: number;
-    rows: IgridConfigRows[];
+    rows: GridRowConfig[];
 };
 
-export interface IGridConfig {
-    groups: IgridConfigGroups[];
+export interface GridConfig {
+    groups: GridGroupConfig[];
     cellHeight: number;
     footerHeight: number;
     panelHeight?: number;

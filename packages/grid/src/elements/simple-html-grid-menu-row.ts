@@ -2,13 +2,13 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell, Entity } from '../interfaces';
+import { CellConfig, Entity } from '../interfaces';
 
 let dataClip: any = null; // firefox hack
 @customElement('simple-html-grid-menu-row')
 export default class extends HTMLElement {
     connector: GridInterface;
-    cell: ICell;
+    cell: CellConfig;
     ref: SimpleHtmlGrid;
     rowNo: number;
     rowData: Entity;

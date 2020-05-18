@@ -1,7 +1,7 @@
 import { GridInterface } from '..';
-import { ICell } from '../interfaces';
+import { CellConfig } from '../interfaces';
 
-let dragCell: ICell = null;
+let dragCell: CellConfig = null;
 let dragColumnBlock: HTMLElement = null;
 const delayDragEventTimer: any = null;
 
@@ -27,7 +27,7 @@ export const columnDragDropPanel = (event: string, _connector: GridInterface) =>
     };
 };
 
-export const columnDragDrop = (event: string, _col: ICell, _connector: GridInterface) => {
+export const columnDragDrop = (event: string, _col: CellConfig, _connector: GridInterface) => {
     // here we will clean up eevnt listeners
 
     const mouseUp = function () {

@@ -1,6 +1,6 @@
 import { customElement, property } from '@simple-html/core';
 import { SimpleHtmlGrid, GridInterface } from '..';
-import { IgridConfigGroups, ICell } from '../interfaces';
+import { GridGroupConfig, CellConfig } from '../interfaces';
 import { html } from 'lit-html';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
@@ -11,8 +11,8 @@ export default class extends HTMLElement {
     ref: SimpleHtmlGrid;
     currentHeight: number;
     @property() rowNo: number;
-    group: IgridConfigGroups;
-    cell: ICell;
+    group: GridGroupConfig;
+    cell: CellConfig;
 
     connectedCallback() {
         this.classList.add('simple-html-grid-cell-row');

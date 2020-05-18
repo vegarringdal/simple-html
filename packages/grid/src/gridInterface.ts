@@ -1,5 +1,5 @@
 import { SimpleHtmlGrid } from '.';
-import { GroupArgument, IGridConfig, ICell, FilterArgument } from './interfaces';
+import { GroupArgument, GridConfig, CellConfig, FilterArgument } from './interfaces';
 import { Datasource, DataContainer } from '@simple-html/datasource';
 
 export class GridInterface {
@@ -23,7 +23,7 @@ export class GridInterface {
     private __SCROLL_HEIGHT: number;
     private __handleEvent: any = null;
 
-    constructor(private __CONFIG: IGridConfig, datasource?: Datasource | DataContainer) {
+    constructor(private __CONFIG: GridConfig, datasource?: Datasource | DataContainer) {
         if (!datasource) {
             this.__ds = new Datasource();
         } else {
@@ -163,7 +163,7 @@ export class GridInterface {
         return this.__CONFIG;
     }
 
-    set config(config: IGridConfig) {
+    set config(config: GridConfig) {
         this.__CONFIG = config;
     }
 
@@ -208,7 +208,7 @@ export class GridInterface {
         if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.render();
     }
 
-    groupingCallback(_event: any, col: ICell) {
+    groupingCallback(_event: any, col: CellConfig) {
         let newGrouping = col ? true : false;
         const groupings = this.__ds.getGrouping();
         col &&
@@ -245,7 +245,7 @@ export class GridInterface {
         this.__ds.group(groupings);
     }
 
-    filterCallback(event: any, col: ICell) {
+    filterCallback(event: any, col: CellConfig) {
         switch (col.type) {
             case 'date':
                 col.filterable.currentValue = new Date(event.target.valueAsDate);
@@ -287,7 +287,7 @@ export class GridInterface {
         this.__ds.filter(filter);
     }
 
-    public clearConfigSort(configColumns: ICell[]) {
+    public clearConfigSort(configColumns: CellConfig[]) {
         configColumns.forEach((col) => {
             if (col.sortable) {
                 col.sortable.sortAscending = null;
@@ -296,7 +296,7 @@ export class GridInterface {
         });
     }
 
-    sortCallback(event: MouseEvent, col: ICell) {
+    sortCallback(event: MouseEvent, col: CellConfig) {
         // get data we need
         let sorting = this.__ds.getOrderBy();
         const attribute = col.attribute;

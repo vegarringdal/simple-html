@@ -3,16 +3,16 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { ICell, FilterArgument } from '../interfaces';
+import { CellConfig, FilterArgument } from '../interfaces';
 import { filterDialogGroupTemplate } from './filterDialogGroupTemplate';
 
 @customElement('simple-html-grid-filter-dialog')
 export default class extends HTMLElement {
     connector: GridInterface;
-    cell: ICell;
+    cell: CellConfig;
     ref: SimpleHtmlGrid;
     width: number;
-    filterAttributes: ICell[];
+    filterAttributes: CellConfig[];
     filter: FilterArgument;
 
     connectedCallback() {
