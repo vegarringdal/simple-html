@@ -296,7 +296,7 @@ export class Datasource {
                 keeping.push(callable);
             }
         });
-        this.__listeners = keeping;
+        this.__listeners = new Set(keeping);
     }
 
     /**

@@ -33,7 +33,6 @@ export class GridInterface {
             if (datasource instanceof DataContainer) {
                 this.__ds = new Datasource(datasource);
             }
-            this.__ds.addEventListner(this);
         }
 
         // set groupheight
@@ -70,7 +69,32 @@ export class GridInterface {
         }
     }
 
-    handleEvent(_event: string) {
+    /**
+     * datasource dataContainer data
+     */
+    get completeDataset() {
+        return this.__ds.getAllData();
+    }
+
+    /**
+     * filtered data- no groups here, just pure data
+     */
+    get filteredDataset() {
+        return this.__ds.getRows(true);
+    }
+
+    /**
+     * this is the rows the grid is displaying
+     */
+    get displayedDataset() {
+        return this.__ds.getRows();
+    }
+
+    /**
+     * event handler for the grid.
+     * @param _event string
+     */
+    handleEvent(_event: any) {
         // console.log(_event, this.displayedDataset.length);
         if (this.__handleEvent === null) {
             // only trigger once..
@@ -103,18 +127,6 @@ export class GridInterface {
         this.__ds.reloadDatasource();
         this.dataSourceUpdated();
         this.reRender();
-    }
-
-    get completeDataset() {
-        return this.__ds.getAllData();
-    }
-
-    get filteredDataset() {
-        return this.__ds.getRows(true);
-    }
-
-    get displayedDataset() {
-        return this.__ds.getRows();
     }
 
     setData(data: any[], add = false, reRunFilter = false) {
@@ -306,7 +318,7 @@ export class GridInterface {
         });
     }
 
-    sortCallback(event: MouseEvent, col: CellConfig) {
+    public sortCallback(event: MouseEvent, col: CellConfig) {
         // get data we need
         let sorting = this.__ds.getOrderBy();
         const attribute = col.attribute;
@@ -341,55 +353,53 @@ export class GridInterface {
         this.__ds.sort();
     }
 
-    removeGroup(group: GroupArgument) {
+    public removeGroup(group: GroupArgument) {
         debugger;
         this.__ds.removeGroup(group);
     }
 
-    groupExpand(id: string) {
+    public groupExpand(id: string) {
         this.__ds.expandGroup(id);
     }
 
-    groupCollapse(id: string) {
+    public groupCollapse(id: string) {
         this.__ds.collapseGroup(id);
     }
 
-    connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
+    public connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
         this.__SimpleHtmlGrid = SimpleHtmlGrid;
+        this.__ds.addEventListner(this);
         this.dataSourceUpdated();
         this.reRender();
     }
 
-    disconnectGrid() {
+    public disconnectGrid() {
         this.__SimpleHtmlGrid = null;
+        this.__ds.removeEventListner(this);
     }
 
-    getCurrentFilter() {
+    public getCurrentFilter() {
         return this.__ds.getFilter();
     }
 
-    setCurrentFilter(filter: FilterArgument) {
+    public setCurrentFilter(filter: FilterArgument) {
         this.__ds.setFilter(filter);
     }
 
-    reRunFilter() {
+    public reRunFilter() {
         this.__ds.filter();
     }
 
-    /**
-     * new added
-     */
-
-    isSelected(row: number) {
+    public isSelected(row: number) {
         return this.__ds.getSelection().isSelected(row);
     }
 
-    highlightRow(e: MouseEvent, currentRow: number) {
+    public highlightRow(e: MouseEvent, currentRow: number) {
         this.__ds.getSelection().highlightRow(e, currentRow);
         this.reRender();
     }
 
-    getSelectedRows() {
+    public getSelectedRows() {
         return this.__ds.getSelection().getSelectedRows();
     }
 }
