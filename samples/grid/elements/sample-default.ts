@@ -1,15 +1,18 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
-import { GridInterface } from '@simple-html/grid';
+import { GridInterface, Datasource } from '@simple-html/grid';
 import { setup } from '../gridSetup/setup';
 import { WordDatasource01, set, add } from '../data/datasources';
 
 @customElement('sample-default')
 export default class extends HTMLElement {
     connector: GridInterface;
+    ds: Datasource;
+
     connectedCallback() {
         this.connector = new GridInterface(setup(1, 10), WordDatasource01);
         this.connector.reloadDatasource();
+        this.ds = this.connector.getDatasource();
     }
 
     render() {
@@ -21,7 +24,7 @@ export default class extends HTMLElement {
                         .btnClass=${'p-2 m-2 bg-green-400'}
                         .type=${'add'}
                         .callback=${(x: number) => {
-                            add(this.connector, x);
+                            add(this.ds, x);
                         }}
                     ></data-buttons>
 
@@ -30,15 +33,17 @@ export default class extends HTMLElement {
                         .btnClass=${'p-2 m-2 bg-yellow-400'}
                         .type=${'set'}
                         .callback=${(x: number) => {
-                            set(this.connector, x);
+                            set(this.ds, x);
                         }}
                     ></data-buttons>
 
                     <nav-buttons
                         class="flex flex-col"
                         .btnClass=${'p-2 m-2 bg-indigo-400'}
-                        .callback=${(action: 'first' | 'next' | 'prev' | 'last') => {
-                            this.connector[action]();
+                        .callback=${(
+                            action: 'selectFirst' | 'selectPrev' | 'selectNext' | 'selectLast'
+                        ) => {
+                            this.ds[action]();
                         }}
                     ></nav-buttons>
                 </div>

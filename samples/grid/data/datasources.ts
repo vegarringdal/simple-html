@@ -1,6 +1,5 @@
-import { DataContainer } from '@simple-html/datasource';
+import { DataContainer, Datasource } from '@simple-html/datasource';
 import { Generator } from './generator';
-import { GridInterface } from '@simple-html/grid';
 
 const generator = new Generator();
 
@@ -15,13 +14,13 @@ WordDatasource02.setData(generator.generateData(10));
 //same data into both
 WordDatasource03.setData(generator.generateData(10));
 
-export function add(ds: DataContainer | GridInterface, howMany: number) {
+export function add(ds: Datasource, howMany: number) {
     if (ds.setData) {
         ds.setData(generator.generateData(howMany), true);
     }
 }
 
-export function set(ds: DataContainer | GridInterface, howMany: number) {
+export function set(ds: Datasource, howMany: number) {
     if (ds.setData) {
         ds.setData(generator.generateData(howMany), false);
     }

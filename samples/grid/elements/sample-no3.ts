@@ -1,6 +1,6 @@
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
-import { GridInterface } from '@simple-html/grid';
+import { GridInterface, Datasource } from '@simple-html/grid';
 import { setup } from '../gridSetup/setup';
 import { WordDatasource03, set, add } from '../data/datasources';
 
@@ -8,11 +8,15 @@ import { WordDatasource03, set, add } from '../data/datasources';
 export default class extends HTMLElement {
     connector1: GridInterface;
     connector2: GridInterface;
+    ds1: Datasource;
+    ds2: Datasource;
     connectedCallback() {
         this.connector1 = new GridInterface(setup(1, 10), WordDatasource03);
         this.connector1.reloadDatasource();
         this.connector2 = new GridInterface(setup(1, 10), WordDatasource03);
         this.connector2.reloadDatasource();
+        this.ds1 = this.connector1.getDatasource();
+        this.ds2 = this.connector2.getDatasource();
     }
 
     render() {
@@ -25,7 +29,7 @@ export default class extends HTMLElement {
                             .btnClass=${'p-2 m-2 bg-green-400'}
                             .type=${'add'}
                             .callback=${(x: number) => {
-                                add(this.connector1, x);
+                                add(this.ds1, x);
                             }}
                         ></data-buttons>
 
@@ -34,7 +38,7 @@ export default class extends HTMLElement {
                             .btnClass=${'p-2 m-2 bg-yellow-400'}
                             .type=${'set'}
                             .callback=${(x: number) => {
-                                set(this.connector1, x);
+                                set(this.ds1, x);
                             }}
                         ></data-buttons>
 
@@ -42,7 +46,7 @@ export default class extends HTMLElement {
                             class="flex flex-col"
                             .btnClass=${'p-2 m-2 bg-indigo-400'}
                             .callback=${(action: 'first' | 'next' | 'prev' | 'last') => {
-                                this.connector1[action]();
+                                this.ds1[action]();
                             }}
                         ></nav-buttons>
                     </div>
@@ -62,7 +66,7 @@ export default class extends HTMLElement {
                             .btnClass=${'p-2 m-2 bg-green-400'}
                             .type=${'add'}
                             .callback=${(x: number) => {
-                                add(this.connector2, x);
+                                add(this.ds2, x);
                             }}
                         ></data-buttons>
 
@@ -71,15 +75,17 @@ export default class extends HTMLElement {
                             .btnClass=${'p-2 m-2 bg-yellow-400'}
                             .type=${'set'}
                             .callback=${(x: number) => {
-                                set(this.connector2, x);
+                                set(this.ds2, x);
                             }}
                         ></data-buttons>
 
                         <nav-buttons
                             class="flex flex-col"
                             .btnClass=${'p-2 m-2 bg-indigo-400'}
-                            .callback=${(action: 'first' | 'next' | 'prev' | 'last') => {
-                                this.connector2[action]();
+                            .callback=${(
+                                action: 'selectFirst' | 'selectPrev' | 'selectNext' | 'selectLast'
+                            ) => {
+                                this.ds2[action]();
                             }}
                         ></nav-buttons>
                     </div>

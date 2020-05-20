@@ -3,14 +3,14 @@ import { html } from 'lit-html';
 
 @customElement('nav-buttons')
 export default class extends HTMLElement {
-    callback: Function;
+    callback: (action: 'selectFirst' | 'selectPrev' | 'selectNext' | 'selectLast') => void;
     btnClass: string;
 
     render() {
         return html` <button
                 class=${this.btnClass}
                 @click=${() => {
-                    this.callback('first');
+                    this.callback('selectFirst');
                 }}
             >
                 first
@@ -18,7 +18,7 @@ export default class extends HTMLElement {
             <button
                 class=${this.btnClass}
                 @click=${() => {
-                    this.callback('prev');
+                    this.callback('selectPrev');
                 }}
             >
                 prev
@@ -26,7 +26,7 @@ export default class extends HTMLElement {
             <button
                 class=${this.btnClass}
                 @click=${() => {
-                    this.callback('next');
+                    this.callback('selectNext');
                 }}
             >
                 next
@@ -34,7 +34,7 @@ export default class extends HTMLElement {
             <button
                 class=${this.btnClass}
                 @click=${() => {
-                    this.callback('last');
+                    this.callback('selectLast');
                 }}
             >
                 last
