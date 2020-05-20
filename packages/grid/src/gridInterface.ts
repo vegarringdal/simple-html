@@ -441,7 +441,6 @@ export class GridInterface {
      * Internal usage only, do not call
      */
     public removeGroup(group: GroupArgument) {
-        debugger;
         this.__ds.removeGroup(group);
     }
 
