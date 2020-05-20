@@ -1,6 +1,7 @@
 import { SimpleHtmlGrid } from '.';
-import { GroupArgument, GridConfig, CellConfig, FilterArgument } from './types';
-import { Datasource, DataContainer } from '@simple-html/datasource';
+import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig } from './types';
+import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
+import { SortArgument } from '@simple-html/datasource/dist';
 
 /**
  * Grid nterface is just connection between datasource/config to the grid.
@@ -189,7 +190,7 @@ export class GridInterface {
         const cell = this.config.cellHeight;
         const row = this.config.__rowHeight;
         let count = 0;
-        this.displayedDataset.forEach((ent) => {
+        this.displayedDataset.forEach((ent: Entity) => {
             const height = ent.__group ? cell : row;
 
             this.__SCROLL_TOPS.push(count);
@@ -240,7 +241,7 @@ export class GridInterface {
      * Internal usage only, do not call
      */
     public edited() {
-        return this.__ds.getAllData().filter((entity) => {
+        return this.__ds.getAllData().filter((entity: Entity) => {
             if (entity.__controller.__edited) {
                 return true;
             } else {
@@ -292,7 +293,7 @@ export class GridInterface {
         let newGrouping = col ? true : false;
         const groupings = this.__ds.getGrouping();
         col &&
-            groupings.forEach((g) => {
+            groupings.forEach((g: GroupArgument) => {
                 if (g.attribute === col.attribute) {
                     newGrouping = false;
                 }
@@ -377,8 +378,8 @@ export class GridInterface {
      * Internal usage only, do not call
      */
     private __updateSortConfig() {
-        const columns = this.config.groups.flatMap((x) => x.rows);
-        const attributes = this.__ds.getOrderBy().flatMap((x) => x.attribute);
+        const columns = this.config.groups.flatMap((x: GridGroupConfig) => x.rows);
+        const attributes = this.__ds.getOrderBy().flatMap((x: SortArgument) => x.attribute);
         const sorting = this.__ds.getOrderBy();
         columns.forEach((col) => {
             const index = attributes.indexOf(col.attribute);
@@ -413,7 +414,7 @@ export class GridInterface {
 
         if (add) {
             let exist = false;
-            sorting.forEach((el) => {
+            sorting.forEach((el: SortArgument) => {
                 if (el.attribute === attribute) {
                     exist = true;
                     el.ascending = el.ascending ? false : true;
