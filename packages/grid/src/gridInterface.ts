@@ -2,7 +2,9 @@ import { SimpleHtmlGrid } from '.';
 import { GroupArgument, GridConfig, CellConfig, FilterArgument } from './types';
 import { Datasource, DataContainer } from '@simple-html/datasource';
 
-// TODO: check what methods are internal used by grid and public for user
+/**
+ * Grid nterface is just connection between datasource/config to the grid.
+ */
 export class GridInterface {
     /**
      * Have all the data
@@ -92,7 +94,15 @@ export class GridInterface {
     }
 
     /**
-     * event handler for the grid.
+     * returns current datasource
+     */
+    public getDatasource() {
+        return this.__ds;
+    }
+
+    /**
+     * event handler for the grid
+     * Internal useage only
      * @param _event string
      */
     handleEvent(_event: any) {
@@ -112,8 +122,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * if you have manually edits config and need to update you will need to run this
+     * grid also uses this for some internal use
      */
     manualConfigChange() {
         if (this.config) {
@@ -135,8 +145,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * add or replace data, this also edits the underlaying datasource/container
+     * with other words repplacing data also replace data in underlaying datasource and container
      */
     setData(data: any[], add = false, reRunFilter = false) {
         const olddataSetlength = this.__ds.getAllData().length;
@@ -154,8 +164,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * Reloads newest data from datasource
+     * Internal usage only, do not call
      */
     reloadDatasource() {
         if (this.__SimpleHtmlGrid) {
@@ -169,8 +179,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * update vaiable row values according to datasource
+     * Internal usage only, do not call
      */
     dataSourceUpdated() {
         this.__SCROLL_TOPS = [];
@@ -190,24 +200,24 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * returns config
+     * Internal usage only, do not call
      */
     public get config() {
         return this.__CONFIG;
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * set new config
+     * Internal usage only, do not call
      */
     public set config(config: GridConfig) {
         this.__CONFIG = config;
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * return scollvars used for controlling variable scrollheight
+     * Internal usage only, do not call
      */
     public get getScrollVars() {
         return {
@@ -218,16 +228,16 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * selects row
+     * Internal usage only, do not call
      */
     public select(row: number) {
         this.__ds.select(row);
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * returns edited rows
+     * Internal usage only, do not call
      */
     public edited() {
         return this.__ds.getAllData().filter((entity) => {
@@ -240,8 +250,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * publish events
+     * Internal usage only, do not call
      */
     publishEvent(event: string) {
         const keep = this.__subscribers.filter((element) => {
@@ -251,32 +261,32 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * add events listener
+     * Internal usage only, do not call
      */
     addEventListener(callable: (event: string) => boolean) {
         this.__subscribers.push(callable);
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * calls grid element reRender funtion
+     * Internal usage only, do not call
      */
     reRender() {
         if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.reRender();
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * calls grid element render funtion
+     * Internal usage only, do not call
      */
     render() {
         if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.render();
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * groups columns
+     * Internal usage only, do not call
      */
     groupingCallback(_event: any, col: CellConfig) {
         let newGrouping = col ? true : false;
@@ -304,8 +314,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * filters columns
+     * Internal usage only, do not call
      */
     filterCallback(event: any, col: CellConfig) {
         switch (col.type) {
@@ -350,8 +360,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * clears sorting order of config columns
+     * Internal usage only, do not call
      */
     public clearConfigSort(configColumns: CellConfig[]) {
         configColumns.forEach((col) => {
@@ -363,8 +373,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * updates config sort, so grid displays correctly
+     * Internal usage only, do not call
      */
     private __updateSortConfig() {
         const columns = this.config.groups.flatMap((x) => x.rows);
@@ -388,8 +398,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * sorts the grid
+     * Internal usage only, do not call
      */
     public sortCallback(event: MouseEvent, col: CellConfig) {
         // get data we need
@@ -427,8 +437,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * removes group
+     * Internal usage only, do not call
      */
     public removeGroup(group: GroupArgument) {
         debugger;
@@ -436,24 +446,24 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * expands all/or 1
+     * Internal usage only, do not call
      */
     public groupExpand(id: string) {
         this.__ds.expandGroup(id);
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * collapses all/1
+     * Internal usage only, do not call
      */
     public groupCollapse(id: string) {
         this.__ds.collapseGroup(id);
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * grid connects to datainterface when its ready
+     * Internal usage only, do not call
      */
     public connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
         this.__SimpleHtmlGrid = SimpleHtmlGrid;
@@ -463,8 +473,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * grid element disconnects when diconnectedCallback is called, gridinterfaces disconnects from datsoruce events
+     * Internal usage only, do not call
      */
     public disconnectGrid() {
         this.__SimpleHtmlGrid = null;
@@ -472,40 +482,40 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * returns ds current filter
+     * Internal usage only, do not call
      */
     public getCurrentFilter() {
         return this.__ds.getFilter();
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * set new current filter
+     * Internal usage only, do not call
      */
     public setCurrentFilter(filter: FilterArgument) {
         this.__ds.setFilter(filter);
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * reruns current filter
+     * Internal usage only, do not call
      */
     public reRunFilter() {
         this.__ds.filter();
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * returns true if row is selected
+     * Internal usage only, do not call
      */
     public isSelected(row: number) {
         return this.__ds.getSelection().isSelected(row);
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * highlights/selects row
+     * Internal usage only, do not call
      */
     public highlightRow(e: MouseEvent, currentRow: number) {
         this.__ds.getSelection().highlightRow(e, currentRow);
@@ -513,8 +523,8 @@ export class GridInterface {
     }
 
     /**
-     * todo
-     * Used by grid, do not call
+     * returns selected rows
+     * Internal usage only, do not call
      */
     public getSelectedRows() {
         return this.__ds.getSelection().getSelectedRows();
