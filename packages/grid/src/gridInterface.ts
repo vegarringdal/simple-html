@@ -441,9 +441,10 @@ export class GridInterface {
 
         this.__ds.setOrderBy(sorting);
 
-        this.__updateSortConfig();
-
         this.__ds.sort();
+
+        // this needs to run after sort since it might trigger endit of the sort order
+        this.__updateSortConfig();
     }
 
     /**

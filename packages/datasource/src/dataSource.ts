@@ -152,21 +152,77 @@ export class Datasource {
      */
     public sort(args?: SortArgument | SortArgument[], add?: boolean) {
         // sort
-        if (args) {
-            // TODO: if we have grouping we need to add it to this..
+        if (!this.__grouping.getGrouping().length) {
+            if (args) {
+                // TODO: if we have grouping we need to add it to this..
 
-            this.__sorting.setOrderBy(args, add);
-            this.__sorting.runOrderBy(this.__collectionFiltered);
-        } else {
-            //if nothing the reuse last config
-            const lastSort = this.__sorting.getLastSort();
-            if (lastSort.length) {
+                this.__sorting.setOrderBy(args, add);
                 this.__sorting.runOrderBy(this.__collectionFiltered);
+            } else {
+                //if nothing the reuse last config
+                const lastSort = this.__sorting.getLastSort();
+                if (lastSort.length) {
+                    this.__sorting.runOrderBy(this.__collectionFiltered);
+                }
             }
         }
 
         if (this.__grouping.getGrouping().length) {
+            // if we also have grouping we need to check if this needs to be added
+
+            // add default sort
+            if (args) {
+                this.__sorting.setOrderBy(args, add);
+            }
+
+            // get attributes/sort order
+            const sortingAttributes = this.__sorting.getOrderBy().map((col) => col.attribute);
+            const sortingAttributesOrder = this.__sorting.getOrderBy().map((col) => col.ascending);
+
+            // reset sort, we need to set it using grouping
+            this.__sorting.reset();
+
+            this.__grouping.getGrouping().forEach((group: GroupArgument) => {
+                const sortIndex = sortingAttributes.indexOf(group.attribute);
+                if (sortingAttributes.indexOf(group.attribute) === -1) {
+                    this.__sorting.setOrderBy(
+                        { attribute: group.attribute, ascending: true },
+                        true
+                    );
+                } else {
+                    // if it already is in the new sorting, we need to use this sort order
+                    this.__sorting.setOrderBy(
+                        {
+                            attribute: group.attribute,
+                            ascending: sortingAttributesOrder[sortIndex]
+                        },
+                        true
+                    );
+                }
+            });
+
+            // last part is to get the column thats not in grouping and add them
+            const groupings = this.__grouping.getGrouping().map((col) => col.attribute);
+            sortingAttributes.forEach((attribute, i) => {
+                if (groupings.indexOf(attribute) === -1) {
+                    this.__sorting.setOrderBy(
+                        {
+                            attribute: sortingAttributes[i],
+                            ascending: sortingAttributesOrder[i]
+                        },
+                        true
+                    );
+                }
+            });
+
+            this.__sorting.runOrderBy(this.__collectionFiltered);
+
             // if grouping is set
+            this.__collectionDisplayed = this.__grouping.group(
+                this.__collectionFiltered,
+                this.__grouping.getGrouping(),
+                true
+            );
         } else {
             //set sorted collection to display
             this.__collectionDisplayed = this.__collectionFiltered.slice();
