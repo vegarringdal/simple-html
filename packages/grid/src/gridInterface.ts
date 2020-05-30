@@ -1,7 +1,7 @@
 import { SimpleHtmlGrid } from '.';
 import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
-import { SortArgument } from '@simple-html/datasource/dist';
+import { SortArgument } from '@simple-html/datasource';
 
 /**
  * Grid nterface is just connection between datasource/config to the grid.
@@ -106,8 +106,17 @@ export class GridInterface {
      * Internal useage only
      * @param _event string
      */
-    handleEvent(_event: any) {
+    handleEvent(_event: { type: string; data: any }) {
         // console.log(_event, this.displayedDataset.length);
+        if (_event.type === 'currentEntity') {
+            return true;
+        }
+
+        if (_event.type === 'selectionChange') {
+            this.__SimpleHtmlGrid.triggerEvent('reRender');
+            return true;
+        }
+
         if (this.__handleEvent === null) {
             // only trigger once..
             this.__handleEvent = 1;
@@ -519,7 +528,6 @@ export class GridInterface {
      */
     public highlightRow(e: MouseEvent, currentRow: number) {
         this.__ds.getSelection().highlightRow(e, currentRow);
-        this.reRender();
     }
 
     /**
