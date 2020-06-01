@@ -18,6 +18,13 @@ export class DataContainer {
         this.__keyAttribute = UniqueKeyAttribute;
     }
 
+    /**
+     * so I can check
+     */
+    public get type() {
+        return 'DataContainer';
+    }
+
     private getKey() {
         return getNextKey();
     }

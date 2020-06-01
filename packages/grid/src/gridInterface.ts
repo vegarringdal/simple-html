@@ -31,11 +31,11 @@ export class GridInterface {
         if (!datasource) {
             this.__ds = new Datasource();
         } else {
-            if (datasource instanceof Datasource) {
-                this.__ds = datasource;
+            if (datasource.type === 'Datasource') {
+                this.__ds = datasource as Datasource;
             }
-            if (datasource instanceof DataContainer) {
-                this.__ds = new Datasource(datasource);
+            if (datasource.type === 'DataContainer') {
+                this.__ds = new Datasource(datasource as DataContainer);
             }
         }
 

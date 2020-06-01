@@ -79,6 +79,13 @@ export class Datasource {
     }
 
     /**
+     * so I can check
+     */
+    public get type() {
+        return 'Datasource';
+    }
+
+    /**
      * This is the data in the dataContainer
      */
     public getAllData(): Entity[] {
