@@ -30,7 +30,7 @@ export class DataContainer {
     }
 
     public getDataSet() {
-        return this.__collection;
+        return this.__collection.slice();
     }
 
     public lenght() {

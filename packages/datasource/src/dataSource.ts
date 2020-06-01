@@ -128,11 +128,15 @@ export class Datasource {
      * this also does not call any events
      */
     private __internalUpdate(reRunFilter: boolean) {
-        if (reRunFilter && this.__filter.getFilter()) {
-            this.__collectionFiltered = this.__filter.filter(
-                this.getAllData(),
-                this.__filter.getFilter()
-            );
+        if (reRunFilter) {
+            if (this.__filter.getFilter()) {
+                this.__collectionFiltered = this.__filter.filter(
+                    this.getAllData(),
+                    this.__filter.getFilter()
+                );
+            } else {
+                this.__collectionFiltered = this.__dataContainer.getDataSet();
+            }
         }
 
         const lastSort = this.__sorting.getLastSort();
@@ -267,7 +271,7 @@ export class Datasource {
                     this.__filter.setFilter(ObjFilter as FilterArgument);
                 }
             }
-        }
+        } /*  */
         this.__internalUpdate(true);
         this.__callSubscribers('collection-filtered');
     }
