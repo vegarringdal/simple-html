@@ -46,7 +46,12 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             try {
                 rowValue = rowValue.toISOString();
             } catch (err) {
-                rowValue = rowValue;
+                try {
+                    // if error we can try and convert it to date first
+                    rowValue = new Date(rowValue).toISOString();
+                } catch (err) {
+                    rowValue = rowValue;
+                }
             }
 
             try {
@@ -71,6 +76,12 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 // needs to be 0
                 filterValue = 0;
             }
+            try {
+                rowValue = isNaN(Number(rowValue)) ? 0 : Number(rowValue);
+            } catch (err) {
+                rowValue = rowValue;
+            }
+
             filterOperator = filterOperator || 'GREATER_THAN_OR_EQUAL_TO';
             if (
                 filterOperator === 'CONTAINS' ||
