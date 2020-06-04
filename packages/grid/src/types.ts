@@ -91,6 +91,7 @@ export interface GridConfig {
     footerHeight: number;
     panelHeight?: number;
     scrollLeft?: number;
+    readonly?: boolean;
     lastScrollTop?: number;
     selectionMode?: 'multiple' | 'single' | 'none';
 

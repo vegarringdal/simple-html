@@ -547,6 +547,14 @@ export class GridInterface {
     }
 
     /**
+     * Set all columns readonly state, if cell config have readonly this will still be readonly
+     * @param newValue default = true
+     */
+    public setReadOnlyState(newValue = true) {
+        return (this.__CONFIG.readonly = newValue);
+    }
+
+    /**
      * resets scroll
      * @param value default = 0
      */

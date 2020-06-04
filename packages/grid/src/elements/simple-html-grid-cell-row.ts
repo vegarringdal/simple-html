@@ -103,7 +103,7 @@ export default class extends HTMLElement {
                 case 'boolean':
                     return html`
                         <input
-                            ?readonly=${cell.readonly}
+                            ?readonly=${cell.readonly || connector.config.readonly}
                             ?disabled=${cell.disabled}
                             @change=${change}
                             @input=${input}
@@ -130,7 +130,7 @@ export default class extends HTMLElement {
                 case 'date':
                     return html`
                         <input
-                            ?readonly=${cell.readonly}
+                            ?readonly=${cell.readonly || connector.config.readonly}
                             ?disabled=${cell.disabled}
                             @change=${change}
                             @input=${input}
@@ -147,7 +147,7 @@ export default class extends HTMLElement {
                 case 'number':
                     return html`
                         <input
-                            ?readonly=${cell.readonly}
+                            ?readonly=${cell.readonly || connector.config.readonly}
                             ?disabled=${cell.disabled}
                             @change=${change}
                             @input=${input}
@@ -166,7 +166,7 @@ export default class extends HTMLElement {
 
             return html`
                 <input
-                    ?readonly=${cell.readonly}
+                    ?readonly=${cell.readonly || connector.config.readonly}
                     ?disabled=${cell.disabled}
                     @change=${change}
                     @input=${input}
