@@ -12,7 +12,8 @@ export const OPERATORS = {
     NOT_EQUAL_TO: '!==',
     DOES_NOT_CONTAIN: '!*',
     BEGIN_WITH: 'x*',
-    END_WITH: '*x'
+    END_WITH: '*x',
+    IN: 'IN'
 };
 
 /**
@@ -90,6 +91,13 @@ export function selectOperatorBtn(operatorObject: FilterArgument, ctx: any) {
                     title: 'Not Equal to',
                     callback: () => {
                         operatorObject.operator = 'NOT_EQUAL_TO';
+                        ctx.render();
+                    }
+                },
+                {
+                    title: 'IN',
+                    callback: () => {
+                        operatorObject.operator = 'IN';
                         ctx.render();
                     }
                 }

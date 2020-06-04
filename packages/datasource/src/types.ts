@@ -35,7 +35,8 @@ export type FilterComparisonOperator =
     | 'NOT_EQUAL_TO'
     | 'DOES_NOT_CONTAIN'
     | 'BEGIN_WITH'
-    | 'END_WITH';
+    | 'END_WITH'
+    | 'IN';
 
 export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
 export type FilterLogicalOperator = 'AND' | 'OR' | 'NONE';

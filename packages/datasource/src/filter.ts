@@ -78,13 +78,36 @@ export class Filter {
                             );
                         }
                     }
+                    let result = false;
+                    if (filter.operator === 'IN') {
+                        let values = filter.value as any;
+                        if (!Array.isArray(filter.value)) {
+                            if (typeof filter.value !== 'string') {
+                                return false;
+                            }
+                            values = (filter.value as string).split('\n');
+                        }
 
-                    const result = objectFilter(rowData, {
-                        value: value,
-                        operator: filter.operator,
-                        attribute: filter.attribute,
-                        type: filter.attributeType
-                    });
+                        for (let y = 0; y < values.length; y++) {
+                            const temp = objectFilter(rowData, {
+                                value: values[y],
+                                operator: 'EQUAL',
+                                attribute: filter.attribute,
+                                type: filter.attributeType
+                            });
+                            if (temp) {
+                                result = true;
+                            }
+                        }
+                    } else {
+                        result = objectFilter(rowData, {
+                            value: value,
+                            operator: filter.operator,
+                            attribute: filter.attribute,
+                            type: filter.attributeType
+                        });
+                    }
+
                     // noo need to check all
                     if (result) {
                         return true;
@@ -127,13 +150,35 @@ export class Filter {
                             );
                         }
                     }
+                    let result = false;
+                    if (filter.operator === 'IN') {
+                        let values = filter.value as any;
+                        if (!Array.isArray(filter.value)) {
+                            if (typeof filter.value !== 'string') {
+                                return false;
+                            }
+                            values = (filter.value as string).split('\n');
+                        }
 
-                    const result = objectFilter(rowData, {
-                        value: value,
-                        operator: filter.operator,
-                        attribute: filter.attribute,
-                        type: filter.attributeType
-                    });
+                        for (let y = 0; y < values.length; y++) {
+                            const temp = objectFilter(rowData, {
+                                value: values[y],
+                                operator: 'EQUAL',
+                                attribute: filter.attribute,
+                                type: filter.attributeType
+                            });
+                            if (temp) {
+                                result = true;
+                            }
+                        }
+                    } else {
+                        result = objectFilter(rowData, {
+                            value: value,
+                            operator: filter.operator,
+                            attribute: filter.attribute,
+                            type: filter.attributeType
+                        });
+                    }
                     // noo need to check all
                     if (!result) {
                         return false;

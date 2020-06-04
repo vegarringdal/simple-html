@@ -5,6 +5,23 @@ import { FilterArgument } from '../../types';
  * returns input based on type
  */
 export function valueInput(operatorObject: FilterArgument) {
+    if (operatorObject.operator === 'IN') {
+        return html`<textarea
+            class="dialog-item-y"
+            style="text-align: center;"
+            value=${Array.isArray(operatorObject.value)
+                ? operatorObject.value.join('\n')
+                : operatorObject.value}
+            @input=${(e: any) => {
+                const x: any[] = e.target.value.split('\n');
+                if (x[x.length - 1] === '') {
+                    x.pop();
+                }
+                operatorObject.value = x as any;
+            }}
+        ></textarea>`;
+    }
+
     switch (operatorObject.attributeType) {
         case 'boolean':
             return html`<input
