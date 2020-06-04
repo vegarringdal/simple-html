@@ -159,16 +159,20 @@ export class GridInterface {
      * with other words repplacing data also replace data in underlaying datasource and container
      */
     setData(data: any[], add = false, reRunFilter = false) {
-        const olddataSetlength = this.__ds.getAllData().length;
+        // const olddataSetlength = this.__ds.getAllData().length;// TODO: remove
 
         this.__ds.setData(data, add, reRunFilter);
 
+        /*   
+        // this really isnt nessesary TODO: remove
         if (this.__SimpleHtmlGrid && olddataSetlength !== this.completeDataset.length) {
             const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
+            console.log('reset1');
             if (node) {
+                console.log('reset1');
                 node.scrollTop = 0;
             }
-        }
+        } */
 
         this.dataSourceUpdated();
     }
@@ -178,12 +182,15 @@ export class GridInterface {
      * Internal usage only, do not call
      */
     reloadDatasource() {
-        if (this.__SimpleHtmlGrid) {
+        /* 
+            this really isnt nessesary, hlets have a funtion to reset  TODO: remove
+            if (this.__SimpleHtmlGrid) {
             const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
             if (node) {
+                console.log('reset2');
                 node.scrollTop = 0;
             }
-        }
+        } */
         this.__ds.reloadDatasource();
         this.dataSourceUpdated();
     }
@@ -537,5 +544,19 @@ export class GridInterface {
      */
     public getSelectedRows() {
         return this.__ds.getSelection().getSelectedRows();
+    }
+
+    /**
+     * resets scroll
+     * @param value default = 0
+     */
+    public setScroll(value = 0) {
+        if (this.__SimpleHtmlGrid) {
+            const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
+
+            if (node) {
+                node.scrollTop = value;
+            }
+        }
     }
 }

@@ -139,7 +139,7 @@ export class SimpleHtmlGrid extends HTMLElement {
                     if (node && node.scrollTop !== this.interface.config.lastScrollTop) {
                         node.scrollTop = this.interface.config.lastScrollTop;
                         node.scrollLeft = this.interface.config.scrollLeft;
-                        this.interface.config.lastScrollTop = 0;
+                        // this.interface.config.lastScrollTop = 0;  TODO: remove
                     }
                 }
             } else {
