@@ -10,7 +10,7 @@ export default class extends HTMLElement {
     ds: Datasource;
 
     connectedCallback() {
-        this.connector = new GridInterface(setup(1, 10), WordDatasource01);
+        this.connector = new GridInterface(setup(1, 10, 100000), WordDatasource01);
         this.connector.reloadDatasource();
         this.ds = this.connector.getDatasource();
     }

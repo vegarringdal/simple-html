@@ -1,11 +1,12 @@
 import { IGridConfig } from '@simple-html/grid';
 
-export function setup(rows: number, columns: number) {
+export function setup(rows: number, columns: number, scroll?: number) {
     const setup: IGridConfig = {
         cellHeight: 20,
         panelHeight: 25,
         footerHeight: 20,
         selectionMode: 'multiple',
+        lastScrollTop: scroll,
         groups: []
     };
 
