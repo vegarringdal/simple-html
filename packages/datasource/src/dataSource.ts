@@ -323,6 +323,7 @@ export class Datasource {
         } else {
             this.group([]);
         }
+        this.__callSubscribers('collection-grouped');
     }
 
     /**

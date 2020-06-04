@@ -147,11 +147,12 @@ export class GridInterface {
                 this.__ds.setExpanded(this.config.groupingExpanded);
             }
         }
-        this.__SimpleHtmlGrid.resetRowCache();
         this.__updateSortConfig();
         this.__ds.reloadDatasource();
+        this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
         this.dataSourceUpdated();
-        this.reRender();
+        this.__SimpleHtmlGrid && this.reRender();
+        this.__handleEvent = null;
     }
 
     /**

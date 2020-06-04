@@ -32,7 +32,7 @@ export function scrollEvent(
             }
 
             let scrollbars = false;
-            if (Math.abs(scrolltop - lastScrollTop) > 300) {
+            if (Math.abs(scrolltop - lastScrollTop) > 700) {
                 scrollbars = true;
             }
 
