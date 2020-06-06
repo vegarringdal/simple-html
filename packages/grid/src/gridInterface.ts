@@ -88,6 +88,11 @@ export class GridInterface {
             return true;
         }
 
+        // update config sorting sets
+        this.config.groupingSet = this.__ds.getGrouping();
+        this.config.groupingExpanded = this.__ds.getExpanded();
+        this.config.sortingSet = this.__ds.getOrderBy();
+
         if (this.__handleEvent === null) {
             // only trigger once..
             this.__handleEvent = 1;
@@ -309,7 +314,8 @@ export class GridInterface {
 
         this.__updateSortConfig();
 
-        this.config.groupingSet = this.__ds.getGrouping();
+        /* this.config.groupingSet = this.__ds.getGrouping();
+        this.config.groupingExpanded = this.__ds.getExpanded(); */
         this.__ds.group(groupings);
     }
 
@@ -395,7 +401,6 @@ export class GridInterface {
                 }
             }
         });
-        this.config.sortingSet = sorting;
     }
 
     /**

@@ -103,6 +103,7 @@ export interface GridConfig {
     /**
      * you need to set new or config for this to work
      * You can use this to save current sorting/grouping for later
+     * these will override what is set in a datasource // todo: add a option to skip this?
      */
     groupingSet?: GroupArgument[];
     sortingSet?: SortArgument[];
