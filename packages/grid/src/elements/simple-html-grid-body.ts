@@ -9,6 +9,7 @@ export default class extends HTMLElement {
     connector: GridInterface;
     rowPositionCache: RowCache[];
     ref: SimpleHtmlGrid;
+    firstLoad = true;
 
     connectedCallback() {
         this.classList.add('simple-html-grid-body');
@@ -39,7 +40,8 @@ export default class extends HTMLElement {
         const config = this.connector.config;
         const lastcsroll = this.connector.config.lastScrollTop;
 
-        if (lastcsroll > 0) {
+        if (lastcsroll > 0 && this.firstLoad) {
+            this.firstLoad = false;
             // if we start withh scrolltop we want to set rows correctly right away to stop
             // unwanted blinking
             let newTopPosition = lastcsroll;
