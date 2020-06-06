@@ -413,6 +413,7 @@ export class GridInterface {
                 }
             }
         });
+        this.config.sortingSet = sorting;
     }
 
     /**
