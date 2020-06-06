@@ -8,7 +8,8 @@ import {
     SelectionMode,
     SortArgument,
     FilterArgument,
-    GroupArgument
+    GroupArgument,
+    OPERATORS
 } from './types';
 import { DataContainer } from './dataContainer';
 
@@ -567,5 +568,55 @@ export class Datasource {
     public reloadDatasource() {
         this.__collectionFiltered = this.getAllData();
         this.__internalUpdate(true);
+    }
+
+    public getFilterString() {
+        const parser = function (obj: FilterArgument, queryString = '') {
+            if (obj) {
+                if (!obj.filterArguments) {
+                    if (obj.operator !== 'IN') {
+                        queryString =
+                            queryString +
+                            `${obj.attribute} ${OPERATORS[obj.operator]} ${
+                                obj.valueType === 'ATTRIBUTE' ? obj.value : "'" + obj.value + "'"
+                            }`;
+                    } else {
+                        // split newline into array
+                        if (Array.isArray(obj.value)) {
+                            queryString =
+                                queryString +
+                                `${obj.attribute} ${OPERATORS[obj.operator]} [${obj.value.map(
+                                    (val) => {
+                                        return `'${val}'`;
+                                    }
+                                )}]`;
+                        } else {
+                            queryString =
+                                queryString +
+                                `${obj.attribute} ${
+                                    OPERATORS[obj.operator]
+                                } [${(obj.value as string).split('\n').map((val) => {
+                                    return `'${val}'`;
+                                })}]`;
+                        }
+                    }
+                } else {
+                    obj.filterArguments.forEach((y, i) => {
+                        if (i > 0) {
+                            queryString = queryString + ` ${obj.logicalOperator} `;
+                        } else {
+                            queryString = queryString + `(`;
+                        }
+                        queryString = parser(y, queryString);
+                        if (obj.filterArguments.length - 1 === i) {
+                            queryString = queryString + `)`;
+                        }
+                    });
+                }
+            }
+            return queryString;
+        };
+
+        return parser(this.__filter.getFilter());
     }
 }

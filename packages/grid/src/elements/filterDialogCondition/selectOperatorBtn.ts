@@ -1,20 +1,7 @@
 import { html } from 'lit-html';
 import { FilterArgument } from '../../types';
 import { generateMenu } from '../generateMenu';
-
-export const OPERATORS = {
-    EQUAL: '===',
-    LESS_THAN_OR_EQUAL_TO: '<=',
-    GREATER_THAN_OR_EQUAL_TO: '>=',
-    LESS_THAN: '<',
-    GREATER_THAN: '>',
-    CONTAINS: '*',
-    NOT_EQUAL_TO: '!==',
-    DOES_NOT_CONTAIN: '!*',
-    BEGIN_WITH: 'x*',
-    END_WITH: '*x',
-    IN: 'IN'
-};
+import { OPERATORS } from '@simple-html/datasource';
 
 /**
  * returns list of operators user can use

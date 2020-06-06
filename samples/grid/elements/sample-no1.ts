@@ -1,4 +1,4 @@
-import { customElement } from '@simple-html/core';
+import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
 import { GridInterface, Datasource } from '@simple-html/grid';
 import { setup } from '../gridSetup/setup';
@@ -10,11 +10,23 @@ let x = setup(1, 10, 100000);
 export default class extends HTMLElement {
     connector: GridInterface;
     ds: Datasource;
+    @property() query: string;
 
     connectedCallback() {
         this.connector = new GridInterface(x, WordDatasource01);
         this.connector.reloadDatasource();
         this.ds = this.connector.getDatasource();
+
+        this.ds.addEventListner(this);
+    }
+
+    handleEvent() {
+        this.query = this.ds.getFilterString();
+        return true;
+    }
+
+    disconnectedCallback() {
+        this.ds.removeEventListner(this);
     }
 
     render() {
@@ -49,7 +61,7 @@ export default class extends HTMLElement {
                         }}
                     ></nav-buttons>
                 </div>
-
+                <span>${this.query}</span>
                 <simple-html-grid
                     style="width:100%"
                     class="simple-html-grid w-full flex-grow"

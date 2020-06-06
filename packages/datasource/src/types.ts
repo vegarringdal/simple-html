@@ -77,3 +77,20 @@ export interface GroupArgument {
     title: string;
     attribute: string;
 }
+
+/**
+ * nices string values
+ */
+export const OPERATORS = {
+    EQUAL: 'equal to',
+    LESS_THAN_OR_EQUAL_TO: 'less or equal',
+    GREATER_THAN_OR_EQUAL_TO: 'greater than or equal',
+    LESS_THAN: 'less than',
+    GREATER_THAN: 'greater than',
+    CONTAINS: 'contains',
+    NOT_EQUAL_TO: 'not equal to',
+    DOES_NOT_CONTAIN: 'does not contain',
+    BEGIN_WITH: 'start with',
+    END_WITH: 'end with',
+    IN: 'IN'
+};
