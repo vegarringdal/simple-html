@@ -1,4 +1,4 @@
-import { SimpleHtmlGrid } from '.';
+import { SimpleHtmlGrid, IGridConfig } from '.';
 import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
@@ -26,8 +26,9 @@ export class GridInterface {
     private __SCROLL_HEIGHTS: number[];
     private __SCROLL_HEIGHT: number;
     private __handleEvent: any = null;
+    private __CONFIG: GridConfig;
 
-    constructor(private __CONFIG: GridConfig, datasource?: Datasource | DataContainer) {
+    constructor(config: GridConfig, datasource?: Datasource | DataContainer) {
         if (!datasource) {
             this.__ds = new Datasource();
         } else {
@@ -39,38 +40,8 @@ export class GridInterface {
             }
         }
 
-        // set groupheight
-        let cellheight = 1;
-        __CONFIG.groups.forEach((group) => {
-            if (group.rows) {
-                group.rows.forEach((_c, i) => {
-                    if (cellheight < i + 1) {
-                        cellheight = i + 1;
-                    }
-                });
-            }
-        });
-        __CONFIG.__cellRows = cellheight;
-        __CONFIG.__rowHeight = __CONFIG.cellHeight * cellheight;
-
-        //set left on groups
-        let totalWidth = 0;
-        __CONFIG.groups.reduce((agg, element) => {
-            element.__left = agg;
-            totalWidth = totalWidth + element.width;
-            return element.__left + element.width;
-        }, 0);
-        __CONFIG.__rowWidth = totalWidth;
-
-        if (this.__CONFIG.sortingSet) {
-            this.__ds.setOrderBy(this.__CONFIG.sortingSet);
-        }
-        if (this.__CONFIG.groupingSet) {
-            this.__ds.setGrouping(this.__CONFIG.groupingSet);
-        }
-        if (this.__CONFIG.groupingExpanded) {
-            this.__ds.setExpanded(this.__CONFIG.groupingExpanded);
-        }
+        this.__CONFIG = config;
+        this.parseConfig();
     }
 
     /**
@@ -132,21 +103,54 @@ export class GridInterface {
     }
 
     /**
+     * runs thouh config and sets some internals needed when creating grid or changing the config
+     */
+    private parseConfig() {
+        // set groupheight
+        let cellheight = 1;
+        this.__CONFIG.groups.forEach((group) => {
+            if (group.rows) {
+                group.rows.forEach((_c, i) => {
+                    if (cellheight < i + 1) {
+                        cellheight = i + 1;
+                    }
+                });
+            }
+        });
+        this.__CONFIG.__cellRows = cellheight;
+        this.__CONFIG.__rowHeight = this.__CONFIG.cellHeight * cellheight;
+
+        //set left on groups
+        let totalWidth = 0;
+        this.config.groups.reduce((agg, element) => {
+            element.__left = agg;
+            totalWidth = totalWidth + element.width;
+            return element.__left + element.width;
+        }, 0);
+        this.__CONFIG.__rowWidth = totalWidth;
+
+        if (this.__CONFIG) {
+            if (this.__CONFIG.sortingSet) {
+                this.__ds.setOrderBy(this.__CONFIG.sortingSet);
+            }
+            if (this.__CONFIG.groupingSet) {
+                this.__ds.setGrouping(this.__CONFIG.groupingSet);
+            }
+            if (this.__CONFIG.groupingExpanded) {
+                this.__ds.setExpanded(this.__CONFIG.groupingExpanded);
+            }
+        }
+    }
+
+    /**
      * if you have manually edits config and need to update you will need to run this
      * grid also uses this for some internal use
      */
-    manualConfigChange() {
-        if (this.config) {
-            if (this.config.sortingSet) {
-                this.__ds.setOrderBy(this.config.sortingSet);
-            }
-            if (this.config.groupingSet) {
-                this.__ds.setGrouping(this.config.groupingSet);
-            }
-            if (this.config.groupingExpanded) {
-                this.__ds.setExpanded(this.config.groupingExpanded);
-            }
+    manualConfigChange(config?: IGridConfig) {
+        if (config) {
+            this.__CONFIG = config;
         }
+        this.parseConfig();
         this.__updateSortConfig();
         this.__ds.reloadDatasource();
         this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
@@ -160,20 +164,7 @@ export class GridInterface {
      * with other words repplacing data also replace data in underlaying datasource and container
      */
     setData(data: any[], add = false, reRunFilter = false) {
-        // const olddataSetlength = this.__ds.getAllData().length;// TODO: remove
-
         this.__ds.setData(data, add, reRunFilter);
-
-        /*   
-        // this really isnt nessesary TODO: remove
-        if (this.__SimpleHtmlGrid && olddataSetlength !== this.completeDataset.length) {
-            const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
-            console.log('reset1');
-            if (node) {
-                console.log('reset1');
-                node.scrollTop = 0;
-            }
-        } */
 
         this.dataSourceUpdated();
     }
@@ -183,15 +174,6 @@ export class GridInterface {
      * Internal usage only, do not call
      */
     reloadDatasource() {
-        /* 
-            this really isnt nessesary, hlets have a funtion to reset  TODO: remove
-            if (this.__SimpleHtmlGrid) {
-            const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
-            if (node) {
-                console.log('reset2');
-                node.scrollTop = 0;
-            }
-        } */
         this.__ds.reloadDatasource();
         this.dataSourceUpdated();
     }
