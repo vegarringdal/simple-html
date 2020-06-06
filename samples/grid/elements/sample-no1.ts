@@ -4,13 +4,15 @@ import { GridInterface, Datasource } from '@simple-html/grid';
 import { setup } from '../gridSetup/setup';
 import { WordDatasource01, set, add } from '../data/datasources';
 
+let x = setup(1, 10, 100000);
+
 @customElement('sample-no1')
 export default class extends HTMLElement {
     connector: GridInterface;
     ds: Datasource;
 
     connectedCallback() {
-        this.connector = new GridInterface(setup(1, 10, 100000), WordDatasource01);
+        this.connector = new GridInterface(x, WordDatasource01);
         this.connector.reloadDatasource();
         this.ds = this.connector.getDatasource();
     }
