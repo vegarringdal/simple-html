@@ -94,10 +94,14 @@ export class GridInterface {
         this.config.sortingSet = this.__ds.getOrderBy();
 
         if (this.__handleEvent === null) {
+            console.log(_event.type);
+
+            if (_event.type !== 'collection-sorted') {
+                this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
+            }
             // only trigger once..
             this.__handleEvent = 1;
             Promise.resolve().then(() => {
-                this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
                 this.dataSourceUpdated();
                 this.__SimpleHtmlGrid && this.reRender();
                 this.__handleEvent = null;
