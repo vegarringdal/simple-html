@@ -1,0 +1,48 @@
+import { Datasource } from '../src/dataSource';
+
+// localCompare corrent ordder with norwegial letters: æ ø å
+const simpleArray = [
+    { name: 'person2', group: 0, age: 23, born: new Date(1980, 0, 1), index: 1 },
+    { name: 'person1', group: '', age: 34, born: new Date(1985, 0, 1), index: 2 },
+    { name: 'Nils', group: 's', age: 32, born: new Date(1990, 0, 1), index: 3 },
+    { name: 'Nilsman', group: null, age: 56, born: new Date(1995, 0, 1), index: 4 },
+    { name: 'person4', group: undefined, age: 55, born: new Date(2000, 0, 1), index: 5 }
+];
+
+let ds: Datasource;
+
+describe('string filter', () => {
+    beforeAll(() => {
+        ds = new Datasource();
+        ds.setData(simpleArray.slice());
+    });
+
+    it('string equal to', (done) => {
+        ds.filter({
+            attribute: 'group',
+            operator: 'EQUAL',
+            value: 'null'
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: 'person2', group: 0, age: 23, born: new Date(1980, 0, 1), index: 1 },
+            { name: 'person1', group: '', age: 34, born: new Date(1985, 0, 1), index: 2 },
+            { name: 'Nilsman', group: null, age: 56, born: new Date(1995, 0, 1), index: 4 },
+            { name: 'person4', group: undefined, age: 55, born: new Date(2000, 0, 1), index: 5 }
+        ]);
+        done();
+    });
+
+    it('string equal to', (done) => {
+        ds.filter({
+            attribute: 'group',
+            operator: 'NOT_EQUAL_TO',
+            value: 'null'
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: 'Nils', group: 's', age: 32, born: new Date(1990, 0, 1), index: 3 }
+        ]);
+        done();
+    });
+});

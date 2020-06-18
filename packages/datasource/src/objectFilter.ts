@@ -38,7 +38,11 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     // lets set some defaults/corrections if its all wrong
     switch (type) {
         case 'null':
-            filterOperator = 'EQUAL';
+            filterValue = null;
+            filterOperator = filterOperator === 'NOT_EQUAL_TO' ? 'NOT_EQUAL_TO' : 'EQUAL'; // we only want blanks or not blanks..
+            if (rowValue === undefined || rowValue === 0 || rowValue === '') {
+                rowValue = null;
+            }
 
             break;
 
