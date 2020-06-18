@@ -12,10 +12,18 @@ export const getNextKey = function () {
 export class DataContainer {
     private __collection: Entity[] = [];
     private __keyAttribute = '';
+    private EntityHandler = EntityHandler;
 
     constructor(UniqueKeyAttribute?: string) {
         // we want to add sufix just incase its something like a new
         this.__keyAttribute = UniqueKeyAttribute;
+    }
+
+    /**
+     * so user can override if they want
+     */
+    public overrideEntityHandler(entityHandler: any) {
+        this.EntityHandler = entityHandler;
     }
 
     /**
@@ -71,7 +79,7 @@ export class DataContainer {
                 if (o && o.__controller) {
                     return o;
                 } else {
-                    return new Proxy(o, new EntityHandler(this.__keyAttribute) as any);
+                    return new Proxy(o, new this.EntityHandler(this.__keyAttribute) as any);
                 }
             });
             this.__collection.push(...x);
@@ -91,7 +99,7 @@ export class DataContainer {
                 if (o && o.__controller) {
                     return o;
                 } else {
-                    return new Proxy(o, new EntityHandler(this.__keyAttribute) as any);
+                    return new Proxy(o, new this.EntityHandler(this.__keyAttribute) as any);
                 }
             });
 
