@@ -46,7 +46,7 @@ export function stateContainer<T>(
         state[key] = defaultValue;
     }
 
-    const currentState = state[key];
+    const currentState: T = state[key];
     const setter = function (value: T) {
         state[key] = value;
     };
