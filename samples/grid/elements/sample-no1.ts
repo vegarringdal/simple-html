@@ -16,17 +16,6 @@ export default class extends HTMLElement {
         this.connector = new GridInterface(x, WordDatasource01);
         this.connector.reloadDatasource();
         this.ds = this.connector.getDatasource();
-
-        this.ds.addEventListner(this);
-    }
-
-    handleEvent() {
-        this.query = this.ds.getFilterString();
-        return true;
-    }
-
-    disconnectedCallback() {
-        this.ds.removeEventListner(this);
     }
 
     render() {

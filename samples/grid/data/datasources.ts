@@ -1,9 +1,28 @@
-import { DataContainer, Datasource } from '@simple-html/datasource';
+import { DataContainer, Datasource, EntityHandler } from '@simple-html/datasource';
 import { Generator } from './generator';
 
 const generator = new Generator();
 
+const EntityHandlerOverride = class extends EntityHandler {
+    get(target: object, prop: string) {
+        if (prop === 'superman') {
+            return (target['word4'] || '') + ' - ' + (target['work5'] || '');
+        } else {
+            return super.get(target, prop);
+        }
+    }
+
+    set(obj: object, prop: string, value: any) {
+        if (prop === 'superman') {
+            return false;
+        } else {
+            return super.set(obj, prop, value);
+        }
+    }
+};
+
 export const WordDatasource01 = new DataContainer();
+WordDatasource01.overrideEntityHandler(EntityHandlerOverride);
 export const WordDatasource02 = new DataContainer();
 export const WordDatasource03 = new DataContainer();
 export const WordDatasource04 = new DataContainer();

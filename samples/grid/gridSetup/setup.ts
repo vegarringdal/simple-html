@@ -4,7 +4,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
     const setup: IGridConfig = {
         cellHeight: 20,
         panelHeight: 25,
-        footerHeight: 20,
+        footerHeight: 40,
         selectionMode: 'multiple',
         lastScrollTop: scroll,
         groups: []
@@ -30,6 +30,13 @@ export function setup(rows: number, columns: number, scroll?: number) {
                         header: 'date',
                         attribute: 'date',
                         type: 'date',
+                        filterable: {},
+                        sortable: {}
+                    });
+                    x.push({
+                        header: 'superman',
+                        attribute: 'superman',
+                        type: 'text',
                         filterable: {},
                         sortable: {}
                     });
