@@ -96,9 +96,8 @@ export class GridInterface {
         if (this.__handleEvent === null) {
             console.log(_event.type);
 
-            if (_event.type !== 'collection-sorted') {
-                this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
-            }
+            this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
+
             // only trigger once..
             this.__handleEvent = 1;
             Promise.resolve().then(() => {
