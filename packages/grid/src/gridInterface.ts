@@ -559,4 +559,11 @@ export class GridInterface {
             }
         }
     }
+
+    /**
+     * get filter string
+     */
+    public getFilterString() {
+        return this.getDatasource().getFilterString();
+    }
 }

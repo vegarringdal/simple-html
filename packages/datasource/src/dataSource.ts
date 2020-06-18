@@ -573,7 +573,10 @@ export class Datasource {
     public getFilterString() {
         const parser = function (obj: FilterArgument, queryString = '') {
             if (obj) {
-                if (!obj.filterArguments) {
+                if (
+                    !obj.filterArguments ||
+                    (obj.filterArguments && obj.filterArguments.length === 0)
+                ) {
                     if (obj.operator !== 'IN') {
                         queryString =
                             queryString +
@@ -616,7 +619,6 @@ export class Datasource {
             }
             return queryString;
         };
-
         return parser(this.__filter.getFilter());
     }
 }

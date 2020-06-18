@@ -29,6 +29,7 @@ export default class extends HTMLElement {
         const totalRows = this.connector.completeDataset.length;
         const filter = this.connector.filteredDataset.length;
 
-        return html`<div style="text-align:center">${filter}/${totalRows}</div>`;
+        return html`<div style="text-align:center">${filter}/${totalRows}</div>
+            <div style="text-align:center">${this.connector.getFilterString()}</div>`;
     }
 }
