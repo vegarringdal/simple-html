@@ -361,9 +361,10 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     background-color: var(--simple-html-grid-alt-bg-color);
 }
 
-input.simple-html-grid-row-input:focus {
+.simple-html-grid .simple-html-grid-row-input:focus {
     border: 1px dashed;
-    outline: hidden;
+    outline: thin;
+    outline-color: var(--simple-html-grid-main-bg-color);
 }
 
 .simple-html-grid-menu {
