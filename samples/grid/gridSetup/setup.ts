@@ -33,13 +33,6 @@ export function setup(rows: number, columns: number, scroll?: number) {
                         filterable: {},
                         sortable: {}
                     });
-                    x.push({
-                        header: 'superman',
-                        attribute: 'superman',
-                        type: 'text',
-                        filterable: {},
-                        sortable: {}
-                    });
                 }
             } else {
                 x.push({
