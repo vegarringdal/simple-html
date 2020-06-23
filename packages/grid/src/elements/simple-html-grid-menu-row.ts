@@ -38,7 +38,21 @@ export default class extends HTMLElement {
         if (_type === 'copy' && this.rowData) {
             try {
                 dataClip = this.rowData[this.cell.attribute]; // firefox hack
-                await navigator.clipboard.writeText(this.rowData[this.cell.attribute]);
+                await navigator.clipboard.writeText(dataClip);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        if (_type === 'copy-range' && this.rowData) {
+            try {
+                dataClip = '';
+                this.connector.getSelectedRows().forEach((row: number) => {
+                    dataClip =
+                        dataClip +
+                        (this.connector.displayedDataset[row][this.cell.attribute] || '') +
+                        '\n';
+                });
+                await navigator.clipboard.writeText(dataClip);
             } catch (err) {
                 console.error(err);
             }
@@ -92,8 +106,12 @@ export default class extends HTMLElement {
     }
 
     render() {
-        return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('copy')}>
+        return html`<!-- data -->
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('copy')}>
                 Copy cell value
+            </p>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('copy-range')}>
+                Copy column cell values
             </p>
             ${this.allowCopyPaste()}`;
     }
