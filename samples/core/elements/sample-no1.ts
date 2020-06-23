@@ -2,6 +2,7 @@ import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 import { viewState } from '../state/viewState';
 import { formState } from '../state/formState';
+import { assignState } from '@simple-html/core/src/state';
 
 @customElement('sample-no1')
 export default class extends HTMLElement {
@@ -23,7 +24,7 @@ export default class extends HTMLElement {
                         class="p-2 m-1"
                         .value=${form.firstName || ''}
                         @input=${(e: any) =>
-                            setForm(Object.assign(form, { firstName: e.target.value }))}
+                            setForm(assignState(form, { firstName: e.target.value }))}
                     />
                 </label>
                 <label>

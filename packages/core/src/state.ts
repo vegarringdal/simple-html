@@ -2,7 +2,7 @@ import { publish } from '.';
 
 let state = (window as any).state || {};
 const keys = new Set();
-type valueSetter = (value: any) => void;
+type valueSetter<T> = (value: T) => void;
 
 // helper for fusebox hmr event
 if (!(window as any).state) {
@@ -12,7 +12,7 @@ if (!(window as any).state) {
     });
 }
 
-export type stateResult<T> = [T, valueSetter];
+export type stateResult<T> = [T, valueSetter<T>];
 
 /**
  * Get current glabal state
@@ -26,8 +26,12 @@ export function getState() {
  * overide current state
  * great for restoring state time user opens website
  */
-export function setState(newState: any) {
+export function setState<T>(newState: T) {
     state = newState;
+}
+
+export function assignState<T, K extends keyof T>(obj: T, part: Pick<T, K>) {
+    return Object.assign(obj, part);
 }
 
 /**
