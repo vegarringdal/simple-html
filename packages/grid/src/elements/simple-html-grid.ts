@@ -118,9 +118,47 @@ export class SimpleHtmlGrid extends HTMLElement {
                 this.interface.displayedDataset.length > rowsNeeded
                     ? rowsNeeded
                     : this.interface.displayedDataset.length;
-            this.rowCache = [];
-            for (let i = 0; i < cacheLength; i++) {
-                this.rowCache.push({ i: i, update: true });
+            if (cacheLength !== this.rowCache.length) {
+                this.rowCache = [];
+                for (let i = 0; i < cacheLength; i++) {
+                    this.rowCache.push({ i: i, update: true });
+                }
+                let newTopPosition = this.interface.config.lastScrollTop;
+                if (this.interface.displayedDataset.length <= this.rowCache.length) {
+                    newTopPosition = 0;
+                }
+
+                const rowTopState: any = this.interface.getScrollVars.__SCROLL_TOPS;
+
+                let currentRow = 0;
+
+                let i = 0;
+
+                if (newTopPosition !== 0) {
+                    // need to do some looping here, need to figure out where we are..
+                    while (i < rowTopState.length) {
+                        const checkValue = Math.floor(newTopPosition - rowTopState[i]);
+
+                        if (checkValue < 0) {
+                            currentRow = i - 1;
+                            break;
+                        }
+
+                        i++;
+                    }
+                }
+
+                let rowFound = currentRow;
+                for (let i = 0; i < this.rowCache.length; i++) {
+                    const newRow = currentRow + i;
+                    if (newRow > this.interface.displayedDataset.length - 1) {
+                        rowFound--;
+                        this.rowCache[i].i = rowFound;
+                    } else {
+                        this.rowCache[i].i = newRow;
+                    }
+                    this.rowCache[i].update = true;
+                }
             }
         } else {
             this.rowCache = [];
