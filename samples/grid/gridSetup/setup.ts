@@ -5,6 +5,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
         cellHeight: 20,
         panelHeight: 25,
         footerHeight: 40,
+
         selectionMode: 'multiple',
         lastScrollTop: scroll,
         groups: []
@@ -28,6 +29,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
                 } else {
                     x.push({
                         header: 'date',
+                        readonly: true,
                         attribute: 'date',
                         type: 'date',
                         filterable: {},

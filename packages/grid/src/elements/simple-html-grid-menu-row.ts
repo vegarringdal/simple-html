@@ -60,6 +60,7 @@ export default class extends HTMLElement {
                 console.error(err);
             }
         }
+
         if (_type === 'clear') {
             this.pasteIntoCells(null);
         }
@@ -76,15 +77,24 @@ export default class extends HTMLElement {
         document.body.removeChild(this);
     }
 
+    allowCopyPaste() {
+        if (!this.connector.config.readonly && !this.cell.readonly) {
+            return html`<!-- only if not readonly -->
+                <p class="simple-html-grid-menu-item" @click=${() => this.select('paste')}>
+                    Paste into selected rows
+                </p>
+                <p class="simple-html-grid-menu-item" @click=${() => this.select('clear')}>
+                    Clear selected rows
+                </p>`;
+        } else {
+            return html``;
+        }
+    }
+
     render() {
         return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('copy')}>
                 Copy cell value
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('paste')}>
-                Paste into selected rows
-            </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('clear')}>
-                Clear selected rows
-            </p>`;
+            ${this.allowCopyPaste()}`;
     }
 }
