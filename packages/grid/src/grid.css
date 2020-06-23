@@ -382,7 +382,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
-    
+
     height: 20px;
     text-align: center;
     overflow: hidden;
@@ -398,7 +398,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     color: var(--simple-html-grid-main-font-color);
 }
 
-.simple-html-grid-menu-full{
+.simple-html-grid-menu-full {
     position: fixed;
     top: 0;
     left: 0;
@@ -415,10 +415,8 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid-menu-item:hover {
-
     background-color: var(--simple-html-grid-main-bg-selected);
 }
-
 
 .simple-html-filter-dialog {
     box-shadow: 1px 1px 3px 0px #000000b5;
@@ -429,9 +427,9 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 
 .dialog-row {
     display: flex;
-    height: 20px;
     box-shadow: inset 1px 1px 3px 0 #fffdfd;
     border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
+    min-height: 20px;
 }
 
 .dialog-item-block {
@@ -444,12 +442,37 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .dialog-item-y {
-    min-width: 100px;
-    max-width: 100px;
-    margin-left: 25px;
+    min-width: 140px;
+    max-width: 140px;
+    margin-left: 15px;
+    min-height: 20px;
+}
+
+.dialog-item-group {
+    margin-left: 5px;
+    margin-top: 2px;
+}
+
+.dialog-item-y:focus {
+    outline: 1px dashed !important;
 }
 
 .dialog-item-x {
     min-width: 15px; /* due to icon */
     margin-left: 25px;
+    min-height: 20px;
+}
+
+.dialog-item-x:focus {
+    outline: 0px !important;
+}
+
+.dialog-condition-trash {
+    position: absolute;
+    right: 5px;
+}
+
+.dialog-condition-type {
+    position: absolute;
+    right: 30px;
 }

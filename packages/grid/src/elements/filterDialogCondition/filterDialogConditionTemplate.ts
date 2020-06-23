@@ -22,8 +22,8 @@ export function filterDialogConditionTemplate(
                 return filterDialogGroupTemplate(operatorObject, ctx, level, operatorObjectArr);
             } else {
                 return html` <div class="dialog-row">
-                    <div style="width:${level}px" class="dialog-item-block"></div>
                     <div class="dialog-item">
+                        <span class="dialog-item-group">${level}:</span>
                         <!-- btn -->
                         ${selectAttributesBtn(operatorObject, ctx)}
                         <!-- btn -->

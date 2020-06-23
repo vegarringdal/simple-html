@@ -6,7 +6,7 @@ import { FilterArgument } from '../../types';
  */
 export function deleteBtn(ctx: any, operatorObjectArr: FilterArgument[], i: number) {
     return html` <button
-        class="dialog-item-x"
+        class="dialog-item-x dialog-condition-trash"
         @click=${() => {
             operatorObjectArr && operatorObjectArr.splice(i, 1);
             ctx.render();

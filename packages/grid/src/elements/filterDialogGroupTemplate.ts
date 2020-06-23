@@ -9,8 +9,8 @@ export function filterDialogGroupTemplate(
     parent?: any[]
 ) {
     return html`
-        <div class="dialog-row main-group">
-            <div style="width:${level}px" class="dialog-item-block"></div>
+        <li class="dialog-row main-group">
+            <span class="dialog-item-group">${level + 1}:</span>
             <button
                 class="dialog-item-x"
                 @click=${() => {
@@ -94,7 +94,7 @@ export function filterDialogGroupTemplate(
                     ></path>
                 </svg>
             </button>
-        </div>
-        ${filterDialogConditionTemplate(g.filterArguments, ctx, level + 10)}
+        </li>
+        ${filterDialogConditionTemplate(g.filterArguments, ctx, level + 1)}
     `;
 }

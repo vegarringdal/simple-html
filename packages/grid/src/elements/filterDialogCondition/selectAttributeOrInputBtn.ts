@@ -6,7 +6,7 @@ import { FilterArgument } from '../../types';
  */
 export function selectAttributeOrInputBtn(operatorObject: FilterArgument, ctx: any) {
     return html` <button
-        class="dialog-item-x"
+        class="dialog-item-x dialog-condition-type"
         @click=${() => {
             operatorObject.valueType = operatorObject.valueType === 'VALUE' ? 'ATTRIBUTE' : 'VALUE';
             ctx.render();
