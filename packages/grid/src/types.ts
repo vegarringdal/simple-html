@@ -39,7 +39,6 @@ export interface CellConfig {
     filterable?: {
         /**Default FALSE */
         filterOverLabel?: boolean;
-        beforeFilterCallbackFn?: any;
         /**Default TRUE */
         auto?: boolean;
         /**Default CHANGE */
@@ -63,18 +62,11 @@ export interface CellConfig {
         auto?: boolean;
     };
     type?: DataTypes;
-    beforeEditCallbackFn?: any;
     /**Default TRUE */
     autoUpdateData?: boolean;
-    afterEditCallbackFn?: any;
     editEventType?: InputTriggers;
     disableDragDrop?: boolean;
     allowGrouping?: boolean;
-
-    // needs more work
-    renderRowCallBackFn?: any; //cell, data, connector, updatecallback
-    renderLabelCallBackFn?: any;
-    renderFilterCallBackFn?: any;
 }
 
 export type GridRowConfig = CellConfig;
@@ -87,6 +79,7 @@ export type GridGroupConfig = {
 
 export interface GridConfig {
     groups: GridGroupConfig[];
+    optionalCells?: CellConfig[];
     cellHeight: number;
     footerHeight: number;
     panelHeight?: number;
@@ -108,4 +101,12 @@ export interface GridConfig {
     groupingSet?: GroupArgument[];
     sortingSet?: SortArgument[];
     groupingExpanded?: string[];
+
+    // callbacks, maybe move these out of the config, or own config for this?
+    beforeEditCallbackFn?: any;
+    afterEditCallbackFn?: any;
+    renderRowCallBackFn?: any;
+    renderLabelCallBackFn?: any;
+    renderFilterCallBackFn?: any;
+    beforeFilterCallbackFn?: any;
 }

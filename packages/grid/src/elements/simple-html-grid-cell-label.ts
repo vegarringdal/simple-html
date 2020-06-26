@@ -93,8 +93,8 @@ export default class extends HTMLElement {
 
         this.style.width = this.group.width + 'px';
 
-        if (cell.renderLabelCallBackFn) {
-            return cell.renderLabelCallBackFn(
+        if (this.connector.config.renderLabelCallBackFn) {
+            return this.connector.config.renderLabelCallBackFn(
                 cell,
                 this.connector,
                 sorticonElement,

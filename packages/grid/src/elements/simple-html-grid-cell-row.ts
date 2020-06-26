@@ -44,8 +44,8 @@ export default class extends HTMLElement {
         const data = this.connector.displayedDataset[this.rowNo];
         const cell = this.cell;
 
-        cell.beforeEditCallbackFn &&
-            cell.beforeEditCallbackFn(e, cell, this.rowNo, data, this.connector);
+        this.connector.config.beforeEditCallbackFn &&
+            this.connector.config.beforeEditCallbackFn(e, cell, this.rowNo, data, this.connector);
         // filter out based on type so we know what type to use
         if (cell.autoUpdateData !== false) {
             switch (this.cell.type) {
@@ -67,8 +67,8 @@ export default class extends HTMLElement {
             }
             this.connector.publishEvent('attribute-change');
         }
-        cell.afterEditCallbackFn &&
-            cell.afterEditCallbackFn(e, cell, this.rowNo, data, this.connector);
+        this.connector.config.afterEditCallbackFn &&
+            this.connector.config.afterEditCallbackFn(e, cell, this.rowNo, data, this.connector);
     }
 
     render() {
@@ -95,8 +95,14 @@ export default class extends HTMLElement {
                 }
             };
 
-            if (cell.renderRowCallBackFn) {
-                return cell.renderRowCallBackFn(cell, data, rowNo, connector, this.updateCallback);
+            if (this.connector.config.renderRowCallBackFn) {
+                return this.connector.config.renderRowCallBackFn(
+                    cell,
+                    data,
+                    rowNo,
+                    connector,
+                    this.updateCallback
+                );
             }
 
             switch (cell.type) {
