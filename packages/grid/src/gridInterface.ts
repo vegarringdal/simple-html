@@ -163,7 +163,7 @@ export class GridInterface {
         this.__ds.reloadDatasource();
         this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
         this.dataSourceUpdated();
-        this.__SimpleHtmlGrid && this.reRender();
+        this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.manualConfigChange();
         this.__handleEvent = null;
     }
 

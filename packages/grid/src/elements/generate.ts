@@ -15,6 +15,7 @@ import './simple-html-grid-menu-label';
 import './simple-html-grid-menu-filter';
 import './simple-html-grid-menu-panel';
 import './simple-html-grid-filter-dialog';
+import './simple-html-grid-column-chooser';
 import './simple-html-grid-menu-custom';
 import { scrollEvent } from './scrollEvent';
 import { GridInterface } from '../gridInterface';

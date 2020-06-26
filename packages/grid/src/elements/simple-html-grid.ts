@@ -49,6 +49,8 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public manualConfigChange() {
+        this.render(true);
+        this.reRender();
         console.log('not implemented');
     }
 
@@ -165,7 +167,10 @@ export class SimpleHtmlGrid extends HTMLElement {
         }
     }
 
-    public render() {
+    public render(clear?: boolean) {
+        if (clear) {
+            return render(html``, this);
+        }
         return new Promise(() => {
             if (this.interface) {
                 render(html` ${generate(this.interface, this.rowCache, this)} `, this);
