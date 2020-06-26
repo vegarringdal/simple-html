@@ -56,17 +56,17 @@ export default class extends HTMLElement {
     render() {
         return html`<p
                 class="simple-html-grid-menu-item"
-                @click=${() => this.select('sort', true, false)}
+                @click=${() => this.select('sort', false, false)}
             >
                 Sort asc
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, false)}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, false)}>
                 Sort desc
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, true)}>
                 Sort asc (add)
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, true)}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
                 Sort desc (add)
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('groupBy')}>
