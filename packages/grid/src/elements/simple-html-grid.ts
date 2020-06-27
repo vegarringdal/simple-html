@@ -139,19 +139,19 @@ export class SimpleHtmlGrid extends HTMLElement {
 
                 let i = 0;
 
-                if (newTopPosition !== 0) {
-                    // need to do some looping here, need to figure out where we are..
-                    while (i < rowTopState.length) {
-                        const checkValue = Math.floor(newTopPosition - rowTopState[i]);
+                //if (newTopPosition !== 0) {
+                // need to do some looping here, need to figure out where we are..
+                while (i < rowTopState.length) {
+                    const checkValue = Math.floor(newTopPosition - rowTopState[i]);
 
-                        if (checkValue < 0) {
-                            currentRow = i - 1;
-                            break;
-                        }
-
-                        i++;
+                    if (checkValue < 0) {
+                        currentRow = i - 1;
+                        break;
                     }
+
+                    i++;
                 }
+                // }
 
                 let rowFound = currentRow;
                 for (let i = 0; i < this.rowCache.length; i++) {
