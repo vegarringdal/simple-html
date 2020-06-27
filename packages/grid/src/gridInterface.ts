@@ -78,7 +78,6 @@ export class GridInterface {
      * @param _event string
      */
     handleEvent(_event: { type: string; data: any }) {
-        // console.log(_event, this.displayedDataset.length);
         if (_event.type === 'currentEntity') {
             return true;
         }
@@ -94,8 +93,6 @@ export class GridInterface {
         this.config.sortingSet = this.__ds.getOrderBy();
 
         if (this.__handleEvent === null) {
-            console.log(_event.type);
-
             this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
 
             // only trigger once..

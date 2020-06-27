@@ -4,6 +4,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig, FilterArgument } from '../types';
+import { columnDragDrop } from './dragEvent';
 
 @customElement('simple-html-grid-column-chooser')
 export default class extends HTMLElement {
@@ -16,9 +17,14 @@ export default class extends HTMLElement {
 
     connectedCallback() {
         this.classList.add('simple-html-grid-menu');
+        this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: Event) {
+        if (e.type === 'reRender') {
+            this.render();
+            return;
+        }
         if (e.target !== this) {
             this.removeSelf();
         }
@@ -26,20 +32,31 @@ export default class extends HTMLElement {
 
     removeSelf() {
         document.body.removeChild(this);
+        this.ref.removeEventListener('reRender', this);
     }
 
     render() {
         return html`<div class="simple-html-grid ">
-            <button
-                class="dialog-item-x"
+            <span
+                class="block simple-html-grid-menu-item"
                 @click=${() => {
                     this.removeSelf();
                 }}
             >
                 <b> Close</b>
-            </button>
-            <br />
-            "NOT IMPLEMENTED YET"
+            </span>
+            ${this.connector.config.optionalCells?.map((cell) => {
+                const mousedown = columnDragDrop('dragstart', cell, this.connector, null);
+
+                return html`<span
+                    class="block simple-html-grid-menu-item"
+                    @mousedown=${(e: any) => {
+                        mousedown(e);
+                    }}
+                >
+                    ${cell.header}
+                </span>`;
+            })}
         </div>`;
     }
 }

@@ -7,6 +7,7 @@
     --simple-html-grid-main-bg-selected: #dbd7dc;
     --simple-html-grid-main-font-color: #2e2d2d;
     --simple-html-grid-sec-font-color: #979494;
+    --simple-html-grid-dropzone-color: #979494;
     --simple-html-grid-font-size: 11px;
     --simple-html-grid-font-weight: 500;
     --simple-html-grid-font-weight-header: 700;
@@ -260,8 +261,8 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 .simple-html-grid .simple-html-grid-draggable-handler {
     position: absolute;
     cursor: w-resize;
-    width: 15px;
-    right: 0;
+    width: 5px;
+    right: -2.5px;
     top: 0;
     bottom: 0;
     z-index: 900;
@@ -358,7 +359,8 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid .simple-html-grid-candrop {
-    background-color: var(--simple-html-grid-alt-bg-color);
+    background-color: var(--simple-html-grid-dropzone-color);
+    box-shadow: inset 1px 1px 3px 0 #fffdfd;
 }
 
 .simple-html-grid .simple-html-grid-row-input:focus {
@@ -475,4 +477,52 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 .dialog-condition-type {
     position: absolute;
     right: 30px;
+}
+
+.simple-html-grid-drop-zone-left {
+
+/*     background-color: red; */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 5px;
+    text-align: center;
+    z-index: 50;
+}
+
+.simple-html-grid-drop-zone-right {
+/* 
+    background-color: rgb(212, 0, 255); */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 5px;
+    text-align: center;
+    z-index: 90;
+}
+
+.simple-html-grid-drop-zone-bottom {
+
+  /*   background-color: red; */
+    position: absolute;
+    bottom: 0;
+    left: 5px;
+    right: 5px;
+    height: 5px;
+    text-align: center;
+    z-index: 50;
+}
+
+.simple-html-grid-drop-zone-top {
+
+ /*    background-color: red; */
+    position: absolute;
+    top: 0;
+    left: 5px;
+    right: 5px;
+    height: 5px;
+    text-align: center;
+    z-index: 50;
 }

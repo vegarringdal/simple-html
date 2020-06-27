@@ -4,7 +4,7 @@ import { GridGroupConfig } from '../types';
 import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
-import { columnDragDrop } from './dragEvent';
+import { columnDragDrop, dropzone } from './dragEvent';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-cell-label')
@@ -75,9 +75,9 @@ export default class extends HTMLElement {
             }
         };
 
-        const mousedown = columnDragDrop('dragstart', cell, connector);
-        const mouseenter = columnDragDrop('enter', cell, connector);
-        const mouseleave = columnDragDrop('leave', cell, connector);
+        const mousedown = columnDragDrop('dragstart', cell, connector, this.group);
+        const mouseenter = columnDragDrop('enter', cell, connector, this.group);
+        const mouseleave = columnDragDrop('leave', cell, connector, this.group);
 
         const contentMenu = function (e: any) {
             if ((e as any).button !== 0) {
@@ -147,6 +147,10 @@ export default class extends HTMLElement {
                     >${label} ${sorticonElement(this.connector, cell)}</span
                 >
                 ${resizeColumnElement(this.ref, this.group)}
+                ${dropzone(this.connector, this.group, cell, 'left')}
+                ${dropzone(this.connector, this.group, cell, 'right')}
+                ${dropzone(this.connector, this.group, cell, 'top')}
+                ${dropzone(this.connector, this.group, cell, 'bottom')}
             `;
         }
     }
