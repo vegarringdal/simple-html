@@ -47,10 +47,12 @@ export default class extends HTMLElement {
             try {
                 dataClip = '';
                 this.connector.getSelectedRows().forEach((row: number) => {
-                    dataClip =
-                        dataClip +
-                        (this.connector.displayedDataset[row][this.cell.attribute] || '') +
-                        '\n';
+                    if (!this.connector.displayedDataset[row].__group) {
+                        dataClip =
+                            dataClip +
+                            (this.connector.displayedDataset[row][this.cell.attribute] || '') +
+                            '\n';
+                    }
                 });
                 await navigator.clipboard.writeText(dataClip);
             } catch (err) {
