@@ -49,9 +49,12 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public manualConfigChange() {
-        this.render(true);
+        // clear all
+        render(html``, this);
+        // genrate new grid
+        render(html` ${generate(this.interface, this.rowCache, this)} `, this);
+        // fix all
         this.reRender();
-        console.log('not implemented');
     }
 
     public triggerEvent(eventName: string, data?: any) {
@@ -167,10 +170,7 @@ export class SimpleHtmlGrid extends HTMLElement {
         }
     }
 
-    public render(clear?: boolean) {
-        if (clear) {
-            return render(html``, this);
-        }
+    public render() {
         return new Promise(() => {
             if (this.interface) {
                 render(html` ${generate(this.interface, this.rowCache, this)} `, this);
