@@ -480,8 +480,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid-drop-zone-left {
-
-/*     background-color: red; */
     position: absolute;
     top: 0;
     bottom: 0;
@@ -492,8 +490,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid-drop-zone-right {
-/* 
-    background-color: rgb(212, 0, 255); */
     position: absolute;
     top: 0;
     bottom: 0;
@@ -504,8 +500,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid-drop-zone-bottom {
-
-  /*   background-color: red; */
     position: absolute;
     bottom: 0;
     left: 5px;
@@ -516,8 +510,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid-drop-zone-top {
-
- /*    background-color: red; */
     position: absolute;
     top: 0;
     left: 5px;
