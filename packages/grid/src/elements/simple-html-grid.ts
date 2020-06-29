@@ -39,7 +39,7 @@ export class SimpleHtmlGrid extends HTMLElement {
                 this.rowCache[i].update = true;
             }
 
-            this.render();
+            //this.render();
             if (this.currentScrollHeight !== this.interface.getScrollVars.__SCROLL_HEIGHT) {
                 // if callention length is changed we need to make sure all rows are within viewport
                 this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;

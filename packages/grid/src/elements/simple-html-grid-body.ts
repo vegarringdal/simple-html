@@ -26,6 +26,7 @@ export default class extends HTMLElement {
             this.render();
         }
         if (e.type === 'reRender') {
+            this.render(true);
             this.render();
         }
     }
@@ -36,7 +37,10 @@ export default class extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
-    render() {
+    render(clear?: boolean) {
+        if (clear) {
+            return '';
+        }
         const config = this.connector.config;
 
         return html`
