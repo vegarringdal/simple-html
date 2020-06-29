@@ -38,49 +38,6 @@ export default class extends HTMLElement {
 
     render() {
         const config = this.connector.config;
-        const lastcsroll = this.connector.config.lastScrollTop;
-
-        if (lastcsroll > 0 && this.firstLoad) {
-            this.firstLoad = false;
-            // if we start withh scrolltop we want to set rows correctly right away to stop
-            // unwanted blinking
-            let newTopPosition = lastcsroll;
-            if (this.connector.displayedDataset.length <= this.rowPositionCache.length) {
-                newTopPosition = 0;
-            }
-
-            const rowTopState: any = this.connector.getScrollVars.__SCROLL_TOPS;
-
-            let currentRow = 0;
-
-            let i = 0;
-
-            if (newTopPosition !== 0) {
-                // need to do some looping here, need to figure out where we are..
-                while (i < rowTopState.length) {
-                    const checkValue = Math.floor(newTopPosition - rowTopState[i]);
-
-                    if (checkValue < 0) {
-                        currentRow = i - 1;
-                        break;
-                    }
-
-                    i++;
-                }
-            }
-
-            let rowFound = currentRow;
-            for (let i = 0; i < this.rowPositionCache.length; i++) {
-                const newRow = currentRow + i;
-                if (newRow > this.connector.displayedDataset.length - 1) {
-                    rowFound--;
-                    this.rowPositionCache[i].i = rowFound;
-                } else {
-                    this.rowPositionCache[i].i = newRow;
-                }
-                this.rowPositionCache[i].update = true;
-            }
-        }
 
         return html`
             <simple-html-grid-body-content

@@ -13,7 +13,7 @@ export default class extends HTMLElement {
     connectedCallback() {
         this.classList.add('simple-html-grid-row');
         this.ref.addEventListener('vertical-scroll', this);
-        this.ref.addEventListener('reRender', this);
+        this.ref.addEventListener('selection', this);
 
         if (this.connector.config.__rowHeight > this.connector.config.cellHeight) {
             this.classList.add('grouping-row-border');
@@ -27,14 +27,14 @@ export default class extends HTMLElement {
                 this.render();
             }
         }
-        if (e.type === 'reRender') {
+        if (e.type === 'selection') {
             this.render();
         }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('vertical-scroll', this);
-        this.ref.removeEventListener('reRender', this);
+        this.ref.removeEventListener('selection', this);
     }
 
     render() {

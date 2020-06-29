@@ -83,7 +83,7 @@ export class GridInterface {
         }
 
         if (_event.type === 'selectionChange') {
-            this.__SimpleHtmlGrid.triggerEvent('reRender');
+            this.__SimpleHtmlGrid.triggerEvent('selection');
             return true;
         }
 

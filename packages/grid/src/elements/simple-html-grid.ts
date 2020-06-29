@@ -3,6 +3,7 @@ import { GridInterface } from '../gridInterface';
 import { customElement } from '@simple-html/core';
 import { generate } from './generate';
 import { RowCache } from '../types';
+import { updateRowCache } from './updateRowCache';
 
 @customElement('simple-html-grid')
 export class SimpleHtmlGrid extends HTMLElement {
@@ -20,11 +21,12 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public connectedCallback() {
-        this.resetRowCache();
         this.render();
+        this.resetRowCache();
         if (this.interface) {
             this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;
         }
+        this.cleanup();
     }
 
     public disconnectedCallback() {
@@ -41,8 +43,8 @@ export class SimpleHtmlGrid extends HTMLElement {
             if (this.currentScrollHeight !== this.interface.getScrollVars.__SCROLL_HEIGHT) {
                 // if callention length is changed we need to make sure all rows are within viewport
                 this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;
-                this.cleanup();
             }
+            this.cleanup();
 
             this.triggerEvent('reRender');
         });
@@ -70,42 +72,7 @@ export class SimpleHtmlGrid extends HTMLElement {
     public cleanup() {
         const node = this.getElementsByTagName('simple-html-grid-body')[0];
         if (node && node.scrollTop !== undefined && this.interface) {
-            let newTopPosition = node.scrollTop;
-            if (this.interface.displayedDataset.length <= this.rowCache.length) {
-                newTopPosition = 0;
-            }
-
-            const rowTopState: any = this.interface.getScrollVars.__SCROLL_TOPS;
-
-            let currentRow = 0;
-
-            let i = 0;
-
-            if (newTopPosition !== 0) {
-                // need to do some looping here, need to figure out where we are..
-                while (i < rowTopState.length) {
-                    const checkValue = Math.floor(newTopPosition - rowTopState[i]);
-                    if (checkValue < 0) {
-                        currentRow = i - 2;
-                        break;
-                    }
-                    i++;
-                }
-            }
-
-            let rowFound = currentRow;
-            for (let i = 0; i < this.rowCache.length; i++) {
-                const newRow = currentRow + i;
-                if (newRow > this.interface.displayedDataset.length - 1) {
-                    rowFound--;
-                    this.rowCache[i].i = rowFound;
-                } else {
-                    this.rowCache[i].i = newRow;
-                }
-                this.rowCache[i].update = true;
-            }
-
-            this.triggerEvent('vertical-scroll');
+            updateRowCache(this.interface, this.rowCache, this, node.scrollTop);
         }
     }
 
@@ -124,45 +91,25 @@ export class SimpleHtmlGrid extends HTMLElement {
                     ? rowsNeeded
                     : this.interface.displayedDataset.length;
             if (cacheLength !== this.rowCache.length) {
-                this.rowCache = [];
-                for (let i = 0; i < cacheLength; i++) {
-                    this.rowCache.push({ i: i, update: true });
-                }
-                let newTopPosition = this.interface.config.lastScrollTop;
-                if (this.interface.displayedDataset.length <= this.rowCache.length) {
-                    newTopPosition = 0;
-                }
-
-                const rowTopState: any = this.interface.getScrollVars.__SCROLL_TOPS;
-
-                let currentRow = 0;
-
-                let i = 0;
-
-                //if (newTopPosition !== 0) {
-                // need to do some looping here, need to figure out where we are..
-                while (i < rowTopState.length) {
-                    const checkValue = Math.floor(newTopPosition - rowTopState[i]);
-
-                    if (checkValue < 0) {
-                        currentRow = i - 1;
-                        break;
+                if (this.rowCache.length > cacheLength) {
+                    let l = this.rowCache.length;
+                    for (let i = 0; i < l; i++) {
+                        if (this.rowCache && this.rowCache[i].i > cacheLength) {
+                            this.rowCache.splice(i, 1);
+                            i--;
+                            l--;
+                            cacheLength;
+                        }
                     }
-
-                    i++;
-                }
-                // }
-
-                let rowFound = currentRow;
-                for (let i = 0; i < this.rowCache.length; i++) {
-                    const newRow = currentRow + i;
-                    if (newRow > this.interface.displayedDataset.length - 1) {
-                        rowFound--;
-                        this.rowCache[i].i = rowFound;
-                    } else {
-                        this.rowCache[i].i = newRow;
+                    const missingLength = cacheLength + 1 - this.rowCache.length;
+                    for (let i = 0; i < missingLength; i++) {
+                        this.rowCache.push({ i: i, update: true });
                     }
-                    this.rowCache[i].update = true;
+                } else {
+                    const missingLength = cacheLength - this.rowCache.length;
+                    for (let i = 0; i < missingLength; i++) {
+                        this.rowCache.push({ i: i, update: true });
+                    }
                 }
             }
         } else {
