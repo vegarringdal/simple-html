@@ -23,21 +23,16 @@ export default class extends HTMLElement {
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.cell = this.group.rows[this.cellPosition];
         this.ref.addEventListener('column-resize', this);
-        this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: Event) {
         if (e.type === 'column-resize') {
             this.style.width = this.group.width + 'px';
         }
-        if (e.type === 'reRender') {
-            this.render();
-        }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
-        this.ref.removeEventListener('reRender', this);
     }
 
     updateCallback(e: any) {

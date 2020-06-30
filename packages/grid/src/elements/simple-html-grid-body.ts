@@ -1,5 +1,5 @@
 import { customElement } from '@simple-html/core';
-import { html } from 'lit-html';
+import { html, render } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
@@ -19,6 +19,7 @@ export default class extends HTMLElement {
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
+        this.scrollTop = 500;
     }
 
     handleEvent(e: any) {
@@ -26,7 +27,7 @@ export default class extends HTMLElement {
             this.render();
         }
         if (e.type === 'reRender') {
-            this.render(true);
+            render('', this); // force clear
             this.render();
         }
     }
@@ -37,12 +38,34 @@ export default class extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
-    render(clear?: boolean) {
-        if (clear) {
-            return '';
+    updated() {
+        if (this.firstLoad) {
+            this.firstLoad = false;
+            const node = this.ref.getElementsByTagName('simple-html-grid-body')[0];
+            if (node && node.scrollTop !== this.connector.config.lastScrollTop) {
+                this.scrollTop = this.connector.config.lastScrollTop;
+                this.scrollLeft = this.connector.config.scrollLeft;
+                this.ref.reRender();
+            }
         }
+    }
+
+    render() {
         const config = this.connector.config;
 
+        if (this.firstLoad) {
+            const node = this.ref.getElementsByTagName('simple-html-grid-body')[0];
+            if (node && node.scrollTop !== this.connector.config.lastScrollTop) {
+                return html`
+                    <simple-html-grid-body-content
+                        style="height:${this.connector.getScrollVars
+                            .__SCROLL_HEIGHT}px;width:${config.__rowWidth}px"
+                        class="simple-html-grid-content"
+                    >
+                    </simple-html-grid-body-content>
+                `;
+            }
+        }
         return html`
             <simple-html-grid-body-content
                 style="height:${this.connector.getScrollVars

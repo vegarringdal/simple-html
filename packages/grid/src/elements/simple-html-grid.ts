@@ -9,11 +9,12 @@ import { updateRowCache } from './updateRowCache';
 export class SimpleHtmlGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
     public rowCache: RowCache[] = [];
-    private currentScrollHeight: number;
 
     set interface(value: GridInterface) {
-        this.__DATASOURCE_INTERFACE = value;
-        this.__DATASOURCE_INTERFACE.connectGrid(this);
+        if (this.__DATASOURCE_INTERFACE !== value) {
+            this.__DATASOURCE_INTERFACE = value;
+            this.__DATASOURCE_INTERFACE.connectGrid(this);
+        }
     }
 
     get interface() {
@@ -21,12 +22,7 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public connectedCallback() {
-        this.render();
         this.resetRowCache();
-        if (this.interface) {
-            this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;
-        }
-        this.cleanup();
     }
 
     public disconnectedCallback() {
@@ -34,29 +30,15 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public reRender() {
-        requestAnimationFrame(() => {
-            for (let i = 0; i < this.rowCache.length; i++) {
-                this.rowCache[i].update = true;
-            }
-
-            //this.render();
-            if (this.currentScrollHeight !== this.interface.getScrollVars.__SCROLL_HEIGHT) {
-                // if callention length is changed we need to make sure all rows are within viewport
-                this.currentScrollHeight = this.interface.getScrollVars.__SCROLL_HEIGHT;
-            }
-            this.cleanup();
-
-            this.triggerEvent('reRender');
-        });
+        this.cleanup();
+        this.triggerEvent('reRender');
     }
 
     public manualConfigChange() {
-        // clear all
         render(html``, this);
-        // genrate new grid
         render(html` ${generate(this.interface, this.rowCache, this)} `, this);
-        // fix all
-        this.reRender();
+        this.cleanup();
+        /*  this.reRender(); */
     }
 
     public triggerEvent(eventName: string, data?: any) {
@@ -121,21 +103,9 @@ export class SimpleHtmlGrid extends HTMLElement {
         return new Promise(() => {
             if (this.interface) {
                 render(html` ${generate(this.interface, this.rowCache, this)} `, this);
-
-                if (this.interface.config.lastScrollTop) {
-                    // set initial scroll top/left
-                    // nice when reloading a page etc
-                    const node = this.getElementsByTagName('simple-html-grid-body')[0];
-                    if (node && node.scrollTop !== this.interface.config.lastScrollTop) {
-                        node.scrollTop = this.interface.config.lastScrollTop;
-                        node.scrollLeft = this.interface.config.scrollLeft;
-                        // this.interface.config.lastScrollTop = 0;  TODO: remove
-                    }
-                }
             } else {
                 if (this.isConnected) {
                     console.error('no config set');
-
                     render(html``, this);
                 }
             }

@@ -474,7 +474,7 @@ export class GridInterface {
         this.__SimpleHtmlGrid = SimpleHtmlGrid;
         this.__ds.addEventListner(this);
         this.dataSourceUpdated();
-        this.reRender();
+        /* this.reRender(); */
     }
 
     /**

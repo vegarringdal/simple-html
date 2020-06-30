@@ -13,21 +13,16 @@ export default class extends HTMLElement {
     connectedCallback() {
         this.classList.add('simple-html-grid-row');
         this.ref.addEventListener('vertical-scroll', this);
-        this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: Event) {
         if (e.type === 'vertical-scroll') {
             this.render();
         }
-        if (e.type === 'reRender') {
-            this.render();
-        }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('vertical-scroll', this);
-        this.ref.removeEventListener('reRender', this);
     }
 
     render() {
