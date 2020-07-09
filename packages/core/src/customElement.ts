@@ -35,18 +35,28 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 super();
                 logger('constructor', this, super.tagName);
             }
+
+            renderCalled() {
+                if (super.renderCalled) {
+                    super.renderCalled.call(this);
+                }
+            }
+
             render(...result: any[]) {
-                logger('render', this, super.tagName);
-                const template = super.render.call(this, ...result);
-                Promise.resolve(template).then((templates) => {
-                    render(templates, this as any, { eventContext: this as any });
-                    if (super.updated) {
-                        //delay so it actually get a chance to update
-                        requestAnimationFrame(() => {
-                            super.updated();
-                        });
-                    }
-                });
+                if (super.render) {
+                    logger('render', this, super.tagName);
+                    const template = super.render.call(this, ...result);
+                    Promise.resolve(template).then((templates) => {
+                        render(templates, this as any, { eventContext: this as any });
+                        if (super.updated) {
+                            //delay so it actually get a chance to update
+                            requestAnimationFrame(() => {
+                                super.updated();
+                            });
+                        }
+                    });
+                }
+                this.renderCalled();
             }
             connectedCallback() {
                 logger('connectedCallback', this, super.tagName);
