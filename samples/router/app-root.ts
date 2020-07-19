@@ -3,6 +3,7 @@ import { customElement } from '@simple-html/core';
 import { navs, routerConfig } from './routes/routerConfig';
 import { subscribeHashEvent, unSubscribeHashEvent, gotoURL } from '@simple-html/router';
 import { routeMatchAsync } from '@simple-html/router';
+import { isAuthenticted, logout } from './routes/login';
 
 @customElement('app-root')
 export default class extends HTMLElement {
@@ -35,10 +36,14 @@ export default class extends HTMLElement {
                     <span
                         class="text-teal-200 hover:text-white"
                         @click=${() => {
-                            gotoURL('#:path', { path: 'settings' });
+                            if (isAuthenticted()) {
+                                logout();
+                            } else {
+                                gotoURL('#:path', { path: 'login' });
+                            }
                         }}
                     >
-                        ${this ? 'Logout' : 'Login'}
+                        ${isAuthenticted() ? 'Logout' : 'Login'}
                     </span>
                 </li>
             </ul>
@@ -53,6 +58,11 @@ export default class extends HTMLElement {
                 routerConfig.settings.path,
                 routerConfig.settings.load,
                 routerConfig.settings.html
+            )}
+            ${routeMatchAsync(
+                routerConfig.login.path,
+                routerConfig.login.load,
+                routerConfig.login.html
             )}
 
             <!--  if you want you could show more then 1 -->

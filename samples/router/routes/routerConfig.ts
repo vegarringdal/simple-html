@@ -22,7 +22,9 @@ export const routerConfig = {
     login: {
         path: '#login',
         href: '#login',
-        title: 'Login',
+        title: 'Auth',
+        load: () => import('./login'),
+        html: html` <login-route></login-route>`,
         isNav: false
     },
     unknown: {
