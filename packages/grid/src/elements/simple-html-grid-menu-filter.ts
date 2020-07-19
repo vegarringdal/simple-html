@@ -57,50 +57,58 @@ export default class extends HTMLElement {
     }
 
     render() {
+        const operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
+        console.log(operator);
         return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('EQUAL')}>
-                Equal to
+                ${operator === 'EQUAL' ? html`<u><b>Equal to</b></u>` : 'Equal to'}
             </p>
 
             <p class="simple-html-grid-menu-item" @click=${() => this.select('NOT_EQUAL_TO')}>
-                Not equal to
+                ${operator === 'NOT_EQUAL_TO' ? html`<u><b>Not equal to</b></u>` : 'Not equal to'}
             </p>
 
             <p class="simple-html-grid-menu-item" @click=${() => this.select('BEGIN_WITH')}>
-                Starts with
+                ${operator === 'BEGIN_WITH' ? html`<u><b>Begin with</b></u>` : 'Begin with'}
             </p>
 
             <p class="simple-html-grid-menu-item" @click=${() => this.select('GREATER_THAN')}>
-                Greater than
+                ${operator === 'GREATER_THAN' ? html`<u><b>Greater than</b></u>` : 'Greater than'}
             </p>
 
             <p
                 class="simple-html-grid-menu-item"
                 @click=${() => this.select('GREATER_THAN_OR_EQUAL_TO')}
             >
-                Greater than or equal
+                ${operator === 'GREATER_THAN_OR_EQUAL_TO'
+                    ? html`<u><b>Greater than or equal</b></u>`
+                    : 'Greater than or equal'}
             </p>
 
             <p class="simple-html-grid-menu-item" @click=${() => this.select('LESS_THAN')}>
-                Less than
+                ${operator === 'LESS_THAN' ? html`<u><b>Less than</b></u>` : 'Less than'}
             </p>
 
             <p
                 class="simple-html-grid-menu-item"
                 @click=${() => this.select('LESS_THAN_OR_EQUAL_TO')}
             >
-                Less than or equal
+                ${operator === 'LESS_THAN_OR_EQUAL_TO'
+                    ? html`<u><b>Less than or equal</b></u>`
+                    : 'Less than or equal'}
             </p>
 
             <p class="simple-html-grid-menu-item" @click=${() => this.select('END_WITH')}>
-                End with
+                ${operator === 'END_WITH' ? html`<u><b>End with</b></u>` : 'End with'}
             </p>
 
             <p class="simple-html-grid-menu-item" @click=${() => this.select('CONTAINS')}>
-                Contains
+                ${operator === 'CONTAINS' ? html`<u><b>Contains</b></u>` : 'Contains'}
             </p>
 
             <p class="simple-html-grid-menu-item" @click=${() => this.select('DOES_NOT_CONTAIN')}>
-                Does not contain
+                ${operator === 'DOES_NOT_CONTAIN'
+                    ? html`<u><b>Does not contain</b></u>`
+                    : 'Does not contain'}
             </p>
 
             <hr />
@@ -122,9 +130,8 @@ export default class extends HTMLElement {
             </p>
 
             <hr />
-
             <p class="simple-html-grid-menu-item" @click=${this.clearAll}>
-                clear filters
+                clear filter all columns
             </p>`;
     }
 }
