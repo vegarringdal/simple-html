@@ -1,6 +1,6 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
-import { navs, routerConfig } from './routerConfig';
+import { navs, routerConfig } from './routes/routerConfig';
 import { subscribeHashEvent, unSubscribeHashEvent, gotoURL } from '@simple-html/router';
 import { routeMatchAsync } from '@simple-html/router';
 
