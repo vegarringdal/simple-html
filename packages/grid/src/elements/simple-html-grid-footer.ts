@@ -2,6 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
+import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-footer')
 export default class extends HTMLElement {
@@ -25,11 +26,36 @@ export default class extends HTMLElement {
         }
     }
 
+    showEdit() {
+        return html`
+            <u
+                @click="${(e: any) => {
+                    generateMenuWithComponentName(
+                        'simple-html-grid-filter-dialog',
+                        e,
+                        this.connector,
+                        this.ref,
+                        null,
+                        null,
+                        null
+                    );
+                }}}"
+                >Edit filter</u
+            >
+        `;
+    }
+
     render() {
         const totalRows = this.connector.completeDataset.length;
         const filter = this.connector.filteredDataset.length;
 
         return html`<div style="text-align:center">${filter}/${totalRows}</div>
-            <div style="text-align:center">${this.connector.getFilterString()}</div>`;
+            <div style="display: flex; justify-content: center;">
+                <div style="margin-right:5px">
+                    ${this.connector.getFilterString()}
+                </div>
+
+                ${this.connector.getFilterString() ? this.showEdit() : ''}
+            </div> `;
     }
 }
