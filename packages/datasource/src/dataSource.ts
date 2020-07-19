@@ -571,6 +571,10 @@ export class Datasource {
     }
 
     public getFilterString() {
+        const filter = this.__filter.getFilter();
+        if (!filter?.filterArguments?.length) {
+            return '';
+        }
         const parser = function (obj: FilterArgument, queryString = '') {
             if (obj) {
                 if (
