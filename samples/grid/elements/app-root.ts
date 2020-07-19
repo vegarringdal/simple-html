@@ -21,6 +21,7 @@ export default class extends HTMLElement {
             </div>
 
             <!--  our routes -->
+            ${routeMatch('') ? html`<sample-default class="flex-grow"></sample-default>` : ''}
             ${routeMatch('#default')
                 ? html`<sample-default class="flex-grow"></sample-default>`
                 : ''}
