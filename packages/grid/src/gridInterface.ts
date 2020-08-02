@@ -298,7 +298,7 @@ export class GridInterface {
         let beforeGroupIndex: number = null;
 
         col &&
-            groupings.forEach((g: GroupArgument, i) => {
+            groupings.forEach((g: GroupArgument, i: number) => {
                 if (g.attribute === col.attribute) {
                     newGrouping = false;
                 }
@@ -324,12 +324,12 @@ export class GridInterface {
             // we want to move before
             let removeIndex = null;
 
-            groupings.forEach((g: GroupArgument, i) => {
+            groupings.forEach((g: GroupArgument, i: number) => {
                 if (g.attribute === beforeGroup) {
                     beforeGroupIndex = i;
                 }
             });
-            groupings.forEach((g: GroupArgument, i) => {
+            groupings.forEach((g: GroupArgument, i: number) => {
                 if (col.attribute === g.attribute) {
                     removeIndex = i;
                 }
@@ -343,7 +343,7 @@ export class GridInterface {
         if (!newGrouping && !beforeGroup && col) {
             // we want to move to end
             let removeIndex = null;
-            groupings.forEach((g: GroupArgument, i) => {
+            groupings.forEach((g: GroupArgument, i: number) => {
                 if (col.attribute === g.attribute) {
                     removeIndex = i;
                 }
