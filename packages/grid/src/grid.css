@@ -364,6 +364,13 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     box-shadow: inset 1px 1px 3px 0 #fffdfd;
 }
 
+
+.simple-html-grid .simple-html-grid-candrop-panel-col{
+    border-left: 3px solid var(--simple-html-grid-dropzone-color);
+}
+
+
+
 .simple-html-grid .simple-html-grid-row-input:focus {
     border: 1px dashed;
     outline: thin;

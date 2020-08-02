@@ -44,7 +44,7 @@ export default class extends HTMLElement {
         }
         if (_type === 'groupBy') {
             if (this.cell.allowGrouping) {
-                this.connector.groupingCallback(null, this.cell);
+                this.connector.groupingCallback(null, this.cell, null);
             }
         }
         this.removeSelf();

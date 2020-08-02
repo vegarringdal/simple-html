@@ -3,6 +3,15 @@ import { GridInterface } from '../gridInterface';
 import { html, svg } from 'lit-html';
 import { SimpleHtmlGrid } from '..';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { panelColumn, columnDragDropPanelColumn } from './dragEvent';
+
+function capalize(text: string) {
+    if (text) {
+        return text[0].toUpperCase() + text.substring(1, text.length);
+    } else {
+        return text;
+    }
+}
 
 @customElement('simple-html-grid-panel')
 export default class extends HTMLElement {
@@ -52,6 +61,10 @@ export default class extends HTMLElement {
                 .classList.add('simple-html-grid-iconhidden');
         };
 
+        const enter = panelColumn('enter', this.connector);
+        const leave = panelColumn('leave', this.connector);
+        const dragstart = columnDragDropPanelColumn('dragstart', this.connector);
+
         return html`
             ${grouping.map((group) => {
                 const click = () => {
@@ -59,12 +72,21 @@ export default class extends HTMLElement {
                 };
                 return html`
                     <div
-                        @mouseenter=${mouseEnter}
-                        @mouseleave=${mouseLeave}
+                        @mouseenter=${(e: any) => {
+                            mouseEnter(e);
+                            enter(e, group.attribute);
+                        }}
+                        @mouseleave=${(e: any) => {
+                            mouseLeave(e);
+                            leave(e);
+                        }}
+                        @mousedown=${(e: any) => {
+                            dragstart(e, group);
+                        }}
                         class="simple-html-grid-grouping-panel-container"
                     >
                         <p class="simple-html-grid-grouping-panel-p">
-                            ${group.title || group.attribute}
+                            ${capalize(group.title || group.attribute)}
                             <i>
                                 <svg
                                     @click=${click}

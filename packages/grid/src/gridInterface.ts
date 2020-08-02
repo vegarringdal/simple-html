@@ -292,19 +292,67 @@ export class GridInterface {
      * groups columns
      * Internal usage only, do not call
      */
-    groupingCallback(_event: any, col: CellConfig) {
+    groupingCallback(_event: any, col: CellConfig, beforeGroup: string) {
         let newGrouping = col ? true : false;
         const groupings = this.__ds.getGrouping();
+        let beforeGroupIndex: number = null;
+
         col &&
-            groupings.forEach((g: GroupArgument) => {
+            groupings.forEach((g: GroupArgument, i) => {
                 if (g.attribute === col.attribute) {
                     newGrouping = false;
+                }
+                if (beforeGroup) {
+                    if (g.attribute === beforeGroup) {
+                        beforeGroupIndex = i;
+                    }
                 }
             });
 
         if (newGrouping) {
-            groupings.push({ title: col.header, attribute: col.attribute });
+            if (beforeGroup) {
+                groupings.splice(beforeGroupIndex, 0, {
+                    title: col.header,
+                    attribute: col.attribute
+                });
+            } else {
+                groupings.push({ title: col.header, attribute: col.attribute });
+            }
         }
+
+        if (!newGrouping && beforeGroup && col) {
+            // we want to move before
+            let removeIndex = null;
+
+            groupings.forEach((g: GroupArgument, i) => {
+                if (g.attribute === beforeGroup) {
+                    beforeGroupIndex = i;
+                }
+            });
+            groupings.forEach((g: GroupArgument, i) => {
+                if (col.attribute === g.attribute) {
+                    removeIndex = i;
+                }
+            });
+            const moveGrouping = groupings.splice(removeIndex, 1);
+            if (moveGrouping.length) {
+                groupings.splice(beforeGroupIndex, 0, moveGrouping[0]);
+            }
+        }
+
+        if (!newGrouping && !beforeGroup && col) {
+            // we want to move to end
+            let removeIndex = null;
+            groupings.forEach((g: GroupArgument, i) => {
+                if (col.attribute === g.attribute) {
+                    removeIndex = i;
+                }
+            });
+
+            const moveGrouping = groupings.splice(removeIndex, 1);
+            groupings.push(moveGrouping[0]);
+        }
+
         this.clearConfigSort(this.config.groups.flatMap((x) => x.rows));
         this.__ds.sortReset();
         groupings.forEach((group: GroupArgument) => {
