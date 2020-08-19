@@ -1,5 +1,12 @@
 import { SimpleHtmlGrid, IGridConfig } from '.';
-import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig } from './types';
+import {
+    GroupArgument,
+    GridConfig,
+    CellConfig,
+    FilterArgument,
+    GridGroupConfig,
+    GridCallbacks
+} from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
 
@@ -27,8 +34,13 @@ export class GridInterface {
     private __SCROLL_HEIGHT: number;
     private __handleEvent: any = null;
     private __CONFIG: GridConfig;
+    gridCallbacks: GridCallbacks;
 
-    constructor(config: GridConfig, datasource?: Datasource | DataContainer) {
+    constructor(
+        config: GridConfig,
+        datasource?: Datasource | DataContainer,
+        gridCallbacks: GridCallbacks = {}
+    ) {
         if (!datasource) {
             this.__ds = new Datasource();
         } else {
@@ -40,8 +52,17 @@ export class GridInterface {
             }
         }
 
+        this.gridCallbacks = gridCallbacks;
         this.__CONFIG = config;
         this.parseConfig();
+    }
+
+    /**
+     * for setting callback funtions
+     * so config does not contain anything that cant live in JSON
+     */
+    setCallback(gridCallbacks: GridCallbacks) {
+        this.gridCallbacks = gridCallbacks;
     }
 
     /**

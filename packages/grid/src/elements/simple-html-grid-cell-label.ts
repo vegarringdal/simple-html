@@ -57,8 +57,8 @@ export default class extends HTMLElement {
 
         const sortCallback = (e: any) => {
             const mouseup = (e: MouseEvent) => {
-                cell.sortable.beforeSortCallbackFn &&
-                    cell.sortable.beforeSortCallbackFn(e as any, cell, connector);
+                this.connector.gridCallbacks.beforeSortCallbackFn &&
+                    this.connector.gridCallbacks.beforeSortCallbackFn(e as any, cell, connector);
                 if (cell.sortable.auto !== false) {
                     connector.sortCallback(e as any, cell);
                 }
@@ -93,8 +93,8 @@ export default class extends HTMLElement {
 
         this.style.width = this.group.width + 'px';
 
-        if (this.connector.config.renderLabelCallBackFn) {
-            return this.connector.config.renderLabelCallBackFn(
+        if (this.connector.gridCallbacks.renderLabelCallBackFn) {
+            return this.connector.gridCallbacks.renderLabelCallBackFn(
                 cell,
                 this.connector,
                 sorticonElement,

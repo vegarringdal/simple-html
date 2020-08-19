@@ -72,8 +72,8 @@ export default class extends HTMLElement {
                         t.indeterminate = true;
                 }
             }
-            this.connector.config.beforeFilterCallbackFn &&
-                this.connector.config.beforeFilterCallbackFn(e, cell, this.connector);
+            this.connector.gridCallbacks.beforeFilterCallbackFn &&
+                this.connector.gridCallbacks.beforeFilterCallbackFn(e, cell, this.connector);
             if (cell.filterable.auto !== false) {
                 this.connector.filterCallback(e, cell);
             }
@@ -120,8 +120,8 @@ export default class extends HTMLElement {
             }
         };
 
-        if (this.connector.config.renderFilterCallBackFn) {
-            return this.connector.config.renderFilterCallBackFn(
+        if (this.connector.gridCallbacks.renderFilterCallBackFn) {
+            return this.connector.gridCallbacks.renderFilterCallBackFn(
                 cell,
                 this.connector,
                 filterCallback

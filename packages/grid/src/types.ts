@@ -55,8 +55,6 @@ export interface CellConfig {
         /**Internal used for making sort icon on header*/
         sortNo?: number;
         /**Internal used for making sort icon on header*/
-        beforeSortCallbackFn?: any;
-        /**Internal used for making sort icon on header*/
         noToggle?: boolean;
         /**Default TRUE */
         auto?: boolean;
@@ -101,12 +99,14 @@ export interface GridConfig {
     groupingSet?: GroupArgument[];
     sortingSet?: SortArgument[];
     groupingExpanded?: string[];
+}
 
-    // callbacks, maybe move these out of the config, or own config for this?
+export interface GridCallbacks {
     beforeEditCallbackFn?: any;
     afterEditCallbackFn?: any;
     renderRowCallBackFn?: any;
     renderLabelCallBackFn?: any;
     renderFilterCallBackFn?: any;
     beforeFilterCallbackFn?: any;
+    beforeSortCallbackFn?: any;
 }
