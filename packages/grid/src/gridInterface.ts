@@ -35,6 +35,7 @@ export class GridInterface {
     private __handleEvent: any = null;
     private __CONFIG: GridConfig;
     gridCallbacks: GridCallbacks;
+    private __configDefault: GridConfig;
 
     constructor(
         config: GridConfig,
@@ -53,6 +54,7 @@ export class GridInterface {
         }
 
         this.gridCallbacks = gridCallbacks;
+        this.__configDefault = JSON.parse(JSON.stringify(config));
         this.__CONFIG = config;
         this.parseConfig();
     }
@@ -166,6 +168,21 @@ export class GridInterface {
                 this.__ds.setExpanded(this.__CONFIG.groupingExpanded);
             }
         }
+    }
+
+    // save current settings
+    saveSettings() {
+        return JSON.parse(JSON.stringify(this.config));
+    }
+
+    // load custom setup
+    loadSettings(config: IGridConfig) {
+        this.manualConfigChange(config);
+    }
+
+    // set back default user had when grid loaded
+    useInitSettings() {
+        this.manualConfigChange(this.__configDefault);
     }
 
     /**
