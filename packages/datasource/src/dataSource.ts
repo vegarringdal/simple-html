@@ -266,6 +266,14 @@ export class Datasource {
                         logicalOperator: 'AND',
                         filterArguments: [ObjFilter as FilterArgument]
                     });
+                    // empty group, clear
+                    if (
+                        ObjFilter?.logicalOperator &&
+                        ObjFilter?.type &&
+                        ObjFilter?.filterArguments?.length === 0
+                    ) {
+                        this.__filter.setFilter(null);
+                    }
                 } else {
                     // FilterArgument
                     // todo, check more and warn if missing options _

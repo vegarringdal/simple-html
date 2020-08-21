@@ -108,21 +108,28 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             newFilterOperator = filterOperator;
 
             // if filter operator is BEGIN WITH
-            if (filter.value.charAt(0) === '*' && filterOperator === 'BEGIN_WITH') {
+            if (
+                (filter.value.charAt(0) === '*' || filter.value.charAt(0) === '%') &&
+                filterOperator === 'BEGIN_WITH'
+            ) {
                 newFilterOperator = 'CONTAINS';
                 filterValue = filterValue.substr(1, filterValue.length);
             }
 
             // if filter operator is EQUAL TO
             // wildcard first = end with
-            if (filter.value.charAt(0) === '*' && filterOperator === 'EQUAL') {
+            if (
+                (filter.value.charAt(0) === '*' || filter.value.charAt(0) === '%') &&
+                filterOperator === 'EQUAL'
+            ) {
                 newFilterOperator = 'END_WITH';
                 filterValue = filterValue.substr(1, filterValue.length);
             }
 
             // wildcard end and first = contains
             if (
-                filter.value.charAt(filter.value.length - 1) === '*' &&
+                (filter.value.charAt(filter.value.length - 1) === '*' ||
+                    filter.value.charAt(filter.value.length - 1) === '%') &&
                 filterOperator === 'EQUAL' &&
                 newFilterOperator === 'END_WITH'
             ) {
@@ -131,7 +138,8 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             }
 
             if (
-                filter.value.charAt(filter.value.length - 1) === '*' &&
+                (filter.value.charAt(filter.value.length - 1) === '*' ||
+                    filter.value.charAt(filter.value.length - 1) === '%') &&
                 (filterOperator === 'END_WITH' || newFilterOperator === 'END_WITH')
             ) {
                 newFilterOperator = 'CONTAINS';
@@ -140,7 +148,8 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
 
             // begin with since wildcard is in the end
             if (
-                filter.value.charAt(filter.value.length - 1) === '*' &&
+                (filter.value.charAt(filter.value.length - 1) === '*' ||
+                    filter.value.charAt(filter.value.length - 1) === '%') &&
                 filterOperator === 'EQUAL' &&
                 newFilterOperator !== 'END_WITH' &&
                 newFilterOperator !== 'CONTAINS'
@@ -237,7 +246,10 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             }
     }
     if (type === 'text') {
-        if (filter.value.charAt(0) === '*' && filter.value.length === 'EQUAL') {
+        if (
+            (filter.value.charAt(0) === '*' || filter.value.charAt(0) === '%') &&
+            filter.value.length === 'EQUAL'
+        ) {
             result = true;
         }
     }

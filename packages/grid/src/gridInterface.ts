@@ -434,7 +434,12 @@ export class GridInterface {
         const columns = this.config.groups.flatMap((x) => x.rows);
         columns.forEach((col) => {
             const f = col.filterable;
-            if (f && f.currentValue !== null && f.currentValue !== undefined) {
+            if (
+                f &&
+                f.currentValue !== null &&
+                f.currentValue !== undefined &&
+                f.currentValue !== ''
+            ) {
                 filter.filterArguments.push({
                     type: 'CONDITION',
                     logicalOperator: 'NONE',
@@ -446,7 +451,6 @@ export class GridInterface {
                 });
             }
         });
-
         this.__ds.filter(filter);
     }
 
