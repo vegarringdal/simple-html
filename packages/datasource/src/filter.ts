@@ -88,16 +88,16 @@ export class Filter {
                             values = (filter.value as string).split('\n');
                         }
 
-                        for (let y = 0; y < values.length; y++) {
-                            const temp = objectFilter(rowData, {
-                                value: values[y],
-                                operator: 'EQUAL',
-                                attribute: filter.attribute,
-                                type: filter.attributeType
-                            });
-                            if (temp) {
-                                result = true;
-                            }
+                        const data = rowData && rowData[filter.attribute] + '';
+                        let temp;
+                        if (data === 'null' || null || undefined) {
+                            temp = values.indexOf('null');
+                        } else {
+                            temp = values.indexOf(data);
+                        }
+
+                        if (temp !== -1) {
+                            result = true;
                         }
                     } else {
                         result = objectFilter(rowData, {
@@ -160,16 +160,16 @@ export class Filter {
                             values = (filter.value as string).split('\n');
                         }
 
-                        for (let y = 0; y < values.length; y++) {
-                            const temp = objectFilter(rowData, {
-                                value: values[y],
-                                operator: 'EQUAL',
-                                attribute: filter.attribute,
-                                type: filter.attributeType
-                            });
-                            if (temp) {
-                                result = true;
-                            }
+                        const data = rowData && rowData[filter.attribute] + '';
+                        let temp;
+                        if (data === 'null' || null || undefined) {
+                            temp = values.indexOf('null');
+                        } else {
+                            temp = values.indexOf(data);
+                        }
+
+                        if (temp !== -1) {
+                            result = true;
                         }
                     } else {
                         result = objectFilter(rowData, {
