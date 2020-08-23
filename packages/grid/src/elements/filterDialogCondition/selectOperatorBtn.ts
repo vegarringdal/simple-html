@@ -87,6 +87,13 @@ export function selectOperatorBtn(operatorObject: FilterArgument, ctx: any) {
                         operatorObject.operator = 'IN';
                         ctx.render();
                     }
+                },
+                {
+                    title: 'NOT IN',
+                    callback: () => {
+                        operatorObject.operator = 'NOT_IN';
+                        ctx.render();
+                    }
                 }
             ]);
         }}

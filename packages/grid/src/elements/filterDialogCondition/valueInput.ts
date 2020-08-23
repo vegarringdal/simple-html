@@ -5,7 +5,7 @@ import { FilterArgument } from '../../types';
  * returns input based on type
  */
 export function valueInput(operatorObject: FilterArgument) {
-    if (operatorObject.operator === 'IN') {
+    if (operatorObject.operator === 'IN' || operatorObject.operator === 'NOT_IN') {
         return html`<textarea
             class="dialog-item-y"
             style="text-align: center;"

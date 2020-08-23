@@ -36,7 +36,8 @@ export type FilterComparisonOperator =
     | 'DOES_NOT_CONTAIN'
     | 'BEGIN_WITH'
     | 'END_WITH'
-    | 'IN';
+    | 'IN'
+    | 'NOT_IN';
 
 export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
 export type FilterLogicalOperator = 'AND' | 'OR' | 'NONE';
@@ -92,5 +93,6 @@ export const OPERATORS = {
     DOES_NOT_CONTAIN: 'does not contain',
     BEGIN_WITH: 'start with',
     END_WITH: 'end with',
-    IN: 'IN'
+    IN: 'IN',
+    NOT_IN: 'NOT IN'
 };

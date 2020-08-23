@@ -79,7 +79,7 @@ export class Filter {
                         }
                     }
                     let result = false;
-                    if (filter.operator === 'IN') {
+                    if (filter.operator === 'IN' || filter.operator === 'NOT_IN') {
                         let values = filter.value as any;
                         if (!Array.isArray(filter.value)) {
                             if (typeof filter.value !== 'string') {
@@ -88,7 +88,28 @@ export class Filter {
                             values = (filter.value as string).split('\n');
                         }
 
-                        const data = rowData && rowData[filter.attribute] + '';
+                        let data;
+                        if (filter.attributeType === 'date' && rowData) {
+                            try {
+                                // TODO: this isnt really fast way to do it... but there is a very low chance for anyone using this.. so OK for now
+                                values.forEach((x: any, i: any) => {
+                                    if (x instanceof Date) {
+                                        values[i] = x.toISOString();
+                                    }
+                                });
+
+                                data = rowData[filter.attribute].toISOString();
+                            } catch (err) {
+                                try {
+                                    // if error we can try and convert it to date first
+                                    data = new Date(rowData[filter.attribute]).toISOString();
+                                } catch (err) {
+                                    data = data;
+                                }
+                            }
+                        } else {
+                            data = rowData && rowData[filter.attribute] + '';
+                        }
                         let temp;
                         if (data === 'null' || null || undefined) {
                             temp = values.indexOf('null');
@@ -96,7 +117,11 @@ export class Filter {
                             temp = values.indexOf(data);
                         }
 
-                        if (temp !== -1) {
+                        if (temp !== -1 && filter.operator === 'IN') {
+                            result = true;
+                        }
+
+                        if (temp === -1 && filter.operator === 'NOT_IN') {
                             result = true;
                         }
                     } else {
@@ -151,7 +176,7 @@ export class Filter {
                         }
                     }
                     let result = false;
-                    if (filter.operator === 'IN') {
+                    if (filter.operator === 'IN' || filter.operator === 'NOT_IN') {
                         let values = filter.value as any;
                         if (!Array.isArray(filter.value)) {
                             if (typeof filter.value !== 'string') {
@@ -160,7 +185,28 @@ export class Filter {
                             values = (filter.value as string).split('\n');
                         }
 
-                        const data = rowData && rowData[filter.attribute] + '';
+                        let data;
+                        if (filter.attributeType === 'date' && rowData) {
+                            try {
+                                // TODO: this isnt really fast way to do it... but there is a very low chance for anyone using this.. so OK for now
+                                values.forEach((x: any, i: any) => {
+                                    if (x instanceof Date) {
+                                        values[i] = x.toISOString();
+                                    }
+                                });
+                                data = rowData[filter.attribute].toISOString();
+                            } catch (err) {
+                                try {
+                                    // if error we can try and convert it to date first
+                                    data = new Date(rowData[filter.attribute]).toISOString();
+                                } catch (err) {
+                                    data = data;
+                                }
+                            }
+                        } else {
+                            data = rowData && rowData[filter.attribute] + '';
+                        }
+
                         let temp;
                         if (data === 'null' || null || undefined) {
                             temp = values.indexOf('null');
@@ -168,7 +214,11 @@ export class Filter {
                             temp = values.indexOf(data);
                         }
 
-                        if (temp !== -1) {
+                        if (temp !== -1 && filter.operator === 'IN') {
+                            result = true;
+                        }
+
+                        if (temp === -1 && filter.operator === 'NOT_IN') {
                             result = true;
                         }
                     } else {

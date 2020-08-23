@@ -31,6 +31,21 @@ describe('string filter', () => {
         done();
     });
 
+    it('simple NOT_IN operator test with newline as split', (done) => {
+        ds.filter({
+            attribute: 'name',
+            operator: 'NOT_IN',
+            value: 'person2\nNils'
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
+            { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
+            { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
+        ]);
+        done();
+    });
+
     it('simple IN operator test with newline as split 2', (done) => {
         ds.filter({
             attribute: 'name',
@@ -53,6 +68,23 @@ describe('string filter', () => {
         });
 
         expect(ds.getRows()).toEqual([]);
+        done();
+    });
+
+    it('simple NOT IN operator test with newline as split, all', (done) => {
+        ds.filter({
+            attribute: 'name',
+            operator: 'NOT_IN',
+            value: ''
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
+            { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
+            { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 },
+            { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
+            { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
+        ]);
         done();
     });
 
@@ -88,6 +120,7 @@ describe('string filter', () => {
         ds.filter({
             attribute: 'born',
             operator: 'IN',
+            attributeType: 'date',
             value: [new Date(1990, 0, 1), new Date(1995, 0, 1)] as any
         });
 
@@ -105,6 +138,7 @@ describe('string filter', () => {
                 {
                     attribute: 'born',
                     operator: 'IN',
+                    attributeType: 'date', // no automatic anymore when using array to speed it up
                     value: [new Date(1990, 0, 1), new Date(1995, 0, 1)] as any
                 },
                 {
@@ -128,7 +162,8 @@ describe('string filter', () => {
                 {
                     attribute: 'born',
                     operator: 'IN',
-                    value: [new Date(1990, 0, 1), new Date(1995, 0, 1)] as any
+                    attributeType: 'date', // no automatic anymore when using array to speed it up
+                    value: [new Date(2000, 0, 1), new Date(1995, 0, 1)] as any
                 },
                 {
                     attribute: 'age',
@@ -140,7 +175,8 @@ describe('string filter', () => {
         expect(ds.getRows()).toEqual([
             { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
             { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 },
-            { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 }
+            { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
+            { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
         done();
     });
