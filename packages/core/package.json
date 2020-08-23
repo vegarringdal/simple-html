@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/core",
-    "version": "1.0.0-alpha.47",
+    "version": "1.0.0-alpha.48",
     "description": "helpers for lit-html",
     "main": "dist/index.js",
     "module": "dist/index.js",
