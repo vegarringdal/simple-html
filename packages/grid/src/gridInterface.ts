@@ -167,20 +167,27 @@ export class GridInterface {
             if (this.__CONFIG.groupingExpanded) {
                 this.__ds.setExpanded(this.__CONFIG.groupingExpanded);
             }
+            if (this.__CONFIG.filterSet) {
+                this.__ds.setFilter(this.__CONFIG.filterSet);
+                this.__CONFIG.filterSet = null; // only once..
+            }
         }
     }
 
-    // save current settings
+    // save current settings (including filter)
     saveSettings() {
-        return JSON.parse(JSON.stringify(this.config));
+        this.__CONFIG.filterSet = this.__ds.getFilter();
+        const settings = JSON.parse(JSON.stringify(this.config));
+        this.__CONFIG.filterSet = null;
+        return settings;
     }
 
-    // load custom setup
+    // load custom setup including refilter if any
     loadSettings(config: IGridConfig) {
         this.manualConfigChange(config);
     }
 
-    // set back default user had when grid loaded
+    // set back default user had when grid loaded, does not do anything with filter
     useInitSettings() {
         this.manualConfigChange(JSON.parse(JSON.stringify(this.__configDefault)));
     }

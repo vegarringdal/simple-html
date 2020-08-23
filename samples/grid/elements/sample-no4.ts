@@ -57,6 +57,14 @@ export default class extends HTMLElement {
                     >
                         load settings
                     </button>
+                    <button
+                        class="p-2 m-2 bg-yellow-400"
+                        @click=${() => {
+                            this.savedConfig && this.connector.useInitSettings();
+                        }}
+                    >
+                        init settings
+                    </button>
 
                     <nav-buttons
                         class="flex flex-col"

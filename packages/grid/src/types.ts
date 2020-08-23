@@ -3,7 +3,8 @@ import {
     SortArgument,
     GroupArgument,
     FilterComparisonOperator,
-    DataTypes
+    DataTypes,
+    FilterArgument
 } from '@simple-html/datasource';
 export {
     FilterComparisonOperator,
@@ -97,6 +98,7 @@ export interface GridConfig {
      * these will override what is set in a datasource // todo: add a option to skip this?
      */
     groupingSet?: GroupArgument[];
+    filterSet?: FilterArgument;
     sortingSet?: SortArgument[];
     groupingExpanded?: string[];
 }
