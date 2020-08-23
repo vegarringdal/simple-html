@@ -182,7 +182,7 @@ export class GridInterface {
 
     // set back default user had when grid loaded
     useInitSettings() {
-        this.manualConfigChange(this.__configDefault);
+        this.manualConfigChange(JSON.parse(JSON.stringify(this.__configDefault)));
     }
 
     /**
