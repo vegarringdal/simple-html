@@ -86,6 +86,7 @@ export class Filter {
                                 return false;
                             }
                             values = (filter.value as string).split('\n');
+                            filter.value = values;
                         }
 
                         let data;
@@ -183,6 +184,7 @@ export class Filter {
                                 return false;
                             }
                             values = (filter.value as string).split('\n');
+                            filter.value = values;
                         }
 
                         let data;
