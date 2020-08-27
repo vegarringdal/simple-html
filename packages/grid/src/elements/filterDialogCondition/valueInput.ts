@@ -10,7 +10,7 @@ export function valueInput(operatorObject: FilterArgument) {
             class="dialog-item-y"
             style="text-align: center;"
             @input=${(e: any) => {
-                const x: any[] = e.target.value.split('\n');
+                const x: any[] = e.target.value.toUpperCase().split('\n');
                 if (x[x.length - 1] === '') {
                     x.pop();
                 }

@@ -85,7 +85,7 @@ export class Filter {
                             if (typeof filter.value !== 'string') {
                                 return false;
                             }
-                            values = (filter.value as string).split('\n');
+                            values = (filter.value as string).toUpperCase().split('\n');
                             filter.value = values;
                         }
 
@@ -110,10 +110,11 @@ export class Filter {
                             }
                         } else {
                             data = rowData && rowData[filter.attribute] + '';
+                            data = data.toUpperCase();
                         }
                         let temp;
-                        if (data === 'null' || null || undefined) {
-                            temp = values.indexOf('null');
+                        if (data === 'null' || null || undefined || '') {
+                            temp = values.indexOf('NULL');
                         } else {
                             temp = values.indexOf(data);
                         }
@@ -183,7 +184,7 @@ export class Filter {
                             if (typeof filter.value !== 'string') {
                                 return false;
                             }
-                            values = (filter.value as string).split('\n');
+                            values = (filter.value as string).toUpperCase().split('\n');
                             filter.value = values;
                         }
 
@@ -207,11 +208,12 @@ export class Filter {
                             }
                         } else {
                             data = rowData && rowData[filter.attribute] + '';
+                            data = data.toUpperCase();
                         }
 
                         let temp;
-                        if (data === 'null' || null || undefined) {
-                            temp = values.indexOf('null');
+                        if (data === 'null' || null || undefined || '') {
+                            temp = values.indexOf('NULL');
                         } else {
                             temp = values.indexOf(data);
                         }
