@@ -60,7 +60,7 @@ export default class extends HTMLElement {
                     <button
                         class="p-2 m-2 bg-yellow-400"
                         @click=${() => {
-                            this.savedConfig && this.connector.useInitSettings();
+                            this.connector.useInitSettings();
                         }}
                     >
                         init settings
