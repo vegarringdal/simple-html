@@ -15,11 +15,13 @@ import { DataContainer } from './dataContainer';
 
 type callable = Function | { handleEvent: Function };
 
+type EntityUnion<T> = Entity & T;
+
 /**
  * Helper class for calling internal sort, filter and grouping classes
  *
  */
-export class Datasource {
+export class Datasource<T = any> {
     /**
      * filter controller, holds all logic for filtering
      */
@@ -68,7 +70,7 @@ export class Datasource {
     /**
      * current entity, use this with form etc if you have a grid with detail form
      */
-    public currentEntity: Entity | null = null;
+    public currentEntity: EntityUnion<T> | null = null;
 
     constructor(dataContainer?: DataContainer, options?: DatasourceConfigOptions) {
         this.__dataContainer = dataContainer || new DataContainer();
@@ -89,8 +91,8 @@ export class Datasource {
     /**
      * This is the data in the dataContainer
      */
-    public getAllData(): Entity[] {
-        return this.__dataContainer.getDataSet();
+    public getAllData(): EntityUnion<T>[] {
+        return this.__dataContainer.getDataSet() as any;
     }
 
     /**
@@ -98,7 +100,7 @@ export class Datasource {
      * @param row
      */
     public __select(row: number) {
-        this.currentEntity = this.__collectionDisplayed[row];
+        this.currentEntity = this.__collectionDisplayed[row] as Entity & T;
         this.__callSubscribers('currentEntity');
     }
 
@@ -109,7 +111,7 @@ export class Datasource {
      * @param add add to current, if false it replaces current collections
      * @param reRunFilter rerun current filter, grouping/sorting will run automatically
      */
-    public setData(data: any[], add = false, reRunFilter = false) {
+    public setData(data: EntityUnion<T>[], add = false, reRunFilter = false) {
         if (add) {
             const x = this.__dataContainer.setData(data, add);
             if (x) {
@@ -430,19 +432,19 @@ export class Datasource {
      * returns 1 row sorted/grouped/filtered, start on 0
      * @param rowNo
      */
-    public getRow(rowNo: number): Entity {
-        return this.__collectionDisplayed[rowNo];
+    public getRow(rowNo: number): EntityUnion<T> {
+        return this.__collectionDisplayed[rowNo] as any;
     }
 
     /**
      * returns all rows sorted/grouped/filtered
      * @param onlyDataRows only get sorted/filtered and skip group
      */
-    public getRows(onlyDataRows?: boolean): Entity[] {
+    public getRows(onlyDataRows?: boolean): EntityUnion<T>[] {
         if (onlyDataRows) {
-            return this.__collectionFiltered;
+            return this.__collectionFiltered as any;
         } else {
-            return this.__collectionDisplayed;
+            return this.__collectionDisplayed as any;
         }
     }
 

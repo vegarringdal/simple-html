@@ -27,9 +27,11 @@ export interface IAttributes {
     type?: DataTypes; //defaults to text if not set
 }
 
-export interface CellConfig {
+// attribute: keyof Record<keyof T, string> & string;
+
+export interface CellConfig<T = any> {
     header?: string;
-    attribute: string;
+    attribute: keyof T & string;
     /**Default FALSE */
     readonly?: boolean;
     /**Default FALSE */
@@ -68,17 +70,17 @@ export interface CellConfig {
     allowGrouping?: boolean;
 }
 
-export type GridRowConfig = CellConfig;
-export type GridGroupConfig = {
+export type GridRowConfig<T = any> = CellConfig<T>;
+export type GridGroupConfig<T = any> = {
     width: number;
     //internal
     __left?: number;
-    rows: GridRowConfig[];
+    rows: GridRowConfig<T>[];
 };
 
-export interface GridConfig {
-    groups: GridGroupConfig[];
-    optionalCells?: CellConfig[];
+export interface GridConfig<T = any> {
+    groups: GridGroupConfig<T>[];
+    optionalCells?: CellConfig<T>[];
     cellHeight: number;
     footerHeight: number;
     panelHeight?: number;

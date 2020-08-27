@@ -13,7 +13,7 @@ import { SortArgument } from '@simple-html/datasource';
 /**
  * Grid nterface is just connection between datasource/config to the grid.
  */
-export class GridInterface {
+export class GridInterface<T = any> {
     /**
      * Have all the data
      **/
@@ -38,7 +38,7 @@ export class GridInterface {
     private __configDefault: GridConfig;
 
     constructor(
-        config: GridConfig,
+        config: GridConfig<T>,
         datasource?: Datasource | DataContainer,
         gridCallbacks: GridCallbacks = {}
     ) {
