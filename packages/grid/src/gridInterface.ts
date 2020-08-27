@@ -136,6 +136,7 @@ export class GridInterface {
     private parseConfig() {
         // set groupheight
         let cellheight = 1;
+        this.__CONFIG.groups = this.__CONFIG.groups.filter((a) => a);
         this.__CONFIG.groups.forEach((group) => {
             if (group.rows) {
                 group.rows.forEach((_c, i) => {
