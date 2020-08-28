@@ -39,6 +39,22 @@ describe('datasource filter with ', () => {
         done();
     });
 
+    it('or statement mpty', (done) => {
+        ds.filter({
+            logicalOperator: 'OR',
+            filterArguments: []
+        });
+        expect(ds.getRows()).toEqual([
+            { name: 'person2', group: 'group2', age: 23, index: 1 },
+            { name: 'person1', group: 'group2', age: 34, index: 2 },
+            { name: 'person1', group: 'group1', age: 32, index: 3 },
+            { name: 'person1', group: 'group1', age: 56, index: 4 },
+            { name: 'person4', group: 'group1', age: 55, index: 5 }
+        ]);
+        expect(ds.getRows().length).toEqual(5);
+        done();
+    });
+
     it('or statement', (done) => {
         ds.filter({
             logicalOperator: 'OR',

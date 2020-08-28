@@ -271,7 +271,7 @@ export class Datasource<T = any> {
                     // empty group, clear
                     if (
                         ObjFilter?.logicalOperator &&
-                        ObjFilter?.type &&
+                        //ObjFilter?.type &&
                         ObjFilter?.filterArguments?.length === 0
                     ) {
                         this.__filter.setFilter(null);
