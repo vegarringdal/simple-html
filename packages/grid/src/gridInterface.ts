@@ -92,7 +92,7 @@ export class GridInterface<T = any> {
      * returns current datasource
      */
     public getDatasource() {
-        return this.__ds;
+        return this.__ds as Datasource<T>;
     }
 
     /**
