@@ -177,7 +177,10 @@ export class GridInterface<T = any> {
 
     // save current settings (including filter)
     saveSettings() {
-        this.__CONFIG.filterSet = this.__ds.getFilter();
+        this.__CONFIG.filterSet = this.__ds.getFilter() || ([] as FilterArgument);
+        this.__CONFIG.groupingSet = this.__ds.getGrouping() || ([] as GroupArgument[]);
+        this.__CONFIG.groupingExpanded = this.__ds.getExpanded() || ([] as string[]);
+        this.__CONFIG.sortingSet = this.__ds.getOrderBy() || ([] as SortArgument[]);
         const settings = JSON.parse(JSON.stringify(this.config));
         this.__CONFIG.filterSet = null;
         return settings;
@@ -185,7 +188,7 @@ export class GridInterface<T = any> {
 
     // load custom setup including refilter if any
     loadSettings(config: IGridConfig) {
-        this.manualConfigChange(config);
+        this.manualConfigChange(JSON.parse(JSON.stringify(config)));
     }
 
     // set back default user had when grid loaded, does not do anything with filter
@@ -202,11 +205,10 @@ export class GridInterface<T = any> {
             this.__CONFIG = config;
         }
         this.parseConfig();
-        this.__updateSortConfig();
-        this.__ds.reloadDatasource();
-        this.dataSourceUpdated();
+        /*         this.__updateSortConfig();
+        this.__ds.reloadDatasource(); */
         this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.manualConfigChange();
-        this.__handleEvent = null;
+        this.reRunFilter();
     }
 
     /**

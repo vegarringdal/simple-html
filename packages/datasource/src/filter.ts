@@ -31,7 +31,9 @@ export class Filter {
     public filter(objArray: Entity[], ObjFilter: FilterArgument) {
         this.currentFilter = ObjFilter;
 
-        if (!ObjFilter) {
+        const emptyFilter = Array.isArray(ObjFilter) && ObjFilter.length === 0;
+
+        if (!ObjFilter || emptyFilter) {
             return objArray.slice();
         }
 
