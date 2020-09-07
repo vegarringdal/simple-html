@@ -586,7 +586,7 @@ export class Datasource<T = any> {
             return '';
         }
 
-        function convertDate(type: string, value: string | Date) {
+        function convertDate(type: string, value: string | Date | number) {
             if (type === 'date' && value instanceof Date) {
                 try {
                     return value.toLocaleDateString();
