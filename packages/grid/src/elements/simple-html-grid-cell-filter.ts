@@ -145,7 +145,7 @@ export default class extends HTMLElement {
                         contentMenu(e);
                         return false;
                     }}
-                    .valueAsDate=${value}
+                    .valueAsDate=${typeof value === 'string' ? new Date(value) : value}
                     placeholder=${placeholder}
                 />
             `;

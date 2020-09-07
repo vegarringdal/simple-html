@@ -46,7 +46,9 @@ ${Array.isArray(operatorObject.value)
                 class="dialog-item-y"
                 style="text-align: center;"
                 type="date"
-                .valueAsDate=${operatorObject.value || null}
+                .valueAsDate=${typeof operatorObject.value === 'string'
+                    ? new Date(operatorObject.value)
+                    : operatorObject.value || null}
                 @input=${(e: any) => {
                     operatorObject.value = e.target.valueAsDate;
                 }}

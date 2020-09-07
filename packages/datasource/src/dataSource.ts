@@ -585,17 +585,32 @@ export class Datasource<T = any> {
         if (!filter?.filterArguments?.length) {
             return '';
         }
+
+        function convertDate(type: string, value: string | Date) {
+            if (type === 'date' && value instanceof Date) {
+                try {
+                    return value.toLocaleDateString();
+                } catch (e) {
+                    return value;
+                }
+            }
+
+            return value;
+        }
+
         const parser = function (obj: FilterArgument, queryString = '') {
             if (obj) {
                 if (
                     !obj.filterArguments ||
                     (obj.filterArguments && obj.filterArguments.length === 0)
                 ) {
-                    if (obj.operator !== 'IN') {
+                    if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                         queryString =
                             queryString +
                             `${obj.attribute} ${OPERATORS[obj.operator]} ${
-                                obj.valueType === 'ATTRIBUTE' ? obj.value : "'" + obj.value + "'"
+                                obj.valueType === 'ATTRIBUTE'
+                                    ? obj.value
+                                    : "'" + convertDate(obj.attributeType, obj.value) + "'"
                             }`;
                     } else {
                         // split newline into array
@@ -633,6 +648,6 @@ export class Datasource<T = any> {
             }
             return queryString;
         };
-        return parser(this.__filter.getFilter());
+        return parser(this.__filter.getFilter()).toUpperCase();
     }
 }
