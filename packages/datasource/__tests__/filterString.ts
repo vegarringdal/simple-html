@@ -19,7 +19,7 @@ describe('datasource filterstring ', () => {
 
     it('single', (done) => {
         ds.filter({ attribute: 'name', operator: 'EQUAL', value: 'person1' });
-        expect(ds.getFilterString()).toEqual("(name equal to 'person1')");
+        expect(ds.getFilterString()).toEqual("(name equal_to 'person1')".toUpperCase());
         done();
     });
 
@@ -29,7 +29,7 @@ describe('datasource filterstring ', () => {
             { attribute: 'name', operator: 'EQUAL', value: 'person1' }
         ]);
         expect(ds.getFilterString()).toEqual(
-            "(group equal to 'group1' AND name equal to 'person1')"
+            "(group equal_to 'group1' AND name equal_to 'person1')".toUpperCase()
         );
         done();
     });
@@ -43,7 +43,7 @@ describe('datasource filterstring ', () => {
             ]
         });
         expect(ds.getFilterString()).toEqual(
-            "(group equal to 'group1' OR name equal to 'person1')"
+            "(group equal_to 'group1' OR name equal_to 'person1')".toUpperCase()
         );
         done();
     });
@@ -69,7 +69,7 @@ describe('datasource filterstring ', () => {
             ]
         });
         expect(ds.getFilterString()).toEqual(
-            "((group equal to 'group2' AND name equal to 'person2') OR (group equal to 'group1' AND name equal to 'person4'))"
+            "((group equal_to 'group2' AND name equal_to 'person2') OR (group equal_to 'group1' AND name equal_to 'person4'))".toUpperCase()
         );
         done();
     });
@@ -95,7 +95,7 @@ describe('datasource filterstring ', () => {
             ]
         });
         expect(ds.getFilterString()).toEqual(
-            "((group equal to 'group1' OR name equal to 'person2') AND (group equal to 'group2' OR name equal to 'person4'))"
+            "((group equal_to 'group1' OR name equal_to 'person2') AND (group equal_to 'group2' OR name equal_to 'person4'))".toUpperCase()
         );
         done();
     });
@@ -155,7 +155,7 @@ describe('datasource filterstring ', () => {
             ]
         });
         expect(ds.getFilterString()).toEqual(
-            "(word5 start with 'c' AND word7 start with 'c' AND (word7 contains 'c' AND word7 contains 'c'))"
+            "(word5 start_with 'c' AND word7 start_with 'c' AND (word7 contains 'c' AND word7 contains 'c'))".toUpperCase()
         );
         done();
     });
