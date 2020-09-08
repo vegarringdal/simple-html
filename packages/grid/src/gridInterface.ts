@@ -444,7 +444,7 @@ export class GridInterface<T = any> {
 
         if (oldFilter?.logicalOperator === 'AND') {
             filter = oldFilter;
-            filter.filterArguments = filter.filterArguments.filter((arg) => {
+            filter.filterArguments = filter.filterArguments.filter((arg: FilterArgument) => {
                 if (arg.attribute === col.attribute) {
                     return false;
                 } else {
@@ -476,7 +476,7 @@ export class GridInterface<T = any> {
 
         // remove duplicates
         const attributes: string[] = [];
-        filter.filterArguments = filter.filterArguments.filter((arg) => {
+        filter.filterArguments = filter.filterArguments.filter((arg: FilterArgument) => {
             if (attributes.indexOf(arg.attribute) !== -1) {
                 return false;
             } else {
