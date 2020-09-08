@@ -28,6 +28,10 @@ export function filterDialogGroupTemplate(
                         {
                             title: 'Add Group',
                             callback: () => {
+                                if (!Array.isArray(g.filterArguments)) {
+                                    g.filterArguments = [];
+                                }
+
                                 g.filterArguments.push({
                                     type: 'GROUP',
                                     logicalOperator: 'AND',
@@ -44,6 +48,10 @@ export function filterDialogGroupTemplate(
                         {
                             title: 'Add condition',
                             callback: () => {
+                                if (!Array.isArray(g.filterArguments)) {
+                                    g.filterArguments = [];
+                                }
+
                                 g.filterArguments.push({
                                     type: 'CONDITION',
                                     logicalOperator: 'NONE',
