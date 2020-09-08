@@ -691,7 +691,7 @@ export class GridInterface<T = any> {
      */
     public autoResizeColumns() {
         const attributes = this.config.groups.flatMap((g) => g?.rows);
-        let widths = attributes.map((e) => (e.type === 'date' ? 15 : 0));
+        let widths: number[] = attributes.map((e) => (e.type === 'date' ? 15 : 0));
 
         const data = this.__ds.getAllData();
         data.forEach((row) => {
@@ -707,7 +707,7 @@ export class GridInterface<T = any> {
         const attributesStrings = attributes.map((e) => e.attribute);
 
         // set some defaults
-        widths = widths.map((e) => (e ? e * 8 : 100));
+        widths = widths.map((e: number) => (e ? e * 8 : 100));
         this.config.groups.forEach((g) => {
             let x = 0;
             g?.rows.forEach((r) => {
