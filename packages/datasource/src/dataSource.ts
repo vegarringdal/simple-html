@@ -607,9 +607,9 @@ export class Datasource<T = any> {
                     if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                         queryString =
                             queryString +
-                            `${obj.attribute} ${OPERATORS[obj.operator]} ${
+                            `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
                                 obj.valueType === 'ATTRIBUTE'
-                                    ? obj.value
+                                    ? `[${obj.value}]`
                                     : "'" + convertDate(obj.attributeType, obj.value) + "'"
                             }`;
                     } else {
@@ -617,7 +617,7 @@ export class Datasource<T = any> {
                         if (Array.isArray(obj.value)) {
                             queryString =
                                 queryString +
-                                `${obj.attribute} ${OPERATORS[obj.operator]} [${obj.value.map(
+                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${obj.value.map(
                                     (val) => {
                                         return `'${val}'`;
                                     }
@@ -625,9 +625,9 @@ export class Datasource<T = any> {
                         } else {
                             queryString =
                                 queryString +
-                                `${obj.attribute} ${
+                                `[${obj.attribute}] <<${
                                     OPERATORS[obj.operator]
-                                } [${(obj.value as string).split('\n').map((val) => {
+                                }>> [${(obj.value as string).split('\n').map((val) => {
                                     return `'${val}'`;
                                 })}]`;
                         }

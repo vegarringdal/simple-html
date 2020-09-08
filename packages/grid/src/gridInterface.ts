@@ -435,11 +435,23 @@ export class GridInterface<T = any> {
                 col.filterable.currentValue = event.target.value;
         }
 
-        const filter: FilterArgument = {
+        const oldFilter = this.__ds.getFilter();
+        let filter: FilterArgument = {
             type: 'GROUP',
             logicalOperator: 'AND',
             filterArguments: []
         };
+
+        if (oldFilter?.logicalOperator === 'AND') {
+            filter = oldFilter;
+            filter.filterArguments = filter.filterArguments.filter((arg) => {
+                if (arg.attribute === col.attribute) {
+                    return false;
+                } else {
+                    return true;
+                }
+            });
+        }
 
         const columns = this.config.groups.flatMap((x) => x.rows);
         columns.forEach((col) => {
@@ -459,6 +471,17 @@ export class GridInterface<T = any> {
                     operator: f.operator || this.__ds.getFilterFromType(col.type),
                     value: f.currentValue as any
                 });
+            }
+        });
+
+        // remove duplicates
+        const attributes: string[] = [];
+        filter.filterArguments = filter.filterArguments.filter((arg) => {
+            if (attributes.indexOf(arg.attribute) !== -1) {
+                return false;
+            } else {
+                attributes.push(arg.attribute);
+                return true;
             }
         });
         this.__ds.filter(filter);

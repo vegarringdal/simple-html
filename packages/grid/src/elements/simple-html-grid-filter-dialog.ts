@@ -18,7 +18,7 @@ export default class extends HTMLElement {
     connectedCallback() {
         this.style.top = '0';
         this.style.left = '0';
-        this.filter = this.connector.getCurrentFilter() || {
+        const defaultStartFilter: FilterArgument = {
             type: 'GROUP',
             logicalOperator: 'AND',
             attribute: null,
@@ -28,6 +28,14 @@ export default class extends HTMLElement {
             attributeType: 'text',
             filterArguments: []
         };
+
+        this.filter = this.connector.getCurrentFilter() || defaultStartFilter;
+
+        // if array we need to reset it
+        if (Array.isArray(this.filter)) {
+            this.filter = defaultStartFilter;
+        }
+
         this.classList.add('simple-html-grid-menu-full');
         this.filterAttributes = this.connector.config.groups.flatMap((y) => y.rows);
     }
