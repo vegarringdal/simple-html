@@ -70,6 +70,12 @@ export default class extends HTMLElement {
             <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
                 Sort desc (add)
             </p>
+            <p
+                class="simple-html-grid-menu-item"
+                @click=${() => this.connector.autoResizeColumns()}
+            >
+                Auto resize columns
+            </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('groupBy')}>
                 Group by
             </p>

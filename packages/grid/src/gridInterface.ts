@@ -685,4 +685,40 @@ export class GridInterface<T = any> {
     public getFilterString() {
         return this.getDatasource().getFilterString();
     }
+
+    /**
+     * experimental autoresize columns
+     */
+    public autoResizeColumns() {
+        const attributes = this.config.groups.flatMap((g) => g?.rows);
+        let widths = attributes.map((e) => (e.type === 'date' ? 15 : 0));
+
+        const data = this.__ds.getAllData();
+        data.forEach((row) => {
+            attributes.forEach((att, i) => {
+                if (row && typeof row[att.attribute] === 'string') {
+                    if (widths[i] < row[att.attribute].length) {
+                        widths[i] = row[att.attribute].length;
+                    }
+                }
+            });
+        });
+
+        const attributesStrings = attributes.map((e) => e.attribute);
+
+        // set some defaults
+        widths = widths.map((e) => (e ? e * 8 : 100));
+        this.config.groups.forEach((g) => {
+            let x = 0;
+            g?.rows.forEach((r) => {
+                const xx = widths[attributesStrings.indexOf(r.attribute)];
+                if (xx > x) {
+                    x = xx;
+                }
+            });
+            g.width = x;
+        });
+
+        this.manualConfigChange(this.config);
+    }
 }
