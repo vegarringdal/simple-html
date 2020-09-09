@@ -421,10 +421,14 @@ export class GridInterface<T = any> {
     filterCallback(event: any, col: CellConfig) {
         switch (col.type) {
             case 'date':
-                col.filterable.currentValue = new Date(event.target.valueAsDate);
+                col.filterable.currentValue =
+                    event.target.valueAsDate === null ? '' : new Date(event.target.valueAsDate);
                 break;
             case 'number':
-                col.filterable.currentValue = event.target.valueAsNumber;
+                col.filterable.currentValue = isNaN(event.target.valueAsNumber)
+                    ? ''
+                    : event.target.valueAsNumber;
+
                 break;
             case 'boolean':
                 col.filterable.currentValue = event.target.indeterminate
