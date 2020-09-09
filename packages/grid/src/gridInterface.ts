@@ -736,7 +736,7 @@ export class GridInterface<T = any> {
             if (e.type === 'number' && e?.header?.length < 10) {
                 return 'AAA.AAA';
             }
-            return '';
+            return e?.header;
         });
 
         const data = this.__ds.getAllData();
@@ -760,9 +760,7 @@ export class GridInterface<T = any> {
             g?.rows.forEach((r) => {
                 const xx = widths[attributesStrings.indexOf(r.attribute)];
                 if (xx > x) {
-                    x = this.getTextWidth(
-                        text[attributesStrings.indexOf(r.attribute)].toUpperCase()
-                    );
+                    x = this.getTextWidth(text[attributesStrings.indexOf(r.attribute)]) + 15;
                 }
             });
             g.width = x;
