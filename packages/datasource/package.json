@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/datasource",
-    "version": "1.0.0-alpha.57",
+    "version": "1.0.0-alpha.58",
     "description": "datasource",
     "main": "dist/index.js",
     "module": "dist/index.js",
