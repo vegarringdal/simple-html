@@ -47,6 +47,15 @@ export default class extends HTMLElement {
                 this.scrollLeft = this.connector.config.scrollLeft;
                 this.ref.reRender();
             }
+        } else {
+            if (
+                this.connector.config.scrollLeft &&
+                this.scrollLeft !== this.connector.config.scrollLeft
+            ) {
+                // fixes left scroll when editing column headers
+                this.scrollLeft = this.connector.config.scrollLeft;
+                this.ref.reRender();
+            }
         }
     }
 
