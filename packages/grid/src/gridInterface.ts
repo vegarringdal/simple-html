@@ -689,9 +689,55 @@ export class GridInterface<T = any> {
     /**
      * experimental autoresize columns
      */
+    private getTextWidth(text: string) {
+        // if given, use cached canvas for better performance
+        // else, create new canvas
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = this.getFont();
+        const metrics = context.measureText(text);
+        return metrics.width;
+    }
+
+    /**
+     * experimental autoresize columns
+     */
+    private getFont() {
+        const ele = this?.__SimpleHtmlGrid;
+        if (ele) {
+            return (
+                window.getComputedStyle(ele).getPropertyValue('font-size') +
+                ' ' +
+                window.getComputedStyle(ele).getPropertyValue('font-family')
+            );
+        } else {
+            return '12px Arial';
+        }
+    }
+
+    /**
+     * experimental autoresize columns
+     */
     public autoResizeColumns() {
         const attributes = this.config.groups.flatMap((g) => g?.rows);
-        let widths: number[] = attributes.map((e) => (e.type === 'date' ? 15 : 0));
+        let widths: number[] = attributes.map((e) => {
+            if (e.type === 'date') {
+                return 150;
+            }
+            if (e.type === 'number') {
+                return 100;
+            }
+            return e?.header?.length;
+        });
+        const text: string[] = attributes.map((e) => {
+            if (e.type === 'date' && e?.header?.length < 20) {
+                return '19.19.2000 AAAA AAAA';
+            }
+            if (e.type === 'number' && e?.header?.length < 10) {
+                return 'AAA.AAA';
+            }
+            return '';
+        });
 
         const data = this.__ds.getAllData();
         data.forEach((row) => {
@@ -699,6 +745,7 @@ export class GridInterface<T = any> {
                 if (row && typeof row[att.attribute] === 'string') {
                     if (widths[i] < row[att.attribute].length) {
                         widths[i] = row[att.attribute].length;
+                        text[i] = row[att.attribute];
                     }
                 }
             });
@@ -713,7 +760,9 @@ export class GridInterface<T = any> {
             g?.rows.forEach((r) => {
                 const xx = widths[attributesStrings.indexOf(r.attribute)];
                 if (xx > x) {
-                    x = xx;
+                    x = this.getTextWidth(
+                        text[attributesStrings.indexOf(r.attribute)].toUpperCase()
+                    );
                 }
             });
             g.width = x;
