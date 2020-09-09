@@ -1,6 +1,6 @@
 {
     "name": "simple-html",
-    "version": "1.0.0-alpha.58",
+    "version": "1.0.0-alpha.59",
     "description": "lit html tools",
     "scripts": {
         "start": "node fuse",
