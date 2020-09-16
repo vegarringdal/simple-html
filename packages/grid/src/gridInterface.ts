@@ -186,8 +186,15 @@ export class GridInterface<T = any> {
         return settings;
     }
 
-    // load custom setup including refilter if any
-    loadSettings(config: IGridConfig) {
+    /**
+     *
+     * @param config standard gridconfig
+     * @param overrideDefault in case of making the grid dynamicaly you should also set default setup
+     */
+    loadSettings(config: IGridConfig, overrideDefault = false) {
+        if (overrideDefault) {
+            this.__configDefault = JSON.parse(JSON.stringify(config));
+        }
         this.manualConfigChange(JSON.parse(JSON.stringify(config)));
     }
 
