@@ -44,7 +44,7 @@ export function filterDialogGroupTemplate(
                         {
                             title: 'Add condition',
                             callback: () => {
-                                g.filterArguments.push({
+                                g.filterArguments.splice(0, 0, {
                                     type: 'CONDITION',
                                     logicalOperator: 'NONE',
                                     attribute: 'select',
