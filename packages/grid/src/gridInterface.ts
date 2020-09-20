@@ -754,7 +754,7 @@ export class GridInterface<T = any> {
         });
 
         const data = this.__ds.getAllData();
-        data.forEach((row) => {
+        data.forEach((row: any) => {
             attributes.forEach((att, i) => {
                 if (row && typeof row[att.attribute] === 'string') {
                     if (widths[i] < row[att.attribute].length) {
