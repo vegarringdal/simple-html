@@ -11,7 +11,7 @@
     --simple-html-grid-font-size: 11px;
     --simple-html-grid-font-weight: 500;
     --simple-html-grid-font-weight-header: 700;
-    --simple-html-grid-font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    --simple-html-grid-font-family: 'Roboto', 'Helvetica', 'Arial', 'sans-serif';
     border: 0;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
