@@ -51,23 +51,23 @@ export default class extends HTMLElement {
     }
 
     removeSelf() {
-        document.body.removeChild(this);
+        this?.parentNode.removeChild(this);
     }
 
     render() {
         return html`<p
                 class="simple-html-grid-menu-item"
-                @click=${() => this.select('sort', false, false)}
+                @click=${() => this.select('sort', true, false)}
             >
                 Sort asc
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, false)}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, false)}>
                 Sort desc
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, true)}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
                 Sort asc (add)
             </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, true)}>
                 Sort desc (add)
             </p>
             <p

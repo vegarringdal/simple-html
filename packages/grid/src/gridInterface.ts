@@ -544,7 +544,7 @@ export class GridInterface<T = any> {
         // get data we need
         let sorting = this.__ds.getOrderBy();
         const attribute = col.attribute;
-        const ascending = col.sortable?.sortAscending;
+        const ascending = col?.sortable?.sortAscending;
         const add = event.shiftKey;
 
         // clear config sort
@@ -559,7 +559,10 @@ export class GridInterface<T = any> {
                 }
             });
             if (!exist) {
-                sorting.push({ attribute, ascending: true });
+                sorting.push({
+                    attribute,
+                    ascending: ascending === false ? false : true
+                });
             } else {
                 col.sortable.sortAscending = true;
                 col.sortable.sortNo = sorting.length;
