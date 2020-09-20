@@ -64,8 +64,8 @@ export class SimpleHtmlGrid extends HTMLElement {
             const height = node?.clientHeight || this.interface.config.cellHeight * 50;
 
             let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2; //(buffer);
-            if (rowsNeeded > 50) {
-                rowsNeeded = 50;
+            if (rowsNeeded > 80) {
+                rowsNeeded = 80;
             }
 
             const cacheLength =
