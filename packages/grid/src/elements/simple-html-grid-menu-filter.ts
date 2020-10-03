@@ -14,7 +14,7 @@ export default class extends HTMLElement {
     wait: boolean;
     selectAll: boolean = true;
     dataSet: Set<unknown>;
-    dataSetFull: Set<unknown>;
+    dataFilterSetFull: Set<unknown>;
 
     connectedCallback() {
         this.classList.add('simple-html-grid', 'simple-html-grid-menu');
@@ -27,18 +27,34 @@ export default class extends HTMLElement {
         const data = this.connector.getDatasource().getAllData();
 
         const attribute = this.cell.attribute;
-        const dataSet = new Set();
+        const dataFilterSet = new Set();
         const length = data.length;
         for (let i = 0; i < length; i++) {
-            if (data[i] && data[i][attribute] && dataSet.size < 200) {
-                dataSet.add(data[i][attribute]);
+            if (data[i] && data[i][attribute] && dataFilterSet.size < 200) {
+                dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
             }
         }
-        this.dataSet = dataSet;
+        this.dataSet = dataFilterSet;
         this.dataSet.add('NULL'); // null so we can get the blanks
-        const tempArray = Array.from(dataSet).sort();
+
+        const tempArray = Array.from(dataFilterSet).sort();
         tempArray.unshift('NULL'); // null so we can get the blanks
-        this.dataSetFull = new Set(tempArray);
+        this.dataFilterSetFull = new Set(tempArray);
+
+        // check if top level filter have attribute, if so.. use it
+        const oldFilter = this.connector.getDatasource().getFilter();
+        if (oldFilter?.filterArguments?.length) {
+            oldFilter?.filterArguments.forEach((f) => {
+                if (f.attribute === this.cell.attribute) {
+                    if (Array.isArray(f.value as any)) {
+                        if (f.operator === 'IN') {
+                            this.dataSet = new Set(f.value as any);
+                            this.selectAll = false;
+                        }
+                    }
+                }
+            });
+        }
     }
 
     disconnectedCallback() {
@@ -137,6 +153,7 @@ export default class extends HTMLElement {
             <p class="simple-html-grid-menu-item" @click=${() => this.select('END_WITH')}>
                 ${operator === 'END_WITH' ? html`<u><b>End with</b></u>` : 'End with'}
             </p>
+            <hr />
             <p
                 class="simple-html-grid-menu-item"
                 @click=${() => {
@@ -145,13 +162,12 @@ export default class extends HTMLElement {
                     this.render();
                 }}
             >
-                Back
+                <b>Back</b>
             </p>`;
     }
 
     default() {
         return html`
-            <hr />
             <p
                 class="simple-html-grid-menu-item"
                 @click=${() => {
@@ -185,24 +201,7 @@ export default class extends HTMLElement {
             </p>
             <hr />
             ${this.cell.type === 'text' || this.cell.type === undefined
-                ? html`
-                      <p
-                          class="simple-html-grid-menu-item"
-                          @click=${() => {
-                              this.connector.filterCallback(
-                                  {} as any,
-                                  this.cell,
-                                  this.dataSet.size !== 0
-                                      ? Array.from(this.dataSet).map((e: string) =>
-                                            e.toLocaleUpperCase()
-                                        )
-                                      : null // upper case so we get incasesensitive
-                              );
-                          }}
-                      >
-                          update
-                      </p>
-                      <div style="max-height:250px; overflow-y:auto">
+                ? html`<div style="max-height:250px; overflow-y:auto">
                           <div style="padding:2px">
                               <input
                                   style="padding:2px"
@@ -212,7 +211,7 @@ export default class extends HTMLElement {
                                       this.wait = true;
                                       this.selectAll = !this.selectAll;
                                       if (this.selectAll) {
-                                          this.dataSet = new Set(this.dataSetFull);
+                                          this.dataSet = new Set(this.dataFilterSetFull);
                                       } else {
                                           this.dataSet = new Set();
                                       }
@@ -225,7 +224,7 @@ export default class extends HTMLElement {
                                       this.wait = true;
                                       this.selectAll = !this.selectAll;
                                       if (this.selectAll) {
-                                          this.dataSet = new Set(this.dataSetFull);
+                                          this.dataSet = new Set(this.dataFilterSetFull);
                                       } else {
                                           this.dataSet = new Set();
                                       }
@@ -237,7 +236,18 @@ export default class extends HTMLElement {
                           </div>
                           ${this.filterValues()}
                       </div>
-                  `
+                      <p
+                          class="simple-html-grid-menu-item"
+                          @click=${() => {
+                              this.connector.filterCallback(
+                                  {} as any,
+                                  this.cell,
+                                  this.dataSet.size !== 0 ? Array.from(this.dataSet) : null
+                              );
+                          }}
+                      >
+                          <b>run filter</b>
+                      </p> `
                 : ''}
         `;
     }
@@ -247,7 +257,7 @@ export default class extends HTMLElement {
     }
 
     filterValues() {
-        return Array.from(this.dataSetFull).map((rowData: any) => {
+        return Array.from(this.dataFilterSetFull).map((rowData: any) => {
             return html`<div style="padding:2px">
                 <input
                     style="padding:2px"
@@ -259,7 +269,7 @@ export default class extends HTMLElement {
                         this.dataSet.has(rowData)
                             ? this.dataSet.delete(rowData)
                             : this.dataSet.add(rowData);
-                        this.selectAll = this.dataSetFull.size === this.dataSet.size;
+                        this.selectAll = this.dataFilterSetFull.size === this.dataSet.size;
                         this.render();
                     }}
                 /><label
@@ -269,7 +279,7 @@ export default class extends HTMLElement {
                         this.dataSet.has(rowData)
                             ? this.dataSet.delete(rowData)
                             : this.dataSet.add(rowData);
-                        this.selectAll = this.dataSetFull.size === this.dataSet.size;
+                        this.selectAll = this.dataFilterSetFull.size === this.dataSet.size;
                         this.render();
                     }}
                     >${rowData}</label
