@@ -185,7 +185,11 @@ export default class extends HTMLElement {
                       <p
                           class="simple-html-grid-menu-item"
                           @click=${() => {
-                              alert('not implemented');
+                              this.connector.filterCallback(
+                                  {} as any,
+                                  this.cell,
+                                  Array.from(this.dataSet).map((e: string) => e.toLocaleUpperCase()) // upper case so we get incasesensitive
+                              );
                           }}
                       >
                           update
