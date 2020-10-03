@@ -425,7 +425,7 @@ export class GridInterface<T = any> {
      * filters columns
      * Internal usage only, do not call
      */
-    filterCallback(event: any, col: CellConfig) {
+    filterCallback(event: any, col: CellConfig, filterArray?: any) {
         switch (col.type) {
             case 'date':
                 col.filterable.currentValue =

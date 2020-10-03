@@ -10,6 +10,11 @@ export default class extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;
+    defaultMenu: boolean = true;
+    wait: boolean;
+    selectAll: boolean = true;
+    dataSet: Set<unknown>;
+    dataSetFull: Set<unknown>;
 
     connectedCallback() {
         this.classList.add('simple-html-grid', 'simple-html-grid-menu');
@@ -18,6 +23,18 @@ export default class extends HTMLElement {
         setTimeout(() => {
             document.addEventListener('contextmenu', this);
         }, 50);
+
+        const data = this.connector.getDatasource().getAllData();
+        const attribute = this.cell.attribute;
+        const dataSet = new Set();
+        const length = data.length;
+        for (let i = 0; i < length; i++) {
+            if (data[i] && data[i][attribute] && dataSet.size < 200) {
+                dataSet.add(data[i][attribute]);
+            }
+        }
+        this.dataSet = dataSet;
+        this.dataSetFull = new Set(dataSet);
     }
 
     disconnectedCallback() {
@@ -27,6 +44,10 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        if (this.wait) {
+            this.wait = false;
+            return;
+        }
         if (e.target !== this) {
             this.removeSelf();
         }
@@ -56,9 +77,8 @@ export default class extends HTMLElement {
         this.connector.reRunFilter();
     }
 
-    render() {
+    filters() {
         const operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
-        console.log(operator);
         return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('EQUAL')}>
                 ${operator === 'EQUAL' ? html`<u><b>Equal to</b></u>` : 'Equal to'}
             </p>
@@ -110,9 +130,35 @@ export default class extends HTMLElement {
                     ? html`<u><b>Does not contain</b></u>`
                     : 'Does not contain'}
             </p>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('END_WITH')}>
+                ${operator === 'END_WITH' ? html`<u><b>End with</b></u>` : 'End with'}
+            </p>
+            <p
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    this.defaultMenu = true;
+                    this.wait = true;
+                    this.render();
+                }}
+            >
+                Back
+            </p>`;
+    }
 
+    default() {
+        return html`
             <hr />
-
+            <p
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    this.defaultMenu = false;
+                    this.wait = true;
+                    this.render();
+                }}
+            >
+                Filters
+            </p>
+            <hr />
             <p
                 class="simple-html-grid-menu-item"
                 @click=${(e: any) =>
@@ -132,6 +178,93 @@ export default class extends HTMLElement {
             <hr />
             <p class="simple-html-grid-menu-item" @click=${this.clearAll}>
                 clear filter all columns
-            </p>`;
+            </p>
+            <hr />
+            ${this.cell.type === 'text' || this.cell.type === undefined
+                ? html`
+                      <p
+                          class="simple-html-grid-menu-item"
+                          @click=${() => {
+                              alert('not implemented');
+                          }}
+                      >
+                          update
+                      </p>
+                      <div style="max-height:250px; overflow-y:auto">
+                          <div style="padding:2px">
+                              <input
+                                  style="padding:2px"
+                                  type="checkbox"
+                                  .checked=${this.selectAll}
+                                  @click=${() => {
+                                      this.wait = true;
+                                      this.selectAll = !this.selectAll;
+                                      if (this.selectAll) {
+                                          this.dataSet = new Set(this.dataSetFull);
+                                      } else {
+                                          this.dataSet = new Set();
+                                      }
+
+                                      this.render();
+                                  }}
+                              /><label
+                                  style="padding:2px"
+                                  @click=${() => {
+                                      this.wait = true;
+                                      this.selectAll = !this.selectAll;
+                                      if (this.selectAll) {
+                                          this.dataSet = new Set(this.dataSetFull);
+                                      } else {
+                                          this.dataSet = new Set();
+                                      }
+
+                                      this.render();
+                                  }}
+                                  >Select all</label
+                              >
+                          </div>
+                          ${this.filterValues()}
+                      </div>
+                  `
+                : ''}
+        `;
+    }
+
+    render() {
+        return html` ${this.defaultMenu ? this.default() : this.filters()}`;
+    }
+
+    filterValues() {
+        return Array.from(this.dataSetFull)
+            .sort()
+            .map((rowData: any) => {
+                return html`<div style="padding:2px">
+                    <input
+                        style="padding:2px"
+                        type="checkbox"
+                        .checked="${this.dataSet.has(rowData)}"
+                        @click=${() => {
+                            this.wait = true;
+                            this.selectAll = false;
+                            this.dataSet.has(rowData)
+                                ? this.dataSet.delete(rowData)
+                                : this.dataSet.add(rowData);
+                            this.selectAll = this.dataSetFull.size === this.dataSet.size;
+                            this.render();
+                        }}
+                    /><label
+                        style="padding:2px"
+                        @click=${() => {
+                            this.wait = true;
+                            this.dataSet.has(rowData)
+                                ? this.dataSet.delete(rowData)
+                                : this.dataSet.add(rowData);
+                            this.selectAll = this.dataSetFull.size === this.dataSet.size;
+                            this.render();
+                        }}
+                        >${rowData}</label
+                    >
+                </div>`;
+            });
     }
 }
