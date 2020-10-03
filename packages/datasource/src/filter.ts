@@ -115,7 +115,14 @@ export class Filter {
                             data = data.toUpperCase();
                         }
                         let temp;
-                        if (data === 'null' || null || undefined || '') {
+                        if (
+                            data === 'null' ||
+                            data === 'NULL' ||
+                            data === 'UNDEFINED' ||
+                            null ||
+                            undefined ||
+                            ''
+                        ) {
                             temp = values.indexOf('NULL');
                         } else {
                             temp = values.indexOf(data);
@@ -214,7 +221,14 @@ export class Filter {
                         }
 
                         let temp;
-                        if (data === 'null' || null || undefined || '') {
+                        if (
+                            data === 'null' ||
+                            data === 'NULL' ||
+                            data === 'UNDEFINED' ||
+                            null ||
+                            undefined ||
+                            ''
+                        ) {
                             temp = values.indexOf('NULL');
                         } else {
                             temp = values.indexOf(data);

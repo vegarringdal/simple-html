@@ -28,20 +28,30 @@ export default class extends HTMLElement {
 
     showEdit() {
         return html`
-            <u
-                @click="${(e: any) => {
-                    generateMenuWithComponentName(
-                        'simple-html-grid-filter-dialog',
-                        e,
-                        this.connector,
-                        this.ref,
-                        null,
-                        null,
-                        null
-                    );
-                }}}"
-                >Edit filter</u
+            <div
+                style="
+                    margin:2px;position:absolute;
+                    top:0px; border: 1px solid; 
+                    border-color: var(--simple-html-grid-sec-bg-border);
+                    background-color: var(--simple-html-grid-main-bg-color)"
             >
+                <button
+                    style="padding:2px"
+                    @click="${(e: any) => {
+                        generateMenuWithComponentName(
+                            'simple-html-grid-filter-dialog',
+                            e,
+                            this.connector,
+                            this.ref,
+                            null,
+                            null,
+                            null
+                        );
+                    }}}"
+                >
+                    Edit filter
+                </button>
+            </div>
         `;
     }
 
@@ -49,13 +59,13 @@ export default class extends HTMLElement {
         const totalRows = this.connector.completeDataset.length;
         const filter = this.connector.filteredDataset.length;
 
-        return html`<div style="text-align:center">${filter}/${totalRows}</div>
-            <div style="display: flex; justify-content: center;">
-                <div style="margin-right:5px">
-                    ${this.connector.getFilterString()}
-                </div>
+        return html`${this.showEdit()}
+            <div style="text-align:center">${filter}/${totalRows}</div>
 
-                ${this.connector.getFilterString() ? this.showEdit() : ''}
+            <div style="display: flex; justify-content: center;">
+                <div style="margin-right:5px; overflow:hidden">
+                    ${this.connector.getFilterString().replace(',', ', ')}
+                </div>
             </div> `;
     }
 }

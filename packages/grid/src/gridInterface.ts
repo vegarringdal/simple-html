@@ -425,7 +425,7 @@ export class GridInterface<T = any> {
      * filters columns
      * Internal usage only, do not call
      */
-    filterCallback(event: any, col: CellConfig) {
+    filterCallback(event: any, col: CellConfig, filterArray?: any) {
         switch (col.type) {
             case 'date':
                 col.filterable.currentValue =
@@ -443,7 +443,7 @@ export class GridInterface<T = any> {
                     : event.target.checked;
                 break;
             default:
-                col.filterable.currentValue = event.target.value;
+                col.filterable.currentValue = filterArray ? filterArray : event?.target?.value;
         }
 
         const oldFilter = this.__ds.getFilter();
@@ -479,8 +479,10 @@ export class GridInterface<T = any> {
                     valueType: 'VALUE',
                     attribute: col.attribute,
                     attributeType: (col.type as any) || 'text',
-                    operator: f.operator || this.__ds.getFilterFromType(col.type),
-                    value: f.currentValue as any
+                    operator: filterArray
+                        ? 'IN'
+                        : f.operator || this.__ds.getFilterFromType(col.type),
+                    value: filterArray ? filterArray : (f.currentValue as any)
                 });
             }
         });
@@ -495,6 +497,12 @@ export class GridInterface<T = any> {
                 return true;
             }
         });
+
+        if (filterArray) {
+            // we need to clear the value so it does not show
+            col.filterable.currentValue = '';
+        }
+
         this.__ds.filter(filter);
     }
 
@@ -754,7 +762,7 @@ export class GridInterface<T = any> {
         });
 
         const data = this.__ds.getAllData();
-        data.forEach((row) => {
+        data.forEach((row: any) => {
             attributes.forEach((att, i) => {
                 if (row && typeof row[att.attribute] === 'string') {
                     if (widths[i] < row[att.attribute].length) {
