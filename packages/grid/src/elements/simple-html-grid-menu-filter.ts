@@ -25,6 +25,7 @@ export default class extends HTMLElement {
         }, 50);
 
         const data = this.connector.getDatasource().getAllData();
+
         const attribute = this.cell.attribute;
         const dataSet = new Set();
         const length = data.length;
@@ -34,7 +35,10 @@ export default class extends HTMLElement {
             }
         }
         this.dataSet = dataSet;
-        this.dataSetFull = new Set(dataSet);
+        this.dataSet.add('NULL'); // null so we can get the blanks
+        const tempArray = Array.from(dataSet).sort();
+        tempArray.unshift('NULL'); // null so we can get the blanks
+        this.dataSetFull = new Set(tempArray);
     }
 
     disconnectedCallback() {
@@ -188,7 +192,11 @@ export default class extends HTMLElement {
                               this.connector.filterCallback(
                                   {} as any,
                                   this.cell,
-                                  Array.from(this.dataSet).map((e: string) => e.toLocaleUpperCase()) // upper case so we get incasesensitive
+                                  this.dataSet.size !== 0
+                                      ? Array.from(this.dataSet).map((e: string) =>
+                                            e.toLocaleUpperCase()
+                                        )
+                                      : null // upper case so we get incasesensitive
                               );
                           }}
                       >
@@ -239,36 +247,34 @@ export default class extends HTMLElement {
     }
 
     filterValues() {
-        return Array.from(this.dataSetFull)
-            .sort()
-            .map((rowData: any) => {
-                return html`<div style="padding:2px">
-                    <input
-                        style="padding:2px"
-                        type="checkbox"
-                        .checked="${this.dataSet.has(rowData)}"
-                        @click=${() => {
-                            this.wait = true;
-                            this.selectAll = false;
-                            this.dataSet.has(rowData)
-                                ? this.dataSet.delete(rowData)
-                                : this.dataSet.add(rowData);
-                            this.selectAll = this.dataSetFull.size === this.dataSet.size;
-                            this.render();
-                        }}
-                    /><label
-                        style="padding:2px"
-                        @click=${() => {
-                            this.wait = true;
-                            this.dataSet.has(rowData)
-                                ? this.dataSet.delete(rowData)
-                                : this.dataSet.add(rowData);
-                            this.selectAll = this.dataSetFull.size === this.dataSet.size;
-                            this.render();
-                        }}
-                        >${rowData}</label
-                    >
-                </div>`;
-            });
+        return Array.from(this.dataSetFull).map((rowData: any) => {
+            return html`<div style="padding:2px">
+                <input
+                    style="padding:2px"
+                    type="checkbox"
+                    .checked="${this.dataSet.has(rowData)}"
+                    @click=${() => {
+                        this.wait = true;
+                        this.selectAll = false;
+                        this.dataSet.has(rowData)
+                            ? this.dataSet.delete(rowData)
+                            : this.dataSet.add(rowData);
+                        this.selectAll = this.dataSetFull.size === this.dataSet.size;
+                        this.render();
+                    }}
+                /><label
+                    style="padding:2px"
+                    @click=${() => {
+                        this.wait = true;
+                        this.dataSet.has(rowData)
+                            ? this.dataSet.delete(rowData)
+                            : this.dataSet.add(rowData);
+                        this.selectAll = this.dataSetFull.size === this.dataSet.size;
+                        this.render();
+                    }}
+                    >${rowData}</label
+                >
+            </div>`;
+        });
     }
 }

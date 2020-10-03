@@ -443,7 +443,7 @@ export class GridInterface<T = any> {
                     : event.target.checked;
                 break;
             default:
-                col.filterable.currentValue = filterArray ? filterArray : event.target.value;
+                col.filterable.currentValue = filterArray ? filterArray : event?.target?.value;
         }
 
         const oldFilter = this.__ds.getFilter();
