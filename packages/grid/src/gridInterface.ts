@@ -747,16 +747,16 @@ export class GridInterface<T = any> {
                 return 150;
             }
             if (e.type === 'number') {
-                return 100;
+                return 5;
             }
             return e?.header?.length;
         });
         const text: string[] = attributes.map((e) => {
             if (e.type === 'date' && e?.header?.length < 20) {
-                return '19.19.2000 AAAA AAAA';
+                return '19.19.2000 A';
             }
             if (e.type === 'number' && e?.header?.length < 10) {
-                return 'AAA.AAA';
+                return 'AA.AA';
             }
             return e?.header;
         });
@@ -768,6 +768,12 @@ export class GridInterface<T = any> {
                     if (widths[i] < row[att.attribute].length) {
                         widths[i] = row[att.attribute].length;
                         text[i] = row[att.attribute];
+                    }
+                }
+                if (row && typeof row[att.attribute] === 'number') {
+                    if (widths[i] < (row[att.attribute] + '').length) {
+                        widths[i] = (row[att.attribute] + '').length;
+                        text[i] = row[att.attribute] + '';
                     }
                 }
             });
