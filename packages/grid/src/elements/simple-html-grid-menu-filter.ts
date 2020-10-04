@@ -13,7 +13,7 @@ export default class extends HTMLElement {
     defaultMenu: boolean = true;
     wait: boolean;
     selectAll: boolean = true;
-    dataSet: Set<unknown>;
+    dataFilterSet: Set<unknown>;
     dataFilterSetFull: Set<unknown>;
 
     connectedCallback() {
@@ -31,14 +31,15 @@ export default class extends HTMLElement {
             const dataFilterSet = new Set();
             const length = data.length;
             for (let i = 0; i < length; i++) {
+                // maybe I should let this be aoption ? the 200 size..
                 if (data[i] && data[i][attribute] && dataFilterSet.size < 200) {
                     if (typeof data[i][attribute] === 'string') {
                         dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
                     }
                 }
             }
-            this.dataSet = dataFilterSet;
-            this.dataSet.add('NULL'); // null so we can get the blanks
+            this.dataFilterSet = dataFilterSet;
+            this.dataFilterSet.add('NULL'); // null so we can get the blanks
 
             const tempArray = Array.from(dataFilterSet).sort();
             tempArray.unshift('NULL'); // null so we can get the blanks
@@ -51,7 +52,7 @@ export default class extends HTMLElement {
                     if (f.attribute === this.cell.attribute) {
                         if (Array.isArray(f.value as any)) {
                             if (f.operator === 'IN') {
-                                this.dataSet = new Set(f.value as any);
+                                this.dataFilterSet = new Set(f.value as any);
                                 this.selectAll = false;
                             }
                         }
@@ -215,9 +216,9 @@ export default class extends HTMLElement {
                                       this.wait = true;
                                       this.selectAll = !this.selectAll;
                                       if (this.selectAll) {
-                                          this.dataSet = new Set(this.dataFilterSetFull);
+                                          this.dataFilterSet = new Set(this.dataFilterSetFull);
                                       } else {
-                                          this.dataSet = new Set();
+                                          this.dataFilterSet = new Set();
                                       }
 
                                       this.render();
@@ -228,9 +229,9 @@ export default class extends HTMLElement {
                                       this.wait = true;
                                       this.selectAll = !this.selectAll;
                                       if (this.selectAll) {
-                                          this.dataSet = new Set(this.dataFilterSetFull);
+                                          this.dataFilterSet = new Set(this.dataFilterSetFull);
                                       } else {
-                                          this.dataSet = new Set();
+                                          this.dataFilterSet = new Set();
                                       }
 
                                       this.render();
@@ -246,7 +247,10 @@ export default class extends HTMLElement {
                               this.connector.filterCallback(
                                   {} as any,
                                   this.cell,
-                                  this.dataSet.size !== 0 ? Array.from(this.dataSet) : null
+                                  this.dataFilterSet.size !== 0 &&
+                                      this.dataFilterSet.size !== this.dataFilterSetFull.size
+                                      ? Array.from(this.dataFilterSet)
+                                      : null
                               );
                           }}
                       >
@@ -266,24 +270,24 @@ export default class extends HTMLElement {
                 <input
                     style="padding:2px"
                     type="checkbox"
-                    .checked="${this.dataSet.has(rowData)}"
+                    .checked="${this.dataFilterSet.has(rowData)}"
                     @click=${() => {
                         this.wait = true;
                         this.selectAll = false;
-                        this.dataSet.has(rowData)
-                            ? this.dataSet.delete(rowData)
-                            : this.dataSet.add(rowData);
-                        this.selectAll = this.dataFilterSetFull.size === this.dataSet.size;
+                        this.dataFilterSet.has(rowData)
+                            ? this.dataFilterSet.delete(rowData)
+                            : this.dataFilterSet.add(rowData);
+                        this.selectAll = this.dataFilterSetFull.size === this.dataFilterSet.size;
                         this.render();
                     }}
                 /><label
                     style="padding:2px"
                     @click=${() => {
                         this.wait = true;
-                        this.dataSet.has(rowData)
-                            ? this.dataSet.delete(rowData)
-                            : this.dataSet.add(rowData);
-                        this.selectAll = this.dataFilterSetFull.size === this.dataSet.size;
+                        this.dataFilterSet.has(rowData)
+                            ? this.dataFilterSet.delete(rowData)
+                            : this.dataFilterSet.add(rowData);
+                        this.selectAll = this.dataFilterSetFull.size === this.dataFilterSet.size;
                         this.render();
                     }}
                     >${rowData}</label
