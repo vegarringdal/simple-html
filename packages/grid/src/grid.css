@@ -30,6 +30,14 @@
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
+.simple-html-grid input::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+.simple-html-grid input[type='date']::-webkit-input-placeholder {
+    visibility: hidden !important;
+}
+
 simple-html-grid-body::-webkit-scrollbar {
     width: 1em;
 }
