@@ -26,34 +26,38 @@ export default class extends HTMLElement {
 
         const data = this.connector.getDatasource().getAllData();
 
-        const attribute = this.cell.attribute;
-        const dataFilterSet = new Set();
-        const length = data.length;
-        for (let i = 0; i < length; i++) {
-            if (data[i] && data[i][attribute] && dataFilterSet.size < 200) {
-                dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
-            }
-        }
-        this.dataSet = dataFilterSet;
-        this.dataSet.add('NULL'); // null so we can get the blanks
-
-        const tempArray = Array.from(dataFilterSet).sort();
-        tempArray.unshift('NULL'); // null so we can get the blanks
-        this.dataFilterSetFull = new Set(tempArray);
-
-        // check if top level filter have attribute, if so.. use it
-        const oldFilter = this.connector.getDatasource().getFilter();
-        if (oldFilter?.filterArguments?.length) {
-            oldFilter?.filterArguments.forEach((f) => {
-                if (f.attribute === this.cell.attribute) {
-                    if (Array.isArray(f.value as any)) {
-                        if (f.operator === 'IN') {
-                            this.dataSet = new Set(f.value as any);
-                            this.selectAll = false;
-                        }
+        if (!this.cell.type || this.cell.type === 'text') {
+            const attribute = this.cell.attribute;
+            const dataFilterSet = new Set();
+            const length = data.length;
+            for (let i = 0; i < length; i++) {
+                if (data[i] && data[i][attribute] && dataFilterSet.size < 200) {
+                    if (typeof data[i][attribute] === 'string') {
+                        dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
                     }
                 }
-            });
+            }
+            this.dataSet = dataFilterSet;
+            this.dataSet.add('NULL'); // null so we can get the blanks
+
+            const tempArray = Array.from(dataFilterSet).sort();
+            tempArray.unshift('NULL'); // null so we can get the blanks
+            this.dataFilterSetFull = new Set(tempArray);
+
+            // check if top level filter have attribute, if so.. use it
+            const oldFilter = this.connector.getDatasource().getFilter();
+            if (oldFilter?.filterArguments?.length) {
+                oldFilter?.filterArguments.forEach((f) => {
+                    if (f.attribute === this.cell.attribute) {
+                        if (Array.isArray(f.value as any)) {
+                            if (f.operator === 'IN') {
+                                this.dataSet = new Set(f.value as any);
+                                this.selectAll = false;
+                            }
+                        }
+                    }
+                });
+            }
         }
     }
 
