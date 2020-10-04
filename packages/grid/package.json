@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/grid",
-    "version": "1.0.0-alpha.66",
+    "version": "1.0.0-alpha.67",
     "description": "Lit html data grid",
     "main": "dist/index.js",
     "module": "dist/index.js",
