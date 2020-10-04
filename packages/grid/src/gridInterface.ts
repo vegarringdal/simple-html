@@ -752,10 +752,10 @@ export class GridInterface<T = any> {
             return e?.header?.length;
         });
         const text: string[] = attributes.map((e) => {
-            if (e.type === 'date' && e?.header?.length < 20) {
+            if (e.type === 'date' && e?.header?.length < 10) {
                 return '19.19.2000 A';
             }
-            if (e.type === 'number' && e?.header?.length < 10) {
+            if (e.type === 'number' && e?.header?.length < 5) {
                 return 'AA.AA';
             }
             return e?.header;
