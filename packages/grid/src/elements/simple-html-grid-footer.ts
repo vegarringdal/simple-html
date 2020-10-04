@@ -63,9 +63,15 @@ export default class extends HTMLElement {
             <div style="text-align:center">${filter}/${totalRows}</div>
 
             <div style="display: flex; justify-content: center;">
-                <div style="margin-right:5px; overflow:hidden">
-                    ${this.connector.getFilterString().replace(',', ', ')}
-                </div>
+                <span
+                    style="margin-right:5px; 
+                        overflow:hidden; 
+                        max-width:90%; 
+                        white-space: nowrap;
+                        text-overflow: ellipsis;"
+                >
+                    ${this.connector.getFilterString().replace(/\,/g, ', ')}
+                </span>
             </div> `;
     }
 }
