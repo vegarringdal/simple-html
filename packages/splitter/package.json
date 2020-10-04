@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/splitter",
-    "version": "1.0.0-alpha.65",
+    "version": "1.0.0-alpha.66",
     "description": "Simple splitter",
     "main": "dist/index.js",
     "module": "dist/index.js",
