@@ -187,6 +187,39 @@ export default class extends HTMLElement {
     }
 
     default() {
+        const filtertoggleClick = () => {
+            this.wait = true;
+            this.availableOnly = !this.availableOnly;
+            this.selectAll =
+                this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
+            this.fillDropdown();
+            this.render();
+        };
+
+        const selectAllClick = () => {
+            this.wait = true;
+            this.selectAll = !this.selectAll;
+            if (this.selectAll) {
+                this.dataFilterSet = new Set(this.dataFilterSetFull);
+            } else {
+                this.dataFilterSet = new Set();
+            }
+
+            this.render();
+        };
+
+        const runFilterClick = () => {
+            this.connector.filterCallback(
+                {} as any,
+                this.cell,
+                (this.dataFilterSet.size !== 0 &&
+                    this.dataFilterSet.size !== this.dataFilterSetFull.size) ||
+                    this.availableOnly
+                    ? Array.from(this.dataFilterSet)
+                    : null
+            );
+        };
+
         return html`
             <p
                 class="simple-html-grid-menu-item"
@@ -226,73 +259,29 @@ export default class extends HTMLElement {
                     style="padding:2px"
                     type="checkbox"
                     .checked=${this.availableOnly}
-                    @click=${() => {
-                        this.wait = true;
-                        this.availableOnly = !this.availableOnly;
-                        this.fillDropdown();
-                        this.render();
-                    }}
-                /><label
-                    style="padding:2px"
-                    @click=${() => {
-                        this.wait = true;
-                        this.availableOnly = !this.availableOnly;
-                        this.fillDropdown();
-                        this.render();
-                    }}
+                    @click="${filtertoggleClick}"
+                /><label style="padding:2px" @click="${filtertoggleClick}"
                     >${this.availableOnly ? 'Filter All' : 'Filter Available'}</label
                 >
             </div>
             ${this.cell.type === 'text' || this.cell.type === undefined
                 ? html`<div style="max-height:250px; overflow-y:auto">
-                          <div style="padding:2px">
-                              <input
-                                  style="padding:2px"
-                                  type="checkbox"
-                                  .checked=${this.selectAll}
-                                  @click=${() => {
-                                      this.wait = true;
-                                      this.selectAll = !this.selectAll;
-                                      if (this.selectAll) {
-                                          this.dataFilterSet = new Set(this.dataFilterSetFull);
-                                      } else {
-                                          this.dataFilterSet = new Set();
-                                      }
-
-                                      this.render();
-                                  }}
-                              /><label
-                                  style="padding:2px"
-                                  @click=${() => {
-                                      this.wait = true;
-                                      this.selectAll = !this.selectAll;
-                                      if (this.selectAll) {
-                                          this.dataFilterSet = new Set(this.dataFilterSetFull);
-                                      } else {
-                                          this.dataFilterSet = new Set();
-                                      }
-
-                                      this.render();
-                                  }}
-                                  >Select all</label
-                              >
-                          </div>
+                          ${!this.availableOnly
+                              ? html`<div style="padding:2px">
+                                    <input
+                                        style="padding:2px"
+                                        type="checkbox"
+                                        .checked=${this.selectAll}
+                                        @click=${selectAllClick}
+                                    /><label style="padding:2px" @click=${selectAllClick}
+                                        >Select all</label
+                                    >
+                                </div>`
+                              : ''}
                           ${this.filterValues()}
                       </div>
 
-                      <p
-                          class="simple-html-grid-menu-item"
-                          @click=${() => {
-                              this.connector.filterCallback(
-                                  {} as any,
-                                  this.cell,
-                                  this.dataFilterSet.size !== 0 &&
-                                      this.dataFilterSet.size !== this.dataFilterSetFull.size
-                                      ? Array.from(this.dataFilterSet)
-                                      : null
-                              );
-                          }}
-                      >
+                      <p class="simple-html-grid-menu-item" @click=${runFilterClick}>
                           <b>run filter</b>
                       </p> `
                 : ''}
@@ -304,31 +293,24 @@ export default class extends HTMLElement {
     }
 
     filterValues() {
+        const filterValueClick = (rowData: any) => {
+            this.wait = true;
+            this.selectAll = false;
+            this.dataFilterSet.has(rowData)
+                ? this.dataFilterSet.delete(rowData)
+                : this.dataFilterSet.add(rowData);
+            this.selectAll =
+                this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
+            this.render();
+        };
         return Array.from(this.dataFilterSetFull).map((rowData: any) => {
             return html`<div style="padding:2px">
                 <input
                     style="padding:2px"
                     type="checkbox"
                     .checked="${this.dataFilterSet.has(rowData)}"
-                    @click=${() => {
-                        this.wait = true;
-                        this.selectAll = false;
-                        this.dataFilterSet.has(rowData)
-                            ? this.dataFilterSet.delete(rowData)
-                            : this.dataFilterSet.add(rowData);
-                        this.selectAll = this.dataFilterSetFull.size === this.dataFilterSet.size;
-                        this.render();
-                    }}
-                /><label
-                    style="padding:2px"
-                    @click=${() => {
-                        this.wait = true;
-                        this.dataFilterSet.has(rowData)
-                            ? this.dataFilterSet.delete(rowData)
-                            : this.dataFilterSet.add(rowData);
-                        this.selectAll = this.dataFilterSetFull.size === this.dataFilterSet.size;
-                        this.render();
-                    }}
+                    @click="${() => filterValueClick(rowData)}}"
+                /><label style="padding:2px" @click="${() => filterValueClick(rowData)}}"
                     >${rowData === 'NULL' ? 'Blank' : rowData}</label
                 >
             </div>`;
