@@ -16,6 +16,7 @@ export default class extends HTMLElement {
     dataFilterSet: Set<unknown>;
     dataFilterSetFull: Set<unknown>;
     availableOnly: boolean = false;
+    enableAvailableOnlyOption: boolean = false;
 
     connectedCallback() {
         this.classList.add('simple-html-grid', 'simple-html-grid-menu');
@@ -32,6 +33,10 @@ export default class extends HTMLElement {
         const data = this.availableOnly
             ? this.connector.getDatasource().getRows(true)
             : this.connector.getDatasource().getAllData();
+
+        this.enableAvailableOnlyOption =
+            this.connector.getDatasource().getRows(true).length !==
+            this.connector.getDatasource().getAllData().length;
 
         if (!this.cell.type || this.cell.type === 'text') {
             const attribute = this.cell.attribute;
@@ -254,16 +259,18 @@ export default class extends HTMLElement {
             </p>
             <hr />
 
-            <div style="padding:2px">
-                <input
-                    style="padding:2px"
-                    type="checkbox"
-                    .checked=${this.availableOnly}
-                    @click="${filtertoggleClick}"
-                /><label style="padding:2px" @click="${filtertoggleClick}"
-                    >${this.availableOnly ? 'Filter All' : 'Filter Available'}</label
-                >
-            </div>
+            ${this.enableAvailableOnlyOption
+                ? html`<div style="padding:2px">
+                      <input
+                          style="padding:2px"
+                          type="checkbox"
+                          .checked=${this.availableOnly}
+                          @click="${filtertoggleClick}"
+                      /><label style="padding:2px" @click="${filtertoggleClick}"
+                          >${this.availableOnly ? 'Filter All' : 'Filter Available'}</label
+                      >
+                  </div>`
+                : ''}
             ${this.cell.type === 'text' || this.cell.type === undefined
                 ? html`<div style="max-height:250px; overflow-y:auto">
                           ${!this.availableOnly
