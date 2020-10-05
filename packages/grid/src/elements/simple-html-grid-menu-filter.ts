@@ -37,19 +37,27 @@ export default class extends HTMLElement {
             const attribute = this.cell.attribute;
             const dataFilterSet = new Set();
             const length = data.length;
+            let haveNull = false;
             for (let i = 0; i < length; i++) {
                 // maybe I should let this be aoption ? the 200 size..
                 if (data[i] && data[i][attribute] && dataFilterSet.size < 200) {
                     if (typeof data[i][attribute] === 'string') {
                         dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
                     }
+                } else {
+                    haveNull = true;
                 }
             }
             this.dataFilterSet = dataFilterSet;
-            this.dataFilterSet.add('NULL'); // null so we can get the blanks
+            if (haveNull) {
+                this.dataFilterSet.add('NULL'); // null so we can get the blanks
+            }
 
             const tempArray = Array.from(dataFilterSet).sort();
-            tempArray.unshift('NULL'); // null so we can get the blanks
+            if (haveNull) {
+                tempArray.unshift('NULL'); // null so we can get the blanks
+            }
+
             this.dataFilterSetFull = new Set(tempArray);
 
             // check if top level filter have attribute, if so.. use it
