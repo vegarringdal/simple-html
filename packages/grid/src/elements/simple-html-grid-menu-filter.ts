@@ -30,15 +30,13 @@ export default class extends HTMLElement {
     }
 
     fillDropdown() {
-        const data = this.availableOnly
-            ? this.connector.getDatasource().getRows(true)
-            : this.connector.getDatasource().getAllData();
-
-        this.enableAvailableOnlyOption =
-            this.connector.getDatasource().getRows(true).length !==
-            this.connector.getDatasource().getAllData().length;
-
         if (!this.cell.type || this.cell.type === 'text') {
+            const data = this.availableOnly
+                ? this.connector.getDatasource().getRows(true)
+                : this.connector.getDatasource().getAllData();
+            this.enableAvailableOnlyOption =
+                this.connector.getDatasource().getRows(true).length !==
+                this.connector.getDatasource().getAllData().length;
             const attribute = this.cell.attribute;
             const dataFilterSet = new Set();
             const length = data.length;
