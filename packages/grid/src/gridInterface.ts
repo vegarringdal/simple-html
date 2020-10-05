@@ -749,16 +749,16 @@ export class GridInterface<T = any> {
             if (e.type === 'number') {
                 return 5;
             }
-            return e?.header?.length;
+            return e?.header?.length + 4;
         });
         const text: string[] = attributes.map((e) => {
-            if (e.type === 'date' && e?.header?.length < 10) {
+            if (e.type === 'date' && e?.header?.length < 5) {
                 return '19.19.2000 A';
             }
             if (e.type === 'number' && e?.header?.length < 5) {
                 return 'AA.AA';
             }
-            return e?.header;
+            return e?.header + 'sort';
         });
 
         const data = this.__ds.getAllData();
@@ -773,7 +773,7 @@ export class GridInterface<T = any> {
                 if (row && typeof row[att.attribute] === 'number') {
                     if (widths[i] < (row[att.attribute] + '').length) {
                         widths[i] = (row[att.attribute] + '').length;
-                        text[i] = row[att.attribute] + '';
+                        text[i] = row[att.attribute];
                     }
                 }
             });
