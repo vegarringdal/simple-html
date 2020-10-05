@@ -15,6 +15,7 @@ export default class extends HTMLElement {
     selectAll: boolean = true;
     dataFilterSet: Set<unknown>;
     dataFilterSetFull: Set<unknown>;
+    availableOnly: boolean = false;
 
     connectedCallback() {
         this.classList.add('simple-html-grid', 'simple-html-grid-menu');
@@ -24,7 +25,13 @@ export default class extends HTMLElement {
             document.addEventListener('contextmenu', this);
         }, 50);
 
-        const data = this.connector.getDatasource().getAllData();
+        this.fillDropdown();
+    }
+
+    fillDropdown() {
+        const data = this.availableOnly
+            ? this.connector.getDatasource().getRows(true)
+            : this.connector.getDatasource().getAllData();
 
         if (!this.cell.type || this.cell.type === 'text') {
             const attribute = this.cell.attribute;
@@ -205,6 +212,29 @@ export default class extends HTMLElement {
                 clear filter all columns
             </p>
             <hr />
+
+            <div style="padding:2px">
+                <input
+                    style="padding:2px"
+                    type="checkbox"
+                    .checked=${this.availableOnly}
+                    @click=${() => {
+                        this.wait = true;
+                        this.availableOnly = !this.availableOnly;
+                        this.fillDropdown();
+                        this.render();
+                    }}
+                /><label
+                    style="padding:2px"
+                    @click=${() => {
+                        this.wait = true;
+                        this.availableOnly = !this.availableOnly;
+                        this.fillDropdown();
+                        this.render();
+                    }}
+                    >${this.availableOnly ? 'Filter All' : 'Filter Available'}</label
+                >
+            </div>
             ${this.cell.type === 'text' || this.cell.type === undefined
                 ? html`<div style="max-height:250px; overflow-y:auto">
                           <div style="padding:2px">
@@ -241,6 +271,7 @@ export default class extends HTMLElement {
                           </div>
                           ${this.filterValues()}
                       </div>
+
                       <p
                           class="simple-html-grid-menu-item"
                           @click=${() => {
@@ -290,7 +321,7 @@ export default class extends HTMLElement {
                         this.selectAll = this.dataFilterSetFull.size === this.dataFilterSet.size;
                         this.render();
                     }}
-                    >${rowData}</label
+                    >${rowData === 'NULL' ? 'Blank' : rowData}</label
                 >
             </div>`;
         });
