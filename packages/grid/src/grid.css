@@ -415,6 +415,24 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 }
+.simple-html-grid-menu-item-input {
+    box-sizing: border-box;
+    border: 0;
+    border-radius: initial;
+    height: 20px;
+    text-align: center;
+    overflow: hidden;
+    user-select: none;
+    margin: initial;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-cell);
+    margin: initial;
+    transition: initial;
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+}
+
 
 .simple-html-grid-menu-full {
     position: fixed;

@@ -425,7 +425,13 @@ export class GridInterface<T = any> {
      * filters columns
      * Internal usage only, do not call
      */
-    filterCallback(event: any, col: CellConfig, filterArray?: any) {
+    filterCallback(
+        event: any,
+        col: CellConfig,
+        filterArray?: any[],
+        filterArrayAndValue?: string,
+        notinArray?: boolean
+    ) {
         switch (col.type) {
             case 'date':
                 col.filterable.currentValue =
@@ -443,7 +449,9 @@ export class GridInterface<T = any> {
                     : event.target.checked;
                 break;
             default:
-                col.filterable.currentValue = filterArray ? filterArray : event?.target?.value;
+                col.filterable.currentValue = filterArrayAndValue
+                    ? filterArrayAndValue
+                    : event?.target?.value;
         }
 
         const oldFilter = this.__ds.getFilter();
@@ -479,18 +487,45 @@ export class GridInterface<T = any> {
                     valueType: 'VALUE',
                     attribute: col.attribute,
                     attributeType: (col.type as any) || 'text',
-                    operator: filterArray
-                        ? 'IN'
-                        : f.operator || this.__ds.getFilterFromType(col.type),
-                    value: filterArray ? filterArray : (f.currentValue as any)
+                    operator: f.operator || this.__ds.getFilterFromType(col.type),
+                    value: f.currentValue as any
                 });
             }
         });
 
+        if (filterArray) {
+            filter.filterArguments.push({
+                type: 'CONDITION',
+                logicalOperator: 'NONE',
+                valueType: 'VALUE',
+                attribute: col.attribute,
+                attributeType: (col.type as any) || 'text',
+                operator: notinArray ? 'NOT_IN' : 'IN',
+                value: filterArray as any
+            });
+        }
+
+        // just add to beginning, duplicates get removed
+        if (filterArrayAndValue) {
+            filter.filterArguments.unshift({
+                type: 'CONDITION',
+                logicalOperator: 'NONE',
+                valueType: 'VALUE',
+                attribute: col.attribute,
+                attributeType: (col.type as any) || 'text',
+                operator: 'CONTAINS',
+                value: filterArrayAndValue
+            });
+        }
+
         // remove duplicates
         const attributes: string[] = [];
         filter.filterArguments = filter.filterArguments.filter((arg: FilterArgument) => {
-            if (attributes.indexOf(arg.attribute) !== -1) {
+            if (
+                attributes.indexOf(arg.attribute) !== -1 &&
+                arg.operator !== 'IN' &&
+                arg.operator !== 'NOT_IN'
+            ) {
                 return false;
             } else {
                 attributes.push(arg.attribute);
@@ -498,7 +533,7 @@ export class GridInterface<T = any> {
             }
         });
 
-        if (filterArray) {
+        if (filterArray && !filterArrayAndValue) {
             // we need to clear the value so it does not show
             col.filterable.currentValue = '';
         }

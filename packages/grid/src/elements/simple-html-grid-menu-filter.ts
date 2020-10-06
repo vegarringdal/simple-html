@@ -17,6 +17,7 @@ export default class extends HTMLElement {
     dataFilterSetFull: Set<unknown>;
     availableOnly: boolean = false;
     enableAvailableOnlyOption: boolean = false;
+    search: any;
 
     connectedCallback() {
         this.classList.add('simple-html-grid', 'simple-html-grid-menu');
@@ -25,7 +26,7 @@ export default class extends HTMLElement {
         setTimeout(() => {
             document.addEventListener('contextmenu', this);
         }, 50);
-
+        this.search = this.cell.filterable?.currentValue || null;
         this.fillDropdown();
     }
 
@@ -34,18 +35,26 @@ export default class extends HTMLElement {
             const data = this.availableOnly
                 ? this.connector.getDatasource().getRows(true)
                 : this.connector.getDatasource().getAllData();
-            this.enableAvailableOnlyOption =
-                this.connector.getDatasource().getRows(true).length !==
-                this.connector.getDatasource().getAllData().length;
+
             const attribute = this.cell.attribute;
             const dataFilterSet = new Set();
             const length = data.length;
             let haveNull = false;
             for (let i = 0; i < length; i++) {
                 // maybe I should let this be aoption ? the 200 size..
-                if (data[i] && data[i][attribute] && dataFilterSet.size < 200) {
+                if (data[i] && data[i][attribute] && dataFilterSet.size < 50) {
                     if (typeof data[i][attribute] === 'string') {
-                        dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
+                        if (this.search) {
+                            if (
+                                data[i][attribute]
+                                    .toLocaleUpperCase()
+                                    .indexOf(this.search.toLocaleUpperCase()) !== -1
+                            ) {
+                                dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
+                            }
+                        } else {
+                            dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
+                        }
                     }
                 } else {
                     haveNull = true;
@@ -73,10 +82,24 @@ export default class extends HTMLElement {
                                 this.dataFilterSet = new Set(f.value as any);
                                 this.selectAll = false;
                             }
+                            if (f.operator === 'NOT_IN') {
+                                const tempSet = new Set(f.value as any);
+                                this.dataFilterSet = new Set(
+                                    Array.from(this.dataFilterSetFull).filter(
+                                        (x) => !tempSet.has(x)
+                                    )
+                                );
+                                this.selectAll = false;
+                            }
                         }
                     }
                 });
             }
+
+            this.enableAvailableOnlyOption =
+                this.connector.getDatasource().getRows(true).length !==
+                    this.connector.getDatasource().getAllData().length &&
+                this.dataFilterSet.size === this.dataFilterSetFull.size;
         }
     }
 
@@ -212,15 +235,28 @@ export default class extends HTMLElement {
         };
 
         const runFilterClick = () => {
-            this.connector.filterCallback(
-                {} as any,
-                this.cell,
-                (this.dataFilterSet.size !== 0 &&
-                    this.dataFilterSet.size !== this.dataFilterSetFull.size) ||
-                    this.availableOnly
-                    ? Array.from(this.dataFilterSet)
-                    : null
+            const intersection = Array.from(this.dataFilterSetFull).filter(
+                (x) => !this.dataFilterSet.has(x)
             );
+
+            if (intersection.length < this.dataFilterSet.size) {
+                // if full we want to use NOT in
+                this.connector.filterCallback(
+                    {} as any,
+                    this.cell,
+                    intersection.length ? intersection : null,
+                    this.search ? this.search : null,
+                    intersection.length ? true : false
+                );
+            } else {
+                this.connector.filterCallback(
+                    {} as any,
+                    this.cell,
+                    this.dataFilterSet.size ? Array.from(this.dataFilterSet) : null,
+                    this.search ? this.search : null,
+                    false
+                );
+            }
         };
 
         return html`
@@ -263,12 +299,26 @@ export default class extends HTMLElement {
                           style="padding:2px"
                           type="checkbox"
                           .checked=${this.availableOnly}
-                          @click="${filtertoggleClick}"
+                          @click=${filtertoggleClick}
                       /><label style="padding:2px" @click="${filtertoggleClick}"
-                          >${this.availableOnly ? 'Filter All' : 'Filter Available'}</label
+                          >Filter Available</label
                       >
                   </div>`
                 : ''}
+            <input
+                class="simple-html-grid-menu-item-input"
+                style="outline:none;width: 100%;"
+                placeholder="search"
+                .value=${this.search}
+                @click=${() => {
+                    this.wait = true;
+                }}
+                @input=${(e: any) => {
+                    this.search = e.target.value || null;
+                    this.fillDropdown();
+                    this.render();
+                }}
+            />
             ${this.cell.type === 'text' || this.cell.type === undefined
                 ? html`<div style="max-height:250px; overflow-y:auto">
                           ${!this.availableOnly
