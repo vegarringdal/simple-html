@@ -56,6 +56,15 @@ export default class extends HTMLElement {
                             dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
                         }
                     }
+                    if (typeof data[i][attribute] === 'number') {
+                        if (this.search) {
+                            if (data[i][attribute].toString().indexOf(this.search) !== -1) {
+                                dataFilterSet.add(data[i][attribute]);
+                            }
+                        } else {
+                            dataFilterSet.add(data[i][attribute]);
+                        }
+                    }
                 } else {
                     haveNull = true;
                 }
@@ -66,6 +75,7 @@ export default class extends HTMLElement {
             }
 
             const tempArray = Array.from(dataFilterSet).sort();
+
             if (haveNull) {
                 tempArray.unshift('NULL'); // null so we can get the blanks
             }
@@ -305,20 +315,22 @@ export default class extends HTMLElement {
                       >
                   </div>`
                 : ''}
-            <input
-                class="simple-html-grid-menu-item-input"
-                style="outline:none;width: 100%;"
-                placeholder="search"
-                .value=${this.search}
-                @click=${() => {
-                    this.wait = true;
-                }}
-                @input=${(e: any) => {
-                    this.search = e.target.value || null;
-                    this.fillDropdown();
-                    this.render();
-                }}
-            />
+            ${this.cell.type === 'text' || this.cell.type === undefined
+                ? html` <input
+                      class="simple-html-grid-menu-item-input"
+                      style="outline:none;width: 100%;"
+                      placeholder="search"
+                      .value=${this.search}
+                      @click=${() => {
+                          this.wait = true;
+                      }}
+                      @input=${(e: any) => {
+                          this.search = e.target.value || null;
+                          this.fillDropdown();
+                          this.render();
+                      }}
+                  />`
+                : ''}
             ${this.cell.type === 'text' || this.cell.type === undefined
                 ? html`<div style="max-height:250px; overflow-y:auto">
                           ${!this.availableOnly
