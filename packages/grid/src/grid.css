@@ -38,6 +38,15 @@
     visibility: hidden !important;
 }
 
+.simple-html-grid input::-webkit-outer-spin-button,
+.simple-html-grid input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.simple-html-grid input[type='number'] {
+    -moz-appearance: textfield;
+}
+
 simple-html-grid-body::-webkit-scrollbar {
     width: 1em;
 }
@@ -234,7 +243,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     box-shadow: initial;
     width: 100%;
     bottom: 1px;
-    top:0;
+    top: 0;
     padding-left: 5px;
     background-color: transparent;
     outline-color: var(--simple-html-grid-main-bg-color);
@@ -372,12 +381,9 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     box-shadow: inset 1px 1px 3px 0 #fffdfd;
 }
 
-
-.simple-html-grid .simple-html-grid-candrop-panel-col{
+.simple-html-grid .simple-html-grid-candrop-panel-col {
     border-left: 3px solid var(--simple-html-grid-dropzone-color);
 }
-
-
 
 .simple-html-grid .simple-html-grid-row-input:focus {
     border: 1px dashed;
@@ -432,7 +438,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 }
-
 
 .simple-html-grid-menu-full {
     position: fixed;

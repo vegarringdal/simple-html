@@ -778,22 +778,16 @@ export class GridInterface<T = any> {
     public autoResizeColumns() {
         const attributes = this.config.groups.flatMap((g) => g?.rows);
         let widths: number[] = attributes.map((e) => {
-            if (e.type === 'date') {
-                return 150;
-            }
-            if (e.type === 'number') {
-                return 5;
-            }
             return e?.header?.length + 4;
         });
         const text: string[] = attributes.map((e) => {
             if (e.type === 'date' && e?.header?.length < 5) {
                 return '19.19.2000 A';
             }
-            if (e.type === 'number' && e?.header?.length < 5) {
+            /*   if (e.type === 'number' && e?.header?.length < 5) {
                 return 'AA.AA';
-            }
-            return e?.header + 'sort';
+            } */
+            return e?.header + 'sorter';
         });
 
         const data = this.__ds.getAllData();
