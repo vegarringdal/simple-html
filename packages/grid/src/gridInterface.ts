@@ -101,6 +101,37 @@ export class GridInterface<T = any> {
      * @param _event string
      */
     handleEvent(_event: { type: string; data: any }) {
+        if (_event.type === 'select') {
+            this.dataSourceUpdated();
+            const node = this.__SimpleHtmlGrid.getElementsByTagName('simple-html-grid-body')[0];
+            const height = node?.clientHeight;
+            const scroll = node?.scrollTop;
+            const row = this.getSelectedRows()[0];
+            const rowTop = this.__SCROLL_TOPS[row];
+
+            let trigger = false;
+            let scrollto = 0;
+            if (scroll > rowTop) {
+                trigger = true;
+                scrollto = rowTop - height / 2;
+            }
+
+            if (scroll + height <= rowTop) {
+                trigger = true;
+                scrollto = rowTop;
+            }
+
+            console.log(scroll, height, rowTop, scrollto, scroll + height);
+            if (trigger) {
+                setTimeout(() => {
+                    // needs to trigger after so dom is updted first
+                    this.setScroll(scrollto);
+                });
+            }
+
+            return true;
+        }
+
         if (_event.type === 'currentEntity') {
             return true;
         }

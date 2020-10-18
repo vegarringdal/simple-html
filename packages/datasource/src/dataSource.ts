@@ -126,6 +126,20 @@ export class Datasource<T = any> {
         this.__callSubscribers('collection-changed', { added: !!add });
     }
 
+    public addNewEmpty(defaultData: EntityUnion<T> = {} as EntityUnion<T>, scrollto = true) {
+        this.__dataContainer.setData([defaultData], true, true);
+        this.__internalUpdate(false);
+        // force add after internal update, doing before will mess up location
+        const dataset = this.__dataContainer.getDataSet();
+        const newRow = dataset[dataset.length - 1];
+        this.__collectionFiltered.push(newRow);
+        this.__collectionDisplayed.push(newRow);
+        this.__callSubscribers('collection-changed', { added: true });
+        if (scrollto) {
+            this.selectLast();
+        }
+    }
+
     /**
      * runs sorting/grouping, used by setdata/and filter, so we dont rerun sort/grouping many times
      * this also does not call any events
@@ -461,6 +475,7 @@ export class Datasource<T = any> {
      */
     public selectFirst(): void {
         this.__selection.highlightRow({} as any, 0);
+        this.__callSubscribers('select');
     }
 
     /**
@@ -473,6 +488,7 @@ export class Datasource<T = any> {
             this.__selection.highlightRow({} as any, row);
         }
         this.__selection.highlightRow({} as any, row);
+        this.__callSubscribers('select');
     }
 
     /**
@@ -484,6 +500,7 @@ export class Datasource<T = any> {
             row = 0;
         }
         this.__selection.highlightRow({} as any, row);
+        this.__callSubscribers('select');
     }
 
     /**
@@ -491,6 +508,7 @@ export class Datasource<T = any> {
      */
     public selectLast(): void {
         this.__selection.highlightRow({} as any, this.__collectionDisplayed.length - 1);
+        this.__callSubscribers('select');
     }
 
     /**

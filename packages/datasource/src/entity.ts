@@ -9,6 +9,7 @@ export class EntityHandler {
     __originalValues? = {};
     __currentValues? = {};
     __newprops? = {};
+    __isNew? = false;
     __edited? = false;
     __controller?: EntityHandler;
     __KEY?: string | number;
@@ -21,8 +22,9 @@ export class EntityHandler {
     __groupChildren?: Entity[];
     __groupExpanded?: boolean;
 
-    constructor(keyString?: string) {
+    constructor(keyString?: string, tagAsNew = false) {
         this.__KEYSTRING = keyString;
+        this.__isNew = tagAsNew;
     }
 
     get(target: object, prop: string) {

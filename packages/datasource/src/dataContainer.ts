@@ -73,13 +73,16 @@ export class DataContainer {
         return [];
     }
 
-    public setData(data: any[], add = false): Entity[] | void {
+    public setData(data: any[], add = false, tagAsNew = false): Entity[] | void {
         if (add) {
             const x = Array.from(data, (o: any | Entity) => {
                 if (o && o.__controller) {
                     return o;
                 } else {
-                    return new Proxy(o, new this.EntityHandler(this.__keyAttribute) as any);
+                    return new Proxy(
+                        o,
+                        new this.EntityHandler(this.__keyAttribute, tagAsNew) as any
+                    );
                 }
             });
             this.__collection.push(...x);
@@ -99,7 +102,10 @@ export class DataContainer {
                 if (o && o.__controller) {
                     return o;
                 } else {
-                    return new Proxy(o, new this.EntityHandler(this.__keyAttribute) as any);
+                    return new Proxy(
+                        o,
+                        new this.EntityHandler(this.__keyAttribute, tagAsNew) as any
+                    );
                 }
             });
 
