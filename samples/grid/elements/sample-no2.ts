@@ -41,7 +41,12 @@ export default class extends HTMLElement {
                         class="flex flex-col"
                         .btnClass=${'p-2 m-2 bg-indigo-400'}
                         .callback=${(
-                            action: 'selectFirst' | 'selectPrev' | 'selectNext' | 'selectLast'
+                            action:
+                                | 'selectFirst'
+                                | 'selectPrev'
+                                | 'selectNext'
+                                | 'selectLast'
+                                | 'addNewEmpty'
                         ) => {
                             this.ds[action]();
                         }}

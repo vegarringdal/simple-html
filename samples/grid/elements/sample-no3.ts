@@ -45,7 +45,9 @@ export default class extends HTMLElement {
                         <nav-buttons
                             class="flex flex-col"
                             .btnClass=${'p-2 m-2 bg-indigo-400'}
-                            .callback=${(action: 'first' | 'next' | 'prev' | 'last') => {
+                            .callback=${(
+                                action: 'first' | 'next' | 'prev' | 'last' | 'addNewEmpty'
+                            ) => {
                                 this.ds1[action]();
                             }}
                         ></nav-buttons>
@@ -83,7 +85,12 @@ export default class extends HTMLElement {
                             class="flex flex-col"
                             .btnClass=${'p-2 m-2 bg-indigo-400'}
                             .callback=${(
-                                action: 'selectFirst' | 'selectPrev' | 'selectNext' | 'selectLast'
+                                action:
+                                    | 'selectFirst'
+                                    | 'selectPrev'
+                                    | 'selectNext'
+                                    | 'selectLast'
+                                    | 'addNewEmpty'
                             ) => {
                                 this.ds2[action]();
                             }}

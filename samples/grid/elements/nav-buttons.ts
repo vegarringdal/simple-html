@@ -3,7 +3,9 @@ import { html } from 'lit-html';
 
 @customElement('nav-buttons')
 export default class extends HTMLElement {
-    callback: (action: 'selectFirst' | 'selectPrev' | 'selectNext' | 'selectLast') => void;
+    callback: (
+        action: 'selectFirst' | 'selectPrev' | 'selectNext' | 'selectLast' | 'addNewEmpty'
+    ) => void;
     btnClass: string;
 
     render() {
@@ -38,6 +40,14 @@ export default class extends HTMLElement {
                 }}
             >
                 last
+            </button>
+            <button
+                class=${this.btnClass}
+                @click=${() => {
+                    this.callback('addNewEmpty');
+                }}
+            >
+                add new
             </button>`;
     }
 }
