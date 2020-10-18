@@ -76,12 +76,29 @@ export default class extends HTMLElement {
                 data,
                 this.connector
             );
+
+        /*  
+         TODO: do we want to check and highlight it ? 
+       if (data.__controller?.__editedProps?.[cell.attribute]) {
+            e.target.style = 'border-bottom: 1px solid red';
+        } else {
+            e.target.style = '';
+        } */
     }
 
     render() {
         if (this.connector.displayedDataset[this.rowNo]) {
             const cell = this.cell;
             const data = this.connector.displayedDataset[this.rowNo];
+            /* 
+            TODO: do we want to check and highlight it ?
+            let edited = false;
+            if (data.__edited) {
+                if (data.__controller?.__editedProps?.[cell.attribute]) {
+                    edited = true;
+                }
+            } */
+
             const connector = this.connector;
             const rowNo = this.rowNo;
             const ref = this.ref;
@@ -177,6 +194,7 @@ export default class extends HTMLElement {
                 default:
             }
 
+            // style="${edited ? 'border-bottom: 1px solid red' : ''}" <- do we want to highlight it?
             return html`
                 <input
                     ?readonly=${cell.readonly || connector.config.readonly}

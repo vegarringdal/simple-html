@@ -77,7 +77,28 @@ export class EntityHandler {
                 if (!this.__editedProps.hasOwnProperty(prop)) {
                     this.__originalValues[prop] = obj[prop];
                     this.__editedProps[prop] = true;
+                } else {
+                    this.__editedProps[prop] = true;
                 }
+                // if user just set back to original value we want to remove the "edited" part
+                let _original = this.__originalValues[prop];
+                let _value = value;
+
+                // if date, clear the "timezone/time part"
+                if (_original instanceof Date) {
+                    _original = new Date(_original.toISOString().split('T')[0]).toISOString();
+                }
+                if (_value instanceof Date) {
+                    _value = new Date(_value.toISOString().split('T')[0]).toISOString();
+                }
+
+                if (
+                    _original === _value ||
+                    ((_original === null || _original === null) && _value === '')
+                ) {
+                    this.__editedProps[prop] = false;
+                }
+
                 this.__currentValues[prop] = value;
                 obj[prop] = value;
             } else {
