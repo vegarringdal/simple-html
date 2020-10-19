@@ -121,7 +121,6 @@ export class GridInterface<T = any> {
                 scrollto = rowTop;
             }
 
-            console.log(scroll, height, rowTop, scrollto, scroll + height);
             if (trigger) {
                 setTimeout(() => {
                     // needs to trigger after so dom is updted first
@@ -147,6 +146,7 @@ export class GridInterface<T = any> {
         this.config.sortingSet = this.__ds.getOrderBy();
 
         if (this.__handleEvent === null) {
+            this.parseConfigWidth();
             this.__SimpleHtmlGrid && this.__SimpleHtmlGrid.resetRowCache();
 
             // only trigger once..
@@ -181,13 +181,7 @@ export class GridInterface<T = any> {
         this.__CONFIG.__rowHeight = this.__CONFIG.cellHeight * cellheight;
 
         //set left on groups
-        let totalWidth = 0;
-        this.config.groups.reduce((agg, element) => {
-            element.__left = agg;
-            totalWidth = totalWidth + element.width;
-            return element.__left + element.width;
-        }, 0);
-        this.__CONFIG.__rowWidth = totalWidth;
+        this.parseConfigWidth();
 
         if (this.__CONFIG) {
             if (this.__CONFIG.sortingSet) {
@@ -203,6 +197,19 @@ export class GridInterface<T = any> {
                 this.__ds.setFilter(this.__CONFIG.filterSet);
                 this.__CONFIG.filterSet = null; // only once..
             }
+        }
+    }
+
+    parseConfigWidth() {
+        let totalWidth = 0;
+        this.config.groups.reduce((agg, element) => {
+            element.__left = agg;
+            totalWidth = totalWidth + element.width;
+            return element.__left + element.width;
+        }, 0);
+        this.__CONFIG.__rowWidth = totalWidth;
+        if (this.__CONFIG.scrollLeft < this.__CONFIG.__rowWidth) {
+            this.__CONFIG.scrollLeft = 0;
         }
     }
 
