@@ -161,6 +161,10 @@ export class GridInterface<T = any> {
         return true;
     }
 
+    public getMainElement() {
+        return this.__SimpleHtmlGrid;
+    }
+
     /**
      * runs thouh config and sets some internals needed when creating grid or changing the config
      */
@@ -208,12 +212,14 @@ export class GridInterface<T = any> {
             return element.__left + element.width;
         }, 0);
         this.__CONFIG.__rowWidth = totalWidth;
+        /*  
+            remove, generates more bugs then good..
         if (this.__CONFIG.scrollLeft < this.__CONFIG.__rowWidth) {
-            const node = this.__SimpleHtmlGrid?.getElementsByTagName('simple-html-grid-body')[0];
+             const node = this.__SimpleHtmlGrid?.getElementsByTagName('simple-html-grid-body')[0];
             if (node) {
                 this.__CONFIG.scrollLeft = node.scrollLeft;
-            }
-        }
+            } 
+        } */
     }
 
     // save current settings (including filter)

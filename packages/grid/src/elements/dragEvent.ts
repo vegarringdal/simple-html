@@ -177,12 +177,25 @@ export const columnDragDrop = (
         dragColumnBlock = null;
     };
 
+    const node = _connector.getMainElement()?.getElementsByTagName('simple-html-grid-body')[0];
+
     // this will just move our label
     const mouseMove = function (e: MouseEvent) {
         setTimeout(() => {
             if (dragColumnBlock) {
                 dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
                 dragColumnBlock.style.left = e.clientX + document.documentElement.scrollLeft + 'px';
+
+                // scroll grid left/right when dragging
+                const rect = _connector.getMainElement().getClientRects()[0];
+
+                if (node.scrollLeft > 0 && rect.x > e.clientX) {
+                    node.scrollLeft = node.scrollLeft + (e.clientX - rect.x);
+                }
+
+                if (rect.x + rect.width < e.clientX) {
+                    node.scrollLeft = node.scrollLeft - (rect.x + rect.width - e.clientX);
+                }
             }
         }, 10);
     };
