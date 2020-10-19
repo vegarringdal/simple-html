@@ -11,6 +11,13 @@ export default class extends HTMLElement {
         return html` <button
                 class=${this.btnClass}
                 @click=${() => {
+                    this.callback(0);
+                }}
+            >
+                ${this.type} 0</button
+            ><button
+                class=${this.btnClass}
+                @click=${() => {
                     this.callback(1);
                 }}
             >
