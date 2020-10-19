@@ -209,7 +209,10 @@ export class GridInterface<T = any> {
         }, 0);
         this.__CONFIG.__rowWidth = totalWidth;
         if (this.__CONFIG.scrollLeft < this.__CONFIG.__rowWidth) {
-            this.__CONFIG.scrollLeft = 0;
+            const node = this.__SimpleHtmlGrid?.getElementsByTagName('simple-html-grid-body')[0];
+            if (node) {
+                this.__CONFIG.scrollLeft = node.scrollLeft;
+            }
         }
     }
 
