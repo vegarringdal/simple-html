@@ -212,14 +212,11 @@ export class GridInterface<T = any> {
             return element.__left + element.width;
         }, 0);
         this.__CONFIG.__rowWidth = totalWidth;
-        /*  
-            remove, generates more bugs then good..
-        if (this.__CONFIG.scrollLeft < this.__CONFIG.__rowWidth) {
-             const node = this.__SimpleHtmlGrid?.getElementsByTagName('simple-html-grid-body')[0];
-            if (node) {
-                this.__CONFIG.scrollLeft = node.scrollLeft;
-            } 
-        } */
+
+        const node = this.__SimpleHtmlGrid?.getElementsByTagName('simple-html-grid-body')[0];
+        if (this.__CONFIG.__rowWidth < node?.clientWidth && this.__CONFIG.scrollLeft > 0) {
+            this.__CONFIG.scrollLeft = node.scrollLeft;
+        }
     }
 
     // save current settings (including filter)
