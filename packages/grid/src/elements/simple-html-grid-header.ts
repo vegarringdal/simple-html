@@ -22,8 +22,6 @@ export default class extends HTMLElement {
         log(this, e);
 
         if (e.type === 'horizontal-scroll' || e.type === 'reRender') {
-            console.log(e.type);
-            console.log(this.connector.config);
             this.render();
         }
     }
