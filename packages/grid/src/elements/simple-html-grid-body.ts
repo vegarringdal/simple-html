@@ -70,8 +70,8 @@ export default class extends HTMLElement {
             if (node && node.scrollTop !== this.connector.config.lastScrollTop) {
                 return html`
                     <simple-html-grid-body-content
-                        style="height:${this.connector.getScrollVars
-                            .__SCROLL_HEIGHT}px;width:${config.__rowWidth}px"
+                        style="height:${this.connector.getScrollVars.__SCROLL_HEIGHT ||
+                        0.1}px;width:${config.__rowWidth || 1}px"
                         class="simple-html-grid-content"
                     >
                     </simple-html-grid-body-content>
@@ -80,8 +80,8 @@ export default class extends HTMLElement {
         }
         return html`
             <simple-html-grid-body-content
-                style="height:${this.connector.getScrollVars
-                    .__SCROLL_HEIGHT}px;width:${config.__rowWidth}px"
+                style="height:${this.connector.getScrollVars.__SCROLL_HEIGHT ||
+                0.1}px;width:${config.__rowWidth}px"
                 class="simple-html-grid-content"
             >
                 ${this.rowPositionCache.map((row) => {
