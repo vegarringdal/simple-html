@@ -4,6 +4,7 @@ import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { log } from './log';
 
 @customElement('simple-html-grid-menu-label')
 export default class extends HTMLElement {
@@ -27,6 +28,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        log(this, e);
+
         if (e.target !== this) {
             this.removeSelf();
         }

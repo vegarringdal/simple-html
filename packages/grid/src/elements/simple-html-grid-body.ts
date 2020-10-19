@@ -3,6 +3,7 @@ import { html, render } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
+import { log } from './log';
 
 @customElement('simple-html-grid-body')
 export default class extends HTMLElement {
@@ -23,6 +24,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: any) {
+        log(this, e);
+
         if (e.type === 'column-resize') {
             this.render();
         }

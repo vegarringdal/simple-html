@@ -3,6 +3,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig, Entity } from '../types';
+import { log } from './log';
 
 let dataClip: any = null; // firefox hack
 @customElement('simple-html-grid-menu-row')
@@ -29,6 +30,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        log(this, e);
+
         if (e.target !== this) {
             this.removeSelf();
         }

@@ -3,6 +3,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig } from '../types';
+import { log } from './log';
 
 @customElement('simple-html-grid-menu-panel')
 export default class extends HTMLElement {
@@ -26,6 +27,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        log(this, e);
+
         if (e.target !== this) {
             this.removeSelf();
         }

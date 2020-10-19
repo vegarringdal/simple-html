@@ -3,6 +3,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { html } from 'lit-html';
 import { RowCache } from '../types';
+import { log } from './log';
 
 @customElement('simple-html-grid-row')
 export default class extends HTMLElement {
@@ -21,6 +22,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        log(this, e);
+
         if (e.type === 'vertical-scroll') {
             if (this.row.update) {
                 this.row.update = false;

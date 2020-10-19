@@ -4,6 +4,7 @@ import { html, svg } from 'lit-html';
 import { SimpleHtmlGrid } from '..';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { panelColumn, columnDragDropPanelColumn } from './dragEvent';
+import { log } from './log';
 
 function capalize(text: string) {
     if (text) {
@@ -27,6 +28,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        log(this, e);
+
         if (e.type === 'reRender') {
             this.render();
         }

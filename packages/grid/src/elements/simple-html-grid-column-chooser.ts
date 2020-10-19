@@ -5,6 +5,7 @@ import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig, FilterArgument } from '../types';
 import { columnDragDrop } from './dragEvent';
+import { log } from './log';
 
 @customElement('simple-html-grid-column-chooser')
 export default class extends HTMLElement {
@@ -21,6 +22,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        log(this, e);
+
         if (e.type === 'reRender') {
             this.render();
             return;

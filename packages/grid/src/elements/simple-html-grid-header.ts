@@ -2,6 +2,7 @@ import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
+import { log } from './log';
 
 @customElement('simple-html-grid-header')
 export default class extends HTMLElement {
@@ -18,7 +19,11 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        log(this, e);
+
         if (e.type === 'horizontal-scroll' || e.type === 'reRender') {
+            console.log(e.type);
+            console.log(this.connector.config);
             this.render();
         }
     }

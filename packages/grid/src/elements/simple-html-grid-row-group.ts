@@ -3,6 +3,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { html, svg } from 'lit-html';
 import { RowCache } from '../types';
+import { log } from './log';
 
 @customElement('simple-html-grid-row-group')
 export default class extends HTMLElement {
@@ -16,6 +17,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
+        log(this, e);
+
         if (e.type === 'vertical-scroll') {
             this.render();
         }
