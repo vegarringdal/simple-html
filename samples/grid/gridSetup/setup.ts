@@ -22,6 +22,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
                     x.push({
                         header: 'index',
                         attribute: 'index',
+                        readonly: true,
                         type: 'number',
                         filterable: {},
                         sortable: {}
@@ -37,13 +38,24 @@ export function setup(rows: number, columns: number, scroll?: number) {
                     });
                 }
             } else {
-                x.push({
-                    header: 'word' + word,
-                    attribute: 'word' + word,
-                    filterable: {},
-                    sortable: {},
-                    allowGrouping: true
-                });
+                if (i === 3) {
+                    x.push({
+                        header: 'word' + word,
+                        attribute: 'word' + word,
+                        filterable: {},
+                        sortable: {},
+                        readonly: true,
+                        allowGrouping: true
+                    });
+                } else {
+                    x.push({
+                        header: 'word' + word,
+                        attribute: 'word' + word,
+                        filterable: {},
+                        sortable: {},
+                        allowGrouping: true
+                    });
+                }
             }
         }
         const x4 = Math.floor(Math.random() * 150) + 75;
