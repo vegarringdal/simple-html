@@ -42,6 +42,15 @@ export default class extends HTMLElement {
         const data = this.connector.displayedDataset[this.rowNo];
         const cell = this.cell;
 
+        if (cell.readonly) {
+            if (this.cell.type === 'date') {
+                // date picker with alt key overides input somehow..
+                e.target.valueAsDate = data[cell.attribute] || null;
+            }
+
+            return;
+        }
+
         this.connector.gridCallbacks.beforeEditCallbackFn &&
             this.connector.gridCallbacks.beforeEditCallbackFn(
                 e,
