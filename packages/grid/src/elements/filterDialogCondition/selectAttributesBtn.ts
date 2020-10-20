@@ -28,6 +28,6 @@ export function selectAttributesBtn(operatorObject: FilterArgument, ctx: any, is
             );
         }}
     >
-        ${isValue !== true ? operatorObject.attribute : operatorObject.value}
+        ${isValue !== true ? operatorObject.attribute || '' : operatorObject.value || ' select '}
     </button>`;
 }

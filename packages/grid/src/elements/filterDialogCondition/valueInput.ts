@@ -67,6 +67,7 @@ ${Array.isArray(operatorObject.value)
             return html`<input
                 class="dialog-item-y"
                 style="text-align: center;"
+                type="text"
                 value=${operatorObject.value}
                 @input=${(e: any) => {
                     operatorObject.value = e.target.value;

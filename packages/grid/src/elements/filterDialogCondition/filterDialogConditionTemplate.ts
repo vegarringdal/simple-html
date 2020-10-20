@@ -21,23 +21,20 @@ export function filterDialogConditionTemplate(
             if (operatorObject.type === 'GROUP') {
                 return filterDialogGroupTemplate(operatorObject, ctx, level, operatorObjectArr);
             } else {
-                return html` <div class="dialog-row">
-                    <div class="dialog-item">
-                        <span class="dialog-item-group">${level}:</span>
-                        <!-- btn -->
-                        ${selectAttributesBtn(operatorObject, ctx)}
-                        <!-- btn -->
-                        ${selectOperatorBtn(operatorObject, ctx)}
-                        <!-- input or btn -->
-                        ${operatorObject.valueType === 'VALUE'
-                            ? valueInput(operatorObject)
-                            : selectAttributesBtn(operatorObject, ctx, true)}
-                        <!-- btn -->
-                        ${selectAttributeOrInputBtn(operatorObject, ctx)}
-                        <!-- btn -->
-                        ${deleteBtn(ctx, operatorObjectArr, i)}
-                    </div>
-                </div>`;
+                return html` <li class="dialog-row">
+                    <!-- btn -->
+                    ${selectAttributesBtn(operatorObject, ctx)}
+                    <!-- btn -->
+                    ${selectOperatorBtn(operatorObject, ctx)}
+                    <!-- input or btn -->
+                    ${operatorObject.valueType === 'VALUE'
+                        ? valueInput(operatorObject)
+                        : selectAttributesBtn(operatorObject, ctx, true)}
+                    <!-- btn -->
+                    ${selectAttributeOrInputBtn(operatorObject, ctx)}
+                    <!-- btn -->
+                    ${deleteBtn(ctx, operatorObjectArr, i)}
+                </li>`;
             }
         });
     }

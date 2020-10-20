@@ -54,8 +54,8 @@ export default class extends HTMLElement {
     }
 
     render() {
-        return html`<div style="width:550px" class="simple-html-grid simple-html-filter-dialog">
-            <ul class="dialog-row main-group">
+        return html`<div style="width:650px" class="simple-html-grid simple-html-filter-dialog">
+            <div class="dialog-row main-group">
                 <button
                     class="dialog-item-x"
                     @click=${() => {
@@ -97,7 +97,7 @@ export default class extends HTMLElement {
                 >
                     <b> Run query</b>
                 </button>
-            </ul>
+            </div>
 
             ${filterDialogGroupTemplate(this.filter, this, 0)}
                 </ul>`;

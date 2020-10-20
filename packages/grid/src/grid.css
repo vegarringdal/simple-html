@@ -467,10 +467,12 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .dialog-row {
-    display: flex;
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
-    border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
+    border-top: 1px solid var(--simple-html-grid-sec-bg-border);
     min-height: 20px;
+}
+
+.dialog-row div:first-child{
+    border-top: 0px solid var(--simple-html-grid-sec-bg-border);
 }
 
 .dialog-item-block {
@@ -483,9 +485,9 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .dialog-item-y {
-    min-width: 140px;
+    width: 140px;
     max-width: 140px;
-    margin-left: 15px;
+
     min-height: 20px;
 }
 
@@ -494,6 +496,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     margin-top: 2px;
 }
 
+
 .dialog-item-y:focus {
     outline: 1px dashed !important;
 }
@@ -501,7 +504,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 .dialog-item-x {
     min-width: 15px; /* due to icon */
     margin-left: 25px;
-    min-height: 20px;
+    margin-top: 5px;
 }
 
 .dialog-item-x:focus {
@@ -557,3 +560,59 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     text-align: center;
     z-index: 50;
 }
+
+div.dialog-row ul:first-child {
+    margin-left: 0px;
+   
+}
+
+ul.dialog-row {
+    position: relative;
+    margin-left: 10px;
+    list-style: none;
+    box-shadow: 1px 1px 3px 0 #fffdfd;
+    border-left: 1px dotted rgb(100, 100, 100);
+}
+
+
+ul.dialog-row li {
+    margin: 0;
+    padding: 0 7px;
+    margin-left: 10px;
+    border-left: 1px dotted rgb(100, 100, 100);
+}
+
+
+ul.dialog-row li:before {
+    position: relative;
+    top: -0.3em;
+    height: 1em;
+    width: 12px;
+    color: white;
+    border-bottom: 1px dotted rgb(100, 100, 100);
+    content: '';
+    display: inline-block;
+    left: -7px;
+}
+
+ul.dialog-row div:before {
+    position: relative;
+    top: 5px;
+    height: 1em;
+    width: 11px;
+    color: white;
+    border-bottom: 1px dotted rgb(100, 100, 100);
+    content: '';
+    display: inline-block;
+}
+
+ul.dialog-row ul:last-child{
+    border-left: 1px dotted rgb(100, 100, 100);
+}
+
+.first-dialog-row{
+    border-left: 0px !important;
+}
+
+
+
