@@ -9,12 +9,8 @@ export default class extends HTMLInputElement {
 
     attributeChangedCallback() {
         // mini hack...
-        this.value = this.getAttribute('setvalue');
-    }
-
-    connectedCallback() {
-        if (this.isConnected) {
-            console.log('s');
-        }
+        setTimeout(() => {
+            this.value = this.getAttribute('setvalue');
+        }, 10);
     }
 }
