@@ -2,7 +2,7 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
-import { CellConfig, FilterComparisonOperator } from '../types';
+import { CellConfig, FilterArgument, FilterComparisonOperator } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { log } from './log';
 
@@ -86,7 +86,7 @@ export default class extends HTMLElement {
             // check if top level filter have attribute, if so.. use it
             const oldFilter = this.connector.getDatasource().getFilter();
             if (oldFilter?.filterArguments?.length) {
-                oldFilter?.filterArguments.forEach((f) => {
+                oldFilter?.filterArguments.forEach((f: FilterArgument) => {
                     if (f.attribute === this.cell.attribute) {
                         if (Array.isArray(f.value as any)) {
                             if (f.operator === 'IN') {
