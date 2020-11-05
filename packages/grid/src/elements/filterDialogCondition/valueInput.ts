@@ -65,10 +65,12 @@ ${Array.isArray(operatorObject.value)
             />`;
         default:
             return html`<input
+                triggerme=${new Date()}
                 class="dialog-item-y"
                 style="text-align: center;"
                 type="text"
-                value=${operatorObject.value}
+                is="simple-html-grid-input"
+                setvalue=${operatorObject.value}
                 @input=${(e: any) => {
                     operatorObject.value = e.target.value;
                 }}

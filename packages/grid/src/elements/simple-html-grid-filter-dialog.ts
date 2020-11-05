@@ -5,6 +5,7 @@ import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig, FilterArgument } from '../types';
 import { filterDialogGroupTemplate } from './filterDialogGroupTemplate';
+import './simple-html-grid-input';
 import { log } from './log';
 
 @customElement('simple-html-grid-filter-dialog')
