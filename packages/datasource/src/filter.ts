@@ -37,6 +37,14 @@ export class Filter {
             return objArray.slice();
         }
 
+        if (
+            ObjFilter?.type === 'GROUP' &&
+            Array.isArray(ObjFilter?.filterArguments) &&
+            ObjFilter?.filterArguments?.length === 0
+        ) {
+            return objArray.slice();
+        }
+
         const resultArray = objArray.filter((rowData) => {
             // lets have true as default, so all that should not be there we set false..
             if (ObjFilter.logicalOperator === 'AND') {
