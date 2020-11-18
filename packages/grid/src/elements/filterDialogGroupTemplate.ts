@@ -29,6 +29,23 @@ export function filterDialogGroupTemplate(
                     @click=${(e: any) => {
                         generateMenu(e, [
                             {
+                                title: 'Insert Group',
+                                callback: () => {
+                                    const g_old = g;
+
+                                    g.type = 'GROUP';
+                                    g.logicalOperator = 'AND';
+                                    g.attribute = 'select';
+                                    g.operator = 'EQUAL';
+                                    g.valueType = 'VALUE';
+                                    g.attributeType = 'text';
+                                    g.filterArguments = [JSON.parse(JSON.stringify(g_old))];
+                                    g.value = '';
+
+                                    ctx.render();
+                                }
+                            },
+                            {
                                 title: 'Add Group',
                                 callback: () => {
                                     g.filterArguments.push({
