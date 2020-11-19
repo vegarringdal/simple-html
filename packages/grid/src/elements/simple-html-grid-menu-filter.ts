@@ -41,7 +41,7 @@ export default class extends HTMLElement {
             const dataFilterSet = new Set();
             const length = data.length;
             let haveNull = false;
-            this.search = this.search?.replaceAll('%', '').replaceAll('*', '');
+            this.search = this.search && this.search?.replaceAll('%', '').replaceAll('*', '');
 
             for (let i = 0; i < length; i++) {
                 // maybe I should let this be aoption ? the 200 size..
