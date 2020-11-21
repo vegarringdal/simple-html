@@ -1,4 +1,4 @@
-import { publish } from '.';
+import { disconnectedCallback, publish, subscribe, unSubscribe } from '.';
 
 let state = (window as any).state || {};
 const keys = new Set();
@@ -73,5 +73,30 @@ export function validateKey(key: string) {
     } else {
         keys.add(key);
         return key;
+    }
+}
+
+export class State<T> {
+    stateKey: string;
+    defaultValue: T;
+    constructor(STATE_KEY: string, defaultValue: T) {
+        this.stateKey = STATE_KEY;
+        this.defaultValue = defaultValue;
+        validateKey(this.stateKey);
+    }
+
+    get(defaultState?: T): stateResult<T> {
+        if (defaultState) {
+            this.defaultValue = defaultState;
+        }
+        return stateContainer<T>(this.stateKey, this.defaultValue);
+    }
+
+    connect(context: HTMLElement, callback: () => void): void {
+        // this register callback with simpleHtml elements disconnected callback
+        disconnectedCallback(context, () => unSubscribe(this.stateKey, context));
+
+        // for following the event we just use the internal event handler
+        subscribe(this.stateKey, context, callback);
     }
 }
