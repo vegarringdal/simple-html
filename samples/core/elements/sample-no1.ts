@@ -2,14 +2,14 @@ import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 import { viewState } from '../state/viewState';
 import { formState } from '../state/formState';
-import { assignState } from '@simple-html/core/src/state';
+import { assignState } from '@simple-html/core';
 
 @customElement('sample-no1')
 export default class extends HTMLElement {
     render() {
         // get our state containers
-        const [view] = viewState();
-        const [form, setForm] = formState();
+        const [view] = viewState.get();
+        const [form, setForm] = formState.get();
 
         return html`
             <span class="text-xl">${view.toUpperCase()}</span>

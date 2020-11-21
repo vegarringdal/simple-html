@@ -57,10 +57,12 @@
         "rollup": "^2.28.2",
         "rollup-plugin-filesize": "^9.0.2",
         "rollup-plugin-terser": "^7.0.2",
-        "tailwindcss": "^1.8.10",
+        "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.1",
         "ts-jest": "^26.4.1",
         "tslib": "^2.0.1",
         "typescript": "^4.0.3"
     },
-    "dependencies": {}
+    "dependencies": {
+        "postcss": "^7.0.35"
+    }
 }

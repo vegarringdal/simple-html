@@ -30,7 +30,7 @@ export default class extends HTMLElement {
     }
 
     render() {
-        const [view] = viewState();
+        const [view] = viewState.get();
         return html` <span class="text-xl">${view.toUpperCase()}</span>
             <p class="mt-2 mb-2">
                 Shows send data between elements, some elements arn always connected, so this will
