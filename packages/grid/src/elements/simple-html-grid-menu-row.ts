@@ -37,6 +37,15 @@ export default class extends HTMLElement {
         }
     }
 
+    capalize(text: string) {
+        if (text) {
+            text = text.toLowerCase();
+            return text[0].toUpperCase() + text.substring(1, text.length);
+        } else {
+            return text;
+        }
+    }
+
     async select(_type: string) {
         if (_type === 'copy' && this.rowData) {
             try {
@@ -46,15 +55,42 @@ export default class extends HTMLElement {
                 console.error(err);
             }
         }
-        if (_type === 'copy-range' && this.rowData) {
+        if ((_type === 'copy-range' || _type === 'copy-range-header') && this.rowData) {
             try {
                 dataClip = '';
+                if (_type === 'copy-range-header') {
+                    dataClip = this.capalize(this.cell.attribute) + '\n';
+                }
                 this.connector.getSelectedRows().forEach((row: number) => {
                     if (!this.connector.displayedDataset[row].__group) {
                         dataClip =
                             dataClip +
                             (this.connector.displayedDataset[row][this.cell.attribute] || '') +
                             '\n';
+                    }
+                });
+                await navigator.clipboard.writeText(dataClip);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        if (_type === 'copy-range-row-header' && this.rowData) {
+            try {
+                const attributes = this.connector.config.groups.flatMap((g) =>
+                    g.rows.map((r) => r.attribute)
+                );
+                dataClip = '';
+                attributes.forEach((att) => {
+                    dataClip = dataClip + this.capalize(att) + '\t';
+                });
+                dataClip = dataClip + '\n';
+                this.connector.getSelectedRows().forEach((row: number) => {
+                    if (!this.connector.displayedDataset[row].__group) {
+                        attributes.forEach((att) => {
+                            dataClip =
+                                dataClip + (this.connector.displayedDataset[row][att] || '') + '\t';
+                        });
+                        dataClip = dataClip + '\n';
                     }
                 });
                 await navigator.clipboard.writeText(dataClip);
@@ -112,11 +148,18 @@ export default class extends HTMLElement {
 
     render() {
         return html`<!-- data -->
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('copy')}>
-                Copy cell value
-            </p>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('copy')}>Copy cell</p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('copy-range')}>
-                Copy column cell values
+                Copy cell (col)
+            </p>
+            <p class="simple-html-grid-menu-item" @click=${() => this.select('copy-range-header')}>
+                Copy cell (col/header)
+            </p>
+            <p
+                class="simple-html-grid-menu-item"
+                @click=${() => this.select('copy-range-row-header')}
+            >
+                Copy row (header)
             </p>
             ${this.allowCopyPaste()}`;
     }
