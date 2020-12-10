@@ -50,6 +50,9 @@ export default class extends HTMLElement {
         if (_type === 'copy' && this.rowData) {
             try {
                 dataClip = this.rowData[this.cell.attribute]; // firefox hack
+                if (this.cell.type === 'date') {
+                    dataClip = dataClip ? dataClip.toLocaleDateString() : '';
+                }
                 await navigator.clipboard.writeText(dataClip);
             } catch (err) {
                 console.error(err);
@@ -63,10 +66,12 @@ export default class extends HTMLElement {
                 }
                 this.connector.getSelectedRows().forEach((row: number) => {
                     if (!this.connector.displayedDataset[row].__group) {
-                        dataClip =
-                            dataClip +
-                            (this.connector.displayedDataset[row][this.cell.attribute] || '') +
-                            '\n';
+                        const data = this.connector.displayedDataset[row][this.cell.attribute];
+                        if (this.cell.type === 'date') {
+                            dataClip = dataClip + (data ? data.toLocaleDateString() : '') + '\n';
+                        } else {
+                            dataClip = dataClip + (data || '') + '\n';
+                        }
                     }
                 });
                 await navigator.clipboard.writeText(dataClip);
@@ -79,16 +84,28 @@ export default class extends HTMLElement {
                 const attributes = this.connector.config.groups.flatMap((g) =>
                     g.rows.map((r) => r.attribute)
                 );
+
+                const types = this.connector.config.groups.flatMap((g) =>
+                    g.rows.map((r) => r.type)
+                );
+
                 dataClip = '';
+                // headers
                 attributes.forEach((att) => {
                     dataClip = dataClip + this.capalize(att) + '\t';
                 });
+                //rows
                 dataClip = dataClip + '\n';
                 this.connector.getSelectedRows().forEach((row: number) => {
                     if (!this.connector.displayedDataset[row].__group) {
-                        attributes.forEach((att) => {
-                            dataClip =
-                                dataClip + (this.connector.displayedDataset[row][att] || '') + '\t';
+                        attributes.forEach((att, i) => {
+                            const data = this.connector.displayedDataset[row][att];
+                            if (types[i] === 'date') {
+                                dataClip =
+                                    dataClip + (data ? data.toLocaleDateString() : '') + '\t';
+                            } else {
+                                dataClip = dataClip + (data || '') + '\t';
+                            }
                         });
                         dataClip = dataClip + '\n';
                     }
@@ -150,16 +167,16 @@ export default class extends HTMLElement {
         return html`<!-- data -->
             <p class="simple-html-grid-menu-item" @click=${() => this.select('copy')}>Copy cell</p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('copy-range')}>
-                Copy cell (col)
+                Copy cell column
             </p>
             <p class="simple-html-grid-menu-item" @click=${() => this.select('copy-range-header')}>
-                Copy cell (col/header)
+                Copy cell column (w/header)
             </p>
             <p
                 class="simple-html-grid-menu-item"
                 @click=${() => this.select('copy-range-row-header')}
             >
-                Copy row (header)
+                Copy cell rows (w/header)
             </p>
             ${this.allowCopyPaste()}`;
     }
