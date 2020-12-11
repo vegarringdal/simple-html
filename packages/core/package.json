@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/core",
-    "version": "1.0.0-alpha.78",
+    "version": "1.0.0",
     "description": "helpers for lit-html",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -21,7 +21,6 @@
         "access": "public"
     },
     "dependencies": {
-        "tslib": "^1.11.1",
         "lit-html": "^1.2.1"
     },
     "devDependencies": {}

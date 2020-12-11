@@ -40,7 +40,7 @@ task('default', async context => {
                         noUnusedLocals: true,
                         allowUnreachableCode: false,
                         removeComments: true,
-                        emitDecoratorMetadata: true,
+                        emitDecoratorMetadata: false,
                         importHelpers: true,
                         strictNullChecks: false,
                         experimentalDecorators: true

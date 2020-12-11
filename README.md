@@ -9,11 +9,17 @@
 -   [`@simple-html/datasource`](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
 -   [`@simple-html/date`](https://github.com/simple-html/simple-html/tree/master/packages/date)  (experiment only atm)
 
-## Production use
+## Why not use some other framework and where is the docs
 
-I only use it for very simple pages, if you use it make sure to lock down versions. Since breaking
-changes comes to router/core and grid when needed until version 1.0.0 When I get there I will start
-using semver. (maybe even at version 0.1.0)
+I really did not want to use time on frameworks, just wanted to have fun.
+I wanted to learn web components and liked how lit-html worked. After a while I started making helper function to make it simple to use in apps, so ended up creating this to learn more.
+
+There isnt any good docs at the moment, only samples under sample folder.
+Its on my todo list... first part is to create simple starter for web only with tailwindcss, then simple starter for web with nodejs server.
+
+Why 1.0.0 when there is no docs? Ive been using it a lot lately and its working great for my use. Mostly simple web pages and tools for work.
+Dont think I will be making many breaking changes in the near future.
+
 
 ## Development on current packages
 
@@ -80,46 +86,6 @@ applyPolyfill();
 To make state container save it self trigger this on hmr event:
 `window.dispatchEvent(new CustomEvent('HMR-FUSEBOX'));`
 
-### I need EdgeHTML browser to work in 2020...++
+### I need EdgeHTML/IE browser to work in 2020++
 
-Your really should consider updating to newest Edge built with chromium..
-
-```html
-<script>
-    // so it works in edge
-
-    if (this.customElements) {
-        try {
-            // feature detect browsers that "forgot" 🙄 to implement built-in extends
-            customElements.define('built-in', document.createElement('p').constructor, {
-                extends: 'p'
-            });
-        } catch (_) {
-            // only WebKit or Safari
-            document.write('<script src="//unpkg.com/@ungap/custom-elements-builtin"><\x2fscript>');
-        }
-    } else {
-        // only legacy browsers
-
-        if (!window.globalThis) {
-            window.globalThis = window;
-        }
-
-        if (!('isConnected' in Node.prototype)) {
-            Object.defineProperty(Node.prototype, 'isConnected', {
-                get() {
-                    return (
-                        !this.ownerDocument ||
-                        !(
-                            this.ownerDocument.compareDocumentPosition(this) &
-                            this.DOCUMENT_POSITION_DISCONNECTED
-                        )
-                    );
-                }
-            });
-        }
-
-        document.write('<script src="//unpkg.com/document-register-element"><\x2fscript>');
-    }
-</script>
-```
+Use something else...
