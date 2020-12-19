@@ -41,7 +41,7 @@ task('default', async context => {
                         allowUnreachableCode: false,
                         removeComments: true,
                         emitDecoratorMetadata: false,
-                        importHelpers: true,
+                        importHelpers: false,
                         strictNullChecks: false,
                         experimentalDecorators: true
                     },
