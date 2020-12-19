@@ -14,7 +14,7 @@ if (!(window as any).state) {
 
 export type stateResult<T> = [T, valueSetter<T>];
 
-export type stateResultObj<T> = [T, <T, K extends keyof T>(part: Pick<T, K>) => void];
+export type stateResultObj<T> = [T, <K extends keyof T>(part: Pick<T, K>) => void];
 
 /**
  * Get current glabal state
@@ -97,7 +97,7 @@ export class State<T> {
     stateKey: string;
     defaultValue: T;
     forceObject: boolean;
-    constructor(STATE_KEY: string, defaultValue: T, forceObject?: boolean) {
+    constructor(STATE_KEY: string, defaultValue: T, forceObject = false) {
         this.stateKey = STATE_KEY;
         this.defaultValue = defaultValue;
         state[this.stateKey] = defaultValue;
@@ -138,8 +138,8 @@ export class State<T> {
 
         const STATE = this.stateKey;
 
-        function assignA<T, K extends keyof T>(part: Pick<T, K>): void {
-            stateContainer(STATE, assignState(state[STATE], part));
+        function assignA<K extends keyof T>(part: Pick<T, K>): void {
+            stateContainer(STATE, assignState(state[STATE] as T, part));
         }
 
         return [state[this.stateKey], assignA];
