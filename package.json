@@ -1,6 +1,6 @@
 {
     "name": "simple-html",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "description": "Simple lib for creating web pages using lit-html and web components",
     "scripts": {
         "start": "node fuse",
