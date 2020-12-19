@@ -85,8 +85,8 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: MouseEvent) {
-        e.stopPropagation();
-        e.preventDefault();
+        //e.stopPropagation(); will break if I have these adn many splitters
+        //e.preventDefault(); will break if I have these adn many splitters
         if (e.type === 'mousedown') {
             this.addEventListener('mouseup', this);
             this.mousedown(e);
