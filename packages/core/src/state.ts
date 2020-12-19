@@ -100,7 +100,10 @@ export class State<T> {
     constructor(STATE_KEY: string, defaultValue: T, forceObject = false) {
         this.stateKey = STATE_KEY;
         this.defaultValue = defaultValue;
-        state[this.stateKey] = defaultValue;
+        if (!state.hasOwnProperty(this.stateKey)) {
+            state[this.stateKey] = defaultValue;
+        }
+
         this.forceObject = forceObject;
         validateKey(this.stateKey);
     }
@@ -114,7 +117,7 @@ export class State<T> {
             throw 'this is object only state, use getObject';
         }
         if (defaultState) {
-            this.defaultValue = defaultState;
+            this.defaultValue = defaultState; // todo, I need to set it...
         }
         return stateContainer<T>(this.stateKey, this.defaultValue);
     }
@@ -125,7 +128,7 @@ export class State<T> {
             throw 'this is object only state, use getObject';
         }
         if (defaultState) {
-            this.defaultValue = defaultState;
+            this.defaultValue = defaultState; // todo, I need to set it...
         }
         return stateOnlyContainer<T>(this.stateKey, this.defaultValue);
     }
@@ -133,7 +136,7 @@ export class State<T> {
     // to simplyfy the usage with objects, but you cant really delete anything here unless you add allkeys
     getObject(defaultState?: T): stateResultObj<T> {
         if (defaultState) {
-            this.defaultValue = defaultState;
+            this.defaultValue = defaultState; // todo, I need to set it...
         }
 
         const STATE = this.stateKey;
@@ -147,7 +150,7 @@ export class State<T> {
     // just return simple value, of object
     getObjectStateOnly(defaultState?: T): T {
         if (defaultState) {
-            this.defaultValue = defaultState;
+            this.defaultValue = defaultState; // todo, I need to set it...
         }
         return stateOnlyContainer<T>(this.stateKey, this.defaultValue);
     }
