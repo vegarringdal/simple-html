@@ -1,13 +1,18 @@
 {
-    "name": "@simple-html/grid",
+    "name": "@simple-html/dropdown",
     "version": "2.0.4",
-    "description": "Lit html data grid",
+    "description": "Simple dropdown component",
     "main": "dist/index.js",
     "module": "dist/index.js",
     "typings": "src/index.ts",
+    "jsnext:main": "dist/index.js",
     "ts:main": "src/index.ts",
     "local:main": "src/index.ts",
-    "author": "Vegar Ringdal <vegar.ringdal@gmail.com>",
+    "author": "vegar.ringdal@gmail.com",
+    "scripts": {
+        "pub-now": "npm publish --access public",
+        "pub-test": "npm publish --dry-run"
+    },
     "license": "MIT",
     "homepage": "https://github.com/vegarringdal/simple-html",
     "repository": {
@@ -21,8 +26,7 @@
         "access": "public"
     },
     "dependencies": {
-        "@simple-html/core": "latest",
-        "@simple-html/datasource": "latest"
+        "lit-html": "^1.1.1"
     },
     "devDependencies": {}
 }
