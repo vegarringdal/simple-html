@@ -1,4 +1,3 @@
-import 'tslib';
 export { attribute } from './attribute';
 export { prop } from './prop';
 export { enableInternalLogger, disableInternalLogger } from './logger';
