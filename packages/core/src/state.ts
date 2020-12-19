@@ -14,6 +14,8 @@ if (!(window as any).state) {
 
 export type stateResult<T> = [T, valueSetter<T>];
 
+export type stateResultObj<T> = [T, <T, K extends keyof T>(part: Pick<T, K>) => void];
+
 /**
  * Get current glabal state
  * great for saving state for next time user opens website
@@ -64,6 +66,21 @@ export function stateContainer<T>(
 }
 
 /**
+ * simple state container
+ * @param key key used in state container and event
+ */
+export function stateOnlyContainer<T>(key: string, defaultValue: T): T {
+    //set default value if not set
+    if (!state.hasOwnProperty(key)) {
+        state[key] = defaultValue;
+    }
+
+    const currentState: T = state[key];
+
+    return currentState;
+}
+
+/**
  * simple warning if you reuse a key by accident
  * @param key
  */
@@ -79,17 +96,60 @@ export function validateKey(key: string) {
 export class State<T> {
     stateKey: string;
     defaultValue: T;
-    constructor(STATE_KEY: string, defaultValue: T) {
+    forceObject: boolean;
+    constructor(STATE_KEY: string, defaultValue: T, forceObject?: boolean) {
         this.stateKey = STATE_KEY;
         this.defaultValue = defaultValue;
+        state[this.stateKey] = defaultValue;
+        this.forceObject = forceObject;
         validateKey(this.stateKey);
     }
 
+    getStatekey() {
+        return this.stateKey;
+    }
+
     get(defaultState?: T): stateResult<T> {
+        if (this.forceObject) {
+            throw 'this is object only state, use getObject';
+        }
         if (defaultState) {
             this.defaultValue = defaultState;
         }
         return stateContainer<T>(this.stateKey, this.defaultValue);
+    }
+
+    // just return simple value
+    getStateOnly(defaultState?: T): T {
+        if (this.forceObject) {
+            throw 'this is object only state, use getObject';
+        }
+        if (defaultState) {
+            this.defaultValue = defaultState;
+        }
+        return stateOnlyContainer<T>(this.stateKey, this.defaultValue);
+    }
+
+    // to simplyfy the usage with objects, but you cant really delete anything here unless you add allkeys
+    getObject(defaultState?: T): stateResultObj<T> {
+        if (defaultState) {
+            this.defaultValue = defaultState;
+        }
+
+        const STATE = this.stateKey;
+
+        function assignA<T, K extends keyof T>(part: Pick<T, K>): void {
+            stateContainer(STATE, assignState(state[STATE], part));
+        }
+
+        return [state[this.stateKey], assignA];
+    }
+    // just return simple value, of object
+    getObjectStateOnly(defaultState?: T): T {
+        if (defaultState) {
+            this.defaultValue = defaultState;
+        }
+        return stateOnlyContainer<T>(this.stateKey, this.defaultValue);
     }
 
     connect(context: HTMLElement, callback: () => void): void {

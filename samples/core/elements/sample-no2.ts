@@ -8,7 +8,7 @@ export default class extends HTMLElement {
     render() {
         // get our state containers
         const [view] = viewState.get();
-        const [form, setForm] = formState.get();
+        const [form, setForm] = formState.getObject();
 
         return html`
             <span class="text-xl">${view.toUpperCase()}</span>
@@ -22,8 +22,7 @@ export default class extends HTMLElement {
                     <input
                         class="p-2 m-1"
                         .value=${form.firstName || ''}
-                        @input=${(e: any) =>
-                            setForm(Object.assign(form, { firstName: e.target.value }))}
+                        @input=${(e: any) => setForm({ firstName: e.target.value })}
                     />
                 </label>
                 <label>
@@ -31,8 +30,7 @@ export default class extends HTMLElement {
                     <input
                         class="p-2 m-1"
                         .value=${form.lastName || ''}
-                        @input=${(e: any) =>
-                            setForm(Object.assign(form, { lastName: e.target.value }))}
+                        @input=${(e: any) => setForm({ lastName: e.target.value })}
                     />
                 </label>
             </div>
