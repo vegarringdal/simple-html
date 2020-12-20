@@ -28,20 +28,32 @@ export default class extends HTMLElement {
                         listClasses="p-1 bg-gray-100"
                         .callback=${(input: string, regex: RegExp) => {
                             return country_list
-                                .filter((val) => {
+                                .filter((val, i) => {
+                                    if (!input) {
+                                        if (i < 10) {
+                                            return true;
+                                        }
+                                        return false;
+                                    }
                                     return regex.test(val);
                                 })
                                 .map((e) => {
                                     return html`
                                         <div
-                                            class="hover:bg-gray-200"
+                                            class="hover:bg-gray-200 focus:bg-gray-200""
                                             @mousedown=${() => {
                                                 setForm({ defaultVal1: e });
                                                 this.render();
                                             }}
+                                            @highlight=${(e: any) => {
+                                                e.target.classList.add('bg-gray-200');
+                                            }}
+                                            @dehighlight=${(e: any) => {
+                                                e.target.classList.remove('bg-gray-200');
+                                            }}
                                         >
-                                            <b>${e.slice(0, input.length)}</b
-                                            ><span>${e.split(regex)[1]}</span>
+                                            <b>${input.length ? e.slice(0, input.length) : ''}</b
+                                            ><span>${input.length ? e.split(regex)[1] : e}</span>
                                         </div>
                                     `;
                                 });
