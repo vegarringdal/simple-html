@@ -7,8 +7,14 @@ type valueSetter<T> = (value: T) => void;
 // helper for fusebox hmr event
 if (!(window as any).state) {
     window.addEventListener('HMR-FUSEBOX', () => {
+        console.warn('please publish: SIMPLE_HTML_SAVE_STATE as event, will remove HMR-FUSEBOX');
         (window as any).state = state;
         console.log('HMR-FUSEBOX', (window as any).state);
+    });
+
+    window.addEventListener('SIMPLE_HTML_SAVE_STATE', () => {
+        (window as any).state = state;
+        console.log('SIMPLE_HTML_HMR', (window as any).state);
     });
 }
 
