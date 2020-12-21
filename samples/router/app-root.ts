@@ -18,12 +18,12 @@ export default class extends HTMLElement {
 
     public render() {
         return html`
-            <ul class="flex bg-teal-500 p-6">
+            <ul class="flex bg-green-500 p-6">
                 ${navs('main').map((route: any) => {
                     if (route.isNav) {
                         return html`
                             <li class="mr-6">
-                                <a class="text-teal-200 hover:text-white" href="${route.href}"
+                                <a class="text-green-200 hover:text-white" href="${route.href}"
                                     >${route.title}</a
                                 >
                             </li>
@@ -34,7 +34,7 @@ export default class extends HTMLElement {
 
                 <li style="margin-left: auto;" class="mr-6">
                     <span
-                        class="text-teal-200 hover:text-white"
+                        class="text-green-200 hover:text-white"
                         @click=${() => {
                             if (isAuthenticted()) {
                                 logout();
