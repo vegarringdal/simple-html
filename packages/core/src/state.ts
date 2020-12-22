@@ -118,6 +118,10 @@ export class State<T> {
         return this.stateKey;
     }
 
+    /**
+     * return state [value, setter]
+     * @param defaultState
+     */
     get(defaultState?: T): stateResult<T> {
         if (this.forceObject) {
             throw 'this is object only state, use getObject';
@@ -128,7 +132,10 @@ export class State<T> {
         return stateContainer<T>(this.stateKey, this.defaultValue);
     }
 
-    // just return simple value
+    /**
+     * just return simple value
+     * @param defaultState
+     */
     getStateOnly(defaultState?: T): T {
         if (this.forceObject) {
             throw 'this is object only state, use getObject';
@@ -136,30 +143,51 @@ export class State<T> {
         if (defaultState) {
             this.defaultValue = defaultState; // todo, I need to set it...
         }
+
         return stateOnlyContainer<T>(this.stateKey, this.defaultValue);
     }
 
-    // to simplyfy the usage with objects, but you cant really delete anything here unless you add allkeys
+    /**
+     * to simplyfy the usage with objects, but you cant really delete anything here unless you add allkeys
+     * @param defaultState
+     */
     getObject(defaultState?: T): stateResultObj<T> {
         if (defaultState) {
             this.defaultValue = defaultState; // todo, I need to set it...
         }
 
-        const STATE = this.stateKey;
+        if (!state.hasOwnProperty(this.stateKey)) {
+            state[this.stateKey] = this.defaultValue;
+        }
 
         function assignA<K extends keyof T>(part: Pick<T, K>): void {
-            stateContainer(STATE, assignState(state[STATE] as T, part));
+            state[this.stateKey] = assignState(state[this.stateKey] as T, part);
+            publish(this.stateKey, state[this.stateKey]);
         }
 
         return [state[this.stateKey], assignA];
     }
-    // just return simple value, of object
+
+    /**
+     * just return simple value, of object
+     * @param defaultState
+     */
     getObjectStateOnly(defaultState?: T): T {
         if (defaultState) {
             this.defaultValue = defaultState; // todo, I need to set it...
         }
+        if (!state.hasOwnProperty(this.stateKey)) {
+            state[this.stateKey] = this.defaultValue;
+        }
+
         return stateOnlyContainer<T>(this.stateKey, this.defaultValue);
     }
+
+    /**
+     * connect to state in elements connectedcallback, will automatically disconnect if dicconnectedcallback is called
+     * @param context
+     * @param callback
+     */
 
     connect(context: HTMLElement, callback: () => void): void {
         // this register callback with simpleHtml elements disconnected callback
