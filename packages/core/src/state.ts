@@ -152,20 +152,21 @@ export class State<T> {
      * @param defaultState
      */
     getObject(defaultState?: T): stateResultObj<T> {
+        const STATE = this.stateKey;
         if (defaultState) {
             this.defaultValue = defaultState; // todo, I need to set it...
         }
 
-        if (!state.hasOwnProperty(this.stateKey)) {
-            state[this.stateKey] = this.defaultValue;
+        if (!state.hasOwnProperty(STATE)) {
+            state[STATE] = this.defaultValue;
         }
 
         function assignA<K extends keyof T>(part: Pick<T, K>): void {
-            state[this.stateKey] = assignState(state[this.stateKey] as T, part);
-            publish(this.stateKey, state[this.stateKey]);
+            state[STATE] = assignState(state[STATE] as T, part);
+            publish(STATE, state[STATE]);
         }
 
-        return [state[this.stateKey], assignA];
+        return [state[STATE], assignA];
     }
 
     /**
