@@ -1,19 +1,14 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
 import { navs, routerConfig } from './routerConfig';
-import { routeMatchAsync, subscribeHashEvent, unSubscribeHashEvent } from '@simple-html/router';
+import { connectHashEvent, routeMatchAsync } from '@simple-html/router';
 
 const childRoute = routerConfig.child.children;
 
 @customElement('childrouter-route')
 export default class extends HTMLElement {
     connectedCallback() {
-        subscribeHashEvent(this, () => {
-            this.render();
-        });
-    }
-    disconnectedCallback() {
-        unSubscribeHashEvent(this);
+        connectHashEvent(this, this.render);
     }
 
     public render() {

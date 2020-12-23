@@ -1,4 +1,4 @@
-import { subscribe, unSubscribe, publish } from '@simple-html/core/src';
+import { subscribe, unSubscribe, publish, disconnectedCallback } from '@simple-html/core';
 /**
  * Simple functions used for subcribing hash event
  */
@@ -14,4 +14,18 @@ export function unSubscribeHashEvent(ctx: any) {
 
 export function publishHashEvent() {
     publish(HASH_RENDER_EVENT);
+}
+
+/**
+ * connect to routerEvent in elements connectedcallback, will automatically disconnect if dicconnectedcallback is called
+ * @param context
+ * @param callback
+ */
+
+export function connectHashEvent(context: HTMLElement, callback: () => void): void {
+    // this register callback with simpleHtml elements disconnected callback
+    disconnectedCallback(context, () => unSubscribe(HASH_RENDER_EVENT, context));
+
+    // for following the event we just use the internal event handler
+    subscribe(HASH_RENDER_EVENT, context, callback);
 }

@@ -5,7 +5,12 @@ export { routeMatch } from './routeMatch';
 export { routeMatchAsync } from './routeMatchAsync';
 export { gotoURL } from './gotoURL';
 export { getRouteParams } from './getRouteParams';
-export { subscribeHashEvent, unSubscribeHashEvent, publishHashEvent } from './hash_render_event';
+export {
+    subscribeHashEvent,
+    unSubscribeHashEvent,
+    publishHashEvent,
+    connectHashEvent
+} from './hash_render_event';
 export {
     subscribeCanDeactivateEvent,
     unSubscribeCanDeactivateEvent,
