@@ -9,7 +9,7 @@ export {
     subscribeHashEvent,
     unSubscribeHashEvent,
     publishHashEvent,
-    connectHashEvent
+    connectHashChanges
 } from './hash_render_event';
 export {
     subscribeCanDeactivateEvent,

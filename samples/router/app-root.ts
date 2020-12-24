@@ -1,14 +1,14 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
 import { navs, routerConfig } from './routes/routerConfig';
-import { gotoURL, connectHashEvent } from '@simple-html/router';
+import { gotoURL, connectHashChanges } from '@simple-html/router';
 import { routeMatchAsync } from '@simple-html/router';
 import { isAuthenticted, logout } from './routes/login';
 
 @customElement('app-root')
 export default class extends HTMLElement {
     connectedCallback() {
-        connectHashEvent(this, this.render);
+        connectHashChanges(this, this.render);
     }
 
     public render() {

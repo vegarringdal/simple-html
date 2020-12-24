@@ -1,4 +1,4 @@
-import { customElement, stateResult, stateContainer } from '@simple-html/core';
+import { customElement, State } from '@simple-html/core';
 
 export type state = {
     active: boolean;
@@ -10,18 +10,28 @@ export type state = {
     x: number;
     y: number;
 };
-
 @customElement('simple-split-vert')
 export default class extends HTMLElement {
     show: boolean;
     refEle: HTMLElement;
     stateName: string;
+    state: State<state>;
 
-    formState(defaultValue = { active: false } as state): stateResult<state> {
-        return stateContainer<state>(this.stateName, defaultValue);
+    formState() {
+        return this.state.getState();
     }
 
     connectedCallback() {
+        if (!this.stateName) {
+            throw 'name attribute needs to be set ".name=${"somename"}';
+        }
+
+        this.state = new State<state>(
+            '@SIMPLE-HTML/SPLITTER',
+            { active: false } as state,
+            false,
+            this.stateName
+        );
         this.style.width = '100%';
         this.style.height = '100%';
         this.style.display = 'flex';

@@ -12,7 +12,7 @@ export default class extends HTMLElement {
     }
 
     render() {
-        const [view, setView] = viewState.getState('element-default');
+        const [view, setView] = viewState.getState();
         return html`<section class="flex flex-row flex-grow h-full">
             <div class="bg-gray-200 flex flex-col">
                 ${this.elements.map((element) => {

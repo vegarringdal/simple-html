@@ -8,8 +8,8 @@ import { country_list } from './listofcountries';
 export default class extends HTMLElement {
     render() {
         // get our state containers
-        const view = viewState.getStateOnly();
-        const [form, setForm] = formState.getObject();
+        const view = viewState.getStateValue();
+        const [form, setForm] = formState.getStateObject();
 
         return html`
             <span class="text-xl">${view.toUpperCase()}</span>
