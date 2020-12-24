@@ -32,39 +32,69 @@ export function validateKey(key: string) {
 }
 
 export class State<T> {
-    private stateKey: string;
+    private mainStateKey: string;
     private forceObject: boolean;
+    internalStateKey: string;
 
-    constructor(STATE_KEY: string, defaultValue?: T, forceObject = false) {
-        this.stateKey = STATE_KEY;
-        if (!state.hasOwnProperty(this.stateKey)) {
-            state[this.stateKey] = defaultValue;
+    constructor(
+        STATE_KEY: string,
+        defaultValue: T = null,
+        forceObject = false,
+        internalStateKey: string = null
+    ) {
+        this.mainStateKey = STATE_KEY;
+        if (internalStateKey) {
+            // set main state
+            if (!this.getStateContainer().hasOwnProperty(this.mainStateKey)) {
+                this.getStateContainer()[this.mainStateKey] = {};
+            }
+
+            // set internal state
+            this.internalStateKey = internalStateKey;
+            if (!this.getStateContainer().hasOwnProperty(this.internalStateKey)) {
+                if (typeof defaultValue === 'object' && defaultValue !== null) {
+                    this.getStateContainer()[this.internalStateKey] = defaultValue;
+                } else {
+                    this.getStateContainer()[this.internalStateKey] = {};
+                }
+            }
+        } else {
+            if (!this.getStateContainer().hasOwnProperty(this.mainStateKey)) {
+                this.getStateContainer()[this.mainStateKey] = defaultValue;
+            }
+
+            this.forceObject = forceObject;
+            if (!this.getStateContainer()[this.mainStateKey] && this.forceObject) {
+                this.getStateContainer()[this.mainStateKey] = {};
+            }
+
+            validateKey(this.mainStateKey);
         }
+    }
 
-        this.forceObject = forceObject;
-        if (!state[this.stateKey] && this.forceObject) {
-            state[this.stateKey] = {};
+    getStateContainer() {
+        if (this.internalStateKey) {
+            return state[this.mainStateKey];
         }
-
-        validateKey(this.stateKey);
+        return state;
     }
 
     reset(val: any = null) {
         if (this.forceObject) {
             throw 'this is object only state, use resetObj';
         }
-        state[this.stateKey] = val;
+        this.getStateContainer()[this.getStateKey()] = val;
     }
 
     resetObj(val = {}) {
-        state[this.stateKey] = val;
+        this.getStateContainer()[this.getStateKey()] = val;
     }
 
     /**
      * Return key of this state
      */
     getStateKey() {
-        return this.stateKey;
+        return this.internalStateKey || this.mainStateKey;
     }
 
     /**
@@ -75,14 +105,15 @@ export class State<T> {
             throw 'this is object only state, use getObjectValue';
         }
 
-        const STATE_KEY = this.stateKey;
+        const STATE_KEY = this.getStateKey();
+        const STATE = this.getStateContainer();
 
         const setAndPublish = function (value: any) {
-            state[STATE_KEY] = value;
+            STATE[STATE_KEY] = value;
             publish(STATE_KEY, value);
         };
 
-        return [state[STATE_KEY], setAndPublish];
+        return [STATE[STATE_KEY], setAndPublish];
     }
 
     /**
@@ -93,7 +124,7 @@ export class State<T> {
             throw 'this is object only state, use getObject';
         }
 
-        return state[this.stateKey];
+        return this.getStateContainer()[this.getStateKey()];
     }
 
     /**
@@ -101,25 +132,26 @@ export class State<T> {
      * this uses built in object.assign in setter
      */
     getStateObject(): stateResultObj<T> {
-        const STATE = this.stateKey;
+        const STATE_KEY = this.getStateKey();
+        const STATE = this.getStateContainer();
 
         function assignState<T, K extends keyof T>(obj: T, part: Pick<T, K>) {
             return Object.assign(obj, part);
         }
 
         function assignAndPublish<K extends keyof T>(part: Pick<T, K>): void {
-            state[STATE] = assignState(state[STATE] as T, part);
-            publish(STATE, state[STATE]);
+            STATE[STATE_KEY] = assignState(STATE[STATE_KEY] as T, part);
+            publish(STATE_KEY, STATE[STATE_KEY]);
         }
 
-        return [state[STATE], assignAndPublish];
+        return [STATE[STATE_KEY], assignAndPublish];
     }
 
     /**
      * just return simple value, of object
      */
     getObjectValue(): T {
-        return state[this.stateKey];
+        return this.getStateContainer()[this.getStateKey()];
     }
 
     /**
@@ -129,9 +161,9 @@ export class State<T> {
      */
     connectStateChanges(context: HTMLElement, callback: () => void): void {
         // this register callback with simpleHtml elements disconnected callback
-        disconnectedCallback(context, () => unSubscribe(this.stateKey, context));
+        disconnectedCallback(context, () => unSubscribe(this.getStateKey(), context));
 
         // for following the event we just use the internal event handler
-        subscribe(this.stateKey, context, callback);
+        subscribe(this.getStateKey(), context, callback);
     }
 }
