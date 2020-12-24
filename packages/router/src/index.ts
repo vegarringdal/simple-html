@@ -21,7 +21,7 @@ export {
 /**
  * starts router
  */
-export function init() {
+export function startRouter() {
     let oldhash = window.location.hash;
     let isBackEvent = false;
 

@@ -1,6 +1,6 @@
-import { init } from '@simple-html/router';
+import { startRouter } from '@simple-html/router';
 import { html } from 'lit-html';
-init();
+startRouter();
 
 export const routerConfig = {
     home: {

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { gotoURL } from '../src/gotoURL';
 import { customElement } from '@simple-html/core';
-import { routeMatchAsync, subscribeHashEvent, unSubscribeHashEvent, init } from '../src';
+import { routeMatchAsync, subscribeHashEvent, unSubscribeHashEvent, startRouter } from '../src';
 import { html } from 'lit-html';
 
 describe('routeMatchAsync', () => {
     it('test if async render returns correct result when hash ', (done) => {
-        init();
+        startRouter();
         @customElement('app-root1')
         class Ele extends HTMLElement {
             connectedCallback() {
