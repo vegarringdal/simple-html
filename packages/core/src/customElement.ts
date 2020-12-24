@@ -4,7 +4,7 @@ import { logger } from './logger';
 
 /**
  * @customElement- decorator
- *
+ * only log if method is not standard, else its just
  */
 export function customElement(elementName: string, extended?: ElementDefinitionOptions) {
     return function reg(elementClass: any) {
@@ -36,28 +36,40 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 logger('constructor', this, super.tagName);
             }
 
-            renderCalled() {
-                if (super.renderCalled) {
-                    super.renderCalled.call(this);
+            /**
+             * called
+             */
+            renderCallback() {
+                if (super.renderCallback) {
+                    logger('renderCallback', this, super.tagName);
+                    super.renderCallback.call(this);
                 }
             }
 
             render(...result: any[]) {
+                this.renderCallback();
                 if (super.render) {
                     logger('render', this, super.tagName);
                     const template = super.render.call(this, ...result);
                     Promise.resolve(template).then((templates) => {
                         render(templates, this as any, { eventContext: this as any });
-                        if (super.updated) {
+                        if (super.updatedCallback) {
                             //delay so it actually get a chance to update
                             requestAnimationFrame(() => {
-                                super.updated();
+                                super.updatedCallback();
                             });
                         }
                     });
                 }
-                this.renderCalled();
             }
+
+            adoptedCallback() {
+                logger('adoptedCallback', this, super.tagName);
+                if (super.adoptedCallback) {
+                    super.adoptedCallback();
+                }
+            }
+
             connectedCallback() {
                 logger('connectedCallback', this, super.tagName);
                 if (super.connectedCallback) {
@@ -66,7 +78,12 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 this.render(this);
             }
 
-            register(call: Function) {
+            /**
+             * register for disconnectCallback event
+             * @param call
+             */
+            registerDisconnectCallback(call: () => void) {
+                logger('registerDisconnectCallback', this, super.tagName);
                 if (this.callers) {
                     this.callers.push(call);
                 } else {
@@ -78,13 +95,14 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             disconnectedCallback() {
                 logger('disconnectedCallback', this, super.tagName);
                 if (this.callers) {
-                    this.callers.forEach((call: Function) => call());
+                    this.callers.forEach((call: () => void) => call());
                 }
                 this.callers = [];
                 if (super.disconnectedCallback) {
                     super.disconnectedCallback.call(this);
                 }
             }
+
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
                 logger('attributeChangedCallback', this, super.tagName);
                 //get map
@@ -105,8 +123,8 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                     super.attributeChangedCallback.call(this, name, oldValue, newValue);
                 }
                 //if our simpler method is set (this is used by the @attribute and @property decorators)
-                if (super.valuesChanged) {
-                    super.valuesChanged('attribute', name, oldValue, newValue);
+                if (super.valuesChangedCallback) {
+                    super.valuesChangedCallback('attribute', name, oldValue, newValue);
                 }
             }
         };

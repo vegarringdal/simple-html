@@ -6,8 +6,8 @@ import { getPropSymbol } from './symbols';
  *
  *
  */
-export function prop(): Function {
-    return function reg(_class: Function, prop: string): void {
+export function prop() {
+    return function reg(_class: () => void, prop: string): void {
         Object.defineProperty(_class, prop, {
             get: function () {
                 return this[getPropSymbol(this.tagName + '_' + prop)];

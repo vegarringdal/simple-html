@@ -72,7 +72,7 @@ describe('customElement', () => {
                 events.push('connectedCallback');
             }
 
-            updated() {
+            updatedCallback() {
                 events.push('updated');
             }
 

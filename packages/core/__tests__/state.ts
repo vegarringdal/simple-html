@@ -18,7 +18,7 @@ validateKey(STATE_KEY);
 /**
  * connect state
  */
-export function connectToState(context: HTMLElement, callback: Function): void {
+export function connectToState(context: HTMLElement, callback: () => void): void {
     // this register callback with simpleHtml elements disconnected callback
     disconnectedCallback(context, () => unSubscribe(STATE_KEY, context));
 

@@ -58,7 +58,7 @@ export function unSubscribe(channel: string, ctx: any): void {
 }
 
 // sync
-export function subscribe(channel: string, ctx: any, func: Function): void {
+export function subscribe(channel: string, ctx: any, func: () => void): void {
     if (!Array.isArray(transmitter()[channel])) {
         transmitter()[channel] = [];
     }

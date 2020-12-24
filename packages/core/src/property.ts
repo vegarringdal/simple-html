@@ -6,8 +6,8 @@ import { logger } from './logger';
  * @property decorator
  *
  */
-export function property(options: { skipRender: boolean } = {} as any): Function {
-    return function reg(_class: Function, prop: string): void {
+export function property(options: { skipRender: boolean } = {} as any) {
+    return function reg(_class: () => void, prop: string): void {
         Object.defineProperty(_class, prop, {
             get: function () {
                 return this[getPropSymbol(this.tagName + '_' + prop)];
@@ -17,8 +17,8 @@ export function property(options: { skipRender: boolean } = {} as any): Function
 
                 const oldValue = this[getPropSymbol(this.tagName + '_' + prop)];
                 this[getPropSymbol(this.tagName + '_' + prop)] = x;
-                if (this.valuesChanged && oldValue !== x) {
-                    this.valuesChanged('property', prop, oldValue, x);
+                if (this.valuesChangedCallback && oldValue !== x) {
+                    this.valuesChangedCallback('property', prop, oldValue, x);
                 }
                 if (oldValue !== x && !options.skipRender) {
                     requestRender(this);

@@ -9,7 +9,7 @@ describe('customElement property', () => {
         class Ele extends HTMLElement {
             @property() myprop = 'initvalue';
 
-            valuesChanged(type: string, name: string, oldValue: string, newValue: string) {
+            valuesChangedCallback(type: string, name: string, oldValue: string, newValue: string) {
                 valuesChanged.push(type, name, oldValue, newValue);
             }
 
