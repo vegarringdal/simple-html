@@ -7,7 +7,7 @@ import { formState } from '../state/formState';
 export default class extends HTMLElement {
     render() {
         // get our state containers
-        const [view] = viewState.get();
+        const [view] = viewState.getState();
         const [form, setForm] = formState.getObject();
 
         return html`

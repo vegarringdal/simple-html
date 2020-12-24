@@ -5,7 +5,7 @@ import { viewState } from '../state/viewState';
 @customElement('sample-default')
 export default class extends HTMLElement {
     render() {
-        const [view] = viewState.get();
+        const [view] = viewState.getState();
         return html` <span class="text-xl">${view.toUpperCase()}</span>
             <p>Click on the buttons to the left to try different samples</p>
             <p>

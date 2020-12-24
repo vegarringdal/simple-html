@@ -9,7 +9,7 @@ export default class extends HTMLElement {
     @property() count = 0;
 
     render() {
-        const [view] = viewState.get();
+        const [view] = viewState.getState();
         return html` <span class="text-xl">${view.toUpperCase()}</span>
             <p class="mt-2 mb-2">
                 Shows how to use @property and @attribute to trigger rerendering on changes

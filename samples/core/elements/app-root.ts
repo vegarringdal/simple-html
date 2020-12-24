@@ -8,11 +8,11 @@ export default class extends HTMLElement {
     elements = ['sample-default', 'sample-no1', 'sample-no2', 'sample-no3', 'sample-no4'];
 
     connectedCallback() {
-        viewState.connect(this, this.render);
+        viewState.connectStateChanges(this, this.render);
     }
 
     render() {
-        const [view, setView] = viewState.get('element-default');
+        const [view, setView] = viewState.getState('element-default');
         return html`<section class="flex flex-row flex-grow h-full">
             <div class="bg-gray-200 flex flex-col">
                 ${this.elements.map((element) => {
