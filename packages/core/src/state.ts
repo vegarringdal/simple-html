@@ -2,7 +2,6 @@ import { disconnectedCallback, publish, subscribe, unSubscribe } from '.';
 
 let state = (window as any).state || {};
 const keys = new Set();
-type valueSetter<T> = (value: T) => void;
 
 // helper for fusebox hmr event
 if (!(window as any).state) {
@@ -18,73 +17,12 @@ if (!(window as any).state) {
     });
 }
 
+/**
+ * Types only
+ */
+type valueSetter<T> = (value: T) => void;
 export type stateResult<T> = [T, valueSetter<T>];
-
 export type stateResultObj<T> = [T, <K extends keyof T>(part: Pick<T, K>) => void];
-
-/**
- * Get current glabal state
- * great for saving state for next time user opens website
- */
-export function getState() {
-    state;
-}
-
-/**
- * overide current state
- * great for restoring state time user opens website
- */
-export function setState<T>(newState: T) {
-    state = newState;
-}
-
-export function assignState<T, K extends keyof T>(obj: T, part: Pick<T, K>) {
-    return Object.assign(obj, part);
-}
-
-/**
- * simple state container
- * @param key key used in state container and event
- * @param defaultValue default state value
- * @param customPublishedTrigger if you do not want it to publish update event
- */
-export function stateContainer<T>(
-    key: string,
-    defaultValue: T,
-    customPublishedTrigger?: boolean
-): stateResult<T> {
-    //set default value if not set
-    if (!state.hasOwnProperty(key)) {
-        state[key] = defaultValue;
-    }
-
-    const currentState: T = state[key];
-    const setter = function (value: T) {
-        state[key] = value;
-    };
-
-    const middleware = function (value: any) {
-        setter(value);
-        publish(key, value);
-    };
-
-    return [currentState, customPublishedTrigger ? setter : middleware];
-}
-
-/**
- * simple state container
- * @param key key used in state container and event
- */
-export function stateOnlyContainer<T>(key: string, defaultValue: T): T {
-    //set default value if not set
-    if (!state.hasOwnProperty(key)) {
-        state[key] = defaultValue;
-    }
-
-    const currentState: T = state[key];
-
-    return currentState;
-}
 
 /**
  * simple warning if you reuse a key by accident
@@ -100,88 +38,94 @@ export function validateKey(key: string) {
 }
 
 export class State<T> {
-    stateKey: string;
-    defaultValue: T;
-    forceObject: boolean;
-    constructor(STATE_KEY: string, defaultValue: T, forceObject = false) {
+    private stateKey: string;
+    private forceObject: boolean;
+
+    constructor(STATE_KEY: string, defaultValue?: T, forceObject = false) {
         this.stateKey = STATE_KEY;
-        this.defaultValue = defaultValue;
         if (!state.hasOwnProperty(this.stateKey)) {
             state[this.stateKey] = defaultValue;
         }
 
         this.forceObject = forceObject;
+        if (!state[this.stateKey] && this.forceObject) {
+            state[this.stateKey] = {};
+        }
+
         validateKey(this.stateKey);
     }
 
-    getStatekey() {
+    reset(val: any = null) {
+        if (this.forceObject) {
+            throw 'this is object only state, use resetObj';
+        }
+        state[this.stateKey] = val;
+    }
+
+    resetObj(val = {}) {
+        state[this.stateKey] = val;
+    }
+
+    /**
+     * Return key of this state
+     */
+    getStateKey() {
         return this.stateKey;
     }
 
     /**
      * return state [value, setter]
-     * @param defaultState
      */
-    get(defaultState?: T): stateResult<T> {
+    getState(): stateResult<T> {
         if (this.forceObject) {
-            throw 'this is object only state, use getObject';
+            throw 'this is object only state, use getObjectValue';
         }
-        if (defaultState) {
-            this.defaultValue = defaultState; // todo, I need to set it...
-        }
-        return stateContainer<T>(this.stateKey, this.defaultValue);
+
+        const STATE_KEY = this.stateKey;
+
+        const setAndPublish = function (value: any) {
+            state[STATE_KEY] = value;
+            publish(STATE_KEY, value);
+        };
+
+        return [state[STATE_KEY], setAndPublish];
     }
 
     /**
      * just return simple value
-     * @param defaultState
      */
-    getStateOnly(defaultState?: T): T {
+    getStateValue(): T {
         if (this.forceObject) {
             throw 'this is object only state, use getObject';
         }
-        if (defaultState) {
-            this.defaultValue = defaultState; // todo, I need to set it...
-        }
 
-        return stateOnlyContainer<T>(this.stateKey, this.defaultValue);
+        return state[this.stateKey];
     }
 
     /**
-     * to simplyfy the usage with objects, but you cant really delete anything here unless you add allkeys
-     * @param defaultState
+     * return state [value, setter]
+     * this uses built in object.assign in setter
      */
-    getObject(defaultState?: T): stateResultObj<T> {
+    getStateObject(): stateResultObj<T> {
         const STATE = this.stateKey;
-        if (defaultState) {
-            this.defaultValue = defaultState; // todo, I need to set it...
+
+        function assignState<T, K extends keyof T>(obj: T, part: Pick<T, K>) {
+            return Object.assign(obj, part);
         }
 
-        if (!state.hasOwnProperty(STATE)) {
-            state[STATE] = this.defaultValue;
-        }
-
-        function assignA<K extends keyof T>(part: Pick<T, K>): void {
+        function assignAndPublish<K extends keyof T>(part: Pick<T, K>): void {
             state[STATE] = assignState(state[STATE] as T, part);
             publish(STATE, state[STATE]);
         }
 
-        return [state[STATE], assignA];
+        return [state[STATE], assignAndPublish];
     }
 
     /**
      * just return simple value, of object
-     * @param defaultState
      */
-    getObjectStateOnly(defaultState?: T): T {
-        if (defaultState) {
-            this.defaultValue = defaultState; // todo, I need to set it...
-        }
-        if (!state.hasOwnProperty(this.stateKey)) {
-            state[this.stateKey] = this.defaultValue;
-        }
-
-        return stateOnlyContainer<T>(this.stateKey, this.defaultValue);
+    getObjectValue(): T {
+        return state[this.stateKey];
     }
 
     /**
@@ -189,8 +133,7 @@ export class State<T> {
      * @param context
      * @param callback
      */
-
-    connect(context: HTMLElement, callback: () => void): void {
+    connectStateChanges(context: HTMLElement, callback: () => void): void {
         // this register callback with simpleHtml elements disconnected callback
         disconnectedCallback(context, () => unSubscribe(this.stateKey, context));
 

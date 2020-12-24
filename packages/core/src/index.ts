@@ -4,6 +4,6 @@ export { enableInternalLogger, disableInternalLogger } from './logger';
 export { property } from './property';
 export { customElement } from './customElement';
 export { publish, subscribe, unSubscribe, publishNext, publishSync } from './transmitter';
-export { validateKey, stateContainer, stateResult, assignState, State } from './state';
+export { validateKey, stateResult, State } from './state';
 export { requestRender } from './requestRender';
 export { disconnectedCallback } from './disconnectedCallback';

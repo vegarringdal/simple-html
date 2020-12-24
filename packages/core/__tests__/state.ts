@@ -1,67 +1,38 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import {
-    stateContainer,
-    stateResult,
-    disconnectedCallback,
-    validateKey,
-    unSubscribe,
-    subscribe,
-    customElement
-} from '../src';
+import { State } from '../src';
 
 /**
- * key and validate key, so we know we dont have duplicates
+ * simple state
  */
-export const STATE_KEY = 'TEST_STATE';
-validateKey(STATE_KEY);
+export const STATE_KEY1 = 'TEST_STATE';
+export type state1 = number | undefined;
+export const simpleState = new State<state1>(STATE_KEY1, null);
 
 /**
- * connect state
+ * simple state
  */
-export function connectToState(context: HTMLElement, callback: () => void): void {
-    // this register callback with simpleHtml elements disconnected callback
-    disconnectedCallback(context, () => unSubscribe(STATE_KEY, context));
-
-    // for following the event we just use the internal event handler
-    subscribe(STATE_KEY, context, callback);
-}
-
-/**
- * function to get state/state setter
- */
-export type state = string;
-export function viewState(defaultValue = '' as state): stateResult<state> {
-    return stateContainer<state>(STATE_KEY, defaultValue);
-}
+export const STATE_KEY2 = 'TEST_STATE2';
+export type state2 = { name: string };
+export const objectState = new State<state2>(STATE_KEY2, null, true);
 
 describe('state', () => {
-    it('simple state', (done) => {
-        @customElement('app-root1')
-        class Ele extends HTMLElement {
-            connectedCallback() {
-                connectToState(this, this.render);
-            }
+    it('simple state', () => {
+        const key = simpleState.getStateKey();
+        expect(key).toEqual(STATE_KEY1);
+        const [state1, setter1] = simpleState.getState();
+        expect(state1).toEqual(null);
+        setter1(1);
+        const state2 = simpleState.getStateValue();
+        expect(state2).toEqual(1);
+    });
 
-            render() {
-                const [currentState] = viewState('works');
-
-                return 'render.' + currentState;
-            }
-        }
-
-        // add custom element
-        document.body.innerHTML = '<app-root1 id="my-element"></app-root1>';
-
-        requestAnimationFrame(() => {
-            const node = document.getElementById('my-element');
-
-            const [_currentState, setCurrent] = viewState('works');
-            expect(_currentState).toEqual('works');
-            setCurrent('new');
-            setTimeout(() => {
-                expect(node.textContent).toEqual('render.new');
-                done();
-            }, 50);
-        });
+    it('object state', () => {
+        const key = objectState.getStateKey();
+        expect(key).toEqual(STATE_KEY2);
+        const [state3, setter3] = objectState.getStateObject();
+        expect(state3).toEqual({});
+        setter3({ name: 'cool' });
+        const state4 = objectState.getObjectValue();
+        expect(state4).toEqual({ name: 'cool' });
     });
 });
