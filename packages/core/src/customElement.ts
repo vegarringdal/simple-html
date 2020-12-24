@@ -83,7 +83,6 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
              * @param call
              */
             registerDisconnectCallback(call: () => void) {
-                logger('registerDisconnectCallback', this, super.tagName);
                 if (this.callers) {
                     this.callers.push(call);
                 } else {
