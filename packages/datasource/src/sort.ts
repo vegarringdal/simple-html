@@ -76,7 +76,7 @@ export class Sort {
         const thisSort = this.getOrderBy();
 
         // this is mix from different sources... from what I can tell it works now
-        array.sort((obj1: object, obj2: object) => {
+        array.sort((obj1: any, obj2: any) => {
             let result = 0;
 
             for (let i = 0; i < thisSort.length && result === 0; ++i) {

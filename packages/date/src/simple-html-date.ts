@@ -58,9 +58,7 @@ export class SimpleHtmlDate extends HTMLElement {
                 }
             }
             monthTemplates.push(html`<!-- month column -->
-                <div class="simple-html-date-col">
-                    ${columns.map((x) => x)}
-                </div>`);
+                <div class="simple-html-date-col">${columns.map((x) => x)}</div>`);
         }
 
         return html`<!-- -->

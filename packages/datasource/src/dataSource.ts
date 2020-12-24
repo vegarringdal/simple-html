@@ -13,7 +13,9 @@ import {
 } from './types';
 import { DataContainer } from './dataContainer';
 
-type callable = Function | { handleEvent: Function };
+type callF = (...args: any[]) => any;
+type callO = { handleEvent: (...args: any[]) => any };
+type callable = callF | callO;
 
 type EntityUnion<T> = Entity & T;
 

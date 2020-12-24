@@ -10,6 +10,8 @@ import {
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
 
+type f = (...args: any[]) => void;
+
 /**
  * Grid nterface is just connection between datasource/config to the grid.
  */
@@ -27,7 +29,7 @@ export class GridInterface<T = any> {
     /**
      * for subscribing event (current entity etc)
      **/
-    private __subscribers: Function[] = [];
+    private __subscribers: f[] = [];
 
     private __SCROLL_TOPS: number[];
     private __SCROLL_HEIGHTS: number[];
