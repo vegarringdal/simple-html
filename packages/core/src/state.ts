@@ -1,16 +1,10 @@
 import { disconnectedCallback, publish, subscribe, unSubscribe } from '.';
 
-let state = (window as any).state || {};
+const state = (window as any).state || {};
 const keys = new Set();
 
 // helper for fusebox hmr event
 if (!(window as any).state) {
-    window.addEventListener('HMR-FUSEBOX', () => {
-        console.warn('please publish: SIMPLE_HTML_SAVE_STATE as event, will remove HMR-FUSEBOX');
-        (window as any).state = state;
-        console.log('HMR-FUSEBOX', (window as any).state);
-    });
-
     window.addEventListener('SIMPLE_HTML_SAVE_STATE', () => {
         (window as any).state = state;
         console.log('SIMPLE_HTML_HMR', (window as any).state);
