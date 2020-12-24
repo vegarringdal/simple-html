@@ -7,7 +7,7 @@ import { logger } from './logger';
  *
  */
 export function property(options: { skipRender: boolean } = {} as any) {
-    return function reg(_class: () => void, prop: string): void {
+    return function reg(_class: any, prop: string): void {
         Object.defineProperty(_class, prop, {
             get: function () {
                 return this[getPropSymbol(this.tagName + '_' + prop)];
