@@ -72,7 +72,7 @@ export class Ele2 extends HTMLElement {
 export class Ele3 extends HTMLElement {
     @property({ skipRender: true }) myvalue = 0;
 
-    valuesChanged(type: string, propertyName: string, oldValue: any, newValue: any) {
+    valuesChangedCallback(type: string, propertyName: string, oldValue: any, newValue: any) {
         console.log(type, propertyName, oldValue, newValue);
         //small delay see it
         setTimeout(() => {
@@ -92,7 +92,7 @@ export class Ele3 extends HTMLElement {
 export class Ele4F extends HTMLElement {
     @attribute({ skipRender: true }) myValue = 0;
 
-    valuesChanged(type: string, propertyName: string, oldValue: any, newValue: any) {
+    valuesChangedCallback(type: string, propertyName: string, oldValue: any, newValue: any) {
         console.log(type, propertyName, oldValue, newValue);
         //small delay see it
         setTimeout(() => {
