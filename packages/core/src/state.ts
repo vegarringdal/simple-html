@@ -7,6 +7,7 @@ export const GLOBAL_STATE_EVENT = 'GLOBAL_STATE_EVENT';
 
 // helper for fusebox hmr event
 if (!(window as any).state) {
+    (window as any).state = {};
     window.addEventListener('SIMPLE_HTML_SAVE_STATE', () => {
         (window as any).state = state;
         console.log('SIMPLE_HTML_HMR', (window as any).state);
