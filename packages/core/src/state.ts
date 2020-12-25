@@ -3,6 +3,8 @@ import { disconnectedCallback, publish, subscribe, unSubscribe } from '.';
 const state = (window as any).state || {};
 const keys = new Set();
 
+export const GLOBAL_STATE_EVENT = 'GLOBAL_STATE_EVENT';
+
 // helper for fusebox hmr event
 if (!(window as any).state) {
     window.addEventListener('SIMPLE_HTML_SAVE_STATE', () => {
@@ -36,6 +38,13 @@ export class State<T> {
     private forceObject: boolean;
     internalStateKey: string;
 
+    /**
+     * Simple global state container
+     * @param STATE_KEY
+     * @param defaultValue
+     * @param forceObject
+     * @param internalStateKey if you use internal store then it wont be verified if you override old keys
+     */
     constructor(
         STATE_KEY: string,
         defaultValue: T = null,
@@ -110,6 +119,7 @@ export class State<T> {
 
         const setAndPublish = function (value: any) {
             STATE[STATE_KEY] = value;
+            publish(GLOBAL_STATE_EVENT, state);
             publish(STATE_KEY, value);
         };
 
@@ -141,6 +151,7 @@ export class State<T> {
 
         function assignAndPublish<K extends keyof T>(part: Pick<T, K>): void {
             STATE[STATE_KEY] = assignState(STATE[STATE_KEY] as T, part);
+            publish(GLOBAL_STATE_EVENT, state);
             publish(STATE_KEY, STATE[STATE_KEY]);
         }
 

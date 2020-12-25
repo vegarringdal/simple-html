@@ -2,9 +2,6 @@ import { getPropSymbol } from './symbols';
 
 /**
  * @property prop
- * TODO combine this to cover property and attribute decorators
- *
- *
  */
 export function prop() {
     return function reg(_class: () => void, prop: string): void {
