@@ -1,4 +1,4 @@
-import { disconnectedCallback, publish, subscribe, unSubscribe } from '.';
+import { disconnectedCallback, publish, subscribe, unSubscribe } from './index';
 
 const state = (window as any).state || {};
 const keys = new Set();

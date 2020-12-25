@@ -1,4 +1,4 @@
-import { subscribe, unSubscribe, publish } from '@simple-html/core/src';
+import { subscribe, unSubscribe, publish } from '@simple-html/core';
 /**
  * Simple functions used for can deactivate event
  */
