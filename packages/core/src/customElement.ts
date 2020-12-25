@@ -28,8 +28,10 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
         if (Array.isArray(observedAttributes) && !Array.isArray(elementClass.observedAttributes)) {
             elementClass.observedAttributes = observedAttributes;
         }
-
+        type fn = () => void;
         const Base: any = class extends elementClass {
+            disconnectCallbackCallers: fn[];
+            updateCallbackCallers: fn[];
             constructor() {
                 super();
                 // lets have this to know if constructor is done or not
@@ -52,10 +54,18 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                     const template = super.render.call(this, ...result);
                     Promise.resolve(template).then((templates) => {
                         render(templates, this as any, { eventContext: this as any });
-                        if (super.updatedCallback) {
+                        if (super.updatedCallback || this.updateCallbackCallers) {
                             //delay so it actually get a chance to update
                             requestAnimationFrame(() => {
-                                super.updatedCallback();
+                                if (this.updateCallbackCallers) {
+                                    this.updateCallbackCallers.forEach((call: () => void) =>
+                                        call()
+                                    );
+                                }
+                                this.updateCallbackCallers = [];
+                                if (super.updatedCallback) {
+                                    super.updatedCallback();
+                                }
                             });
                         }
                     });
@@ -80,27 +90,39 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
              * @param call
              */
             registerDisconnectCallback(call: () => void) {
-                if (this.callers) {
-                    this.callers.push(call);
+                if (this.disconnectCallbackCallers) {
+                    this.disconnectCallbackCallers.push(call);
                 } else {
-                    this.callers = [];
-                    this.callers.push(call);
+                    this.disconnectCallbackCallers = [];
+                    this.disconnectCallbackCallers.push(call);
+                }
+            }
+
+            /**
+             * register for next callback event - only once
+             * @param call
+             */
+            registerUpdatedCallback(call: () => void) {
+                if (this.updateCallbackCallers) {
+                    this.updateCallbackCallers.push(call);
+                } else {
+                    this.updateCallbackCallers = [];
+                    this.updateCallbackCallers.push(call);
                 }
             }
 
             disconnectedCallback() {
-                if (this.callers) {
-                    this.callers.forEach((call: () => void) => call());
+                if (this.disconnectCallbackCallers) {
+                    this.disconnectCallbackCallers.forEach((call: () => void) => call());
                 }
-                this.callers = [];
+                this.updateCallbackCallers = []; // remove these if any we dont stop it getting garbage collected
+                this.disconnectCallbackCallers = [];
                 if (super.disconnectedCallback) {
                     super.disconnectedCallback.call(this);
                 }
             }
 
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-                //get map
-
                 if (!this[getObservedAttributesMapSymbol()]) {
                     const attribute = name
                         .replace(/([a-z])([A-Z])/g, '$1-$2')
@@ -112,6 +134,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
 
                 const nameProp = this[getObservedAttributesMapSymbol()].get(name);
                 this[nameProp] = newValue || '';
+
                 // if normal attributeChanged is set
                 if (super.attributeChangedCallback) {
                     super.attributeChangedCallback.call(this, name, oldValue, newValue);

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { customElement, attribute } from '../src';
+import { updatedCallback } from '../src/updateCallback';
 
 describe('customElement attributeChangedCallback native', () => {
     it('standard attibute', (done) => {
@@ -67,8 +68,8 @@ describe('customElement attributeChangedCallback native', () => {
      *********************************************************************************/
     it('custom attributeChangedCallback @attribute', (done) => {
         // simple variable for holding value so we can check in the end
-        const attributeChangedCallbacks: string[][] = [];
-        const valuesChangedCallbacks: string[][] = [];
+        let attributeChangedCallbacks: string[][] = [];
+        let valuesChangedCallbacks: string[][] = [];
 
         // our element with minimum config
         @customElement('app-root2')
@@ -100,38 +101,33 @@ describe('customElement attributeChangedCallback native', () => {
                 'render works:initvalue'
             );
 
-            // set newvalue so we can also test change trigger
-            document.getElementById('my-element').setAttribute('my-att', 'newvalue');
+            // init set
+            expect(attributeChangedCallbacks[0]).toEqual(['my-att', null, 'initvalue']);
+            // no init from null to value on props
+            expect(valuesChangedCallbacks[0]).toEqual([
+                'property',
+                'myAtt',
+                'whatever',
+                'initvalue'
+            ]);
+            expect(valuesChangedCallbacks[1]).toEqual(['attribute', 'my-att', null, 'initvalue']);
 
-            requestAnimationFrame(() => {
-                // init set
-                expect(attributeChangedCallbacks[0]).toEqual(['my-att', null, 'initvalue']);
+            // reset callback functions
+            attributeChangedCallbacks = [];
+            valuesChangedCallbacks = [];
+
+            updatedCallback(document.getElementById('my-element'), () => {
+                // after edit
+                expect(attributeChangedCallbacks[0]).toEqual(['my-att', 'initvalue', 'newvalue']);
 
                 // after edit
-                expect(attributeChangedCallbacks[1]).toEqual(['my-att', 'initvalue', 'newvalue']);
-
-                // no init from null to value on props
                 expect(valuesChangedCallbacks[0]).toEqual([
-                    'property',
-                    'myAtt',
-                    'whatever',
-                    'initvalue'
-                ]);
-                expect(valuesChangedCallbacks[1]).toEqual([
-                    'attribute',
-                    'my-att',
-                    null,
-                    'initvalue'
-                ]);
-
-                // after edit
-                expect(valuesChangedCallbacks[2]).toEqual([
                     'property',
                     'myAtt',
                     'initvalue',
                     'newvalue'
                 ]);
-                expect(valuesChangedCallbacks[3]).toEqual([
+                expect(valuesChangedCallbacks[1]).toEqual([
                     'attribute',
                     'my-att',
                     'initvalue',
@@ -140,6 +136,9 @@ describe('customElement attributeChangedCallback native', () => {
 
                 done();
             });
+
+            // set newvalue so we can also test change trigger
+            document.getElementById('my-element').setAttribute('my-att', 'newvalue');
         });
     });
 });
