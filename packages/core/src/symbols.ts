@@ -32,24 +32,6 @@ export function getPropSymbol(name: string) {
     }
 }
 
-export function getLoggerSymbol() {
-    if (!(globalThis as any)._LHF_SYMBOL.logger) {
-        (globalThis as any)._LHF_SYMBOL.logger = Symbol('logger');
-        return (globalThis as any)._LHF_SYMBOL.logger;
-    } else {
-        return (globalThis as any)._LHF_SYMBOL.logger;
-    }
-}
-
-export function getLoggerCountSymbol() {
-    if (!(globalThis as any)._LHF_SYMBOL.loggerCount) {
-        (globalThis as any)._LHF_SYMBOL.loggerCount = Symbol('loggerCount');
-        return (globalThis as any)._LHF_SYMBOL.loggerCount;
-    } else {
-        return (globalThis as any)._LHF_SYMBOL.loggerCount;
-    }
-}
-
 export function getTransmitterSymbol() {
     if (!(globalThis as any)._LHF_SYMBOL.transmitter) {
         (globalThis as any)._LHF_SYMBOL.transmitter = Symbol('transmitter');
