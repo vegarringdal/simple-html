@@ -110,33 +110,27 @@ describe('customElement attributeChangedCallback native', () => {
                 expect(attributeChangedCallbacks[4]).toEqual('initvalue');
                 expect(attributeChangedCallbacks[5]).toEqual('newvalue');
 
-                // init set
-
+                // no init from null to value on props
                 expect(valuesChangedCallbacks[0]).toEqual('property');
                 expect(valuesChangedCallbacks[1]).toEqual('myAtt');
-                expect(valuesChangedCallbacks[2]).toEqual(undefined);
-                expect(valuesChangedCallbacks[3]).toEqual('whatever');
+                expect(valuesChangedCallbacks[2]).toEqual('whatever');
+                expect(valuesChangedCallbacks[3]).toEqual('initvalue');
 
-                expect(valuesChangedCallbacks[4]).toEqual('property');
-                expect(valuesChangedCallbacks[5]).toEqual('myAtt');
-                expect(valuesChangedCallbacks[6]).toEqual('whatever');
+                expect(valuesChangedCallbacks[4]).toEqual('attribute');
+                expect(valuesChangedCallbacks[5]).toEqual('my-att');
+                expect(valuesChangedCallbacks[6]).toEqual(null);
                 expect(valuesChangedCallbacks[7]).toEqual('initvalue');
-
-                expect(valuesChangedCallbacks[8]).toEqual('attribute');
-                expect(valuesChangedCallbacks[9]).toEqual('my-att');
-                expect(valuesChangedCallbacks[10]).toEqual(null);
-                expect(valuesChangedCallbacks[11]).toEqual('initvalue');
                 // after edit
 
-                expect(valuesChangedCallbacks[12]).toEqual('property');
-                expect(valuesChangedCallbacks[13]).toEqual('myAtt');
+                expect(valuesChangedCallbacks[8]).toEqual('property');
+                expect(valuesChangedCallbacks[9]).toEqual('myAtt');
+                expect(valuesChangedCallbacks[10]).toEqual('initvalue');
+                expect(valuesChangedCallbacks[11]).toEqual('newvalue');
+
+                expect(valuesChangedCallbacks[12]).toEqual('attribute');
+                expect(valuesChangedCallbacks[13]).toEqual('my-att');
                 expect(valuesChangedCallbacks[14]).toEqual('initvalue');
                 expect(valuesChangedCallbacks[15]).toEqual('newvalue');
-
-                expect(valuesChangedCallbacks[16]).toEqual('attribute');
-                expect(valuesChangedCallbacks[17]).toEqual('my-att');
-                expect(valuesChangedCallbacks[18]).toEqual('initvalue');
-                expect(valuesChangedCallbacks[19]).toEqual('newvalue');
                 done();
             });
         });

@@ -29,28 +29,25 @@ describe('customElement property', () => {
             // set newvalue so we can also test change trigger
             node.myprop = 'newvalue';
 
-            requestAnimationFrame(() => {
+            setTimeout(() => {
+                // requestAnimationFrame(() => {
                 expect(node.textContent).toEqual('render works:newvalue');
-                // init set
+
                 expect(valuesChanged[0]).toEqual('property');
                 expect(valuesChanged[1]).toEqual('myprop');
-                expect(valuesChanged[2]).toEqual(undefined);
-                expect(valuesChanged[3]).toEqual('initvalue');
-                // after edit
-                expect(valuesChanged[4]).toEqual('property');
-                expect(valuesChanged[5]).toEqual('myprop');
-                expect(valuesChanged[6]).toEqual('initvalue');
-                expect(valuesChanged[7]).toEqual('newvalue');
+                expect(valuesChanged[2]).toEqual('initvalue');
+                expect(valuesChanged[3]).toEqual('newvalue');
 
                 // trigger again
                 node.myprop = 'more';
 
-                expect(valuesChanged[8]).toEqual('property');
-                expect(valuesChanged[9]).toEqual('myprop');
-                expect(valuesChanged[10]).toEqual('newvalue');
-                expect(valuesChanged[11]).toEqual('more');
+                expect(valuesChanged[4]).toEqual('property');
+                expect(valuesChanged[5]).toEqual('myprop');
+                expect(valuesChanged[6]).toEqual('newvalue');
+                expect(valuesChanged[7]).toEqual('more');
                 done();
-            });
+                //});
+            }, 100);
         });
     });
 });

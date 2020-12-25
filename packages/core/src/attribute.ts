@@ -19,11 +19,13 @@ export function attribute(options: { skipRender: boolean } = {} as any) {
             set: function (x: any) {
                 const oldValue = this[getPropSymbol(this.tagName + '_' + prop)];
                 this[getPropSymbol(this.tagName + '_' + prop)] = x;
-                if (this.valuesChangedCallback && oldValue !== x) {
-                    this.valuesChangedCallback('property', prop, oldValue, x);
-                }
-                if (oldValue !== x && !options.skipRender) {
-                    requestRender(this);
+                if (this.__constructorDone) {
+                    if (this.valuesChangedCallback && oldValue !== x) {
+                        this.valuesChangedCallback('property', prop, oldValue, x);
+                    }
+                    if (oldValue !== x && !options.skipRender) {
+                        requestRender(this);
+                    }
                 }
             },
             configurable: true

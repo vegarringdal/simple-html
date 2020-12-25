@@ -32,6 +32,9 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
         const Base: any = class extends elementClass {
             constructor() {
                 super();
+                // lets have this to know if constructor is done or not
+                // this way we can skip prop attribute changed values happing before constructor
+                this.__constructorDone = true;
             }
 
             /**
