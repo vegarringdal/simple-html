@@ -1,6 +1,5 @@
 import { requestRender } from './requestRender';
 import { getPropSymbol } from './symbols';
-import { logger } from './logger';
 
 /**
  * @property decorator
@@ -13,8 +12,6 @@ export function property(options: { skipRender: boolean } = {} as any) {
                 return this[getPropSymbol(this.tagName + '_' + prop)];
             },
             set: function (x: any) {
-                logger('property set', this, this.tagName);
-
                 const oldValue = this[getPropSymbol(this.tagName + '_' + prop)];
                 this[getPropSymbol(this.tagName + '_' + prop)] = x;
                 if (this.valuesChangedCallback && oldValue !== x) {

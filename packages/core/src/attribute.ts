@@ -4,7 +4,6 @@ import {
     getObservedAttributesSymbol,
     getPropSymbol
 } from './symbols';
-import { logger } from './logger';
 
 /**
  * @attibute- decorator
@@ -18,8 +17,6 @@ export function attribute(options: { skipRender: boolean } = {} as any) {
                 return this[getPropSymbol(this.tagName + '_' + prop)];
             },
             set: function (x: any) {
-                logger('attribute set', this, this.tagName);
-
                 const oldValue = this[getPropSymbol(this.tagName + '_' + prop)];
                 this[getPropSymbol(this.tagName + '_' + prop)] = x;
                 if (this.valuesChangedCallback && oldValue !== x) {

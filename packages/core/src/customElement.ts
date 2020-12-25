@@ -1,6 +1,5 @@
 import { render } from 'lit-html';
 import { getObservedAttributesSymbol, getObservedAttributesMapSymbol } from './symbols';
-import { logger } from './logger';
 
 /**
  * @customElement- decorator
@@ -33,7 +32,6 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
         const Base: any = class extends elementClass {
             constructor() {
                 super();
-                logger('constructor', this, super.tagName);
             }
 
             /**
@@ -41,7 +39,6 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
              */
             renderCallback() {
                 if (super.renderCallback) {
-                    logger('renderCallback', this, super.tagName);
                     super.renderCallback.call(this);
                 }
             }
@@ -49,7 +46,6 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             render(...result: any[]) {
                 this.renderCallback();
                 if (super.render) {
-                    logger('render', this, super.tagName);
                     const template = super.render.call(this, ...result);
                     Promise.resolve(template).then((templates) => {
                         render(templates, this as any, { eventContext: this as any });
@@ -64,14 +60,12 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             }
 
             adoptedCallback() {
-                logger('adoptedCallback', this, super.tagName);
                 if (super.adoptedCallback) {
                     super.adoptedCallback();
                 }
             }
 
             connectedCallback() {
-                logger('connectedCallback', this, super.tagName);
                 if (super.connectedCallback) {
                     super.connectedCallback.call(this);
                 }
@@ -92,7 +86,6 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             }
 
             disconnectedCallback() {
-                logger('disconnectedCallback', this, super.tagName);
                 if (this.callers) {
                     this.callers.forEach((call: () => void) => call());
                 }
@@ -103,7 +96,6 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             }
 
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-                logger('attributeChangedCallback', this, super.tagName);
                 //get map
 
                 if (!this[getObservedAttributesMapSymbol()]) {
