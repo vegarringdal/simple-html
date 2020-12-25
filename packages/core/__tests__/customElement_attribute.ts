@@ -3,8 +3,8 @@ import { customElement, attribute } from '../src';
 
 describe('customElement attributeChangedCallback native', () => {
     it('standard attibute', (done) => {
-        const attributeChangedCallbacks: string[] = [];
-        const valuesChangedCallbacks: string[] = [];
+        const attributeChangedCallbacks: string[][] = [];
+        const valuesChangedCallbacks: string[][] = [];
 
         @customElement('app-root1')
         class Ele extends HTMLElement {
@@ -13,11 +13,11 @@ describe('customElement attributeChangedCallback native', () => {
             }
 
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-                attributeChangedCallbacks.push(name, oldValue, newValue);
+                attributeChangedCallbacks.push([name, oldValue, newValue]);
             }
 
             valuesChangedCallback(type: string, name: string, oldValue: string, newValue: string) {
-                valuesChangedCallbacks.push(type, name, oldValue, newValue);
+                valuesChangedCallbacks.push([type, name, oldValue, newValue]);
             }
 
             render() {
@@ -36,24 +36,27 @@ describe('customElement attributeChangedCallback native', () => {
 
             requestAnimationFrame(() => {
                 // init set
-                expect(attributeChangedCallbacks[0]).toEqual('my-att');
-                expect(attributeChangedCallbacks[1]).toEqual(null);
-                expect(attributeChangedCallbacks[2]).toEqual('initvalue');
+                expect(attributeChangedCallbacks[0]).toEqual(['my-att', null, 'initvalue']);
+
                 // after edit
-                expect(attributeChangedCallbacks[3]).toEqual('my-att');
-                expect(attributeChangedCallbacks[4]).toEqual('initvalue');
-                expect(attributeChangedCallbacks[5]).toEqual('newvalue');
+                expect(attributeChangedCallbacks[1]).toEqual(['my-att', 'initvalue', 'newvalue']);
 
                 // init set
-                expect(valuesChangedCallbacks[0]).toEqual('attribute');
-                expect(valuesChangedCallbacks[1]).toEqual('my-att');
-                expect(valuesChangedCallbacks[2]).toEqual(null);
-                expect(valuesChangedCallbacks[3]).toEqual('initvalue');
+                expect(valuesChangedCallbacks[0]).toEqual([
+                    'attribute',
+                    'my-att',
+                    null,
+                    'initvalue'
+                ]);
+
                 // after edit
-                expect(valuesChangedCallbacks[4]).toEqual('attribute');
-                expect(valuesChangedCallbacks[5]).toEqual('my-att');
-                expect(valuesChangedCallbacks[6]).toEqual('initvalue');
-                expect(valuesChangedCallbacks[7]).toEqual('newvalue');
+                expect(valuesChangedCallbacks[1]).toEqual([
+                    'attribute',
+                    'my-att',
+                    'initvalue',
+                    'newvalue'
+                ]);
+
                 done();
             });
         });
@@ -64,8 +67,8 @@ describe('customElement attributeChangedCallback native', () => {
      *********************************************************************************/
     it('custom attributeChangedCallback @attribute', (done) => {
         // simple variable for holding value so we can check in the end
-        const attributeChangedCallbacks: string[] = [];
-        const valuesChangedCallbacks: string[] = [];
+        const attributeChangedCallbacks: string[][] = [];
+        const valuesChangedCallbacks: string[][] = [];
 
         // our element with minimum config
         @customElement('app-root2')
@@ -77,11 +80,11 @@ describe('customElement attributeChangedCallback native', () => {
             }
 
             attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-                attributeChangedCallbacks.push(name, oldValue, newValue);
+                attributeChangedCallbacks.push([name, oldValue, newValue]);
             }
 
             valuesChangedCallback(type: string, name: string, oldValue: string, newValue: string) {
-                valuesChangedCallbacks.push(type, name, oldValue, newValue);
+                valuesChangedCallbacks.push([type, name, oldValue, newValue]);
             }
 
             render() {
@@ -102,35 +105,39 @@ describe('customElement attributeChangedCallback native', () => {
 
             requestAnimationFrame(() => {
                 // init set
-                expect(attributeChangedCallbacks[0]).toEqual('my-att');
-                expect(attributeChangedCallbacks[1]).toEqual(null);
-                expect(attributeChangedCallbacks[2]).toEqual('initvalue');
+                expect(attributeChangedCallbacks[0]).toEqual(['my-att', null, 'initvalue']);
+
                 // after edit
-                expect(attributeChangedCallbacks[3]).toEqual('my-att');
-                expect(attributeChangedCallbacks[4]).toEqual('initvalue');
-                expect(attributeChangedCallbacks[5]).toEqual('newvalue');
+                expect(attributeChangedCallbacks[1]).toEqual(['my-att', 'initvalue', 'newvalue']);
 
                 // no init from null to value on props
-                expect(valuesChangedCallbacks[0]).toEqual('property');
-                expect(valuesChangedCallbacks[1]).toEqual('myAtt');
-                expect(valuesChangedCallbacks[2]).toEqual('whatever');
-                expect(valuesChangedCallbacks[3]).toEqual('initvalue');
+                expect(valuesChangedCallbacks[0]).toEqual([
+                    'property',
+                    'myAtt',
+                    'whatever',
+                    'initvalue'
+                ]);
+                expect(valuesChangedCallbacks[1]).toEqual([
+                    'attribute',
+                    'my-att',
+                    null,
+                    'initvalue'
+                ]);
 
-                expect(valuesChangedCallbacks[4]).toEqual('attribute');
-                expect(valuesChangedCallbacks[5]).toEqual('my-att');
-                expect(valuesChangedCallbacks[6]).toEqual(null);
-                expect(valuesChangedCallbacks[7]).toEqual('initvalue');
                 // after edit
+                expect(valuesChangedCallbacks[2]).toEqual([
+                    'property',
+                    'myAtt',
+                    'initvalue',
+                    'newvalue'
+                ]);
+                expect(valuesChangedCallbacks[3]).toEqual([
+                    'attribute',
+                    'my-att',
+                    'initvalue',
+                    'newvalue'
+                ]);
 
-                expect(valuesChangedCallbacks[8]).toEqual('property');
-                expect(valuesChangedCallbacks[9]).toEqual('myAtt');
-                expect(valuesChangedCallbacks[10]).toEqual('initvalue');
-                expect(valuesChangedCallbacks[11]).toEqual('newvalue');
-
-                expect(valuesChangedCallbacks[12]).toEqual('attribute');
-                expect(valuesChangedCallbacks[13]).toEqual('my-att');
-                expect(valuesChangedCallbacks[14]).toEqual('initvalue');
-                expect(valuesChangedCallbacks[15]).toEqual('newvalue');
                 done();
             });
         });
