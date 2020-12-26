@@ -59,9 +59,7 @@
         "tailwindcss": "2.0.2",
         "ts-jest": "^26.4.4",
         "typescript": "^4.1.3",
-        "postcss": "^8.2.1"
-    },
-    "dependencies": {
+        "postcss": "^8.2.1",
         "jsdom": "^16.4.0"
     }
 }
