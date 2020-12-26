@@ -39,17 +39,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 this.__constructorDone = true;
             }
 
-            /**
-             * called
-             */
-            renderCallback() {
-                if (super.renderCallback) {
-                    super.renderCallback.call(this);
-                }
-            }
-
             render(...result: any[]) {
-                this.renderCallback();
                 if (super.render) {
                     const template = super.render.call(this, ...result);
                     Promise.resolve(template).then((templates) => {
