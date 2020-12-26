@@ -78,12 +78,46 @@ describe('getRouteParams query', () => {
 });
 
 describe('full test', () => {
-    it('cool:wow', () => {
+    it('home/:var1 & cool/wow', () => {
         const result = getRouteParams('home/:var1', 'cool/wow');
         expect(result).toEqual({ _paths: ['wow'], _query: {}, var1: 'wow' });
     });
-    it('cool:wow?test=1', () => {
+
+    it('home/:var1 & cool/wow/come', () => {
+        const result = getRouteParams('home/:var1', 'cool/wow/come');
+        expect(result).toEqual({ _paths: ['wow', 'come'], _query: {}, var1: 'wow' });
+    });
+
+    it('home/:var1 & cool/wow?test=1', () => {
         const result = getRouteParams('home/:var1', 'cool/wow?test=1');
         expect(result).toEqual({ _paths: ['wow'], _query: { test: '1' }, var1: 'wow' });
+    });
+
+    it(':first/:var1 & cool/wow?test=1', () => {
+        const result = getRouteParams(':first/:var1', 'cool/wow?test=1');
+        expect(result).toEqual({
+            _paths: ['wow'],
+            _query: { test: '1' },
+            var1: 'wow',
+            first: 'cool'
+        });
+    });
+
+    it(':var1/:var1 & cool/wow?test=1', () => {
+        const result = getRouteParams(':var1/:var1', 'cool/wow?test=1');
+        expect(result).toEqual({
+            _paths: ['wow'],
+            _query: { test: '1' },
+            var1: 'wow'
+        });
+    });
+
+    it(':var1 & cool/wow?test=1', () => {
+        const result = getRouteParams(':var1', 'cool/wow?test=1');
+        expect(result).toEqual({
+            _paths: ['cool', 'wow'],
+            _query: { test: '1' },
+            var1: 'cool'
+        });
     });
 });
