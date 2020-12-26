@@ -1,5 +1,5 @@
 import { requestRender } from './requestRender';
-import { getPropSymbol } from './symbols';
+import { getConstructorDoneSymbol, getPropSymbol } from './symbols';
 
 /**
  * @property decorator
@@ -14,7 +14,7 @@ export function property(options: { skipRender: boolean } = {} as any) {
             set: function (x: any) {
                 const oldValue = this[getPropSymbol(this.tagName + '_' + prop)];
                 this[getPropSymbol(this.tagName + '_' + prop)] = x;
-                if (this.__constructorDone) {
+                if (this[getConstructorDoneSymbol()]) {
                     if (this.valuesChangedCallback && oldValue !== x) {
                         this.valuesChangedCallback('property', prop, oldValue, x);
                     }

@@ -1,5 +1,11 @@
 import { render } from 'lit-html';
-import { getObservedAttributesSymbol, getObservedAttributesMapSymbol } from './symbols';
+import {
+    getObservedAttributesSymbol,
+    getObservedAttributesMapSymbol,
+    getConstructorDoneSymbol,
+    getDisconnectCallbackCallerSymbol,
+    getUpdateCallbackCallersSymbol
+} from './symbols';
 
 /**
  * @customElement- decorator
@@ -28,15 +34,19 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
         if (Array.isArray(observedAttributes) && !Array.isArray(elementClass.observedAttributes)) {
             elementClass.observedAttributes = observedAttributes;
         }
-        type fn = () => void;
+
         const Base: any = class extends elementClass {
-            disconnectCallbackCallers: fn[];
-            updateCallbackCallers: fn[];
+            ['updateCallbackCallersSymbol']: (() => void)[];
+            ['getDisconnectCallbackCallerSymbol']: (() => void)[];
+            ['getConstructorDoneSymbol']: boolean;
+
             constructor() {
                 super();
                 // lets have this to know if constructor is done or not
                 // this way we can skip prop attribute changed values happing before constructor
-                this.__constructorDone = true;
+                this[getUpdateCallbackCallersSymbol()] = [];
+                this[getDisconnectCallbackCallerSymbol()] = [];
+                this[getConstructorDoneSymbol()] = true;
             }
 
             render(...result: any[]) {
@@ -44,15 +54,14 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                     const template = super.render.call(this, ...result);
                     Promise.resolve(template).then((templates) => {
                         render(templates, this as any, { eventContext: this as any });
-                        if (super.updatedCallback || this.updateCallbackCallers) {
+                        const callers = this[getUpdateCallbackCallersSymbol()];
+                        if (super.updatedCallback || callers.length) {
                             //delay so it actually get a chance to update
                             requestAnimationFrame(() => {
-                                if (this.updateCallbackCallers) {
-                                    this.updateCallbackCallers.forEach((call: () => void) =>
-                                        call()
-                                    );
+                                if (callers.length) {
+                                    callers.forEach((call: () => void) => call());
                                 }
-                                this.updateCallbackCallers = [];
+                                this[getUpdateCallbackCallersSymbol()] = [];
                                 if (super.updatedCallback) {
                                     super.updatedCallback();
                                 }
@@ -80,12 +89,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
              * @param call
              */
             registerDisconnectCallback(call: () => void) {
-                if (this.disconnectCallbackCallers) {
-                    this.disconnectCallbackCallers.push(call);
-                } else {
-                    this.disconnectCallbackCallers = [];
-                    this.disconnectCallbackCallers.push(call);
-                }
+                this[getDisconnectCallbackCallerSymbol()].push(call);
             }
 
             /**
@@ -93,20 +97,16 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
              * @param call
              */
             registerUpdatedCallback(call: () => void) {
-                if (this.updateCallbackCallers) {
-                    this.updateCallbackCallers.push(call);
-                } else {
-                    this.updateCallbackCallers = [];
-                    this.updateCallbackCallers.push(call);
-                }
+                this[getUpdateCallbackCallersSymbol()].push(call);
             }
 
             disconnectedCallback() {
-                if (this.disconnectCallbackCallers) {
-                    this.disconnectCallbackCallers.forEach((call: () => void) => call());
+                const callers = this[getDisconnectCallbackCallerSymbol()];
+                if (callers.length) {
+                    callers.forEach((call: () => void) => call());
                 }
-                this.updateCallbackCallers = []; // remove these if any we dont stop it getting garbage collected
-                this.disconnectCallbackCallers = [];
+                this[getUpdateCallbackCallersSymbol()] = []; // remove these if any we dont stop it getting garbage collected
+                this[getDisconnectCallbackCallerSymbol()] = [];
                 if (super.disconnectedCallback) {
                     super.disconnectedCallback.call(this);
                 }
