@@ -40,8 +40,8 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             ['getDisconnectCallbackCallerSymbol']: (() => void)[];
             ['getConstructorDoneSymbol']: boolean;
 
-            constructor() {
-                super();
+            constructor(...result: any[]) {
+                super(...result);
                 // lets have this to know if constructor is done or not
                 // this way we can skip prop attribute changed values happing before constructor
                 this[getUpdateCallbackCallersSymbol()] = [];
@@ -71,15 +71,15 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 }
             }
 
-            adoptedCallback() {
+            adoptedCallback(...result: any[]) {
                 if (super.adoptedCallback) {
-                    super.adoptedCallback();
+                    super.adoptedCallback.call(this, ...result);
                 }
             }
 
-            connectedCallback() {
+            connectedCallback(...result: any[]) {
                 if (super.connectedCallback) {
-                    super.connectedCallback.call(this);
+                    super.connectedCallback.call(this, ...result);
                 }
                 this.render(this);
             }
@@ -100,7 +100,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 this[getUpdateCallbackCallersSymbol()].push(call);
             }
 
-            disconnectedCallback() {
+            disconnectedCallback(...result: any[]) {
                 const callers = this[getDisconnectCallbackCallerSymbol()];
                 if (callers.length) {
                     callers.forEach((call: () => void) => call());
@@ -108,7 +108,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 this[getUpdateCallbackCallersSymbol()] = []; // remove these if any we dont stop it getting garbage collected
                 this[getDisconnectCallbackCallerSymbol()] = [];
                 if (super.disconnectedCallback) {
-                    super.disconnectedCallback.call(this);
+                    super.disconnectedCallback.call(this, ...result);
                 }
             }
 
