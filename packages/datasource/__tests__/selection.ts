@@ -71,5 +71,50 @@ describe('datasource selection', () => {
         done();
     });
 
+    it('select(2)', (done) => {
+        datasource.select(2);
+        expect(datasource.currentEntity).toEqual(simpleArray[1]);
+        done();
+    });
+
+    it('select row 1-3', (done) => {
+        datasource.getSelection().highlightRow({} as any, 1);
+        datasource.getSelection().highlightRow({ shiftKey: true } as any, 3);
+        expect(datasource.getSelection().getSelectedRows()).toEqual([1, 2, 3]);
+        done();
+    });
+
+    it('select row 1-3 and not row 2', (done) => {
+        datasource.getSelection().highlightRow({} as any, 1);
+        datasource.getSelection().highlightRow({ shiftKey: true } as any, 3);
+        datasource.getSelection().highlightRow({ ctrlKey: true } as any, 2); // deselect
+        expect(datasource.getSelection().getSelectedRows()).toEqual([1, 3]);
+        done();
+    });
+
+    it('select row 2 and 4', (done) => {
+        datasource.getSelection().deSelectAll();
+        datasource.getSelection().highlightRow({ ctrlKey: true } as any, 2);
+        datasource.getSelection().highlightRow({ ctrlKey: true } as any, 4);
+        expect(datasource.getSelection().getSelectedRows()).toEqual([2, 4]);
+        done();
+    });
+
+    it('select row 2 and 4', (done) => {
+        datasource.getSelection().deSelectAll();
+        datasource.getSelection().highlightRow({} as any, 2);
+        datasource.getSelection().highlightRow({ ctrlKey: true } as any, 4);
+        expect(datasource.getSelection().getSelectedRows()).toEqual([2, 4]);
+        done();
+    });
+
+    it('deSelectAll, select -1, then shiftkey row 4', (done) => {
+        datasource.getSelection().deSelectAll();
+        datasource.getSelection().highlightRow({} as any, -1);
+        datasource.getSelection().highlightRow({ shiftKey: true } as any, 4);
+        expect(datasource.getSelection().getSelectedRows()).toEqual([4]);
+        done();
+    });
+
     // todo clear currentEntity on filter ?
 });
