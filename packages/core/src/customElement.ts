@@ -89,7 +89,11 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
              * @param call
              */
             registerDisconnectCallback(call: () => void) {
-                this[getDisconnectCallbackCallerSymbol()].push(call);
+                if (this[getDisconnectCallbackCallerSymbol()]) {
+                    this[getDisconnectCallbackCallerSymbol()].push(call);
+                } else {
+                    console.warn('you tried to reregister disconnect callback when not allowed');
+                }
             }
 
             /**
@@ -97,16 +101,21 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
              * @param call
              */
             registerUpdatedCallback(call: () => void) {
-                this[getUpdateCallbackCallersSymbol()].push(call);
+                if (this[getUpdateCallbackCallersSymbol()]) {
+                    this[getUpdateCallbackCallersSymbol()].push(call);
+                } else {
+                    console.warn('you tried to reregister updated callback when not allowed');
+                }
             }
 
             disconnectedCallback(...result: any[]) {
+                this[getUpdateCallbackCallersSymbol()] = null; // set to null, so they cant reregister
                 const callers = this[getDisconnectCallbackCallerSymbol()];
+                this[getDisconnectCallbackCallerSymbol()] = null; // set to null, so they cant reregister
                 if (callers.length) {
                     callers.forEach((call: () => void) => call());
                 }
-                this[getUpdateCallbackCallersSymbol()] = []; // remove these if any we dont stop it getting garbage collected
-                this[getDisconnectCallbackCallerSymbol()] = [];
+
                 if (super.disconnectedCallback) {
                     super.disconnectedCallback.call(this, ...result);
                 }
