@@ -63,7 +63,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                                 }
                                 this[getUpdateCallbackCallersSymbol()] = [];
                                 if (super.updatedCallback) {
-                                    super.updatedCallback();
+                                    super.updatedCallback.call(this);
                                 }
                             });
                         }
