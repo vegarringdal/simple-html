@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { property, customElement } from '../src';
 
-describe('customElement property decorator with skip render', () => {
+describe('customElement property decorator with skip render but initial value', () => {
     let changedCallbacks: string[][] = [];
 
     beforeAll((done) => {
