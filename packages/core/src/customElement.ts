@@ -131,7 +131,7 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                 }
                 //if our simpler method is set (this is used by the @attribute and @property decorators)
                 if (super.valuesChangedCallback) {
-                    super.valuesChangedCallback('attribute', name, oldValue, newValue);
+                    super.valuesChangedCallback.call(this, 'attribute', name, oldValue, newValue);
                 }
             }
         };

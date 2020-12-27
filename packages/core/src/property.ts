@@ -16,7 +16,7 @@ export function property(options: { skipRender: boolean } = {} as any) {
                 this[getPropSymbol(this.tagName + '_' + prop)] = x;
                 if (this[getConstructorDoneSymbol()]) {
                     if (this.valuesChangedCallback && oldValue !== x) {
-                        this.valuesChangedCallback('property', prop, oldValue, x);
+                        this.valuesChangedCallback.call(this, 'property', prop, oldValue, x);
                     }
                     if (oldValue !== x && !options.skipRender) {
                         requestRender(this);
