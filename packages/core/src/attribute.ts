@@ -11,7 +11,7 @@ import {
  * simple decorator for tracking custom element attribute changes
  * PS! do not set value manually, does not do anything
  */
-export function attribute(options: { skipRender: boolean } = {} as any) {
+export function attribute(options: { skipRender?: boolean; attribute?: string } = {} as any) {
     return function reg(_class: any, prop: string): void {
         Object.defineProperty(_class, prop, {
             get: function () {
@@ -33,23 +33,25 @@ export function attribute(options: { skipRender: boolean } = {} as any) {
         });
 
         // replace uppercase with lower and add '-'
-        const attribute = prop
-            .replace(/([a-z])([A-Z])/g, '$1-$2')
-            .replace(/\s+/g, '-')
-            .toLowerCase();
+        const attributeName =
+            options.attribute ||
+            prop
+                .replace(/([a-z])([A-Z])/g, '$1-$2')
+                .replace(/\s+/g, '-')
+                .toLowerCase();
 
         //create a map so we can find it later
         if (!_class[getObservedAttributesMapSymbol()]) {
             _class[getObservedAttributesMapSymbol()] = new Map();
         }
-        _class[getObservedAttributesMapSymbol()].set(attribute, prop);
+        _class[getObservedAttributesMapSymbol()].set(attributeName, prop);
 
         // add to observedAttributes
         if (_class[getObservedAttributesSymbol()]) {
-            _class[getObservedAttributesSymbol()].push(attribute);
+            _class[getObservedAttributesSymbol()].push(attributeName);
         } else {
             _class[getObservedAttributesSymbol()] = [];
-            _class[getObservedAttributesSymbol()].push(attribute);
+            _class[getObservedAttributesSymbol()].push(attributeName);
         }
     };
 }
