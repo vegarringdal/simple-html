@@ -682,12 +682,12 @@ Public functions on state class:
 ```ts
 
     /**
-     * Return key of this state
+     * resets state constainer to null or value you want
      */
     reset: (val: any = null)=> void;
 
     /**
-     * Return key of this state
+     * resets state constainer to {} or object you want
      */
     resetObj:(val = {})=> void;
 
