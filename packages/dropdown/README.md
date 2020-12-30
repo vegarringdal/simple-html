@@ -14,8 +14,8 @@
 
 ### Bundle size:
 
-https://bundlephobia.com/result?p=@simple-html/<dropdown>
+https://bundlephobia.com/result?p=@simple-html/dropdown
 
 ### Docs
 
-..todo, for now se sample
+Docs for all repos will be [here](https://github.com/simple-html/simple-html)

@@ -31,4 +31,4 @@ https://bundlephobia.com/result?p=@simple-html/grid
 
 ### Docs
 
-..todo, for now se sample
+Docs for all repos will be [here](https://github.com/simple-html/simple-html)
