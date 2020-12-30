@@ -56,7 +56,7 @@ YAY :joy:
 <br>
 <br>
 
-###      About the starter kit
+### Getting stared: About the starter kit
 
 ----
 
@@ -94,7 +94,7 @@ Atm please overlook everything in the root folder except `src` folder. This will
 <br>
 <br>
 
-### Closer look at `app-root.ts`
+### Getting stared: Closer look at `app-root.ts`
 
 ---
 
@@ -153,7 +153,7 @@ export default class extends HTMLElement {
 <br>
 <br>
 
-### Lets make a counter
+### Getting stared: Lets make a counter
 
 ----
 
@@ -243,7 +243,7 @@ You could have also used arrow function instead of class method
 <br>
 <br>
 
-### Auto call render with `@property()`
+### Getting stared: Auto call render with @property()
 
 ----
 
@@ -271,46 +271,7 @@ TODO
 <br>
 <br>
 
-### Lets make more components
-
-----
-
-TODO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<br>
-<br>
-<br>
-
-### Lets send events between the components
+### Getting stared: Lets make more components
 
 ----
 
@@ -344,11 +305,50 @@ TODO
 
 
 
+
 <br>
 <br>
 <br>
 
-### Lets play with state
+### Getting stared: Lets send events between the components
+
+----
+
+TODO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<br>
+<br>
+<br>
+
+### Getting stared: Lets play with state
 
 ----
 
@@ -371,7 +371,7 @@ TODO
 <br>
 <br>
 
-### Decorator `@customElement()`
+### Decorator: `@customElement()`
 
 ---
 
@@ -395,7 +395,7 @@ export default class extends HTMLElement {
 To use this you would now add `<app-root></app-root>` to you html
 
 
-#### Custom element methods
+#### Custom element methods when using @customElement
 
 
 This is the built in methods simple-html component/element will have.
@@ -486,7 +486,7 @@ export default class extends HTMLElement {
 <br>
 <br>
 
-### Decorator `@attribute()`
+### Decorator: @attribute()
 
 ---
 
@@ -558,7 +558,7 @@ class Ele extends HTMLElement {
 <br>
 <br>
 
-### Decorator `@property()`
+### Decorator: @property()
 
 ---
 
@@ -599,7 +599,7 @@ class Ele extends HTMLElement {
 <br>
 <br>
 
-### Helper function `disconnectedCallback()`
+### Helper function: disconnectedCallback()
 
 ---
 
@@ -623,7 +623,7 @@ disconnectedCallback(ctx: HTMLElement, call: () => void):void
 <br>
 <br>
 
-### Helper function `requestRender()`
+### Helper function: requestRender()
 
 ---
 
@@ -646,7 +646,7 @@ requestRender(ctx: HTMLElement):void
 <br>
 <br>
 
-### Helper function `updatedCallback()`
+### Helper function: updatedCallback()
 
 ---
 
@@ -670,7 +670,7 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 <br>
 <br>
 
-### Helper class `State`</summary>
+### Helper class: State
 
 ---
 
@@ -823,7 +823,7 @@ export  class DisplayForm  extends HTMLElement {
 <br>
 <br>
 
-### Transmitter functions
+### Transmitter
 
 ---
 
@@ -831,7 +831,7 @@ Transmitter functions is a easy way to subscribe and publish events to other par
 Simple-html uses this internally in router, state etc
 
 
-#### Tranmitter function `publish`
+#### Tranmitter function: publish
 
 Microtask by using Promise.resolve.then(()=>work)
 
@@ -839,7 +839,7 @@ Microtask by using Promise.resolve.then(()=>work)
 publish(channel: string, ...args: any[]): void 
 ```
 
-#### Tranmitter function `publishSync`
+#### Tranmitter function: publishSync
 
 Sync
 
@@ -847,7 +847,7 @@ Sync
 publishSync(channel: string, ...args: any[]): void
 ```
 
-#### Tranmitter function `publishNext`
+#### Tranmitter function: publishNext
 
 Next event loop by using SetTimeout 0
 
@@ -855,7 +855,7 @@ Next event loop by using SetTimeout 0
 publishNext(channel: string, ...args: any[]): void
 ```
 
-#### Tranmitter function `unSubscribe`
+#### Tranmitter function: unSubscribe()
 
 Unsubscribes channel
 
@@ -863,7 +863,7 @@ Unsubscribes channel
 unSubscribe(channel: string, ctx: any): void 
 ```
 
-#### Tranmitter function `subscribe`
+#### Tranmitter function: subscribe()
 
 Subscribe channel
 
