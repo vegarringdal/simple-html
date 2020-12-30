@@ -705,12 +705,12 @@ Public functions on state class:
      * return state [value, setter]
      * this uses built in object.assign in setter
      */
-    getStateObject: ()=> stateResultObj<T>{}
+    getStateObject: ()=> stateResultObj<T>{};
 
     /**
      * just return simple value, of object
      */
-    getObjectValue: ()=> T
+    getObjectValue: ()=> T;
 
     /**
      * connect to state in elements connectedcallback
@@ -718,9 +718,7 @@ Public functions on state class:
      * @param context
      * @param callback
      */
-    connectStateChanges: (context: HTMLElement, callback: () => void) => void
-}
-
+    connectStateChanges: (context: HTMLElement, callback: () => void) => void;
 
 ```
 
@@ -743,15 +741,14 @@ export const formState = new State<state>('FORM_STATE', {} as state, true);
 
 
 ```ts
-
+// app-root.ts
 import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
-import { viewState } from '../state/viewState';
-import { formState } from '../state/formState';
+import { formState } from './state.ts;
 
 
 @customElement('app-root')
-export default class extends HTMLElement {
+export class AppRoot extends HTMLElement {
     render() {
         const [view, setView] = viewState.getStateObject();
         return html`<section class="flex flex-col m-auto">
@@ -763,7 +760,7 @@ export default class extends HTMLElement {
 
 
 @customElement('input-form')
-export default class extends HTMLElement {
+export class InputForm extends HTMLElement {
     render() {
         // get our state container
         const [form, setForm] = formState.getStateObject();
@@ -794,7 +791,7 @@ export default class extends HTMLElement {
 
 
 @customElement('display-form')
-export default class extends HTMLElement {
+export  class DisplayForm  extends HTMLElement {
 
     connectedCallback(){
         formState.connectStateChanges(this, this.render)
