@@ -831,7 +831,7 @@ Transmitter functions is a easy way to subscribe and publish events to other par
 Simple-html uses this internally in router, state etc
 
 
-#### Tranmitter function: publish
+#### transmitter function: publish
 
 Microtask by using Promise.resolve.then(()=>work)
 
@@ -839,7 +839,7 @@ Microtask by using Promise.resolve.then(()=>work)
 publish(channel: string, ...args: any[]): void 
 ```
 
-#### Tranmitter function: publishSync
+#### transmitter function: publishSync
 
 Sync
 
@@ -847,7 +847,7 @@ Sync
 publishSync(channel: string, ...args: any[]): void
 ```
 
-#### Tranmitter function: publishNext
+#### transmitter function: publishNext
 
 Next event loop by using SetTimeout 0
 
@@ -855,7 +855,7 @@ Next event loop by using SetTimeout 0
 publishNext(channel: string, ...args: any[]): void
 ```
 
-#### Tranmitter function: unSubscribe()
+#### transmitter function: unSubscribe()
 
 Unsubscribes channel
 
@@ -863,7 +863,7 @@ Unsubscribes channel
 unSubscribe(channel: string, ctx: any): void 
 ```
 
-#### Tranmitter function: subscribe()
+#### transmitter function: subscribe()
 
 Subscribe channel
 
