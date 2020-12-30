@@ -674,12 +674,97 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 
 ---
 
-Todo
+State class helps you preserve state during the application. This could be between moving between pages using the router or HMR event during developement
 
 
+Simple sample
+
+```ts 
+// state.ts
+import { State } from '@simple-html/core';
+
+export type state = { firstName: string; lastName: string };
+
+export const formState = new State<state>('FORM_STATE', {} as state, true);
+```
 
 
+```ts
 
+import { customElement } from '@simple-html/core';
+import { html } from 'lit-html';
+import { viewState } from '../state/viewState';
+import { formState } from '../state/formState';
+
+
+@customElement('app-root')
+export default class extends HTMLElement {
+    render() {
+        const [view, setView] = viewState.getStateObject();
+        return html`<section class="flex flex-col m-auto">
+            <input-form></input-form>
+            <display-form></display-form>
+        </section>`;
+    }
+}
+
+
+@customElement('input-form')
+export default class extends HTMLElement {
+    render() {
+        // get our state container
+        const [form, setForm] = formState.getStateObject();
+
+        return html`
+
+            <div class="m-auto flex flex-col">
+                <label>
+                    FirstName:
+                    <input
+                        class="p-2 m-1"
+                        .value=${form.firstName || ''}
+                        @input=${(e: any) => setForm({ firstName: e.target.value })}
+                    />
+                </label>
+                <label>
+                    LastName:
+                    <input
+                        class="p-2 m-1"
+                        .value=${form.lastName || ''}
+                        @input=${(e: any) => setForm({ lastName: e.target.value })}
+                    />
+                </label>
+            </div>
+        `;
+    }
+}
+
+
+@customElement('display-form')
+export default class extends HTMLElement {
+
+    connectedCallback(){
+        formState.connectStateChanges(this, this.render)
+    }
+
+    render() {
+        const [form, setForm] = formState.getStateObject();
+        return html`
+            <div class="m-auto flex flex-col">
+                <label>
+                    FirstName:
+                    ${form.firstName || 'not-set'}
+                </label>
+                <label>
+                    LastName:
+                     ${form.lastName || 'not-set'}
+                </label>
+            </div>
+        `;
+    }
+}
+
+```
 
 
 
