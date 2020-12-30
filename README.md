@@ -56,7 +56,7 @@ YAY :joy:
 <br>
 <br>
 
-### Getting stared: About the starter kit
+### Getting started: About the starter kit
 
 ----
 
@@ -94,7 +94,7 @@ Atm please overlook everything in the root folder except `src` folder. This will
 <br>
 <br>
 
-### Getting stared: Closer look at app-root.ts
+### Getting started: Closer look at app-root.ts
 
 ---
 
@@ -153,7 +153,7 @@ export default class extends HTMLElement {
 <br>
 <br>
 
-### Getting stared: Lets make a counter
+### Getting started: Lets make a counter
 
 ----
 
@@ -243,7 +243,7 @@ You could have also used arrow function instead of class method
 <br>
 <br>
 
-### Getting stared: Auto call render with @property()
+### Getting started: Auto call render with @property()
 
 ----
 
@@ -271,46 +271,7 @@ TODO
 <br>
 <br>
 
-### Getting stared: Lets make more components
-
-----
-
-TODO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<br>
-<br>
-<br>
-
-### Getting stared: Lets send events between the components
+### Getting started: Lets make more components
 
 ----
 
@@ -344,11 +305,50 @@ TODO
 
 
 
+
 <br>
 <br>
 <br>
 
-### Getting stared: Lets play with state
+### Getting started: Lets send events between the components
+
+----
+
+TODO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<br>
+<br>
+<br>
+
+### Getting started: Lets play with state
 
 ----
 
