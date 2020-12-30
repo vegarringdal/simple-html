@@ -677,7 +677,60 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 State class helps you preserve state during the application. This could be between moving between pages using the router or HMR event during developement
 
 
-Simple sample
+Public functions on state class:
+
+```ts
+
+    /**
+     * Return key of this state
+     */
+    reset: (val: any = null)=> void;
+
+    /**
+     * Return key of this state
+     */
+    resetObj:(val = {})=> void;
+
+    /**
+     * return state [value, setter]
+     */
+    getState: () => stateResult<T>;
+
+    /**
+     * just return simple value
+     */
+    getStateValue:() => T;
+
+    /**
+     * return state [value, setter]
+     * this uses built in object.assign in setter
+     */
+    getStateObject: ()=> stateResultObj<T>{}
+
+    /**
+     * just return simple value, of object
+     */
+    getObjectValue: ()=> T
+
+    /**
+     * connect to state in elements connectedcallback
+     * will automatically disconnect if dicconnectedcallback is called
+     * @param context
+     * @param callback
+     */
+    connectStateChanges: (context: HTMLElement, callback: () => void) => void
+}
+
+
+```
+
+
+
+
+
+
+
+Simple sample:
 
 ```ts 
 // state.ts
