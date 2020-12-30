@@ -94,7 +94,7 @@ Atm please overlook everything in the root folder except `src` folder. This will
 <br>
 <br>
 
-### Getting stared: Closer look at `app-root.ts`
+### Getting stared: Closer look at app-root.ts
 
 ---
 
@@ -395,7 +395,7 @@ export default class extends HTMLElement {
 To use this you would now add `<app-root></app-root>` to you html
 
 
-#### Custom element methods when using @customElement
+#### Custom element methods when using `@customElement`
 
 
 This is the built in methods simple-html component/element will have.
@@ -486,7 +486,7 @@ export default class extends HTMLElement {
 <br>
 <br>
 
-### Decorator: @attribute()
+### Decorator: `@attribute()`
 
 ---
 
@@ -558,7 +558,7 @@ class Ele extends HTMLElement {
 <br>
 <br>
 
-### Decorator: @property()
+### Decorator: `@property()`
 
 ---
 
@@ -599,7 +599,7 @@ class Ele extends HTMLElement {
 <br>
 <br>
 
-### Helper function: disconnectedCallback()
+### Helper function: `disconnectedCallback()`
 
 ---
 
@@ -623,7 +623,7 @@ disconnectedCallback(ctx: HTMLElement, call: () => void):void
 <br>
 <br>
 
-### Helper function: requestRender()
+### Helper function: `requestRender()`
 
 ---
 
@@ -646,7 +646,7 @@ requestRender(ctx: HTMLElement):void
 <br>
 <br>
 
-### Helper function: updatedCallback()
+### Helper function: `updatedCallback()`
 
 ---
 
@@ -670,7 +670,7 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 <br>
 <br>
 
-### Helper class: State
+### Helper class: `State`
 
 ---
 
