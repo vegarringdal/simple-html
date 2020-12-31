@@ -1,4 +1,4 @@
-import { customElement, State } from '@simple-html/core';
+import { customElement, ObjectStateInternal } from '@simple-html/core';
 
 export type state = {
     active: boolean;
@@ -14,7 +14,7 @@ export default class extends HTMLElement {
     show: boolean;
     refEle: HTMLElement;
     stateName: string;
-    state: State<state>;
+    state: ObjectStateInternal<state>;
     nextElement: HTMLElement;
     previousElement: HTMLElement;
 
@@ -27,10 +27,9 @@ export default class extends HTMLElement {
             throw 'name attribute needs to be set ".name=${"somename"}';
         }
 
-        this.state = new State<state>(
+        this.state = new ObjectStateInternal<state>(
             '@SIMPLE-HTML/SPLITTER',
             { active: false } as state,
-            false,
             this.stateName
         );
         this.style.width = '100%';
