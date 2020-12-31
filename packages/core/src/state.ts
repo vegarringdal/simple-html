@@ -39,6 +39,7 @@ const State = class<T> {
     mainStateKey: string;
     isObject: boolean;
     internalStateKey: string;
+    defaultValue: T;
 
     /**
      * Simple global state container
@@ -54,6 +55,7 @@ const State = class<T> {
         internalStateKey: string | null
     ) {
         this.mainStateKey = STATE_KEY;
+        this.defaultValue = defaultValue;
         if (internalStateKey) {
             // set main state
             if (!this.getStateContainer().hasOwnProperty(this.mainStateKey)) {
@@ -98,14 +100,14 @@ const State = class<T> {
         return this.internalStateKey || this.mainStateKey;
     }
 
-    protected resetSimpleState(val: any = null) {
+    protected resetSimpleState(val: any = this.defaultValue) {
         if (this.isObject) {
             throw 'this is object only state, use resetObj';
         }
         this.getStateContainer()[this.getStateKey()] = val;
     }
 
-    protected resetObjectState(val = {}) {
+    protected resetObjectState(val = this.defaultValue) {
         this.getStateContainer()[this.getStateKey()] = val;
     }
 
@@ -203,7 +205,7 @@ const State = class<T> {
 };
 
 export class ObjectState<T> extends State<T> {
-    constructor(STATE_KEY: string, defaultValue: T = null) {
+    constructor(STATE_KEY: string, defaultValue: T = {} as T) {
         super(STATE_KEY, defaultValue, true, null);
     }
 
@@ -222,7 +224,7 @@ export class SimpleState<T> extends State<T> {
 }
 
 export class ObjectStateInternal<T> extends State<T> {
-    constructor(STATE_KEY: string, defaultValue: T = null, internalProp: string) {
+    constructor(STATE_KEY: string, defaultValue: T = {} as T, internalProp: string) {
         super(STATE_KEY, defaultValue, true, internalProp);
     }
     public getState(): stateResultObj<T> {
