@@ -5,6 +5,8 @@ describe('customElement', () => {
     it('renders on connected', (done) => {
         // get decorator function
         @customElement('app-root1')
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         class Ele extends HTMLElement {
             render() {
                 return 'render works';

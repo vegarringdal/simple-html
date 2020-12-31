@@ -6,6 +6,8 @@ describe('customElement property', () => {
         const valuesChanged: string[][] = [];
 
         @customElement('app-root1')
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         class Ele extends HTMLElement {
             @property() myprop = 'initvalue';
 
@@ -27,7 +29,7 @@ describe('customElement property', () => {
             expect(node.textContent).toEqual('render works:initvalue');
 
             // set newvalue so we can also test change trigger
-            node.myprop = 'newvalue';
+            (node as any).myprop = 'newvalue';
 
             setTimeout(() => {
                 // requestAnimationFrame(() => {
@@ -36,7 +38,7 @@ describe('customElement property', () => {
                 expect(valuesChanged[0]).toEqual(['property', 'myprop', 'initvalue', 'newvalue']);
 
                 // trigger again
-                node.myprop = 'more';
+                (node as any).myprop = 'more';
                 expect(valuesChanged[1]).toEqual(['property', 'myprop', 'newvalue', 'more']);
 
                 done();

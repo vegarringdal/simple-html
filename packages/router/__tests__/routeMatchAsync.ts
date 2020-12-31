@@ -8,6 +8,8 @@ describe('routeMatchAsync', () => {
     it('test if async render returns correct result when hash ', (done) => {
         startRouter();
         @customElement('app-root1')
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         class Ele extends HTMLElement {
             connectedCallback() {
                 subscribeHashEvent(this, () => {

@@ -8,6 +8,8 @@ describe('customElement attributeChangedCallback native', () => {
         const valuesChangedCallbacks: string[][] = [];
 
         @customElement('app-root1')
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         class Ele extends HTMLElement {
             static get observedAttributes() {
                 return ['my-att'];
@@ -73,6 +75,8 @@ describe('customElement attributeChangedCallback native', () => {
 
         // our element with minimum config
         @customElement('app-root2')
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         class Ele extends HTMLElement {
             @attribute() myAtt: string = 'whatever'; // this tracks "my-att"
 
