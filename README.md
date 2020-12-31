@@ -32,10 +32,11 @@ make it easier to read html in string literals you should install extension call
 <br>
 <br>
 
-# `@simple-html/core`
+# Getting started
 
 Core part of this library is to help with creating the web components, updating and communication
-between them.
+between them. We will start the docs with getting started guide. Usually easier to learn by making something work.
+
 
 To make it a little easier to get started Ive created a simple starter kit
 [here](https://github.com/simple-html/starter-web). We will go into more details about the starter
@@ -67,7 +68,7 @@ YAY :joy:
 
 ### Getting started: About the starter kit
 
-------------------------------------------------------------------------------------
+---
 
 Using a starter kit is a easy way to get started, but its useful to understand a little how it
 works. I assume you know how npm modules & package.json works, so I will not go into any details
@@ -109,7 +110,7 @@ the source to our web page. Under `src` folder you will find 4 files.
 
 ### Getting started: Closer look at app-root.ts
 
-------------------------------------------------------------------------------------
+---
 
 Now we will have a closer look at the starting point of our application, the `app-root.ts`.
 
@@ -169,7 +170,7 @@ export default class extends HTMLElement {
 
 ### Getting started: Lets make a counter
 
-------------------------------------------------------------------------------------
+---
 
 Replace the code you have in `app-root.ts` with the code under and save file. The webpage will now
 update with 2 buttons on the page, and our hello world box have been replaced by a bigger box with
@@ -244,7 +245,7 @@ You could have also used arrow function instead of class method
 
 ### Getting started: Auto call render with @property()
 
-------------------------------------------------------------------------------------
+---
 
 TODO
 
@@ -257,7 +258,7 @@ TODO
 
 ### Getting started: Lets make more components
 
-------------------------------------------------------------------------------------
+---
 
 TODO
 
@@ -270,7 +271,7 @@ TODO
 
 ### Getting started: Lets send events between the components
 
-------------------------------------------------------------------------------------
+---
 
 TODO
 
@@ -283,7 +284,7 @@ TODO
 
 ### Getting started: Lets play with state
 
-------------------------------------------------------------------------------------
+---
 
 TODO
 
@@ -294,9 +295,22 @@ TODO
 <br>
 <br>
 
+# `@simple-html/core`
+
+Next parts shows all the different functions/decorators in `@simple-html/core`
+
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
 ### Decorator: `@customElement()`
 
-------------------------------------------------------------------------------------
+---
 
 This decorator helps you register the custom element/component.
 
@@ -389,7 +403,7 @@ export default class extends HTMLElement {
 
 ### Decorator: `@attribute()`
 
----------------------------------------------------------------------------------------------------------------
+---
 
 This decorator help you listen for attribute changes and set this value to a property. Atm only two
 options:
@@ -468,7 +482,7 @@ class Ele extends HTMLElement {
 
 ### Decorator: `@property()`
 
-------------------------------------------------------------------------------------
+---
 
 Makes it easy to update/listen for changes to property set locally or externaly
 
@@ -506,7 +520,7 @@ class Ele extends HTMLElement {
 
 ### Helper function: `disconnectedCallback()`
 
-------------------------------------------------------------------------------------
+---
 
 Set up listener for when element gets disconnected.
 
@@ -523,7 +537,7 @@ disconnectedCallback(ctx: HTMLElement, call: () => void):void
 
 ### Helper function: `requestRender()`
 
-------------------------------------------------------------------------------------
+---
 
 Ask a element to update
 
@@ -540,7 +554,7 @@ requestRender(ctx: HTMLElement):void
 
 ### Helper function: `updatedCallback()`
 
-------------------------------------------------------------------------------------
+---
 
 This is a utillity class that can be used if you need to be notified if update happend. You will
 need to reregister if you are called..
@@ -558,7 +572,7 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 
 ### Helper function: `State`
 
-------------------------------------------------------------------------------------
+---
 
 State class helps you preserve state during the application. This could be between moving between
 pages using the router or HMR event during developement
@@ -704,7 +718,7 @@ export  class DisplayForm  extends HTMLElement {
 
 ### Transmitter Functions
 
-------------------------------------------------------------------------------------
+---
 
 Transmitter functions is a easy way to subscribe and publish events to other parts of you
 application. Simple-html uses this internally in router, state etc if you are planning to subscribe,
@@ -759,9 +773,24 @@ subscribe(channel: string, ctx: HTMLElement| {} , func: (...args: any[]) => void
 
 ### HMR
 
-------------------------------------------------------------------------------------
+---
 
-Todo (is built into starter)
+Just load before eventything.
+Check with bundler how to treshake it away, depends how it works.
+Starter does this already on production builds
+
+```ts
+import { applyPolyfill, ReflowStrategy } from 'custom-elements-hmr-polyfill';
+applyPolyfill(ReflowStrategy.NONE);
+
+import('./app-root').then(() => {
+    // rebuild app
+    if (document.body) {
+        document.body.innerHTML = '<app-root></app-root>';
+    } else{
+      // add a dom loaded event if you dont have it in index.html
+    }
+});
 
 <br>
 <br>
@@ -854,7 +883,7 @@ This is the current packages:
 
 ### Why not use some other framework and where is the docs
 
-------------------------------------------------------------------------------------
+---
 
 I really did not want to use time on frameworks, just wanted to have fun. I wanted to learn web
 components and liked how lit-html worked. After a while I started making helper function to make it
@@ -869,7 +898,7 @@ simple to use in apps, so ended up creating this to learn more.
 
 ### Development on current packages
 
-------------------------------------------------------------------------------------
+---
 
 -   Run `npm install`
 -   see how to run samples and start coding
@@ -890,7 +919,7 @@ in fusebox.
 
 ### Add new package
 
-------------------------------------------------------------------------------------
+---
 
 -   copy folder `./packages/template-package` and give it a new name
 -   update name in package.json
@@ -907,7 +936,7 @@ in fusebox.
 
 ### To run samples
 
-------------------------------------------------------------------------------------
+---
 
 You need to read development first before trying to run these.
 
@@ -924,7 +953,7 @@ You need to read development first before trying to run these.
 
 ### Make new sample
 
-------------------------------------------------------------------------------------
+---
 
 -   copy folder `./samples/template-starter` and give it a new name
 -   add script to `package.json` to start it (look at the others for how)
@@ -938,7 +967,7 @@ You need to read development first before trying to run these.
 
 ### To build all packages
 
-------------------------------------------------------------------------------------
+---
 
 -   Set new package version in root `package.json`
 -   Run `npm run build:all` - this will now build all packages and sync package json version in all.
@@ -952,7 +981,7 @@ You need to read development first before trying to run these.
 
 ## To publish all packages
 
-------------------------------------------------------------------------------------
+---
 
 -   Run `pubblish:all` to publish
     -   Or `publish:test` to run publish with `--dry-run` option
@@ -966,27 +995,28 @@ You need to read development first before trying to run these.
 
 ### HMR info
 
-------------------------------------------------------------------------------------
+---
 
 Load before everything
 
 ```ts
-import { applyPolyfill, reflowDOM } from 'custom-elements-hmr-polyfill';
+import { applyPolyfill, ReflowStrategy } from 'custom-elements-hmr-polyfill';
+applyPolyfill(ReflowStrategy.NONE);
 
-if (document.body) {
-    // I just want every thing to be rebuild from main element during hmr
-    document.body.innerHTML = '';
-    setTimeout(() => {
-        document.body.innerHTML = '<app-root></app-root>'; // <-- needs to match you main root element
-    }, 0);
-}
-
-// apply polly fill
-applyPolyfill();
+import('./app-root').then(() => {
+    // rebuild app
+    if (document.body) {
+        document.body.innerHTML = '<app-root></app-root>';
+    } else{
+      // add a dom loaded event if you dont have it in index.html
+    }
+});
 ```
 
-To make state container save it self trigger this on hmr event:
-`window.dispatchEvent(new CustomEvent('HMR-FUSEBOX'));`
+> To make state container save it self trigger this on hmr event: Important since fusebox flushes
+> the core during development of the core...
+
+`window.dispatchEvent(new CustomEvent('IMPLE_HTML_SAVE_STATE'));`
 
 <br>
 <br>
@@ -997,6 +1027,6 @@ To make state container save it self trigger this on hmr event:
 
 ### I need EdgeHTML/IE browser to work in 2020++
 
-------------------------------------------------------------------------------------
+---
 
 Use something else... :joy:
