@@ -55,10 +55,10 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                     Promise.resolve(template).then((templates) => {
                         render(templates, this as any, { eventContext: this as any });
                         const callers = this[getUpdateCallbackCallersSymbol()];
-                        if (super.updatedCallback || callers.length) {
+                        if (super.updatedCallback || (callers && callers.length)) {
                             //delay so it actually get a chance to update
                             requestAnimationFrame(() => {
-                                if (callers.length) {
+                                if (callers && callers.length) {
                                     callers.forEach((call: () => void) => call());
                                 }
                                 this[getUpdateCallbackCallersSymbol()] = [];
