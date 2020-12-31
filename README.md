@@ -791,6 +791,7 @@ import('./app-root').then(() => {
       // add a dom loaded event if you dont have it in index.html
     }
 });
+```
 
 <br>
 <br>
