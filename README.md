@@ -308,11 +308,11 @@ Next parts shows all the different functions/decorators in `@simple-html/core`
 <br>
 <br>
 
-### Decorator: `@customElement()`
+### @simple-html/core: `@customElement()`
 
 ---
 
-This decorator helps you register the custom element/component.
+`@customElement()` decorator helps you register the custom element/component.
 
 ```ts
 import { html } from 'lit-html';
@@ -328,7 +328,7 @@ export default class extends HTMLElement {
 
 To use this you would now add `<app-root></app-root>` to you html
 
-#### Custom element methods when using `@customElement`
+#### `@customElement` adds methods:
 
 This is the built in methods simple-html component/element will have.
 
@@ -401,11 +401,11 @@ export default class extends HTMLElement {
 <br>
 <br>
 
-### Decorator: `@attribute()`
+### @simple-html/core: `@attribute()`
 
 ---
 
-This decorator help you listen for attribute changes and set this value to a property. Atm only two
+`@attribute()` Decorator help you listen for attribute changes and set this value to a property. Atm only two
 options:
 
 -   `skipRender: boolean` setting this to false will prevent it from auto updateing if value is
@@ -480,11 +480,11 @@ class Ele extends HTMLElement {
 <br>
 <br>
 
-### Decorator: `@property()`
+### @simple-html/core `@property()`
 
 ---
 
-Makes it easy to update/listen for changes to property set locally or externaly
+`@property()` Decorator makes it easy to update/listen for changes to property set locally or externaly
 
 ```ts
 @property(options: { skipRender: boolean })
@@ -518,11 +518,12 @@ class Ele extends HTMLElement {
 <br>
 <br>
 
-### Helper function: `disconnectedCallback()`
+### @simple-html/core: `disconnectedCallback()`
 
 ---
 
-Set up listener for when element gets disconnected.
+This is a utility function that can be used if you need to be notified if disconnectedCallback happens on a element.
+
 
 ```ts
 disconnectedCallback(ctx: HTMLElement, call: () => void):void
@@ -552,11 +553,11 @@ requestRender(ctx: HTMLElement):void
 <br>
 <br>
 
-### Helper function: `updatedCallback()`
+### @simple-html/core: `updatedCallback()`
 
 ---
 
-This is a utillity class that can be used if you need to be notified if update happend. You will
+This is a utility function that can be used if you need to be notified if update happens on a element. You will
 need to reregister if you are called..
 
 ```ts
@@ -570,7 +571,7 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 <br>
 <br>
 
-### Helper function: `State`
+### @simple-html/core: `State`
 
 ---
 
@@ -716,7 +717,7 @@ export  class DisplayForm  extends HTMLElement {
 <br>
 <br>
 
-### Transmitter Functions
+### @simple-html/core: Transmitter Functions
 
 ---
 
@@ -764,6 +765,15 @@ Subscribe channel
 subscribe(channel: string, ctx: HTMLElement| {} , func: (...args: any[]) => void): void
 ```
 
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
@@ -771,7 +781,28 @@ subscribe(channel: string, ctx: HTMLElement| {} , func: (...args: any[]) => void
 <br>
 <br>
 
-### HMR
+# `@simple-html/router`
+
+Todo
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+
+# HMR in apps
 
 ---
 
@@ -792,25 +823,6 @@ import('./app-root').then(() => {
     }
 });
 ```
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-
-# `@simple-html/router`
-
-Todo
 
 <br>
 <br>
@@ -857,6 +869,8 @@ Phase future
 <br>
 <br>
 <br>
+
+
 
 # About the monorepo
 
