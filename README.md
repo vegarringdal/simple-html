@@ -295,6 +295,63 @@ TODO
 <br>
 <br>
 
+
+### Getting started: Adding router
+
+---
+
+TODO
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+### Getting started: Go to url if not logged in
+
+---
+
+TODO
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+### Getting started: stop navigation if we havent saved
+
+---
+
+TODO
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+
+### Getting started: getting param for url
+
+---
+
+TODO
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
 # `@simple-html/core`
 
 Next parts shows all the different functions/decorators in `@simple-html/core`
