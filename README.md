@@ -663,6 +663,8 @@ const [currentView, setView] = viewState.getState();
 html`<button @click=${(e) => setView('VIEW1')}>${currentView}</button>`;
 ```
 
+### Reset state
+
 ```ts
 // there is also a reset option
 // this will use first default value unless you give it something new
