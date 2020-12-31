@@ -247,7 +247,47 @@ You could have also used arrow function instead of class method
 
 ---
 
-TODO
+We will now add @Property decorator, this will call `this.render()` for us when changes happens.
+This will save us from calling render manually.
+
+
+```ts
+
+import { html } from 'lit-html';
+import { customElement, property } from '@simple-html/core';
+
+@customElement('app-root')
+export default class extends HTMLElement {
+    // our counter
+    @property() public count = 0;
+
+    // called when we click add button
+    public addClick() {
+        this.count++;
+    }
+
+    // called when we click subract button
+    public subtractClick() {
+        this.count--;
+    }
+
+    // click listeners are added when we use `@click` in lit-html, read more about this in lit-html docs
+    public render() {
+        return html`
+            <section class="flex flex-col">
+                <span class="inline-block p-2 m-2 bg-indigo-500 text-white text-center">
+                    current count
+                    <br />
+                    ${this.count}
+                </span>
+                <button class="p-2 m-2 bg-green-500" @click=${this.addClick}>add</button>
+                <button class="p-2 m-2 bg-red-500" @click=${this.subtractClick}>subtract</button>
+            </section>
+        `;
+    }
+}
+
+```
 
 <br>
 <br>
