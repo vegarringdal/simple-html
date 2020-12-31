@@ -25,6 +25,12 @@ make it easier to read html in string literals you should install extension call
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 # `@simple-html/core`
 
@@ -55,8 +61,11 @@ YAY :joy:
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Getting started:__ About the starter kit
+### Getting started: About the starter kit
 
 ------------------------------------------------------------------------------------
 
@@ -94,8 +103,11 @@ the source to our web page. Under `src` folder you will find 4 files.
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Getting started:__ Closer look at app-root.ts
+### Getting started: Closer look at app-root.ts
 
 ------------------------------------------------------------------------------------
 
@@ -151,8 +163,11 @@ export default class extends HTMLElement {
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Getting started:__ Lets make a counter
+### Getting started: Lets make a counter
 
 ------------------------------------------------------------------------------------
 
@@ -223,8 +238,11 @@ You could have also used arrow function instead of class method
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Getting started:__ Auto call render with @property()
+### Getting started: Auto call render with @property()
 
 ------------------------------------------------------------------------------------
 
@@ -233,8 +251,11 @@ TODO
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Getting started:__ Lets make more components
+### Getting started: Lets make more components
 
 ------------------------------------------------------------------------------------
 
@@ -243,8 +264,11 @@ TODO
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Getting started:__ Lets send events between the components
+### Getting started: Lets send events between the components
 
 ------------------------------------------------------------------------------------
 
@@ -253,8 +277,11 @@ TODO
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Getting started:__ Lets play with state
+### Getting started: Lets play with state
 
 ------------------------------------------------------------------------------------
 
@@ -263,8 +290,11 @@ TODO
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Decorator:__ `@customElement()`
+### Decorator: `@customElement()`
 
 ------------------------------------------------------------------------------------
 
@@ -353,8 +383,11 @@ export default class extends HTMLElement {
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Decorator:__ `@attribute()`
+### Decorator: `@attribute()`
 
 ---------------------------------------------------------------------------------------------------------------
 
@@ -429,8 +462,11 @@ class Ele extends HTMLElement {
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Decorator:__ `@property()`
+### Decorator: `@property()`
 
 ------------------------------------------------------------------------------------
 
@@ -464,8 +500,11 @@ class Ele extends HTMLElement {
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Helper function:__ `disconnectedCallback()`
+### Helper function: `disconnectedCallback()`
 
 ------------------------------------------------------------------------------------
 
@@ -478,8 +517,11 @@ disconnectedCallback(ctx: HTMLElement, call: () => void):void
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Helper function:__ `requestRender()`
+### Helper function: `requestRender()`
 
 ------------------------------------------------------------------------------------
 
@@ -492,8 +534,11 @@ requestRender(ctx: HTMLElement):void
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Helper function:__ `updatedCallback()`
+### Helper function: `updatedCallback()`
 
 ------------------------------------------------------------------------------------
 
@@ -507,8 +552,11 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Helper function:__ `State`
+### Helper function: `State`
 
 ------------------------------------------------------------------------------------
 
@@ -650,8 +698,11 @@ export  class DisplayForm  extends HTMLElement {
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __Transmitter__ Functions
+### Transmitter Functions
 
 ------------------------------------------------------------------------------------
 
@@ -702,8 +753,11 @@ subscribe(channel: string, ctx: HTMLElement| {} , func: (...args: any[]) => void
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
-### __HMR__
+### HMR
 
 ------------------------------------------------------------------------------------
 
@@ -717,11 +771,23 @@ Todo (is built into starter)
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 # `@simple-html/router`
 
 Todo
 
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
@@ -755,6 +821,12 @@ Phase future
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 # About the monorepo
 
@@ -776,6 +848,9 @@ This is the current packages:
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
 ### Why not use some other framework and where is the docs
 
@@ -785,6 +860,9 @@ I really did not want to use time on frameworks, just wanted to have fun. I want
 components and liked how lit-html worked. After a while I started making helper function to make it
 simple to use in apps, so ended up creating this to learn more.
 
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
@@ -806,6 +884,9 @@ in fusebox.
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
 ### Add new package
 
@@ -817,6 +898,9 @@ in fusebox.
 -   make a new sample- see how to make a new sample
 -   copy sample template and use same name
 
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
@@ -834,6 +918,9 @@ You need to read development first before trying to run these.
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
 ### Make new sample
 
@@ -842,6 +929,9 @@ You need to read development first before trying to run these.
 -   copy folder `./samples/template-starter` and give it a new name
 -   add script to `package.json` to start it (look at the others for how)
 
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
@@ -856,6 +946,9 @@ You need to read development first before trying to run these.
 <br>
 <br>
 <br>
+<br>
+<br>
+<br>
 
 ## To publish all packages
 
@@ -864,6 +957,9 @@ You need to read development first before trying to run these.
 -   Run `pubblish:all` to publish
     -   Or `publish:test` to run publish with `--dry-run` option
 
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
@@ -892,6 +988,9 @@ applyPolyfill();
 To make state container save it self trigger this on hmr event:
 `window.dispatchEvent(new CustomEvent('HMR-FUSEBOX'));`
 
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
