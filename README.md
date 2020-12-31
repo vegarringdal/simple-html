@@ -630,7 +630,6 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 State class helps you preserve state during the application. This could be between moving between
 pages using the router or HMR event during developement
 
-
 Simple sample:
 
 ### Object state
@@ -669,7 +668,7 @@ html`<button @click=${(e) => setView('VIEW1')}>${currentView}</button>`;
 // there is also a reset option
 // this will use first default value unless you give it something new
 viewState.reset();
-formState.reset()
+formState.reset();
 ```
 
 ### Connect for updates
@@ -838,7 +837,20 @@ Todo..
 <br>
 <br>
 
-### @simple-html/router: `subscribeCanDeactivateEvent()`
+### @simple-html/router: `connectCanDeactivate()`
+
+```ts
+connectedCallback() {
+        connectCanDeactivate(this, async () => {
+            if (this.locked) {
+                alert('page is locked, unlock first');
+                return false;
+            } else {
+                return true;
+            }
+        });
+    }
+```
 
 ---
 
