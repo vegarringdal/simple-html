@@ -630,40 +630,6 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 State class helps you preserve state during the application. This could be between moving between
 pages using the router or HMR event during developement
 
-Public functions on state classes `ObjectState` & `SimpleState`:
-
-```ts
-
-    /**
-     * resets state constainer to null or value you want
-     */
-    reset: (val: any = null)=> void;
-```
-
-```ts
-    /**
-     * return state [value, setter]
-     */
-    getState: () => stateResult<T> | stateResultObj<T>;
-```
-
-```ts
-    /**
-     * just return simple value
-     */
-    getValue: () => T;
-```
-
-```ts
-    /**
-     * connect to state in elements connectedcallback
-     * will automatically disconnect if dicconnectedcallback is called
-     * @param context
-     * @param callback
-     */
-    connectStateChanges: (context: HTMLElement, callback: () => void) => void;
-
-```
 
 Simple sample:
 
@@ -695,6 +661,13 @@ export const viewState = new SimpleState<state>('FORM_STATE', 'DEFAULT');
 // use Object state
 const [currentView, setView] = viewState.getState();
 html`<button @click=${(e) => setView('VIEW1')}>${currentView}</button>`;
+```
+
+```ts
+// there is also a reset option
+// this will use first default value unless you give it something new
+viewState.reset();
+formState.reset()
 ```
 
 ### Connect for updates
