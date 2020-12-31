@@ -8,7 +8,7 @@ export default class extends HTMLElement {
     render() {
         // get our state containers
         const [view] = viewState.getState();
-        const [form, setForm] = formState.getStateObject();
+        const [form, setForm] = formState.getState();
 
         return html`
             <span class="text-xl">${view.toUpperCase()}</span>

@@ -7,8 +7,8 @@ import { formState } from '../state/formState';
 export default class extends HTMLElement {
     render() {
         // get our state containers
-        const view = viewState.getObjectValue();
-        const [form, setForm] = formState.getStateObject();
+        const view = viewState.getValue();
+        const [form, setForm] = formState.getState();
 
         return html`
             <span class="text-xl">${view.toUpperCase()}</span>

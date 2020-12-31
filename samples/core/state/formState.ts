@@ -1,5 +1,5 @@
-import { State } from '@simple-html/core';
+import { ObjectState } from '@simple-html/core';
 
 export type state = { firstName: string; lastName: string };
 
-export const formState = new State<state>('FORM_STATE', {} as state, true);
+export const formState = new ObjectState<state>('FORM_STATE', {} as state);
