@@ -117,10 +117,12 @@ export class State<T> {
 
         const STATE_KEY = this.getStateKey();
         const STATE = this.getStateContainer();
+        const MAIN_KEY = this.mainStateKey;
+        const INTERNAL_KEY = this.internalStateKey;
 
         const setAndPublish = function (value: any) {
             STATE[STATE_KEY] = value;
-            publish(GLOBAL_STATE_EVENT, state);
+            publish(GLOBAL_STATE_EVENT, state, MAIN_KEY, INTERNAL_KEY);
             publish(STATE_KEY, value);
         };
 
@@ -145,6 +147,8 @@ export class State<T> {
     getStateObject(): stateResultObj<T> {
         const STATE_KEY = this.getStateKey();
         const STATE = this.getStateContainer();
+        const MAIN_KEY = this.mainStateKey;
+        const INTERNAL_KEY = this.internalStateKey;
 
         function assignState<T, K extends keyof T>(obj: T, part: Pick<T, K>) {
             return Object.assign(obj, part);
@@ -152,7 +156,7 @@ export class State<T> {
 
         function assignAndPublish<K extends keyof T>(part: Pick<T, K>): void {
             STATE[STATE_KEY] = assignState(STATE[STATE_KEY] as T, part);
-            publish(GLOBAL_STATE_EVENT, state);
+            publish(GLOBAL_STATE_EVENT, state, MAIN_KEY, INTERNAL_KEY);
             publish(STATE_KEY, STATE[STATE_KEY]);
         }
 
