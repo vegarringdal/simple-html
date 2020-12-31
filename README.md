@@ -380,7 +380,8 @@ export default class extends HTMLElement {
         //  do somethine
     }
 
-    // helper function to get called back when its about to disconnect, useful if you have another component that needs to do something when you component disconnects
+    // helper function to get called back when its about to disconnect, 
+    // useful if you have another component that needs to do something when you component disconnects
     // you can call it, but overriding it is not possible
     registerDisconnectCallback(call: () => void): void {
         //  do somethine
@@ -405,7 +406,7 @@ export default class extends HTMLElement {
 
 ---
 
-`@attribute()` Decorator help you listen for attribute changes and set this value to a property. Atm only two
+This decorator function help you listen for attribute changes and set this value to a property. Atm only two
 options:
 
 -   `skipRender: boolean` setting this to false will prevent it from auto updateing if value is
@@ -480,11 +481,11 @@ class Ele extends HTMLElement {
 <br>
 <br>
 
-### @simple-html/core `@property()`
+### @simple-html/core: `@property()`
 
 ---
 
-`@property()` Decorator makes it easy to update/listen for changes to property set locally or externaly
+This decorator function makes it easy to update/listen for changes to property set locally or externaly
 
 ```ts
 @property(options: { skipRender: boolean })
@@ -536,7 +537,7 @@ disconnectedCallback(ctx: HTMLElement, call: () => void):void
 <br>
 <br>
 
-### Helper function: `requestRender()`
+### @simple-html/core: `requestRender()`
 
 ---
 
@@ -783,7 +784,99 @@ subscribe(channel: string, ctx: HTMLElement| {} , func: (...args: any[]) => void
 
 # `@simple-html/router`
 
-Todo
+Router part of simple-html helps you listen and navigate hash events
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+### @simple-html/router: `startRouter()`
+
+---
+
+Todo..
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+### @simple-html/router: `connectHashChanges()`
+
+---
+
+Todo..
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+### @simple-html/router: `routeMatch()`
+
+---
+
+Todo..
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+### @simple-html/router: `routeMatchAsync()`
+
+---
+
+Todo..
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+### @simple-html/router: `getRouteParams()`
+
+---
+
+Todo..
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+### @simple-html/router: `subscribeCanDeactivateEvent()`
+
+---
+
+Todo..
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+
+
 
 <br>
 <br>
