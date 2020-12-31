@@ -648,10 +648,10 @@ Public functions on state classes `ObjectState` & `SimpleState`:
 ```
 
 ```ts
-/**
- * just return simple value
- */
-getValue: () => T;
+    /**
+     * just return simple value
+     */
+    getValue: () => T;
 ```
 
 ```ts
