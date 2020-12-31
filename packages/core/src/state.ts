@@ -34,23 +34,24 @@ export function validateKey(key: string) {
     }
 }
 
-export class State<T> {
-    private mainStateKey: string;
-    private forceObject: boolean;
+// internal object
+const State = class<T> {
+    mainStateKey: string;
+    isObject: boolean;
     internalStateKey: string;
 
     /**
      * Simple global state container
      * @param STATE_KEY
      * @param defaultValue
-     * @param forceObject
+     * @param isObject
      * @param internalStateKey if you use internal store then it wont be verified if you override old keys
      */
     constructor(
         STATE_KEY: string,
         defaultValue: T = null,
-        forceObject = false,
-        internalStateKey: string = null
+        isObject: boolean,
+        internalStateKey: string | null
     ) {
         this.mainStateKey = STATE_KEY;
         if (internalStateKey) {
@@ -73,8 +74,8 @@ export class State<T> {
                 this.getStateContainer()[this.mainStateKey] = defaultValue;
             }
 
-            this.forceObject = forceObject;
-            if (!this.getStateContainer()[this.mainStateKey] && this.forceObject) {
+            this.isObject = isObject;
+            if (!this.getStateContainer()[this.mainStateKey] && this.isObject) {
                 this.getStateContainer()[this.mainStateKey] = {};
             }
 
@@ -82,36 +83,37 @@ export class State<T> {
         }
     }
 
-    getStateContainer() {
+    protected getStateContainer() {
         if (this.internalStateKey) {
             return state[this.mainStateKey];
         }
         return state;
     }
 
-    reset(val: any = null) {
-        if (this.forceObject) {
+    /**
+     * Return key of this state
+     * If it have a internal key then its a internal state
+     */
+    protected getStateKey() {
+        return this.internalStateKey || this.mainStateKey;
+    }
+
+    protected resetSimpleState(val: any = null) {
+        if (this.isObject) {
             throw 'this is object only state, use resetObj';
         }
         this.getStateContainer()[this.getStateKey()] = val;
     }
 
-    resetObj(val = {}) {
+    protected resetObjectState(val = {}) {
         this.getStateContainer()[this.getStateKey()] = val;
-    }
-
-    /**
-     * Return key of this state
-     */
-    getStateKey() {
-        return this.internalStateKey || this.mainStateKey;
     }
 
     /**
      * return state [value, setter]
      */
-    getState(): stateResult<T> {
-        if (this.forceObject) {
+    protected getSimpleState(): stateResult<T> {
+        if (this.isObject) {
             throw 'this is object only state, use getObjectValue';
         }
 
@@ -132,8 +134,8 @@ export class State<T> {
     /**
      * just return simple value
      */
-    getStateValue(): T {
-        if (this.forceObject) {
+    protected getSimpleValue(): T {
+        if (this.isObject) {
             throw 'this is object only state, use getObject';
         }
 
@@ -144,7 +146,7 @@ export class State<T> {
      * return state [value, setter]
      * this uses built in object.assign in setter
      */
-    getStateObject(): stateResultObj<T> {
+    protected getObjectState(): stateResultObj<T> {
         const STATE_KEY = this.getStateKey();
         const STATE = this.getStateContainer();
         const MAIN_KEY = this.mainStateKey;
@@ -164,10 +166,26 @@ export class State<T> {
     }
 
     /**
-     * just return simple value, of object
+     * just return simple value, of object type
      */
-    getObjectValue(): T {
+    protected getObjectValue(): T {
         return this.getStateContainer()[this.getStateKey()];
+    }
+
+    public getValue() {
+        if (this.isObject) {
+            return this.getObjectValue();
+        } else {
+            return this.getSimpleValue();
+        }
+    }
+
+    public reset(x: any) {
+        if (this.isObject) {
+            return this.resetObjectState(x);
+        } else {
+            return this.resetSimpleState(x);
+        }
     }
 
     /**
@@ -175,11 +193,48 @@ export class State<T> {
      * @param context
      * @param callback
      */
-    connectStateChanges(context: HTMLElement, callback: () => void): void {
+    public connectStateChanges(context: HTMLElement, callback: () => void): void {
         // this register callback with simpleHtml elements disconnected callback
         disconnectedCallback(context, () => unSubscribe(this.getStateKey(), context));
 
         // for following the event we just use the internal event handler
         subscribe(this.getStateKey(), context, callback);
+    }
+};
+
+export class ObjectState<T> extends State<T> {
+    constructor(STATE_KEY: string, defaultValue: T = null) {
+        super(STATE_KEY, defaultValue, true, null);
+    }
+
+    public getState(): stateResultObj<T> {
+        return this.getObjectState();
+    }
+}
+
+export class SimpleState<T> extends State<T> {
+    constructor(STATE_KEY: string, defaultValue: T = null) {
+        super(STATE_KEY, defaultValue, false, null);
+    }
+    public getState(): stateResult<T> {
+        return this.getSimpleState();
+    }
+}
+
+export class ObjectStateInternal<T> extends State<T> {
+    constructor(STATE_KEY: string, defaultValue: T = null, internalProp: string) {
+        super(STATE_KEY, defaultValue, true, internalProp);
+    }
+    public getState(): stateResultObj<T> {
+        return this.getObjectState();
+    }
+}
+
+export class SimpleStateInternal<T> extends State<T> {
+    constructor(STATE_KEY: string, defaultValue: T = null, internalProp: string) {
+        super(STATE_KEY, defaultValue, false, internalProp);
+    }
+    public getState(): stateResult<T> {
+        return this.getSimpleState();
     }
 }
