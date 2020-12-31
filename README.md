@@ -776,7 +776,11 @@ Router part of simple-html helps you listen and navigate hash events
 
 ---
 
-Todo..
+To start/enable router
+
+```ts
+startRouter():void
+```
 
 <br>
 <br>
@@ -789,7 +793,11 @@ Todo..
 
 ---
 
-Todo..
+To be used in connectedCallback
+
+```ts
+const connectHashChanges(context: HTMLElement, callback: () => void)
+```
 
 <br>
 <br>
@@ -802,7 +810,9 @@ Todo..
 
 ---
 
-Todo..
+```ts
+const routeMatch: (hash?: string, locationhash?: string) => boolean;
+```
 
 <br>
 <br>
@@ -815,7 +825,28 @@ Todo..
 
 ---
 
-Todo..
+```ts
+const routeMatchAsync: (
+    hash: string,
+    importStatement: () => Promise<any>,
+    htmlTemplate: TemplateResult
+) => '' | ((part: any) => void);
+```
+
+Sample:
+
+```ts
+render(){
+    html`
+     ${routeMatchAsync(
+        '#settings'
+        () => import('./settings'),
+        html` <settings-route></settings-route> `
+      )}
+    `
+}
+
+```
 
 <br>
 <br>
@@ -828,7 +859,9 @@ Todo..
 
 ---
 
-Todo..
+```ts
+const getRouteParams: (hash: string, locationhash?: string) => any;
+```
 
 <br>
 <br>
