@@ -3,9 +3,7 @@ import { customElement, State } from '@simple-html/core';
 export type state = {
     active: boolean;
     mainWidth: number;
-    nextElement: HTMLElement;
     nextElementWidth: number;
-    previousElement: HTMLElement;
     previousElementWidth: number;
     x: number;
     y: number;
@@ -17,6 +15,8 @@ export default class extends HTMLElement {
     refEle: HTMLElement;
     stateName: string;
     state: State<state>;
+    nextElement: HTMLElement;
+    previousElement: HTMLElement;
 
     formState() {
         return this.state.getState();
@@ -84,9 +84,8 @@ export default class extends HTMLElement {
         this.refEle.removeEventListener('mousedown', this);
         this.removeEventListener('mouseup', this);
         this.removeEventListener('mousemove', this);
-        const [state] = this.formState();
-        state.nextElement = null;
-        state.previousElement = null;
+        this.nextElement = null;
+        this.previousElement = null;
         this.refEle = null;
     }
 
@@ -112,9 +111,9 @@ export default class extends HTMLElement {
         const state: state = _state as any;
         state.active = true;
         state.mainWidth = e.target.parentNode?.clientWidth;
-        state.nextElement = e.target.nextElementSibling;
+        this.nextElement = e.target.nextElementSibling;
         state.nextElementWidth = e.target.nextElementSibling.clientWidth;
-        state.previousElement = e.target.previousElementSibling;
+        this.previousElement = e.target.previousElementSibling;
         state.previousElementWidth = e.target.previousElementSibling.clientWidth;
         state.x = e.screenX;
         state.y = e.screenY;
@@ -124,8 +123,8 @@ export default class extends HTMLElement {
     mouseup() {
         const [state, setState] = this.formState();
         state.active = false;
-        state.previousElementWidth = state.previousElement.clientWidth;
-        state.nextElementWidth = state.nextElement.clientWidth;
+        state.previousElementWidth = this.previousElement.clientWidth;
+        state.nextElementWidth = this.nextElement.clientWidth;
         setState(state);
     }
 
@@ -136,13 +135,13 @@ export default class extends HTMLElement {
             if (state.x < e.screenX) {
                 const procent = ((state.previousElementWidth + change) * 100) / state.mainWidth;
 
-                state.previousElement.style.width = procent + '%';
-                state.nextElement.style.width = 100 - procent + '%';
+                this.previousElement.style.width = procent + '%';
+                this.nextElement.style.width = 100 - procent + '%';
             } else {
                 const procent = ((state.previousElementWidth - change) * 100) / state.mainWidth;
 
-                state.previousElement.style.width = procent + '%';
-                state.nextElement.style.width = 100 - procent + '%';
+                this.previousElement.style.width = procent + '%';
+                this.nextElement.style.width = 100 - procent + '%';
             }
             setState(state);
         }
