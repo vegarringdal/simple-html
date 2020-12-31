@@ -2,7 +2,7 @@ import { customElement } from '@simple-html/core';
 import { html } from 'lit-html';
 import { viewState } from '../state/viewState';
 import { getElementMarkup } from './getElementMarkup';
-
+import '@simple-html/dropdown';
 @customElement('app-root')
 export default class extends HTMLElement {
     elements = ['sample-default', 'sample-no1', 'sample-no2', 'sample-no3', 'sample-no4'];

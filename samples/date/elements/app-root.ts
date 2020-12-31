@@ -1,7 +1,14 @@
 import { customElement, requestRender } from '@simple-html/core';
 import { html } from 'lit-html';
 import { routeMatch } from '@simple-html/router';
+import './elements/sample-default';
+import './elements/sample-no1';
+import './elements/sample-no2';
+import './elements/sample-no3';
+import './elements/sample-no4';
 
+// add our your widget ?
+import '@simple-html/date';
 @customElement('app-root')
 export default class extends HTMLElement {
     elements = ['#default', '#sample1', '#sample2', '#sample3', '#sample4'];

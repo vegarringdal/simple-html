@@ -1,4 +1,5 @@
 import { html } from 'lit-html';
+import './routes/routerConfig';
 import { customElement } from '@simple-html/core';
 import { navs, routerConfig } from './routes/routerConfig';
 import { gotoURL, connectHashChanges } from '@simple-html/router';
