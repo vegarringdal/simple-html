@@ -35,8 +35,8 @@ make it easier to read html in string literals you should install extension call
 # Getting started
 
 Core part of this library is to help with creating the web components, updating and communication
-between them. We will start the docs with getting started guide. Usually easier to learn by making something work.
-
+between them. We will start the docs with getting started guide. Usually easier to learn by making
+something work.
 
 To make it a little easier to get started Ive created a simple starter kit
 [here](https://github.com/simple-html/starter-web). We will go into more details about the starter
@@ -295,7 +295,6 @@ TODO
 <br>
 <br>
 
-
 ### Getting started: Adding router
 
 ---
@@ -308,7 +307,6 @@ TODO
 <br>
 <br>
 <br>
-
 
 ### Getting started: Go to url if not logged in
 
@@ -323,7 +321,6 @@ TODO
 <br>
 <br>
 
-
 ### Getting started: stop navigation if we havent saved
 
 ---
@@ -336,8 +333,6 @@ TODO
 <br>
 <br>
 <br>
-
-
 
 ### Getting started: getting param for url
 
@@ -355,8 +350,6 @@ TODO
 # `@simple-html/core`
 
 Next parts shows all the different functions/decorators in `@simple-html/core`
-
-
 
 <br>
 <br>
@@ -437,7 +430,7 @@ export default class extends HTMLElement {
         //  do somethine
     }
 
-    // helper function to get called back when its about to disconnect, 
+    // helper function to get called back when its about to disconnect,
     // useful if you have another component that needs to do something when you component disconnects
     // you can call it, but overriding it is not possible
     registerDisconnectCallback(call: () => void): void {
@@ -463,8 +456,8 @@ export default class extends HTMLElement {
 
 ---
 
-This decorator function help you listen for attribute changes and set this value to a property. Atm only two
-options:
+This decorator function help you listen for attribute changes and set this value to a property. Atm
+only two options:
 
 -   `skipRender: boolean` setting this to false will prevent it from auto updateing if value is
     changed
@@ -542,7 +535,8 @@ class Ele extends HTMLElement {
 
 ---
 
-This decorator function makes it easy to update/listen for changes to property set locally or externaly
+This decorator function makes it easy to update/listen for changes to property set locally or
+externaly
 
 ```ts
 @property(options: { skipRender: boolean })
@@ -580,8 +574,8 @@ class Ele extends HTMLElement {
 
 ---
 
-This is a utility function that can be used if you need to be notified if disconnectedCallback happens on a element.
-
+This is a utility function that can be used if you need to be notified if disconnectedCallback
+happens on a element.
 
 ```ts
 disconnectedCallback(ctx: HTMLElement, call: () => void):void
@@ -615,8 +609,8 @@ requestRender(ctx: HTMLElement):void
 
 ---
 
-This is a utility function that can be used if you need to be notified if update happens on a element. You will
-need to reregister if you are called..
+This is a utility function that can be used if you need to be notified if update happens on a
+element. You will need to reregister if you are called..
 
 ```ts
 updatedCallback(ctx: HTMLElement, call: () => void)
@@ -636,7 +630,7 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 State class helps you preserve state during the application. This could be between moving between
 pages using the router or HMR event during developement
 
-Public functions on state class:
+Public functions on state classes `ObjectState` & `SimpleState`:
 
 ```ts
 
@@ -644,33 +638,23 @@ Public functions on state class:
      * resets state constainer to null or value you want
      */
     reset: (val: any = null)=> void;
+```
 
-    /**
-     * resets state constainer to {} or object you want
-     */
-    resetObj:(val = {})=> void;
-
+```ts
     /**
      * return state [value, setter]
      */
-    getState: () => stateResult<T>;
+    getState: () => stateResult<T> | stateResultObj<T>;
+```
 
-    /**
-     * just return simple value
-     */
-    getStateValue:() => T;
+```ts
+/**
+ * just return simple value
+ */
+getValue: () => T;
+```
 
-    /**
-     * return state [value, setter]
-     * this uses built in object.assign in setter
-     */
-    getStateObject: ()=> stateResultObj<T>{};
-
-    /**
-     * just return simple value, of object
-     */
-    getObjectValue: ()=> T;
-
+```ts
     /**
      * connect to state in elements connectedcallback
      * will automatically disconnect if dicconnectedcallback is called
@@ -683,89 +667,54 @@ Public functions on state class:
 
 Simple sample:
 
+### Object state
+
 ```ts
-// state.ts
-import { State } from '@simple-html/core';
-
+// create Object state
+import { ObjectState } from '@simple-html/core';
 export type state = { firstName: string; lastName: string };
-
-export const formState = new State<state>('FORM_STATE', {} as state, true);
+export const formState = new ObjectState<state>('FORM_STATE', {} as state);
 ```
 
 ```ts
-// app-root.ts
-import { customElement } from '@simple-html/core';
-import { html } from 'lit-html';
-import { formState } from './state.ts;
+// use Object state
+const [get, set] = formState.getState();
+html`<input .value=${get.firstName} @input=${(e) => set({ firstName: e.target.value })} />`;
+```
 
+### Simple state
 
+```ts
+// create simple state
+import { SimpleState } from '@simple-html/core';
+export type state = 'DEFAULT' | 'VIEW1' | 'VIEW2' | 'VIEW3' | 'VIEW4';
+export const viewState = new SimpleState<state>('FORM_STATE', 'DEFAULT');
+```
+
+```ts
+// use Object state
+const [currentView, setView] = viewState.getState();
+html`<button @click=${(e) => setView('VIEW1')}>${currentView}</button>`;
+```
+
+### Connect for updates
+
+```ts
+// connect for auto render on changes
+import { viewState, formState } from './myState.ts';
+
+// connect in custom element
 @customElement('app-root')
-export class AppRoot extends HTMLElement {
-    render() {
-        const [view, setView] = viewState.getStateObject();
-        return html`<section class="flex flex-col m-auto">
-            <input-form></input-form>
-            <display-form></display-form>
-        </section>`;
-    }
-}
-
-
-@customElement('input-form')
-export class InputForm extends HTMLElement {
-    render() {
-        // get our state container
-        const [form, setForm] = formState.getStateObject();
-
-        return html`
-
-            <div class="m-auto flex flex-col">
-                <label>
-                    FirstName:
-                    <input
-                        class="p-2 m-1"
-                        .value=${form.firstName || ''}
-                        @input=${(e: any) => setForm({ firstName: e.target.value })}
-                    />
-                </label>
-                <label>
-                    LastName:
-                    <input
-                        class="p-2 m-1"
-                        .value=${form.lastName || ''}
-                        @input=${(e: any) => setForm({ lastName: e.target.value })}
-                    />
-                </label>
-            </div>
-        `;
-    }
-}
-
-
-@customElement('display-form')
-export  class DisplayForm  extends HTMLElement {
-
-    connectedCallback(){
-        formState.connectStateChanges(this, this.render)
+class Ele extends HTMLElement {
+    connectedCallback() {
+        viewState.connectStateChanges(this, this.render);
+        formState.connectStateChanges(this, this.render);
     }
 
     render() {
-        const [form, setForm] = formState.getStateObject();
-        return html`
-            <div class="m-auto flex flex-col">
-                <label>
-                    FirstName:
-                    ${form.firstName || 'not-set'}
-                </label>
-                <label>
-                    LastName:
-                     ${form.lastName || 'not-set'}
-                </label>
-            </div>
-        `;
+        // something awsome...
     }
 }
-
 ```
 
 <br>
@@ -823,7 +772,6 @@ Subscribe channel
 subscribe(channel: string, ctx: HTMLElement| {} , func: (...args: any[]) => void): void
 ```
 
-
 <br>
 <br>
 <br>
@@ -842,7 +790,6 @@ subscribe(channel: string, ctx: HTMLElement| {} , func: (...args: any[]) => void
 # `@simple-html/router`
 
 Router part of simple-html helps you listen and navigate hash events
-
 
 <br>
 <br>
@@ -863,7 +810,6 @@ Todo..
 <br>
 <br>
 <br>
-
 
 ### @simple-html/router: `connectHashChanges()`
 
@@ -917,7 +863,6 @@ Todo..
 <br>
 <br>
 
-
 ### @simple-html/router: `subscribeCanDeactivateEvent()`
 
 ---
@@ -931,10 +876,6 @@ Todo..
 <br>
 <br>
 
-
-
-
-
 <br>
 <br>
 <br>
@@ -949,15 +890,12 @@ Todo..
 <br>
 <br>
 <br>
-
-
 
 # HMR in apps
 
 ---
 
-Just load before eventything.
-Check with bundler how to treshake it away, depends how it works.
+Just load before eventything. Check with bundler how to treshake it away, depends how it works.
 Starter does this already on production builds
 
 ```ts
@@ -968,8 +906,8 @@ import('./app-root').then(() => {
     // rebuild app
     if (document.body) {
         document.body.innerHTML = '<app-root></app-root>';
-    } else{
-      // add a dom loaded event if you dont have it in index.html
+    } else {
+        // add a dom loaded event if you dont have it in index.html
     }
 });
 ```
@@ -1019,8 +957,6 @@ Phase future
 <br>
 <br>
 <br>
-
-
 
 # About the monorepo
 
@@ -1172,8 +1108,8 @@ import('./app-root').then(() => {
     // rebuild app
     if (document.body) {
         document.body.innerHTML = '<app-root></app-root>';
-    } else{
-      // add a dom loaded event if you dont have it in index.html
+    } else {
+        // add a dom loaded event if you dont have it in index.html
     }
 });
 ```
