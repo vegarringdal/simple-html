@@ -300,7 +300,60 @@ export default class extends HTMLElement {
 
 ---
 
-TODO
+Lets create some more elements. Normally you would have these in seperate files.
+But this shows how you can split you app into different parts easly
+ 
+
+```ts
+import { html } from 'lit-html';
+import { customElement } from '@simple-html/core';
+
+@customElement('app-root')
+export class AppRoot extends HTMLElement {
+
+    connectedCallback(){
+      // as you can see this is a normal HTMLElement, so you can use normal js
+      // it would be cleaner to add this code to main index.css file
+      this.style.display = 'flex';
+      this.style.flexDirection ='column'
+    }
+
+    public render() {
+        return html`
+          <header-section class="bg-indigo-300 block"></header-section>
+          <content-section class="block flex flex-grow bg-indigo-600"></content-section>
+          <footer-section class="bg-indigo-400 block"></footer-section>
+        `;
+    }
+}
+
+@customElement('header-section')
+export class HeaderSection extends HTMLElement {
+    public render() {
+        return html`
+            header
+        `;
+    }
+}
+
+@customElement('content-section')
+export class ContentSection extends HTMLElement {
+    public render() {
+        return html`
+            content
+        `;
+    }
+}
+
+@customElement('footer-section')
+export class FooterSection extends HTMLElement {
+    public render() {
+        return html`
+            footer
+        `;
+    }
+}
+```
 
 <br>
 <br>
