@@ -1,33 +1,21 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
-import {
-    subscribeCanDeactivateEvent,
-    unSubscribeCanDeactivateEvent,
-    stopCanDeactivate
-} from '@simple-html/router';
+import { connectCanDeactivate } from '@simple-html/router';
 
 @customElement('settings-route')
 export default class extends HTMLElement {
     private locked = false;
 
     connectedCallback() {
-        subscribeCanDeactivateEvent(this, function () {
-            console.log('trigger settings event', this.counter);
-            stopCanDeactivate(
-                new Promise((resolve) => {
-                    if (this.locked) {
-                        alert('sorry');
-                        resolve(false);
-                    } else {
-                        resolve(true);
-                    }
-                    console.log('stopevent');
-                })
-            );
+        connectCanDeactivate(this, async () => {
+            console.log('stopevent');
+            if (this.locked) {
+                alert('sorry');
+                return false;
+            } else {
+                return true;
+            }
         });
-    }
-    disconnectedCallback() {
-        unSubscribeCanDeactivateEvent(this);
     }
 
     clicker() {
