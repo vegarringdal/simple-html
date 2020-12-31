@@ -1,4 +1,4 @@
-import { subscribe, unSubscribe, publish } from '@simple-html/core';
+import { subscribe, unSubscribe, disconnectedCallback, publishSync } from '@simple-html/core';
 /**
  * Simple functions used for can deactivate event
  */
@@ -13,29 +13,36 @@ export function unSubscribeCanDeactivateEvent(ctx: any) {
 }
 
 export function publishCanDeactivateEvent() {
-    publish(CAN_DEACTIVATE_EVENT);
+    publishSync(CAN_DEACTIVATE_EVENT);
 }
 
-export let canDeactivateCallers: any[] = [];
+export let canDeactivateCallers: (() => Promise<boolean>)[] = [];
 export function canDeactivate() {
     return new Promise(async (resolve) => {
         canDeactivateCallers = [];
         publishCanDeactivateEvent();
 
-        setTimeout(async () => {
-            let result = true;
-            for (let i = 0; i < canDeactivateCallers.length; i++) {
-                const y = await Promise.resolve(canDeactivateCallers[i]);
-                if (y === false) {
-                    result = y;
-                }
+        let result = true;
+        for (let i = 0; i < canDeactivateCallers.length; i++) {
+            const y = await Promise.resolve(canDeactivateCallers[i]());
+            if (y === false) {
+                result = y;
             }
-            resolve(result);
-        }, 0);
+        }
+        resolve(result);
     });
 }
 
 // you call this during a CAN_DEACTIVATE_EVENT to stop navigation
-export const stopCanDeactivate = function (promise: Promise<boolean>) {
+export const stopCanDeactivate = function (promise: () => Promise<boolean>) {
     canDeactivateCallers.push(promise);
 };
+
+export function connectCanDeactivate(ctx: any, call: () => Promise<boolean>) {
+    disconnectedCallback(ctx, function () {
+        unSubscribeCanDeactivateEvent(ctx);
+    });
+    subscribeCanDeactivateEvent(ctx, function () {
+        stopCanDeactivate(call);
+    });
+}

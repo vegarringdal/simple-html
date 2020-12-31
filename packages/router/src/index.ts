@@ -15,7 +15,8 @@ export {
     subscribeCanDeactivateEvent,
     unSubscribeCanDeactivateEvent,
     publishCanDeactivateEvent,
-    stopCanDeactivate
+    stopCanDeactivate,
+    connectCanDeactivate
 } from './can_deactivate_event';
 
 /**
