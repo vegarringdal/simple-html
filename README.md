@@ -248,12 +248,10 @@ You could have also used arrow function instead of class method
 ---
 
 We will now add @Property decorator, this will call `this.render()` for us when changes happens.
-This will save us from calling render manually.
-You can read more about this decorator in its own chapter on `@simple-html/core`. (todo- add link)
-
+This will save us from calling render manually. You can read more about this decorator in its own
+chapter on `@simple-html/core`. (todo- add link)
 
 ```ts
-
 import { html } from 'lit-html';
 import { customElement, property } from '@simple-html/core';
 
@@ -287,7 +285,6 @@ export default class extends HTMLElement {
         `;
     }
 }
-
 ```
 
 <br>
@@ -301,72 +298,65 @@ export default class extends HTMLElement {
 
 ---
 
-Lets create some more elements and use the `@attribute()` decorator. Normally you would have these elements/classes in seperate files.
-But this shows how you can split you app into different parts easly.
+Lets create some more elements and use the `@attribute()` decorator. Normally you would have these
+elements/classes in seperate files. But this shows how you can split you app into different parts
+easly.
 
-Sample under show how you can use `@attribute()` instead of manually getting value with `this.getAttribute('xx')`.
-When you use `@attribute()` it will be automatically observed/added to `static observedAttributes` in custom elements.
-You can read more about this decorator in its own chapter on `@simple-html/core`. (todo- add link)
- 
+Sample under show how you can use `@attribute()` instead of manually getting value with
+`this.getAttribute('xx')`. When you use `@attribute()` it will be automatically observed/added to
+`static observedAttributes` in custom elements. You can read more about this decorator in its own
+chapter on `@simple-html/core`. (todo- add link)
 
 ```ts
-import { html } from "lit-html";
-import { attribute, customElement } from "@simple-html/core";
+import { html } from 'lit-html';
+import { attribute, customElement } from '@simple-html/core';
 
-@customElement("app-root")
+@customElement('app-root')
 export class AppRoot extends HTMLElement {
-  connectedCallback() {
-    // as you can see this is a normal HTMLElement, so you can use normal js
-    // it would be cleaner to add this code to main index.css file
-    this.style.display = "flex";
-    this.style.flexDirection = "column";
-  }
+    connectedCallback() {
+        // as you can see this is a normal HTMLElement, so you can use normal js
+        // it would be cleaner to add this code to main index.css file
+        this.style.display = 'flex';
+        this.style.flexDirection = 'column';
+    }
 
-  public render() {
-    return html`
-      <header-section
-        my-attribute="att1"
-        class="bg-indigo-300 block"
-      ></header-section>
+    public render() {
+        return html`
+            <header-section my-attribute="att1" class="bg-indigo-300 block"></header-section>
 
-      <content-section
-        my-attribute="att1"
-        class="block flex flex-grow bg-indigo-600"
-      ></content-section>
+            <content-section
+                my-attribute="att1"
+                class="block flex flex-grow bg-indigo-600"
+            ></content-section>
 
-      <footer-section
-        my-attribute="att1"
-        class="bg-indigo-400 block"
-      ></footer-section>
-    `;
-  }
+            <footer-section my-attribute="att1" class="bg-indigo-400 block"></footer-section>
+        `;
+    }
 }
 
-@customElement("header-section")
+@customElement('header-section')
 export class HeaderSection extends HTMLElement {
-  @attribute() myAttribute = "default-value";
+    @attribute() myAttribute = 'default-value';
 
-  public render() {
-    return html` header:${this.myAttribute} `;
-  }
+    public render() {
+        return html` header:${this.myAttribute} `;
+    }
 }
 
-@customElement("content-section")
+@customElement('content-section')
 export class ContentSection extends HTMLElement {
-  @attribute({ attribute: "my-attribute" }) someOtherName = "default-value";
+    @attribute({ attribute: 'my-attribute' }) someOtherName = 'default-value';
 
-  public render() {
-    return html` content:${this.someOtherName} `;
-  }
+    public render() {
+        return html` content:${this.someOtherName} `;
+    }
 }
 
-@customElement("footer-section")
+@customElement('footer-section')
 export class FooterSection extends HTMLElement {
-  public render() {
-    return html`
-      footer:${this.getAttribute("my-attribute") || "default-value"}
-    `;
-  }
+    public render() {
+        return html` footer:${this.getAttribute('my-attribute') || 'default-value'} `;
+    }
 }
 ```
 
@@ -381,7 +371,85 @@ export class FooterSection extends HTMLElement {
 
 ---
 
-TODO
+Sometimes you might need to send a message to another part of you application, for this you can use
+built in `transmitter` functions. You should only send new sting, numbers or new objects with no
+reference to other objects/elements, so you dont prevent garbage collector from cleaning up.
+
+```ts
+import { html } from 'lit-html';
+import { customElement, property, publish, subscribe, unSubscribe } from '@simple-html/core';
+
+@customElement('app-root')
+export class AppRoot extends HTMLElement {
+    public render() {
+        return html`
+            <style>
+                app-root {
+                    display: flex;
+                    flex-direction: column;
+                }
+            </style>
+
+            <header-section class="bg-indigo-300 block"></header-section>
+
+            <content-section class="block flex flex-grow bg-indigo-600"></content-section>
+
+            <footer-section class="bg-indigo-400 block"></footer-section>
+        `;
+    }
+}
+
+@customElement('header-section')
+export class HeaderSection extends HTMLElement {
+    @property() count = 0;
+    connectedCallback() {
+        subscribe('SUPER-CHANNEL', this, (arg: number) => {
+            this.count = arg;
+        });
+    }
+    disconnectedCallback() {
+        unSubscribe('SUPER-CHANNEL', this);
+    }
+    public render() {
+        return html` header:${this.count} `;
+    }
+}
+
+@customElement('content-section')
+export class ContentSection extends HTMLElement {
+    @property() counter = 0;
+
+    btnClick() {
+        this.counter++;
+        publish('SUPER-CHANNEL', this.counter);
+    }
+
+    public render() {
+        return html`
+            <div>
+                <button class="p-2 m-2 bg-green-200" @click=${this.btnClick}>add</button>
+                <span>Count:${this.counter}</span>
+            </div>
+        `;
+    }
+}
+
+@customElement('footer-section')
+export class FooterSection extends HTMLElement {
+    @property() counter = 0;
+    connectedCallback() {
+        subscribe('SUPER-CHANNEL', this, (arg: number) => {
+            this.counter = arg;
+        });
+    }
+    disconnectedCallback() {
+        unSubscribe('SUPER-CHANNEL', this);
+    }
+    public render() {
+        return html` footer:${this.counter} `;
+    }
+}
+```
 
 <br>
 <br>
@@ -394,7 +462,80 @@ TODO
 
 ---
 
-TODO
+Using events is great, but for values its a lot easier to use the built in `State` class. This also
+remebers values during HMR event. This makes it a lot more fun to make edits.
+
+State class also support object states, see state class for more info. (todo- add link)
+
+```ts
+import { html } from 'lit-html';
+import { customElement, SimpleState } from '@simple-html/core';
+
+const myCounter = new SimpleState('SUPER_COUNTER', 0);
+@customElement('app-root')
+export class AppRoot extends HTMLElement {
+    public render() {
+        return html`
+            <style>
+                app-root {
+                    display: flex;
+                    flex-direction: column;
+                }
+            </style>
+
+            <header-section class="bg-indigo-300 block"></header-section>
+
+            <content-section class="block flex flex-grow bg-indigo-600"></content-section>
+
+            <footer-section class="bg-indigo-400 block"></footer-section>
+        `;
+    }
+}
+
+@customElement('header-section')
+export class HeaderSection extends HTMLElement {
+    connectedCallback() {
+        myCounter.connectStateChanges(this, this.render);
+    }
+
+    public render() {
+        const count = myCounter.getValue();
+        return html` footer:${count} `;
+    }
+}
+
+@customElement('content-section')
+export class ContentSection extends HTMLElement {
+    connectedCallback() {
+        myCounter.connectStateChanges(this, this.render);
+    }
+
+    public render() {
+        const [count, setCount] = myCounter.getState();
+
+        return html`
+            <div>
+                <button class="p-2 m-2 bg-green-200" @click=${() => setCount(count + 1)}>
+                    add
+                </button>
+                <span>Count:${count}</span>
+            </div>
+        `;
+    }
+}
+
+@customElement('footer-section')
+export class FooterSection extends HTMLElement {
+    connectedCallback() {
+        myCounter.connectStateChanges(this, this.render);
+    }
+
+    public render() {
+        const count = myCounter.getValue();
+        return html` footer:${count} `;
+    }
+}
+```
 
 <br>
 <br>
