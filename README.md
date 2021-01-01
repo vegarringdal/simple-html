@@ -249,6 +249,7 @@ You could have also used arrow function instead of class method
 
 We will now add @Property decorator, this will call `this.render()` for us when changes happens.
 This will save us from calling render manually.
+You can read more about this decorator in its own chapter on `@simple-html/core`. (todo- add link)
 
 
 ```ts
@@ -296,62 +297,76 @@ export default class extends HTMLElement {
 <br>
 <br>
 
-### Getting started: Lets make more components
+### Getting started: Lets make more components and add @attribute
 
 ---
 
-Lets create some more elements. Normally you would have these in seperate files.
-But this shows how you can split you app into different parts easly
+Lets create some more elements and use the `@attribute()` decorator. Normally you would have these elements/classes in seperate files.
+But this shows how you can split you app into different parts easly.
+
+Sample under show how you can use `@attribute()` instead of manually getting value with `this.getAttribute('xx')`.
+When you use `@attribute()` it will be automatically observed/added to `static observedAttributes` in custom elements.
+You can read more about this decorator in its own chapter on `@simple-html/core`. (todo- add link)
  
 
 ```ts
-import { html } from 'lit-html';
-import { customElement } from '@simple-html/core';
+import { html } from "lit-html";
+import { attribute, customElement } from "@simple-html/core";
 
-@customElement('app-root')
+@customElement("app-root")
 export class AppRoot extends HTMLElement {
+  connectedCallback() {
+    // as you can see this is a normal HTMLElement, so you can use normal js
+    // it would be cleaner to add this code to main index.css file
+    this.style.display = "flex";
+    this.style.flexDirection = "column";
+  }
 
-    connectedCallback(){
-      // as you can see this is a normal HTMLElement, so you can use normal js
-      // it would be cleaner to add this code to main index.css file
-      this.style.display = 'flex';
-      this.style.flexDirection ='column'
-    }
+  public render() {
+    return html`
+      <header-section
+        my-attribute="att1"
+        class="bg-indigo-300 block"
+      ></header-section>
 
-    public render() {
-        return html`
-          <header-section class="bg-indigo-300 block"></header-section>
-          <content-section class="block flex flex-grow bg-indigo-600"></content-section>
-          <footer-section class="bg-indigo-400 block"></footer-section>
-        `;
-    }
+      <content-section
+        my-attribute="att1"
+        class="block flex flex-grow bg-indigo-600"
+      ></content-section>
+
+      <footer-section
+        my-attribute="att1"
+        class="bg-indigo-400 block"
+      ></footer-section>
+    `;
+  }
 }
 
-@customElement('header-section')
+@customElement("header-section")
 export class HeaderSection extends HTMLElement {
-    public render() {
-        return html`
-            header
-        `;
-    }
+  @attribute() myAttribute = "default-value";
+
+  public render() {
+    return html` header:${this.myAttribute} `;
+  }
 }
 
-@customElement('content-section')
+@customElement("content-section")
 export class ContentSection extends HTMLElement {
-    public render() {
-        return html`
-            content
-        `;
-    }
+  @attribute({ attribute: "my-attribute" }) someOtherName = "default-value";
+
+  public render() {
+    return html` content:${this.someOtherName} `;
+  }
 }
 
-@customElement('footer-section')
+@customElement("footer-section")
 export class FooterSection extends HTMLElement {
-    public render() {
-        return html`
-            footer
-        `;
-    }
+  public render() {
+    return html`
+      footer:${this.getAttribute("my-attribute") || "default-value"}
+    `;
+  }
 }
 ```
 
