@@ -1,6 +1,6 @@
 import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
-import { GridInterface, Datasource } from '@simple-html/grid/src';
+import { GridInterface, Datasource } from '@simple-html/grid';
 import { WordDatasource01, add, set } from '../data/datasources';
 import { setup } from '../gridSetup/setup';
 
