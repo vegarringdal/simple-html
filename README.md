@@ -471,7 +471,12 @@ State class also support object states, see state class for more info. (todo- ad
 import { html } from 'lit-html';
 import { customElement, SimpleState } from '@simple-html/core';
 
+// lets create a state container and give it a default value
+// simple state uses only simple values like string or numbers
+// you could use objetcs, but better to use ObjectState here.
 const myCounter = new SimpleState('SUPER_COUNTER', 0);
+
+
 @customElement('app-root')
 export class AppRoot extends HTMLElement {
     public render() {
