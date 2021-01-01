@@ -4,7 +4,6 @@ export { customElement } from './customElement';
 export { publish, subscribe, unSubscribe, publishNext, publishSync } from './transmitter';
 export {
     validateKey,
-    stateResult,
     ObjectState,
     SimpleState,
     ObjectStateInternal,

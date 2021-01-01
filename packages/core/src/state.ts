@@ -18,8 +18,8 @@ if (!(window as any).state) {
  * Types only
  */
 type valueSetter<T> = (value: T) => void;
-export type stateResult<T> = [T, valueSetter<T>];
-export type stateResultObj<T> = [T, <K extends keyof T>(part: Pick<T, K>) => void];
+type stateResult<T> = [T, valueSetter<T>];
+type stateResultObj<T> = [T, <K extends keyof T>(part: Pick<T, K>) => void];
 
 /**
  * simple warning if you reuse a key by accident
