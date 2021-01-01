@@ -1,5 +1,4 @@
-import { SortArgument } from './types';
-import { Entity } from '@simple-html/grid/src/types';
+import { SortArgument, Entity } from './types';
 
 export class Sort {
     private lastSorting: SortArgument[];
