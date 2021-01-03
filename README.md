@@ -1532,14 +1532,6 @@ connectedCallback() {
 
 ---
 
-Todo..
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
 
 <br>
 <br>
