@@ -249,7 +249,7 @@ You could have also used arrow function instead of class method
 
 We will now add @Property decorator, this will call `this.render()` for us when changes happens.
 This will save us from calling render manually. You can read more about this decorator in its own
-chapter on `@simple-html/core`. [link](readme.md#simple-htmlcore-property)
+chapter on `@simple-html/core`. [link](#simple-htmlcore-property)
 
 ```ts
 import { html } from 'lit-html';
