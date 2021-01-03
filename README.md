@@ -877,7 +877,109 @@ export class RouterPage2 extends HTMLElement {
 
 ---
 
-TODO
+```ts
+import { html } from "lit-html";
+import { customElement } from "@simple-html/core";
+import {
+  startRouter,
+  connectHashChanges,
+  routeMatch,
+  gotoURL,
+  getRouteParams,
+} from "@simple-html/router";
+
+// start router (events listener etc)
+startRouter();
+@customElement("app-root")
+export class AppRoot extends HTMLElement {
+  connectedCallback() {
+    // this connected this elements to hash changes, and will be called on every route changes
+    connectHashChanges(this, this.render);
+  }
+
+  public render() {
+    return html`
+      <style>
+        app-root {
+          display: flex;
+          flex-direction: column;
+        }
+      </style>
+
+      <nav class="bg-indigo-900 block">
+        <a class="p-2 m-2 inline-block" href="">home</a>
+        <a class="p-2 m-2 inline-block" href="#page1">page1</a>
+        <a class="p-2 m-2 inline-block" href="#page2">page2</a>
+      </nav>
+
+      <!--   if route matches we show it -->
+      <!--  this way you could have several elements showing depending on route -->
+      ${routeMatch("")
+        ? html`<router-home
+            class="block flex flex-col flex-grow bg-indigo-600 m-2 p-2"
+          ></router-home>`
+        : ""}
+
+      <!--   if route matches we show it -->
+      ${routeMatch("#page1*")
+        ? html`<router-page1
+            class="block flex flex-col flex-grow bg-indigo-600 m-2 p-2"
+          ></router-page1>`
+        : ""}
+
+      <!--   if route matches we show it -->
+      ${routeMatch("#page2*")
+        ? html`<router-page2
+            class="block flex flex-col flex-grow bg-indigo-600 m-2 p-2"
+          ></router-page1>`
+        : ""}
+    `;
+  }
+}
+
+@customElement("router-home")
+export class RouterHome extends HTMLElement {
+  public render() {
+    return html`home`;
+  }
+}
+
+@customElement("router-page1")
+export class RouterPage1 extends HTMLElement {
+  public render() {
+    const x = getRouteParams("");
+
+    return html`page1
+      <button
+        class="m-2 p-2 bg-green-300"
+        @click=${() => gotoURL("#page2/:cool", { cool: "super" }, { id: 5 })}
+      >
+        go to page 2
+      </button>
+      <pre>
+        ${JSON.stringify(x)}
+      </pre
+      >`;
+  }
+}
+
+@customElement("router-page2")
+export class RouterPage2 extends HTMLElement {
+  public render() {
+    const x = getRouteParams("");
+
+    return html`page2
+      <button class="m-2 p-2 bg-green-300" @click=${() => gotoURL("#page1/:name/", { name: "wow" }, { id: 1 })}>
+        go to page 1
+      </button>
+      <pre>
+        ${JSON.stringify(x)}
+      </pre
+      >`;
+  }
+}
+
+```
 
 <br>
 <br>
