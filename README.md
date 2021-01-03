@@ -877,6 +877,10 @@ export class RouterPage2 extends HTMLElement {
 
 ---
 
+This sample shows how to get params during load of new page.
+It also shows how to send over params with `goToURL()` helper.
+
+
 ```ts
 import { html } from "lit-html";
 import { customElement } from "@simple-html/core";
