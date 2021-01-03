@@ -249,7 +249,7 @@ You could have also used arrow function instead of class method
 
 We will now add @Property decorator, this will call `this.render()` for us when changes happens.
 This will save us from calling render manually. You can read more about this decorator in its own
-chapter on `@simple-html/core`. [link](#simple-htmlcore-property)
+chapter on `@simple-html/core`. [Link to @proerty()](#simple-htmlcore-property)
 
 ```ts
 import { html } from 'lit-html';
@@ -305,7 +305,7 @@ easly.
 Sample under show how you can use `@attribute()` instead of manually getting value with
 `this.getAttribute('xx')`. When you use `@attribute()` it will be automatically observed/added to
 `static observedAttributes` in custom elements. You can read more about this decorator in its own
-chapter on `@simple-html/core`. [link](#simple-htmlcore-attribute)
+chapter on `@simple-html/core`. [Link to attribute()](#simple-htmlcore-attribute)
 
 ```ts
 import { html } from 'lit-html';
@@ -465,7 +465,7 @@ export class FooterSection extends HTMLElement {
 Using events is great, but for values its a lot easier to use the built in `State` class. This also
 remebers values during HMR event. This makes it a lot more fun to make edits.
 
-State class also support object states, see state class for more info. [link](#simple-htmlcore-state)
+State class also support object states, see state class for more info. [Link to State](#simple-htmlcore-state)
 
 ```ts
 import { html } from 'lit-html';
