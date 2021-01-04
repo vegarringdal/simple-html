@@ -4,5 +4,5 @@
  * @param call
  */
 export function disconnectedCallback(ctx: HTMLElement, call: () => void) {
-    (ctx as any).registerDisconnectCallback(call);
+    (ctx as any).internalRegisterDisconnectCallback(call);
 }

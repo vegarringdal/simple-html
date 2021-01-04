@@ -1031,7 +1031,7 @@ To use this you would now add `<app-root></app-root>` to you html
 
 #### `@customElement` adds methods:
 
-This is the built in methods simple-html component/element will have.
+This is the built in methods simple-html component/element can use
 
 ```ts
 @customElement('app-root')
@@ -1078,19 +1078,6 @@ export default class extends HTMLElement {
 
     // standard web component callback
     adoptedCallback(...result: any[]): void {
-        //  do something
-    }
-
-    // helper function to get called back when its about to disconnect,
-    // useful if you have another component that needs to do something when you component disconnects
-    // you can call it, but overriding it is not possible
-    registerDisconnectCallback(call: () => void): void {
-        //  do something
-    }
-
-    // helper function like registerDisconnectCallback, this will only be called once, you need to re-register if you want update again
-    // you can call it, but overriding it is not possible
-    registerUpdatedCallback(call: () => void): void {
         //  do something
     }
 }

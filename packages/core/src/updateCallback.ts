@@ -4,5 +4,5 @@
  * @param call
  */
 export function updatedCallback(ctx: HTMLElement, call: () => void) {
-    (ctx as any).registerUpdatedCallback(call);
+    (ctx as any).internalRegisterUpdatedCallback(call);
 }

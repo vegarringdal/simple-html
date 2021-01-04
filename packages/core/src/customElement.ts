@@ -85,10 +85,11 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             }
 
             /**
+             * FOR INTERNAL USE ONLY! use disconnectedCallback helper function
              * register for disconnectCallback event
              * @param call
              */
-            registerDisconnectCallback(call: () => void) {
+            internalRegisterDisconnectCallback(call: () => void) {
                 if (this[getDisconnectCallbackCallerSymbol()]) {
                     this[getDisconnectCallbackCallerSymbol()].push(call);
                 } else {
@@ -97,10 +98,11 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             }
 
             /**
+             * FOR INTERNAL USE ONLY! use updatedCallback helper function
              * register for next callback event - only once
              * @param call
              */
-            registerUpdatedCallback(call: () => void) {
+            internalRegisterUpdatedCallback(call: () => void) {
                 if (this[getUpdateCallbackCallersSymbol()]) {
                     this[getUpdateCallbackCallersSymbol()].push(call);
                 } else {
