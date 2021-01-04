@@ -1,8 +1,8 @@
 # @simple-html
 
-This is the docs for little library wrapper Ive made around `lit-html`. For building web pages you
-need 2 main parts called `@simple-html/core` & `@simple-html/router`. There is other parts too, but
-they are mostly experimental gui components like datagrid, splitter, dropdown etc.
+This is a little library wrapper I have made around `lit-html`. Created this since I wanted to learn more about web components and did not want to use a framework/or be dependent on many other libraries to make simple pages. I use it many personal projects and mini tools at work.
+
+For building web pages, you need 2 main parts called `@simple-html/core` & `@simple-html/router`. There are other parts too, but they are mostly experimental GUI components like data grid, splitter, dropdown etc. I only use light dom and only client side routing.
 
 Main goal is to make it a little easier to use web components with the help of `lit-html`. But also
 not try and do to much magic except for what `lit-html` does :joy:
@@ -16,6 +16,8 @@ I assume you have [git](https://git-scm.com/), [nodejs 14+](https://nodejs.org/e
 [vscode](https://code.visualstudio.com/) installed, and have basic understanding of html/css/js. To
 make it easier to read html in string literals you should install extension called
 [lit-html](https://marketplace.visualstudio.com/items?itemName=bierner.lit-html) in vscode.
+
+
 
 <br>
 <br>
@@ -46,8 +48,8 @@ Please open your terminal in a folder where you would like to create the project
 
 When you are ready do the following:
 
--   Run this in the termnal `git clone https://github.com/simple-html/starter-web`.
-    -   This will clone the repoository and create folder `starter-web`.
+-   Run this in the terminal `git clone https://github.com/simple-html/starter-web`.
+    -   This will clone the repository and create folder `starter-web`.
 -   Enter folder by running `cd .\starter-web\` and open vscode with `code .`.
 -   Now we will open terminal inside vscode, go to menu `view` and go down to `terminal` (please
     notice shortcut to next time).
@@ -55,7 +57,7 @@ When you are ready do the following:
 -   Lets start the project by running `npm start dev` and open in browser url
     `http://localhost:4444`
 
-You browser should show a blue box with "hello world" inside it.
+Your browser should show a blue box with "hello world" inside it.
 
 YAY :joy:
 
@@ -70,21 +72,21 @@ YAY :joy:
 
 ---
 
-Using a starter kit is a easy way to get started, but its useful to understand a little how it
+Using a starter kit is an easy way to get started, but it's useful to understand a little how it
 works. I assume you know how npm modules & package.json works, so I will not go into any details
 about this. The project have 2 commands you can run.
 
 -   `npm start`
     -   This runs app in development mode and launches local web server at localhost port 4444
 -   `npm run build`
-    -   This generates a production build, when its done you will find the files under `build`
+    -   This generates a production build, when it's done you will find the files under `build`
         folder.
 
 Atm please overlook everything in the root folder except `src` folder. This will have will have all
 the source to our web page. Under `src` folder you will find 4 files.
 
 -   `index.css`
-    -   This loads tailwindcss and basic style for body
+    -   This loads "Tailwindcss" and basic style for body
 -   `index.html`
     -   Simple standard html file, only part worth noticing here is the `$css`,`$bundles` in header
         and `<app-root></app-root>` in body.
@@ -93,7 +95,7 @@ the source to our web page. Under `src` folder you will find 4 files.
         -   `<app-root></app-root>` is the root of our web app. All elements we generate will be
             inside here.
 -   `index.ts`
-    -   This is the first code thats loaded by index.html, you dont need to change this. All it does
+    -   This is the first code that's loaded by index.html, you don't need to change this. All it does
         is load index.css file. And load a helper library `custom-elements-hmr-polyfill` to make web
         development more fun when we do edits. And load load our app-root element & resets our
         app-root on saves.
@@ -130,7 +132,7 @@ export default class extends HTMLElement {
 }
 ```
 
-Here is the same, but Ive added some comments. Look in the links under for more details about the
+Here is the same, but I've added some comments. Look in the links under for more details about the
 subject.
 
 ```ts
@@ -174,7 +176,7 @@ export default class extends HTMLElement {
 
 Replace the code you have in `app-root.ts` with the code under and save file. The webpage will now
 update with 2 buttons on the page, and our hello world box have been replaced by a bigger box with
-the current count Sample shows under how we call a method on the class to update local class
+the current count Sample show under how we call a method on the class to update local class
 property and call render to update the page. In the render function I have added a few classes to
 class attribute in `section, span, button`. This is classes from
 [tailwindcss](https://tailwindcss.com/) project. tailwind makes it easier and a lot more fun to
@@ -195,7 +197,7 @@ export default class extends HTMLElement {
         this.render();
     }
 
-    // called when we click subract button
+    // called when we click subtract button
     public subtractClick() {
         this.count--;
         this.render();
@@ -249,7 +251,9 @@ You could have also used arrow function instead of class method
 
 We will now add @Property decorator, this will call `this.render()` for us when changes happens.
 This will save us from calling render manually. You can read more about this decorator in its own
-chapter on `@simple-html/core`. [Link to @proerty()](#simple-htmlcore-property)
+chapter on `@simple-html/core`. 
+
+[Link to @property()](#simple-htmlcore-property)
 
 ```ts
 import { html } from 'lit-html';
@@ -265,7 +269,7 @@ export default class extends HTMLElement {
         this.count++;
     }
 
-    // called when we click subract button
+    // called when we click subtract button
     public subtractClick() {
         this.count--;
     }
@@ -299,13 +303,15 @@ export default class extends HTMLElement {
 ---
 
 Lets create some more elements and use the `@attribute()` decorator. Normally you would have these
-elements/classes in seperate files. But this shows how you can split you app into different parts
-easly.
+elements/classes in separate files. But this show how you can split your app into different parts
+easily.
 
 Sample under show how you can use `@attribute()` instead of manually getting value with
 `this.getAttribute('xx')`. When you use `@attribute()` it will be automatically observed/added to
 `static observedAttributes` in custom elements. You can read more about this decorator in its own
-chapter on `@simple-html/core`. [Link to attribute()](#simple-htmlcore-attribute)
+chapter on `@simple-html/core`. 
+
+[Link to attribute()](#simple-htmlcore-attribute)
 
 ```ts
 import { html } from 'lit-html';
@@ -371,9 +377,9 @@ export class FooterSection extends HTMLElement {
 
 ---
 
-Sometimes you might need to send a message to another part of you application, for this you can use
+Sometimes you might need to send a message to another part of your application, for this you can use
 built in `transmitter` functions. You should only send new sting, numbers or new objects with no
-reference to other objects/elements, so you dont prevent garbage collector from cleaning up.
+reference to other objects/elements, so you don't prevent garbage collector from cleaning up.
 
 ```ts
 import { html } from 'lit-html';
@@ -462,8 +468,8 @@ export class FooterSection extends HTMLElement {
 
 ---
 
-Using events is great, but for values its a lot easier to use the built in `State` class. This also
-remebers values during HMR event. This makes it a lot more fun to make edits.
+Using events is great, but for values it's a lot easier to use the built in `State` class. This also
+remembers values during HMR event. This makes it a lot more fun to make edits.
 
 State class also support object states, see state class for more info. [Link to State](#simple-htmlcore-state)
 
@@ -473,7 +479,7 @@ import { customElement, SimpleState } from '@simple-html/core';
 
 // lets create a state container and give it a default value
 // simple state uses only simple values like string or numbers
-// you could use objetcs, but better to use ObjectState here.
+// you could use objects, but better to use ObjectState here.
 const myCounter = new SimpleState('SUPER_COUNTER', 0);
 
 
@@ -568,7 +574,7 @@ import {
 startRouter();
 
 
-// our main appication
+// our main application
 @customElement("app-root")
 export class AppRoot extends HTMLElement {
   
@@ -651,7 +657,7 @@ export class RouterPage2 extends HTMLElement {
 
 ---
 
-Lets use the `goToUrl()` function to add a simple button to go between pages
+Let's use the `goToUrl()` function to add a simple button to go between pages.
 
 ```ts
 import { html } from "lit-html";
@@ -747,7 +753,7 @@ export class RouterPage2 extends HTMLElement {
 <br>
 <br>
 
-### Getting started: stop navigation if we havent saved
+### Getting started: stop navigation if needed
 
 ---
 
@@ -877,8 +883,8 @@ export class RouterPage2 extends HTMLElement {
 
 ---
 
-This sample shows how to get params during load of new page.
-It also shows how to send over params with `goToURL()` helper.
+This sample show how to get params during load of new page.
+It also show how to send over params with `goToURL()` helper.
 
 
 ```ts
@@ -994,7 +1000,7 @@ export class RouterPage2 extends HTMLElement {
 
 # `@simple-html/core`
 
-Next parts shows all the different functions/decorators in `@simple-html/core`
+Next parts show all the different functions/decorators in `@simple-html/core`
 
 <br>
 <br>
@@ -1032,12 +1038,12 @@ This is the built in methods simple-html component/element will have.
 export default class extends HTMLElement {
     // standard web component callback, you need to call super() here
     constructor(...result: any[]): void {
-        //  do somethine
+        //  do something
     }
 
     // standard web component callback
     connectedCallback(...result: any[]): void {
-        //  do somethine
+        //  do something
     }
 
     //called when it want to render, you supply it with the lit-html template result here
@@ -1047,17 +1053,17 @@ export default class extends HTMLElement {
 
     // called when render have updated
     updatedCallback(): void {
-        //  do somethine
+        //  do something
     }
 
     // standard web component callback
     disconnectedCallback(...result: any[]): void {
-        //  do somethine
+        //  do something
     }
 
     // standard web component callback
     attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
-        //  do somethine
+        //  do something
     }
 
     // called when attributes or properties observed is updated
@@ -1067,25 +1073,25 @@ export default class extends HTMLElement {
         oldValue: string,
         newValue: string
     ): void {
-        //  do somethine
+        //  do something
     }
 
     // standard web component callback
     adoptedCallback(...result: any[]): void {
-        //  do somethine
+        //  do something
     }
 
     // helper function to get called back when its about to disconnect,
     // useful if you have another component that needs to do something when you component disconnects
     // you can call it, but overriding it is not possible
     registerDisconnectCallback(call: () => void): void {
-        //  do somethine
+        //  do something
     }
 
-    // helper function like registerDisconnectCallback, this will only be called once, you need to reregister if you want update again
+    // helper function like registerDisconnectCallback, this will only be called once, you need to re-register if you want update again
     // you can call it, but overriding it is not possible
     registerUpdatedCallback(call: () => void): void {
-        //  do somethine
+        //  do something
     }
 }
 ```
@@ -1104,15 +1110,15 @@ export default class extends HTMLElement {
 This decorator function help you listen for attribute changes and set this value to a property. Atm
 only two options:
 
--   `skipRender: boolean` setting this to false will prevent it from auto updateing if value is
+-   `skipRender: boolean` setting this to false will prevent it from auto updating if value is
     changed
--   `attribute: string` so property and attibute does not need to be the same
+-   `attribute: string` so property and attribute does not need to be the same
 
 ```ts
 @attribute(options: { skipRender?: boolean })
 ```
 
-If you dont use decorator you need to use the native implementation `observedAttributes`
+If you don't use decorator you need to use the native implementation `observedAttributes`
 
 ```ts
 @customElement('app-root')
@@ -1140,13 +1146,13 @@ class Ele extends HTMLElement {
 }
 ```
 
-If you use decorator same code can be written like this. Its splits camelcase `myAttribute` as
+If you use decorator same code can be written like this. Its splits "camelCase" `myAttribute` as
 `my-attribute`.
 
 ```ts
 @customElement('app-root')
 class Ele extends HTMLElement {
-    @attibute() myAttribute = 'my local default value';
+    @attribute() myAttribute = 'my local default value';
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
         // do something
@@ -1181,7 +1187,7 @@ class Ele extends HTMLElement {
 ---
 
 This decorator function makes it easy to update/listen for changes to property set locally or
-externaly
+externally
 
 ```ts
 @property(options: { skipRender: boolean })
@@ -1255,7 +1261,7 @@ requestRender(ctx: HTMLElement):void
 ---
 
 This is a utility function that can be used if you need to be notified if update happens on a
-element. You will need to reregister if you are called..
+element. You will need to re-register if you are called..
 
 ```ts
 updatedCallback(ctx: HTMLElement, call: () => void)
@@ -1273,7 +1279,7 @@ updatedCallback(ctx: HTMLElement, call: () => void)
 ---
 
 State class helps you preserve state during the application. This could be between moving between
-pages using the router or HMR event during developement
+pages using the router or HMR event during development
 
 Simple sample:
 
@@ -1331,7 +1337,7 @@ class Ele extends HTMLElement {
     }
 
     render() {
-        // something awsome...
+        // something awesome...
     }
 }
 ```
@@ -1353,7 +1359,7 @@ then connectedCallback will be a good place, and disconnectedCallback for unsubs
 
 #### Transmitter function: `publish()`
 
-Microtask by using Promise.resolve.then(()=>work)
+Micro task by using Promise.resolve.then(()=>work)
 
 ```ts
 publish(channel: string, ...args: any[]): void
@@ -1552,7 +1558,7 @@ connectedCallback() {
 
 ---
 
-Just load before eventything. Check with bundler how to treshake it away, depends how it works.
+Just load before everything. Check with bundler how to treeshake it away, depends how it works.
 Starter does this already on production builds
 
 ```ts
@@ -1564,7 +1570,7 @@ import('./app-root').then(() => {
     if (document.body) {
         document.body.innerHTML = '<app-root></app-root>';
     } else {
-        // add a dom loaded event if you dont have it in index.html
+        // add a dom loaded event if you don't have it in index.html
     }
 });
 ```
@@ -1741,7 +1747,7 @@ You need to read development first before trying to run these.
 
 ---
 
--   Run `pubblish:all` to publish
+-   Run `publish:all` to publish
     -   Or `publish:test` to run publish with `--dry-run` option
 
 <br>
@@ -1766,7 +1772,7 @@ import('./app-root').then(() => {
     if (document.body) {
         document.body.innerHTML = '<app-root></app-root>';
     } else {
-        // add a dom loaded event if you dont have it in index.html
+        // add a dom loaded event if you don't have it in index.html
     }
 });
 ```
@@ -1774,7 +1780,7 @@ import('./app-root').then(() => {
 > To make state container save it self trigger this on hmr event: Important since fusebox flushes
 > the core during development of the core...
 
-`window.dispatchEvent(new CustomEvent('IMPLE_HTML_SAVE_STATE'));`
+`window.dispatchEvent(new CustomEvent('SIMPLE_HTML_SAVE_STATE'));`
 
 <br>
 <br>
