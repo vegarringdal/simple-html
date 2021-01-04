@@ -1,4 +1,4 @@
-# @simple-html
+# Documentation
 
 This is a little library wrapper I have made around `lit-html`. Created this since I wanted to learn more about web components and did not want to use a framework/or be dependent on many other libraries to make simple pages. I use it many personal projects and mini tools at work.
 
@@ -22,17 +22,7 @@ make it easier to read html in string literals you should install extension call
 <br>
 <br>
 <br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
+
 
 # Getting started
 
