@@ -1424,7 +1424,7 @@ startRouter():void
 To be used in connectedCallback
 
 ```ts
-const connectHashChanges(context: HTMLElement, callback: () => void)
+connectHashChanges(context: HTMLElement, callback: () => void)
 ```
 
 <br>
@@ -1439,7 +1439,7 @@ const connectHashChanges(context: HTMLElement, callback: () => void)
 ---
 
 ```ts
-const routeMatch: (hash?: string, locationhash?: string) => boolean;
+routeMatch: (hash?: string, locationhash?: string) => boolean;
 ```
 
 <br>
@@ -1454,7 +1454,7 @@ const routeMatch: (hash?: string, locationhash?: string) => boolean;
 ---
 
 ```ts
-const routeMatchAsync: (
+routeMatchAsync: (
     hash: string,
     importStatement: () => Promise<any>,
     htmlTemplate: TemplateResult
@@ -1488,7 +1488,7 @@ render(){
 ---
 
 ```ts
-const getRouteParams: (hash: string, locationhash?: string) => any;
+getRouteParams: (hash: string, locationhash?: string) => any;
 ```
 
 <br>
