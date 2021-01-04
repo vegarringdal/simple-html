@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/datasource",
-    "version": "3.0.0-next6",
+    "version": "3.0.0",
     "description": "datasource",
     "main": "dist/index.js",
     "module": "dist/index.js",

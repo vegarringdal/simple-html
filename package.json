@@ -1,6 +1,6 @@
 {
     "name": "simple-html",
-    "version": "3.0.0-next6",
+    "version": "3.0.0",
     "description": "Simple lib for creating web pages using lit-html and web components",
     "scripts": {
         "start": "node fuse",
@@ -20,7 +20,7 @@
         "coverage": "npm run rollup && jest --collectCoverage",
         "rollup": "./node_modules/.bin/rollup -c"
     },
-    "author": "vegar Ringdal",
+    "author": "Vegar Ringdal",
     "license": "MIT",
     "husky": {
         "hooks": {
