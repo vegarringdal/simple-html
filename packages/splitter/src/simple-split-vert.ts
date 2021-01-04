@@ -1,27 +1,36 @@
-import { customElement, stateResult, stateContainer } from '@simple-html/core';
+import { customElement, ObjectStateInternal } from '@simple-html/core';
 
 export type state = {
     active: boolean;
     mainHeight: number;
-    nextElement: HTMLElement;
     nextElementHeight: number;
-    previousElement: HTMLElement;
     previousElementHeight: number;
     x: number;
     y: number;
 };
-
 @customElement('simple-split-vert')
 export default class extends HTMLElement {
     show: boolean;
     refEle: HTMLElement;
     stateName: string;
+    state: ObjectStateInternal<state>;
+    previousElement: HTMLElement;
+    nextElement: HTMLElement;
 
-    formState(defaultValue = { active: false } as state): stateResult<state> {
-        return stateContainer<state>(this.stateName, defaultValue);
+    formState() {
+        return this.state.getState();
     }
 
     connectedCallback() {
+        if (!this.stateName) {
+            throw 'name attribute needs to be set ".name=${"somename"}';
+        }
+
+        this.state = new ObjectStateInternal<state>(
+            '@SIMPLE-HTML/SPLITTER',
+            { active: false } as state,
+            this.stateName
+        );
         this.style.width = '100%';
         this.style.height = '100%';
         this.style.display = 'flex';
@@ -78,9 +87,8 @@ export default class extends HTMLElement {
         this.refEle.removeEventListener('mousedown', this);
         this.removeEventListener('mouseup', this);
         this.removeEventListener('mousemove', this);
-        const [state] = this.formState();
-        state.nextElement = null;
-        state.previousElement = null;
+        this.nextElement = null;
+        this.previousElement = null;
         this.refEle = null;
     }
 
@@ -107,9 +115,9 @@ export default class extends HTMLElement {
         const state: state = _state as any;
         state.active = true;
         state.mainHeight = e.target.parentNode?.clientHeight;
-        state.nextElement = e.target.nextElementSibling;
+        this.nextElement = e.target.nextElementSibling;
         state.nextElementHeight = e.target.nextElementSibling.clientHeight;
-        state.previousElement = e.target.previousElementSibling;
+        this.previousElement = e.target.previousElementSibling;
         state.previousElementHeight = e.target.previousElementSibling.clientHeight;
         state.x = e.screenX;
         state.y = e.screenY;
@@ -119,8 +127,8 @@ export default class extends HTMLElement {
     mouseup() {
         const [state, setState] = this.formState();
         state.active = false;
-        state.previousElementHeight = state.previousElement.clientHeight;
-        state.nextElementHeight = state.nextElement.clientHeight;
+        state.previousElementHeight = this.previousElement.clientHeight;
+        state.nextElementHeight = this.nextElement.clientHeight;
         setState(state);
     }
 
@@ -131,13 +139,13 @@ export default class extends HTMLElement {
             if (state.y < e.screenY) {
                 const procent = ((state.previousElementHeight + change) * 100) / state.mainHeight;
 
-                state.previousElement.style.height = procent + '%';
-                state.nextElement.style.height = 100 - procent + '%';
+                this.previousElement.style.height = procent + '%';
+                this.nextElement.style.height = 100 - procent + '%';
             } else {
                 const procent = ((state.previousElementHeight - change) * 100) / state.mainHeight;
 
-                state.previousElement.style.height = procent + '%';
-                state.nextElement.style.height = 100 - procent + '%';
+                this.previousElement.style.height = procent + '%';
+                this.nextElement.style.height = 100 - procent + '%';
             }
             setState(state);
         }

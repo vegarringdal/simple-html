@@ -6,7 +6,7 @@ export function requestRender(ctx: any) {
             ctx.__wait = true;
             requestAnimationFrame(async () => {
                 await Promise.resolve(true);
-                ctx.render();
+                ctx.render.call(ctx);
                 ctx.__wait = false;
             });
         }

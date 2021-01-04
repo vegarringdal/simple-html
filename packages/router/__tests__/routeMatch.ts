@@ -53,8 +53,18 @@ describe('routeMatch', () => {
     });
 
     it('#home/:any/whatever === #home/something/whatever/', () => {
-        gotoURL('#home/something/whatever/');
+        gotoURL('#home/something/whatever/?ddd');
         expect(routeMatch('#home/:any/whatever')).toEqual(true);
+    });
+
+    it('#home/:any/whatever === #home/something/whatever/?test=1', () => {
+        gotoURL('#home/something/whatever/?test=1');
+        expect(routeMatch('#home/:any/whatever')).toEqual(true);
+    });
+
+    it('#home/:any/whatever === #home/something/whatever/?foo=1&bar=2', () => {
+        gotoURL('#home/something/awsome/?foo=1&bar=2');
+        expect(routeMatch('#home/:any/:whatever')).toEqual(true);
     });
 
     it('#home/any/whatever === #home/any/whatever/', () => {

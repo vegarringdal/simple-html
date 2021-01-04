@@ -9,19 +9,20 @@ export {
     subscribeHashEvent,
     unSubscribeHashEvent,
     publishHashEvent,
-    connectHashEvent
+    connectHashChanges
 } from './hash_render_event';
 export {
     subscribeCanDeactivateEvent,
     unSubscribeCanDeactivateEvent,
     publishCanDeactivateEvent,
-    stopCanDeactivate
+    stopCanDeactivate,
+    connectCanDeactivate
 } from './can_deactivate_event';
 
 /**
  * starts router
  */
-export function init() {
+export function startRouter() {
     let oldhash = window.location.hash;
     let isBackEvent = false;
 

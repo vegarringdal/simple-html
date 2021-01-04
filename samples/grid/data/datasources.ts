@@ -4,7 +4,7 @@ import { Generator } from './generator';
 const generator = new Generator();
 
 const EntityHandlerOverride = class extends EntityHandler {
-    get(target: object, prop: string) {
+    get(target: any, prop: string) {
         if (prop === 'superman') {
             return (target['word4'] || '') + ' - ' + (target['work5'] || '');
         } else {
@@ -12,7 +12,7 @@ const EntityHandlerOverride = class extends EntityHandler {
         }
     }
 
-    set(obj: object, prop: string, value: any) {
+    set(obj: any, prop: string, value: any) {
         if (prop === 'superman') {
             return false;
         } else {

@@ -1,10 +1,15 @@
 import { render } from 'lit-html';
-import { getObservedAttributesSymbol, getObservedAttributesMapSymbol } from './symbols';
-import { logger } from './logger';
+import {
+    getObservedAttributesSymbol,
+    getObservedAttributesMapSymbol,
+    getConstructorDoneSymbol,
+    getDisconnectCallbackCallerSymbol,
+    getUpdateCallbackCallersSymbol
+} from './symbols';
 
 /**
  * @customElement- decorator
- *
+ * only log if method is not standard, else its just
  */
 export function customElement(elementName: string, extended?: ElementDefinitionOptions) {
     return function reg(elementClass: any) {
@@ -31,64 +36,94 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
         }
 
         const Base: any = class extends elementClass {
-            constructor() {
-                super();
-                logger('constructor', this, super.tagName);
-            }
+            ['updateCallbackCallersSymbol']: (() => void)[];
+            ['getDisconnectCallbackCallerSymbol']: (() => void)[];
+            ['getConstructorDoneSymbol']: boolean;
 
-            renderCalled() {
-                if (super.renderCalled) {
-                    super.renderCalled.call(this);
-                }
+            constructor(...result: any[]) {
+                super(...result);
+                // lets have this to know if constructor is done or not
+                // this way we can skip prop attribute changed values happing before constructor
+                this[getUpdateCallbackCallersSymbol()] = [];
+                this[getDisconnectCallbackCallerSymbol()] = [];
+                this[getConstructorDoneSymbol()] = true;
             }
 
             render(...result: any[]) {
                 if (super.render) {
-                    logger('render', this, super.tagName);
                     const template = super.render.call(this, ...result);
                     Promise.resolve(template).then((templates) => {
                         render(templates, this as any, { eventContext: this as any });
-                        if (super.updated) {
+                        const callers = this[getUpdateCallbackCallersSymbol()];
+                        if (super.updatedCallback || (callers && callers.length)) {
                             //delay so it actually get a chance to update
                             requestAnimationFrame(() => {
-                                super.updated();
+                                if (callers && callers.length) {
+                                    callers.forEach((call: () => void) => call());
+                                }
+                                this[getUpdateCallbackCallersSymbol()] = [];
+                                if (super.updatedCallback) {
+                                    super.updatedCallback.call(this);
+                                }
                             });
                         }
                     });
                 }
-                this.renderCalled();
             }
-            connectedCallback() {
-                logger('connectedCallback', this, super.tagName);
+
+            adoptedCallback(...result: any[]) {
+                if (super.adoptedCallback) {
+                    super.adoptedCallback.call(this, ...result);
+                }
+            }
+
+            connectedCallback(...result: any[]) {
                 if (super.connectedCallback) {
-                    super.connectedCallback.call(this);
+                    super.connectedCallback.call(this, ...result);
                 }
                 this.render(this);
             }
 
-            register(call: Function) {
-                if (this.callers) {
-                    this.callers.push(call);
+            /**
+             * FOR INTERNAL USE ONLY! use disconnectedCallback helper function
+             * register for disconnectCallback event
+             * @param call
+             */
+            internalRegisterDisconnectCallback(call: () => void) {
+                if (this[getDisconnectCallbackCallerSymbol()]) {
+                    this[getDisconnectCallbackCallerSymbol()].push(call);
                 } else {
-                    this.callers = [];
-                    this.callers.push(call);
+                    console.warn('you tried to reregister disconnect callback when not allowed');
                 }
             }
 
-            disconnectedCallback() {
-                logger('disconnectedCallback', this, super.tagName);
-                if (this.callers) {
-                    this.callers.forEach((call: Function) => call());
+            /**
+             * FOR INTERNAL USE ONLY! use updatedCallback helper function
+             * register for next callback event - only once
+             * @param call
+             */
+            internalRegisterUpdatedCallback(call: () => void) {
+                if (this[getUpdateCallbackCallersSymbol()]) {
+                    this[getUpdateCallbackCallersSymbol()].push(call);
+                } else {
+                    console.warn('you tried to reregister updated callback when not allowed');
                 }
-                this.callers = [];
+            }
+
+            disconnectedCallback(...result: any[]) {
+                this[getUpdateCallbackCallersSymbol()] = null; // set to null, so they cant reregister
+                const callers = this[getDisconnectCallbackCallerSymbol()];
+                this[getDisconnectCallbackCallerSymbol()] = null; // set to null, so they cant reregister
+                if (callers.length) {
+                    callers.forEach((call: () => void) => call());
+                }
+
                 if (super.disconnectedCallback) {
-                    super.disconnectedCallback.call(this);
+                    super.disconnectedCallback.call(this, ...result);
                 }
             }
-            attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-                logger('attributeChangedCallback', this, super.tagName);
-                //get map
 
+            attributeChangedCallback(name: string, oldValue: string, newValue: string) {
                 if (!this[getObservedAttributesMapSymbol()]) {
                     const attribute = name
                         .replace(/([a-z])([A-Z])/g, '$1-$2')
@@ -100,13 +135,14 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
 
                 const nameProp = this[getObservedAttributesMapSymbol()].get(name);
                 this[nameProp] = newValue || '';
+
                 // if normal attributeChanged is set
                 if (super.attributeChangedCallback) {
                     super.attributeChangedCallback.call(this, name, oldValue, newValue);
                 }
                 //if our simpler method is set (this is used by the @attribute and @property decorators)
-                if (super.valuesChanged) {
-                    super.valuesChanged('attribute', name, oldValue, newValue);
+                if (super.valuesChangedCallback) {
+                    super.valuesChangedCallback.call(this, 'attribute', name, oldValue, newValue);
                 }
             }
         };

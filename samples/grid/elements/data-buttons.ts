@@ -3,7 +3,7 @@ import { html } from 'lit-html';
 
 @customElement('data-buttons')
 export default class extends HTMLElement {
-    callback: Function;
+    callback: (num: any) => void;
     type: string;
     btnClass: string;
 

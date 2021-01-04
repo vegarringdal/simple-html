@@ -2,6 +2,20 @@ import { customElement, requestRender } from '@simple-html/core';
 import { html } from 'lit-html';
 import { routeMatch } from '@simple-html/router';
 
+import './sample-default';
+import './sample-no1';
+import './sample-no2';
+import './sample-no3';
+import './sample-no4';
+
+// extra
+import './data-buttons';
+import './nav-buttons';
+
+// add our grid
+import '@simple-html/grid';
+import '@simple-html/grid/src/grid.css';
+
 @customElement('app-root')
 export default class extends HTMLElement {
     elements = ['#default', '#sample1', '#sample2', '#sample3', '#sample4'];

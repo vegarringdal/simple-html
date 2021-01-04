@@ -1,10 +1,10 @@
 import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
-import { GridInterface, Datasource } from '@simple-html/grid/src';
+import { GridInterface, Datasource } from '@simple-html/grid';
 import { WordDatasource01, add, set } from '../data/datasources';
 import { setup } from '../gridSetup/setup';
 
-let x = setup(1, 10, 100000);
+const x = setup(1, 10, 100000);
 
 @customElement('sample-no4')
 export default class extends HTMLElement {

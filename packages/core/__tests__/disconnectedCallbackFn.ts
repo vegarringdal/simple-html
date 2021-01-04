@@ -7,6 +7,8 @@ describe('customElement', () => {
 
         // our element with minimum config
         @customElement('app-root3')
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         class Ele extends HTMLElement {
             data = 'none';
 
@@ -20,7 +22,7 @@ describe('customElement', () => {
                 events.push('connectedCallback');
             }
 
-            updated() {
+            updatedCallback() {
                 events.push('updated');
             }
 

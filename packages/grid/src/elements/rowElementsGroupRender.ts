@@ -4,7 +4,7 @@ import { GridInterface } from '../gridInterface';
 
 export function rowElementsGroupRender(
     SimpleHtmlGridRowStyle: string,
-    _rowClick: Function,
+    _rowClick: () => void,
     _connector: GridInterface,
     _rowNo: number,
     rowData: Entity

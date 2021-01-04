@@ -2,11 +2,11 @@ import { Datasource } from '../src/dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
-    { name: 'person2', group: 'group2', localCompare: 'a' },
-    { name: 'person1', group: 'group2', localCompare: 'b' },
-    { name: 'person3', group: 'group1', localCompare: 'ø' },
-    { name: 'person5', group: 'group1', localCompare: 'æ' },
-    { name: 'person4', group: 'group1', localCompare: 'å' }
+    { name: 'person2', group: 'group2', localCompare: 'a', num: 3 },
+    { name: 'person1', group: 'group2', localCompare: 'b', num: 1 },
+    { name: 'person3', group: 'group1', localCompare: 'ø', num: 4 },
+    { name: 'person5', group: 'group1', localCompare: 'æ', num: 5 },
+    { name: 'person4', group: 'group1', localCompare: 'å', num: 2 }
 ];
 
 let datasource: Datasource;
@@ -108,6 +108,21 @@ describe('datasource sort', () => {
         datasource.resetSort('name');
         datasource.sort();
         expect((datasource.getRow(0) as any).name).toEqual('person1');
+        done();
+    });
+
+    it('numbersort', (done) => {
+        datasource.resetSort('num');
+        datasource.sort();
+        const arr: string[] = datasource.getRows().map((x: any) => x.num);
+        expect(arr).toEqual([1, 2, 3, 4, 5]);
+        done();
+    });
+
+    it('numbersort2', (done) => {
+        datasource.sort({ attribute: 'num', ascending: false });
+        const arr: string[] = datasource.getRows().map((x: any) => x.num);
+        expect(arr).toEqual([1, 2, 3, 4, 5].reverse());
         done();
     });
 });

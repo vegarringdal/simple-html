@@ -11,6 +11,8 @@ function transmitter() {
 
 // microtask
 export function publish(channel: string, ...args: any[]): void {
+    // todo: use queueMicrotask instead? https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/queueMicrotask
+    // what do I gain by using it?
     Promise.resolve().then(() => {
         if (Array.isArray(transmitter()[channel])) {
             for (let i = 0, len = transmitter()[channel].length; i < len; i++) {
@@ -31,7 +33,7 @@ export function publishSync(channel: string, ...args: any[]): void {
     }
 }
 
-//next task
+// next task, do I also want a middle ground? requestAnimation frame?
 export function publishNext(channel: string, ...args: any[]): void {
     setTimeout(() => {
         if (Array.isArray(transmitter()[channel])) {
@@ -58,7 +60,7 @@ export function unSubscribe(channel: string, ctx: any): void {
 }
 
 // sync
-export function subscribe(channel: string, ctx: any, func: Function): void {
+export function subscribe(channel: string, ctx: any, func: (...args: any[]) => void): void {
     if (!Array.isArray(transmitter()[channel])) {
         transmitter()[channel] = [];
     }

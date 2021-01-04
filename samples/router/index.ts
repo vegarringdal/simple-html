@@ -1,7 +1,7 @@
 import './hmr';
 import './index.css';
-import './routes/routerConfig';
-import './app-root';
-
-import { enableInternalLogger } from '@simple-html/core';
-enableInternalLogger();
+import('./app-root').then(() => {
+    if (document.body) {
+        document.body.innerHTML = '<app-root></app-root>';
+    }
+});

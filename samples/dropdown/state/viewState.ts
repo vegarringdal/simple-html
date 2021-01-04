@@ -1,3 +1,3 @@
-import { State } from '@simple-html/core';
+import { SimpleState } from '@simple-html/core';
 
-export const viewState = new State<string>('VIEW_STATE', '');
+export const viewState = new SimpleState<string>('VIEW_STATE', '');

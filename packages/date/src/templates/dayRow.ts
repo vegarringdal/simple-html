@@ -26,7 +26,5 @@ export function dayRow(
     });
 
     return html`<!-- function:dayRow -->
-        <simple-html-date-day-row style="height:${height}">
-            ${days}
-        </simple-html-date-day-row>`;
+        <simple-html-date-day-row style="height:${height}"> ${days} </simple-html-date-day-row>`;
 }

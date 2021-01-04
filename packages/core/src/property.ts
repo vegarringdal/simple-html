@@ -1,27 +1,26 @@
 import { requestRender } from './requestRender';
-import { getPropSymbol } from './symbols';
-import { logger } from './logger';
+import { getConstructorDoneSymbol, getPropSymbol } from './symbols';
 
 /**
  * @property decorator
  *
  */
-export function property(options: { skipRender: boolean } = {} as any): Function {
-    return function reg(_class: Function, prop: string): void {
+export function property(options: { skipRender: boolean } = {} as any) {
+    return function reg(_class: any, prop: string): void {
         Object.defineProperty(_class, prop, {
             get: function () {
                 return this[getPropSymbol(this.tagName + '_' + prop)];
             },
             set: function (x: any) {
-                logger('property set', this, this.tagName);
-
                 const oldValue = this[getPropSymbol(this.tagName + '_' + prop)];
                 this[getPropSymbol(this.tagName + '_' + prop)] = x;
-                if (this.valuesChanged && oldValue !== x) {
-                    this.valuesChanged('property', prop, oldValue, x);
-                }
-                if (oldValue !== x && !options.skipRender) {
-                    requestRender(this);
+                if (this[getConstructorDoneSymbol()]) {
+                    if (this.valuesChangedCallback && oldValue !== x) {
+                        this.valuesChangedCallback.call(this, 'property', prop, oldValue, x);
+                    }
+                    if (oldValue !== x && !options.skipRender) {
+                        requestRender(this);
+                    }
                 }
             },
             configurable: true

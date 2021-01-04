@@ -10,8 +10,6 @@ export function monthHeader(
 ) {
     return html`<!-- function:monthHeader -->
         <simple-html-date-month-header>
-            <span>
-                ${config.monthHeader[month]}-${year}
-            </span>
+            <span> ${config.monthHeader[month]}-${year} </span>
         </simple-html-date-month-header>`;
 }

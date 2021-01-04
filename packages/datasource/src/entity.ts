@@ -27,7 +27,7 @@ export class EntityHandler {
         this.__isNew = tagAsNew;
     }
 
-    get(target: object, prop: string) {
+    get(target: any, prop: string) {
         if (prop === '__controller') {
             return this;
         }
@@ -53,7 +53,7 @@ export class EntityHandler {
         return target[prop];
     }
 
-    set(obj: object, prop: string, value: any) {
+    set(obj: any, prop: string, value: any) {
         let update = true;
 
         if (prop[0] === '_' && prop[1] === '_') {

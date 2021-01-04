@@ -9,7 +9,7 @@ export default class extends HTMLElement {
     @property() count = 0;
 
     render() {
-        const [view] = viewState.get();
+        const [view] = viewState.getState();
         return html` <span class="text-xl">${view.toUpperCase()}</span>
             <p class="mt-2 mb-2">
                 Shows how to use @property and @attribute to trigger rerendering on changes
@@ -72,7 +72,7 @@ export class Ele2 extends HTMLElement {
 export class Ele3 extends HTMLElement {
     @property({ skipRender: true }) myvalue = 0;
 
-    valuesChanged(type: string, propertyName: string, oldValue: any, newValue: any) {
+    valuesChangedCallback(type: string, propertyName: string, oldValue: any, newValue: any) {
         console.log(type, propertyName, oldValue, newValue);
         //small delay see it
         setTimeout(() => {
@@ -92,7 +92,7 @@ export class Ele3 extends HTMLElement {
 export class Ele4F extends HTMLElement {
     @attribute({ skipRender: true }) myValue = 0;
 
-    valuesChanged(type: string, propertyName: string, oldValue: any, newValue: any) {
+    valuesChangedCallback(type: string, propertyName: string, oldValue: any, newValue: any) {
         console.log(type, propertyName, oldValue, newValue);
         //small delay see it
         setTimeout(() => {

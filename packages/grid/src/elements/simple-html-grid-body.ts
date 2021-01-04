@@ -41,7 +41,7 @@ export default class extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
-    updated() {
+    updatedCallback() {
         if (this.firstLoad) {
             this.firstLoad = false;
             const node = this.ref.getElementsByTagName('simple-html-grid-body')[0];

@@ -22,7 +22,7 @@ export function publishHashEvent() {
  * @param callback
  */
 
-export function connectHashEvent(context: HTMLElement, callback: () => void): void {
+export function connectHashChanges(context: HTMLElement, callback: () => void): void {
     // this register callback with simpleHtml elements disconnected callback
     disconnectedCallback(context, () => unSubscribe(HASH_RENDER_EVENT, context));
 

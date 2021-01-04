@@ -1,7 +1,7 @@
 import { GridInterface } from '..';
 import { CellConfig, GridGroupConfig } from '../types';
 import { html } from 'lit-html';
-import { GroupArgument } from '@simple-html/datasource/src';
+import { GroupArgument } from '@simple-html/datasource';
 
 let dragCell: CellConfig = null;
 let dragGroup: GridGroupConfig = null;
