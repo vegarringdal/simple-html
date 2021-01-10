@@ -1290,6 +1290,22 @@ const [currentView, setView] = viewState.getState();
 html`<button @click=${(e) => setView('VIEW1')}>${currentView}</button>`;
 ```
 
+If you just need setter
+
+```ts
+// use Object get setter if you just need this part
+const setView = viewState.getSetter();
+html`<button @click=${(e) => setView('VIEW1')}>Something Static</button>`;
+```
+
+If you just need setter
+
+```ts
+// use Object get value if you just need this part
+const currentView = viewState.getValue();
+html`<h1>${currentView}</h1>`;
+```
+
 ### Reset state
 
 ```ts
@@ -1298,6 +1314,8 @@ html`<button @click=${(e) => setView('VIEW1')}>${currentView}</button>`;
 viewState.reset();
 formState.reset();
 ```
+
+
 
 ### Connect for updates
 

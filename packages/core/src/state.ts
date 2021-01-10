@@ -212,6 +212,11 @@ export class ObjectState<T> extends State<T> {
     public getState(): stateResultObj<T> {
         return this.getObjectState();
     }
+
+    public getSetter() {
+        const [, setter] = this.getObjectState();
+        return setter;
+    }
 }
 
 export class SimpleState<T> extends State<T> {
@@ -220,6 +225,11 @@ export class SimpleState<T> extends State<T> {
     }
     public getState(): stateResult<T> {
         return this.getSimpleState();
+    }
+
+    public getSetter() {
+        const [, setter] = this.getSimpleState();
+        return setter;
     }
 }
 
@@ -230,6 +240,11 @@ export class ObjectStateInternal<T> extends State<T> {
     public getState(): stateResultObj<T> {
         return this.getObjectState();
     }
+
+    public getSetter() {
+        const [, setter] = this.getObjectState();
+        return setter;
+    }
 }
 
 export class SimpleStateInternal<T> extends State<T> {
@@ -238,5 +253,9 @@ export class SimpleStateInternal<T> extends State<T> {
     }
     public getState(): stateResult<T> {
         return this.getSimpleState();
+    }
+    public getSetter() {
+        const [, setter] = this.getSimpleState();
+        return setter;
     }
 }
