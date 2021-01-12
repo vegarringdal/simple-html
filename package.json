@@ -20,6 +20,7 @@
         "coverage": "npm run rollup && jest --collectCoverage",
         "rollup": "./node_modules/.bin/rollup -c",
         "release": "standard-version",
+        "release-test": "standard-version  --dry-run",
         "release:minor": "standard-version --release-as minor",
         "release:patch": "standard-version --release-as patch",
         "release:major": "standard-version --release-as major"
@@ -32,6 +33,9 @@
         }
     },
     "standard-version": {
+        "skip":{
+            "commit":true
+        },
         "scripts": {
             "prebump": "npm test",
             "postbump": "npm run sync"
