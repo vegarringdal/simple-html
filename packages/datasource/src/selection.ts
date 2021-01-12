@@ -27,7 +27,17 @@ export class Selection {
         this.selectedRows = this.selection.size;
     }
 
-    public highlightRow(e: MouseEvent, currentRow: number): void {
+    public highlightRow(
+        e: MouseEvent,
+        currentRow: number,
+        overrideSelectionMode?: 'none' | 'single' | 'multiple'
+    ): void {
+        if (overrideSelectionMode === 'none') {
+            return;
+        }
+
+        let selectionMode = overrideSelectionMode || this.dataSource.getSelectionMode();
+
         let isSel: boolean;
         let currentselectedRows = this.getSelectedRows();
         let currentKeyKode = '';
@@ -38,7 +48,7 @@ export class Selection {
             if (currentRow <= this.dataSource.length() - 1) {
                 // do I need to check this?
 
-                if (this.dataSource.getSelectionMode() === 'multiple') {
+                if (selectionMode === 'multiple') {
                     // if multiselect duh!
 
                     if (e.shiftKey) {

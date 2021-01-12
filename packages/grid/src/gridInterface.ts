@@ -749,7 +749,7 @@ export class GridInterface<T = any> {
      * Internal usage only, do not call
      */
     public highlightRow(e: MouseEvent, currentRow: number) {
-        this.__ds.getSelection().highlightRow(e, currentRow);
+        this.__ds.getSelection().highlightRow(e, currentRow, this.config.selectionMode);
     }
 
     /**
