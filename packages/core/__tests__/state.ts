@@ -22,6 +22,13 @@ describe('state', () => {
         setter1(1);
         const state2 = simpleState.getValue();
         expect(state2).toEqual(1);
+        const setter = simpleState.getSetter();
+        setter(3);
+        const state5 = simpleState.getValue();
+        expect(state5).toEqual(3);
+        simpleState.setValue(4);
+        const state6 = simpleState.getValue();
+        expect(state6).toEqual(4);
     });
 
     it('object state', () => {
@@ -30,5 +37,12 @@ describe('state', () => {
         setter3({ name: 'cool' });
         const state4 = objectState.getValue();
         expect(state4).toEqual({ name: 'cool' });
+        const setter = objectState.getSetter();
+        setter({ name: 'test' });
+        const state5 = objectState.getValue();
+        expect(state5).toEqual({ name: 'test' });
+        objectState.setValue({ name: 'nils' });
+        const state6 = objectState.getValue();
+        expect(state6).toEqual({ name: 'nils' });
     });
 });

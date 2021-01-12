@@ -217,6 +217,10 @@ export class ObjectState<T> extends State<T> {
         const [, setter] = this.getObjectState();
         return setter;
     }
+    public setValue<K extends keyof T>(part: Pick<T, K>): void {
+        const [, setter] = this.getObjectState();
+        setter(part);
+    }
 }
 
 export class SimpleState<T> extends State<T> {
@@ -230,6 +234,10 @@ export class SimpleState<T> extends State<T> {
     public getSetter() {
         const [, setter] = this.getSimpleState();
         return setter;
+    }
+    public setValue(value: any): void {
+        const [, setter] = this.getSimpleState();
+        setter(value);
     }
 }
 
@@ -245,6 +253,10 @@ export class ObjectStateInternal<T> extends State<T> {
         const [, setter] = this.getObjectState();
         return setter;
     }
+    public setValue<K extends keyof T>(part: Pick<T, K>): void {
+        const [, setter] = this.getObjectState();
+        setter(part);
+    }
 }
 
 export class SimpleStateInternal<T> extends State<T> {
@@ -257,5 +269,9 @@ export class SimpleStateInternal<T> extends State<T> {
     public getSetter() {
         const [, setter] = this.getSimpleState();
         return setter;
+    }
+    public setValue(value: any): void {
+        const [, setter] = this.getSimpleState();
+        setter(value);
     }
 }
