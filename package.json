@@ -31,6 +31,12 @@
             "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
         }
     },
+    "standard-version": {
+        "scripts": {
+            "prebump": "npm test",
+            "postbump": "npm run sync"
+        }
+    },
     "devDependencies": {
         "@commitlint/cli": "^11.0.0",
         "@commitlint/config-conventional": "^11.0.0",
