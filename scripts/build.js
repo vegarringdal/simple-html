@@ -5,14 +5,13 @@ const { sparky } = require('fuse-box');
 class Context {}
 const { task, src, rm } = sparky(Context);
 
-task('default', async context => {
+task('default', async (context) => {
     const files = await readFiles('./packages');
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.isDirectory() && file.name !== 'template-package') {
             logInfo(`\n\n ${file.name}: Remove old dist folder`);
-            rm(`../packages/${file.name}/dist/`)
-              
+            rm(`../packages/${file.name}/dist/`);
 
             const checker = require('fuse-box-typechecker').TypeChecker({
                 tsConfigOverride: {
@@ -26,10 +25,11 @@ task('default', async context => {
                         isolatedModules: false,
                         preserveConstEnums: true,
                         allowSyntheticDefaultImports: true,
-                        skipLibCheck: true,
                         sourceMap: true,
+                        inlineSources: true,
                         preserveSymlinks: true,
                         declaration: true,
+                        declarationMap: true,
                         noImplicitAny: true,
                         noImplicitReturns: true,
                         noImplicitUseStrict: true,
