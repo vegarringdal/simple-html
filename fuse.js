@@ -2,6 +2,7 @@ const { fusebox, sparky, pluginPostCSS } = require('fuse-box');
 const { pluginTypeChecker } = require('fuse-box-typechecker');
 
 class Context {
+    
     isProduction;
     runServer;
     getConfig(folderInSamples, prod) {
