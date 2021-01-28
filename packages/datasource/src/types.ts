@@ -80,7 +80,7 @@ export interface GroupArgument {
 }
 
 /**
- * nices string values
+ * nicer string values
  */
 export const OPERATORS = {
     EQUAL: 'equal_to',
@@ -94,5 +94,5 @@ export const OPERATORS = {
     BEGIN_WITH: 'start_with',
     END_WITH: 'end_with',
     IN: 'IN',
-    NOT_IN: 'NOT_ IN'
+    NOT_IN: 'NOT_IN'
 };
