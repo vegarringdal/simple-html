@@ -147,6 +147,16 @@ export class Datasource<T = any> {
      * this also does not call any events
      */
     private __internalUpdate(reRunFilter: boolean) {
+        let forceUpdate = false;
+        if (
+            !reRunFilter &&
+            !this.__filter.getFilter() &&
+            !this.__sorting.getLastSort().length &&
+            !this.__grouping.getGrouping().length
+        ) {
+            forceUpdate = true;
+        }
+
         if (reRunFilter) {
             if (this.__filter.getFilter()) {
                 this.__collectionFiltered = this.__filter.filter(
@@ -158,8 +168,7 @@ export class Datasource<T = any> {
             }
         }
 
-        const lastSort = this.__sorting.getLastSort();
-        if (lastSort.length) {
+        if (this.__sorting.getLastSort().length) {
             this.__sorting.runOrderBy(this.__collectionFiltered);
         }
 
@@ -172,6 +181,10 @@ export class Datasource<T = any> {
         } else {
             //set sorted collection to display
             this.__collectionDisplayed = this.__collectionFiltered.slice();
+        }
+
+        if (forceUpdate) {
+            this.__callSubscribers('collection-filtered');
         }
     }
 
