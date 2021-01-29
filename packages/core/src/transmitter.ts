@@ -16,8 +16,10 @@ export function publish(channel: string, ...args: any[]): void {
     Promise.resolve().then(() => {
         if (Array.isArray(transmitter()[channel])) {
             for (let i = 0, len = transmitter()[channel].length; i < len; i++) {
-                const ctx = transmitter()[channel][i].ctx;
-                transmitter()[channel][i].func.apply(ctx, args);
+                if (transmitter()[channel][i]) {
+                    const ctx = transmitter()[channel][i].ctx;
+                    transmitter()[channel][i].func.apply(ctx, args);
+                }
             }
         }
     });
@@ -27,8 +29,10 @@ export function publish(channel: string, ...args: any[]): void {
 export function publishSync(channel: string, ...args: any[]): void {
     if (Array.isArray(transmitter()[channel])) {
         for (let i = 0, len = transmitter()[channel].length; i < len; i++) {
-            const ctx = transmitter()[channel][i].ctx;
-            transmitter()[channel][i].func.apply(ctx, args);
+            if (transmitter()[channel][i]) {
+                const ctx = transmitter()[channel][i].ctx;
+                transmitter()[channel][i].func.apply(ctx, args);
+            }
         }
     }
 }
@@ -38,8 +42,10 @@ export function publishNext(channel: string, ...args: any[]): void {
     setTimeout(() => {
         if (Array.isArray(transmitter()[channel])) {
             for (let i = 0, len = transmitter()[channel].length; i < len; i++) {
-                const ctx = transmitter()[channel][i].ctx;
-                transmitter()[channel][i].func.apply(ctx, args);
+                if (transmitter()[channel][i]) {
+                    const ctx = transmitter()[channel][i].ctx;
+                    transmitter()[channel][i].func.apply(ctx, args);
+                }
             }
         }
     }, 0);
