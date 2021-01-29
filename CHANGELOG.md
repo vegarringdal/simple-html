@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.2.0](https://github.com/simple-html/simple-html/compare/v3.1.3...v3.2.0) (2021-01-29)
+
+
+### Bug Fixes
+
+* **core:** check if subscriber still is there, might unsubscibe during other callbacks ([98c23c1](https://github.com/simple-html/simple-html/commits/98c23c1636d0259002e155a3aa28a887c5b7d92d))
+* **core:** only use resolve promise on render if it return a promise ([593d39c](https://github.com/simple-html/simple-html/commits/593d39c193697ed5277ffb0b1a02c36ee6293350))
+* **ds:** more date fixes on filtering ([9d9b1f6](https://github.com/simple-html/simple-html/commits/9d9b1f634023b93175acb8dd3d4dab6447fe19a4))
+* **ds:** skip time on date filter and better limit on type of filter used ([cf34b51](https://github.com/simple-html/simple-html/commits/cf34b51677b4b5e5c1c9ae7da3ae77ffbc6ecf4c))
+
 ### [3.1.3](https://github.com/simple-html/simple-html/compare/v3.1.2...v3.1.3) (2021-01-28)
 
 
@@ -22,4 +32,3 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 ### Bug Fixes
-
