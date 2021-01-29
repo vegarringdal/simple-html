@@ -52,8 +52,8 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
             render(...result: any[]) {
                 if (super.render) {
                     const template = super.render.call(this, ...result);
-                    Promise.resolve(template).then((templates) => {
-                        render(templates, this as any, { eventContext: this as any });
+                    if (!template?.then) {
+                        render(template, this as any, { eventContext: this as any });
                         const callers = this[getUpdateCallbackCallersSymbol()];
                         if (super.updatedCallback || (callers && callers.length)) {
                             //delay so it actually get a chance to update
@@ -67,7 +67,24 @@ export function customElement(elementName: string, extended?: ElementDefinitionO
                                 }
                             });
                         }
-                    });
+                    } else {
+                        Promise.resolve(template).then((templates) => {
+                            render(templates, this as any, { eventContext: this as any });
+                            const callers = this[getUpdateCallbackCallersSymbol()];
+                            if (super.updatedCallback || (callers && callers.length)) {
+                                //delay so it actually get a chance to update
+                                requestAnimationFrame(() => {
+                                    if (callers && callers.length) {
+                                        callers.forEach((call: () => void) => call());
+                                    }
+                                    this[getUpdateCallbackCallersSymbol()] = [];
+                                    if (super.updatedCallback) {
+                                        super.updatedCallback.call(this);
+                                    }
+                                });
+                            }
+                        });
+                    }
                 }
             }
 
