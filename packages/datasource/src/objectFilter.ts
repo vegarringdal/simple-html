@@ -48,31 +48,48 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
 
         case 'date':
             try {
+                // we need to reset date so they use same time/timezone
+                rowValue = new Date(
+                    rowValue.getFullYear(),
+                    rowValue.getMonth(),
+                    rowValue.getDay(),
+                    0,
+                    0,
+                    0,
+                    0
+                );
                 rowValue = rowValue.toISOString();
             } catch (err) {
-                try {
-                    // if error we can try and convert it to date first
-                    rowValue = new Date(rowValue).toISOString();
-                } catch (err) {
-                    rowValue = rowValue;
-                }
+                rowValue = rowValue;
             }
 
             try {
-                filterValue = filter.value.toISOString();
+                // we need to reset date so they use same time/timezone
+                filterValue = new Date(
+                    filter.value.getFullYear(),
+                    filter.value.getMonth(),
+                    filter.value.getDay(),
+                    0,
+                    0,
+                    0,
+                    0
+                );
+                filterValue = filterValue.toISOString();
             } catch (err) {
                 filterValue = filter.value;
             }
 
-            filterOperator = filterOperator || 'GREATER_THAN_OR_EQUAL_TO';
             if (
-                filterOperator === 'CONTAINS' ||
-                filterOperator === 'BEGIN_WITH' ||
-                filterOperator === 'END_WITH' ||
-                filterOperator === 'DOES_NOT_CONTAIN'
+                filterOperator !== 'EQUAL' &&
+                filterOperator !== 'NOT_EQUAL_TO' &&
+                filterOperator !== 'GREATER_THAN' &&
+                filterOperator !== 'GREATER_THAN_OR_EQUAL_TO' &&
+                filterOperator !== 'LESS_THAN' &&
+                filterOperator !== 'LESS_THAN_OR_EQUAL_TO'
             ) {
                 filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
             }
+
             break;
         case 'number':
             filterValue = Number(filter.value);
@@ -86,12 +103,13 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 rowValue = rowValue;
             }
 
-            filterOperator = filterOperator || 'GREATER_THAN_OR_EQUAL_TO';
             if (
-                filterOperator === 'CONTAINS' ||
-                filterOperator === 'BEGIN_WITH' ||
-                filterOperator === 'END_WITH' ||
-                filterOperator === 'DOES_NOT_CONTAIN'
+                filterOperator !== 'EQUAL' &&
+                filterOperator !== 'NOT_EQUAL_TO' &&
+                filterOperator !== 'GREATER_THAN' &&
+                filterOperator !== 'GREATER_THAN_OR_EQUAL_TO' &&
+                filterOperator !== 'LESS_THAN' &&
+                filterOperator !== 'LESS_THAN_OR_EQUAL_TO'
             ) {
                 filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
             }
