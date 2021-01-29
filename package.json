@@ -4,7 +4,7 @@
     "description": "Simple lib for creating web pages using lit-html and web components",
     "scripts": {
         "start": "node fuse",
-        "build:all": "node ./scripts/build && node ./scripts/syncPackages",
+        "build:all": "node ./scripts/build",
         "clean:dist": "node ./scripts/clean",
         "sync": "node ./scripts/syncPackages",
         "publish:all": "node ./scripts/publish",
