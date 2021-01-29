@@ -50,15 +50,15 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             try {
                 // we need to reset date so they use same time/timezone
                 rowValue = new Date(
-                    rowValue.getFullYear(),
-                    rowValue.getMonth(),
-                    rowValue.getDay(),
+                    new Date(rowValue).getFullYear(),
+                    new Date(rowValue).getMonth(),
+                    new Date(rowValue).getDate(),
                     0,
                     0,
                     0,
                     0
                 );
-                rowValue = rowValue.toISOString();
+                rowValue = rowValue.getTime();
             } catch (err) {
                 rowValue = rowValue;
             }
@@ -66,15 +66,15 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             try {
                 // we need to reset date so they use same time/timezone
                 filterValue = new Date(
-                    filter.value.getFullYear(),
-                    filter.value.getMonth(),
-                    filter.value.getDay(),
+                    new Date(filter.value).getFullYear(),
+                    new Date(filter.value).getMonth(),
+                    new Date(filter.value).getDate(),
                     0,
                     0,
                     0,
                     0
                 );
-                filterValue = filterValue.toISOString();
+                filterValue = filterValue.getTime();
             } catch (err) {
                 filterValue = filter.value;
             }
