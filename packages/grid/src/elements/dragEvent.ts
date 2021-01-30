@@ -177,10 +177,13 @@ export const columnDragDrop = (
         dragColumnBlock = null;
     };
 
-    const node = _connector.getMainElement()?.getElementsByTagName('simple-html-grid-body')[0];
+    let node = _connector.getMainElement()?.getElementsByTagName('simple-html-grid-body')[0];
 
     // this will just move our label
     const mouseMove = function (e: MouseEvent) {
+        if(!node){
+            node = _connector.getMainElement()?.getElementsByTagName('simple-html-grid-body')[0];
+        }
         setTimeout(() => {
             if (dragColumnBlock) {
                 dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it

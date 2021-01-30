@@ -9,7 +9,7 @@ import './simple-html-grid-header';
 import './simple-html-grid-footer';
 import './simple-html-grid-panel';
 import './simple-html-grid-row';
-import './simple-html-grid-row-group';
+import './simple-html-grid-col';
 import './simple-html-grid-menu-row';
 import './simple-html-grid-menu-label';
 import './simple-html-grid-menu-filter';
@@ -29,24 +29,32 @@ export function generate(
     rowPositionCache: RowCache[],
     ref: SimpleHtmlGrid
 ) {
+    console.log('generate');
     const scroll = scrollEvent(connector, rowPositionCache, ref);
     const enter = columnDragDropPanel('enter', connector);
     const leave = columnDragDropPanel('leave', connector);
 
-    return html`
-        <simple-html-grid-panel
-            .connector=${connector}
-            .ref=${ref}
-            @mouseleave=${leave}
-            @mouseenter=${enter}
-        ></simple-html-grid-panel>
-        <simple-html-grid-header .connector=${connector} .ref=${ref}></simple-html-grid-header>
-        <simple-html-grid-body
-            .connector=${connector}
-            .rowPositionCache=${rowPositionCache}
-            @scroll=${scroll}
-            .ref=${ref}
-        ></simple-html-grid-body>
-        <simple-html-grid-footer .connector=${connector} .ref=${ref}></simple-html-grid-footer>
-    `;
+    const panel = document.createElement('simple-html-grid-panel');
+    panel.connector = connector;
+    panel.ref = ref;
+    panel.onmouseleave = leave;
+    panel.onmouseenter = enter;
+    ref.appendChild(panel);
+
+    const header = document.createElement('simple-html-grid-header');
+    header.connector = connector;
+    header.ref = ref;
+    ref.appendChild(header);
+
+    const body = document.createElement('simple-html-grid-body');
+    body.connector = connector;
+    body.ref = ref;
+    body.rowPositionCache = rowPositionCache;
+    body.onscroll = scroll;
+    ref.appendChild(body);
+
+    const footer = document.createElement('simple-html-grid-footer');
+    footer.connector = connector;
+    footer.ref = ref;
+    ref.appendChild(footer);
 }

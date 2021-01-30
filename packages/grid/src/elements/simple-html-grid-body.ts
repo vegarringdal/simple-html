@@ -11,6 +11,8 @@ export default class extends HTMLElement {
     rowPositionCache: RowCache[];
     ref: SimpleHtmlGrid;
     firstLoad = true;
+    body: HTMLElement;
+    rows: { r: HTMLElement }[];
 
     connectedCallback() {
         this.classList.add('simple-html-grid-body');
@@ -21,17 +23,34 @@ export default class extends HTMLElement {
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
         this.scrollTop = 500;
+        this.body = document.createElement('simple-html-grid-body-content');
+
+        this.rows = this.rowPositionCache.map((i) => {
+            const r = document.createElement('simple-html-grid-row');
+            r.connector = this.connector;
+            r.row = i;
+            r.ref = this.ref;
+            this.body.append(r);
+
+            return { r };
+        });
+        this.body.style.height = `${this.connector.getScrollVars.__SCROLL_HEIGHT || 0.1}px`;
+        this.body.style.width = `${config.__rowWidth}px`;
+        this.body.classList.add('simple-html-grid-content');
+        this.append(this.body);
     }
 
     handleEvent(e: any) {
         log(this, e);
 
         if (e.type === 'column-resize') {
-            this.render();
+            console.log('s');
+            this.reRender();
         }
         if (e.type === 'reRender') {
-            render('', this); // force clear
-            this.render();
+            console.log('reRender');
+            //render('', this); // force clear
+            this.reRender();
         }
     }
 
@@ -41,64 +60,49 @@ export default class extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
-    updatedCallback() {
-        if (this.firstLoad) {
-            this.firstLoad = false;
-            const node = this.ref.getElementsByTagName('simple-html-grid-body')[0];
-            if (node && node.scrollTop !== this.connector.config.lastScrollTop) {
-                this.scrollTop = this.connector.config.lastScrollTop;
-                this.scrollLeft = this.connector.config.scrollLeft;
-                this.ref.reRender();
-            }
-        } else {
-            if (
-                this.connector.config.scrollLeft &&
-                this.scrollLeft !== this.connector.config.scrollLeft
-            ) {
-                // fixes left scroll when editing column headers
-                this.scrollLeft = this.connector.config.scrollLeft;
-                this.ref.reRender();
-            }
-        }
-    }
-
-    render() {
+    reRender() {
         const config = this.connector.config;
+        this.style.top = config.panelHeight + config.__rowHeight * 2 + 2 + 'px';
+        this.style.bottom = config.footerHeight + 'px';
+        this.body.style.height = `${this.connector.getScrollVars.__SCROLL_HEIGHT || 0.1}px`;
+        this.body.style.width = `${config.__rowWidth}px`;
 
-        if (this.firstLoad) {
-            const node = this.ref.getElementsByTagName('simple-html-grid-body')[0];
-            if (node && node.scrollTop !== this.connector.config.lastScrollTop) {
-                return html`
-                    <simple-html-grid-body-content
-                        style="height:${this.connector.getScrollVars.__SCROLL_HEIGHT ||
-                        0.1}px;width:${config.__rowWidth || 1}px"
-                        class="simple-html-grid-content"
-                    >
-                    </simple-html-grid-body-content>
-                `;
+        if (this.rowPositionCache.length !== this.rows.length) {
+            if (this.rowPositionCache.length < this.rows.length) {
+                const keep: any = [];
+                this.rows.forEach((e, i) => {
+                    if (!this.rowPositionCache[i]) {
+                        this.body.removeChild(e.r);
+                    } else {
+                        keep.push(e);
+                    }
+                });
+                this.rows = keep;
+            } else {
+                this.rowPositionCache.forEach((e, i) => {
+                    if (!this.rows[i]) {
+                        const r = document.createElement('simple-html-grid-row');
+                        r.connector = this.connector;
+                        r.row = e;
+                        r.ref = this.ref;
+                        this.body.append(r);
+                        this.rows.push({ r /* g */ });
+                    } else {
+                        const x = this.rows[i];
+
+                        x.r.row = e;
+                    }
+                });
             }
         }
-        return html`
-            <simple-html-grid-body-content
-                style="height:${this.connector.getScrollVars.__SCROLL_HEIGHT ||
-                0.1}px;width:${config.__rowWidth}px"
-                class="simple-html-grid-content"
-            >
-                ${this.rowPositionCache.map((row) => {
-                    return html`
-                        <simple-html-grid-row-group
-                            .connector=${this.connector}
-                            .row=${row}
-                            .ref=${this.ref}
-                        ></simple-html-grid-row-group>
-                        <simple-html-grid-row
-                            .connector=${this.connector}
-                            .row=${row}
-                            .ref=${this.ref}
-                        ></simple-html-grid-row>
-                    `;
-                })}
-            </simple-html-grid-body-content>
-        `;
+
+        this.rows.forEach((row, i) => {
+            const r = row.r;
+            r.connector = this.connector;
+            r.row = this.rowPositionCache[i];
+            r.ref = this.ref;
+            r.handleEvent({type:'update-cols'})
+        });
+        
     }
 }

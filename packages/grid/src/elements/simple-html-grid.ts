@@ -35,10 +35,14 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public manualConfigChange() {
-        render(html``, this);
-        render(html` ${generate(this.interface, this.rowCache, this)} `, this);
+        //render(html``, this);
+        // render(html` ${generate(this.interface, this.rowCache, this)} `, this);
+
+        if (!this.children.length) {
+            generate(this.interface, this.rowCache, this);
+        }
         this.cleanup();
-        /*  this.reRender(); */
+        this.reRender();
     }
 
     public triggerEvent(eventName: string, data?: any) {
@@ -102,11 +106,14 @@ export class SimpleHtmlGrid extends HTMLElement {
     public render() {
         return new Promise(() => {
             if (this.interface) {
-                render(html` ${generate(this.interface, this.rowCache, this)} `, this);
+                if (!this.children.length) {
+                    generate(this.interface, this.rowCache, this);
+                }
+                // render(html` ${generate(this.interface, this.rowCache, this)} `, this);
             } else {
                 if (this.isConnected) {
                     console.error('no config set');
-                    render(html``, this);
+                    //render(html``, this);
                 }
             }
         });

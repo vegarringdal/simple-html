@@ -34,6 +34,7 @@ export default class extends HTMLElement {
             const curleft = grouping ? grouping * 15 : 0;
             this.style.width = this.group.width + 'px';
             this.style.left = this.group.__left + curleft + 'px';
+
             this.render();
         }
     }
