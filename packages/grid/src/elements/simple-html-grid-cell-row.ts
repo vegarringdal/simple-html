@@ -97,6 +97,12 @@ export default class extends HTMLElement {
     setSettings() {
         const cell = this.cell;
         const data = this.connector.displayedDataset[this.rowNo];
+        if (data.__group) {
+            this.parentNode.style.display = 'none';
+            return;
+        } else {
+            this.parentNode.style.display = 'block';
+        }
         this.lastVal = data[cell.attribute];
 
         const connector = this.connector;
@@ -168,6 +174,11 @@ export default class extends HTMLElement {
         if (this.connector.displayedDataset[this.rowNo]) {
             const cell = this.cell;
             const data = this.connector.displayedDataset[this.rowNo];
+            if (data.__group) {
+                this.parentNode.style.display = 'none';
+            } else {
+                this.parentNode.style.display = 'block';
+            }
             if (this.lastVal !== data[cell.attribute]) {
                 switch (cell.type) {
                     case 'boolean':

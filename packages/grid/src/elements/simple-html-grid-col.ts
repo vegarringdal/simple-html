@@ -20,13 +20,10 @@ export default class extends HTMLElement {
     }
 
     render() {
-        // check if height is changed
-        //  if (this.currentHeight !== this.row.i * config.__rowHeight) {
         if (this.connector) {
+            this.style.width = '100%';
             this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
-            this.style.transform = `translate3d(0px, ${
-                this.connector.getScrollVars.__SCROLL_TOPS[this.row.i]
-            }px, 0px)`;
+
             // }
             const entity = this.connector.displayedDataset[this.row.i];
 
@@ -54,32 +51,10 @@ export default class extends HTMLElement {
                         </svg></i
                     ><span> ${entity.__groupName} (${entity.__groupTotal})</span>
                 `;
-
-                /*  return html`
-                ${entity.__groupLvl
-                    ? html`
-                          <simple-html-grid-col
-                              class="simple-html-grid-col simple-html-grid-grouping-row"
-                              style="width:${entity.__groupLvl
-                                  ? entity.__groupLvl * 15
-                                  : 0}px;left:0"
-                          >
-                          </simple-html-grid-col>
-                      `
-                    : ''}
-                ${html`
-                    <simple-html-grid-col
-                        class="simple-html-grid-col-group"
-                        style="left:${entity.__groupLvl ? entity.__groupLvl * 15 : 0}px;right:0"
-                    >
-                        ${defaultMarkup}
-                    </simple-html-grid-col>
-                `}
-            `; */
             } else {
                 this.style.display = 'none';
 
-                return '';
+                return '' as any;
             }
         }
     }

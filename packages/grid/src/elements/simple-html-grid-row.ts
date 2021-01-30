@@ -18,6 +18,7 @@ export default class extends HTMLElement {
         this.classList.add('simple-html-grid-row');
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('selection', this);
+        this.ref.addEventListener('column-resize', this);
 
         if (this.connector.config.__rowHeight > this.connector.config.cellHeight) {
             this.classList.add('grouping-row-border');
@@ -30,9 +31,6 @@ export default class extends HTMLElement {
         this.col.style.width = `${grouping ? grouping * 15 : 0}px`;
         this.col.style.left = `0`;
         this.col.style.display = grouping ? 'block' : 'none';
-        this.col.connector = this.connector;
-        this.col.row = this.row;
-        this.col.ref = this.ref;
 
         this.col2 = document.createElement('simple-html-grid-col');
         this.col2.classList.add('simple-html-grid-grouping-row');
@@ -75,22 +73,46 @@ export default class extends HTMLElement {
             }
         }
 
-        if (e.type === 'update-cols') {
-            this.cols = this.cols.map((e) => this.removeChild(e));
-            this.cols = this.connector.config.groups.map((_group, i) => {
-                const x = document.createElement('simple-html-grid-group-row');
-                x.onclick = (e) => {
-                    this.connector.highlightRow(e as any, this.row.i);
-                };
-                x.connector = this.connector;
-                x.rowNo = this.row.i;
-                x.ref = this.ref;
-                x.group = i;
+        if (e.type === 'column-resize') {
+            const data = this.connector.displayedDataset[this.row.i];
 
-                this.appendChild(x);
-                return x;
-            });
-            this.xrender();
+            if (data && !data.__group) {
+                this.cols.forEach((g, i) => {
+                    g.updateCells();
+                });
+                this.xrender();
+            }
+        }
+
+        if (e.type === 'update-cols') {
+            this.col.render();
+
+            this.col2.connector = this.connector;
+            this.col2.row = this.row;
+            this.col2.ref = this.ref;
+            this.col2.render();
+            // quick fix for now..
+            this.cols = this.cols.map((e) => this.removeChild(e));
+            this.cols = [];
+
+            const data = this.connector.displayedDataset[this.row.i];
+
+            if (data && !data.__group) {
+                this.cols = this.connector.config.groups.map((_group, i) => {
+                    const x = document.createElement('simple-html-grid-group-row');
+                    x.onclick = (e) => {
+                        this.connector.highlightRow(e as any, this.row.i);
+                    };
+                    x.connector = this.connector;
+                    x.rowNo = this.row.i;
+                    x.ref = this.ref;
+                    x.group = i;
+
+                    this.appendChild(x);
+                    return x;
+                });
+                this.xrender();
+            }
         }
 
         if (e.type === 'selection') {
@@ -101,6 +123,7 @@ export default class extends HTMLElement {
     disconnectedCallback() {
         this.ref.removeEventListener('vertical-scroll', this);
         this.ref.removeEventListener('selection', this);
+        this.ref.removeEventListener('column-resize', this);
     }
 
     xrender() {

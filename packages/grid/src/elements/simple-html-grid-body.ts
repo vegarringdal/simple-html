@@ -19,7 +19,7 @@ export default class extends HTMLElement {
         const config = this.connector.config;
         this.style.top = config.panelHeight + config.__rowHeight * 2 + 2 + 'px';
         this.style.bottom = config.footerHeight + 'px';
-        this.ref.addEventListener('column-resize', this);
+        //this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('vertical-scroll', this);
         this.ref.addEventListener('reRender', this);
         this.scrollTop = 500;
@@ -43,10 +43,10 @@ export default class extends HTMLElement {
     handleEvent(e: any) {
         log(this, e);
 
-        if (e.type === 'column-resize') {
+        /* if (e.type === 'column-resize') {
             console.log('s');
             this.reRender();
-        }
+        } */
         if (e.type === 'reRender') {
             console.log('reRender');
             //render('', this); // force clear
@@ -56,7 +56,7 @@ export default class extends HTMLElement {
 
     disconnectedCallback() {
         this.ref.removeEventListener('vertical-scroll', this);
-        this.ref.removeEventListener('column-resize', this);
+        //this.ref.removeEventListener('column-resize', this);
         this.ref.removeEventListener('reRender', this);
     }
 
