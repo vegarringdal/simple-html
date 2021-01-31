@@ -10,8 +10,20 @@ export class SimpleHtmlGridCol extends HTMLElement {
     row: RowCache;
     ref: SimpleHtmlGrid;
 
+    /*  disconnectedCallback() {
+        this.ref.removeEventListener('reRender', this);
+    }
+
+    handleEvent(e: any) {
+        if (e.type === 'reRender') {
+            debugger;
+        }
+    } */
+
     render() {
-        if (this.connector) {
+        if (this.ref) {
+            const grouping =
+                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
             this.style.width = '100%';
             this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
 
@@ -20,6 +32,8 @@ export class SimpleHtmlGridCol extends HTMLElement {
 
             if (entity && entity.__group) {
                 this.style.display = 'block';
+
+                this.style.left = (entity.__groupLvl ? entity.__groupLvl * 15 : 0) + 'px';
 
                 const changeGrouping = () => {
                     if (entity.__groupExpanded) {
@@ -47,6 +61,15 @@ export class SimpleHtmlGridCol extends HTMLElement {
 
                 return '' as any;
             }
+        } else {
+            const grouping =
+                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+            this.style.width = (grouping ? grouping * 15 : 0) + 'px';
+            this.style.height =
+                (this.row
+                    ? this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i]
+                    : this.connector.config.cellHeight) + 'px';
+            this.style.display = grouping ? 'block' : 'none';
         }
     }
 }

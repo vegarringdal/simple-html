@@ -31,6 +31,8 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.groupMarginEl.style.width = `${grouping ? grouping * 15 : 0}px`;
         this.groupMarginEl.style.left = `0`;
         this.groupMarginEl.style.display = grouping ? 'block' : 'none';
+        this.groupMarginEl.connector = this.connector;
+
 
         this.groupDataEl = document.createElement('simple-html-grid-col') as SimpleHtmlGridCol;
         this.groupDataEl.classList.add('simple-html-grid-grouping-row');
@@ -39,7 +41,6 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.groupDataEl.style.display = grouping ? 'block' : 'none';
         this.groupDataEl.connector = this.connector;
         this.groupDataEl.row = this.row;
-        this.groupDataEl.ref = this.ref;
 
         this.appendChild(this.groupMarginEl);
         this.appendChild(this.groupDataEl);
@@ -86,11 +87,6 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.groupDataEl.ref = this.ref;
         this.groupDataEl.render();
         // quick fix for now..
-
-        /*     this.colEls = this.colEls.map((e) => this.removeChild(e));
-        this.colEls = []; */
-
-        const data = this.connector.displayedDataset[this.row.i];
 
         const groups = this.connector.config.groups;
 
