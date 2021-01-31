@@ -1,16 +1,14 @@
-import { customElement, property } from '@simple-html/core';
+import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
-import { GridGroupConfig } from '../types';
-import { html } from 'lit-html';
 import { log } from './log';
 
 @customElement('simple-html-grid-group-row')
 export default class extends HTMLElement {
     connector: GridInterface;
-    @property() rowNo: number;
+    rowNo: number;
     ref: SimpleHtmlGrid;
     currentHeight: number;
-    @property() group: number;
+    group: number;
 
     connectedCallback() {
         this.classList.add('simple-html-grid-group-row');
@@ -38,16 +36,11 @@ export default class extends HTMLElement {
         });
     }
 
-    valuesChangedCallback() {
-        if (this.isConnected) {
-            this.rows.forEach((r) => {
-                r.rowNo = this.rowNo;
-            });
-        }
-    }
+
 
     updateCells() {
         this.rows.forEach((r) => {
+            r.rowNo = this.rowNo;
             r.xrender();
         });
     }

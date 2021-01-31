@@ -70,7 +70,7 @@ export default class extends HTMLElement {
                 });
                 this.row.update = false;
                 this.xrender();
-            }
+            } 
         }
 
         if (e.type === 'column-resize') {

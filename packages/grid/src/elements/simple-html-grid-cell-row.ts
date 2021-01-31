@@ -10,7 +10,7 @@ export default class extends HTMLElement {
     cellPosition: number;
     ref: SimpleHtmlGrid;
     currentHeight: number;
-    @property() rowNo: number;
+    rowNo: number;
     group: number;
     cell: CellConfig;
     innerEle: HTMLInputElement;

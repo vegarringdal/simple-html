@@ -55,8 +55,10 @@ export function updateRowCache(
             const row = update.splice(0, 1)[0];
             rowPositionCache[i].i = row;
         } else {
-            rowPositionCache[i].update = true;
+            rowPositionCache[i].update = false;
         }
     }
-    ref.triggerEvent('vertical-scroll');
+    requestAnimationFrame(() => {
+        ref.triggerEvent('vertical-scroll');
+    });
 }
