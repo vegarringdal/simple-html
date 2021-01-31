@@ -176,10 +176,12 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             } else {
                 (this.parentNode as HTMLElement).style.display = 'block';
             }
-            if (this.lastVal !== data[cell.attribute]) {
+            this.innerEle.setAttribute('type', cell.type || 'text');
+            const newVal = data[cell.attribute] || null;
+            if (this.lastVal !== newVal) {
                 switch (cell.type) {
                     case 'boolean':
-                        this.innerEle.checked = data[cell.attribute];
+                        this.innerEle.checked = newVal;
                         break;
                     case 'image':
                         console.log('no-image');
@@ -188,13 +190,15 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                         console.log('no-.empty');
                         break;
                     case 'date':
-                        this.innerEle.valueAsDate = data[cell.attribute] || null;
+                        this.innerEle.valueAsDate = newVal;
                         break;
                     case 'number':
-                        this.innerEle.valueAsNumber = data[cell.attribute] || null;
+                        this.innerEle.valueAsNumber = newVal;
                         break;
                     default:
-                        this.innerEle.value = data[cell.attribute] || null;
+                        try {
+                            this.innerEle.value = newVal;
+                        } catch (e) {}
                 }
             }
         }

@@ -43,7 +43,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
 
         this.appendChild(this.groupMarginEl);
         this.appendChild(this.groupDataEl);
-        this.colEls = this.connector.config.groups.map((_group, i) => {
+        this.colEls = this.ref.colCache.map((group) => {
             const el = document.createElement(
                 'simple-html-grid-group-row'
             ) as SimpleHtmlGridGroupRow;
@@ -54,7 +54,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
             el.connector = this.connector;
             el.rowNo = this.row.i;
             el.ref = this.ref;
-            el.group = i;
+            el.group = group;
 
             this.appendChild(el);
             return el;
@@ -79,23 +79,18 @@ export class SimpleHtmlGridRow extends HTMLElement {
     }
 
     fixCols() {
-        const groups = this.connector.config.groups;
-        if (groups.length < this.colEls.length) {
+        if (this.ref.colCache.length < this.colEls.length) {
             const keep: any = [];
             this.colEls.forEach((e, i) => {
-                if (!groups[i]) {
+                if (!this.ref.colCache[i]) {
                     this.removeChild(e);
                 } else {
                     keep.push(e);
                 }
             });
             this.colEls = keep;
-            this.colEls.forEach((el, i) => {
-                el.rowNo = this.row.i;
-                el.group = i;
-            });
         } else {
-            groups.forEach((_e, i) => {
+            this.ref.colCache.forEach((group, i) => {
                 if (!this.colEls[i]) {
                     const el = document.createElement(
                         'simple-html-grid-group-row'
@@ -107,16 +102,20 @@ export class SimpleHtmlGridRow extends HTMLElement {
                     el.connector = this.connector;
                     el.rowNo = this.row.i;
                     el.ref = this.ref;
-                    el.group = i;
+                    el.group = group;
                     this.colEls.push(el);
                     this.appendChild(el);
                 } else {
                     const el = this.colEls[i];
                     el.rowNo = this.row.i;
-                    el.group = i;
+                    //el.group = i;
                 }
             });
         }
+        this.colEls.forEach((el, i) => {
+            el.rowNo = this.row.i;
+            el.group = this.ref.colCache[i];
+        });
     }
 
     updateCols() {
@@ -128,14 +127,14 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.groupDataEl.render();
         // quick fix for now..
 
-        const groups = this.connector.config.groups;
+        /*      const groups = this.connector.config.groups; */
 
-        if (this.colEls.length !== groups.length) {
+        if (this.colEls.length !== this.ref.colCache.length) {
             this.fixCols();
         } else {
+            this.fixCols();
             this.colEls.forEach((el, i) => {
                 el.rowNo = this.row.i;
-                el.group = i;
                 el.updateCells();
             });
         }

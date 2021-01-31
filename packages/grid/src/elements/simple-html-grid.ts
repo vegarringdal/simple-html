@@ -4,7 +4,6 @@ import { generate } from './generate';
 import { ColCache, RowCache } from '../types';
 import { updateRowCache } from './updateRowCache';
 
-
 @customElement('simple-html-grid')
 export class SimpleHtmlGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
@@ -66,13 +65,16 @@ export class SimpleHtmlGrid extends HTMLElement {
     public resetColCache() {
         const node = this.getElementsByTagName('simple-html-grid-body')[0];
         const clientWidth = node?.clientWidth || 1980;
-
+        this.colCache = [];
         this.interface.config.groups.forEach((group, i) => {
             if (group.__left < clientWidth) {
                 this.colCache.push({ i, update: true });
             }
         });
-        console.log(this.colCache.length)
+        if (this.interface.config.groups.length > this.colCache.length) {
+            this.colCache.push({ i: this.colCache.length, update: true });
+        }
+        console.log(this.colCache.length);
     }
 
     public resetRowCache() {
