@@ -1,18 +1,18 @@
 import { customElement } from '@simple-html/core';
-import { html, render } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
 import { log } from './log';
+import { SimpleHtmlGridRow } from './simple-html-grid-row';
 
 @customElement('simple-html-grid-body')
-export default class extends HTMLElement {
+export class SimpleHtmlGridBody extends HTMLElement {
     connector: GridInterface;
     rowPositionCache: RowCache[];
     ref: SimpleHtmlGrid;
     firstLoad = true;
     body: HTMLElement;
-    rows: { r: HTMLElement }[];
+    rows: SimpleHtmlGridRow[];
 
     connectedCallback() {
         this.classList.add('simple-html-grid-body');
@@ -24,13 +24,13 @@ export default class extends HTMLElement {
         this.body = document.createElement('simple-html-grid-body-content');
 
         this.rows = this.rowPositionCache.map((i) => {
-            const r = document.createElement('simple-html-grid-row');
+            const r = document.createElement('simple-html-grid-row') as SimpleHtmlGridRow;
             r.connector = this.connector;
             r.row = i;
             r.ref = this.ref;
             this.body.append(r);
 
-            return { r };
+            return r;
         });
         this.body.style.height = `${this.connector.getScrollVars.__SCROLL_HEIGHT || 0.1}px`;
         this.body.style.width = `${config.__rowWidth}px`;
@@ -63,7 +63,7 @@ export default class extends HTMLElement {
                 const keep: any = [];
                 this.rows.forEach((e, i) => {
                     if (!this.rowPositionCache[i]) {
-                        this.body.removeChild(e.r);
+                        this.body.removeChild(e);
                     } else {
                         keep.push(e);
                     }
@@ -72,7 +72,9 @@ export default class extends HTMLElement {
             } else {
                 this.rowPositionCache.forEach((e, i) => {
                     if (!this.rows[i]) {
-                        const r = document.createElement('simple-html-grid-row');
+                        const r = document.createElement(
+                            'simple-html-grid-row'
+                        ) as SimpleHtmlGridRow;
                         r.connector = this.connector;
                         r.row = e;
                         r.ref = this.ref;
@@ -81,19 +83,18 @@ export default class extends HTMLElement {
                     } else {
                         const x = this.rows[i];
 
-                        x.r.row = e;
+                        x.row = e;
                     }
                 });
             }
         }
 
         this.rows.forEach((row, i) => {
-            const r = row.r;
+            const r = row;
             r.connector = this.connector;
             r.row = this.rowPositionCache[i];
             r.ref = this.ref;
-            r.handleEvent({type:'update-cols'})
+            r.handleEvent({ type: 'update-cols' });
         });
-        
     }
 }

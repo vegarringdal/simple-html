@@ -1,7 +1,7 @@
 import { customElement, property } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
-import { RowCache } from '../types';
+import { GridGroupConfig, RowCache } from '../types';
 import { log } from './log';
 import { SimpleHtmlGridGroupRow } from './simple-html-grid-group-row';
 import { SimpleHtmlGridCol } from './simple-html-grid-col';
@@ -63,30 +63,24 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.xrender();
     }
 
+    verticalScroll(leftMargin: number, rightMargin: number, groups: GridGroupConfig[]) {
+        if (this.row.update) {
+            this.colEls.forEach((col, i) => {
+                col.rowNo = this.row.i;
+                const g = groups[i];
+                const left = g.__left;
+                //const right = g.__left + g.width;
+                if (left >= leftMargin && left <= rightMargin) {
+                    col.updateCells();
+                }
+            });
+            this.row.update = false;
+            this.xrender();
+        }
+    }
+
     handleEvent(e: Event) {
         log(this, e);
-
-        if (e.type === 'vertical-scroll') {
-            const node = this.ref.getElementsByTagName('simple-html-grid-body')[0];
-            const leftMargin = node.scrollLeft;
-            const rightMargin = node.clientWidth + leftMargin;
-            const groups = this.connector.config.groups;
-            if (this.row.update) {
-                this.colEls.forEach((col, i) => {
-                    col.rowNo = this.row.i;
-                    const g = groups[i];
-                    const left = g.__left;
-                    const right = g.__left + g.width;
-                    if (left >= leftMargin && right <= rightMargin) {
-                        col.updateCells();
-                    } else{
-                        console.log(i)
-                    }
-                });
-                this.row.update = false;
-                this.xrender();
-            }
-        }
 
         if (e.type === 'column-resize') {
             const data = this.connector.displayedDataset[this.row.i];

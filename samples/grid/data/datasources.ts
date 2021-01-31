@@ -28,8 +28,16 @@ export const WordDatasource03 = new DataContainer();
 export const WordDatasource04 = new DataContainer();
 
 // add some default data
-debugger
-WordDatasource01.setData(generator.generateData(100));
+let x;
+console.time('generate');
+if (localStorage.getItem('data')) {
+    x = JSON.parse(localStorage.getItem('data'));
+} else {
+    x = generator.generateData(500);
+    localStorage.setItem('data', JSON.stringify(x));
+}
+console.timeEnd('generate');
+WordDatasource01.setData(x);
 WordDatasource02.setData(generator.generateData(10));
 //same data into both
 WordDatasource03.setData(generator.generateData(10));

@@ -1,6 +1,13 @@
 import { IGridConfig } from '@simple-html/grid';
 
 export function setup(rows: number, columns: number, scroll?: number) {
+    console.time('setup')
+    if (localStorage.getItem('columns' + columns)) {
+        x = JSON.parse(localStorage.getItem('columns' + columns));
+        console.timeEnd('setup')
+        return x;
+    }
+
     const setup: IGridConfig = {
         cellHeight: 20,
         panelHeight: 25,
@@ -51,5 +58,8 @@ export function setup(rows: number, columns: number, scroll?: number) {
 
         setup.groups.push({ width: 125, rows: x });
     }
+
+    localStorage.setItem('columns' + columns, JSON.stringify(setup));
+    console.timeEnd('setup')
     return setup;
 }

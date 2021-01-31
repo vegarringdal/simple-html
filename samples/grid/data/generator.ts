@@ -18,7 +18,7 @@ export class Generator {
             const x = {};
             x['index'] = this.totalGenerated;
 
-            for (let y = 1; y < 75; y++) {
+            for (let y = 1; y < 150; y++) {
                 x['word' + y] = y + ':' + this.totalGenerated;
             }
 
