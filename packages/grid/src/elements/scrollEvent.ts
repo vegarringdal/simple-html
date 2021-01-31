@@ -2,11 +2,10 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
 import { updateRowCache } from './updateRowCache';
-import { SimpleHtmlGridBody } from './simple-html-grid-body';
+
+import { updateColCache } from './updateColCache';
 
 let scrollBarTimer: any;
-
-let check = '';
 
 export function scrollEvent(
     connector: GridInterface,
@@ -26,7 +25,8 @@ export function scrollEvent(
 
             connector.config.scrollLeft = e.target.scrollLeft;
 
-            const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
+            updateColCache(ref, connector, scrollDirection);
+            /*  const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
             const width = node.clientWidth;
             const left = node.scrollLeft;
 
@@ -53,20 +53,11 @@ export function scrollEvent(
                     }
                     ref.colCache.sort((a, b) => (a.i < b.i ? -1 : 1));
                 }
-            });
+            }); */
 
-            if (!check) {
+            /*  if (!check) {
                 check = ref.colCache.map((e) => e.i).join(',');
-            }
-
-            if (ref.colCache.map((e) => e.i).join(',') !== check) {
-                check = ref.colCache.map((e) => e.i).join(',');
-                /*  console.log(check); */
-
-                node.rows.forEach((row) => {
-                    row.updateCols();
-                });
-            }
+            } */
 
             ref.triggerEvent('horizontal-scroll');
         } else {

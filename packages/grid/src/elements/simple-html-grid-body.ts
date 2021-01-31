@@ -86,6 +86,7 @@ export class SimpleHtmlGridBody extends HTMLElement {
             }
         }
         console.time('row');
+
         this.rows.forEach((row, i) => {
             const r = row;
             r.connector = this.connector;
@@ -93,6 +94,8 @@ export class SimpleHtmlGridBody extends HTMLElement {
             r.ref = this.ref;
             r.updateCols(true);
         });
+        //debugger
+        //updateColCache(this.ref, this.connector, 'right');
         console.timeEnd('row');
     }
 }

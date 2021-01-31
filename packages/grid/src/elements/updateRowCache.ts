@@ -61,10 +61,8 @@ export function updateRowCache(
     }
 
     const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
-    const leftMargin = node.scrollLeft;
-    const rightMargin = node.clientWidth + leftMargin;
-    const groups = connector.config.groups;
+
     node.rows.forEach((row) => {
-        row.verticalScroll(leftMargin, rightMargin, groups);
+        row.verticalScroll();
     });
 }

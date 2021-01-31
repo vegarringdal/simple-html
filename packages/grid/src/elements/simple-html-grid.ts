@@ -65,9 +65,10 @@ export class SimpleHtmlGrid extends HTMLElement {
     public resetColCache() {
         const node = this.getElementsByTagName('simple-html-grid-body')[0];
         const clientWidth = node?.clientWidth || 1980;
+        const scrollLeft = node?.scrollLeft || 0;
         this.colCache = [];
         this.interface.config.groups.forEach((group, i) => {
-            if (group.__left < clientWidth) {
+            if (group.__left < clientWidth + scrollLeft) {
                 this.colCache.push({ i, update: true });
             }
         });

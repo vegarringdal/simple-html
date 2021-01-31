@@ -1,7 +1,7 @@
 import { customElement, property } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
-import { GridGroupConfig, RowCache } from '../types';
+import { RowCache } from '../types';
 import { SimpleHtmlGridGroupRow } from './simple-html-grid-group-row';
 import { SimpleHtmlGridCol } from './simple-html-grid-col';
 
@@ -62,16 +62,16 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.xrender();
     }
 
-    verticalScroll(leftMargin: number, rightMargin: number, groups: GridGroupConfig[]) {
+    verticalScroll(/* leftMargin: number, rightMargin: number, groups: GridGroupConfig[] */) {
         if (this.row.update) {
-            this.colEls.forEach((col, i) => {
-                col.rowNo = this.row.i;
-                const g = groups[i];
-                const left = g.__left;
+            this.colEls.forEach((col) => {
+                //col.rowNo = this.row.i;
+                //const g = groups[i];
+                //const left = g.__left;
                 //const right = g.__left + g.width;
-                if (left >= leftMargin && left <= rightMargin) {
-                    col.updateCells();
-                }
+                //  if (left >= leftMargin && left <= rightMargin) {
+                col.updateCells();
+                //}
             });
             this.row.update = false;
             this.xrender();
@@ -139,6 +139,31 @@ export class SimpleHtmlGridRow extends HTMLElement {
             this.colEls.forEach((el) => {
                 el.rowNo = this.row.i;
                 el.updateCells();
+            });
+        }
+        this.xrender();
+    }
+
+    updateCols2() {
+        /*  this.groupMarginEl.render();
+
+        this.groupDataEl.connector = this.connector;
+        this.groupDataEl.row = this.row;
+        this.groupDataEl.ref = this.ref;
+        this.groupDataEl.render(); */
+        // quick fix for now..
+
+        /*      const groups = this.connector.config.groups; */
+
+        if (this.colEls.length !== this.ref.colCache.length) {
+            this.fixCols();
+        } else {
+            this.colEls.forEach((el) => {
+                if (el.group.update) {
+                    //
+                    el.rowNo = this.row.i;
+                    el.updateCells();
+                }
             });
         }
         this.xrender();
