@@ -86,30 +86,60 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.groupDataEl.ref = this.ref;
         this.groupDataEl.render();
         // quick fix for now..
-        this.colEls = this.colEls.map((e) => this.removeChild(e));
-        this.colEls = [];
+
+        /*     this.colEls = this.colEls.map((e) => this.removeChild(e));
+        this.colEls = []; */
 
         const data = this.connector.displayedDataset[this.row.i];
 
-        if (data && !data.__group) {
-            this.colEls = this.connector.config.groups.map((_group, i) => {
-                const el = document.createElement(
-                    'simple-html-grid-group-row'
-                ) as SimpleHtmlGridGroupRow;
+        const groups = this.connector.config.groups;
 
-                el.onclick = (e) => {
-                    this.connector.highlightRow(e as any, this.row.i);
-                };
-                el.connector = this.connector;
+        if (this.colEls.length !== groups.length) {
+            if (groups.length < this.colEls.length) {
+                const keep: any = [];
+                this.colEls.forEach((e, i) => {
+                    if (!groups[i]) {
+                        this.removeChild(e);
+                    } else {
+                        keep.push(e);
+                    }
+                });
+                this.colEls = keep;
+                this.colEls.forEach((el, i) => {
+                    el.rowNo = this.row.i;
+                    el.group = i;
+                });
+            } else {
+                groups.forEach((_e, i) => {
+                    if (!this.colEls[i]) {
+                        const el = document.createElement(
+                            'simple-html-grid-group-row'
+                        ) as SimpleHtmlGridGroupRow;
+
+                        el.onclick = (e) => {
+                            this.connector.highlightRow(e as any, this.row.i);
+                        };
+                        el.connector = this.connector;
+                        el.rowNo = this.row.i;
+                        el.ref = this.ref;
+                        el.group = i;
+                        this.colEls.push(el);
+                        this.appendChild(el);
+                    } else {
+                        const el = this.colEls[i];
+                        el.rowNo = this.row.i;
+                        el.group = i;
+                    }
+                });
+            }
+        } else {
+            this.colEls.forEach((el, i) => {
                 el.rowNo = this.row.i;
-                el.ref = this.ref;
                 el.group = i;
-
-                this.appendChild(el);
-                return el;
+                el.updateCells();
             });
-            this.xrender();
         }
+        this.xrender();
     }
 
     handleEvent(e: Event) {

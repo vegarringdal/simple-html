@@ -23,8 +23,6 @@ export class SimpleHtmlGridGroupLabel extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        
-
         if (e.type === 'column-resize' || e.type === 'reRender') {
             const grouping =
                 this.connector.config.groupingSet && this.connector.config.groupingSet.length;

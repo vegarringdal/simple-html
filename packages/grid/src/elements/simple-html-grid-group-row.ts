@@ -38,8 +38,53 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
     }
 
     updateCells() {
-        this.rows.forEach((r) => {
+        const rows = this.connector.config.groups[this.group].rows;
+
+        if (this.rows.length !== rows.length) {
+            if (rows.length < this.rows.length) {
+                const keep: any = [];
+                this.rows.forEach((e, i) => {
+                    if (!rows[i]) {
+                        this.removeChild(e);
+                    } else {
+                        keep.push(e);
+                    }
+                });
+                this.rows = keep;
+                this.rows.forEach((el, i) => {
+                    el.rowNo = this.rowNo;
+                    el.group = i;
+                });
+            } else {
+                rows.forEach((_e, i) => {
+                    if (!this.rows[i]) {
+                        const el = document.createElement(
+                            'simple-html-grid-cell-row'
+                        ) as SimpleHtmlGridCellRow;
+                        el.connector = this.connector;
+                        el.rowNo = this.rowNo;
+                        el.cell = rows[i];
+                        el.group = this.group;
+                        el.ref = this.ref;
+                        el.cellPosition = i;
+
+                        this.appendChild(el);
+                        this.rows.push(el);
+                    } else {
+                        const el = this.rows[i];
+                        el.rowNo = this.rowNo;
+                        el.cell = rows[i];
+                        el.group = this.group;
+                        el.cellPosition = i;
+                    }
+                });
+            }
+        }
+
+        this.rows.forEach((r, i) => {
             r.rowNo = this.rowNo;
+            r.cell = this.connector.config.groups[this.group].rows[i];
+            r.cellPosition = i;
             r.xrender();
         });
     }
