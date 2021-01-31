@@ -71,9 +71,12 @@ export class SimpleHtmlGrid extends HTMLElement {
                 this.colCache.push({ i, update: true });
             }
         });
-        if (this.interface.config.groups.length > this.colCache.length) {
-            this.colCache.push({ i: this.colCache.length, update: true });
+        for (let i = 0; i < 3; i++) {
+            if (this.interface.config.groups.length > this.colCache.length) {
+                this.colCache.push({ i: this.colCache.length, update: true });
+            }
         }
+
         console.log(this.colCache.length);
     }
 

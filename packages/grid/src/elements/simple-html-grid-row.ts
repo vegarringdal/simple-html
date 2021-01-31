@@ -118,7 +118,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
         });
     }
 
-    updateCols() {
+    updateCols(force?: boolean) {
         this.groupMarginEl.render();
 
         this.groupDataEl.connector = this.connector;
@@ -132,8 +132,11 @@ export class SimpleHtmlGridRow extends HTMLElement {
         if (this.colEls.length !== this.ref.colCache.length) {
             this.fixCols();
         } else {
-            this.fixCols();
-            this.colEls.forEach((el, i) => {
+            if (force) {
+                this.fixCols();
+            }
+
+            this.colEls.forEach((el) => {
                 el.rowNo = this.row.i;
                 el.updateCells();
             });

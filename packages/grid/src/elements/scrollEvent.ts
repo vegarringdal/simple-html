@@ -22,7 +22,6 @@ export function scrollEvent(
             let scrollDirection = 'left';
             if (connector.config.scrollLeft < e.target.scrollLeft) {
                 scrollDirection = 'right';
-                console.log('right');
             }
 
             connector.config.scrollLeft = e.target.scrollLeft;
@@ -62,7 +61,7 @@ export function scrollEvent(
 
             if (ref.colCache.map((e) => e.i).join(',') !== check) {
                 check = ref.colCache.map((e) => e.i).join(',');
-               /*  console.log(check); */
+                /*  console.log(check); */
 
                 node.rows.forEach((row) => {
                     row.updateCols();

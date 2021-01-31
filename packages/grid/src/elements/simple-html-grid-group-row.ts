@@ -21,7 +21,10 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
         this.style.display = 'block';
         this.style.height = config.__rowHeight + 'px';
         this.style.width = config.groups[this.group.i].width + 'px';
-        this.style.left = config.groups[this.group.i].__left + curleft + 'px';
+        //this.style.left = config.groups[this.group.i].__left + curleft + 'px';
+        this.style.transform = `translate3d(${
+            config.groups[this.group.i].__left + curleft
+        }px, 0px,  0px)`;
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);
 
@@ -94,7 +97,9 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
             this.connector.config.groupingSet && this.connector.config.groupingSet.length;
         const curleft = grouping ? grouping * 15 : 0;
         this.style.width = this.connector.config.groups[this.group.i].width + 'px';
-        this.style.left = this.connector.config.groups[this.group.i].__left + curleft + 'px';
+        this.style.transform = `translate3d(${
+            this.connector.config.groups[this.group.i].__left + curleft
+        }px, 0px,  0px)`;
     }
 
     handleEvent(e: Event) {
@@ -105,7 +110,10 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
             const curleft = grouping ? grouping * 15 : 0;
             this.style.height = config.__rowHeight + 'px';
             this.style.width = config.groups[this.group.i].width + 'px';
-            this.style.left = config.groups[this.group.i].__left + curleft + 'px';
+            // this.style.left = config.groups[this.group.i].__left + curleft + 'px';
+            this.style.transform = `translate3d(${
+                config.groups[this.group.i].__left + curleft
+            }px, 0px,  0px)`;
         }
     }
 
