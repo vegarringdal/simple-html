@@ -2,7 +2,6 @@ import { customElement, property } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { GridGroupConfig, RowCache } from '../types';
-import { log } from './log';
 import { SimpleHtmlGridGroupRow } from './simple-html-grid-group-row';
 import { SimpleHtmlGridCol } from './simple-html-grid-col';
 
@@ -114,8 +113,6 @@ export class SimpleHtmlGridRow extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'column-resize') {
             const data = this.connector.displayedDataset[this.row.i];
 
@@ -126,7 +123,6 @@ export class SimpleHtmlGridRow extends HTMLElement {
                 this.xrender();
             }
         }
-
 
         if (e.type === 'selection') {
             this.xrender();

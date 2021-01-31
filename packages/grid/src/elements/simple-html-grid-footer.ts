@@ -3,7 +3,6 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
-import { log } from './log';
 
 @customElement('simple-html-grid-footer')
 export class SimpleHtmlGridFooter extends HTMLElement {
@@ -22,8 +21,6 @@ export class SimpleHtmlGridFooter extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'reRender') {
             this.render();
         }

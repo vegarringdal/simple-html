@@ -3,10 +3,9 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
 import { html } from 'lit-html';
-import { log } from './log';
 
 @customElement('simple-html-grid-group-filter')
-export default class extends HTMLElement {
+export class SimpleHtmlGridGroupFilter extends HTMLElement {
     connector: GridInterface;
     rowNo: number;
     ref: SimpleHtmlGrid;
@@ -26,8 +25,6 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'column-resize' || e.type === 'reRender') {
             const grouping =
                 this.connector.config.groupingSet && this.connector.config.groupingSet.length;

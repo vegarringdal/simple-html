@@ -6,7 +6,6 @@ import { resizeColumnElement } from './resizeColumnElement';
 import { sorticonElement } from './sorticonElement';
 import { columnDragDrop, dropzone } from './dragEvent';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
-import { log } from './log';
 
 @customElement('simple-html-grid-cell-label')
 export default class extends HTMLElement {
@@ -29,8 +28,6 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'column-resize') {
             this.render();
         }

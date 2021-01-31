@@ -2,7 +2,6 @@ import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
-import { log } from './log';
 import { SimpleHtmlGridRow } from './simple-html-grid-row';
 
 @customElement('simple-html-grid-body')
@@ -39,8 +38,6 @@ export class SimpleHtmlGridBody extends HTMLElement {
     }
 
     handleEvent(e: any) {
-        log(this, e);
-
         if (e.type === 'reRender') {
             console.log('reRender');
             this.reRender();

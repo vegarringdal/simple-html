@@ -1,6 +1,5 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
-import { log } from './log';
 import { SimpleHtmlGridCellRow } from './simple-html-grid-cell-row';
 
 @customElement('simple-html-grid-group-row')
@@ -46,8 +45,6 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'column-resize' || e.type === 'reRender') {
             const config = this.connector.config;
             const grouping =

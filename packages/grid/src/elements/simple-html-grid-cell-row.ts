@@ -2,7 +2,6 @@ import { customElement } from '@simple-html/core';
 import { SimpleHtmlGrid, GridInterface } from '..';
 import { CellConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
-import { log } from './log';
 
 @customElement('simple-html-grid-cell-row')
 export class SimpleHtmlGridCellRow extends HTMLElement {
@@ -31,8 +30,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'column-resize') {
             this.style.width = this.connector.config.groups[this.group].width + 'px';
         }
