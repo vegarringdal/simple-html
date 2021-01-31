@@ -23,7 +23,7 @@ class Context {
                 ignored: ['dist']
             },
             sourceMap: !prod,
-            hmr: { plugin: `./samples/${folderInSamples}/fuseHmrPlugin.ts` },
+            hmr: false,
             devServer: !prod,
             plugins: [
                 pluginPostCSS(/\.css$/, {

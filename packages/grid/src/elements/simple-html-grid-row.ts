@@ -33,7 +33,6 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.groupMarginEl.style.display = grouping ? 'block' : 'none';
         this.groupMarginEl.connector = this.connector;
 
-
         this.groupDataEl = document.createElement('simple-html-grid-col') as SimpleHtmlGridCol;
         this.groupDataEl.classList.add('simple-html-grid-grouping-row');
         this.groupDataEl.style.width = `${grouping ? grouping * 15 : 0}px`;
@@ -79,6 +78,47 @@ export class SimpleHtmlGridRow extends HTMLElement {
         }
     }
 
+    fixCols() {
+        const groups = this.connector.config.groups;
+        if (groups.length < this.colEls.length) {
+            const keep: any = [];
+            this.colEls.forEach((e, i) => {
+                if (!groups[i]) {
+                    this.removeChild(e);
+                } else {
+                    keep.push(e);
+                }
+            });
+            this.colEls = keep;
+            this.colEls.forEach((el, i) => {
+                el.rowNo = this.row.i;
+                el.group = i;
+            });
+        } else {
+            groups.forEach((_e, i) => {
+                if (!this.colEls[i]) {
+                    const el = document.createElement(
+                        'simple-html-grid-group-row'
+                    ) as SimpleHtmlGridGroupRow;
+
+                    el.onclick = (e) => {
+                        this.connector.highlightRow(e as any, this.row.i);
+                    };
+                    el.connector = this.connector;
+                    el.rowNo = this.row.i;
+                    el.ref = this.ref;
+                    el.group = i;
+                    this.colEls.push(el);
+                    this.appendChild(el);
+                } else {
+                    const el = this.colEls[i];
+                    el.rowNo = this.row.i;
+                    el.group = i;
+                }
+            });
+        }
+    }
+
     updateCols() {
         this.groupMarginEl.render();
 
@@ -91,43 +131,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
         const groups = this.connector.config.groups;
 
         if (this.colEls.length !== groups.length) {
-            if (groups.length < this.colEls.length) {
-                const keep: any = [];
-                this.colEls.forEach((e, i) => {
-                    if (!groups[i]) {
-                        this.removeChild(e);
-                    } else {
-                        keep.push(e);
-                    }
-                });
-                this.colEls = keep;
-                this.colEls.forEach((el, i) => {
-                    el.rowNo = this.row.i;
-                    el.group = i;
-                });
-            } else {
-                groups.forEach((_e, i) => {
-                    if (!this.colEls[i]) {
-                        const el = document.createElement(
-                            'simple-html-grid-group-row'
-                        ) as SimpleHtmlGridGroupRow;
-
-                        el.onclick = (e) => {
-                            this.connector.highlightRow(e as any, this.row.i);
-                        };
-                        el.connector = this.connector;
-                        el.rowNo = this.row.i;
-                        el.ref = this.ref;
-                        el.group = i;
-                        this.colEls.push(el);
-                        this.appendChild(el);
-                    } else {
-                        const el = this.colEls[i];
-                        el.rowNo = this.row.i;
-                        el.group = i;
-                    }
-                });
-            }
+            this.fixCols();
         } else {
             this.colEls.forEach((el, i) => {
                 el.rowNo = this.row.i;

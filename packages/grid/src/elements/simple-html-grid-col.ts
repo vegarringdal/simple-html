@@ -22,8 +22,8 @@ export class SimpleHtmlGridCol extends HTMLElement {
 
     render() {
         if (this.ref) {
-            const grouping =
-                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+  /*           const grouping =
+                this.connector.config.groupingSet && this.connector.config.groupingSet.length; */
             this.style.width = '100%';
             this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
 
@@ -44,6 +44,12 @@ export class SimpleHtmlGridCol extends HTMLElement {
                 };
 
                 return html`
+                    <simple-html-grid-col
+                        .connector=${this.connector}
+                        .row=${this.row}
+                        class="simple-html-grid-grouping-row"
+                        style="left:0"
+                    ></simple-html-grid-col>
                     <i @click=${changeGrouping}>
                         <svg
                             class="simple-html-grid-icon"
@@ -64,7 +70,12 @@ export class SimpleHtmlGridCol extends HTMLElement {
         } else {
             const grouping =
                 this.connector.config.groupingSet && this.connector.config.groupingSet.length;
-            this.style.width = (grouping ? grouping * 15 : 0) + 'px';
+            const entity = this.row ? this.connector.displayedDataset[this.row.i] : null;
+            if (entity && entity.__group) {
+                this.style.width = entity.__groupLvl * 15 + 'px';
+            } else {
+                this.style.width = (grouping ? grouping * 15 : 0) + 'px';
+            }
             this.style.height =
                 (this.row
                     ? this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i]

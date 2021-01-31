@@ -1,13 +1,15 @@
 import { GridInterface } from '../gridInterface';
 import { customElement } from '@simple-html/core';
 import { generate } from './generate';
-import { RowCache } from '../types';
+import { ColCache, RowCache } from '../types';
 import { updateRowCache } from './updateRowCache';
+
 
 @customElement('simple-html-grid')
 export class SimpleHtmlGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
     public rowCache: RowCache[] = [];
+    public colCache: ColCache[] = [];
 
     set interface(value: GridInterface) {
         if (this.__DATASOURCE_INTERFACE !== value) {
@@ -27,7 +29,6 @@ export class SimpleHtmlGrid extends HTMLElement {
     public disconnectedCallback() {
         this.__DATASOURCE_INTERFACE && this.__DATASOURCE_INTERFACE.disconnectGrid();
     }
-
 
     public reRender() {
         this.cleanup();
@@ -62,10 +63,23 @@ export class SimpleHtmlGrid extends HTMLElement {
         }
     }
 
+    public resetColCache() {
+        const node = this.getElementsByTagName('simple-html-grid-body')[0];
+        const clientWidth = node?.clientWidth || 1980;
+
+        this.interface.config.groups.forEach((group, i) => {
+            if (group.__left < clientWidth) {
+                this.colCache.push({ i, update: true });
+            }
+        });
+        console.log(this.colCache.length)
+    }
+
     public resetRowCache() {
         if (this.interface) {
             const node = this.getElementsByTagName('simple-html-grid-body')[0];
             const height = node?.clientHeight || this.interface.config.cellHeight * 50;
+            this.resetColCache();
 
             let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2; //(buffer);
             if (rowsNeeded > 80) {
