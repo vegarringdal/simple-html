@@ -3,7 +3,7 @@ import { GridInterface, SimpleHtmlGrid } from '..';
 import { log } from './log';
 
 @customElement('simple-html-grid-group-row')
-export default class extends HTMLElement {
+export class SimpleHtmlGridGroupRow extends HTMLElement {
     connector: GridInterface;
     rowNo: number;
     ref: SimpleHtmlGrid;

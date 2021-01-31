@@ -1,18 +1,19 @@
 import { customElement, property } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
-import { html } from 'lit-html';
 import { RowCache } from '../types';
 import { log } from './log';
+import { SimpleHtmlGridGroupRow } from './simple-html-grid-group-row';
+import { SimpleHtmlGridCol } from './simple-html-grid-col';
 
 @customElement('simple-html-grid-row')
-export default class extends HTMLElement {
+export class SimpleHtmlGridRow extends HTMLElement {
     connector: GridInterface;
     @property() row: RowCache;
     ref: SimpleHtmlGrid;
-    col: HTMLElement;
-    cols: HTMLElement[];
-    col2: HTMLElement;
+    groupMarginEl: SimpleHtmlGridCol;
+    colEls: SimpleHtmlGridGroupRow[];
+    groupDataEl: SimpleHtmlGridCol;
 
     connectedCallback() {
         this.classList.add('simple-html-grid-row');
@@ -26,35 +27,38 @@ export default class extends HTMLElement {
         const grouping =
             this.connector.config.groupingSet && this.connector.config.groupingSet.length;
 
-        this.col = document.createElement('simple-html-grid-col');
-        this.col.classList.add('simple-html-grid-grouping-row');
-        this.col.style.width = `${grouping ? grouping * 15 : 0}px`;
-        this.col.style.left = `0`;
-        this.col.style.display = grouping ? 'block' : 'none';
+        this.groupMarginEl = document.createElement('simple-html-grid-col') as SimpleHtmlGridCol;
+        this.groupMarginEl.classList.add('simple-html-grid-grouping-row');
+        this.groupMarginEl.style.width = `${grouping ? grouping * 15 : 0}px`;
+        this.groupMarginEl.style.left = `0`;
+        this.groupMarginEl.style.display = grouping ? 'block' : 'none';
 
-        this.col2 = document.createElement('simple-html-grid-col');
-        this.col2.classList.add('simple-html-grid-grouping-row');
-        this.col2.style.width = `${grouping ? grouping * 15 : 0}px`;
-        this.col2.style.left = `0`;
-        this.col2.style.display = grouping ? 'block' : 'none';
-        this.col2.connector = this.connector;
-        this.col2.row = this.row;
-        this.col2.ref = this.ref;
+        this.groupDataEl = document.createElement('simple-html-grid-col') as SimpleHtmlGridCol;
+        this.groupDataEl.classList.add('simple-html-grid-grouping-row');
+        this.groupDataEl.style.width = `${grouping ? grouping * 15 : 0}px`;
+        this.groupDataEl.style.left = `0`;
+        this.groupDataEl.style.display = grouping ? 'block' : 'none';
+        this.groupDataEl.connector = this.connector;
+        this.groupDataEl.row = this.row;
+        this.groupDataEl.ref = this.ref;
 
-        this.appendChild(this.col);
-        this.appendChild(this.col2);
-        this.cols = this.connector.config.groups.map((_group, i) => {
-            const x = document.createElement('simple-html-grid-group-row');
-            x.onclick = (e) => {
+        this.appendChild(this.groupMarginEl);
+        this.appendChild(this.groupDataEl);
+        this.colEls = this.connector.config.groups.map((_group, i) => {
+            const el = document.createElement(
+                'simple-html-grid-group-row'
+            ) as SimpleHtmlGridGroupRow;
+
+            el.onclick = (e) => {
                 this.connector.highlightRow(e as any, this.row.i);
             };
-            x.connector = this.connector;
-            x.rowNo = this.row.i;
-            x.ref = this.ref;
-            x.group = i;
+            el.connector = this.connector;
+            el.rowNo = this.row.i;
+            el.ref = this.ref;
+            el.group = i;
 
-            this.appendChild(x);
-            return x;
+            this.appendChild(el);
+            return el;
         });
         this.xrender();
     }
@@ -63,21 +67,30 @@ export default class extends HTMLElement {
         log(this, e);
 
         if (e.type === 'vertical-scroll') {
+            const node = this.ref.getElementsByTagName('simple-html-grid-body')[0];
+            const leftMargin = node.scrollLeft;
+            const rightMargin = node.clientWidth + leftMargin;
+            const groups = this.connector.config.groups;
             if (this.row.update) {
-                this.cols.forEach((col) => {
+                this.colEls.forEach((col, i) => {
                     col.rowNo = this.row.i;
-                    col.updateCells();
+                    const g = groups[i];
+                    const left = g.__left;
+                    const right = g.__left + g.width;
+                    if (left >= leftMargin && right <= rightMargin) {
+                        col.updateCells();
+                    }
                 });
                 this.row.update = false;
                 this.xrender();
-            } 
+            }
         }
 
         if (e.type === 'column-resize') {
             const data = this.connector.displayedDataset[this.row.i];
 
             if (data && !data.__group) {
-                this.cols.forEach((g, i) => {
+                this.colEls.forEach((g, i) => {
                     g.updateCells();
                 });
                 this.xrender();
@@ -85,31 +98,34 @@ export default class extends HTMLElement {
         }
 
         if (e.type === 'update-cols') {
-            this.col.render();
+            this.groupMarginEl.render();
 
-            this.col2.connector = this.connector;
-            this.col2.row = this.row;
-            this.col2.ref = this.ref;
-            this.col2.render();
+            this.groupDataEl.connector = this.connector;
+            this.groupDataEl.row = this.row;
+            this.groupDataEl.ref = this.ref;
+            this.groupDataEl.render();
             // quick fix for now..
-            this.cols = this.cols.map((e) => this.removeChild(e));
-            this.cols = [];
+            this.colEls = this.colEls.map((e) => this.removeChild(e));
+            this.colEls = [];
 
             const data = this.connector.displayedDataset[this.row.i];
 
             if (data && !data.__group) {
-                this.cols = this.connector.config.groups.map((_group, i) => {
-                    const x = document.createElement('simple-html-grid-group-row');
-                    x.onclick = (e) => {
+                this.colEls = this.connector.config.groups.map((_group, i) => {
+                    const el = document.createElement(
+                        'simple-html-grid-group-row'
+                    ) as SimpleHtmlGridGroupRow;
+
+                    el.onclick = (e) => {
                         this.connector.highlightRow(e as any, this.row.i);
                     };
-                    x.connector = this.connector;
-                    x.rowNo = this.row.i;
-                    x.ref = this.ref;
-                    x.group = i;
+                    el.connector = this.connector;
+                    el.rowNo = this.row.i;
+                    el.ref = this.ref;
+                    el.group = i;
 
-                    this.appendChild(x);
-                    return x;
+                    this.appendChild(el);
+                    return el;
                 });
                 this.xrender();
             }

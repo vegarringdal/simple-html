@@ -6,7 +6,7 @@ import { RowCache } from '../types';
 import { log } from './log';
 
 @customElement('simple-html-grid-col')
-export default class extends HTMLElement {
+export class SimpleHtmlGridCol extends HTMLElement {
     connector: GridInterface;
     row: RowCache;
     ref: SimpleHtmlGrid;
@@ -14,9 +14,9 @@ export default class extends HTMLElement {
     handleEvent(e: Event) {
         log(this, e);
 
-        if (e.type === 'vertical-scroll') {
+   /*      if (e.type === 'vertical-scroll') {
             this.render();
-        }
+        } */
     }
 
     render() {

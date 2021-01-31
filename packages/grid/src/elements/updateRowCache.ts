@@ -58,7 +58,6 @@ export function updateRowCache(
             rowPositionCache[i].update = false;
         }
     }
-    requestAnimationFrame(() => {
-        ref.triggerEvent('vertical-scroll');
-    });
+
+    ref.triggerEvent('vertical-scroll');
 }

@@ -29,6 +29,7 @@ export class SimpleHtmlGrid extends HTMLElement {
         this.__DATASOURCE_INTERFACE && this.__DATASOURCE_INTERFACE.disconnectGrid();
     }
 
+
     public reRender() {
         this.cleanup();
         this.triggerEvent('reRender');
