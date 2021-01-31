@@ -68,7 +68,7 @@ export class SimpleHtmlGrid extends HTMLElement {
         const scrollLeft = node?.scrollLeft || 0;
         this.colCache = [];
         this.interface.config.groups.forEach((group, i) => {
-            if (group.__left < clientWidth + scrollLeft) {
+            if (group.__left < clientWidth + scrollLeft && group.__left > scrollLeft ) {
                 this.colCache.push({ i, update: true });
             }
         });

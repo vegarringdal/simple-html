@@ -30,11 +30,11 @@ export const WordDatasource04 = new DataContainer();
 // add some default data
 let x;
 console.time('generate');
-if (localStorage.getItem('data')) {
-    x = JSON.parse(localStorage.getItem('data'));
+if (localStorage.getItem('data2')) {
+    x = JSON.parse(localStorage.getItem('data2'));
 } else {
     x = generator.generateData(500);
-    localStorage.setItem('data', JSON.stringify(x));
+    localStorage.setItem('data2', JSON.stringify(x));
 }
 console.timeEnd('generate');
 WordDatasource01.setData(x);
