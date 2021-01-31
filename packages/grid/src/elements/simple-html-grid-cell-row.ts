@@ -1,11 +1,11 @@
-import { customElement, property } from '@simple-html/core';
+import { customElement } from '@simple-html/core';
 import { SimpleHtmlGrid, GridInterface } from '..';
 import { CellConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { log } from './log';
 
 @customElement('simple-html-grid-cell-row')
-export default class extends HTMLElement {
+export class SimpleHtmlGridCellRow extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
     ref: SimpleHtmlGrid;
@@ -98,10 +98,10 @@ export default class extends HTMLElement {
         const cell = this.cell;
         const data = this.connector.displayedDataset[this.rowNo];
         if (data.__group) {
-            this.parentNode.style.display = 'none';
+            (this.parentNode as HTMLElement).style.display = 'none';
             return;
         } else {
-            this.parentNode.style.display = 'block';
+            (this.parentNode as HTMLElement).style.display = 'block';
         }
         this.lastVal = data[cell.attribute];
 
@@ -175,9 +175,9 @@ export default class extends HTMLElement {
             const cell = this.cell;
             const data = this.connector.displayedDataset[this.rowNo];
             if (data.__group) {
-                this.parentNode.style.display = 'none';
+                (this.parentNode as HTMLElement).style.display = 'none';
             } else {
-                this.parentNode.style.display = 'block';
+                (this.parentNode as HTMLElement).style.display = 'block';
             }
             if (this.lastVal !== data[cell.attribute]) {
                 switch (cell.type) {

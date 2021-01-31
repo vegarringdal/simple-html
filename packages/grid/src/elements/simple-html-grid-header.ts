@@ -5,7 +5,7 @@ import { SimpleHtmlGrid } from '..';
 import { log } from './log';
 
 @customElement('simple-html-grid-header')
-export default class extends HTMLElement {
+export class SimpleHtmlGridHeader extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
 

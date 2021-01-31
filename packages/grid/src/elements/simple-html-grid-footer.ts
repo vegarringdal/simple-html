@@ -6,7 +6,7 @@ import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { log } from './log';
 
 @customElement('simple-html-grid-footer')
-export default class extends HTMLElement {
+export class SimpleHtmlGridFooter extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
 

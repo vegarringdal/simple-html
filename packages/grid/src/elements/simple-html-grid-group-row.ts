@@ -1,6 +1,7 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { log } from './log';
+import { SimpleHtmlGridCellRow } from './simple-html-grid-cell-row';
 
 @customElement('simple-html-grid-group-row')
 export class SimpleHtmlGridGroupRow extends HTMLElement {
@@ -9,6 +10,7 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
     ref: SimpleHtmlGrid;
     currentHeight: number;
     group: number;
+    rows: SimpleHtmlGridCellRow[];
 
     connectedCallback() {
         this.classList.add('simple-html-grid-group-row');
@@ -24,10 +26,10 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
         this.ref.addEventListener('reRender', this);
 
         this.rows = config.groups[this.group].rows.map((cell, i) => {
-            const x = document.createElement('simple-html-grid-cell-row');
+            const x = document.createElement('simple-html-grid-cell-row') as SimpleHtmlGridCellRow;
             x.connector = this.connector;
             x.rowNo = this.rowNo;
-            x.cell = this.cell;
+            x.cell = cell;
             x.group = this.group;
             x.ref = this.ref;
             x.cellPosition = i;
@@ -35,8 +37,6 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
             return x;
         });
     }
-
-
 
     updateCells() {
         this.rows.forEach((r) => {

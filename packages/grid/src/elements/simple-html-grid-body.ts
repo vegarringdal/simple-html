@@ -79,7 +79,7 @@ export class SimpleHtmlGridBody extends HTMLElement {
                         r.row = e;
                         r.ref = this.ref;
                         this.body.append(r);
-                        this.rows.push({ r /* g */ });
+                        this.rows.push(r);
                     } else {
                         const x = this.rows[i];
 
@@ -94,7 +94,7 @@ export class SimpleHtmlGridBody extends HTMLElement {
             r.connector = this.connector;
             r.row = this.rowPositionCache[i];
             r.ref = this.ref;
-            r.handleEvent({ type: 'update-cols' });
+            r.updateCols();
         });
     }
 }

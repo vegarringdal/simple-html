@@ -79,6 +79,40 @@ export class SimpleHtmlGridRow extends HTMLElement {
         }
     }
 
+    updateCols() {
+        this.groupMarginEl.render();
+
+        this.groupDataEl.connector = this.connector;
+        this.groupDataEl.row = this.row;
+        this.groupDataEl.ref = this.ref;
+        this.groupDataEl.render();
+        // quick fix for now..
+        this.colEls = this.colEls.map((e) => this.removeChild(e));
+        this.colEls = [];
+
+        const data = this.connector.displayedDataset[this.row.i];
+
+        if (data && !data.__group) {
+            this.colEls = this.connector.config.groups.map((_group, i) => {
+                const el = document.createElement(
+                    'simple-html-grid-group-row'
+                ) as SimpleHtmlGridGroupRow;
+
+                el.onclick = (e) => {
+                    this.connector.highlightRow(e as any, this.row.i);
+                };
+                el.connector = this.connector;
+                el.rowNo = this.row.i;
+                el.ref = this.ref;
+                el.group = i;
+
+                this.appendChild(el);
+                return el;
+            });
+            this.xrender();
+        }
+    }
+
     handleEvent(e: Event) {
         log(this, e);
 
@@ -86,46 +120,13 @@ export class SimpleHtmlGridRow extends HTMLElement {
             const data = this.connector.displayedDataset[this.row.i];
 
             if (data && !data.__group) {
-                this.colEls.forEach((g, i) => {
+                this.colEls.forEach((g) => {
                     g.updateCells();
                 });
                 this.xrender();
             }
         }
 
-        if (e.type === 'update-cols') {
-            this.groupMarginEl.render();
-
-            this.groupDataEl.connector = this.connector;
-            this.groupDataEl.row = this.row;
-            this.groupDataEl.ref = this.ref;
-            this.groupDataEl.render();
-            // quick fix for now..
-            this.colEls = this.colEls.map((e) => this.removeChild(e));
-            this.colEls = [];
-
-            const data = this.connector.displayedDataset[this.row.i];
-
-            if (data && !data.__group) {
-                this.colEls = this.connector.config.groups.map((_group, i) => {
-                    const el = document.createElement(
-                        'simple-html-grid-group-row'
-                    ) as SimpleHtmlGridGroupRow;
-
-                    el.onclick = (e) => {
-                        this.connector.highlightRow(e as any, this.row.i);
-                    };
-                    el.connector = this.connector;
-                    el.rowNo = this.row.i;
-                    el.ref = this.ref;
-                    el.group = i;
-
-                    this.appendChild(el);
-                    return el;
-                });
-                this.xrender();
-            }
-        }
 
         if (e.type === 'selection') {
             this.xrender();

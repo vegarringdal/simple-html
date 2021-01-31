@@ -20,9 +20,12 @@ import './simple-html-grid-menu-custom';
 import { scrollEvent } from './scrollEvent';
 import { GridInterface } from '../gridInterface';
 import { RowCache } from '../types';
-import { html } from 'lit-html';
 import { SimpleHtmlGrid } from '../';
 import { columnDragDropPanel } from './dragEvent';
+import { SimpleHtmlGridPanel } from './simple-html-grid-panel';
+import { SimpleHtmlGridBody } from './simple-html-grid-body';
+import { SimpleHtmlGridFooter } from './simple-html-grid-footer';
+import { SimpleHtmlGridHeader } from './simple-html-grid-header';
 
 export function generate(
     connector: GridInterface,
@@ -34,26 +37,26 @@ export function generate(
     const enter = columnDragDropPanel('enter', connector);
     const leave = columnDragDropPanel('leave', connector);
 
-    const panel = document.createElement('simple-html-grid-panel');
+    const panel = document.createElement('simple-html-grid-panel') as SimpleHtmlGridPanel;
     panel.connector = connector;
     panel.ref = ref;
     panel.onmouseleave = leave;
     panel.onmouseenter = enter;
     ref.appendChild(panel);
 
-    const header = document.createElement('simple-html-grid-header');
+    const header = document.createElement('simple-html-grid-header') as SimpleHtmlGridHeader;
     header.connector = connector;
     header.ref = ref;
     ref.appendChild(header);
 
-    const body = document.createElement('simple-html-grid-body');
+    const body = document.createElement('simple-html-grid-body') as SimpleHtmlGridBody;
     body.connector = connector;
     body.ref = ref;
     body.rowPositionCache = rowPositionCache;
     body.onscroll = scroll;
     ref.appendChild(body);
 
-    const footer = document.createElement('simple-html-grid-footer');
+    const footer = document.createElement('simple-html-grid-footer') as SimpleHtmlGridFooter; 
     footer.connector = connector;
     footer.ref = ref;
     ref.appendChild(footer);

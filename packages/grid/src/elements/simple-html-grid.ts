@@ -1,4 +1,3 @@
-import { render, html } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { customElement } from '@simple-html/core';
 import { generate } from './generate';

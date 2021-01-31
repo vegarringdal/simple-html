@@ -15,7 +15,7 @@ function capalize(text: string) {
 }
 
 @customElement('simple-html-grid-panel')
-export default class extends HTMLElement {
+export class SimpleHtmlGridPanel extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
 
