@@ -55,39 +55,56 @@ export class SimpleHtmlGridHeader extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        if (e.type === 'horizontal-scroll' || e.type === 'reRender') {
-            this.xrender();
+        if (e.type === 'horizontal-scroll') {
+            const config = this.connector.config;
+
+            this.style.left = -config.scrollLeft + 'px';
+            this.style.width = config.__rowWidth + 'px';
+        }
+
+        if (e.type === 'reRender') {
+            const config = this.connector.config;
+            const grouping =
+                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+            this.groupMarginEl.style.width = `${grouping ? grouping * 15 : 0}px`;
+            this.groupMarginEl.style.left = `0`;
+            this.groupMarginEl.style.display = grouping ? 'block' : 'none';
+
+            this.style.left = -config.scrollLeft + 'px';
+            this.style.width = config.__rowWidth + 'px';
+            this.style.top = config.panelHeight + 'px';
+            this.style.height = config.__rowHeight * 2 + 2 + 'px';
+            this.colLabels = this.colLabels.map((e) => this.removeChild(e));
+            this.colFilters = this.colFilters.map((e) => this.removeChild(e));
+
+            this.colLabels = this.connector.config.groups.map((group) => {
+                const el = document.createElement(
+                    'simple-html-grid-group-label'
+                ) as SimpleHtmlGridGroupLabel;
+                el.connector = this.connector;
+                el.ref = this.ref;
+                el.group = group;
+
+                this.appendChild(el);
+                return el;
+            });
+
+            this.colFilters = this.connector.config.groups.map((group) => {
+                const el = document.createElement(
+                    'simple-html-grid-group-filter'
+                ) as SimpleHtmlGridGroupFilter;
+                el.connector = this.connector;
+                el.ref = this.ref;
+                el.group = group;
+
+                this.appendChild(el);
+                return el;
+            });
         }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('horizontal-scroll', this);
         this.ref.removeEventListener('reRender', this);
-    }
-
-    xrender() {
-        const config = this.connector.config;
-
-        this.style.left = -config.scrollLeft + 'px';
-        this.style.width = config.__rowWidth + 'px';
-
-        /*       return html`
-            ${config.groups.map((group) => {
-                return html`
-                    <simple-html-grid-group-label
-                        .connector=${this.connector}
-                        .ref=${this.ref}
-                        .group=${group}
-                    >
-                    </simple-html-grid-group-label>
-                    <simple-html-grid-group-filter
-                        .connector=${this.connector}
-                        .ref=${this.ref}
-                        .group=${group}
-                    >
-                    </simple-html-grid-group-filter>
-                `;
-            })}
-        `; */
     }
 }
