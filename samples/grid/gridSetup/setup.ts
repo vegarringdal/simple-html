@@ -29,37 +29,27 @@ export function setup(rows: number, columns: number, scroll?: number) {
                     });
                 } else {
                     x.push({
-                        header: 'date',
-                        readonly: true,
-                        attribute: 'date',
-                        type: 'date',
+                        header: 'word' + word,
+                        attribute: 'word' + word,
                         filterable: {},
-                        sortable: {}
+                        sortable: {},
+                        readonly: true,
+                        allowGrouping: true
                     });
                 }
             } else {
-                if (i === 3) {
-                    x.push({
-                        header: 'word' + word,
-                        attribute: 'word' + word,
-                        filterable: {},
-                        sortable: {},
-                        readonly: true,
-                        allowGrouping: true
-                    });
-                } else {
-                    x.push({
-                        header: 'word' + word,
-                        attribute: 'word' + word,
-                        filterable: {},
-                        sortable: {},
-                        allowGrouping: true
-                    });
-                }
+                x.push({
+                    header: 'word' + word,
+                    attribute: 'word' + word,
+                    filterable: {},
+                    sortable: {},
+                    readonly: true,
+                    allowGrouping: true
+                });
             }
         }
-        const x4 = Math.floor(Math.random() * 150) + 75;
-        setup.groups.push({ width: x4, rows: x });
+
+        setup.groups.push({ width: 125, rows: x });
     }
     return setup;
 }

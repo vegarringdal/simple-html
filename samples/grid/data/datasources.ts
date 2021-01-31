@@ -28,6 +28,7 @@ export const WordDatasource03 = new DataContainer();
 export const WordDatasource04 = new DataContainer();
 
 // add some default data
+debugger
 WordDatasource01.setData(generator.generateData(100));
 WordDatasource02.setData(generator.generateData(10));
 //same data into both

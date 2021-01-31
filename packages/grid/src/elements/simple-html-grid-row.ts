@@ -79,6 +79,8 @@ export class SimpleHtmlGridRow extends HTMLElement {
                     const right = g.__left + g.width;
                     if (left >= leftMargin && right <= rightMargin) {
                         col.updateCells();
+                    } else{
+                        console.log(i)
                     }
                 });
                 this.row.update = false;
