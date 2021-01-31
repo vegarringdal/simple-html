@@ -65,7 +65,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
     verticalScroll(/* leftMargin: number, rightMargin: number, groups: GridGroupConfig[] */) {
         if (this.row.update) {
             this.colEls.forEach((col) => {
-                //col.rowNo = this.row.i;
+                col.rowNo = this.row.i;
                 //const g = groups[i];
                 //const left = g.__left;
                 //const right = g.__left + g.width;
@@ -161,6 +161,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
             this.colEls.forEach((el) => {
                 if (el.group.update) {
                     //
+
                     el.rowNo = this.row.i;
                     el.updateCells();
                 }
