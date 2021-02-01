@@ -88,7 +88,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
     setSettings() {
         if (this.rowNo < 0) {
-            debugger;
+            debugger; // TODO will be here to I have tested this more..
             return;
         }
 
