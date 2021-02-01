@@ -151,7 +151,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.xrender();
     }
 
-    verticalScrollEvent() {
+    horizontalScollEvent() {
         if (this.colEls.length !== this.ref.colCache.length) {
             this.fixCols();
         } else {

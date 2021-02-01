@@ -20,21 +20,18 @@ export function scrollEvent(
         ) {
             connector.config.scrollLeft = e.target.scrollLeft;
 
-            if (scrollBarTimer) {
-                clearTimeout(scrollBarTimer);
-            }
-            scrollBarTimer = setTimeout(() => {
+            requestAnimationFrame(() => {
                 scrollBarTimer = null;
                 ref.resetColCache();
-                console.log('reset');
+
                 const node = ref.getElementsByTagName(
                     'simple-html-grid-body'
                 )[0] as SimpleHtmlGridBody;
                 node.rows.forEach((row) => {
-                    row.verticalScrollEvent();
+                    row.horizontalScollEvent();
                 });
                 ref.colCache.forEach((e) => (e.update = false));
-            }, 90);
+            });
 
             ref.triggerEvent('horizontal-scroll');
         } else {

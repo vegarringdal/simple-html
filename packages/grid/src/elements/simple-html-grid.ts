@@ -72,13 +72,16 @@ export class SimpleHtmlGrid extends HTMLElement {
                 this.colCache.push({ i, update: true });
             }
         });
-        for (let i = 0; i < 3; i++) {
+        /*  for (let i = 0; i < 3; i++) {
             if (this.interface.config.groups.length > this.colCache.length) {
-                this.colCache.push({ i: this.colCache.length, update: true });
+                this.colCache.push({
+                    i: this.colCache[this.colCache.length - 1].i + 1,
+                    update: true
+                });
             }
-        }
+        } */
 
-        console.log(this.colCache.map((e) => e.i).join(','));
+        //console.log(this.colCache.map((e) => e.i).join(','));
     }
 
     public resetRowCache() {
