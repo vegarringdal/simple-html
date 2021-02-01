@@ -150,30 +150,15 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.xrender();
     }
 
-    updateCols2(force?: boolean) {
-        /*  this.groupMarginEl.render();
-
-        this.groupDataEl.connector = this.connector;
-        this.groupDataEl.row = this.row;
-        this.groupDataEl.ref = this.ref;
-        this.groupDataEl.render(); */
-        // quick fix for now..
-
-        /*      const groups = this.connector.config.groups; */
-
+    updateCols2() {
         if (this.colEls.length !== this.ref.colCache.length) {
             this.fixCols();
         } else {
             this.colEls.forEach((el, i) => {
-                if (el.group.update || force) {
-                    //
-                    if (force) {
-                        el.group = this.ref.colCache[i];
-                    }
+                el.group = this.ref.colCache[i];
 
-                    el.rowNo = this.row.i;
-                    el.updateCells();
-                }
+                el.rowNo = this.row.i;
+                el.updateCells();
             });
         }
         this.xrender();

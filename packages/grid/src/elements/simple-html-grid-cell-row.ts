@@ -13,7 +13,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     group: number;
     cell: CellConfig;
     innerEle: HTMLInputElement;
-    lastVal: any;
 
     public connectedCallback() {
         this.classList.add('simple-html-grid-cell-row');
@@ -99,7 +98,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         } else {
             (this.parentNode as HTMLElement).style.display = 'block';
         }
-        this.lastVal = data[cell.attribute];
 
         const connector = this.connector;
         const rowNo = this.rowNo;
@@ -178,28 +176,24 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             this.style.width = this.connector.config.groups[this.group].width + 'px';
             this.innerEle.setAttribute('type', cell.type || 'text');
             const newVal = data[cell.attribute] || null;
-            if (this.lastVal !== newVal) {
-                switch (cell.type) {
-                    case 'boolean':
-                        this.innerEle.checked = newVal;
-                        break;
-                    case 'image':
-                        console.log('no-image');
-                        break;
-                    case 'empty':
-                        console.log('no-.empty');
-                        break;
-                    case 'date':
-                        this.innerEle.valueAsDate = newVal;
-                        break;
-                    case 'number':
-                        this.innerEle.valueAsNumber = newVal;
-                        break;
-                    default:
-                        try {
-                            this.innerEle.value = newVal;
-                        } catch (e) {}
-                }
+            switch (cell.type) {
+                case 'boolean':
+                    this.innerEle.checked = newVal;
+                    break;
+                case 'image':
+                    console.log('no-image');
+                    break;
+                case 'empty':
+                    console.log('no-.empty');
+                    break;
+                case 'date':
+                    this.innerEle.valueAsDate = newVal;
+                    break;
+                case 'number':
+                    this.innerEle.valueAsNumber = newVal;
+                    break;
+                default:
+                    this.innerEle.value = newVal;
             }
         }
     }

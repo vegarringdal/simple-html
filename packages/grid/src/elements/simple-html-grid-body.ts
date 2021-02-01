@@ -92,7 +92,7 @@ export class SimpleHtmlGridBody extends HTMLElement {
             r.connector = this.connector;
             r.row = this.rowPositionCache[i];
             r.ref = this.ref;
-            r.updateCols(true);
+            r.updateCols();
         });
         //debugger
         //updateColCache(this.ref, this.connector, 'right');

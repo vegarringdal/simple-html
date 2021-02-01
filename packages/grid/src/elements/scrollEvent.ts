@@ -3,7 +3,7 @@ import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
 import { updateRowCache } from './updateRowCache';
 
-import { updateColCache } from './updateColCache';
+import { SimpleHtmlGridBody } from './simple-html-grid-body';
 
 let scrollBarTimer: any;
 
@@ -18,31 +18,24 @@ export function scrollEvent(
             connector.config.scrollLeft !== e.target.scrollLeft &&
             connector.config.lastScrollTop === e.target.scrollTop
         ) {
-            let scrollDirection = 'left';
-            if (connector.config.scrollLeft < e.target.scrollLeft) {
-                scrollDirection = 'right';
-            }
-
-            let scrollbars = false;
-
-            if (Math.abs(connector.config.scrollLeft - e.target.scrollLeft) > 250) {
-                scrollbars = true;
-            }
-
             connector.config.scrollLeft = e.target.scrollLeft;
-            if (scrollbars || scrollBarTimer) {
-                if (scrollBarTimer) {
-                    clearTimeout(scrollBarTimer);
-                }
-                scrollBarTimer = setTimeout(() => {
-                    scrollBarTimer = null;
-                    ref.resetColCache();
-                    updateColCache(ref, connector, scrollDirection, true);
-                    ref.triggerEvent('horizontal-scroll');
-                }, 90);
-            } else {
-                updateColCache(ref, connector, scrollDirection);
+
+            if (scrollBarTimer) {
+                clearTimeout(scrollBarTimer);
             }
+            scrollBarTimer = setTimeout(() => {
+                scrollBarTimer = null;
+                ref.resetColCache();
+                console.log('reset');
+                const node = ref.getElementsByTagName(
+                    'simple-html-grid-body'
+                )[0] as SimpleHtmlGridBody;
+                node.rows.forEach((row) => {
+                    row.updateCols2();
+                });
+                ref.colCache.forEach((e) => (e.update = false));
+            }, 90);
+
             ref.triggerEvent('horizontal-scroll');
         } else {
             connector.config.scrollLeft = e.target.scrollLeft;
