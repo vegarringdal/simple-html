@@ -78,10 +78,10 @@ export class SimpleHtmlGridHeader extends HTMLElement {
             console.time('header');
 
             const groups = this.connector.config.groups;
-            if (this.ref.colCache.length < this.colLabels.length) {
+            if (groups.length < this.colLabels.length) {
                 const keep: any = [];
                 this.colLabels.forEach((e, i) => {
-                    if (!this.ref.colCache[i]) {
+                    if (!groups[i]) {
                         this.removeChild(e);
                     } else {
                         keep.push(e);
@@ -89,7 +89,7 @@ export class SimpleHtmlGridHeader extends HTMLElement {
                 });
                 this.colLabels = keep;
             } else {
-                this.ref.colCache.forEach((_group, i) => {
+                groups.forEach((_group, i) => {
                     if (!this.colLabels[i]) {
                         const el = document.createElement(
                             'simple-html-grid-group-label'
@@ -111,10 +111,10 @@ export class SimpleHtmlGridHeader extends HTMLElement {
                 el.xrender();
             });
 
-            if (this.ref.colCache.length < this.colFilters.length) {
+            if (groups.length < this.colFilters.length) {
                 const keep: any = [];
                 this.colFilters.forEach((e, i) => {
-                    if (!this.ref.colCache[i]) {
+                    if (!groups[i]) {
                         this.removeChild(e);
                     } else {
                         keep.push(e);
@@ -122,7 +122,7 @@ export class SimpleHtmlGridHeader extends HTMLElement {
                 });
                 this.colFilters = keep;
             } else {
-                this.ref.colCache.forEach((_group, i) => {
+                groups.forEach((_group, i) => {
                     if (!this.colFilters[i]) {
                         const el = document.createElement(
                             'simple-html-grid-group-filter'
