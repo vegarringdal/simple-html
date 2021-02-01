@@ -31,7 +31,7 @@ export function scrollEvent(
                     'simple-html-grid-body'
                 )[0] as SimpleHtmlGridBody;
                 node.rows.forEach((row) => {
-                    row.updateCols2();
+                    row.verticalScrollEvent();
                 });
                 ref.colCache.forEach((e) => (e.update = false));
             }, 90);

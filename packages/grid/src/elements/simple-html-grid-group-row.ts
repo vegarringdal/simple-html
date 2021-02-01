@@ -15,19 +15,7 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
     connectedCallback() {
         this.classList.add('simple-html-grid-group-row');
         const config = this.connector.config;
-        const grouping =
-            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
-        const curleft = grouping ? grouping * 15 : 0;
-        this.style.display = 'block';
-        this.style.height = config.__rowHeight + 'px';
-        this.style.width = config.groups[this.group.i].width + 'px';
-        //this.style.left = config.groups[this.group.i].__left + curleft + 'px';
-        this.style.transform = `translate3d(${
-            config.groups[this.group.i].__left + curleft
-        }px, 0px,  0px)`;
-        this.ref.addEventListener('column-resize', this);
-        this.ref.addEventListener('reRender', this);
-
+        this.updateStyling();
         this.rows = config.groups[this.group.i].rows.map((cell, i) => {
             const x = document.createElement('simple-html-grid-cell-row') as SimpleHtmlGridCellRow;
             x.connector = this.connector;
@@ -93,28 +81,23 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
             r.xrender();
         });
 
-        const grouping =
-            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+        this.updateStyling();
+    }
+
+    private updateStyling() {
+        const config = this.connector.config;
+        const grouping = config.groupingSet && config.groupingSet.length;
         const curleft = grouping ? grouping * 15 : 0;
-        this.style.width = this.connector.config.groups[this.group.i].width + 'px';
+        this.style.height = config.__rowHeight + 'px';
+        this.style.width = config.groups[this.group.i].width + 'px';
         this.style.transform = `translate3d(${
-            this.connector.config.groups[this.group.i].__left + curleft
+            config.groups[this.group.i].__left + curleft
         }px, 0px,  0px)`;
     }
 
     handleEvent(e: Event) {
-        if (e.type === 'column-resize' || e.type === 'reRender') {
-            const config = this.connector.config;
-            const grouping =
-                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
-            const curleft = grouping ? grouping * 15 : 0;
-            this.style.height = config.__rowHeight + 'px';
-            this.style.width = config.groups[this.group.i].width + 'px';
-            // this.style.left = config.groups[this.group.i].__left + curleft + 'px';
-            this.style.transform = `translate3d(${
-                config.groups[this.group.i].__left + curleft
-            }px, 0px,  0px)`;
-
+        if (e.type === 'column-resize' /* || e.type === 'reRender' */) {
+            this.updateStyling();
             this.rows.forEach((r) => {
                 r.updateWidth();
             });
@@ -123,6 +106,5 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
-        this.ref.removeEventListener('reRender', this);
     }
 }

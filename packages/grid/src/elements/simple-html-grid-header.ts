@@ -75,6 +75,7 @@ export class SimpleHtmlGridHeader extends HTMLElement {
             this.style.width = config.__rowWidth + 'px';
             this.style.top = config.panelHeight + 'px';
             this.style.height = config.__rowHeight * 2 + 2 + 'px';
+            console.time('header')
             this.colLabels = this.colLabels.map((e) => this.removeChild(e));
             this.colFilters = this.colFilters.map((e) => this.removeChild(e));
 
@@ -101,6 +102,7 @@ export class SimpleHtmlGridHeader extends HTMLElement {
                 this.appendChild(el);
                 return el;
             });
+            console.timeEnd('header')
         }
     }
 
