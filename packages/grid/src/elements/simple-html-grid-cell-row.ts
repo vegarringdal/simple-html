@@ -15,7 +15,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     innerEle: HTMLInputElement;
     lastVal: any;
 
-    connectedCallback() {
+    public connectedCallback() {
         this.classList.add('simple-html-grid-cell-row');
         const config = this.connector.config;
         this.style.display = 'block';
@@ -23,23 +23,17 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.style.width = config.groups[this.group].width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.cell = config.groups[this.group].rows[this.cellPosition];
-        this.ref.addEventListener('column-resize', this);
+
         this.innerEle = document.createElement('input');
         this.appendChild(this.innerEle);
         this.setSettings();
     }
 
-    handleEvent(e: Event) {
-        if (e.type === 'column-resize') {
-            this.style.width = this.connector.config.groups[this.group].width + 'px';
-        }
+    public updateWidth() {
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
     }
 
-    disconnectedCallback() {
-        this.ref.removeEventListener('column-resize', this);
-    }
-
-    updateCallback(e: any) {
+    private updateCallback(e: any) {
         const data = this.connector.displayedDataset[this.rowNo];
         const cell = this.cell;
         this.style.width = this.connector.config.groups[this.group].width + 'px';
@@ -95,7 +89,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     setSettings() {
         const cell = this.cell;
         if (this.rowNo < 0) {
-            console.log('bug')
+            console.log('bug');
             return;
         }
         const data = this.connector.displayedDataset[this.rowNo];
@@ -181,6 +175,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             } else {
                 (this.parentNode as HTMLElement).style.display = 'block';
             }
+            this.style.width = this.connector.config.groups[this.group].width + 'px';
             this.innerEle.setAttribute('type', cell.type || 'text');
             const newVal = data[cell.attribute] || null;
             if (this.lastVal !== newVal) {
