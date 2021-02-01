@@ -17,15 +17,17 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
         const config = this.connector.config;
         this.updateStyling();
         this.rows = config.groups[this.group.i].rows.map((cell, i) => {
-            const x = document.createElement('simple-html-grid-cell-row') as SimpleHtmlGridCellRow;
-            x.connector = this.connector;
-            x.rowNo = this.rowNo;
-            x.cell = cell;
-            x.group = this.group.i;
-            x.ref = this.ref;
-            x.cellPosition = i;
-            this.appendChild(x);
-            return x;
+            const rowCell = document.createElement(
+                'simple-html-grid-cell-row'
+            ) as SimpleHtmlGridCellRow;
+            rowCell.connector = this.connector;
+            rowCell.rowNo = this.rowNo;
+            rowCell.cell = cell;
+            rowCell.group = this.group.i;
+            rowCell.ref = this.ref;
+            rowCell.cellPosition = i;
+            this.appendChild(rowCell);
+            return rowCell;
         });
     }
 
@@ -78,7 +80,7 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
             r.group = this.group.i;
             r.cell = this.connector.config.groups[this.group.i].rows[i];
             r.cellPosition = i;
-            r.xrender();
+            r.updateInput();
         });
 
         this.updateStyling();
