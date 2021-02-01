@@ -87,6 +87,8 @@ export class SimpleHtmlGridBody extends HTMLElement {
         }
         console.time('row');
 
+        this.ref.resetColCache();
+
         this.rows.forEach((row, i) => {
             const r = row;
             r.connector = this.connector;

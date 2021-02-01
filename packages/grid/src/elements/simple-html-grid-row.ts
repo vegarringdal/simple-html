@@ -142,8 +142,9 @@ export class SimpleHtmlGridRow extends HTMLElement {
         if (this.colEls.length !== this.ref.colCache.length) {
             this.fixCols();
         } else {
-            this.colEls.forEach((el) => {
+            this.colEls.forEach((el, i) => {
                 el.rowNo = this.row.i;
+                el.group = this.ref.colCache[i];
                 el.updateCells();
             });
         }
