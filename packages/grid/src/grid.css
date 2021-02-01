@@ -84,7 +84,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 .simple-html-grid .simple-html-grid-col {
     border: 0;
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
-    /* border-top: 1px solid var(--simple-html-grid-main-bg-border); */
     box-sizing: border-box;
     position: absolute;
     height: 100%;

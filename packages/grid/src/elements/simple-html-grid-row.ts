@@ -32,6 +32,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.groupMarginEl.style.left = `0`;
         this.groupMarginEl.style.display = grouping ? 'block' : 'none';
         this.groupMarginEl.connector = this.connector;
+        this.groupMarginEl.row = this.row;
 
         this.groupDataEl = document.createElement('simple-html-grid-col') as SimpleHtmlGridCol;
         this.groupDataEl.classList.add('simple-html-grid-grouping-row');
@@ -63,6 +64,13 @@ export class SimpleHtmlGridRow extends HTMLElement {
     }
 
     verticalScroll(/* leftMargin: number, rightMargin: number, groups: GridGroupConfig[] */) {
+        this.groupMarginEl.row = this.row;
+        this.groupMarginEl.render();
+
+        this.groupDataEl.connector = this.connector;
+        this.groupDataEl.row = this.row;
+        this.groupDataEl.ref = this.ref;
+        this.groupDataEl.render();
         if (this.row.update) {
             this.colEls.forEach((col) => {
                 col.rowNo = this.row.i;
@@ -120,6 +128,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
     }
 
     updateCols() {
+        this.groupMarginEl.row = this.row;
         this.groupMarginEl.render();
 
         this.groupDataEl.connector = this.connector;

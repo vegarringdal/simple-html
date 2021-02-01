@@ -10,20 +10,8 @@ export class SimpleHtmlGridCol extends HTMLElement {
     row: RowCache;
     ref: SimpleHtmlGrid;
 
-    /*  disconnectedCallback() {
-        this.ref.removeEventListener('reRender', this);
-    }
-
-    handleEvent(e: any) {
-        if (e.type === 'reRender') {
-            debugger;
-        }
-    } */
-
     render() {
         if (this.ref) {
-  /*           const grouping =
-                this.connector.config.groupingSet && this.connector.config.groupingSet.length; */
             this.style.width = '100%';
             this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
 
@@ -44,12 +32,6 @@ export class SimpleHtmlGridCol extends HTMLElement {
                 };
 
                 return html`
-                    <simple-html-grid-col
-                        .connector=${this.connector}
-                        .row=${this.row}
-                        class="simple-html-grid-grouping-row"
-                        style="left:0"
-                    ></simple-html-grid-col>
                     <i @click=${changeGrouping}>
                         <svg
                             class="simple-html-grid-icon"
@@ -81,6 +63,7 @@ export class SimpleHtmlGridCol extends HTMLElement {
                     ? this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i]
                     : this.connector.config.cellHeight) + 'px';
             this.style.display = grouping ? 'block' : 'none';
+            return '';
         }
     }
 }
