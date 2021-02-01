@@ -16,9 +16,12 @@ export class SimpleHtmlGridGroupFilter extends HTMLElement {
         this.classList.add('simple-html-grid-group-label');
         const config = this.connector.config;
         this.style.display = 'block';
+        const grouping =
+            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+        const curleft = grouping ? grouping * 15 : 0;
         this.style.height = config.__rowHeight + 'px';
         this.style.width = this.group.width + 'px';
-        this.style.left = this.group.__left + 'px';
+        this.style.left = this.group.__left + curleft + 'px';
         this.style.top = config.__rowHeight + 'px';
         this.ref.addEventListener('column-resize', this);
         this.ref.addEventListener('reRender', this);

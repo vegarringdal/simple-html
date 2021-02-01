@@ -50,20 +50,22 @@ export class SimpleHtmlGridCol extends HTMLElement {
                 return '' as any;
             }
         } else {
-            const grouping =
-                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
-            const entity = this.row ? this.connector.displayedDataset[this.row.i] : null;
-            if (entity && entity.__group) {
-                this.style.width = entity.__groupLvl * 15 + 'px';
-            } else {
-                this.style.width = (grouping ? grouping * 15 : 0) + 'px';
+            if (this.connector) {
+                const grouping =
+                    this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+                const entity = this.row ? this.connector.displayedDataset[this.row.i] : null;
+                if (entity && entity.__group) {
+                    this.style.width = entity.__groupLvl * 15 + 'px';
+                } else {
+                    this.style.width = (grouping ? grouping * 15 : 0) + 'px';
+                }
+                this.style.height =
+                    (this.row
+                        ? this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i]
+                        : this.connector.config.cellHeight) + 'px';
+                this.style.display = grouping ? 'block' : 'none';
+                return '';
             }
-            this.style.height =
-                (this.row
-                    ? this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i]
-                    : this.connector.config.cellHeight) + 'px';
-            this.style.display = grouping ? 'block' : 'none';
-            return '';
         }
     }
 }

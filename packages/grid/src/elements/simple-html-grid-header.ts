@@ -28,7 +28,6 @@ export class SimpleHtmlGridHeader extends HTMLElement {
         this.groupMarginEl.style.width = `${grouping ? grouping * 15 : 0}px`;
         this.groupMarginEl.style.left = `0`;
         this.groupMarginEl.style.display = grouping ? 'block' : 'none';
-        this.groupMarginEl.connector = this.connector;
 
         this.appendChild(this.groupMarginEl);
         this.colLabels = this.connector.config.groups.map((group) => {
