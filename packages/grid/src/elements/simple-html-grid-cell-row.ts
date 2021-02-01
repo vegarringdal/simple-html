@@ -24,6 +24,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.cell = config.groups[this.group].rows[this.cellPosition];
 
         this.innerEle = document.createElement('input');
+        this.innerEle.classList.add('simple-html-grid-row-input');
         this.appendChild(this.innerEle);
         this.setSettings();
     }
@@ -88,7 +89,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     setSettings() {
         const cell = this.cell;
         if (this.rowNo < 0) {
-            console.log('bug');
+            debugger
             return;
         }
         const data = this.connector.displayedDataset[this.rowNo];
@@ -139,7 +140,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             contentMenu(e);
             return false;
         };
-        this.innerEle.classList.add('simple-html-grid-row-input');
 
         switch (cell.type) {
             case 'boolean':
