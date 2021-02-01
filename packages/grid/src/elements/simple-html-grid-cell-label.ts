@@ -8,7 +8,7 @@ import { columnDragDrop, dropzone } from './dragEvent';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-cell-label')
-export default class extends HTMLElement {
+export class SimpleHtmlGridCellLabel extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
     ref: SimpleHtmlGrid;
@@ -24,21 +24,21 @@ export default class extends HTMLElement {
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.ref.addEventListener('column-resize', this);
-        this.ref.addEventListener('reRender', this);
+        /*  this.ref.addEventListener('reRender', this); */
     }
 
     handleEvent(e: Event) {
         if (e.type === 'column-resize') {
             this.render();
         }
-        if (e.type === 'reRender') {
+        /*  if (e.type === 'reRender') {
             this.render();
-        }
+        } */
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
-        this.ref.removeEventListener('reRender', this);
+        /*  this.ref.removeEventListener('reRender', this); */
     }
 
     capalize(text: string) {
@@ -54,6 +54,11 @@ export default class extends HTMLElement {
         const connector = this.connector;
         const ref = this.ref;
         const label = this.capalize(this.group.rows[this.cellPosition].header || '');
+        const config = this.connector.config;
+        this.style.display = 'block';
+        this.style.height = config.cellHeight + 'px';
+        this.style.width = this.group.width + 'px';
+        this.style.top = this.cellPosition * config.cellHeight + 'px';
 
         const sortCallback = (e: any) => {
             const mouseup = (e: MouseEvent) => {

@@ -5,7 +5,7 @@ import { html } from 'lit-html';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-cell-filter')
-export default class extends HTMLElement {
+export class SimpleHtmlGridCellFilter extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
     ref: SimpleHtmlGrid;
@@ -22,21 +22,16 @@ export default class extends HTMLElement {
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.attribute = this.group.rows[this.cellPosition].attribute;
         this.ref.addEventListener('column-resize', this);
-        this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: Event) {
         if (e.type === 'column-resize') {
             this.style.width = this.group.width + 'px';
         }
-        if (e.type === 'reRender') {
-            this.render();
-        }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
-        this.ref.removeEventListener('reRender', this);
     }
 
     render() {
@@ -48,6 +43,11 @@ export default class extends HTMLElement {
 
         const value = cell.filterable.currentValue || null;
         const placeholder = cell.filterable.placeholder || '';
+        const config = this.connector.config;
+        this.style.height = config.cellHeight + 'px';
+        this.style.width = this.group.width + 'px';
+        this.style.top = this.cellPosition * config.cellHeight + 'px';
+        this.attribute = this.group.rows[this.cellPosition].attribute;
 
         const filterCallback = (e: any) => {
             // if boolean column we to to overide how it behaves

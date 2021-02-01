@@ -37,6 +37,13 @@ export function generate(
     const enter = columnDragDropPanel('enter', connector);
     const leave = columnDragDropPanel('leave', connector);
 
+    const body = document.createElement('simple-html-grid-body') as SimpleHtmlGridBody;
+    body.connector = connector;
+    body.ref = ref;
+    body.rowPositionCache = rowPositionCache;
+    body.onscroll = scroll;
+    ref.appendChild(body);
+
     const panel = document.createElement('simple-html-grid-panel') as SimpleHtmlGridPanel;
     panel.connector = connector;
     panel.ref = ref;
@@ -49,14 +56,7 @@ export function generate(
     header.ref = ref;
     ref.appendChild(header);
 
-    const body = document.createElement('simple-html-grid-body') as SimpleHtmlGridBody;
-    body.connector = connector;
-    body.ref = ref;
-    body.rowPositionCache = rowPositionCache;
-    body.onscroll = scroll;
-    ref.appendChild(body);
-
-    const footer = document.createElement('simple-html-grid-footer') as SimpleHtmlGridFooter; 
+    const footer = document.createElement('simple-html-grid-footer') as SimpleHtmlGridFooter;
     footer.connector = connector;
     footer.ref = ref;
     ref.appendChild(footer);
