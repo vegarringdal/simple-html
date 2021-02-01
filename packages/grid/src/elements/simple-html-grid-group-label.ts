@@ -22,25 +22,20 @@ export class SimpleHtmlGridGroupLabel extends HTMLElement {
         this.style.width = this.group.width + 'px';
         this.style.left = this.group.__left + curleft + 'px';
         this.ref.addEventListener('column-resize', this);
-        this.ref.addEventListener('reRender', this);
     }
 
     handleEvent(e: Event) {
-        if (e.type === 'column-resize' || e.type === 'reRender') {
+        if (e.type === 'column-resize') {
             const grouping =
                 this.connector.config.groupingSet && this.connector.config.groupingSet.length;
             const curleft = grouping ? grouping * 15 : 0;
             this.style.width = this.group.width + 'px';
             this.style.left = this.group.__left + curleft + 'px';
         }
-        if (e.type === 'reRender') {
-            this.render();
-        }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
-        this.ref.removeEventListener('reRender', this);
     }
 
     render() {
