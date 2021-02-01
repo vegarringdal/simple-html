@@ -44,7 +44,10 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
     updateCells() {
         const rows = this.connector.config.groups[this.group.i].rows;
 
-        if (this.rows.length !== rows.length) {
+        const r = this.rows.length;
+        const rr = rows.length;
+
+        if (r !== rr) {
             if (rows.length < this.rows.length) {
                 const keep: any = [];
                 this.rows.forEach((e, i) => {

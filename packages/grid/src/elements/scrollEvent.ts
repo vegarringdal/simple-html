@@ -23,42 +23,26 @@ export function scrollEvent(
                 scrollDirection = 'right';
             }
 
+            let scrollbars = false;
+
+            if (Math.abs(connector.config.scrollLeft - e.target.scrollLeft) > 250) {
+                scrollbars = true;
+            }
+
             connector.config.scrollLeft = e.target.scrollLeft;
-
-            updateColCache(ref, connector, scrollDirection);
-            /*  const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
-            const width = node.clientWidth;
-            const left = node.scrollLeft;
-
-            const groups = connector.config.groups;
-            ref.colCache.forEach((col) => {
-                const g = groups[col.i];
-                const c1 = g.__left + g.width < left;
-
-                const c2 = g.__left > left + width;
-                if (c1 && scrollDirection === 'right') {
-                    const newIndex = ref.colCache[ref.colCache.length - 1].i + 1;
-                    if (newIndex <= groups.length - 1) {
-                        col.i = newIndex;
-                        col.update = true;
-                    }
-                    ref.colCache.sort((a, b) => (a.i < b.i ? -1 : 1));
+            if (scrollbars || scrollBarTimer) {
+                if (scrollBarTimer) {
+                    clearTimeout(scrollBarTimer);
                 }
-
-                if (c2 && scrollDirection === 'left') {
-                    const newIndex = ref.colCache[0].i - 1;
-                    if (newIndex > -1) {
-                        col.i = newIndex;
-                        col.update = true;
-                    }
-                    ref.colCache.sort((a, b) => (a.i < b.i ? -1 : 1));
-                }
-            }); */
-
-            /*  if (!check) {
-                check = ref.colCache.map((e) => e.i).join(',');
-            } */
-
+                scrollBarTimer = setTimeout(() => {
+                    scrollBarTimer = null;
+                    ref.resetColCache();
+                    updateColCache(ref, connector, scrollDirection, true);
+                    ref.triggerEvent('horizontal-scroll');
+                }, 90);
+            } else {
+                updateColCache(ref, connector, scrollDirection);
+            }
             ref.triggerEvent('horizontal-scroll');
         } else {
             connector.config.scrollLeft = e.target.scrollLeft;

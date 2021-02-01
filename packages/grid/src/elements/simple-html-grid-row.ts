@@ -115,10 +115,11 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.colEls.forEach((el, i) => {
             el.rowNo = this.row.i;
             el.group = this.ref.colCache[i];
+            el.updateCells();
         });
     }
 
-    updateCols(force?: boolean) {
+    updateCols() {
         this.groupMarginEl.render();
 
         this.groupDataEl.connector = this.connector;
@@ -132,10 +133,6 @@ export class SimpleHtmlGridRow extends HTMLElement {
         if (this.colEls.length !== this.ref.colCache.length) {
             this.fixCols();
         } else {
-            if (force) {
-                this.fixCols();
-            }
-
             this.colEls.forEach((el) => {
                 el.rowNo = this.row.i;
                 el.updateCells();
@@ -144,7 +141,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.xrender();
     }
 
-    updateCols2() {
+    updateCols2(force?: boolean) {
         /*  this.groupMarginEl.render();
 
         this.groupDataEl.connector = this.connector;
@@ -158,9 +155,12 @@ export class SimpleHtmlGridRow extends HTMLElement {
         if (this.colEls.length !== this.ref.colCache.length) {
             this.fixCols();
         } else {
-            this.colEls.forEach((el) => {
-                if (el.group.update) {
+            this.colEls.forEach((el, i) => {
+                if (el.group.update || force) {
                     //
+                    if (force) {
+                        el.group = this.ref.colCache[i];
+                    }
 
                     el.rowNo = this.row.i;
                     el.updateCells();

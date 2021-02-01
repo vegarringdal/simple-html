@@ -68,7 +68,7 @@ export class SimpleHtmlGrid extends HTMLElement {
         const scrollLeft = node?.scrollLeft || 0;
         this.colCache = [];
         this.interface.config.groups.forEach((group, i) => {
-            if (group.__left < clientWidth + scrollLeft && group.__left > scrollLeft ) {
+            if (group.__left < clientWidth + scrollLeft && group.__left >= scrollLeft) {
                 this.colCache.push({ i, update: true });
             }
         });
@@ -78,7 +78,7 @@ export class SimpleHtmlGrid extends HTMLElement {
             }
         }
 
-        console.log(this.colCache.length);
+        console.log(this.colCache.map((e) => e.i).join(','));
     }
 
     public resetRowCache() {
@@ -100,14 +100,17 @@ export class SimpleHtmlGrid extends HTMLElement {
                 if (this.rowCache.length > cacheLength) {
                     let l = this.rowCache.length;
                     for (let i = 0; i < l; i++) {
-                        if (this.rowCache && this.rowCache[i].i > cacheLength) {
+                        if (
+                            (this.rowCache && this.rowCache[i].i > cacheLength - 1) ||
+                            this.rowCache[i].i < 0
+                        ) {
                             this.rowCache.splice(i, 1);
                             i--;
                             l--;
                             cacheLength;
                         }
                     }
-                    const missingLength = cacheLength + 1 - this.rowCache.length;
+                    const missingLength = cacheLength - this.rowCache.length;
                     for (let i = 0; i < missingLength; i++) {
                         this.rowCache.push({ i: i, update: true });
                     }

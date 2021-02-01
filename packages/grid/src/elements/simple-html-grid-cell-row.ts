@@ -42,6 +42,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     updateCallback(e: any) {
         const data = this.connector.displayedDataset[this.rowNo];
         const cell = this.cell;
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
 
         if (cell.readonly) {
             if (this.cell.type === 'date') {
@@ -93,6 +94,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
     setSettings() {
         const cell = this.cell;
+        if (this.rowNo < 0) {
+            console.log('bug')
+            return;
+        }
         const data = this.connector.displayedDataset[this.rowNo];
         if (data.__group) {
             (this.parentNode as HTMLElement).style.display = 'none';

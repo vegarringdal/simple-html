@@ -6,7 +6,8 @@ let check = '';
 export function updateColCache(
     ref: SimpleHtmlGrid,
     connector: GridInterface,
-    scrollDirection: string
+    scrollDirection: string,
+    force?: boolean
 ) {
     const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
     const width = node.clientWidth;
@@ -42,7 +43,7 @@ export function updateColCache(
         /*  console.log(check); */
 
         node.rows.forEach((row) => {
-            row.updateCols2();
+            row.updateCols2(force);
         });
         ref.colCache.forEach((e) => (e.update = false));
     }

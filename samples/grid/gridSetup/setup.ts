@@ -2,8 +2,8 @@ import { IGridConfig } from '@simple-html/grid';
 
 export function setup(rows: number, columns: number, scroll?: number) {
     console.time('setup');
-    if (localStorage.getItem('columns' + columns)) {
-        const x = JSON.parse(localStorage.getItem('columns' + columns));
+    if (localStorage.getItem('columns2' + columns)) {
+        const x = JSON.parse(localStorage.getItem('columns2' + columns));
         console.timeEnd('setup');
         return x;
     }
@@ -56,10 +56,10 @@ export function setup(rows: number, columns: number, scroll?: number) {
             }
         }
 
-        setup.groups.push({ width: 125, rows: x });
+        setup.groups.push({ width: Math.floor(Math.random() * 100) + 100, rows: x });
     }
 
-    localStorage.setItem('columns' + columns, JSON.stringify(setup));
+    localStorage.setItem('columns2' + columns, JSON.stringify(setup));
     console.timeEnd('setup');
     return setup;
 }
