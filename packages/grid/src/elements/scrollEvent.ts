@@ -6,7 +6,6 @@ import { updateRowCache } from './updateRowCache';
 import { SimpleHtmlGridBody } from './simple-html-grid-body';
 
 let scrollBarTimer: any;
-let configLastScrollLeft: any;
 
 export function scrollEvent(
     connector: GridInterface,
@@ -14,16 +13,9 @@ export function scrollEvent(
     ref: SimpleHtmlGrid
 ) {
     return (e: any) => {
-        if (
-            connector.config.scrollLeft &&
-            connector.config.scrollLeft !== e.target.scrollLeft &&
-            connector.config.lastScrollTop === e.target.scrollTop
-        ) {
-            connector.config.scrollLeft = e.target.scrollLeft;
-
+        function horizontalScroll() {
             const scrollLeft = e.target.scrollLeft;
-            const lastScrollLeft = configLastScrollLeft;
-            configLastScrollLeft = scrollLeft;
+            const lastScrollLeft = connector.config.scrollLeft;
 
             let scrollbars = false;
             if (Math.abs(scrollLeft - lastScrollLeft) > 2000) {
@@ -107,10 +99,11 @@ export function scrollEvent(
                 });
                 ref.colCache.forEach((e) => (e.update = false));
             }
-
-            ref.triggerEvent('horizontal-scroll');
-        } else {
             connector.config.scrollLeft = e.target.scrollLeft;
+            ref.triggerEvent('horizontal-scroll');
+        }
+
+        function verticalScroll() {
             if (document.activeElement) {
                 (document.activeElement as any).blur();
             }
@@ -142,6 +135,14 @@ export function scrollEvent(
                 scrollBarTimer = null;
                 updateRowCache(connector, rowPositionCache, ref, scrolltop);
             }
+        }
+
+        if (connector.config.scrollLeft !== e.target.scrollLeft) {
+            horizontalScroll();
+        }
+
+        if (connector.config.lastScrollTop !== e.target.scrollTop) {
+            verticalScroll();
         }
     };
 }
