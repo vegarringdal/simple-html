@@ -93,6 +93,6 @@ export class SimpleHtmlGridGroupLabel extends HTMLElement {
             el.cellPosition = i;
             el.group = this.group;
         });
-        this.rows.forEach((e) => e.render());
+        this.rows.forEach((e) => e.update());
     }
 }

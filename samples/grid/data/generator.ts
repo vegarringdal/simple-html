@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 export class Generator {
     public rowTop: number;
     private totalGenerated: number;
@@ -19,7 +19,17 @@ export class Generator {
             x['index'] = this.totalGenerated;
 
             for (let y = 1; y < 300; y++) {
-                x['word' + y] = y + ':' + this.totalGenerated;
+                if (y < 10) {
+                    if (y < 5) {
+                        // @ts-ignore
+                        x['word' + y] = 'person' + parseInt(Math.random() * 100);
+                    } else {
+                        // @ts-ignore
+                        x['word' + y] = 'person' + parseInt(Math.random() * 5);
+                    }
+                } else {
+                    x['word' + y] = y + ':' + this.totalGenerated;
+                }
             }
 
             dummyArray.push(x);

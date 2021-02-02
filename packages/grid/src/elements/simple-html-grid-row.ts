@@ -74,12 +74,8 @@ export class SimpleHtmlGridRow extends HTMLElement {
         if (this.row.update) {
             this.colEls.forEach((col) => {
                 col.rowNo = this.row.i;
-                //const g = groups[i];
-                //const left = g.__left;
-                //const right = g.__left + g.width;
-                //  if (left >= leftMargin && left <= rightMargin) {
+
                 col.updateCells();
-                //}
             });
             this.row.update = false;
             this.xrender();
@@ -111,18 +107,20 @@ export class SimpleHtmlGridRow extends HTMLElement {
                     el.rowNo = this.row.i;
                     el.ref = this.ref;
                     el.group = group;
+                    el.group.update = true;
                     this.colEls.push(el);
                     this.appendChild(el);
                 } else {
                     const el = this.colEls[i];
                     el.rowNo = this.row.i;
-                    //el.group = i;
+                    el.group = this.ref.colCache[i];
                 }
             });
         }
         this.colEls.forEach((el, i) => {
             el.rowNo = this.row.i;
             el.group = this.ref.colCache[i];
+
             el.updateCells();
         });
     }
@@ -157,9 +155,10 @@ export class SimpleHtmlGridRow extends HTMLElement {
         } else {
             this.colEls.forEach((el, i) => {
                 el.group = this.ref.colCache[i];
-
                 el.rowNo = this.row.i;
+                //if (el.group.update) {
                 el.updateCells();
+                // }
             });
         }
         this.xrender();

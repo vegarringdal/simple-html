@@ -69,19 +69,9 @@ export class SimpleHtmlGrid extends HTMLElement {
         this.colCache = [];
         this.interface.config.groups.forEach((group, i) => {
             if (group.__left < clientWidth + scrollLeft && group.__left >= scrollLeft) {
-                this.colCache.push({ i, update: true });
+                this.colCache.push({ i, update: true, found: false });
             }
         });
-        /*  for (let i = 0; i < 3; i++) {
-            if (this.interface.config.groups.length > this.colCache.length) {
-                this.colCache.push({
-                    i: this.colCache[this.colCache.length - 1].i + 1,
-                    update: true
-                });
-            }
-        } */
-
-        //console.log(this.colCache.map((e) => e.i).join(','));
     }
 
     public resetRowCache() {

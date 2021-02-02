@@ -22,7 +22,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.style.width = config.groups[this.group].width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.cell = config.groups[this.group].rows[this.cellPosition];
-
+        if (!this.cell) {
+            debugger;
+            return;
+        }
         this.innerEle = document.createElement('input');
         this.innerEle.classList.add('simple-html-grid-row-input');
         this.appendChild(this.innerEle);
@@ -92,10 +95,8 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             return;
         }
 
-        const cell = this.cell;
-        const data = this.connector.displayedDataset[this.rowNo];
         const connector = this.connector;
-        const rowNo = this.rowNo;
+
         const ref = this.ref;
         const change = this.cell.editEventType !== 'input' ? this.updateCallback : null;
         const input = this.cell.editEventType === 'input' ? this.updateCallback : null;
@@ -107,28 +108,18 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                     e,
                     connector,
                     ref,
-                    cell,
-                    rowNo,
-                    data
+                    () => this.cell,
+                    () => this.rowNo,
+                    () => this.connector.displayedDataset[this.rowNo]
                 );
             }
         };
 
-        if (this.connector.gridCallbacks.renderRowCallBackFn) {
-            return this.connector.gridCallbacks.renderRowCallBackFn(
-                cell,
-                data,
-                rowNo,
-                connector,
-                this.updateCallback
-            );
-        }
-
-        this.innerEle.readOnly = cell.readonly || connector.config.readonly;
-        this.innerEle.disabled = cell.disabled;
+        this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
+        this.innerEle.disabled = this.cell.disabled;
         this.innerEle.onchange = change;
         this.innerEle.oninput = input;
-        this.innerEle.setAttribute('type', cell.type || 'text');
+        this.innerEle.setAttribute('type', this.cell.type || 'text');
         this.innerEle.oncontextmenu = (e: any) => {
             e.preventDefault();
             contentMenu(e);
@@ -140,7 +131,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
     updateInput() {
         const data = this.connector.displayedDataset[this.rowNo];
-        if (data.__group) {
+        if (!data || data.__group) {
             (this.parentNode as HTMLElement).style.display = 'none';
             return;
         } else {

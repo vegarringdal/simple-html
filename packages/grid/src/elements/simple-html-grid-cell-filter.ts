@@ -115,7 +115,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
                     e,
                     connector,
                     ref,
-                    cell
+                    () => this.group.rows[this.cellPosition] || null
                 );
             }
         };

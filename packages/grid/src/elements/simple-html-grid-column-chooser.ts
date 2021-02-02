@@ -46,7 +46,7 @@ export default class extends HTMLElement {
                 <b> Close</b>
             </span>
             ${this.connector.config.optionalCells?.map((cell) => {
-                const mousedown = columnDragDrop('dragstart', cell, this.connector, null);
+                const mousedown = columnDragDrop('dragstart', () => cell, this.connector, null);
 
                 return html`<span
                     class="block simple-html-grid-menu-item"
