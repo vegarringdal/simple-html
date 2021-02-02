@@ -20,25 +20,22 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.ref.addEventListener('selection', this);
         this.ref.addEventListener('column-resize', this);
 
-        if (this.connector.config.__rowHeight > this.connector.config.cellHeight) {
-            this.classList.add('grouping-row-border');
-        }
-        const grouping =
+        const groupingLength =
             this.connector.config.groupingSet && this.connector.config.groupingSet.length;
 
         this.groupMarginEl = document.createElement('simple-html-grid-col') as SimpleHtmlGridCol;
         this.groupMarginEl.classList.add('simple-html-grid-grouping-row');
-        this.groupMarginEl.style.width = `${grouping ? grouping * 15 : 0}px`;
+        this.groupMarginEl.style.width = `${groupingLength ? groupingLength * 15 : 0}px`;
         this.groupMarginEl.style.left = `0`;
-        this.groupMarginEl.style.display = grouping ? 'block' : 'none';
+        this.groupMarginEl.style.display = groupingLength ? 'block' : 'none';
         this.groupMarginEl.connector = this.connector;
         this.groupMarginEl.row = this.row;
 
         this.groupDataEl = document.createElement('simple-html-grid-col') as SimpleHtmlGridCol;
         this.groupDataEl.classList.add('simple-html-grid-grouping-row');
-        this.groupDataEl.style.width = `${grouping ? grouping * 15 : 0}px`;
+        this.groupDataEl.style.width = `${groupingLength ? groupingLength * 15 : 0}px`;
         this.groupDataEl.style.left = `0`;
-        this.groupDataEl.style.display = grouping ? 'block' : 'none';
+        this.groupDataEl.style.display = groupingLength ? 'block' : 'none';
         this.groupDataEl.connector = this.connector;
         this.groupDataEl.row = this.row;
 
@@ -60,10 +57,10 @@ export class SimpleHtmlGridRow extends HTMLElement {
             this.appendChild(el);
             return el;
         });
-        this.xrender();
+        this.updateView();
     }
 
-    verticalScroll(/* leftMargin: number, rightMargin: number, groups: GridGroupConfig[] */) {
+    public verticalScrollEvent() {
         this.groupMarginEl.row = this.row;
         this.groupMarginEl.render();
 
@@ -78,11 +75,11 @@ export class SimpleHtmlGridRow extends HTMLElement {
                 col.updateCells();
             });
             this.row.update = false;
-            this.xrender();
+            this.updateView();
         }
     }
 
-    fixCols() {
+    private syncColumnsWithColCache() {
         if (this.ref.colCache.length < this.colEls.length) {
             const keep: any = [];
             this.colEls.forEach((e, i) => {
@@ -125,7 +122,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
         });
     }
 
-    updateCols() {
+    public updateRowColumns() {
         this.groupMarginEl.row = this.row;
         this.groupMarginEl.render();
 
@@ -133,12 +130,9 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.groupDataEl.row = this.row;
         this.groupDataEl.ref = this.ref;
         this.groupDataEl.render();
-        // quick fix for now..
-
-        /*      const groups = this.connector.config.groups; */
 
         if (this.colEls.length !== this.ref.colCache.length) {
-            this.fixCols();
+            this.syncColumnsWithColCache();
         } else {
             this.colEls.forEach((el, i) => {
                 el.rowNo = this.row.i;
@@ -146,12 +140,12 @@ export class SimpleHtmlGridRow extends HTMLElement {
                 el.updateCells();
             });
         }
-        this.xrender();
+        this.updateView();
     }
 
-    horizontalScollEvent() {
+    public horizontalScollEvent() {
         if (this.colEls.length !== this.ref.colCache.length) {
-            this.fixCols();
+            this.syncColumnsWithColCache();
         } else {
             this.colEls.forEach((el, i) => {
                 el.group = this.ref.colCache[i];
@@ -161,10 +155,10 @@ export class SimpleHtmlGridRow extends HTMLElement {
                 // }
             });
         }
-        this.xrender();
+        this.updateView();
     }
 
-    handleEvent(e: Event) {
+    public handleEvent(e: Event) {
         if (e.type === 'column-resize') {
             const data = this.connector.displayedDataset[this.row.i];
 
@@ -172,23 +166,26 @@ export class SimpleHtmlGridRow extends HTMLElement {
                 this.colEls.forEach((g) => {
                     g.updateCells();
                 });
-                this.xrender();
+                this.updateView();
             }
         }
 
         if (e.type === 'selection') {
-            this.xrender();
+            this.updateView();
         }
     }
 
-    disconnectedCallback() {
+    public disconnectedCallback() {
         this.ref.removeEventListener('vertical-scroll', this);
         this.ref.removeEventListener('selection', this);
         this.ref.removeEventListener('column-resize', this);
     }
 
-    xrender() {
+    private updateView() {
         // check if height is changed
+        if (this.connector.config.__rowHeight > this.connector.config.cellHeight) {
+            this.classList.add('grouping-row-border');
+        }
         this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
         this.style.transform = `translate3d(0px, ${
             this.connector.getScrollVars.__SCROLL_TOPS[this.row.i]

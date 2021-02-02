@@ -63,6 +63,6 @@ export function updateRowCache(
     const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
 
     node.rows.forEach((row) => {
-        row.verticalScroll();
+        row.verticalScrollEvent();
     });
 }
