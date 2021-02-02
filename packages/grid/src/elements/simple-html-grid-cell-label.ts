@@ -2,7 +2,6 @@ import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
 import { resizeColumnElement } from './resizeColumnElement';
-import { sorticonElement } from './sorticonElement';
 import { columnDragDrop, dropzone } from './dragEvent';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
@@ -16,6 +15,7 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
     label: string;
     labelEl: HTMLSpanElement;
     textEl: any;
+    sortIcon: any;
 
     connectedCallback() {
         this.classList.add('simple-html-grid-cell-label');
@@ -55,6 +55,39 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.labelEl.innerText = this.capalize(this.group.rows[this.cellPosition].header || '');
+        this.setSortIcon();
+    }
+
+    setSortIcon() {
+        const xmlns = 'http://www.w3.org/2000/svg';
+        const ascTemplate = document.createElementNS(xmlns, 'svg');
+
+        ascTemplate.setAttributeNS(null, 'viewBox', '0 0 16 16');
+        ascTemplate.setAttributeNS(null, 'class', 'simple-html-grid-icon');
+        const ascTemplatePath = document.createElementNS(xmlns, 'path');
+        ascTemplatePath.setAttributeNS(null, 'd', 'M7.4 6L3 10h1.5L8 7l3.4 3H13L8.5 6h-1z');
+        ascTemplate.appendChild(ascTemplatePath);
+
+        const descTemplate = document.createElementNS(xmlns, 'svg');
+        descTemplate.setAttributeNS(null, 'viewBox', '0 0 16 16');
+        descTemplate.setAttributeNS(null, 'class', 'simple-html-grid-icon');
+
+        const descTemplatePath = document.createElementNS(xmlns, 'path');
+        descTemplatePath.setAttributeNS(null, 'd', 'M7.4 10L3 6h1.5L8 9.2 11.3 6H13l-4.5 4h-1z');
+        descTemplate.appendChild(descTemplatePath);
+
+        if (this.sortIcon) {
+            this.sortIcon.parentNode?.removeChild(this.sortIcon);
+            this.sortIcon = null;
+        }
+        const cell = this.group.rows[this.cellPosition];
+        if (cell.sortable && cell.sortable.sortNo) {
+            this.sortIcon = document.createElement('i');
+            this.sortIcon.appendChild(cell.sortable.sortAscending ? ascTemplate : descTemplate);
+            this.labelEl.appendChild(this.sortIcon);
+            this.sortIcon.classList.add('simple-html-grid-fa-sort-number');
+            this.sortIcon.setAttribute('data-vgridsort', cell.sortable.sortNo);
+        }
     }
 
     xrender() {
@@ -170,7 +203,7 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
         );
 
         this.labelEl.innerText = this.capalize(this.group.rows[this.cellPosition].header || '');
-
+        this.setSortIcon();
         //${label} ${sorticonElement(this.connector, cell)
     }
 }
