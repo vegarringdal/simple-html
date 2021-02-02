@@ -25,7 +25,7 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.ref.addEventListener('column-resize', this);
-        this.xrender();
+        this.generateGui();
     }
 
     handleEvent(e: Event) {
@@ -90,7 +90,7 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
         }
     }
 
-    xrender() {
+    generateGui() {
         const sortCallback = (e: any) => {
             const mouseup = (e: MouseEvent) => {
                 const cell = this.group.rows[this.cellPosition];
@@ -207,6 +207,5 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
 
         this.labelEl.innerText = this.capalize(this.group.rows[this.cellPosition].header || '');
         this.setSortIcon();
-        //${label} ${sorticonElement(this.connector, cell)
     }
 }

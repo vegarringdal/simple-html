@@ -13,14 +13,12 @@ export default class extends HTMLElement {
     connectedCallback() {
         this.classList.add('simple-html-grid', 'simple-html-grid-menu');
         document.addEventListener('click', this);
-        /*         this.ref.addEventListener('vertical-scroll', this); */
         setTimeout(() => {
             document.addEventListener('contextmenu', this);
         }, 50);
     }
 
     disconnectedCallback() {
-        /*         this.ref.removeEventListener('vertical-scroll', this); */
         document.removeEventListener('click', this);
         document.removeEventListener('contextmenu', this);
     }
@@ -34,7 +32,6 @@ export default class extends HTMLElement {
     select(_type: string) {
         if (_type === 'clear') {
             this.connector.config.groupingExpanded = [];
-            // this.connector.config.sortingSet = []; --keep
             this.connector.config.groupingSet = [];
             this.connector.manualConfigChange();
         }
