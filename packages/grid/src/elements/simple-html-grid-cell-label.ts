@@ -32,14 +32,10 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
         if (e.type === 'column-resize') {
             this.style.width = this.group.width + 'px';
         }
-        /*  if (e.type === 'reRender') {
-            this.render();
-        } */
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
-        /*  this.ref.removeEventListener('reRender', this); */
     }
 
     capalize(text: string) {
@@ -121,18 +117,6 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
                 );
             }
         };
-
-        if (this.connector.gridCallbacks.renderLabelCallBackFn) {
-            return this.connector.gridCallbacks.renderLabelCallBackFn(
-                () => this.group.rows[this.cellPosition],
-                this.connector,
-                sorticonElement,
-                resizeColumnElement,
-                mousedown,
-                mouseenter,
-                mouseleave
-            );
-        }
 
         this.labelEl = document.createElement('span');
         this.labelEl.classList.add('simple-html-grid-label');

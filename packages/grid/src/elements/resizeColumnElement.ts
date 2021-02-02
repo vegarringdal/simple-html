@@ -3,7 +3,7 @@ import { SimpleHtmlGrid } from '../';
 
 export function resizeColumnElement(ref: SimpleHtmlGrid, getGroup: () => GridGroupConfig) {
     let originX: number = null;
-    const originalColumnWidth = getGroup().width;
+    let originalColumnWidth = getGroup().width;
 
     const mouseMove = (e: MouseEvent) => {
         e.preventDefault();
@@ -37,6 +37,7 @@ export function resizeColumnElement(ref: SimpleHtmlGrid, getGroup: () => GridGro
 
     const mouseDown = (e: MouseEvent) => {
         originX = e.screenX;
+        originalColumnWidth = getGroup().width;
         document.addEventListener('mousemove', mouseMove);
         document.addEventListener('mouseup', mouseUp);
     };

@@ -233,7 +233,7 @@ export const columnDragDrop = (
             // not very fancy, but betteer then nothing
             const drop = (e: any) => {
                 const daCell = Object.assign({}, dragCell);
-                const doCell = Object.assign({}, getCell);
+                const doCell = Object.assign({}, getCell());
                 const keys = Object.assign(dragCell, getCell());
 
                 for (const key in keys) {
@@ -389,15 +389,15 @@ export function dropzone(
             break;
 
         case 'top':
-            el.classList.add('simple-html-grid-drop-zone-bottom');
+            el.classList.add('simple-html-grid-drop-zone-top');
             break;
 
         case 'left':
-            el.classList.add('simple-html-grid-drop-zone-bottom');
+            el.classList.add('simple-html-grid-drop-zone-left');
             break;
 
         case 'right':
-            el.classList.add('simple-html-grid-drop-zone-bottom');
+            el.classList.add('simple-html-grid-drop-zone-right');
             break;
     }
 
