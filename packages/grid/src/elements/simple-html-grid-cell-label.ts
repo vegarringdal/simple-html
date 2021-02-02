@@ -91,17 +91,10 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
     }
 
     xrender() {
-        const cell = this.group.rows[this.cellPosition];
-        const connector = this.connector;
-        const ref = this.ref;
-        const config = connector.config;
-        this.style.display = 'block';
-        this.style.height = config.cellHeight + 'px';
-        this.style.width = this.group.width + 'px';
-        this.style.top = this.cellPosition * config.cellHeight + 'px';
-
         const sortCallback = (e: any) => {
             const mouseup = (e: MouseEvent) => {
+                const cell = this.group.rows[this.cellPosition];
+                const connector = this.connector;
                 connector.gridCallbacks.beforeSortCallbackFn &&
                     connector.gridCallbacks.beforeSortCallbackFn(e as any, cell, connector);
                 if (cell.sortable.auto !== false) {
@@ -123,19 +116,19 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
         const mousedown = columnDragDrop(
             'dragstart',
             () => this.group.rows[this.cellPosition],
-            connector,
+            this.connector,
             () => this.group
         );
         const mouseenter = columnDragDrop(
             'enter',
             () => this.group.rows[this.cellPosition],
-            connector,
+            this.connector,
             () => this.group
         );
         const mouseleave = columnDragDrop(
             'leave',
             () => this.group.rows[this.cellPosition],
-            connector,
+            this.connector,
             () => this.group
         );
 
@@ -151,10 +144,22 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
             }
         };
 
+        const cell = this.group.rows[this.cellPosition];
+        const connector = this.connector;
+        const ref = this.ref;
+        const config = connector.config;
+        this.style.display = 'block';
+        this.style.height = config.cellHeight + 'px';
+        this.style.width = this.group.width + 'px';
+        this.style.top = this.cellPosition * config.cellHeight + 'px';
+
         this.labelEl = document.createElement('span');
         this.labelEl.classList.add('simple-html-grid-label');
-        (this.labelEl as any).cell = cell;
-        this.labelEl.onmousedown = function (e) {
+
+        this.labelEl.onmouseenter = !cell.disableDragDrop && mouseenter;
+        this.labelEl.onmouseleave = !cell.disableDragDrop && mouseleave;
+        this.labelEl.onmousedown = (e) => {
+            const cell = this.group.rows[this.cellPosition];
             cell.sortable && sortCallback(e);
             !cell.disableDragDrop && mousedown(e);
         };
@@ -163,8 +168,6 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
             contentMenu(e);
             return false;
         };
-        this.labelEl.onmouseenter = !cell.disableDragDrop && mouseenter;
-        this.labelEl.onmouseleave = !cell.disableDragDrop && mouseleave;
 
         this.appendChild(this.labelEl);
         this.appendChild(resizeColumnElement(this.ref, () => this.group));

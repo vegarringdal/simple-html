@@ -75,7 +75,6 @@ export class SimpleHtmlGridHeader extends HTMLElement {
             this.style.width = config.__rowWidth + 'px';
             this.style.top = config.panelHeight + 'px';
             this.style.height = config.__rowHeight * 2 + 2 + 'px';
-            console.time('header');
 
             const groups = this.connector.config.groups;
             if (groups.length < this.colLabels.length) {
@@ -143,8 +142,6 @@ export class SimpleHtmlGridHeader extends HTMLElement {
                 el.group = groups[i];
                 el.xrender();
             });
-
-            console.timeEnd('header');
         }
     }
 

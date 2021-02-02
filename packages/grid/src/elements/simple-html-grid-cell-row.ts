@@ -101,7 +101,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         const change = this.cell.editEventType !== 'input' ? this.updateCallback : null;
         const input = this.cell.editEventType === 'input' ? this.updateCallback : null;
 
-        const contentMenu = function (e: any) {
+        const contentMenu = (e: any) => {
             if ((e as any).button !== 0) {
                 generateMenuWithComponentName(
                     'simple-html-grid-menu-row',

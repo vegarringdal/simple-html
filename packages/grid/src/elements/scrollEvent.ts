@@ -100,7 +100,6 @@ export function scrollEvent(
                     }
                 }
 
-                // console.log(ref.colCache.map((e) => e.i).join(','));
                 scrollBarTimer = null;
 
                 node.rows.forEach((row) => {

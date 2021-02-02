@@ -1,10 +1,8 @@
 import { IGridConfig } from '@simple-html/grid';
 
 export function setup(rows: number, columns: number, scroll?: number) {
-    console.time('setup');
     if (localStorage.getItem('columns2' + columns)) {
         const x = JSON.parse(localStorage.getItem('columns2' + columns));
-        console.timeEnd('setup');
         return x;
     }
 
@@ -29,7 +27,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
                     x.push({
                         header: 'index',
                         attribute: 'index',
-                        readonly: true,
+                        //readonly: true,
                         type: 'number',
                         filterable: {},
                         sortable: {}
@@ -40,7 +38,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
                         attribute: 'word' + word,
                         filterable: {},
                         sortable: {},
-                        readonly: true,
+                        //readonly: true,
                         allowGrouping: true
                     });
                 }
@@ -50,7 +48,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
                     attribute: 'word' + word,
                     filterable: {},
                     sortable: {},
-                    readonly: true,
+                    //readonly: true,
                     allowGrouping: true
                 });
             }
@@ -60,6 +58,5 @@ export function setup(rows: number, columns: number, scroll?: number) {
     }
 
     localStorage.setItem('columns2' + columns, JSON.stringify(setup));
-    console.timeEnd('setup');
     return setup;
 }

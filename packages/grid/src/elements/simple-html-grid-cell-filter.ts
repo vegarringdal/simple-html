@@ -108,7 +108,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         const change = cell.editEventType !== 'input' ? filterCallback : null;
         const input = cell.editEventType === 'input' ? filterCallback : null;
 
-        const contentMenu = function (e: any) {
+        const contentMenu = (e: any) => {
             if ((e as any).button !== 0) {
                 generateMenuWithComponentName(
                     'simple-html-grid-menu-filter',

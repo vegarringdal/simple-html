@@ -32,7 +32,6 @@ export function generate(
     rowPositionCache: RowCache[],
     ref: SimpleHtmlGrid
 ) {
-    console.log('generate');
     const scroll = scrollEvent(connector, rowPositionCache, ref);
     const enter = columnDragDropPanel('enter', connector);
     const leave = columnDragDropPanel('leave', connector);

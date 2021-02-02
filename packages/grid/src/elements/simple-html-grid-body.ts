@@ -39,7 +39,6 @@ export class SimpleHtmlGridBody extends HTMLElement {
 
     handleEvent(e: any) {
         if (e.type === 'reRender') {
-            console.log('reRender');
             this.reRender();
         }
     }
@@ -85,7 +84,6 @@ export class SimpleHtmlGridBody extends HTMLElement {
                 });
             }
         }
-        console.time('row');
 
         this.ref.resetColCache();
 
@@ -96,8 +94,5 @@ export class SimpleHtmlGridBody extends HTMLElement {
             r.ref = this.ref;
             r.updateCols();
         });
-        //debugger
-        //updateColCache(this.ref, this.connector, 'right');
-        console.timeEnd('row');
     }
 }
