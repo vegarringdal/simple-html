@@ -4,6 +4,8 @@ import { RowCache } from '../types';
 import { updateRowCache } from './updateRowCache';
 
 import { SimpleHtmlGridBody } from './simple-html-grid-body';
+import { group } from 'console';
+import { SimpleHtmlGridGroupRow } from './simple-html-grid-group-row';
 
 let scrollBarTimer: any;
 
@@ -63,11 +65,13 @@ export function scrollEvent(
                     }
                 });
 
+                ref.colCache = node.rows[0]?.colEls?.map((e) => e.group) || [];
+
                 ref.colCache.forEach((e) => (e.found = false));
                 const ok = newColCache.map((e) => e.i);
                 if (newColCache > ref.colCache) {
                     while (newColCache.length !== ref.colCache.length) {
-                        ref.colCache.push({ i: -1, update: true, found: false });
+                        ref.colCache.push({ i: -1, update: true, found: false, new: true });
                     }
                 }
                 ref.colCache.forEach((e) => {
@@ -92,6 +96,10 @@ export function scrollEvent(
                 let l = ref.colCache.length;
                 for (let i = 0; i < l; i++) {
                     if (ref.colCache[i].found === false) {
+                        node.rows.forEach((row) => {
+                            row.colEls[i].parentNode.removeChild(row.colEls[i]);
+                            row.colEls.splice(i, 1);
+                        });
                         ref.colCache.splice(i, 1);
                         i--;
                         l--;
@@ -105,7 +113,10 @@ export function scrollEvent(
                 node.rows.forEach((row) => {
                     row.horizontalScollEvent();
                 });
-                ref.colCache.forEach((e) => (e.update = false));
+                ref.colCache.forEach((e) => {
+                    e.update = false;
+                    e.new = false;
+                });
             }
             connector.config.scrollLeft = e.target.scrollLeft;
             ref.triggerEvent('horizontal-scroll');

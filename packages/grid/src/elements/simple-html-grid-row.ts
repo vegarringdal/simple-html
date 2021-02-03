@@ -90,6 +90,11 @@ export class SimpleHtmlGridRow extends HTMLElement {
                 }
             });
             this.colEls = keep;
+            this.colEls.forEach((el, i) => {
+                el.rowNo = this.row.i;
+                el.group = this.ref.colCache[i];
+                el.updateCells();
+            });
         } else {
             this.ref.colCache.forEach((group, i) => {
                 if (!this.colEls[i]) {
@@ -114,13 +119,6 @@ export class SimpleHtmlGridRow extends HTMLElement {
                 }
             });
         }
-        this.colEls.forEach((el, i) => {
-            el.rowNo = this.row.i;
-            el.group = this.ref.colCache[i];
-            if (el.group.update) {
-                el.updateCells();
-            }
-        });
     }
 
     public updateRowColumns() {
@@ -151,9 +149,7 @@ export class SimpleHtmlGridRow extends HTMLElement {
             this.colEls.forEach((el, i) => {
                 el.group = this.ref.colCache[i];
                 el.rowNo = this.row.i;
-                if (el.group.update) {
-                    el.updateCells();
-                }
+                el.updateCells();
             });
         }
         this.updateView();
