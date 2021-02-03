@@ -2,10 +2,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
 import { updateRowCache } from './updateRowCache';
-
 import { SimpleHtmlGridBody } from './simple-html-grid-body';
-import { group } from 'console';
-import { SimpleHtmlGridGroupRow } from './simple-html-grid-group-row';
 
 let scrollBarTimer: any;
 
@@ -71,7 +68,7 @@ export function scrollEvent(
                 const ok = newColCache.map((e) => e.i);
                 if (newColCache > ref.colCache) {
                     while (newColCache.length !== ref.colCache.length) {
-                        ref.colCache.push({ i: -1, update: true, found: false, new: true });
+                        ref.colCache.push({ i: -1, update: true, found: false });
                     }
                 }
                 ref.colCache.forEach((e) => {
@@ -115,7 +112,6 @@ export function scrollEvent(
                 });
                 ref.colCache.forEach((e) => {
                     e.update = false;
-                    e.new = false;
                 });
             }
             connector.config.scrollLeft = e.target.scrollLeft;
