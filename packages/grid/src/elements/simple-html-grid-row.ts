@@ -117,8 +117,9 @@ export class SimpleHtmlGridRow extends HTMLElement {
         this.colEls.forEach((el, i) => {
             el.rowNo = this.row.i;
             el.group = this.ref.colCache[i];
-
-            el.updateCells();
+            if (el.group.update) {
+                el.updateCells();
+            }
         });
     }
 
