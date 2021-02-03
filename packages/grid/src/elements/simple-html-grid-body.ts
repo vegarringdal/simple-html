@@ -19,6 +19,7 @@ export class SimpleHtmlGridBody extends HTMLElement {
         this.style.top = config.panelHeight + config.__rowHeight * 2 + 2 + 'px';
         this.style.bottom = config.footerHeight + 'px';
         this.ref.addEventListener('reRender', this);
+        this.ref.addEventListener('column-resize', this);
         this.scrollTop = 500;
         this.body = document.createElement('simple-html-grid-body-content');
 
@@ -41,10 +42,16 @@ export class SimpleHtmlGridBody extends HTMLElement {
         if (e.type === 'reRender') {
             this.reRender();
         }
+
+        if (e.type === 'column-resize') {
+            const config = this.connector.config;
+            this.body.style.width = `${config.__rowWidth}px`;
+        }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('reRender', this);
+        this.ref.removeEventListener('column-resize', this);
     }
 
     reRender() {
