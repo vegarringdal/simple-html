@@ -66,10 +66,17 @@ export class SimpleHtmlGrid extends HTMLElement {
         const node = this.getElementsByTagName('simple-html-grid-body')[0];
         const clientWidth = node?.clientWidth || 1980;
         const scrollLeft = node?.scrollLeft || 0;
+
         this.colCache = [];
         this.interface.config.groups.forEach((group, i) => {
-            if (group.__left < clientWidth + scrollLeft && group.__left >= scrollLeft) {
+            const cellRight = group.__left + group.width;
+            const cellLeft = group.__left;
+            const rightMargin = clientWidth + scrollLeft;
+            const leftMargin = scrollLeft;
+
+            if (cellRight >= leftMargin && cellLeft <= rightMargin) {
                 this.colCache.push({ i, update: true, found: false });
+                return;
             }
         });
     }

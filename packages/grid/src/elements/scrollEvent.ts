@@ -52,8 +52,14 @@ export function scrollEvent(
                 const scrollLeft = node?.scrollLeft;
                 const newColCache: any[] = [];
                 connector.config.groups.forEach((group, i) => {
-                    if (group.__left < clientWidth + scrollLeft && group.__left >= scrollLeft) {
-                        newColCache.push({ i, update: true });
+                    const cellRight = group.__left + group.width;
+                    const cellLeft = group.__left;
+                    const rightMargin = clientWidth + scrollLeft;
+                    const leftMargin = scrollLeft;
+
+                    if (cellRight >= leftMargin && cellLeft <= rightMargin) {
+                        newColCache.push({ i, update: true, found: false });
+                        return;
                     }
                 });
 
@@ -91,6 +97,8 @@ export function scrollEvent(
                         l--;
                     }
                 }
+
+                //console.log(ref.colCache.map((e) => e.update).join(','));
 
                 scrollBarTimer = null;
 
