@@ -72,12 +72,18 @@ export function scrollEvent(
                         let next = newColCache[newColCache.length - 1].i + 1;
                         if (next >= connector.config.groups.length) {
                             next = newColCache[0].i - 1;
+                            newColCache.unshift({
+                                i: next,
+                                update: true,
+                                found: false
+                            });
+                        } else {
+                            newColCache.push({
+                                i: next,
+                                update: true,
+                                found: false
+                            });
                         }
-                        newColCache.push({
-                            i: next,
-                            update: true,
-                            found: false
-                        });
                     }
                 }
                 /* console.log(newColCache.map((e) => e.i).join(',')); */
@@ -107,8 +113,10 @@ export function scrollEvent(
                 }
 
                 let l = ref.colCache.length;
+                console.log(l);
                 for (let i = 0; i < l; i++) {
                     if (ref.colCache[i].found === false) {
+                        debugger;
                         node.rows.forEach((row) => {
                             row.colEls[i].parentNode.removeChild(row.colEls[i]);
                             row.colEls.splice(i, 1);

@@ -83,18 +83,22 @@ export class SimpleHtmlGrid extends HTMLElement {
             const cellLeft = group.__left;
             const rightMargin = clientWidth + scrollLeft;
             const leftMargin = scrollLeft;
-
-            if (cellRight >= leftMargin && cellLeft <= rightMargin) {
+            if (
+                (leftMargin <= cellLeft && cellLeft <= rightMargin) ||
+                (leftMargin <= cellRight && cellRight <= rightMargin)
+            ) {
                 this.colCache.push({ i, update: true, found: false });
                 return;
             }
-
-            if (this.colCache.length < minGroups) {
-                while (this.colCache.length < minGroups) {
-                    this.colCache.push({ i: this.colCache.length, update: true, found: false });
-                }
+            if (this.colCache.length > 22) {
+                debugger;
             }
         });
+        if (this.colCache.length < minGroups) {
+            while (this.colCache.length < minGroups) {
+                this.colCache.push({ i: this.colCache.length, update: true, found: false });
+            }
+        }
     }
 
     public resetRowCache() {
