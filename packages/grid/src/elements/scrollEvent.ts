@@ -50,6 +50,11 @@ export function scrollEvent(
                 const clientWidth = node?.clientWidth;
                 const scrollLeft = node?.scrollLeft;
                 const newColCache: any[] = [];
+                let minGroups = Math.floor(clientWidth / 90) || 22;
+                if (minGroups > connector.config.groups.length) {
+                    minGroups = connector.config.groups.length;
+                }
+
                 connector.config.groups.forEach((group, i) => {
                     const cellRight = group.__left + group.width;
                     const cellLeft = group.__left;
@@ -62,15 +67,26 @@ export function scrollEvent(
                     }
                 });
 
+                if (newColCache.length < minGroups) {
+                    while (newColCache.length < minGroups) {
+                        let next = newColCache[newColCache.length - 1].i + 1;
+                        if (next >= connector.config.groups.length) {
+                            next = newColCache[0].i - 1;
+                        }
+                        newColCache.push({
+                            i: next,
+                            update: true,
+                            found: false
+                        });
+                    }
+                }
+                /* console.log(newColCache.map((e) => e.i).join(',')); */
+
                 ref.colCache = node.rows[0]?.colEls?.map((e) => e.group) || [];
 
                 ref.colCache.forEach((e) => (e.found = false));
                 const ok = newColCache.map((e) => e.i);
-                if (newColCache > ref.colCache) {
-                    while (newColCache.length !== ref.colCache.length) {
-                        ref.colCache.push({ i: -1, update: true, found: false });
-                    }
-                }
+
                 ref.colCache.forEach((e) => {
                     if (ok.indexOf(e.i) !== -1) {
                         e.found = true;

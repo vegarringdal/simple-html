@@ -23,6 +23,15 @@ export class SimpleHtmlGrid extends HTMLElement {
 
     public connectedCallback() {
         this.resetRowCache();
+        if (this.interface) {
+            if (!this.children.length) {
+                generate(this.interface, this.rowCache, this);
+            }
+        } else {
+            if (this.isConnected) {
+                console.error('no config set');
+            }
+        }
     }
 
     public disconnectedCallback() {
@@ -35,9 +44,6 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public manualConfigChange() {
-        //render(html``, this);
-        // render(html` ${generate(this.interface, this.rowCache, this)} `, this);
-
         if (!this.children.length) {
             generate(this.interface, this.rowCache, this);
         }
@@ -66,6 +72,10 @@ export class SimpleHtmlGrid extends HTMLElement {
         const node = this.getElementsByTagName('simple-html-grid-body')[0];
         const clientWidth = node?.clientWidth || 1980;
         const scrollLeft = node?.scrollLeft || 0;
+        let minGroups = Math.floor(clientWidth / 90) || 22;
+        if (minGroups > this.interface.config.groups.length) {
+            minGroups = this.interface.config.groups.length;
+        }
 
         this.colCache = [];
         this.interface.config.groups.forEach((group, i) => {
@@ -78,6 +88,12 @@ export class SimpleHtmlGrid extends HTMLElement {
                 this.colCache.push({ i, update: true, found: false });
                 return;
             }
+
+            if (this.colCache.length < minGroups) {
+                while (this.colCache.length < minGroups) {
+                    this.colCache.push({ i: this.colCache.length, update: true, found: false });
+                }
+            }
         });
     }
 
@@ -87,7 +103,7 @@ export class SimpleHtmlGrid extends HTMLElement {
             const height = node?.clientHeight || this.interface.config.cellHeight * 50;
             this.resetColCache();
 
-            let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2; //(buffer);
+            let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2;
             if (rowsNeeded > 80) {
                 rowsNeeded = 80;
             }
@@ -124,21 +140,5 @@ export class SimpleHtmlGrid extends HTMLElement {
         } else {
             this.rowCache = [];
         }
-    }
-
-    public render() {
-        return new Promise(() => {
-            if (this.interface) {
-                if (!this.children.length) {
-                    generate(this.interface, this.rowCache, this);
-                }
-                // render(html` ${generate(this.interface, this.rowCache, this)} `, this);
-            } else {
-                if (this.isConnected) {
-                    console.error('no config set');
-                    //render(html``, this);
-                }
-            }
-        });
     }
 }

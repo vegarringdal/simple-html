@@ -36,6 +36,7 @@ export class SimpleHtmlGridBody extends HTMLElement {
         this.body.style.width = `${config.__rowWidth}px`;
         this.body.classList.add('simple-html-grid-content');
         this.append(this.body);
+        this.reRender();
     }
 
     handleEvent(e: any) {
