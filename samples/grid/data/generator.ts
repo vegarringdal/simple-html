@@ -21,8 +21,24 @@ export class Generator {
             for (let y = 1; y < 300; y++) {
                 if (y < 10) {
                     if (y < 5) {
+                        if (y === 2) {
+                            new Date().toLocaleString(undefined, {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                            });
+                            // @ts-ignore
+                            x['date'] = new Date(`1/${parseInt(Math.random() * 5)}/2020`);
+                        } else {
+                            if (y === 3) {
+                                // @ts-ignore
+                                x['bool'] = parseInt(Math.random() * 10) > 5 ? true : false;
+                            } else {
+                                // @ts-ignore
+                                x['word' + y] = parseInt(Math.random() * 100);
+                            }
+                        }
                         // @ts-ignore
-                        x['word' + y] = 'person' + parseInt(Math.random() * 100);
                     } else {
                         // @ts-ignore
                         x['word' + y] = 'person' + parseInt(Math.random() * 5);
@@ -31,7 +47,7 @@ export class Generator {
                     x['word' + y] = y + ':' + this.totalGenerated;
                 }
             }
-
+            console.log(x)
             dummyArray.push(x);
         }
 

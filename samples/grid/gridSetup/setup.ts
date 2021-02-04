@@ -1,10 +1,7 @@
 import { IGridConfig } from '@simple-html/grid';
 
 export function setup(rows: number, columns: number, scroll?: number) {
-    if (localStorage.getItem('columns2' + columns)) {
-        const x = JSON.parse(localStorage.getItem('columns2' + columns));
-        return x;
-    }
+
 
     const setup: IGridConfig = {
         cellHeight: 20,
@@ -22,7 +19,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
         for (let y = 0; y < rows; y++) {
             word++;
 
-            if ((i === 1 && y === 0) || (i === 2 && y === 0) || (i === 2 && y === 1)) {
+            if ((i === 1 && y === 0) ||(i === 3 && y === 0) || (i === 2 && y === 0) ) {
                 if (i === 1 && y === 0) {
                     x.push({
                         header: 'index',
@@ -30,18 +27,32 @@ export function setup(rows: number, columns: number, scroll?: number) {
                         //readonly: true,
                         type: 'number',
                         filterable: {},
-                        sortable: {}
-                    });
-                } else {
-                    x.push({
-                        header: 'word' + word,
-                        attribute: 'word' + word,
-                        filterable: {},
                         sortable: {},
-                        //readonly: true,
                         allowGrouping: true
                     });
                 }
+                if (i === 2 && y === 0) {
+                    x.push({
+                        header: 'date',
+                        attribute: 'date',
+                        //readonly: true,
+                        type: 'date',
+                        filterable: {},
+                        sortable: {},
+                        allowGrouping: true
+                    });
+                } 
+                if (i === 3 && y === 0) {
+                    x.push({
+                        header: 'bool',
+                        attribute: 'bool',
+                        //readonly: true,
+                        type: 'boolean',
+                        filterable: {},
+                        sortable: {},
+                        allowGrouping: true
+                    });
+                } 
             } else {
                 x.push({
                     header: 'word' + word,

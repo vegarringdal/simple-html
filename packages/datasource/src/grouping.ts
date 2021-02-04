@@ -235,6 +235,14 @@ export class Grouping {
         array.forEach((element) => {
             let groupID = element[groupBy];
             groupID = typeof groupID === 'boolean' ? groupID.toString() : groupID;
+            groupID =
+                typeof groupID?.toLocaleDateString === 'function'
+                    ? groupID.toLocaleDateString('en-US', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                      })
+                    : groupID;
             groupID = groupID || ' blank';
 
             if (groupID !== lastGroupID) {
@@ -275,7 +283,16 @@ export class Grouping {
             // loop children
             const rebuiltChildrenArray: Entity[] = [];
             element.__groupChildren.forEach((child: Entity) => {
-                const groupID = child[groupBy] || ' blank';
+                let groupID = child[groupBy];
+                groupID =
+                    typeof groupID?.toLocaleDateString === 'function'
+                        ? groupID.toLocaleDateString('en-US', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                          })
+                        : groupID;
+                groupID = groupID || ' blank';
 
                 if (groupID !== tempValue) {
                     const gidc = element.__groupID;

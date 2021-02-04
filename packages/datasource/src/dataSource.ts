@@ -90,6 +90,10 @@ export class Datasource<T = any> {
         return 'Datasource';
     }
 
+    public setDates(x:string[]){
+        this.__sorting.setDateAttribute(x)
+    }
+
     /**
      * This is the data in the dataContainer
      */

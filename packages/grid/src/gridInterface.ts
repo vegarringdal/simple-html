@@ -203,6 +203,16 @@ export class GridInterface<T = any> {
                 this.__ds.setFilter(this.__CONFIG.filterSet);
                 this.__CONFIG.filterSet = null; // only once..
             }
+
+            let dates: string[] = [];
+            this.__CONFIG.groups?.forEach((group) => {
+                group.rows?.forEach((r) => {
+                    if (r.type === 'date') {
+                        dates.push(r.attribute);
+                    }
+                });
+            });
+            this.__ds.setDates(dates);
         }
     }
 

@@ -142,7 +142,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         if (data) {
             const cell = this.cell;
             this.style.width = this.connector.config.groups[this.group].width + 'px';
-            this.innerEle.setAttribute('type', cell.type || 'text');
+            this.innerEle.setAttribute('type', cell.type === 'boolean' ? 'checkbox' : cell.type || 'text');
             const newVal = data[cell.attribute] || null;
             switch (cell.type) {
                 case 'boolean':
