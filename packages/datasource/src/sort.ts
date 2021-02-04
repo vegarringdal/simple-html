@@ -103,7 +103,7 @@ export class Sort {
 
                     return resultLocale;
                 };
-
+                result = 0;
                 if (v1 !== v2) {
                     if (currentObj.ascending === true) {
                         // ASC
@@ -135,23 +135,27 @@ export class Sort {
                                         0
                                     ).getTime() || 0;
                             }
+                            console.log(vv1, vv2);
 
                             if (vv1 < vv2) {
                                 result = -1;
-                            } else {
+                            }
+                            if (vv1 > vv2) {
                                 result = 1;
                             }
                         } else {
                             if (typeof v1 === 'string' && typeof v1 === 'string') {
                                 if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
                                     result = -1;
-                                } else {
+                                }
+                                if (localCompare(v1, v2) > 0 && localCompare(v1, v2) !== 0) {
                                     result = 1;
                                 }
                             } else {
                                 if (v1 < v2) {
                                     result = -1;
-                                } else {
+                                }
+                                if (v1 > v2) {
                                     result = 1;
                                 }
                             }
@@ -185,22 +189,27 @@ export class Sort {
                                         0
                                     ).getTime() || 0;
                             }
+
                             if (vv1 < vv2) {
                                 result = 1;
-                            } else {
+                            }
+                            if (vv1 > vv2) {
                                 result = -1;
                             }
                         } else {
                             if (typeof v1 === 'string' && typeof v1 === 'string') {
                                 if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
                                     result = 1;
-                                } else {
+                                }
+
+                                if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
                                     result = -1;
                                 }
                             } else {
                                 if (v1 < v2) {
                                     result = 1;
-                                } else {
+                                }
+                                if (v1 > v2) {
                                     result = -1;
                                 }
                             }
