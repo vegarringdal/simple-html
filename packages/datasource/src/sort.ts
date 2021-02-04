@@ -135,7 +135,6 @@ export class Sort {
                                         0
                                     ).getTime() || 0;
                             }
-                            console.log(vv1, vv2);
 
                             if (vv1 < vv2) {
                                 result = -1;

@@ -246,8 +246,6 @@ export const columnDragDrop = (
 
                     e.target.removeEventListener('mouseup', drop);
                     (e.target as any).classList.remove('simple-html-grid-candrop');
-                } else {
-                    console.log('no drag cell');
                 }
             };
 
