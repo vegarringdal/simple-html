@@ -41,6 +41,10 @@
     {
       "filename": "packages/splitter/package.json",
       "type": "json"
+    },
+    {
+      "filename": "packages/date/package.json",
+      "type": "json"
     }
   ],
   "commitUrlFormat": "https://github.com/simple-html/simple-html/commits/{{hash}}",
