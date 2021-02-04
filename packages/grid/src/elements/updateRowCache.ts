@@ -6,7 +6,8 @@ export function updateRowCache(
     connector: GridInterface,
     rowPositionCache: RowCache[],
     ref: SimpleHtmlGrid,
-    scrollTop: number
+    scrollTop: number,
+    skipUpdate?: boolean
 ) {
     let newTopPosition = scrollTop;
     if (connector.displayedDataset.length <= rowPositionCache.length) {
@@ -60,9 +61,10 @@ export function updateRowCache(
         }
     }
 
-    const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
-
-    node.rows.forEach((row) => {
-        row.verticalScrollEvent();
-    });
+    if (!skipUpdate) {
+        const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
+        node.rows.forEach((row) => {
+            row.verticalScrollEvent();
+        });
+    }
 }

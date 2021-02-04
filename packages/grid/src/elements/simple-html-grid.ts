@@ -2,6 +2,7 @@ import { GridInterface } from '../gridInterface';
 import { customElement } from '@simple-html/core';
 import { generate } from './generate';
 import { ColCache, RowCache } from '../types';
+import { updateRowCache } from './updateRowCache';
 
 @customElement('simple-html-grid')
 export class SimpleHtmlGrid extends HTMLElement {
@@ -25,6 +26,13 @@ export class SimpleHtmlGrid extends HTMLElement {
         if (this.interface) {
             if (!this.children.length) {
                 generate(this.interface, this.rowCache, this);
+                if (this.interface.config.lastScrollTop) {
+                    const node = this.getElementsByTagName('simple-html-grid-body')[0];
+                    node.scrollTop = this.interface.config.lastScrollTop;
+                    if (node && node.scrollTop !== undefined && this.interface) {
+                        updateRowCache(this.interface, this.rowCache, this, node.scrollTop);
+                    }
+                }
             }
         } else {
             if (this.isConnected) {
@@ -38,11 +46,14 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public reRender() {
+        const node = this.getElementsByTagName('simple-html-grid-body')[0];
+        if (node && node.scrollTop !== undefined && this.interface) {
+            updateRowCache(this.interface, this.rowCache, this, node.scrollTop, true);
+        }
         this.triggerEvent('reRender');
     }
 
     public manualConfigChange() {
-        console.log('manual config');
         if (!this.children.length) {
             generate(this.interface, this.rowCache, this);
         }
@@ -81,9 +92,6 @@ export class SimpleHtmlGrid extends HTMLElement {
                 this.colCache.push({ i, update: true, found: false });
                 return;
             }
-            /*  if (this.colCache.length > 22) {
-                debugger;
-            } */
         });
         if (this.colCache.length < minGroups) {
             while (this.colCache.length < minGroups) {

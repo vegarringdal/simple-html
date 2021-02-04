@@ -86,11 +86,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     }
 
     setSettings() {
-        /*      if (this.rowNo < 0) {
-            debugger; // TODO will be here to I have tested this more..
-            return;
-        } */
-
         const connector = this.connector;
 
         const ref = this.ref;
