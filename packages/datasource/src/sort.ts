@@ -108,8 +108,34 @@ export class Sort {
                     if (currentObj.ascending === true) {
                         // ASC
                         if (isDate) {
-                            let vv1 = v1?.getTime() || 0;
-                            let vv2 = v2?.getTime() || 0;
+                            let vv1 = -1;
+                            if (v1 && v1.getTime) {
+                                vv1 =
+                                    new Date(
+                                        new Date(v1).getFullYear(),
+                                        new Date(v1).getMonth(),
+                                        new Date(v1).getDate(),
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ).getTime() || 0;
+                            }
+
+                            let vv2 = 0;
+                            if (v2 && v2.getTime) {
+                                vv2 =
+                                    new Date(
+                                        new Date(v2).getFullYear(),
+                                        new Date(v2).getMonth(),
+                                        new Date(v2).getDate(),
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ).getTime() || 0;
+                            }
+
                             if (vv1 < vv2) {
                                 result = -1;
                             } else {
@@ -132,8 +158,33 @@ export class Sort {
                         }
                     } else {
                         if (isDate) {
-                            let vv1 = v1?.getTime();
-                            let vv2 = v2?.getTime();
+                            let vv1 = -1;
+                            if (v1 && v1.getTime) {
+                                vv1 =
+                                    new Date(
+                                        new Date(v1).getFullYear(),
+                                        new Date(v1).getMonth(),
+                                        new Date(v1).getDate(),
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ).getTime() || 0;
+                            }
+
+                            let vv2 = 0;
+                            if (v2 && v2.getTime) {
+                                vv2 =
+                                    new Date(
+                                        new Date(v2).getFullYear(),
+                                        new Date(v2).getMonth(),
+                                        new Date(v2).getDate(),
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ).getTime() || 0;
+                            }
                             if (vv1 < vv2) {
                                 result = 1;
                             } else {

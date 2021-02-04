@@ -47,7 +47,6 @@ export class Generator {
                     x['word' + y] = y + ':' + this.totalGenerated;
                 }
             }
-            console.log(x)
             dummyArray.push(x);
         }
 
