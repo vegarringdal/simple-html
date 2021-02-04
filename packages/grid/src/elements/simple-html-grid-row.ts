@@ -183,7 +183,12 @@ export class SimpleHtmlGridRow extends HTMLElement {
         const data = this.connector.displayedDataset[this.row.i];
         if (this.connector.config.__rowHeight > this.connector.config.cellHeight && data && !data.__group) {
             this.classList.add('grouping-row-border');
+        } else{
+            this.classList.remove('grouping-row-border');
         }
+        
+
+
         this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
         this.style.transform = `translate3d(0px, ${
             this.connector.getScrollVars.__SCROLL_TOPS[this.row.i]
