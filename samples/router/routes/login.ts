@@ -1,6 +1,6 @@
 import { html } from 'lit-html';
 import { customElement } from '@simple-html/core';
-import { gotoURL } from '@simple-html/router/src';
+import { gotoURL } from '@simple-html/router';
 
 let loggedin = false;
 export function isAuthenticted() {

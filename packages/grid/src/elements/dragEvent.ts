@@ -230,21 +230,25 @@ export const columnDragDrop = (
         }
 
         if (dragCell !== null) {
-            // not very fancy, but betteer then nothing
+            // not very fancy, but better then nothing
             const drop = (e: any) => {
-                const daCell = Object.assign({}, dragCell);
-                const doCell = Object.assign({}, getCell());
-                const keys = Object.assign(dragCell, getCell());
+                if (dragCell !== null) {
+                    const daCell = Object.assign({}, dragCell);
+                    const doCell = Object.assign({}, getCell());
+                    const keys = Object.assign(dragCell, getCell());
 
-                for (const key in keys) {
-                    dragCell[key] = doCell[key];
-                    getCell()[key] = daCell[key];
+                    for (const key in keys) {
+                        dragCell[key] = doCell[key];
+                        getCell()[key] = daCell[key];
+                    }
+
+                    _connector.reRender();
+
+                    e.target.removeEventListener('mouseup', drop);
+                    (e.target as any).classList.remove('simple-html-grid-candrop');
+                } else {
+                    console.log('no drag cell');
                 }
-
-                _connector.reRender();
-
-                e.target.removeEventListener('mouseup', drop);
-                (e.target as any).classList.remove('simple-html-grid-candrop');
             };
 
             if (event === 'enter' && dragCell && dragCell !== getCell()) {
@@ -280,6 +284,12 @@ export function dropzone(
         // loop old columns and remove them
         let oldGroupI: number = null;
         let oldRowI: number = null;
+        let newGroupI: number = null;
+        let newRowI: number = null;
+
+        const _group = getGroup();
+        const _cell = getCell();
+
         if (dragGroup) {
             _connector.config.groups.forEach((g, i) => {
                 if (g === dragGroup) {
@@ -289,6 +299,9 @@ export function dropzone(
                             oldRowI = y;
                         }
                     });
+                    if (g === _group) {
+                        newGroupI = i;
+                    }
                     if (oldRowI !== null) {
                         g.rows.splice(oldRowI, 1);
                     }
@@ -310,18 +323,17 @@ export function dropzone(
         }
 
         // loop new group position and insert
-        let newGroupI: number = null;
-        let newRowI: number = null;
         _connector.config.groups.forEach((g, i) => {
-            if (g === getGroup()) {
+            if (g === _group) {
                 g.rows.forEach((r, y) => {
-                    if (r === getCell()) {
+                    if (r === _cell) {
                         newGroupI = i;
                         newRowI = y;
                     }
                 });
             }
         });
+
         if (newRowI !== null) {
             if (type === 'left') {
                 _connector.config.groups.splice(newGroupI, 0, {
@@ -364,7 +376,8 @@ export function dropzone(
     };
 
     const mouseEnter = (e: MouseEvent) => {
-        if (dragCell && dragCell !== getCell()) {
+        const _cell = getCell();
+        if (dragCell && dragCell !== _cell) {
             e.preventDefault();
             (e.target as any).classList.add('simple-html-grid-candrop');
             e.target.addEventListener('mouseup', up);
@@ -372,7 +385,8 @@ export function dropzone(
     };
 
     const mouseLeave = (e: MouseEvent) => {
-        if (dragCell && dragCell !== getCell()) {
+        const _cell = getCell();
+        if (dragCell && dragCell !== _cell) {
             e.preventDefault();
             (e.target as any).classList.remove('simple-html-grid-candrop');
             e.target.removeEventListener('mouseup', up);

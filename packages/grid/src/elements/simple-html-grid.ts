@@ -2,7 +2,6 @@ import { GridInterface } from '../gridInterface';
 import { customElement } from '@simple-html/core';
 import { generate } from './generate';
 import { ColCache, RowCache } from '../types';
-import { updateRowCache } from './updateRowCache';
 
 @customElement('simple-html-grid')
 export class SimpleHtmlGrid extends HTMLElement {
@@ -39,15 +38,14 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public reRender() {
-        this.cleanup();
         this.triggerEvent('reRender');
     }
 
     public manualConfigChange() {
+        console.log('manual config');
         if (!this.children.length) {
             generate(this.interface, this.rowCache, this);
         }
-        this.cleanup();
         this.reRender();
     }
 
@@ -59,13 +57,6 @@ export class SimpleHtmlGrid extends HTMLElement {
             }
         });
         this.dispatchEvent(event);
-    }
-
-    public cleanup() {
-        const node = this.getElementsByTagName('simple-html-grid-body')[0];
-        if (node && node.scrollTop !== undefined && this.interface) {
-            updateRowCache(this.interface, this.rowCache, this, node.scrollTop);
-        }
     }
 
     public resetColCache() {
@@ -90,9 +81,9 @@ export class SimpleHtmlGrid extends HTMLElement {
                 this.colCache.push({ i, update: true, found: false });
                 return;
             }
-            if (this.colCache.length > 22) {
+            /*  if (this.colCache.length > 22) {
                 debugger;
-            }
+            } */
         });
         if (this.colCache.length < minGroups) {
             while (this.colCache.length < minGroups) {
@@ -137,7 +128,7 @@ export class SimpleHtmlGrid extends HTMLElement {
                 } else {
                     const missingLength = cacheLength - this.rowCache.length;
                     for (let i = 0; i < missingLength; i++) {
-                        this.rowCache.push({ i: i, update: true });
+                        this.rowCache.push({ i: this.rowCache.length, update: true });
                     }
                 }
             }

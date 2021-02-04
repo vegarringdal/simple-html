@@ -22,10 +22,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.style.width = config.groups[this.group].width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.cell = config.groups[this.group].rows[this.cellPosition];
-        if (!this.cell) {
-            debugger;
-            return;
-        }
         this.innerEle = document.createElement('input');
         this.innerEle.classList.add('simple-html-grid-row-input');
         this.appendChild(this.innerEle);
@@ -90,16 +86,26 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     }
 
     setSettings() {
-        if (this.rowNo < 0) {
+        /*      if (this.rowNo < 0) {
             debugger; // TODO will be here to I have tested this more..
             return;
-        }
+        } */
 
         const connector = this.connector;
 
         const ref = this.ref;
-        const change = this.cell.editEventType !== 'input' ? this.updateCallback : null;
-        const input = this.cell.editEventType === 'input' ? this.updateCallback : null;
+        const change =
+            this.cell.editEventType !== 'input'
+                ? (e: any) => {
+                      this.updateCallback(e);
+                  }
+                : null;
+        const input =
+            this.cell.editEventType !== 'input'
+                ? (e: any) => {
+                      this.updateCallback(e);
+                  }
+                : null;
 
         const contentMenu = (e: any) => {
             if ((e as any).button !== 0) {

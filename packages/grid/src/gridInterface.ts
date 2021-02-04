@@ -386,7 +386,7 @@ export class GridInterface<T = any> {
      * Internal usage only, do not call
      */
     render() {
-        if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.render();
+        if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.reRender();
     }
 
     /**
@@ -861,12 +861,14 @@ export class GridInterface<T = any> {
         this.config.groups.forEach((g) => {
             let x = 0;
             g?.rows.forEach((r) => {
-                const xx = widths[attributesStrings.indexOf(r.attribute)];
-                if (xx > x) {
-                    x = this.getTextWidth(text[attributesStrings.indexOf(r.attribute)]) + 15;
+                if (x < 750) {
+                    const xx = widths[attributesStrings.indexOf(r.attribute)];
+                    if (xx > x) {
+                        x = this.getTextWidth(text[attributesStrings.indexOf(r.attribute)]) + 15;
+                    }
                 }
             });
-            g.width = x;
+            g.width = x > 750 ? 750 : x;
         });
 
         this.manualConfigChange(this.config);

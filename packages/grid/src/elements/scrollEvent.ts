@@ -113,7 +113,6 @@ export function scrollEvent(
                 }
 
                 let l = ref.colCache.length;
-                console.log(l);
                 for (let i = 0; i < l; i++) {
                     if (ref.colCache[i].found === false) {
                         debugger;
