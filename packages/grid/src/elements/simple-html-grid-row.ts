@@ -163,8 +163,8 @@ export class SimpleHtmlGridRow extends HTMLElement {
                 this.colEls.forEach((g) => {
                     g.updateCells();
                 });
-                this.updateView();
             }
+            this.updateView();
         }
 
         if (e.type === 'selection') {
@@ -180,7 +180,8 @@ export class SimpleHtmlGridRow extends HTMLElement {
 
     private updateView() {
         // check if height is changed
-        if (this.connector.config.__rowHeight > this.connector.config.cellHeight) {
+        const data = this.connector.displayedDataset[this.row.i];
+        if (this.connector.config.__rowHeight > this.connector.config.cellHeight && data && !data.__group) {
             this.classList.add('grouping-row-border');
         }
         this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
