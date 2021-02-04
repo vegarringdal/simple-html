@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.2.1](https://github.com/simple-html/simple-html/compare/v3.2.0...v3.2.1) (2021-02-04)
+
+
+### Bug Fixes
+
+* **ds & grid:** improve performance and dates in datasource ([#22](https://github.com/simple-html/simple-html/issues/22)) ([6a79de8](https://github.com/simple-html/simple-html/commits/6a79de88de6ce2b0d66483d4c1f5b19973b205a2)), [#21](https://github.com/simple-html/simple-html/issues/21)
+
 ## [3.2.0](https://github.com/simple-html/simple-html/compare/v3.1.3...v3.2.0) (2021-01-29)
 
 
