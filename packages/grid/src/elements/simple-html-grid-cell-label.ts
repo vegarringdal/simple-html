@@ -1,21 +1,21 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
-import { html } from 'lit-html';
 import { resizeColumnElement } from './resizeColumnElement';
-import { sorticonElement } from './sorticonElement';
 import { columnDragDrop, dropzone } from './dragEvent';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
-import { log } from './log';
 
 @customElement('simple-html-grid-cell-label')
-export default class extends HTMLElement {
+export class SimpleHtmlGridCellLabel extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
     ref: SimpleHtmlGrid;
     currentHeight: number;
     group: GridGroupConfig;
     label: string;
+    labelEl: HTMLSpanElement;
+    textEl: any;
+    sortIcon: any;
 
     connectedCallback() {
         this.classList.add('simple-html-grid-cell-label');
@@ -25,23 +25,17 @@ export default class extends HTMLElement {
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.ref.addEventListener('column-resize', this);
-        this.ref.addEventListener('reRender', this);
+        this.generateGui();
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'column-resize') {
-            this.render();
-        }
-        if (e.type === 'reRender') {
-            this.render();
+            this.style.width = this.group.width + 'px';
         }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('column-resize', this);
-        this.ref.removeEventListener('reRender', this);
     }
 
     capalize(text: string) {
@@ -52,16 +46,57 @@ export default class extends HTMLElement {
         }
     }
 
-    render() {
+    update() {
         const cell = this.group.rows[this.cellPosition];
-        const connector = this.connector;
-        const ref = this.ref;
-        const label = this.capalize(this.group.rows[this.cellPosition].header || '');
+        (this.labelEl as any).cell = cell;
+        this.style.display = 'block';
+        const config = this.connector.config;
+        this.style.height = config.cellHeight + 'px';
+        this.style.width = this.group.width + 'px';
+        this.style.top = this.cellPosition * config.cellHeight + 'px';
+        this.labelEl.innerText = this.capalize(this.group.rows[this.cellPosition].header || '');
+        this.setSortIcon();
+    }
 
+    setSortIcon() {
+        const xmlns = 'http://www.w3.org/2000/svg';
+        const ascTemplate = document.createElementNS(xmlns, 'svg');
+
+        ascTemplate.setAttributeNS(null, 'viewBox', '0 0 16 16');
+        ascTemplate.setAttributeNS(null, 'class', 'simple-html-grid-icon');
+        const ascTemplatePath = document.createElementNS(xmlns, 'path');
+        ascTemplatePath.setAttributeNS(null, 'd', 'M7.4 6L3 10h1.5L8 7l3.4 3H13L8.5 6h-1z');
+        ascTemplate.appendChild(ascTemplatePath);
+
+        const descTemplate = document.createElementNS(xmlns, 'svg');
+        descTemplate.setAttributeNS(null, 'viewBox', '0 0 16 16');
+        descTemplate.setAttributeNS(null, 'class', 'simple-html-grid-icon');
+
+        const descTemplatePath = document.createElementNS(xmlns, 'path');
+        descTemplatePath.setAttributeNS(null, 'd', 'M7.4 10L3 6h1.5L8 9.2 11.3 6H13l-4.5 4h-1z');
+        descTemplate.appendChild(descTemplatePath);
+
+        if (this.sortIcon) {
+            this.sortIcon.parentNode?.removeChild(this.sortIcon);
+            this.sortIcon = null;
+        }
+        const cell = this.group.rows[this.cellPosition];
+        if (cell.sortable && cell.sortable.sortNo) {
+            this.sortIcon = document.createElement('i');
+            this.sortIcon.appendChild(cell.sortable.sortAscending ? ascTemplate : descTemplate);
+            this.labelEl.appendChild(this.sortIcon);
+            this.sortIcon.classList.add('simple-html-grid-fa-sort-number');
+            this.sortIcon.setAttribute('data-vgridsort', cell.sortable.sortNo);
+        }
+    }
+
+    generateGui() {
         const sortCallback = (e: any) => {
             const mouseup = (e: MouseEvent) => {
-                this.connector.gridCallbacks.beforeSortCallbackFn &&
-                    this.connector.gridCallbacks.beforeSortCallbackFn(e as any, cell, connector);
+                const cell = this.group.rows[this.cellPosition];
+                const connector = this.connector;
+                connector.gridCallbacks.beforeSortCallbackFn &&
+                    connector.gridCallbacks.beforeSortCallbackFn(e as any, cell, connector);
                 if (cell.sortable.auto !== false) {
                     connector.sortCallback(e as any, cell);
                 }
@@ -78,83 +113,99 @@ export default class extends HTMLElement {
             }
         };
 
-        const mousedown = columnDragDrop('dragstart', cell, connector, this.group);
-        const mouseenter = columnDragDrop('enter', cell, connector, this.group);
-        const mouseleave = columnDragDrop('leave', cell, connector, this.group);
+        const mousedown = columnDragDrop(
+            'dragstart',
+            () => this.group.rows[this.cellPosition],
+            this.connector,
+            () => this.group
+        );
+        const mouseenter = columnDragDrop(
+            'enter',
+            () => this.group.rows[this.cellPosition],
+            this.connector,
+            () => this.group
+        );
+        const mouseleave = columnDragDrop(
+            'leave',
+            () => this.group.rows[this.cellPosition],
+            this.connector,
+            () => this.group
+        );
 
-        const contentMenu = function (e: any) {
+        const contentMenu = (e: any) => {
             if ((e as any).button !== 0) {
                 generateMenuWithComponentName(
                     'simple-html-grid-menu-label',
                     e,
                     connector,
                     ref,
-                    cell
+                    () => this.group.rows[this.cellPosition]
                 );
             }
         };
 
+        const cell = this.group.rows[this.cellPosition];
+        const connector = this.connector;
+        const ref = this.ref;
+        const config = connector.config;
+        this.style.display = 'block';
+        this.style.height = config.cellHeight + 'px';
         this.style.width = this.group.width + 'px';
+        this.style.top = this.cellPosition * config.cellHeight + 'px';
 
-        if (this.connector.gridCallbacks.renderLabelCallBackFn) {
-            return this.connector.gridCallbacks.renderLabelCallBackFn(
-                cell,
-                this.connector,
-                sorticonElement,
-                resizeColumnElement,
-                mousedown,
-                mouseenter,
-                mouseleave
-            );
-        }
+        this.labelEl = document.createElement('span');
+        this.labelEl.classList.add('simple-html-grid-label');
 
-        if (cell.type === 'empty') {
-            return html`
-                <style>
-                    .simple-html-grid .hideme {
-                        background-color: ${getComputedStyle(this.ref).getPropertyValue(
-                            '--SimpleHtmlGrid-main-bg-color'
-                        )};
-                    }
-                </style>
-                <span
-                    .cell=${cell}
-                    class="simple-html-grid-label hideme"
-                    @mouseenter=${!cell.disableDragDrop && mouseenter}
-                    @mouseleave=${!cell.disableDragDrop && mouseleave}
-                    @contextmenu=${(e: any) => {
-                        e.preventDefault();
-                        contentMenu(e);
-                        return false;
-                    }}
-                >
-                </span>
-                ${resizeColumnElement(this.ref, this.group)}
-            `;
-        } else {
-            return html`
-                <span
-                    .cell=${cell}
-                    class="simple-html-grid-label"
-                    @mousedown=${(e: any) => {
-                        cell.sortable && sortCallback(e);
-                        !cell.disableDragDrop && mousedown(e);
-                    }}
-                    @contextmenu=${(e: any) => {
-                        e.preventDefault();
-                        contentMenu(e);
-                        return false;
-                    }}
-                    @mouseenter=${!cell.disableDragDrop && mouseenter}
-                    @mouseleave=${!cell.disableDragDrop && mouseleave}
-                    >${label} ${sorticonElement(this.connector, cell)}</span
-                >
-                ${resizeColumnElement(this.ref, this.group)}
-                ${dropzone(this.connector, this.group, cell, 'left')}
-                ${dropzone(this.connector, this.group, cell, 'right')}
-                ${dropzone(this.connector, this.group, cell, 'top')}
-                ${dropzone(this.connector, this.group, cell, 'bottom')}
-            `;
-        }
+        this.labelEl.onmouseenter = !cell.disableDragDrop && mouseenter;
+        this.labelEl.onmouseleave = !cell.disableDragDrop && mouseleave;
+        this.labelEl.onmousedown = (e) => {
+            const cell = this.group.rows[this.cellPosition];
+            cell.sortable && sortCallback(e);
+            !cell.disableDragDrop && mousedown(e);
+        };
+        this.labelEl.oncontextmenu = (e: any) => {
+            e.preventDefault();
+            contentMenu(e);
+            return false;
+        };
+
+        this.appendChild(this.labelEl);
+        this.appendChild(resizeColumnElement(this.ref, () => this.group));
+        this.appendChild(
+            dropzone(
+                connector,
+                () => this.group,
+                () => this.group.rows[this.cellPosition],
+                'left'
+            )
+        );
+        this.appendChild(
+            dropzone(
+                connector,
+                () => this.group,
+                () => this.group.rows[this.cellPosition],
+                'right'
+            )
+        );
+        this.appendChild(
+            dropzone(
+                connector,
+                () => this.group,
+                () => this.group.rows[this.cellPosition],
+                'top'
+            )
+        );
+
+        this.appendChild(
+            dropzone(
+                connector,
+                () => this.group,
+                () => this.group.rows[this.cellPosition],
+                'bottom'
+            )
+        );
+
+        this.labelEl.innerText = this.capalize(this.group.rows[this.cellPosition].header || '');
+        this.setSortIcon();
     }
 }

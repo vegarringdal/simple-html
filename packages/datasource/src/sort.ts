@@ -4,11 +4,16 @@ export class Sort {
     private lastSorting: SortArgument[];
     private currentSorting: SortArgument[];
     private localeCompareCode: Intl.Collator;
+    dates: string[] = [];
 
     constructor() {
         this.lastSorting = [];
         this.currentSorting = [];
         this.localeCompareCode = null;
+    }
+
+    public setDateAttribute(dates: string[] = []) {
+        this.dates = dates;
     }
 
     public setLocaleCompare(code: string, options?: any): void {
@@ -81,6 +86,7 @@ export class Sort {
             for (let i = 0; i < thisSort.length && result === 0; ++i) {
                 // loop until all are sorted
                 const currentObj = thisSort[i];
+                const isDate = this.dates.indexOf(currentObj.attribute) !== -1 ? true : false;
                 const v1 = obj1[currentObj.attribute] || '';
                 const v2 = obj2[currentObj.attribute] || '';
 
@@ -97,35 +103,114 @@ export class Sort {
 
                     return resultLocale;
                 };
-
+                result = 0;
                 if (v1 !== v2) {
                     if (currentObj.ascending === true) {
                         // ASC
-                        if (typeof v1 === 'string' && typeof v1 === 'string') {
-                            if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
+                        if (isDate) {
+                            let vv1 = -1;
+                            if (v1 && v1.getTime) {
+                                vv1 =
+                                    new Date(
+                                        new Date(v1).getFullYear(),
+                                        new Date(v1).getMonth(),
+                                        new Date(v1).getDate(),
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ).getTime() || 0;
+                            }
+
+                            let vv2 = 0;
+                            if (v2 && v2.getTime) {
+                                vv2 =
+                                    new Date(
+                                        new Date(v2).getFullYear(),
+                                        new Date(v2).getMonth(),
+                                        new Date(v2).getDate(),
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ).getTime() || 0;
+                            }
+
+                            if (vv1 < vv2) {
                                 result = -1;
-                            } else {
+                            }
+                            if (vv1 > vv2) {
                                 result = 1;
                             }
                         } else {
-                            if (v1 < v2) {
-                                result = -1;
+                            if (typeof v1 === 'string' && typeof v1 === 'string') {
+                                if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
+                                    result = -1;
+                                }
+                                if (localCompare(v1, v2) > 0 && localCompare(v1, v2) !== 0) {
+                                    result = 1;
+                                }
                             } else {
-                                result = 1;
+                                if (v1 < v2) {
+                                    result = -1;
+                                }
+                                if (v1 > v2) {
+                                    result = 1;
+                                }
                             }
                         }
                     } else {
-                        if (typeof v1 === 'string' && typeof v1 === 'string') {
-                            if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
+                        if (isDate) {
+                            let vv1 = -1;
+                            if (v1 && v1.getTime) {
+                                vv1 =
+                                    new Date(
+                                        new Date(v1).getFullYear(),
+                                        new Date(v1).getMonth(),
+                                        new Date(v1).getDate(),
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ).getTime() || 0;
+                            }
+
+                            let vv2 = 0;
+                            if (v2 && v2.getTime) {
+                                vv2 =
+                                    new Date(
+                                        new Date(v2).getFullYear(),
+                                        new Date(v2).getMonth(),
+                                        new Date(v2).getDate(),
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                    ).getTime() || 0;
+                            }
+
+                            if (vv1 < vv2) {
                                 result = 1;
-                            } else {
+                            }
+                            if (vv1 > vv2) {
                                 result = -1;
                             }
                         } else {
-                            if (v1 < v2) {
-                                result = 1;
+                            if (typeof v1 === 'string' && typeof v1 === 'string') {
+                                if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
+                                    result = 1;
+                                }
+
+                                if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
+                                    result = -1;
+                                }
                             } else {
-                                result = -1;
+                                if (v1 < v2) {
+                                    result = 1;
+                                }
+                                if (v1 > v2) {
+                                    result = -1;
+                                }
                             }
                         }
                     }

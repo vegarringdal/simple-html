@@ -112,7 +112,6 @@ export class Drop extends HTMLInputElement {
                             this.lastSelectedElement.clientHeight;
                     }
                 }
-                console.log(e);
             }
         }
     }

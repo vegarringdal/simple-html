@@ -21,6 +21,7 @@ export {
 
 export type InputTriggers = 'input' | 'change';
 export type RowCache = { i: number; update: boolean };
+export type ColCache = { i: number; update: boolean; found: boolean };
 
 export interface IAttributes {
     attribute: string;

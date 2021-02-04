@@ -1,11 +1,13 @@
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
+import { SimpleHtmlGridBody } from './simple-html-grid-body';
 
 export function updateRowCache(
     connector: GridInterface,
     rowPositionCache: RowCache[],
     ref: SimpleHtmlGrid,
-    scrollTop: number
+    scrollTop: number,
+    skipUpdate?: boolean
 ) {
     let newTopPosition = scrollTop;
     if (connector.displayedDataset.length <= rowPositionCache.length) {
@@ -55,8 +57,14 @@ export function updateRowCache(
             const row = update.splice(0, 1)[0];
             rowPositionCache[i].i = row;
         } else {
-            rowPositionCache[i].update = true;
+            rowPositionCache[i].update = false;
         }
     }
-    ref.triggerEvent('vertical-scroll');
+
+    if (!skipUpdate) {
+        const node = ref.getElementsByTagName('simple-html-grid-body')[0] as SimpleHtmlGridBody;
+        node.rows.forEach((row) => {
+            row.verticalScrollEvent();
+        });
+    }
 }

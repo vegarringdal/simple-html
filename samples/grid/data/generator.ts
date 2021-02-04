@@ -1,14 +1,9 @@
-import * as internalDataArray from './dummyData';
-
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 export class Generator {
     public rowTop: number;
     private totalGenerated: number;
-    private internalDataArray: any;
-
     constructor() {
         this.totalGenerated = 0;
-        // transform json object to an array
-        this.internalDataArray = internalDataArray.data;
     }
 
     public reset(): void {
@@ -18,34 +13,40 @@ export class Generator {
     public generateData(no: any): any {
         const dummyArray = [];
         for (let i = 0; i < no; i++) {
-            // up count
             this.totalGenerated++;
+            // up count
+            const x = {};
+            x['index'] = this.totalGenerated;
 
-            const random = function () {
-                const x1 = Math.floor(Math.random() * 3) + 0;
-                const x2 = Math.floor(Math.random() * 9) + 0;
-                const x3 = Math.floor(Math.random() * 9) + 0;
-                const x4 = Math.floor(Math.random() * 9) + 0;
-                return `${x1}${x2}${x3}${x4}`;
-            };
-
-            const date = new Date(
-                new Date().setDate(new Date().getDate() + (Math.floor(Math.random() * 300) + 0))
-            );
-
-            const data = this.internalDataArray;
-
-            const x: any = {};
-            x.index = this.totalGenerated;
-            x.mod = Math.floor(this.totalGenerated / 10);
-            x.number = Math.floor(Math.random() * 9000) + 0;
-            x.bool = Math.floor(Math.random() * 9000) % 3 ? true : false;
-            x.date = date;
-
-            for (let i = 1; i < 75; i++) {
-                x['word' + i] = data[random()];
+            for (let y = 1; y < 300; y++) {
+                if (y < 10) {
+                    if (y < 5) {
+                        if (y === 2) {
+                            new Date().toLocaleString(undefined, {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                            });
+                            // @ts-ignore
+                            x['date'] = new Date(`1/${parseInt(Math.random() * 5)}/2020`);
+                        } else {
+                            if (y === 3) {
+                                // @ts-ignore
+                                x['bool'] = parseInt(Math.random() * 10) > 5 ? true : false;
+                            } else {
+                                // @ts-ignore
+                                x['word' + y] = parseInt(Math.random() * 100);
+                            }
+                        }
+                        // @ts-ignore
+                    } else {
+                        // @ts-ignore
+                        x['word' + y] = 'person' + parseInt(Math.random() * 5);
+                    }
+                } else {
+                    x['word' + y] = y + ':' + this.totalGenerated;
+                }
             }
-
             dummyArray.push(x);
         }
 

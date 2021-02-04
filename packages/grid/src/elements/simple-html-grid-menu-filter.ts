@@ -4,7 +4,6 @@ import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig, FilterArgument, FilterComparisonOperator } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
-import { log } from './log';
 
 @customElement('simple-html-grid-menu-filter')
 export default class extends HTMLElement {
@@ -123,8 +122,6 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (this.wait) {
             this.wait = false;
             return;

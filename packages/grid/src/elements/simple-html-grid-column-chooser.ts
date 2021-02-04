@@ -5,7 +5,6 @@ import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig, FilterArgument } from '../types';
 import { columnDragDrop } from './dragEvent';
-import { log } from './log';
 
 @customElement('simple-html-grid-column-chooser')
 export default class extends HTMLElement {
@@ -22,8 +21,6 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'reRender') {
             this.render();
             return;
@@ -49,7 +46,7 @@ export default class extends HTMLElement {
                 <b> Close</b>
             </span>
             ${this.connector.config.optionalCells?.map((cell) => {
-                const mousedown = columnDragDrop('dragstart', cell, this.connector, null);
+                const mousedown = columnDragDrop('dragstart', () => cell, this.connector, null);
 
                 return html`<span
                     class="block simple-html-grid-menu-item"

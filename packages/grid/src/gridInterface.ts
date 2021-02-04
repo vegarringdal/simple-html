@@ -203,6 +203,16 @@ export class GridInterface<T = any> {
                 this.__ds.setFilter(this.__CONFIG.filterSet);
                 this.__CONFIG.filterSet = null; // only once..
             }
+
+            let dates: string[] = [];
+            this.__CONFIG.groups?.forEach((group) => {
+                group.rows?.forEach((r) => {
+                    if (r.type === 'date') {
+                        dates.push(r.attribute);
+                    }
+                });
+            });
+            this.__ds.setDates(dates);
         }
     }
 
@@ -386,7 +396,7 @@ export class GridInterface<T = any> {
      * Internal usage only, do not call
      */
     render() {
-        if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.render();
+        if (this.__SimpleHtmlGrid) this.__SimpleHtmlGrid.reRender();
     }
 
     /**
@@ -861,12 +871,14 @@ export class GridInterface<T = any> {
         this.config.groups.forEach((g) => {
             let x = 0;
             g?.rows.forEach((r) => {
-                const xx = widths[attributesStrings.indexOf(r.attribute)];
-                if (xx > x) {
-                    x = this.getTextWidth(text[attributesStrings.indexOf(r.attribute)]) + 15;
+                if (x < 750) {
+                    const xx = widths[attributesStrings.indexOf(r.attribute)];
+                    if (xx > x) {
+                        x = this.getTextWidth(text[attributesStrings.indexOf(r.attribute)]) + 15;
+                    }
                 }
             });
-            g.width = x;
+            g.width = x > 750 ? 750 : x;
         });
 
         this.manualConfigChange(this.config);

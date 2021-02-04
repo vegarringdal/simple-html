@@ -4,7 +4,6 @@ import { html, svg } from 'lit-html';
 import { SimpleHtmlGrid } from '..';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { panelColumn, columnDragDropPanelColumn } from './dragEvent';
-import { log } from './log';
 
 function capalize(text: string) {
     if (text) {
@@ -15,7 +14,7 @@ function capalize(text: string) {
 }
 
 @customElement('simple-html-grid-panel')
-export default class extends HTMLElement {
+export class SimpleHtmlGridPanel extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
 
@@ -28,8 +27,6 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: Event) {
-        log(this, e);
-
         if (e.type === 'reRender') {
             this.render();
         }

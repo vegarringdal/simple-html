@@ -9,7 +9,7 @@ import './simple-html-grid-header';
 import './simple-html-grid-footer';
 import './simple-html-grid-panel';
 import './simple-html-grid-row';
-import './simple-html-grid-row-group';
+import './simple-html-grid-col';
 import './simple-html-grid-menu-row';
 import './simple-html-grid-menu-label';
 import './simple-html-grid-menu-filter';
@@ -20,9 +20,12 @@ import './simple-html-grid-menu-custom';
 import { scrollEvent } from './scrollEvent';
 import { GridInterface } from '../gridInterface';
 import { RowCache } from '../types';
-import { html } from 'lit-html';
 import { SimpleHtmlGrid } from '../';
 import { columnDragDropPanel } from './dragEvent';
+import { SimpleHtmlGridPanel } from './simple-html-grid-panel';
+import { SimpleHtmlGridBody } from './simple-html-grid-body';
+import { SimpleHtmlGridFooter } from './simple-html-grid-footer';
+import { SimpleHtmlGridHeader } from './simple-html-grid-header';
 
 export function generate(
     connector: GridInterface,
@@ -33,20 +36,27 @@ export function generate(
     const enter = columnDragDropPanel('enter', connector);
     const leave = columnDragDropPanel('leave', connector);
 
-    return html`
-        <simple-html-grid-panel
-            .connector=${connector}
-            .ref=${ref}
-            @mouseleave=${leave}
-            @mouseenter=${enter}
-        ></simple-html-grid-panel>
-        <simple-html-grid-header .connector=${connector} .ref=${ref}></simple-html-grid-header>
-        <simple-html-grid-body
-            .connector=${connector}
-            .rowPositionCache=${rowPositionCache}
-            @scroll=${scroll}
-            .ref=${ref}
-        ></simple-html-grid-body>
-        <simple-html-grid-footer .connector=${connector} .ref=${ref}></simple-html-grid-footer>
-    `;
+    const body = document.createElement('simple-html-grid-body') as SimpleHtmlGridBody;
+    body.connector = connector;
+    body.ref = ref;
+    body.rowPositionCache = rowPositionCache;
+    body.onscroll = scroll;
+    ref.appendChild(body);
+
+    const panel = document.createElement('simple-html-grid-panel') as SimpleHtmlGridPanel;
+    panel.connector = connector;
+    panel.ref = ref;
+    panel.onmouseleave = leave;
+    panel.onmouseenter = enter;
+    ref.appendChild(panel);
+
+    const header = document.createElement('simple-html-grid-header') as SimpleHtmlGridHeader;
+    header.connector = connector;
+    header.ref = ref;
+    ref.appendChild(header);
+
+    const footer = document.createElement('simple-html-grid-footer') as SimpleHtmlGridFooter;
+    footer.connector = connector;
+    footer.ref = ref;
+    ref.appendChild(footer);
 }

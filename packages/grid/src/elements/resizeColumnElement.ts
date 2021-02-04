@@ -1,10 +1,9 @@
-import { html } from 'lit-html';
 import { GridGroupConfig } from '../types';
 import { SimpleHtmlGrid } from '../';
 
-export function resizeColumnElement(ref: SimpleHtmlGrid, group: GridGroupConfig) {
+export function resizeColumnElement(ref: SimpleHtmlGrid, getGroup: () => GridGroupConfig) {
     let originX: number = null;
-    const originalColumnWidth = group.width;
+    let originalColumnWidth = getGroup().width;
 
     const mouseMove = (e: MouseEvent) => {
         e.preventDefault();
@@ -13,7 +12,7 @@ export function resizeColumnElement(ref: SimpleHtmlGrid, group: GridGroupConfig)
             if (movment % 2 === 0) {
                 const movementX = originX - e.screenX;
                 const newColumnWidth = originalColumnWidth - movementX;
-                group.width = newColumnWidth > 10 ? newColumnWidth : 10;
+                getGroup().width = newColumnWidth > 10 ? newColumnWidth : 10;
 
                 // fix config before trigger
                 let totalWidth = 0;
@@ -38,9 +37,13 @@ export function resizeColumnElement(ref: SimpleHtmlGrid, group: GridGroupConfig)
 
     const mouseDown = (e: MouseEvent) => {
         originX = e.screenX;
+        originalColumnWidth = getGroup().width;
         document.addEventListener('mousemove', mouseMove);
         document.addEventListener('mouseup', mouseUp);
     };
 
-    return html` <div class="simple-html-grid-draggable-handler" @mousedown=${mouseDown}></div> `;
+    const el = document.createElement('div');
+    el.classList.add('simple-html-grid-draggable-handler');
+    el.onmousedown = mouseDown;
+    return el;
 }

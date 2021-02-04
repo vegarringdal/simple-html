@@ -12,7 +12,7 @@ export function selectOperatorBtn(operatorObject: FilterArgument, ctx: any) {
         @click=${(e: any) => {
             generateMenu(e, [
                 {
-                    title: 'Begin with',
+                    title: 'Starts with',
                     callback: () => {
                         operatorObject.operator = 'BEGIN_WITH';
                         ctx.render();

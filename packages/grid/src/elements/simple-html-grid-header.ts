@@ -1,13 +1,17 @@
 import { customElement } from '@simple-html/core';
-import { html } from 'lit-html';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
-import { log } from './log';
+import { SimpleHtmlGridCol } from './simple-html-grid-col';
+import { SimpleHtmlGridGroupLabel } from './simple-html-grid-group-label';
+import { SimpleHtmlGridGroupFilter } from './simple-html-grid-group-filter';
 
 @customElement('simple-html-grid-header')
-export default class extends HTMLElement {
+export class SimpleHtmlGridHeader extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
+    groupMarginEl: any;
+    colLabels: SimpleHtmlGridGroupLabel[];
+    colFilters: SimpleHtmlGridGroupFilter[];
 
     connectedCallback() {
         this.classList.add('simple-html-grid-header');
@@ -16,54 +20,133 @@ export default class extends HTMLElement {
         this.style.height = config.__rowHeight * 2 + 2 + 'px';
         this.ref.addEventListener('horizontal-scroll', this);
         this.ref.addEventListener('reRender', this);
+        const grouping =
+            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+
+        this.groupMarginEl = document.createElement('simple-html-grid-col') as SimpleHtmlGridCol;
+        this.groupMarginEl.classList.add('simple-html-grid-grouping-row');
+        this.groupMarginEl.style.width = `${grouping ? grouping * 15 : 0}px`;
+        this.groupMarginEl.style.left = `0`;
+        this.groupMarginEl.style.display = grouping ? 'block' : 'none';
+
+        this.appendChild(this.groupMarginEl);
+        this.colLabels = this.connector.config.groups.map((group) => {
+            const el = document.createElement(
+                'simple-html-grid-group-label'
+            ) as SimpleHtmlGridGroupLabel;
+            el.connector = this.connector;
+            el.ref = this.ref;
+            el.group = group;
+
+            this.appendChild(el);
+            return el;
+        });
+
+        this.colFilters = this.connector.config.groups.map((group) => {
+            const el = document.createElement(
+                'simple-html-grid-group-filter'
+            ) as SimpleHtmlGridGroupFilter;
+            el.connector = this.connector;
+            el.ref = this.ref;
+            el.group = group;
+
+            this.appendChild(el);
+            return el;
+        });
     }
 
     handleEvent(e: Event) {
-        log(this, e);
+        if (e.type === 'horizontal-scroll') {
+            const config = this.connector.config;
 
-        if (e.type === 'horizontal-scroll' || e.type === 'reRender') {
-            this.render();
+            this.style.left = -config.scrollLeft + 'px';
+            this.style.width = config.__rowWidth + 'px';
+        }
+
+        if (e.type === 'reRender') {
+            const config = this.connector.config;
+            const grouping =
+                this.connector.config.groupingSet && this.connector.config.groupingSet.length;
+            this.groupMarginEl.style.width = `${grouping ? grouping * 15 : 0}px`;
+            this.groupMarginEl.style.left = `0`;
+            this.groupMarginEl.style.display = grouping ? 'block' : 'none';
+
+            this.style.left = -config.scrollLeft + 'px';
+            this.style.width = config.__rowWidth + 'px';
+            this.style.top = config.panelHeight + 'px';
+            this.style.height = config.__rowHeight * 2 + 2 + 'px';
+
+            const groups = this.connector.config.groups;
+            if (groups.length < this.colLabels.length) {
+                const keep: any = [];
+                this.colLabels.forEach((e, i) => {
+                    if (!groups[i]) {
+                        this.removeChild(e);
+                    } else {
+                        keep.push(e);
+                    }
+                });
+                this.colLabels = keep;
+            } else {
+                groups.forEach((_group, i) => {
+                    if (!this.colLabels[i]) {
+                        const el = document.createElement(
+                            'simple-html-grid-group-label'
+                        ) as SimpleHtmlGridGroupLabel;
+
+                        el.connector = this.connector;
+                        el.ref = this.ref;
+                        el.group = groups[i];
+                        this.colLabels.push(el);
+                        this.appendChild(el);
+                    } else {
+                        const el = this.colLabels[i];
+                        el.group = groups[i];
+                    }
+                });
+            }
+            this.colLabels.forEach((el, i) => {
+                el.group = groups[i];
+                el.xrender();
+            });
+
+            if (groups.length < this.colFilters.length) {
+                const keep: any = [];
+                this.colFilters.forEach((e, i) => {
+                    if (!groups[i]) {
+                        this.removeChild(e);
+                    } else {
+                        keep.push(e);
+                    }
+                });
+                this.colFilters = keep;
+            } else {
+                groups.forEach((_group, i) => {
+                    if (!this.colFilters[i]) {
+                        const el = document.createElement(
+                            'simple-html-grid-group-filter'
+                        ) as SimpleHtmlGridGroupFilter;
+
+                        el.connector = this.connector;
+                        el.ref = this.ref;
+                        el.group = groups[i];
+                        this.colFilters.push(el);
+                        this.appendChild(el);
+                    } else {
+                        const el = this.colFilters[i];
+                        el.group = groups[i];
+                    }
+                });
+            }
+            this.colFilters.forEach((el, i) => {
+                el.group = groups[i];
+                el.xrender();
+            });
         }
     }
 
     disconnectedCallback() {
         this.ref.removeEventListener('horizontal-scroll', this);
         this.ref.removeEventListener('reRender', this);
-    }
-
-    render() {
-        const config = this.connector.config;
-
-        this.style.left = -config.scrollLeft + 'px';
-        this.style.width = config.__rowWidth + 'px';
-
-        const grouping =
-            this.connector.config.groupingSet && this.connector.config.groupingSet.length;
-
-        return html`
-            <simple-html-grid-col
-                class=" simple-html-grid-grouping-row"
-                style="width:${grouping ? grouping * 15 : 0}px;left:0; display:${grouping
-                    ? 'block'
-                    : 'none'}"
-            >
-            </simple-html-grid-col>
-            ${config.groups.map((group) => {
-                return html`
-                    <simple-html-grid-group-label
-                        .connector=${this.connector}
-                        .ref=${this.ref}
-                        .group=${group}
-                    >
-                    </simple-html-grid-group-label>
-                    <simple-html-grid-group-filter
-                        .connector=${this.connector}
-                        .ref=${this.ref}
-                        .group=${group}
-                    >
-                    </simple-html-grid-group-filter>
-                `;
-            })}
-        `;
     }
 }

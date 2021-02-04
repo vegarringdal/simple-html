@@ -14,7 +14,7 @@ import './nav-buttons';
 
 // add our grid
 import '@simple-html/grid';
-import '@simple-html/grid/src/grid.css';
+import '../../../packages/grid/src/grid.css';
 
 @customElement('app-root')
 export default class extends HTMLElement {

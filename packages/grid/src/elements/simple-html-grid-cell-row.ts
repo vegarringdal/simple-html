@@ -1,46 +1,41 @@
-import { customElement, property } from '@simple-html/core';
+import { customElement } from '@simple-html/core';
 import { SimpleHtmlGrid, GridInterface } from '..';
-import { GridGroupConfig, CellConfig } from '../types';
-import { html } from 'lit-html';
+import { CellConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
-import { log } from './log';
 
 @customElement('simple-html-grid-cell-row')
-export default class extends HTMLElement {
+export class SimpleHtmlGridCellRow extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
     ref: SimpleHtmlGrid;
     currentHeight: number;
-    @property() rowNo: number;
-    group: GridGroupConfig;
+    rowNo: number;
+    group: number;
     cell: CellConfig;
+    innerEle: HTMLInputElement;
 
-    connectedCallback() {
+    public connectedCallback() {
         this.classList.add('simple-html-grid-cell-row');
         const config = this.connector.config;
         this.style.display = 'block';
         this.style.height = config.cellHeight + 'px';
-        this.style.width = this.group.width + 'px';
+        this.style.width = config.groups[this.group].width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
-        this.cell = this.group.rows[this.cellPosition];
-        this.ref.addEventListener('column-resize', this);
+        this.cell = config.groups[this.group].rows[this.cellPosition];
+        this.innerEle = document.createElement('input');
+        this.innerEle.classList.add('simple-html-grid-row-input');
+        this.appendChild(this.innerEle);
+        this.setSettings();
     }
 
-    handleEvent(e: Event) {
-        log(this, e);
-
-        if (e.type === 'column-resize') {
-            this.style.width = this.group.width + 'px';
-        }
+    public updateWidth() {
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
     }
 
-    disconnectedCallback() {
-        this.ref.removeEventListener('column-resize', this);
-    }
-
-    updateCallback(e: any) {
+    private updateCallback(e: any) {
         const data = this.connector.displayedDataset[this.rowNo];
         const cell = this.cell;
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
 
         if (cell.readonly) {
             if (this.cell.type === 'date') {
@@ -88,143 +83,88 @@ export default class extends HTMLElement {
                 data,
                 this.connector
             );
-
-        /*  
-         TODO: do we want to check and highlight it ? 
-       if (data.__controller?.__editedProps?.[cell.attribute]) {
-            e.target.style = 'border-bottom: 1px solid red';
-        } else {
-            e.target.style = '';
-        } */
     }
 
-    render() {
-        if (this.connector.displayedDataset[this.rowNo]) {
-            const cell = this.cell;
-            const data = this.connector.displayedDataset[this.rowNo];
-            /* 
-            TODO: do we want to check and highlight it ?
-            let edited = false;
-            if (data.__edited) {
-                if (data.__controller?.__editedProps?.[cell.attribute]) {
-                    edited = true;
-                }
-            } */
+    setSettings() {
+        const connector = this.connector;
 
-            const connector = this.connector;
-            const rowNo = this.rowNo;
-            const ref = this.ref;
-            const change = this.cell.editEventType !== 'input' ? this.updateCallback : null;
-            const input = this.cell.editEventType === 'input' ? this.updateCallback : null;
+        const ref = this.ref;
+        const change =
+            this.cell.editEventType !== 'input'
+                ? (e: any) => {
+                      this.updateCallback(e);
+                  }
+                : null;
+        const input =
+            this.cell.editEventType !== 'input'
+                ? (e: any) => {
+                      this.updateCallback(e);
+                  }
+                : null;
 
-            const contentMenu = function (e: any) {
-                if ((e as any).button !== 0) {
-                    generateMenuWithComponentName(
-                        'simple-html-grid-menu-row',
-                        e,
-                        connector,
-                        ref,
-                        cell,
-                        rowNo,
-                        data
-                    );
-                }
-            };
-
-            if (this.connector.gridCallbacks.renderRowCallBackFn) {
-                return this.connector.gridCallbacks.renderRowCallBackFn(
-                    cell,
-                    data,
-                    rowNo,
+        const contentMenu = (e: any) => {
+            if ((e as any).button !== 0) {
+                generateMenuWithComponentName(
+                    'simple-html-grid-menu-row',
+                    e,
                     connector,
-                    this.updateCallback
+                    ref,
+                    () => this.cell,
+                    () => this.rowNo,
+                    () => this.connector.displayedDataset[this.rowNo]
                 );
             }
+        };
 
+        this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
+        this.innerEle.disabled = this.cell.disabled;
+        this.innerEle.onchange = change;
+        this.innerEle.oninput = input;
+        this.innerEle.setAttribute('type', this.cell.type || 'text');
+        this.innerEle.oncontextmenu = (e: any) => {
+            e.preventDefault();
+            contentMenu(e);
+            return false;
+        };
+
+        this.updateInput();
+    }
+
+    updateInput() {
+        const data = this.connector.displayedDataset[this.rowNo];
+        if (!data || data.__group) {
+            (this.parentNode as HTMLElement).style.display = 'none';
+            return;
+        } else {
+            (this.parentNode as HTMLElement).style.display = 'block';
+        }
+
+        if (data) {
+            const cell = this.cell;
+            this.style.width = this.connector.config.groups[this.group].width + 'px';
+            this.innerEle.setAttribute('type', cell.type === 'boolean' ? 'checkbox' : cell.type || 'text');
+            const newVal = data[cell.attribute] || null;
             switch (cell.type) {
                 case 'boolean':
-                    return html`
-                        <input
-                            ?readonly=${cell.readonly || connector.config.readonly}
-                            ?disabled=${cell.disabled}
-                            @change=${change}
-                            @input=${input}
-                            type="checkbox"
-                            @contextmenu=${(e: any) => {
-                                e.preventDefault();
-                                contentMenu(e);
-                                return false;
-                            }}
-                            .checked=${data[cell.attribute]}
-                            class="simple-html-grid-row-checkbox"
-                        />
-                    `;
+                    this.innerEle.checked = newVal;
+                    this.innerEle.classList.remove('simple-html-grid-row-input');
+                    this.innerEle.classList.add('simple-html-grid-row-checkbox');
+                    break;
                 case 'image':
-                    return html`
-                        <img
-                            .src=${data[cell.attribute] || ''}
-                            class="simple-html-grid-image-round"
-                        />
-                    `;
+                    console.log('no-image');
+                    break;
                 case 'empty':
-                    return html`<div class="simple-html-grid-row-input "></div>`;
-
+                    console.log('no-.empty');
+                    break;
                 case 'date':
-                    return html`
-                        <input
-                            ?readonly=${cell.readonly || connector.config.readonly}
-                            ?disabled=${cell.disabled}
-                            @change=${change}
-                            @input=${input}
-                            type=${cell.type}
-                            @contextmenu=${(e: any) => {
-                                e.preventDefault();
-                                contentMenu(e);
-                                return false;
-                            }}
-                            .valueAsDate=${data[cell.attribute] || null}
-                            class="simple-html-grid-row-input"
-                        />
-                    `;
+                    this.innerEle.valueAsDate = newVal;
+                    break;
                 case 'number':
-                    return html`
-                        <input
-                            ?readonly=${cell.readonly || connector.config.readonly}
-                            ?disabled=${cell.disabled}
-                            @change=${change}
-                            @input=${input}
-                            type=${cell.type}
-                            @contextmenu=${(e: any) => {
-                                e.preventDefault();
-                                contentMenu(e);
-                                return false;
-                            }}
-                            .valueAsNumber=${data[cell.attribute]}
-                            class="simple-html-grid-row-input"
-                        />
-                    `;
+                    this.innerEle.valueAsNumber = newVal;
+                    break;
                 default:
+                    this.innerEle.value = newVal;
             }
-
-            // style="${edited ? 'border-bottom: 1px solid red' : ''}" <- do we want to highlight it?
-            return html`
-                <input
-                    ?readonly=${cell.readonly || connector.config.readonly}
-                    ?disabled=${cell.disabled}
-                    @change=${change}
-                    @input=${input}
-                    @contextmenu=${(e: any) => {
-                        e.preventDefault();
-                        contentMenu(e);
-                        return false;
-                    }}
-                    type=${cell.type || 'text'}
-                    .value=${data[cell.attribute] || null}
-                    class="simple-html-grid-row-input"
-                />
-            `;
-        } else {
-            return '';
         }
     }
 }
