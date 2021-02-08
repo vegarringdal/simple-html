@@ -1,7 +1,6 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
-import { html } from 'lit-html';
 import { CellConfig, FilterArgument, FilterComparisonOperator } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
@@ -18,6 +17,7 @@ export default class extends HTMLElement {
     availableOnly: boolean = false;
     enableAvailableOnlyOption: boolean = false;
     search: any;
+    scrollAreaRef: HTMLDivElement;
 
     connectedCallback() {
         this.classList.add('simple-html-grid', 'simple-html-grid-menu');
@@ -28,6 +28,7 @@ export default class extends HTMLElement {
         }, 50);
         this.search = this.cell.filterable?.currentValue || null;
         this.fillDropdown();
+        this.default();
     }
 
     fillDropdown() {
@@ -110,7 +111,7 @@ export default class extends HTMLElement {
 
             this.enableAvailableOnlyOption =
                 this.connector.getDatasource().getRows(true).length !==
-                    this.connector.getDatasource().getAllData().length &&
+                    this.connector.getDatasource().getAllData().length ||
                 this.dataFilterSet.size === this.dataFilterSetFull.size;
         }
     }
@@ -156,94 +157,134 @@ export default class extends HTMLElement {
     }
 
     filters() {
+        this.innerHTML = '';
         const operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
-        return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('EQUAL')}>
-                ${operator === 'EQUAL' ? html`<u><b>Equal to</b></u>` : 'Equal to'}
-            </p>
 
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('NOT_EQUAL_TO')}>
-                ${operator === 'NOT_EQUAL_TO' ? html`<u><b>Not equal to</b></u>` : 'Not equal to'}
-            </p>
+        let el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('EQUAL');
+        el.style.fontWeight = operator === 'EQUAL' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Equal to'));
+        this.appendChild(el);
 
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('BEGIN_WITH')}>
-                ${operator === 'BEGIN_WITH' ? html`<u><b>Begin with</b></u>` : 'Begin with'}
-            </p>
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('NOT_EQUAL_TO');
+        el.style.fontWeight = operator === 'NOT_EQUAL_TO' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Not equal to'));
+        this.appendChild(el);
 
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('GREATER_THAN')}>
-                ${operator === 'GREATER_THAN' ? html`<u><b>Greater than</b></u>` : 'Greater than'}
-            </p>
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('BEGIN_WITH');
+        el.style.fontWeight = operator === 'BEGIN_WITH' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Begin with'));
+        this.appendChild(el);
 
-            <p
-                class="simple-html-grid-menu-item"
-                @click=${() => this.select('GREATER_THAN_OR_EQUAL_TO')}
-            >
-                ${operator === 'GREATER_THAN_OR_EQUAL_TO'
-                    ? html`<u><b>Greater than or equal</b></u>`
-                    : 'Greater than or equal'}
-            </p>
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('GREATER_THAN');
+        el.style.fontWeight = operator === 'GREATER_THAN' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Greater than'));
+        this.appendChild(el);
 
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('LESS_THAN')}>
-                ${operator === 'LESS_THAN' ? html`<u><b>Less than</b></u>` : 'Less than'}
-            </p>
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('GREATER_THAN_OR_EQUAL_TO');
+        el.style.fontWeight = operator === 'GREATER_THAN_OR_EQUAL_TO' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Greater than or equal'));
+        this.appendChild(el);
 
-            <p
-                class="simple-html-grid-menu-item"
-                @click=${() => this.select('LESS_THAN_OR_EQUAL_TO')}
-            >
-                ${operator === 'LESS_THAN_OR_EQUAL_TO'
-                    ? html`<u><b>Less than or equal</b></u>`
-                    : 'Less than or equal'}
-            </p>
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('LESS_THAN');
+        el.style.fontWeight = operator === 'LESS_THAN' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Less than'));
+        this.appendChild(el);
 
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('END_WITH')}>
-                ${operator === 'END_WITH' ? html`<u><b>End with</b></u>` : 'End with'}
-            </p>
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('LESS_THAN_OR_EQUAL_TO');
+        el.style.fontWeight = operator === 'LESS_THAN_OR_EQUAL_TO' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Less than or equal'));
+        this.appendChild(el);
 
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('CONTAINS')}>
-                ${operator === 'CONTAINS' ? html`<u><b>Contains</b></u>` : 'Contains'}
-            </p>
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('END_WITH');
+        el.style.fontWeight = operator === 'END_WITH' ? 'bold' : '';
+        el.appendChild(document.createTextNode('End with'));
+        this.appendChild(el);
 
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('DOES_NOT_CONTAIN')}>
-                ${operator === 'DOES_NOT_CONTAIN'
-                    ? html`<u><b>Does not contain</b></u>`
-                    : 'Does not contain'}
-            </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('END_WITH')}>
-                ${operator === 'END_WITH' ? html`<u><b>End with</b></u>` : 'End with'}
-            </p>
-            <hr />
-            <p
-                class="simple-html-grid-menu-item"
-                @click=${() => {
-                    this.defaultMenu = true;
-                    this.wait = true;
-                    this.render();
-                }}
-            >
-                <b>Back</b>
-            </p>`;
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('CONTAINS');
+        el.style.fontWeight = operator === 'CONTAINS' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Contains'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('DOES_NOT_CONTAIN');
+        el.style.fontWeight = operator === 'DOES_NOT_CONTAIN' ? 'bold' : '';
+        el.appendChild(document.createTextNode('Does not contain'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.select('END_WITH');
+        el.style.fontWeight = operator === 'END_WITH' ? 'bold' : '';
+        el.appendChild(document.createTextNode('End with'));
+        this.appendChild(el);
+
+        el = document.createElement('hr');
+        el.appendChild(document.createTextNode('End with'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.appendChild(document.createTextNode('Back'));
+        el.onclick = () => {
+            this.defaultMenu = true;
+            this.wait = true;
+            this.default();
+        };
+        this.appendChild(el);
+    }
+
+    filterValueClick(rowData: any) {
+        this.wait = true;
+        this.selectAll = false;
+        this.dataFilterSet.has(rowData)
+            ? this.dataFilterSet.delete(rowData)
+            : this.dataFilterSet.add(rowData);
+        this.selectAll =
+            this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
+        this.default();
+    }
+
+    selectAllClick() {
+        this.wait = true;
+        this.selectAll = !this.selectAll;
+        if (this.selectAll) {
+            this.dataFilterSet = new Set(this.dataFilterSetFull);
+        } else {
+            this.dataFilterSet = new Set();
+        }
+
+        this.default();
     }
 
     default() {
+        this.innerHTML = '';
+
         const filtertoggleClick = () => {
             this.wait = true;
             this.availableOnly = !this.availableOnly;
             this.selectAll =
                 this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
             this.fillDropdown();
-            this.render();
-        };
-
-        const selectAllClick = () => {
-            this.wait = true;
-            this.selectAll = !this.selectAll;
-            if (this.selectAll) {
-                this.dataFilterSet = new Set(this.dataFilterSetFull);
-            } else {
-                this.dataFilterSet = new Set();
-            }
-
-            this.render();
+            this.default();
         };
 
         const runFilterClick = () => {
@@ -271,118 +312,142 @@ export default class extends HTMLElement {
             }
         };
 
-        return html`
-            <p
-                class="simple-html-grid-menu-item"
-                @click=${() => {
-                    this.defaultMenu = false;
-                    this.wait = true;
-                    this.render();
-                }}
-            >
-                Filters
-            </p>
-            <hr />
-            <p
-                class="simple-html-grid-menu-item"
-                @click=${(e: any) =>
-                    generateMenuWithComponentName(
-                        'simple-html-grid-filter-dialog',
-                        e,
-                        this.connector,
-                        this.ref,
-                        null,
-                        null,
-                        null
-                    )}
-            >
-                Advanced
-            </p>
-
-            <hr />
-            <p class="simple-html-grid-menu-item" @click=${this.clearAll}>
-                clear filter all columns
-            </p>
-            <hr />
-
-            ${this.enableAvailableOnlyOption
-                ? html`<div style="padding:2px">
-                      <input
-                          style="padding:2px"
-                          type="checkbox"
-                          .checked=${this.availableOnly}
-                          @click=${filtertoggleClick}
-                      /><label style="padding:2px" @click="${filtertoggleClick}"
-                          >Filter Available</label
-                      >
-                  </div>`
-                : ''}
-            ${this.cell.type === 'text' || this.cell.type === undefined
-                ? html` <input
-                      class="simple-html-grid-menu-item-input"
-                      style="outline:none;width: 100%;"
-                      placeholder="search"
-                      .value=${this.search}
-                      @click=${() => {
-                          this.wait = true;
-                      }}
-                      @input=${(e: any) => {
-                          this.search = e.target.value || null;
-                          this.fillDropdown();
-                          this.render();
-                      }}
-                  />`
-                : ''}
-            ${this.cell.type === 'text' || this.cell.type === undefined
-                ? html`<div style="max-height:250px; overflow-y:auto">
-                          ${!this.availableOnly
-                              ? html`<div style="padding:2px">
-                                    <input
-                                        style="padding:2px"
-                                        type="checkbox"
-                                        .checked=${this.selectAll}
-                                        @click=${selectAllClick}
-                                    /><label style="padding:2px" @click=${selectAllClick}
-                                        >Select all</label
-                                    >
-                                </div>`
-                              : ''}
-                          ${this.filterValues()}
-                      </div>
-
-                      <p class="simple-html-grid-menu-item" @click=${runFilterClick}>
-                          <b>run filter</b>
-                      </p> `
-                : ''}
-        `;
-    }
-
-    render() {
-        return html` ${this.defaultMenu ? this.default() : this.filters()}`;
-    }
-
-    filterValues() {
-        const filterValueClick = (rowData: any) => {
+        let el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => {
+            this.defaultMenu = false;
             this.wait = true;
-            this.selectAll = false;
-            this.dataFilterSet.has(rowData)
-                ? this.dataFilterSet.delete(rowData)
-                : this.dataFilterSet.add(rowData);
-            this.selectAll =
-                this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
-            this.render();
+            this.filters();
         };
-        return Array.from(this.dataFilterSetFull).map((rowData: any) => {
-            return html`<div style="padding:2px">
-                <input
-                    style="padding:2px"
-                    type="checkbox"
-                    .checked="${this.dataFilterSet.has(rowData)}"
-                    @click="${() => filterValueClick(rowData)}}"
-                /><label style="padding:2px" @click="${() => filterValueClick(rowData)}}"
-                    >${rowData === 'NULL' ? 'Blank' : rowData}</label
-                >
-            </div>`;
+        el.appendChild(document.createTextNode('Filters'));
+        this.appendChild(el);
+
+        el = document.createElement('hr');
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = (e: any) =>
+            generateMenuWithComponentName(
+                'simple-html-grid-filter-dialog',
+                e,
+                this.connector,
+                this.ref,
+                null,
+                null,
+                null
+            );
+        el.appendChild(document.createTextNode('Advanced'));
+        this.appendChild(el);
+
+        el = document.createElement('hr');
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.clearAll();
+        el.appendChild(document.createTextNode('clear filter all columns'));
+        this.appendChild(el);
+
+        el = document.createElement('hr');
+        this.appendChild(el);
+
+        if (this.enableAvailableOnlyOption) {
+            el = document.createElement('div');
+            el.style.padding = '2px';
+
+            let iel = document.createElement('input');
+            iel.style.padding = '2px';
+            iel.type = 'checkbox';
+            iel.checked = this.availableOnly;
+            iel.onclick = () => filtertoggleClick();
+            el.appendChild(iel);
+
+            let lel = document.createElement('label');
+            lel.style.padding = '2px';
+            lel.onclick = () => filtertoggleClick();
+            lel.appendChild(document.createTextNode('Filter Available'));
+            el.appendChild(lel);
+
+            this.appendChild(el);
+        }
+
+        if (this.cell.type === 'text' || this.cell.type === undefined) {
+            let textFilterInput = document.createElement('input');
+            textFilterInput.classList.add('simple-html-grid-menu-item-input');
+            textFilterInput.style.outline = 'none';
+            textFilterInput.style.width = '100%';
+            textFilterInput.type = 'text';
+            textFilterInput.placeholder = 'search';
+            textFilterInput.value = this.search;
+            textFilterInput.checked = this.availableOnly;
+            textFilterInput.onclick = () => {
+                this.wait = true;
+            };
+            textFilterInput.oninput = (e: any) => {
+                this.search = e.target.value || null;
+                this.fillDropdown();
+
+                this.scrollAreaRef.innerText = '';
+                this.filterValues(this.scrollAreaRef);
+            };
+            this.appendChild(textFilterInput);
+
+            let scrollArea = document.createElement('div');
+            scrollArea.style.padding = '2px';
+            scrollArea.style.overflowY = 'auto';
+            scrollArea.style.maxHeight = '250px';
+
+            this.filterValues(scrollArea);
+            this.appendChild(scrollArea);
+            this.scrollAreaRef = scrollArea;
+
+            let el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => runFilterClick();
+            el.appendChild(document.createTextNode('run filter'));
+            this.appendChild(el);
+        }
+    }
+
+    filterValues(scrollArea: HTMLElement) {
+        let containerSelectAll = document.createElement('div');
+        containerSelectAll.style.padding = '2px';
+
+        let selectAll = document.createElement('input');
+        selectAll.style.padding = '2px';
+        selectAll.type = 'checkbox';
+        selectAll.checked = this.selectAll;
+        selectAll.onclick = () => this.selectAllClick();
+
+        containerSelectAll.appendChild(selectAll);
+
+        let labelSelectAll = document.createElement('label');
+        labelSelectAll.style.padding = '2px';
+        labelSelectAll.onclick = () => this.selectAllClick();
+        labelSelectAll.appendChild(document.createTextNode('Select all'));
+        containerSelectAll.appendChild(labelSelectAll);
+
+        scrollArea.appendChild(containerSelectAll);
+
+        Array.from(this.dataFilterSetFull).forEach((rowData: any) => {
+            let el = document.createElement('div');
+            el.style.padding = '2px';
+
+            let iel = document.createElement('input');
+            iel.style.padding = '2px';
+            iel.type = 'checkbox';
+            iel.checked = this.dataFilterSet.has(rowData);
+            iel.onclick = () => this.filterValueClick(rowData);
+            el.appendChild(iel);
+
+            let lel = document.createElement('label');
+            lel.style.padding = '2px';
+            lel.onclick = () => this.filterValueClick(rowData);
+            lel.appendChild(document.createTextNode(rowData === 'NULL' ? 'Blank' : rowData));
+            el.appendChild(lel);
+
+            scrollArea.appendChild(el);
         });
     }
 }
