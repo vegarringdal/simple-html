@@ -1,5 +1,4 @@
 import { GridInterface } from '../gridInterface';
-import { html, svg } from 'lit-html';
 import { SimpleHtmlGrid } from '..';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { panelColumn, columnDragDropPanelColumn } from './dragEvent';
@@ -97,11 +96,6 @@ export class SimpleHtmlGridPanel extends HTMLElement {
             svgElDelete.classList.add('simple-html-grid-icon','simple-html-grid-iconhidden')
             svgElDelete.onclick = click
             svgElDelete.setAttributeNS(null, 'viewBox', '0 0 16 16');
-           /*  svgElDelete.setAttributeNS(
-                null,
-                'class',
-                'simple-html-grid-icon simple-html-grid-iconhidden'
-            ); */
             const svgElpath = document.createElementNS(xmlns, 'path');
             svgElpath.setAttributeNS(
                 null,
