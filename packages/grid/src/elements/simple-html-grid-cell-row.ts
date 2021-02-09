@@ -12,6 +12,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     group: number;
     cell: CellConfig;
     innerEle: HTMLInputElement;
+    lastVal: any;
 
     public connectedCallback() {
         this.classList.add('simple-html-grid-cell-row');
