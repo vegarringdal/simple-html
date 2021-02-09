@@ -1,7 +1,6 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
-import { html } from 'lit-html';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-footer')
