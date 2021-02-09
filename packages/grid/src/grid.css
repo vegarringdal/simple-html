@@ -252,6 +252,14 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight);
 }
+.simple-html-grid .grid-edit-button {
+    margin: 2px;
+    position: absolute;
+    top: 0px;
+    border: 1px solid;
+    border-color: var(--simple-html-grid-sec-bg-border);
+    background-color: var(--simple-html-grid-main-bg-color);
+}
 
 .simple-html-grid .simple-html-grid-label {
     box-sizing: border-box;
@@ -471,7 +479,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     min-height: 20px;
 }
 
-.dialog-row div:first-child{
+.dialog-row div:first-child {
     border-top: 0px solid var(--simple-html-grid-sec-bg-border);
 }
 
@@ -495,7 +503,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     margin-left: 5px;
     margin-top: 2px;
 }
-
 
 .dialog-item-y:focus {
     outline: 1px dashed !important;
@@ -563,7 +570,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 
 div.dialog-row ul:first-child {
     margin-left: 0px;
-   
 }
 
 ul.dialog-row {
@@ -574,14 +580,12 @@ ul.dialog-row {
     border-left: 1px dotted rgb(100, 100, 100);
 }
 
-
 ul.dialog-row li {
     margin: 0;
     padding: 0 7px;
     margin-left: 10px;
     border-left: 1px dotted rgb(100, 100, 100);
 }
-
 
 ul.dialog-row li:before {
     position: relative;
@@ -606,13 +610,10 @@ ul.dialog-row div:before {
     display: inline-block;
 }
 
-ul.dialog-row ul:last-child{
+ul.dialog-row ul:last-child {
     border-left: 1px dotted rgb(100, 100, 100);
 }
 
-.first-dialog-row{
+.first-dialog-row {
     border-left: 0px !important;
 }
-
-
-
