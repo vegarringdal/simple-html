@@ -146,27 +146,31 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                 cell.type === 'boolean' ? 'checkbox' : cell.type || 'text'
             );
             const newVal = data[cell.attribute] || null;
-            switch (cell.type) {
-                case 'boolean':
-                    this.innerEle.checked = newVal;
-                    this.innerEle.classList.remove('simple-html-grid-row-input');
-                    this.innerEle.classList.add('simple-html-grid-row-checkbox');
-                    break;
-                case 'image':
-                    console.log('no-image');
-                    break;
-                case 'empty':
-                    console.log('no-.empty');
-                    break;
-                case 'date':
-                    this.innerEle.valueAsDate = newVal;
-                    break;
-                case 'number':
-                    this.innerEle.valueAsNumber = newVal;
-                    break;
-                default:
-                    this.innerEle.value = newVal;
+            if (newVal !== this.lastVal) {
+                switch (cell.type) {
+                    case 'boolean':
+                        this.innerEle.checked = newVal;
+                        this.innerEle.classList.remove('simple-html-grid-row-input');
+                        this.innerEle.classList.add('simple-html-grid-row-checkbox');
+                        break;
+                    case 'image':
+                        console.log('no-image');
+                        break;
+                    case 'empty':
+                        console.log('no-.empty');
+                        break;
+                    case 'date':
+                        this.innerEle.valueAsDate = newVal;
+                        break;
+                    case 'number':
+                        this.innerEle.valueAsNumber = newVal;
+                        break;
+                    default:
+                        this.innerEle.value = newVal;
+                }
             }
+
+            this.lastVal = newVal;
         }
     }
 }

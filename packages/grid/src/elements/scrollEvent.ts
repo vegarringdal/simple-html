@@ -176,15 +176,15 @@ export function scrollEvent(
         }
 
         if (connector.config.scrollLeft !== e.target.scrollLeft) {
-            requestAnimationFrame(() => {
+           // requestAnimationFrame(() => {
                 horizontalScroll();
-            });
+           // });
         }
 
         if (connector.config.lastScrollTop !== e.target.scrollTop) {
-            requestAnimationFrame(() => {
+            //requestAnimationFrame(() => {
                 verticalScroll();
-            });
+           // });
         }
     };
 }
