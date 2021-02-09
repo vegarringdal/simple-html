@@ -1,7 +1,6 @@
 import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
-import { html } from 'lit-html';
 import { CellConfig } from '../types';
 
 @customElement('simple-html-grid-menu-panel')
