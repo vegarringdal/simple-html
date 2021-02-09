@@ -111,7 +111,7 @@ export function filterDialogGroupTemplate(
         if (!parent) {
             g.filterArguments = [];
         }
-        ctx.render();
+        ctx.generate();
     };
 
     const svgElDelete = document.createElementNS(xmlns, 'svg');

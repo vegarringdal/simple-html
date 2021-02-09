@@ -61,12 +61,12 @@ export class SimpleHtmlGridRow extends HTMLElement {
 
     public verticalScrollEvent() {
         this.groupMarginEl.row = this.row;
-        this.groupMarginEl.render();
+        this.groupMarginEl.updateGui();
 
         this.groupDataEl.connector = this.connector;
         this.groupDataEl.row = this.row;
         this.groupDataEl.ref = this.ref;
-        this.groupDataEl.render();
+        this.groupDataEl.updateGui();
         if (this.row.update) {
             this.colEls.forEach((col, i) => {
                 col.rowNo = this.row.i;
@@ -122,12 +122,12 @@ export class SimpleHtmlGridRow extends HTMLElement {
 
     public updateRowColumns() {
         this.groupMarginEl.row = this.row;
-        this.groupMarginEl.render();
+        this.groupMarginEl.updateGui();
 
         this.groupDataEl.connector = this.connector;
         this.groupDataEl.row = this.row;
         this.groupDataEl.ref = this.ref;
-        this.groupDataEl.render();
+        this.groupDataEl.updateGui();
 
         if (this.colEls.length !== this.ref.colCache.length) {
             this.syncColumnsWithColCache();

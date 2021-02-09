@@ -115,4 +115,6 @@ const checker_client = TypeChecker({
 
 checker_client.printSettings();
 checker_client.inspectAndPrint();
-checker_client.worker_watch('./src');
+checker_client.worker_watch('./');
+
+
