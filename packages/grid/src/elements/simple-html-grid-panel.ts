@@ -23,11 +23,12 @@ export class SimpleHtmlGridPanel extends HTMLElement {
         this.style.height = config.panelHeight + 'px';
         this.ref.addEventListener('reRender', this);
         this.addEventListener('contextmenu', this);
+        this.updateGui();
     }
 
     handleEvent(e: Event) {
         if (e.type === 'reRender') {
-            this.render();
+            this.updateGui();
         }
         if (e.type === 'contextmenu') {
             e.preventDefault();
@@ -45,7 +46,8 @@ export class SimpleHtmlGridPanel extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
-    render() {
+    updateGui() {
+        this.innerHTML = '';
         const grouping = this.connector.config.groupingSet || [];
 
         const mouseEnter = (e: MouseEvent) => {
@@ -64,43 +66,59 @@ export class SimpleHtmlGridPanel extends HTMLElement {
         const leave = panelColumn('leave', this.connector);
         const dragstart = columnDragDropPanelColumn('dragstart', this.connector);
 
-        return html`
-            ${grouping.map((group) => {
-                const click = () => {
-                    this.connector.removeGroup(group);
-                };
-                return html`
-                    <div
-                        @mouseenter=${(e: any) => {
-                            mouseEnter(e);
-                            enter(e, group.attribute);
-                        }}
-                        @mouseleave=${(e: any) => {
-                            mouseLeave(e);
-                            leave(e);
-                        }}
-                        @mousedown=${(e: any) => {
-                            dragstart(e, group);
-                        }}
-                        class="simple-html-grid-grouping-panel-container"
-                    >
-                        <p class="simple-html-grid-grouping-panel-p">
-                            ${capalize(group.title || group.attribute)}
-                            <i>
-                                <svg
-                                    @click=${click}
-                                    class="simple-html-grid-icon simple-html-grid-iconhidden"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 16 16"
-                                >
-                                    ${svg`<path d="M3 4l4.3 4L3 12h1.4L8 8.7l3.5 3.3H13L8.6 8 13 4h-1.5L8 7.3 4.4 4H3z"/>`}
-                                </svg></i
-                            >
-                        </p>
-                    </div>
-                `;
-            })}
-        `;
+        const groupEls = grouping.map((group) => {
+            const click = () => {
+                this.connector.removeGroup(group);
+            };
+
+            const el = document.createElement('div');
+            el.classList.add('simple-html-grid-grouping-panel-container');
+            el.onmouseenter = (e: any) => {
+                mouseEnter(e);
+                enter(e, group.attribute);
+            };
+            el.onmouseleave = (e: any) => {
+                mouseLeave(e);
+                leave(e);
+            };
+            el.onmousedown = (e: any) => {
+                dragstart(e, group);
+            };
+
+            const p = document.createElement('p');
+            p.classList.add('simple-html-grid-grouping-panel-p');
+            p.appendChild(document.createTextNode(`${capalize(group.title || group.attribute)}`));
+
+            const i = document.createElement('i');
+            
+
+            const xmlns = 'http://www.w3.org/2000/svg';
+            const svgElDelete = document.createElementNS(xmlns, 'svg');
+            svgElDelete.classList.add('simple-html-grid-icon','simple-html-grid-iconhidden')
+            svgElDelete.onclick = click
+            svgElDelete.setAttributeNS(null, 'viewBox', '0 0 16 16');
+           /*  svgElDelete.setAttributeNS(
+                null,
+                'class',
+                'simple-html-grid-icon simple-html-grid-iconhidden'
+            ); */
+            const svgElpath = document.createElementNS(xmlns, 'path');
+            svgElpath.setAttributeNS(
+                null,
+                'd',
+                'M3 4l4.3 4L3 12h1.4L8 8.7l3.5 3.3H13L8.6 8 13 4h-1.5L8 7.3 4.4 4H3z'
+            );
+            svgElDelete.appendChild(svgElpath);
+            i.appendChild(svgElDelete);
+            p.appendChild(i);
+            el.appendChild(p);
+
+            return el;
+        });
+
+        groupEls.forEach((el) => {
+            this.appendChild(el);
+        });
     }
 }
 defineElement(SimpleHtmlGridPanel, 'simple-html-grid-panel');
