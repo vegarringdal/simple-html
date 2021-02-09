@@ -1,6 +1,6 @@
 import { customElement } from '@simple-html/core';
 @customElement('simple-html-grid-menu-custom')
-export default class extends HTMLElement {
+export class SimpleHtmlGridMenuCustom extends HTMLElement {
     rows: any[];
 
     connectedCallback() {

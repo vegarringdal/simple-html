@@ -7,7 +7,7 @@ import { CellConfig, FilterArgument } from '../types';
 import { filterDialogGroupTemplate } from './filterDialogGroupTemplate';
 
 @customElement('simple-html-grid-filter-dialog')
-export default class extends HTMLElement {
+export class SimpleHtmlGridFilterDialog extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;

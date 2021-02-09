@@ -5,7 +5,7 @@ import { CellConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-menu-label')
-export default class extends HTMLElement {
+export class SimpleHtmlGridMenuLabel extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;

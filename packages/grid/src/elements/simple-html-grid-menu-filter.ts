@@ -5,7 +5,7 @@ import { CellConfig, FilterArgument, FilterComparisonOperator } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
 @customElement('simple-html-grid-menu-filter')
-export default class extends HTMLElement {
+export class SimpleHtmlGridMenuFilter extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;

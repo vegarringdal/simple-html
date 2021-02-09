@@ -4,7 +4,7 @@ import { SimpleHtmlGrid } from './simple-html-grid';
 import { CellConfig } from '../types';
 
 @customElement('simple-html-grid-menu-panel')
-export default class extends HTMLElement {
+export class SimpleHtmlGridMenuPanel extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;

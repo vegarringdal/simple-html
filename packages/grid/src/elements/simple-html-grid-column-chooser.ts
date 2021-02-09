@@ -6,7 +6,7 @@ import { CellConfig, FilterArgument } from '../types';
 import { columnDragDrop } from './dragEvent';
 
 @customElement('simple-html-grid-column-chooser')
-export default class extends HTMLElement {
+export class SimpleHtmlGridColumnChooser extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;

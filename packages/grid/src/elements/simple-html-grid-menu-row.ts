@@ -5,7 +5,7 @@ import { CellConfig, Entity } from '../types';
 
 let dataClip: any = null; // firefox hack
 @customElement('simple-html-grid-menu-row')
-export default class extends HTMLElement {
+export class SimpleHtmlGridMenuRow extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;
