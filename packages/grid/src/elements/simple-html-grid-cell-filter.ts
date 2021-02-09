@@ -34,6 +34,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
     }
 
     updateGui() {
+        this.innerHTML = ''
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
         const ref = this.ref;
