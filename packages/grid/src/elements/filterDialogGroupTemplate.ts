@@ -1,10 +1,11 @@
 import { FilterArgument } from '../types';
 import { filterDialogConditionTemplate } from './filterDialogCondition/filterDialogConditionTemplate';
 import { generateMenu } from './generateMenu';
+import { SimpleHtmlGridFilterDialog } from './simple-html-grid-filter-dialog';
 
 export function filterDialogGroupTemplate(
     g: FilterArgument,
-    ctx: any,
+    ctx: SimpleHtmlGridFilterDialog,
     level: number,
     parent?: any[]
 ) {
@@ -20,7 +21,7 @@ export function filterDialogGroupTemplate(
     btnLogical.classList.add('dialog-item-x');
     btnLogical.onclick = () => {
         g.logicalOperator = g.logicalOperator === 'AND' ? 'OR' : 'AND';
-        ctx.render();
+        ctx.generate();
     };
     const btnLogicalB = document.createElement('b');
     btnLogicalB.appendChild(document.createTextNode(g.logicalOperator));
@@ -45,7 +46,7 @@ export function filterDialogGroupTemplate(
                     g.filterArguments = [JSON.parse(JSON.stringify(g_old))];
                     g.value = '';
 
-                    ctx.render();
+                    ctx.generate();
                 }
             },
             {
@@ -61,7 +62,7 @@ export function filterDialogGroupTemplate(
                         filterArguments: [],
                         value: ''
                     });
-                    ctx.render();
+                    ctx.generate();
                 }
             },
             {
@@ -77,7 +78,7 @@ export function filterDialogGroupTemplate(
                         filterArguments: [],
                         value: ''
                     });
-                    ctx.render();
+                    ctx.generate();
                 }
             }
         ]);

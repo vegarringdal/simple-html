@@ -5,13 +5,14 @@ import { selectAttributeOrInputBtn } from './selectAttributeOrInputBtn';
 import { valueInput } from './valueInput';
 import { selectOperatorBtn } from './selectOperatorBtn';
 import { selectAttributesBtn } from './selectAttributesBtn';
+import { SimpleHtmlGridFilterDialog } from '../simple-html-grid-filter-dialog';
 
 /**
  * returns condition template
  */
 export function filterDialogConditionTemplate(
     operatorObjectArr: FilterArgument[],
-    ctx: any,
+    ctx: SimpleHtmlGridFilterDialog,
     level: number
 ): HTMLElement[] | null {
     ctx.width = level + ctx.width;

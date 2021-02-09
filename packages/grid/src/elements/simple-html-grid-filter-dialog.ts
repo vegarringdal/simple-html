@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
-import { html } from 'lit-html';
 import { CellConfig, FilterArgument } from '../types';
 import { filterDialogGroupTemplate } from './filterDialogGroupTemplate';
 import { defineElement } from './defineElement';
@@ -37,6 +36,7 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
 
         this.classList.add('simple-html-grid-menu-full');
         this.filterAttributes = this.connector.config.groups.flatMap((y) => y.rows);
+        this.generate();
     }
 
     handleEvent(e: Event) {
@@ -49,54 +49,61 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
         document.body.removeChild(this);
     }
 
-    render() {
-        return html`<div style="width:650px" class="simple-html-grid simple-html-filter-dialog">
-            <div class="dialog-row main-group">
-                <button
-                    class="dialog-item-x"
-                    @click=${() => {
-                        this.removeSelf();
-                    }}
-                >
-                    <b> Close</b>
-                </button>
-                <button
-                    class="dialog-item-x"
-                    @click=${() => {
-                        const columns = this.connector.config.groups.flatMap((x) => x.rows);
-                        columns.forEach((col) => {
-                            const f = col.filterable;
-                            if (f) {
-                                f.currentValue = null;
-                            }
-                        });
-                        this.connector.setCurrentFilter(this.filter);
-                        this.connector.reRunFilter();
-                        this.removeSelf();
-                    }}
-                >
-                    <b> Run query & close</b>
-                </button>
-                <button
-                    class="dialog-item-x"
-                    @click=${() => {
-                        const columns = this.connector.config.groups.flatMap((x) => x.rows);
-                        columns.forEach((col) => {
-                            const f = col.filterable;
-                            if (f) {
-                                f.currentValue = null;
-                            }
-                        });
-                        this.connector.setCurrentFilter(this.filter);
-                        this.connector.reRunFilter();
-                    }}
-                >
-                    <b> Run query</b>
-                </button>
-            </div>
+    generate() {
+        this.innerHTML = '';
+        const outerDiv = document.createElement('div');
+        outerDiv.style.width = '650px';
+        outerDiv.classList.add('simple-html-grid', 'simple-html-filter-dialog');
 
-            ${filterDialogGroupTemplate(this.filter, this, 0)}
-                </ul>`;
+        const topRow = document.createElement('div');
+        topRow.classList.add('dialog-row','main-group');
+
+        outerDiv.appendChild(topRow);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.classList.add('dialog-item-x');
+        closeBtn.onclick = () => {
+            this.removeSelf();
+        };
+        closeBtn.appendChild(document.createTextNode('Close'));
+        topRow.appendChild(closeBtn);
+
+        const queryCloseBtn = document.createElement('button');
+        queryCloseBtn.classList.add('dialog-item-x');
+        queryCloseBtn.onclick = () => {
+            const columns = this.connector.config.groups.flatMap((x) => x.rows);
+            columns.forEach((col) => {
+                const f = col.filterable;
+                if (f) {
+                    f.currentValue = null;
+                }
+            });
+            this.connector.setCurrentFilter(this.filter);
+            this.connector.reRunFilter();
+            this.removeSelf();
+        };
+        queryCloseBtn.appendChild(document.createTextNode('Run query & close'));
+        topRow.appendChild(queryCloseBtn);
+
+        const queryBtn = document.createElement('button');
+        queryBtn.classList.add('dialog-item-x');
+        queryBtn.onclick = () => {
+            const columns = this.connector.config.groups.flatMap((x) => x.rows);
+            columns.forEach((col) => {
+                const f = col.filterable;
+                if (f) {
+                    f.currentValue = null;
+                }
+            });
+            this.connector.setCurrentFilter(this.filter);
+            this.connector.reRunFilter();
+        };
+        queryBtn.appendChild(document.createTextNode('Run query'));
+        topRow.appendChild(queryBtn);
+
+        outerDiv.appendChild(filterDialogGroupTemplate(this.filter, this, 0));
+
+        this.appendChild(outerDiv);
     }
 }
 defineElement(SimpleHtmlGridFilterDialog, 'simple-html-grid-filter-dialog');

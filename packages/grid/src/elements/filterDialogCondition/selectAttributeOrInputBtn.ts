@@ -1,9 +1,10 @@
 import { FilterArgument } from '../../types';
+import { SimpleHtmlGridFilterDialog } from '../simple-html-grid-filter-dialog';
 
 /**
  * sets if value is input or btn to select attibutes
  */
-export function selectAttributeOrInputBtn(operatorObject: FilterArgument, ctx: any) {
+export function selectAttributeOrInputBtn(operatorObject: FilterArgument, ctx: SimpleHtmlGridFilterDialog) {
     const xmlns = 'http://www.w3.org/2000/svg';
     const svgEl = document.createElementNS(xmlns, 'svg');
 
@@ -25,7 +26,7 @@ export function selectAttributeOrInputBtn(operatorObject: FilterArgument, ctx: a
     el.classList.add('dialog-item-x', 'dialog-condition-type');
     el.onclick = () => {
         operatorObject.valueType = operatorObject.valueType === 'VALUE' ? 'ATTRIBUTE' : 'VALUE';
-        ctx.render();
+        ctx.generate();
     };
     el.appendChild(svgEl)
     return el;

@@ -93,7 +93,7 @@ export class SimpleHtmlGridGroupFilter extends HTMLElement {
             el.group = this.group;
         });
 
-        this.rows.forEach((e) => e.render());
+        this.rows.forEach((e) => e.updateGui());
     }
 }
 defineElement(SimpleHtmlGridGroupFilter, 'simple-html-grid-group-filter');

@@ -1,10 +1,11 @@
 import { CellConfig, FilterArgument } from '../../types';
 import { generateMenu } from '../generateMenu';
+import { SimpleHtmlGridFilterDialog } from '../simple-html-grid-filter-dialog';
 
 /**
  * returns list if attributes from config
  */
-export function selectAttributesBtn(operatorObject: FilterArgument, ctx: any, isValue?: boolean) {
+export function selectAttributesBtn(operatorObject: FilterArgument, ctx: SimpleHtmlGridFilterDialog, isValue?: boolean) {
     const el = document.createElement('button');
     el.classList.add('dialog-item-y');
     el.onclick = (e: any) => {
@@ -20,7 +21,7 @@ export function selectAttributesBtn(operatorObject: FilterArgument, ctx: any, is
                             operatorObject.attribute = e.attribute;
                         }
                         operatorObject.attributeType = e.type;
-                        ctx.render();
+                        ctx.generate();
                     }
                 };
             })

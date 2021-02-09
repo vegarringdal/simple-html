@@ -1,9 +1,10 @@
 import { FilterArgument } from '../../types';
+import { SimpleHtmlGridFilterDialog } from '../simple-html-grid-filter-dialog';
 
 /**
  * delete btn, removes condition
  */
-export function deleteBtn(ctx: any, operatorObjectArr: FilterArgument[], i: number) {
+export function deleteBtn(ctx: SimpleHtmlGridFilterDialog, operatorObjectArr: FilterArgument[], i: number) {
     const xmlns = 'http://www.w3.org/2000/svg';
     const svgElDelete = document.createElementNS(xmlns, 'svg');
 
@@ -25,7 +26,7 @@ export function deleteBtn(ctx: any, operatorObjectArr: FilterArgument[], i: numb
     el.classList.add('dialog-item-x', 'dialog-condition-trash');
     el.onclick = () => {
         operatorObjectArr && operatorObjectArr.splice(i, 1);
-        ctx.render();
+        ctx.generate();
     };
     el.appendChild(svgElDelete);
     return el;
