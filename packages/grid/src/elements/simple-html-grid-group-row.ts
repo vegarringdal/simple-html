@@ -1,9 +1,8 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { ColCache } from '../types';
+import { defineElement } from './defineElement';
 import { SimpleHtmlGridCellRow } from './simple-html-grid-cell-row';
 
-@customElement('simple-html-grid-group-row')
 export class SimpleHtmlGridGroupRow extends HTMLElement {
     connector: GridInterface;
     rowNo: number;
@@ -110,3 +109,5 @@ export class SimpleHtmlGridGroupRow extends HTMLElement {
         this.ref.removeEventListener('column-resize', this);
     }
 }
+
+defineElement(SimpleHtmlGridGroupRow, 'simple-html-grid-group-row');

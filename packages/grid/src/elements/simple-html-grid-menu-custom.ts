@@ -1,5 +1,5 @@
-import { customElement } from '@simple-html/core';
-@customElement('simple-html-grid-menu-custom')
+import { defineElement } from './defineElement';
+
 export class SimpleHtmlGridMenuCustom extends HTMLElement {
     rows: any[];
 
@@ -38,3 +38,5 @@ export class SimpleHtmlGridMenuCustom extends HTMLElement {
         });
     }
 }
+
+defineElement(SimpleHtmlGridMenuCustom, 'simple-html-grid-menu-custom');

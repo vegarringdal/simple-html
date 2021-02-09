@@ -1,6 +1,7 @@
 import { FilterArgument } from '../types';
 import { filterDialogConditionTemplate } from './filterDialogCondition/filterDialogConditionTemplate';
 import { generateMenu } from './generateMenu';
+
 export function filterDialogGroupTemplate(
     g: FilterArgument,
     ctx: any,
@@ -25,10 +26,6 @@ export function filterDialogGroupTemplate(
     btnLogicalB.appendChild(document.createTextNode(g.logicalOperator));
     btnLogical.appendChild(btnLogicalB);
     div.appendChild(btnLogical);
-
-
-  
-
 
     const btnGroup = document.createElement('button');
     btnGroup.classList.add('dialog-item-x');
@@ -138,10 +135,9 @@ export function filterDialogGroupTemplate(
 
     const x = filterDialogConditionTemplate(g.filterArguments, ctx, level + 1);
     if (x && x.length) {
-        x.forEach((r)=>{
+        x.forEach((r) => {
             ul.appendChild(r);
         });
-        
     }
 
     return ul;

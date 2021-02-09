@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { CellConfig, FilterArgument } from '../types';
 import { columnDragDrop } from './dragEvent';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-column-chooser')
 export class SimpleHtmlGridColumnChooser extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
@@ -69,3 +68,4 @@ export class SimpleHtmlGridColumnChooser extends HTMLElement {
         });
     }
 }
+defineElement(SimpleHtmlGridColumnChooser, 'simple-html-grid-column-chooser');

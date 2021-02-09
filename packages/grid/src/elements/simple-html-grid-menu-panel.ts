@@ -1,9 +1,8 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { CellConfig } from '../types';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-menu-panel')
 export class SimpleHtmlGridMenuPanel extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
@@ -64,3 +63,5 @@ export class SimpleHtmlGridMenuPanel extends HTMLElement {
         el.forEach((e) => this.appendChild(e));
     }
 }
+
+defineElement(SimpleHtmlGridMenuPanel, 'simple-html-grid-menu-panel');

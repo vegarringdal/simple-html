@@ -1,9 +1,8 @@
-import { customElement } from '@simple-html/core';
 import { SimpleHtmlGrid, GridInterface } from '..';
 import { CellConfig } from '../types';
+import { defineElement } from './defineElement';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
-@customElement('simple-html-grid-cell-row')
 export class SimpleHtmlGridCellRow extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
@@ -142,7 +141,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         if (data) {
             const cell = this.cell;
             this.style.width = this.connector.config.groups[this.group].width + 'px';
-            this.innerEle.setAttribute('type', cell.type === 'boolean' ? 'checkbox' : cell.type || 'text');
+            this.innerEle.setAttribute(
+                'type',
+                cell.type === 'boolean' ? 'checkbox' : cell.type || 'text'
+            );
             const newVal = data[cell.attribute] || null;
             switch (cell.type) {
                 case 'boolean':
@@ -168,3 +170,4 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         }
     }
 }
+defineElement(SimpleHtmlGridCellRow, 'simple-html-grid-cell-row');

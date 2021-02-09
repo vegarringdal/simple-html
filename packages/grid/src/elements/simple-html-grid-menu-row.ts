@@ -1,10 +1,10 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { CellConfig, Entity } from '../types';
+import { defineElement } from './defineElement';
 
 let dataClip: any = null; // firefox hack
-@customElement('simple-html-grid-menu-row')
+
 export class SimpleHtmlGridMenuRow extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
@@ -145,8 +145,6 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
     }
 
     buildHtml() {
-    
-
         const el = [1, 1, 1, 1, 1, 1].map(() => document.createElement('p'));
         el.forEach((e) => e.classList.add('simple-html-grid-menu-item'));
 
@@ -176,3 +174,5 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
         el.forEach((e) => this.appendChild(e));
     }
 }
+
+defineElement(SimpleHtmlGridMenuRow, 'simple-html-grid-menu-row');

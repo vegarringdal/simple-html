@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { html } from 'lit-html';
 import { CellConfig, FilterArgument } from '../types';
 import { filterDialogGroupTemplate } from './filterDialogGroupTemplate';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-filter-dialog')
 export class SimpleHtmlGridFilterDialog extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
@@ -100,3 +99,4 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
                 </ul>`;
     }
 }
+defineElement(SimpleHtmlGridFilterDialog, 'simple-html-grid-filter-dialog');

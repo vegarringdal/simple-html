@@ -1,14 +1,13 @@
-import { customElement, property } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
 import { SimpleHtmlGridGroupRow } from './simple-html-grid-group-row';
 import { SimpleHtmlGridCol } from './simple-html-grid-col';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-row')
 export class SimpleHtmlGridRow extends HTMLElement {
     connector: GridInterface;
-    @property() row: RowCache;
+    row: RowCache;
     ref: SimpleHtmlGrid;
     groupMarginEl: SimpleHtmlGridCol;
     colEls: SimpleHtmlGridGroupRow[];
@@ -181,13 +180,15 @@ export class SimpleHtmlGridRow extends HTMLElement {
     private updateView() {
         // check if height is changed
         const data = this.connector.displayedDataset[this.row.i];
-        if (this.connector.config.__rowHeight > this.connector.config.cellHeight && data && !data.__group) {
+        if (
+            this.connector.config.__rowHeight > this.connector.config.cellHeight &&
+            data &&
+            !data.__group
+        ) {
             this.classList.add('grouping-row-border');
-        } else{
+        } else {
             this.classList.remove('grouping-row-border');
         }
-        
-
 
         this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
         this.style.transform = `translate3d(0px, ${
@@ -203,3 +204,5 @@ export class SimpleHtmlGridRow extends HTMLElement {
         }
     }
 }
+
+defineElement(SimpleHtmlGridRow, 'simple-html-grid-row');

@@ -1,10 +1,9 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
 import { SimpleHtmlGridRow } from './simple-html-grid-row';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-body')
 export class SimpleHtmlGridBody extends HTMLElement {
     connector: GridInterface;
     rowPositionCache: RowCache[];
@@ -105,3 +104,5 @@ export class SimpleHtmlGridBody extends HTMLElement {
         });
     }
 }
+
+defineElement(SimpleHtmlGridBody, 'simple-html-grid-body');

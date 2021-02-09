@@ -1,10 +1,9 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { CellConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-menu-label')
 export class SimpleHtmlGridMenuLabel extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
@@ -113,3 +112,5 @@ export class SimpleHtmlGridMenuLabel extends HTMLElement {
         el.forEach((e) => this.appendChild(e));
     }
 }
+
+defineElement(SimpleHtmlGridMenuLabel, 'simple-html-grid-menu-label');

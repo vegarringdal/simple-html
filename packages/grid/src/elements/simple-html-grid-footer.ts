@@ -1,9 +1,8 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-footer')
 export class SimpleHtmlGridFooter extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
@@ -81,3 +80,4 @@ export class SimpleHtmlGridFooter extends HTMLElement {
         }
     }
 }
+defineElement(SimpleHtmlGridFooter, 'simple-html-grid-footer');

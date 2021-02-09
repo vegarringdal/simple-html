@@ -1,11 +1,10 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
 import { resizeColumnElement } from './resizeColumnElement';
 import { columnDragDrop, dropzone } from './dragEvent';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-cell-label')
 export class SimpleHtmlGridCellLabel extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
@@ -209,3 +208,5 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
         this.setSortIcon();
     }
 }
+
+defineElement(SimpleHtmlGridCellLabel, 'simple-html-grid-cell-label');

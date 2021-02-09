@@ -1,9 +1,9 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { html, svg } from 'lit-html';
 import { SimpleHtmlGrid } from '..';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { panelColumn, columnDragDropPanelColumn } from './dragEvent';
+import { defineElement } from './defineElement';
 
 function capalize(text: string) {
     if (text) {
@@ -13,7 +13,6 @@ function capalize(text: string) {
     }
 }
 
-@customElement('simple-html-grid-panel')
 export class SimpleHtmlGridPanel extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
@@ -104,3 +103,4 @@ export class SimpleHtmlGridPanel extends HTMLElement {
         `;
     }
 }
+defineElement(SimpleHtmlGridPanel, 'simple-html-grid-panel');

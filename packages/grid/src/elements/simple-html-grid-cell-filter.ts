@@ -1,10 +1,9 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
 import { html } from 'lit-html';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-cell-filter')
 export class SimpleHtmlGridCellFilter extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
@@ -172,3 +171,4 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         }
     }
 }
+defineElement(SimpleHtmlGridCellFilter, 'simple-html-grid-cell-filter');

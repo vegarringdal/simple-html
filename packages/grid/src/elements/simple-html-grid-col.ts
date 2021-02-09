@@ -1,10 +1,9 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { html, svg } from 'lit-html';
 import { RowCache } from '../types';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-col')
 export class SimpleHtmlGridCol extends HTMLElement {
     connector: GridInterface;
     row: RowCache;
@@ -69,3 +68,4 @@ export class SimpleHtmlGridCol extends HTMLElement {
         }
     }
 }
+defineElement(SimpleHtmlGridCol, 'simple-html-grid-col');
