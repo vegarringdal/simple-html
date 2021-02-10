@@ -115,6 +115,6 @@ const checker_client = TypeChecker({
 
 checker_client.printSettings();
 checker_client.inspectAndPrint();
-checker_client.worker_watch('./');
+checker_client.worker_watch(['./samples', './packages']);
 
 
