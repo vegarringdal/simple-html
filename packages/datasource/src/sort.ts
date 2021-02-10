@@ -146,8 +146,7 @@ export class Sort {
                             if (typeof v1 === 'string' && typeof v1 === 'string') {
                                 if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
                                     result = -1;
-                                }
-                                if (localCompare(v1, v2) > 0 && localCompare(v1, v2) !== 0) {
+                                } else {
                                     result = 1;
                                 }
                             } else {
@@ -199,9 +198,7 @@ export class Sort {
                             if (typeof v1 === 'string' && typeof v1 === 'string') {
                                 if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
                                     result = 1;
-                                }
-
-                                if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
+                                } else {
                                     result = -1;
                                 }
                             } else {
