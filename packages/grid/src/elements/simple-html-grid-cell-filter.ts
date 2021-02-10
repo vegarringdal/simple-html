@@ -34,7 +34,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
     }
 
     updateGui() {
-        this.innerHTML = ''
+        this.innerHTML = '';
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
         const ref = this.ref;
@@ -156,10 +156,18 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
             };
             inputEl.oninput = input;
             inputEl.onkeydown = enterKeyDown;
-            inputEl.value = value as any;
+            if (coltype === 'checkbox') {
+                inputEl.checked = value as any;
+            } else {
+                if (coltype === 'number') {
+                    inputEl.valueAsNumber = value as any;
+                } else {
+                    inputEl.value = value as any;
+                }
+            }
         }
 
-        this.appendChild(inputEl)
+        this.appendChild(inputEl);
     }
 }
 defineElement(SimpleHtmlGridCellFilter, 'simple-html-grid-cell-filter');
