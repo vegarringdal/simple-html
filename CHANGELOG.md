@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.2.2](https://github.com/simple-html/simple-html/compare/v3.2.1...v3.2.2) (2021-02-10)
+
+Grid is also rebuild to have no dependencies
+
+### Bug Fixes
+
+* string sorting ([b33c010](https://github.com/simple-html/simple-html/commits/b33c010b7f8002532b8b632bb2637ca0b91fb9a2))
+
 ### [3.2.1](https://github.com/simple-html/simple-html/compare/v3.2.0...v3.2.1) (2021-02-04)
 
 
