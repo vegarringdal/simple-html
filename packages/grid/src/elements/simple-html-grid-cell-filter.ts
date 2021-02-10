@@ -1,10 +1,8 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface, SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
-import { html } from 'lit-html';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-cell-filter')
 export class SimpleHtmlGridCellFilter extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
@@ -22,6 +20,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.attribute = this.group.rows[this.cellPosition].attribute;
         this.ref.addEventListener('column-resize', this);
+        this.updateGui();
     }
 
     handleEvent(e: Event) {
@@ -34,7 +33,8 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         this.ref.removeEventListener('column-resize', this);
     }
 
-    render() {
+    updateGui() {
+        this.innerHTML = '';
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
         const ref = this.ref;
@@ -92,7 +92,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         if (cell.type === 'boolean' && cell.filterable) {
             // if no value is set then its "blank state, nothing filtered
             if (cell.filterable.currentValue !== false && cell.filterable.currentValue !== true) {
-                boolstyle = 'opacity:0.3';
+                boolstyle = true;
                 indeterminate = true;
                 setState = 0;
             } else {
@@ -128,47 +128,46 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
             );
         }
 
-        if (coltype === 'empty') {
-            return html`<div style=${boolstyle} class="${classname} hideme"></div>`;
+        const inputEl = document.createElement('input');
+        inputEl.type = coltype || 'text';
+        if (boolstyle) {
+            inputEl.style.opacity = '0.3';
         }
+        inputEl.indeterminate = indeterminate;
+        inputEl.placeholder = placeholder;
+        inputEl.classList.add(classname);
 
         if (coltype === 'date') {
-            return html`
-                <input
-                    type=${coltype}
-                    style=${boolstyle}
-                    class=${classname}
-                    @input=${input}
-                    @keydown=${enterKeyDown}
-                    @contextmenu=${(e: any) => {
-                        e.preventDefault();
-                        contentMenu(e);
-                        return false;
-                    }}
-                    .valueAsDate=${typeof value === 'string' ? new Date(value) : value}
-                    placeholder=${placeholder}
-                />
-            `;
+            inputEl.oninput = input;
+            inputEl.onkeydown = enterKeyDown;
+            inputEl.oncontextmenu = (e: any) => {
+                e.preventDefault();
+                contentMenu(e);
+                return false;
+            };
+            inputEl.valueAsDate = typeof value === 'string' ? new Date(value) : (value as any);
         } else {
-            return html`
-                <input
-                    type=${coltype || 'text'}
-                    style=${boolstyle}
-                    .indeterminate=${indeterminate}
-                    .state=${setState}
-                    class=${classname}
-                    @change=${change}
-                    @contextmenu=${(e: any) => {
-                        e.preventDefault();
-                        contentMenu(e);
-                        return false;
-                    }}
-                    @input=${input}
-                    @keydown=${enterKeyDown}
-                    .value=${value}
-                    placeholder=${placeholder}
-                />
-            `;
+            inputEl.onchange = change;
+            (inputEl as any).state = setState;
+            inputEl.oncontextmenu = (e: any) => {
+                e.preventDefault();
+                contentMenu(e);
+                return false;
+            };
+            inputEl.oninput = input;
+            inputEl.onkeydown = enterKeyDown;
+            if (coltype === 'checkbox') {
+                inputEl.checked = value as any;
+            } else {
+                if (coltype === 'number') {
+                    inputEl.valueAsNumber = value as any;
+                } else {
+                    inputEl.value = value as any;
+                }
+            }
         }
+
+        this.appendChild(inputEl);
     }
 }
+defineElement(SimpleHtmlGridCellFilter, 'simple-html-grid-cell-filter');

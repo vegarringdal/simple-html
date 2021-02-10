@@ -1,10 +1,8 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
-import { html } from 'lit-html';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-footer')
 export class SimpleHtmlGridFooter extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
@@ -14,6 +12,7 @@ export class SimpleHtmlGridFooter extends HTMLElement {
         const config = this.connector.config;
         this.style.height = config.footerHeight + 'px';
         this.ref.addEventListener('reRender', this);
+        this.renderx();
     }
 
     disconnectedCallback() {
@@ -22,56 +21,63 @@ export class SimpleHtmlGridFooter extends HTMLElement {
 
     handleEvent(e: Event) {
         if (e.type === 'reRender') {
-            this.render();
+            this.innerHTML = '';
+            this.renderx();
         }
     }
 
     showEdit() {
-        return html`
-            <div
-                style="
-                    margin:2px;position:absolute;
-                    top:0px; border: 1px solid; 
-                    border-color: var(--simple-html-grid-sec-bg-border);
-                    background-color: var(--simple-html-grid-main-bg-color)"
-            >
-                <button
-                    style="padding:2px"
-                    @click="${(e: any) => {
-                        generateMenuWithComponentName(
-                            'simple-html-grid-filter-dialog',
-                            e,
-                            this.connector,
-                            this.ref,
-                            null,
-                            null,
-                            null
-                        );
-                    }}}"
-                >
-                    Edit filter
-                </button>
-            </div>
-        `;
+        const el = document.createElement('div');
+        el.classList.add('grid-edit-button');
+
+        const btn = document.createElement('button');
+        btn.style.padding = '2px';
+        btn.onclick = (e: any) => {
+            generateMenuWithComponentName(
+                'simple-html-grid-filter-dialog',
+                e,
+                this.connector,
+                this.ref,
+                null,
+                null,
+                null
+            );
+        };
+        btn.appendChild(document.createTextNode('Edit filter'));
+        el.append(btn);
+        return el;
     }
 
-    render() {
+    renderx() {
         const totalRows = this.connector.completeDataset.length;
         const filter = this.connector.filteredDataset.length;
 
-        return html`${this.showEdit()}
-            <div style="text-align:center">${filter}/${totalRows}</div>
+        this.appendChild(this.showEdit());
 
-            <div style="display: flex; justify-content: center;">
-                <span
-                    style="margin-right:5px; 
-                        overflow:hidden; 
-                        max-width:90%; 
-                        white-space: nowrap;
-                        text-overflow: ellipsis;"
-                >
-                    ${this.connector.getFilterString().replace(/\,/g, ', ')}
-                </span>
-            </div> `;
+        {
+            const el = document.createElement('div');
+            el.style.textAlign = 'center';
+            el.appendChild(document.createTextNode(`${filter}/${totalRows}`));
+            this.appendChild(el);
+        }
+
+        {
+            const el = document.createElement('div');
+            el.style.display = 'flex';
+            el.style.justifyContent = 'center';
+
+            const span = document.createElement('span');
+            span.style.marginRight = '5px';
+            span.style.maxWidth = '90%;';
+            span.style.whiteSpace = 'nowrap';
+            span.style.textOverflow = 'ellipsis';
+
+            span.appendChild(
+                document.createTextNode(`${this.connector.getFilterString().replace(/\,/g, ', ')}`)
+            );
+            el.appendChild(span);
+            this.appendChild(el);
+        }
     }
 }
+defineElement(SimpleHtmlGridFooter, 'simple-html-grid-footer');

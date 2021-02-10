@@ -1,11 +1,9 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
-import { html } from 'lit-html';
 import { CellConfig } from '../types';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-menu-panel')
-export default class extends HTMLElement {
+export class SimpleHtmlGridMenuPanel extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;
@@ -16,6 +14,7 @@ export default class extends HTMLElement {
         setTimeout(() => {
             document.addEventListener('contextmenu', this);
         }, 50);
+        this.buildHtml();
     }
 
     disconnectedCallback() {
@@ -48,15 +47,21 @@ export default class extends HTMLElement {
         document.body.removeChild(this);
     }
 
-    render() {
-        return html`<p class="simple-html-grid-menu-item" @click=${() => this.select('clear')}>
-                Clear grouping
-            </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('collapse')}>
-                Collapse all
-            </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('expand')}>
-                Expand all
-            </p>`;
+    buildHtml() {
+        const el = [1, 1, 1].map(() => document.createElement('p'));
+        el.forEach((e) => e.classList.add('simple-html-grid-menu-item'));
+
+        el[0].onclick = () => this.select('clear');
+        el[0].appendChild(document.createTextNode('Clear grouping'));
+
+        el[1].onclick = () => this.select('collapse');
+        el[1].appendChild(document.createTextNode('Collapse all'));
+
+        el[2].onclick = () => this.select('expand');
+        el[2].appendChild(document.createTextNode('Expand all'));
+
+        el.forEach((e) => this.appendChild(e));
     }
 }
+
+defineElement(SimpleHtmlGridMenuPanel, 'simple-html-grid-menu-panel');

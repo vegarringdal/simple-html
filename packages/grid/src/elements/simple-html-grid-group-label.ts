@@ -1,10 +1,9 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
 import { SimpleHtmlGridCellLabel } from './simple-html-grid-cell-label';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-group-label')
 export class SimpleHtmlGridGroupLabel extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
@@ -96,3 +95,5 @@ export class SimpleHtmlGridGroupLabel extends HTMLElement {
         this.rows.forEach((e) => e.update());
     }
 }
+
+defineElement(SimpleHtmlGridGroupLabel, 'simple-html-grid-group-label');

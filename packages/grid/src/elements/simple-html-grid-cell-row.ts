@@ -1,9 +1,8 @@
-import { customElement } from '@simple-html/core';
 import { SimpleHtmlGrid, GridInterface } from '..';
 import { CellConfig } from '../types';
+import { defineElement } from './defineElement';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
-@customElement('simple-html-grid-cell-row')
 export class SimpleHtmlGridCellRow extends HTMLElement {
     connector: GridInterface;
     cellPosition: number;
@@ -13,6 +12,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     group: number;
     cell: CellConfig;
     innerEle: HTMLInputElement;
+    lastVal: any;
 
     public connectedCallback() {
         this.classList.add('simple-html-grid-cell-row');
@@ -142,29 +142,37 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         if (data) {
             const cell = this.cell;
             this.style.width = this.connector.config.groups[this.group].width + 'px';
-            this.innerEle.setAttribute('type', cell.type === 'boolean' ? 'checkbox' : cell.type || 'text');
+            this.innerEle.setAttribute(
+                'type',
+                cell.type === 'boolean' ? 'checkbox' : cell.type || 'text'
+            );
             const newVal = data[cell.attribute] || null;
-            switch (cell.type) {
-                case 'boolean':
-                    this.innerEle.checked = newVal;
-                    this.innerEle.classList.remove('simple-html-grid-row-input');
-                    this.innerEle.classList.add('simple-html-grid-row-checkbox');
-                    break;
-                case 'image':
-                    console.log('no-image');
-                    break;
-                case 'empty':
-                    console.log('no-.empty');
-                    break;
-                case 'date':
-                    this.innerEle.valueAsDate = newVal;
-                    break;
-                case 'number':
-                    this.innerEle.valueAsNumber = newVal;
-                    break;
-                default:
-                    this.innerEle.value = newVal;
+            if (newVal !== this.lastVal) {
+                switch (cell.type) {
+                    case 'boolean':
+                        this.innerEle.checked = newVal;
+                        this.innerEle.classList.remove('simple-html-grid-row-input');
+                        this.innerEle.classList.add('simple-html-grid-row-checkbox');
+                        break;
+                    case 'image':
+                        console.log('no-image');
+                        break;
+                    case 'empty':
+                        console.log('no-.empty');
+                        break;
+                    case 'date':
+                        this.innerEle.valueAsDate = newVal;
+                        break;
+                    case 'number':
+                        this.innerEle.valueAsNumber = newVal;
+                        break;
+                    default:
+                        this.innerEle.value = newVal;
+                }
             }
+
+            this.lastVal = newVal;
         }
     }
 }
+defineElement(SimpleHtmlGridCellRow, 'simple-html-grid-cell-row');

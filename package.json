@@ -46,7 +46,7 @@
         "@typescript-eslint/parser": "^4.14.2",
         "autoprefixer": "^10.2.4",
         "custom-elements-hmr-polyfill": "^1.0.3",
-        "esbuild-helpers": "0.0.1-next.9",
+        "esbuild-helpers": "0.0.1-next.11",
         "eslint": "^7.19.0",
         "eslint-config-prettier": "^7.2.0",
         "eslint-plugin-prettier": "^3.3.1",

@@ -1,12 +1,10 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
-import { html } from 'lit-html';
 import { CellConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-menu-label')
-export default class extends HTMLElement {
+export class SimpleHtmlGridMenuLabel extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;
@@ -17,6 +15,7 @@ export default class extends HTMLElement {
         setTimeout(() => {
             document.addEventListener('contextmenu', this);
         }, 50);
+        this.buildHtml();
     }
 
     disconnectedCallback() {
@@ -52,72 +51,66 @@ export default class extends HTMLElement {
         this?.parentNode.removeChild(this);
     }
 
-    render() {
-        return html`<p
-                class="simple-html-grid-menu-item"
-                @click=${() => this.select('sort', true, false)}
-            >
-                Sort asc
-            </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, false)}>
-                Sort desc
-            </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', true, true)}>
-                Sort asc (add)
-            </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('sort', false, true)}>
-                Sort desc (add)
-            </p>
-            <p
-                class="simple-html-grid-menu-item"
-                @click=${() => this.connector.autoResizeColumns()}
-            >
-                Auto resize columns
-            </p>
-            <p class="simple-html-grid-menu-item" @click=${() => this.select('groupBy')}>
-                Group by
-            </p>
-            <p
-                class="simple-html-grid-menu-item"
-                @click=${() => {
-                    const cell = this.cell;
-                    if (!this.connector.config.optionalCells) {
-                        this.connector.config.optionalCells = [];
-                    }
-                    this.connector.config.optionalCells.push(cell);
-                    let removeGroup = null;
-                    this.connector.config.groups.forEach((row, groupNo) => {
-                        const index = row.rows.indexOf(cell);
-                        if (index !== -1) {
-                            row.rows.splice(index, 1);
-                        }
-                        if (row.rows.length === 0) {
-                            removeGroup = groupNo;
-                        }
-                    });
-                    if (removeGroup !== null) {
-                        this.connector.config.groups.splice(removeGroup, 1);
-                    }
+    buildHtml() {
+        const el = [1, 1, 1, 1, 1, 1, 1, 1].map(() => document.createElement('p'));
+        el.forEach((e) => e.classList.add('simple-html-grid-menu-item'));
 
-                    this.connector.manualConfigChange(this.connector.config);
-                }}
-            >
-                Remove cell
-            </p>
-            <p
-                class="simple-html-grid-menu-item"
-                @click=${(e: any) =>
-                    generateMenuWithComponentName(
-                        'simple-html-grid-column-chooser',
-                        e,
-                        this.connector,
-                        this.ref,
-                        null,
-                        null,
-                        null
-                    )}
-            >
-                Column Chooser
-            </p>`;
+        el[0].onclick = () => this.select('sort', false, false);
+        el[0].appendChild(document.createTextNode('Sort asc'));
+
+        el[1].onclick = () => this.select('sort', true, false);
+        el[1].appendChild(document.createTextNode('Sort desc'));
+
+        el[2].onclick = () => this.select('sort', true, true);
+        el[2].appendChild(document.createTextNode('Sort asc (add)'));
+
+        el[3].onclick = () => this.select('sort', false, true);
+        el[3].appendChild(document.createTextNode('Sort desc (add)'));
+
+        el[4].onclick = () => this.connector.autoResizeColumns();
+        el[4].appendChild(document.createTextNode('Auto resize columns'));
+
+        el[5].onclick = () => this.select('groupBy');
+        el[5].appendChild(document.createTextNode('Group by'));
+
+        el[6].onclick = () => {
+            const cell = this.cell;
+            if (!this.connector.config.optionalCells) {
+                this.connector.config.optionalCells = [];
+            }
+            this.connector.config.optionalCells.push(cell);
+            let removeGroup = null;
+            this.connector.config.groups.forEach((row, groupNo) => {
+                const index = row.rows.indexOf(cell);
+                if (index !== -1) {
+                    row.rows.splice(index, 1);
+                }
+                if (row.rows.length === 0) {
+                    removeGroup = groupNo;
+                }
+            });
+            if (removeGroup !== null) {
+                this.connector.config.groups.splice(removeGroup, 1);
+            }
+            this.connector.manualConfigChange(this.connector.config);
+        };
+
+        el[6].appendChild(document.createTextNode('Remove cell'));
+
+        el[7].onclick = (e: any) =>
+            generateMenuWithComponentName(
+                'simple-html-grid-column-chooser',
+                e,
+                this.connector,
+                this.ref,
+                null,
+                null,
+                null
+            );
+        el[7].appendChild(document.createTextNode('Column Chooser'));
+
+        el.forEach((e) => this.appendChild(e));
     }
 }
+
+defineElement(SimpleHtmlGridMenuLabel, 'simple-html-grid-menu-label');

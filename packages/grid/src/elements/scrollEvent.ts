@@ -86,8 +86,7 @@ export function scrollEvent(
                         }
                     }
                 }
-                /* console.log(newColCache.map((e) => e.i).join(',')); */
-
+ 
                 ref.colCache = node.rows[0]?.colEls?.map((e) => e.group) || [];
 
                 ref.colCache.forEach((e) => (e.found = false));
@@ -125,8 +124,6 @@ export function scrollEvent(
                         l--;
                     }
                 }
-
-                //console.log(ref.colCache.map((e) => e.update).join(','));
 
                 scrollBarTimer = null;
 
@@ -176,11 +173,15 @@ export function scrollEvent(
         }
 
         if (connector.config.scrollLeft !== e.target.scrollLeft) {
-            horizontalScroll();
+           // requestAnimationFrame(() => {
+                horizontalScroll();
+           // });
         }
 
         if (connector.config.lastScrollTop !== e.target.scrollTop) {
-            verticalScroll();
+            //requestAnimationFrame(() => {
+                verticalScroll();
+           // });
         }
     };
 }

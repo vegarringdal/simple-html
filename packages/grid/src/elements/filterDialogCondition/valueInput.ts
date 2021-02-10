@@ -1,4 +1,3 @@
-import { html } from 'lit-html';
 import { FilterArgument } from '../../types';
 
 /**
@@ -6,74 +5,69 @@ import { FilterArgument } from '../../types';
  */
 export function valueInput(operatorObject: FilterArgument) {
     if (operatorObject.operator === 'IN' || operatorObject.operator === 'NOT_IN') {
-        return html`<textarea
-            class="dialog-item-y"
-            style="text-align: center;"
-            @input=${(e: any) => {
-                const x: any[] = e.target.value.toUpperCase().split('\n');
-                if (x[x.length - 1] === '') {
-                    x.pop();
-                }
-                operatorObject.value = x as any;
-            }}
-        >
-${Array.isArray(operatorObject.value)
-                ? operatorObject.value.join('\n')
-                : operatorObject.value}</textarea
-        >`;
+        const el = document.createElement('textarea');
+        el.classList.add('dialog-item-y');
+        el.style.textAlign = 'center';
+        el.oninput = (e: any) => {
+            const x: any[] = e.target.value.toUpperCase().split('\n');
+            if (x[x.length - 1] === '') {
+                x.pop();
+            }
+            operatorObject.value = x as any;
+        };
+
+        el.textContent = Array.isArray(operatorObject.value)
+            ? operatorObject.value.join('\n')
+            : operatorObject.value.toString();
+
+        return el;
     }
+
+    const el = document.createElement('input');
+    el.classList.add('dialog-item-y');
+    el.style.textAlign = 'center';
 
     switch (operatorObject.attributeType) {
         case 'boolean':
-            return html`<input
-                class="dialog-item-y"
-                style="text-align: center;"
-                type="checkbox"
-                .checked=${operatorObject.value}
-                @change=${(e: any) => {
-                    operatorObject.value = e.target.checked;
-                }}
-                @input=${(e: any) => {
-                    operatorObject.value = e.target.checked;
-                }}
-            />`;
+            el.type = 'checkbox';
+            el.checked = (operatorObject.value as unknown) as boolean;
+            el.onchange = (e: any) => {
+                operatorObject.value = e.target.checked;
+            };
+            el.oninput = (e: any) => {
+                operatorObject.value = e.target.checked;
+            };
+            return el;
         case 'image':
         // nothing
         case 'empty':
         // nothing
         case 'date':
-            return html`<input
-                class="dialog-item-y"
-                style="text-align: center;"
-                type="date"
-                .valueAsDate=${typeof operatorObject.value === 'string'
+            el.type = 'date';
+            el.valueAsDate =
+                typeof operatorObject.value === 'string' || typeof operatorObject.value === 'number'
                     ? new Date(operatorObject.value)
-                    : operatorObject.value || null}
-                @input=${(e: any) => {
-                    operatorObject.value = e.target.valueAsDate;
-                }}
-            />`;
+                    : operatorObject.value || null;
+            el.onchange = (e: any) => {
+                operatorObject.value = e.target.checked;
+            };
+            el.oninput = (e: any) => {
+                operatorObject.value = e.target.valueAsDate;
+            };
+            return el;
         case 'number':
-            return html`<input
-                class="dialog-item-y"
-                style="text-align: center;"
-                type="number"
-                .valueAsNumber=${operatorObject.value}
-                @input=${(e: any) => {
-                    operatorObject.value = e.target.valueAsNumber;
-                }}
-            />`;
+            el.type = 'number';
+            el.valueAsNumber = operatorObject.value as number;
+            el.oninput = (e: any) => {
+                operatorObject.value = e.target.valueAsNumber;
+            };
+            return el;
         default:
-            return html`<input
-                triggerme=${new Date()}
-                class="dialog-item-y"
-                style="text-align: center;"
-                type="text"
-                is="simple-html-grid-input"
-                setvalue=${operatorObject.value}
-                @input=${(e: any) => {
-                    operatorObject.value = e.target.value;
-                }}
-            />`;
+            el.type = 'text';
+            el.value = operatorObject.value as any;
+            el.oninput = (e: any) => {
+                operatorObject.value = e.target.value;
+            };
+            return el;
     }
 }

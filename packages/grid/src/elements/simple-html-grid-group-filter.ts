@@ -1,10 +1,9 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
 import { SimpleHtmlGridCellFilter } from './simple-html-grid-cell-filter';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-group-filter')
 export class SimpleHtmlGridGroupFilter extends HTMLElement {
     connector: GridInterface;
     rowNo: number;
@@ -94,6 +93,7 @@ export class SimpleHtmlGridGroupFilter extends HTMLElement {
             el.group = this.group;
         });
 
-        this.rows.forEach((e) => e.render());
+        this.rows.forEach((e) => e.updateGui());
     }
 }
+defineElement(SimpleHtmlGridGroupFilter, 'simple-html-grid-group-filter');

@@ -7,7 +7,6 @@ export function setup(rows: number, columns: number, scroll?: number) {
         cellHeight: 20,
         panelHeight: 25,
         footerHeight: 40,
-
         selectionMode: 'multiple',
         lastScrollTop: scroll,
         groups: []

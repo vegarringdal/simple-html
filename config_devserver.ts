@@ -1,5 +1,5 @@
-import { clearFolders, addDefaultIndex, client, postcssPlugin, single } from 'esbuild-helpers';
-import { TypeChecker } from 'fuse-box-typechecker';
+import { clearFolders, addDefaultIndex, client, postcssPlugin, single, TypeChecker } from 'esbuild-helpers';
+
 
 clearFolders('dist_client', 'dist_nodejs');
 
@@ -109,10 +109,12 @@ const checker_client = TypeChecker({
                 '@simple-html*': ['packages*']
             }
         },
-        exclude: ['node_modules', 'config_devserver.ts']
+        exclude: ['node_modules', 'config_devserver.ts', 'dist']
     }
 });
 
 checker_client.printSettings();
 checker_client.inspectAndPrint();
-checker_client.worker_watch('./');
+checker_client.worker_watch(['./samples', './packages']);
+
+

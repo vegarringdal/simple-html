@@ -1,16 +1,19 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
-import { html, svg } from 'lit-html';
 import { RowCache } from '../types';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-col')
 export class SimpleHtmlGridCol extends HTMLElement {
     connector: GridInterface;
     row: RowCache;
     ref: SimpleHtmlGrid;
 
-    render() {
+    connectedCallback() {
+        this.updateGui();
+    }
+
+    updateGui() {
+        this.innerHTML = '';
         if (this.ref) {
             this.style.width = '100%';
             this.style.height = this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i] + 'px';
@@ -31,23 +34,34 @@ export class SimpleHtmlGridCol extends HTMLElement {
                     }
                 };
 
-                return html`
-                    <i @click=${changeGrouping}>
-                        <svg
-                            class="simple-html-grid-icon"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 16 16"
-                        >
-                            ${entity.__groupExpanded
-                                ? svg`<path d="M4.8 7.5h6.5v1H4.8z" />`
-                                : svg`<path d="M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z" />`}
-                        </svg></i
-                    ><span> ${entity.__groupName} (${entity.__groupTotal})</span>
-                `;
+                const i = document.createElement('i');
+                i.onclick = changeGrouping;
+                this.appendChild(i);
+
+                const xmlns = 'http://www.w3.org/2000/svg';
+                const svgToggle = document.createElementNS(xmlns, 'svg');
+                svgToggle.classList.add('simple-html-grid-icon');
+                svgToggle.setAttributeNS(null, 'viewBox', '0 0 16 16');
+                const svgElpath = document.createElementNS(xmlns, 'path');
+                svgElpath.setAttributeNS(
+                    null,
+                    'd',
+                    entity.__groupExpanded
+                        ? 'M4.8 7.5h6.5v1H4.8z'
+                        : 'M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z'
+                );
+
+                svgToggle.appendChild(svgElpath);
+
+                i.appendChild(svgToggle);
+
+                const span = document.createElement('span');
+                span.appendChild(
+                    document.createTextNode(`${entity.__groupName} (${entity.__groupTotal})`)
+                );
+                this.appendChild(span);
             } else {
                 this.style.display = 'none';
-
-                return '' as any;
             }
         } else {
             if (this.connector) {
@@ -64,8 +78,8 @@ export class SimpleHtmlGridCol extends HTMLElement {
                         ? this.connector.getScrollVars.__SCROLL_HEIGHTS[this.row.i]
                         : this.connector.config.cellHeight) + 'px';
                 this.style.display = grouping ? 'block' : 'none';
-                return '';
             }
         }
     }
 }
+defineElement(SimpleHtmlGridCol, 'simple-html-grid-col');

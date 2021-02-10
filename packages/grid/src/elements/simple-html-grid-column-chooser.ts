@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
-import { html } from 'lit-html';
 import { CellConfig, FilterArgument } from '../types';
 import { columnDragDrop } from './dragEvent';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-column-chooser')
-export default class extends HTMLElement {
+export class SimpleHtmlGridColumnChooser extends HTMLElement {
     connector: GridInterface;
     cell: CellConfig;
     ref: SimpleHtmlGrid;
@@ -22,6 +20,7 @@ export default class extends HTMLElement {
 
     handleEvent(e: Event) {
         if (e.type === 'reRender') {
+            this.innerHTML = '';
             this.render();
             return;
         }
@@ -36,27 +35,37 @@ export default class extends HTMLElement {
     }
 
     render() {
-        return html`<div class="simple-html-grid ">
-            <span
-                class="block simple-html-grid-menu-item"
-                @click=${() => {
-                    this.removeSelf();
-                }}
-            >
-                <b> Close</b>
-            </span>
-            ${this.connector.config.optionalCells?.map((cell) => {
-                const mousedown = columnDragDrop('dragstart', () => cell, this.connector, null);
+        const div = document.createElement('div');
+        div.classList.add('simple-html-grid');
 
-                return html`<span
-                    class="block simple-html-grid-menu-item"
-                    @mousedown=${(e: any) => {
-                        mousedown(e);
-                    }}
-                >
-                    ${cell.header}
-                </span>`;
-            })}
-        </div>`;
+        const span = document.createElement('span');
+        span.classList.add('block', 'simple-html-grid-menu-item');
+        span.onclick = () => {
+            this.removeSelf();
+        };
+        const b = document.createElement('b');
+        b.appendChild(document.createTextNode('Close'));
+        span.appendChild(b);
+
+        div.appendChild(span);
+
+        this.appendChild(div);
+
+        const cols = this.connector.config.optionalCells?.map((cell) => {
+            const mousedown = columnDragDrop('dragstart', () => cell, this.connector, null);
+
+            const span = document.createElement('span');
+            span.classList.add('block', 'simple-html-grid-menu-item');
+            span.onclick = (e: any) => {
+                mousedown(e);
+            };
+            span.appendChild(document.createTextNode(cell.header));
+            return span;
+        });
+
+        cols.forEach((c) => {
+            this.appendChild(c);
+        });
     }
 }
+defineElement(SimpleHtmlGridColumnChooser, 'simple-html-grid-column-chooser');

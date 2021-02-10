@@ -1,9 +1,6 @@
-import { customElement } from '@simple-html/core';
+import { defineElement } from './defineElement';
 
-import { html } from 'lit-html';
-
-@customElement('simple-html-grid-menu-custom')
-export default class extends HTMLElement {
+export class SimpleHtmlGridMenuCustom extends HTMLElement {
     rows: any[];
 
     connectedCallback() {
@@ -13,6 +10,7 @@ export default class extends HTMLElement {
             document.addEventListener('click', this);
             document.addEventListener('contextmenu', this);
         }, 50);
+        this.renderx();
     }
 
     disconnectedCallback() {
@@ -30,13 +28,15 @@ export default class extends HTMLElement {
         document.body.removeChild(this);
     }
 
-    render() {
-        return this.rows.map((row) => {
-            return html`
-                <p class="simple-html-grid-menu-item" @click=${() => row.callback(row)}>
-                    ${row.title}
-                </p>
-            `;
+    renderx() {
+        this.rows.forEach((row) => {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => row.callback(row);
+            el.appendChild(document.createTextNode(row.title));
+            this.appendChild(el);
         });
     }
 }
+
+defineElement(SimpleHtmlGridMenuCustom, 'simple-html-grid-menu-custom');

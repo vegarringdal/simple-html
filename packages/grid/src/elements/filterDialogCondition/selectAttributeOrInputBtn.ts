@@ -1,28 +1,33 @@
-import { html } from 'lit-html';
 import { FilterArgument } from '../../types';
+import { SimpleHtmlGridFilterDialog } from '../simple-html-grid-filter-dialog';
 
 /**
  * sets if value is input or btn to select attibutes
  */
-export function selectAttributeOrInputBtn(operatorObject: FilterArgument, ctx: any) {
-    return html` <button
-        class="dialog-item-x dialog-condition-type"
-        @click=${() => {
-            operatorObject.valueType = operatorObject.valueType === 'VALUE' ? 'ATTRIBUTE' : 'VALUE';
-            ctx.render();
-        }}
-    >
-        <svg
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-        >
-            <path
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            ></path>
-        </svg>
-    </button>`;
+export function selectAttributeOrInputBtn(operatorObject: FilterArgument, ctx: SimpleHtmlGridFilterDialog) {
+    const xmlns = 'http://www.w3.org/2000/svg';
+    const svgEl = document.createElementNS(xmlns, 'svg');
+
+    svgEl.setAttributeNS(null, 'viewBox', '0 0 24 24');
+    svgEl.setAttributeNS(null, 'fill', 'none');
+    svgEl.setAttributeNS(null, 'stroke-linecap', 'round');
+    svgEl.setAttributeNS(null, 'stroke-linejoin', 'round');
+    svgEl.setAttributeNS(null, 'stroke-width', '2');
+    svgEl.setAttributeNS(null, 'stroke', 'currentColor');
+    const svgElpath = document.createElementNS(xmlns, 'path');
+    svgElpath.setAttributeNS(
+        null,
+        'd',
+        'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+    );
+    svgEl.appendChild(svgElpath);
+
+    const el = document.createElement('button');
+    el.classList.add('dialog-item-x', 'dialog-condition-type');
+    el.onclick = () => {
+        operatorObject.valueType = operatorObject.valueType === 'VALUE' ? 'ATTRIBUTE' : 'VALUE';
+        ctx.generate();
+    };
+    el.appendChild(svgEl)
+    return el;
 }

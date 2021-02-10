@@ -1,11 +1,10 @@
-import { customElement } from '@simple-html/core';
 import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from '..';
 import { SimpleHtmlGridCol } from './simple-html-grid-col';
 import { SimpleHtmlGridGroupLabel } from './simple-html-grid-group-label';
 import { SimpleHtmlGridGroupFilter } from './simple-html-grid-group-filter';
+import { defineElement } from './defineElement';
 
-@customElement('simple-html-grid-header')
 export class SimpleHtmlGridHeader extends HTMLElement {
     connector: GridInterface;
     ref: SimpleHtmlGrid;
@@ -150,3 +149,5 @@ export class SimpleHtmlGridHeader extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 }
+
+defineElement(SimpleHtmlGridHeader, 'simple-html-grid-header');
