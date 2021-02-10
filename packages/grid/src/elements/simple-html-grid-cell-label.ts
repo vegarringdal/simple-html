@@ -106,10 +106,7 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
                 setTimeout(() => {
                     e.target.removeEventListener('mouseup', mouseup);
                 }, 500);
-            } else {
-                // do not do anything, we use context event here
-                //console.log('open menu');
-            }
+            } 
         };
 
         const mousedown = columnDragDrop(
