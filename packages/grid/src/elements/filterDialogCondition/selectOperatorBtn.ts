@@ -8,6 +8,7 @@ import { SimpleHtmlGridFilterDialog } from '../simple-html-grid-filter-dialog';
  */
 export function selectOperatorBtn(operatorObject: FilterArgument, ctx: SimpleHtmlGridFilterDialog) {
     const el = document.createElement('button');
+    el.style.margin = '1px'
     el.classList.add('dialog-item-y');
     el.onclick = (e: any) => {
         generateMenu(e, [

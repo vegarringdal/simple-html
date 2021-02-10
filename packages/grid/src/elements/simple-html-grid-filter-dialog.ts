@@ -50,7 +50,11 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
     }
 
     generate() {
+        
+        // this isnt very optimized... it should be handled smarter
         this.innerHTML = '';
+
+
         const outerDiv = document.createElement('div');
         outerDiv.style.width = '650px';
         outerDiv.classList.add('simple-html-grid', 'simple-html-filter-dialog');
