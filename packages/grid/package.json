@@ -21,7 +21,6 @@
         "access": "public"
     },
     "dependencies": {
-        "@simple-html/core": "latest",
         "@simple-html/datasource": "latest"
     },
     "devDependencies": {}
