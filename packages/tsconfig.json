@@ -33,7 +33,8 @@
             "@simple-html/grid": ["./grid/src"],
             "@simple-html/router": ["./router/src"],
             "@simple-html/splitter": ["./splitter/src"],
-            "@simple-html/date": ["./date/src"]
+            "@simple-html/date": ["./date/src"],
+            "@simple-html/dropdown": ["./dropdown/src"]
         }
     },
     "exclude": ["node_modules"]
