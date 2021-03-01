@@ -34,7 +34,6 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
     }
 
     updateGui() {
-        this.innerHTML = '';
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
         const ref = this.ref;
@@ -127,8 +126,13 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
                 filterCallback
             );
         }
+        let inputEl: HTMLInputElement;
+        if (this.children.length) {
+            inputEl = this.children[0] as HTMLInputElement;
+        } else {
+            inputEl = document.createElement('input');
+        }
 
-        const inputEl = document.createElement('input');
         inputEl.type = coltype || 'text';
         if (boolstyle) {
             inputEl.style.opacity = '0.3';
@@ -136,6 +140,9 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         inputEl.indeterminate = indeterminate;
         inputEl.placeholder = placeholder;
         inputEl.classList.add(classname);
+
+        // reset
+        inputEl.onchange = null;
 
         if (coltype === 'date') {
             inputEl.oninput = input;
@@ -157,17 +164,24 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
             inputEl.oninput = input;
             inputEl.onkeydown = enterKeyDown;
             if (coltype === 'checkbox') {
-                inputEl.checked = value as any;
+                if (inputEl.checked !== value) {
+                    inputEl.checked = value as any;
+                }
             } else {
                 if (coltype === 'number') {
-                    inputEl.valueAsNumber = value as any;
+                    if (inputEl.valueAsNumber !== value || 0) {
+                        inputEl.valueAsNumber = value as any;
+                    }
                 } else {
-                    inputEl.value = value as any;
+                    if (inputEl.value !== value || '' ) {
+                        inputEl.value = value as any;
+                    }
                 }
             }
         }
-
-        this.appendChild(inputEl);
+        if (!this.children.length) {
+            this.appendChild(inputEl);
+        }
     }
 }
 defineElement(SimpleHtmlGridCellFilter, 'simple-html-grid-cell-filter');
