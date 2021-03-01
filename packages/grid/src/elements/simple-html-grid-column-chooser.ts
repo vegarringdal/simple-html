@@ -14,14 +14,15 @@ export class SimpleHtmlGridColumnChooser extends HTMLElement {
     filter: FilterArgument;
 
     connectedCallback() {
-        this.classList.add('simple-html-grid-menu');
+        this.classList.add('simple-html-grid', 'simple-html-grid-menu');
         this.ref.addEventListener('reRender', this);
+        this.show();
     }
 
     handleEvent(e: Event) {
         if (e.type === 'reRender') {
             this.innerHTML = '';
-            this.render();
+            this.show();
             return;
         }
         if (e.target !== this) {
@@ -34,7 +35,7 @@ export class SimpleHtmlGridColumnChooser extends HTMLElement {
         this.ref.removeEventListener('reRender', this);
     }
 
-    render() {
+    show() {
         const div = document.createElement('div');
         div.classList.add('simple-html-grid');
 
@@ -56,16 +57,18 @@ export class SimpleHtmlGridColumnChooser extends HTMLElement {
 
             const span = document.createElement('span');
             span.classList.add('block', 'simple-html-grid-menu-item');
-            span.onclick = (e: any) => {
-                mousedown(e);
+            span.onmousedown = (e) => {
+                mousedown(e)
             };
             span.appendChild(document.createTextNode(cell.header));
             return span;
         });
 
-        cols.forEach((c) => {
-            this.appendChild(c);
-        });
+        if (cols && cols.length) {
+            cols.forEach((c) => {
+                this.appendChild(c);
+            });
+        }
     }
 }
 defineElement(SimpleHtmlGridColumnChooser, 'simple-html-grid-column-chooser');
