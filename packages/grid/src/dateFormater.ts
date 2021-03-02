@@ -1,6 +1,6 @@
 export interface DateFormaterType {
-    dateToString(value: Date | null | undefined | string): string | null | undefined;
-    stringToDate(value: any): Date | null | undefined | 'null';
+    fromDate(value: Date | null | undefined): string | null | undefined;
+    toDate(value: string | null | undefined): Date | null | undefined;
     getPlaceHolderDate(): string;
 }
 
@@ -9,15 +9,10 @@ export class DateFormater {
      * Takes value and return string
      * @param value
      */
-    static dateToString(value: Date | string | null | undefined): string {
+    static fromDate(value: Date | string | null | undefined): string {
         let returnValue: any = value;
 
-        if (
-            returnValue === 'null' ||
-            returnValue === null ||
-            returnValue === undefined ||
-            returnValue === ''
-        ) {
+        if (returnValue === null || returnValue === undefined || returnValue === '') {
             return returnValue;
         }
 
@@ -50,10 +45,10 @@ export class DateFormater {
      *
      * @param value Takes string and returns date
      */
-    static stringToDate(value: any): Date | null | undefined | 'null' {
+    static toDate(value: any): Date | null | undefined {
         let returnValue = value;
 
-        if (returnValue === 'null' || returnValue === null || returnValue === undefined) {
+        if (returnValue === null || returnValue === undefined) {
             return returnValue;
         }
 

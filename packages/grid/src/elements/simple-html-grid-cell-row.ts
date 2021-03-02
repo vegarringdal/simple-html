@@ -40,7 +40,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         if (cell.readonly) {
             if (this.cell.type === 'date') {
                 // date picker with alt key overides input somehow..
-                e.target.value = this.connector.dateFormater.dateToString(
+                e.target.value = this.connector.dateFormater.fromDate(
                     data[cell.attribute] || null
                 );
             }
@@ -74,7 +74,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                     // we need this ever ?
                     break;
                 case 'date':
-                    data[cell.attribute] = this.connector.dateFormater.stringToDate(e.target.value);
+                    data[cell.attribute] = this.connector.dateFormater.toDate(e.target.value);
                     break;
                 case 'number':
                     data[cell.attribute] = this.connector.numberFormater.fromString(e.target.value);
@@ -201,7 +201,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                         console.log('no-.empty');
                         break;
                     case 'date':
-                        this.innerEle.value = this.connector.dateFormater.dateToString(newVal);
+                        this.innerEle.value = this.connector.dateFormater.fromDate(newVal);
                         break;
                     case 'number':
                         this.innerEle.value = this.connector.numberFormater.fromNumber(

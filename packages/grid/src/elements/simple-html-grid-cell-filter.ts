@@ -71,11 +71,12 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
                         t.style.opacity = '0.3';
                         t.indeterminate = true;
                 }
+                e.target.value = t.indeterminate ? null : t.checked;
             }
             this.connector.gridCallbacks.beforeFilterCallbackFn &&
                 this.connector.gridCallbacks.beforeFilterCallbackFn(e, cell, this.connector);
             if (cell.filterable.auto !== false) {
-                this.connector.filterCallback(e, cell);
+                this.connector.filterCallback(e.target.value, cell);
             }
         };
 
@@ -168,9 +169,20 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         } else {
             if (inputEl.value !== (value || '')) {
                 if (coltype === 'number') {
-                    inputEl.value = this.connector.numberFormater.fromNumber(value) as any;
+                    if (value === 'null') {
+                        inputEl.value === 'null';
+                    } else {
+                        if (cell.filterable.currentValue === 0) {
+                            inputEl.value === '0';
+                        } else {
+                            inputEl.value = this.connector.numberFormater.fromNumber(value) as any;
+                        }
+                    }
                 } else if (coltype === 'date') {
-                    inputEl.value = this.connector.dateFormater.dateToString(value as any);
+                    inputEl.value =
+                        value === 'null'
+                            ? 'null'
+                            : this.connector.dateFormater.fromDate(value as any);
                 } else {
                     inputEl.value = value as any;
                 }

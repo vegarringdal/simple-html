@@ -294,7 +294,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             if (intersection.length < this.dataFilterSet.size) {
                 // if full we want to use NOT in
                 this.connector.filterCallback(
-                    {} as any,
+                    null,
                     this.cell,
                     intersection.length ? intersection : null,
                     this.search ? this.search : null,
@@ -302,7 +302,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
                 );
             } else {
                 this.connector.filterCallback(
-                    {} as any,
+                    null,
                     this.cell,
                     this.dataFilterSet.size ? Array.from(this.dataFilterSet) : null,
                     this.search ? this.search : null,

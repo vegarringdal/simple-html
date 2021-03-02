@@ -46,9 +46,12 @@ export function valueInput(operatorObject: FilterArgument, ctx: SimpleHtmlGridFi
         case 'date':
             el.type = 'text';
             el.placeholder = ctx.connector.dateFormater.getPlaceHolderDate();
-            el.value = ctx.connector.dateFormater.dateToString(operatorObject.value as string);
+            el.value =
+                operatorObject.value === 'null'
+                    ? 'null'
+                    : ctx.connector.dateFormater.fromDate(operatorObject.value as any);
             el.onchange = (e: any) => {
-                operatorObject.value = ctx.connector.dateFormater.stringToDate(e.target.value);
+                operatorObject.value = ctx.connector.dateFormater.toDate(e.target.value);
             };
             el.oninput = (e: any) => {
                 operatorObject.value = e.target.value;
@@ -56,7 +59,10 @@ export function valueInput(operatorObject: FilterArgument, ctx: SimpleHtmlGridFi
             return el;
         case 'number':
             el.type = 'text';
-            el.value = isNaN(operatorObject.value as any) ? '' : (operatorObject.value as string);
+            el.value =
+                operatorObject.value === 'null'
+                    ? 'null'
+                    : ctx.connector.numberFormater.fromNumber(operatorObject.value as any);
             el.oninput = (e: any) => {
                 operatorObject.value = e.target.value;
             };

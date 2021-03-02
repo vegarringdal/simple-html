@@ -489,7 +489,7 @@ export class GridInterface<T = any> {
      * Internal usage only, do not call
      */
     filterCallback(
-        event: any,
+        value: string | number | null | undefined,
         col: CellConfig,
         filterArray?: any[],
         filterArrayAndValue?: string,
@@ -497,26 +497,33 @@ export class GridInterface<T = any> {
     ) {
         switch (col.type) {
             case 'date':
-                if (event.target.value === 'null') {
+                if (value === 'null') {
                     col.filterable.currentValue = 'null';
                 } else {
-                    col.filterable.currentValue = this.dateFormater.stringToDate(
-                        event.target.value
-                    );
+                    col.filterable.currentValue = this.dateFormater.toDate(value as string);
                 }
                 break;
             case 'number':
-                col.filterable.currentValue = this.numberFormater.fromString(event.target.value);
+                if (value === 'null') {
+                    col.filterable.currentValue = 'null';
+                } else {
+                    col.filterable.currentValue = this.numberFormater.fromString(value as string);
+                }
                 break;
             case 'boolean':
-                col.filterable.currentValue = event.target.indeterminate
-                    ? null
-                    : event.target.checked;
+                if (value === null) {
+                    col.filterable.currentValue = null;
+                }
+                if (value === 'false') {
+                    col.filterable.currentValue = false;
+                }
+                if (value === 'true') {
+                    col.filterable.currentValue = true;
+                }
+
                 break;
             default:
-                col.filterable.currentValue = filterArrayAndValue
-                    ? filterArrayAndValue
-                    : event?.target?.value;
+                col.filterable.currentValue = filterArrayAndValue ? filterArrayAndValue : value;
         }
 
         const oldFilter = this.__ds.getFilter();
