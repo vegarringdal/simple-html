@@ -64,7 +64,10 @@ export function valueInput(operatorObject: FilterArgument, ctx: SimpleHtmlGridFi
                     ? 'null'
                     : ctx.connector.numberFormater.fromNumber(operatorObject.value as any);
             el.oninput = (e: any) => {
-                operatorObject.value = e.target.value;
+                operatorObject.value =
+                    e.target.value === 'null'
+                        ? 'null'
+                        : ctx.connector.numberFormater.fromString(e.target.value);
             };
             return el;
         default:
