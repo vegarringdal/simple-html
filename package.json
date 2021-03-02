@@ -1,6 +1,6 @@
 {
     "name": "simple-html",
-    "version": "3.2.2",
+    "version": "3.2.3-next.0",
     "description": "Simple lib for creating web pages using lit-html and web components",
     "scripts": {
         "start": "ts-node config_devserver",
@@ -24,7 +24,7 @@
         "release:minor": "standard-version --release-as minor",
         "release:patch": "standard-version --release-as patch",
         "release:major": "standard-version --release-as major",
-        "release:next": "standard-version --prerelease next"
+        "release:next": "standard-version --prerelease next --skip.changelog"
     },
     "author": "Vegar Ringdal",
     "license": "MIT",
