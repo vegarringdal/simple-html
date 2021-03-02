@@ -1,11 +1,5 @@
 import { SimpleHtmlGrid, IGridConfig } from '.';
-import {
-    GroupArgument,
-    GridConfig,
-    CellConfig,
-    FilterArgument,
-    GridGroupConfig
-} from './types';
+import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
 import { DateFormater, DateFormaterType } from './dateFormater';
@@ -41,10 +35,7 @@ export class GridInterface<T = any> {
     dateFormater: DateFormaterType;
     numberFormater: typeof NumberFormater;
 
-    constructor(
-        config: GridConfig<T>,
-        datasource?: Datasource | DataContainer
-    ) {
+    constructor(config: GridConfig<T>, datasource?: Datasource | DataContainer) {
         if (!datasource) {
             this.__ds = new Datasource();
         } else {
@@ -715,9 +706,12 @@ export class GridInterface<T = any> {
      * Internal usage only, do not call
      */
     public connectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
-        this.__SimpleHtmlGrid = SimpleHtmlGrid;
-        this.__ds.addEventListner(this);
-        this.dataSourceUpdated();
+        // lets do a check, no need to do anything if its the same.
+        if (this.__SimpleHtmlGrid !== SimpleHtmlGrid) {
+            this.__SimpleHtmlGrid = SimpleHtmlGrid;
+            this.__ds.addEventListner(this);
+            this.dataSourceUpdated();
+        }
         /* this.reRender(); */
     }
 
