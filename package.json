@@ -18,7 +18,7 @@
         "test:watch": "npm run rollup && jest --watch ",
         "test-ci": "npm run rollup && jest",
         "coverage": "npm run rollup && jest --collectCoverage",
-        "rollup": "./node_modules/.bin/rollup -c",
+        "rollup": "rollup -c",
         "release": "standard-version",
         "release-test": "standard-version  --dry-run",
         "release:minor": "standard-version --release-as minor",
