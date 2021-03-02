@@ -2,6 +2,7 @@ import { GridInterface, SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { defineElement } from './defineElement';
+import { dateToString, getPlaceHolderDate } from '../dateHelper';
 
 export class SimpleHtmlGridCellFilter extends HTMLElement {
     connector: GridInterface;
@@ -40,9 +41,11 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
 
         const coltype = cell.type === 'boolean' ? 'checkbox' : cell.type;
 
-        const value = cell.filterable.currentValue || null;
+        let value = cell.filterable.currentValue || null;
         const placeholder = cell.filterable.placeholder || '';
         const config = this.connector.config;
+        
+        
         this.style.height = config.cellHeight + 'px';
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
@@ -133,52 +136,46 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
             inputEl = document.createElement('input');
         }
 
-        inputEl.type = coltype || 'text';
+        inputEl.type = coltype === 'checkbox' ? coltype : 'text';
         if (boolstyle) {
             inputEl.style.opacity = '0.3';
         }
         inputEl.indeterminate = indeterminate;
         inputEl.placeholder = placeholder;
+        if (coltype === 'date') {
+            inputEl.placeholder = getPlaceHolderDate();
+        }
         inputEl.classList.add(classname);
 
         // reset
         inputEl.onchange = null;
 
-        if (coltype === 'date') {
-            inputEl.oninput = input;
-            inputEl.onkeydown = enterKeyDown;
-            inputEl.oncontextmenu = (e: any) => {
-                e.preventDefault();
-                contentMenu(e);
-                return false;
-            };
-            inputEl.valueAsDate = typeof value === 'string' ? new Date(value) : (value as any);
+        inputEl.onchange = change;
+        (inputEl as any).state = setState;
+        inputEl.oncontextmenu = (e: any) => {
+            e.preventDefault();
+            contentMenu(e);
+            return false;
+        };
+        inputEl.oninput = input;
+        inputEl.onkeydown = enterKeyDown;
+        if (coltype === 'checkbox') {
+            if (inputEl.checked !== value) {
+                inputEl.checked = value as any;
+            }
         } else {
-            inputEl.onchange = change;
-            (inputEl as any).state = setState;
-            inputEl.oncontextmenu = (e: any) => {
-                e.preventDefault();
-                contentMenu(e);
-                return false;
-            };
-            inputEl.oninput = input;
-            inputEl.onkeydown = enterKeyDown;
-            if (coltype === 'checkbox') {
-                if (inputEl.checked !== value) {
-                    inputEl.checked = value as any;
-                }
-            } else {
-                if (coltype === 'number') {
-                    if (inputEl.valueAsNumber !== value || 0) {
-                        inputEl.valueAsNumber = value as any;
-                    }
+            if (inputEl.value !== (value || '')) {
+                if (coltype === 'number' && isNaN(value as any)) {
+                    inputEl.value = '';
+                } else if (coltype === 'date') {
+                    inputEl.placeholder = getPlaceHolderDate();
+                    inputEl.value = dateToString(value);
                 } else {
-                    if (inputEl.value !== value || '' ) {
-                        inputEl.value = value as any;
-                    }
+                    inputEl.value = value as any;
                 }
             }
         }
+
         if (!this.children.length) {
             this.appendChild(inputEl);
         }

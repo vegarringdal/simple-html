@@ -1,5 +1,6 @@
 import { SimpleHtmlGrid, GridInterface } from '..';
 import { CellConfig } from '../types';
+import { dateToString, getPlaceHolderDate, stringToDate } from '../dateHelper';
 import { defineElement } from './defineElement';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
@@ -40,7 +41,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         if (cell.readonly) {
             if (this.cell.type === 'date') {
                 // date picker with alt key overides input somehow..
-                e.target.valueAsDate = data[cell.attribute] || null;
+                e.target.value = dateToString(data[cell.attribute] || null);
             }
 
             return;
@@ -65,7 +66,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                     // we need this ever ?
                     break;
                 case 'date':
-                    data[cell.attribute] = e.target.valueAsDate;
+                    data[cell.attribute] = stringToDate(e.target.value);
                     break;
                 case 'number':
                     data[cell.attribute] = e.target.valueAsNumber;
@@ -119,8 +120,12 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
         this.innerEle.disabled = this.cell.disabled;
         this.innerEle.onchange = change;
-        this.innerEle.oninput = input;
-        this.innerEle.setAttribute('type', this.cell.type || 'text');
+        if (this.cell.type === 'date') {
+            this.innerEle.oninput = null;
+        } else {
+            this.innerEle.oninput = input;
+        }
+
         this.innerEle.oncontextmenu = (e: any) => {
             e.preventDefault();
             contentMenu(e);
@@ -139,20 +144,47 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             (this.parentNode as HTMLElement).style.display = 'block';
         }
 
+        // set celltype
+        let celltype = this.cell.type === 'boolean' ? 'checkbox' : this.cell.type || 'text';
+        if (this.cell.type === 'date') {
+            celltype = 'text';
+        }
+
+        if (this.innerEle.type !== celltype) {
+            this.innerEle.type = celltype;
+        }
+
+        // fix class if checkbox/input
+        if (celltype === 'checkbox') {
+            if (this.innerEle.classList.contains('simple-html-grid-row-input')) {
+                this.innerEle.classList.remove('simple-html-grid-row-input');
+            }
+            if (!this.innerEle.classList.contains('simple-html-grid-row-checkbox')) {
+                this.innerEle.classList.add('simple-html-grid-row-checkbox');
+            }
+        } else {
+            if (this.innerEle.classList.contains('simple-html-grid-row-checkbox')) {
+                this.innerEle.classList.remove('simple-html-grid-row-checkbox');
+            }
+            if (!this.innerEle.classList.contains('simple-html-grid-row-input')) {
+                this.innerEle.classList.add('simple-html-grid-row-input');
+            }
+        }
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
+
         if (data) {
             const cell = this.cell;
-            this.style.width = this.connector.config.groups[this.group].width + 'px';
-            this.innerEle.setAttribute(
-                'type',
-                cell.type === 'boolean' ? 'checkbox' : cell.type || 'text'
-            );
+
+            if (cell.type === 'date') {
+                this.innerEle.placeholder = getPlaceHolderDate();
+            }
+
             const newVal = data[cell.attribute] || null;
+
             if (newVal !== this.lastVal) {
                 switch (cell.type) {
                     case 'boolean':
                         this.innerEle.checked = newVal;
-                        this.innerEle.classList.remove('simple-html-grid-row-input');
-                        this.innerEle.classList.add('simple-html-grid-row-checkbox');
                         break;
                     case 'image':
                         console.log('no-image');
@@ -161,7 +193,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                         console.log('no-.empty');
                         break;
                     case 'date':
-                        this.innerEle.valueAsDate = newVal;
+                        this.innerEle.value = dateToString(newVal);
                         break;
                     case 'number':
                         this.innerEle.valueAsNumber = newVal;
@@ -172,6 +204,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             }
 
             this.lastVal = newVal;
+        } else {
+            if (this.innerEle.value) {
+                this.innerEle.value = '';
+            }
         }
     }
 }

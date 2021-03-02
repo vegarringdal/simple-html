@@ -9,6 +9,7 @@ import {
 } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
+import { stringToDate } from './dateHelper';
 
 type f = (...args: any[]) => void;
 
@@ -490,13 +491,27 @@ export class GridInterface<T = any> {
     ) {
         switch (col.type) {
             case 'date':
-                col.filterable.currentValue =
-                    event.target.valueAsDate === null ? '' : new Date(event.target.valueAsDate);
+                if (event.target.value === 'null') {
+                    col.filterable.currentValue = 'null';
+                } else {
+                    col.filterable.currentValue = stringToDate(event.target.value);
+                }
                 break;
             case 'number':
-                col.filterable.currentValue = isNaN(event.target.valueAsNumber)
-                    ? ''
-                    : event.target.valueAsNumber;
+                if (event.target.value === 'null') {
+                    col.filterable.currentValue = 'null';
+                } else {
+                    let value = event.target.value;
+                    // todo, make own helper for dealing with numbers so I can handle decimal better
+                    if (value.includes(',') && !value.includes('.')) {
+                        value = value.replace(',', '.');
+                    }
+                    if (value === '' || value === '0') {
+                        col.filterable.currentValue = value;
+                    } else {
+                        col.filterable.currentValue = isNaN(value) ? '' : parseFloat(value);
+                    }
+                }
 
                 break;
             case 'boolean':

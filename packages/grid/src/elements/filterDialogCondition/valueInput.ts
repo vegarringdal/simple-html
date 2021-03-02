@@ -1,4 +1,5 @@
 import { FilterArgument } from '../../types';
+import { dateToString, getPlaceHolderDate, stringToDate } from '../../dateHelper';
 
 /**
  * returns input based on type
@@ -43,23 +44,21 @@ export function valueInput(operatorObject: FilterArgument) {
         case 'empty':
         // nothing
         case 'date':
-            el.type = 'date';
-            el.valueAsDate =
-                typeof operatorObject.value === 'string' || typeof operatorObject.value === 'number'
-                    ? new Date(operatorObject.value)
-                    : operatorObject.value || null;
+            el.type = 'text';
+            el.placeholder = getPlaceHolderDate();
+            el.value = dateToString(operatorObject.value);
             el.onchange = (e: any) => {
-                operatorObject.value = e.target.checked;
+                operatorObject.value = stringToDate(e.target.value);
             };
             el.oninput = (e: any) => {
-                operatorObject.value = e.target.valueAsDate;
+                operatorObject.value = e.target.value;
             };
             return el;
         case 'number':
-            el.type = 'number';
-            el.valueAsNumber = operatorObject.value as number;
+            el.type = 'text';
+            el.value = isNaN(operatorObject.value as any) ? '' : (operatorObject.value as string);
             el.oninput = (e: any) => {
-                operatorObject.value = e.target.valueAsNumber;
+                operatorObject.value = e.target.value;
             };
             return el;
         default:
