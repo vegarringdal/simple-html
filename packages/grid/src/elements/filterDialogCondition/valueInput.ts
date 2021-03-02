@@ -1,10 +1,10 @@
+import { SimpleHtmlGridFilterDialog } from '../simple-html-grid-filter-dialog';
 import { FilterArgument } from '../../types';
-import { dateToString, getPlaceHolderDate, stringToDate } from '../../dateHelper';
 
 /**
  * returns input based on type
  */
-export function valueInput(operatorObject: FilterArgument) {
+export function valueInput(operatorObject: FilterArgument, ctx: SimpleHtmlGridFilterDialog) {
     if (operatorObject.operator === 'IN' || operatorObject.operator === 'NOT_IN') {
         const el = document.createElement('textarea');
         el.classList.add('dialog-item-y');
@@ -45,10 +45,10 @@ export function valueInput(operatorObject: FilterArgument) {
         // nothing
         case 'date':
             el.type = 'text';
-            el.placeholder = getPlaceHolderDate();
-            el.value = dateToString(operatorObject.value);
+            el.placeholder = ctx.connector.dateFormater.getPlaceHolderDate();
+            el.value = ctx.connector.dateFormater.dateToString(operatorObject.value as string);
             el.onchange = (e: any) => {
-                operatorObject.value = stringToDate(e.target.value);
+                operatorObject.value = ctx.connector.dateFormater.stringToDate(e.target.value);
             };
             el.oninput = (e: any) => {
                 operatorObject.value = e.target.value;

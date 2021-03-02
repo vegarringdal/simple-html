@@ -9,7 +9,8 @@ import {
 } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
-import { stringToDate } from './dateHelper';
+import { DateFormater, DateFormaterType } from './dateFormater';
+import { NumberFormater } from './numberFormater';
 
 type f = (...args: any[]) => void;
 
@@ -39,6 +40,8 @@ export class GridInterface<T = any> {
     private __CONFIG: GridConfig;
     gridCallbacks: GridCallbacks;
     private __configDefault: GridConfig;
+    dateFormater: DateFormaterType;
+    numberFormater: typeof NumberFormater;
 
     constructor(
         config: GridConfig<T>,
@@ -59,6 +62,9 @@ export class GridInterface<T = any> {
         this.gridCallbacks = gridCallbacks;
         this.__configDefault = JSON.parse(JSON.stringify(config));
         this.__CONFIG = config;
+        // set default date formater
+        this.dateFormater = DateFormater;
+        this.numberFormater = NumberFormater;
         this.parseConfig();
     }
 
@@ -494,25 +500,13 @@ export class GridInterface<T = any> {
                 if (event.target.value === 'null') {
                     col.filterable.currentValue = 'null';
                 } else {
-                    col.filterable.currentValue = stringToDate(event.target.value);
+                    col.filterable.currentValue = this.dateFormater.stringToDate(
+                        event.target.value
+                    );
                 }
                 break;
             case 'number':
-                if (event.target.value === 'null') {
-                    col.filterable.currentValue = 'null';
-                } else {
-                    let value = event.target.value;
-                    // todo, make own helper for dealing with numbers so I can handle decimal better
-                    if (value.includes(',') && !value.includes('.')) {
-                        value = value.replace(',', '.');
-                    }
-                    if (value === '' || value === '0') {
-                        col.filterable.currentValue = value;
-                    } else {
-                        col.filterable.currentValue = isNaN(value) ? '' : parseFloat(value);
-                    }
-                }
-
+                col.filterable.currentValue = this.numberFormater.fromString(event.target.value);
                 break;
             case 'boolean':
                 col.filterable.currentValue = event.target.indeterminate
@@ -610,6 +604,10 @@ export class GridInterface<T = any> {
         }
 
         this.__ds.filter(filter);
+    }
+
+    public setDateFormater(dateFormater: DateFormaterType) {
+        this.dateFormater = dateFormater || dateFormater;
     }
 
     /**

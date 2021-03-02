@@ -1,6 +1,5 @@
 import { SimpleHtmlGrid, GridInterface } from '..';
 import { CellConfig } from '../types';
-import { dateToString, getPlaceHolderDate, stringToDate } from '../dateHelper';
 import { defineElement } from './defineElement';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 
@@ -41,7 +40,16 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         if (cell.readonly) {
             if (this.cell.type === 'date') {
                 // date picker with alt key overides input somehow..
-                e.target.value = dateToString(data[cell.attribute] || null);
+                e.target.value = this.connector.dateFormater.dateToString(
+                    data[cell.attribute] || null
+                );
+            }
+
+            if (this.cell.type === 'number') {
+                // date picker with alt key overides input somehow..
+                e.target.value = this.connector.numberFormater.fromNumber(
+                    data[cell.attribute] || null
+                );
             }
 
             return;
@@ -66,10 +74,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                     // we need this ever ?
                     break;
                 case 'date':
-                    data[cell.attribute] = stringToDate(e.target.value);
+                    data[cell.attribute] = this.connector.dateFormater.stringToDate(e.target.value);
                     break;
                 case 'number':
-                    data[cell.attribute] = e.target.valueAsNumber;
+                    data[cell.attribute] = this.connector.numberFormater.fromString(e.target.value);
                     break;
                 default:
                     data[cell.attribute] = e.target.value;
@@ -86,7 +94,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             );
     }
 
-    setSettings() {
+    private setSettings() {
         const connector = this.connector;
 
         const ref = this.ref;
@@ -146,7 +154,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
         // set celltype
         let celltype = this.cell.type === 'boolean' ? 'checkbox' : this.cell.type || 'text';
-        if (this.cell.type === 'date') {
+        if (celltype !== 'text' && celltype !== 'checkbox') {
             celltype = 'text';
         }
 
@@ -176,7 +184,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             const cell = this.cell;
 
             if (cell.type === 'date') {
-                this.innerEle.placeholder = getPlaceHolderDate();
+                this.innerEle.placeholder = this.connector.dateFormater.getPlaceHolderDate();
             }
 
             const newVal = data[cell.attribute] || null;
@@ -193,10 +201,12 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                         console.log('no-.empty');
                         break;
                     case 'date':
-                        this.innerEle.value = dateToString(newVal);
+                        this.innerEle.value = this.connector.dateFormater.dateToString(newVal);
                         break;
                     case 'number':
-                        this.innerEle.valueAsNumber = newVal;
+                        this.innerEle.value = this.connector.numberFormater.fromNumber(
+                            newVal
+                        ) as string;
                         break;
                     default:
                         this.innerEle.value = newVal;

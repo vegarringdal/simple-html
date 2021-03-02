@@ -2,7 +2,6 @@ import { GridInterface, SimpleHtmlGrid } from '..';
 import { GridGroupConfig } from '../types';
 import { generateMenuWithComponentName } from './generateMenuWithComponentName';
 import { defineElement } from './defineElement';
-import { dateToString, getPlaceHolderDate } from '../dateHelper';
 
 export class SimpleHtmlGridCellFilter extends HTMLElement {
     connector: GridInterface;
@@ -44,8 +43,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         let value = cell.filterable.currentValue || null;
         const placeholder = cell.filterable.placeholder || '';
         const config = this.connector.config;
-        
-        
+
         this.style.height = config.cellHeight + 'px';
         this.style.width = this.group.width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
@@ -136,14 +134,18 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
             inputEl = document.createElement('input');
         }
 
-        inputEl.type = coltype === 'checkbox' ? coltype : 'text';
+        inputEl.type = coltype;
+        if (coltype !== 'text' && coltype !== 'checkbox') {
+            inputEl.type = 'text';
+        }
+
         if (boolstyle) {
             inputEl.style.opacity = '0.3';
         }
         inputEl.indeterminate = indeterminate;
         inputEl.placeholder = placeholder;
         if (coltype === 'date') {
-            inputEl.placeholder = getPlaceHolderDate();
+            inputEl.placeholder = this.connector.dateFormater.getPlaceHolderDate();
         }
         inputEl.classList.add(classname);
 
@@ -165,11 +167,10 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
             }
         } else {
             if (inputEl.value !== (value || '')) {
-                if (coltype === 'number' && isNaN(value as any)) {
-                    inputEl.value = '';
+                if (coltype === 'number') {
+                    inputEl.value = this.connector.numberFormater.fromNumber(value) as any;
                 } else if (coltype === 'date') {
-                    inputEl.placeholder = getPlaceHolderDate();
-                    inputEl.value = dateToString(value);
+                    inputEl.value = this.connector.dateFormater.dateToString(value as any);
                 } else {
                     inputEl.value = value as any;
                 }
