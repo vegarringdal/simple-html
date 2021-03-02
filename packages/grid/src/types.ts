@@ -106,12 +106,3 @@ export interface GridConfig<T = any> {
     groupingExpanded?: string[];
 }
 
-export interface GridCallbacks {
-    beforeEditCallbackFn?: any;
-    afterEditCallbackFn?: any;
-    renderRowCallBackFn?: any;
-    renderLabelCallBackFn?: any;
-    renderFilterCallBackFn?: any;
-    beforeFilterCallbackFn?: any;
-    beforeSortCallbackFn?: any;
-}

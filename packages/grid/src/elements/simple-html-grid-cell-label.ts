@@ -94,8 +94,6 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
             const mouseup = (e: MouseEvent) => {
                 const cell = this.group.rows[this.cellPosition];
                 const connector = this.connector;
-                connector.gridCallbacks.beforeSortCallbackFn &&
-                    connector.gridCallbacks.beforeSortCallbackFn(e as any, cell, connector);
                 if (cell.sortable.auto !== false) {
                     connector.sortCallback(e as any, cell);
                 }

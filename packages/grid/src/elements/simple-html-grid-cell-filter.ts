@@ -44,11 +44,9 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         const placeholder = cell.filterable.placeholder || '';
         const config = this.connector.config;
 
-        this.style.height = config.cellHeight + 'px';
-        this.style.width = this.group.width + 'px';
-        this.style.top = this.cellPosition * config.cellHeight + 'px';
-        this.attribute = this.group.rows[this.cellPosition].attribute;
-
+        
+        // misc callbacks/listeners
+        
         const filterCallback = (e: any) => {
             // if boolean column we to to overide how it behaves
             if (cell.type === 'boolean') {
@@ -73,8 +71,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
                 }
                 e.target.value = t.indeterminate ? null : t.checked;
             }
-            this.connector.gridCallbacks.beforeFilterCallbackFn &&
-                this.connector.gridCallbacks.beforeFilterCallbackFn(e, cell, this.connector);
+
             if (cell.filterable.auto !== false) {
                 this.connector.filterCallback(e.target.value, cell);
             }
@@ -86,25 +83,6 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
                 filterCallback(e as any);
             }
         };
-
-        let boolstyle = null;
-        let indeterminate = false;
-        let setState = 0;
-        if (cell.type === 'boolean' && cell.filterable) {
-            // if no value is set then its "blank state, nothing filtered
-            if (cell.filterable.currentValue !== false && cell.filterable.currentValue !== true) {
-                boolstyle = true;
-                indeterminate = true;
-                setState = 0;
-            } else {
-                setState = cell.filterable.currentValue ? 2 : 3;
-            }
-        }
-
-        let classname = 'simple-html-grid-row-input';
-        if (cell.type === 'boolean') {
-            classname = 'simple-html-grid-row-checkbox';
-        }
 
         const change = cell.editEventType !== 'input' ? filterCallback : null;
         const input = cell.editEventType === 'input' ? filterCallback : null;
@@ -121,13 +99,35 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
             }
         };
 
-        if (this.connector.gridCallbacks.renderFilterCallBackFn) {
-            return this.connector.gridCallbacks.renderFilterCallBackFn(
-                cell,
-                this.connector,
-                filterCallback
-            );
+        // checkbox variables
+
+        let boolstyle = null;
+        let indeterminate = false;
+        let setState = 0;
+        if (cell.type === 'boolean' && cell.filterable) {
+            // if no value is set then its "blank state, nothing filtered
+            if (cell.filterable.currentValue !== false && cell.filterable.currentValue !== true) {
+                boolstyle = true;
+                indeterminate = true;
+                setState = 0;
+            } else {
+                setState = cell.filterable.currentValue ? 2 : 3;
+            }
         }
+
+        // dynamic styles
+
+        let classname = 'simple-html-grid-row-input';
+        if (cell.type === 'boolean') {
+            classname = 'simple-html-grid-row-checkbox';
+        }
+        this.style.height = config.cellHeight + 'px';
+        this.style.width = this.group.width + 'px';
+        this.style.top = this.cellPosition * config.cellHeight + 'px';
+        this.attribute = this.group.rows[this.cellPosition].attribute;
+
+
+        // create element or reuse if we allready have it
         let inputEl: HTMLInputElement;
         if (this.children.length) {
             inputEl = this.children[0] as HTMLInputElement;
@@ -143,18 +143,19 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         if (boolstyle) {
             inputEl.style.opacity = '0.3';
         }
-        inputEl.indeterminate = indeterminate;
+
         inputEl.placeholder = placeholder;
         if (coltype === 'date') {
             inputEl.placeholder = this.connector.dateFormater.getPlaceHolderDate();
         }
+
+        // add classes and state if checkbox
         inputEl.classList.add(classname);
-
-        // reset
-        inputEl.onchange = null;
-
-        inputEl.onchange = change;
         (inputEl as any).state = setState;
+        inputEl.indeterminate = indeterminate;
+
+        // add misc listeners
+        inputEl.onchange = change;
         inputEl.oncontextmenu = (e: any) => {
             e.preventDefault();
             contentMenu(e);
@@ -162,13 +163,17 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         };
         inputEl.oninput = input;
         inputEl.onkeydown = enterKeyDown;
-        if (coltype === 'checkbox') {
-            if (inputEl.checked !== value) {
-                inputEl.checked = value as any;
-            }
-        } else {
-            if (inputEl.value !== (value || '')) {
-                if (coltype === 'number') {
+
+        // set value based on type and prev value
+
+        if (inputEl.value !== (value || '')) {
+            switch (coltype) {
+                case 'checkbox':
+                    if (inputEl.checked !== value) {
+                        inputEl.checked = value as any;
+                    }
+                    break;
+                case 'number':
                     if (value === 'null') {
                         inputEl.value === 'null';
                     } else {
@@ -178,14 +183,18 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
                             inputEl.value = this.connector.numberFormater.fromNumber(value) as any;
                         }
                     }
-                } else if (coltype === 'date') {
-                    inputEl.value =
-                        value === 'null'
-                            ? 'null'
-                            : this.connector.dateFormater.fromDate(value as any);
-                } else {
+
+                    break;
+                case 'date':
+                    if (value === 'null') {
+                        inputEl.value = 'null';
+                    } else {
+                        inputEl.value = this.connector.dateFormater.fromDate(value as any);
+                    }
+
+                    break;
+                default:
                     inputEl.value = value as any;
-                }
             }
         }
 

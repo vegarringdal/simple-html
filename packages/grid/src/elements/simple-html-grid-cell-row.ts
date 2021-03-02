@@ -32,6 +32,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.style.width = this.connector.config.groups[this.group].width + 'px';
     }
 
+    // callback for change
     private updateCallback(e: any) {
         const data = this.connector.displayedDataset[this.rowNo];
         const cell = this.cell;
@@ -40,9 +41,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         if (cell.readonly) {
             if (this.cell.type === 'date') {
                 // date picker with alt key overides input somehow..
-                e.target.value = this.connector.dateFormater.fromDate(
-                    data[cell.attribute] || null
-                );
+                e.target.value = this.connector.dateFormater.fromDate(data[cell.attribute] || null);
             }
 
             if (this.cell.type === 'number') {
@@ -55,14 +54,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             return;
         }
 
-        this.connector.gridCallbacks.beforeEditCallbackFn &&
-            this.connector.gridCallbacks.beforeEditCallbackFn(
-                e,
-                cell,
-                this.rowNo,
-                data,
-                this.connector
-            );
         // filter out based on type so we know what type to use
         if (cell.autoUpdateData !== false) {
             switch (this.cell.type) {
@@ -84,14 +75,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             }
             this.connector.publishEvent('attribute-change');
         }
-        this.connector.gridCallbacks.afterEditCallbackFn &&
-            this.connector.gridCallbacks.afterEditCallbackFn(
-                e,
-                cell,
-                this.rowNo,
-                data,
-                this.connector
-            );
     }
 
     private setSettings() {

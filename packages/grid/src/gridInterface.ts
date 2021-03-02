@@ -4,8 +4,7 @@ import {
     GridConfig,
     CellConfig,
     FilterArgument,
-    GridGroupConfig,
-    GridCallbacks
+    GridGroupConfig
 } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
@@ -38,15 +37,13 @@ export class GridInterface<T = any> {
     private __SCROLL_HEIGHT: number;
     private __handleEvent: any = null;
     private __CONFIG: GridConfig;
-    gridCallbacks: GridCallbacks;
     private __configDefault: GridConfig;
     dateFormater: DateFormaterType;
     numberFormater: typeof NumberFormater;
 
     constructor(
         config: GridConfig<T>,
-        datasource?: Datasource | DataContainer,
-        gridCallbacks: GridCallbacks = {}
+        datasource?: Datasource | DataContainer
     ) {
         if (!datasource) {
             this.__ds = new Datasource();
@@ -59,21 +56,12 @@ export class GridInterface<T = any> {
             }
         }
 
-        this.gridCallbacks = gridCallbacks;
         this.__configDefault = JSON.parse(JSON.stringify(config));
         this.__CONFIG = config;
         // set default date formater
         this.dateFormater = DateFormater;
         this.numberFormater = NumberFormater;
         this.parseConfig();
-    }
-
-    /**
-     * for setting callback funtions
-     * so config does not contain anything that cant live in JSON
-     */
-    setCallback(gridCallbacks: GridCallbacks) {
-        this.gridCallbacks = gridCallbacks;
     }
 
     /**
