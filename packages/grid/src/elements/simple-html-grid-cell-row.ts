@@ -22,14 +22,56 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.style.width = config.groups[this.group].width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.cell = config.groups[this.group].rows[this.cellPosition];
+        
         this.innerEle = document.createElement('input');
         this.innerEle.classList.add('simple-html-grid-row-input');
         this.appendChild(this.innerEle);
-        this.setSettings();
-    }
 
-    public updateWidth() {
-        this.style.width = this.connector.config.groups[this.group].width + 'px';
+        const ref = this.ref;
+        const change =
+            this.cell.editEventType !== 'input'
+                ? (e: any) => {
+                      this.updateCallback(e);
+                  }
+                : null;
+        const input =
+            this.cell.editEventType !== 'input'
+                ? (e: any) => {
+                      this.updateCallback(e);
+                  }
+                : null;
+
+        const connector = this.connector; //ref in callback
+        const contentMenu = (e: any) => {
+            if ((e as any).button !== 0) {
+                generateMenuWithComponentName(
+                    'simple-html-grid-menu-row',
+                    e,
+                    connector,
+                    ref,
+                    () => this.cell,
+                    () => this.rowNo,
+                    () => this.connector.displayedDataset[this.rowNo]
+                );
+            }
+        };
+
+        this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
+        this.innerEle.disabled = this.cell.disabled;
+        this.innerEle.onchange = change;
+        if (this.cell.type === 'date') {
+            this.innerEle.oninput = null;
+        } else {
+            this.innerEle.oninput = input;
+        }
+
+        this.innerEle.oncontextmenu = (e: any) => {
+            e.preventDefault();
+            contentMenu(e);
+            return false;
+        };
+
+        this.updateInput();
     }
 
     // callback for change
@@ -77,53 +119,8 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         }
     }
 
-    private setSettings() {
-        const connector = this.connector;
-
-        const ref = this.ref;
-        const change =
-            this.cell.editEventType !== 'input'
-                ? (e: any) => {
-                      this.updateCallback(e);
-                  }
-                : null;
-        const input =
-            this.cell.editEventType !== 'input'
-                ? (e: any) => {
-                      this.updateCallback(e);
-                  }
-                : null;
-
-        const contentMenu = (e: any) => {
-            if ((e as any).button !== 0) {
-                generateMenuWithComponentName(
-                    'simple-html-grid-menu-row',
-                    e,
-                    connector,
-                    ref,
-                    () => this.cell,
-                    () => this.rowNo,
-                    () => this.connector.displayedDataset[this.rowNo]
-                );
-            }
-        };
-
-        this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
-        this.innerEle.disabled = this.cell.disabled;
-        this.innerEle.onchange = change;
-        if (this.cell.type === 'date') {
-            this.innerEle.oninput = null;
-        } else {
-            this.innerEle.oninput = input;
-        }
-
-        this.innerEle.oncontextmenu = (e: any) => {
-            e.preventDefault();
-            contentMenu(e);
-            return false;
-        };
-
-        this.updateInput();
+    public updateWidth() {
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
     }
 
     updateInput() {
