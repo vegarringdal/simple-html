@@ -61,7 +61,7 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public disconnectedCallback() {
-        this.__DATASOURCE_INTERFACE && this.__DATASOURCE_INTERFACE.disconnectGrid();
+        this.__DATASOURCE_INTERFACE && this.__DATASOURCE_INTERFACE.disconnectGrid(this);
     }
 
     public reRender() {

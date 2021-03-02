@@ -719,9 +719,12 @@ export class GridInterface<T = any> {
      * grid element disconnects when diconnectedCallback is called, gridinterfaces disconnects from datsoruce events
      * Internal usage only, do not call
      */
-    public disconnectGrid() {
-        this.__SimpleHtmlGrid = null;
-        this.__ds.removeEventListner(this);
+    public disconnectGrid(SimpleHtmlGrid: SimpleHtmlGrid) {
+        // some apps might have delay, so lets make sure we still have same context
+        if (this.__SimpleHtmlGrid !== SimpleHtmlGrid) {
+            this.__SimpleHtmlGrid = null;
+            this.__ds.removeEventListner(this);
+        }
     }
 
     /**
