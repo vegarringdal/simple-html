@@ -37,16 +37,13 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
         const ref = this.ref;
-
         const coltype = cell.type === 'boolean' ? 'checkbox' : cell.type;
-
         let value = cell.filterable.currentValue || null;
         const placeholder = cell.filterable.placeholder || '';
         const config = this.connector.config;
 
-        
         // misc callbacks/listeners
-        
+
         const filterCallback = (e: any) => {
             // if boolean column we to to overide how it behaves
             if (cell.type === 'boolean') {
@@ -126,8 +123,8 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.attribute = this.group.rows[this.cellPosition].attribute;
 
-
         // create element or reuse if we allready have it
+        
         let inputEl: HTMLInputElement;
         if (this.children.length) {
             inputEl = this.children[0] as HTMLInputElement;
@@ -140,21 +137,23 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
             inputEl.type = 'text';
         }
 
-        if (boolstyle) {
-            inputEl.style.opacity = '0.3';
-        }
-
         inputEl.placeholder = placeholder;
         if (coltype === 'date') {
             inputEl.placeholder = this.connector.dateFormater.getPlaceHolderDate();
         }
 
         // add classes and state if checkbox
+        
         inputEl.classList.add(classname);
         (inputEl as any).state = setState;
         inputEl.indeterminate = indeterminate;
+        if (boolstyle) {
+            // so it looks a little faded when indeterminate state
+            inputEl.style.opacity = '0.3';
+        }
 
         // add misc listeners
+        
         inputEl.onchange = change;
         inputEl.oncontextmenu = (e: any) => {
             e.preventDefault();

@@ -124,14 +124,12 @@ export const columnDragDropPanelColumn = (event: string, _connector: GridInterfa
 
     // this will just move our label
     const mouseMove = function (e: MouseEvent) {
-        /*  setTimeout(() => { */
         requestAnimationFrame(() => {
             if (dragColumnBlock) {
                 dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
                 dragColumnBlock.style.left = e.clientX + document.documentElement.scrollLeft + 'px';
             }
         });
-        /* }, 10); */
     };
 
     return (_e: any, group: GroupArgument) => {
@@ -183,8 +181,6 @@ export const columnDragDrop = (
     // this will just move our label
     const mouseMove = function (e: MouseEvent) {
         node = _connector.getMainElement()?.getElementsByTagName('simple-html-grid-body')[0];
-
-        /*    setTimeout(() => { */
         requestAnimationFrame(() => {
             if (dragColumnBlock) {
                 dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
@@ -202,7 +198,6 @@ export const columnDragDrop = (
                 }
             }
         });
-        /*  }, 10); */
     };
 
     // main event binded to column
