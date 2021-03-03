@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.2.4](https://github.com/simple-html/simple-html/compare/v3.2.3...v3.2.4) (2021-03-03)
+
+
+### Bug Fixes
+
+* **grid:** placeholder for dates on empty row was not reset ([9bc2ccd](https://github.com/simple-html/simple-html/commits/9bc2ccdba4e046e83d8edf9601e6d9024dfeab67))
+
 ### [3.2.3](https://github.com/simple-html/simple-html/compare/v3.2.2...v3.2.3) (2021-03-03)
 
 

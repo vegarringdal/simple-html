@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/date",
-    "version": "3.2.3",
+    "version": "3.2.4",
     "description": "simple html datepicker",
     "main": "dist/index.js",
     "module": "dist/index.js",
