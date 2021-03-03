@@ -1,8 +1,9 @@
 # @simple-html/grid
 
 IMPORTANT! -> very early state of developement..
+I havent decided completly how I want it, so some breaking changes might come without following semver
 
-Simple data grid made with lit-html & @simple-html/core & @simple-html/datasource.
+Simple data grid made with @simple-html/datasource.
 This grid is made for desktop, not mobile.
 
 
@@ -13,7 +14,7 @@ Features:
 -   multi sorting
 -   mulitiselect rows
 
-Grid uses @simple-html/datasorce to for sorting/filtering/sorting/tracking changes
+Grid uses @simple-html/datasource to for sorting/filtering/sorting/tracking changes
 
 ### Install
 
