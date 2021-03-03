@@ -43,7 +43,6 @@ export function scrollEvent(
                 /**
                  * Normal scrolling (not scrollbar)
                  */
-
                 const node = ref.getElementsByTagName(
                     'simple-html-grid-body'
                 )[0] as SimpleHtmlGridBody;
@@ -86,7 +85,7 @@ export function scrollEvent(
                         }
                     }
                 }
- 
+
                 ref.colCache = node.rows[0]?.colEls?.map((e) => e.group) || [];
 
                 ref.colCache.forEach((e) => (e.found = false));
@@ -173,15 +172,15 @@ export function scrollEvent(
         }
 
         if (connector.config.scrollLeft !== e.target.scrollLeft) {
-           // requestAnimationFrame(() => {
-                horizontalScroll();
-           // });
+            // requestAnimationFrame(() => {
+            horizontalScroll();
+            // });
         }
 
         if (connector.config.lastScrollTop !== e.target.scrollTop) {
             //requestAnimationFrame(() => {
-                verticalScroll();
-           // });
+            verticalScroll();
+            // });
         }
     };
 }

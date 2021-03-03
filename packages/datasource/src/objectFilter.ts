@@ -40,13 +40,14 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
         case 'null':
             filterValue = null;
             filterOperator = filterOperator === 'NOT_EQUAL_TO' ? 'NOT_EQUAL_TO' : 'EQUAL'; // we only want blanks or not blanks..
-            if (rowValue === undefined || rowValue === 0 || rowValue === '') {
+            if (rowValue === undefined || rowValue === 0 || rowValue === '' || (rowValue  && typeof rowValue === 'object' && rowValue.toString() ==='Invalid Date')) {
                 rowValue = null;
             }
 
             break;
 
         case 'date':
+            
             try {
                 // we need to reset date so they use same time/timezone
                 rowValue = new Date(

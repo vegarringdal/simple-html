@@ -27,7 +27,7 @@ export function filterDialogConditionTemplate(
                 el.appendChild(selectOperatorBtn(operatorObject, ctx));
                 el.appendChild(
                     operatorObject.valueType === 'VALUE'
-                        ? valueInput(operatorObject)
+                        ? valueInput(operatorObject, ctx)
                         : selectAttributesBtn(operatorObject, ctx, true)
                 );
                 el.appendChild(selectAttributeOrInputBtn(operatorObject, ctx));

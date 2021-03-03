@@ -22,71 +22,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.style.width = config.groups[this.group].width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.cell = config.groups[this.group].rows[this.cellPosition];
+        
         this.innerEle = document.createElement('input');
         this.innerEle.classList.add('simple-html-grid-row-input');
         this.appendChild(this.innerEle);
-        this.setSettings();
-    }
-
-    public updateWidth() {
-        this.style.width = this.connector.config.groups[this.group].width + 'px';
-    }
-
-    private updateCallback(e: any) {
-        const data = this.connector.displayedDataset[this.rowNo];
-        const cell = this.cell;
-        this.style.width = this.connector.config.groups[this.group].width + 'px';
-
-        if (cell.readonly) {
-            if (this.cell.type === 'date') {
-                // date picker with alt key overides input somehow..
-                e.target.valueAsDate = data[cell.attribute] || null;
-            }
-
-            return;
-        }
-
-        this.connector.gridCallbacks.beforeEditCallbackFn &&
-            this.connector.gridCallbacks.beforeEditCallbackFn(
-                e,
-                cell,
-                this.rowNo,
-                data,
-                this.connector
-            );
-        // filter out based on type so we know what type to use
-        if (cell.autoUpdateData !== false) {
-            switch (this.cell.type) {
-                case 'boolean':
-                    data[cell.attribute] = e.target.checked;
-                    break;
-                case 'image':
-                    // rowData[col.attribute] = e.target.checked;
-                    // we need this ever ?
-                    break;
-                case 'date':
-                    data[cell.attribute] = e.target.valueAsDate;
-                    break;
-                case 'number':
-                    data[cell.attribute] = e.target.valueAsNumber;
-                    break;
-                default:
-                    data[cell.attribute] = e.target.value;
-            }
-            this.connector.publishEvent('attribute-change');
-        }
-        this.connector.gridCallbacks.afterEditCallbackFn &&
-            this.connector.gridCallbacks.afterEditCallbackFn(
-                e,
-                cell,
-                this.rowNo,
-                data,
-                this.connector
-            );
-    }
-
-    setSettings() {
-        const connector = this.connector;
 
         const ref = this.ref;
         const change =
@@ -102,6 +41,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                   }
                 : null;
 
+        const connector = this.connector; //ref in callback
         const contentMenu = (e: any) => {
             if ((e as any).button !== 0) {
                 generateMenuWithComponentName(
@@ -119,8 +59,12 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
         this.innerEle.disabled = this.cell.disabled;
         this.innerEle.onchange = change;
-        this.innerEle.oninput = input;
-        this.innerEle.setAttribute('type', this.cell.type || 'text');
+        if (this.cell.type === 'date') {
+            this.innerEle.oninput = null;
+        } else {
+            this.innerEle.oninput = input;
+        }
+
         this.innerEle.oncontextmenu = (e: any) => {
             e.preventDefault();
             contentMenu(e);
@@ -128,6 +72,55 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         };
 
         this.updateInput();
+    }
+
+    // callback for change
+    private updateCallback(e: any) {
+        const data = this.connector.displayedDataset[this.rowNo];
+        const cell = this.cell;
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
+
+        if (cell.readonly) {
+            if (this.cell.type === 'date') {
+                // date picker with alt key overides input somehow..
+                e.target.value = this.connector.dateFormater.fromDate(data[cell.attribute] || null);
+            }
+
+            if (this.cell.type === 'number') {
+                // date picker with alt key overides input somehow..
+                e.target.value = this.connector.numberFormater.fromNumber(
+                    data[cell.attribute] || null
+                );
+            }
+
+            return;
+        }
+
+        // filter out based on type so we know what type to use
+        if (cell.autoUpdateData !== false) {
+            switch (this.cell.type) {
+                case 'boolean':
+                    data[cell.attribute] = e.target.checked;
+                    break;
+                case 'image':
+                    // rowData[col.attribute] = e.target.checked;
+                    // we need this ever ?
+                    break;
+                case 'date':
+                    data[cell.attribute] = this.connector.dateFormater.toDate(e.target.value);
+                    break;
+                case 'number':
+                    data[cell.attribute] = this.connector.numberFormater.fromString(e.target.value);
+                    break;
+                default:
+                    data[cell.attribute] = e.target.value;
+            }
+            this.connector.publishEvent('attribute-change');
+        }
+    }
+
+    public updateWidth() {
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
     }
 
     updateInput() {
@@ -139,20 +132,47 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             (this.parentNode as HTMLElement).style.display = 'block';
         }
 
+        // set celltype
+        let celltype = this.cell.type === 'boolean' ? 'checkbox' : this.cell.type || 'text';
+        if (celltype !== 'text' && celltype !== 'checkbox') {
+            celltype = 'text';
+        }
+
+        if (this.innerEle.type !== celltype) {
+            this.innerEle.type = celltype;
+        }
+
+        // fix class if checkbox/input
+        if (celltype === 'checkbox') {
+            if (this.innerEle.classList.contains('simple-html-grid-row-input')) {
+                this.innerEle.classList.remove('simple-html-grid-row-input');
+            }
+            if (!this.innerEle.classList.contains('simple-html-grid-row-checkbox')) {
+                this.innerEle.classList.add('simple-html-grid-row-checkbox');
+            }
+        } else {
+            if (this.innerEle.classList.contains('simple-html-grid-row-checkbox')) {
+                this.innerEle.classList.remove('simple-html-grid-row-checkbox');
+            }
+            if (!this.innerEle.classList.contains('simple-html-grid-row-input')) {
+                this.innerEle.classList.add('simple-html-grid-row-input');
+            }
+        }
+        this.style.width = this.connector.config.groups[this.group].width + 'px';
+
         if (data) {
             const cell = this.cell;
-            this.style.width = this.connector.config.groups[this.group].width + 'px';
-            this.innerEle.setAttribute(
-                'type',
-                cell.type === 'boolean' ? 'checkbox' : cell.type || 'text'
-            );
+
+            if (cell.type === 'date') {
+                this.innerEle.placeholder = this.connector.dateFormater.getPlaceHolderDate();
+            }
+
             const newVal = data[cell.attribute] || null;
+
             if (newVal !== this.lastVal) {
                 switch (cell.type) {
                     case 'boolean':
                         this.innerEle.checked = newVal;
-                        this.innerEle.classList.remove('simple-html-grid-row-input');
-                        this.innerEle.classList.add('simple-html-grid-row-checkbox');
                         break;
                     case 'image':
                         console.log('no-image');
@@ -161,10 +181,12 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                         console.log('no-.empty');
                         break;
                     case 'date':
-                        this.innerEle.valueAsDate = newVal;
+                        this.innerEle.value = this.connector.dateFormater.fromDate(newVal);
                         break;
                     case 'number':
-                        this.innerEle.valueAsNumber = newVal;
+                        this.innerEle.value = this.connector.numberFormater.fromNumber(
+                            newVal
+                        ) as string;
                         break;
                     default:
                         this.innerEle.value = newVal;
@@ -172,6 +194,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             }
 
             this.lastVal = newVal;
+        } else {
+            if (this.innerEle.value) {
+                this.innerEle.value = '';
+            }
         }
     }
 }

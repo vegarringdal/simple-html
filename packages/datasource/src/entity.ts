@@ -88,10 +88,30 @@ export class EntityHandler {
 
                 // if date, clear the "timezone/time part"
                 if (_original instanceof Date) {
-                    _original = new Date(_original.toISOString().split('T')[0]).toISOString();
+                    try {
+                        _original = new Date(
+                            new Date(_original).getFullYear(),
+                            new Date(_original).getMonth(),
+                            new Date(_original).getDate(),
+                            0,
+                            0,
+                            0,
+                            0
+                        );
+                    } catch (e) {
+                        _original = null;
+                    }
                 }
                 if (_value instanceof Date) {
-                    _value = new Date(_value.toISOString().split('T')[0]).toISOString();
+                    _value = new Date(
+                        new Date(_value).getFullYear(),
+                        new Date(_value).getMonth(),
+                        new Date(_value).getDate(),
+                        0,
+                        0,
+                        0,
+                        0
+                    );
                 }
 
                 if (

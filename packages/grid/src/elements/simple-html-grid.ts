@@ -3,11 +3,14 @@ import { generate } from './generate';
 import { ColCache, RowCache } from '../types';
 import { updateRowCache } from './updateRowCache';
 import { defineElement } from './defineElement';
-
+declare const ResizeObserver: any; // dunno whytypescript dont know about this one, TODO: check lib in tsconfig
 export class SimpleHtmlGrid extends HTMLElement {
     private __DATASOURCE_INTERFACE: GridInterface;
     public rowCache: RowCache[] = [];
     public colCache: ColCache[] = [];
+    private oldHeight: number;
+    private oldWidth: number;
+    private resizeTimer: any;
 
     set interface(value: GridInterface) {
         if (this.__DATASOURCE_INTERFACE !== value) {
@@ -21,8 +24,25 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public connectedCallback() {
-        this.resetRowCache();
         if (this.interface) {
+            this.oldHeight = this.clientHeight;
+            this.oldWidth = this.clientWidth;
+            this.resizeTimer;
+            new ResizeObserver(() => {
+                if (this.oldHeight !== this.clientHeight || this.oldWidth !== this.clientWidth) {
+                    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+                    this.resizeTimer = setTimeout(() => {
+                        this.resetRowCache();
+                        this.reRender();
+                    }, 100);
+                }
+            }).observe(this);
+
+            this.resetRowCache();
+
+            // lets do a extra connect, just incase hmr have disconnected it and user cache har messed up
+            this.interface.connectGrid(this);
+
             if (!this.children.length) {
                 generate(this.interface, this.rowCache, this);
                 if (this.interface.config.lastScrollTop) {
@@ -41,7 +61,7 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public disconnectedCallback() {
-        this.__DATASOURCE_INTERFACE && this.__DATASOURCE_INTERFACE.disconnectGrid();
+        this.__DATASOURCE_INTERFACE && this.__DATASOURCE_INTERFACE.disconnectGrid(this);
     }
 
     public reRender() {
