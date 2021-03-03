@@ -22,7 +22,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.style.width = config.groups[this.group].width + 'px';
         this.style.top = this.cellPosition * config.cellHeight + 'px';
         this.cell = config.groups[this.group].rows[this.cellPosition];
-        
+
         this.innerEle = document.createElement('input');
         this.innerEle.classList.add('simple-html-grid-row-input');
         this.appendChild(this.innerEle);
@@ -159,6 +159,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             }
         }
         this.style.width = this.connector.config.groups[this.group].width + 'px';
+        this.innerEle.placeholder = ''; // reset
 
         if (data) {
             const cell = this.cell;
