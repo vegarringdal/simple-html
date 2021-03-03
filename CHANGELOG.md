@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.2.3](https://github.com/simple-html/simple-html/compare/v3.2.2...v3.2.3) (2021-03-03)
+
+
+### Bug Fixes
+
+* column chooser was broken ([d1429fa](https://github.com/simple-html/simple-html/commits/d1429fa42f08c9dc88c84db3d5afa47ebacc88b3))
+* keep focus on header input on filter ([962f208](https://github.com/simple-html/simple-html/commits/962f208b872250b812d158b9a4dc678c46993e42))
+* resize of gridsize will trigger redraw after 100ms
+* removed native number and date input types, using norwegian numbering and dates as default in rows and filter
+* using keyword null with any operator except "not equal to" will force filter to find blanks, plan is to add own operator later for this
+
 ### [3.2.2](https://github.com/simple-html/simple-html/compare/v3.2.1...v3.2.2) (2021-02-10)
 
 Grid is also rebuild to have no dependencies
