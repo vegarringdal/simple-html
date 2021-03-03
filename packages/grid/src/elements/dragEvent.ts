@@ -155,6 +155,10 @@ export const columnDragDropPanelColumn = (event: string, _connector: GridInterfa
     };
 };
 
+// helpers to stop drap drop to show of not moved over 10px
+let lastX: number = null;
+let lastY: number = null;
+
 /**
  * used by column for dragging/drop
  */
@@ -180,24 +184,30 @@ export const columnDragDrop = (
 
     // this will just move our label
     const mouseMove = function (e: MouseEvent) {
-        node = _connector.getMainElement()?.getElementsByTagName('simple-html-grid-body')[0];
-        requestAnimationFrame(() => {
-            if (dragColumnBlock) {
-                dragColumnBlock.style.top = e.clientY + document.documentElement.scrollTop + 'px'; // hide it
-                dragColumnBlock.style.left = e.clientX + document.documentElement.scrollLeft + 'px';
+        if (Math.abs(lastY - e.clientY) > 10 || Math.abs(lastX - e.clientX) > 10) {
+            lastY = 99200;
+            lastX = 99200;
+            node = _connector.getMainElement()?.getElementsByTagName('simple-html-grid-body')[0];
+            requestAnimationFrame(() => {
+                if (dragColumnBlock) {
+                    dragColumnBlock.style.top =
+                        e.clientY + document.documentElement.scrollTop + 'px'; // hide it
+                    dragColumnBlock.style.left =
+                        e.clientX + document.documentElement.scrollLeft + 'px';
 
-                // scroll grid left/right when dragging
-                const rect = _connector.getMainElement().getClientRects()[0];
+                    // scroll grid left/right when dragging
+                    const rect = _connector.getMainElement().getClientRects()[0];
 
-                if (node.scrollLeft > 0 && rect.x > e.clientX) {
-                    node.scrollLeft = node.scrollLeft + (e.clientX - rect.x);
+                    if (node.scrollLeft > 0 && rect.x > e.clientX) {
+                        node.scrollLeft = node.scrollLeft + (e.clientX - rect.x);
+                    }
+
+                    if (rect.x + rect.width < e.clientX) {
+                        node.scrollLeft = node.scrollLeft - (rect.x + rect.width - e.clientX);
+                    }
                 }
-
-                if (rect.x + rect.width < e.clientX) {
-                    node.scrollLeft = node.scrollLeft - (rect.x + rect.width - e.clientX);
-                }
-            }
-        });
+            });
+        }
     };
 
     // main event binded to column
@@ -207,6 +217,9 @@ export const columnDragDrop = (
             //save cell ref
             dragCell = getCell();
             dragGroup = getGroup && getGroup();
+
+            lastY = _e.clientY;
+            lastX = _e.clientX;
 
             // register mouseup so we can clean up
             document.addEventListener('mouseup', mouseUp);
