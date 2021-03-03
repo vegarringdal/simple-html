@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.2.5](https://github.com/simple-html/simple-html/compare/v3.2.4...v3.2.5) (2021-03-03)
+
+
+### Bug Fixes
+
+* **grid:** dont active drap/Drop if movement is under 10px ([7c9acdd](https://github.com/simple-html/simple-html/commits/7c9acdd99ddad5936ef7a4fb2109cd3e150a41f0))
+
 ### [3.2.4](https://github.com/simple-html/simple-html/compare/v3.2.3...v3.2.4) (2021-03-03)
 
 
