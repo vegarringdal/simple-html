@@ -124,7 +124,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         this.attribute = this.group.rows[this.cellPosition].attribute;
 
         // create element or reuse if we allready have it
-        
+
         let inputEl: HTMLInputElement;
         if (this.children.length) {
             inputEl = this.children[0] as HTMLInputElement;
@@ -143,7 +143,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         }
 
         // add classes and state if checkbox
-        
+
         inputEl.classList.add(classname);
         (inputEl as any).state = setState;
         inputEl.indeterminate = indeterminate;
@@ -153,7 +153,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         }
 
         // add misc listeners
-        
+
         inputEl.onchange = change;
         inputEl.oncontextmenu = (e: any) => {
             e.preventDefault();
@@ -173,23 +173,15 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
                     }
                     break;
                 case 'number':
-                    if (value === 'null') {
-                        inputEl.value = 'null';
+                    if (cell.filterable.currentValue === 0) {
+                        inputEl.value = '0';
                     } else {
-                        if (cell.filterable.currentValue === 0) {
-                            inputEl.value = '0';
-                        } else {
-                            inputEl.value = this.connector.numberFormater.fromNumber(value) as any;
-                        }
+                        inputEl.value = this.connector.numberFormater.fromNumber(value) as any;
                     }
 
                     break;
                 case 'date':
-                    if (value === 'null') {
-                        inputEl.value = 'null';
-                    } else {
-                        inputEl.value = this.connector.dateFormater.fromDate(value as any);
-                    }
+                    inputEl.value = this.connector.dateFormater.fromDate(value as any);
 
                     break;
                 default:

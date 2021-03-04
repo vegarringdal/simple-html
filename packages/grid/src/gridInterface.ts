@@ -476,18 +476,12 @@ export class GridInterface<T = any> {
     ) {
         switch (col.type) {
             case 'date':
-                if (value === 'null') {
-                    col.filterable.currentValue = 'null';
-                } else {
-                    col.filterable.currentValue = this.dateFormater.toDate(value as string);
-                }
+                col.filterable.currentValue = this.dateFormater.toDate(value as string);
+
                 break;
             case 'number':
-                if (value === 'null') {
-                    col.filterable.currentValue = 'null';
-                } else {
-                    col.filterable.currentValue = this.numberFormater.fromString(value as string);
-                }
+                col.filterable.currentValue = this.numberFormater.fromString(value as string);
+
                 break;
             case 'boolean':
                 if (value === null) {
@@ -845,9 +839,6 @@ export class GridInterface<T = any> {
             if (e.type === 'date' && e?.header?.length < 5) {
                 return '19.19.2000 A';
             }
-            /*   if (e.type === 'number' && e?.header?.length < 5) {
-                return 'AA.AA';
-            } */
             return e?.header + 'sorter';
         });
 

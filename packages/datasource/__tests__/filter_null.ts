@@ -20,8 +20,7 @@ describe('string filter', () => {
     it('string equal to', (done) => {
         ds.filter({
             attribute: 'group',
-            operator: 'EQUAL',
-            value: 'null'
+            operator: 'IS_BLANK'
         });
 
         expect(ds.getRows()).toEqual([
@@ -36,8 +35,7 @@ describe('string filter', () => {
     it('string equal to', (done) => {
         ds.filter({
             attribute: 'group',
-            operator: 'NOT_EQUAL_TO',
-            value: 'null'
+            operator: 'IS_NOT_BLANK'
         });
 
         expect(ds.getRows()).toEqual([

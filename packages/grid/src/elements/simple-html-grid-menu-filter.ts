@@ -236,9 +236,9 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el.appendChild(document.createTextNode('End with'));
         this.appendChild(el);
 
-        el = document.createElement('hr');
-        el.appendChild(document.createTextNode('End with'));
         this.appendChild(el);
+
+        el = document.createElement('hr');
 
         el = document.createElement('p');
         el.classList.add('simple-html-grid-menu-item');

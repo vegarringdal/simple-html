@@ -37,7 +37,9 @@ export type FilterComparisonOperator =
     | 'BEGIN_WITH'
     | 'END_WITH'
     | 'IN'
-    | 'NOT_IN';
+    | 'NOT_IN'
+    | 'IS_BLANK'
+    | 'IS_NOT_BLANK'
 
 export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
 export type FilterLogicalOperator = 'AND' | 'OR' | 'NONE';
@@ -94,5 +96,7 @@ export const OPERATORS = {
     BEGIN_WITH: 'start_with',
     END_WITH: 'end_with',
     IN: 'IN',
-    NOT_IN: 'NOT_IN'
+    NOT_IN: 'NOT_IN',
+    IS_BLANK: 'IS_BLANK',
+    IS_NOT_BLANK: 'IS_NOT_BLANK'
 };

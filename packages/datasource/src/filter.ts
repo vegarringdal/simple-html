@@ -122,19 +122,7 @@ export class Filter {
                             data = rowData && rowData[filter.attribute] + '';
                             data = data.toUpperCase();
                         }
-                        let temp;
-                        if (
-                            data === 'null' ||
-                            data === 'NULL' ||
-                            data === 'UNDEFINED' ||
-                            null ||
-                            undefined ||
-                            ''
-                        ) {
-                            temp = values.indexOf('NULL');
-                        } else {
-                            temp = values.indexOf(data);
-                        }
+                        let temp = values.indexOf(data);
 
                         if (temp !== -1 && filter.operator === 'IN') {
                             result = true;
@@ -228,19 +216,7 @@ export class Filter {
                             data = data.toUpperCase();
                         }
 
-                        let temp;
-                        if (
-                            data === 'null' ||
-                            data === 'NULL' ||
-                            data === 'UNDEFINED' ||
-                            null ||
-                            undefined ||
-                            ''
-                        ) {
-                            temp = values.indexOf('NULL');
-                        } else {
-                            temp = values.indexOf(data);
-                        }
+                        let temp = values.indexOf(data);
 
                         if (temp !== -1 && filter.operator === 'IN') {
                             result = true;
