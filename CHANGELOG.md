@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.2.6](https://github.com/simple-html/simple-html/compare/v3.2.5...v3.2.6) (2021-03-04)
+
+
+### Bug Fixes
+
+* **grid:** null and "0" on number filter was cleared ([3ba8c29](https://github.com/simple-html/simple-html/commits/3ba8c2963b93f995822eb809e3296356a0a1ca83))
+
 ### [3.2.5](https://github.com/simple-html/simple-html/compare/v3.2.4...v3.2.5) (2021-03-03)
 
 
