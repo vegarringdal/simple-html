@@ -119,10 +119,19 @@ export class Filter {
                                 }
                             }
                         } else {
-                            data = rowData && rowData[filter.attribute] + '';
-                            data = data.toUpperCase();
+                            data = rowData && rowData[filter.attribute];
+                            data = data && data.toUpperCase();
                         }
-                        let temp = values.indexOf(data);
+                        let temp;
+                        if (
+                            data === null ||
+                            data === undefined ||
+                            data === ''
+                        ) {
+                            temp = values.indexOf('NULL');
+                        } else {
+                            temp = values.indexOf(data);
+                        }
 
                         if (temp !== -1 && filter.operator === 'IN') {
                             result = true;
@@ -212,12 +221,20 @@ export class Filter {
                                 }
                             }
                         } else {
-                            data = rowData && rowData[filter.attribute] + '';
-                            data = data.toUpperCase();
+                            data = rowData && rowData[filter.attribute];
+                            data = data && data.toUpperCase();
                         }
 
-                        let temp = values.indexOf(data);
-
+                        let temp;
+                        if (
+                            data === null ||
+                            data === undefined ||
+                            data === ''
+                        ) {
+                            temp = values.indexOf('NULL');
+                        } else {
+                            temp = values.indexOf(data);
+                        }
                         if (temp !== -1 && filter.operator === 'IN') {
                             result = true;
                         }
