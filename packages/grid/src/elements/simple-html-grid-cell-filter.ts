@@ -174,10 +174,10 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
                     break;
                 case 'number':
                     if (value === 'null') {
-                        inputEl.value === 'null';
+                        inputEl.value = 'null';
                     } else {
                         if (cell.filterable.currentValue === 0) {
-                            inputEl.value === '0';
+                            inputEl.value = '0';
                         } else {
                             inputEl.value = this.connector.numberFormater.fromNumber(value) as any;
                         }
