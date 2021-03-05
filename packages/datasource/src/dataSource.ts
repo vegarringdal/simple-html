@@ -90,8 +90,8 @@ export class Datasource<T = any> {
         return 'Datasource';
     }
 
-    public setDates(x:string[]){
-        this.__sorting.setDateAttribute(x)
+    public setDates(x: string[]) {
+        this.__sorting.setDateAttribute(x);
     }
 
     /**
@@ -641,32 +641,37 @@ export class Datasource<T = any> {
                     !obj.filterArguments ||
                     (obj.filterArguments && obj.filterArguments.length === 0)
                 ) {
-                    if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
+                    if (obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK') {
                         queryString =
-                            queryString +
-                            `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
-                                obj.valueType === 'ATTRIBUTE'
-                                    ? `[${obj.value}]`
-                                    : "'" + convertDate(obj.attributeType, obj.value) + "'"
-                            }`;
+                            queryString + `[${obj.attribute}] <<${OPERATORS[obj.operator]}>>`;
                     } else {
-                        // split newline into array
-                        if (Array.isArray(obj.value)) {
+                        if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                             queryString =
                                 queryString +
-                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${obj.value.map(
-                                    (val) => {
-                                        return `'${val}'`;
-                                    }
-                                )}]`;
+                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
+                                    obj.valueType === 'ATTRIBUTE'
+                                        ? `[${obj.value}]`
+                                        : "'" + convertDate(obj.attributeType, obj.value) + "'"
+                                }`;
                         } else {
-                            queryString =
-                                queryString +
-                                `[${obj.attribute}] <<${
-                                    OPERATORS[obj.operator]
-                                }>> [${(obj.value as string).split('\n').map((val) => {
-                                    return `'${val}'`;
-                                })}]`;
+                            // split newline into array
+                            if (Array.isArray(obj.value)) {
+                                queryString =
+                                    queryString +
+                                    `[${obj.attribute}] <<${
+                                        OPERATORS[obj.operator]
+                                    }>> [${obj.value.map((val) => {
+                                        return `'${val}'`;
+                                    })}]`;
+                            } else {
+                                queryString =
+                                    queryString +
+                                    `[${obj.attribute}] <<${
+                                        OPERATORS[obj.operator]
+                                    }>> [${(obj.value as string).split('\n').map((val) => {
+                                        return `'${val}'`;
+                                    })}]`;
+                            }
                         }
                     }
                 } else {
