@@ -119,15 +119,19 @@ export class Filter {
                                 }
                             }
                         } else {
-                            data = rowData && rowData[filter.attribute];
-                            data = data && data.toUpperCase();
+                            if (
+                                rowData &&
+                                rowData[filter.attribute] !== null &&
+                                rowData[filter.attribute] !== undefined
+                            ) {
+                                data = rowData && rowData[filter.attribute];
+                                if (data && data.toUpperCase) {
+                                    data = data.toUpperCase();
+                                }
+                            }
                         }
                         let temp;
-                        if (
-                            data === null ||
-                            data === undefined ||
-                            data === ''
-                        ) {
+                        if (data === null || data === undefined || data === '' || data === 0) {
                             temp = values.indexOf('NULL');
                         } else {
                             temp = values.indexOf(data);
@@ -221,16 +225,20 @@ export class Filter {
                                 }
                             }
                         } else {
-                            data = rowData && rowData[filter.attribute];
-                            data = data && data.toUpperCase();
+                            if (
+                                rowData &&
+                                rowData[filter.attribute] !== null &&
+                                rowData[filter.attribute] !== undefined
+                            ) {
+                                data = rowData && rowData[filter.attribute];
+                                if (data && data.toUpperCase) {
+                                    data = data.toUpperCase();
+                                }
+                            }
                         }
 
                         let temp;
-                        if (
-                            data === null ||
-                            data === undefined ||
-                            data === ''
-                        ) {
+                        if (data === null || data === undefined || data === '' || data === 0) {
                             temp = values.indexOf('NULL');
                         } else {
                             temp = values.indexOf(data);
