@@ -45,9 +45,9 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             if (
                 typeof rowValue === 'object' &&
                 rowValue.toString &&
-                rowValue.toString() !== 'Invalid Date'
+                rowValue.toString() === 'Invalid Date'
             ) {
-                return true;
+                return false;
             }
         }
         if (rowValue === '' || rowValue === 0 || rowValue === null || rowValue === undefined) {

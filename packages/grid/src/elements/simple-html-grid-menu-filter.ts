@@ -110,7 +110,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
             this.enableAvailableOnlyOption =
                 this.connector.getDatasource().getRows(true).length !==
-                    this.connector.getDatasource().getAllData().length ||
+                this.connector.getDatasource().getAllData().length ||
                 this.dataFilterSet.size === this.dataFilterSetFull.size;
         }
     }
@@ -151,6 +151,94 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
                 f.currentValue = null;
             }
         });
+        this.connector.reRender();
+        this.connector.reRunFilter();
+    }
+
+    clearThis() {
+        let x = this.connector.getDatasource().getFilter();
+
+        const loopFilter = (filter: FilterArgument) => {
+            if (filter && Array.isArray(filter.filterArguments)) {
+                filter.filterArguments = filter.filterArguments.filter((fi) => {
+                    if (fi.attribute === this.cell.attribute) {
+                        return false;
+                    } else {
+                        return true
+                    }
+                })
+                filter.filterArguments.forEach((fi) => {
+                    if (fi.type === 'GROUP') {
+                        loopFilter(fi)
+                    }
+                })
+            }
+
+
+        }
+        loopFilter(x)
+
+        const columns = this.connector.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f && this.cell.attribute === col.attribute) {
+                f.currentValue = null;
+            }
+        });
+        this.connector.reRender();
+        this.connector.reRunFilter();
+    }
+
+    setFilter(arg: 'IS_BLANK' | 'IS_NOT_BLANK') {
+        let x = this.connector.getDatasource().getFilter();
+
+        const loopFilter = (filter: FilterArgument) => {
+            if (filter && Array.isArray(filter.filterArguments)) {
+                filter.filterArguments = filter.filterArguments.filter((fi) => {
+                    if (fi.attribute === this.cell.attribute) {
+                        return false;
+                    } else {
+                        return true
+                    }
+                })
+                filter.filterArguments.forEach((fi) => {
+                    if (fi.type === 'GROUP') {
+                        loopFilter(fi)
+                    }
+                })
+            }
+
+        }
+        loopFilter(x)
+
+        const columns = this.connector.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f && this.cell.attribute === col.attribute) {
+                f.currentValue = null;
+            }
+        });
+        if (x && Array.isArray(x.filterArguments)) {
+            x.filterArguments.push({
+                type: 'CONDITION',
+                attribute: this.cell.attribute,
+                operator: arg,
+                attributeType: this.cell.type
+            })
+            this.connector.getDatasource().setFilter(x)
+        } else {
+            this.connector.getDatasource().setFilter({
+                type: 'GROUP',
+                logicalOperator: 'AND',
+                filterArguments: [{
+                    type: 'CONDITION',
+                    attribute: this.cell.attribute,
+                    operator: arg,
+                    attributeType: this.cell.type
+                }
+                ]
+            })
+        }
         this.connector.reRender();
         this.connector.reRunFilter();
     }
@@ -345,7 +433,25 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el = document.createElement('p');
         el.classList.add('simple-html-grid-menu-item');
         el.onclick = () => this.clearAll();
-        el.appendChild(document.createTextNode('clear filter all columns'));
+        el.appendChild(document.createTextNode('Remove all filters'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.clearThis();
+        el.appendChild(document.createTextNode('Reset column filter'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.setFilter('IS_BLANK');
+        el.appendChild(document.createTextNode('Set BLANK'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.setFilter('IS_NOT_BLANK');
+        el.appendChild(document.createTextNode('Set NOT BLANK'));
         this.appendChild(el);
 
         el = document.createElement('hr');
