@@ -657,13 +657,16 @@ export class Datasource<T = any> {
             return '';
         }
 
-        function convertDate(type: string, value: string | Date | number) {
-            if (type === 'date' && value instanceof Date) {
-                try {
-                    return value.toLocaleDateString();
-                } catch (e) {
-                    return value;
-                }
+        const dateformater = this.getDateFormater();
+        const numformater = this.getNumberFormater();
+
+        function convertValue(type: string, value: string | Date | number) {
+            if (type === 'date') {
+                return dateformater.fromDate(value);
+            }
+
+            if (type === 'number') {
+                return numformater.fromNumber(value);
             }
 
             return value;
@@ -684,7 +687,7 @@ export class Datasource<T = any> {
                                 queryString +
                                 `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${obj.valueType === 'ATTRIBUTE'
                                     ? `[${obj.value}]`
-                                    : "'" + convertDate(obj.attributeType, obj.value) + "'"
+                                    : "'" + convertValue(obj.attributeType, obj.value) + "'"
                                 }`;
                         } else {
                             // split newline into array
