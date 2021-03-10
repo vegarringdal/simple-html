@@ -212,7 +212,8 @@ export class Datasource<T = any> {
             this.__collectionDisplayed = this.__grouping.group(
                 this.__collectionFiltered,
                 this.__grouping.getGrouping(),
-                true
+                true,
+                this
             );
         } else {
             //set sorted collection to display
@@ -300,7 +301,8 @@ export class Datasource<T = any> {
             this.__collectionDisplayed = this.__grouping.group(
                 this.__collectionFiltered,
                 this.__grouping.getGrouping(),
-                true
+                true,
+                this
             );
         } else {
             //set sorted collection to display
@@ -373,7 +375,7 @@ export class Datasource<T = any> {
         });
         this.__sorting.runOrderBy(this.__collectionFiltered);
         if (groupings.length) {
-            const result = this.__grouping.group(this.__collectionFiltered, groupings, true);
+            const result = this.__grouping.group(this.__collectionFiltered, groupings, true, this);
             this.__collectionDisplayed = result;
         } else {
             this.__collectionDisplayed = this.__collectionFiltered;
