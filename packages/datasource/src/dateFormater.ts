@@ -1,6 +1,6 @@
 export interface DateFormaterType {
-    fromDate(value: Date | null | undefined): string | null | undefined;
-    toDate(value: string | null | undefined): Date | null | undefined;
+    fromDate(value: any): string | null | undefined;
+    toDate(value: any): Date | null | undefined;
     getPlaceHolderDate(): string;
 }
 

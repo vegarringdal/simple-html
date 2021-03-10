@@ -1,5 +1,6 @@
 import { Entity, FilterArgument, FilterComparisonOperator } from './types';
 import { objectFilter } from './objectFilter';
+import { Datasource } from './dataSource';
 
 export class Filter {
     private currentFilter: FilterArgument;
@@ -28,7 +29,7 @@ export class Filter {
         }
     }
 
-    public filter(objArray: Entity[], ObjFilter: FilterArgument) {
+    public filter(objArray: Entity[], ObjFilter: FilterArgument, ds: Datasource) {
         this.currentFilter = ObjFilter;
 
         const emptyFilter = Array.isArray(ObjFilter) && ObjFilter.length === 0;
@@ -48,27 +49,27 @@ export class Filter {
         const resultArray = objArray.filter((rowData) => {
             // lets have true as default, so all that should not be there we set false..
             if (ObjFilter.logicalOperator === 'AND') {
-                return this.andStatement(rowData, ObjFilter);
+                return this.andStatement(rowData, ObjFilter, ds);
             } else {
-                return this.orStatement(rowData, ObjFilter);
+                return this.orStatement(rowData, ObjFilter, ds);
             }
         });
 
         return resultArray;
     }
 
-    private orStatement(rowData: Entity, ObjFilter: FilterArgument): boolean {
+    private orStatement(rowData: Entity, ObjFilter: FilterArgument, ds: Datasource): boolean {
         if (Array.isArray(ObjFilter.filterArguments)) {
             for (let i = 0; i < ObjFilter.filterArguments.length; i++) {
                 const filter = ObjFilter.filterArguments[i];
                 if (filter.logicalOperator === 'AND') {
-                    const result = this.andStatement(rowData, filter);
+                    const result = this.andStatement(rowData, filter, ds);
                     if (result) {
                         return true;
                     }
                 }
                 if (filter.logicalOperator === 'OR') {
-                    const result = this.orStatement(rowData, filter);
+                    const result = this.orStatement(rowData, filter, ds);
                     if (result) {
                         return true;
                     }
@@ -101,32 +102,20 @@ export class Filter {
 
                         let data;
                         if (filter.attributeType === 'date' && rowData) {
-                            try {
-                                // TODO: this isnt really fast way to do it... but there is a very low chance for anyone using this.. so OK for now
-                                values.forEach((x: any, i: any) => {
-                                    if (x instanceof Date) {
-                                        values[i] = x.toISOString();
-                                    }
-                                });
-
-                                data = rowData[filter.attribute].toISOString();
-                            } catch (err) {
-                                try {
-                                    // if error we can try and convert it to date first
-                                    data = new Date(rowData[filter.attribute]).toISOString();
-                                } catch (err) {
-                                    data = data;
-                                }
-                            }
+                            data = ds.getDateFormater().fromDate(rowData[filter.attribute])
                         } else {
-                            if (
-                                rowData &&
-                                rowData[filter.attribute] !== null &&
-                                rowData[filter.attribute] !== undefined
-                            ) {
-                                data = rowData && rowData[filter.attribute];
-                                if (data && data.toUpperCase) {
-                                    data = data.toUpperCase();
+                            if (filter.attributeType === 'number' && rowData) {
+                                data = ds.getNumberFormater().fromNumber(rowData[filter.attribute]);
+                            } else {
+                                if (
+                                    rowData &&
+                                    rowData[filter.attribute] !== null &&
+                                    rowData[filter.attribute] !== undefined
+                                ) {
+                                    data = rowData && rowData[filter.attribute];
+                                    if (data && data.toUpperCase) {
+                                        data = data.toUpperCase();
+                                    }
                                 }
                             }
                         }
@@ -164,18 +153,18 @@ export class Filter {
         return false;
     }
 
-    private andStatement(rowData: Entity, ObjFilter: FilterArgument): boolean {
+    private andStatement(rowData: Entity, ObjFilter: FilterArgument, ds: Datasource): boolean {
         if (Array.isArray(ObjFilter.filterArguments)) {
             for (let i = 0; i < ObjFilter.filterArguments.length; i++) {
                 const filter = ObjFilter.filterArguments[i];
                 if (filter.logicalOperator === 'AND') {
-                    const result = this.andStatement(rowData, filter);
+                    const result = this.andStatement(rowData, filter, ds);
                     if (!result) {
                         return false;
                     }
                 }
                 if (filter.logicalOperator === 'OR') {
-                    const result = this.orStatement(rowData, filter);
+                    const result = this.orStatement(rowData, filter, ds);
                     if (!result) {
                         return false;
                     }
@@ -208,31 +197,20 @@ export class Filter {
 
                         let data;
                         if (filter.attributeType === 'date' && rowData) {
-                            try {
-                                // TODO: this isnt really fast way to do it... but there is a very low chance for anyone using this.. so OK for now
-                                values.forEach((x: any, i: any) => {
-                                    if (x instanceof Date) {
-                                        values[i] = x.toISOString();
-                                    }
-                                });
-                                data = rowData[filter.attribute].toISOString();
-                            } catch (err) {
-                                try {
-                                    // if error we can try and convert it to date first
-                                    data = new Date(rowData[filter.attribute]).toISOString();
-                                } catch (err) {
-                                    data = data;
-                                }
-                            }
+                            data = ds.getDateFormater().fromDate(rowData[filter.attribute])
                         } else {
-                            if (
-                                rowData &&
-                                rowData[filter.attribute] !== null &&
-                                rowData[filter.attribute] !== undefined
-                            ) {
-                                data = rowData && rowData[filter.attribute];
-                                if (data && data.toUpperCase) {
-                                    data = data.toUpperCase();
+                            if (filter.attributeType === 'number' && rowData) {
+                                data = ds.getNumberFormater().fromNumber(rowData[filter.attribute]);
+                            } else {
+                                if (
+                                    rowData &&
+                                    rowData[filter.attribute] !== null &&
+                                    rowData[filter.attribute] !== undefined
+                                ) {
+                                    data = rowData && rowData[filter.attribute];
+                                    if (data && data.toUpperCase) {
+                                        data = data.toUpperCase();
+                                    }
                                 }
                             }
                         }

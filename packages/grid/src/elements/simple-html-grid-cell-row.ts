@@ -110,7 +110,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                     data[cell.attribute] = this.connector.dateFormater.toDate(e.target.value);
                     break;
                 case 'number':
-                    data[cell.attribute] = this.connector.numberFormater.fromString(e.target.value);
+                    data[cell.attribute] = this.connector.numberFormater.toNumber(e.target.value);
                     break;
                 default:
                     data[cell.attribute] = e.target.value;

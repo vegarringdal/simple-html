@@ -58,7 +58,7 @@ export function valueInput(operatorObject: FilterArgument, ctx: SimpleHtmlGridFi
             el.type = 'text';
             el.value = ctx.connector.numberFormater.fromNumber(operatorObject.value as any);
             el.oninput = (e: any) => {
-                operatorObject.value = ctx.connector.numberFormater.fromString(e.target.value);
+                operatorObject.value = ctx.connector.numberFormater.toNumber(e.target.value);
             };
             return el;
         default:

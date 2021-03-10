@@ -12,6 +12,9 @@ import {
     OPERATORS
 } from './types';
 import { DataContainer } from './dataContainer';
+import { DateFormater, DateFormaterType } from './dateFormater';
+import { NumberFormater, NumberFormaterType } from './numberFormater';
+
 
 type callF = (...args: any[]) => any;
 type callO = { handleEvent: (...args: any[]) => any };
@@ -69,6 +72,17 @@ export class Datasource<T = any> {
      */
     private __listeners: Set<callable> = new Set();
 
+
+    /**
+     * default date formater
+     */
+    private __dateFormater: DateFormaterType = DateFormater;
+
+    /**
+     * default number formater
+     */
+    private __numberFormater: NumberFormaterType = NumberFormater;
+
     /**
      * current entity, use this with form etc if you have a grid with detail form
      */
@@ -81,6 +95,23 @@ export class Datasource<T = any> {
         this.__filter = new Filter();
         this.__sorting = new Sort();
         this.__grouping = new Grouping();
+    }
+
+
+    public setNumberFormater(formater: NumberFormaterType) {
+        this.__numberFormater = formater;
+    }
+
+    public setDateFormater(formater: DateFormaterType) {
+        this.__dateFormater = formater;
+    }
+
+    public getNumberFormater() {
+        return this.__numberFormater;
+    }
+
+    public getDateFormater() {
+        return this.__dateFormater;
     }
 
     /**
@@ -165,7 +196,8 @@ export class Datasource<T = any> {
             if (this.__filter.getFilter()) {
                 this.__collectionFiltered = this.__filter.filter(
                     this.getAllData(),
-                    this.__filter.getFilter()
+                    this.__filter.getFilter(),
+                    this
                 );
             } else {
                 this.__collectionFiltered = this.__dataContainer.getDataSet();
@@ -648,26 +680,23 @@ export class Datasource<T = any> {
                         if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                             queryString =
                                 queryString +
-                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
-                                    obj.valueType === 'ATTRIBUTE'
-                                        ? `[${obj.value}]`
-                                        : "'" + convertDate(obj.attributeType, obj.value) + "'"
+                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${obj.valueType === 'ATTRIBUTE'
+                                    ? `[${obj.value}]`
+                                    : "'" + convertDate(obj.attributeType, obj.value) + "'"
                                 }`;
                         } else {
                             // split newline into array
                             if (Array.isArray(obj.value)) {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${
-                                        OPERATORS[obj.operator]
+                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]
                                     }>> [${obj.value.map((val) => {
                                         return `'${val}'`;
                                     })}]`;
                             } else {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${
-                                        OPERATORS[obj.operator]
+                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]
                                     }>> [${(obj.value as string).split('\n').map((val) => {
                                         return `'${val}'`;
                                     })}]`;
