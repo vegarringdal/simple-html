@@ -445,13 +445,13 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el = document.createElement('p');
         el.classList.add('simple-html-grid-menu-item');
         el.onclick = () => this.setFilter('IS_BLANK');
-        el.appendChild(document.createTextNode('Set BLANK'));
+        el.appendChild(document.createTextNode('Set blank filter'));
         this.appendChild(el);
 
         el = document.createElement('p');
         el.classList.add('simple-html-grid-menu-item');
         el.onclick = () => this.setFilter('IS_NOT_BLANK');
-        el.appendChild(document.createTextNode('Set NOT BLANK'));
+        el.appendChild(document.createTextNode('Set not blank filter'));
         this.appendChild(el);
 
         el = document.createElement('hr');
