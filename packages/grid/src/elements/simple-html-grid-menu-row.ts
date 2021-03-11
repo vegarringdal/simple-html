@@ -113,12 +113,12 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                         attributes.forEach((att, i) => {
                             const data = this.connector.displayedDataset[row][att];
                             if (types[i] === 'date') {
-                                dataClip = dataClip + (dateformater.fromDate(data)) + '\n';
+                                dataClip = dataClip + (dateformater.fromDate(data)) + '\t';
                             } else {
                                 if (types[i] === 'number') {
-                                    dataClip = dataClip + (numberformater.fromNumber(data)) + '\n';
+                                    dataClip = dataClip + (numberformater.fromNumber(data)) + '\t';
                                 } else {
-                                    dataClip = dataClip + (data || '') + '\n';
+                                    dataClip = dataClip + (data || '') + '\t';
                                 }
                             }
                         });
