@@ -160,14 +160,14 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
         const loopFilter = (filter: FilterArgument) => {
             if (filter && Array.isArray(filter.filterArguments)) {
-                filter.filterArguments = filter.filterArguments.filter((fi) => {
+                filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
                     if (fi.attribute === this.cell.attribute) {
                         return false;
                     } else {
                         return true
                     }
                 })
-                filter.filterArguments.forEach((fi) => {
+                filter.filterArguments.forEach((fi: FilterArgument) => {
                     if (fi.type === 'GROUP') {
                         loopFilter(fi)
                     }
@@ -194,14 +194,14 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
         const loopFilter = (filter: FilterArgument) => {
             if (filter && Array.isArray(filter.filterArguments)) {
-                filter.filterArguments = filter.filterArguments.filter((fi) => {
+                filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
                     if (fi.attribute === this.cell.attribute) {
                         return false;
                     } else {
                         return true
                     }
                 })
-                filter.filterArguments.forEach((fi) => {
+                filter.filterArguments.forEach((fi: FilterArgument) => {
                     if (fi.type === 'GROUP') {
                         loopFilter(fi)
                     }
