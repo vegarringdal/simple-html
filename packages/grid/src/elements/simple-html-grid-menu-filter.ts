@@ -26,11 +26,11 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             document.addEventListener('contextmenu', this);
         }, 50);
         this.search = this.cell.filterable?.currentValue || null;
-        this.fillDropdown();
-        this.default();
+        this.getDropdownData();
+        this.generateMainMenu();
     }
 
-    fillDropdown() {
+    getDropdownData() {
         if (!this.cell.type || this.cell.type === 'text') {
             const data = this.availableOnly
                 ? this.connector.getDatasource().getRows(true)
@@ -243,7 +243,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         this.connector.reRunFilter();
     }
 
-    filters() {
+    generateOperatorMenu() {
         this.innerHTML = '';
         const operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
 
@@ -334,7 +334,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el.onclick = () => {
             this.defaultMenu = true;
             this.wait = true;
-            this.default();
+            this.generateMainMenu();
         };
         this.appendChild(el);
     }
@@ -349,7 +349,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
 
         const scrollTop = this.scrollAreaRef.scrollTop;
-        this.default();
+        this.generateMainMenu();
         this.scrollAreaRef.scrollTop = scrollTop;
     }
 
@@ -362,10 +362,10 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.dataFilterSet = new Set();
         }
 
-        this.default();
+        this.generateMainMenu();
     }
 
-    default() {
+    generateMainMenu() {
         this.innerHTML = '';
 
         const filtertoggleClick = () => {
@@ -373,8 +373,8 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.availableOnly = !this.availableOnly;
             this.selectAll =
                 this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
-            this.fillDropdown();
-            this.default();
+            this.getDropdownData();
+            this.generateMainMenu();
         };
 
         const runFilterClick = () => {
@@ -407,7 +407,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el.onclick = () => {
             this.defaultMenu = false;
             this.wait = true;
-            this.filters();
+            this.generateOperatorMenu();
         };
         el.appendChild(document.createTextNode('Filters'));
         this.appendChild(el);
@@ -494,10 +494,10 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             };
             textFilterInput.oninput = (e: any) => {
                 this.search = e.target.value || null;
-                this.fillDropdown();
+                this.getDropdownData();
 
                 this.scrollAreaRef.innerText = '';
-                this.filterValues(this.scrollAreaRef);
+                this.generateScrollListItems(this.scrollAreaRef);
             };
             this.appendChild(textFilterInput);
 
@@ -506,7 +506,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             scrollArea.style.overflowY = 'auto';
             scrollArea.style.maxHeight = '250px';
 
-            this.filterValues(scrollArea);
+            this.generateScrollListItems(scrollArea);
             this.appendChild(scrollArea);
             this.scrollAreaRef = scrollArea;
 
@@ -518,7 +518,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         }
     }
 
-    filterValues(scrollArea: HTMLElement) {
+    generateScrollListItems(scrollArea: HTMLElement) {
         let containerSelectAll = document.createElement('div');
         containerSelectAll.style.padding = '2px';
 
