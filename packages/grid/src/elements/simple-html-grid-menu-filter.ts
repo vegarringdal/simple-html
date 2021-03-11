@@ -347,7 +347,10 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             : this.dataFilterSet.add(rowData);
         this.selectAll =
             this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
+
+        const scrollTop = this.scrollAreaRef.scrollTop;
         this.default();
+        this.scrollAreaRef.scrollTop = scrollTop;
     }
 
     selectAllClick() {
