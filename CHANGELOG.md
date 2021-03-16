@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.3.0](https://github.com/simple-html/simple-html/compare/v3.2.6...v3.3.0) (2021-03-16)
+
+* added "is null" and "is not null" operator
+* added more menus option for new operator to grid
+* moved date/number format to datasource
+* misc fixes to date and number formating/filter
+
 ### [3.2.6](https://github.com/simple-html/simple-html/compare/v3.2.5...v3.2.6) (2021-03-04)
 
 
