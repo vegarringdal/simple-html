@@ -10,14 +10,6 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     let newFilterOperator: FilterComparisonOperator;
     let type: string = filter.type || 'text';
 
-    if (filter.value === 'null') {
-        type = 'null';
-    }
-
-    if (filter.value === null || filter.value === undefined) {
-        type = 'null';
-    }
-
     if (filter.value instanceof Date) {
         // little chance someone sends in date if they do not want to query for it
         type = 'date';
@@ -29,6 +21,44 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
 
     rowValue = rowData[filter.attribute];
 
+    // if is blank or is not blank then just check right away
+    if ('IS_BLANK' === filterOperator) {
+        if (type === 'date') {
+            if (
+                rowValue && 
+                typeof rowValue === 'object' &&
+                rowValue.toString &&
+                rowValue.toString() === 'Invalid Date'
+            ) {
+                return true;
+            }
+        }
+
+        if (rowValue === '' || rowValue === 0 || rowValue === null || rowValue === undefined) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    if ('IS_NOT_BLANK' === filterOperator) {
+        if (type === 'date') {
+            if (
+                rowValue && 
+                typeof rowValue === 'object' &&
+                rowValue.toString &&
+                rowValue.toString() === 'Invalid Date'
+            ) {
+                return false;
+            }
+        }
+        if (rowValue === '' || rowValue === 0 || rowValue === null || rowValue === undefined) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     // helper for boolean
     const typeBool: { true: boolean; false: boolean } = {
         true: true,
@@ -37,17 +67,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
 
     // lets set some defaults/corrections if its all wrong
     switch (type) {
-        case 'null':
-            filterValue = null;
-            filterOperator = filterOperator === 'NOT_EQUAL_TO' ? 'NOT_EQUAL_TO' : 'EQUAL'; // we only want blanks or not blanks..
-            if (rowValue === undefined || rowValue === 0 || rowValue === '' || (rowValue  && typeof rowValue === 'object' && rowValue.toString() ==='Invalid Date')) {
-                rowValue = null;
-            }
-
-            break;
-
         case 'date':
-            
             try {
                 // we need to reset date so they use same time/timezone
                 rowValue = new Date(

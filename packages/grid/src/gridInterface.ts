@@ -2,8 +2,7 @@ import { SimpleHtmlGrid, IGridConfig } from '.';
 import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
-import { DateFormater, DateFormaterType } from './dateFormater';
-import { NumberFormater } from './numberFormater';
+
 
 type f = (...args: any[]) => void;
 
@@ -32,8 +31,6 @@ export class GridInterface<T = any> {
     private __handleEvent: any = null;
     private __CONFIG: GridConfig;
     private __configDefault: GridConfig;
-    dateFormater: DateFormaterType;
-    numberFormater: typeof NumberFormater;
 
     constructor(config: GridConfig<T>, datasource?: Datasource | DataContainer) {
         if (!datasource) {
@@ -49,11 +46,18 @@ export class GridInterface<T = any> {
 
         this.__configDefault = JSON.parse(JSON.stringify(config));
         this.__CONFIG = config;
-        // set default date formater
-        this.dateFormater = DateFormater;
-        this.numberFormater = NumberFormater;
         this.parseConfig();
     }
+
+
+    get dateFormater() {
+        return this.__ds.getDateFormater();
+    }
+
+    get numberFormater() {
+        return this.__ds.getNumberFormater()
+    }
+
 
     /**
      * datasource dataContainer data
@@ -476,18 +480,12 @@ export class GridInterface<T = any> {
     ) {
         switch (col.type) {
             case 'date':
-                if (value === 'null') {
-                    col.filterable.currentValue = 'null';
-                } else {
-                    col.filterable.currentValue = this.dateFormater.toDate(value as string);
-                }
+                col.filterable.currentValue = this.dateFormater.toDate(value as string);
+
                 break;
             case 'number':
-                if (value === 'null') {
-                    col.filterable.currentValue = 'null';
-                } else {
-                    col.filterable.currentValue = this.numberFormater.fromString(value as string);
-                }
+                col.filterable.currentValue = this.numberFormater.toNumber(value as string);
+
                 break;
             case 'boolean':
                 if (value === null) {
@@ -592,9 +590,6 @@ export class GridInterface<T = any> {
         this.__ds.filter(filter);
     }
 
-    public setDateFormater(dateFormater: DateFormaterType) {
-        this.dateFormater = dateFormater || dateFormater;
-    }
 
     /**
      * clears sorting order of config columns
@@ -845,9 +840,6 @@ export class GridInterface<T = any> {
             if (e.type === 'date' && e?.header?.length < 5) {
                 return '19.19.2000 A';
             }
-            /*   if (e.type === 'number' && e?.header?.length < 5) {
-                return 'AA.AA';
-            } */
             return e?.header + 'sorter';
         });
 

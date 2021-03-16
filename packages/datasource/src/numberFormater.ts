@@ -1,6 +1,6 @@
 export interface NumberFormaterType {
-    fromString(value: string | null | undefined): number | null | undefined;
-    fromNumber(value: number | null | undefined): string | null | undefined;
+    toNumber(value: any): number | null | undefined;
+    fromNumber(value: any): string | null | undefined;
 }
 
 export class NumberFormater {
@@ -8,7 +8,7 @@ export class NumberFormater {
      * Takes value and return string
      * @param value
      */
-    static fromString(value: string | null | undefined): number | null | undefined {
+    static toNumber(value: any): number | null | undefined {
         let returnValue: any = value;
 
         if (returnValue === null || returnValue === 'undefined') {
@@ -49,6 +49,6 @@ export class NumberFormater {
             returnValue = returnValue.toString().replace('.', ',');
         }
 
-        return returnValue;
+        return returnValue.toString();
     }
 }

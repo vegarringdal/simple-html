@@ -1,4 +1,5 @@
 import { GroupArgument, Entity } from './types';
+import { Datasource } from './dataSource';
 
 /**
  * This takes care the generating the flat array the grid can use for grouping
@@ -20,7 +21,7 @@ export class Grouping {
         this.expandedGroupIDs = new Set([]);
     }
 
-    public group(arrayToGroup: Entity[], groupingConfig: GroupArgument[], keepExpanded?: boolean) {
+    public group(arrayToGroup: Entity[], groupingConfig: GroupArgument[], keepExpanded: boolean, ds: Datasource) {
         // if grouping
         if (groupingConfig.length > 0) {
             // temp holder for groups as we create them
@@ -38,7 +39,8 @@ export class Grouping {
                         arrayToGroup,
                         groupBy.attribute,
                         groupNo,
-                        groupBy.title
+                        groupBy.title,
+                        ds
                     );
                     groups.push(mainGroup);
                 } else {
@@ -48,7 +50,8 @@ export class Grouping {
                         childGroupArray,
                         groupBy.attribute,
                         groupNo,
-                        groupBy.title
+                        groupBy.title,
+                        ds
                     );
                     groups.push(newSubGroup);
                 }
@@ -226,7 +229,7 @@ export class Grouping {
         return collection;
     }
 
-    private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string) {
+    private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
         const tempGroupArray: Entity[] = [];
         let curGroup: Entity = {} as Entity;
         let lastGroupID: string = null;
@@ -237,12 +240,10 @@ export class Grouping {
             groupID = typeof groupID === 'boolean' ? groupID.toString() : groupID;
             groupID =
                 typeof groupID?.toLocaleDateString === 'function'
-                    ? groupID.toLocaleDateString('en-US', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric'
-                      })
-                    : groupID;
+                    ? ds.getDateFormater().fromDate(groupID)
+                    : typeof groupID?.toFixed === 'function'
+                        ? ds.getNumberFormater().fromNumber(groupID)
+                        : groupID;
             groupID = groupID || ' blank';
 
             if (groupID !== lastGroupID) {
@@ -271,7 +272,8 @@ export class Grouping {
         childGroupArray: Entity[],
         groupBy: string,
         groupNo: number,
-        title: string
+        title: string,
+        ds: Datasource
     ) {
         const tempGroupArray: Entity[] = [];
 
@@ -286,12 +288,10 @@ export class Grouping {
                 let groupID = child[groupBy];
                 groupID =
                     typeof groupID?.toLocaleDateString === 'function'
-                        ? groupID.toLocaleDateString('en-US', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric'
-                          })
-                        : groupID;
+                        ? ds.getDateFormater().fromDate(groupID)
+                        : typeof groupID?.toFixed === 'function'
+                            ? ds.getNumberFormater().fromNumber(groupID)
+                            : groupID;
                 groupID = groupID || ' blank';
 
                 if (groupID !== tempValue) {

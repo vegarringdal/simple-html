@@ -95,6 +95,20 @@ export function selectOperatorBtn(operatorObject: FilterArgument, ctx: SimpleHtm
                     operatorObject.operator = 'NOT_IN';
                     ctx.generate();
                 }
+            },
+            {
+                title: 'IS BLANK',
+                callback: () => {
+                    operatorObject.operator = 'IS_BLANK';
+                    ctx.generate();
+                }
+            },
+            {
+                title: 'IS NOT BLANK',
+                callback: () => {
+                    operatorObject.operator = 'IS_NOT_BLANK';
+                    ctx.generate();
+                }
             }
         ]);
     };

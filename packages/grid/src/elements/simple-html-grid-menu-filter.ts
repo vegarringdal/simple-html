@@ -26,11 +26,11 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             document.addEventListener('contextmenu', this);
         }, 50);
         this.search = this.cell.filterable?.currentValue || null;
-        this.fillDropdown();
-        this.default();
+        this.getDropdownData();
+        this.generateMainMenu();
     }
 
-    fillDropdown() {
+    getDropdownData() {
         if (!this.cell.type || this.cell.type === 'text') {
             const data = this.availableOnly
                 ? this.connector.getDatasource().getRows(true)
@@ -110,7 +110,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
             this.enableAvailableOnlyOption =
                 this.connector.getDatasource().getRows(true).length !==
-                    this.connector.getDatasource().getAllData().length ||
+                this.connector.getDatasource().getAllData().length ||
                 this.dataFilterSet.size === this.dataFilterSetFull.size;
         }
     }
@@ -155,7 +155,95 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         this.connector.reRunFilter();
     }
 
-    filters() {
+    clearThis() {
+        let x = this.connector.getDatasource().getFilter();
+
+        const loopFilter = (filter: FilterArgument) => {
+            if (filter && Array.isArray(filter.filterArguments)) {
+                filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
+                    if (fi.attribute === this.cell.attribute) {
+                        return false;
+                    } else {
+                        return true
+                    }
+                })
+                filter.filterArguments.forEach((fi: FilterArgument) => {
+                    if (fi.type === 'GROUP') {
+                        loopFilter(fi)
+                    }
+                })
+            }
+
+
+        }
+        loopFilter(x)
+
+        const columns = this.connector.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f && this.cell.attribute === col.attribute) {
+                f.currentValue = null;
+            }
+        });
+        this.connector.reRender();
+        this.connector.reRunFilter();
+    }
+
+    setFilter(arg: 'IS_BLANK' | 'IS_NOT_BLANK') {
+        let x = this.connector.getDatasource().getFilter();
+
+        const loopFilter = (filter: FilterArgument) => {
+            if (filter && Array.isArray(filter.filterArguments)) {
+                filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
+                    if (fi.attribute === this.cell.attribute) {
+                        return false;
+                    } else {
+                        return true
+                    }
+                })
+                filter.filterArguments.forEach((fi: FilterArgument) => {
+                    if (fi.type === 'GROUP') {
+                        loopFilter(fi)
+                    }
+                })
+            }
+
+        }
+        loopFilter(x)
+
+        const columns = this.connector.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f && this.cell.attribute === col.attribute) {
+                f.currentValue = null;
+            }
+        });
+        if (x && Array.isArray(x.filterArguments)) {
+            x.filterArguments.push({
+                type: 'CONDITION',
+                attribute: this.cell.attribute,
+                operator: arg,
+                attributeType: this.cell.type
+            })
+            this.connector.getDatasource().setFilter(x)
+        } else {
+            this.connector.getDatasource().setFilter({
+                type: 'GROUP',
+                logicalOperator: 'AND',
+                filterArguments: [{
+                    type: 'CONDITION',
+                    attribute: this.cell.attribute,
+                    operator: arg,
+                    attributeType: this.cell.type
+                }
+                ]
+            })
+        }
+        this.connector.reRender();
+        this.connector.reRunFilter();
+    }
+
+    generateOperatorMenu() {
         this.innerHTML = '';
         const operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
 
@@ -236,9 +324,9 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el.appendChild(document.createTextNode('End with'));
         this.appendChild(el);
 
-        el = document.createElement('hr');
-        el.appendChild(document.createTextNode('End with'));
         this.appendChild(el);
+
+        el = document.createElement('hr');
 
         el = document.createElement('p');
         el.classList.add('simple-html-grid-menu-item');
@@ -246,7 +334,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el.onclick = () => {
             this.defaultMenu = true;
             this.wait = true;
-            this.default();
+            this.generateMainMenu();
         };
         this.appendChild(el);
     }
@@ -259,7 +347,10 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             : this.dataFilterSet.add(rowData);
         this.selectAll =
             this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
-        this.default();
+
+        const scrollTop = this.scrollAreaRef.scrollTop;
+        this.generateMainMenu();
+        this.scrollAreaRef.scrollTop = scrollTop;
     }
 
     selectAllClick() {
@@ -271,10 +362,10 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.dataFilterSet = new Set();
         }
 
-        this.default();
+        this.generateMainMenu();
     }
 
-    default() {
+    generateMainMenu() {
         this.innerHTML = '';
 
         const filtertoggleClick = () => {
@@ -282,8 +373,8 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.availableOnly = !this.availableOnly;
             this.selectAll =
                 this.dataFilterSetFull.size === this.dataFilterSet.size && !this.availableOnly;
-            this.fillDropdown();
-            this.default();
+            this.getDropdownData();
+            this.generateMainMenu();
         };
 
         const runFilterClick = () => {
@@ -316,7 +407,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el.onclick = () => {
             this.defaultMenu = false;
             this.wait = true;
-            this.filters();
+            this.generateOperatorMenu();
         };
         el.appendChild(document.createTextNode('Filters'));
         this.appendChild(el);
@@ -345,7 +436,25 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         el = document.createElement('p');
         el.classList.add('simple-html-grid-menu-item');
         el.onclick = () => this.clearAll();
-        el.appendChild(document.createTextNode('clear filter all columns'));
+        el.appendChild(document.createTextNode('Remove all filters'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.clearThis();
+        el.appendChild(document.createTextNode('Reset column filter'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.setFilter('IS_BLANK');
+        el.appendChild(document.createTextNode('Set blank filter'));
+        this.appendChild(el);
+
+        el = document.createElement('p');
+        el.classList.add('simple-html-grid-menu-item');
+        el.onclick = () => this.setFilter('IS_NOT_BLANK');
+        el.appendChild(document.createTextNode('Set not blank filter'));
         this.appendChild(el);
 
         el = document.createElement('hr');
@@ -385,10 +494,10 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             };
             textFilterInput.oninput = (e: any) => {
                 this.search = e.target.value || null;
-                this.fillDropdown();
+                this.getDropdownData();
 
                 this.scrollAreaRef.innerText = '';
-                this.filterValues(this.scrollAreaRef);
+                this.generateScrollListItems(this.scrollAreaRef);
             };
             this.appendChild(textFilterInput);
 
@@ -397,7 +506,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             scrollArea.style.overflowY = 'auto';
             scrollArea.style.maxHeight = '250px';
 
-            this.filterValues(scrollArea);
+            this.generateScrollListItems(scrollArea);
             this.appendChild(scrollArea);
             this.scrollAreaRef = scrollArea;
 
@@ -409,7 +518,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         }
     }
 
-    filterValues(scrollArea: HTMLElement) {
+    generateScrollListItems(scrollArea: HTMLElement) {
         let containerSelectAll = document.createElement('div');
         containerSelectAll.style.padding = '2px';
 

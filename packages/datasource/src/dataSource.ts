@@ -12,6 +12,9 @@ import {
     OPERATORS
 } from './types';
 import { DataContainer } from './dataContainer';
+import { DateFormater, DateFormaterType } from './dateFormater';
+import { NumberFormater, NumberFormaterType } from './numberFormater';
+
 
 type callF = (...args: any[]) => any;
 type callO = { handleEvent: (...args: any[]) => any };
@@ -69,6 +72,17 @@ export class Datasource<T = any> {
      */
     private __listeners: Set<callable> = new Set();
 
+
+    /**
+     * default date formater
+     */
+    private __dateFormater: DateFormaterType = DateFormater;
+
+    /**
+     * default number formater
+     */
+    private __numberFormater: NumberFormaterType = NumberFormater;
+
     /**
      * current entity, use this with form etc if you have a grid with detail form
      */
@@ -83,6 +97,23 @@ export class Datasource<T = any> {
         this.__grouping = new Grouping();
     }
 
+
+    public setNumberFormater(formater: NumberFormaterType) {
+        this.__numberFormater = formater;
+    }
+
+    public setDateFormater(formater: DateFormaterType) {
+        this.__dateFormater = formater;
+    }
+
+    public getNumberFormater() {
+        return this.__numberFormater;
+    }
+
+    public getDateFormater() {
+        return this.__dateFormater;
+    }
+
     /**
      * so I can check
      */
@@ -90,8 +121,8 @@ export class Datasource<T = any> {
         return 'Datasource';
     }
 
-    public setDates(x:string[]){
-        this.__sorting.setDateAttribute(x)
+    public setDates(x: string[]) {
+        this.__sorting.setDateAttribute(x);
     }
 
     /**
@@ -165,7 +196,8 @@ export class Datasource<T = any> {
             if (this.__filter.getFilter()) {
                 this.__collectionFiltered = this.__filter.filter(
                     this.getAllData(),
-                    this.__filter.getFilter()
+                    this.__filter.getFilter(),
+                    this
                 );
             } else {
                 this.__collectionFiltered = this.__dataContainer.getDataSet();
@@ -180,7 +212,8 @@ export class Datasource<T = any> {
             this.__collectionDisplayed = this.__grouping.group(
                 this.__collectionFiltered,
                 this.__grouping.getGrouping(),
-                true
+                true,
+                this
             );
         } else {
             //set sorted collection to display
@@ -268,7 +301,8 @@ export class Datasource<T = any> {
             this.__collectionDisplayed = this.__grouping.group(
                 this.__collectionFiltered,
                 this.__grouping.getGrouping(),
-                true
+                true,
+                this
             );
         } else {
             //set sorted collection to display
@@ -341,7 +375,7 @@ export class Datasource<T = any> {
         });
         this.__sorting.runOrderBy(this.__collectionFiltered);
         if (groupings.length) {
-            const result = this.__grouping.group(this.__collectionFiltered, groupings, true);
+            const result = this.__grouping.group(this.__collectionFiltered, groupings, true, this);
             this.__collectionDisplayed = result;
         } else {
             this.__collectionDisplayed = this.__collectionFiltered;
@@ -623,13 +657,16 @@ export class Datasource<T = any> {
             return '';
         }
 
-        function convertDate(type: string, value: string | Date | number) {
-            if (type === 'date' && value instanceof Date) {
-                try {
-                    return value.toLocaleDateString();
-                } catch (e) {
-                    return value;
-                }
+        const dateformater = this.getDateFormater();
+        const numformater = this.getNumberFormater();
+
+        function convertValue(type: string, value: string | Date | number) {
+            if (type === 'date') {
+                return dateformater.fromDate(value);
+            }
+
+            if (type === 'number') {
+                return numformater.fromNumber(value);
             }
 
             return value;
@@ -641,32 +678,34 @@ export class Datasource<T = any> {
                     !obj.filterArguments ||
                     (obj.filterArguments && obj.filterArguments.length === 0)
                 ) {
-                    if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
+                    if (obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK') {
                         queryString =
-                            queryString +
-                            `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
-                                obj.valueType === 'ATTRIBUTE'
-                                    ? `[${obj.value}]`
-                                    : "'" + convertDate(obj.attributeType, obj.value) + "'"
-                            }`;
+                            queryString + `[${obj.attribute}] <<${OPERATORS[obj.operator]}>>`;
                     } else {
-                        // split newline into array
-                        if (Array.isArray(obj.value)) {
+                        if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                             queryString =
                                 queryString +
-                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${obj.value.map(
-                                    (val) => {
-                                        return `'${val}'`;
-                                    }
-                                )}]`;
+                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${obj.valueType === 'ATTRIBUTE'
+                                    ? `[${obj.value}]`
+                                    : "'" + convertValue(obj.attributeType, obj.value) + "'"
+                                }`;
                         } else {
-                            queryString =
-                                queryString +
-                                `[${obj.attribute}] <<${
-                                    OPERATORS[obj.operator]
-                                }>> [${(obj.value as string).split('\n').map((val) => {
-                                    return `'${val}'`;
-                                })}]`;
+                            // split newline into array
+                            if (Array.isArray(obj.value)) {
+                                queryString =
+                                    queryString +
+                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]
+                                    }>> [${obj.value.map((val) => {
+                                        return `'${val}'`;
+                                    })}]`;
+                            } else {
+                                queryString =
+                                    queryString +
+                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]
+                                    }>> [${(obj.value as string).split('\n').map((val) => {
+                                        return `'${val}'`;
+                                    })}]`;
+                            }
                         }
                     }
                 } else {
