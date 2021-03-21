@@ -31,14 +31,16 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         const change =
             this.cell.editEventType !== 'input'
                 ? (e: any) => {
-                      this.updateCallback(e);
-                  }
+                    this.lastVal = undefined;
+                    this.updateCallback(e);
+                }
                 : null;
         const input =
             this.cell.editEventType !== 'input'
                 ? (e: any) => {
-                      this.updateCallback(e);
-                  }
+                    this.lastVal = undefined;
+                    this.updateCallback(e);
+                }
                 : null;
 
         const connector = this.connector; //ref in callback
