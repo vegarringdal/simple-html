@@ -125,8 +125,8 @@ export class Datasource<T = any> {
         this.__sorting.setDateAttribute(x);
     }
 
-    public getMarkedForDeletion() {
-        return this.__dataContainer.getMarkedForDeletion();
+    public getMarkedForDeletion(): EntityUnion<T>[] {
+        return this.__dataContainer.getMarkedForDeletion() as EntityUnion<T>[];
     }
 
     public resetData() {
