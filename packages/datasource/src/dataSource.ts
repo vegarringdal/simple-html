@@ -125,6 +125,11 @@ export class Datasource<T = any> {
         this.__sorting.setDateAttribute(x);
     }
 
+
+    public removeData(data: Entity | Entity[], all = false) {
+        return this.__dataContainer.removeData(data, all);
+    }
+
     /**
      * This is the data in the dataContainer
      */
