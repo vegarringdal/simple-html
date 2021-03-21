@@ -22,6 +22,12 @@ export class Selection {
         return result;
     }
 
+    public addSelectedKeys(keys: any[]) {
+        keys.forEach((k) => {
+            this.selection.add(k)
+        })
+    }
+
     public deSelectAll(): void {
         this.selection.clear();
         this.selectedRows = this.selection.size;
