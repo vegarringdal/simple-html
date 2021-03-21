@@ -127,7 +127,9 @@ export class Datasource<T = any> {
 
 
     public removeData(data: Entity | Entity[], all = false) {
-        return this.__dataContainer.removeData(data, all);
+        const removed = this.__dataContainer.removeData(data, all);
+        this.__callSubscribers('collection-changed', { removed: true });
+        return removed;
     }
 
     /**
