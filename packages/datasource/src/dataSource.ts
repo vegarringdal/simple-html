@@ -125,6 +125,22 @@ export class Datasource<T = any> {
         this.__sorting.setDateAttribute(x);
     }
 
+    public getMarkedForDeletion() {
+        return this.__dataContainer.getMarkedForDeletion();
+    }
+
+    public resetData() {
+        this.__dataContainer.resetData();
+        this.__internalUpdate(true);
+        this.__callSubscribers('collection-filtered');
+    }
+
+    public markForDeletion(data: Entity | Entity[], all = false) {
+        this.__dataContainer.markForDeletion(data, all);
+        this.__internalUpdate(true);
+        this.__callSubscribers('collection-filtered');
+    }
+
 
     public removeData(data: Entity | Entity[], all = false) {
         const removed = this.__dataContainer.removeData(data, all);
