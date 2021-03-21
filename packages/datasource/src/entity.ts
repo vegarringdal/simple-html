@@ -76,7 +76,7 @@ export class EntityHandler {
 
         if (update) {
             if (obj.hasOwnProperty(prop)) {
-                if (!this.__editedProps.hasOwnProperty(prop)) {
+                if (!this.__editedProps.hasOwnProperty(prop) && !this.__isNew) {
                     this.__originalValues[prop] = obj[prop];
                     this.__editedProps[prop] = true;
                 } else {
@@ -116,7 +116,7 @@ export class EntityHandler {
 
                 if (
                     _original === _value ||
-                    ((_original === null || _original === null) && _value === '')
+                    ((_original === null || _original === undefined) && _value === '')
                 ) {
                     this.__editedProps[prop] = false;
                 }
@@ -129,8 +129,8 @@ export class EntityHandler {
                     this.__newprops[prop] = true;
                 }
             }
-            this.__edited = true;
-            this.__currentValues[prop] = value;
+            this.__edited = Object.values(this.__editedProps).includes(true);
+            this.__currentValues[prop] = value
             obj[prop] = value;
         }
 
