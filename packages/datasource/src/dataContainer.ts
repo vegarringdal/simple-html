@@ -5,7 +5,7 @@ let globalKeyCount = 0;
 
 // we need 1 for all datasources not using uniqueKeyAttribute
 export const getNextKey = function () {
-    globalKeyCount++;
+    globalKeyCount--;
     return globalKeyCount;
 };
 
@@ -67,7 +67,7 @@ export class DataContainer {
             }
         })
         this.removeData(newEntities);
-        
+
         this.__markedForDeletion = [];
     }
 
