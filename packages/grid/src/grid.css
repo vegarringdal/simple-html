@@ -252,6 +252,28 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight);
 }
+.simple-html-grid .simple-html-grid-row-input-button {
+    box-sizing: border-box;
+    border: 0;
+    position: absolute;
+
+    width: 20px;
+    bottom: 1px;
+    top: 0;
+    right: 0;
+    margin-right: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+
+    background-color: var(--simple-html-grid-main-bg-color);
+    text-overflow: ellipsis;
+    content: '...';
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+}
 .simple-html-grid .grid-edit-button {
     margin: 2px;
     position: absolute;
@@ -316,6 +338,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 
 .simple-html-grid .simple-html-grid-iconhidden {
     display: none;
+    pointer-events: none;
 }
 
 .simple-html-grid .simple-html-grid-dragHandle {

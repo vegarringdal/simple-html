@@ -13,6 +13,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
     cell: CellConfig;
     innerEle: HTMLInputElement;
     lastVal: any;
+    innerBtn: HTMLButtonElement;
 
     public connectedCallback() {
         this.classList.add('simple-html-grid-cell-row');
@@ -144,6 +145,21 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             this.innerEle.type = celltype;
         }
 
+        this.innerEle.onfocus = () => {
+            if (this.innerBtn) {
+                this.innerBtn.classList.remove('simple-html-grid-iconhidden')
+            }
+        }
+
+        this.innerEle.onblur = () => {
+            if (this.innerBtn) {
+                setTimeout(() => {
+                    this.innerBtn.classList.add('simple-html-grid-iconhidden')
+                }, 200);
+
+            }
+        }
+
         // fix class if checkbox/input
         if (celltype === 'checkbox') {
             if (this.innerEle.classList.contains('simple-html-grid-row-input')) {
@@ -160,6 +176,24 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                 this.innerEle.classList.add('simple-html-grid-row-input');
             }
         }
+
+        // so I can attach external dropdown etc 
+        if (celltype !== 'checkbox' && this.cell.focusButton) {
+            if (!this.innerBtn) {
+                this.innerBtn = document.createElement('button')
+                this.innerBtn.classList.add('simple-html-grid-row-input-button', 'simple-html-grid-iconhidden')
+                this.innerBtn.appendChild(document.createTextNode('...'))
+                this.appendChild(this.innerBtn)
+            }
+            this.innerBtn.onclick = () => {
+                this.cell.focusButton(this);
+            }
+        } else {
+            if (this.innerBtn && this.innerBtn.parentNode) {
+                this.innerBtn.parentNode.removeChild(this.innerBtn)
+            }
+        }
+
         this.style.width = this.connector.config.groups[this.group].width + 'px';
         this.innerEle.placeholder = ''; // reset
 

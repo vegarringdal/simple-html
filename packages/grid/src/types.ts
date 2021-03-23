@@ -6,6 +6,7 @@ import {
     DataTypes,
     FilterArgument
 } from '@simple-html/datasource';
+import { SimpleHtmlGridCellRow } from './elements/simple-html-grid-cell-row';
 export {
     FilterComparisonOperator,
     FilterAttributeSimple,
@@ -39,6 +40,8 @@ export interface CellConfig<T = any> {
     disabled?: boolean;
     /**NOT IN USE */
     width?: number;
+    /**option for popup menu etc, can be used with readonly columns*/
+    focusButton?: (ctx: SimpleHtmlGridCellRow) => void
     //filter
     filterable?: {
         /**Default FALSE */
