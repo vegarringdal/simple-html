@@ -18,14 +18,17 @@ export function setup(rows: number, columns: number, scroll?: number) {
         for (let y = 0; y < rows; y++) {
             word++;
 
-            if ((i === 1 && y === 0) ||(i === 3 && y === 0) || (i === 2 && y === 0) ) {
+            if ((i === 1 && y === 0) || (i === 3 && y === 0) || (i === 2 && y === 0)) {
                 if (i === 1 && y === 0) {
                     x.push({
                         header: 'index',
                         attribute: 'index',
-                        //readonly: true,
+                        readonly: true,
                         type: 'number',
                         filterable: {},
+                        focusButton: (x: any) => {
+                            console.log(x)
+                        },
                         sortable: {},
                         allowGrouping: true
                     });
@@ -40,7 +43,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
                         sortable: {},
                         allowGrouping: true
                     });
-                } 
+                }
                 if (i === 3 && y === 0) {
                     x.push({
                         header: 'bool',
@@ -51,7 +54,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
                         sortable: {},
                         allowGrouping: true
                     });
-                } 
+                }
             } else {
                 x.push({
                     header: 'word' + word,
