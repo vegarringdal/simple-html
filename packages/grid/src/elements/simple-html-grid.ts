@@ -28,15 +28,7 @@ export class SimpleHtmlGrid extends HTMLElement {
             this.oldHeight = this.clientHeight;
             this.oldWidth = this.clientWidth;
             this.resizeTimer;
-            new ResizeObserver(() => {
-                if (this.oldHeight !== this.clientHeight || this.oldWidth !== this.clientWidth) {
-                    if (this.resizeTimer) clearTimeout(this.resizeTimer);
-                    this.resizeTimer = setTimeout(() => {
-                        this.resetRowCache();
-                        this.reRender();
-                    }, 100);
-                }
-            }).observe(this);
+
 
             this.resetRowCache();
 
@@ -53,6 +45,17 @@ export class SimpleHtmlGrid extends HTMLElement {
                     }
                 }
             }
+            let init = false;
+            new ResizeObserver(() => {
+                if (this.oldHeight !== this.clientHeight || this.oldWidth !== this.clientWidth && init) {
+                    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+                    this.resizeTimer = setTimeout(() => {
+                        this.resetRowCache();
+                        this.reRender();
+                    }, 100);
+                }
+                init = true;
+            }).observe(this);
         } else {
             if (this.isConnected) {
                 console.error('no config set');
