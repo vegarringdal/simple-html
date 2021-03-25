@@ -28,51 +28,8 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.innerEle.classList.add('simple-html-grid-row-input');
         this.appendChild(this.innerEle);
 
-        const ref = this.ref;
-        const change =
-            this.cell.editEventType !== 'input'
-                ? (e: any) => {
-                    this.lastVal = undefined;
-                    this.updateCallback(e);
-                }
-                : null;
-        const input =
-            this.cell.editEventType !== 'input'
-                ? (e: any) => {
-                    this.lastVal = undefined;
-                    this.updateCallback(e);
-                }
-                : null;
 
-        const connector = this.connector; //ref in callback
-        const contentMenu = (e: any) => {
-            if ((e as any).button !== 0) {
-                generateMenuWithComponentName(
-                    'simple-html-grid-menu-row',
-                    e,
-                    connector,
-                    ref,
-                    () => this.cell,
-                    () => this.rowNo,
-                    () => this.connector.displayedDataset[this.rowNo]
-                );
-            }
-        };
 
-        this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
-        this.innerEle.disabled = this.cell.disabled;
-        this.innerEle.onchange = change;
-        if (this.cell.type === 'date') {
-            this.innerEle.oninput = null;
-        } else {
-            this.innerEle.oninput = input;
-        }
-
-        this.innerEle.oncontextmenu = (e: any) => {
-            e.preventDefault();
-            contentMenu(e);
-            return false;
-        };
 
         this.updateInput();
     }
@@ -128,6 +85,51 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
     updateInput() {
         const data = this.connector.displayedDataset[this.rowNo];
+        const ref = this.ref;
+        const connector = this.connector; //ref in callback
+
+        const contentMenu = (e: any) => {
+            if ((e as any).button !== 0) {
+                generateMenuWithComponentName(
+                    'simple-html-grid-menu-row',
+                    e,
+                    connector,
+                    ref,
+                    () => this.cell,
+                    () => this.rowNo,
+                    () => this.connector.displayedDataset[this.rowNo]
+                );
+            }
+        };
+        const change =
+            this.cell.editEventType !== 'input'
+                ? (e: any) => {
+                    this.lastVal = undefined;
+                    this.updateCallback(e);
+                }
+                : null;
+        const input =
+            this.cell.editEventType !== 'input'
+                ? (e: any) => {
+                    this.lastVal = undefined;
+                    this.updateCallback(e);
+                }
+                : null;
+        this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
+        this.innerEle.disabled = this.cell.disabled;
+        this.innerEle.onchange = change;
+        if (this.cell.type === 'date') {
+            this.innerEle.oninput = null;
+        } else {
+            this.innerEle.oninput = input;
+        }
+
+        this.innerEle.oncontextmenu = (e: any) => {
+            e.preventDefault();
+            contentMenu(e);
+            return false;
+        };
+
         if (!data || data.__group) {
             (this.parentNode as HTMLElement).style.display = 'none';
             return;
