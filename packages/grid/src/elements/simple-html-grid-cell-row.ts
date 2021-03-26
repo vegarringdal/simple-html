@@ -42,7 +42,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
     handleEvent(e: Event) {
         if (e.type === 'column-resize') {
-            this.style.width = this.group.width + 'px';
+            this.style.width = this.connector.config.groups[this.group].width + 'px';
         }
 
         if (e.type === 'update-cell-data') {
