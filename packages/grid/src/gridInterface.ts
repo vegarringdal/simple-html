@@ -689,6 +689,19 @@ export class GridInterface<T = any> {
     }
 
     /**
+     * triggers row cells to check if they are update
+     * useful combined with current entity to keep them in sync
+     * @param currentEntityOnly 
+     */
+    public updateRowCells(currentEntityOnly = false) {
+        if (currentEntityOnly) {
+            this.__SimpleHtmlGrid.triggerEvent('update-cell-data-currentEnity')
+        } else {
+            this.__SimpleHtmlGrid.triggerEvent('update-cell-data');
+        }
+    }
+
+    /**
      * collapses all/1
      * Internal usage only, do not call
      */

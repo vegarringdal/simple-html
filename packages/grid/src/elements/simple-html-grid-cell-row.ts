@@ -30,8 +30,33 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
 
 
-
+        this.ref.addEventListener('update-cell-data-currentEnity', this);
+        this.ref.addEventListener('update-cell-data', this);
         this.updateInput();
+    }
+
+    disconnectedCallback() {
+        this.ref.removeEventListener('update-cell-data-currentEnity', this);
+        this.ref.removeEventListener('update-cell-data', this);
+    }
+
+    handleEvent(e: Event) {
+        if (e.type === 'column-resize') {
+            this.style.width = this.group.width + 'px';
+        }
+
+        if (e.type === 'update-cell-data') {
+            this.updateInput();
+        }
+
+        if (e.type === 'update-cell-data-currentEnity') {
+            const data = this.connector.displayedDataset[this.rowNo];
+            const currentEnity = this.connector.getDatasource().currentEntity
+            if (data === currentEnity) {
+                this.updateInput();
+            }
+
+        }
     }
 
     // callback for change
