@@ -488,7 +488,7 @@ export class GridInterface<T = any> {
 
                 break;
             case 'boolean':
-                if (value === null) {
+                if (value === '') {
                     col.filterable.currentValue = null;
                 }
                 if (value === 'false') {
