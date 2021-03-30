@@ -65,10 +65,11 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         const cell = this.cell;
         this.style.width = this.connector.config.groups[this.group].width + 'px';
 
-        if (cell.readonly) {
+        if (cell.readonly || this.connector.config.readonly) {
             if (this.cell.type === 'date') {
                 // date picker with alt key overides input somehow..
                 e.target.value = this.connector.dateFormater.fromDate(data[cell.attribute] || null);
+                return;
             }
 
             if (this.cell.type === 'number') {
@@ -76,9 +77,19 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                 e.target.value = this.connector.numberFormater.fromNumber(
                     data[cell.attribute] || null
                 );
+                return;
             }
 
-            return;
+            if (this.cell.type === 'boolean') {
+                // date picker with alt key overides input somehow..
+                e.target.checked = data[cell.attribute]
+                return;
+            }
+
+
+            e.target.value = data[cell.attribute]
+
+
         }
 
         // filter out based on type so we know what type to use
@@ -131,10 +142,12 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                 ? (e: any) => {
                     this.lastVal = undefined;
                     this.updateCallback(e);
+                    // if not input change, we can update it
+                    this.updateInput();
                 }
                 : null;
         const input =
-            this.cell.editEventType !== 'input'
+            this.cell.editEventType === 'input'
                 ? (e: any) => {
                     this.lastVal = undefined;
                     this.updateCallback(e);
