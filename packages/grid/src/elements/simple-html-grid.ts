@@ -116,8 +116,18 @@ export class SimpleHtmlGrid extends HTMLElement {
             }
         });
         if (this.colCache.length < minGroups) {
+
+            // make sure we dont add "i" we have from before..
+
+            // columns we have
+            let x = this.colCache.map(x => x.i);
+            // columns we should have
+            let y = Array.from(new Array(minGroups)).map((_x, i) => {return i})
+            // missing ones
+            let z = y.filter(y => !x.includes(y));
+
             while (this.colCache.length < minGroups) {
-                this.colCache.push({ i: this.colCache.length, update: true, found: false });
+                this.colCache.push({ i: z.pop(), update: true, found: false });
             }
         }
     }
