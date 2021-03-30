@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/router",
-    "version": "3.4.0-next.5",
+    "version": "3.4.0-next.6",
     "description": "Lit html router",
     "main": "dist/index.js",
     "module": "dist/index.js",
