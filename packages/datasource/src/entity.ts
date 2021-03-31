@@ -70,8 +70,12 @@ export class EntityHandler {
                     '__groupExpanded'
                 ].indexOf(prop) > -1
             ) {
-                if (this.__KEYSTRING) {
-                    return obj[this.__KEYSTRING] = value;
+                if (prop === '__KEY') {
+                    if (this.__KEYSTRING) {
+                        return obj[this.__KEYSTRING] = value;
+                    } else {
+                        this[prop] = value;
+                    }
                 } else {
                     this[prop] = value;
                 }
