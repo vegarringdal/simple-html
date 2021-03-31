@@ -6,7 +6,6 @@ import {
     DataTypes,
     FilterArgument
 } from '@simple-html/datasource';
-import { SimpleHtmlGridCellRow } from './elements/simple-html-grid-cell-row';
 export {
     FilterComparisonOperator,
     FilterAttributeSimple,
@@ -40,8 +39,10 @@ export interface CellConfig<T = any> {
     disabled?: boolean;
     /**NOT IN USE */
     width?: number;
-    /**option for popup menu etc, can be used with readonly columns*/
-    focusButton?: (ctx: SimpleHtmlGridCellRow) => void
+    /** you need to subscribe event*/
+    focusButton?: boolean
+    focusButtonIfGridReadonly?: boolean
+    focusButtonIfCellReadonly?: boolean
     //filter
     filterable?: {
         /**Default FALSE */

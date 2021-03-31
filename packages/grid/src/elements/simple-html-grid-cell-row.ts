@@ -111,7 +111,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                 default:
                     data[cell.attribute] = e.target.value;
             }
-            this.connector.publishEvent('attribute-change');
+            this.connector.publishEvent('attribute-change', this);
         }
     }
 
@@ -217,16 +217,38 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             }
         }
 
+
+
+
         // so I can attach external dropdown etc 
         if (celltype !== 'checkbox' && this.cell.focusButton) {
-            if (!this.innerBtn) {
-                this.innerBtn = document.createElement('button')
-                this.innerBtn.classList.add('simple-html-grid-row-input-button', 'simple-html-grid-iconhidden')
-                this.innerBtn.appendChild(document.createTextNode('...'))
-                this.appendChild(this.innerBtn)
+
+            let show = true;
+            const gridReadonly = this.connector.config.readonly;
+            const cellReadonly = this.cell.readonly;
+
+            if (gridReadonly && this.cell.focusButtonIfGridReadonly === false) {
+                show = false;
             }
-            this.innerBtn.onclick = () => {
-                this.cell.focusButton(this);
+
+            if (cellReadonly && this.cell.focusButtonIfCellReadonly === false) {
+                show = false;
+            }
+
+            if (show) {
+                if (!this.innerBtn) {
+                    this.innerBtn = document.createElement('button')
+                    this.innerBtn.classList.add('simple-html-grid-row-input-button', 'simple-html-grid-iconhidden')
+                    this.innerBtn.appendChild(document.createTextNode('...'))
+                    this.appendChild(this.innerBtn)
+                }
+                this.innerBtn.onclick = () => {
+                    this.connector.publishEvent('focus-button', this);
+                }
+            } else {
+                if (this.innerBtn && this.innerBtn.parentNode) {
+                    this.innerBtn.parentNode.removeChild(this.innerBtn)
+                }
             }
         } else {
             if (this.innerBtn && this.innerBtn.parentNode) {

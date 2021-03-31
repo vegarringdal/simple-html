@@ -4,8 +4,6 @@ import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
 
 
-type f = (...args: any[]) => void;
-
 /**
  * Grid nterface is just connection between datasource/config to the grid.
  */
@@ -21,9 +19,9 @@ export class GridInterface<T = any> {
     private __SimpleHtmlGrid: SimpleHtmlGrid;
 
     /**
-     * for subscribing event (current entity etc)
+     * for subscribing events on grid, like callback on columns etc
      **/
-    private __subscribers: f[] = [];
+    private __subscribers: { handleEvent: (event: { type: string, data: any }) => boolean }[] = [];
 
     private __SCROLL_TOPS: number[];
     private __SCROLL_HEIGHTS: number[];
@@ -355,22 +353,20 @@ export class GridInterface<T = any> {
     }
 
     /**
-     * publish events
-     * Internal usage only, do not call
+     * publish events, used by row cells etc
      */
-    publishEvent(event: string) {
-        const keep = this.__subscribers.filter((element) => {
-            return element(event);
+    publishEvent(type: string, data: any) {
+        const keep = this.__subscribers.filter((context) => {
+            return context.handleEvent({ type, data });
         });
         this.__subscribers = keep;
     }
 
     /**
-     * add events listener
-     * Internal usage only, do not call
+     * add events listener, you need to return true to keep reciving events
      */
-    addEventListener(callable: (event: string) => boolean) {
-        this.__subscribers.push(callable);
+    addEventListener(context: { handleEvent: (event: { type: string, data: any }) => boolean }) {
+        this.__subscribers.push(context);
     }
 
     /**
