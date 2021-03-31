@@ -7,6 +7,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
         cellHeight: 20,
         panelHeight: 25,
         footerHeight: 40,
+        readonly:true,
         selectionMode: 'multiple',
         lastScrollTop: scroll,
         groups: []
@@ -26,9 +27,8 @@ export function setup(rows: number, columns: number, scroll?: number) {
                         readonly: true,
                         type: 'number',
                         filterable: {},
-                        focusButton: (x: any) => {
-                            console.log(x)
-                        },
+                        focusButton: true,
+                        focusButtonIfGridReadonly: false,
                         sortable: {},
                         allowGrouping: true
                     });
