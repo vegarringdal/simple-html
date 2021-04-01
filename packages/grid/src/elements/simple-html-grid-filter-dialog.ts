@@ -36,6 +36,11 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
 
         this.classList.add('simple-html-grid-menu-full');
         this.filterAttributes = this.connector.config.groups.flatMap((y) => y.rows);
+
+        if (Array.isArray(this.connector.config.optionalCells)) {
+          this.filterAttributes = this.filterAttributes.concat(this.connector.config.optionalCells)
+        }
+
         this.generate();
     }
 
@@ -50,7 +55,7 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
     }
 
     generate() {
-        
+
         // this isnt very optimized... it should be handled smarter
         this.innerHTML = '';
 
@@ -60,7 +65,7 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
         outerDiv.classList.add('simple-html-grid', 'simple-html-filter-dialog');
 
         const topRow = document.createElement('div');
-        topRow.classList.add('dialog-row','main-group');
+        topRow.classList.add('dialog-row', 'main-group');
 
         outerDiv.appendChild(topRow);
 
