@@ -72,7 +72,7 @@ export class DateFormater {
             x[2] = new Date().getFullYear();
         }
 
-        returnValue = new Date(x[2], parseInt(x[1]) - 1, parseInt(x[0]), 0, 0, 0, 0);
+        returnValue = new Date(x[2], parseInt(x[1]) - 1, parseInt(x[0]), new Date().getHours(), new Date().getMinutes(), new Date().getSeconds(), new Date().getMilliseconds());
         if (
             returnValue &&
             typeof returnValue === 'object' &&
