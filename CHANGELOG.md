@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.4.0](https://github.com/simple-html/simple-html/compare/v3.3.0...v3.4.0) (2021-04-04)
+
+### Features
+* **grid:** focus button option
+* **grid:** function to request update to row/rows. useful when sepearte form need to sync
+
+### Bug Fixes
+* **grid:** hidden columns will now show in filter
+* **grid:** edits to cells on dates keep local hour/min/sec
+* **grid:** misc fixes to custom key on selection
+* **grid:** date gets updated in cell on blur
+* **grid:** misc fixes to how cells is build, so rerenders better
+
+### Bug Fixes
+
 ## [3.3.0](https://github.com/simple-html/simple-html/compare/v3.2.6...v3.3.0) (2021-03-16)
 
 * added "is null" and "is not null" operator
@@ -11,8 +26,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [3.2.6](https://github.com/simple-html/simple-html/compare/v3.2.5...v3.2.6) (2021-03-04)
 
-
-### Bug Fixes
 
 * **grid:** null and "0" on number filter was cleared ([3ba8c29](https://github.com/simple-html/simple-html/commits/3ba8c2963b93f995822eb809e3296356a0a1ca83))
 
