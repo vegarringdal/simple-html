@@ -40,9 +40,9 @@ export interface CellConfig<T = any> {
     /**NOT IN USE */
     width?: number;
     /** you need to subscribe event*/
-    focusButton?: boolean
-    focusButtonIfGridReadonly?: boolean
-    focusButtonIfCellReadonly?: boolean
+    focusButton?: boolean;
+    focusButtonIfGridReadonly?: boolean;
+    focusButtonIfCellReadonly?: boolean;
     //filter
     filterable?: {
         /**Default FALSE */
@@ -109,4 +109,3 @@ export interface GridConfig<T = any> {
     sortingSet?: SortArgument[];
     groupingExpanded?: string[];
 }
-

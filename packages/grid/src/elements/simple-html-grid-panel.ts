@@ -89,12 +89,11 @@ export class SimpleHtmlGridPanel extends HTMLElement {
             p.appendChild(document.createTextNode(`${capalize(group.title || group.attribute)}`));
 
             const i = document.createElement('i');
-            
 
             const xmlns = 'http://www.w3.org/2000/svg';
             const svgElDelete = document.createElementNS(xmlns, 'svg');
-            svgElDelete.classList.add('simple-html-grid-icon','simple-html-grid-iconhidden')
-            svgElDelete.onclick = click
+            svgElDelete.classList.add('simple-html-grid-icon', 'simple-html-grid-iconhidden');
+            svgElDelete.onclick = click;
             svgElDelete.setAttributeNS(null, 'viewBox', '0 0 16 16');
             const svgElpath = document.createElementNS(xmlns, 'path');
             svgElpath.setAttributeNS(

@@ -5,12 +5,12 @@ import { Entity } from './types';
  */
 
 export class EntityHandler {
-    __editedProps?= {};
-    __originalValues?= {};
-    __currentValues?= {};
-    __newprops?= {};
-    __isNew?= false;
-    __edited?= false;
+    __editedProps? = {};
+    __originalValues? = {};
+    __currentValues? = {};
+    __newprops? = {};
+    __isNew? = false;
+    __edited? = false;
     __controller?: EntityHandler;
     __KEY?: string | number;
     __KEYSTRING?: string | number;
@@ -72,14 +72,13 @@ export class EntityHandler {
             ) {
                 if (prop === '__KEY') {
                     if (this.__KEYSTRING) {
-                        return obj[this.__KEYSTRING] = value;
+                        return (obj[this.__KEYSTRING] = value);
                     } else {
                         this[prop] = value;
                     }
                 } else {
                     this[prop] = value;
                 }
-
             }
         }
 
@@ -88,7 +87,6 @@ export class EntityHandler {
                 this.__originalValues[prop] = obj[prop];
                 this.__newprops[prop] = true;
             }
-
 
             if (!this.__editedProps.hasOwnProperty(prop) && !this.__isNew) {
                 this.__originalValues[prop] = obj[prop];
@@ -139,7 +137,7 @@ export class EntityHandler {
             obj[prop] = value;
 
             this.__edited = Object.values(this.__editedProps).includes(true);
-            this.__currentValues[prop] = value
+            this.__currentValues[prop] = value;
             obj[prop] = value;
         }
 

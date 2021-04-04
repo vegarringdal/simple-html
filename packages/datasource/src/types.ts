@@ -39,7 +39,7 @@ export type FilterComparisonOperator =
     | 'IN'
     | 'NOT_IN'
     | 'IS_BLANK'
-    | 'IS_NOT_BLANK'
+    | 'IS_NOT_BLANK';
 
 export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
 export type FilterLogicalOperator = 'AND' | 'OR' | 'NONE';

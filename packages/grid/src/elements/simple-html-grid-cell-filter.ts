@@ -38,7 +38,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         const connector = this.connector;
         const ref = this.ref;
         const coltype = cell.type === 'boolean' ? 'checkbox' : cell.type;
-        let value = cell.filterable.currentValue || null;
+        const value = cell.filterable.currentValue || null;
         const placeholder = cell.filterable.placeholder || '';
         const config = this.connector.config;
 

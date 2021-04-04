@@ -102,7 +102,7 @@ export class Filter {
 
                         let data;
                         if (filter.attributeType === 'date' && rowData) {
-                            data = ds.getDateFormater().fromDate(rowData[filter.attribute])
+                            data = ds.getDateFormater().fromDate(rowData[filter.attribute]);
                         } else {
                             if (filter.attributeType === 'number' && rowData) {
                                 data = ds.getNumberFormater().fromNumber(rowData[filter.attribute]);
@@ -197,7 +197,7 @@ export class Filter {
 
                         let data;
                         if (filter.attributeType === 'date' && rowData) {
-                            data = ds.getDateFormater().fromDate(rowData[filter.attribute])
+                            data = ds.getDateFormater().fromDate(rowData[filter.attribute]);
                         } else {
                             if (filter.attributeType === 'number' && rowData) {
                                 data = ds.getNumberFormater().fromNumber(rowData[filter.attribute]);

@@ -21,7 +21,12 @@ export class Grouping {
         this.expandedGroupIDs = new Set([]);
     }
 
-    public group(arrayToGroup: Entity[], groupingConfig: GroupArgument[], keepExpanded: boolean, ds: Datasource) {
+    public group(
+        arrayToGroup: Entity[],
+        groupingConfig: GroupArgument[],
+        keepExpanded: boolean,
+        ds: Datasource
+    ) {
         // if grouping
         if (groupingConfig.length > 0) {
             // temp holder for groups as we create them
@@ -229,7 +234,13 @@ export class Grouping {
         return collection;
     }
 
-    private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
+    private createMainGrouping(
+        array: Entity[],
+        groupBy: string,
+        groupNo: number,
+        title: string,
+        ds: Datasource
+    ) {
         const tempGroupArray: Entity[] = [];
         let curGroup: Entity = {} as Entity;
         let lastGroupID: string = null;
@@ -242,8 +253,8 @@ export class Grouping {
                 typeof groupID?.toLocaleDateString === 'function'
                     ? ds.getDateFormater().fromDate(groupID)
                     : typeof groupID?.toFixed === 'function'
-                        ? ds.getNumberFormater().fromNumber(groupID)
-                        : groupID;
+                    ? ds.getNumberFormater().fromNumber(groupID)
+                    : groupID;
             groupID = groupID || ' blank';
 
             if (groupID !== lastGroupID) {
@@ -290,8 +301,8 @@ export class Grouping {
                     typeof groupID?.toLocaleDateString === 'function'
                         ? ds.getDateFormater().fromDate(groupID)
                         : typeof groupID?.toFixed === 'function'
-                            ? ds.getNumberFormater().fromNumber(groupID)
-                            : groupID;
+                        ? ds.getNumberFormater().fromNumber(groupID)
+                        : groupID;
                 groupID = groupID || ' blank';
 
                 if (groupID !== tempValue) {

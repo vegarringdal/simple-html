@@ -3,7 +3,6 @@ import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig 
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
 
-
 /**
  * Grid nterface is just connection between datasource/config to the grid.
  */
@@ -21,7 +20,7 @@ export class GridInterface<T = any> {
     /**
      * for subscribing events on grid, like callback on columns etc
      **/
-    private __subscribers: { handleEvent: (event: { type: string, data: any }) => boolean }[] = [];
+    private __subscribers: { handleEvent: (event: { type: string; data: any }) => boolean }[] = [];
 
     private __SCROLL_TOPS: number[];
     private __SCROLL_HEIGHTS: number[];
@@ -47,15 +46,13 @@ export class GridInterface<T = any> {
         this.parseConfig();
     }
 
-
     get dateFormater() {
         return this.__ds.getDateFormater();
     }
 
     get numberFormater() {
-        return this.__ds.getNumberFormater()
+        return this.__ds.getNumberFormater();
     }
-
 
     /**
      * datasource dataContainer data
@@ -192,7 +189,7 @@ export class GridInterface<T = any> {
                 this.__CONFIG.filterSet = null; // only once..
             }
 
-            let dates: string[] = [];
+            const dates: string[] = [];
             this.__CONFIG.groups?.forEach((group) => {
                 group.rows?.forEach((r) => {
                     if (r.type === 'date') {
@@ -365,7 +362,7 @@ export class GridInterface<T = any> {
     /**
      * add events listener, you need to return true to keep reciving events
      */
-    addEventListener(context: { handleEvent: (event: { type: string, data: any }) => boolean }) {
+    addEventListener(context: { handleEvent: (event: { type: string; data: any }) => boolean }) {
         this.__subscribers.push(context);
     }
 
@@ -586,7 +583,6 @@ export class GridInterface<T = any> {
         this.__ds.filter(filter);
     }
 
-
     /**
      * clears sorting order of config columns
      * Internal usage only, do not call
@@ -687,11 +683,11 @@ export class GridInterface<T = any> {
     /**
      * triggers row cells to check if they are update
      * useful combined with current entity to keep them in sync
-     * @param currentEntityOnly 
+     * @param currentEntityOnly
      */
     public updateRowCells(currentEntityOnly = false) {
         if (currentEntityOnly) {
-            this.__SimpleHtmlGrid.triggerEvent('update-cell-data-currentEnity')
+            this.__SimpleHtmlGrid.triggerEvent('update-cell-data-currentEnity');
         } else {
             this.__SimpleHtmlGrid.triggerEvent('update-cell-data');
         }

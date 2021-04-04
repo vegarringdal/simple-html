@@ -58,7 +58,7 @@ export class SimpleHtmlGridColumnChooser extends HTMLElement {
             const span = document.createElement('span');
             span.classList.add('block', 'simple-html-grid-menu-item');
             span.onmousedown = (e) => {
-                mousedown(e)
+                mousedown(e);
             };
             span.appendChild(document.createTextNode(cell.header));
             return span;

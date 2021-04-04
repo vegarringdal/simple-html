@@ -104,7 +104,7 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
                 setTimeout(() => {
                     e.target.removeEventListener('mouseup', mouseup);
                 }, 500);
-            } 
+            }
         };
 
         const mousedown = columnDragDrop(

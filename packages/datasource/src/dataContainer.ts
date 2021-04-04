@@ -11,7 +11,7 @@ export const getNextKey = function () {
 
 export class DataContainer {
     private __collection: Entity[] = [];
-    private __markedForDeletion: Entity[] = []
+    private __markedForDeletion: Entity[] = [];
     private __keyAttribute = '';
     private EntityHandler = EntityHandler;
 
@@ -46,31 +46,29 @@ export class DataContainer {
         return this.__collection;
     }
 
-
     public getMarkedForDeletion() {
         return this.__markedForDeletion;
     }
 
     public resetData() {
         const newEntities: Entity[] = [];
-        this.setData(this.__markedForDeletion, true)
+        this.setData(this.__markedForDeletion, true);
         this.__collection.forEach((row) => {
             if (row.__controller.__isNew) {
-                newEntities.push(row)
+                newEntities.push(row);
             }
             if (row.__controller.__edited) {
-                for (let k in row.__controller.__originalValues) {
+                for (const k in row.__controller.__originalValues) {
                     row[k] = row.__controller.__originalValues[k];
                 }
-                row.__controller.__editedProps = {}
+                row.__controller.__editedProps = {};
                 row.__controller.__edited = false;
             }
-        })
+        });
         this.removeData(newEntities);
 
         this.__markedForDeletion = [];
     }
-
 
     public markForDeletion(data: Entity | Entity[], all = false) {
         if (all) {
@@ -151,7 +149,7 @@ export class DataContainer {
             });
             return x;
         } else {
-            this.__markedForDeletion = []
+            this.__markedForDeletion = [];
             this.__collection = Array.from(data, (o: any | Entity) => {
                 if (o && o.__controller) {
                     return o;

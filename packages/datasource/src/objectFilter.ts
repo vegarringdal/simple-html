@@ -25,7 +25,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     if ('IS_BLANK' === filterOperator) {
         if (type === 'date') {
             if (
-                rowValue && 
+                rowValue &&
                 typeof rowValue === 'object' &&
                 rowValue.toString &&
                 rowValue.toString() === 'Invalid Date'
@@ -44,7 +44,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     if ('IS_NOT_BLANK' === filterOperator) {
         if (type === 'date') {
             if (
-                rowValue && 
+                rowValue &&
                 typeof rowValue === 'object' &&
                 rowValue.toString &&
                 rowValue.toString() === 'Invalid Date'

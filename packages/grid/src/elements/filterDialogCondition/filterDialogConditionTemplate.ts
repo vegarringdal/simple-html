@@ -25,14 +25,17 @@ export function filterDialogConditionTemplate(
                 el.classList.add('dialog-row');
                 el.appendChild(selectAttributesBtn(operatorObject, ctx));
                 el.appendChild(selectOperatorBtn(operatorObject, ctx));
-                if(operatorObject.operator !== 'IS_BLANK' && operatorObject.operator !== 'IS_NOT_BLANK'){
+                if (
+                    operatorObject.operator !== 'IS_BLANK' &&
+                    operatorObject.operator !== 'IS_NOT_BLANK'
+                ) {
                     el.appendChild(
                         operatorObject.valueType === 'VALUE'
                             ? valueInput(operatorObject, ctx)
                             : selectAttributesBtn(operatorObject, ctx, true)
                     );
                 }
-                
+
                 el.appendChild(selectAttributeOrInputBtn(operatorObject, ctx));
                 el.appendChild(deleteBtn(ctx, operatorObjectArr, i));
 

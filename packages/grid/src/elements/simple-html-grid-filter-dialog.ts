@@ -38,7 +38,9 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
         this.filterAttributes = this.connector.config.groups.flatMap((y) => y.rows);
 
         if (Array.isArray(this.connector.config.optionalCells)) {
-          this.filterAttributes = this.filterAttributes.concat(this.connector.config.optionalCells)
+            this.filterAttributes = this.filterAttributes.concat(
+                this.connector.config.optionalCells
+            );
         }
 
         this.generate();
@@ -55,10 +57,8 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
     }
 
     generate() {
-
         // this isnt very optimized... it should be handled smarter
         this.innerHTML = '';
-
 
         const outerDiv = document.createElement('div');
         outerDiv.style.width = '650px';

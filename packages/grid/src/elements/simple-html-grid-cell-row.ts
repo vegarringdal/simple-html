@@ -28,8 +28,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.innerEle.classList.add('simple-html-grid-row-input');
         this.appendChild(this.innerEle);
 
-
-
         this.ref.addEventListener('update-cell-data-currentEnity', this);
         this.ref.addEventListener('update-cell-data', this);
         this.updateInput();
@@ -51,11 +49,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
         if (e.type === 'update-cell-data-currentEnity') {
             const data = this.connector.displayedDataset[this.rowNo];
-            const currentEnity = this.connector.getDatasource().currentEntity
+            const currentEnity = this.connector.getDatasource().currentEntity;
             if (data === currentEnity) {
                 this.updateInput();
             }
-
         }
     }
 
@@ -82,14 +79,11 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
             if (this.cell.type === 'boolean') {
                 // date picker with alt key overides input somehow..
-                e.target.checked = data[cell.attribute]
+                e.target.checked = data[cell.attribute];
                 return;
             }
 
-
-            e.target.value = data[cell.attribute]
-
-
+            e.target.value = data[cell.attribute];
         }
 
         // filter out based on type so we know what type to use
@@ -140,18 +134,18 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         const change =
             this.cell.editEventType !== 'input'
                 ? (e: any) => {
-                    this.lastVal = undefined;
-                    this.updateCallback(e);
-                    // if not input change, we can update it
-                    this.updateInput();
-                }
+                      this.lastVal = undefined;
+                      this.updateCallback(e);
+                      // if not input change, we can update it
+                      this.updateInput();
+                  }
                 : null;
         const input =
             this.cell.editEventType === 'input'
                 ? (e: any) => {
-                    this.lastVal = undefined;
-                    this.updateCallback(e);
-                }
+                      this.lastVal = undefined;
+                      this.updateCallback(e);
+                  }
                 : null;
         this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
         this.innerEle.disabled = this.cell.disabled;
@@ -187,18 +181,17 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
         this.innerEle.onfocus = () => {
             if (this.innerBtn) {
-                this.innerBtn.classList.remove('simple-html-grid-iconhidden')
+                this.innerBtn.classList.remove('simple-html-grid-iconhidden');
             }
-        }
+        };
 
         this.innerEle.onblur = () => {
             if (this.innerBtn) {
                 setTimeout(() => {
-                    this.innerBtn.classList.add('simple-html-grid-iconhidden')
+                    this.innerBtn.classList.add('simple-html-grid-iconhidden');
                 }, 200);
-
             }
-        }
+        };
 
         // fix class if checkbox/input
         if (celltype === 'checkbox') {
@@ -217,12 +210,8 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
             }
         }
 
-
-
-
-        // so I can attach external dropdown etc 
+        // so I can attach external dropdown etc
         if (celltype !== 'checkbox' && this.cell.focusButton) {
-
             let show = true;
             const gridReadonly = this.connector.config.readonly;
             const cellReadonly = this.cell.readonly;
@@ -237,22 +226,25 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
             if (show) {
                 if (!this.innerBtn) {
-                    this.innerBtn = document.createElement('button')
-                    this.innerBtn.classList.add('simple-html-grid-row-input-button', 'simple-html-grid-iconhidden')
-                    this.innerBtn.appendChild(document.createTextNode('...'))
-                    this.appendChild(this.innerBtn)
+                    this.innerBtn = document.createElement('button');
+                    this.innerBtn.classList.add(
+                        'simple-html-grid-row-input-button',
+                        'simple-html-grid-iconhidden'
+                    );
+                    this.innerBtn.appendChild(document.createTextNode('...'));
+                    this.appendChild(this.innerBtn);
                 }
                 this.innerBtn.onclick = () => {
                     this.connector.publishEvent('focus-button', this);
-                }
+                };
             } else {
                 if (this.innerBtn && this.innerBtn.parentNode) {
-                    this.innerBtn.parentNode.removeChild(this.innerBtn)
+                    this.innerBtn.parentNode.removeChild(this.innerBtn);
                 }
             }
         } else {
             if (this.innerBtn && this.innerBtn.parentNode) {
-                this.innerBtn.parentNode.removeChild(this.innerBtn)
+                this.innerBtn.parentNode.removeChild(this.innerBtn);
             }
         }
 

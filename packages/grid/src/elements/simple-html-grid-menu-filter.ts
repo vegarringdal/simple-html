@@ -110,7 +110,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
             this.enableAvailableOnlyOption =
                 this.connector.getDatasource().getRows(true).length !==
-                this.connector.getDatasource().getAllData().length ||
+                    this.connector.getDatasource().getAllData().length ||
                 this.dataFilterSet.size === this.dataFilterSetFull.size;
         }
     }
@@ -156,7 +156,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
     }
 
     clearThis() {
-        let x = this.connector.getDatasource().getFilter();
+        const x = this.connector.getDatasource().getFilter();
 
         const loopFilter = (filter: FilterArgument) => {
             if (filter && Array.isArray(filter.filterArguments)) {
@@ -164,19 +164,17 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
                     if (fi.attribute === this.cell.attribute) {
                         return false;
                     } else {
-                        return true
+                        return true;
                     }
-                })
+                });
                 filter.filterArguments.forEach((fi: FilterArgument) => {
                     if (fi.type === 'GROUP') {
-                        loopFilter(fi)
+                        loopFilter(fi);
                     }
-                })
+                });
             }
-
-
-        }
-        loopFilter(x)
+        };
+        loopFilter(x);
 
         const columns = this.connector.config.groups.flatMap((x) => x.rows);
         columns.forEach((col) => {
@@ -190,7 +188,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
     }
 
     setFilter(arg: 'IS_BLANK' | 'IS_NOT_BLANK') {
-        let x = this.connector.getDatasource().getFilter();
+        const x = this.connector.getDatasource().getFilter();
 
         const loopFilter = (filter: FilterArgument) => {
             if (filter && Array.isArray(filter.filterArguments)) {
@@ -198,18 +196,17 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
                     if (fi.attribute === this.cell.attribute) {
                         return false;
                     } else {
-                        return true
+                        return true;
                     }
-                })
+                });
                 filter.filterArguments.forEach((fi: FilterArgument) => {
                     if (fi.type === 'GROUP') {
-                        loopFilter(fi)
+                        loopFilter(fi);
                     }
-                })
+                });
             }
-
-        }
-        loopFilter(x)
+        };
+        loopFilter(x);
 
         const columns = this.connector.config.groups.flatMap((x) => x.rows);
         columns.forEach((col) => {
@@ -224,20 +221,21 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
                 attribute: this.cell.attribute,
                 operator: arg,
                 attributeType: this.cell.type
-            })
-            this.connector.getDatasource().setFilter(x)
+            });
+            this.connector.getDatasource().setFilter(x);
         } else {
             this.connector.getDatasource().setFilter({
                 type: 'GROUP',
                 logicalOperator: 'AND',
-                filterArguments: [{
-                    type: 'CONDITION',
-                    attribute: this.cell.attribute,
-                    operator: arg,
-                    attributeType: this.cell.type
-                }
+                filterArguments: [
+                    {
+                        type: 'CONDITION',
+                        attribute: this.cell.attribute,
+                        operator: arg,
+                        attributeType: this.cell.type
+                    }
                 ]
-            })
+            });
         }
         this.connector.reRender();
         this.connector.reRunFilter();
@@ -464,14 +462,14 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             el = document.createElement('div');
             el.style.padding = '2px';
 
-            let iel = document.createElement('input');
+            const iel = document.createElement('input');
             iel.style.padding = '2px';
             iel.type = 'checkbox';
             iel.checked = this.availableOnly;
             iel.onclick = () => filtertoggleClick();
             el.appendChild(iel);
 
-            let lel = document.createElement('label');
+            const lel = document.createElement('label');
             lel.style.padding = '2px';
             lel.onclick = () => filtertoggleClick();
             lel.appendChild(document.createTextNode('Filter Available'));
@@ -481,7 +479,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         }
 
         if (this.cell.type === 'text' || this.cell.type === undefined) {
-            let textFilterInput = document.createElement('input');
+            const textFilterInput = document.createElement('input');
             textFilterInput.classList.add('simple-html-grid-menu-item-input');
             textFilterInput.style.outline = 'none';
             textFilterInput.style.width = '100%';
@@ -501,7 +499,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             };
             this.appendChild(textFilterInput);
 
-            let scrollArea = document.createElement('div');
+            const scrollArea = document.createElement('div');
             scrollArea.style.padding = '2px';
             scrollArea.style.overflowY = 'auto';
             scrollArea.style.maxHeight = '250px';
@@ -510,7 +508,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(scrollArea);
             this.scrollAreaRef = scrollArea;
 
-            let el = document.createElement('p');
+            const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => runFilterClick();
             el.appendChild(document.createTextNode('run filter'));
@@ -519,10 +517,10 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
     }
 
     generateScrollListItems(scrollArea: HTMLElement) {
-        let containerSelectAll = document.createElement('div');
+        const containerSelectAll = document.createElement('div');
         containerSelectAll.style.padding = '2px';
 
-        let selectAll = document.createElement('input');
+        const selectAll = document.createElement('input');
         selectAll.style.padding = '2px';
         selectAll.type = 'checkbox';
         selectAll.checked = this.selectAll;
@@ -530,7 +528,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
         containerSelectAll.appendChild(selectAll);
 
-        let labelSelectAll = document.createElement('label');
+        const labelSelectAll = document.createElement('label');
         labelSelectAll.style.padding = '2px';
         labelSelectAll.onclick = () => this.selectAllClick();
         labelSelectAll.appendChild(document.createTextNode('Select all'));
@@ -539,17 +537,17 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         scrollArea.appendChild(containerSelectAll);
 
         Array.from(this.dataFilterSetFull).forEach((rowData: any) => {
-            let el = document.createElement('div');
+            const el = document.createElement('div');
             el.style.padding = '2px';
 
-            let iel = document.createElement('input');
+            const iel = document.createElement('input');
             iel.style.padding = '2px';
             iel.type = 'checkbox';
             iel.checked = this.dataFilterSet.has(rowData);
             iel.onclick = () => this.filterValueClick(rowData);
             el.appendChild(iel);
 
-            let lel = document.createElement('label');
+            const lel = document.createElement('label');
             lel.style.padding = '2px';
             lel.onclick = () => this.filterValueClick(rowData);
             lel.appendChild(document.createTextNode(rowData === 'NULL' ? 'Blank' : rowData));

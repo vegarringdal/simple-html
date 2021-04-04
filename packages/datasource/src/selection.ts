@@ -24,8 +24,8 @@ export class Selection {
 
     public addSelectedKeys(keys: any[]) {
         keys.forEach((k) => {
-            this.selection.add(k)
-        })
+            this.selection.add(k);
+        });
     }
 
     public deSelectAll(): void {
@@ -42,7 +42,7 @@ export class Selection {
             return;
         }
 
-        let selectionMode = overrideSelectionMode || this.dataSource.getSelectionMode();
+        const selectionMode = overrideSelectionMode || this.dataSource.getSelectionMode();
 
         let isSel: boolean;
         let currentselectedRows = this.getSelectedRows();

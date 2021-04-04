@@ -15,7 +15,6 @@ import { DataContainer } from './dataContainer';
 import { DateFormater, DateFormaterType } from './dateFormater';
 import { NumberFormater, NumberFormaterType } from './numberFormater';
 
-
 type callF = (...args: any[]) => any;
 type callO = { handleEvent: (...args: any[]) => any };
 type callable = callF | callO;
@@ -72,7 +71,6 @@ export class Datasource<T = any> {
      */
     private __listeners: Set<callable> = new Set();
 
-
     /**
      * default date formater
      */
@@ -96,7 +94,6 @@ export class Datasource<T = any> {
         this.__sorting = new Sort();
         this.__grouping = new Grouping();
     }
-
 
     public setNumberFormater(formater: NumberFormaterType) {
         this.__numberFormater = formater;
@@ -140,7 +137,6 @@ export class Datasource<T = any> {
         this.__internalUpdate(true);
         this.__callSubscribers('collection-filtered');
     }
-
 
     public removeData(data: Entity | Entity[], all = false) {
         const removed = this.__dataContainer.removeData(data, all);
@@ -708,23 +704,26 @@ export class Datasource<T = any> {
                         if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                             queryString =
                                 queryString +
-                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${obj.valueType === 'ATTRIBUTE'
-                                    ? `[${obj.value}]`
-                                    : "'" + convertValue(obj.attributeType, obj.value) + "'"
+                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
+                                    obj.valueType === 'ATTRIBUTE'
+                                        ? `[${obj.value}]`
+                                        : "'" + convertValue(obj.attributeType, obj.value) + "'"
                                 }`;
                         } else {
                             // split newline into array
                             if (Array.isArray(obj.value)) {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]
+                                    `[${obj.attribute}] <<${
+                                        OPERATORS[obj.operator]
                                     }>> [${obj.value.map((val) => {
                                         return `'${val}'`;
                                     })}]`;
                             } else {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]
+                                    `[${obj.attribute}] <<${
+                                        OPERATORS[obj.operator]
                                     }>> [${(obj.value as string).split('\n').map((val) => {
                                         return `'${val}'`;
                                     })}]`;

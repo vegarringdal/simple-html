@@ -123,7 +123,9 @@ describe('string filter', () => {
             attribute: 'born',
             operator: 'IN',
             attributeType: 'date',
-            value: [new Date(1990, 0, 1), new Date(1995, 0, 1)].map(x => ds.getDateFormater().fromDate(x)) as any
+            value: [new Date(1990, 0, 1), new Date(1995, 0, 1)].map((x) =>
+                ds.getDateFormater().fromDate(x)
+            ) as any
         });
 
         expect(ds.getRows()).toEqual([
@@ -141,7 +143,9 @@ describe('string filter', () => {
                     attribute: 'born',
                     operator: 'IN',
                     attributeType: 'date', // no automatic anymore when using array to speed it up
-                    value: [new Date(1990, 0, 1), new Date(1995, 0, 1)].map(x => ds.getDateFormater().fromDate(x)) as any
+                    value: [new Date(1990, 0, 1), new Date(1995, 0, 1)].map((x) =>
+                        ds.getDateFormater().fromDate(x)
+                    ) as any
                 },
                 {
                     attribute: 'age',
@@ -166,7 +170,9 @@ describe('string filter', () => {
                     attribute: 'born',
                     operator: 'IN',
                     attributeType: 'date', // no automatic anymore when using array to speed it up
-                    value: [new Date(2000, 0, 1), new Date(1995, 0, 1)].map(x => ds.getDateFormater().fromDate(x)) as any
+                    value: [new Date(2000, 0, 1), new Date(1995, 0, 1)].map((x) =>
+                        ds.getDateFormater().fromDate(x)
+                    ) as any
                 },
                 {
                     attribute: 'age',

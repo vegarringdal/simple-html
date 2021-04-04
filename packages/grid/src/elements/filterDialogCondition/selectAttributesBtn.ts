@@ -5,7 +5,11 @@ import { SimpleHtmlGridFilterDialog } from '../simple-html-grid-filter-dialog';
 /**
  * returns list if attributes from config
  */
-export function selectAttributesBtn(operatorObject: FilterArgument, ctx: SimpleHtmlGridFilterDialog, isValue?: boolean) {
+export function selectAttributesBtn(
+    operatorObject: FilterArgument,
+    ctx: SimpleHtmlGridFilterDialog,
+    isValue?: boolean
+) {
     const el = document.createElement('button');
     el.classList.add('dialog-item-y');
     el.onclick = (e: any) => {

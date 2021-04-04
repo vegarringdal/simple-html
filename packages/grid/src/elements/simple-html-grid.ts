@@ -29,7 +29,6 @@ export class SimpleHtmlGrid extends HTMLElement {
             this.oldWidth = this.clientWidth;
             this.resizeTimer;
 
-
             this.resetRowCache();
 
             // lets do a extra connect, just incase hmr have disconnected it and user cache har messed up
@@ -47,7 +46,10 @@ export class SimpleHtmlGrid extends HTMLElement {
             }
             let init = false;
             new ResizeObserver(() => {
-                if (this.oldHeight !== this.clientHeight || this.oldWidth !== this.clientWidth && init) {
+                if (
+                    this.oldHeight !== this.clientHeight ||
+                    (this.oldWidth !== this.clientWidth && init)
+                ) {
                     if (this.resizeTimer) clearTimeout(this.resizeTimer);
                     this.resizeTimer = setTimeout(() => {
                         this.resetRowCache();
@@ -116,15 +118,16 @@ export class SimpleHtmlGrid extends HTMLElement {
             }
         });
         if (this.colCache.length < minGroups) {
-
             // make sure we dont add "i" we have from before..
 
             // columns we have
-            let x = this.colCache.map(x => x.i);
+            const x = this.colCache.map((x) => x.i);
             // columns we should have
-            let y = Array.from(new Array(minGroups)).map((_x, i) => {return i})
+            const y = Array.from(new Array(minGroups)).map((_x, i) => {
+                return i;
+            });
             // missing ones
-            let z = y.filter(y => !x.includes(y));
+            const z = y.filter((y) => !x.includes(y));
 
             while (this.colCache.length < minGroups) {
                 this.colCache.push({ i: z.pop(), update: true, found: false });
