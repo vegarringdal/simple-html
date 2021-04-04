@@ -3,6 +3,7 @@ const { off } = require('process');
 module.exports = {
     parser: '@typescript-eslint/parser',
     extends: ['plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'],
+    ignorePatterns: ['**/*/*.d.ts'],
     rules: {
         '@typescript-eslint/interface-name-prefix': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
