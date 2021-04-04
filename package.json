@@ -13,7 +13,7 @@
         "eslint": "npm run eslint:run:packages && npm run eslint:run:samples",
         "eslint:run:packages": "eslint --fix ./packages/**/*.ts",
         "eslint:run:samples": "eslint --fix ./samples/**/*.ts",
-        "prettier:run": "node node_modules/prettier/bin-prettier --write \"packages/**/*.{ts}\" \"samples/**/*.{ts}\"",
+        "prettier:run": "prettier --write \"packages/**/*.ts\" \"samples/**/*.ts\"",
         "test": "npm run rollup && jest",
         "test:watch": "npm run rollup && jest --watch ",
         "test-ci": "npm run rollup && jest",
