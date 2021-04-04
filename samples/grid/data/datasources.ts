@@ -28,9 +28,8 @@ export const WordDatasource03 = new DataContainer();
 export const WordDatasource04 = new DataContainer();
 
 // add some default data
-let x;
 console.time('generate');
-x = generator.generateData(500);
+const x = generator.generateData(500);
 console.timeEnd('generate');
 WordDatasource01.setData(x);
 WordDatasource02.setData(generator.generateData(10));

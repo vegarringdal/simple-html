@@ -15,12 +15,12 @@ export default class extends HTMLElement {
     connectedCallback() {
         this.connector = new GridInterface(x, WordDatasource01);
         this.connector.reloadDatasource();
-        this.connector.addEventListener(this)
+        this.connector.addEventListener(this);
         this.ds = this.connector.getDatasource();
     }
 
-    handleEvent(event:any){
-        console.log(event)
+    handleEvent(event: any) {
+        console.log(event);
         return true;
     }
 
