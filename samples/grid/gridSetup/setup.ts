@@ -1,7 +1,7 @@
-import { IGridConfig } from '@simple-html/grid';
+import { GridConfig } from '@simple-html/grid';
 
 export function setup(rows: number, columns: number, scroll?: number) {
-    const setup: IGridConfig = {
+    const setup: GridConfig = {
         cellHeight: 20,
         panelHeight: 25,
         footerHeight: 40,

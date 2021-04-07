@@ -1,6 +1,6 @@
 import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
-import { GridInterface, Datasource } from '@simple-html/grid';
+import { GridInterface, Datasource, GridConfig } from '@simple-html/grid';
 import { WordDatasource01, add, set } from '../data/datasources';
 import { setup } from '../gridSetup/setup';
 
@@ -11,7 +11,7 @@ export default class extends HTMLElement {
     connector: GridInterface;
     ds: Datasource;
     @property() query: string;
-    savedConfig: any;
+    savedConfig: GridConfig<any>;
 
     connectedCallback() {
         this.connector = new GridInterface(x, WordDatasource01);

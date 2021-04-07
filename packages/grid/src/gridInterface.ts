@@ -1,4 +1,4 @@
-import { SimpleHtmlGrid, IGridConfig } from '.';
+import { SimpleHtmlGrid } from '.';
 import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
@@ -217,14 +217,14 @@ export class GridInterface<T = any> {
     }
 
     // save current settings (including filter)
-    saveSettings() {
+    saveSettings(): GridConfig<T> {
         this.__CONFIG.filterSet = this.__ds.getFilter() || ([] as FilterArgument);
         this.__CONFIG.groupingSet = this.__ds.getGrouping() || ([] as GroupArgument[]);
         this.__CONFIG.groupingExpanded = this.__ds.getExpanded() || ([] as string[]);
         this.__CONFIG.sortingSet = this.__ds.getOrderBy() || ([] as SortArgument[]);
         const settings = JSON.parse(JSON.stringify(this.config));
         this.__CONFIG.filterSet = null;
-        return settings;
+        return settings as GridConfig<T>;
     }
 
     /**
@@ -232,7 +232,7 @@ export class GridInterface<T = any> {
      * @param config standard gridconfig
      * @param overrideDefault in case of making the grid dynamicaly you should also set default setup
      */
-    loadSettings(config: IGridConfig, overrideDefault = false) {
+    loadSettings(config: GridConfig, overrideDefault = false) {
         if (overrideDefault) {
             this.__configDefault = JSON.parse(JSON.stringify(config));
         }
@@ -248,7 +248,7 @@ export class GridInterface<T = any> {
      * if you have manually edits config and need to update you will need to run this
      * grid also uses this for some internal use
      */
-    manualConfigChange(config?: IGridConfig) {
+    manualConfigChange(config?: GridConfig) {
         if (config) {
             this.__CONFIG = config;
         }
