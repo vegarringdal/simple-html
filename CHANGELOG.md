@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.0](https://github.com/simple-html/simple-html/compare/v3.4.0...v3.5.0-next.0) (2021-04-08)
+
+
+### Features
+
+* **grid:** placeholder text on selected row and better grouping color/own variable ([51113fb](https://github.com/simple-html/simple-html/commits/51113fb7e8ffb33ef4f4c1465a3e3bbc4a12ce8a))
+
+
+### Bug Fixes
+
+* **grid:** focus button after editing readonly by save/load settings ([04cd6a1](https://github.com/simple-html/simple-html/commits/04cd6a1b03f614d89a88a63fe92b7a92e657e3df))
+
 ## [3.4.0](https://github.com/simple-html/simple-html/compare/v3.3.0...v3.4.0) (2021-04-04)
 
 ### Features
