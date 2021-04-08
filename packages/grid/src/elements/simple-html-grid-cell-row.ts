@@ -134,18 +134,18 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         const change =
             this.cell.editEventType !== 'input'
                 ? (e: any) => {
-                      this.lastVal = undefined;
-                      this.updateCallback(e);
-                      // if not input change, we can update it
-                      this.updateInput();
-                  }
+                    this.lastVal = undefined;
+                    this.updateCallback(e);
+                    // if not input change, we can update it
+                    this.updateInput();
+                }
                 : null;
         const input =
             this.cell.editEventType === 'input'
                 ? (e: any) => {
-                      this.lastVal = undefined;
-                      this.updateCallback(e);
-                  }
+                    this.lastVal = undefined;
+                    this.updateCallback(e);
+                }
                 : null;
         this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
         this.innerEle.disabled = this.cell.disabled;
@@ -188,7 +188,9 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         this.innerEle.onblur = () => {
             if (this.innerBtn) {
                 setTimeout(() => {
-                    this.innerBtn.classList.add('simple-html-grid-iconhidden');
+                    if (this.innerBtn) {
+                        this.innerBtn.classList.add('simple-html-grid-iconhidden');
+                    }
                 }, 200);
             }
         };
@@ -212,6 +214,11 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
         // so I can attach external dropdown etc
         if (celltype !== 'checkbox' && this.cell.focusButton) {
+
+            if (this.innerBtn && this.innerBtn.parentNode === null) {
+                this.innerBtn = null;
+            }
+
             let show = true;
             const gridReadonly = this.connector.config.readonly;
             const cellReadonly = this.cell.readonly;
