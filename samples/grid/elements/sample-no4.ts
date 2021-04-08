@@ -16,6 +16,12 @@ export default class extends HTMLElement {
     connectedCallback() {
         this.connector = new GridInterface(x, WordDatasource01);
         this.connector.reloadDatasource();
+        this.connector.addEventListener({handleEvent: (event)=>{
+
+            console.log(event)
+
+            return this.isConnected
+        }})
         this.ds = this.connector.getDatasource();
     }
 
@@ -45,17 +51,21 @@ export default class extends HTMLElement {
                         class="p-2 m-2 bg-yellow-400"
                         @click=${() => {
                             this.savedConfig = this.connector.saveSettings();
+                            this.savedConfig.readonly = false;
+                            this.connector.loadSettings(this.savedConfig);
                         }}
                     >
-                        save settings
+                        editmode
                     </button>
                     <button
                         class="p-2 m-2 bg-yellow-400"
                         @click=${() => {
-                            this.savedConfig && this.connector.loadSettings(this.savedConfig);
+                            this.savedConfig = this.connector.saveSettings();
+                            this.savedConfig.readonly = true;
+                            this.connector.loadSettings(this.savedConfig);
                         }}
                     >
-                        load settings
+                        cancel
                     </button>
                     <button
                         class="p-2 m-2 bg-yellow-400"
