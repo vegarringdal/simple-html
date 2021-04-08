@@ -8,6 +8,8 @@
     --simple-html-grid-main-font-color: #2e2d2d;
     --simple-html-grid-sec-font-color: #979494;
     --simple-html-grid-dropzone-color: #979494;
+    --simple-html-grid-grouping-border: #c7c7c7;
+    
     --simple-html-grid-font-size: 11px;
     --simple-html-grid-font-weight: 500;
     --simple-html-grid-font-weight-header: 700;
@@ -71,12 +73,23 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     overflow: hidden;
 }
 
+
 /* when we have many rows within row */
 .simple-html-grid .grouping-row-border {
-    border-bottom: 2px solid var(--simple-html-grid-main-bg-border);
+    border-bottom: 2px solid var(--simple-html-grid-grouping-border);
 }
 
 .simple-html-grid input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1; /* Firefox */
+}
+
+.simple-html-grid-cell-row input::placeholder{
+    color: transparent;
+    opacity: 0; /* Firefox */
+}
+
+.simple-html-grid-selected-row .simple-html-grid-cell-row  input::placeholder{
     color: var(--simple-html-grid-sec-font-color);
     opacity: 1; /* Firefox */
 }

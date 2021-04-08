@@ -256,13 +256,13 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         }
 
         this.style.width = this.connector.config.groups[this.group].width + 'px';
-        this.innerEle.placeholder = ''; // reset
+        this.innerEle.placeholder = this.cell.placeholder || ''
 
         if (data) {
             const cell = this.cell;
 
             if (cell.type === 'date') {
-                this.innerEle.placeholder = this.connector.dateFormater.getPlaceHolderDate();
+                this.innerEle.placeholder = this.cell.placeholder ? this.cell.placeholder : this.connector.dateFormater.getPlaceHolderDate();
             }
 
             const newVal = data[cell.attribute] || null;

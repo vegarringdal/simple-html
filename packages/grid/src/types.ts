@@ -37,8 +37,9 @@ export interface CellConfig<T = any> {
     readonly?: boolean;
     /**Default FALSE */
     disabled?: boolean;
-    /**NOT IN USE */
     width?: number;
+    /**this will overide date if any */
+    placeholder?: string;
     /** you need to subscribe event*/
     focusButton?: boolean;
     focusButtonIfGridReadonly?: boolean;
