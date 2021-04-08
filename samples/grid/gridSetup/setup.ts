@@ -57,6 +57,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
                 x.push({
                     header: 'word' + word,
                     attribute: 'word' + word,
+                    placeholder: 'word' + word,
                     filterable: {},
                     sortable: {},
                     //readonly: true,
