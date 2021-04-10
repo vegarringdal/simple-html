@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.1](https://github.com/simple-html/simple-html/compare/v3.5.0-next.0...v3.5.0-next.1) (2021-04-10)
+
+
+### Bug Fixes
+
+* **splitter:**  fix event listeners/optimize preventdefault ([e625950](https://github.com/simple-html/simple-html/commits/e625950972c6b09659403942baaa18d1555c2f1e))
+
 ## [3.5.0-next.0](https://github.com/simple-html/simple-html/compare/v3.4.0...v3.5.0-next.0) (2021-04-08)
 
 
