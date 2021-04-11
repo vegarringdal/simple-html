@@ -468,7 +468,7 @@ export class Datasource<T = any> {
      * adds event listener, this is called when collection is changed by sorting/grouping etc
      * @param callable
      */
-    public addEventListner(callable: callable): void {
+    public addEventListener(callable: callable): void {
         if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
             throw new Error('callable sent to datasource event listner is wrong type');
         }
@@ -482,7 +482,7 @@ export class Datasource<T = any> {
      * removes listener from datasource
      * @param callable
      */
-    public removeEventListner(callable: callable): void {
+    public removeEventListener(callable: callable): void {
         if (this.__listeners.has(callable)) {
             this.__listeners.delete(callable);
         }
