@@ -1,9 +1,14 @@
 import { SimpleHtmlGrid } from '.';
-import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig, callable } from './types';
+import {
+    GroupArgument,
+    GridConfig,
+    CellConfig,
+    FilterArgument,
+    GridGroupConfig,
+    callable
+} from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
-
-
 
 /**
  * Grid nterface is just connection between datasource/config to the grid.
@@ -355,7 +360,6 @@ export class GridInterface<T = any> {
      * publish events, used by row cells etc
      */
     publishEvent(type: string, data: any) {
-
         const keeping: any = [];
         this.__subscribers.forEach((callable) => {
             let keep: boolean;
@@ -373,13 +377,11 @@ export class GridInterface<T = any> {
         this.__subscribers = new Set(keeping);
     }
 
-
-
     /**
-   * adds event listener to interface
-   * this is not the same as datasource
-   * @param callable
-   */
+     * adds event listener to interface
+     * this is not the same as datasource
+     * @param callable
+     */
     public addEventListener(callable: callable): void {
         if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
             throw new Error('callable sent to datasource event listner is wrong type');
@@ -399,7 +401,6 @@ export class GridInterface<T = any> {
             this.__subscribers.delete(callable);
         }
     }
-
 
     /**
      * calls grid element reRender funtion

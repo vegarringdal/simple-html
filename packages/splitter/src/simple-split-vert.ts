@@ -80,7 +80,6 @@ export default class extends HTMLElement {
         }
 
         this.refEle.addEventListener('mousedown', this);
-
     }
 
     disconnectedCallback() {
@@ -93,18 +92,23 @@ export default class extends HTMLElement {
     }
 
     handleEvent(e: MouseEvent) {
-        if (e.target && (e.target as any).tagName.toUpperCase() === 'simple-split-handle'.toUpperCase()) {
+        if (
+            e.target &&
+            (e.target as any).tagName.toUpperCase() === 'simple-split-handle'.toUpperCase()
+        ) {
             e.preventDefault();
         }
         //e.stopPropagation(); will break if I have these adn many splitters
         //e.preventDefault(); will break if I have these adn many splitters
         if (e.type === 'mousedown') {
-            if (e.target && (e.target as any).tagName.toUpperCase() === 'simple-split-handle'.toUpperCase()) {
+            if (
+                e.target &&
+                (e.target as any).tagName.toUpperCase() === 'simple-split-handle'.toUpperCase()
+            ) {
                 this.addEventListener('mousemove', this);
                 this.addEventListener('mouseup', this);
                 this.mousedown(e);
             }
-           
         }
 
         if (e.type === 'mousemove') {

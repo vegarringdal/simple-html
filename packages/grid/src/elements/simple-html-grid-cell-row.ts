@@ -134,18 +134,18 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         const change =
             this.cell.editEventType !== 'input'
                 ? (e: any) => {
-                    this.lastVal = undefined;
-                    this.updateCallback(e);
-                    // if not input change, we can update it
-                    this.updateInput();
-                }
+                      this.lastVal = undefined;
+                      this.updateCallback(e);
+                      // if not input change, we can update it
+                      this.updateInput();
+                  }
                 : null;
         const input =
             this.cell.editEventType === 'input'
                 ? (e: any) => {
-                    this.lastVal = undefined;
-                    this.updateCallback(e);
-                }
+                      this.lastVal = undefined;
+                      this.updateCallback(e);
+                  }
                 : null;
         this.innerEle.readOnly = this.cell.readonly || connector.config.readonly;
         this.innerEle.disabled = this.cell.disabled;
@@ -214,7 +214,6 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
         // so I can attach external dropdown etc
         if (celltype !== 'checkbox' && this.cell.focusButton) {
-
             if (this.innerBtn && this.innerBtn.parentNode === null) {
                 this.innerBtn = null;
             }
@@ -256,13 +255,15 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         }
 
         this.style.width = this.connector.config.groups[this.group].width + 'px';
-        this.innerEle.placeholder = this.cell.placeholder || ''
+        this.innerEle.placeholder = this.cell.placeholder || '';
 
         if (data) {
             const cell = this.cell;
 
             if (cell.type === 'date') {
-                this.innerEle.placeholder = this.cell.placeholder ? this.cell.placeholder : this.connector.dateFormater.getPlaceHolderDate();
+                this.innerEle.placeholder = this.cell.placeholder
+                    ? this.cell.placeholder
+                    : this.connector.dateFormater.getPlaceHolderDate();
             }
 
             const newVal = data[cell.attribute] || null;
