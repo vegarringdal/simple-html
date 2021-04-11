@@ -110,3 +110,8 @@ export interface GridConfig<T = any> {
     sortingSet?: SortArgument[];
     groupingExpanded?: string[];
 }
+
+
+type callF = (...args: any[]) => any;
+type callO = { handleEvent: (...args: any[]) => any };
+export type callable = callF | callO;

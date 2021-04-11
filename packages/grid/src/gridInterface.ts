@@ -1,7 +1,9 @@
 import { SimpleHtmlGrid } from '.';
-import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig } from './types';
+import { GroupArgument, GridConfig, CellConfig, FilterArgument, GridGroupConfig, callable } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
+
+
 
 /**
  * Grid nterface is just connection between datasource/config to the grid.
@@ -20,7 +22,7 @@ export class GridInterface<T = any> {
     /**
      * for subscribing events on grid, like callback on columns etc
      **/
-    private __subscribers: { handleEvent: (event: { type: string; data: any }) => boolean }[] = [];
+    private __subscribers: Set<callable> = new Set();
 
     private __SCROLL_TOPS: number[];
     private __SCROLL_HEIGHTS: number[];
@@ -353,18 +355,51 @@ export class GridInterface<T = any> {
      * publish events, used by row cells etc
      */
     publishEvent(type: string, data: any) {
-        const keep = this.__subscribers.filter((context) => {
-            return context.handleEvent({ type, data });
+
+        const keeping: any = [];
+        this.__subscribers.forEach((callable) => {
+            let keep: boolean;
+            if (typeof callable === 'function') {
+                keep = callable({ type: event, data: data });
+            } else {
+                if (typeof callable?.handleEvent === 'function') {
+                    keep = callable.handleEvent({ type: type, data: data });
+                }
+            }
+            if (keep) {
+                keeping.push(callable);
+            }
         });
-        this.__subscribers = keep;
+        this.__subscribers = new Set(keeping);
+    }
+
+
+
+    /**
+   * adds event listener to interface
+   * this is not the same as datasource
+   * @param callable
+   */
+    public addEventListener(callable: callable): void {
+        if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
+            throw new Error('callable sent to datasource event listner is wrong type');
+        }
+
+        if (!this.__subscribers.has(callable)) {
+            this.__subscribers.add(callable);
+        }
     }
 
     /**
-     * add events listener, you need to return true to keep reciving events
+     * removes listener from gridInterface
+     * @param callable
      */
-    addEventListener(context: { handleEvent: (event: { type: string; data: any }) => boolean }) {
-        this.__subscribers.push(context);
+    public removeEventListener(callable: callable): void {
+        if (this.__subscribers.has(callable)) {
+            this.__subscribers.delete(callable);
+        }
     }
+
 
     /**
      * calls grid element reRender funtion
@@ -709,7 +744,7 @@ export class GridInterface<T = any> {
         // lets do a check, no need to do anything if its the same.
         if (this.__SimpleHtmlGrid !== SimpleHtmlGrid) {
             this.__SimpleHtmlGrid = SimpleHtmlGrid;
-            this.__ds.addEventListner(this);
+            this.__ds.addEventListener(this);
             this.dataSourceUpdated();
         }
         /* this.reRender(); */
@@ -723,7 +758,7 @@ export class GridInterface<T = any> {
         // some apps might have delay, so lets make sure we still have same context
         if (this.__SimpleHtmlGrid !== SimpleHtmlGrid) {
             this.__SimpleHtmlGrid = null;
-            this.__ds.removeEventListner(this);
+            this.__ds.removeEventListener(this);
         }
     }
 
