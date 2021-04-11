@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/dropdown",
-    "version": "3.5.0-next.1",
+    "version": "3.5.0-next.2",
     "description": "Simple dropdown component",
     "main": "dist/index.js",
     "module": "dist/index.js",

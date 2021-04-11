@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.2](https://github.com/simple-html/simple-html/compare/v3.5.0-next.1...v3.5.0-next.2) (2021-04-11)
+
+
+### Bug Fixes
+
+* **ds:** typo in method name of eventListener (PS! breaking) ([bee8e16](https://github.com/simple-html/simple-html/commits/bee8e161949c58f60ef36e7e9582cf03e9e24294))
+* **grid:** refactor and fix eventListeners, and add remove listener ([eb6e870](https://github.com/simple-html/simple-html/commits/eb6e87049f2a3cacddf93b501a7fe33bec826f21))
+
 ## [3.5.0-next.1](https://github.com/simple-html/simple-html/compare/v3.5.0-next.0...v3.5.0-next.1) (2021-04-10)
 
 
