@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.4](https://github.com/simple-html/simple-html/compare/v3.5.0-next.3...v3.5.0-next.4) (2021-04-13)
+
+
+### Bug Fixes
+
+* **grid:** change default average grid col with ([daf6613](https://github.com/simple-html/simple-html/commits/daf66131a719c64c441cd4c02f5a632dc4e1285a))
+
 ## [3.5.0-next.3](https://github.com/simple-html/simple-html/compare/v3.5.0-next.2...v3.5.0-next.3) (2021-04-13)
 
 
