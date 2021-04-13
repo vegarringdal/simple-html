@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.5](https://github.com/simple-html/simple-html/compare/v3.5.0-next.4...v3.5.0-next.5) (2021-04-13)
+
+
+### Bug Fixes
+
+* **grid:** revert change earlier today ([1b5d59a](https://github.com/simple-html/simple-html/commits/1b5d59af45df369081de42ca09d9c3fb0582c3f6))
+
 ## [3.5.0-next.4](https://github.com/simple-html/simple-html/compare/v3.5.0-next.3...v3.5.0-next.4) (2021-04-13)
 
 
