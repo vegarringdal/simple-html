@@ -66,7 +66,7 @@ export function setup(rows: number, columns: number, scroll?: number) {
             }
         }
 
-        setup.groups.push({ width: Math.floor(Math.random() * 100) + 100, rows: x });
+        setup.groups.push({ width: Math.floor(Math.random() * 100) + 50, rows: x });
     }
 
     localStorage.setItem('columns2' + columns, JSON.stringify(setup));
