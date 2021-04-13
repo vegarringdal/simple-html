@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.3](https://github.com/simple-html/simple-html/compare/v3.5.0-next.2...v3.5.0-next.3) (2021-04-13)
+
+
+### Bug Fixes
+
+* **grid:** remove debugger statement ([b8aaee4](https://github.com/simple-html/simple-html/commits/b8aaee47b49a341efdef0bb657899e09a51a5230))
+* **grid:** row cache when row higher than 1 cell height ([960bde6](https://github.com/simple-html/simple-html/commits/960bde60229404d95428ff62e6bd0c6fc6ccffb4))
+
 ## [3.5.0-next.2](https://github.com/simple-html/simple-html/compare/v3.5.0-next.1...v3.5.0-next.2) (2021-04-11)
 
 

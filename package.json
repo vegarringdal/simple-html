@@ -1,6 +1,6 @@
 {
     "name": "simple-html",
-    "version": "3.5.0-next.2",
+    "version": "3.5.0-next.3",
     "description": "Simple lib for creating web pages using lit-html and web components",
     "scripts": {
         "start": "ts-node config_devserver",
