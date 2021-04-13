@@ -140,8 +140,9 @@ export class SimpleHtmlGrid extends HTMLElement {
             const node = this.getElementsByTagName('simple-html-grid-body')[0];
             const height = node?.clientHeight || this.interface.config.cellHeight * 50;
             this.resetColCache();
+            // I need to use cell height here due to grouping/variable row height
 
-            let rowsNeeded = Math.round(Math.floor(height / (this.interface.config.cellHeight * this.interface.config.__cellRows))) + 2;
+            let rowsNeeded = Math.round(Math.floor(height / this.interface.config.cellHeight)) + 2;
             if (rowsNeeded > 80) {
                 rowsNeeded = 80;
             }
