@@ -49,7 +49,7 @@ export function scrollEvent(
                 const clientWidth = node?.clientWidth;
                 const scrollLeft = node?.scrollLeft;
                 const newColCache: any[] = [];
-                let minGroups = Math.floor(clientWidth / 90) || 22;
+                let minGroups = Math.floor(clientWidth / 50) || 22;
                 if (minGroups > connector.config.groups.length) {
                     minGroups = connector.config.groups.length;
                 }
@@ -121,6 +121,17 @@ export function scrollEvent(
                         i--;
                         l--;
                     }
+                }
+
+                if (ok.length) {
+                    // if I get col issues I need to check this
+                    /* ok.forEach((x: number) => {
+                        ref.colCache.push({
+                            i: x,
+                            update: true,
+                            found: true
+                        })
+                    }); */
                 }
 
                 scrollBarTimer = null;

@@ -98,7 +98,7 @@ export class SimpleHtmlGrid extends HTMLElement {
         const node = this.getElementsByTagName('simple-html-grid-body')[0];
         const clientWidth = node?.clientWidth || 1980;
         const scrollLeft = node?.scrollLeft || 0;
-        let minGroups = Math.floor(clientWidth / 90) || 22;
+        let minGroups = Math.floor(clientWidth / 50) || 22;
         if (minGroups > this.interface.config.groups.length) {
             minGroups = this.interface.config.groups.length;
         }
