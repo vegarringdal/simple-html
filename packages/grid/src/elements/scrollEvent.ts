@@ -113,7 +113,6 @@ export function scrollEvent(
                 let l = ref.colCache.length;
                 for (let i = 0; i < l; i++) {
                     if (ref.colCache[i].found === false) {
-                        debugger;
                         node.rows.forEach((row) => {
                             row.colEls[i].parentNode.removeChild(row.colEls[i]);
                             row.colEls.splice(i, 1);
