@@ -2,7 +2,7 @@ import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
 import { GridInterface, Datasource, GridConfig } from '@simple-html/grid';
 import { WordDatasource01, add, set } from '../data/datasources';
-import { setup } from '../gridSetup/setup';
+import { largeStaticConfig, setup } from '../gridSetup/setup';
 
 const x = setup(1, 10, 100000);
 
@@ -14,7 +14,7 @@ export default class extends HTMLElement {
     savedConfig: GridConfig<any>;
 
     connectedCallback() {
-        this.connector = new GridInterface(x, WordDatasource01);
+        this.connector = new GridInterface(largeStaticConfig, WordDatasource01);
         this.connector.reloadDatasource();
         this.connector.addEventListener({
             handleEvent: (event) => {
