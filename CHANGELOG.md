@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.6](https://github.com/simple-html/simple-html/compare/v3.5.0-next.5...v3.5.0-next.6) (2021-04-16)
+
+
+### Features
+
+* **grid:** add avg/sum/max/min to row menu if number column from selected rows ([26fc028](https://github.com/simple-html/simple-html/commits/26fc0287922f3eca0f9eb4601d7e349e8b300db2))
+
+
+### Bug Fixes
+
+* **date:** old code was removed so it renders ([f74fffc](https://github.com/simple-html/simple-html/commits/f74fffca4fef03a8bbff9ca8ce0b99b9c4c882bd))
+* **grid:** column chooser to have a max size ([fe1d381](https://github.com/simple-html/simple-html/commits/fe1d381298b4eeafa4dec97f7906ce9a13cdbbf1))
+
 ## [3.5.0-next.5](https://github.com/simple-html/simple-html/compare/v3.5.0-next.4...v3.5.0-next.5) (2021-04-13)
 
 
