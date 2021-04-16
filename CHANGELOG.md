@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.8](https://github.com/simple-html/simple-html/compare/v3.5.0-next.7...v3.5.0-next.8) (2021-04-16)
+
+
+### Bug Fixes
+
+* **grid:** row max was showing min value ([141c796](https://github.com/simple-html/simple-html/commits/141c79675d11bf5b278a4370aa15da6a7a531d51))
+
 ## [3.5.0-next.7](https://github.com/simple-html/simple-html/compare/v3.5.0-next.6...v3.5.0-next.7) (2021-04-16)
 
 
