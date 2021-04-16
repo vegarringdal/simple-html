@@ -2,7 +2,7 @@ import { customElement, property } from '@simple-html/core';
 import { html } from 'lit-html';
 import { GridInterface, Datasource, GridConfig } from '@simple-html/grid';
 import { WordDatasource01, add, set } from '../data/datasources';
-import { largeStaticConfig, setup } from '../gridSetup/setup';
+import { largeStaticConfig } from '../gridSetup/setup';
 
 // const x = setup(1, 10, 100000);
 
