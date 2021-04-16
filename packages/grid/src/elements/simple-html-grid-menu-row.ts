@@ -274,10 +274,10 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
 
             x = document.createElement('p')
             x.onclick = async () => {
-                const maxValueX = Math.round(minValue * 100) / 100
+                const maxValueX = Math.round(maxValue * 100) / 100
                 await navigator.clipboard.writeText(NumberFormater.fromNumber(maxValueX));
             };
-            const maxValueX = Math.round(minValue * 100) / 100
+            const maxValueX = Math.round(maxValue * 100) / 100
             x.appendChild(document.createTextNode(`Max: ${NumberFormater.fromNumber(maxValueX)}`));
             x.classList.add('simple-html-grid-menu-item')
             this.appendChild(x)
