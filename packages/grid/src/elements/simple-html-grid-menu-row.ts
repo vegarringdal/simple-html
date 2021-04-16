@@ -249,7 +249,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
             let curValue = 0;
             let maxValue = 0;
             let minValue: number = null;
-            selectedRows.forEach((index) => {
+            selectedRows.forEach((index: number) => {
                 const x = allrows[index];
                 if (x && x[this.cell.attribute]) {
                     curValue = add(curValue, x[this.cell.attribute]);
