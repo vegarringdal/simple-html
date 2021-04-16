@@ -9,7 +9,7 @@
     --simple-html-grid-sec-font-color: #979494;
     --simple-html-grid-dropzone-color: #979494;
     --simple-html-grid-grouping-border: #c7c7c7;
-    
+
     --simple-html-grid-font-size: 11px;
     --simple-html-grid-font-weight: 500;
     --simple-html-grid-font-weight-header: 700;
@@ -30,6 +30,16 @@
     color: var(--simple-html-grid-main-font-color);
     background-color: var(--simple-html-grid-main-bg-color);
     border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+simple-html-grid-column-chooser {
+    max-height: 350px;
+    overflow-y: auto !important;;
+}
+
+simple-html-grid-column-chooser .simple-html-grid {
+    position: sticky;
+    top: 0;
 }
 
 .simple-html-grid input::-webkit-calendar-picker-indicator {
@@ -73,7 +83,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     overflow: hidden;
 }
 
-
 /* when we have many rows within row */
 .simple-html-grid .grouping-row-border {
     border-bottom: 2px solid var(--simple-html-grid-grouping-border);
@@ -84,12 +93,12 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     opacity: 1; /* Firefox */
 }
 
-.simple-html-grid-cell-row input::placeholder{
+.simple-html-grid-cell-row input::placeholder {
     color: transparent;
     opacity: 0; /* Firefox */
 }
 
-.simple-html-grid-selected-row .simple-html-grid-cell-row  input::placeholder{
+.simple-html-grid-selected-row .simple-html-grid-cell-row input::placeholder {
     color: var(--simple-html-grid-sec-font-color);
     opacity: 1; /* Firefox */
 }
