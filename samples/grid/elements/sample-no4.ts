@@ -4,7 +4,7 @@ import { GridInterface, Datasource, GridConfig } from '@simple-html/grid';
 import { WordDatasource01, add, set } from '../data/datasources';
 import { largeStaticConfig, setup } from '../gridSetup/setup';
 
-const x = setup(1, 10, 100000);
+// const x = setup(1, 10, 100000);
 
 @customElement('sample-no4')
 export default class extends HTMLElement {
