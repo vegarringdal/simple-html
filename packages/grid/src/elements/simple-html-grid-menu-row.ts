@@ -2,6 +2,7 @@ import { GridInterface } from '../gridInterface';
 import { SimpleHtmlGrid } from './simple-html-grid';
 import { CellConfig, Entity } from '../types';
 import { defineElement } from './defineElement';
+import { NumberFormater } from '@simple-html/datasource';
 
 let dataClip: any = null; // firefox hack
 
@@ -180,33 +181,122 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
     }
 
     buildHtml() {
-        const el = [1, 1, 1, 1, 1, 1].map(() => document.createElement('p'));
-        el.forEach((e) => e.classList.add('simple-html-grid-menu-item'));
 
-        el[0].onclick = () => this.select('copy');
-        el[0].appendChild(document.createTextNode('Copy cell'));
 
-        el[1].onclick = () => this.select('copy-range');
-        el[1].appendChild(document.createTextNode('Copy cell column'));
+        let x = document.createElement('p')
+        x.onclick = () => this.select('copy');
+        x.appendChild(document.createTextNode('Copy cell'));
+        x.classList.add('simple-html-grid-menu-item')
+        this.appendChild(x)
 
-        el[2].onclick = () => this.select('copy');
-        el[2].appendChild(document.createTextNode('Copy cell column (w/header)'));
+        x = document.createElement('p')
+        x.onclick = () => this.select('copy-range');
+        x.appendChild(document.createTextNode('Copy cell column'));
+        x.classList.add('simple-html-grid-menu-item')
+        this.appendChild(x)
 
-        el[3].onclick = () => this.select('copy-range-row-header');
-        el[3].appendChild(document.createTextNode(' Copy cell rows (w/header)'));
+        x = document.createElement('p')
+        x.onclick = () => this.select('copy');
+        x.appendChild(document.createTextNode('Copy cell column (w/header)'));
+        x.classList.add('simple-html-grid-menu-item')
+        this.appendChild(x)
+
+        x = document.createElement('p')
+        x.onclick = () => this.select('copy-range-row-header');
+        x.appendChild(document.createTextNode(' Copy cell rows (w/header)'));
+        x.classList.add('simple-html-grid-menu-item')
+        this.appendChild(x)
 
         if (!this.connector.config.readonly && !this.cell.readonly) {
-            el[4].onclick = () => this.select('paste');
-            el[4].appendChild(document.createTextNode('Paste into selected rows/cells'));
+            x = document.createElement('p')
+            x.onclick = () => this.select('paste');
+            x.appendChild(document.createTextNode('Paste into selected rows/cells'));
+            x.classList.add('simple-html-grid-menu-item')
+            this.appendChild(x)
 
-            el[5].onclick = () => this.select('clear');
-            el[5].appendChild(document.createTextNode('Clear selected rows/cells'));
-        } else {
-            el.pop();
-            el.pop();
+            x = document.createElement('p')
+            x.onclick = () => this.select('clear');
+            x.appendChild(document.createTextNode('Clear selected rows/cells'));
+            x.classList.add('simple-html-grid-menu-item')
+            this.appendChild(x)
         }
 
-        el.forEach((e) => this.appendChild(e));
+        if (this.cell.type === 'number') {
+            function add(prev: number, cur: number) {
+                return Math.round((prev + cur) * 1e12) / 1e12;
+            }
+
+            function max(prev: number, cur: number) {
+                return cur > prev ? cur : prev
+            }
+
+            function min(prev: number | null, cur: number) {
+                if (prev === null) {
+                    return cur;
+                }
+
+                return cur < prev ? cur : prev
+            }
+
+            function avg(no: number, sum: number) {
+                return Math.round(sum / no)
+            }
+
+            const ds = this.connector.getDatasource();
+            const selectedRows = ds.getSelection().getSelectedRows();
+            const allrows = ds.getRows(true);
+
+            let curValue = 0;
+            let maxValue = 0;
+            let minValue: number = null;
+            selectedRows.forEach((index) => {
+                const x = allrows[index];
+                if (x && x[this.cell.attribute]) {
+                    curValue = add(curValue, x[this.cell.attribute]);
+                    maxValue = max(maxValue, x[this.cell.attribute]);
+                    minValue = min(minValue, x[this.cell.attribute]);
+                }
+            })
+
+
+            x = document.createElement('hr')
+            this.appendChild(x)
+
+            x = document.createElement('p')
+            x.onclick = async () => {
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(curValue));
+            };
+            x.appendChild(document.createTextNode(`Sum: ${NumberFormater.fromNumber(curValue)}`));
+            x.classList.add('simple-html-grid-menu-item')
+            this.appendChild(x)
+
+            x = document.createElement('p')
+            x.onclick = async () => {
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(maxValue));
+            };
+            x.appendChild(document.createTextNode(`Max: ${NumberFormater.fromNumber(maxValue)}`));
+            x.classList.add('simple-html-grid-menu-item')
+            this.appendChild(x)
+
+            x = document.createElement('p')
+            x.onclick = async () => {
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(minValue));
+            };
+            x.appendChild(document.createTextNode(`Min: ${NumberFormater.fromNumber(minValue)}`));
+            x.classList.add('simple-html-grid-menu-item')
+            this.appendChild(x)
+
+            x = document.createElement('p')
+            x.onclick = async () => {
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(avg(selectedRows.length, curValue)));
+            };
+            x.appendChild(document.createTextNode(`Avg: ${NumberFormater.fromNumber(avg(selectedRows.length, curValue))}`));
+            x.classList.add('simple-html-grid-menu-item')
+            this.appendChild(x)
+
+
+        }
+
     }
 }
 

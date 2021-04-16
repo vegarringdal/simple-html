@@ -1,11 +1,11 @@
 import { customElement, requestRender } from '@simple-html/core';
 import { html } from 'lit-html';
 import { routeMatch } from '@simple-html/router';
-import './elements/sample-default';
-import './elements/sample-no1';
-import './elements/sample-no2';
-import './elements/sample-no3';
-import './elements/sample-no4';
+import './sample-default';
+import './sample-no1';
+import './sample-no2';
+import './sample-no3';
+import './sample-no4';
 
 // add our your widget ?
 import '@simple-html/date';
