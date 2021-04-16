@@ -223,7 +223,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
 
         if (this.cell.type === 'number') {
             function add(prev: number, cur: number) {
-                return Math.round((prev + cur) * 1e12) / 1e12;
+                return parseFloat((prev + cur).toFixed(5));
             }
 
             function max(prev: number, cur: number) {
@@ -244,7 +244,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
 
             const ds = this.connector.getDatasource();
             const selectedRows = ds.getSelection().getSelectedRows();
-            const allrows = ds.getRows(true);
+            const allrows = ds.getRows();
 
             let curValue = 0;
             let maxValue = 0;
@@ -264,33 +264,49 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
 
             x = document.createElement('p')
             x.onclick = async () => {
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(curValue));
+                const curValueX = Math.round(curValue * 100) / 100
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(curValueX));
             };
-            x.appendChild(document.createTextNode(`Sum: ${NumberFormater.fromNumber(curValue)}`));
+            const curValueX = Math.round(curValue * 100) / 100
+            x.appendChild(document.createTextNode(`Sum: ${NumberFormater.fromNumber(curValueX)}`));
             x.classList.add('simple-html-grid-menu-item')
             this.appendChild(x)
 
             x = document.createElement('p')
             x.onclick = async () => {
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(maxValue));
+                const maxValueX = Math.round(minValue * 100) / 100
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(maxValueX));
             };
-            x.appendChild(document.createTextNode(`Max: ${NumberFormater.fromNumber(maxValue)}`));
+            const maxValueX = Math.round(minValue * 100) / 100
+            x.appendChild(document.createTextNode(`Max: ${NumberFormater.fromNumber(maxValueX)}`));
             x.classList.add('simple-html-grid-menu-item')
             this.appendChild(x)
 
             x = document.createElement('p')
             x.onclick = async () => {
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(minValue));
+                const minValueX = Math.round(minValue * 100) / 100
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(minValueX));
             };
-            x.appendChild(document.createTextNode(`Min: ${NumberFormater.fromNumber(minValue)}`));
+            const minValueX = Math.round(minValue * 100) / 100
+            x.appendChild(document.createTextNode(`Min: ${NumberFormater.fromNumber(minValueX)}`));
             x.classList.add('simple-html-grid-menu-item')
             this.appendChild(x)
 
             x = document.createElement('p')
             x.onclick = async () => {
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(avg(selectedRows.length, curValue)));
+                const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(avgValueX));
             };
-            x.appendChild(document.createTextNode(`Avg: ${NumberFormater.fromNumber(avg(selectedRows.length, curValue))}`));
+            const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100
+            x.appendChild(document.createTextNode(`Avg: ${NumberFormater.fromNumber(avgValueX)}`));
+            x.classList.add('simple-html-grid-menu-item')
+            this.appendChild(x)
+
+            x = document.createElement('p')
+            x.onclick = async () => {
+                await navigator.clipboard.writeText(NumberFormater.fromNumber(selectedRows.length));
+            };
+            x.appendChild(document.createTextNode(`Rows: ${selectedRows.length}`));
             x.classList.add('simple-html-grid-menu-item')
             this.appendChild(x)
 
