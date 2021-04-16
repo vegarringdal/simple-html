@@ -93,7 +93,7 @@ export function day(
     }
 
     const currentDate = new Date(year, month, day);
-    this.dimmed = dimmedCell;
+
     if (context.selected.has(currentDate.getTime()) && !dimmedCell) {
         classList.push('simple-html-date-day-selected');
     }
