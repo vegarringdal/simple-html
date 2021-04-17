@@ -36,28 +36,21 @@ export class SimpleHtmlGrid extends HTMLElement {
 
             if (!this.children.length) {
                 generate(this.interface, this.rowCache, this);
-                if (this.interface.config.lastScrollTop) {
-                    // TODO: would be better is it was rendered directly..
-                    const node = this.getElementsByTagName('simple-html-grid-body')[0];
-                    node.scrollTop = this.interface.config.lastScrollTop;
-                    if (node && node.scrollTop !== undefined && this.interface) {
-                        updateRowCache(this.interface, this.rowCache, this, node.scrollTop);
-                    }
-                }
+
             }
             let init = false;
             new ResizeObserver(() => {
                 if (this.isConnected) {
-                if (
-                    this.oldHeight !== this.clientHeight ||
-                    (this.oldWidth !== this.clientWidth && init)
-                ) {
-                    if (this.resizeTimer) clearTimeout(this.resizeTimer);
-                    this.resizeTimer = setTimeout(() => {
-                        this.resetRowCache();
-                        this.reRender();
-                    }, 100);
-                }
+                    if (
+                        this.oldHeight !== this.clientHeight ||
+                        (this.oldWidth !== this.clientWidth && init)
+                    ) {
+                        if (this.resizeTimer) clearTimeout(this.resizeTimer);
+                        this.resizeTimer = setTimeout(() => {
+                            this.resetRowCache();
+                            this.reRender();
+                        }, 100);
+                    }
                     init = true
                 }
 

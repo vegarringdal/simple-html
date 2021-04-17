@@ -3,6 +3,7 @@ import { SimpleHtmlGrid } from '..';
 import { RowCache } from '../types';
 import { SimpleHtmlGridRow } from './simple-html-grid-row';
 import { defineElement } from './defineElement';
+import { updateRowCache } from './updateRowCache';
 
 export class SimpleHtmlGridBody extends HTMLElement {
     connector: GridInterface;
@@ -11,6 +12,8 @@ export class SimpleHtmlGridBody extends HTMLElement {
     firstLoad = true;
     body: HTMLElement;
     rows: SimpleHtmlGridRow[];
+    /**Helper for when grid have initial scroll on first render */
+    private skipFirstRerender: boolean;
 
     connectedCallback() {
         this.classList.add('simple-html-grid-body');
@@ -21,19 +24,26 @@ export class SimpleHtmlGridBody extends HTMLElement {
         this.ref.addEventListener('column-resize', this);
         this.body = document.createElement('simple-html-grid-body-content');
 
+
+        this.body.style.height = `${this.connector.getScrollVars.__SCROLL_HEIGHT || 0.1}px`;
+        this.body.style.width = `${config.__rowWidth}px`;
+        this.body.classList.add('simple-html-grid-content');
+
+        this.append(this.body);
+        if (this.ref.interface.config.lastScrollTop) {
+            this.skipFirstRerender = true;
+            this.scrollTop = this.ref.interface.config.lastScrollTop;
+            updateRowCache(this.ref.interface, this.ref.rowCache, this.ref, this.scrollTop, true);
+        }
+
         this.rows = this.rowPositionCache.map((i) => {
             const r = document.createElement('simple-html-grid-row') as SimpleHtmlGridRow;
             r.connector = this.connector;
             r.row = i;
             r.ref = this.ref;
             this.body.append(r);
-
             return r;
         });
-        this.body.style.height = `${this.connector.getScrollVars.__SCROLL_HEIGHT || 0.1}px`;
-        this.body.style.width = `${config.__rowWidth}px`;
-        this.body.classList.add('simple-html-grid-content');
-        this.append(this.body);
         this.reRender();
     }
 
@@ -60,8 +70,13 @@ export class SimpleHtmlGridBody extends HTMLElement {
         this.body.style.height = `${this.connector.getScrollVars.__SCROLL_HEIGHT || 0.1}px`;
         this.body.style.width = `${config.__rowWidth}px`;
 
-        this.ref.resetColCache();
-        this.ref.resetRowCache();
+        if (this.skipFirstRerender) {
+            this.skipFirstRerender = false;
+        } else {
+            this.ref.resetColCache();
+            this.ref.resetRowCache();
+        }
+
 
         if (this.rowPositionCache.length !== this.rows.length) {
             if (this.rowPositionCache.length < this.rows.length) {
