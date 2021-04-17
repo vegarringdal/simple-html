@@ -27,6 +27,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         if (e.type === 'column-resize') {
             this.style.width = this.group.width + 'px';
         }
+        console.log(e.type)
     }
 
     disconnectedCallback() {
@@ -34,6 +35,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
     }
 
     updateGui() {
+        console.log("filetr")
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
         const ref = this.ref;
@@ -114,9 +116,24 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
 
         // dynamic styles
 
+        let inputEl: HTMLInputElement;
+        if (this.children.length) {
+            inputEl = this.children[0] as HTMLInputElement;
+        } else {
+            inputEl = document.createElement('input');
+        }
+
         let classname = 'simple-html-grid-row-input';
+        let classNameCheckbox = 'simple-html-grid-row-checkbox'
         if (cell.type === 'boolean') {
-            classname = 'simple-html-grid-row-checkbox';
+            if(inputEl.classList.contains(classname)){
+                inputEl.classList.remove(classname)
+            }
+            classname = classNameCheckbox;
+        } else{
+            if(inputEl.classList.contains(classNameCheckbox)){
+                inputEl.classList.remove(classNameCheckbox)
+            }
         }
         this.style.height = config.cellHeight + 'px';
         this.style.width = this.group.width + 'px';
@@ -125,12 +142,7 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
 
         // create element or reuse if we allready have it
 
-        let inputEl: HTMLInputElement;
-        if (this.children.length) {
-            inputEl = this.children[0] as HTMLInputElement;
-        } else {
-            inputEl = document.createElement('input');
-        }
+      
 
         inputEl.type = coltype;
         if (coltype !== 'text' && coltype !== 'checkbox') {
