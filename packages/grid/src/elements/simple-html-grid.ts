@@ -24,7 +24,7 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public connectedCallback() {
-        if (this.interface) {
+        if (this.interface && this.isConnected) {
             this.oldHeight = this.clientHeight;
             this.oldWidth = this.clientWidth;
             this.resizeTimer;
@@ -37,6 +37,7 @@ export class SimpleHtmlGrid extends HTMLElement {
             if (!this.children.length) {
                 generate(this.interface, this.rowCache, this);
                 if (this.interface.config.lastScrollTop) {
+                    // TODO: would be better is it was rendered directly..
                     const node = this.getElementsByTagName('simple-html-grid-body')[0];
                     node.scrollTop = this.interface.config.lastScrollTop;
                     if (node && node.scrollTop !== undefined && this.interface) {
@@ -46,6 +47,7 @@ export class SimpleHtmlGrid extends HTMLElement {
             }
             let init = false;
             new ResizeObserver(() => {
+                if (this.isConnected) {
                 if (
                     this.oldHeight !== this.clientHeight ||
                     (this.oldWidth !== this.clientWidth && init)
@@ -56,7 +58,9 @@ export class SimpleHtmlGrid extends HTMLElement {
                         this.reRender();
                     }, 100);
                 }
-                init = true;
+                    init = true
+                }
+
             }).observe(this);
         } else {
             if (this.isConnected) {

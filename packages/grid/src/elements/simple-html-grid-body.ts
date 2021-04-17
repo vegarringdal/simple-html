@@ -19,7 +19,6 @@ export class SimpleHtmlGridBody extends HTMLElement {
         this.style.bottom = config.footerHeight + 'px';
         this.ref.addEventListener('reRender', this);
         this.ref.addEventListener('column-resize', this);
-        this.scrollTop = 500;
         this.body = document.createElement('simple-html-grid-body-content');
 
         this.rows = this.rowPositionCache.map((i) => {

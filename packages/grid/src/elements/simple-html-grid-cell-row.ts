@@ -30,7 +30,10 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
         this.ref.addEventListener('update-cell-data-currentEnity', this);
         this.ref.addEventListener('update-cell-data', this);
+        /*
+        I dont need to call this, will be called by scoll event
         this.updateInput();
+        */
     }
 
     disconnectedCallback() {
