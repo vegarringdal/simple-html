@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.9](https://github.com/simple-html/simple-html/compare/v3.5.0-next.8...v3.5.0-next.9) (2021-04-17)
+
+
+### Features
+
+* **grid:** add option to delay row render on first render ([e646ff6](https://github.com/simple-html/simple-html/commits/e646ff632dd2dc971412837725ce74446ab05464))
+
+
+### Bug Fixes
+
+* **grid:** checkbox after drag/drop ([4edb096](https://github.com/simple-html/simple-html/commits/4edb096142dcb8521c71328bf927ccd127755e89))
+* **grid:** misc minor fixes to improve performance ([c0a350b](https://github.com/simple-html/simple-html/commits/c0a350bfe946d3b3cdbc0badd06aef872626f989))
+* **grid:** set scroll on first render/improve frist render when we have data ([b09952f](https://github.com/simple-html/simple-html/commits/b09952fa471cf38e244b6ec3cb2a5424a0590dde))
+
 ## [3.5.0-next.8](https://github.com/simple-html/simple-html/compare/v3.5.0-next.7...v3.5.0-next.8) (2021-04-16)
 
 
