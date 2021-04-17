@@ -35,7 +35,10 @@ export class SimpleHtmlGrid extends HTMLElement {
             this.interface.connectGrid(this);
 
             if (!this.children.length) {
+
                 generate(this.interface, this.rowCache, this);
+
+
 
             }
             let init = false;

@@ -109,6 +109,13 @@ export interface GridConfig<T = any> {
     filterSet?: FilterArgument;
     sortingSet?: SortArgument[];
     groupingExpanded?: string[];
+
+    /**
+     * experimental, so grid with data dont hold inital render
+     */
+    delayRowRenderToNextTick?: boolean
+    //default 0ms
+    delayMs?: number
 }
 
 type callF = (...args: any[]) => any;
