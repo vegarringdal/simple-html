@@ -27,7 +27,6 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         if (e.type === 'column-resize') {
             this.style.width = this.group.width + 'px';
         }
-        console.log(e.type)
     }
 
     disconnectedCallback() {
@@ -35,7 +34,6 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
     }
 
     updateGui() {
-        console.log("filetr")
         const cell = this.group.rows[this.cellPosition];
         const connector = this.connector;
         const ref = this.ref;
