@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0](https://github.com/simple-html/simple-html/compare/v3.5.0-next.10...v3.5.0) (2021-04-18)
+
+
+### Features
+
+* **ds:** setRowAsCurrentEntity method ([e6d8fde](https://github.com/simple-html/simple-html/commits/e6d8fde924e4bfc83e5d593d8ed21592686cf326))
+
 ## [3.5.0-next.10](https://github.com/simple-html/simple-html/compare/v3.5.0-next.9...v3.5.0-next.10) (2021-04-18)
 
 
