@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.5.0-next.10](https://github.com/simple-html/simple-html/compare/v3.5.0-next.9...v3.5.0-next.10) (2021-04-18)
+
+
+### Features
+
+* **ds:** replace/delete data rows ([5c27c79](https://github.com/simple-html/simple-html/commits/5c27c79fda8714bb59747570112914d87c0b6496))
+
 ## [3.5.0-next.9](https://github.com/simple-html/simple-html/compare/v3.5.0-next.8...v3.5.0-next.9) (2021-04-17)
 
 
