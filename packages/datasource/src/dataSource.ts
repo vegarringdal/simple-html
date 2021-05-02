@@ -126,6 +126,10 @@ export class Datasource<T = any> {
         return this.__dataContainer.getMarkedForDeletion() as EntityUnion<T>[];
     }
 
+    public clearMarkedForDeletion(): EntityUnion<T>[] {
+        this.__dataContainer.clearMarkedForDeletion();
+    }
+
     public resetData() {
         this.__dataContainer.resetData();
         this.__internalUpdate(true);
@@ -168,7 +172,7 @@ export class Datasource<T = any> {
      * @param row 0 based like array, not like the select
      */
     public setRowAsCurrentEntity(row: number) {
-        this.__select(row)
+        this.__select(row);
     }
 
     /**
@@ -715,23 +719,26 @@ export class Datasource<T = any> {
                         if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                             queryString =
                                 queryString +
-                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${obj.valueType === 'ATTRIBUTE'
-                                    ? `[${obj.value}]`
-                                    : "'" + convertValue(obj.attributeType, obj.value) + "'"
+                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
+                                    obj.valueType === 'ATTRIBUTE'
+                                        ? `[${obj.value}]`
+                                        : "'" + convertValue(obj.attributeType, obj.value) + "'"
                                 }`;
                         } else {
                             // split newline into array
                             if (Array.isArray(obj.value)) {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]
+                                    `[${obj.attribute}] <<${
+                                        OPERATORS[obj.operator]
                                     }>> [${obj.value.map((val) => {
                                         return `'${val}'`;
                                     })}]`;
                             } else {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]
+                                    `[${obj.attribute}] <<${
+                                        OPERATORS[obj.operator]
                                     }>> [${(obj.value as string).split('\n').map((val) => {
                                         return `'${val}'`;
                                     })}]`;
