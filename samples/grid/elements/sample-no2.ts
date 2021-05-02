@@ -30,6 +30,7 @@ export default class extends HTMLElement {
                     --simple-html-grid-dropzone-color: #979494;
                     --simple-html-grid-grouping-border: #374151;
                     --simple-html-grid-boxshadow: #4b5563;
+                    --simple-html-grid-main-hr-border: #4b5563;
                 }
             </style>
             <div class="flex flex-row flex-grow h-full">

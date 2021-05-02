@@ -27,18 +27,19 @@ export default class extends HTMLElement {
     render() {
         return html`
             <style>
-                .testDark {
-                    --simple-html-grid-main-bg-color: #374151;
-                    --simple-html-grid-sec-bg-color: #4b5563;
-                    --simple-html-grid-alt-bg-color: #4b5563;
-                    --simple-html-grid-main-bg-border: #374151;
-                    --simple-html-grid-sec-bg-border: #374151;
-                    --simple-html-grid-main-bg-selected: #1f2937;
-                    --simple-html-grid-main-font-color: #f9f7f7;
-                    --simple-html-grid-sec-font-color: #979494;
-                    --simple-html-grid-dropzone-color: #979494;
-                    --simple-html-grid-grouping-border: #374151;
-                    --simple-html-grid-boxshadow: #4b5563;
+                .simple-html-grid {
+                    --simple-html-grid-main-bg-color: #374151 !important;
+                    --simple-html-grid-sec-bg-color: #4b5563 !important;
+                    --simple-html-grid-alt-bg-color: #4b5563 !important;
+                    --simple-html-grid-main-bg-border: #374151 !important;
+                    --simple-html-grid-sec-bg-border: #374151 !important;
+                    --simple-html-grid-main-bg-selected: #1f2937 !important;
+                    --simple-html-grid-main-font-color: #f9f7f7 !important;
+                    --simple-html-grid-sec-font-color: #979494 !important;
+                    --simple-html-grid-dropzone-color: #979494 !important;
+                    --simple-html-grid-grouping-border: #374151 !important;
+                    --simple-html-grid-boxshadow: #4b5563 !important;
+                    --simple-html-grid-main-hr-border: #4b5563 !important;
                 }
             </style>
 
