@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.5.1-next.0](https://github.com/simple-html/simple-html/compare/v3.5.0...v3.5.1-next.0) (2021-05-02)
+
+
+### Bug Fixes
+
+* **ds:** add missing method fo clearing marked for deletion on ds ([e506c78](https://github.com/simple-html/simple-html/commits/e506c785af4421ac0cd754f4b66fb581b65b822a))
+* variabale name to shadow color and remove shadow row ([0835ecb](https://github.com/simple-html/simple-html/commits/0835ecb96339138486f16a98893ee5bb21c7ee90))
+
 ## [3.5.0](https://github.com/simple-html/simple-html/compare/v3.5.0-next.10...v3.5.0) (2021-04-18)
 
 
