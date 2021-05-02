@@ -9,6 +9,7 @@
     --simple-html-grid-sec-font-color: #979494;
     --simple-html-grid-dropzone-color: #979494;
     --simple-html-grid-grouping-border: #c7c7c7;
+    --simple-html-grid-boxshadow: #fffdfd;
 
     --simple-html-grid-font-size: 11px;
     --simple-html-grid-font-weight: 500;
@@ -118,7 +119,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     width: 100%;
     top: 0;
     background-color: var(--simple-html-grid-main-bg-color);
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
 .simple-html-grid .simple-html-grid-footer {
@@ -129,7 +130,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     bottom: 0;
     border-top: 1px solid var(--simple-html-grid-main-bg-border);
     background-color: var(--simple-html-grid-main-bg-color);
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
 .simple-html-grid .simple-html-grid-header {
@@ -309,7 +310,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
     height: 100%;
     width: 100%;
     padding: 2px;
@@ -324,7 +325,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid .simple-html-grid-selected-row {
-    box-shadow: inset 1px 1px 3px 0 #a9a9a9;
+   /*  box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow); */
     background-color: var(--simple-html-grid-main-bg-selected);
 }
 
@@ -399,7 +400,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     position: absolute;
     background-color: var(--simple-html-grid-main-bg-color);
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
 .simple-html-grid .simple-html-grid-col-group {
@@ -409,7 +410,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     position: absolute;
     border: 0;
     border-radius: initial;
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
     padding: 2px 10px;
     height: 100%;
     background-color: var(--simple-html-grid-main-bg-color);
@@ -426,12 +427,12 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     margin: 0;
     display: flex;
     text-align: center;
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
 .simple-html-grid .simple-html-grid-candrop {
     background-color: var(--simple-html-grid-dropzone-color);
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
 .simple-html-grid .simple-html-grid-candrop-panel-col {
@@ -453,7 +454,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     border-left: 1px solid var(--simple-html-grid-sec-bg-border);
     border-right: 1px solid var(--simple-html-grid-sec-bg-border);
     border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 .simple-html-grid-menu-item {
     box-sizing: border-box;
@@ -505,7 +506,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     border-left: 1px solid var(--simple-html-grid-sec-bg-border);
     border-right: 1px solid var(--simple-html-grid-sec-bg-border);
     border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
-    box-shadow: inset 1px 1px 3px 0 #fffdfd;
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
 .simple-html-grid-menu-item:hover {
