@@ -126,7 +126,7 @@ export class Datasource<T = any> {
         return this.__dataContainer.getMarkedForDeletion() as EntityUnion<T>[];
     }
 
-    public clearMarkedForDeletion(): EntityUnion<T>[] {
+    public clearMarkedForDeletion() {
         this.__dataContainer.clearMarkedForDeletion();
     }
 
