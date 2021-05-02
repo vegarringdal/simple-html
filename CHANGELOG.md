@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.5.1-next.1](https://github.com/simple-html/simple-html/compare/v3.5.1-next.0...v3.5.1-next.1) (2021-05-02)
+
+
+### Bug Fixes
+
+* **grid:** improve dark mode option ([9dd2b99](https://github.com/simple-html/simple-html/commits/9dd2b99d593108548b0d4c842b22633c898ee1b5))
+
 ### [3.5.1-next.0](https://github.com/simple-html/simple-html/compare/v3.5.0...v3.5.1-next.0) (2021-05-02)
 
 
