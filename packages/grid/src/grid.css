@@ -10,6 +10,7 @@
     --simple-html-grid-dropzone-color: #979494;
     --simple-html-grid-grouping-border: #c7c7c7;
     --simple-html-grid-boxshadow: #fffdfd;
+    --simple-html-grid-main-hr-border: #ffffff;
 
     --simple-html-grid-font-size: 11px;
     --simple-html-grid-font-weight: 500;
@@ -33,9 +34,19 @@
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
+.simple-html-grid .simple-html-defaults {
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-main-bg-color);
+    outline-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid hr {
+    border-color: var(--simple-html-grid-main-hr-border);
+}
+
 simple-html-grid-column-chooser {
     max-height: 350px;
-    overflow-y: auto !important;;
+    overflow-y: auto !important;
 }
 
 simple-html-grid-column-chooser .simple-html-grid {
@@ -325,7 +336,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid .simple-html-grid-selected-row {
-   /*  box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow); */
+    /*  box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow); */
     background-color: var(--simple-html-grid-main-bg-selected);
 }
 
@@ -491,6 +502,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     transition: initial;
     outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-alt-bg-color);
 }
 
 .simple-html-grid-menu-full {

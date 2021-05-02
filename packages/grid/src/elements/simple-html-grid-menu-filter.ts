@@ -474,6 +474,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             lel.onclick = () => filtertoggleClick();
             lel.appendChild(document.createTextNode('Filter Available'));
             el.appendChild(lel);
+            el.classList.add('simple-html-defaults');
 
             this.appendChild(el);
         }
@@ -533,6 +534,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         labelSelectAll.onclick = () => this.selectAllClick();
         labelSelectAll.appendChild(document.createTextNode('Select all'));
         containerSelectAll.appendChild(labelSelectAll);
+        containerSelectAll.classList.add('simple-html-defaults');
 
         scrollArea.appendChild(containerSelectAll);
 
@@ -554,6 +556,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             el.appendChild(lel);
 
             scrollArea.appendChild(el);
+            scrollArea.classList.add('simple-html-defaults');
         });
     }
 }
