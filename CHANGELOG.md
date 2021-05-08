@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.5.1-next.2](https://github.com/simple-html/simple-html/compare/v3.5.1-next.1...v3.5.1-next.2) (2021-05-08)
+
+
+### Bug Fixes
+
+* **ds:** fix how contains/end with etc works with dates/numbers ([07ebfd7](https://github.com/simple-html/simple-html/commits/07ebfd7e57a0f487b7596a0fc29fdea71865ca97))
+
 ### [3.5.1-next.1](https://github.com/simple-html/simple-html/compare/v3.5.1-next.0...v3.5.1-next.1) (2021-05-02)
 
 
