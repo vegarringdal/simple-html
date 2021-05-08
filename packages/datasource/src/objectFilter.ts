@@ -100,6 +100,14 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 filterValue = filter.value;
             }
 
+            if (filterOperator === 'END_WITH') {
+                filterOperator = 'LESS_THAN_OR_EQUAL_TO';
+            }
+
+            if (filterOperator === 'DOES_NOT_CONTAIN') {
+                filterOperator = 'LESS_THAN';
+            }
+
             if (
                 filterOperator !== 'EQUAL' &&
                 filterOperator !== 'NOT_EQUAL_TO' &&
@@ -122,6 +130,14 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 rowValue = isNaN(Number(rowValue)) ? 0 : Number(rowValue);
             } catch (err) {
                 rowValue = rowValue;
+            }
+
+            if (filterOperator === 'END_WITH') {
+                filterOperator = 'LESS_THAN_OR_EQUAL_TO';
+            }
+
+            if (filterOperator === 'DOES_NOT_CONTAIN') {
+                filterOperator = 'LESS_THAN';
             }
 
             if (

@@ -136,7 +136,7 @@ describe('number filter', () => {
         done();
     });
 
-    it('number end with will use greater or equal to ', (done) => {
+    it('number end with will use less or equal to ', (done) => {
         ds.filter({
             attribute: 'age',
             operator: 'END_WITH',
@@ -144,9 +144,23 @@ describe('number filter', () => {
         });
 
         expect(ds.getRows()).toEqual([
-            { name: 'person1', group: 'group1', age: 40, born: new Date(1990, 0, 1), index: 3 },
-            { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
-            { name: 'person4', group: 'group1', age: 67, born: new Date(2000, 0, 1), index: 5 }
+            { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
+            { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
+            { name: 'person1', group: 'group1', age: 40, born: new Date(1990, 0, 1), index: 3 }
+        ]);
+        done();
+    });
+
+    it('number does not cotains will use less than ', (done) => {
+        ds.filter({
+            attribute: 'age',
+            operator: 'DOES_NOT_CONTAIN',
+            value: 40
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
+            { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }
         ]);
         done();
     });

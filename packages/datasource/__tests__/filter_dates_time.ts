@@ -1,6 +1,5 @@
 import { Datasource } from '../src/dataSource';
 
-// localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
     { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
     { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
