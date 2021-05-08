@@ -97,7 +97,7 @@ export class DataContainer {
     }
 
     public clearMarkedForDeletion() {
-        this.__markedForDeletion = []
+        this.__markedForDeletion = [];
     }
 
     public removeData(data: Entity | Entity[], all = false) {
@@ -127,8 +127,6 @@ export class DataContainer {
 
         return [];
     }
-
-
 
     public setData(data: any[], add = false, tagAsNew = false): Entity[] | void {
         if (add) {
@@ -179,24 +177,16 @@ export class DataContainer {
         }
     }
 
-
-
     public replace(data: any[], index: number, remove: number) {
         // todo
         const x = Array.from(data, (o: any | Entity) => {
             if (o && o.__controller) {
                 return o;
             } else {
-                return new Proxy(
-                    o,
-                    new this.EntityHandler(this.__keyAttribute, false) as any
-                );
+                return new Proxy(o, new this.EntityHandler(this.__keyAttribute, false) as any);
             }
         });
 
-        this.__collection.splice(index, remove, ...x)
-
-
+        this.__collection.splice(index, remove, ...x);
     }
 }
-

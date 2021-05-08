@@ -122,15 +122,15 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         }
 
         let classname = 'simple-html-grid-row-input';
-        let classNameCheckbox = 'simple-html-grid-row-checkbox'
+        const classNameCheckbox = 'simple-html-grid-row-checkbox';
         if (cell.type === 'boolean') {
-            if(inputEl.classList.contains(classname)){
-                inputEl.classList.remove(classname)
+            if (inputEl.classList.contains(classname)) {
+                inputEl.classList.remove(classname);
             }
             classname = classNameCheckbox;
-        } else{
-            if(inputEl.classList.contains(classNameCheckbox)){
-                inputEl.classList.remove(classNameCheckbox)
+        } else {
+            if (inputEl.classList.contains(classNameCheckbox)) {
+                inputEl.classList.remove(classNameCheckbox);
             }
         }
         this.style.height = config.cellHeight + 'px';
@@ -139,8 +139,6 @@ export class SimpleHtmlGridCellFilter extends HTMLElement {
         this.attribute = this.group.rows[this.cellPosition].attribute;
 
         // create element or reuse if we allready have it
-
-      
 
         inputEl.type = coltype;
         if (coltype !== 'text' && coltype !== 'checkbox') {

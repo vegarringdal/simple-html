@@ -24,7 +24,6 @@ export class SimpleHtmlGridBody extends HTMLElement {
         this.ref.addEventListener('column-resize', this);
         this.body = document.createElement('simple-html-grid-body-content');
 
-
         this.body.style.height = `${this.connector.getScrollVars.__SCROLL_HEIGHT || 0.1}px`;
         this.body.style.width = `${config.__rowWidth}px`;
         this.body.classList.add('simple-html-grid-content');
@@ -76,7 +75,6 @@ export class SimpleHtmlGridBody extends HTMLElement {
             this.ref.resetColCache();
             this.ref.resetRowCache();
         }
-
 
         if (this.rowPositionCache.length !== this.rows.length) {
             if (this.rowPositionCache.length < this.rows.length) {

@@ -113,9 +113,9 @@ export interface GridConfig<T = any> {
     /**
      * experimental, so grid with data dont hold inital render
      */
-    delayRowRenderToNextTick?: boolean
+    delayRowRenderToNextTick?: boolean;
     //default 0ms
-    delayMs?: number
+    delayMs?: number;
 }
 
 type callF = (...args: any[]) => any;

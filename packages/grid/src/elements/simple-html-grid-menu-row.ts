@@ -181,44 +181,42 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
     }
 
     buildHtml() {
-
-
-        let x = document.createElement('p')
+        let x = document.createElement('p');
         x.onclick = () => this.select('copy');
         x.appendChild(document.createTextNode('Copy cell'));
-        x.classList.add('simple-html-grid-menu-item')
-        this.appendChild(x)
+        x.classList.add('simple-html-grid-menu-item');
+        this.appendChild(x);
 
-        x = document.createElement('p')
+        x = document.createElement('p');
         x.onclick = () => this.select('copy-range');
         x.appendChild(document.createTextNode('Copy cell column'));
-        x.classList.add('simple-html-grid-menu-item')
-        this.appendChild(x)
+        x.classList.add('simple-html-grid-menu-item');
+        this.appendChild(x);
 
-        x = document.createElement('p')
+        x = document.createElement('p');
         x.onclick = () => this.select('copy');
         x.appendChild(document.createTextNode('Copy cell column (w/header)'));
-        x.classList.add('simple-html-grid-menu-item')
-        this.appendChild(x)
+        x.classList.add('simple-html-grid-menu-item');
+        this.appendChild(x);
 
-        x = document.createElement('p')
+        x = document.createElement('p');
         x.onclick = () => this.select('copy-range-row-header');
         x.appendChild(document.createTextNode(' Copy cell rows (w/header)'));
-        x.classList.add('simple-html-grid-menu-item')
-        this.appendChild(x)
+        x.classList.add('simple-html-grid-menu-item');
+        this.appendChild(x);
 
         if (!this.connector.config.readonly && !this.cell.readonly) {
-            x = document.createElement('p')
+            x = document.createElement('p');
             x.onclick = () => this.select('paste');
             x.appendChild(document.createTextNode('Paste into selected rows/cells'));
-            x.classList.add('simple-html-grid-menu-item')
-            this.appendChild(x)
+            x.classList.add('simple-html-grid-menu-item');
+            this.appendChild(x);
 
-            x = document.createElement('p')
+            x = document.createElement('p');
             x.onclick = () => this.select('clear');
             x.appendChild(document.createTextNode('Clear selected rows/cells'));
-            x.classList.add('simple-html-grid-menu-item')
-            this.appendChild(x)
+            x.classList.add('simple-html-grid-menu-item');
+            this.appendChild(x);
         }
 
         if (this.cell.type === 'number') {
@@ -227,7 +225,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
             }
 
             function max(prev: number, cur: number) {
-                return cur > prev ? cur : prev
+                return cur > prev ? cur : prev;
             }
 
             function min(prev: number | null, cur: number) {
@@ -235,11 +233,11 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                     return cur;
                 }
 
-                return cur < prev ? cur : prev
+                return cur < prev ? cur : prev;
             }
 
             function avg(no: number, sum: number) {
-                return Math.round(sum / no)
+                return Math.round(sum / no);
             }
 
             const ds = this.connector.getDatasource();
@@ -256,63 +254,59 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                     maxValue = max(maxValue, x[this.cell.attribute]);
                     minValue = min(minValue, x[this.cell.attribute]);
                 }
-            })
+            });
 
+            x = document.createElement('hr');
+            this.appendChild(x);
 
-            x = document.createElement('hr')
-            this.appendChild(x)
-
-            x = document.createElement('p')
+            x = document.createElement('p');
             x.onclick = async () => {
-                const curValueX = Math.round(curValue * 100) / 100
+                const curValueX = Math.round(curValue * 100) / 100;
                 await navigator.clipboard.writeText(NumberFormater.fromNumber(curValueX));
             };
-            const curValueX = Math.round(curValue * 100) / 100
+            const curValueX = Math.round(curValue * 100) / 100;
             x.appendChild(document.createTextNode(`Sum: ${NumberFormater.fromNumber(curValueX)}`));
-            x.classList.add('simple-html-grid-menu-item')
-            this.appendChild(x)
+            x.classList.add('simple-html-grid-menu-item');
+            this.appendChild(x);
 
-            x = document.createElement('p')
+            x = document.createElement('p');
             x.onclick = async () => {
-                const maxValueX = Math.round(maxValue * 100) / 100
+                const maxValueX = Math.round(maxValue * 100) / 100;
                 await navigator.clipboard.writeText(NumberFormater.fromNumber(maxValueX));
             };
-            const maxValueX = Math.round(maxValue * 100) / 100
+            const maxValueX = Math.round(maxValue * 100) / 100;
             x.appendChild(document.createTextNode(`Max: ${NumberFormater.fromNumber(maxValueX)}`));
-            x.classList.add('simple-html-grid-menu-item')
-            this.appendChild(x)
+            x.classList.add('simple-html-grid-menu-item');
+            this.appendChild(x);
 
-            x = document.createElement('p')
+            x = document.createElement('p');
             x.onclick = async () => {
-                const minValueX = Math.round(minValue * 100) / 100
+                const minValueX = Math.round(minValue * 100) / 100;
                 await navigator.clipboard.writeText(NumberFormater.fromNumber(minValueX));
             };
-            const minValueX = Math.round(minValue * 100) / 100
+            const minValueX = Math.round(minValue * 100) / 100;
             x.appendChild(document.createTextNode(`Min: ${NumberFormater.fromNumber(minValueX)}`));
-            x.classList.add('simple-html-grid-menu-item')
-            this.appendChild(x)
+            x.classList.add('simple-html-grid-menu-item');
+            this.appendChild(x);
 
-            x = document.createElement('p')
+            x = document.createElement('p');
             x.onclick = async () => {
-                const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100
+                const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100;
                 await navigator.clipboard.writeText(NumberFormater.fromNumber(avgValueX));
             };
-            const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100
+            const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100;
             x.appendChild(document.createTextNode(`Avg: ${NumberFormater.fromNumber(avgValueX)}`));
-            x.classList.add('simple-html-grid-menu-item')
-            this.appendChild(x)
+            x.classList.add('simple-html-grid-menu-item');
+            this.appendChild(x);
 
-            x = document.createElement('p')
+            x = document.createElement('p');
             x.onclick = async () => {
                 await navigator.clipboard.writeText(NumberFormater.fromNumber(selectedRows.length));
             };
             x.appendChild(document.createTextNode(`Rows: ${selectedRows.length}`));
-            x.classList.add('simple-html-grid-menu-item')
-            this.appendChild(x)
-
-
+            x.classList.add('simple-html-grid-menu-item');
+            this.appendChild(x);
         }
-
     }
 }
 

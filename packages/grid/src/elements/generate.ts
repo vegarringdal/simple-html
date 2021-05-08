@@ -44,7 +44,7 @@ export function generate(
             body.rowPositionCache = rowPositionCache;
             body.onscroll = scroll;
             ref.appendChild(body);
-        }, connector.config.delayMs || 0)
+        }, connector.config.delayMs || 0);
     } else {
         const body = document.createElement('simple-html-grid-body') as SimpleHtmlGridBody;
         body.connector = connector;
@@ -53,7 +53,6 @@ export function generate(
         body.onscroll = scroll;
         ref.appendChild(body);
     }
-
 
     const panel = document.createElement('simple-html-grid-panel') as SimpleHtmlGridPanel;
     panel.connector = connector;

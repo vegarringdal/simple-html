@@ -35,11 +35,7 @@ export class SimpleHtmlGrid extends HTMLElement {
             this.interface.connectGrid(this);
 
             if (!this.children.length) {
-
                 generate(this.interface, this.rowCache, this);
-
-
-
             }
             let init = false;
             new ResizeObserver(() => {
@@ -54,9 +50,8 @@ export class SimpleHtmlGrid extends HTMLElement {
                             this.reRender();
                         }, 100);
                     }
-                    init = true
+                    init = true;
                 }
-
             }).observe(this);
         } else {
             if (this.isConnected) {
