@@ -1,19 +1,16 @@
-const path = require('path');
-const { readFiles, spawner, logInfo, logError } = require('./utils');
+/* eslint-disable @typescript-eslint/no-var-requires */
 
-const { sparky } = require('fuse-box');
-class Context {}
-const { task, src } = sparky(Context);
+const { clearFolders } = require('esbuild-helpers');
+const { readFiles, logInfo } = require('./utils');
 
-task('default', async context => {
+async function run() {
     const files = await readFiles('./packages');
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.isDirectory() && file.name !== 'template-package') {
             logInfo(`${file.name}: Remove old dist folder`);
-            await src(`../packages/${file.name}/dist/**/*.*`)
-                .clean()
-                .exec();
+            clearFolders(`./packages/${file.name}/dist/**/*.*`);
         }
     }
-})
+}
+run();

@@ -1,10 +1,15 @@
-import { clearFolders, addDefaultIndex, client, postcssPlugin, single, TypeChecker } from 'esbuild-helpers';
-
+import {
+    clearFolders,
+    addDefaultIndex,
+    client,
+    postcssPlugin,
+    single,
+    TypeChecker
+} from 'esbuild-helpers';
 
 clearFolders('dist_client', 'dist_nodejs');
 
 const sample = process.argv[2];
-
 
 /**
  * css so we dont need to wait for postcss unless we change css..
@@ -51,6 +56,7 @@ client(
  */
 addDefaultIndex({
     distFolder: `dist/${sample}`,
+    publicFolders: [],
     entry: './index.js',
     hbr: true,
     devServer: true,
@@ -116,5 +122,3 @@ const checker_client = TypeChecker({
 checker_client.printSettings();
 checker_client.inspectAndPrint();
 checker_client.worker_watch(['./samples', './packages']);
-
-

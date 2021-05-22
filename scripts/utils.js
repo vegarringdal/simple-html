@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 // @ts-check
 const fs = require('fs');
 const path = require('path');
@@ -8,7 +9,7 @@ const spawn = require('child_process').spawn;
  */
 const renameFolder = (oldPath, newPath) => {
     return new Promise((resolve, reject) => {
-        fs.rename(path.resolve(oldPath), path.resolve(newPath), function(err) {
+        fs.rename(path.resolve(oldPath), path.resolve(newPath), function (err) {
             if (err) {
                 reject(err);
             } else {
@@ -18,11 +19,11 @@ const renameFolder = (oldPath, newPath) => {
     });
 };
 
-const deleteFolder = folder => {
+const deleteFolder = (folder) => {
     const delPath = path.resolve(folder);
     if (fs.existsSync(delPath)) {
-        fs.readdirSync(delPath).forEach((file, index) => {
-            const currentPath = path.resolve(delPath , `./${file}`);
+        fs.readdirSync(delPath).forEach((file) => {
+            const currentPath = path.resolve(delPath, `./${file}`);
             if (fs.lstatSync(currentPath).isDirectory()) {
                 deleteFolder(currentPath);
             } else {
@@ -33,7 +34,7 @@ const deleteFolder = folder => {
     }
 };
 
-const readFile = file => {
+const readFile = (file) => {
     return new Promise((resolve, reject) => {
         fs.readFile(path.resolve(file), 'UTF8', (err, data) => {
             if (err) {
@@ -45,21 +46,25 @@ const readFile = file => {
     });
 };
 
-const readFiles = folder => {
+const readFiles = (folder) => {
     return new Promise((resolve, reject) => {
-        fs.readdir(path.resolve(process.cwd(), folder), { withFileTypes: true }, function(err, files) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(files);
+        fs.readdir(
+            path.resolve(process.cwd(), folder),
+            { withFileTypes: true },
+            function (err, files) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(files);
+                }
             }
-        });
+        );
     });
 };
 
 const writeFile = (file, data) => {
     return new Promise((resolve, reject) => {
-        fs.writeFile(path.resolve(file), data, function(err) {
+        fs.writeFile(path.resolve(file), data, function (err) {
             if (err) {
                 reject(err);
             } else {
@@ -99,11 +104,11 @@ const print = (color, comment, error) => {
     }
 };
 
-const logInfo = function(comment, color = 'green') {
+const logInfo = function (comment, color = 'green') {
     print(color, comment, false);
 };
 
-const logError = function(comment) {
+const logError = function (comment) {
     print('red', comment, true);
 };
 
@@ -113,7 +118,7 @@ const spawner = (cmd, args, dirname, display = false) => {
             stdio: display ? 'inherit' : 'ignore',
             cwd: dirname
         });
-        childSpawn.on('exit', function(code) {
+        childSpawn.on('exit', function (code) {
             resolve(code);
         });
     });

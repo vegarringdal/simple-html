@@ -1,19 +1,16 @@
-const path = require('path');
-const { readFiles, spawner, logInfo, logError } = require('./utils');
+/* eslint-disable @typescript-eslint/no-var-requires */
+const { readFiles, logInfo } = require('./utils');
+const { clearFolders, copySync } = require('esbuild-helpers');
 
-const { sparky } = require('fuse-box');
-class Context {}
-const { task, src, rm } = sparky(Context);
-
-task('default', async (context) => {
+async function run() {
     const files = await readFiles('./packages');
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.isDirectory() && file.name !== 'template-package') {
             logInfo(`\n\n ${file.name}: Remove old dist folder`);
-            rm(`../packages/${file.name}/dist/`);
+            clearFolders(`packages/${file.name}/dist/`);
 
-            const checker = require('fuse-box-typechecker').TypeChecker({
+            const checker = require('esbuild-helpers').TypeChecker({
                 tsConfigOverride: {
                     compilerOptions: {
                         outDir: `./dist`,
@@ -55,15 +52,12 @@ task('default', async (context) => {
             let result = checker.inspectOnly();
             checker.printOnly(result);
             logInfo(`${file.name}: emit js`);
-            const x = result.oldProgram.emit();
-
-            const PATH = require('path').resolve(__dirname, '../packages');
+            result.oldProgram.emit();
 
             //copy css files
             logInfo(`${file.name}: copy css if any`);
-            await src(`${PATH}/${file.name}/src/**/*.css`)
-                .dest(`${PATH}/${file.name}/dist`, `src`)
-                .exec();
+            copySync(`packages/${file.name}/src/**/*.css`, `packages/${file.name}/dist`);
         }
     }
-});
+}
+run();
