@@ -26,23 +26,6 @@ export default class extends HTMLElement {
 
     render() {
         return html`
-            <style>
-                .simple-html-grid {
-                    --simple-html-grid-main-bg-color: #374151 !important;
-                    --simple-html-grid-sec-bg-color: #4b5563 !important;
-                    --simple-html-grid-alt-bg-color: #4b5563 !important;
-                    --simple-html-grid-main-bg-border: #374151 !important;
-                    --simple-html-grid-sec-bg-border: #374151 !important;
-                    --simple-html-grid-main-bg-selected: #1f2937 !important;
-                    --simple-html-grid-main-font-color: #f9f7f7 !important;
-                    --simple-html-grid-sec-font-color: #979494 !important;
-                    --simple-html-grid-dropzone-color: #979494 !important;
-                    --simple-html-grid-grouping-border: #374151 !important;
-                    --simple-html-grid-boxshadow: #4b5563 !important;
-                    --simple-html-grid-main-hr-border: #4b5563 !important;
-                }
-            </style>
-
             <div class="flex flex-row flex-grow h-full">
                 <div class="flex-grow">
                     <data-buttons
