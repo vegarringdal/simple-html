@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.6.0-next.2](https://github.com/simple-html/simple-html/compare/v3.6.0-next.1...v3.6.0-next.2) (2021-06-10)
+
+
+### Bug Fixes
+
+* css grid ([d1e411f](https://github.com/simple-html/simple-html/commits/d1e411f73e72fe966da32da953d4a6867eff7fc4))
+* more css fixes grid ([e341504](https://github.com/simple-html/simple-html/commits/e341504f8ed58e0b1b496cd74c1ad66320d0c144))
+
 ## [3.6.0-next.1](https://github.com/simple-html/simple-html/compare/v3.6.0-next.0...v3.6.0-next.1) (2021-06-10)
 
 
