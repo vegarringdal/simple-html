@@ -1,12 +1,3 @@
-.simple-html-grid *,
-::after,
-::before {
-    box-sizing: border-box;
-    border-width: 0;
-    border-style: solid;
-    border-color: #e2e8f0;
-}
-
 .simple-html-grid button,
 input,
 textarea {
@@ -18,6 +9,13 @@ textarea {
 .simple-html-grid button,
 select {
     text-transform: none;
+}
+
+.simple-html-grid hr {
+    border-top-width: 1px;
+    box-sizing: content-box;
+    height: 0;
+    overflow: visible;
 }
 
 .simple-html-grid button {
@@ -36,6 +34,31 @@ ul {
 .simple-html-grid svg {
     display: block;
     vertical-align: middle;
+}
+
+.simple-html-grid blockquote,
+dd,
+dl,
+figure,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+p,
+pre {
+    margin: 0;
+}
+
+.simple-html-grid *,
+::after,
+::before {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: #e2e8f0;
 }
 
 .simple-html-grid {
