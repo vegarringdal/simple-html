@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.6.0-next.0](https://github.com/simple-html/simple-html/compare/v3.5.1-next.2...v3.6.0-next.0) (2021-06-10)
+
+
+### Features
+
+* allow create without interface set ([824306b](https://github.com/simple-html/simple-html/commits/824306b76b0917415e052be59b1cc810c5d54e9c))
+
+
+### Bug Fixes
+
+* unset all properties ([d8156e1](https://github.com/simple-html/simple-html/commits/d8156e1c6f0390b11b3e9d9e558230e03f443b44))
+
 ### [3.5.1-next.2](https://github.com/simple-html/simple-html/compare/v3.5.1-next.1...v3.5.1-next.2) (2021-05-08)
 
 
