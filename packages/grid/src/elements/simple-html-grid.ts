@@ -11,11 +11,16 @@ export class SimpleHtmlGrid extends HTMLElement {
     private oldHeight: number;
     private oldWidth: number;
     private resizeTimer: any;
+    private resizeInit: boolean;
 
     set interface(value: GridInterface) {
         if (this.__DATASOURCE_INTERFACE !== value) {
             this.__DATASOURCE_INTERFACE = value;
             this.__DATASOURCE_INTERFACE.connectGrid(this);
+        }
+        //just incase reziser is not set
+        if (!this.resizeInit) {
+            this.initResizerEvent();
         }
     }
 
@@ -24,6 +29,7 @@ export class SimpleHtmlGrid extends HTMLElement {
     }
 
     public connectedCallback() {
+        this.resizeInit = false;
         if (this.interface && this.isConnected) {
             this.oldHeight = this.clientHeight;
             this.oldWidth = this.clientWidth;
@@ -37,27 +43,27 @@ export class SimpleHtmlGrid extends HTMLElement {
             if (!this.children.length) {
                 generate(this.interface, this.rowCache, this);
             }
-            let init = false;
-            new ResizeObserver(() => {
-                if (this.isConnected) {
-                    if (
-                        this.oldHeight !== this.clientHeight ||
-                        (this.oldWidth !== this.clientWidth && init)
-                    ) {
-                        if (this.resizeTimer) clearTimeout(this.resizeTimer);
-                        this.resizeTimer = setTimeout(() => {
-                            this.resetRowCache();
-                            this.reRender();
-                        }, 100);
-                    }
-                    init = true;
-                }
-            }).observe(this);
-        } else {
-            if (this.isConnected) {
-                console.error('no config set');
-            }
+
+            this.initResizerEvent();
         }
+    }
+
+    private initResizerEvent() {
+        new ResizeObserver(() => {
+            if (this.isConnected) {
+                if (
+                    this.oldHeight !== this.clientHeight ||
+                    (this.oldWidth !== this.clientWidth && this.resizeInit)
+                ) {
+                    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+                    this.resizeTimer = setTimeout(() => {
+                        this.resetRowCache();
+                        this.reRender();
+                    }, 100);
+                }
+                this.resizeInit = true;
+            }
+        }).observe(this);
     }
 
     public disconnectedCallback() {
