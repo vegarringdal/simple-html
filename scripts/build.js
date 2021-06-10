@@ -18,6 +18,7 @@ async function run() {
                         target: 'es2018',
                         module: 'esNext',
                         lib: ['es2019', 'dom'],
+                        skipLibCheck: true,
                         moduleResolution: 'node',
                         isolatedModules: false,
                         preserveConstEnums: true,
