@@ -11,11 +11,11 @@ describe('transmitter', () => {
         publish('call1', 'two');
         publish('call1', 'one');
         expect(calls).toEqual('');
-        setImmediate(() => {
+        requestAnimationFrame(() => {
             expect(calls).toEqual('one');
             publish('call1', 'two');
             expect(calls).toEqual('one');
-            setImmediate(() => {
+            requestAnimationFrame(() => {
                 expect(calls).toEqual('two');
                 done();
             });
@@ -34,11 +34,11 @@ describe('transmitter', () => {
         publishSync('call1', 'one');
         expect(calls).toEqual('one');
 
-        setImmediate(() => {
+        requestAnimationFrame(() => {
             expect(calls).toEqual('one');
             publishSync('call1', 'two');
             expect(calls).toEqual('two');
-            setImmediate(() => {
+            requestAnimationFrame(() => {
                 expect(calls).toEqual('two');
                 done();
             });
