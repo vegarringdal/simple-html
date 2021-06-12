@@ -8,6 +8,7 @@ textarea {
 
 .simple-html-grid button,
 select {
+    color: var(--simple-html-grid-main-font-color);
     text-transform: none;
 }
 
@@ -144,9 +145,27 @@ simple-html-grid-body::-webkit-scrollbar-track {
     /*nothing atm */
 }
 
+
+
 simple-html-grid-body::-webkit-scrollbar-thumb {
     background-color: var(--simple-html-grid-main-bg-selected);
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    outline: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid-menu::-webkit-scrollbar {
+    width: 1em;
+}
+
+.simple-html-grid-menu::-webkit-scrollbar-track {
+    /*nothing atm */
+}
+
+.simple-html-grid-menu::-webkit-scrollbar-thumb {
+    background-color: var(--simple-html-grid-main-bg-selected);
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
@@ -536,12 +555,11 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
-
+    display: block;
     height: 20px;
     text-align: center;
     overflow: hidden;
     user-select: none;
-    margin: initial;
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight-cell);
@@ -571,6 +589,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid-menu-full {
+    color: var(--simple-html-grid-main-font-color);
     position: fixed;
     top: 0;
     left: 0;
@@ -591,6 +610,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-filter-dialog {
+    color: var(--simple-html-grid-main-font-color);
     box-shadow: 1px 1px 3px 0px #000000b5;
     top: 30%;
     position: relative;
@@ -739,4 +759,12 @@ ul.dialog-row ul:last-child {
 
 .first-dialog-row {
     border-left: 0px !important;
+}
+
+.simple-html-filter-dialog input {
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+.simple-html-filter-dialog textarea {
+    background-color: var(--simple-html-grid-sec-bg-color);
 }
