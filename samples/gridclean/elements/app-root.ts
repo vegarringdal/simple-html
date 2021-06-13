@@ -10,11 +10,11 @@ import { WordDatasource01, set, add } from '../data/datasources';
 import '@simple-html/grid';
 import '../../../packages/grid/src/grid.css';
 import { GridInterface } from '@simple-html/grid';
-import { setup } from '../gridSetup/setup';
+import { generateGridConfig } from '../gridSetup/setup';
 import { gridDarkModeStyles } from './gridTheme';
 
 // dummy data
-const x = setup(1, 300, 300);
+const x = generateGridConfig(1, 300, 300);
 
 @customElement('app-root')
 export default class extends HTMLElement {
@@ -43,7 +43,7 @@ export default class extends HTMLElement {
                         toggle theme
                     </button>
                     <data-buttons
-                        class="flex flex-col w-100"
+                        class="flex flex-col mt-10"
                         .btnClass=${'p-2 m-2'}
                         .type=${'add'}
                         .callback=${(x: number) => {
@@ -52,7 +52,7 @@ export default class extends HTMLElement {
                     ></data-buttons>
 
                     <data-buttons
-                        class="flex flex-col "
+                        class="flex flex-col mt-10"
                         .btnClass=${'p-2 m-2'}
                         .type=${'set'}
                         .callback=${(x: number) => {
@@ -61,7 +61,7 @@ export default class extends HTMLElement {
                     ></data-buttons>
 
                     <nav-buttons
-                        class="flex flex-col"
+                        class="flex flex-col mt-10"
                         .btnClass=${'p-2 m-2'}
                         .callback=${(
                             action:

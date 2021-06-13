@@ -10,6 +10,10 @@ body {
     margin: 2px;
 }
 
+.mt-10 {
+    margin-top: 10px;
+}
+
 .p-2 {
     padding: 2px;
 }
