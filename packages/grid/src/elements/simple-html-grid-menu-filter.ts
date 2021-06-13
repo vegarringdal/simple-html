@@ -531,6 +531,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
         const labelSelectAll = document.createElement('label');
         labelSelectAll.style.padding = '2px';
+
         labelSelectAll.onclick = () => this.selectAllClick();
         labelSelectAll.appendChild(document.createTextNode('Select all'));
         containerSelectAll.appendChild(labelSelectAll);
@@ -541,6 +542,8 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         Array.from(this.dataFilterSetFull).forEach((rowData: any) => {
             const el = document.createElement('div');
             el.style.padding = '2px';
+            el.style.display = 'flex';
+            el.className = 'simple-html-grid-hover';
 
             const iel = document.createElement('input');
             iel.style.padding = '2px';
@@ -551,6 +554,8 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
             const lel = document.createElement('label');
             lel.style.padding = '2px';
+            lel.style.width = '100%';
+
             lel.onclick = () => this.filterValueClick(rowData);
             lel.appendChild(document.createTextNode(rowData === 'NULL' ? 'Blank' : rowData));
             el.appendChild(lel);

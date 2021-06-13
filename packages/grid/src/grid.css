@@ -152,6 +152,24 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
+.simple-html-defaults::-webkit-scrollbar {
+    width: 1em;
+}
+
+.simple-html-defaults::-webkit-scrollbar-track {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-defaults::-webkit-scrollbar-thumb {
+    background-color: var(--simple-html-grid-main-bg-selected);
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    outline: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+
+
+
 .simple-html-grid-menu::-webkit-scrollbar {
     width: 1em;
 }
@@ -607,6 +625,12 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     background-color: var(--simple-html-grid-main-bg-selected);
 }
 
+.simple-html-grid-hover:hover{
+    background-color: var(--simple-html-grid-main-bg-selected);
+}
+
+
+
 .simple-html-filter-dialog {
     color: var(--simple-html-grid-main-font-color);
     box-shadow: 1px 1px 3px 0px #000000b5;
@@ -768,4 +792,9 @@ ul.dialog-row ul:last-child {
 }
 .simple-html-filter-dialog textarea {
     background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid .group-operator{
+    margin-left: 0;
+    margin-top: 0;
 }

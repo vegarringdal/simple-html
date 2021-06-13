@@ -19,9 +19,9 @@ export function gridDarkModeStyles() {
             --simple-html-grid-main-hr-border: #4b5563;
         }
 
-        .simple-html-grid-menu {
+       /*  .simple-html-grid-menu {
             box-shadow: 1px 1px 3px 0 #bcbec1;
-        }
+        } */
         .simple-html-grid ul.dialog-row {
             box-shadow: none;
             border-top: 1px solid #3b3b3c;
