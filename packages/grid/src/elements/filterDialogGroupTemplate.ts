@@ -18,7 +18,7 @@ export function filterDialogGroupTemplate(
     div.style.flexFlow = 'row';
 
     const btnLogical = document.createElement('button');
-    btnLogical.classList.add('dialog-item-x');
+    btnLogical.classList.add('dialog-item-x', 'group-operator');
     btnLogical.onclick = () => {
         g.logicalOperator = g.logicalOperator === 'AND' ? 'OR' : 'AND';
         ctx.generate();
