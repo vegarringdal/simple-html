@@ -142,10 +142,8 @@ simple-html-grid-body::-webkit-scrollbar {
 }
 
 simple-html-grid-body::-webkit-scrollbar-track {
-    /*nothing atm */
+    background-color: var(--simple-html-grid-main-bg-color);
 }
-
-
 
 simple-html-grid-body::-webkit-scrollbar-thumb {
     background-color: var(--simple-html-grid-main-bg-selected);
@@ -159,7 +157,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 }
 
 .simple-html-grid-menu::-webkit-scrollbar-track {
-    /*nothing atm */
+    background-color: var(--simple-html-grid-main-bg-color);
 }
 
 .simple-html-grid-menu::-webkit-scrollbar-thumb {
@@ -615,7 +613,10 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     top: 30%;
     position: relative;
     margin: auto;
+    border: 0;
 }
+
+
 
 .dialog-row {
     border-top: 1px solid var(--simple-html-grid-sec-bg-border);
