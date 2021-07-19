@@ -28,6 +28,17 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         this.search = this.cell.filterable?.currentValue || null;
         this.getDropdownData();
         this.generateMainMenu();
+
+        // move menu to fit inside viewport
+        const rect = this.getBoundingClientRect();
+        const thisInnerHeight = window.innerHeight;
+        const thisInnerWidth = window.innerWidth;
+        if (rect.bottom > thisInnerHeight) {
+            this.style.top = `${this.offsetTop - (rect.bottom - thisInnerHeight)}px`;
+        }
+        if (rect.right > thisInnerWidth) {
+            this.style.left = `${this.offsetLeft - (rect.right - thisInnerWidth)}px`;
+        }
     }
 
     getDropdownData() {

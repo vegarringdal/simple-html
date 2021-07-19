@@ -20,6 +20,17 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
             document.addEventListener('contextmenu', this);
         }, 50);
         this.buildHtml();
+
+        // move menu to fit inside viewport
+        const rect = this.getBoundingClientRect();
+        const thisInnerHeight = window.innerHeight;
+        const thisInnerWidth = window.innerWidth;
+        if (rect.bottom > thisInnerHeight) {
+            this.style.top = `${this.offsetTop - (rect.bottom - thisInnerHeight)}px`;
+        }
+        if (rect.right > thisInnerWidth) {
+            this.style.left = `${this.offsetLeft - (rect.right - thisInnerWidth)}px`;
+        }
     }
 
     disconnectedCallback() {
