@@ -42,8 +42,19 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
         }
     }
 
-    async select(_type: string) {
-        if (_type === 'copy' && this.rowData) {
+    async action(
+        _type:
+            | 'copy-cell'
+            | 'copy-column-with-header'
+            | 'copy-column'
+            | 'copy-row-with-header'
+            | 'paste-into-selected-rows-in-selected-column'
+            | 'clear-cells-selected-rows-in-selected-columns'
+    ) {
+        /**
+         * Copy of cell
+         */
+        if (_type === 'copy-cell' && this.rowData) {
             try {
                 const numberformater = this.connector.numberFormater;
                 const dateformater = this.connector.dateFormater;
@@ -54,41 +65,122 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                 if (this.cell.type === 'number') {
                     dataClip = numberformater.fromNumber(dataClip);
                 }
-                await navigator.clipboard.writeText(dataClip);
+
+                function listener(e: any) {
+                    e.clipboardData.setData('text/html', dataClip);
+                    e.clipboardData.setData('text/plain', dataClip);
+                    e.preventDefault();
+                }
+                document.addEventListener('copy', listener);
+                document.execCommand('copy');
+                document.removeEventListener('copy', listener);
             } catch (err) {
                 console.error(err);
             }
         }
-        if ((_type === 'copy-range' || _type === 'copy-range-header') && this.rowData) {
+
+        /**
+         * Copy of column range
+         */
+        if ((_type === 'copy-column' || _type === 'copy-column-with-header') && this.rowData) {
             try {
-                dataClip = '';
-                if (_type === 'copy-range-header') {
-                    dataClip = this.capalize(this.cell.attribute) + '\n';
-                }
+                const getText = () => {
+                    dataClip = '';
+                    if (_type === 'copy-column-with-header') {
+                        dataClip = this.capalize(this.cell.attribute) + '\n';
+                    }
 
-                const numberformater = this.connector.numberFormater;
-                const dateformater = this.connector.dateFormater;
+                    const numberformater = this.connector.numberFormater;
+                    const dateformater = this.connector.dateFormater;
 
-                this.connector.getSelectedRows().forEach((row: number) => {
-                    if (!this.connector.displayedDataset[row].__group) {
-                        const data = this.connector.displayedDataset[row][this.cell.attribute];
-                        if (this.cell.type === 'date') {
-                            dataClip = dataClip + dateformater.fromDate(data) + '\n';
-                        } else {
-                            if (this.cell.type === 'number') {
-                                dataClip = dataClip + numberformater.fromNumber(data) + '\n';
+                    this.connector.getSelectedRows().forEach((row: number) => {
+                        if (!this.connector.displayedDataset[row].__group) {
+                            const data = this.connector.displayedDataset[row][this.cell.attribute];
+                            if (this.cell.type === 'date') {
+                                dataClip = dataClip + dateformater.fromDate(data) + '\n';
                             } else {
-                                dataClip = dataClip + (data || '') + '\n';
+                                if (this.cell.type === 'number') {
+                                    dataClip = dataClip + numberformater.fromNumber(data) + '\n';
+                                } else {
+                                    dataClip = dataClip + (data || '') + '\n';
+                                }
                             }
                         }
+                    });
+                    return dataClip;
+                };
+
+                const getHtml = () => {
+                    dataClip = `
+                                <html>
+                                <body>
+                                <style>
+                                table {
+                                    border-collapse: collapse;
+                                }
+                                td,
+                                th {
+                                    border: 1px solid rgb(190, 190, 190);
+                                    border-collapse: collapse;
+                                    padding:3px;
+                                }
+                                
+                                </style>
+                                <table>`;
+                    if (_type === 'copy-column-with-header') {
+                        dataClip =
+                            dataClip +
+                            '<tr><th>' +
+                            this.capalize(this.cell.attribute) +
+                            '</th></tr>';
                     }
-                });
-                await navigator.clipboard.writeText(dataClip);
+
+                    const numberformater = this.connector.numberFormater;
+                    const dateformater = this.connector.dateFormater;
+
+                    this.connector.getSelectedRows().forEach((row: number) => {
+                        if (!this.connector.displayedDataset[row].__group) {
+                            const data = this.connector.displayedDataset[row][this.cell.attribute];
+                            if (this.cell.type === 'date') {
+                                dataClip =
+                                    dataClip +
+                                    '<tr><td>' +
+                                    dateformater.fromDate(data) +
+                                    '</td></tr>';
+                            } else {
+                                if (this.cell.type === 'number') {
+                                    dataClip =
+                                        dataClip +
+                                        '<tr><td>' +
+                                        numberformater.fromNumber(data) +
+                                        '</td></tr>';
+                                } else {
+                                    dataClip = dataClip + '<tr><td>' + (data || '') + '</td></tr>';
+                                }
+                            }
+                        }
+                    });
+                    dataClip = dataClip + '<table/></body></html>';
+                    return dataClip;
+                };
+
+                function listener(e: any) {
+                    e.clipboardData.setData('text/html', getHtml());
+                    e.clipboardData.setData('text/plain', getText());
+                    e.preventDefault();
+                }
+                document.addEventListener('copy', listener);
+                document.execCommand('copy');
+                document.removeEventListener('copy', listener);
             } catch (err) {
                 console.error(err);
             }
         }
-        if (_type === 'copy-range-row-header' && this.rowData) {
+
+        /**
+         * Copy of row range
+         */
+        if (_type === 'copy-row-with-header' && this.rowData) {
             try {
                 const attributes = this.connector.config.groups.flatMap((g) =>
                     g.rows.map((r) => r.attribute)
@@ -98,40 +190,107 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                     g.rows.map((r) => r.type)
                 );
 
-                dataClip = '';
-                // headers
-                attributes.forEach((att) => {
-                    dataClip = dataClip + this.capalize(att) + '\t';
-                });
-                //rows
-                dataClip = dataClip + '\n';
+                const getText = () => {
+                    dataClip = '';
+                    // headers
+                    attributes.forEach((att) => {
+                        dataClip = dataClip + this.capalize(att) + '\t';
+                    });
+                    //rows
+                    dataClip = dataClip + '\n';
 
-                const numberformater = this.connector.numberFormater;
-                const dateformater = this.connector.dateFormater;
+                    const numberformater = this.connector.numberFormater;
+                    const dateformater = this.connector.dateFormater;
 
-                this.connector.getSelectedRows().forEach((row: number) => {
-                    if (!this.connector.displayedDataset[row].__group) {
-                        attributes.forEach((att, i) => {
-                            const data = this.connector.displayedDataset[row][att];
-                            if (types[i] === 'date') {
-                                dataClip = dataClip + dateformater.fromDate(data) + '\t';
-                            } else {
-                                if (types[i] === 'number') {
-                                    dataClip = dataClip + numberformater.fromNumber(data) + '\t';
+                    this.connector.getSelectedRows().forEach((row: number) => {
+                        if (!this.connector.displayedDataset[row].__group) {
+                            attributes.forEach((att, i) => {
+                                const data = this.connector.displayedDataset[row][att];
+                                if (types[i] === 'date') {
+                                    dataClip = dataClip + dateformater.fromDate(data) + '\t';
                                 } else {
-                                    dataClip = dataClip + (data || '') + '\t';
+                                    if (types[i] === 'number') {
+                                        dataClip =
+                                            dataClip + numberformater.fromNumber(data) + '\t';
+                                    } else {
+                                        dataClip = dataClip + (data || '') + '\t';
+                                    }
                                 }
-                            }
-                        });
-                        dataClip = dataClip + '\n';
-                    }
-                });
-                await navigator.clipboard.writeText(dataClip);
+                            });
+                            dataClip = dataClip + '\n';
+                        }
+                    });
+                };
+
+                const getHtml = () => {
+                    dataClip = `
+                                <html>
+                                <body>
+                                <style>
+                                table {
+                                    border-collapse: collapse;
+                                }
+                                td,
+                                th {
+                                    border: 1px solid rgb(190, 190, 190);
+                                    border-collapse: collapse;
+                                    padding:3px;
+                                }
+                                
+                                </style>
+                                <table>`;
+                    // headers
+                    dataClip = dataClip + '<tr>';
+                    attributes.forEach((att) => {
+                        dataClip = dataClip + '<th>' + this.capalize(att) + '</th>';
+                    });
+                    //rows
+                    dataClip = dataClip + '</tr>';
+
+                    const numberformater = this.connector.numberFormater;
+                    const dateformater = this.connector.dateFormater;
+
+                    this.connector.getSelectedRows().forEach((row: number) => {
+                        if (!this.connector.displayedDataset[row].__group) {
+                            let rowClip = '<tr>';
+                            attributes.forEach((att, i) => {
+                                const data = this.connector.displayedDataset[row][att];
+                                if (types[i] === 'date') {
+                                    rowClip =
+                                        rowClip + '<td>' + dateformater.fromDate(data) + '</td>';
+                                } else {
+                                    if (types[i] === 'number') {
+                                        rowClip =
+                                            rowClip +
+                                            '<td>' +
+                                            numberformater.fromNumber(data) +
+                                            '</td>';
+                                    } else {
+                                        rowClip = rowClip + '<td>' + (data || '') + '</td>';
+                                    }
+                                }
+                            });
+
+                            dataClip = dataClip + rowClip + '</tr>';
+                        }
+                    });
+                    dataClip = dataClip + '<table/></body></html>';
+                    return dataClip;
+                };
+
+                function listener(e: any) {
+                    e.clipboardData.setData('text/html', getHtml());
+                    e.clipboardData.setData('text/plain', getText());
+                    e.preventDefault();
+                }
+                document.addEventListener('copy', listener);
+                document.execCommand('copy');
+                document.removeEventListener('copy', listener);
             } catch (err) {
                 console.error(err);
             }
         }
-        if (_type === 'paste') {
+        if (_type === 'paste-into-selected-rows-in-selected-column') {
             try {
                 let data;
                 if (navigator.clipboard.readText) {
@@ -149,7 +308,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
             }
         }
 
-        if (_type === 'clear') {
+        if (_type === 'clear-cells-selected-rows-in-selected-columns') {
             this.pasteIntoCells(null);
         }
     }
@@ -160,14 +319,12 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
 
         this.connector.getSelectedRows().forEach((row: number) => {
             if (this.cell.type === 'number') {
-                this.connector.displayedDataset[row][this.cell.attribute] = numberformater.toNumber(
-                    data
-                );
+                this.connector.displayedDataset[row][this.cell.attribute] =
+                    numberformater.toNumber(data);
             }
             if (this.cell.type === 'date') {
-                this.connector.displayedDataset[row][this.cell.attribute] = dateformater.toDate(
-                    data
-                );
+                this.connector.displayedDataset[row][this.cell.attribute] =
+                    dateformater.toDate(data);
             }
             if (this.cell.type !== 'number' && this.cell.type !== 'date') {
                 this.connector.displayedDataset[row][this.cell.attribute] = data;
@@ -182,39 +339,39 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
 
     buildHtml() {
         let x = document.createElement('p');
-        x.onclick = () => this.select('copy');
-        x.appendChild(document.createTextNode('Copy cell'));
+        x.onclick = () => this.action('copy-cell');
+        x.appendChild(document.createTextNode('Copy'));
         x.classList.add('simple-html-grid-menu-item');
         this.appendChild(x);
 
-        x = document.createElement('p');
+        /*     x = document.createElement('p');
         x.onclick = () => this.select('copy-range');
-        x.appendChild(document.createTextNode('Copy cell column'));
+        x.appendChild(document.createTextNode('Copy column'));
+        x.classList.add('simple-html-grid-menu-item');
+        this.appendChild(x);
+ */
+        x = document.createElement('p');
+        x.onclick = () => this.action('copy-column-with-header');
+        x.appendChild(document.createTextNode('Copy column'));
         x.classList.add('simple-html-grid-menu-item');
         this.appendChild(x);
 
         x = document.createElement('p');
-        x.onclick = () => this.select('copy');
-        x.appendChild(document.createTextNode('Copy cell column (w/header)'));
-        x.classList.add('simple-html-grid-menu-item');
-        this.appendChild(x);
-
-        x = document.createElement('p');
-        x.onclick = () => this.select('copy-range-row-header');
-        x.appendChild(document.createTextNode(' Copy cell rows (w/header)'));
+        x.onclick = () => this.action('copy-row-with-header');
+        x.appendChild(document.createTextNode('Copy rows'));
         x.classList.add('simple-html-grid-menu-item');
         this.appendChild(x);
 
         if (!this.connector.config.readonly && !this.cell.readonly) {
             x = document.createElement('p');
-            x.onclick = () => this.select('paste');
-            x.appendChild(document.createTextNode('Paste into selected rows/cells'));
+            x.onclick = () => this.action('paste-into-selected-rows-in-selected-column');
+            x.appendChild(document.createTextNode('Paste into rows'));
             x.classList.add('simple-html-grid-menu-item');
             this.appendChild(x);
 
             x = document.createElement('p');
-            x.onclick = () => this.select('clear');
-            x.appendChild(document.createTextNode('Clear selected rows/cells'));
+            x.onclick = () => this.action('clear-cells-selected-rows-in-selected-columns');
+            x.appendChild(document.createTextNode('Clear rows'));
             x.classList.add('simple-html-grid-menu-item');
             this.appendChild(x);
         }
