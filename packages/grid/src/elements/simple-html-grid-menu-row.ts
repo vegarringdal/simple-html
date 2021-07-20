@@ -349,42 +349,47 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
     }
 
     buildHtml() {
-        let x = document.createElement('p');
-        x.onclick = () => this.action('copy-cell');
-        x.appendChild(document.createTextNode('Copy'));
-        x.classList.add('simple-html-grid-menu-item');
-        this.appendChild(x);
+        {
+            const element = document.createElement('p');
+            element.onclick = () => this.action('copy-cell');
+            element.appendChild(document.createTextNode('Copy'));
+            element.classList.add('simple-html-grid-menu-item');
+            this.appendChild(element);
+        }
 
-        /*     x = document.createElement('p');
-        x.onclick = () => this.select('copy-range');
-        x.appendChild(document.createTextNode('Copy column'));
-        x.classList.add('simple-html-grid-menu-item');
-        this.appendChild(x);
- */
-        x = document.createElement('p');
-        x.onclick = () => this.action('copy-column-with-header');
-        x.appendChild(document.createTextNode('Copy column'));
-        x.classList.add('simple-html-grid-menu-item');
-        this.appendChild(x);
+        {
+            const element = document.createElement('p');
+            element.onclick = () => this.action('copy-column-with-header');
+            element.appendChild(document.createTextNode('Copy column'));
+            element.classList.add('simple-html-grid-menu-item');
+            this.appendChild(element);
+        }
 
-        x = document.createElement('p');
-        x.onclick = () => this.action('copy-row-with-header');
-        x.appendChild(document.createTextNode('Copy rows'));
-        x.classList.add('simple-html-grid-menu-item');
-        this.appendChild(x);
+        {
+            const element = document.createElement('p');
+            element.onclick = () => this.action('copy-row-with-header');
+            element.appendChild(document.createTextNode('Copy rows'));
+            element.classList.add('simple-html-grid-menu-item');
+            this.appendChild(element);
+        }
 
         if (!this.connector.config.readonly && !this.cell.readonly) {
-            x = document.createElement('p');
-            x.onclick = () => this.action('paste-into-selected-rows-in-selected-column');
-            x.appendChild(document.createTextNode('Paste into rows'));
-            x.classList.add('simple-html-grid-menu-item');
-            this.appendChild(x);
+            {
+                const element = document.createElement('p');
+                element.onclick = () => this.action('paste-into-selected-rows-in-selected-column');
+                element.appendChild(document.createTextNode('Paste into rows'));
+                element.classList.add('simple-html-grid-menu-item');
+                this.appendChild(element);
+            }
 
-            x = document.createElement('p');
-            x.onclick = () => this.action('clear-cells-selected-rows-in-selected-columns');
-            x.appendChild(document.createTextNode('Clear rows'));
-            x.classList.add('simple-html-grid-menu-item');
-            this.appendChild(x);
+            {
+                const element = document.createElement('p');
+                element.onclick = () =>
+                    this.action('clear-cells-selected-rows-in-selected-columns');
+                element.appendChild(document.createTextNode('Clear rows'));
+                element.classList.add('simple-html-grid-menu-item');
+                this.appendChild(element);
+            }
         }
 
         if (this.cell.type === 'number') {
@@ -424,56 +429,78 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                 }
             });
 
-            x = document.createElement('hr');
-            this.appendChild(x);
+            {
+                const element = document.createElement('hr');
+                this.appendChild(element);
+            }
 
-            x = document.createElement('p');
-            x.onclick = async () => {
+            {
+                const element = document.createElement('p');
+                element.onclick = async () => {
+                    const curValueX = Math.round(curValue * 100) / 100;
+                    await navigator.clipboard.writeText(NumberFormater.fromNumber(curValueX));
+                };
                 const curValueX = Math.round(curValue * 100) / 100;
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(curValueX));
-            };
-            const curValueX = Math.round(curValue * 100) / 100;
-            x.appendChild(document.createTextNode(`Sum: ${NumberFormater.fromNumber(curValueX)}`));
-            x.classList.add('simple-html-grid-menu-item');
-            this.appendChild(x);
+                element.appendChild(
+                    document.createTextNode(`Sum: ${NumberFormater.fromNumber(curValueX)}`)
+                );
+                element.classList.add('simple-html-grid-menu-item');
+                this.appendChild(element);
+            }
 
-            x = document.createElement('p');
-            x.onclick = async () => {
+            {
+                const element = document.createElement('p');
+                element.onclick = async () => {
+                    const maxValueX = Math.round(maxValue * 100) / 100;
+                    await navigator.clipboard.writeText(NumberFormater.fromNumber(maxValueX));
+                };
                 const maxValueX = Math.round(maxValue * 100) / 100;
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(maxValueX));
-            };
-            const maxValueX = Math.round(maxValue * 100) / 100;
-            x.appendChild(document.createTextNode(`Max: ${NumberFormater.fromNumber(maxValueX)}`));
-            x.classList.add('simple-html-grid-menu-item');
-            this.appendChild(x);
+                element.appendChild(
+                    document.createTextNode(`Max: ${NumberFormater.fromNumber(maxValueX)}`)
+                );
+                element.classList.add('simple-html-grid-menu-item');
+                this.appendChild(element);
+            }
 
-            x = document.createElement('p');
-            x.onclick = async () => {
+            {
+                const element = document.createElement('p');
+                element.onclick = async () => {
+                    const minValueX = Math.round(minValue * 100) / 100;
+                    await navigator.clipboard.writeText(NumberFormater.fromNumber(minValueX));
+                };
                 const minValueX = Math.round(minValue * 100) / 100;
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(minValueX));
-            };
-            const minValueX = Math.round(minValue * 100) / 100;
-            x.appendChild(document.createTextNode(`Min: ${NumberFormater.fromNumber(minValueX)}`));
-            x.classList.add('simple-html-grid-menu-item');
-            this.appendChild(x);
+                element.appendChild(
+                    document.createTextNode(`Min: ${NumberFormater.fromNumber(minValueX)}`)
+                );
+                element.classList.add('simple-html-grid-menu-item');
+                this.appendChild(element);
+            }
 
-            x = document.createElement('p');
-            x.onclick = async () => {
+            {
+                const element = document.createElement('p');
+                element.onclick = async () => {
+                    const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100;
+                    await navigator.clipboard.writeText(NumberFormater.fromNumber(avgValueX));
+                };
                 const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100;
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(avgValueX));
-            };
-            const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100;
-            x.appendChild(document.createTextNode(`Avg: ${NumberFormater.fromNumber(avgValueX)}`));
-            x.classList.add('simple-html-grid-menu-item');
-            this.appendChild(x);
+                element.appendChild(
+                    document.createTextNode(`Avg: ${NumberFormater.fromNumber(avgValueX)}`)
+                );
+                element.classList.add('simple-html-grid-menu-item');
+                this.appendChild(element);
+            }
 
-            x = document.createElement('p');
-            x.onclick = async () => {
-                await navigator.clipboard.writeText(NumberFormater.fromNumber(selectedRows.length));
-            };
-            x.appendChild(document.createTextNode(`Rows: ${selectedRows.length}`));
-            x.classList.add('simple-html-grid-menu-item');
-            this.appendChild(x);
+            {
+                const element = document.createElement('p');
+                element.onclick = async () => {
+                    await navigator.clipboard.writeText(
+                        NumberFormater.fromNumber(selectedRows.length)
+                    );
+                };
+                element.appendChild(document.createTextNode(`Rows: ${selectedRows.length}`));
+                element.classList.add('simple-html-grid-menu-item');
+                this.appendChild(element);
+            }
         }
     }
 }
