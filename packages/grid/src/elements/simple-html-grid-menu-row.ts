@@ -27,8 +27,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
         const thisInnerWidth = window.innerWidth;
         if (rect.bottom > thisInnerHeight) {
             this.style.top = `${this.offsetTop - (rect.bottom - thisInnerHeight)}px`;
-        }
-        if (rect.right > thisInnerWidth) {
+        } else if (rect.right > thisInnerWidth) {
             this.style.left = `${this.offsetLeft - (rect.right - thisInnerWidth)}px`;
         }
     }
@@ -72,8 +71,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                 dataClip = this.rowData[this.cell.attribute]; // firefox hack
                 if (this.cell.type === 'date') {
                     dataClip = dateformater.fromDate(dataClip);
-                }
-                if (this.cell.type === 'number') {
+                } else if (this.cell.type === 'number') {
                     dataClip = numberformater.fromNumber(dataClip);
                 }
 
@@ -109,12 +107,10 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                             const data = this.connector.displayedDataset[row][this.cell.attribute];
                             if (this.cell.type === 'date') {
                                 dataClip = dataClip + dateformater.fromDate(data) + '\n';
+                            } else if (this.cell.type === 'number') {
+                                dataClip = dataClip + numberformater.fromNumber(data) + '\n';
                             } else {
-                                if (this.cell.type === 'number') {
-                                    dataClip = dataClip + numberformater.fromNumber(data) + '\n';
-                                } else {
-                                    dataClip = dataClip + (data || '') + '\n';
-                                }
+                                dataClip = dataClip + (data || '') + '\n';
                             }
                         }
                     });
@@ -158,16 +154,14 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                                     '<tr><td>' +
                                     dateformater.fromDate(data) +
                                     '</td></tr>';
+                            } else if (this.cell.type === 'number') {
+                                dataClip =
+                                    dataClip +
+                                    '<tr><td>' +
+                                    numberformater.fromNumber(data) +
+                                    '</td></tr>';
                             } else {
-                                if (this.cell.type === 'number') {
-                                    dataClip =
-                                        dataClip +
-                                        '<tr><td>' +
-                                        numberformater.fromNumber(data) +
-                                        '</td></tr>';
-                                } else {
-                                    dataClip = dataClip + '<tr><td>' + (data || '') + '</td></tr>';
-                                }
+                                dataClip = dataClip + '<tr><td>' + (data || '') + '</td></tr>';
                             }
                         }
                     });
@@ -219,13 +213,10 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                                 const data = this.connector.displayedDataset[row][att];
                                 if (types[i] === 'date') {
                                     dataClip = dataClip + dateformater.fromDate(data) + '\t';
+                                } else if (types[i] === 'number') {
+                                    dataClip = dataClip + numberformater.fromNumber(data) + '\t';
                                 } else {
-                                    if (types[i] === 'number') {
-                                        dataClip =
-                                            dataClip + numberformater.fromNumber(data) + '\t';
-                                    } else {
-                                        dataClip = dataClip + (data || '') + '\t';
-                                    }
+                                    dataClip = dataClip + (data || '') + '\t';
                                 }
                             });
                             dataClip = dataClip + '\n';
@@ -269,16 +260,14 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                                 if (types[i] === 'date') {
                                     rowClip =
                                         rowClip + '<td>' + dateformater.fromDate(data) + '</td>';
+                                } else if (types[i] === 'number') {
+                                    rowClip =
+                                        rowClip +
+                                        '<td>' +
+                                        numberformater.fromNumber(data) +
+                                        '</td>';
                                 } else {
-                                    if (types[i] === 'number') {
-                                        rowClip =
-                                            rowClip +
-                                            '<td>' +
-                                            numberformater.fromNumber(data) +
-                                            '</td>';
-                                    } else {
-                                        rowClip = rowClip + '<td>' + (data || '') + '</td>';
-                                    }
+                                    rowClip = rowClip + '<td>' + (data || '') + '</td>';
                                 }
                             });
 
@@ -332,12 +321,10 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
             if (this.cell.type === 'number') {
                 this.connector.displayedDataset[row][this.cell.attribute] =
                     numberformater.toNumber(data);
-            }
-            if (this.cell.type === 'date') {
+            } else if (this.cell.type === 'date') {
                 this.connector.displayedDataset[row][this.cell.attribute] =
                     dateformater.toDate(data);
-            }
-            if (this.cell.type !== 'number' && this.cell.type !== 'date') {
+            } else {
                 this.connector.displayedDataset[row][this.cell.attribute] = data;
             }
         });
