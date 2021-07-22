@@ -118,20 +118,19 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                 };
 
                 const getHtml = () => {
-                    dataClip = `
-                                <html>
+                    dataClip = `<html>
                                 <body>
                                 <style>
-                                table {
-                                    border-collapse: collapse;
-                                }
-                                td,
-                                th {
-                                    border: 1px solid rgb(190, 190, 190);
-                                    border-collapse: collapse;
-                                    padding:3px;
-                                }
-                                
+                                    table {
+                                        border-collapse: collapse;
+                                        border:.5pt solid windowtext;
+                                    }
+                                    td,
+                                    th {
+                                        border-collapse: collapse;
+                                        padding:3px;
+                                        border:.5pt solid windowtext;
+                                    }
                                 </style>
                                 <table>`;
                     if (_type === 'copy-column-with-header') {
@@ -159,13 +158,13 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                                     dataClip +
                                     '<tr><td>' +
                                     numberformater.fromNumber(data) +
-                                    '</td></tr>';
+                                    '</td ></tr>';
                             } else {
                                 dataClip = dataClip + '<tr><td>' + (data || '') + '</td></tr>';
                             }
                         }
                     });
-                    dataClip = dataClip + '<table/></body></html>';
+                    dataClip = dataClip + '</table></body></html>';
                     return dataClip;
                 };
 
@@ -225,20 +224,19 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                 };
 
                 const getHtml = () => {
-                    dataClip = `
-                                <html>
+                    dataClip = `<html>
                                 <body>
                                 <style>
-                                table {
-                                    border-collapse: collapse;
-                                }
-                                td,
-                                th {
-                                    border: 1px solid rgb(190, 190, 190);
-                                    border-collapse: collapse;
-                                    padding:3px;
-                                }
-                                
+                                    table {
+                                        border-collapse: collapse;
+                                        border:.5pt solid windowtext;
+                                    }
+                                    td,
+                                    th {
+                                        border-collapse: collapse;
+                                        padding:3px;
+                                        border:.5pt solid windowtext;
+                                    }
                                 </style>
                                 <table>`;
                     // headers
@@ -274,7 +272,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                             dataClip = dataClip + rowClip + '</tr>';
                         }
                     });
-                    dataClip = dataClip + '<table/></body></html>';
+                    dataClip = dataClip + '</table></body></html>';
                     return dataClip;
                 };
 
