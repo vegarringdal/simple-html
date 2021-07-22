@@ -22,6 +22,13 @@ export class Selection {
         return result;
     }
 
+    /**
+     * sleect all of visible rows
+     */
+    public selectAll() {
+        this.selectRange(0, this.dataSource.length() - 1);
+    }
+
     public addSelectedKeys(keys: any[]) {
         keys.forEach((k) => {
             this.selection.add(k);

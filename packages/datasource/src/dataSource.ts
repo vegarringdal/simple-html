@@ -523,6 +523,13 @@ export class Datasource<T = any> {
     }
 
     /**
+     * Selects all rows displayed
+     */
+    public selectAll() {
+        this.__selection.selectAll();
+    }
+
+    /**
      * replace selection mode used, if blank it will be set to 'none'
      */
     public setSelectionMode(mode: SelectionMode): void {
@@ -737,11 +744,13 @@ export class Datasource<T = any> {
                             } else {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${
-                                        OPERATORS[obj.operator]
-                                    }>> [${(obj.value as string).split('\n').map((val) => {
-                                        return `'${val}'`;
-                                    })}]`;
+                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${(
+                                        obj.value as string
+                                    )
+                                        .split('\n')
+                                        .map((val) => {
+                                            return `'${val}'`;
+                                        })}]`;
                             }
                         }
                     }

@@ -343,6 +343,13 @@ export class GridInterface<T = any> {
     }
 
     /**
+     * Selects all rows displayed
+     */
+    public selectAll() {
+        this.__ds.selectAll();
+    }
+
+    /**
      * returns edited rows
      * Internal usage only, do not call
      */

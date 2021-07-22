@@ -46,6 +46,17 @@ export class SimpleHtmlGrid extends HTMLElement {
 
             this.initResizerEvent();
         }
+
+        // add simple select all
+        this.onkeydown = (e: KeyboardEvent) => {
+            if (e.ctrlKey === true) {
+                if (e.key === 'A' || e.key === 'a') {
+                    e.preventDefault();
+                    this.interface.selectAll();
+                    this.reRender();
+                }
+            }
+        };
     }
 
     private initResizerEvent() {
