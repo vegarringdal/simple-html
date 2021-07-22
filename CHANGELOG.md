@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.7.0-next.1](https://github.com/simple-html/simple-html/compare/v3.7.0-next.0...v3.7.0-next.1) (2021-07-22)
+
+
+### Features
+
+* add select all to datasource/grid ([992284d](https://github.com/simple-html/simple-html/commits/992284d170e291ad9ac96a1fe9a49c4744d4b267))
+
 ## [3.7.0-next.0](https://github.com/simple-html/simple-html/compare/v3.6.0...v3.7.0-next.0) (2021-07-22)
 
 
