@@ -221,6 +221,7 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
                             dataClip = dataClip + '\n';
                         }
                     });
+                    return dataClip;
                 };
 
                 const getHtml = () => {
