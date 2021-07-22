@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.7.0-next.0](https://github.com/simple-html/simple-html/compare/v3.6.0...v3.7.0-next.0) (2021-07-22)
+
+
+### Features
+
+* paste rows and columns as table ([95dbe6e](https://github.com/simple-html/simple-html/commits/95dbe6e4dfb4300c1247f699786ddf3077e4e82c))
+
+
+### Bug Fixes
+
+* borders when pasting columns or row into excel ([739967e](https://github.com/simple-html/simple-html/commits/739967ee20d4da9c0c64cfa06cb6decfab6f0dfa))
+* clipboard plantext on rows was not returning text ([1700169](https://github.com/simple-html/simple-html/commits/170016934e6545e02d0ec5e2c7fa9b6672042db7))
+* quickfix move menus to stay inside viewports ([a94601c](https://github.com/simple-html/simple-html/commits/a94601cc661a074ad64a4a7a4c00c1f8a9b013a4))
+
 ## [3.6.0](https://github.com/simple-html/simple-html/compare/v3.6.0-next.3...v3.6.0) (2021-07-13)
 
 ## [3.6.0-next.3](https://github.com/simple-html/simple-html/compare/v3.6.0-next.2...v3.6.0-next.3) (2021-06-13)
