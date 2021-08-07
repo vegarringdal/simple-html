@@ -141,6 +141,11 @@ simple-html-grid-body::-webkit-scrollbar {
     width: 1em;
 }
 
+
+simple-html-grid-body::-webkit-scrollbar-corner {
+    background-color: var(--simple-html-grid-main-bg-border);
+}
+
 simple-html-grid-body::-webkit-scrollbar-track {
     background-color: var(--simple-html-grid-main-bg-color);
 }
@@ -251,7 +256,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     display: inline-block;
     min-width: 100%;
     background-color: var(--simple-html-grid-main-bg-color);
-    border-right: 1px solid var(--simple-html-grid-main-bg-border);
+    /* border-right: 1px solid var(--simple-html-grid-main-bg-border); */
     border-top: 1px solid var(--simple-html-grid-main-bg-border);
     border-bottom: 2px solid var(--simple-html-grid-main-bg-border);
     overflow: hidden;
