@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.7.0-next.2](https://github.com/simple-html/simple-html/compare/v3.7.0-next.1...v3.7.0-next.2) (2021-08-07)
+
+
+### Bug Fixes
+
+* **grid:** improve border header and scroll corner css ([644724c](https://github.com/simple-html/simple-html/commits/644724ca3cd86cba30374c54d6f8e54996860f11))
+
 ## [3.7.0-next.1](https://github.com/simple-html/simple-html/compare/v3.7.0-next.0...v3.7.0-next.1) (2021-07-22)
 
 
