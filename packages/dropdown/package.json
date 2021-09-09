@@ -4,10 +4,7 @@
     "description": "Simple dropdown component",
     "main": "dist/index.js",
     "module": "dist/index.js",
-    "typings": "src/index.ts",
-    "jsnext:main": "dist/index.js",
-    "ts:main": "src/index.ts",
-    "local:main": "src/index.ts",
+    "typings": "dist/index.d.ts",
     "author": "vegar.ringdal@gmail.com",
     "scripts": {
         "pub-now": "npm publish --access public",
