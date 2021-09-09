@@ -1,11 +1,6 @@
-const checker = require('fuse-box-typechecker').TypeChecker({
-    basePath: './',
-    tsConfigOverride: {
-        extends: './tsconfig.json',
-        compilerOptions: {
-            rootDirs: [`./samples`, './packages']
-        }
-    }
+const checker = require('esbuild-helpers').TypeChecker({
+    basePath: './packages',
+    tsConfig: 'tsconfig.json'
 });
 checker.printSettings();
 const result = checker.inspectOnly();
