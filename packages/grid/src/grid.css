@@ -468,9 +468,10 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
 
 .simple-html-grid .simple-html-grid-icon {
     fill: currentColor;
-    width: 1em;
-    height: 1em;
-    vertical-align: -0.15em;
+    width: 15px;
+    height: 15px;
+    margin-right: 5px;
+    margin-left: 5px;
     overflow: hidden;
     display: initial;
 }
