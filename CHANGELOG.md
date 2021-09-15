@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.7.0-next.5](https://github.com/simple-html/simple-html/compare/v3.7.0-next.4...v3.7.0-next.5) (2021-09-15)
+
+
+### Features
+
+* (grid) label menu -> auto resize current column ([1e12a2b](https://github.com/simple-html/simple-html/commits/1e12a2bc446b01a8af8c3f7a96227cae8c5356fd))
+
+
+### Bug Fixes
+
+* grouping plus/minus icon size ([c1bb21c](https://github.com/simple-html/simple-html/commits/c1bb21cc45d7dce29bff311ac3dbf5cab7f24cf6))
+* improve context menu,make entire label clickable ([12e4c07](https://github.com/simple-html/simple-html/commits/12e4c07e068a023c6ad468de22416df94981fcb1))
+
 ## [3.7.0-next.4](https://github.com/simple-html/simple-html/compare/v3.7.0-next.3...v3.7.0-next.4) (2021-09-09)
 
 ## [3.7.0-next.3](https://github.com/simple-html/simple-html/compare/v3.7.0-next.2...v3.7.0-next.3) (2021-09-09)
