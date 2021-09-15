@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.7.0-next.6](https://github.com/simple-html/simple-html/compare/v3.7.0-next.5...v3.7.0-next.6) (2021-09-15)
+
+
+### Bug Fixes
+
+* (grid) autorizie forgot to check if cell have value ([74112c6](https://github.com/simple-html/simple-html/commits/74112c6f7fd90f5ab006fd580007ed7a9feda754))
+
 ## [3.7.0-next.5](https://github.com/simple-html/simple-html/compare/v3.7.0-next.4...v3.7.0-next.5) (2021-09-15)
 
 
