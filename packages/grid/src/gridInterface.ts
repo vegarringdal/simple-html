@@ -879,8 +879,8 @@ export class GridInterface<T = any> {
     /**
      * experimental autoresize columns
      */
-    public autoResizeColumns() {
-        const attributes = this.config.groups.flatMap((g) => g?.rows);
+    public autoResizeColumns(cell?: CellConfig<any>) {
+        const attributes = [cell] || this.config.groups.flatMap((g) => g?.rows);
         let widths: number[] = attributes.map((e) => {
             return e?.header?.length + 4;
         });
@@ -917,13 +917,19 @@ export class GridInterface<T = any> {
             let x = 0;
             g?.rows.forEach((r) => {
                 if (x < 750) {
-                    const xx = widths[attributesStrings.indexOf(r.attribute)];
-                    if (xx > x) {
-                        x = this.getTextWidth(text[attributesStrings.indexOf(r.attribute)]) + 15;
+                    if (attributesStrings.indexOf(r.attribute) !== -1) {
+                        const xx = widths[attributesStrings.indexOf(r.attribute)];
+                        if (xx > x) {
+                            x =
+                                this.getTextWidth(text[attributesStrings.indexOf(r.attribute)]) +
+                                15;
+                        }
                     }
                 }
             });
-            g.width = x > 750 ? 750 : x;
+            if (x) {
+                g.width = x > 750 ? 750 : x;
+            }
         });
 
         this.manualConfigChange(this.config);

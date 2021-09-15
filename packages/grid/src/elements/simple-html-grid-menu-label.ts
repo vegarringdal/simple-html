@@ -63,7 +63,7 @@ export class SimpleHtmlGridMenuLabel extends HTMLElement {
     }
 
     buildHtml() {
-        const el = [1, 1, 1, 1, 1, 1, 1, 1].map(() => document.createElement('p'));
+        const el = [1, 1, 1, 1, 1, 1, 1, 1, 1].map(() => document.createElement('p'));
         el.forEach((e) => e.classList.add('simple-html-grid-menu-item'));
 
         el[0].onclick = () => this.select('sort', false, false);
@@ -81,10 +81,13 @@ export class SimpleHtmlGridMenuLabel extends HTMLElement {
         el[4].onclick = () => this.connector.autoResizeColumns();
         el[4].appendChild(document.createTextNode('Auto resize columns'));
 
-        el[5].onclick = () => this.select('groupBy');
-        el[5].appendChild(document.createTextNode('Group by'));
+        el[5].onclick = () => this.connector.autoResizeColumns(this.cell);
+        el[5].appendChild(document.createTextNode('Auto resize this column'));
 
-        el[6].onclick = () => {
+        el[6].onclick = () => this.select('groupBy');
+        el[6].appendChild(document.createTextNode('Group by'));
+
+        el[7].onclick = () => {
             const cell = this.cell;
             if (!this.connector.config.optionalCells) {
                 this.connector.config.optionalCells = [];
@@ -106,9 +109,9 @@ export class SimpleHtmlGridMenuLabel extends HTMLElement {
             this.connector.manualConfigChange(this.connector.config);
         };
 
-        el[6].appendChild(document.createTextNode('Remove cell'));
+        el[7].appendChild(document.createTextNode('Remove cell'));
 
-        el[7].onclick = (e: any) =>
+        el[8].onclick = (e: any) =>
             generateMenuWithComponentName(
                 'simple-html-grid-column-chooser',
                 e,
@@ -118,7 +121,7 @@ export class SimpleHtmlGridMenuLabel extends HTMLElement {
                 null,
                 null
             );
-        el[7].appendChild(document.createTextNode('Column Chooser'));
+        el[8].appendChild(document.createTextNode('Column Chooser'));
 
         el.forEach((e) => this.appendChild(e));
     }
