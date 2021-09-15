@@ -880,7 +880,7 @@ export class GridInterface<T = any> {
      * experimental autoresize columns
      */
     public autoResizeColumns(cell?: CellConfig<any>) {
-        const attributes = [cell] || this.config.groups.flatMap((g) => g?.rows);
+        const attributes = cell ? [cell] : this.config.groups.flatMap((g) => g?.rows);
         let widths: number[] = attributes.map((e) => {
             return e?.header?.length + 4;
         });
