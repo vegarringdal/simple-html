@@ -157,7 +157,7 @@ export class SimpleHtmlGridCellLabel extends HTMLElement {
             cell.sortable && sortCallback(e);
             !cell.disableDragDrop && mousedown(e);
         };
-        this.labelEl.oncontextmenu = (e: any) => {
+        this.oncontextmenu = (e: any) => {
             e.preventDefault();
             contentMenu(e);
             return false;
