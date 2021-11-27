@@ -27,4 +27,4 @@ Added branch for it, everything except grid/datsource could easily be replaced b
 
 `npm run build:all` builds all packages
 
-`npm run release:all` publishes repo, you need to push
+`npm run publish:all` publishes repo, you need to push
