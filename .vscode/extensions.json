@@ -1,9 +1,7 @@
 {
   "recommendations": [
     "eamodio.gitlens",
-    "eg2.tslint",
     "pflannery.vscode-versionlens",
     "esbenp.prettier-vscode",
-    "bierner.lit-html"
   ]
 }
