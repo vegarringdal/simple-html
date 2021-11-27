@@ -25,16 +25,9 @@
         "importHelpers": false,
         "strictNullChecks": false,
         "experimentalDecorators": true,
-        "baseUrl": "./",
-        "rootDir": ".",
         "paths": {
-            "@simple-html/core": ["../packages/core/src"],
             "@simple-html/datasource": ["../packages/datasource/src"],
-            "@simple-html/grid": ["../packages/grid/src"],
-            "@simple-html/router": ["../packages/router/src"],
-            "@simple-html/splitter": ["../packages/splitter/src"],
-            "@simple-html/date": ["../packages/date/src"],
-            "@simple-html/dropdown": ["../packages/dropdown/src"]
+            "@simple-html/grid": ["../packages/grid/src"]
         }
     },
     "exclude": ["node_modules"]
