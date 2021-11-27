@@ -27,4 +27,6 @@ Added branch for it, everything except grid/datsource could easily be replaced b
 
 `npm run build:all` builds all packages
 
+`npm run release:next` updates package.json and updates chnagelog
+
 `npm run publish:all` publishes repo, you need to push
