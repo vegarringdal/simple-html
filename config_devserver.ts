@@ -1,39 +1,15 @@
-import {
-    clearFolders,
-    addDefaultIndex,
-    client,
-    postcssPlugin,
-    single,
-    TypeChecker
-} from 'esbuild-helpers';
+import { clearFolders, addDefaultIndex, client, single, TypeChecker } from 'esbuild-helpers';
 
 clearFolders('dist_client', 'dist_nodejs');
 
 const sample = process.argv[2];
 
-/**
- * css so we dont need to wait for postcss unless we change css..
- */
-single(
-    { watch: `./src/${sample}/**/*.css` },
-    {
-        color: true,
-        define: {
-            DEVELOPMENT: 'true'
-        },
-        entryPoints: [`./samples/${sample}/index.css`],
-        outfile: `./dist/${sample}/app.css`,
-        plugins: [postcssPlugin([require('tailwindcss')])],
-        logLevel: 'error',
-        incremental: true
-    }
-);
 
 /**
  * client bundle
  */
 client(
-    { watch: [`./samples/${sample}/**/*.ts`, './packages/**/*.*'] },
+    { watch: [`./samples/${sample}/**/*.*`, './packages/**/*.*'] },
     {
         color: true,
         define: {
@@ -43,14 +19,13 @@ client(
         outfile: `./dist/${sample}/index.js`,
         minify: false,
         bundle: true,
-        tsconfig: './samples/tsconfig.json',
+        tsconfig: `./samples/tsconfig.json`,
         platform: 'browser',
         sourcemap: true,
         logLevel: 'error',
         incremental: true
     }
 );
-
 /**
  * index file for project
  */
@@ -60,8 +35,8 @@ addDefaultIndex({
     entry: './index.js',
     hbr: true,
     devServer: true,
-    devServerPort: 80,
-    userInjectOnHbr: 'window.dispatchEvent(new CustomEvent("SIMPLE_HTML_SAVE_STATE"));',
+    devServerPort: 8080,
+    userInjectOnHbr: 'window.location.reload();',
     indexTemplate: /*html*/ `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -69,7 +44,7 @@ addDefaultIndex({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Document</title>
         <link href="./index.css" rel="stylesheet" />
-        <link href="./app.css" rel="stylesheet" />
+       
        
         $bundle
       </head>

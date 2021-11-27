@@ -28,13 +28,8 @@
         "baseUrl": "./",
         "rootDir": ".",
         "paths": {
-            "@simple-html/core": ["./core/src"],
             "@simple-html/datasource": ["./datasource/src"],
-            "@simple-html/grid": ["./grid/src"],
-            "@simple-html/router": ["./router/src"],
-            "@simple-html/splitter": ["./splitter/src"],
-            "@simple-html/date": ["./date/src"],
-            "@simple-html/dropdown": ["./dropdown/src"]
+            "@simple-html/grid": ["./grid/src"]
         }
     },
     "exclude": ["node_modules"]

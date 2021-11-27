@@ -1,19 +1,17 @@
-# @simple-html/core 
 
-Little library wrapper I have made around `lit-html`.
-It comes with simple router `@simple-html/router`
+# @simple-html/grid & @simple-html/datasource
 
-Link to [documentation](/docs/readme.md)
+Native html grid & datasource with no dependencies.
 
-
-
-
-# @simple-html/grid
-
-Grid have no dependecies on `@simple-html/core` or `lit-html`. But it needs `@simple-html/datasource`
 
 Limted docs atm, only simple samples
 Its beeing used in some personal applications at work atm to get real world testing on what works good and not.
 
-https://github.com/simple-html/simple-html/tree/master/packages/grid
-https://github.com/simple-html/simple-html/tree/master/packages/datasource
+
+[grid source](https://github.com/simple-html/simple-html/tree/master/packages/grid)
+[datasource source](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
+
+
+### What happend to version 3.x.x
+
+Added branch for it, everything except grid/datsource could easily be replaced by React/lithtml or similar, so was no need for it.

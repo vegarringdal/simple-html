@@ -31,7 +31,7 @@ export function valueInput(operatorObject: FilterArgument, ctx: SimpleHtmlGridFi
     switch (operatorObject.attributeType) {
         case 'boolean':
             el.type = 'checkbox';
-            el.checked = (operatorObject.value as unknown) as boolean;
+            el.checked = operatorObject.value as unknown as boolean;
             el.onchange = (e: any) => {
                 operatorObject.value = e.target.checked;
             };
