@@ -12,6 +12,12 @@ Its beeing used in some personal applications at work atm to get real world test
 [datasource source](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
 
 
+# Developer sample 01
+
+* clone repo
+* `npm install`
+* `npm start grid01`
+
 ### What happend to version 3.x.x
 
 Added branch for it, everything except grid/datsource could easily be replaced by React/lithtml or similar, so was no need for it.
