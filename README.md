@@ -10,3 +10,8 @@ Its beeing used in some personal applications at work atm to get real world test
 
 [grid source](https://github.com/simple-html/simple-html/tree/master/packages/grid)
 [datasource source](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
+
+
+### What happend to version 3.x.x
+
+Added branch for it, everything except grid/datsource could easily be replaced by React/lithtml or similar, so was no need for it.
