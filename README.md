@@ -21,3 +21,10 @@ Its beeing used in some personal applications at work atm to get real world test
 ### What happend to version 3.x.x
 
 Added branch for it, everything except grid/datsource could easily be replaced by React/lithtml or similar, so was no need for it.
+
+
+### BUILD / RELEASE
+
+`npm run build:all` builds all packages
+
+`npm run release:all` publishes repo, you need to push

@@ -29,11 +29,7 @@
     },
     "author": "Vegar Ringdal",
     "license": "MIT",
-    "standard-version": {
-        "skip": {
-            "commit": true
-        }
-    },
+    "standard-version": {},
     "devDependencies": {
         "@commitlint/cli": "^15.0.0",
         "@commitlint/config-conventional": "^15.0.0",
