@@ -10,8 +10,8 @@ Source code:
 * [Datasource](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
 
 API docs
-* [Grid](https://github.com/simple-html/docs/grid/index.html)
-* [Datasource](https://github.com/simple-html/docs/datasource/index.html)
+* [Grid](https://simple-html.github.io/simple-html/grid/index.html)
+* [Datasource](https://simple-html.github.io/simple-html/datasource/index.html)
 
 # Developer sample 01
 

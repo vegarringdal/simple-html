@@ -33,4 +33,4 @@ https://bundlephobia.com/result?p=@simple-html/grid
 
 ### Docs
 
-[Grid Api](https://github.com/simple-html/docs/grid/index.html)
+[Grid Api](https://simple-html.github.io/simple-html/grid/index.html)

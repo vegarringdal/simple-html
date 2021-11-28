@@ -21,4 +21,4 @@ https://bundlephobia.com/result?p=@simple-html/datasource
 
 ### Docs
 
-[Datasource Api](https://github.com/simple-html/docs/datasource/index.html)
+[Datasource Api](https://simple-html.github.io/simple-html/datasource/index.html)
