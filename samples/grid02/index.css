@@ -1,0 +1,31 @@
+body {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.m-2 {
+    margin: 2px;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.p-2 {
+    padding: 2px;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.flex-row {
+    flex-direction: row;
+}
