@@ -3,14 +3,14 @@
 
 Native html grid & datasource with no dependencies.
 
-
-Limted docs atm, only simple samples
 Its beeing used in some personal applications at work atm to get real world testing on what works good and not.
 
 
-[grid source](https://github.com/simple-html/simple-html/tree/master/packages/grid)
-[datasource source](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
+[Grid source code](https://github.com/simple-html/simple-html/tree/master/packages/grid)
+[Datasource source code](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
 
+[Grid Api](https://github.com/simple-html/docs/grid/index.html)
+[Datasource Api](https://github.com/simple-html/docs/datasource/index.html)
 
 # Developer sample 01
 
@@ -26,6 +26,9 @@ Added branch for it, everything except grid/datsource could easily be replaced b
 ### BUILD / RELEASE
 
 `npm run build:all` builds all packages
+
+`npm run typedoc-grid` update typedoc grid
+`npm run typedoc-ds` update typedoc grid
 
 `npm run release:next` updates package.json and updates chnagelog (remove next if not test version)
 

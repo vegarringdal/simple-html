@@ -1,4 +1,4 @@
-import { clearFolders, addDefaultIndex, client, single, TypeChecker } from 'esbuild-helpers';
+import { clearFolders, addDefaultIndex, client, TypeChecker } from 'esbuild-helpers';
 
 clearFolders('dist_client', 'dist_nodejs');
 
