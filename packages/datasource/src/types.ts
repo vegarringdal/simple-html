@@ -82,6 +82,7 @@ export interface GroupArgument {
 }
 
 /**
+ * @internal
  * nicer string values
  */
 export const OPERATORS = {

@@ -156,6 +156,7 @@ export class Datasource<T = any> {
     }
 
     /**
+     * @internal
      * INTERNAL: Used by selection to set new current entity
      * @param row
      */
@@ -457,6 +458,7 @@ export class Datasource<T = any> {
     }
 
     /**
+     * @internal
      * used to call subscribers, used by selection/sorting/filter/grouping controller
      * @param event
      * @param data

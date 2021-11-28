@@ -1,6 +1,7 @@
 import { Entity } from './types';
 
 /**
+ * @internal
  * Entity will keep track of edited properties of the row object
  */
 

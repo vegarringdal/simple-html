@@ -26,8 +26,8 @@
         "release:major": "standard-version --release-as major",
         "release:next": "standard-version --prerelease next",
         "prepare": "husky install",
-        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --excludeNotDocumented --cleanOutputDir --out docs/grid ./packages/grid/src/index.ts",
-        "typedoc-ds": "npx typedoc --tsconfig tsconfig-typedoc.json --excludeNotDocumented --cleanOutputDir --out docs/datasource ./packages/datasource/src/index.ts"
+        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --excludeNotDocumented --excludeExternals --excludePrivate --excludeInternal --cleanOutputDir --out docs/grid ./packages/grid/src/index.ts",
+        "typedoc-ds": "npx typedoc --tsconfig tsconfig-typedoc.json --excludeNotDocumented --excludeExternals --excludePrivate --excludeInternal --cleanOutputDir --out docs/datasource ./packages/datasource/src/index.ts"
     },
     "author": "Vegar Ringdal",
     "license": "MIT",

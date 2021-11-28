@@ -21,6 +21,7 @@ export class GridInterface<T = any> {
 
     /**
      * connected grid
+     * @internal
      **/
     private __SimpleHtmlGrid: SimpleHtmlGrid;
 
