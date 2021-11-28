@@ -14,7 +14,7 @@ const gridConfig: GridConfig = generateGridConfig(1, 30);
 
 const datasource = new Datasource();
 const generator = new DataGenerator();
-datasource.setData(generator.generateData(100));
+datasource.setData(generator.generateData(10000));
 
 /**
  * create interface
