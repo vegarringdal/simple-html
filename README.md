@@ -5,12 +5,13 @@ Native html grid & datasource with no dependencies.
 
 Its beeing used in some personal applications at work atm to get real world testing on what works good and not.
 
+Source code:
+* [Grid](https://github.com/simple-html/simple-html/tree/master/packages/grid)
+* [Datasource](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
 
-[Grid source code](https://github.com/simple-html/simple-html/tree/master/packages/grid)
-[Datasource source code](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
-
-[Grid Api](https://github.com/simple-html/docs/grid/index.html)
-[Datasource Api](https://github.com/simple-html/docs/datasource/index.html)
+API docs
+* [Grid](https://github.com/simple-html/docs/grid/index.html)
+* [Datasource](https://github.com/simple-html/docs/datasource/index.html)
 
 # Developer sample 01
 
