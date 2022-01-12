@@ -45,3 +45,10 @@ showDialogBtn.addEventListener('click', () => {
     gridInterface.showFilterDialog();
 });
 document.body.appendChild(showDialogBtn);
+
+const clearFilterBtn = document.createElement('button');
+clearFilterBtn.innerText = 'clear filters';
+clearFilterBtn.addEventListener('click', () => {
+    gridInterface.clearAllFilters();
+});
+document.body.appendChild(clearFilterBtn);
