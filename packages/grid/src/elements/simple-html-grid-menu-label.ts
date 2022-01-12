@@ -109,7 +109,7 @@ export class SimpleHtmlGridMenuLabel extends HTMLElement {
             this.connector.manualConfigChange(this.connector.config);
         };
 
-        el[7].appendChild(document.createTextNode('Remove cell'));
+        el[7].appendChild(document.createTextNode('Hide column'));
 
         el[8].onclick = (e: any) =>
             generateMenuWithComponentName(

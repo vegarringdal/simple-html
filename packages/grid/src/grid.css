@@ -573,13 +573,14 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     border-bottom: 1px solid var(--simple-html-grid-sec-bg-border);
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
+
 .simple-html-grid-menu-item {
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
     display: block;
     height: 20px;
-    text-align: center;
+    text-align: left;
     overflow: hidden;
     user-select: none;
     font-family: var(--simple-html-grid-font-family);
@@ -587,10 +588,16 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     font-weight: var(--simple-html-grid-font-weight-cell);
     background-color: var(--simple-html-grid-main-bg-color);
     margin: initial;
+    padding-left: 5px;
     transition: initial;
     outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 }
+.simple-html-grid-menu-item-center {
+    text-align: center;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
 .simple-html-grid-menu-item-input {
     box-sizing: border-box;
     border: 0;

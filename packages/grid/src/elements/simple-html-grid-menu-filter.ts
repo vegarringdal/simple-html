@@ -522,8 +522,9 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
+            el.classList.add('simple-html-grid-menu-item-center');
             el.onclick = () => runFilterClick();
-            el.appendChild(document.createTextNode('run filter'));
+            el.appendChild(document.createTextNode('Run filter'));
             this.appendChild(el);
         }
     }
