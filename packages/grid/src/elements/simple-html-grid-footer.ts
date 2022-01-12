@@ -52,7 +52,10 @@ export class SimpleHtmlGridFooter extends HTMLElement {
         const totalRows = this.connector.completeDataset.length;
         const filter = this.connector.filteredDataset.length;
 
-        this.appendChild(this.showEdit());
+        if (this.connector.config.showDialogInFooter) {
+            // only show if set to true, hidden by default
+            this.appendChild(this.showEdit());
+        }
 
         {
             const el = document.createElement('div');

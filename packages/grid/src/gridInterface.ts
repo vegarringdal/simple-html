@@ -9,6 +9,7 @@ import {
 } from './types';
 import { Datasource, DataContainer, Entity } from '@simple-html/datasource';
 import { SortArgument } from '@simple-html/datasource';
+import { generateMenuWithComponentName } from './elements/generateMenuWithComponentName';
 
 /**
  * Grid nterface is just connection between datasource/config to the grid.
@@ -81,6 +82,21 @@ export class GridInterface<T = any> {
      */
     get displayedDataset() {
         return this.__ds.getRows();
+    }
+
+    /**
+     * show filter dialog
+     */
+    public showFilterDialog() {
+        generateMenuWithComponentName(
+            'simple-html-grid-filter-dialog',
+            this.__SimpleHtmlGrid,
+            this,
+            this.__SimpleHtmlGrid,
+            null,
+            null,
+            null
+        );
     }
 
     /**

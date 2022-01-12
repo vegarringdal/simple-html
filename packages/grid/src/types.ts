@@ -95,6 +95,9 @@ export interface GridConfig<T = any> {
     lastScrollTop?: number;
     selectionMode?: 'multiple' | 'single' | 'none';
 
+    // optional
+    showDialogInFooter?: boolean;
+
     // internals
     __cellRows?: number;
     __rowHeight?: number;
