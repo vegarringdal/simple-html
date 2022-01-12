@@ -35,3 +35,13 @@ element.classList.add('simple-html-grid');
  * add to document
  */
 document.body.appendChild(element);
+
+/**
+ * Add buttons
+ */
+const showDialogBtn = document.createElement('button');
+showDialogBtn.innerText = 'show dialog';
+showDialogBtn.addEventListener('click', () => {
+    gridInterface.showFilterDialog();
+});
+document.body.appendChild(showDialogBtn);
