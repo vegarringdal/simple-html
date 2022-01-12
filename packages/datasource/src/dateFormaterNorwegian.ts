@@ -4,6 +4,9 @@ export interface DateFormaterType {
     getPlaceHolderDate(): string;
 }
 
+/**
+ * default dateformater - DD-MM-YYYY
+ */
 export class DateFormater {
     /**
      * Takes value and return string

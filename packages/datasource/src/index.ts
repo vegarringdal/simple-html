@@ -14,5 +14,5 @@ export { Entity, OPERATORS } from './types';
 export { EntityHandler } from './entity';
 export { Datasource } from './dataSource';
 export { DataContainer } from './dataContainer';
-export { NumberFormater, NumberFormaterType } from './numberFormater';
-export { DateFormater, DateFormaterType } from './dateFormater';
+export { NumberFormaterDot as NumberFormater, NumberFormaterType } from './numberFormaterDot';
+export { DateFormaterDefault as DateFormater, DateFormaterType } from './dateFormaterDefault';

@@ -12,8 +12,8 @@ import {
     OPERATORS
 } from './types';
 import { DataContainer } from './dataContainer';
-import { DateFormater, DateFormaterType } from './dateFormater';
-import { NumberFormater, NumberFormaterType } from './numberFormater';
+import { DateFormaterDefault, DateFormaterType } from './dateFormaterDefault';
+import { NumberFormaterDot, NumberFormaterType } from './numberFormaterDot';
 
 type callF = (...args: any[]) => any;
 type callO = { handleEvent: (...args: any[]) => any };
@@ -74,12 +74,12 @@ export class Datasource<T = any> {
     /**
      * default date formater
      */
-    private __dateFormater: DateFormaterType = DateFormater;
+    private __dateFormater: DateFormaterType = DateFormaterDefault;
 
     /**
      * default number formater
      */
-    private __numberFormater: NumberFormaterType = NumberFormater;
+    private __numberFormater: NumberFormaterType = NumberFormaterDot;
 
     /**
      * current entity, use this with form etc if you have a grid with detail form

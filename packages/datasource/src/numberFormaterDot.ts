@@ -3,7 +3,11 @@ export interface NumberFormaterType {
     fromNumber(value: any): string | null | undefined;
 }
 
-export class NumberFormater {
+/**
+ * default number format, uses dot
+ * this will convert comma to dot
+ */
+export class NumberFormaterDot {
     /**
      * Takes value and return string
      * @param value
@@ -45,8 +49,8 @@ export class NumberFormater {
             return returnValue;
         }
 
-        if (returnValue.toString().includes('.')) {
-            returnValue = returnValue.toString().replace('.', ',');
+        if (returnValue.toString().includes(',')) {
+            returnValue = returnValue.toString().replace(',', '.');
         }
 
         return returnValue.toString();
