@@ -19,7 +19,11 @@ export {
     DataTypes
 } from '@simple-html/datasource';
 
+/**
+ * filter triggers
+ */
 export type InputTriggers = 'input' | 'change';
+
 export type RowCache = { i: number; update: boolean };
 export type ColCache = { i: number; update: boolean; found: boolean };
 
@@ -30,34 +34,78 @@ export interface IAttributes {
 
 // attribute: keyof Record<keyof T, string> & string;
 
+/**
+ * Cell config
+ */
 export interface CellConfig<T = any> {
+    /**
+     * header title
+     */
     header?: string;
+    /**
+     * attribute in data
+     */
     attribute: keyof T & string;
-    /**Default FALSE */
+    /**
+     * read only cell, default false
+     */
     readonly?: boolean;
-    /**Default FALSE */
+    /**
+     * disabled, false by default
+     */
     disabled?: boolean;
+    /**
+     * width of cell
+     */
     width?: number;
-    /**this will overide date if any */
+    /**
+     * placeholder cell if empty and row selected
+     */
     placeholder?: string;
-    /** you need to subscribe event*/
+
+    /**
+     * add focus button, you also need to subscribe event on gridInterface to do anything
+     */
     focusButton?: boolean;
+    /**
+     * show filterbutton if grid is readonly
+     */
     focusButtonIfGridReadonly?: boolean;
+    /**
+     * show filterbutton if cell is read only
+     */
     focusButtonIfCellReadonly?: boolean;
-    //filter
+    /**
+     * filter settings
+     */
     filterable?: {
-        /**Default FALSE */
+        /**
+         * filter over label
+         */
         filterOverLabel?: boolean;
         /**Default TRUE */
         auto?: boolean;
-        /**Default CHANGE */
+        /**
+         * filter trigger
+         */
         filterTrigger?: InputTriggers;
-        /**Default STRING/TEXT */
+        /**
+         * @private
+         * value in cell
+         */
         currentValue?: string | number | boolean | Date;
+        /**
+         * place holder
+         */
         placeholder?: string;
-        /**Default BEGIN WITH */
+        /**
+         * default filteroperator, default is BEGIN WITH
+         */
         operator?: FilterComparisonOperator;
     };
+    /**
+     * sort options
+     */
     sortable?: {
         /**Internal used for making sort icon on header*/
         sortAscending?: boolean;
@@ -66,6 +114,9 @@ export interface CellConfig<T = any> {
         /**Internal used for making sort icon on header*/
         noToggle?: boolean;
         /**Default TRUE */
+        /**
+         * trigger sort on header click
+         */
         auto?: boolean;
     };
     type?: DataTypes;
@@ -76,26 +127,64 @@ export interface CellConfig<T = any> {
     allowGrouping?: boolean;
 }
 
+/**
+ * grid row config
+ */
 export type GridRowConfig<T = any> = CellConfig<T>;
+
+/**
+ * @public
+ * column group config
+ */
 export type GridGroupConfig<T = any> = {
+    /**
+     * width of column
+     */
     width: number;
     //internal
     __left?: number;
+    /**
+     * rows in columns withing a row
+     */
     rows: GridRowConfig<T>[];
 };
 
+/**
+ * Grid config
+ */
 export interface GridConfig<T = any> {
+    /**
+     * Groups of columns, every column can have rows of cells within a row
+     */
     groups: GridGroupConfig<T>[];
+    /**
+     * this is the optional/hidden cells
+     */
     optionalCells?: CellConfig<T>[];
+    /**
+     * hight of a cell
+     */
     cellHeight: number;
+    /**
+     * footer hight
+     */
     footerHeight: number;
+    /**
+     * panel hight
+     */
     panelHeight?: number;
     scrollLeft?: number;
     readonly?: boolean;
     lastScrollTop?: number;
+    /**
+     * selection mode
+     */
     selectionMode?: 'multiple' | 'single' | 'none';
 
     // optional
+    /**
+     * show filter dialog, hidden by default
+     */
     showDialogInFooter?: boolean;
 
     // internals
