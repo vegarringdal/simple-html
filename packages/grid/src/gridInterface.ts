@@ -100,6 +100,23 @@ export class GridInterface<T = any> {
     }
 
     /**
+     * clear all filters
+     *
+     */
+    public clearAllFilters() {
+        this.setCurrentFilter(null);
+        const columns = this.config.groups.flatMap((x) => x.rows);
+        columns.forEach((col) => {
+            const f = col.filterable;
+            if (f) {
+                f.currentValue = null;
+            }
+        });
+        this.reRender();
+        this.reRunFilter();
+    }
+
+    /**
      * returns current datasource
      */
     public getDatasource() {
