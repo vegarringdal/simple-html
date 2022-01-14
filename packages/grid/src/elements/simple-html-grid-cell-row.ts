@@ -26,6 +26,9 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
 
         this.innerEle = document.createElement('input');
         this.innerEle.classList.add('simple-html-grid-row-input');
+
+        this.innerEle.setAttribute('data-type', this.cell.type || 'text');
+        this.innerEle.setAttribute('data-value-cell', '');
         this.appendChild(this.innerEle);
 
         this.ref.addEventListener('update-cell-data-currentEnity', this);

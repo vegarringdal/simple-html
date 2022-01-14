@@ -141,7 +141,6 @@ simple-html-grid-body::-webkit-scrollbar {
     width: 1em;
 }
 
-
 simple-html-grid-body::-webkit-scrollbar-corner {
     background-color: var(--simple-html-grid-main-bg-border);
 }
@@ -171,9 +170,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
-
-
-
 
 .simple-html-grid-menu::-webkit-scrollbar {
     width: 1em;
@@ -562,6 +558,11 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     outline-color: var(--simple-html-grid-main-bg-color);
 }
 
+.simple-html-grid [data-type='number'] {
+    text-align: end;
+    padding-right: 5px;
+}
+
 .simple-html-grid-menu {
     position: absolute;
     z-index: 901;
@@ -638,11 +639,9 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     background-color: var(--simple-html-grid-main-bg-selected);
 }
 
-.simple-html-grid-hover:hover{
+.simple-html-grid-hover:hover {
     background-color: var(--simple-html-grid-main-bg-selected);
 }
-
-
 
 .simple-html-filter-dialog {
     color: var(--simple-html-grid-main-font-color);
@@ -652,8 +651,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     margin: auto;
     border: 0;
 }
-
-
 
 .dialog-row {
     border-top: 1px solid var(--simple-html-grid-sec-bg-border);
@@ -807,7 +804,7 @@ ul.dialog-row ul:last-child {
     background-color: var(--simple-html-grid-sec-bg-color);
 }
 
-.simple-html-grid .group-operator{
+.simple-html-grid .group-operator {
     margin-left: 0;
     margin-top: 0;
 }
