@@ -29,6 +29,7 @@ export class DataContainer {
 
     /**
      * so I can check
+     * @internal
      */
     public get type() {
         return 'DataContainer';
@@ -42,14 +43,25 @@ export class DataContainer {
         return this.__collection.slice();
     }
 
+    /**
+     * gives you the entire collection
+     * @returns array of entities
+     */
     public lenght() {
         return this.__collection;
     }
 
+    /**
+     * return entities marked for deletion
+     * @returns
+     */
     public getMarkedForDeletion() {
         return this.__markedForDeletion;
     }
 
+    /**
+     * resets data, all edits are resets and marked for deletetion if returned
+     */
     public resetData() {
         const newEntities: Entity[] = [];
         this.setData(this.__markedForDeletion, true);
@@ -70,6 +82,11 @@ export class DataContainer {
         this.__markedForDeletion = [];
     }
 
+    /**
+     * mark data for deletion, will not show in searches/grouping
+     * @param data set null if all
+     * @param all remove all
+     */
     public markForDeletion(data: Entity | Entity[], all = false) {
         if (all) {
             const removed = this.__collection.slice();
@@ -96,10 +113,19 @@ export class DataContainer {
         }
     }
 
+    /**
+     *
+     */
     public clearMarkedForDeletion() {
         this.__markedForDeletion = [];
     }
 
+    /**
+     * will remove from dataset, this is not the same as mark for deletion
+     * @param data entity or entirty array you want to remove
+     * @param all if set to true, you remove all
+     * @returns returns removed
+     */
     public removeData(data: Entity | Entity[], all = false) {
         if (all) {
             const removed = this.__collection.slice();

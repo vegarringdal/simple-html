@@ -38,6 +38,11 @@ export class GridInterface<T = any> {
     private __CONFIG: GridConfig;
     private __configDefault: GridConfig;
 
+    /**
+     * grid constructor
+     * @param config gridconfig
+     * @param datasource datasource, if no datasource is supplied, grid generates one on the fly
+     */
     constructor(config: GridConfig<T>, datasource?: Datasource | DataContainer) {
         if (!datasource) {
             this.__ds = new Datasource();
@@ -55,10 +60,16 @@ export class GridInterface<T = any> {
         this.parseConfig();
     }
 
+    /**
+     * current date formater used in datasource
+     */
     get dateFormater() {
         return this.__ds.getDateFormater();
     }
 
+    /**
+     * current numberformater used in datasource
+     */
     get numberFormater() {
         return this.__ds.getNumberFormater();
     }
@@ -127,6 +138,7 @@ export class GridInterface<T = any> {
      * event handler for the grid
      * Internal useage only
      * @param _event string
+     * @internal
      */
     handleEvent(_event: { type: string; data: any }) {
         if (_event.type === 'select') {
@@ -189,6 +201,9 @@ export class GridInterface<T = any> {
         return true;
     }
 
+    /**
+     * returns main div element of grid
+     */
     public getMainElement() {
         return this.__SimpleHtmlGrid;
     }
@@ -242,6 +257,9 @@ export class GridInterface<T = any> {
         }
     }
 
+    /**
+     * @internal helper function to get with of columns
+     */
     parseConfigWidth() {
         let totalWidth = 0;
         this.config.groups.reduce((agg, element) => {
@@ -257,8 +275,11 @@ export class GridInterface<T = any> {
         }
     }
 
-    // save current settings (including filter)
-    saveSettings(): GridConfig<T> {
+    /**
+     * Save settings
+     * @returns returns settings, you need to store this, use loadsettings to use it
+     */
+    public saveSettings(): GridConfig<T> {
         this.__CONFIG.filterSet = this.__ds.getFilter() || ([] as FilterArgument);
         this.__CONFIG.groupingSet = this.__ds.getGrouping() || ([] as GroupArgument[]);
         this.__CONFIG.groupingExpanded = this.__ds.getExpanded() || ([] as string[]);
@@ -269,27 +290,30 @@ export class GridInterface<T = any> {
     }
 
     /**
-     *
+     * load new settigns into grid
      * @param config standard gridconfig
      * @param overrideDefault in case of making the grid dynamicaly you should also set default setup
      */
-    loadSettings(config: GridConfig, overrideDefault = false) {
+    public loadSettings(config: GridConfig, overrideDefault = false) {
         if (overrideDefault) {
             this.__configDefault = JSON.parse(JSON.stringify(config));
         }
         this.manualConfigChange(JSON.parse(JSON.stringify(config)));
     }
 
-    // set back default user had when grid loaded, does not do anything with filter
-    useInitSettings() {
+    /**
+     * sets back initial settings of grid
+     */
+    public useInitSettings() {
         this.manualConfigChange(JSON.parse(JSON.stringify(this.__configDefault)));
     }
 
     /**
-     * if you have manually edits config and need to update you will need to run this
+     * if you have manually edited config and need to update you will need to run this
      * grid also uses this for some internal use
+     * @internal, public is loadsettings
      */
-    manualConfigChange(config?: GridConfig) {
+    public manualConfigChange(config?: GridConfig) {
         if (config) {
             this.__CONFIG = config;
         }
@@ -304,7 +328,7 @@ export class GridInterface<T = any> {
      * add or replace data, this also edits the underlaying datasource/container
      * with other words repplacing data also replace data in underlaying datasource and container
      */
-    setData(data: any[], add = false, reRunFilter = false) {
+    public setData(data: any[], add = false, reRunFilter = false) {
         this.__ds.setData(data, add, reRunFilter);
 
         this.dataSourceUpdated();
@@ -314,14 +338,14 @@ export class GridInterface<T = any> {
      * Reloads newest data from datasource
      * Internal usage only, do not call
      */
-    reloadDatasource() {
+    public reloadDatasource() {
         this.__ds.reloadDatasource();
         this.dataSourceUpdated();
     }
 
     /**
      * update vaiable row values according to datasource
-     * Internal usage only, do not call
+     * @internal usage only, do not call
      */
     dataSourceUpdated() {
         this.__SCROLL_TOPS = [];
