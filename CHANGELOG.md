@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.9](https://github.com/simple-html/simple-html/compare/v4.0.0-next.8...v4.0.0-next.9) (2022-01-17)
+
+
+### Bug Fixes
+
+* fix padding on filter menu ([bdffea9](https://github.com/simple-html/simple-html/commits/bdffea9080de5f0fa142f2cbf4f8305c69144674))
+
 ## [4.0.0-next.8](https://github.com/simple-html/simple-html/compare/v4.0.0-next.7...v4.0.0-next.8) (2022-01-17)
 
 
