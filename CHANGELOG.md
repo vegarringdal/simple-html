@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.8](https://github.com/simple-html/simple-html/compare/v4.0.0-next.7...v4.0.0-next.8) (2022-01-17)
+
+
+### Bug Fixes
+
+* more css fixes ([828b12b](https://github.com/simple-html/simple-html/commits/828b12b35d3db1c2127937cb763ca02b1acd02ea))
+
 ## [4.0.0-next.7](https://github.com/simple-html/simple-html/compare/v4.0.0-next.6...v4.0.0-next.7) (2022-01-17)
 
 
