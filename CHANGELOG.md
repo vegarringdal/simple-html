@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.7](https://github.com/simple-html/simple-html/compare/v4.0.0-next.6...v4.0.0-next.7) (2022-01-17)
+
+
+### Bug Fixes
+
+* filter menu css bug ([3935e6e](https://github.com/simple-html/simple-html/commits/3935e6eae2215815049c01da8bf5b1de9b5bf363))
+
 ## [4.0.0-next.6](https://github.com/simple-html/simple-html/compare/v4.0.0-next.5...v4.0.0-next.6) (2022-01-17)
 
 
