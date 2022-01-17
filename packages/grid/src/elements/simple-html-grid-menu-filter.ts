@@ -511,7 +511,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             el.appendChild(iel);
 
             const lel = document.createElement('label');
-            lel.style.padding = '2px';
+            //lel.style.padding = '2px';
             lel.onclick = () => filtertoggleClick();
             lel.appendChild(document.createTextNode('Filter Available'));
             el.appendChild(lel);
