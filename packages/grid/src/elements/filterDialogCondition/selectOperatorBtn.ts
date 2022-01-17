@@ -15,7 +15,7 @@ export function selectOperatorBtn(operatorObject: FilterArgument, ctx: SimpleHtm
 
         const isText = celltype === 'text';
         const isNumberOrDate = celltype === 'number' || celltype === 'date';
-        const isBool = celltype === 'boolean';
+        //const isBool = celltype === 'boolean';
 
         generateMenu(
             e,
