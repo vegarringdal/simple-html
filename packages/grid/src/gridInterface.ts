@@ -37,6 +37,7 @@ export class GridInterface<T = any> {
     private __handleEvent: any = null;
     private __CONFIG: GridConfig;
     private __configDefault: GridConfig;
+    private smartFilterEnabled: boolean;
 
     /**
      * grid constructor
@@ -132,6 +133,26 @@ export class GridInterface<T = any> {
      */
     public getDatasource() {
         return this.__ds as Datasource<T>;
+    }
+
+    /**
+     * filter out filters
+     * tries to show only relevant filters
+     */
+    public enableSmartFilter() {
+        this.smartFilterEnabled = true;
+    }
+
+    /**
+     * filter out filters
+     * tries to show only relevant filters
+     */
+    public disableSmartFilter() {
+        this.smartFilterEnabled = false;
+    }
+
+    public smartFilterStatus() {
+        return this.smartFilterEnabled;
     }
 
     /**

@@ -70,7 +70,7 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
         outerDiv.appendChild(topRow);
 
         const closeBtn = document.createElement('button');
-        closeBtn.classList.add('dialog-item-x');
+        closeBtn.classList.add('dialog-item-topbuttons');
         closeBtn.onclick = () => {
             this.removeSelf();
         };
@@ -78,7 +78,7 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
         topRow.appendChild(closeBtn);
 
         const queryCloseBtn = document.createElement('button');
-        queryCloseBtn.classList.add('dialog-item-x');
+        queryCloseBtn.classList.add('dialog-item-topbuttons');
         queryCloseBtn.onclick = () => {
             const columns = this.connector.config.groups.flatMap((x) => x.rows);
             columns.forEach((col) => {
@@ -91,11 +91,11 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
             this.connector.reRunFilter();
             this.removeSelf();
         };
-        queryCloseBtn.appendChild(document.createTextNode('Run query & close'));
+        queryCloseBtn.appendChild(document.createTextNode('Filter & close'));
         topRow.appendChild(queryCloseBtn);
 
         const queryBtn = document.createElement('button');
-        queryBtn.classList.add('dialog-item-x');
+        queryBtn.classList.add('dialog-item-topbuttons');
         queryBtn.onclick = () => {
             const columns = this.connector.config.groups.flatMap((x) => x.rows);
             columns.forEach((col) => {
@@ -107,7 +107,7 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
             this.connector.setCurrentFilter(this.filter);
             this.connector.reRunFilter();
         };
-        queryBtn.appendChild(document.createTextNode('Run query'));
+        queryBtn.appendChild(document.createTextNode('Filter'));
         topRow.appendChild(queryBtn);
 
         outerDiv.appendChild(filterDialogGroupTemplate(this.filter, this, 0));

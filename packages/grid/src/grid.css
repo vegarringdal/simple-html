@@ -686,6 +686,19 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     outline: 1px dashed !important;
 }
 
+.dialog-item-topbuttons {
+    min-width: 100px;
+    margin-left: 25px;
+    margin-top: 5px;
+    border: 1px solid;
+    border-color: var(--simple-html-grid-main-bg-border);
+    margin-bottom: 5px;
+    padding: 2px !important;
+}
+.dialog-item-topbuttons:hover {
+    background-color: var(--simple-html-grid-main-bg-selected);
+}
+
 .dialog-item-x {
     min-width: 15px; /* due to icon */
     margin-left: 25px;

@@ -254,90 +254,120 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
     generateOperatorMenu() {
         this.innerHTML = '';
-        const operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
+        let operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
+        const celltype = this.cell?.type || 'text';
 
-        let el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('EQUAL');
-        el.style.fontWeight = operator === 'EQUAL' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Equal to'));
-        this.appendChild(el);
+        const isText = celltype === 'text';
+        const isNumberOrDate = celltype === 'number' || celltype === 'date';
+        const isBool = celltype === 'boolean';
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('NOT_EQUAL_TO');
-        el.style.fontWeight = operator === 'NOT_EQUAL_TO' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Not equal to'));
-        this.appendChild(el);
+        if (isNumberOrDate && operator === 'BEGIN_WITH') {
+            operator = 'GREATER_THAN';
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('BEGIN_WITH');
-        el.style.fontWeight = operator === 'BEGIN_WITH' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Begin with'));
-        this.appendChild(el);
+        if (isText || isBool || isNumberOrDate || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('EQUAL');
+            el.style.fontWeight = operator === 'EQUAL' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Equal to'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('GREATER_THAN');
-        el.style.fontWeight = operator === 'GREATER_THAN' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Greater than'));
-        this.appendChild(el);
+        if (isText || isBool || isNumberOrDate || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('NOT_EQUAL_TO');
+            el.style.fontWeight = operator === 'NOT_EQUAL_TO' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Not equal to'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('GREATER_THAN_OR_EQUAL_TO');
-        el.style.fontWeight = operator === 'GREATER_THAN_OR_EQUAL_TO' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Greater than or equal'));
-        this.appendChild(el);
+        if (isText || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('BEGIN_WITH');
+            el.style.fontWeight = operator === 'BEGIN_WITH' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Begin with'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('LESS_THAN');
-        el.style.fontWeight = operator === 'LESS_THAN' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Less than'));
-        this.appendChild(el);
+        if (isNumberOrDate || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('GREATER_THAN');
+            el.style.fontWeight = operator === 'GREATER_THAN' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Greater than'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('LESS_THAN_OR_EQUAL_TO');
-        el.style.fontWeight = operator === 'LESS_THAN_OR_EQUAL_TO' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Less than or equal'));
-        this.appendChild(el);
+        if (isNumberOrDate || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('GREATER_THAN_OR_EQUAL_TO');
+            el.style.fontWeight = operator === 'GREATER_THAN_OR_EQUAL_TO' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Greater than or equal'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('END_WITH');
-        el.style.fontWeight = operator === 'END_WITH' ? 'bold' : '';
-        el.appendChild(document.createTextNode('End with'));
-        this.appendChild(el);
+        if (isNumberOrDate || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('LESS_THAN');
+            el.style.fontWeight = operator === 'LESS_THAN' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Less than'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('CONTAINS');
-        el.style.fontWeight = operator === 'CONTAINS' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Contains'));
-        this.appendChild(el);
+        if (isNumberOrDate || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('LESS_THAN_OR_EQUAL_TO');
+            el.style.fontWeight = operator === 'LESS_THAN_OR_EQUAL_TO' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Less than or equal'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('DOES_NOT_CONTAIN');
-        el.style.fontWeight = operator === 'DOES_NOT_CONTAIN' ? 'bold' : '';
-        el.appendChild(document.createTextNode('Does not contain'));
-        this.appendChild(el);
+        if (isText || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('END_WITH');
+            el.style.fontWeight = operator === 'END_WITH' ? 'bold' : '';
+            el.appendChild(document.createTextNode('End with'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
-        el.classList.add('simple-html-grid-menu-item');
-        el.onclick = () => this.select('END_WITH');
-        el.style.fontWeight = operator === 'END_WITH' ? 'bold' : '';
-        el.appendChild(document.createTextNode('End with'));
-        this.appendChild(el);
+        if (isText || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('CONTAINS');
+            el.style.fontWeight = operator === 'CONTAINS' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Contains'));
+            this.appendChild(el);
+        }
 
-        this.appendChild(el);
+        if (isText || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('DOES_NOT_CONTAIN');
+            el.style.fontWeight = operator === 'DOES_NOT_CONTAIN' ? 'bold' : '';
+            el.appendChild(document.createTextNode('Does not contain'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('hr');
+        if (isText || !this.connector.smartFilterStatus()) {
+            const el = document.createElement('p');
+            el.classList.add('simple-html-grid-menu-item');
+            el.onclick = () => this.select('END_WITH');
+            el.style.fontWeight = operator === 'END_WITH' ? 'bold' : '';
+            el.appendChild(document.createTextNode('End with'));
+            this.appendChild(el);
+        }
 
-        el = document.createElement('p');
+        const elH = document.createElement('hr');
+        this.appendChild(elH);
+
+        const el = document.createElement('p');
         el.classList.add('simple-html-grid-menu-item');
         el.appendChild(document.createTextNode('Back'));
         el.onclick = () => {

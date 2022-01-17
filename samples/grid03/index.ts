@@ -52,3 +52,16 @@ clearFilterBtn.addEventListener('click', () => {
     gridInterface.clearAllFilters();
 });
 document.body.appendChild(clearFilterBtn);
+
+const toggleSmartFIlterBtn = document.createElement('button');
+toggleSmartFIlterBtn.innerText = 'toggle smartfilter';
+toggleSmartFIlterBtn.addEventListener('click', () => {
+    if (!gridInterface.smartFilterStatus()) {
+        console.log('enabled');
+        gridInterface.enableSmartFilter();
+    } else {
+        console.log('disabled');
+        gridInterface.disableSmartFilter();
+    }
+});
+document.body.appendChild(toggleSmartFIlterBtn);
