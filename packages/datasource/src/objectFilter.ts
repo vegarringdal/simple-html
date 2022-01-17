@@ -6,8 +6,9 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     // vars
     let rowValue: any;
     let filterValue: any;
-    let filterOperator = filter.operator;
-    let newFilterOperator: FilterComparisonOperator;
+    type filterExtended = ('REGEX' | 'REGEX-NOT') | FilterComparisonOperator;
+    let filterOperator: filterExtended = filter.operator;
+    let newFilterOperator: filterExtended;
     let type: string = filter.type || 'text';
 
     if (filter.value instanceof Date) {
@@ -162,60 +163,56 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
 
-            // if filter operator is BEGIN WITH
-            if (
-                (filter.value.charAt(0) === '*' || filter.value.charAt(0) === '%') &&
-                filterOperator === 'BEGIN_WITH'
-            ) {
-                newFilterOperator = 'CONTAINS';
-                filterValue = filterValue.substr(1, filterValue.length);
-            }
-
-            // if filter operator is EQUAL TO
-            // wildcard first = end with
-            if (
-                (filter.value.charAt(0) === '*' || filter.value.charAt(0) === '%') &&
-                filterOperator === 'EQUAL'
-            ) {
-                newFilterOperator = 'END_WITH';
-                filterValue = filterValue.substr(1, filterValue.length);
-            }
-
-            // wildcard end and first = contains
-            if (
-                (filter.value.charAt(filter.value.length - 1) === '*' ||
-                    filter.value.charAt(filter.value.length - 1) === '%') &&
-                filterOperator === 'EQUAL' &&
-                newFilterOperator === 'END_WITH'
-            ) {
-                newFilterOperator = 'CONTAINS';
-                filterValue = filterValue.substr(0, filterValue.length - 1);
-            }
-
-            if (
-                (filter.value.charAt(filter.value.length - 1) === '*' ||
-                    filter.value.charAt(filter.value.length - 1) === '%') &&
-                (filterOperator === 'END_WITH' || newFilterOperator === 'END_WITH')
-            ) {
-                newFilterOperator = 'CONTAINS';
-                filterValue = filterValue.substr(0, filterValue.length - 1);
-            }
-
-            // begin with since wildcard is in the end
-            if (
-                (filter.value.charAt(filter.value.length - 1) === '*' ||
-                    filter.value.charAt(filter.value.length - 1) === '%') &&
-                filterOperator === 'EQUAL' &&
-                newFilterOperator !== 'END_WITH' &&
-                newFilterOperator !== 'CONTAINS'
-            ) {
-                newFilterOperator = 'BEGIN_WITH';
-                filterValue = filterValue.substr(0, filterValue.length - 1);
+            // I need to check for wildcards, old method did not support wildcard in the middle
+            switch (filterOperator) {
+                case 'BEGIN_WITH':
+                    newFilterOperator = 'REGEX';
+                    filterValue = new RegExp(
+                        `${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
+                        'i'
+                    );
+                    break;
+                case 'CONTAINS':
+                    newFilterOperator = 'REGEX';
+                    filterValue = new RegExp(
+                        `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
+                        'i'
+                    );
+                    break;
+                case 'END_WITH':
+                    newFilterOperator = 'REGEX';
+                    filterValue = new RegExp(
+                        `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
+                        'i'
+                    );
+                    break;
+                case 'DOES_NOT_CONTAIN':
+                    newFilterOperator = 'REGEX-NOT';
+                    filterValue = new RegExp(
+                        `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
+                        'i'
+                    );
+                    break;
+                case 'NOT_EQUAL_TO':
+                    newFilterOperator = 'REGEX-NOT';
+                    filterValue = new RegExp(
+                        `${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
+                        'i'
+                    );
+                    break;
+                default:
+                    if (filterValue.split('*').length > 0 || filterValue.split('%').length > 0) {
+                        newFilterOperator = 'REGEX';
+                        filterValue = new RegExp(
+                            `${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
+                            'i'
+                        );
+                    }
             }
 
             // set the filteroperator from new if changed
             if (filterOperator !== newFilterOperator) {
-                filterOperator = newFilterOperator;
+                filterOperator = newFilterOperator as any;
             }
             break;
         case 'boolean':
@@ -242,6 +239,18 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
 
     // filter from what operator used
     switch (filterOperator) {
+        case 'REGEX':
+            // contains any type of wildcard
+            if (!filterValue.test(rowValue)) {
+                result = false;
+            }
+            break;
+        case 'REGEX-NOT':
+            // not contains with any type of wildcard
+            if (filterValue.test(rowValue)) {
+                result = false;
+            }
+            break;
         case 'EQUAL':
             if (rowValue !== filterValue) {
                 result = false;
@@ -299,14 +308,6 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             if (rowValue !== filterValue) {
                 result = false;
             }
-    }
-    if (type === 'text') {
-        if (
-            (filter.value.charAt(0) === '*' || filter.value.charAt(0) === '%') &&
-            filter.value.length === 'EQUAL'
-        ) {
-            result = true;
-        }
     }
 
     return result;
