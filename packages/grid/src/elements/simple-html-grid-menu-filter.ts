@@ -501,7 +501,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
         if (this.enableAvailableOnlyOption) {
             el = document.createElement('div');
-            //el.style.padding = '2px';
+            el.style.padding = '2px';
 
             const iel = document.createElement('input');
             iel.style.padding = '2px';
@@ -542,7 +542,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(textFilterInput);
 
             const scrollArea = document.createElement('div');
-            scrollArea.style.padding = '2px';
+            //scrollArea.style.padding = '2px';
             scrollArea.style.overflowY = 'auto';
             scrollArea.style.maxHeight = '250px';
 
