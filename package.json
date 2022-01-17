@@ -1,6 +1,6 @@
 {
     "name": "simple-html",
-    "version": "4.0.0-next.5",
+    "version": "4.0.0-next.6",
     "description": "UI components without dependencies",
     "scripts": {
         "start": "ts-node config_devserver",

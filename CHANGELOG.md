@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.6](https://github.com/simple-html/simple-html/compare/v4.0.0-next.5...v4.0.0-next.6) (2022-01-17)
+
+
+### Features
+
+* option to try and show only useful filtert based on column type ([ff57c04](https://github.com/simple-html/simple-html/commits/ff57c049bf902a2071f4fae37d1783fde2af7eae))
+
 ## [4.0.0-next.5](https://github.com/simple-html/simple-html/compare/v4.0.0-next.4...v4.0.0-next.5) (2022-01-17)
 
 
