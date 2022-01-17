@@ -501,7 +501,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
         if (this.enableAvailableOnlyOption) {
             el = document.createElement('div');
-            el.style.padding = '2px';
+            //el.style.padding = '2px';
 
             const iel = document.createElement('input');
             iel.style.padding = '2px';
@@ -511,7 +511,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             el.appendChild(iel);
 
             const lel = document.createElement('label');
-            //lel.style.padding = '2px';
+            lel.style.padding = '2px';
             lel.onclick = () => filtertoggleClick();
             lel.appendChild(document.createTextNode('Filter Available'));
             el.appendChild(lel);
