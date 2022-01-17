@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.5](https://github.com/simple-html/simple-html/compare/v4.0.0-next.4...v4.0.0-next.5) (2022-01-17)
+
+
+### Bug Fixes
+
+* improve wildcard search ([2e12759](https://github.com/simple-html/simple-html/commits/2e12759472e414c59809c534804260c73566de68))
+
 ## [4.0.0-next.4](https://github.com/simple-html/simple-html/compare/v4.0.0-next.3...v4.0.0-next.4) (2022-01-14)
 
 
