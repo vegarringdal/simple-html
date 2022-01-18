@@ -17,6 +17,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
     enableAvailableOnlyOption: boolean = false;
     search: any;
     scrollAreaRef: HTMLDivElement;
+    serachRegex: RegExp;
 
     connectedCallback() {
         this.classList.add('simple-html-grid', 'simple-html-grid-menu');
@@ -26,6 +27,13 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             document.addEventListener('contextmenu', this);
         }, 50);
         this.search = this.cell.filterable?.currentValue || null;
+        if (this.search) {
+            this.serachRegex = new RegExp(
+                `${(this.search as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
+                'i'
+            );
+        }
+
         this.getDropdownData();
         this.generateMainMenu();
 
@@ -51,18 +59,19 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             const dataFilterSet = new Set();
             const length = data.length;
             let haveNull = false;
-            this.search = this.search && this.search?.replaceAll('%', '').replaceAll('*', '');
+            if (this.search) {
+                this.serachRegex = new RegExp(
+                    `${(this.search as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
+                    'i'
+                );
+            }
 
             for (let i = 0; i < length; i++) {
                 // maybe I should let this be aoption ? the 200 size..
                 if (data[i] && data[i][attribute] && dataFilterSet.size < 50) {
                     if (typeof data[i][attribute] === 'string') {
                         if (this.search) {
-                            if (
-                                data[i][attribute]
-                                    .toLocaleUpperCase()
-                                    .indexOf(this.search.toLocaleUpperCase()) !== -1
-                            ) {
+                            if (this.serachRegex.test(data[i][attribute])) {
                                 dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
                             }
                         } else {
@@ -71,7 +80,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
                     }
                     if (typeof data[i][attribute] === 'number') {
                         if (this.search) {
-                            if (data[i][attribute].toString().indexOf(this.search) !== -1) {
+                            if (this.serachRegex.test(data[i][attribute])) {
                                 dataFilterSet.add(data[i][attribute]);
                             }
                         } else {
