@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.13](https://github.com/simple-html/simple-html/compare/v4.0.0-next.12...v4.0.0-next.13) (2022-01-19)
+
+
+### Features
+
+* improve selection methods ([f5d74f6](https://github.com/simple-html/simple-html/commits/f5d74f661cc2d75d64587192343f3c43d2e78f8d))
+
 ## [4.0.0-next.12](https://github.com/simple-html/simple-html/compare/v4.0.0-next.11...v4.0.0-next.12) (2022-01-19)
 
 
