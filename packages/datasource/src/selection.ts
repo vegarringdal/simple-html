@@ -29,12 +29,20 @@ export class Selection {
         this.selectRange(0, this.dataSource.length() - 1);
     }
 
+    /**
+     * adds to selection
+     * @param keys
+     */
     public addSelectedKeys(keys: any[]) {
         keys.forEach((k) => {
             this.selection.add(k);
         });
+        this.selectedRows = this.selection.size;
     }
 
+    /**
+     * deselect all
+     */
     public deSelectAll(): void {
         this.selection.clear();
         this.selectedRows = this.selection.size;
@@ -233,8 +241,13 @@ export class Selection {
             }
             this.selectedRows = this.selection.size;
         }
+        this.selectedRows = this.selection.size;
     }
 
+    /**
+     * get selected rows
+     * @returns number array
+     */
     public getSelectedRows(): number[] {
         const array: number[] = [];
         const keys = this.getRowKeys();
@@ -249,6 +262,35 @@ export class Selection {
         return array;
     }
 
+    /**
+     * returns selection keys
+     */
+    public getSelectedKeys() {
+        return Array.from(this.selection);
+    }
+
+    /**
+     * sets selection keys (replaces old)
+     */
+    public setSelectedKeys(keys: any[]) {
+        this.selection.clear();
+        keys.forEach((k) => {
+            this.selection.add(k);
+        });
+        this.selectedRows = this.selection.size;
+    }
+
+    /**
+     * trigger grid to update row to show selection
+     */
+    public triggerSelectionChange() {
+        this.dataSource.__callSubscribers('selectionChange');
+    }
+
+    /**
+     * selects new rows
+     * @param newRows rows to be selected
+     */
     private setSelectedRows(newRows: number[]): void {
         if (this.selectedRows > 0) {
             this.selection.clear();

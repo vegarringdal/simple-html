@@ -65,3 +65,17 @@ toggleSmartFIlterBtn.addEventListener('click', () => {
     }
 });
 document.body.appendChild(toggleSmartFIlterBtn);
+
+{
+    const button = document.createElement('button');
+    button.innerText = 'remove on selected row';
+    button.addEventListener('click', () => {
+        const x = gridInterface.getDatasource().getSelection().getSelectedKeys();
+        if (x.length) {
+            x.shift();
+        }
+        gridInterface.getDatasource().getSelection().setSelectedKeys(x);
+        gridInterface.getDatasource().getSelection().triggerSelectionChange();
+    });
+    document.body.appendChild(button);
+}
