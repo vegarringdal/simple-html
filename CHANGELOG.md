@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.11](https://github.com/simple-html/simple-html/compare/v4.0.0-next.10...v4.0.0-next.11) (2022-01-19)
+
+
+### Bug Fixes
+
+* cell number alignment, didnt reset when scrolling horz ([fde41b0](https://github.com/simple-html/simple-html/commits/fde41b0d12628b9c48fcae6dfb3a55d2336e35c7))
+
 ## [4.0.0-next.10](https://github.com/simple-html/simple-html/compare/v4.0.0-next.9...v4.0.0-next.10) (2022-01-18)
 
 
