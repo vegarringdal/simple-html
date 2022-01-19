@@ -163,12 +163,26 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
 
+            if (
+                filterOperator === 'BEGIN_WITH' &&
+                (filterValue[filterValue.length] === '*' || filterValue[filterValue.length] === '%')
+            ) {
+                filterOperator = 'CONTAINS';
+            }
+
+            if (
+                filterOperator === 'END_WITH' &&
+                (filterValue[0] === '*' || filterValue[0] === '%')
+            ) {
+                filterOperator = 'CONTAINS';
+            }
+
             // I need to check for wildcards, old method did not support wildcard in the middle
             switch (filterOperator) {
                 case 'BEGIN_WITH':
                     newFilterOperator = 'REGEX';
                     filterValue = new RegExp(
-                        `${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
+                        `^${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
                         'i'
                     );
                     break;
@@ -182,7 +196,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 case 'END_WITH':
                     newFilterOperator = 'REGEX';
                     filterValue = new RegExp(
-                        `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
+                        `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}$`,
                         'i'
                     );
                     break;
