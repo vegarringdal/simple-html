@@ -209,16 +209,42 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     break;
                 case 'NOT_EQUAL_TO':
                     newFilterOperator = 'REGEX-NOT';
+                    let start = '';
+                    if (filterValue[0] !== '*' || filterValue[0] !== '%') {
+                        start = '^';
+                    }
+                    let end = '';
+                    if (
+                        filterValue[filterValue.length] !== '*' ||
+                        filterValue[filterValue.length] !== '%'
+                    ) {
+                        end = '$';
+                    }
                     filterValue = new RegExp(
-                        `${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
+                        `${start}${(filterValue as string)
+                            .replace(/\*/g, '.*')
+                            .replace(/\%/g, '.*')}${end}`,
                         'i'
                     );
                     break;
                 default:
                     if (filterValue.split('*').length > 0 || filterValue.split('%').length > 0) {
                         newFilterOperator = 'REGEX';
+                        let start = '';
+                        if (filterValue[0] !== '*' || filterValue[0] !== '%') {
+                            start = '^';
+                        }
+                        let end = '';
+                        if (
+                            filterValue[filterValue.length] !== '*' ||
+                            filterValue[filterValue.length] !== '%'
+                        ) {
+                            end = '$';
+                        }
                         filterValue = new RegExp(
-                            `${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
+                            `${start}${(filterValue as string)
+                                .replace(/\*/g, '.*')
+                                .replace(/\%/g, '.*')}${end}`,
                             'i'
                         );
                     }
