@@ -228,7 +228,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     );
                     break;
                 default:
-                    if (filterValue.split('*').length > 0 || filterValue.split('%').length > 0) {
+                    if (filterValue.split('*').length > 1 || filterValue.split('%').length > 1) {
                         newFilterOperator = 'REGEX';
                         let start = '';
                         if (filterValue[0] !== '*' || filterValue[0] !== '%') {
