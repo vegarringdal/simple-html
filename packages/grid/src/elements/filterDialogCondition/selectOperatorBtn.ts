@@ -11,158 +11,120 @@ export function selectOperatorBtn(operatorObject: FilterArgument, ctx: SimpleHtm
     el.style.margin = '1px';
     el.classList.add('dialog-item-y');
     el.onclick = (e: any) => {
-        const celltype = operatorObject.attributeType || 'text';
-
-        const isText = celltype === 'text';
-        const isNumberOrDate = celltype === 'number' || celltype === 'date';
-        //const isBool = celltype === 'boolean';
-
-        generateMenu(
-            e,
-            [
-                {
-                    operator: 'BEGIN_WITH',
-                    title: 'Begin with',
-                    callback: () => {
-                        operatorObject.operator = 'BEGIN_WITH';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'EQUAL',
-                    title: 'Equal to',
-                    callback: () => {
-                        operatorObject.operator = 'EQUAL';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'CONTAINS',
-                    title: 'Contains',
-                    callback: () => {
-                        operatorObject.operator = 'CONTAINS';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'DOES_NOT_CONTAIN',
-                    title: 'Does not contain',
-                    callback: () => {
-                        operatorObject.operator = 'DOES_NOT_CONTAIN';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'END_WITH',
-                    title: 'End with',
-                    callback: () => {
-                        operatorObject.operator = 'END_WITH';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'GREATER_THAN',
-                    title: 'Greater than',
-                    callback: () => {
-                        operatorObject.operator = 'GREATER_THAN';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'GREATER_THAN_OR_EQUAL_TO',
-                    title: 'Greater than or equal to',
-                    callback: () => {
-                        operatorObject.operator = 'GREATER_THAN_OR_EQUAL_TO';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'LESS_THAN',
-                    title: 'Less than',
-                    callback: () => {
-                        operatorObject.operator = 'LESS_THAN';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'LESS_THAN_OR_EQUAL_TO',
-                    title: 'Less then or equal to',
-                    callback: () => {
-                        operatorObject.operator = 'LESS_THAN_OR_EQUAL_TO';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'NOT_EQUAL_TO',
-                    title: 'Not Equal to',
-                    callback: () => {
-                        operatorObject.operator = 'NOT_EQUAL_TO';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'IN',
-                    title: 'IN',
-                    callback: () => {
-                        operatorObject.operator = 'IN';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'NOT_IN',
-                    title: 'NOT IN',
-                    callback: () => {
-                        operatorObject.operator = 'NOT_IN';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'IS_BLANK',
-                    title: 'IS BLANK',
-                    callback: () => {
-                        operatorObject.operator = 'IS_BLANK';
-                        ctx.generate();
-                    }
-                },
-                {
-                    operator: 'IS_NOT_BLANK',
-                    title: 'IS NOT BLANK',
-                    callback: () => {
-                        operatorObject.operator = 'IS_NOT_BLANK';
-                        ctx.generate();
-                    }
+        generateMenu(e, [
+            {
+                operator: 'BEGIN_WITH',
+                title: 'Begin with',
+                callback: () => {
+                    operatorObject.operator = 'BEGIN_WITH';
+                    ctx.generate();
                 }
-            ].filter((row) => {
-                if (!ctx.connector.smartFilterStatus()) {
-                    return true;
+            },
+            {
+                operator: 'EQUAL',
+                title: 'Equal to',
+                callback: () => {
+                    operatorObject.operator = 'EQUAL';
+                    ctx.generate();
                 }
-
-                if (isNumberOrDate) {
-                    if (
-                        ['BEGIN_WITH', 'END_WITH', 'DOES_NOT_CONTAIN', 'CONTAINS'].indexOf(
-                            row.operator
-                        ) !== -1
-                    ) {
-                        return false;
-                    }
+            },
+            {
+                operator: 'CONTAINS',
+                title: 'Contains',
+                callback: () => {
+                    operatorObject.operator = 'CONTAINS';
+                    ctx.generate();
                 }
-
-                if (isText) {
-                    if (
-                        [
-                            'GREATER_THAN',
-                            'GREATER_THAN_OR_EQUAL_TO',
-                            'LESS_THAN',
-                            'LESS_THAN_OR_EQUAL_TO'
-                        ].indexOf(row.operator) !== -1
-                    ) {
-                        return false;
-                    }
+            },
+            {
+                operator: 'DOES_NOT_CONTAIN',
+                title: 'Does not contain',
+                callback: () => {
+                    operatorObject.operator = 'DOES_NOT_CONTAIN';
+                    ctx.generate();
                 }
-
-                return true;
-            })
-        );
+            },
+            {
+                operator: 'END_WITH',
+                title: 'End with',
+                callback: () => {
+                    operatorObject.operator = 'END_WITH';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'GREATER_THAN',
+                title: 'Greater than',
+                callback: () => {
+                    operatorObject.operator = 'GREATER_THAN';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'GREATER_THAN_OR_EQUAL_TO',
+                title: 'Greater than or equal to',
+                callback: () => {
+                    operatorObject.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'LESS_THAN',
+                title: 'Less than',
+                callback: () => {
+                    operatorObject.operator = 'LESS_THAN';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'LESS_THAN_OR_EQUAL_TO',
+                title: 'Less then or equal to',
+                callback: () => {
+                    operatorObject.operator = 'LESS_THAN_OR_EQUAL_TO';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'NOT_EQUAL_TO',
+                title: 'Not Equal to',
+                callback: () => {
+                    operatorObject.operator = 'NOT_EQUAL_TO';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'IN',
+                title: 'IN',
+                callback: () => {
+                    operatorObject.operator = 'IN';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'NOT_IN',
+                title: 'NOT IN',
+                callback: () => {
+                    operatorObject.operator = 'NOT_IN';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'IS_BLANK',
+                title: 'IS BLANK',
+                callback: () => {
+                    operatorObject.operator = 'IS_BLANK';
+                    ctx.generate();
+                }
+            },
+            {
+                operator: 'IS_NOT_BLANK',
+                title: 'IS NOT BLANK',
+                callback: () => {
+                    operatorObject.operator = 'IS_NOT_BLANK';
+                    ctx.generate();
+                }
+            }
+        ]);
     };
     const boldEl = document.createElement('b');
     boldEl.appendChild(document.createTextNode(OPERATORS[operatorObject.operator]));

@@ -263,18 +263,9 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
 
     generateOperatorMenu() {
         this.innerHTML = '';
-        let operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
-        const celltype = this.cell?.type || 'text';
+        const operator = this.cell?.filterable?.operator || 'BEGIN_WITH';
 
-        const isText = celltype === 'text';
-        const isNumberOrDate = celltype === 'number' || celltype === 'date';
-        const isBool = celltype === 'boolean';
-
-        if (isNumberOrDate && operator === 'BEGIN_WITH') {
-            operator = 'GREATER_THAN';
-        }
-
-        if (isText || isBool || isNumberOrDate || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('EQUAL');
@@ -283,7 +274,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isText || isBool || isNumberOrDate || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('NOT_EQUAL_TO');
@@ -292,7 +283,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isText || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('BEGIN_WITH');
@@ -301,7 +292,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isNumberOrDate || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('GREATER_THAN');
@@ -310,7 +301,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isNumberOrDate || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('GREATER_THAN_OR_EQUAL_TO');
@@ -319,7 +310,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isNumberOrDate || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('LESS_THAN');
@@ -328,7 +319,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isNumberOrDate || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('LESS_THAN_OR_EQUAL_TO');
@@ -337,7 +328,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isText || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('END_WITH');
@@ -346,7 +337,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isText || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('CONTAINS');
@@ -355,7 +346,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isText || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('DOES_NOT_CONTAIN');
@@ -364,7 +355,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             this.appendChild(el);
         }
 
-        if (isText || !this.connector.smartFilterStatus()) {
+        {
             const el = document.createElement('p');
             el.classList.add('simple-html-grid-menu-item');
             el.onclick = () => this.select('END_WITH');
