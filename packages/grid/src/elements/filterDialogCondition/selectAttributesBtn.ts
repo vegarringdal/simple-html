@@ -32,7 +32,7 @@ export function selectAttributesBtn(
         );
     };
 
-    let text = operatorObject.value || ' select ';
+    let text = operatorObject.value || 'click to select column';
     if (isValue !== true) {
         text = operatorObject.attribute;
     }

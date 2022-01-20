@@ -652,74 +652,90 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     border: 0;
 }
 
-.dialog-row {
-    border-top: 1px solid var(--simple-html-grid-sec-bg-border);
+.filter-dialog-top-row {
+    display: flex;
+    height: 35px;
+}
+.filter-dialog-top-row span {
+    margin-right: 5px;
+    padding: 5px;
+    font-size: 16px;
+}
+
+.filter-dialog-bottom-row {
+    display: flex;
+    flex-direction: row-reverse;
+    border: 0px;
+}
+
+.simple-html-grid .dialog-row {
+    border-top: 0px;
     min-height: 20px;
 }
 
-.dialog-row div:first-child {
+.simple-html-grid .dialog-row div:first-child {
     border-top: 0px solid var(--simple-html-grid-sec-bg-border);
 }
 
-.dialog-item-block {
+.simple-html-grid .dialog-item-block {
     border-right: 1px solid var(--simple-html-grid-sec-bg-border);
 }
 
-.dialog-item {
+.simple-html-grid .dialog-item {
     display: flex;
     text-align: center;
 }
 
-.dialog-item-y {
+.simple-html-grid .dialog-item-y {
     width: 140px;
     max-width: 140px;
 
     min-height: 20px;
 }
 
-.dialog-item-group {
+.simple-html-grid .dialog-item-group {
     margin-left: 5px;
     margin-top: 2px;
 }
 
-.dialog-item-y:focus {
+.simple-html-grid .dialog-item-y:focus {
     outline: 1px dashed !important;
 }
 
-.dialog-item-topbuttons {
+.simple-html-grid .dialog-item-buttombuttons {
     min-width: 100px;
-    margin-left: 25px;
-    margin-top: 5px;
+    margin-right: 10px;
+    margin-top: 15px;
     border: 1px solid;
     border-color: var(--simple-html-grid-main-bg-border);
     margin-bottom: 5px;
     padding: 2px !important;
 }
-.dialog-item-topbuttons:hover {
+.simple-html-grid .dialog-item-buttombuttons:hover {
     background-color: var(--simple-html-grid-main-bg-selected);
 }
 
-.dialog-item-x {
+.simple-html-grid .dialog-item-x {
     min-width: 15px; /* due to icon */
     margin-left: 25px;
     margin-top: 5px;
 }
 
-.dialog-item-x:focus {
+.simple-html-grid .dialog-item-x:focus {
     outline: 0px !important;
 }
 
-.dialog-condition-trash {
+.simple-html-grid .dialog-condition-trash {
     position: absolute;
     right: 5px;
 }
 
-.dialog-condition-type {
+.simple-html-grid .dialog-condition-type {
     position: absolute;
     right: 30px;
 }
 
-.simple-html-grid-drop-zone-left {
+.simple-html-grid .simple-html-grid-drop-zone-left {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -729,7 +745,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     z-index: 50;
 }
 
-.simple-html-grid-drop-zone-right {
+.simple-html-grid .simple-html-grid-drop-zone-right {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -739,7 +755,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     z-index: 90;
 }
 
-.simple-html-grid-drop-zone-bottom {
+.simple-html-grid .simple-html-grid-drop-zone-bottom {
     position: absolute;
     bottom: 0;
     left: 5px;
@@ -749,7 +765,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     z-index: 50;
 }
 
-.simple-html-grid-drop-zone-top {
+.simple-html-grid .simple-html-grid-drop-zone-top {
     position: absolute;
     top: 0;
     left: 5px;
@@ -759,26 +775,26 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     z-index: 50;
 }
 
-div.dialog-row ul:first-child {
+.simple-html-grid div.dialog-row ul:first-child {
     margin-left: 0px;
 }
 
-ul.dialog-row {
+.simple-html-grid ul.dialog-row {
     position: relative;
     margin-left: 10px;
     list-style: none;
-    box-shadow: 1px 1px 3px 0 #fffdfd;
+ 
     border-left: 1px dotted rgb(100, 100, 100);
 }
 
-ul.dialog-row li {
+.simple-html-grid ul.dialog-row li {
     margin: 0;
     padding: 0 7px;
     margin-left: 10px;
     border-left: 1px dotted rgb(100, 100, 100);
 }
 
-ul.dialog-row li:before {
+.simple-html-grid ul.dialog-row li:before {
     position: relative;
     top: -0.3em;
     height: 1em;
@@ -790,7 +806,7 @@ ul.dialog-row li:before {
     left: -7px;
 }
 
-ul.dialog-row div:before {
+.simple-html-grid ul.dialog-row div:before {
     position: relative;
     top: 5px;
     height: 1em;
@@ -801,19 +817,20 @@ ul.dialog-row div:before {
     display: inline-block;
 }
 
-ul.dialog-row ul:last-child {
+.simple-html-grid ul.dialog-row ul:last-child {
     border-left: 1px dotted rgb(100, 100, 100);
 }
 
-.first-dialog-row {
+.simple-html-grid .first-dialog-row {
     border-left: 0px !important;
+    border-top: 0px !important;
 }
 
-.simple-html-filter-dialog input {
+.simple-html-grid .simple-html-filter-dialog input {
     color: var(--simple-html-grid-main-font-color);
     background-color: var(--simple-html-grid-sec-bg-color);
 }
-.simple-html-filter-dialog textarea {
+.simple-html-grid .simple-html-filter-dialog textarea {
     background-color: var(--simple-html-grid-sec-bg-color);
 }
 

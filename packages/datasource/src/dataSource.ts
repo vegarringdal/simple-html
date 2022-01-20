@@ -562,8 +562,11 @@ export class Datasource<T = any> {
      * sets current entity and selection, start on 1 not 0
      * @param row, if skipped we select the first
      */
-    public select(row?: number): void {
+    public select(row?: number, triggerSelect?: boolean): void {
         this.__selection.highlightRow({} as any, row ? row - 1 : 0);
+        if (triggerSelect) {
+            this.__callSubscribers('select');
+        }
     }
 
     /**

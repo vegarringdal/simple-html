@@ -39,7 +39,7 @@ export function filterDialogGroupTemplate(
 
                     g.type = 'GROUP';
                     g.logicalOperator = 'AND';
-                    g.attribute = 'select';
+                    g.attribute = 'click to select column';
                     g.operator = 'EQUAL';
                     g.valueType = 'VALUE';
                     g.attributeType = 'text';
@@ -55,7 +55,7 @@ export function filterDialogGroupTemplate(
                     g.filterArguments.push({
                         type: 'GROUP',
                         logicalOperator: 'AND',
-                        attribute: 'select',
+                        attribute: 'click to select column',
                         operator: 'EQUAL',
                         valueType: 'VALUE',
                         attributeType: 'text',
@@ -71,7 +71,7 @@ export function filterDialogGroupTemplate(
                     g.filterArguments.splice(0, 0, {
                         type: 'CONDITION',
                         logicalOperator: 'NONE',
-                        attribute: 'select',
+                        attribute: 'click to select column',
                         operator: 'EQUAL',
                         valueType: 'VALUE',
                         attributeType: 'text',

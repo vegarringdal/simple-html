@@ -60,25 +60,75 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
         // this isnt very optimized... it should be handled smarter
         this.innerHTML = '';
 
+        /**
+         * container
+         */
         const outerDiv = document.createElement('div');
         outerDiv.style.width = '650px';
         outerDiv.classList.add('simple-html-grid', 'simple-html-filter-dialog');
 
+        /**
+         * top row
+         */
         const topRow = document.createElement('div');
-        topRow.classList.add('dialog-row', 'main-group');
+        topRow.classList.add('dialog-row', 'main-group', 'filter-dialog-top-row');
+        const header = document.createElement('span');
+        header.appendChild(document.createTextNode('Filter Editor'));
 
+        topRow.appendChild(header);
         outerDiv.appendChild(topRow);
 
+        /**
+         * query part
+         */
+        outerDiv.appendChild(filterDialogGroupTemplate(this.filter, this, 0));
+
+        this.appendChild(outerDiv);
+
+        /**
+         * bottom row of query editor
+         */
+
+        const bottomRow = document.createElement('div');
+        bottomRow.classList.add('dialog-row', 'main-group', 'filter-dialog-bottom-row');
+        outerDiv.appendChild(bottomRow);
+        /**
+         * close button
+         */
         const closeBtn = document.createElement('button');
-        closeBtn.classList.add('dialog-item-topbuttons');
+        closeBtn.classList.add('dialog-item-buttombuttons');
         closeBtn.onclick = () => {
             this.removeSelf();
         };
-        closeBtn.appendChild(document.createTextNode('Close'));
-        topRow.appendChild(closeBtn);
+        closeBtn.appendChild(document.createTextNode('Cancel'));
+        bottomRow.appendChild(closeBtn);
 
+        outerDiv.appendChild(bottomRow);
+
+        /**
+         * filter button
+         */
+        const queryBtn = document.createElement('button');
+        queryBtn.classList.add('dialog-item-buttombuttons');
+        queryBtn.onclick = () => {
+            const columns = this.connector.config.groups.flatMap((x) => x.rows);
+            columns.forEach((col) => {
+                const f = col.filterable;
+                if (f) {
+                    f.currentValue = null;
+                }
+            });
+            this.connector.setCurrentFilter(this.filter);
+            this.connector.reRunFilter();
+        };
+        queryBtn.appendChild(document.createTextNode('Apply'));
+        bottomRow.appendChild(queryBtn);
+
+        /**
+         * filter & close button
+         */
         const queryCloseBtn = document.createElement('button');
-        queryCloseBtn.classList.add('dialog-item-topbuttons');
+        queryCloseBtn.classList.add('dialog-item-buttombuttons');
         queryCloseBtn.onclick = () => {
             const columns = this.connector.config.groups.flatMap((x) => x.rows);
             columns.forEach((col) => {
@@ -91,28 +141,8 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
             this.connector.reRunFilter();
             this.removeSelf();
         };
-        queryCloseBtn.appendChild(document.createTextNode('Filter & close'));
-        topRow.appendChild(queryCloseBtn);
-
-        const queryBtn = document.createElement('button');
-        queryBtn.classList.add('dialog-item-topbuttons');
-        queryBtn.onclick = () => {
-            const columns = this.connector.config.groups.flatMap((x) => x.rows);
-            columns.forEach((col) => {
-                const f = col.filterable;
-                if (f) {
-                    f.currentValue = null;
-                }
-            });
-            this.connector.setCurrentFilter(this.filter);
-            this.connector.reRunFilter();
-        };
-        queryBtn.appendChild(document.createTextNode('Filter'));
-        topRow.appendChild(queryBtn);
-
-        outerDiv.appendChild(filterDialogGroupTemplate(this.filter, this, 0));
-
-        this.appendChild(outerDiv);
+        queryCloseBtn.appendChild(document.createTextNode('OK'));
+        bottomRow.appendChild(queryCloseBtn);
     }
 }
 defineElement(SimpleHtmlGridFilterDialog, 'simple-html-grid-filter-dialog');
