@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.16](https://github.com/simple-html/simple-html/compare/v4.0.0-next.15...v4.0.0-next.16) (2022-01-21)
+
+
+### Bug Fixes
+
+* mulit line wildcard ([3c9d544](https://github.com/simple-html/simple-html/commits/3c9d544dfc313cb4c7f3e53f931acd2afe0310bb))
+* multiline wildcard dropdown search ([6a274fc](https://github.com/simple-html/simple-html/commits/6a274fcfc863167925683086a4b3d690539e5cc0))
+
 ## [4.0.0-next.15](https://github.com/simple-html/simple-html/compare/v4.0.0-next.14...v4.0.0-next.15) (2022-01-20)
 
 
