@@ -183,28 +183,28 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     newFilterOperator = 'REGEX';
                     filterValue = new RegExp(
                         `^${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
-                        'i'
+                        'gim'
                     );
                     break;
                 case 'CONTAINS':
                     newFilterOperator = 'REGEX';
                     filterValue = new RegExp(
                         `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
-                        'i'
+                        'gim'
                     );
                     break;
                 case 'END_WITH':
                     newFilterOperator = 'REGEX';
                     filterValue = new RegExp(
                         `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}$`,
-                        'i'
+                        'gim'
                     );
                     break;
                 case 'DOES_NOT_CONTAIN':
                     newFilterOperator = 'REGEX-NOT';
                     filterValue = new RegExp(
                         `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
-                        'i'
+                        'gim'
                     );
                     break;
                 case 'NOT_EQUAL_TO':
@@ -224,7 +224,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                         `${start}${(filterValue as string)
                             .replace(/\*/g, '.*')
                             .replace(/\%/g, '.*')}${end}`,
-                        'i'
+                        'gim'
                     );
                     break;
                 default:
@@ -245,7 +245,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                             `${start}${(filterValue as string)
                                 .replace(/\*/g, '.*')
                                 .replace(/\%/g, '.*')}${end}`,
-                            'i'
+                            'gim'
                         );
                     }
             }
