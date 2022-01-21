@@ -30,7 +30,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
         if (this.search) {
             this.serachRegex = new RegExp(
                 `${(this.search as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
-                'i'
+                'gim'
             );
         }
 
@@ -62,7 +62,7 @@ export class SimpleHtmlGridMenuFilter extends HTMLElement {
             if (this.search) {
                 this.serachRegex = new RegExp(
                     `${(this.search as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
-                    'i'
+                    'gim'
                 );
             }
 
