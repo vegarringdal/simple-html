@@ -34,11 +34,45 @@ describe('string filter', () => {
         done();
     });
 
+    it('string with BEGIN_WITH', (done) => {
+        ds.filter({
+            attribute: 'name',
+            operator: 'BEGIN_WITH',
+            value: 'p*er'
+        });
+
+        expect(ds.getRows()).toEqual([
+            /* { name: '4person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
+            { name: 'qperson22', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
+            { name: '4person244', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
+            { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }, */
+            { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
+        ]);
+        done();
+    });
+
     it('string with END_WITH', (done) => {
         ds.filter({
             attribute: 'name',
             operator: 'END_WITH',
             value: 'son2'
+        });
+
+        expect(ds.getRows()).toEqual([
+            { name: '4person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }
+            /*  { name: 'qperson22', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
+            { name: '4person244', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
+            { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
+            { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
+        ]);
+        done();
+    });
+
+    it('string with END_WITH', (done) => {
+        ds.filter({
+            attribute: 'name',
+            operator: 'END_WITH',
+            value: '*son2'
         });
 
         expect(ds.getRows()).toEqual([

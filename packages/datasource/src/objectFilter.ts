@@ -163,19 +163,6 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
 
-            if (
-                filterOperator === 'BEGIN_WITH' &&
-                (filterValue[filterValue.length] === '*' || filterValue[filterValue.length] === '%')
-            ) {
-                filterOperator = 'CONTAINS';
-            }
-
-            if (
-                filterOperator === 'END_WITH' &&
-                (filterValue[0] === '*' || filterValue[0] === '%')
-            ) {
-                filterOperator = 'CONTAINS';
-            }
 
             // I need to check for wildcards, old method did not support wildcard in the middle
             switch (filterOperator) {
