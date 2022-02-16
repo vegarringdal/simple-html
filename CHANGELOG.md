@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.18](https://github.com/simple-html/simple-html/compare/v4.0.0-next.17...v4.0.0-next.18) (2022-02-16)
+
+
+### Features
+
+* add class to inputs with duplicate value til cell above ([27ff126](https://github.com/simple-html/simple-html/commits/27ff126729e2d1bf453329ce7636d0d8ee848ee5))
+
 ## [4.0.0-next.17](https://github.com/simple-html/simple-html/compare/v4.0.0-next.16...v4.0.0-next.17) (2022-01-27)
 
 ## [4.0.0-next.16](https://github.com/simple-html/simple-html/compare/v4.0.0-next.15...v4.0.0-next.16) (2022-01-21)
