@@ -306,6 +306,42 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                 this.innerEle.value = '';
             }
         }
+
+        /**
+         * check if value is same as from row above
+         * if it is we add a helper class users of grid can use to remove/change opacity of duplicate/repeated cells
+         */
+        const prevRowValue = this.connector.displayedDataset[this.rowNo - 1];
+        const classList = this.innerEle.classList;
+
+        if (prevRowValue) {
+            let prevValue = prevRowValue[this.cell.attribute] || '';
+            let thisValue = data[this.cell.attribute] || '';
+
+            if (this.cell.type === 'number') {
+                prevValue = prevValue + '';
+                thisValue = thisValue + '';
+            }
+
+            if (this.cell.type === 'date') {
+                prevValue = this.connector.dateFormater.fromDate(prevValue);
+                thisValue = this.connector.dateFormater.fromDate(thisValue);
+            }
+
+            if (prevValue === thisValue) {
+                if (!classList.contains('simple-html-grid-duplicate-value')) {
+                    classList.add('simple-html-grid-duplicate-value');
+                }
+            } else {
+                if (classList.contains('simple-html-grid-duplicate-value')) {
+                    classList.remove('simple-html-grid-duplicate-value');
+                }
+            }
+        } else {
+            if (classList.contains('simple-html-grid-duplicate-value')) {
+                classList.add('simple-html-grid-duplicate-value');
+            }
+        }
     }
 }
 defineElement(SimpleHtmlGridCellRow, 'simple-html-grid-cell-row');

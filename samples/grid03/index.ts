@@ -1,4 +1,5 @@
 import '../../packages/grid/src/grid.css'; // direct so we can edit
+import './index.css';
 import { Datasource, GridConfig, GridInterface, SimpleHtmlGrid } from '@simple-html/grid';
 import { generateGridConfig } from './generateGridConfig';
 import { DataGenerator } from './DataGenerator';
@@ -6,7 +7,7 @@ import { DataGenerator } from './DataGenerator';
 /**
  * simple gridconfig
  */
-const gridConfig: GridConfig = generateGridConfig(2, 30);
+const gridConfig: GridConfig = generateGridConfig(1, 12);
 
 /**
  * create datasource & data

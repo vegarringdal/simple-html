@@ -29,3 +29,7 @@ body {
 .flex-row {
     flex-direction: row;
 }
+
+.simple-html-grid-duplicate {
+    opacity: 0.1;
+}

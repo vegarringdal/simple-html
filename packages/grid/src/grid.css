@@ -387,6 +387,8 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight);
 }
+
+
 .simple-html-grid .simple-html-grid-row-input-button {
     box-sizing: border-box;
     border: 0;
@@ -556,6 +558,8 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     border: 1px dashed;
     outline: thin;
     outline-color: var(--simple-html-grid-main-bg-color);
+    /* incase someone uses duplicate value class with opacity */
+    opacity: 1; 
 }
 
 .simple-html-grid [data-type='number'] {
