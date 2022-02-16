@@ -30,6 +30,8 @@ body {
     flex-direction: row;
 }
 
-.simple-html-grid-duplicate {
+/* 
+disable for now... I need to add react/lit & tests 
+.simple-html-grid-duplicate-value {
     opacity: 0.1;
-}
+} */

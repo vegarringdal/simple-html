@@ -338,8 +338,9 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
                 }
             }
         } else {
+            // if there is not duplicate, we need to remove if its set
             if (classList.contains('simple-html-grid-duplicate-value')) {
-                classList.add('simple-html-grid-duplicate-value');
+                classList.remove('simple-html-grid-duplicate-value');
             }
         }
     }
