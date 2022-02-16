@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.19](https://github.com/simple-html/simple-html/compare/v4.0.0-next.18...v4.0.0-next.19) (2022-02-16)
+
+
+### Bug Fixes
+
+* duplicate values class was not removed when top row ([32d8384](https://github.com/simple-html/simple-html/commits/32d8384d272322a6d4611a50a9cfc182383983c6))
+
 ## [4.0.0-next.18](https://github.com/simple-html/simple-html/compare/v4.0.0-next.17...v4.0.0-next.18) (2022-02-16)
 
 
