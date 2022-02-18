@@ -4,7 +4,6 @@ clearFolders('dist_client', 'dist_nodejs');
 
 const sample = process.argv[2];
 
-
 /**
  * client bundle
  */
@@ -87,7 +86,8 @@ const checker_client = TypeChecker({
             baseUrl: './',
             rootDir: '',
             paths: {
-                '@simple-html*': ['packages*']
+                '@simple-html/datasource': ['./packages/datasource/src'],
+                '@simple-html/grid': ['./packages/grid/src']
             }
         },
         exclude: ['node_modules', 'config_devserver.ts', 'dist']
