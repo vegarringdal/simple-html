@@ -226,10 +226,10 @@ export function sampleButtons() {
                 <div class="grid p-2 m-2 flex-row">
                     <button
                         @click="${() => {
-                            alert('not implemented');
+                            console.log(gridInterface.getDatasource().getGrouping());
                         }}"
                     >
-                        tba
+                        get grouping
                     </button>
 
                     <button
