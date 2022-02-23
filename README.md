@@ -45,6 +45,8 @@ similar, so was no need for it.
 -   run samples
 
     -   `npm start grid01`
+      - as simple as it can get
     -   `npm start grid02`
+      - using lit-html will get a lot of sample code how methods of grid/datasource work
 
     Will add more sample... just been to busy lately
