@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.20](https://github.com/simple-html/simple-html/compare/v4.0.0-next.19...v4.0.0-next.20) (2022-02-23)
+
+
+### Features
+
+* set attribute name on cell input html data-attribute (for styling options based on name) ([32155c0](https://github.com/simple-html/simple-html/commits/32155c04e01ef7d89c699f775ce13282b3b6152e))
+
+
+### Bug Fixes
+
+* callable event when function did not return type ([d40ffbf](https://github.com/simple-html/simple-html/commits/d40ffbf9d3f3e853c9e9555b4b7a8f4d4c5eade6))
+
 ## [4.0.0-next.19](https://github.com/simple-html/simple-html/compare/v4.0.0-next.18...v4.0.0-next.19) (2022-02-16)
 
 
