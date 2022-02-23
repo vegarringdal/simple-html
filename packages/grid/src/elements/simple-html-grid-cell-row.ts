@@ -123,7 +123,7 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         const data = this.connector.displayedDataset[this.rowNo];
         const ref = this.ref;
         const connector = this.connector; //ref in callback
-
+        this.innerEle.setAttribute('data-attribute', this.cell.attribute || '');
         this.innerEle.setAttribute('data-type', this.cell.type || 'text');
 
         const contentMenu = (e: any) => {
