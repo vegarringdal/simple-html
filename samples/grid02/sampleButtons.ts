@@ -53,13 +53,13 @@ export function sampleButtons() {
                         } else {
                             const style = document.createElement('style');
                             style.id = 'dupes';
+                            // this is also a option
+                            //[data-attribute="word5"].simple-html-grid-duplicate-value
                             style.appendChild(
-                                document.createTextNode(`
-                           
-                            .simple-html-grid-duplicate-value {
-                                opacity: 0.1;
-                            }
-                            
+                                document.createTextNode(`   
+                                    .simple-html-grid-duplicate-value {
+                                        opacity: 0.1;
+                                    }
                             `)
                             );
                             document.body.appendChild(style);
@@ -172,20 +172,46 @@ export function sampleButtons() {
 
                     <button
                         @click="${() => {
-                            alert('not implemented');
+                            console.log('cell event grid listener added');
+                            // simple for now, rerender will break this.
+                            // removeEventListener to remove
+                            gridInterface.addEventListener((type: string, data: any) => {
+                                console.log('cell function', type, data);
+                                return true;
+                            });
+                            gridInterface.addEventListener({
+                                handleEvent: (type: string, data: any) => {
+                                    console.log('cell handleEvent', type, data);
+                                    return true;
+                                }
+                            });
                         }}"
                     >
-                        tba
+                        cell event grid
                     </button>
                 </div>
                 <!-- ---------------------------------------------------------------------------- -->
                 <div class="grid p-2 m-2 flex-row">
                     <button
                         @click="${() => {
-                            alert('not implemented');
+                            console.log('ds event listener added');
+                            // simple for now, rerender will break this.
+                            // removeEventListener to remove
+                            gridInterface
+                                .getDatasource()
+                                .addEventListener((type: string, data: any) => {
+                                    console.log('ds function', type, data);
+                                    return true;
+                                });
+                            gridInterface.getDatasource().addEventListener({
+                                handleEvent: (type: string, data: any) => {
+                                    console.log('ds handleEvent', type, data);
+                                    return true;
+                                }
+                            });
                         }}"
                     >
-                        tba
+                        ds events
                     </button>
 
                     <button

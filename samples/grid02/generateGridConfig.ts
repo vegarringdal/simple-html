@@ -5,7 +5,7 @@ export function generateGridConfig(rows: number, columns: number, scroll?: numbe
         cellHeight: 20,
         panelHeight: 25,
         footerHeight: 40,
-        readonly: true,
+        readonly: false,
         selectionMode: 'multiple',
         lastScrollTop: scroll,
         groups: []
