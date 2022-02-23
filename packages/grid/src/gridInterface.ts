@@ -429,7 +429,7 @@ export class GridInterface<T = any> {
         this.__subscribers.forEach((callable) => {
             let keep: boolean;
             if (typeof callable === 'function') {
-                keep = callable({ type: event, data: data });
+                keep = callable({ type: type, data: data });
             } else {
                 if (typeof callable?.handleEvent === 'function') {
                     keep = callable.handleEvent({ type: type, data: data });
@@ -444,7 +444,8 @@ export class GridInterface<T = any> {
 
     /**
      * adds event listener to interface
-     * this is not the same as datasource
+     * this is not the same as datasource, just for manual change event, and focus button
+     * helper for when editing current row/cell and update detail form manually
      * @param callable
      */
     public addEventListener(callable: callable): void {
