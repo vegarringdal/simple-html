@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.21](https://github.com/simple-html/simple-html/compare/v4.0.0-next.20...v4.0.0-next.21) (2022-03-14)
+
+
+### Bug Fixes
+
+* grouping box css ([a34cda2](https://github.com/simple-html/simple-html/commits/a34cda2bc0ea5bac4f2b2aa8c65e2541b15e0dcf))
+
 ## [4.0.0-next.20](https://github.com/simple-html/simple-html/compare/v4.0.0-next.19...v4.0.0-next.20) (2022-02-23)
 
 
