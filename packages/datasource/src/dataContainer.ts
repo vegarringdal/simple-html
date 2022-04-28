@@ -17,7 +17,10 @@ export class DataContainer {
     private __markedForDeletion: Entity[] = [];
     private __keyAttribute = '';
     private EntityHandler = EntityHandler;
-
+    /**
+     *
+     * @param UniqueKeyAttribute fo selection usage, this way it can be persistant when dealing with remote data
+     */
     constructor(UniqueKeyAttribute?: string) {
         // we want to add sufix just incase its something like a new
         this.__keyAttribute = UniqueKeyAttribute;
@@ -42,6 +45,10 @@ export class DataContainer {
         return getNextKey();
     }
 
+    /**
+     * return collection slice
+     * @returns
+     */
     public getDataSet() {
         return this.__collection.slice();
     }
@@ -157,6 +164,13 @@ export class DataContainer {
         return [];
     }
 
+    /**
+     * set data
+     * @param data
+     * @param add
+     * @param tagAsNew
+     * @returns
+     */
     public setData(data: any[], add = false, tagAsNew = false): Entity[] | void {
         if (add) {
             const x = Array.from(data, (o: any | Entity) => {
@@ -206,6 +220,12 @@ export class DataContainer {
         }
     }
 
+    /**
+     * replaced entity wtih index
+     * @param data
+     * @param index
+     * @param remove
+     */
     public replace(data: any[], index: number, remove: number) {
         // todo
         const x = Array.from(data, (o: any | Entity) => {
