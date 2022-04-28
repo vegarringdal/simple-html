@@ -61,6 +61,8 @@ export class SimpleHtmlGridMenuRow extends HTMLElement {
             | 'paste-into-selected-rows-in-selected-column'
             | 'clear-cells-selected-rows-in-selected-columns'
     ) {
+        this.connector.publishEvent(_type, this);
+
         /**
          * Copy of cell
          */

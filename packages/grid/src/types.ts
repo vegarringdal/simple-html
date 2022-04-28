@@ -76,6 +76,10 @@ export interface CellConfig<T = any> {
      */
     focusButtonIfCellReadonly?: boolean;
     /**
+     * dont allow input, just paste/clear
+     */
+    stopManualEdit?: boolean;
+    /**
      * filter settings
      */
     filterable?: {

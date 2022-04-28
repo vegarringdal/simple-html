@@ -161,7 +161,14 @@ export class SimpleHtmlGridCellRow extends HTMLElement {
         if (this.cell.type === 'date') {
             this.innerEle.oninput = null;
         } else {
-            this.innerEle.oninput = input;
+            this.innerEle.oninput = this.cell.stopManualEdit ? null : input;
+            if (this.cell.stopManualEdit) {
+                // just so there is atleast 1 way to stop input, if wanted
+                this.innerEle.onkeydown = function (e) {
+                    e.preventDefault();
+                    return false;
+                };
+            }
         }
 
         this.innerEle.oncontextmenu = (e: any) => {
