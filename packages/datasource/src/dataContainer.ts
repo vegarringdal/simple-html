@@ -9,6 +9,9 @@ export const getNextKey = function () {
     return globalKeyCount;
 };
 
+/**
+ * Datacontainer, this can be used as input for multible datasources
+ */
 export class DataContainer {
     private __collection: Entity[] = [];
     private __markedForDeletion: Entity[] = [];
@@ -48,7 +51,7 @@ export class DataContainer {
      * @returns array of entities
      */
     public lenght() {
-        return this.__collection;
+        return this.__collection.length;
     }
 
     /**
