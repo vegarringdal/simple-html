@@ -163,7 +163,6 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
 
-
             // I need to check for wildcards, old method did not support wildcard in the middle
             switch (filterOperator) {
                 case 'BEGIN_WITH':
