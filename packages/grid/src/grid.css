@@ -502,8 +502,6 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     margin: 3px;
     height: 80%;
     box-sizing: border-box;
-    padding-left: 10px;
-    padding-right: 10px;
     display: block;
     float: left;
     border: 1px solid var(--simple-html-grid-main-bg-border);
@@ -538,6 +536,8 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     box-shadow: initial;
     height: 100%;
     width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
     position: relative;
     margin: 0;
     display: flex;
