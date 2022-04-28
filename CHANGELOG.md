@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.21](https://github.com/simple-html/simple-html/compare/v4.0.0-next.20...v4.0.0-next.21) (2022-04-28)
+
+
+### Features
+
+* add option to stop input and copy/paste events ([b39462c](https://github.com/simple-html/simple-html/commits/b39462cc50311f2ecc5660522499d1ba4959321f))
+
+
+### Bug Fixes
+
+* length datacointainer gave collection not size ([76227dd](https://github.com/simple-html/simple-html/commits/76227dd7b6ec4634a48aa27726c2e626de39c44f))
+
 ## [4.0.0-next.20](https://github.com/simple-html/simple-html/compare/v4.0.0-next.19...v4.0.0-next.20) (2022-02-23)
 
 
