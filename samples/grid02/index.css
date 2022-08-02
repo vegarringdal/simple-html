@@ -6,6 +6,10 @@ body {
     bottom: 0;
 }
 
+/* .simple-html-grid {
+    --simple-html-grid-main-bg-even:rgba(105, 31, 223, 0.2);
+} */
+
 .m-2 {
     margin: 2px;
 }

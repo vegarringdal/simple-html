@@ -86,6 +86,7 @@ export function sampleButtons() {
                                 --simple-html-grid-sec-bg-color: #4b5563;
                                 --simple-html-grid-alt-bg-color: #4b5563;
                                 --simple-html-grid-main-bg-border: #1f2937;
+                                --simple-html-grid-main-bg-even: #4b5563;
                                 --simple-html-grid-sec-bg-border: #1f2937;
                                 --simple-html-grid-main-bg-selected: #234882;
                                 --simple-html-grid-main-font-color: #f9f7f7;

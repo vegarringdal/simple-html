@@ -1,5 +1,6 @@
-import './index.css';
+
 import '../../packages/grid/src/grid.css'; // direct so we can edit
+import './index.css';
 import { Datasource, GridConfig, GridInterface } from '@simple-html/grid';
 import { customElement } from 'lit/decorators.js';
 

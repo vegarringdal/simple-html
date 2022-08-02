@@ -197,6 +197,13 @@ export class SimpleHtmlGridRow extends HTMLElement {
 
         this.style.display = 'block';
 
+        if(this.row?.i % 2 === 0){
+            this.classList.add('simple-html-grid-row-even');
+        } else{
+            this.classList.remove('simple-html-grid-row-even');
+        }
+
+
         if (this.connector.isSelected(this.row.i)) {
             this.classList.add('simple-html-grid-selected-row');
         } else {
