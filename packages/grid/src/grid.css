@@ -376,7 +376,7 @@ simple-html-grid-body::-webkit-scrollbar-thumb {
     border-radius: initial;
     box-shadow: initial;
     width: 100%;
-    bottom: 1px;
+    bottom: 0px;
     top: 0;
     padding-left: 5px;
     background-color: transparent;
