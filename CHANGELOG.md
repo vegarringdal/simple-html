@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.23](https://github.com/simple-html/simple-html/compare/v4.0.0-next.22...v4.0.0-next.23) (2022-08-02)
+
+
+### Features
+
+* add option to set even row background color ([4a42d3f](https://github.com/simple-html/simple-html/commits/4a42d3ffd1c6d5377c37d7affbbbc19840ea84f5))
+
+
+### Bug Fixes
+
+* css border on cell input to 0 ([a906685](https://github.com/simple-html/simple-html/commits/a906685387b76221053982f685b5461c46984eae))
+
 ## [4.0.0-next.22](https://github.com/simple-html/simple-html/compare/v4.0.0-next.21...v4.0.0-next.22) (2022-04-28)
 
 
