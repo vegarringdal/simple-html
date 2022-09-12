@@ -36,16 +36,9 @@ export function filterDialogGroupTemplate(
                 title: 'Insert Group',
                 callback: () => {
                     const g_old = g;
-
                     g.type = 'GROUP';
                     g.logicalOperator = 'AND';
-                    g.attribute = 'click to select column';
-                    g.operator = 'EQUAL';
-                    g.valueType = 'VALUE';
-                    g.attributeType = 'text';
                     g.filterArguments = [JSON.parse(JSON.stringify(g_old))];
-                    g.value = '';
-
                     ctx.generate();
                 }
             },
@@ -55,12 +48,7 @@ export function filterDialogGroupTemplate(
                     g.filterArguments.push({
                         type: 'GROUP',
                         logicalOperator: 'AND',
-                        attribute: 'click to select column',
-                        operator: 'EQUAL',
-                        valueType: 'VALUE',
-                        attributeType: 'text',
-                        filterArguments: [],
-                        value: ''
+                        filterArguments: []
                     });
                     ctx.generate();
                 }

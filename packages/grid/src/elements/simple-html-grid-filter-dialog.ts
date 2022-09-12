@@ -19,11 +19,6 @@ export class SimpleHtmlGridFilterDialog extends HTMLElement {
         const defaultStartFilter: FilterArgument = {
             type: 'GROUP',
             logicalOperator: 'AND',
-            attribute: null,
-            operator: null,
-            valueType: null,
-            value: null,
-            attributeType: 'text',
             filterArguments: []
         };
 
