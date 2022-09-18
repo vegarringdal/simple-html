@@ -24,7 +24,7 @@ Grid uses @simple-html/datasource to for sorting/filtering/sorting/tracking chan
 ### Sample
 
 
-````ts
+```ts
 // since datasource is part of grid dependency, you only need to install the grid
 import "@simple-html/grid/dist/grid.css";
 import { Datasource, GridConfig, GridInterface, SimpleHtmlGrid } from '@simple-html/grid';
