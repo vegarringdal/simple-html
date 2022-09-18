@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.24](https://github.com/simple-html/simple-html/compare/v4.0.0-next.23...v4.0.0-next.24) (2022-09-18)
+
+
+### Bug Fixes
+
+* generate cleaner filter json ([2a97680](https://github.com/simple-html/simple-html/commits/2a97680ef833cb7d7104813a6875602809dcf491))
+* improve events ([267b6a0](https://github.com/simple-html/simple-html/commits/267b6a0a661bd7e43294fcb475b389c06d3e6096))
+
 ## [4.0.0-next.23](https://github.com/simple-html/simple-html/compare/v4.0.0-next.22...v4.0.0-next.23) (2022-08-02)
 
 
