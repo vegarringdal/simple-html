@@ -1,14 +1,13 @@
 module.exports = {
-    preset: 'ts-jest',
     testEnvironment: 'jsdom',
     maxConcurrency: 1,
     verbose: true,
     moduleDirectories: ['node_modules'],
-    globals: {
-        'ts-jest': {
+    transform: {                                                                                                                                                                                                                                                                                
+        "^.+\\.(ts)$": ['ts-jest', {
             diagnostics: false,
-            tsconfig: './packages/tsconfig.json'
-        }
+            tsconfig: '<rootDir>/packages/tsconfig.json'
+        }],                                                                                                                                                                                                             
     },
     collectCoverageFrom: [
         'packages/core/src/**/*.ts',

@@ -5,6 +5,7 @@
         "lib": ["es2019", "dom"],
         "moduleResolution": "node",
         "isolatedModules": false,
+        "esModuleInterop": true,
         "preserveConstEnums": true,
         "allowSyntheticDefaultImports": true,
         "skipLibCheck": true,
