@@ -1,4 +1,3 @@
-
 import '../../packages/grid/src/grid.css'; // direct so we can edit
 import './index.css';
 import { Datasource, GridConfig, GridInterface } from '@simple-html/grid';
@@ -18,12 +17,27 @@ export const gridConfig: GridConfig = generateGridConfig(1, 30);
  * create datasource & data/
  */
 export const datasource = new Datasource();
+datasource.addEventListener({
+    handleEvent: (event) => {
+        console.log('datasourceEvent: ', event.type, event.data);
+        return true; // to keep alive
+    }
+});
+
+
 export const generator = new DataGenerator();
 
 /**
  * create interface
  */
 export const gridInterface = new GridInterface(gridConfig, datasource);
+
+gridInterface.addEventListener({
+    handleEvent: (event) => {
+        console.log('gridInterfaceEvent: ', event.type, event.data);
+        return true; // to keep alive
+    }
+});
 
 @customElement('root-app')
 export class MyElement extends LitElement {

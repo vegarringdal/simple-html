@@ -132,19 +132,23 @@ export class Datasource<T = any> {
 
     public resetData() {
         this.__dataContainer.resetData();
-        this.__internalUpdate(true);
-        this.__callSubscribers('collection-filtered');
+        const eventTriggered = this.__internalUpdate(true);
+        if (!eventTriggered) {
+            this.__callSubscribers('collection-filtered', { info: 'resetData' });
+        }
     }
 
     public markForDeletion(data: Entity | Entity[], all = false) {
         this.__dataContainer.markForDeletion(data, all);
-        this.__internalUpdate(true);
-        this.__callSubscribers('collection-filtered');
+        const eventTriggered = this.__internalUpdate(true);
+        if (!eventTriggered) {
+            this.__callSubscribers('collection-filtered', { info: 'markForDeletion' });
+        }
     }
 
     public removeData(data: Entity | Entity[], all = false) {
         const removed = this.__dataContainer.removeData(data, all);
-        this.__callSubscribers('collection-changed', { removed: true });
+        this.__callSubscribers('collection-changed', { removed: true, info: 'removeData', data });
         return removed;
     }
 
@@ -256,8 +260,9 @@ export class Datasource<T = any> {
         }
 
         if (forceUpdate) {
-            this.__callSubscribers('collection-filtered');
+            this.__callSubscribers('collection-filtered', { info: '__internalUpdate, forced' });
         }
+        return forceUpdate;
     }
 
     /**
@@ -385,8 +390,10 @@ export class Datasource<T = any> {
                 }
             }
         } /*  */
-        this.__internalUpdate(true);
-        this.__callSubscribers('collection-filtered');
+        const eventTriggered = this.__internalUpdate(true);
+        if (!eventTriggered) {
+            this.__callSubscribers('collection-filtered', { info: 'filter' });
+        }
     }
 
     /**
@@ -417,7 +424,7 @@ export class Datasource<T = any> {
         }
 
         // group
-        this.__callSubscribers('collection-grouped');
+        this.__callSubscribers('collection-grouped', { info: 'group', groupings });
     }
 
     /**
@@ -436,7 +443,7 @@ export class Datasource<T = any> {
         } else {
             this.group([]);
         }
-        this.__callSubscribers('collection-grouped');
+        this.__callSubscribers('collection-grouped', { info: 'removeGroup' });
     }
 
     /**
@@ -574,7 +581,7 @@ export class Datasource<T = any> {
      */
     public selectFirst(): void {
         this.__selection.highlightRow({} as any, 0);
-        this.__callSubscribers('select');
+        this.__callSubscribers('select', { info: 'select-first' });
     }
 
     /**
@@ -587,7 +594,7 @@ export class Datasource<T = any> {
             this.__selection.highlightRow({} as any, row);
         }
         this.__selection.highlightRow({} as any, row);
-        this.__callSubscribers('select');
+        this.__callSubscribers('select', { info: 'select-prev' });
     }
 
     /**
@@ -599,7 +606,7 @@ export class Datasource<T = any> {
             row = 0;
         }
         this.__selection.highlightRow({} as any, row);
-        this.__callSubscribers('select');
+        this.__callSubscribers('select', { info: 'select-next' });
     }
 
     /**
@@ -607,7 +614,7 @@ export class Datasource<T = any> {
      */
     public selectLast(): void {
         this.__selection.highlightRow({} as any, this.__collectionDisplayed.length - 1);
-        this.__callSubscribers('select');
+        this.__callSubscribers('select', { info: 'select-last' });
     }
 
     /**
