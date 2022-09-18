@@ -1,4 +1,4 @@
-import '../../packages/grid/src/grid.css'; // direct so we can edit
+import '../../packages/grid/src/grid.css'; // direct so we can edit // import "@simple-html/grid/dist/grid.css";
 import { Datasource, GridConfig, GridInterface, SimpleHtmlGrid } from '@simple-html/grid';
 
 /**
@@ -15,6 +15,7 @@ const gridConfig: GridConfig = {
             width: 200,
             rows: [
                 {
+                    header: 'firstname',
                     attribute: 'firstname',
                     filterable: {}
                 }
@@ -24,6 +25,7 @@ const gridConfig: GridConfig = {
             width: 200,
             rows: [
                 {
+                    header: 'lastname',
                     attribute: 'lastname',
                     filterable: {}
                 }

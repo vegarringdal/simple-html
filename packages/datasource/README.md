@@ -11,9 +11,7 @@ changes
 
 ### Sample
 
--   `git clone https://github.com/simple-html/simple-html`
--   `npm install`
--   `npm start datasource`
+- see grid for sample
 
 ### Bundle size:
 
