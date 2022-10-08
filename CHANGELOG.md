@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-next.25](https://github.com/simple-html/simple-html/compare/v4.0.0-next.24...v4.0.0-next.25) (2022-10-08)
+
+
+### Bug Fixes
+
+* optimise setData - was slow ([4059901](https://github.com/simple-html/simple-html/commits/40599016ce16a26c4ed634f1b0b16a5c8f6f71f4))
+
 ## [4.0.0-next.24](https://github.com/simple-html/simple-html/compare/v4.0.0-next.23...v4.0.0-next.24) (2022-09-18)
 
 
