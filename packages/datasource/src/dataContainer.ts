@@ -172,52 +172,31 @@ export class DataContainer {
      * @returns
      */
     public setData(data: any[], add = false, tagAsNew = false): Entity[] | void {
-        if (add) {
-            const x = Array.from(data, (o: any | Entity) => {
-                if (o && o.__controller) {
-                    return o;
-                } else {
-                    return new Proxy(
-                        o,
-                        new this.EntityHandler(this.__keyAttribute, tagAsNew) as any
-                    );
-                }
-            });
-            this.__collection.push(...x);
-
-            this.__collection.forEach((entity, i) => {
-                if (entity && !(entity as any).__KEY) {
-                    (entity as any).__KEY = this.getKey();
-                } else {
-                    if (!this.__collection[i]) {
-                        this.__collection[i] = { __KEY: this.getKey() };
-                    }
-                }
-            });
-            return x;
-        } else {
+        if (!add) {
             this.__markedForDeletion = [];
-            this.__collection = Array.from(data, (o: any | Entity) => {
-                if (o && o.__controller) {
-                    return o;
-                } else {
-                    return new Proxy(
-                        o,
-                        new this.EntityHandler(this.__keyAttribute, tagAsNew) as any
-                    );
-                }
-            });
+            this.__collection = [];
+        }
 
-            this.__collection.forEach((entity, i) => {
+        const x = Array.from(data, (o: any | Entity) => {
+            if (o && o.__controller) {
+                if (o && !(o as any).__KEY) {
+                    (o as any).__KEY = this.getKey();
+                }
+                return o;
+            } else {
+                const entity = new Proxy(
+                    o,
+                    new this.EntityHandler(this.__keyAttribute, tagAsNew) as any
+                );
                 if (entity && !(entity as any).__KEY) {
                     (entity as any).__KEY = this.getKey();
-                } else {
-                    if (!this.__collection[i]) {
-                        this.__collection[i] = { __KEY: this.getKey() };
-                    }
                 }
-            });
-        }
+                return entity;
+            }
+        });
+        this.__collection = this.__collection.concat(x);
+
+        return x;
     }
 
     /**
