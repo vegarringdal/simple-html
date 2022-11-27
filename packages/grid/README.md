@@ -1,9 +1,5 @@
 # @simple-html/grid
 
-IMPORTANT! -> very early state of developement..
-I havent decided completly how I want it, so some breaking changes might come without following semver
-Currently using it in applications to find missing api/bugs
-
 Simple data grid made with @simple-html/datasource.
 This grid is made for desktop, not mobile.
 
