@@ -92,7 +92,8 @@ Main rendering will be first focus
  * [ ] option to override cell with callback, incase someone want svg and text etc
  * option to override 
  * [ ] edit cells
- * [ ] add current filter to footer
+ * [x] add current filter to footer
+ * [x] total rows/filtered rows to footer
  * [ ] clear filter with button in footer (need to be able to hide)
    
 

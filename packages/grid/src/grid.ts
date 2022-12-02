@@ -153,6 +153,7 @@ export class Grid {
             this.rebuildHeaderColumns();
         }
         this.rebuildTopPanel();
+        this.rebuildFooter();
         this.triggerScrollEvent();
         console.timeEnd('create');
     }
@@ -231,6 +232,7 @@ export class Grid {
         this.rebuildRowColumns();
         this.rebuildHeaderColumns();
         this.rebuildTopPanel();
+        this.rebuildFooter();
         this.addScrollEventListeners();
 
         this.updateVerticalScrollHeight(this.gridInterface.getScrollState().scrollHeight);
@@ -412,6 +414,25 @@ export class Grid {
 
             panel.appendChild(label);
         });
+    }
+
+    private rebuildFooter() {
+        const footer = getElementByClassName(this.element, 'simple-html-grid-footer');
+        const totalRows = this.gridInterface.getDatasource().getAllData().length;
+        const filteredRows = this.gridInterface.getDatasource().length();
+        const filterString = this.gridInterface.getDatasource().getFilterString();
+        const scrollbarHeight = this.gridInterface.getGridConfig().__scrollbarSize;
+
+        // TODO : add svg to remove filter if any
+
+        render(
+            html`<div style="display:flex;flex-direction: column;">
+                <div style="flex: 1 1 ${scrollbarHeight}px;"></div>
+                <span style="margin:auto">${filteredRows}/${totalRows}</span>
+                <span style="margin:auto">${filterString}</span>
+            </div>`,
+            footer
+        );
     }
 
     private rebuildRows() {

@@ -21,7 +21,7 @@ import '../../packages/grid/src/grid.css';
 const gridConfig: GridConfig = {
     cellHeight: 20,
     panelHeight: 25,
-    footerHeight: 25,
+    footerHeight: 45,
     selectSizeHeight: 20,
     readonly: true,
     selectionMode: 'multiple',
@@ -105,7 +105,7 @@ let ii = 0;
 let cat = 'one';
 
 const c = [];
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < 1000; i++) {
     u++;
     if (u === 10) {
         ii++;
