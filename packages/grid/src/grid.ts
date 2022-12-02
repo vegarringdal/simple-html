@@ -2106,21 +2106,43 @@ export class Grid {
                 value = this.gridInterface.getDatasource().getDateFormater().fromDate(value);
             }
 
-            render(
-                html`<input
-                    style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
-                    .value=${value?.toString()}
-                    @click=${() => {
-                        this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
-                        console.log('current entity:', this.gridInterface.getDatasource().currentEntity);
-                        this.triggerScrollEvent();
-                    }}
-                    @input=${(e: any) => {
-                        console.log(e);
-                    }}
-                />`,
-                cell as any
-            );
+            if (cellConfig.type === 'boolean') {
+                value = (entity && entity[attribute]) || false;
+            }
+
+            if (cellConfig.type === 'boolean') {
+                render(
+                    html`<input
+                        .checked=${value}
+                        type="checkbox"
+                        @click=${() => {
+                            this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
+                            console.log('current entity:', this.gridInterface.getDatasource().currentEntity);
+                            this.triggerScrollEvent();
+                        }}
+                        @input=${(e: any) => {
+                            console.log(e);
+                        }}
+                    />`,
+                    cell as any
+                );
+            } else {
+                render(
+                    html`<input
+                        style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
+                        .value=${value?.toString()}
+                        @click=${() => {
+                            this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
+                            console.log('current entity:', this.gridInterface.getDatasource().currentEntity);
+                            this.triggerScrollEvent();
+                        }}
+                        @input=${(e: any) => {
+                            console.log(e);
+                        }}
+                    />`,
+                    cell as any
+                );
+            }
         } else {
             render(html`<div class="simple-html-dimmed"></div>`, cell as any);
         }
