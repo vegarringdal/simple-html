@@ -748,10 +748,10 @@ input {
     margin-right: 3px;
 }
 
-.simple-html-grid .simple-html-grid-row-odd + .simple-html-grid-selected-row {
+.simple-html-grid .simple-html-grid-selected-row-even {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .simple-html-grid-row-even + .simple-html-grid-selected-row {
+.simple-html-grid .simple-html-grid-selected-row-odd {
     background-color: var(--simple-html-grid-main-bg-selected-odd);
 }

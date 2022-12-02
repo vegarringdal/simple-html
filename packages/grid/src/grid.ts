@@ -1376,22 +1376,25 @@ export class Grid {
                     const rowEl = this.rows.get(e.id);
                     if (rowEl) {
                         const selection = this.gridInterface.getDatasource().getSelection();
-                        
+
                         rowEl.classList.remove('simple-html-grid-row-even');
                         rowEl.classList.remove('simple-html-grid-row-odd');
 
-                        if (e.row % 2 === 0) {
-                            rowEl.classList.add('simple-html-grid-row-even');
-                        } else {
-                            rowEl.classList.add('simple-html-grid-row-odd');
-                        }
-                        
-                        rowEl.classList.remove('simple-html-grid-selected-row');
+                        rowEl.classList.remove('simple-html-grid-selected-row-odd');
+                        rowEl.classList.remove('simple-html-grid-selected-row-even');
                         if (selection.isSelected(e.row)) {
-                            rowEl.classList.add('simple-html-grid-selected-row');
+                            if (e.row % 2 === 0) {
+                                rowEl.classList.add('simple-html-grid-selected-row-even');
+                            } else {
+                                rowEl.classList.add('simple-html-grid-selected-row-odd');
+                            }
+                        } else{
+                            if (e.row % 2 === 0) {
+                                rowEl.classList.add('simple-html-grid-row-even');
+                            } else {
+                                rowEl.classList.add('simple-html-grid-row-odd');
+                            }
                         }
-
-                     
 
                         rowEl.style.display = 'block';
                         rowEl.style.transform = `translate3d(0px, ${e.top}px, 0px)`;
@@ -2049,9 +2052,9 @@ export class Grid {
     ) {
         let currentEntitySelected = '';
         if (rowData === this.gridInterface.getDatasource().currentEntity) {
-            currentEntitySelected = row % 0 == 0 ? 'simple-html-label-even': 'simple-html-label-odd';
-        } else{
-            currentEntitySelected = "simple-html-label"
+            currentEntitySelected = row % 0 == 0 ? 'simple-html-label-even' : 'simple-html-label-odd';
+        } else {
+            currentEntitySelected = 'simple-html-label';
         }
 
         render(
