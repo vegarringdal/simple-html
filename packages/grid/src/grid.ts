@@ -146,7 +146,7 @@ export class Grid {
         this.gridInterface.dataSourceUpdated(); // I really only need this for drag/drop
         this.updateHorizontalScrollWidth();
         this.updateMainElementSizes();
-       
+
         this.rebuildRows();
         this.rebuildRowColumns();
         if (rebuildHeader) {
@@ -442,6 +442,12 @@ export class Grid {
                 element.setAttribute('row-id', id);
                 element.style.transform = `translate3d(0px, ${top}px, 0px)`;
                 element.style.height = asPx(this.gridInterface.getScrollState().scrollHeights[i]);
+
+                if (i % 2 === 0) {
+                    element.classList.add('simple-html-grid-row-even');
+                } else {
+                    element.classList.add('simple-html-grid-row-odd');
+                }
 
                 parent.appendChild(element);
                 rowCache.push({ id, row: i, top });
@@ -1375,6 +1381,13 @@ export class Grid {
                             rowEl.classList.add('simple-html-grid-selected-row');
                         }
 
+                        rowEl.classList.remove('simple-html-grid-row-even');
+                        if (e.row % 2 === 0) {
+                            rowEl.classList.add('simple-html-grid-row-even');
+                        } else {
+                            rowEl.classList.add('simple-html-grid-row-odd');
+                        }
+
                         rowEl.style.display = 'block';
                         rowEl.style.transform = `translate3d(0px, ${e.top}px, 0px)`;
                         rowEl.style.height = asPx(heights[e.row]);
@@ -2031,7 +2044,7 @@ export class Grid {
     ) {
         let currentEntitySelected = '';
         if (rowData === this.gridInterface.getDatasource().currentEntity) {
-            currentEntitySelected = 'simple-html-grid-selected-row';
+            currentEntitySelected = row % 0 == 0 ? 'simple-html-grid-row-even simple-html-grid-selected-row': 'simple-html-grid-row-odd simple-html-grid-selected-row';
         }
 
         render(
