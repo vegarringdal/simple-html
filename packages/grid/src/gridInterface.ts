@@ -107,8 +107,6 @@ export class GridInterface {
                 });
             }
         });
-
-        console.log(this.gridConfig.__selectSizeWidth);
     }
 
     /**

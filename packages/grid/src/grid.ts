@@ -1976,7 +1976,6 @@ export class Grid {
 
             // stop duplicate events
             let filterRunning = false;
-            console.log('w');
 
             if (cellConfig.type === 'boolean') {
                 render(
@@ -1988,31 +1987,27 @@ export class Grid {
                         @change=${(e: any) => {
                             if (!filterRunning) {
                                 filterRunning = true;
-                                console.log(currentValue, (e.target as any).checked, e.target.indeterminate);
 
                                 switch (true) {
                                     case currentValue === '' &&
                                         (e.target as any).checked === true &&
                                         e.target.indeterminate === false:
-                                        console.log('1');
                                         this.filterCallback((e.target as any).checked.toString(), cellConfig);
                                         currentValue = (e.target as any).checked.toString();
                                         break;
                                     case currentValue === 'true' &&
                                         (e.target as any).checked === false &&
                                         e.target.indeterminate === false:
-                                        console.log('2');
                                         this.filterCallback((e.target as any).checked.toString(), cellConfig);
                                         currentValue = (e.target as any).checked.toString();
                                         break;
                                     case currentValue === 'false' &&
                                         (e.target as any).checked === true &&
                                         e.target.indeterminate === false:
-                                        console.log('3');
                                         this.filterCallback('', cellConfig);
                                         e.target.indeterminate = true;
-                                        (e.target as any).checked = false
-                                        currentValue = ""
+                                        (e.target as any).checked = false;
+                                        currentValue = '';
                                 }
 
                                 filterRunning = false;
