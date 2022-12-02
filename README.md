@@ -57,8 +57,8 @@ Main rendering will be first focus
  * [x] virtual scrolling up/down
  * [x] virtual scrolling left/right middle section
  * [x] basic filter text/date/number
- * [ ] checkbox filter
- * [ ] checkbox on row
+ * [x] checkbox filter
+ * [x] checkbox on row
  * [x] selection by using left row selector only
  * [ ] select all top/left 
  * [x] multisort with shift key and colum label click
