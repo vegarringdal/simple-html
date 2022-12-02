@@ -77,7 +77,7 @@ let ii = 0;
 let cat = 'one';
 
 const c = [];
-for (let i = 0; i < 5000; i++) {
+for (let i = 0; i < 10; i++) {
     u++;
     if (u === 10) {
         ii++;

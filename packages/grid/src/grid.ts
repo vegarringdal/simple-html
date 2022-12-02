@@ -1336,6 +1336,11 @@ export class Grid {
                 rowsWanted.add(i);
             }
 
+            // hack 1 row
+            if (currentBottomRow === 0 && currentTopRow === 0 && rowTops.length === 1) {
+                rowsWanted.add(0);
+            }
+
             this.containerGroupRowCache.forEach((e) => {
                 if (e.row >= 0) {
                     if (!rowsWanted.has(e.row)) {
@@ -1388,7 +1393,7 @@ export class Grid {
                             } else {
                                 rowEl.classList.add('simple-html-grid-selected-row-odd');
                             }
-                        } else{
+                        } else {
                             if (e.row % 2 === 0) {
                                 rowEl.classList.add('simple-html-grid-row-even');
                             } else {
