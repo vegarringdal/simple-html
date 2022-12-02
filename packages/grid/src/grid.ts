@@ -1376,17 +1376,22 @@ export class Grid {
                     const rowEl = this.rows.get(e.id);
                     if (rowEl) {
                         const selection = this.gridInterface.getDatasource().getSelection();
-                        rowEl.classList.remove('simple-html-grid-selected-row');
-                        if (selection.isSelected(e.row)) {
-                            rowEl.classList.add('simple-html-grid-selected-row');
-                        }
-
+                        
                         rowEl.classList.remove('simple-html-grid-row-even');
+                        rowEl.classList.remove('simple-html-grid-row-odd');
+
                         if (e.row % 2 === 0) {
                             rowEl.classList.add('simple-html-grid-row-even');
                         } else {
                             rowEl.classList.add('simple-html-grid-row-odd');
                         }
+                        
+                        rowEl.classList.remove('simple-html-grid-selected-row');
+                        if (selection.isSelected(e.row)) {
+                            rowEl.classList.add('simple-html-grid-selected-row');
+                        }
+
+                     
 
                         rowEl.style.display = 'block';
                         rowEl.style.transform = `translate3d(0px, ${e.top}px, 0px)`;
