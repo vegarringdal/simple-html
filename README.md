@@ -67,6 +67,7 @@ Main rendering will be first focus
  * [ ] on focus button -> with event
  * [x] resize columns
  * [x] resize pinned left/right
+ * [x] even /odd coloring to rows (also when selected)
  * [ ] load setting
  * [ ] save setting
  * [x] drag/drop column to change location
