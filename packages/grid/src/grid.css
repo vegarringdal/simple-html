@@ -425,7 +425,6 @@ input {
     background-color: var(--simple-html-grid-main-bg-odd);
 }
 
-
 .simple-html-grid-row-extended {
     border-bottom: 2px solid var(--simple-html-grid-pinned-border);
 }
@@ -465,14 +464,34 @@ input {
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
     background-color: var(--simple-html-grid-main-bg-color);
     pointer-events: all;
-
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight-header);
     text-align: center;
     overflow: hidden;
     user-select: none;
-    /*  padding: 2px; */
+}
+
+.simple-html-label-odd {
+    background-color: var(--simple-html-grid-main-bg-selected);
+    pointer-events: all;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    text-align: center;
+    overflow: hidden;
+    user-select: none;
+}
+
+.simple-html-label-even {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+    pointer-events: all;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    text-align: center;
+    overflow: hidden;
+    user-select: none;
 }
 
 .simple-html-dimmed {
@@ -520,8 +539,6 @@ input {
 
     opacity: 1; /* Firefox */
 }
-
-
 
 .simple-html-grid .simple-html-grid-drop-container {
     box-sizing: border-box;

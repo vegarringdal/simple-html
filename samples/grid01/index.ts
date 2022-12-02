@@ -40,15 +40,15 @@ const gridConfig: GridConfig = {
         },
         boolean: {
             attribute: 'boolean',
-            type:"boolean"
+            type: 'boolean'
         },
-        parents:{
+        parents: {
             attribute: 'parents',
-            type: "number"
+            type: 'number'
         },
-        born:{
+        born: {
             attribute: 'born',
-            type: "date"
+            type: 'date'
         }
     },
     sortOrder: [
@@ -222,4 +222,4 @@ function darktheme() {
     }
 }
 
-/* darktheme(); */
+darktheme();

@@ -2044,12 +2044,14 @@ export class Grid {
     ) {
         let currentEntitySelected = '';
         if (rowData === this.gridInterface.getDatasource().currentEntity) {
-            currentEntitySelected = row % 0 == 0 ? 'simple-html-grid-row-even simple-html-grid-selected-row': 'simple-html-grid-row-odd simple-html-grid-selected-row';
+            currentEntitySelected = row % 0 == 0 ? 'simple-html-label-even': 'simple-html-label-odd';
+        } else{
+            currentEntitySelected = "simple-html-label"
         }
 
         render(
             html`<div
-                class=${currentEntitySelected + ' simple-html-absolute-fill simple-html-label '}
+                class=${currentEntitySelected + ' simple-html-absolute-fill'}
                 @click=${(e: any) => {
                     if (rowData.__group) {
                         console.log('row selected:', row);
