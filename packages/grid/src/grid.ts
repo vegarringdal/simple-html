@@ -1968,7 +1968,7 @@ export class Grid {
             const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
 
             const placeHolder = cellConfig.placeHolder || '🔍';
-            let currentValue = cellConfig.currentFilterValue || '';
+            let currentValue = cellConfig.currentFilterValue || ('' as any);
 
             if (cellConfig?.type === 'date') {
                 currentValue = this.gridInterface.getDatasource().getDateFormater().fromDate(currentValue);
@@ -1976,34 +1976,62 @@ export class Grid {
 
             // stop duplicate events
             let filterRunning = false;
+            console.log('w');
 
-            render(
-                html`<input
-                    style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
-                    .value=${currentValue}
-                    placeholder=${placeHolder}
-                    @keydown=${(e: KeyboardEvent) => {
-                        const keycode = e.keyCode ? e.keyCode : e.which;
-                        if (keycode === 13) {
-                            e.preventDefault();
-                            e.stopPropagation();
+            if (cellConfig.type === 'boolean') {
+                render(
+                    html`<input
+                        type="checkbox"
+                        .checked=${currentValue}
+                        .indeterminate=${currentValue !== true && currentValue !== false}
+                        placeholder=${placeHolder}
+                        @change=${(e: any) => {
+                            if (!filterRunning) {
+                                filterRunning = true;
+
+                                if (currentValue === 'false' && (e.target as any).checked === true) {
+                                    this.filterCallback('', cellConfig);
+                                    e.target.indeterminate = true;
+                                } else {
+                                    this.filterCallback((e.target as any).checked.toString(), cellConfig);
+                                    currentValue = (e.target as any).checked.toString();
+                                }
+
+                                filterRunning = false;
+                            }
+                        }}
+                    />`,
+                    cell as any
+                );
+            } else {
+                render(
+                    html`<input
+                        style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
+                        .value=${currentValue}
+                        placeholder=${placeHolder}
+                        @keydown=${(e: KeyboardEvent) => {
+                            const keycode = e.keyCode ? e.keyCode : e.which;
+                            if (keycode === 13) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (!filterRunning) {
+                                    filterRunning = true;
+                                    this.filterCallback((e.target as any).value, cellConfig);
+                                    filterRunning = false;
+                                }
+                            }
+                        }}
+                        @change=${(e: any) => {
                             if (!filterRunning) {
                                 filterRunning = true;
                                 this.filterCallback((e.target as any).value, cellConfig);
                                 filterRunning = false;
                             }
-                        }
-                    }}
-                    @change=${(e: any) => {
-                        if (!filterRunning) {
-                            filterRunning = true;
-                            this.filterCallback((e.target as any).value, cellConfig);
-                            filterRunning = false;
-                        }
-                    }}
-                />`,
-                cell as any
-            );
+                        }}
+                    />`,
+                    cell as any
+                );
+            }
         } else {
             render(html`<div class="simple-html-dimmed"></div>`, cell as any);
         }
