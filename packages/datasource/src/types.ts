@@ -41,7 +41,7 @@ export type FilterComparisonOperator =
     | 'IS_BLANK'
     | 'IS_NOT_BLANK';
 
-export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date' | 'empty';
+export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date';
 export type FilterLogicalOperator = 'AND' | 'OR' | 'NONE';
 export type FilterExpressionType = 'CONDITION' | 'GROUP';
 export type FilterValueType = 'ATTRIBUTE' | 'VALUE';

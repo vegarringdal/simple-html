@@ -30,7 +30,7 @@
         "rootDir": ".",
         "paths": {
             "@simple-html/datasource": ["./datasource/src"],
-            "@simple-html/grid": ["./grid/src"]
+            "@simple-html/grid": ["OLD/src"]
         }
     },
     "exclude": ["node_modules"]

@@ -1,119 +1,33 @@
-# @simple-html/grid
-
-Simple data grid made with @simple-html/datasource.
-This grid is made for desktop, not mobile.
+experiment
 
 
-Features:
+Want to take what Ive learned last year and see if pinned column/row column is possible
 
--   Grouping
--   Filtering
--   multi sorting
--   mulitiselect rows
+Also clean up weird stuff
 
-Grid uses @simple-html/datasource to for sorting/filtering/sorting/tracking changes
-
-### Install
-
--   `npm install @simple-html/grid`
-
-### Sample
+Main point is that this will be compatable with current v4
 
 
-```ts
-// since datasource is part of grid dependency, you only need to install the grid
-import "@simple-html/grid/dist/grid.css";
-import { Datasource, GridConfig, GridInterface, SimpleHtmlGrid } from '@simple-html/grid';
+- [x] enable to pin left
+- [x] enable to pin right
+- [x] vert scrolling working
+- [x] horx scroll middle area
+- [ ] drag drop columns (also to pinned area)
+- [ ] grouping on rows by code
+- [ ] drag/drop to group
+- [ ] click label to filter
+- [ ] menu rows (copy/paste values)
+- [ ] cell selection ?
+- [ ] menu label
+- [ ] advanced search menu
+- [ ] advanced search dialog
+- [ ] menu to edit operator for filter
+- [ ] edit cell
+- [ ] working filter i header
+- [ ] add checkbox logic for rows
+- [ ] cell render callback ?
+- [ ] filter i footer
+- [ ] simple clear filters i footer (optional by config)
+- [ ] simpel open advanced filter in footer (optional by config)
 
-
-
-/**
- * simple gridconfig
- */
-const gridConfig: GridConfig = {
-    cellHeight: 20,
-    panelHeight: 25,
-    footerHeight: 40,
-    readonly: true,
-    selectionMode: 'multiple',
-    groups: [
-        {
-            width: 200,
-            rows: [
-                {
-                    header: 'firstname',
-                    attribute: 'firstname',
-                    filterable: {}
-                }
-            ]
-        },
-        {
-            width: 200,
-            rows: [
-                {
-                    header: 'lastname',
-                    attribute: 'lastname',
-                    filterable: {}
-                }
-            ]
-        }
-    ]
-};
-
-
-
-/**
- * create datasource
- */
-const datasource = new Datasource();
-datasource.setData([
-    {
-        firstname: 'Per',
-        lastname: 'Person'
-    },
-    {
-        firstname: 'Nina',
-        lastname: 'Larson'
-    },
-    {
-        firstname: 'Lasse',
-        lastname: 'Gronn'
-    }
-]);
-
-
-
-/**
- * create interface
- */
-const gridInterface = new GridInterface(gridConfig, datasource);
-
-
-
-/**
- * add element and add inteface and styling
- * !important to add class
- */
-const element = document.createElement('simple-html-grid');
-element.style.width = '500px';
-element.style.height = '500px';
-element.classList.add('simple-html-grid');
-(element as SimpleHtmlGrid).interface = gridInterface;
-
-
-
-/**
- * add to document
- * assume this script is running after body is created
- */
-document.body.appendChild(element);
-```
-
-
-### Bundle size:
-
-https://bundlephobia.com/result?p=@simple-html/grid
-
-### Docs
-
-[Grid Api](https://simple-html.github.io/simple-html/grid/index.html)
+todo.. a lot more I do not remeber atm

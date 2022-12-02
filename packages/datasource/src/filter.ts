@@ -21,11 +21,11 @@ export class Filter {
         switch (type) {
             case 'date':
             case 'number':
-                return 'GREATER_THAN';
+                return 'GREATER_THAN_OR_EQUAL_TO';
             case 'bool':
                 return 'EQUAL';
             default:
-                return 'BEGIN_WITH';
+                return 'EQUAL';
         }
     }
 

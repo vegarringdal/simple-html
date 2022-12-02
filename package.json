@@ -1,6 +1,6 @@
 {
-    "name": "simple-html",
-    "version": "4.0.1",
+    "name": "simple-html-rebuild",
+    "version": "5.0.0-next.1",
     "description": "UI components without dependencies",
     "scripts": {
         "start": "ts-node config_devserver",
@@ -19,7 +19,7 @@
         "test-ci": "jest",
         "coverage": "jest --collectCoverage",
         "rollup": "rollup -c",
-        "release": "standard-version",
+        "release": "standard-version  --prerelease nex",
         "release-test": "standard-version  --dry-run",
         "release:minor": "standard-version --release-as minor",
         "release:patch": "standard-version --release-as patch",
@@ -36,9 +36,9 @@
         "@commitlint/cli": "^17.3.0",
         "@commitlint/config-conventional": "^17.3.0",
         "@types/jest": "^29.2.3",
-        "@typescript-eslint/eslint-plugin": "^5.44.0",
-        "@typescript-eslint/parser": "^5.44.0",
-        "esbuild": "^0.15.15",
+        "@typescript-eslint/eslint-plugin": "^5.45.0",
+        "@typescript-eslint/parser": "^5.45.0",
+        "esbuild": "^0.15.16",
         "esbuild-helpers": "0.0.9",
         "eslint": "^8.28.0",
         "eslint-config-prettier": "^8.5.0",
@@ -48,12 +48,14 @@
         "jest-environment-jsdom": "^29.3.1",
         "jsdom": "^20.0.3",
         "lint-staged": "^13.0.4",
-        "lit": "^2.4.1",
         "prettier": "^2.8.0",
         "standard-version": "^9.5.0",
         "ts-jest": "^29.0.3",
         "ts-node": "^10.9.1",
         "typedoc": "^0.23.21",
         "typescript": "^4.9.3"
+    },
+    "dependencies": {
+        "lit-html": "^2.4.0"
     }
 }

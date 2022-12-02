@@ -1,144 +1,100 @@
-# @simple-html/grid & @simple-html/datasource
+# grid-rebuild
 
-Native html grid & datasource with no dependencies.
 
-Its beeing used in some personal applications at work atm to get real world testing on what works
-good and not.
+> nexy version 5.0.0 repo, simplyfying and improving what I learne while using grid in prod
 
-Source code:
+> not made any npm package yet
 
--   [Grid](https://github.com/simple-html/simple-html/tree/master/packages/grid)
--   [Datasource](https://github.com/simple-html/simple-html/tree/master/packages/datasource)
+Will add `lit-html` for cell rendering in cells/menus/filters. It will make it simpler for more custom work/overrides.
 
-API docs
+Scrolling improvement have been worked on, and rerendering. Less custom elements for everything, gridinterface will have less duplicate code from datasource. More event driven.
 
--   [Grid](https://simple-html.github.io/simple-html/grid/index.html)
--   [Datasource](https://simple-html.github.io/simple-html/datasource/index.html)
-
-# Developer sample 01
-
--   clone repo
--   `npm install`
--   `npm start grid01`
-
-### What happend to version 3.x.x
-
-Added branch for it, everything except grid/datsource could easily be replaced by React/lithtml or
-similar, so was no need for it.
-
-### BUILD / RELEASE
-
-`npm run build:all` builds all packages
-
-`npm run typedoc-grid` update typedoc grid `npm run typedoc-ds` update typedoc grid
-
-`npm run release:next` updates package.json and updates chnagelog (remove next if not test version)
-
-`git push --follow-tags origin master` to update github with new tag
-
-`npm run publish:all` publishes repo, you need to push
-
-### how to try samples
-
--   `clone repo`
--   run `npm install`
--   run samples
-
-    -   `npm start grid01`
-      - as simple as it can get
-    -   `npm start grid02`
-      - using lit-html will get a lot of sample code how methods of grid/datasource work
-
-    Will add more sample... just been to busy lately
-
-### Sampel code to show how simples grid would be made
-
-```ts
-// since datasource is part of grid dependency, you only need to install the grid
-import "@simple-html/grid/dist/grid.css";
-import { Datasource, GridConfig, GridInterface, SimpleHtmlGrid } from '@simple-html/grid';
+dev branch will have a lot of commits to just save current progress, as it gets more stable I will start adding change log
 
 
 
-/**
- * simple gridconfig
- */
-const gridConfig: GridConfig = {
-    cellHeight: 20,
-    panelHeight: 25,
-    footerHeight: 40,
-    readonly: true,
-    selectionMode: 'multiple',
-    groups: [
-        {
-            width: 200,
-            rows: [
-                {
-                    header: 'firstname',
-                    attribute: 'firstname',
-                    filterable: {}
-                }
-            ]
-        },
-        {
-            width: 200,
-            rows: [
-                {
-                    header: 'lastname',
-                    attribute: 'lastname',
-                    filterable: {}
-                }
-            ]
-        }
-    ]
-};
+# dev
+
+* `git clone https://github.com/vegarringdal/simple-html`
+* `git checkout 5.0.0`
+* `npm i`
+* `npm start grid01`
+' open `http://localhost:8080`
 
 
 
-/**
- * create datasource
- */
-const datasource = new Datasource();
-datasource.setData([
-    {
-        firstname: 'Per',
-        lastname: 'Person'
-    },
-    {
-        firstname: 'Nina',
-        lastname: 'Larson'
-    },
-    {
-        firstname: 'Lasse',
-        lastname: 'Gronn'
-    }
-]);
+2022 - 12 - 02
 
 
 
-/**
- * create interface
- */
-const gridInterface = new GridInterface(gridConfig, datasource);
+
+# info / Progress
 
 
 
-/**
- * add element and add inteface and styling
- * !important to add class
- */
-const element = document.createElement('simple-html-grid');
-element.style.width = '500px';
-element.style.height = '500px';
-element.classList.add('simple-html-grid');
-(element as SimpleHtmlGrid).interface = gridInterface;
+* all UI rebuilt to optimise scrolling vert/horz
+  * usign less custom componets, more wrapped into 1 class with methods
+  * old grid had some really messy parts since all was to split into own classes/got expanded due to issues found at work in the begining, like 200 columns on a report
+* datasource mostly unchanged
+* gridinterface rebuilt from scratch
+  * needed to support pinned left/right
+  * tried to simplify more
+  * remove all duplicate functions it had, people can just ise datasource
+* changed datasource defaults on filter
+  * number is greater than or equal
+  * text is equal
+    * so they can just use * to starts with/contains etc
 
 
 
-/**
- * add to document
- * assume this script is running after body is created
- */
-document.body.appendChild(element);
-```
-````
+TODO:
+
+List here is not final, but to make it easier for me to focus
+
+Main rendering will be first focus
+
+ * [x] main UI parts
+ * [x] virtual scrolling up/down
+ * [x] virtual scrolling left/right middle section
+ * [x] basic filter text/date/number
+ * [ ] checkbox filter
+ * [ ] checkbox on row
+ * [x] selection by using left row selector only
+ * [ ] select all top/left 
+ * [x] multisort with shift key and colum label click
+ * [x] grouping with expand/collapse in group rows
+ * [ ] simple dropdown from columns
+ * [ ] on focus button -> with event
+ * [x] resize columns
+ * [x] resize pinned left/right
+ * [ ] load setting
+ * [ ] save setting
+ * [x] drag/drop column to change location
+ * [ ] menu label
+   * [ ] pin left
+   * [ ] pin right
+   * [ ] hide
+   * [ ] column chooser
+   * [ ] resize this column
+   * [ ] resize all columns
+ * [ ] menu filter
+   * [ ] clear filter
+   * [ ] clear all filters
+   * [ ] operator
+   * [ ] -> advanced filter like we have?
+ * [ ] menu row
+   * [ ] copy cell
+   * [ ] copy colum
+   * [ ] paste into cells
+     * [ ] event for when this happends, incase we need to edit others
+ * [ ] advanced search dialog
+ * [ ] option to override cell with callback, incase someone want svg and text etc
+ * option to override 
+ * [ ] edit cells
+ * [ ] add current filter to footer
+ * [ ] clear filter with button in footer (need to be able to hide)
+   
+
+
+todo... keep adding all the minor stuff ass I remeber
+

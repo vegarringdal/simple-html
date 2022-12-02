@@ -1,4 +1,4 @@
-export { GridConfig } from './types';
 export { GridInterface } from './gridInterface';
-export { Datasource } from '@simple-html/datasource';
-export { SimpleHtmlGrid } from './elements/simple-html-grid';
+export { GridElement } from './gridElement';
+export { Grid } from './grid';
+export { GridConfig } from './GridConfig';

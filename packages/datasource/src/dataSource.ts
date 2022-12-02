@@ -2,15 +2,7 @@ import { Filter } from './filter';
 import { Sort } from './sort';
 import { Grouping } from './grouping';
 import { Selection } from './selection';
-import {
-    Entity,
-    DatasourceConfigOptions,
-    SelectionMode,
-    SortArgument,
-    FilterArgument,
-    GroupArgument,
-    OPERATORS
-} from './types';
+import { Entity, DatasourceConfigOptions, SelectionMode, SortArgument, FilterArgument, GroupArgument, OPERATORS } from './types';
 import { DataContainer } from './dataContainer';
 import { DateFormaterDefault, DateFormaterType } from './dateFormaterDefault';
 import { NumberFormaterDot, NumberFormaterType } from './numberFormaterDot';
@@ -216,6 +208,10 @@ export class Datasource<T = any> {
         }
     }
 
+    public getLastSorting() {
+        return this.__sorting.getLastSort();
+    }
+
     /**
      * runs sorting/grouping, used by setdata/and filter, so we dont rerun sort/grouping many times
      * this also does not call any events
@@ -233,11 +229,7 @@ export class Datasource<T = any> {
 
         if (reRunFilter) {
             if (this.__filter.getFilter()) {
-                this.__collectionFiltered = this.__filter.filter(
-                    this.getAllData(),
-                    this.__filter.getFilter(),
-                    this
-                );
+                this.__collectionFiltered = this.__filter.filter(this.getAllData(), this.__filter.getFilter(), this);
             } else {
                 this.__collectionFiltered = this.__dataContainer.getDataSet();
             }
@@ -305,10 +297,7 @@ export class Datasource<T = any> {
             this.__grouping.getGrouping().forEach((group: GroupArgument) => {
                 const sortIndex = sortingAttributes.indexOf(group.attribute);
                 if (sortingAttributes.indexOf(group.attribute) === -1) {
-                    this.__sorting.setOrderBy(
-                        { attribute: group.attribute, ascending: true },
-                        true
-                    );
+                    this.__sorting.setOrderBy({ attribute: group.attribute, ascending: true }, true);
                 } else {
                     // if it already is in the new sorting, we need to use this sort order
                     this.__sorting.setOrderBy(
@@ -422,6 +411,8 @@ export class Datasource<T = any> {
         } else {
             this.__collectionDisplayed = this.__collectionFiltered;
         }
+
+        this.__grouping.setGrouping(groupings);
 
         // group
         this.__callSubscribers('collection-grouped', { info: 'group', groupings });
@@ -727,13 +718,9 @@ export class Datasource<T = any> {
 
         const parser = function (obj: FilterArgument, queryString = '') {
             if (obj) {
-                if (
-                    !obj.filterArguments ||
-                    (obj.filterArguments && obj.filterArguments.length === 0)
-                ) {
+                if (!obj.filterArguments || (obj.filterArguments && obj.filterArguments.length === 0)) {
                     if (obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK') {
-                        queryString =
-                            queryString + `[${obj.attribute}] <<${OPERATORS[obj.operator]}>>`;
+                        queryString = queryString + `[${obj.attribute}] <<${OPERATORS[obj.operator]}>>`;
                     } else {
                         if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                             queryString =
@@ -748,17 +735,13 @@ export class Datasource<T = any> {
                             if (Array.isArray(obj.value)) {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${
-                                        OPERATORS[obj.operator]
-                                    }>> [${obj.value.map((val) => {
+                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${obj.value.map((val) => {
                                         return `'${val}'`;
                                     })}]`;
                             } else {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${(
-                                        obj.value as string
-                                    )
+                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${(obj.value as string)
                                         .split('\n')
                                         .map((val) => {
                                             return `'${val}'`;
