@@ -183,7 +183,7 @@ function darktheme() {
         --simple-html-grid-main-bg-odd: #6b7178;
         --simple-html-grid-sec-bg-border: #1f2937;
         --simple-html-grid-pinned-border: #1f2937;
-        --simple-html-grid-main-bg-selected: #234882;
+        --simple-html-grid-main-bg-selected-odd: #234882;
         --simple-html-grid-main-bg-selected-even: #274e8f;
         --simple-html-grid-main-font-color: #f9f7f7;
         --simple-html-grid-sec-font-color: #979494;
