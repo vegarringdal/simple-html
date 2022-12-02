@@ -3,6 +3,18 @@ import { Datasource } from '@simple-html/datasource';
 import { GridInterface, GridConfig, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
 
+
+
+/**
+ * WARNING, this will be weird while I get main parts working
+ */
+
+
+
+
+
+
+
 /**
  * simple gridconfig
  */
@@ -59,6 +71,13 @@ const gridConfig: GridConfig = {
     ]
 };
 
+
+
+
+/**
+ * dyanmically create columns 
+ * please overlook this crap... just to simulate A LOT of columns
+ */
 for (let y = 0; y < 300; y++) {
     const obj = {
         rows: ['x' + y, 'y' + y],
@@ -67,11 +86,20 @@ for (let y = 0; y < 300; y++) {
     gridConfig.columnsCenter.push(obj);
 }
 
+
+
+
 /**
  * create datasource
  */
-
 const datasource = new Datasource();
+
+
+
+/**
+ * dyanmically create dummy data 
+ * please overlook this crap... just to give me test data/columns
+ */
 let u = 0;
 let ii = 0;
 let cat = 'one';
@@ -106,42 +134,50 @@ for (let i = 0; i < 10; i++) {
 }
 
 datasource.setData(c);
-/*  datasource.group([{ title: 'children', attribute: 'children' }, { title: 'parents', attribute: 'parents' }]);
- datasource.expandGroup("cat104");   */
 
-/* setTimeout(() => {
-    const c = [];
-for (let i = 0; i < 10; i++) {
-    u++;
-    if (u === 10) {
-        ii++;
-        cat = `cat${ii}`;
-        u = 0;
-    }
+/*  
+    //just to test grouping set on init
+    datasource.group([{ title: 'children', attribute: 'children' }, { title: 'parents', attribute: 'parents' }]);
+    datasource.expandGroup("cat104");   
+*/
 
-    const o = {
-        firstnamea: 'firstnamea' + i,
-        firstnameb: 'firstnameb' + i,
-        firstnamec: 'firstnamec' + i,
-        firstnamed: 'firstnamed' + i,
-        lastname: 'Gron',
-        children: cat,
-        boolean: u < 5 ? true : false,
-        parents: 2,
-        born: new Date()
-    };
+/* 
+// just to test if dataset changes
+    setTimeout(() => {
+        const c = [];
+        for (let i = 0; i < 10; i++) {
+            u++;
+            if (u === 10) {
+                ii++;
+                cat = `cat${ii}`;
+                u = 0;
+            }
 
-    for (let y = 0; y < 300; y++) {
-        o['x' + y] = 'x' + y + ':' + i;
-        o['y' + y] = 'y' + y + ':' + i;
-    }
+            const o = {
+                firstnamea: 'firstnamea' + i,
+                firstnameb: 'firstnameb' + i,
+                firstnamec: 'firstnamec' + i,
+                firstnamed: 'firstnamed' + i,
+                lastname: 'Gron',
+                children: cat,
+                boolean: u < 5 ? true : false,
+                parents: 2,
+                born: new Date()
+            };
 
-    c.push(o);
-}
+            for (let y = 0; y < 300; y++) {
+                o['x' + y] = 'x' + y + ':' + i;
+                o['y' + y] = 'y' + y + ':' + i;
+            }
 
-datasource.setData(c);
-}, 5000); 
+            c.push(o);
+        }
+
+        datasource.setData(c);
+    }, 5000); 
  */
+
+
 /**
  * create interface
  */
@@ -163,6 +199,10 @@ element.connectInterface(gridInterface);
  */
 document.body.appendChild(element);
 
+
+/**
+ * dark theme helper...
+ */
 function darktheme() {
     const x = document.getElementById('darkgrid');
     if (x) {
