@@ -2627,6 +2627,31 @@ export class Grid {
                 >
                     Clear
                 </div>
+                <div class="simple-html-grid-menu-section">Row:</div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Copy
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Paste
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Clear
+                </div>
             </div>`,
             contextMenu
         );
