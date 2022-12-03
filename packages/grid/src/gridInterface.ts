@@ -229,7 +229,7 @@ export class GridInterface {
                 this.grid.rebuild();
 
                 break;
-            case e.type === 'curreent-Entity':
+            case e.type === 'currentEntity':
             case e.type === 'selectionChange':
                 console.log('handleEvent:', e.type, e.data);
                 this.dataSourceUpdated();
