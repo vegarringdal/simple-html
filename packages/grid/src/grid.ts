@@ -1590,12 +1590,11 @@ export class Grid {
     }
 
     private horizontalScrollHandler(scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
-
         if (this.contextMenu) {
             document.body.removeChild(this.contextMenu);
             this.contextMenu = null;
         }
-        
+
         const config = this.gridInterface.getGridConfig();
 
         let columns = config.columnsCenter;
@@ -2395,12 +2394,81 @@ export class Grid {
 
         render(
             html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-item">Pin left</div>
-                <div class="simple-html-grid-menu-item">Pin right</div>
-                <div class="simple-html-grid-menu-item">Hide</div>
-                <div class="simple-html-grid-menu-item">Column chooser</div>
-                <div class="simple-html-grid-menu-item">Resize this column</div>
-                <div class="simple-html-grid-menu-item">Resize all columns</div>
+                <div
+                    class="simple-html-grid-menu-section"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Pinning:
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Pin left
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Pin right
+                </div>
+                <div class="simple-html-grid-menu-section">Visibility:</div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Hide
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Column chooser
+                </div>
+                <div class="simple-html-grid-menu-section">Size:</div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Resize this column
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Resize all columns
+                </div>
+                <div class="simple-html-grid-menu-section">Grouping:</div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Expand all
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Collapse all
+                </div>
             </div>`,
             contextMenu
         );
@@ -2434,11 +2502,48 @@ export class Grid {
 
         render(
             html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-item">Clear filter</div>
-                <div class="simple-html-grid-menu-item">clear all filters</div>
-                <div class="simple-html-grid-menu-item">Advanced filter</div>
-                <div class="simple-html-grid-menu-item">Operator: Equal</div>
-                <div class="simple-html-grid-menu-item">Operator: Contains</div>
+                <div class="simple-html-grid-menu-section">Filter:</div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Clear Filter
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Clear All Filters
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Advanced Filter
+                </div>
+                <div class="simple-html-grid-menu-section">Set Operator:</div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Equal
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Contains
+                </div>
             </div>`,
             contextMenu
         );
@@ -2472,10 +2577,56 @@ export class Grid {
 
         render(
             html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-item">Copy</div>
-                <div class="simple-html-grid-menu-item">Column</div>
-                <div class="simple-html-grid-menu-item">Paste</div>
-                <div class="simple-html-grid-menu-item">Clear</div>
+                <div class="simple-html-grid-menu-section">Cell:</div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Copy
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Paste
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Clear
+                </div>
+                <div class="simple-html-grid-menu-section">Column:</div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Copy
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Paste
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Clear
+                </div>
             </div>`,
             contextMenu
         );

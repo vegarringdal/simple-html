@@ -794,9 +794,11 @@ input {
     display: flex;
     flex-direction: column;
     z-index: 500;
+    box-shadow: 10px 5px 5px black;
 }
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
+    pointer-events: all;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
@@ -810,14 +812,37 @@ input {
     font-weight: var(--simple-html-grid-font-weight-cell);
     background-color: var(--simple-html-grid-main-bg-color);
     margin: initial;
+    padding-left: 10px;
+    padding-right: 15px;
+
+    transition: initial;
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-section {
+    pointer-events: none;
+    box-sizing: border-box;
+    border:0;
+    border-radius: initial;
+    display: block;
+    height: 20px;
+    text-align: left;
+    overflow: hidden;
+    user-select: none;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-cell);
+    background-color: var(--simple-html-grid-main-bg-color);
+    margin: initial;
+    filter: opacity(0.5);
     padding-left: 5px;
-    margin-left: 5px;
-    margin-right: 5px;
+    padding-right: 15px;
     transition: initial;
     outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 }
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item:hover {
-    background-color: var(--simple-html-grid-main-bg-selected);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
 }
