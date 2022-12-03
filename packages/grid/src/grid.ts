@@ -4,7 +4,7 @@ import { getElementByClassName } from './getElementByClassName';
 import { asPx } from './asPx';
 import { Attribute, Columns } from './gridConfig';
 import { html, render, svg } from 'lit-html';
-import { live } from 'lit-html//directives/live';
+import { live } from 'lit-html/directives/live.js';
 import { Entity, FilterArgument } from '@simple-html/datasource';
 
 const MIDDLE_PINNED_COLTYPE = 'middle-pinned';
