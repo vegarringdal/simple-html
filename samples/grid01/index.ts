@@ -3,17 +3,9 @@ import { Datasource } from '@simple-html/datasource';
 import { GridInterface, GridConfig, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
 
-
-
 /**
  * WARNING, this will be weird while I get main parts working
  */
-
-
-
-
-
-
 
 /**
  * simple gridconfig
@@ -31,7 +23,7 @@ const gridConfig: GridConfig = {
             width: 100
         },
         {
-            rows: ['parents', 'boolean'],
+            rows: ['parents', 'boolean2'],
             width: 100
         }
     ],
@@ -41,18 +33,25 @@ const gridConfig: GridConfig = {
             width: 100
         },
         {
-            rows: ['firstnamed'],
+            rows: ['firstnamed', 'boolean'],
             width: 100
         }
     ],
     columnsCenter: [],
     attributes: {
-        firstname: {
-            attribute: 'firstname'
+        firstnamea: {
+            attribute: 'firstnamea',
+            readonly: true
         },
         boolean: {
             attribute: 'boolean',
-            type: 'boolean'
+            type: 'boolean',
+            readonly: true
+        },
+        boolean2: {
+            attribute: 'boolean',
+            type: 'boolean',
+            readonly: false
         },
         parents: {
             attribute: 'parents',
@@ -71,11 +70,8 @@ const gridConfig: GridConfig = {
     ]
 };
 
-
-
-
 /**
- * dyanmically create columns 
+ * dyanmically create columns
  * please overlook this crap... just to simulate A LOT of columns
  */
 for (let y = 0; y < 300; y++) {
@@ -86,18 +82,13 @@ for (let y = 0; y < 300; y++) {
     gridConfig.columnsCenter.push(obj);
 }
 
-
-
-
 /**
  * create datasource
  */
 const datasource = new Datasource();
 
-
-
 /**
- * dyanmically create dummy data 
+ * dyanmically create dummy data
  * please overlook this crap... just to give me test data/columns
  */
 let u = 0;
@@ -121,6 +112,7 @@ for (let i = 0; i < 1000; i++) {
         lastname: 'Gron',
         children: cat,
         boolean: u < 5 ? true : false,
+        boolean2: u < 5 ? true : false,
         parents: 2,
         born: new Date(new Date().setDate(i))
     };
@@ -177,7 +169,6 @@ datasource.setData(c);
     }, 5000); 
  */
 
-
 /**
  * create interface
  */
@@ -198,7 +189,6 @@ element.connectInterface(gridInterface);
  * add to document
  */
 document.body.appendChild(element);
-
 
 /**
  * dark theme helper...

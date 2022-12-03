@@ -511,6 +511,23 @@ input {
     background-repeat: repeat;
 }
 
+.simple-html-readonly {
+    box-sizing: border-box;
+    position: absolute;
+    background-color: transparent;
+    left: 0;
+    right: 0;
+    border: 0;
+    outline: none;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    user-select: none;
+    filter: opacity(0.1);
+    background: repeating-linear-gradient(-55deg, #222, #222 1px, #bdb4b4 5px, #bfbfbf 5px);
+    background-repeat: repeat;
+}
+
 .simple-html-selector {
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }

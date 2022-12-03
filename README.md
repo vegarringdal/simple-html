@@ -76,11 +76,12 @@ Main rendering will be first focus
    * [x] add input to row
    * [ ] able to set placeholder with config
    * [ ] able to add focus button (...) or dropdown icon
-   * [ ] edit cells
+   * [x] edit cells
    * [ ] edit cells callback/event
    * [ ] support simple dropsdown (dropdown need to be placed on document like we need to do with menus)
    * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
-   * [ ] readonly with callback, so you can also set it based on other row values
+   * [x] readonly 
+     * [ ] with callback, so you can also set it based on other row values
    * [ ] disabled? (or is this just disabled)
  * [ ] menu label
    * [ ] pin left

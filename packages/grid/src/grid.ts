@@ -2172,37 +2172,60 @@ export class Grid {
             if (cellConfig.type === 'boolean') {
                 value = (entity && entity[attribute]) || false;
             }
+            let dimmed = '';
+            if (cellConfig.readonly) {
+                // todo: look more into this one
+                //dimmed = 'simple-html-readonly';
+            }
 
             if (cellConfig.type === 'boolean') {
                 render(
                     html`<input
                         .checked=${live(value)}
                         type="checkbox"
+                        .readonly=${cellConfig.readonly}
+                        .disabled=${cellConfig.readonly}
                         @click=${() => {
                             this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
-                            console.log('current entity:', this.gridInterface.getDatasource().currentEntity);
                             this.triggerScrollEvent();
                         }}
-                        @input=${(e: any) => {
-                            console.log(e);
+                        @change=${(e: any) => {
+                            if (!cellConfig.readonly) {
+                                entity[attribute] = e.target.checked ? false : true;
+                                e.target.checked = entity[attribute];
+                            }
                         }}
                     />`,
                     cell as any
                 );
             } else {
                 render(
-                    html`<input
-                        style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
-                        .value=${live(value?.toString())}
-                        @click=${() => {
-                            this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
-                            console.log('current entity:', this.gridInterface.getDatasource().currentEntity);
-                            this.triggerScrollEvent();
-                        }}
-                        @input=${(e: any) => {
-                            console.log(e);
-                        }}
-                    />`,
+                    html` <div>
+                        <div class=${dimmed}></div>
+                        <input
+                            style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
+                            .value=${live(value?.toString())}
+                            .readonly=${cellConfig.readonly}
+                            .disabled=${cellConfig.readonly}
+                            @click=${() => {
+                                this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
+                                this.triggerScrollEvent();
+                            }}
+                            @input=${(e: any) => {
+                                if (!cellConfig.readonly && cellConfig?.type !== 'date') {
+                                    entity[attribute] = e.target.value;
+                                }
+                            }}
+                            @change=${(e: any) => {
+                                if (!cellConfig.readonly && cellConfig?.type === 'date') {
+                                    entity[attribute] = this.gridInterface
+                                        .getDatasource()
+                                        .getDateFormater()
+                                        .toDate(e.target.value);
+                                }
+                            }}
+                        />
+                    </div>`,
                     cell as any
                 );
             }
