@@ -2,6 +2,7 @@ import './index.css';
 import { Datasource } from '@simple-html/datasource';
 import { GridInterface, GridConfig, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
+import { dummydata } from './dummyData';
 
 /**
  * WARNING, this will be weird while I get main parts working
@@ -19,41 +20,178 @@ const gridConfig: GridConfig = {
     selectionMode: 'multiple',
     columnsPinnedLeft: [
         {
-            rows: ['firstnamea', 'children'],
+            rows: ['id', 'name'],
+            width: 180
+        },
+        {
+            rows: ['isActive'],
             width: 100
         },
         {
-            rows: ['boolean2'],
-            width: 100
-        },
-        {
-            rows: ['parents'],
+            rows: ['balance'],
             width: 100
         }
     ],
     columnsPinnedRight: [
         {
-            rows: ['firstnamec', 'born'],
+            rows: ['index', 'eyeColor'],
             width: 100
         },
         {
-            rows: ['firstnamed', 'boolean'],
+            rows: ['gender', 'isDumb'],
             width: 100
         }
     ],
-    columnsCenter: [],
+    columnsCenter: [
+        {
+            rows: ['company', 'email'],
+            width: 200
+        },
+        {
+            rows: ['phone', 'address'],
+            width: 300
+        },
+        
+        {
+            rows: ['date1', 'date2'],
+            width: 80
+        },
+        
+        {
+            rows: ['favoriteFruit', 'longitude'],
+            width: 100
+        },
+        {
+            rows: ['country', 'registered'],
+            width: 100
+        },
+        
+        {
+            rows: ['about', 'age'],
+            width: 100
+        },
+        
+        {
+            rows: ['tags', 'greeting'],
+            width: 250
+        },
+        
+        {
+            rows: ['picture', 'age'],
+            width: 300
+        },
+        {
+            rows: ['company', 'email'],
+            width: 200
+        },
+        {
+            rows: ['phone', 'address'],
+            width: 300
+        },
+        
+        {
+            rows: ['date1', 'date2'],
+            width: 100
+        },
+        
+        {
+            rows: ['favoriteFruit', 'longitude'],
+            width: 100
+        },
+        
+        {
+            rows: ['about', 'age'],
+            width: 100
+        },
+        
+        {
+            rows: ['tags', 'greeting'],
+            width: 250
+        },
+        
+        {
+            rows: ['picture', 'age'],
+            width: 300
+        },{
+            rows: ['company', 'email'],
+            width: 200
+        },
+        {
+            rows: ['phone', 'address'],
+            width: 300
+        },
+        
+        {
+            rows: ['date1', 'date2'],
+            width: 150
+        },
+        
+        {
+            rows: ['favoriteFruit', 'longitude'],
+            width: 100
+        },
+        
+        {
+            rows: ['about', 'age'],
+            width: 100
+        },
+        
+        {
+            rows: ['tags', 'greeting'],
+            width: 250
+        },
+        
+        {
+            rows: ['picture', 'age'],
+            width: 300
+        },
+        {
+            rows: ['company', 'email'],
+            width: 200
+        },
+        {
+            rows: ['phone', 'address'],
+            width: 300
+        },
+        
+        {
+            rows: ['date1', 'date2'],
+            width: 100
+        },
+        
+        {
+            rows: ['favoriteFruit', 'longitude'],
+            width: 100
+        },
+        
+        {
+            rows: ['about', 'age'],
+            width: 100
+        },
+        
+        {
+            rows: ['tags', 'greeting'],
+            width: 250
+        },
+        
+        {
+            rows: ['picture', 'age'],
+            width: 300
+        }
+
+    ],
     attributes: {
         firstnamea: {
             attribute: 'firstnamea',
             readonly: true
         },
-        boolean: {
-            attribute: 'boolean',
+        isActive: {
+            attribute: 'isActive',
             type: 'boolean',
             readonly: true
         },
-        boolean2: {
-            attribute: 'boolean',
+        isDumb: {
+            attribute: 'isDumb',
             type: 'boolean',
             readonly: false
         },
@@ -61,8 +199,12 @@ const gridConfig: GridConfig = {
             attribute: 'parents',
             type: 'number'
         },
-        born: {
-            attribute: 'born',
+        date1: {
+            attribute: 'date1',
+            type: 'date'
+        },
+        date2: {
+            attribute: 'date2',
             type: 'date'
         }
     },
@@ -74,104 +216,20 @@ const gridConfig: GridConfig = {
     ]
 };
 
-/**
- * dyanmically create columns
- * please overlook this crap... just to simulate A LOT of columns
- */
-for (let y = 0; y < 300; y++) {
-    const obj = {
-        rows: ['x' + y, 'y' + y],
-        width: 100 + (y % 3 === 0 ? 40 : 5)
-    };
-    gridConfig.columnsCenter.push(obj);
-}
 
 /**
  * create datasource
  */
 const datasource = new Datasource();
 
-/**
- * dyanmically create dummy data
- * please overlook this crap... just to give me test data/columns
- */
-let u = 0;
-let ii = 0;
-let cat = 'one';
+datasource.setData(dummydata.map((e)=>{
+    //@ts-ignore
+    e.date1 = new Date(e.date1)
+     //@ts-ignore
+    e.date2 = new Date(e.date2)
+    return e
+}));
 
-const c = [];
-for (let i = 0; i < 1000; i++) {
-    u++;
-    if (u === 10) {
-        ii++;
-        cat = `cat${ii}`;
-        u = 0;
-    }
-
-    const o = {
-        firstnamea: 'firstnamea' + i,
-        firstnameb: 'firstnameb' + i,
-        firstnamec: 'firstnamec' + i,
-        firstnamed: 'firstnamed' + i,
-        lastname: 'Gron',
-        children: cat,
-        boolean: u < 5 ? true : false,
-        boolean2: u < 5 ? true : false,
-        parents: 2,
-        born: new Date(new Date().setDate(i))
-    };
-
-    for (let y = 0; y < 300; y++) {
-        o['x' + y] = 'x' + y + ':' + i;
-        o['y' + y] = 'y' + y + ':' + i;
-    }
-
-    c.push(o);
-}
-
-datasource.setData(c);
-
-/*  
-    //just to test grouping set on init
-    datasource.group([{ title: 'children', attribute: 'children' }, { title: 'parents', attribute: 'parents' }]);
-    datasource.expandGroup("cat104");   
-*/
-
-/* 
-// just to test if dataset changes
-    setTimeout(() => {
-        const c = [];
-        for (let i = 0; i < 10; i++) {
-            u++;
-            if (u === 10) {
-                ii++;
-                cat = `cat${ii}`;
-                u = 0;
-            }
-
-            const o = {
-                firstnamea: 'firstnamea' + i,
-                firstnameb: 'firstnameb' + i,
-                firstnamec: 'firstnamec' + i,
-                firstnamed: 'firstnamed' + i,
-                lastname: 'Gron',
-                children: cat,
-                boolean: u < 5 ? true : false,
-                parents: 2,
-                born: new Date()
-            };
-
-            for (let y = 0; y < 300; y++) {
-                o['x' + y] = 'x' + y + ':' + i;
-                o['y' + y] = 'y' + y + ':' + i;
-            }
-
-            c.push(o);
-        }
-
-        datasource.setData(c);
-    }, 5000); 
- */
 
 /**
  * create interface
