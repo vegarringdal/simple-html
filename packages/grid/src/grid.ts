@@ -2004,7 +2004,18 @@ export class Grid {
 
         const value = attribute;
         if (attribute) {
-            render(html`<div class="simple-html-label">${value} ${iconAsc}</div>`, cell as any);
+            render(
+                html`<div
+                    class="simple-html-label"
+                    @contextmenu=${(e: any) => {
+                        e.preventDefault();
+                        console.log('context menu call on label');
+                    }}
+                >
+                    ${value} ${iconAsc}
+                </div>`,
+                cell as any
+            );
         } else {
             render(html`<div class="simple-html-dimmed"></div>`, cell as any);
         }
@@ -2040,6 +2051,10 @@ export class Grid {
                         .checked=${live(currentValue)}
                         .indeterminate=${currentValue !== true && currentValue !== false}
                         placeholder=${placeHolder}
+                        @contextmenu=${(e: any) => {
+                            e.preventDefault();
+                            console.log('context menu call on filter');
+                        }}
                         @change=${(e: any) => {
                             if (!filterRunning) {
                                 filterRunning = true;
@@ -2078,6 +2093,10 @@ export class Grid {
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(currentValue)}
                         placeholder=${placeHolder}
+                        @contextmenu=${(e: any) => {
+                            e.preventDefault();
+                            console.log('context menu call on filter');
+                        }}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
                             if (keycode === 13) {
@@ -2218,6 +2237,10 @@ export class Grid {
                         type="checkbox"
                         .readonly=${cellConfig.readonly}
                         .disabled=${cellConfig.readonly}
+                        @contextmenu=${(e: any) => {
+                            e.preventDefault();
+                            console.log('context menu call on row');
+                        }}
                         @click=${() => {
                             this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                             this.triggerScrollEvent();
@@ -2240,6 +2263,10 @@ export class Grid {
                             .value=${live(value?.toString())}
                             .readonly=${cellConfig.readonly}
                             .disabled=${cellConfig.readonly}
+                            @contextmenu=${(e: any) => {
+                                e.preventDefault();
+                                console.log('context menu call on row');
+                            }}
                             @click=${() => {
                                 this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                                 this.triggerScrollEvent();
