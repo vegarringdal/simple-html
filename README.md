@@ -70,7 +70,18 @@ Main rendering will be first focus
  * [x] even /odd coloring to rows (also when selected)
  * [ ] load setting
  * [ ] save setting
+ * [ ] global readonly setting
  * [x] drag/drop column to change location
+ * [ ] row/cell
+   * [x] add input to row
+   * [ ] able to set placeholder with config
+   * [ ] able to add focus button (...) or dropdown icon
+   * [ ] edit cells
+   * [ ] edit cells callback/event
+   * [ ] support simple dropsdown (dropdown need to be placed on document like we need to do with menus)
+   * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
+   * [ ] readonly with callback, so you can also set it based on other row values
+   * [ ] disabled? (or is this just disabled)
  * [ ] menu label
    * [ ] pin left
    * [ ] pin right
@@ -85,14 +96,21 @@ Main rendering will be first focus
    * [ ] -> advanced filter like we have?
  * [ ] menu row
    * [ ] copy cell
+      * [ ] need a event/callback for this
    * [ ] copy colum
+      * [ ] need a event/callback for this
    * [ ] paste into cells
      * [ ] event for when this happends, incase we need to edit others
+   * do we need a way to overide value copied and pasted ?
  * [ ] advanced search dialog
- * [ ] option to override cell with callback, incase someone want svg and text etc
+   * [ ] support groups
+     * [ ] and groups
+     * [ ] or groups
+     * [ ] not groups
+   * in operator  
+ * do we want a find all (find value in all columns/rows?)
  * option to override 
- * [ ] edit cells
- * [x] add current filter to footer
+  * [x] add current filter to footer
  * [x] total rows/filtered rows to footer
  * [ ] clear filter with button in footer (need to be able to hide)
    
