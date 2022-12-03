@@ -507,8 +507,8 @@ input {
     overflow: hidden;
     user-select: none;
     filter: opacity(0.1);
-    background: repeating-linear-gradient(-55deg, #222, #222 1px, #bdb4b4 5px, #bfbfbf 5px);
-    background-repeat: repeat;
+    background-image: repeating-linear-gradient(-45deg, transparent, transparent 1px, black 1px, black 4px);
+    background-image: repeating-linear-gradient(-45deg, transparent 0 1px, black 1px 2px);
 }
 
 .simple-html-readonly {
@@ -523,9 +523,26 @@ input {
     bottom: 0;
     overflow: hidden;
     user-select: none;
-    filter: opacity(0.1);
-    background: repeating-linear-gradient(-55deg, #222, #222 1px, #bdb4b4 5px, #bfbfbf 5px);
-    background-repeat: repeat;
+    filter: opacity(0.2);
+    background-image: repeating-linear-gradient(-45deg, transparent, transparent 1px, rgb(255, 0, 0) 1px, rgb(255, 0, 0) 4px);
+    background-image: repeating-linear-gradient(-45deg, transparent 0 1px, rgb(255, 0, 0) 1px 2px);
+}
+
+.simple-html-mandatory {
+    box-sizing: border-box;
+    position: absolute;
+    background-color: transparent;
+    left: 0;
+    right: 0;
+    border: 0;
+    outline: none;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    user-select: none;
+    filter: opacity(0.2);
+    background-image: repeating-linear-gradient(-45deg, transparent, transparent 1px, rgb(21, 255, 0) 1px, rgb(21, 255, 0) 4px);
+    background-image: repeating-linear-gradient(-45deg, transparent 0 1px, rgb(21, 255, 0) 1px 2px);
 }
 
 .simple-html-selector {

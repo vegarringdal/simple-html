@@ -2208,8 +2208,7 @@ export class Grid {
             }
             let dimmed = '';
             if (cellConfig.readonly) {
-                // todo: look more into this one
-                //dimmed = 'simple-html-readonly';
+                dimmed = 'simple-html-readonly';
             }
 
             if (cellConfig.type === 'boolean') {

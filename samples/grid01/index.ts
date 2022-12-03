@@ -23,7 +23,11 @@ const gridConfig: GridConfig = {
             width: 100
         },
         {
-            rows: ['parents', 'boolean2'],
+            rows: ['boolean2'],
+            width: 100
+        },
+        {
+            rows: ['parents'],
             width: 100
         }
     ],
@@ -252,4 +256,5 @@ function darktheme() {
     }
 }
 
-darktheme();
+/* darktheme();
+ */
