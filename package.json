@@ -4,6 +4,7 @@
     "description": "UI components without dependencies",
     "scripts": {
         "start": "ts-node config_devserver",
+        "build:demo": "ts-node config_demo_build",
         "build:all": "node ./scripts/build",
         "clean:dist": "node ./scripts/clean",
         "sync": "node ./scripts/syncPackages",
