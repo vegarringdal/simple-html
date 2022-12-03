@@ -4,6 +4,7 @@ import { getElementByClassName } from './getElementByClassName';
 import { asPx } from './asPx';
 import { Attribute, Columns } from './gridConfig';
 import { html, render, svg } from 'lit-html';
+import { live } from 'lit-html//directives/live';
 import { Entity, FilterArgument } from '@simple-html/datasource';
 
 const MIDDLE_PINNED_COLTYPE = 'middle-pinned';
@@ -2002,7 +2003,7 @@ export class Grid {
                 render(
                     html`<input
                         type="checkbox"
-                        .checked=${currentValue}
+                        .checked=${live(currentValue)}
                         .indeterminate=${currentValue !== true && currentValue !== false}
                         placeholder=${placeHolder}
                         @change=${(e: any) => {
@@ -2041,7 +2042,7 @@ export class Grid {
                 render(
                     html`<input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
-                        .value=${currentValue}
+                        .value=${live(currentValue)}
                         placeholder=${placeHolder}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
@@ -2175,7 +2176,7 @@ export class Grid {
             if (cellConfig.type === 'boolean') {
                 render(
                     html`<input
-                        .checked=${value}
+                        .checked=${live(value)}
                         type="checkbox"
                         @click=${() => {
                             this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -2192,7 +2193,7 @@ export class Grid {
                 render(
                     html`<input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
-                        .value=${value?.toString()}
+                        .value=${live(value?.toString())}
                         @click=${() => {
                             this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                             console.log('current entity:', this.gridInterface.getDatasource().currentEntity);
