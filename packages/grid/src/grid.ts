@@ -1396,6 +1396,20 @@ export class Grid {
                 lastLeft = lastLeft + c.width;
             });
 
+            const widthsLeft: number[] = [];
+            lastLeft = 0;
+            config.columnsPinnedLeft.forEach((c) => {
+                widthsLeft.push(c.width);
+                lastLeft = lastLeft + c.width;
+            });
+
+            const widthsRight: number[] = [];
+            lastLeft = 0;
+            config.columnsPinnedRight.forEach((c) => {
+                widthsRight.push(c.width);
+                lastLeft = lastLeft + c.width;
+            });
+
             const updateRow = (e: RowCache, colType: ColType) => {
                 if (e.row !== -1) {
                     const rowdata = this.gridInterface.getDatasource().getRow(e.row);
@@ -1443,6 +1457,16 @@ export class Grid {
                                     } else {
                                         if (elc.style.display !== 'block') {
                                             elc.style.display = 'block';
+                                        }
+
+                                        const transform = `translate3d(${x.left}px, 0px, 0px)`;
+                                        const width = asPx(widthsLeft[x.column]);
+
+                                        if (transform !== elc.style.transform) {
+                                            elc.style.transform = transform;
+                                        }
+                                        if (width !== elc.style.width) {
+                                            elc.style.width = width;
                                         }
 
                                         for (let cc = 0; cc < elc.children.length; cc++) {
@@ -1495,6 +1519,16 @@ export class Grid {
                                     } else {
                                         if (colEl.style.display !== 'block') {
                                             colEl.style.display = 'block';
+                                        }
+
+                                        const transform = `translate3d(${x.left}px, 0px, 0px)`;
+                                        const width = asPx(widthsRight[x.column]);
+
+                                        if (transform !== colEl.style.transform) {
+                                            colEl.style.transform = transform;
+                                        }
+                                        if (width !== colEl.style.width) {
+                                            colEl.style.width = width;
                                         }
 
                                         for (let cc = 0; cc < colEl.children.length; cc++) {
