@@ -256,5 +256,4 @@ function darktheme() {
     }
 }
 
-/* darktheme();
- */
+darktheme();
