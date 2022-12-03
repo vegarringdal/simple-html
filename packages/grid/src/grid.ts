@@ -1975,13 +1975,13 @@ export class Grid {
 
     private renderHeaderLabel(
         cell: HTMLCellElement,
-        _row: number,
-        _column: number,
-        _celno: number,
-        _colType: ColType,
-        _cellType: string,
+        row: number,
+        column: number,
+        celno: number,
+        colType: ColType,
+        cellType: string,
         attribute: string,
-        _rowData: Entity
+        rowData: Entity
     ) {
         /**
          * first get sort logic
@@ -2009,7 +2009,19 @@ export class Grid {
                     class="simple-html-label"
                     @contextmenu=${(e: any) => {
                         e.preventDefault();
-                        console.log('context menu call on label');
+                        this.contextmenuLabel(
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData,
+                            render,
+                            html,
+                            live
+                        );
                     }}
                 >
                     ${value} ${iconAsc}
@@ -2023,13 +2035,13 @@ export class Grid {
 
     private renderHeaderFilter(
         cell: HTMLCellElement,
-        _row: number,
-        _column: number,
-        _celno: number,
-        _colType: ColType,
-        _cellType: string,
+        row: number,
+        column: number,
+        celno: number,
+        colType: ColType,
+        cellType: string,
         attribute: string,
-        _rowData: Entity
+        rowData: Entity
     ) {
         if (attribute) {
             const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
@@ -2053,7 +2065,19 @@ export class Grid {
                         placeholder=${placeHolder}
                         @contextmenu=${(e: any) => {
                             e.preventDefault();
-                            console.log('context menu call on filter');
+                            this.contextmenuFilter(
+                                cell,
+                                row,
+                                column,
+                                celno,
+                                colType,
+                                cellType,
+                                attribute,
+                                rowData,
+                                render,
+                                html,
+                                live
+                            );
                         }}
                         @change=${(e: any) => {
                             if (!filterRunning) {
@@ -2095,7 +2119,19 @@ export class Grid {
                         placeholder=${placeHolder}
                         @contextmenu=${(e: any) => {
                             e.preventDefault();
-                            console.log('context menu call on filter');
+                            this.contextmenuFilter(
+                                cell,
+                                row,
+                                column,
+                                celno,
+                                colType,
+                                cellType,
+                                attribute,
+                                rowData,
+                                render,
+                                html,
+                                live
+                            );
                         }}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
@@ -2201,12 +2237,12 @@ export class Grid {
     private renderRowCell(
         cell: HTMLCellElement,
         row: number,
-        _column: number,
-        _celno: number,
-        _colType: ColType,
-        _cellType: string,
+        column: number,
+        celno: number,
+        colType: ColType,
+        cellType: string,
         attribute: string,
-        _rowData: Entity
+        rowData: Entity
     ) {
         const entity = this.gridInterface.getDatasource().getRow(row);
         let value = (entity && entity[attribute]?.toString()) || '';
@@ -2239,7 +2275,19 @@ export class Grid {
                         .disabled=${cellConfig.readonly}
                         @contextmenu=${(e: any) => {
                             e.preventDefault();
-                            console.log('context menu call on row');
+                            this.contextmenuRow(
+                                cell,
+                                row,
+                                column,
+                                celno,
+                                colType,
+                                cellType,
+                                attribute,
+                                rowData,
+                                render,
+                                html,
+                                live
+                            );
                         }}
                         @click=${() => {
                             this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -2265,7 +2313,19 @@ export class Grid {
                             .disabled=${cellConfig.readonly}
                             @contextmenu=${(e: any) => {
                                 e.preventDefault();
-                                console.log('context menu call on row');
+                                this.contextmenuRow(
+                                    cell,
+                                    row,
+                                    column,
+                                    celno,
+                                    colType,
+                                    cellType,
+                                    attribute,
+                                    rowData,
+                                    render,
+                                    html,
+                                    live
+                                );
                             }}
                             @click=${() => {
                                 this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -2355,5 +2415,79 @@ export class Grid {
         if (type === 'row-cell') {
             this.renderRowCell(cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
         }
+    }
+
+    private contextmenuLabel(
+        cell: HTMLCellElement,
+        row: number,
+        column: number,
+        celno: number,
+        colType: ColType,
+        cellType: string,
+        attribute: string,
+        rowData: Entity,
+        litHtmlRender: any,
+        html: any,
+        live: any
+    ) {
+        console.log(
+            'contextmenuLabel',
+            cell,
+            row,
+            column,
+            celno,
+            colType,
+            cellType,
+            attribute,
+            rowData,
+            litHtmlRender,
+            html,
+            live
+        );
+    }
+
+    private contextmenuFilter(
+        cell: HTMLCellElement,
+        row: number,
+        column: number,
+        celno: number,
+        colType: ColType,
+        cellType: string,
+        attribute: string,
+        rowData: Entity,
+        litHtmlRender: any,
+        html: any,
+        live: any
+    ) {
+        console.log(
+            'contextmenuFilter',
+            cell,
+            row,
+            column,
+            celno,
+            colType,
+            cellType,
+            attribute,
+            rowData,
+            litHtmlRender,
+            html,
+            live
+        );
+    }
+
+    private contextmenuRow(
+        cell: HTMLCellElement,
+        row: number,
+        column: number,
+        celno: number,
+        colType: ColType,
+        cellType: string,
+        attribute: string,
+        rowData: Entity,
+        litHtmlRender: any,
+        html: any,
+        live: any
+    ) {
+        console.log('contextmenuRow', cell, row, column, celno, colType, cellType, attribute, rowData, litHtmlRender, html, live);
     }
 }
