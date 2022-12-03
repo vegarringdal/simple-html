@@ -1307,6 +1307,11 @@ export class Grid {
     }
 
     private verticalScrollHandler(scrollTop: number) {
+        if (this.contextMenu) {
+            document.body.removeChild(this.contextMenu);
+            this.contextMenu = null;
+        }
+
         if (this.largeScrollTopTimer) {
             return;
         }
@@ -1585,6 +1590,12 @@ export class Grid {
     }
 
     private horizontalScrollHandler(scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
+
+        if (this.contextMenu) {
+            document.body.removeChild(this.contextMenu);
+            this.contextMenu = null;
+        }
+        
         const config = this.gridInterface.getGridConfig();
 
         let columns = config.columnsCenter;
