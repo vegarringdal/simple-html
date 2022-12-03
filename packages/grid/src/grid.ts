@@ -63,6 +63,7 @@ export class Grid {
     private resizeInit = false;
     private columnsHeaders: Map<string, HTMLElement> = new Map();
     private skipInitResizeEvent: boolean = false;
+    contextMenu: HTMLElement;
 
     connectElement(element: HTMLElement) {
         this.element = element;
@@ -2009,19 +2010,7 @@ export class Grid {
                     class="simple-html-label"
                     @contextmenu=${(e: any) => {
                         e.preventDefault();
-                        this.contextmenuLabel(
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData,
-                            render,
-                            html,
-                            live
-                        );
+                        this.contextmenuLabel(cell, row, column, celno, colType, cellType, attribute, rowData);
                     }}
                 >
                     ${value} ${iconAsc}
@@ -2065,19 +2054,7 @@ export class Grid {
                         placeholder=${placeHolder}
                         @contextmenu=${(e: any) => {
                             e.preventDefault();
-                            this.contextmenuFilter(
-                                cell,
-                                row,
-                                column,
-                                celno,
-                                colType,
-                                cellType,
-                                attribute,
-                                rowData,
-                                render,
-                                html,
-                                live
-                            );
+                            this.contextmenuFilter(cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @change=${(e: any) => {
                             if (!filterRunning) {
@@ -2119,19 +2096,7 @@ export class Grid {
                         placeholder=${placeHolder}
                         @contextmenu=${(e: any) => {
                             e.preventDefault();
-                            this.contextmenuFilter(
-                                cell,
-                                row,
-                                column,
-                                celno,
-                                colType,
-                                cellType,
-                                attribute,
-                                rowData,
-                                render,
-                                html,
-                                live
-                            );
+                            this.contextmenuFilter(cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
@@ -2275,19 +2240,7 @@ export class Grid {
                         .disabled=${cellConfig.readonly}
                         @contextmenu=${(e: any) => {
                             e.preventDefault();
-                            this.contextmenuRow(
-                                cell,
-                                row,
-                                column,
-                                celno,
-                                colType,
-                                cellType,
-                                attribute,
-                                rowData,
-                                render,
-                                html,
-                                live
-                            );
+                            this.contextmenuRow(cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @click=${() => {
                             this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -2311,21 +2264,10 @@ export class Grid {
                             .value=${live(value?.toString())}
                             .readonly=${cellConfig.readonly}
                             .disabled=${cellConfig.readonly}
-                            @contextmenu=${(e: any) => {
+                            @contextmenu=${(e: MouseEvent) => {
                                 e.preventDefault();
-                                this.contextmenuRow(
-                                    cell,
-                                    row,
-                                    column,
-                                    celno,
-                                    colType,
-                                    cellType,
-                                    attribute,
-                                    rowData,
-                                    render,
-                                    html,
-                                    live
-                                );
+
+                                this.contextmenuRow(cell, row, column, celno, colType, cellType, attribute, rowData);
                             }}
                             @click=${() => {
                                 this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -2425,25 +2367,35 @@ export class Grid {
         colType: ColType,
         cellType: string,
         attribute: string,
-        rowData: Entity,
-        litHtmlRender: any,
-        html: any,
-        live: any
+        rowData: Entity
     ) {
-        console.log(
-            'contextmenuLabel',
-            cell,
-            row,
-            column,
-            celno,
-            colType,
-            cellType,
-            attribute,
-            rowData,
-            litHtmlRender,
-            html,
-            live
+        console.log('contextmenuLabel', cell, row, column, celno, colType, cellType, attribute, rowData);
+
+        if (this.contextMenu) {
+            document.body.removeChild(this.contextMenu);
+            this.contextMenu = null;
+        }
+
+        const contextMenu = creatElement('div', 'simple-html-grid');
+        const rect = cell.getBoundingClientRect();
+        contextMenu.style.position = 'absolute';
+        contextMenu.style.top = asPx(rect.top + rect.height);
+        contextMenu.style.left = asPx(rect.left);
+
+        render(
+            html`<div class="simple-html-grid-menu">
+                <div class="simple-html-grid-menu-item">Pin left</div>
+                <div class="simple-html-grid-menu-item">Pin right</div>
+                <div class="simple-html-grid-menu-item">Hide</div>
+                <div class="simple-html-grid-menu-item">Column chooser</div>
+                <div class="simple-html-grid-menu-item">Resize this column</div>
+                <div class="simple-html-grid-menu-item">Resize all columns</div>
+            </div>`,
+            contextMenu
         );
+
+        document.body.appendChild(contextMenu);
+        this.contextMenu = contextMenu;
     }
 
     private contextmenuFilter(
@@ -2454,25 +2406,34 @@ export class Grid {
         colType: ColType,
         cellType: string,
         attribute: string,
-        rowData: Entity,
-        litHtmlRender: any,
-        html: any,
-        live: any
+        rowData: Entity
     ) {
-        console.log(
-            'contextmenuFilter',
-            cell,
-            row,
-            column,
-            celno,
-            colType,
-            cellType,
-            attribute,
-            rowData,
-            litHtmlRender,
-            html,
-            live
+        console.log('contextmenuFilter', cell, row, column, celno, colType, cellType, attribute, rowData);
+
+        if (this.contextMenu) {
+            document.body.removeChild(this.contextMenu);
+            this.contextMenu = null;
+        }
+
+        const contextMenu = creatElement('div', 'simple-html-grid');
+        const rect = cell.getBoundingClientRect();
+        contextMenu.style.position = 'absolute';
+        contextMenu.style.top = asPx(rect.top + rect.height);
+        contextMenu.style.left = asPx(rect.left);
+
+        render(
+            html`<div class="simple-html-grid-menu">
+                <div class="simple-html-grid-menu-item">Clear filter</div>
+                <div class="simple-html-grid-menu-item">clear all filters</div>
+                <div class="simple-html-grid-menu-item">Advanced filter</div>
+                <div class="simple-html-grid-menu-item">Operator: Equal</div>
+                <div class="simple-html-grid-menu-item">Operator: Contains</div>
+            </div>`,
+            contextMenu
         );
+
+        document.body.appendChild(contextMenu);
+        this.contextMenu = contextMenu;
     }
 
     private contextmenuRow(
@@ -2483,11 +2444,32 @@ export class Grid {
         colType: ColType,
         cellType: string,
         attribute: string,
-        rowData: Entity,
-        litHtmlRender: any,
-        html: any,
-        live: any
+        rowData: Entity
     ) {
-        console.log('contextmenuRow', cell, row, column, celno, colType, cellType, attribute, rowData, litHtmlRender, html, live);
+        console.log('contextmenuRow', cell, row, column, celno, colType, cellType, attribute, rowData);
+
+        if (this.contextMenu) {
+            document.body.removeChild(this.contextMenu);
+            this.contextMenu = null;
+        }
+
+        const contextMenu = creatElement('div', 'simple-html-grid');
+        const rect = cell.getBoundingClientRect();
+        contextMenu.style.position = 'absolute';
+        contextMenu.style.top = asPx(rect.top + rect.height);
+        contextMenu.style.left = asPx(rect.left);
+
+        render(
+            html`<div class="simple-html-grid-menu">
+                <div class="simple-html-grid-menu-item">Copy</div>
+                <div class="simple-html-grid-menu-item">Column</div>
+                <div class="simple-html-grid-menu-item">Paste</div>
+                <div class="simple-html-grid-menu-item">Clear</div>
+            </div>`,
+            contextMenu
+        );
+
+        document.body.appendChild(contextMenu);
+        this.contextMenu = contextMenu;
     }
 }

@@ -248,14 +248,9 @@ element.classList.add('simple-html-grid');
 element.connectInterface(gridInterface);
 
 /**
- * add to document
- */
-document.body.appendChild(element);
-
-/**
  * dark theme helper...
  */
-function darktheme() {
+ function darktheme() {
     const x = document.getElementById('darkgrid');
     if (x) {
         x.parentElement.removeChild(x);
@@ -315,3 +310,10 @@ function darktheme() {
 }
 
 darktheme();
+
+
+/**
+ * add to document
+ */
+document.body.appendChild(element);
+

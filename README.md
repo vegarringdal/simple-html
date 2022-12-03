@@ -96,11 +96,12 @@ Main rendering will be first focus
    * [ ] operator
    * [ ] -> advanced filter like we have?
  * [ ] menu row
-   * [ ] copy cell
+    * [ ] clear (sett to null)
+   * [ ] copy
       * [ ] need a event/callback for this
    * [ ] copy colum
       * [ ] need a event/callback for this
-   * [ ] paste into cells
+   * [ ] paste
      * [ ] event for when this happends, incase we need to edit others
    * do we need a way to overide value copied and pasted ?
  * [ ] advanced search dialog
