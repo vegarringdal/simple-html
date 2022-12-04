@@ -2737,7 +2737,7 @@ export class Grid {
                         { attribute: 'group', operator: 'EQUAL', value: 'group2' },
                         { attribute: 'name', operator: 'EQUAL', value: 'person2' }
                     ]
-                } ,
+                },
                 {
                     logicalOperator: 'AND',
                     filterArguments: [
@@ -2763,7 +2763,7 @@ export class Grid {
                             ]
                         }
                     ]
-                } 
+                }
             ]
         } as FilterArgument;
 
@@ -2854,11 +2854,15 @@ export class Grid {
                         <div class="grid-flex-1 grid-text-label">Filter value:</div>
                     </div>
                     <div class="grid-flex">
-                        <div class="grid-flex-1 grid-text-center">${arg.attribute ? arg.attribute : "Click me to select field" }</div>
-                        <div class="grid-flex-1 grid-text-center">${arg.operator ? arg.operator : "Click me to select Operator" }</div>
+                        <div class="grid-flex-1 grid-text-center">
+                            ${arg.attribute ? arg.attribute : 'Click me to select field'}
+                        </div>
+                        <div class="grid-flex-1 grid-text-center">
+                            ${arg.operator ? arg.operator : 'Click me to select Operator'}
+                        </div>
                         <div class="grid-flex-1 grid-text-center "><input .value=${arg.value} /></div>
                     </div>
-                    <div class="grid-flex-reverse">
+                    <div class="grid-flex-reverse grid-m-4">
                         <div class="grid-m-4">${trashIcon()}</div>
                         <div class="grid-m-4">${inputSwitchIcon()}</div>
                     </div>
@@ -2875,10 +2879,12 @@ export class Grid {
             return html`<div>
                 <div class="grid-flex-column grid-sub-group">
                     <div class="grid-flex grid-group">
-                        <div class="grid-m-4 grid-button-small grid-text-center grid-text-label">${arg.logicalOperator}</div>
-                        <div class="grid-m-4">${addFilterGroup()}</div>
-                        <div class="grid-m-4">${addFilterCondition()}</div>
-                        <div class="grid-m-4">${trashIcon()}</div>
+                        <div class="grid-flex grid-m-4">
+                            <div class="grid-m-4 grid-button-small grid-text-center grid-text-label">${arg.logicalOperator}</div>
+                            <div class="grid-m-4">${addFilterGroup()}</div>
+                            <div class="grid-m-4">${addFilterCondition()}</div>
+                            <div class="grid-m-4">${trashIcon()}</div>
+                        </div>
                     </div>
                     <div class="grid-flex-column grid-sub-group ">${conditions}</div>
                     ${groupsArgs}
