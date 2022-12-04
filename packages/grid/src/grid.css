@@ -22,6 +22,7 @@
     --simple-html-grid-font-weight-header: 700;
     --simple-html-grid-font-family: 'Roboto', 'Helvetica', 'Arial', 'sans-serif';
     border: 0;
+    margin: 0;
     line-height: 1.5;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -823,7 +824,7 @@ input {
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-section {
     pointer-events: none;
     box-sizing: border-box;
-    border:0;
+    border: 0;
     border-radius: initial;
     display: block;
     height: 20px;
@@ -834,7 +835,7 @@ input {
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight-cell);
     background-color: var(--simple-html-grid-main-bg-color);
-    margin: initial;
+    margin: 0px;
     filter: opacity(0.5);
     padding-left: 5px;
     padding-right: 15px;
@@ -845,4 +846,27 @@ input {
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-menu .hr-solid {
+    border-top: 0px dashed;
+    border-bottom: 1px solid;
+    border-color: var(--simple-html-grid-sec-bg-color);
+    box-sizing: content-box;
+    height: 0;
+    overflow: visible;
+    margin: 0;
+    width: 0; /*  yes... they made it to messy */
+}
+
+.simple-html-grid .simple-html-grid-menu .hr-dashed {
+    border-top: 0px dashed;
+    border-bottom: 1px dashed;
+    border-color: var(--simple-html-grid-sec-bg-color);
+    box-sizing: content-box;
+    height: 0;
+    overflow: visible;
+    width: 0; /*  yes... they made it to messy */
+    margin-top: 1px;
+    margin-bottom: 1px;
 }

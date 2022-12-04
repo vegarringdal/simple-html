@@ -193,10 +193,22 @@ const gridConfig: GridConfig = {
         isDumb: {
             attribute: 'isDumb',
             type: 'boolean',
-            readonly: false
+            readonly: true
         },
-        parents: {
-            attribute: 'parents',
+        balance: {
+            attribute: 'balance',
+            type: 'number'
+        },
+        longitude: {
+            attribute: 'longitude',
+            type: 'number'
+        },
+        age: {
+            attribute: 'age',
+            type: 'number'
+        },
+        index: {
+            attribute: 'index',
             type: 'number'
         },
         date1: {

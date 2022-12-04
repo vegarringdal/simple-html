@@ -2388,20 +2388,16 @@ export class Grid {
 
         const contextMenu = creatElement('div', 'simple-html-grid');
         const rect = cell.getBoundingClientRect();
+        console.log(rect);
         contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.top + rect.height);
-        contextMenu.style.left = asPx(rect.left);
+        contextMenu.style.top = asPx(rect.bottom + 2);
+        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.minWidth = asPx(130);
 
         render(
             html`<div class="simple-html-grid-menu">
-                <div
-                    class="simple-html-grid-menu-section"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Pinning:
-                </div>
+                <div class="simple-html-grid-menu-section">Column:</div>
+                <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -2418,7 +2414,7 @@ export class Grid {
                 >
                     Pin right
                 </div>
-                <div class="simple-html-grid-menu-section">Visibility:</div>
+
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -2427,6 +2423,7 @@ export class Grid {
                 >
                     Hide
                 </div>
+                <hr class="hr-dashed" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -2436,13 +2433,14 @@ export class Grid {
                     Column chooser
                 </div>
                 <div class="simple-html-grid-menu-section">Size:</div>
+                <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
                         alert('not implemented');
                     }}
                 >
-                    Resize this column
+                    Resize Column
                 </div>
                 <div
                     class="simple-html-grid-menu-item"
@@ -2453,6 +2451,7 @@ export class Grid {
                     Resize all columns
                 </div>
                 <div class="simple-html-grid-menu-section">Grouping:</div>
+                <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -2468,6 +2467,14 @@ export class Grid {
                     }}
                 >
                     Collapse all
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Clear all
                 </div>
             </div>`,
             contextMenu
@@ -2497,12 +2504,52 @@ export class Grid {
         const contextMenu = creatElement('div', 'simple-html-grid');
         const rect = cell.getBoundingClientRect();
         contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.top + rect.height);
-        contextMenu.style.left = asPx(rect.left);
+        contextMenu.style.top = asPx(rect.bottom + 2);
+        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.minWidth = asPx(130);
+
+        const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+
+        let filterTemplate = html`<div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    alert('not implemented');
+                }}
+            >
+                Equal
+            </div>
+            <div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    alert('not implemented');
+                }}
+            >
+                Not Equal
+            </div>`;
+
+        if (cellConfig.type === 'date' || cellConfig.type === 'number') {
+            filterTemplate = html`<div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Greater than or equal
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Less than or equal
+                </div>`;
+        }
 
         render(
             html`<div class="simple-html-grid-menu">
                 <div class="simple-html-grid-menu-section">Filter:</div>
+                <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -2519,6 +2566,24 @@ export class Grid {
                 >
                     Clear All Filters
                 </div>
+                <hr class="hr-dashed" />
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Set "Is Blank"
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Set "Is Not Blank"
+                </div>
+                <hr class="hr-dashed" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -2527,23 +2592,10 @@ export class Grid {
                 >
                     Advanced Filter
                 </div>
+
                 <div class="simple-html-grid-menu-section">Set Operator:</div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Equal
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Contains
-                </div>
+                <hr class="hr-solid" />
+                ${filterTemplate}
             </div>`,
             contextMenu
         );
@@ -2572,12 +2624,14 @@ export class Grid {
         const contextMenu = creatElement('div', 'simple-html-grid');
         const rect = cell.getBoundingClientRect();
         contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.top + rect.height);
-        contextMenu.style.left = asPx(rect.left);
+        contextMenu.style.top = asPx(rect.bottom + 2);
+        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.minWidth = asPx(130);
 
         render(
             html`<div class="simple-html-grid-menu">
                 <div class="simple-html-grid-menu-section">Cell:</div>
+                <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -2603,6 +2657,7 @@ export class Grid {
                     Clear
                 </div>
                 <div class="simple-html-grid-menu-section">Column:</div>
+                <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -2628,6 +2683,7 @@ export class Grid {
                     Clear
                 </div>
                 <div class="simple-html-grid-menu-section">Row:</div>
+                <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
