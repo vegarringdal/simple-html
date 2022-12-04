@@ -136,6 +136,13 @@ export class GridInterface {
         return structuredClone(this.gridConfig);
     }
 
+
+    openFilterEditor(){
+        if(this.grid){
+            this.grid.openFilterEditor();
+        }
+    }
+
     /**
      * when you need load
      */

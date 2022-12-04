@@ -39,6 +39,7 @@
     color: var(--simple-html-grid-main-font-color);
     background-color: var(--simple-html-grid-main-bg-color);
     border: 1px solid var(--simple-html-grid-main-bg-border);
+    box-sizing: border-box;
 }
 
 input {
@@ -873,4 +874,113 @@ input {
 
 .simple-html-draggable-element {
     pointer-events: none;
+}
+
+.filter-editor-container {
+    position: fixed;
+    background-color: rgba(129, 127, 127, 0.2);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.simple-html-grid .filter-editor-content {
+    background-color: var(--simple-html-grid-main-bg-color);
+    position: fixed;
+    min-width: 650px;
+    min-height: 500px;
+    top: 50%;
+    left: 50%;
+    /* bring your own prefixes */
+    transform: translate(-50%, -50%);
+}
+
+.simple-html-grid .filter-editor-content .grid-button {
+    min-width: 100px;
+    margin: 2px;
+    padding: 1px;
+    border: 1px solid var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid .filter-editor-content .grid-button-small {
+    min-width: 40px;
+    margin: 2px;
+    padding: 1px;
+    border: 1px solid var(--simple-html-grid-sec-bg-color);
+}
+
+
+.simple-html-grid .filter-editor-content .grid-flex-reverse {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.simple-html-grid .filter-editor-content .grid-flex {
+    display: flex;
+}
+
+.simple-html-grid .filter-editor-content .grid-mt-6 {
+    margin-top: 6px;
+}
+
+.simple-html-grid .filter-editor-content .grid-m-4 {
+    margin: 4px;
+}
+
+.simple-html-grid .filter-editor-content .grid-flex-1 {
+    flex: 1 1 0%;
+}
+
+.simple-html-grid .filter-editor-content .grid-flex-row {
+    display: flex;
+    flex-direction: column;
+}
+
+.simple-html-grid .filter-editor-content .grid-sub-group {
+    margin-left: 10px;
+}
+
+.simple-html-grid .filter-editor-content .grid-condition {
+    border-bottom: 1px dashed var(--simple-html-grid-sec-bg-color);
+    border-left: 1px dashed var(--simple-html-grid-sec-bg-color);
+    padding: 2px;
+    padding-top:5px;
+}
+
+.simple-html-grid .filter-editor-content .grid-group {
+    border-bottom: 1px dashed var(--simple-html-grid-sec-bg-color);
+    border-left: 1px dashed var(--simple-html-grid-sec-bg-color);
+    padding: 2px;
+    padding-top:5px;
+}
+
+.simple-html-grid .filter-editor-content .grid-text-center {
+    text-align: center;
+}
+
+
+.simple-html-grid .filter-editor-content .grid-text-label {
+    pointer-events: none;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: initial;
+    display: block;
+    height: 20px;
+    text-align: center;
+    overflow: hidden;
+    user-select: none;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-cell);
+    background-color: var(--simple-html-grid-main-bg-color);
+    margin: 0px;
+    filter: opacity(0.5);
+    transition: initial;
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
 }

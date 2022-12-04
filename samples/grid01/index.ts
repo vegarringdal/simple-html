@@ -51,12 +51,12 @@ const gridConfig: GridConfig = {
             rows: ['phone', 'address'],
             width: 300
         },
-        
+
         {
             rows: ['date1', 'date2'],
             width: 80
         },
-        
+
         {
             rows: ['favoriteFruit', 'longitude'],
             width: 100
@@ -65,17 +65,17 @@ const gridConfig: GridConfig = {
             rows: ['country', 'registered'],
             width: 100
         },
-        
+
         {
             rows: ['about', 'age'],
             width: 100
         },
-        
+
         {
             rows: ['tags', 'greeting'],
             width: 250
         },
-        
+
         {
             rows: ['picture', 'age'],
             width: 300
@@ -88,31 +88,32 @@ const gridConfig: GridConfig = {
             rows: ['phone', 'address'],
             width: 300
         },
-        
+
         {
             rows: ['date1', 'date2'],
             width: 100
         },
-        
+
         {
             rows: ['favoriteFruit', 'longitude'],
             width: 100
         },
-        
+
         {
             rows: ['about', 'age'],
             width: 100
         },
-        
+
         {
             rows: ['tags', 'greeting'],
             width: 250
         },
-        
+
         {
             rows: ['picture', 'age'],
             width: 300
-        },{
+        },
+        {
             rows: ['company', 'email'],
             width: 200
         },
@@ -120,27 +121,27 @@ const gridConfig: GridConfig = {
             rows: ['phone', 'address'],
             width: 300
         },
-        
+
         {
             rows: ['date1', 'date2'],
             width: 150
         },
-        
+
         {
             rows: ['favoriteFruit', 'longitude'],
             width: 100
         },
-        
+
         {
             rows: ['about', 'age'],
             width: 100
         },
-        
+
         {
             rows: ['tags', 'greeting'],
             width: 250
         },
-        
+
         {
             rows: ['picture', 'age'],
             width: 300
@@ -153,32 +154,31 @@ const gridConfig: GridConfig = {
             rows: ['phone', 'address'],
             width: 300
         },
-        
+
         {
             rows: ['date1', 'date2'],
             width: 100
         },
-        
+
         {
             rows: ['favoriteFruit', 'longitude'],
             width: 100
         },
-        
+
         {
             rows: ['about', 'age'],
             width: 100
         },
-        
+
         {
             rows: ['tags', 'greeting'],
             width: 250
         },
-        
+
         {
             rows: ['picture', 'age'],
             width: 300
         }
-
     ],
     attributes: {
         firstnamea: {
@@ -228,20 +228,20 @@ const gridConfig: GridConfig = {
     ]
 };
 
-
 /**
  * create datasource
  */
 const datasource = new Datasource();
 
-datasource.setData(dummydata.map((e)=>{
-    //@ts-ignore
-    e.date1 = new Date(e.date1)
-     //@ts-ignore
-    e.date2 = new Date(e.date2)
-    return e
-}));
-
+datasource.setData(
+    dummydata.map((e) => {
+        //@ts-ignore
+        e.date1 = new Date(e.date1);
+        //@ts-ignore
+        e.date2 = new Date(e.date2);
+        return e;
+    })
+);
 
 /**
  * create interface
@@ -262,7 +262,7 @@ element.connectInterface(gridInterface);
 /**
  * dark theme helper...
  */
- function darktheme() {
+function darktheme() {
     const x = document.getElementById('darkgrid');
     if (x) {
         x.parentElement.removeChild(x);
@@ -323,9 +323,11 @@ element.connectInterface(gridInterface);
 
 darktheme();
 
-
 /**
  * add to document
  */
 document.body.appendChild(element);
 
+setTimeout(() => {
+    gridInterface.openFilterEditor();
+}, 200);
