@@ -321,7 +321,7 @@ function darktheme() {
     }
 }
 
-darktheme();
+ darktheme(); 
 
 /**
  * add to document

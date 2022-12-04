@@ -867,7 +867,7 @@ input {
 .simple-html-grid .simple-html-grid-menu .hr-solid {
     border-top: 0px dashed;
     border-bottom: 1px solid;
-    border-color: var(--simple-html-grid-sec-bg-color);
+    border-color: var(--simple-html-grid-main-bg-border);
     box-sizing: content-box;
     height: 0;
     overflow: visible;
@@ -878,7 +878,7 @@ input {
 .simple-html-grid .simple-html-grid-menu .hr-dashed {
     border-top: 0px dashed;
     border-bottom: 1px dashed;
-    border-color: var(--simple-html-grid-sec-bg-color);
+    border-color: var(--simple-html-grid-main-bg-border);
     box-sizing: content-box;
     height: 0;
     overflow: visible;
@@ -906,6 +906,7 @@ input {
     padding: px;
     box-sizing: border-box;
     overflow: hidden;
+ 
 }
 
 .simple-html-grid .filter-editor-content {
@@ -923,14 +924,14 @@ input {
     min-width: 100px;
     margin: 2px;
     padding: 1px;
-    border: 1px solid var(--simple-html-grid-sec-bg-color);
+    border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 .simple-html-grid .filter-editor-content .grid-button-small {
     min-width: 40px;
     margin: 2px;
     padding: 1px;
-    border: 1px solid var(--simple-html-grid-sec-bg-color);
+    border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 .simple-html-grid .filter-editor-content .grid-flex-reverse {
@@ -964,15 +965,15 @@ input {
 }
 
 .simple-html-grid .filter-editor-content .grid-condition {
-    border-bottom: 1px dashed var(--simple-html-grid-sec-bg-color);
-    border-left: 1px dashed var(--simple-html-grid-sec-bg-color);
+    border-bottom: 1px dashed var(--simple-html-grid-main-bg-border);
+    border-left: 1px dashed var(--simple-html-grid-main-bg-border);
     padding: 2px;
     padding-top: 5px;
 }
 
 .simple-html-grid .filter-editor-content .grid-group {
-    border-bottom: 1px dashed var(--simple-html-grid-sec-bg-color);
-    border-left: 1px dashed var(--simple-html-grid-sec-bg-color);
+    border-bottom: 1px dashed var(--simple-html-grid-main-bg-border);
+    border-left: 1px dashed var(--simple-html-grid-main-bg-border);
     padding: 2px;
     padding-top: 5px;
 }
@@ -992,6 +993,7 @@ input {
     font-weight: var(--simple-html-grid-font-weight-cell);
     background-color: var(--simple-html-grid-main-bg-color);
     margin: 4px;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 .simple-html-grid .filter-editor-content .grid-text-label {
@@ -1027,7 +1029,19 @@ input {
     height: 100%;
 }
 
-
+.simple-html-grid .filter-editor-content input {
+    background-color: var(--simple-html-grid-sec-bg-color);
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    margin-left: 3px;
+    margin-right: 3px;
+    text-align: center;
+    padding: 3px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
 
 /*
  * filter editor css

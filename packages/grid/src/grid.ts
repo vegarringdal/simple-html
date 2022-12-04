@@ -2854,9 +2854,9 @@ export class Grid {
                         <div class="grid-flex-1 grid-text-label">Filter value:</div>
                     </div>
                     <div class="grid-flex">
-                        <div class="grid-flex-1 grid-text-center">Click me to select field</div>
-                        <div class="grid-flex-1 grid-text-center">Click me to select Operator</div>
-                        <div class="grid-flex-1 grid-text-center"><input /></div>
+                        <div class="grid-flex-1 grid-text-center">${arg.attribute ? arg.attribute : "Click me to select field" }</div>
+                        <div class="grid-flex-1 grid-text-center">${arg.operator ? arg.operator : "Click me to select Operator" }</div>
+                        <div class="grid-flex-1 grid-text-center "><input .value=${arg.value} /></div>
                     </div>
                     <div class="grid-flex-reverse">
                         <div class="grid-m-4">${trashIcon()}</div>
