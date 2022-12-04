@@ -870,3 +870,7 @@ input {
     margin-top: 1px;
     margin-bottom: 1px;
 }
+
+.simple-html-draggable-element {
+    pointer-events: none;
+}
