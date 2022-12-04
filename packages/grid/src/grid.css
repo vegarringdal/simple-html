@@ -362,7 +362,7 @@ input {
 }
 .simple-html-grid-middle-scroller::-webkit-scrollbar-track {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-color);
+    background-color: var(--simple-html-grid-alt-bg-color);
     z-index: 10;
 }
 
@@ -382,7 +382,7 @@ input {
 }
 .simple-html-grid-body-scroller::-webkit-scrollbar-track {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-color);
+    background-color: var(--simple-html-grid-alt-bg-color);
 }
 
 /*
