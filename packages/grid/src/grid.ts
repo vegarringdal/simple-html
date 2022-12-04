@@ -3,7 +3,7 @@ import { creatElement } from './createElement';
 import { getElementByClassName } from './getElementByClassName';
 import { asPx } from './asPx';
 import { Attribute, Columns } from './gridConfig';
-import { html, render, svg } from 'lit-html';
+import { html, render, svg, TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { Entity, FilterArgument } from '@simple-html/datasource';
 
@@ -2722,6 +2722,12 @@ export class Grid {
             this.contextMenu = null;
         }
 
+        const defaultStartFilter: FilterArgument = {
+            type: 'GROUP',
+            logicalOperator: 'AND',
+            filterArguments: []
+        };
+
         const filterArg = {
             logicalOperator: 'OR',
             filterArguments: [
@@ -2731,22 +2737,39 @@ export class Grid {
                         { attribute: 'group', operator: 'EQUAL', value: 'group2' },
                         { attribute: 'name', operator: 'EQUAL', value: 'person2' }
                     ]
-                },
+                } ,
                 {
                     logicalOperator: 'AND',
                     filterArguments: [
                         { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person4' }
+                        { attribute: 'name', operator: 'EQUAL', value: 'person4' },
+                        {
+                            logicalOperator: 'OR',
+                            filterArguments: [
+                                {
+                                    logicalOperator: 'AND',
+                                    filterArguments: [
+                                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
+                                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
+                                    ]
+                                },
+                                {
+                                    logicalOperator: 'AND',
+                                    filterArguments: [
+                                        { attribute: 'group', operator: 'EQUAL', value: 'group1' },
+                                        { attribute: 'name', operator: 'EQUAL', value: 'person4' }
+                                    ]
+                                }
+                            ]
+                        }
                     ]
-                }
+                } 
             ]
         } as FilterArgument;
 
         const filterEditorContainer = creatElement('div', 'filter-editor-container');
         const filterEditorGridCssContext = creatElement('div', 'simple-html-grid');
         filterEditorContainer.appendChild(filterEditorGridCssContext);
-
-        const header = html`<div>Filter Editor</div>`;
 
         const trashIcon = () => {
             return html`<svg
@@ -2822,12 +2845,12 @@ export class Grid {
             `;
         };
 
-        const condition = () => {
+        const condition = (arg: FilterArgument) => {
             return html`<div>
-                <div class="grid-flex-row grid-condition">
+                <div class="grid-flex-column grid-condition">
                     <div class="grid-flex">
                         <div class="grid-flex-1 grid-text-label">Query Field:</div>
-                        <div class="grid-flex-1 grid-text-label">Operator</div>
+                        <div class="grid-flex-1 grid-text-label">Operator:</div>
                         <div class="grid-flex-1 grid-text-label">Filter value:</div>
                     </div>
                     <div class="grid-flex">
@@ -2843,21 +2866,44 @@ export class Grid {
             </div>`;
         };
 
-        const group = () => {
+        const group = (arg: FilterArgument): TemplateResult<1> => {
+            const conditions = arg.filterArguments
+                .filter((e) => e.type !== 'GROUP' && !e.logicalOperator)
+                .map((e) => condition(e));
+            const groupsArgs = arg.filterArguments.filter((e) => e.type === 'GROUP' || e.logicalOperator).map((e) => group(e));
+
             return html`<div>
-                <div class="grid-flex-row">
+                <div class="grid-flex-column grid-sub-group">
                     <div class="grid-flex grid-group">
-                        <div class="grid-m-4 grid-button-small grid-text-center grid-text-label">OR</div>
+                        <div class="grid-m-4 grid-button-small grid-text-center grid-text-label">${arg.logicalOperator}</div>
                         <div class="grid-m-4">${addFilterGroup()}</div>
                         <div class="grid-m-4">${addFilterCondition()}</div>
                         <div class="grid-m-4">${trashIcon()}</div>
                     </div>
-                    <div class="grid-flex-row grid-sub-group ">${condition()} ${condition()} ${condition()}</div>
+                    <div class="grid-flex-column grid-sub-group ">${conditions}</div>
+                    ${groupsArgs}
                 </div>
             </div>`;
         };
 
-        render(html`<div class="filter-editor-content">${header} ${group()}</div>`, filterEditorGridCssContext);
+        const header = html`<div class="grid-text-title">Filter Editor</div>`;
+
+        const footer = html`<div class="grid-flex-reverse grid-m-4">
+            <div class="grid-button grid-text-center">OK</div>
+            <div class="grid-button grid-text-center">Apply</div>
+            <div class="grid-button grid-text-center">Cancel</div>
+        </div>`;
+
+        render(
+            html`<div class="filter-editor-content">
+                <div class="grid-flex-column grid-w-full grid-h-full">
+                    ${header}
+                    <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg)}</div>
+                    ${footer}
+                </div>
+            </div>`,
+            filterEditorGridCssContext
+        );
 
         document.body.appendChild(filterEditorContainer);
     }
