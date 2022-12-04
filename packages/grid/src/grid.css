@@ -1042,6 +1042,21 @@ input {
     padding: 3px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
+.simple-html-grid .filter-editor-content textarea {
+    background-color: var(--simple-html-grid-sec-bg-color);
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    margin-left: 3px;
+    margin-right: 3px;
+    max-width: 145px;
+    min-width: 145px;
+    text-align: center;
+    padding: 3px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
 
 /*
  * filter editor css
