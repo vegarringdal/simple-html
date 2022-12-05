@@ -997,7 +997,6 @@ input {
 }
 
 .simple-html-grid .filter-editor-content .grid-text-label {
-    pointer-events: none;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;

@@ -321,13 +321,9 @@ function darktheme() {
     }
 }
 
- darktheme(); 
+darktheme();
 
 /**
  * add to document
  */
 document.body.appendChild(element);
-
-setTimeout(() => {
-    gridInterface.openFilterEditor();
-}, 200);

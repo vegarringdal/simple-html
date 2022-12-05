@@ -63,7 +63,8 @@ export class Grid {
     private resizeInit = false;
     private columnsHeaders: Map<string, HTMLElement> = new Map();
     private skipInitResizeEvent: boolean = false;
-    contextMenu: HTMLElement;
+    private contextMenu: HTMLElement;
+    private filterEditorContainer: HTMLElement;
 
     connectElement(element: HTMLElement) {
         this.element = element;
@@ -2099,6 +2100,9 @@ export class Grid {
                     cell as any
                 );
             } else {
+
+                let lastFilter = 
+
                 render(
                     html`<input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
@@ -2106,7 +2110,11 @@ export class Grid {
                         placeholder=${placeHolder}
                         @contextmenu=${(e: any) => {
                             e.preventDefault();
+                            if( lastFilter !== (e.target as any).value){
+                                this.filterCallback((e.target as any).value, cellConfig);
+                            }
                             this.contextmenuFilter(cell, row, column, celno, colType, cellType, attribute, rowData);
+                          
                         }}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
@@ -2114,8 +2122,12 @@ export class Grid {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 if (!filterRunning) {
+                                    
                                     filterRunning = true;
-                                    this.filterCallback((e.target as any).value, cellConfig);
+                                    lastFilter = (e.target as any).value;
+                                    if( lastFilter !== (e.target as any).value){
+                                        this.filterCallback((e.target as any).value, cellConfig);
+                                    }
                                     filterRunning = false;
                                 }
                             }
@@ -2123,7 +2135,10 @@ export class Grid {
                         @change=${(e: any) => {
                             if (!filterRunning) {
                                 filterRunning = true;
-                                this.filterCallback((e.target as any).value, cellConfig);
+                                lastFilter = (e.target as any).value;
+                                if( lastFilter !== (e.target as any).value){
+                                    this.filterCallback((e.target as any).value, cellConfig);
+                                }
                                 filterRunning = false;
                             }
                         }}
@@ -2587,7 +2602,8 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        console.log('event')
+                        this.openFilterEditor();
                     }}
                 >
                     Advanced Filter
@@ -2729,15 +2745,15 @@ export class Grid {
         };
 
         const dsFilter = this.gridInterface.getDatasource().getFilter();
-        if (dsFilter) {
-            defaultStartFilter.filterArguments = [dsFilter];
-        }
 
-        let filterArg = Array.isArray(dsFilter) ? dsFilter : defaultStartFilter;
+        let filterArg = dsFilter ? dsFilter : defaultStartFilter;
 
         this.generateFilterEditor(structuredClone(filterArg));
     }
     private generateFilterEditor(filterArg: FilterArgument) {
+        if (this.filterEditorContainer) {
+            document.body.removeChild(this.filterEditorContainer);
+        }
         /**
          * main container holding data/setting center
          */
@@ -2915,14 +2931,13 @@ export class Grid {
          */
         const group = (arg: FilterArgument, context: FilterArgument[]): TemplateResult<1> => {
             // collect all conditions, and inject them into html
-            const conditions = arg.filterArguments
-                .filter((e) => e.type !== 'GROUP' && !e.logicalOperator)
-                .map((e) => condition(e, arg.filterArguments));
+
+            const conditions =
+                arg.filterArguments?.filter((e) => e.type !== 'GROUP').map((e) => condition(e, arg.filterArguments)) || [];
 
             // collect all groups, and inject them into html
-            const groupsArgs = arg.filterArguments
-                .filter((e) => e.type === 'GROUP' || e.logicalOperator)
-                .map((e) => group(e, arg.filterArguments));
+            const groupsArgs =
+                arg.filterArguments?.filter((e) => e.type === 'GROUP').map((e) => group(e, arg.filterArguments)) || [];
 
             return html`<div>
                 <div class="grid-flex-column grid-sub-group">
@@ -2930,13 +2945,12 @@ export class Grid {
                         <div class="grid-flex grid-m-4">
                             <div
                                 class="grid-m-4 grid-button-small grid-text-center grid-text-label"
-                                @mousedown=${() => {
-                                    console.log('c')
+                                @click=${() => {
                                     arg.logicalOperator = arg.logicalOperator === 'AND' ? 'OR' : 'AND';
                                     this.generateFilterEditor(structuredClone(filterArg));
                                 }}
                             >
-                                ${arg.logicalOperator}
+                                <span> ${arg.logicalOperator}</span>
                             </div>
                             <div class="grid-m-4">
                                 ${addFilterGroupIcon(() => {
@@ -2986,7 +3000,15 @@ export class Grid {
         const footer = html`<div class="grid-flex-reverse grid-m-4">
             <div class="grid-button grid-text-center" @click=${() => alert('not implemented')}>OK</div>
             <div class="grid-button grid-text-center" @click=${() => alert('not implemented')}>Apply</div>
-            <div class="grid-button grid-text-center" @click=${() => alert('not implemented')}>Cancel</div>
+            <div
+                class="grid-button grid-text-center"
+                @click=${() => {
+                    filterEditorContainer.parentElement.removeChild(filterEditorContainer);
+                    this.filterEditorContainer = null;
+                }}
+            >
+                Cancel
+            </div>
         </div>`;
 
         /**
@@ -3004,5 +3026,7 @@ export class Grid {
         );
 
         document.body.appendChild(filterEditorContainer);
+
+        this.filterEditorContainer = filterEditorContainer;
     }
 }
