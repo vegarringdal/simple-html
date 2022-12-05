@@ -2728,50 +2728,29 @@ export class Grid {
             filterArguments: []
         };
 
-        const filterArg = {
-            logicalOperator: 'OR',
-            filterArguments: [
-                {
-                    logicalOperator: 'AND',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
-                    ]
-                },
-                {
-                    logicalOperator: 'AND',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person4' },
-                        {
-                            logicalOperator: 'OR',
-                            filterArguments: [
-                                {
-                                    logicalOperator: 'AND',
-                                    filterArguments: [
-                                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
-                                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
-                                    ]
-                                },
-                                {
-                                    logicalOperator: 'AND',
-                                    filterArguments: [
-                                        { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                                        { attribute: 'name', operator: 'EQUAL', value: 'person4' }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        } as FilterArgument;
+        const dsFilter = this.gridInterface.getDatasource().getFilter();
+        if (dsFilter) {
+            defaultStartFilter.filterArguments = [dsFilter];
+        }
 
+        let filterArg = Array.isArray(dsFilter) ? dsFilter : defaultStartFilter;
+
+        this.generateFilterEditor(structuredClone(filterArg));
+    }
+    private generateFilterEditor(filterArg: FilterArgument) {
+        /**
+         * main container holding data/setting center
+         */
         const filterEditorContainer = creatElement('div', 'filter-editor-container');
         const filterEditorGridCssContext = creatElement('div', 'simple-html-grid');
         filterEditorContainer.appendChild(filterEditorGridCssContext);
 
-        const trashIcon = () => {
+        /**
+         * Icon helper
+         * @param callback
+         * @returns
+         */
+        const trashIcon = (callback: (e: any) => void) => {
             return html`<svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -2779,6 +2758,7 @@ export class Grid {
                 stroke-width="1.5"
                 stroke="currentColor"
                 class="simple-html-grid-icon-group-svg"
+                @click=${(e: any) => callback(e)}
             >
                 <path
                     stroke-linecap="round"
@@ -2788,7 +2768,13 @@ export class Grid {
             </svg> `;
         };
 
-        const inputSwitchIcon = () => {
+        /**
+         * icon helper, switch between value and aattribute input
+         * @param arg
+         * @param callback
+         * @returns
+         */
+        const inputSwitchIcon = (arg: FilterArgument, callback: (e: any) => void) => {
             return html`
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -2797,6 +2783,14 @@ export class Grid {
                     stroke-width="1.5"
                     stroke="currentColor"
                     class="simple-html-grid-icon-group-svg"
+                    @click=${(e: any) => {
+                        if (arg.valueType === 'ATTRIBUTE') {
+                            arg.valueType = 'VALUE';
+                        } else {
+                            arg.valueType = 'ATTRIBUTE';
+                        }
+                        callback(e);
+                    }}
                 >
                     <path
                         stroke-linecap="round"
@@ -2807,7 +2801,12 @@ export class Grid {
             `;
         };
 
-        const addFilterCondition = () => {
+        /**
+         * icon helper
+         * @param callback
+         * @returns
+         */
+        const addFilterConditionIcon = (callback: (e: any) => void) => {
             return html`
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -2816,6 +2815,7 @@ export class Grid {
                     stroke-width="1.5"
                     stroke="currentColor"
                     class="simple-html-grid-icon-group-svg"
+                    @click=${(e: any) => callback(e)}
                 >
                     <path
                         stroke-linecap="round"
@@ -2826,7 +2826,12 @@ export class Grid {
             `;
         };
 
-        const addFilterGroup = () => {
+        /**
+         * icon helper
+         * @param callback
+         * @returns
+         */
+        const addFilterGroupIcon = (callback: (e: any) => void) => {
             return html`
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -2835,6 +2840,7 @@ export class Grid {
                     stroke-width="1.5"
                     stroke="currentColor"
                     class="simple-html-grid-icon-group-svg"
+                    @click=${(e: any) => callback(e)}
                 >
                     <path
                         stroke-linecap="round"
@@ -2845,7 +2851,23 @@ export class Grid {
             `;
         };
 
-        const condition = (arg: FilterArgument) => {
+        /**
+         * generate html for condition
+         * @param arg
+         * @param context
+         * @returns
+         */
+        const condition = (arg: FilterArgument, context: FilterArgument[]) => {
+            let filterValue = html`<input .value=${arg.value || ''} />`;
+
+            if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
+                filterValue = html`<textarea .value=${arg.value}></textarea>`;
+            }
+
+            if (arg.valueType === 'ATTRIBUTE') {
+                filterValue = html`<div>${arg.value}</div>`;
+            }
+
             return html`<div>
                 <div class="grid-flex-column grid-condition">
                     <div class="grid-flex">
@@ -2860,30 +2882,97 @@ export class Grid {
                         <div class="grid-flex-1 grid-text-center">
                             ${arg.operator ? arg.operator : 'Click me to select Operator'}
                         </div>
-                        <div class="grid-flex-1 grid-text-center "><input .value=${arg.value} /></div>
+                        <div class="grid-flex-1 grid-text-center ">${filterValue}</div>
                     </div>
                     <div class="grid-flex-reverse grid-m-4">
-                        <div class="grid-m-4">${trashIcon()}</div>
-                        <div class="grid-m-4">${inputSwitchIcon()}</div>
+                        <div class="grid-m-4">
+                            ${trashIcon(() => {
+                                let x: number = null;
+                                context.forEach((row, i) => {
+                                    if (row === arg) {
+                                        x = i;
+                                    }
+                                });
+                                context.splice(x, 1);
+                                this.generateFilterEditor(structuredClone(filterArg));
+                            })}
+                        </div>
+                        <div class="grid-m-4">
+                            ${inputSwitchIcon(arg, () => {
+                                this.generateFilterEditor(structuredClone(filterArg));
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>`;
         };
 
-        const group = (arg: FilterArgument): TemplateResult<1> => {
+        /**
+         * generate html for group
+         * @param arg
+         * @param context
+         * @returns
+         */
+        const group = (arg: FilterArgument, context: FilterArgument[]): TemplateResult<1> => {
+            // collect all conditions, and inject them into html
             const conditions = arg.filterArguments
                 .filter((e) => e.type !== 'GROUP' && !e.logicalOperator)
-                .map((e) => condition(e));
-            const groupsArgs = arg.filterArguments.filter((e) => e.type === 'GROUP' || e.logicalOperator).map((e) => group(e));
+                .map((e) => condition(e, arg.filterArguments));
+
+            // collect all groups, and inject them into html
+            const groupsArgs = arg.filterArguments
+                .filter((e) => e.type === 'GROUP' || e.logicalOperator)
+                .map((e) => group(e, arg.filterArguments));
 
             return html`<div>
                 <div class="grid-flex-column grid-sub-group">
                     <div class="grid-flex grid-group">
                         <div class="grid-flex grid-m-4">
-                            <div class="grid-m-4 grid-button-small grid-text-center grid-text-label">${arg.logicalOperator}</div>
-                            <div class="grid-m-4">${addFilterGroup()}</div>
-                            <div class="grid-m-4">${addFilterCondition()}</div>
-                            <div class="grid-m-4">${trashIcon()}</div>
+                            <div
+                                class="grid-m-4 grid-button-small grid-text-center grid-text-label"
+                                @mousedown=${() => {
+                                    console.log('c')
+                                    arg.logicalOperator = arg.logicalOperator === 'AND' ? 'OR' : 'AND';
+                                    this.generateFilterEditor(structuredClone(filterArg));
+                                }}
+                            >
+                                ${arg.logicalOperator}
+                            </div>
+                            <div class="grid-m-4">
+                                ${addFilterGroupIcon(() => {
+                                    arg.filterArguments.push({
+                                        type: 'GROUP',
+                                        logicalOperator: 'AND',
+                                        filterArguments: []
+                                    });
+                                    this.generateFilterEditor(structuredClone(filterArg));
+                                })}
+                            </div>
+                            <div class="grid-m-4">
+                                ${addFilterConditionIcon(() => {
+                                    arg.filterArguments.push({
+                                        type: 'CONDITION'
+                                    });
+                                    this.generateFilterEditor(structuredClone(filterArg));
+                                })}
+                            </div>
+                            <div class="grid-m-4">
+                                ${trashIcon(() => {
+                                    if (context) {
+                                        let x: number = null;
+                                        context.forEach((row, i) => {
+                                            if (row === arg) {
+                                                x = i;
+                                            }
+                                        });
+                                        context.splice(x, 1);
+                                        this.generateFilterEditor(structuredClone(filterArg));
+                                    } else {
+                                        arg.filterArguments = [];
+                                        this.generateFilterEditor(structuredClone(filterArg));
+                                    }
+                                })}
+                            </div>
                         </div>
                     </div>
                     <div class="grid-flex-column grid-sub-group ">${conditions}</div>
@@ -2895,16 +2984,19 @@ export class Grid {
         const header = html`<div class="grid-text-title">Filter Editor</div>`;
 
         const footer = html`<div class="grid-flex-reverse grid-m-4">
-            <div class="grid-button grid-text-center">OK</div>
-            <div class="grid-button grid-text-center">Apply</div>
-            <div class="grid-button grid-text-center">Cancel</div>
+            <div class="grid-button grid-text-center" @click=${() => alert('not implemented')}>OK</div>
+            <div class="grid-button grid-text-center" @click=${() => alert('not implemented')}>Apply</div>
+            <div class="grid-button grid-text-center" @click=${() => alert('not implemented')}>Cancel</div>
         </div>`;
 
+        /**
+         * render dialog
+         */
         render(
             html`<div class="filter-editor-content">
                 <div class="grid-flex-column grid-w-full grid-h-full">
                     ${header}
-                    <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg)}</div>
+                    <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg, null)}</div>
                     ${footer}
                 </div>
             </div>`,
