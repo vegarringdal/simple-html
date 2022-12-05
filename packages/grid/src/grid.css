@@ -906,7 +906,6 @@ input {
     padding: px;
     box-sizing: border-box;
     overflow: hidden;
- 
 }
 
 .simple-html-grid .filter-editor-content {
@@ -1057,6 +1056,27 @@ input {
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
+.simple-html-grid .simple-html-grid-menu-sub {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
 /*
  * filter editor css
  ****************************************************************************/
+
+.simple-html-grid input:focus {
+    border: 1px dashed;
+    outline: thin;
+    outline-color: var(--simple-html-grid-main-bg-color);
+    /* incase someone uses duplicate value class with opacity */
+    opacity: 1;
+}
+
+.simple-html-grid textarea:focus {
+    border: 1px dashed;
+    outline: thin;
+    outline-color: var(--simple-html-grid-main-bg-color);
+    /* incase someone uses duplicate value class with opacity */
+    opacity: 1;
+}

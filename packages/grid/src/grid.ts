@@ -2100,7 +2100,8 @@ export class Grid {
                     cell as any
                 );
             } else {
-                let lastFilter = render(
+                let lastFilter = '';
+                render(
                     html`<input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(currentValue)}
@@ -2380,6 +2381,105 @@ export class Grid {
         if (type === 'row-cell') {
             this.renderRowCell(cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
         }
+    }
+
+    private contextMenuAttributes(cell: HTMLElement, callback: (attribute: string) => void) {
+        console.log('contextmenuLabel', cell);
+
+        if (this.contextMenu) {
+            document.body.removeChild(this.contextMenu);
+            this.contextMenu = null;
+        }
+
+        const contextMenu = creatElement('div', 'simple-html-grid');
+        const rect = cell.getBoundingClientRect();
+        console.log(rect);
+        contextMenu.style.position = 'absolute';
+        contextMenu.style.top = asPx(rect.bottom + 2);
+        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.minWidth = asPx(130);
+
+        const attributes = Object.keys(this.gridInterface.getGridConfig().attributes) || [];
+
+        render(
+            html`<div class="simple-html-grid-menu ">
+                <div class="simple-html-grid-menu-section">Column:</div>
+                <hr class="hr-solid" />
+                <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
+                    ${attributes.map((attribute) => {
+                        return html`<div
+                            class="simple-html-grid-menu-item"
+                            @click=${() => {
+                                callback(attribute);
+                            }}
+                        >
+                            ${attribute}
+                        </div>`;
+                    })}
+                </div>
+            </div>`,
+            contextMenu
+        );
+
+        document.body.appendChild(contextMenu);
+        this.contextMenu = contextMenu;
+    }
+
+    private contextMenuOperator(cell: HTMLElement, callback: (operator: string) => void) {
+        console.log('contextmenuLabel', cell);
+
+        if (this.contextMenu) {
+            document.body.removeChild(this.contextMenu);
+            this.contextMenu = null;
+        }
+
+        const contextMenu = creatElement('div', 'simple-html-grid');
+        const rect = cell.getBoundingClientRect();
+        console.log(rect);
+        contextMenu.style.position = 'absolute';
+        contextMenu.style.top = asPx(rect.bottom + 2);
+        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.minWidth = asPx(130);
+
+        const operators = [
+            'EQUAL',
+            'LESS_THAN_OR_EQUAL_TO',
+            'GREATER_THAN_OR_EQUAL_TO',
+            'LESS_THAN',
+            'GREATER_THAN',
+            'CONTAINS',
+            'NOT_EQUAL_TO',
+            'DOES_NOT_CONTAIN',
+            'BEGIN_WITH',
+            'END_WITH',
+            'IN',
+            'NOT_IN',
+            'IS_BLANK',
+            'IS_NOT_BLANK'
+        ];
+
+        render(
+            html`<div class="simple-html-grid-menu">
+                <div class="simple-html-grid-menu-section">Column:</div>
+                <hr class="hr-solid" />
+                <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
+                    ${operators.map((operator) => {
+                        return html`<div
+                            class="simple-html-grid-menu-item"
+                            @click=${() => {
+                                callback(operator);
+                            }}
+                        >
+                            ${operator}
+                        </div>`;
+                    })}
+                </div>
+            </div>`,
+            contextMenu
+        );
+
+        document.body.appendChild(contextMenu);
+        this.contextMenu = contextMenu;
     }
 
     private contextmenuLabel(
@@ -2872,14 +2972,23 @@ export class Grid {
          * @returns
          */
         const condition = (arg: FilterArgument, context: FilterArgument[]) => {
-            let filterValue = html`<input .value=${arg.value || ''} />`;
+            let filterValue = html`<input .value=${arg.value || ''} @input=${(e: any) => (arg.value = e.target.value)} />`;
 
             if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
-                filterValue = html`<textarea .value=${arg.value}></textarea>`;
+                filterValue = html`<textarea .value=${arg.value || ''}></textarea>`;
             }
 
             if (arg.valueType === 'ATTRIBUTE') {
-                filterValue = html`<div>${arg.value}</div>`;
+                filterValue = html`<div
+                    @click=${(e: any) => {
+                        this.contextMenuAttributes(e.target, (attribute) => {
+                            arg.value = attribute;
+                            this.generateFilterEditor(structuredClone(filterArg));
+                        });
+                    }}
+                >
+                    ${arg.value || 'Click me to select attribute'}
+                </div>`;
             }
 
             return html`<div>
@@ -2890,10 +2999,27 @@ export class Grid {
                         <div class="grid-flex-1 grid-text-label">Filter value:</div>
                     </div>
                     <div class="grid-flex">
-                        <div class="grid-flex-1 grid-text-center">
+                        <div
+                            class="grid-flex-1 grid-text-center"
+                            @click=${(e: any) => {
+                                this.contextMenuAttributes(e.target, (attribute) => {
+                                    arg.attribute = attribute;
+                                    this.generateFilterEditor(structuredClone(filterArg));
+                                });
+                            }}
+                        >
                             ${arg.attribute ? arg.attribute : 'Click me to select field'}
                         </div>
-                        <div class="grid-flex-1 grid-text-center">
+
+                        <div
+                            class="grid-flex-1 grid-text-center"
+                            @click=${(e: any) => {
+                                this.contextMenuOperator(e.target, (operator) => {
+                                    arg.operator = operator as any;
+                                    this.generateFilterEditor(structuredClone(filterArg));
+                                });
+                            }}
+                        >
                             ${arg.operator ? arg.operator : 'Click me to select Operator'}
                         </div>
                         <div class="grid-flex-1 grid-text-center ">${filterValue}</div>
@@ -2996,8 +3122,24 @@ export class Grid {
         const header = html`<div class="grid-text-title">Filter Editor</div>`;
 
         const footer = html`<div class="grid-flex-reverse grid-m-4">
-            <div class="grid-button grid-text-center" @click=${() => alert('not implemented')}>OK</div>
-            <div class="grid-button grid-text-center" @click=${() => alert('not implemented')}>Apply</div>
+            <div
+                class="grid-button grid-text-center"
+                @click=${() => {
+                    filterEditorContainer.parentElement.removeChild(filterEditorContainer);
+                    this.filterEditorContainer = null;
+                    this.gridInterface.getDatasource().filter(structuredClone(filterArg));
+                }}
+            >
+                OK
+            </div>
+            <div
+                class="grid-button grid-text-center"
+                @click=${() => {
+                    this.gridInterface.getDatasource().filter(structuredClone(filterArg));
+                }}
+            >
+                Apply
+            </div>
             <div
                 class="grid-button grid-text-center"
                 @click=${() => {
@@ -3005,7 +3147,7 @@ export class Grid {
                     this.filterEditorContainer = null;
                 }}
             >
-                Cancel
+                Close
             </div>
         </div>`;
 
