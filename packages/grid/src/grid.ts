@@ -2100,21 +2100,18 @@ export class Grid {
                     cell as any
                 );
             } else {
-
-                let lastFilter = 
-
-                render(
+                let lastFilter = render(
                     html`<input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(currentValue)}
                         placeholder=${placeHolder}
                         @contextmenu=${(e: any) => {
                             e.preventDefault();
-                            if( lastFilter !== (e.target as any).value){
+                            if (lastFilter !== (e.target as any).value) {
                                 this.filterCallback((e.target as any).value, cellConfig);
                             }
+                            lastFilter = (e.target as any).value;
                             this.contextmenuFilter(cell, row, column, celno, colType, cellType, attribute, rowData);
-                          
                         }}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
@@ -2122,12 +2119,12 @@ export class Grid {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 if (!filterRunning) {
-                                    
                                     filterRunning = true;
-                                    lastFilter = (e.target as any).value;
-                                    if( lastFilter !== (e.target as any).value){
+
+                                    if (lastFilter !== (e.target as any).value) {
                                         this.filterCallback((e.target as any).value, cellConfig);
                                     }
+                                    lastFilter = (e.target as any).value;
                                     filterRunning = false;
                                 }
                             }
@@ -2135,10 +2132,11 @@ export class Grid {
                         @change=${(e: any) => {
                             if (!filterRunning) {
                                 filterRunning = true;
-                                lastFilter = (e.target as any).value;
-                                if( lastFilter !== (e.target as any).value){
+
+                                if (lastFilter !== (e.target as any).value) {
                                     this.filterCallback((e.target as any).value, cellConfig);
                                 }
+                                lastFilter = (e.target as any).value;
                                 filterRunning = false;
                             }
                         }}
@@ -2602,7 +2600,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        console.log('event')
+                        console.log('event');
                         this.openFilterEditor();
                     }}
                 >
