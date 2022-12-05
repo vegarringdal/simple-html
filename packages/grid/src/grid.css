@@ -443,7 +443,7 @@ input {
 }
 
 .simple-html-grid-row-extended {
-    border-bottom: 2px solid var(--simple-html-grid-pinned-border);
+    border-bottom: 1px solid var(--simple-html-grid-pinned-border);
 }
 
 .simple-html-grid-col {
@@ -810,8 +810,11 @@ input {
 .simple-html-grid .simple-html-grid-menu {
     display: flex;
     flex-direction: column;
+    position: relative;
     z-index: 500;
+    background-color: var(--simple-html-grid-main-bg-color);
     box-shadow: 10px 5px 5px black;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
@@ -866,7 +869,7 @@ input {
 
 .simple-html-grid .simple-html-grid-menu .hr-solid {
     border-top: 0px dashed;
-    border-bottom: 1px solid;
+    border-bottom: 0px solid;
     border-color: var(--simple-html-grid-main-bg-border);
     box-sizing: content-box;
     height: 0;
@@ -891,6 +894,12 @@ input {
     pointer-events: none;
 }
 
+
+.simple-html-grid-reset {
+    background-color: var(--simple-html-grid-main-bg-color);
+    border: 0px;
+}
+
 /****************************************************************************
  * filter editor css
  */
@@ -906,6 +915,7 @@ input {
     padding: px;
     box-sizing: border-box;
     overflow: hidden;
+    z-index: 500;
 }
 
 .simple-html-grid .filter-editor-content {

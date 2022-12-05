@@ -1308,10 +1308,7 @@ export class Grid {
     }
 
     private verticalScrollHandler(scrollTop: number) {
-        if (this.contextMenu) {
-            document.body.removeChild(this.contextMenu);
-            this.contextMenu = null;
-        }
+        this.removeContextMenu();
 
         if (this.largeScrollTopTimer) {
             return;
@@ -1591,10 +1588,7 @@ export class Grid {
     }
 
     private horizontalScrollHandler(scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
-        if (this.contextMenu) {
-            document.body.removeChild(this.contextMenu);
-            this.contextMenu = null;
-        }
+        this.removeContextMenu();
 
         const config = this.gridInterface.getGridConfig();
 
@@ -2383,15 +2377,18 @@ export class Grid {
         }
     }
 
+    /**
+     * this is part of filter editor
+     * @param cell
+     * @param callback
+     */
     private contextMenuAttributes(cell: HTMLElement, callback: (attribute: string) => void) {
         console.log('contextmenuLabel', cell);
 
-        if (this.contextMenu) {
-            document.body.removeChild(this.contextMenu);
-            this.contextMenu = null;
-        }
+        this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
+        contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
         console.log(rect);
         contextMenu.style.position = 'absolute';
@@ -2403,7 +2400,7 @@ export class Grid {
 
         render(
             html`<div class="simple-html-grid-menu ">
-                <div class="simple-html-grid-menu-section">Column:</div>
+                <div class="simple-html-grid-menu-section">Available Fields:</div>
                 <hr class="hr-solid" />
                 <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                     ${attributes.map((attribute) => {
@@ -2425,15 +2422,18 @@ export class Grid {
         this.contextMenu = contextMenu;
     }
 
+    /**
+     * this is part of filter editor
+     * @param cell
+     * @param callback
+     */
     private contextMenuOperator(cell: HTMLElement, callback: (operator: string) => void) {
         console.log('contextmenuLabel', cell);
 
-        if (this.contextMenu) {
-            document.body.removeChild(this.contextMenu);
-            this.contextMenu = null;
-        }
+        this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
+        contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
         console.log(rect);
         contextMenu.style.position = 'absolute';
@@ -2460,17 +2460,19 @@ export class Grid {
 
         render(
             html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-section">Column:</div>
+                <div class="simple-html-grid-menu-section">Operator:</div>
                 <hr class="hr-solid" />
                 <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                     ${operators.map((operator) => {
+                        const prettytext = this.prettyPrintString(operator);
+
                         return html`<div
                             class="simple-html-grid-menu-item"
                             @click=${() => {
-                                callback(operator);
+                                callback(prettytext);
                             }}
                         >
-                            ${operator}
+                            ${prettytext}
                         </div>`;
                     })}
                 </div>
@@ -2494,12 +2496,10 @@ export class Grid {
     ) {
         console.log('contextmenuLabel', cell, row, column, celno, colType, cellType, attribute, rowData);
 
-        if (this.contextMenu) {
-            document.body.removeChild(this.contextMenu);
-            this.contextMenu = null;
-        }
+        this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
+        contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
         console.log(rect);
         contextMenu.style.position = 'absolute';
@@ -2609,12 +2609,10 @@ export class Grid {
     ) {
         console.log('contextmenuFilter', cell, row, column, celno, colType, cellType, attribute, rowData);
 
-        if (this.contextMenu) {
-            document.body.removeChild(this.contextMenu);
-            this.contextMenu = null;
-        }
+        this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
+        contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
@@ -2730,12 +2728,10 @@ export class Grid {
     ) {
         console.log('contextmenuRow', cell, row, column, celno, colType, cellType, attribute, rowData);
 
-        if (this.contextMenu) {
-            document.body.removeChild(this.contextMenu);
-            this.contextMenu = null;
-        }
+        this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
+        contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
@@ -2830,11 +2826,11 @@ export class Grid {
         this.contextMenu = contextMenu;
     }
 
+    /**
+     * opens filter editor with current filter
+     */
     public openFilterEditor() {
-        if (this.contextMenu) {
-            document.body.removeChild(this.contextMenu);
-            this.contextMenu = null;
-        }
+        this.removeContextMenu();
 
         const defaultStartFilter: FilterArgument = {
             type: 'GROUP',
@@ -2848,6 +2844,19 @@ export class Grid {
 
         this.generateFilterEditor(structuredClone(filterArg));
     }
+
+    private prettyPrintString(text: string) {
+        const prettytext = text
+            .split('_')
+            .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
+            .join(' ');
+        return prettytext;
+    }
+
+    /**
+     * internal method to generate html for filter editor
+     * @param filterArg
+     */
     private generateFilterEditor(filterArg: FilterArgument) {
         if (this.filterEditorContainer) {
             document.body.removeChild(this.filterEditorContainer);
@@ -3015,12 +3024,17 @@ export class Grid {
                             class="grid-flex-1 grid-text-center"
                             @click=${(e: any) => {
                                 this.contextMenuOperator(e.target, (operator) => {
-                                    arg.operator = operator as any;
+                                    arg.operator = operator.replace(' ', '_').toUpperCase() as any;
                                     this.generateFilterEditor(structuredClone(filterArg));
                                 });
                             }}
                         >
-                            ${arg.operator ? arg.operator : 'Click me to select Operator'}
+                            ${arg.operator
+                                ? arg.operator
+                                      .split('_')
+                                      .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
+                                      .join(' ')
+                                : 'Click me to select Operator'}
                         </div>
                         <div class="grid-flex-1 grid-text-center ">${filterValue}</div>
                     </div>
@@ -3125,6 +3139,7 @@ export class Grid {
             <div
                 class="grid-button grid-text-center"
                 @click=${() => {
+                    this.removeContextMenu();
                     filterEditorContainer.parentElement.removeChild(filterEditorContainer);
                     this.filterEditorContainer = null;
                     this.gridInterface.getDatasource().filter(structuredClone(filterArg));
@@ -3135,6 +3150,7 @@ export class Grid {
             <div
                 class="grid-button grid-text-center"
                 @click=${() => {
+                    this.removeContextMenu();
                     this.gridInterface.getDatasource().filter(structuredClone(filterArg));
                 }}
             >
@@ -3143,6 +3159,7 @@ export class Grid {
             <div
                 class="grid-button grid-text-center"
                 @click=${() => {
+                    this.removeContextMenu();
                     filterEditorContainer.parentElement.removeChild(filterEditorContainer);
                     this.filterEditorContainer = null;
                 }}
@@ -3168,5 +3185,15 @@ export class Grid {
         document.body.appendChild(filterEditorContainer);
 
         this.filterEditorContainer = filterEditorContainer;
+    }
+
+    /**
+     * helper
+     */
+    private removeContextMenu() {
+        if (this.contextMenu) {
+            document.body.removeChild(this.contextMenu);
+            this.contextMenu = null;
+        }
     }
 }
