@@ -3130,7 +3130,7 @@ export class Grid {
                     this.gridInterface.getDatasource().filter(structuredClone(filterArg));
                 }}
             >
-                OK
+                Filter & Close
             </div>
             <div
                 class="grid-button grid-text-center"
@@ -3138,7 +3138,7 @@ export class Grid {
                     this.gridInterface.getDatasource().filter(structuredClone(filterArg));
                 }}
             >
-                Apply
+                Filter Only
             </div>
             <div
                 class="grid-button grid-text-center"
