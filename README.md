@@ -76,14 +76,17 @@ Main rendering will be first focus
    * [x] add input to row
    * [ ] able to set placeholder with config
    * [ ] able to add focus button (...) or dropdown icon
+      * I might just a focus event for this, so its not part of grid
    * [x] edit cells
    * [ ] edit cells callback/event
    * [ ] support simple dropsdown (dropdown need to be placed on document like we need to do with menus)
+     * I might just a focus event for this, so its not part of grid
    * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
    * [x] readonly 
      * [ ] with callback, so you can also set it based on other row values
    * [ ] disabled? (or is this just disabled)
  * [ ] menu label
+   * [x] GUI
    * [ ] pin left
    * [ ] pin right
    * [ ] hide
@@ -91,11 +94,13 @@ Main rendering will be first focus
    * [ ] resize this column
    * [ ] resize all columns
  * [ ] menu filter
+   * [x] GUI
    * [ ] clear filter
    * [ ] clear all filters
    * [ ] operator
-   * [ ] -> advanced filter like we have?
+   * [x] -> advanced filter like we have?
  * [ ] menu row
+    * [x] GUI
     * [ ] clear (sett to null)
    * [ ] copy
       * [ ] need a event/callback for this
@@ -105,11 +110,11 @@ Main rendering will be first focus
      * [ ] event for when this happends, incase we need to edit others
    * do we need a way to overide value copied and pasted ?
  * [ ] advanced search dialog
-   * [ ] support groups
-     * [ ] and groups
-     * [ ] or groups
-     * [ ] not groups
-   * in operator  
+   * [x] support groups
+     * [x] and groups
+     * [x] or groups
+     * [ ] not groups ? (do we need, they can search not equal..?)
+   * [ ] in operator  
  * do we want a find all (find value in all columns/rows?)
  * option to override 
   * [x] add current filter to footer
