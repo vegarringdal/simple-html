@@ -159,7 +159,9 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 rowValue = rowValue + ''; // incase we got something else
                 rowValue = rowValue.toLowerCase();
             }
-            filterValue = filter.value.toLowerCase();
+            
+            filterValue = filter.value + ''// incase we got something else
+            filterValue = filterValue.toLowerCase();
             filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
 
