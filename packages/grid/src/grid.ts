@@ -3013,6 +3013,9 @@ export class Grid {
                             @click=${(e: any) => {
                                 this.contextMenuAttributes(e.target, (attribute) => {
                                     arg.attribute = attribute;
+
+                                    const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+                                    arg.attributeType = cellConfig.type || 'text';
                                     this.generateFilterEditor(structuredClone(filterArg));
                                 });
                             }}
@@ -3025,6 +3028,7 @@ export class Grid {
                             @click=${(e: any) => {
                                 this.contextMenuOperator(e.target, (operator) => {
                                     arg.operator = operator.replace(' ', '_').toUpperCase() as any;
+
                                     this.generateFilterEditor(structuredClone(filterArg));
                                 });
                             }}
