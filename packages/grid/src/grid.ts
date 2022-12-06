@@ -432,7 +432,7 @@ export class Grid {
             html`<div style="display:flex;flex-direction: column;">
                 <div style="flex: 1 1 ${scrollbarHeight}px;"></div>
                 <span style="margin:auto">${filteredRows}/${totalRows}</span>
-                <span style="margin:auto">${filterString}</span>
+                <span class="footer-query" style="margin:auto">${filterString}</span>
             </div>`,
             footer
         );

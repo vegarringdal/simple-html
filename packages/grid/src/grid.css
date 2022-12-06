@@ -900,6 +900,12 @@ input {
     border: 0px;
 }
 
+
+.simple-html-grid .footer-query{
+    text-overflow: ellipsis;
+    max-width: 90%;
+}
+
 /****************************************************************************
  * filter editor css
  */
