@@ -2657,6 +2657,110 @@ export class Grid {
                 </div>`;
         }
 
+        /**
+         * set blank or not blank filter
+         */
+        const setBlankOrNotBlank = (arg: 'IS_BLANK' | 'IS_NOT_BLANK') => {
+            const datasource = this.gridInterface.getDatasource();
+            const currentFilter = datasource.getFilter();
+
+            const loopFilter = (filter: FilterArgument) => {
+                if (filter && Array.isArray(filter.filterArguments)) {
+                    filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
+                        if (fi.attribute === attribute) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    });
+                    filter.filterArguments.forEach((fi: FilterArgument) => {
+                        if (fi.type === 'GROUP') {
+                            loopFilter(fi);
+                        }
+                    });
+                }
+            };
+            loopFilter(currentFilter);
+
+            const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+
+            cellConfig.currentFilterValue = null;
+
+            if (currentFilter && Array.isArray(currentFilter.filterArguments)) {
+                currentFilter.filterArguments.push({
+                    type: 'CONDITION',
+                    attribute: cellConfig.attribute,
+                    operator: arg,
+                    attributeType: cellConfig.type
+                });
+                datasource.setFilter(currentFilter);
+            } else {
+                datasource.setFilter({
+                    type: 'GROUP',
+                    logicalOperator: 'AND',
+                    filterArguments: [
+                        {
+                            type: 'CONDITION',
+                            attribute: cellConfig.attribute,
+                            operator: arg,
+                            attributeType: cellConfig.type
+                        }
+                    ]
+                });
+            }
+
+            datasource.filter();
+        };
+
+        /**
+         * clear current column filter
+         */
+        const clearColumnFilter = () => {
+            const datasource = this.gridInterface.getDatasource();
+            const currentFilter = datasource.getFilter();
+
+            const loopFilter = (filter: FilterArgument) => {
+                if (filter && Array.isArray(filter.filterArguments)) {
+                    filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
+                        if (fi.attribute === attribute) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    });
+                    filter.filterArguments.forEach((fi: FilterArgument) => {
+                        if (fi.type === 'GROUP') {
+                            loopFilter(fi);
+                        }
+                    });
+                }
+            };
+            const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+            if (cellConfig) {
+                cellConfig.currentFilterValue = null;
+            }
+
+            loopFilter(currentFilter);
+            datasource.setFilter(currentFilter);
+            this.rebuildHeaderColumns();
+            datasource.filter();
+        };
+
+        /**
+         * clear all column filters
+         */
+        const clearAllCOlumnFilters = () => {
+            const datasource = this.gridInterface.getDatasource();
+            datasource.setFilter(null);
+            const attributes = this.gridInterface.getGridConfig().attributes;
+            const keys = Object.keys(attributes);
+            keys.forEach((key) => {
+                attributes[key].currentFilterValue = null;
+            });
+            this.rebuildHeaderColumns();
+            datasource.filter();
+        };
+
         render(
             html`<div class="simple-html-grid-menu">
                 <div class="simple-html-grid-menu-section">Filter:</div>
@@ -2664,7 +2768,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        clearColumnFilter();
                     }}
                 >
                     Clear Filter
@@ -2672,7 +2776,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        clearAllCOlumnFilters();
                     }}
                 >
                     Clear All Filters
@@ -2681,7 +2785,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        setBlankOrNotBlank('IS_BLANK');
                     }}
                 >
                     Set "Is Blank"
@@ -2689,7 +2793,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        setBlankOrNotBlank('IS_NOT_BLANK');
                     }}
                 >
                     Set "Is Not Blank"
