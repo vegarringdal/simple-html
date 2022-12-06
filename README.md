@@ -60,7 +60,7 @@ Main rendering will be first focus
  * [x] checkbox filter
  * [x] checkbox on row
  * [x] selection by using left row selector only
- * [ ] select all top/left 
+ * [x] select all top/left 
  * [x] multisort with shift key and colum label click
  * [x] grouping with expand/collapse in group rows
  * [ ] simple dropdown from columns
@@ -95,9 +95,11 @@ Main rendering will be first focus
    * [ ] resize all columns
  * [ ] menu filter
    * [x] GUI
-   * [ ] clear filter
-   * [ ] clear all filters
-   * [ ] operator
+   * [x] clear filter
+   * [x] clear all filters
+   * [x] set is blank
+   * [x] set is not blank
+   * [ ] operator menu...
    * [x] -> advanced filter like we have?
  * [ ] menu row
     * [x] GUI

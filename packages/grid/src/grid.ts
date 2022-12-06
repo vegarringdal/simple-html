@@ -1089,6 +1089,12 @@ export class Grid {
             0,
             RIGH_PINNED_COLTYPE
         );
+
+
+        const selectorTopLeft = getElementByClassName(this.element, "simple-html-grid-header-row-container-selector")
+        selectorTopLeft.onclick = ()=>{
+            this.gridInterface.getDatasource().selectAll();
+        }
     }
 
     private getGroupingWidth(coltype: ColType) {

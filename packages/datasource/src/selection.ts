@@ -27,6 +27,8 @@ export class Selection {
      */
     public selectAll() {
         this.selectRange(0, this.dataSource.length() - 1);
+        // update selection on rows
+        this.dataSource.__callSubscribers('selectionChange');
     }
 
     /**
