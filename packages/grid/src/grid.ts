@@ -366,7 +366,7 @@ export class Grid {
             label.style.width = asPx(this.getTextWidth(group.title) + 20);
 
 
-            this.dragEvent(label as HTMLCellElement);
+            this.dragEvent(label as HTMLCellElement, false);
 
             render(
                 html`<div>
@@ -505,7 +505,7 @@ export class Grid {
         this.containerRightRowCache = addRows(containerRight, RIGH_PINNED_COLTYPE);
     }
 
-    private dragEvent(cell: HTMLCellElement) {
+    private dragEvent(cell: HTMLCellElement, sortEnabled = true) {
         cell.addEventListener('mousedown', (e) => {
             if (e.button !== 0) {
                 return;
@@ -799,7 +799,7 @@ export class Grid {
                         }
                     }
                 }
-                if (isClickEvent && attribute) {
+                if (isClickEvent && attribute && sortEnabled) {
                     /**
                      * its a click event
                      * not we need to get old sorting an and check if we need to reverse it
@@ -920,7 +920,7 @@ export class Grid {
                         /**
                          * logic for dragdrop and sort event
                          */
-                        this.dragEvent(cell as HTMLCellElement);
+                        this.dragEvent(cell as HTMLCellElement, true);
                     }
 
                     /**
