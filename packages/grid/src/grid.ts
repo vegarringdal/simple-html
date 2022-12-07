@@ -65,6 +65,7 @@ export class Grid {
     private skipInitResizeEvent: boolean = false;
     private contextMenu: HTMLElement;
     private filterEditorContainer: HTMLElement;
+    columnChooserMenu: HTMLElement;
 
     connectElement(element: HTMLElement) {
         this.element = element;
@@ -365,7 +366,6 @@ export class Grid {
             (label as HTMLCellElement).$attribute = group.attribute;
             label.style.width = asPx(this.getTextWidth(group.title) + 20);
 
-
             this.dragEvent(label as HTMLCellElement, false);
 
             render(
@@ -417,9 +417,6 @@ export class Grid {
             };
 
             addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-left-panel'), label);
-
-
-      
 
             panel.appendChild(label);
         });
@@ -507,6 +504,7 @@ export class Grid {
 
     private dragEvent(cell: HTMLCellElement, sortEnabled = true) {
         cell.addEventListener('mousedown', (e) => {
+            console.log('e');
             if (e.button !== 0) {
                 return;
             }
@@ -2378,6 +2376,59 @@ export class Grid {
      * @param cell
      * @param callback
      */
+    private contextMenuColumnChooser(cell: HTMLElement) {
+        console.log('contextmenuLabel', cell);
+
+        this.removeContextMenu();
+
+        const contextMenu = creatElement('div', 'simple-html-grid');
+        contextMenu.classList.add('simple-html-grid-reset');
+        const rect = cell.getBoundingClientRect();
+
+        contextMenu.style.position = 'absolute';
+        contextMenu.style.top = asPx(rect.bottom + 50);
+        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.minWidth = asPx(130);
+
+        const attributes = Object.keys(this.gridInterface.getGridConfig().attributes) || [];
+
+        render(
+            html`<div class="simple-html-grid-menu ">
+                <div
+                    class="simple-html-label-button-menu-top"
+                    @click=${() => {
+                        document.body.removeChild(contextMenu);
+                    }}
+                >
+                    Close
+                </div>
+                <div class="simple-html-grid-menu-section">Available Fields:</div>
+                <hr class="hr-solid" />
+                <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
+                    ${attributes.map((attribute) => {
+                        return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>${attribute}</div>`;
+                    })}
+                </div>
+            </div>`,
+            contextMenu
+        );
+
+        const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
+        console.log(cells);
+
+        for (let i = 0; i < cells.length; i++) {
+            this.dragEvent(cells[i] as HTMLCellElement, false);
+        }
+
+        document.body.appendChild(contextMenu);
+        this.columnChooserMenu = contextMenu;
+    }
+
+    /**
+     * this is part of filter editor
+     * @param cell
+     * @param callback
+     */
     private contextMenuAttributes(cell: HTMLElement, callback: (attribute: string) => void) {
         console.log('contextmenuLabel', cell);
 
@@ -2634,7 +2685,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        this.contextMenuColumnChooser(cell);
                     }}
                 >
                     Column chooser
