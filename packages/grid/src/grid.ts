@@ -2395,11 +2395,11 @@ export class Grid {
         render(
             html`<div class="simple-html-grid-menu ">
                 
-                <div class="simple-html-grid-menu-section">Available Fields:</div>
+                <div class="simple-html-grid-menu-section">All Fields:</div>
                 <hr class="hr-solid" />
                 <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                    ${attributes.map((attribute) => {
-                        return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>${attribute}</div>`;
+                    ${attributes.sort().map((attribute) => {
+                        return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>${this.prettyPrintString(attribute)}</div>`;
                     })}
                 </div>
                 <div
@@ -2451,14 +2451,14 @@ export class Grid {
                 <div class="simple-html-grid-menu-section">Available Fields:</div>
                 <hr class="hr-solid" />
                 <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                    ${attributes.map((attribute) => {
+                    ${attributes.sort().map((attribute) => {
                         return html`<div
                             class="simple-html-grid-menu-item"
                             @click=${() => {
                                 callback(attribute);
                             }}
                         >
-                            ${attribute}
+                            ${this.prettyPrintString(attribute)}
                         </div>`;
                     })}
                 </div>
@@ -2928,7 +2928,7 @@ export class Grid {
         /**
          * clear all column filters
          */
-        const clearAllCOlumnFilters = () => {
+        const clearAllColumnFilters = () => {
             const datasource = this.gridInterface.getDatasource();
             datasource.setFilter(null);
             const attributes = this.gridInterface.getGridConfig().attributes;
@@ -2955,7 +2955,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        clearAllCOlumnFilters();
+                        clearAllColumnFilters();
                     }}
                 >
                     Clear All Filters
@@ -3126,6 +3126,11 @@ export class Grid {
         this.generateFilterEditor(structuredClone(filterArg));
     }
 
+    /**
+     * takes and turn first letter to upper/rest lowercase and lower hyphen into space
+     * @param text 
+     * @returns 
+     */
     private prettyPrintString(text: string) {
         const prettytext = text
             .split('_')
