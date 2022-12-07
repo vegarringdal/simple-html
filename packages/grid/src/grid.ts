@@ -2395,7 +2395,7 @@ export class Grid {
         const contextMenu = creatElement('div', 'simple-html-grid');
         contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
-        console.log(rect);
+        
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
         contextMenu.style.left = asPx(rect.left + 2);
@@ -2440,7 +2440,7 @@ export class Grid {
         const contextMenu = creatElement('div', 'simple-html-grid');
         contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
-        console.log(rect);
+        
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
         contextMenu.style.left = asPx(rect.left + 2);
@@ -2506,7 +2506,7 @@ export class Grid {
         const contextMenu = creatElement('div', 'simple-html-grid');
         contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
-        console.log(rect);
+        
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
         contextMenu.style.left = asPx(rect.left + 2);
@@ -2573,7 +2573,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        this.gridInterface.getDatasource().expandGroup()
                     }}
                 >
                     Expand all
@@ -2581,7 +2581,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        this.gridInterface.getDatasource().collapseGroup()
                     }}
                 >
                     Collapse all
@@ -2589,7 +2589,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        this.gridInterface.getDatasource().removeGroup()
                     }}
                 >
                     Clear all
@@ -2692,7 +2692,7 @@ export class Grid {
             cellConfig.type !== 'date' &&
             cellConfig.type !== undefined
         ) {
-            filterTemplate = '';
+            filterTemplate = '' as any;
         }
 
         /**

@@ -93,6 +93,9 @@ Main rendering will be first focus
    * [ ] column chooser
    * [ ] resize this column
    * [ ] resize all columns
+   * [x] collapse all groups
+   * [x] expand all groups
+   * [x] clear grouping
  * [ ] menu filter
    * [x] GUI
    * [x] clear filter
