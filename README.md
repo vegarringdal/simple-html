@@ -88,18 +88,18 @@ Main rendering will be first focus
      * [ ] with callback, so you can also set it based on other row values
      * [ ] set "read" background/scratched, so its easy to see its a readonly even i edit mode
    * [ ] disabled? (or is just readonly good enough?) 
- * [ ] menu label
+ * [x] menu label
    * [x] GUI
    * [x] pin left
    * [x] pin right
    * [x] hide
-   * [ ] column chooser
+   * [x] column chooser
    * [x] resize this column
    * [x] resize all columns
    * [x] collapse all groups
    * [x] expand all groups
    * [x] clear grouping
- * [ ] menu filter
+ * [x] menu filter
    * [x] GUI
    * [x] clear filter
    * [x] clear all filters
@@ -107,7 +107,7 @@ Main rendering will be first focus
    * [x] set is not blank
    * [x] operator (most used only, they can used advanced for others)
    * [x] advanced filter  (filter dialog)
-   * [ ] do we want excel similar column filter ?
+ * [ ] do we want excel similar column filter, when they enter focus mode?
  * [ ] menu row
     * [x] GUI
     * [ ] clear (sett to null)
