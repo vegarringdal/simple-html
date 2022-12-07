@@ -99,7 +99,7 @@ Main rendering will be first focus
    * [x] clear all filters
    * [x] set is blank
    * [x] set is not blank
-   * [ ] operator menu...
+   * [x] operator (most used only, they can used advanced for others)
    * [x] -> advanced filter like we have?
  * [ ] menu row
     * [x] GUI

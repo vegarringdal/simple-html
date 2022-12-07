@@ -1090,11 +1090,10 @@ export class Grid {
             RIGH_PINNED_COLTYPE
         );
 
-
-        const selectorTopLeft = getElementByClassName(this.element, "simple-html-grid-header-row-container-selector")
-        selectorTopLeft.onclick = ()=>{
+        const selectorTopLeft = getElementByClassName(this.element, 'simple-html-grid-header-row-container-selector');
+        selectorTopLeft.onclick = () => {
             this.gridInterface.getDatasource().selectAll();
-        }
+        };
     }
 
     private getGroupingWidth(coltype: ColType) {
@@ -2627,40 +2626,73 @@ export class Grid {
 
         const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
 
-        let filterTemplate = html`<div
-                class="simple-html-grid-menu-item"
+        const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
+        const notSelected = 'simple-html-grid-menu-item';
+
+        if (!cellConfig.operator) {
+            cellConfig.operator = this.gridInterface.getDatasource().getFilterFromType(cellConfig.type);
+        }
+
+        let filterTemplate = html` <div class="simple-html-grid-menu-section">Set Operator:</div>
+            <hr class="hr-solid" />
+            <div
+                class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                 @click=${() => {
-                    alert('not implemented');
+                    cellConfig.operator = 'EQUAL';
+                    this.removeContextMenu();
                 }}
             >
                 Equal
             </div>
             <div
-                class="simple-html-grid-menu-item"
+                class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
                 @click=${() => {
-                    alert('not implemented');
+                    cellConfig.operator = 'NOT_EQUAL_TO';
+                    this.removeContextMenu();
                 }}
             >
                 Not Equal
+            </div>
+            <div
+                class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
+                @click=${() => {
+                    cellConfig.operator = 'CONTAINS';
+                    this.removeContextMenu();
+                }}
+            >
+                Contains
             </div>`;
 
         if (cellConfig.type === 'date' || cellConfig.type === 'number') {
-            filterTemplate = html`<div
-                    class="simple-html-grid-menu-item"
+            filterTemplate = html` <div class="simple-html-grid-menu-section">Set Operator:</div>
+                <hr class="hr-solid" />
+                <div
+                    class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
                     @click=${() => {
-                        alert('not implemented');
+                        cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                        this.removeContextMenu();
                     }}
                 >
                     Greater than or equal
                 </div>
                 <div
-                    class="simple-html-grid-menu-item"
+                    class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
                     @click=${() => {
-                        alert('not implemented');
+                        cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
+                        this.removeContextMenu();
                     }}
                 >
                     Less than or equal
                 </div>`;
+        }
+
+        if (
+            cellConfig.type !== 'text' &&
+            cellConfig.type !== 'number' &&
+            cellConfig.type !== 'date' &&
+            cellConfig.type !== undefined
+        ) {
+            filterTemplate = '';
         }
 
         /**
@@ -2815,8 +2847,6 @@ export class Grid {
                     Advanced Filter
                 </div>
 
-                <div class="simple-html-grid-menu-section">Set Operator:</div>
-                <hr class="hr-solid" />
                 ${filterTemplate}
             </div>`,
             contextMenu

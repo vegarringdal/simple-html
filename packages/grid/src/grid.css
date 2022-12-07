@@ -867,6 +867,10 @@ input {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-selected {
+    background-color: var(--simple-html-grid-main-bg-selected-odd);
+}
+
 .simple-html-grid .simple-html-grid-menu .hr-solid {
     border-top: 0px dashed;
     border-bottom: 0px solid;
