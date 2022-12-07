@@ -51,7 +51,8 @@ dev branch will have a lot of commits to just save current progress, as it gets 
 
 List here is not final, but to make it easier for me to focus
 
-[demo](https://vegarringdal.github.io/rebuild-grid/index.html)
+[demo](https://vegarringdal.github.io/rebuild-grid/index.html) Try and update it when I update the todo list, demo page will get expanded with more buttons etc as I get main parts in place
+
 
 Main rendering will be first focus
 
