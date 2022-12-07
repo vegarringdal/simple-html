@@ -12,10 +12,10 @@ import { dummydata } from './dummyData';
  * simple gridconfig
  */
 const gridConfig: GridConfig = {
-    cellHeight: 20,
+    cellHeight: 22,
     panelHeight: 25,
     footerHeight: 45,
-    selectSizeHeight: 20,
+    selectSizeHeight: 18,
     readonly: true,
     selectionMode: 'multiple',
  /*    columnsPinnedLeft: [
