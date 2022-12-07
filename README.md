@@ -51,6 +51,8 @@ dev branch will have a lot of commits to just save current progress, as it gets 
 
 List here is not final, but to make it easier for me to focus
 
+[demo](https://vegarringdal.github.io/rebuild-grid/index.html)
+
 Main rendering will be first focus
 
  * [x] main UI parts
@@ -63,8 +65,6 @@ Main rendering will be first focus
  * [x] select all top/left 
  * [x] multisort with shift key and colum label click
  * [x] grouping with expand/collapse in group rows
- * [ ] simple dropdown from columns
- * [ ] on focus button -> with event
  * [x] resize columns
  * [x] resize pinned left/right
  * [x] even /odd coloring to rows (also when selected)
@@ -72,11 +72,10 @@ Main rendering will be first focus
  * [ ] save setting
  * [ ] global readonly setting
  * [x] drag/drop column to change location
- * [ ] row/cell
+ * [ ] row/cell (incl header)
    * [x] add input to row
    * [ ] able to set placeholder with config
-   * [ ] able to add focus button (...) or dropdown icon
-      * I might just a focus event for this, so its not part of grid
+   * [ ] able to add focus button (...) or dropdown icon with event callback
    * [x] edit cells
    * [ ] edit cells callback/event
    * [ ] support simple dropsdown (dropdown need to be placed on document like we need to do with menus)
@@ -118,8 +117,7 @@ Main rendering will be first focus
    * [x] support groups
      * [x] and groups
      * [x] or groups
-     * [ ] not groups ? (do we need, they can search not equal..?)
-   * [ ] in operator  
+   * [ ] in operator (might work, not tested)
  * do we want a find all (find value in all columns/rows?)
  * option to override 
   * [x] add current filter to footer
