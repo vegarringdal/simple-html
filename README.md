@@ -91,8 +91,8 @@ Main rendering will be first focus
    * [ ] pin right
    * [ ] hide
    * [ ] column chooser
-   * [ ] resize this column
-   * [ ] resize all columns
+   * [x] resize this column
+   * [x] resize all columns
    * [x] collapse all groups
    * [x] expand all groups
    * [x] clear grouping

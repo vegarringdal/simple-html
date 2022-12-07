@@ -2395,7 +2395,7 @@ export class Grid {
         const contextMenu = creatElement('div', 'simple-html-grid');
         contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
-        
+
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
         contextMenu.style.left = asPx(rect.left + 2);
@@ -2440,7 +2440,7 @@ export class Grid {
         const contextMenu = creatElement('div', 'simple-html-grid');
         contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
-        
+
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
         contextMenu.style.left = asPx(rect.left + 2);
@@ -2506,7 +2506,7 @@ export class Grid {
         const contextMenu = creatElement('div', 'simple-html-grid');
         contextMenu.classList.add('simple-html-grid-reset');
         const rect = cell.getBoundingClientRect();
-        
+
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
         contextMenu.style.left = asPx(rect.left + 2);
@@ -2555,7 +2555,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        this.autoResizeColumns(attribute);
                     }}
                 >
                     Resize Column
@@ -2563,7 +2563,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        this.autoResizeColumns();
                     }}
                 >
                     Resize all columns
@@ -2573,7 +2573,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        this.gridInterface.getDatasource().expandGroup()
+                        this.gridInterface.getDatasource().expandGroup();
                     }}
                 >
                     Expand all
@@ -2581,7 +2581,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        this.gridInterface.getDatasource().collapseGroup()
+                        this.gridInterface.getDatasource().collapseGroup();
                     }}
                 >
                     Collapse all
@@ -2589,7 +2589,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        this.gridInterface.getDatasource().removeGroup()
+                        this.gridInterface.getDatasource().removeGroup();
                     }}
                 >
                     Clear all
@@ -3339,5 +3339,68 @@ export class Grid {
             document.body.removeChild(this.contextMenu);
             this.contextMenu = null;
         }
+    }
+
+    public autoResizeColumns(useAttribute?: string) {
+        const attributes = this.gridInterface.getGridConfig().attributes;
+        const attributeKeys = useAttribute ? [useAttribute] : Object.keys(attributes);
+
+        let widths: number[] = attributeKeys.map((key) => {
+            const attribute = attributes[key];
+            const length =  attribute?.label?.length || attribute.attribute?.length 
+            return length + 4;
+        });
+        let text: string[] = attributeKeys.map((key) => {
+            const attribute = attributes[key];
+            if (attribute.type === 'date' && attribute?.label?.length < 5) {
+                return '19.19.2000 A';
+            }
+            return (attribute?.label || attribute.attribute)  + 'sorter';
+        });
+
+        const data = this.gridInterface.getDatasource().getAllData();
+        data.forEach((row: any) => {
+            attributeKeys.forEach((key, i) => {
+                const att = attributes[key];
+
+                if (row && typeof row[att.attribute] === 'string') {
+                    if (widths[i] < row[att.attribute].length) {
+                        widths[i] = row[att.attribute].length;
+                        text[i] = row[att.attribute];
+                    }
+                }
+                if (row && typeof row[att.attribute] === 'number') {
+                    if (widths[i] < (row[att.attribute] + '').length) {
+                        widths[i] = (row[att.attribute] + '').length;
+                        text[i] = row[att.attribute];
+                    }
+                }
+            });
+        });
+
+        widths = widths.map((e: number) => (e ? e * 8 : 100));
+
+        const left = this.gridInterface.getGridConfig().columnsPinnedLeft || []
+        const right = this.gridInterface.getGridConfig().columnsPinnedRight || []
+        const center = this.gridInterface.getGridConfig().columnsCenter || []
+
+        center.concat(left).concat(right).forEach((g) => {
+            let x = 0;
+            g?.rows.forEach((rowAttribute) => {
+                if (x < 750) {
+                    if (attributeKeys.indexOf(rowAttribute) !== -1) {
+                        const xx = widths[attributeKeys.indexOf(rowAttribute)];
+                        if (xx > x) {
+                            x = this.getTextWidth(text[attributeKeys.indexOf(rowAttribute)]) + 15;
+                        }
+                    }
+                }
+            });
+            if (x) {
+                g.width = x > 750 ? 750 : x;
+            }
+        });
+
+        this.rebuild();
     }
 }
