@@ -5,7 +5,7 @@ export type GridConfig = {
     panelHeight: number;
     footerHeight: number;
     selectSizeHeight: number;
-    readonly: true;
+    readonly: boolean;
     selectionMode: 'multiple' | 'single';
     attributes: Record<string, Attribute>;
     columnsPinnedLeft?: Columns[];
