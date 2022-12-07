@@ -76,15 +76,18 @@ Main rendering will be first focus
  * [ ] row/cell (incl header)
    * [x] add input to row
    * [ ] able to set placeholder with config
+     * [ ] row
+     * [ ] header
    * [ ] able to add focus button (...) or dropdown icon with event callback
+     * [ ] row
+     * [ ] header
    * [x] edit cells
    * [ ] edit cells callback/event
-   * [ ] support simple dropsdown (dropdown need to be placed on document like we need to do with menus)
-     * I might just a focus event for this, so its not part of grid
-   * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
-   * [x] readonly 
+    * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
+   * [x] readonly (row)
      * [ ] with callback, so you can also set it based on other row values
-   * [ ] disabled? (or is this just disabled)
+     * [ ] set "read" background/scratched, so its easy to see its a readonly even i edit mode
+   * [ ] disabled? (or is just readonly good enough?) 
  * [ ] menu label
    * [x] GUI
    * [x] pin left
@@ -103,7 +106,8 @@ Main rendering will be first focus
    * [x] set is blank
    * [x] set is not blank
    * [x] operator (most used only, they can used advanced for others)
-   * [x] -> advanced filter like we have?
+   * [x] advanced filter  (filter dialog)
+   * [ ] do we want excel similar column filter ?
  * [ ] menu row
     * [x] GUI
     * [ ] clear (sett to null)
@@ -119,9 +123,8 @@ Main rendering will be first focus
      * [x] and groups
      * [x] or groups
    * [ ] in operator (might work, not tested)
- * do we want a find all (find value in all columns/rows?)
- * option to override 
-  * [x] add current filter to footer
+ * [ ] do we want a find all (find value in all columns/rows?)
+ * [x] add current filter to footer
  * [x] total rows/filtered rows to footer
  * [ ] clear filter with button in footer (need to be able to hide)
    
