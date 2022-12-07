@@ -47,7 +47,7 @@ dev branch will have a lot of commits to just save current progress, as it gets 
 
 
 
-TODO:
+# TODO:
 
 List here is not final, but to make it easier for me to focus
 
