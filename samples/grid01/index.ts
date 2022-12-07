@@ -18,9 +18,9 @@ const gridConfig: GridConfig = {
     selectSizeHeight: 20,
     readonly: true,
     selectionMode: 'multiple',
-    columnsPinnedLeft: [
+ /*    columnsPinnedLeft: [
         {
-            rows: ['id', 'name'],
+            rows: ['id'],
             width: 180
         },
         {
@@ -31,152 +31,152 @@ const gridConfig: GridConfig = {
             rows: ['balance'],
             width: 100
         }
-    ],
-    columnsPinnedRight: [
+    ], */
+  /*   columnsPinnedRight: [
         {
-            rows: ['index', 'eyeColor'],
+            rows: ['index'],
             width: 100
         },
         {
-            rows: ['gender', 'isDumb'],
+            rows: ['gender'],
             width: 100
         }
-    ],
+    ], */
     columnsCenter: [
         {
-            rows: ['company', 'email'],
+            rows: ['company'],
             width: 200
         },
         {
-            rows: ['phone', 'address'],
+            rows: ['phone'],
             width: 300
         },
 
         {
-            rows: ['date1', 'date2'],
+            rows: ['date1'],
             width: 80
         },
 
         {
-            rows: ['favoriteFruit', 'longitude'],
+            rows: ['favoriteFruit'],
             width: 100
         },
         {
-            rows: ['country', 'registered'],
-            width: 100
-        },
-
-        {
-            rows: ['about', 'age'],
+            rows: ['country'],
             width: 100
         },
 
         {
-            rows: ['tags', 'greeting'],
+            rows: ['about'],
+            width: 100
+        },
+
+        {
+            rows: ['tags'],
             width: 250
         },
 
         {
-            rows: ['picture', 'age'],
+            rows: ['picture'],
             width: 300
         },
         {
-            rows: ['company', 'email'],
+            rows: ['company'],
             width: 200
         },
         {
-            rows: ['phone', 'address'],
+            rows: ['phone'],
             width: 300
         },
 
         {
-            rows: ['date1', 'date2'],
+            rows: ['date1'],
             width: 100
         },
 
         {
-            rows: ['favoriteFruit', 'longitude'],
+            rows: ['favoriteFruit'],
             width: 100
         },
 
         {
-            rows: ['about', 'age'],
+            rows: ['about'],
             width: 100
         },
 
         {
-            rows: ['tags', 'greeting'],
+            rows: ['tags'],
             width: 250
         },
 
         {
-            rows: ['picture', 'age'],
+            rows: ['picture'],
             width: 300
         },
         {
-            rows: ['company', 'email'],
+            rows: ['company'],
             width: 200
         },
         {
-            rows: ['phone', 'address'],
+            rows: ['phone'],
             width: 300
         },
 
         {
-            rows: ['date1', 'date2'],
+            rows: ['date1'],
             width: 150
         },
 
         {
-            rows: ['favoriteFruit', 'longitude'],
+            rows: ['favoriteFruit'],
             width: 100
         },
 
         {
-            rows: ['about', 'age'],
+            rows: ['about'],
             width: 100
         },
 
         {
-            rows: ['tags', 'greeting'],
+            rows: ['tags'],
             width: 250
         },
 
         {
-            rows: ['picture', 'age'],
+            rows: ['picture'],
             width: 300
         },
         {
-            rows: ['company', 'email'],
+            rows: ['company'],
             width: 200
         },
         {
-            rows: ['phone', 'address'],
+            rows: ['phone'],
             width: 300
         },
 
         {
-            rows: ['date1', 'date2'],
+            rows: ['date1'],
             width: 100
         },
 
         {
-            rows: ['favoriteFruit', 'longitude'],
+            rows: ['favoriteFruit'],
             width: 100
         },
 
         {
-            rows: ['about', 'age'],
+            rows: ['about'],
             width: 100
         },
 
         {
-            rows: ['tags', 'greeting'],
+            rows: ['tags'],
             width: 250
         },
 
         {
-            rows: ['picture', 'age'],
+            rows: ['picture'],
             width: 300
         }
     ],
