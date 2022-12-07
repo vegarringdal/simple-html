@@ -87,9 +87,9 @@ Main rendering will be first focus
    * [ ] disabled? (or is this just disabled)
  * [ ] menu label
    * [x] GUI
-   * [ ] pin left
-   * [ ] pin right
-   * [ ] hide
+   * [x] pin left
+   * [x] pin right
+   * [x] hide
    * [ ] column chooser
    * [x] resize this column
    * [x] resize all columns

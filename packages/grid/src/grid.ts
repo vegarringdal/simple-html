@@ -2512,31 +2512,129 @@ export class Grid {
         contextMenu.style.left = asPx(rect.left + 2);
         contextMenu.style.minWidth = asPx(130);
 
+        /**
+         * pin left depends on what this column it is
+         */
+        let pinLeftTemplate = html`
+            <div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    let width = 100;
+                    if (colType === 'middle-pinned') {
+                        this.gridInterface.getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                        width = this.gridInterface.getGridConfig().columnsCenter[column].width;
+                    }
+                    if (colType === 'right-pinned') {
+                        this.gridInterface.getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                        width = this.gridInterface.getGridConfig().columnsPinnedRight[column].width;
+                    }
+
+                    this.gridInterface.getGridConfig().columnsPinnedLeft.push({
+                        rows: [attribute],
+                        width
+                    });
+                    this.rebuild(true);
+                }}
+            >
+                Pin left
+            </div>
+            <div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    let width = 100;
+                    if (colType === 'middle-pinned') {
+                        width = this.gridInterface.getGridConfig().columnsCenter[column].width;
+                    }
+                    if (colType === 'right-pinned') {
+                        width = this.gridInterface.getGridConfig().columnsPinnedRight[column].width;
+                    }
+
+                    this.gridInterface.getGridConfig().columnsPinnedLeft.push({
+                        rows: [attribute],
+                        width
+                    });
+                    this.rebuild(true);
+                }}
+            >
+                Pin left (copy)
+            </div>
+        `;
+
+        if (colType === 'left-pinned') {
+            pinLeftTemplate = '' as any;
+        }
+
+        /**
+         * pin right depends on what this column it is
+         */
+        let pinRightTemplate = html`
+            <div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    let width = 100;
+                    if (colType === 'middle-pinned') {
+                        this.gridInterface.getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                        width = this.gridInterface.getGridConfig().columnsCenter[column].width;
+                    }
+                    if (colType === 'left-pinned') {
+                        this.gridInterface.getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                        width = this.gridInterface.getGridConfig().columnsPinnedLeft[column].width;
+                    }
+
+                    this.gridInterface.getGridConfig().columnsPinnedRight.push({
+                        rows: [attribute],
+                        width
+                    });
+                    this.rebuild(true);
+                }}
+            >
+                Pin right
+            </div>
+            <div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    let width = 100;
+                    if (colType === 'middle-pinned') {
+                        width = this.gridInterface.getGridConfig().columnsCenter[column].width;
+                    }
+                    if (colType === 'left-pinned') {
+                        width = this.gridInterface.getGridConfig().columnsPinnedLeft[column].width;
+                    }
+
+                    this.gridInterface.getGridConfig().columnsPinnedRight.push({
+                        rows: [attribute],
+                        width
+                    });
+                    this.rebuild(true);
+                }}
+            >
+                Pin right (copy)
+            </div>
+        `;
+
+        if (colType === 'right-pinned') {
+            pinRightTemplate = '' as any;
+        }
+
         render(
             html`<div class="simple-html-grid-menu">
                 <div class="simple-html-grid-menu-section">Column:</div>
                 <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Pin left
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Pin right
-                </div>
 
+                ${pinLeftTemplate} ${pinRightTemplate}
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        if (colType === 'middle-pinned') {
+                            this.gridInterface.getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                        }
+                        if (colType === 'right-pinned') {
+                            this.gridInterface.getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                        }
+                        if (colType === 'left-pinned') {
+                            this.gridInterface.getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                        }
+                        this.rebuild(true);
                     }}
                 >
                     Hide
@@ -3347,7 +3445,7 @@ export class Grid {
 
         let widths: number[] = attributeKeys.map((key) => {
             const attribute = attributes[key];
-            const length =  attribute?.label?.length || attribute.attribute?.length 
+            const length = attribute?.label?.length || attribute.attribute?.length;
             return length + 4;
         });
         let text: string[] = attributeKeys.map((key) => {
@@ -3355,7 +3453,7 @@ export class Grid {
             if (attribute.type === 'date' && attribute?.label?.length < 5) {
                 return '19.19.2000 A';
             }
-            return (attribute?.label || attribute.attribute)  + 'sorter';
+            return (attribute?.label || attribute.attribute) + 'sorter';
         });
 
         const data = this.gridInterface.getDatasource().getAllData();
@@ -3380,26 +3478,29 @@ export class Grid {
 
         widths = widths.map((e: number) => (e ? e * 8 : 100));
 
-        const left = this.gridInterface.getGridConfig().columnsPinnedLeft || []
-        const right = this.gridInterface.getGridConfig().columnsPinnedRight || []
-        const center = this.gridInterface.getGridConfig().columnsCenter || []
+        const left = this.gridInterface.getGridConfig().columnsPinnedLeft || [];
+        const right = this.gridInterface.getGridConfig().columnsPinnedRight || [];
+        const center = this.gridInterface.getGridConfig().columnsCenter || [];
 
-        center.concat(left).concat(right).forEach((g) => {
-            let x = 0;
-            g?.rows.forEach((rowAttribute) => {
-                if (x < 750) {
-                    if (attributeKeys.indexOf(rowAttribute) !== -1) {
-                        const xx = widths[attributeKeys.indexOf(rowAttribute)];
-                        if (xx > x) {
-                            x = this.getTextWidth(text[attributeKeys.indexOf(rowAttribute)]) + 15;
+        center
+            .concat(left)
+            .concat(right)
+            .forEach((g) => {
+                let x = 0;
+                g?.rows.forEach((rowAttribute) => {
+                    if (x < 750) {
+                        if (attributeKeys.indexOf(rowAttribute) !== -1) {
+                            const xx = widths[attributeKeys.indexOf(rowAttribute)];
+                            if (xx > x) {
+                                x = this.getTextWidth(text[attributeKeys.indexOf(rowAttribute)]) + 15;
+                            }
                         }
                     }
+                });
+                if (x) {
+                    g.width = x > 750 ? 750 : x;
                 }
             });
-            if (x) {
-                g.width = x > 750 ? 750 : x;
-            }
-        });
 
         this.rebuild();
     }
