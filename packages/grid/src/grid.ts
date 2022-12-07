@@ -2394,20 +2394,21 @@ export class Grid {
 
         render(
             html`<div class="simple-html-grid-menu ">
-                <div
-                    class="simple-html-label-button-menu-top"
-                    @click=${() => {
-                        document.body.removeChild(contextMenu);
-                    }}
-                >
-                    Close
-                </div>
+                
                 <div class="simple-html-grid-menu-section">Available Fields:</div>
                 <hr class="hr-solid" />
                 <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                     ${attributes.map((attribute) => {
                         return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>${attribute}</div>`;
                     })}
+                </div>
+                <div
+                    class="simple-html-label-button-menu-bottom"
+                    @click=${() => {
+                        document.body.removeChild(contextMenu);
+                    }}
+                >
+                    Close
                 </div>
             </div>`,
             contextMenu

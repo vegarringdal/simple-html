@@ -489,8 +489,8 @@ input {
     user-select: none;
 }
 
-.simple-html-label-button-menu-top {
-    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+.simple-html-label-button-menu-bottom {
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
     background-color: var(--simple-html-grid-main-bg-color);
     pointer-events: all;
