@@ -120,7 +120,7 @@ Main rendering will be first focus
       * [ ] need a event/callback for this
    * [ ] paste cell
      * [ ] event for when this happends, incase we need to edit others
-   * [ ] paste cell
+   * [ ] clear cell
      * [ ] event for when this happends, incase we need to edit others
  * [ ] advanced search dialog
    * [x] support groups
