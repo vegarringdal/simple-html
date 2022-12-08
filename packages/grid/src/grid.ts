@@ -2007,9 +2007,9 @@ export class Grid {
             render(
                 html`<div
                     class="simple-html-label"
-                    @contextmenu=${(e: any) => {
+                    @contextmenu=${(e: MouseEvent) => {
                         e.preventDefault();
-                        this.contextmenuLabel(cell, row, column, celno, colType, cellType, attribute, rowData);
+                        this.contextmenuLabel(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                     }}
                 >
                     ${value} ${iconAsc}
@@ -2051,9 +2051,9 @@ export class Grid {
                         .checked=${live(currentValue)}
                         .indeterminate=${currentValue !== true && currentValue !== false}
                         placeholder=${placeHolder}
-                        @contextmenu=${(e: any) => {
+                        @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
-                            this.contextmenuFilter(cell, row, column, celno, colType, cellType, attribute, rowData);
+                            this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @change=${(e: any) => {
                             if (!filterRunning) {
@@ -2094,13 +2094,13 @@ export class Grid {
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(currentValue)}
                         placeholder=${placeHolder}
-                        @contextmenu=${(e: any) => {
+                        @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             if (lastFilter !== (e.target as any).value) {
                                 this.filterCallback((e.target as any).value, cellConfig);
                             }
                             lastFilter = (e.target as any).value;
-                            this.contextmenuFilter(cell, row, column, celno, colType, cellType, attribute, rowData);
+                            this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
@@ -2254,9 +2254,9 @@ export class Grid {
                         type="checkbox"
                         .readonly=${cellConfig.readonly}
                         .disabled=${cellConfig.readonly}
-                        @contextmenu=${(e: any) => {
+                        @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
-                            this.contextmenuRow(cell, row, column, celno, colType, cellType, attribute, rowData);
+                            this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @click=${() => {
                             this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -2282,8 +2282,7 @@ export class Grid {
                             .disabled=${cellConfig.readonly}
                             @contextmenu=${(e: MouseEvent) => {
                                 e.preventDefault();
-
-                                this.contextmenuRow(cell, row, column, celno, colType, cellType, attribute, rowData);
+                                this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                             }}
                             @click=${() => {
                                 this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -2293,11 +2292,17 @@ export class Grid {
                                 if (!cellConfig.readonly && cellConfig?.type !== 'date') {
                                     entity[attribute] = e.target.value;
                                 }
-                                if(!cellConfig.readonly && cellConfig.type === 'date'){
-                                    entity[attribute] =  this.gridInterface.getDatasource().getDateFormater().toDate(e.target.value);
+                                if (!cellConfig.readonly && cellConfig.type === 'date') {
+                                    entity[attribute] = this.gridInterface
+                                        .getDatasource()
+                                        .getDateFormater()
+                                        .toDate(e.target.value);
                                 }
-                                if(!cellConfig.readonly && cellConfig.type === 'number'){
-                                    entity[attribute] = this.gridInterface.getDatasource().getNumberFormater().toNumber(e.target.value);
+                                if (!cellConfig.readonly && cellConfig.type === 'number') {
+                                    entity[attribute] = this.gridInterface
+                                        .getDatasource()
+                                        .getNumberFormater()
+                                        .toNumber(e.target.value);
                                 }
                             }}
                             @change=${(e: any) => {
@@ -2404,12 +2409,13 @@ export class Grid {
 
         render(
             html`<div class="simple-html-grid-menu ">
-                
                 <div class="simple-html-grid-menu-section">All Fields:</div>
                 <hr class="hr-solid" />
                 <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                     ${attributes.sort().map((attribute) => {
-                        return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>${this.prettyPrintString(attribute)}</div>`;
+                        return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>
+                            ${this.prettyPrintString(attribute)}
+                        </div>`;
                     })}
                 </div>
                 <div
@@ -2440,8 +2446,8 @@ export class Grid {
      * @param cell
      * @param callback
      */
-    private contextMenuAttributes(cell: HTMLElement, callback: (attribute: string) => void) {
-        console.log('contextmenuLabel', cell);
+    private contextMenuAttributes(event: MouseEvent, cell: HTMLElement, callback: (attribute: string) => void) {
+        console.log('contextmenuLabel', event, cell);
 
         this.removeContextMenu();
 
@@ -2485,8 +2491,8 @@ export class Grid {
      * @param cell
      * @param callback
      */
-    private contextMenuOperator(cell: HTMLElement, callback: (operator: string) => void) {
-        console.log('contextmenuLabel', cell);
+    private contextMenuOperator(event: MouseEvent, cell: HTMLElement, callback: (operator: string) => void) {
+        console.log('contextmenuLabel', event, cell);
 
         this.removeContextMenu();
 
@@ -2543,6 +2549,7 @@ export class Grid {
     }
 
     private contextmenuLabel(
+        event: MouseEvent,
         cell: HTMLCellElement,
         row: number,
         column: number,
@@ -2552,7 +2559,7 @@ export class Grid {
         attribute: string,
         rowData: Entity
     ) {
-        console.log('contextmenuLabel', cell, row, column, celno, colType, cellType, attribute, rowData);
+        console.log('contextmenuLabel', event, cell, row, column, celno, colType, cellType, attribute, rowData);
 
         this.removeContextMenu();
 
@@ -2562,8 +2569,16 @@ export class Grid {
 
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.left = asPx(event.clientX - 65);
         contextMenu.style.minWidth = asPx(130);
+
+        if(event.clientX+70 > window.innerWidth){
+            contextMenu.style.left = asPx(window.innerWidth - 150);
+        }
+        if(event.clientX-65 < 0){
+            contextMenu.style.left = asPx(5);
+        }
+
 
         /**
          * pin left depends on what this column it is
@@ -2754,6 +2769,7 @@ export class Grid {
     }
 
     private contextmenuFilter(
+        event: MouseEvent,
         cell: HTMLCellElement,
         row: number,
         column: number,
@@ -2763,7 +2779,7 @@ export class Grid {
         attribute: string,
         rowData: Entity
     ) {
-        console.log('contextmenuFilter', cell, row, column, celno, colType, cellType, attribute, rowData);
+        console.log('contextmenuFilter', event, cell, row, column, celno, colType, cellType, attribute, rowData);
 
         this.removeContextMenu();
 
@@ -2772,8 +2788,15 @@ export class Grid {
         const rect = cell.getBoundingClientRect();
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.left = asPx(event.clientX - 65);
         contextMenu.style.minWidth = asPx(130);
+
+        if(event.clientX+70 > window.innerWidth){
+            contextMenu.style.left = asPx(window.innerWidth - 150);
+        }
+        if(event.clientX-65 < 0){
+            contextMenu.style.left = asPx(5);
+        }
 
         const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
 
@@ -3008,6 +3031,7 @@ export class Grid {
     }
 
     private contextmenuRow(
+        event: MouseEvent,
         cell: HTMLCellElement,
         row: number,
         column: number,
@@ -3017,7 +3041,7 @@ export class Grid {
         attribute: string,
         rowData: Entity
     ) {
-        console.log('contextmenuRow', cell, row, column, celno, colType, cellType, attribute, rowData);
+        console.log('contextmenuRow', event, cell, row, column, celno, colType, cellType, attribute, rowData);
 
         this.removeContextMenu();
 
@@ -3026,8 +3050,16 @@ export class Grid {
         const rect = cell.getBoundingClientRect();
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.left = asPx(event.clientX - 65);
         contextMenu.style.minWidth = asPx(130);
+
+        if (event.clientX + 70 > window.innerWidth) {
+            contextMenu.style.left = asPx(window.innerWidth - 150);
+        }
+        if(event.clientX-65 < 0){
+            contextMenu.style.left = asPx(5);
+        }
+
 
         render(
             html`<div class="simple-html-grid-menu">
@@ -3138,8 +3170,8 @@ export class Grid {
 
     /**
      * takes and turn first letter to upper/rest lowercase and lower hyphen into space
-     * @param text 
-     * @returns 
+     * @param text
+     * @returns
      */
     private prettyPrintString(text: string) {
         const prettytext = text
@@ -3285,8 +3317,8 @@ export class Grid {
 
             if (arg.valueType === 'ATTRIBUTE') {
                 filterValue = html`<div
-                    @click=${(e: any) => {
-                        this.contextMenuAttributes(e.target, (attribute) => {
+                    @click=${(e: MouseEvent) => {
+                        this.contextMenuAttributes(e, e.target as any, (attribute) => {
                             arg.value = attribute;
                             this.generateFilterEditor(structuredClone(filterArg));
                         });
@@ -3306,8 +3338,8 @@ export class Grid {
                     <div class="grid-flex">
                         <div
                             class="grid-flex-1 grid-text-center"
-                            @click=${(e: any) => {
-                                this.contextMenuAttributes(e.target, (attribute) => {
+                            @click=${(e: MouseEvent) => {
+                                this.contextMenuAttributes(e, e.target as HTMLCellElement, (attribute) => {
                                     arg.attribute = attribute;
 
                                     const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
@@ -3321,8 +3353,8 @@ export class Grid {
 
                         <div
                             class="grid-flex-1 grid-text-center"
-                            @click=${(e: any) => {
-                                this.contextMenuOperator(e.target, (operator) => {
+                            @click=${(e: MouseEvent) => {
+                                this.contextMenuOperator(e, e.target as HTMLCellElement, (operator) => {
                                     arg.operator = operator.replace(' ', '_').toUpperCase() as any;
 
                                     this.generateFilterEditor(structuredClone(filterArg));
