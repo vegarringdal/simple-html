@@ -67,7 +67,7 @@ export class Grid {
     private filterEditorContainer: HTMLElement;
     columnChooserMenu: HTMLElement;
 
-    connectElement(element: HTMLElement) {
+    public connectElement(element: HTMLElement) {
         this.element = element;
         this.element.classList.add('simple-html-grid');
         if (this.gridInterface) {
@@ -79,7 +79,7 @@ export class Grid {
         }
     }
 
-    connectGridInterface(gridInterface: GridInterface) {
+    public connectGridInterface(gridInterface: GridInterface) {
         this.gridInterface = gridInterface;
         this.gridInterface.connectGrid(this);
 
@@ -110,23 +110,23 @@ export class Grid {
         }).observe(this.element);
     }
 
-    disconnectElement() {
+    public disconnectElement() {
         this.gridInterface.disconnectGrid();
     }
 
-    disableResizeEvent() {
+    public disableResizeEvent() {
         this.skipInitResizeEvent = false;
     }
 
-    enableResizeEvent() {
+    public enableResizeEvent() {
         this.skipInitResizeEvent = true;
     }
 
-    getElement() {
+    public getElement() {
         return this.element;
     }
 
-    getBody() {
+    public getBody() {
         return this.body;
     }
 
@@ -504,7 +504,6 @@ export class Grid {
 
     private dragEvent(cell: HTMLCellElement, sortEnabled = true) {
         cell.addEventListener('mousedown', (e) => {
-            console.log('e');
             if (e.button !== 0) {
                 return;
             }
@@ -2391,10 +2390,12 @@ export class Grid {
      * @param cell
      * @param callback
      */
-    private contextMenuColumnChooser(cell: HTMLElement) {
-        console.log('contextmenuLabel', cell);
-
+    private contextMenuColumnChooser(event: MouseEvent, cell: HTMLElement) {
         this.removeContextMenu();
+
+        if (this.columnChooserMenu && this.columnChooserMenu.parentElement) {
+            document.body.removeChild(this.columnChooserMenu);
+        }
 
         const contextMenu = creatElement('div', 'simple-html-grid');
         contextMenu.classList.add('simple-html-grid-reset');
@@ -2402,9 +2403,16 @@ export class Grid {
 
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 50);
-        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.left = asPx(event.clientX - 65);
         contextMenu.style.minWidth = asPx(130);
 
+        if (event.clientX + 70 > window.innerWidth) {
+            contextMenu.style.left = asPx(window.innerWidth - 150);
+        }
+        if (event.clientX - 65 < 0) {
+            contextMenu.style.left = asPx(5);
+        }
+        
         const attributes = Object.keys(this.gridInterface.getGridConfig().attributes) || [];
 
         render(
@@ -2431,7 +2439,6 @@ export class Grid {
         );
 
         const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
-        console.log(cells);
 
         for (let i = 0; i < cells.length; i++) {
             this.dragEvent(cells[i] as HTMLCellElement, false);
@@ -2457,8 +2464,16 @@ export class Grid {
 
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.left = asPx(event.clientX - 65);
         contextMenu.style.minWidth = asPx(130);
+
+        if (event.clientX + 70 > window.innerWidth) {
+            contextMenu.style.left = asPx(window.innerWidth - 150);
+        }
+        if (event.clientX - 65 < 0) {
+            contextMenu.style.left = asPx(5);
+        }
+
 
         const attributes = Object.keys(this.gridInterface.getGridConfig().attributes) || [];
 
@@ -2502,8 +2517,15 @@ export class Grid {
 
         contextMenu.style.position = 'absolute';
         contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(rect.left + 2);
+        contextMenu.style.left = asPx(event.clientX - 65);
         contextMenu.style.minWidth = asPx(130);
+
+        if (event.clientX + 70 > window.innerWidth) {
+            contextMenu.style.left = asPx(window.innerWidth - 150);
+        }
+        if (event.clientX - 65 < 0) {
+            contextMenu.style.left = asPx(5);
+        }
 
         const operators = [
             'EQUAL',
@@ -2709,8 +2731,8 @@ export class Grid {
                 <hr class="hr-dashed" />
                 <div
                     class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        this.contextMenuColumnChooser(cell);
+                    @click=${(e: MouseEvent) => {
+                        this.contextMenuColumnChooser(e, cell);
                     }}
                 >
                     Column chooser
@@ -3052,7 +3074,7 @@ export class Grid {
         attributes.forEach((attribute) => {
             tableHeader = tableHeader + '<th>' + this.prettyPrintString(attribute) + '</th>';
         });
-        tableHeader = tableHeader + '</tr>'
+        tableHeader = tableHeader + '</tr>';
 
         let tableInnerData = '';
         let justData = '';
