@@ -2235,6 +2235,10 @@ export class Grid {
                 value = this.gridInterface.getDatasource().getDateFormater().fromDate(value);
             }
 
+            if (cellConfig?.type === 'number') {
+                value = this.gridInterface.getDatasource().getNumberFormater().fromNumber(value);
+            }
+
             if (cellConfig.type === 'boolean') {
                 value = (entity && entity[attribute]) || false;
             }
@@ -2288,6 +2292,12 @@ export class Grid {
                             @input=${(e: any) => {
                                 if (!cellConfig.readonly && cellConfig?.type !== 'date') {
                                     entity[attribute] = e.target.value;
+                                }
+                                if(!cellConfig.readonly && cellConfig.type === 'date'){
+                                    entity[attribute] =  this.gridInterface.getDatasource().getDateFormater().toDate(e.target.value);
+                                }
+                                if(!cellConfig.readonly && cellConfig.type === 'number'){
+                                    entity[attribute] = this.gridInterface.getDatasource().getNumberFormater().toNumber(e.target.value);
                                 }
                             }}
                             @change=${(e: any) => {
