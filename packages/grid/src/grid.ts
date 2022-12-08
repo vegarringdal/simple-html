@@ -2572,13 +2572,12 @@ export class Grid {
         contextMenu.style.left = asPx(event.clientX - 65);
         contextMenu.style.minWidth = asPx(130);
 
-        if(event.clientX+70 > window.innerWidth){
+        if (event.clientX + 70 > window.innerWidth) {
             contextMenu.style.left = asPx(window.innerWidth - 150);
         }
-        if(event.clientX-65 < 0){
+        if (event.clientX - 65 < 0) {
             contextMenu.style.left = asPx(5);
         }
-
 
         /**
          * pin left depends on what this column it is
@@ -2791,10 +2790,10 @@ export class Grid {
         contextMenu.style.left = asPx(event.clientX - 65);
         contextMenu.style.minWidth = asPx(130);
 
-        if(event.clientX+70 > window.innerWidth){
+        if (event.clientX + 70 > window.innerWidth) {
             contextMenu.style.left = asPx(window.innerWidth - 150);
         }
-        if(event.clientX-65 < 0){
+        if (event.clientX - 65 < 0) {
             contextMenu.style.left = asPx(5);
         }
 
@@ -3030,6 +3029,98 @@ export class Grid {
         this.contextMenu = contextMenu;
     }
 
+    private generateCopyPasteData(attributes: string[], onlyCurrentEntity: boolean) {
+        const TableOuterTop = `
+        <html>
+            <body>
+            <style>
+                table {
+                border-collapse: collapse;
+                border:.5pt solid windowtext;
+                }
+                td,
+                th {
+                    border-collapse: collapse;
+                    padding:3px;
+                    border:.5pt solid windowtext;
+                }
+            </style>
+        <table>`;
+        const TableOuterBottom = '</table></body></html>';
+
+        let tableHeader = '<tr>';
+        attributes.forEach((attribute) => {
+            tableHeader = tableHeader + '<th>' + this.prettyPrintString(attribute) + '</th>';
+        });
+        tableHeader = tableHeader + '</tr>'
+
+        let tableInnerData = '';
+        let justData = '';
+
+        const datasource = this.gridInterface.getDatasource();
+        const attConfig = this.gridInterface.getGridConfig().attributes;
+        const displayedRows = datasource.getRows();
+        const dateformater = datasource.getDateFormater();
+        const numberformater = datasource.getNumberFormater();
+
+        let rows = datasource.getSelection().getSelectedRows();
+
+        const loopData = (entity: Entity) => {
+            if (!entity.__group) {
+                tableInnerData = tableInnerData + '<tr>';
+                attributes.forEach((attribute, i) => {
+                    const cellConfig = attConfig[attribute];
+                    const colData = entity[attribute];
+
+                    if (i > 0) {
+                        justData = justData + '\t';
+                    }
+
+                    if (cellConfig.type === 'date') {
+                        //
+                        const data = dateformater.fromDate(colData);
+                        justData = justData + data;
+                        tableInnerData = tableInnerData + '<td>' + data + '</td>';
+                    } else if (cellConfig.type === 'number') {
+                        //
+                        const data = numberformater.fromNumber(colData);
+                        justData = justData + data;
+                        tableInnerData = tableInnerData + '<td>' + data + '</td >';
+                    } else {
+                        //
+                        justData = justData + colData;
+                        tableInnerData = tableInnerData + '<td>' + (colData || '') + '</td>';
+                    }
+                });
+                justData = justData + '\n';
+                tableInnerData = tableInnerData + '</tr>';
+            }
+        };
+
+        if (onlyCurrentEntity) {
+            loopData(datasource.currentEntity);
+        } else {
+            rows.forEach((rowNumber) => {
+                loopData(displayedRows[rowNumber]);
+            });
+        }
+
+        return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
+    }
+
+    private copyPasteData(attributes: string[], onlyCurrentEntity: boolean) {
+        const [html, text] = this.generateCopyPasteData(attributes, onlyCurrentEntity);
+
+        function listener(e: any) {
+            e.clipboardData.setData('text/html', html);
+            e.clipboardData.setData('text/plain', text);
+            e.preventDefault();
+        }
+        document.addEventListener('copy', listener);
+        document.execCommand('copy');
+        document.removeEventListener('copy', listener);
+    }
+
     private contextmenuRow(
         event: MouseEvent,
         cell: HTMLCellElement,
@@ -3056,10 +3147,9 @@ export class Grid {
         if (event.clientX + 70 > window.innerWidth) {
             contextMenu.style.left = asPx(window.innerWidth - 150);
         }
-        if(event.clientX-65 < 0){
+        if (event.clientX - 65 < 0) {
             contextMenu.style.left = asPx(5);
         }
-
 
         render(
             html`<div class="simple-html-grid-menu">
@@ -3068,7 +3158,8 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        this.copyPasteData([attribute], true);
+                        this.removeContextMenu();
                     }}
                 >
                     Cell
@@ -3076,7 +3167,8 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        this.copyPasteData([attribute], false);
+                        this.removeContextMenu();
                     }}
                 >
                     Column <i>(sel.rows)</i>
@@ -3084,7 +3176,9 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        const attributes = Object.keys(this.gridInterface.getGridConfig().attributes);
+                        this.copyPasteData(attributes, false);
+                        this.removeContextMenu();
                     }}
                 >
                     Row <i>(sel. rows)</i>

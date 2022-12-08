@@ -110,11 +110,13 @@ Main rendering will be first focus
  * [ ] do we want excel similar column filter, when they enter focus mode?
  * [ ] menu row
     * [x] GUI
-   * [ ] copy cell
+   * [x] copy cell
       * [ ] need a event/callback for this
-   * [ ] copy colum
+   * [x] copy colum
       * [ ] need a event/callback for this
-   * [ ] copy row
+   * [x] copy row
+      * [ ] copy in correct oclumn order..
+      * [ ] allow select columns in selector in header, to limit columns getting copied
       * [ ] need a event/callback for this
    * [ ] paste cell
      * [ ] event for when this happends, incase we need to edit others
