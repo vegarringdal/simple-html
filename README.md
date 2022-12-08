@@ -110,14 +110,16 @@ Main rendering will be first focus
  * [ ] do we want excel similar column filter, when they enter focus mode?
  * [ ] menu row
     * [x] GUI
-    * [ ] clear (sett to null)
-   * [ ] copy
+   * [ ] copy cell
       * [ ] need a event/callback for this
    * [ ] copy colum
       * [ ] need a event/callback for this
-   * [ ] paste
+   * [ ] copy row
+      * [ ] need a event/callback for this
+   * [ ] paste cell
      * [ ] event for when this happends, incase we need to edit others
-   * do we need a way to overide value copied and pasted ?
+   * [ ] paste cell
+     * [ ] event for when this happends, incase we need to edit others
  * [ ] advanced search dialog
    * [x] support groups
      * [x] and groups

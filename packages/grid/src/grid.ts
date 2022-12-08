@@ -3063,7 +3063,7 @@ export class Grid {
 
         render(
             html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-section">Cell:</div>
+                <div class="simple-html-grid-menu-section">Copy:</div>
                 <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
@@ -3071,7 +3071,7 @@ export class Grid {
                         alert('not implemented');
                     }}
                 >
-                    Copy
+                    Cell
                 </div>
                 <div
                     class="simple-html-grid-menu-item"
@@ -3079,7 +3079,7 @@ export class Grid {
                         alert('not implemented');
                     }}
                 >
-                    Paste
+                    Column <i>(sel.rows)</i>
                 </div>
                 <div
                     class="simple-html-grid-menu-item"
@@ -3087,9 +3087,9 @@ export class Grid {
                         alert('not implemented');
                     }}
                 >
-                    Clear
+                    Row <i>(sel. rows)</i>
                 </div>
-                <div class="simple-html-grid-menu-section">Column:</div>
+                <div class="simple-html-grid-menu-section">Paste:</div>
                 <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
@@ -3097,25 +3097,9 @@ export class Grid {
                         alert('not implemented');
                     }}
                 >
-                    Copy
+                    Cell <i>(sel.rows)</i>
                 </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Paste
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Clear
-                </div>
-                <div class="simple-html-grid-menu-section">Row:</div>
+                <div class="simple-html-grid-menu-section">Clear:</div>
                 <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
@@ -3123,23 +3107,7 @@ export class Grid {
                         alert('not implemented');
                     }}
                 >
-                    Copy
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Paste
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Clear
+                    Cell <i>(sel. rows)</i>
                 </div>
             </div>`,
             contextMenu
