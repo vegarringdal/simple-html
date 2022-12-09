@@ -184,10 +184,7 @@ export class DataContainer {
                 }
                 return o;
             } else {
-                const entity = new Proxy(
-                    o,
-                    new this.EntityHandler(this.__keyAttribute, tagAsNew) as any
-                );
+                const entity = new Proxy(o, new this.EntityHandler(this.__keyAttribute, tagAsNew) as any);
                 if (entity && !(entity as any).__KEY) {
                     (entity as any).__KEY = this.getKey();
                 }

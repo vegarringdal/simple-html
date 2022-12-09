@@ -48,12 +48,7 @@ describe('date filter equal, use only date and not time', () => {
             value: new Date(1990, 0, 1),
             attributeType: 'date'
         });
-        expect(ds.getRows()).toEqual([
-            simpleArray[0],
-            simpleArray[1],
-            simpleArray[3],
-            simpleArray[4]
-        ]);
+        expect(ds.getRows()).toEqual([simpleArray[0], simpleArray[1], simpleArray[3], simpleArray[4]]);
         done();
     });
 });

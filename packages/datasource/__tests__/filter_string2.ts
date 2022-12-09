@@ -24,9 +24,7 @@ describe('string filter', () => {
             value: 'per*on2'
         });
 
-        expect(ds.getRows()).toEqual([
-            { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }
-        ]);
+        expect(ds.getRows()).toEqual([{ name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }]);
         done();
     });
 
@@ -37,9 +35,7 @@ describe('string filter', () => {
             value: 'per%on2'
         });
 
-        expect(ds.getRows()).toEqual([
-            { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }
-        ]);
+        expect(ds.getRows()).toEqual([{ name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }]);
         done();
     });
 
@@ -50,9 +46,7 @@ describe('string filter', () => {
             value: '%per%on2%'
         });
 
-        expect(ds.getRows()).toEqual([
-            { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }
-        ]);
+        expect(ds.getRows()).toEqual([{ name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }]);
         done();
     });
 
@@ -63,9 +57,7 @@ describe('string filter', () => {
             value: '*per*on2*'
         });
 
-        expect(ds.getRows()).toEqual([
-            { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }
-        ]);
+        expect(ds.getRows()).toEqual([{ name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }]);
         done();
     });
 

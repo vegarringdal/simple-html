@@ -233,8 +233,8 @@ export class Selection {
 
     /**
      * internal, does not trigger event
-     * @param start 
-     * @param end 
+     * @param start
+     * @param end
      */
     private selectRange(start: number, end: number): void {
         if (this.dataSource.getSelectionMode() === 'multiple') {

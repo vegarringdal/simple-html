@@ -25,18 +25,14 @@ describe('date filter', () => {
             attributeType: 'date'
         });
 
-        expect(ds.getRows()).toEqual([
-            { name: 'person1', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }
-        ]);
+        expect(ds.getRows()).toEqual([{ name: 'person1', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }]);
         done();
     });
 
     it('date equal to, auto guess type based on input', (done) => {
         ds.filter({ attribute: 'born', operator: 'EQUAL', value: new Date(1990, 0, 1) });
 
-        expect(ds.getRows()).toEqual([
-            { name: 'person1', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }
-        ]);
+        expect(ds.getRows()).toEqual([{ name: 'person1', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }]);
         done();
     });
 

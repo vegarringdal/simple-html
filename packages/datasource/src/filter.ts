@@ -74,19 +74,13 @@ export class Filter {
                         return true;
                     }
                 }
-                if (
-                    filter.logicalOperator === 'NONE' ||
-                    filter.logicalOperator === null ||
-                    filter.logicalOperator == undefined
-                ) {
+                if (filter.logicalOperator === 'NONE' || filter.logicalOperator === null || filter.logicalOperator == undefined) {
                     let value = filter.value;
                     if (filter.valueType === 'ATTRIBUTE') {
                         if (typeof filter.value === 'string') {
                             value = rowData[filter.value];
                         } else {
-                            console.error(
-                                'filtervalue needs to be string if you are comparing attributes'
-                            );
+                            console.error('filtervalue needs to be string if you are comparing attributes');
                         }
                     }
                     let result = false;
@@ -107,11 +101,7 @@ export class Filter {
                             if (filter.attributeType === 'number' && rowData) {
                                 data = ds.getNumberFormater().fromNumber(rowData[filter.attribute]);
                             } else {
-                                if (
-                                    rowData &&
-                                    rowData[filter.attribute] !== null &&
-                                    rowData[filter.attribute] !== undefined
-                                ) {
+                                if (rowData && rowData[filter.attribute] !== null && rowData[filter.attribute] !== undefined) {
                                     data = rowData && rowData[filter.attribute];
                                     if (data && data.toUpperCase) {
                                         data = data.toUpperCase();
@@ -169,19 +159,13 @@ export class Filter {
                         return false;
                     }
                 }
-                if (
-                    filter.logicalOperator === 'NONE' ||
-                    filter.logicalOperator === null ||
-                    filter.logicalOperator == undefined
-                ) {
+                if (filter.logicalOperator === 'NONE' || filter.logicalOperator === null || filter.logicalOperator == undefined) {
                     let value = filter.value;
                     if (filter.valueType === 'ATTRIBUTE') {
                         if (typeof filter.value === 'string') {
                             value = rowData[filter.value];
                         } else {
-                            console.error(
-                                'filtervalue needs to be string if you are comparing attributes'
-                            );
+                            console.error('filtervalue needs to be string if you are comparing attributes');
                         }
                     }
                     let result = false;
@@ -202,11 +186,7 @@ export class Filter {
                             if (filter.attributeType === 'number' && rowData) {
                                 data = ds.getNumberFormater().fromNumber(rowData[filter.attribute]);
                             } else {
-                                if (
-                                    rowData &&
-                                    rowData[filter.attribute] !== null &&
-                                    rowData[filter.attribute] !== undefined
-                                ) {
+                                if (rowData && rowData[filter.attribute] !== null && rowData[filter.attribute] !== undefined) {
                                     data = rowData && rowData[filter.attribute];
                                     if (data && data.toUpperCase) {
                                         data = data.toUpperCase();

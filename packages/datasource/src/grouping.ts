@@ -21,12 +21,7 @@ export class Grouping {
         this.expandedGroupIDs = new Set([]);
     }
 
-    public group(
-        arrayToGroup: Entity[],
-        groupingConfig: GroupArgument[],
-        keepExpanded: boolean,
-        ds: Datasource
-    ) {
+    public group(arrayToGroup: Entity[], groupingConfig: GroupArgument[], keepExpanded: boolean, ds: Datasource) {
         // if grouping
         if (groupingConfig.length > 0) {
             // temp holder for groups as we create them
@@ -40,24 +35,12 @@ export class Grouping {
             groupingConfig.forEach((groupBy, groupNo) => {
                 if (groupNo === 0) {
                     // create main group and add to groups array
-                    const mainGroup = this.createMainGrouping(
-                        arrayToGroup,
-                        groupBy.attribute,
-                        groupNo,
-                        groupBy.title,
-                        ds
-                    );
+                    const mainGroup = this.createMainGrouping(arrayToGroup, groupBy.attribute, groupNo, groupBy.title, ds);
                     groups.push(mainGroup);
                 } else {
                     // get last group created, and group children
                     const childGroupArray = groups[groups.length - 1];
-                    const newSubGroup = this.groupChildren(
-                        childGroupArray,
-                        groupBy.attribute,
-                        groupNo,
-                        groupBy.title,
-                        ds
-                    );
+                    const newSubGroup = this.groupChildren(childGroupArray, groupBy.attribute, groupNo, groupBy.title, ds);
                     groups.push(newSubGroup);
                 }
             });
@@ -234,13 +217,7 @@ export class Grouping {
         return collection;
     }
 
-    private createMainGrouping(
-        array: Entity[],
-        groupBy: string,
-        groupNo: number,
-        title: string,
-        ds: Datasource
-    ) {
+    private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
         const tempGroupArray: Entity[] = [];
         let curGroup: Entity = {} as Entity;
         let lastGroupID: string = null;
@@ -279,13 +256,7 @@ export class Grouping {
         return tempGroupArray;
     }
 
-    private groupChildren(
-        childGroupArray: Entity[],
-        groupBy: string,
-        groupNo: number,
-        title: string,
-        ds: Datasource
-    ) {
+    private groupChildren(childGroupArray: Entity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
         const tempGroupArray: Entity[] = [];
 
         let curGroup: Entity = {} as Entity;

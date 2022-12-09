@@ -84,11 +84,7 @@ export class DateFormaterDefault {
             new Date().getSeconds(),
             new Date().getMilliseconds()
         );
-        if (
-            returnValue &&
-            typeof returnValue === 'object' &&
-            returnValue.toString() === 'Invalid Date'
-        ) {
+        if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
             returnValue = '';
         }
 

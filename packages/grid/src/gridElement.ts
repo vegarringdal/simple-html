@@ -14,15 +14,15 @@ export class GridElement extends HTMLElement {
         this.grid = new Grid();
     }
 
-    connectInterface(value:GridInterface){
+    connectInterface(value: GridInterface) {
         this.gridInterface = value;
-        this.grid.connectGridInterface(this.gridInterface)
+        this.grid.connectGridInterface(this.gridInterface);
     }
 
     public connectedCallback() {
         this.grid.connectElement(this);
     }
-  
+
     public disconnectedCallback() {
         this.grid.disconnectElement();
     }

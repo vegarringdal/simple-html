@@ -767,17 +767,17 @@ export class Grid {
                                      * new
                                      */
                                     if (newColtype === 'left-pinned') {
-                                        let x = newColumn + 1;
+                                        const x = newColumn + 1;
                                         columnLeft.splice(x, 0, { rows: [attribute], width: 100 });
                                     }
 
                                     if (newColtype === 'middle-pinned') {
-                                        let x = newColumn + 1;
+                                        const x = newColumn + 1;
                                         columnCenter.splice(x, 0, { rows: [attribute], width: 100 });
                                     }
 
                                     if (newColtype === 'right-pinned') {
-                                        let x = newColumn + 1;
+                                        const x = newColumn + 1;
                                         columnRight.splice(x, 0, { rows: [attribute], width: 100 });
                                     }
 
@@ -2231,12 +2231,10 @@ export class Grid {
                             }
                             selectRows.push(i);
                         }
-                        if(selectRows.length){
-                       
-                            ds.getSelection().selectRowRange(selectRows[0], selectRows[selectRows.length-1], e.ctrlKey)
+                        if (selectRows.length) {
+                            ds.getSelection().selectRowRange(selectRows[0], selectRows[selectRows.length - 1], e.ctrlKey);
                             this.rebuild();
                         }
-                       
 
                         console.log('row selected:', row);
                     } else {
@@ -3124,7 +3122,7 @@ export class Grid {
         const dateformater = datasource.getDateFormater();
         const numberformater = datasource.getNumberFormater();
 
-        let rows = datasource.getSelection().getSelectedRows();
+        const rows = datasource.getSelection().getSelectedRows();
 
         const loopData = (entity: Entity) => {
             if (!entity.__group) {
@@ -3286,7 +3284,7 @@ export class Grid {
 
         const dsFilter = this.gridInterface.getDatasource().getFilter();
 
-        let filterArg = dsFilter ? dsFilter : defaultStartFilter;
+        const filterArg = dsFilter ? dsFilter : defaultStartFilter;
 
         this.generateFilterEditor(structuredClone(filterArg));
     }
@@ -3665,7 +3663,7 @@ export class Grid {
             const length = attribute?.label?.length || attribute.attribute?.length;
             return length + 4;
         });
-        let text: string[] = attributeKeys.map((key) => {
+        const text: string[] = attributeKeys.map((key) => {
             const attribute = attributes[key];
             if (attribute.type === 'date' && attribute?.label?.length < 5) {
                 return '19.19.2000 A';

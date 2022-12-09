@@ -1,12 +1,6 @@
 import { Datasource } from '../src/dataSource';
 
-const simpleArray = [
-    { name: 'person1' },
-    { name: 'person2' },
-    { name: 'person3' },
-    { name: 'person4' },
-    { name: 'person5' }
-];
+const simpleArray = [{ name: 'person1' }, { name: 'person2' }, { name: 'person3' }, { name: 'person4' }, { name: 'person5' }];
 
 let datasource: Datasource;
 

@@ -127,10 +127,7 @@ export class EntityHandler {
                 );
             }
 
-            if (
-                _original === _value ||
-                ((_original === null || _original === undefined) && _value === '')
-            ) {
+            if (_original === _value || ((_original === null || _original === undefined) && _value === '')) {
                 this.__editedProps[prop] = false;
             }
 

@@ -28,9 +28,7 @@ describe('datasource filterstring ', () => {
             { attribute: 'group', operator: 'EQUAL', value: 'group1' },
             { attribute: 'name', operator: 'EQUAL', value: 'person1' }
         ]);
-        expect(ds.getFilterString()).toEqual(
-            "([group] <<equal_to>> 'group1' AND [name] <<equal_to>> 'person1')".toUpperCase()
-        );
+        expect(ds.getFilterString()).toEqual("([group] <<equal_to>> 'group1' AND [name] <<equal_to>> 'person1')".toUpperCase());
         done();
     });
 
@@ -42,9 +40,7 @@ describe('datasource filterstring ', () => {
                 { attribute: 'name', operator: 'EQUAL', value: 'person1' }
             ]
         });
-        expect(ds.getFilterString()).toEqual(
-            "([group] <<equal_to>> 'group1' OR [name] <<equal_to>> 'person1')".toUpperCase()
-        );
+        expect(ds.getFilterString()).toEqual("([group] <<equal_to>> 'group1' OR [name] <<equal_to>> 'person1')".toUpperCase());
         done();
     });
 

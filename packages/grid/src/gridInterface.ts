@@ -21,7 +21,7 @@ export class GridInterface {
     private suppressEvents: boolean;
 
     constructor(gridConfig: GridConfig, datasource: Datasource) {
-        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));;
+        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
         this.dataSource = datasource;
         this.parseConfig();
 
@@ -139,9 +139,9 @@ export class GridInterface {
         // TODO: get sorting and add it
         // TODO: get grouping and add it
         const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
-        config.sortOrder = this.getDatasource().getLastSorting()
-        config.grouping = this.getDatasource().getGrouping()
-        config.filter = this.getDatasource().getFilter()
+        config.sortOrder = this.getDatasource().getLastSorting();
+        config.grouping = this.getDatasource().getGrouping();
+        config.filter = this.getDatasource().getFilter();
 
         return config;
     }
@@ -156,40 +156,37 @@ export class GridInterface {
      * when you need load
      */
     loadGridConfig(gridConfig: GridConfig) {
-
         this.suppressEvents = true;
 
-        const sortOrder = gridConfig.sortOrder
-        const grouping =  gridConfig.grouping
-        const filter =  gridConfig.filter
-       
-        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
-        this.gridConfig.sortOrder = null
-        this.gridConfig.grouping = null
-        this.gridConfig.filter = null
+        const sortOrder = gridConfig.sortOrder;
+        const grouping = gridConfig.grouping;
+        const filter = gridConfig.filter;
 
-        
+        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
+        this.gridConfig.sortOrder = null;
+        this.gridConfig.grouping = null;
+        this.gridConfig.filter = null;
+
         this.parseConfig();
-        if(filter){
-            this.getDatasource().setFilter(filter as FilterArgument)
-        } else{
-            this.getDatasource().setFilter(null)
+        if (filter) {
+            this.getDatasource().setFilter(filter as FilterArgument);
+        } else {
+            this.getDatasource().setFilter(null);
         }
         this.getDatasource().filter();
-        
-        if(sortOrder?.length && !grouping?.length){
-            this.getDatasource().sort(sortOrder)
-        } 
-       
-        if(grouping?.length){
-            this.getDatasource().group(grouping)
-        } else{
-            this.getDatasource().removeGroup()
-        }     
+
+        if (sortOrder?.length && !grouping?.length) {
+            this.getDatasource().sort(sortOrder);
+        }
+
+        if (grouping?.length) {
+            this.getDatasource().group(grouping);
+        } else {
+            this.getDatasource().removeGroup();
+        }
 
         this.suppressEvents = false;
         this.grid.rebuild();
- 
     }
 
     /**
@@ -262,8 +259,7 @@ export class GridInterface {
      * do not use - used to handle event from datasource
      */
     handleEvent(e: any) {
-
-        if(this.suppressEvents){
+        if (this.suppressEvents) {
             return null;
         }
 

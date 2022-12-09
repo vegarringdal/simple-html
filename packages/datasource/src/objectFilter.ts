@@ -25,12 +25,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     // if is blank or is not blank then just check right away
     if ('IS_BLANK' === filterOperator) {
         if (type === 'date') {
-            if (
-                rowValue &&
-                typeof rowValue === 'object' &&
-                rowValue.toString &&
-                rowValue.toString() === 'Invalid Date'
-            ) {
+            if (rowValue && typeof rowValue === 'object' && rowValue.toString && rowValue.toString() === 'Invalid Date') {
                 return true;
             }
         }
@@ -44,12 +39,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
 
     if ('IS_NOT_BLANK' === filterOperator) {
         if (type === 'date') {
-            if (
-                rowValue &&
-                typeof rowValue === 'object' &&
-                rowValue.toString &&
-                rowValue.toString() === 'Invalid Date'
-            ) {
+            if (rowValue && typeof rowValue === 'object' && rowValue.toString && rowValue.toString() === 'Invalid Date') {
                 return false;
             }
         }
@@ -159,8 +149,8 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 rowValue = rowValue + ''; // incase we got something else
                 rowValue = rowValue.toLowerCase();
             }
-            
-            filterValue = filter.value + ''// incase we got something else
+
+            filterValue = filter.value + ''; // incase we got something else
             filterValue = filterValue.toLowerCase();
             filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
@@ -169,31 +159,19 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             switch (filterOperator) {
                 case 'BEGIN_WITH':
                     newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(
-                        `^${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
-                        'gim'
-                    );
+                    filterValue = new RegExp(`^${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`, 'gim');
                     break;
                 case 'CONTAINS':
                     newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(
-                        `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`,
-                        'gim'
-                    );
+                    filterValue = new RegExp(`.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`, 'gim');
                     break;
                 case 'END_WITH':
                     newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(
-                        `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}$`,
-                        'gim'
-                    );
+                    filterValue = new RegExp(`.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}$`, 'gim');
                     break;
                 case 'DOES_NOT_CONTAIN':
                     newFilterOperator = 'REGEX-NOT';
-                    filterValue = new RegExp(
-                        `.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`,
-                        'gim'
-                    );
+                    filterValue = new RegExp(`.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`, 'gim');
                     break;
                 case 'NOT_EQUAL_TO':
                     newFilterOperator = 'REGEX-NOT';
@@ -202,16 +180,11 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                         start = '^';
                     }
                     let end = '';
-                    if (
-                        filterValue[filterValue.length] !== '*' ||
-                        filterValue[filterValue.length] !== '%'
-                    ) {
+                    if (filterValue[filterValue.length] !== '*' || filterValue[filterValue.length] !== '%') {
                         end = '$';
                     }
                     filterValue = new RegExp(
-                        `${start}${(filterValue as string)
-                            .replace(/\*/g, '.*')
-                            .replace(/\%/g, '.*')}${end}`,
+                        `${start}${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}${end}`,
                         'gim'
                     );
                     break;
@@ -223,16 +196,11 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                             start = '^';
                         }
                         let end = '';
-                        if (
-                            filterValue[filterValue.length] !== '*' ||
-                            filterValue[filterValue.length] !== '%'
-                        ) {
+                        if (filterValue[filterValue.length] !== '*' || filterValue[filterValue.length] !== '%') {
                             end = '$';
                         }
                         filterValue = new RegExp(
-                            `${start}${(filterValue as string)
-                                .replace(/\*/g, '.*')
-                                .replace(/\%/g, '.*')}${end}`,
+                            `${start}${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}${end}`,
                             'gim'
                         );
                     }
@@ -325,10 +293,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             }
             break;
         case 'END_WITH':
-            if (
-                rowValue.substring(rowValue.length - filterValue.length, rowValue.length) !==
-                filterValue
-            ) {
+            if (rowValue.substring(rowValue.length - filterValue.length, rowValue.length) !== filterValue) {
                 result = false;
             }
             break;

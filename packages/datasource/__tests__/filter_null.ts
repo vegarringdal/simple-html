@@ -38,9 +38,7 @@ describe('string filter', () => {
             operator: 'IS_NOT_BLANK'
         });
 
-        expect(ds.getRows()).toEqual([
-            { name: 'Nils', group: 's', age: 32, born: new Date(1990, 0, 1), index: 3 }
-        ]);
+        expect(ds.getRows()).toEqual([{ name: 'Nils', group: 's', age: 32, born: new Date(1990, 0, 1), index: 3 }]);
         done();
     });
 });
