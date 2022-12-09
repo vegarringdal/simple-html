@@ -48,6 +48,26 @@ export class GridInterface {
         if (!Array.isArray(this.gridConfig.columnsPinnedLeft)) {
             this.gridConfig.columnsCenter = [];
         }
+
+        if (this.gridConfig.footerHeight === null || this.gridConfig.footerHeight === undefined) {
+            this.gridConfig.footerHeight = 45;
+        }
+        if (this.gridConfig.cellHeight === null || this.gridConfig.cellHeight === undefined) {
+            this.gridConfig.cellHeight = 22;
+        }
+        if (this.gridConfig.panelHeight === null || this.gridConfig.panelHeight === undefined) {
+            this.gridConfig.panelHeight = 0;
+        }
+        if (this.gridConfig.selectSizeHeight === null || this.gridConfig.selectSizeHeight === undefined) {
+            this.gridConfig.selectSizeHeight = 18;
+        }
+        if (this.gridConfig.readonly === null || this.gridConfig.readonly === undefined) {
+            this.gridConfig.readonly = true;
+        }
+        if (this.gridConfig.selectionMode === null || this.gridConfig.selectionMode === undefined) {
+            this.gridConfig.selectionMode = 'multiple';
+        }
+
         /**
          * height
          */

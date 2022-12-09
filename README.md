@@ -133,8 +133,8 @@ Main rendering will be first focus
  * [ ] do we want a find all (find value in all columns/rows?)
  * [x] add current filter to footer
  * [x] total rows/filtered rows to footer
- * [ ] clear filter with button in footer (need to be able to hide)
- * [ ] last item... split most of private methods of grid class into own functions... its a bit crazy atm... but easier to work with atm
+ * [x] clear filter with button in footer
+functions... its a bit crazy atm... but easier to work with atm
    
 
 

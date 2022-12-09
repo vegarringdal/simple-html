@@ -5,12 +5,12 @@ import { GridConfig } from '@simple-html/grid';
  * keep this in own file since it so big..
  */
 export const gridConfig: GridConfig = {
-    cellHeight: 22,
+/*  cellHeight: 22,
     panelHeight: 25,
     footerHeight: 45,
     selectSizeHeight: 18,
     readonly: true,
-    selectionMode: 'multiple',
+    selectionMode: 'multiple', */
  /*    columnsPinnedLeft: [
         {
             rows: ['id'],

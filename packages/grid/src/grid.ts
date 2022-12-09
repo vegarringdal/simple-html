@@ -46,9 +46,9 @@ export class Grid {
     private containerMiddleRowCache: RowCache[];
     private containerRightRowCache: RowCache[];
     // column cache
-    private containerLeftColumnCache: ColumnCache[];
-    private containerMiddleColumnCache: ColumnCache[];
-    private containerRightColumnCache: ColumnCache[];
+    private containerLeftColumnCache: ColumnCache[] = []
+    private containerMiddleColumnCache: ColumnCache[] = []
+    private containerRightColumnCache: ColumnCache[] = []
     // scroll helpers
     private lastScrollTop: number = 0;
     private lastScrollLeft: number = 0;
@@ -454,13 +454,15 @@ export class Grid {
         const filterString = this.gridInterface.getDatasource().getFilterString();
         const scrollbarHeight = this.gridInterface.getGridConfig().__scrollbarSize;
 
-        // TODO : add svg to remove filter if any
+        const clearButton = filterString ? html`<div class="clear-button" @click=${()=>this.clearAllColumnFilters()}>Clear filter</div>`:null
+        const filterTemplate = html`<div style="display:flex">${clearButton} <span class="footer-query" style="margin:auto">${filterString}</span> </div>`
+        
 
         render(
             html`<div style="display:flex;flex-direction: column;">
                 <div style="flex: 1 1 ${scrollbarHeight}px;"></div>
                 <span style="margin:auto">${filteredRows}/${totalRows}</span>
-                <span class="footer-query" style="margin:auto">${filterString}</span>
+               ${filterString ? filterTemplate: null}
             </div>`,
             footer
         );
@@ -2826,6 +2828,19 @@ export class Grid {
         this.contextMenu = contextMenu;
     }
 
+    private clearAllColumnFilters() {
+        const datasource = this.gridInterface.getDatasource();
+        datasource.setFilter(null);
+        const attributes = this.gridInterface.getGridConfig().attributes;
+        const keys = Object.keys(attributes);
+        keys.forEach((key) => {
+            attributes[key].currentFilterValue = null;
+        });
+        this.rebuildHeaderColumns();
+        datasource.filter();
+    };
+
+
     private contextmenuFilter(
         event: MouseEvent,
         cell: HTMLCellElement,
@@ -3016,20 +3031,8 @@ export class Grid {
             datasource.filter();
         };
 
-        /**
-         * clear all column filters
-         */
-        const clearAllColumnFilters = () => {
-            const datasource = this.gridInterface.getDatasource();
-            datasource.setFilter(null);
-            const attributes = this.gridInterface.getGridConfig().attributes;
-            const keys = Object.keys(attributes);
-            keys.forEach((key) => {
-                attributes[key].currentFilterValue = null;
-            });
-            this.rebuildHeaderColumns();
-            datasource.filter();
-        };
+     
+
 
         render(
             html`<div class="simple-html-grid-menu">
@@ -3046,7 +3049,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        clearAllColumnFilters();
+                        this.clearAllColumnFilters();
                     }}
                 >
                     Clear All Filters

@@ -926,6 +926,14 @@ input {
     max-width: 90%;
 }
 
+.simple-html-grid .clear-button{
+  color: red;
+  font-weight: bold;
+  margin-left: 5px;
+  pointer-events: all;
+  cursor: pointer;
+}
+
 /****************************************************************************
  * filter editor css
  */

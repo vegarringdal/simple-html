@@ -1,12 +1,12 @@
 import { FilterComparisonOperator, DataTypes, GroupArgument, FilterArgument } from '@simple-html/datasource';
 
 export type GridConfig = {
-    cellHeight: number;
-    panelHeight: number;
-    footerHeight: number;
-    selectSizeHeight: number;
-    readonly: boolean;
-    selectionMode: 'multiple' | 'single';
+    cellHeight?: number;
+    panelHeight?: number;
+    footerHeight?: number;
+    selectSizeHeight?: number;
+    readonly?: boolean;
+    selectionMode?: 'multiple' | 'single';
     attributes: Record<string, Attribute>;
     columnsPinnedLeft?: Columns[];
     columnsCenter: Columns[];
