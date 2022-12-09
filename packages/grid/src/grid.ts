@@ -2219,7 +2219,7 @@ export class Grid {
                     }
                 }}
             >
-                <span class="simple-html-selector-text">${row}</span>
+                <span class="simple-html-selector-text">${row+1}</span>
             </div>`,
             cell as any
         );
