@@ -16,7 +16,7 @@ export class GridInterface {
     private scrollHeight: number;
 
     constructor(gridConfig: GridConfig, datasource: Datasource) {
-        this.gridConfig = gridConfig;
+        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));;
         this.dataSource = datasource;
         this.parseConfig();
         // TODO: append sorting to datasource if any
@@ -133,12 +133,11 @@ export class GridInterface {
         // TODO: get sorting and add it
         // TODO: get grouping and add it
 
-        return structuredClone(this.gridConfig);
+        return JSON.parse(JSON.stringify(this.gridConfig));
     }
 
-
-    openFilterEditor(){
-        if(this.grid){
+    openFilterEditor() {
+        if (this.grid) {
             this.grid.openFilterEditor();
         }
     }
@@ -146,10 +145,18 @@ export class GridInterface {
     /**
      * when you need load
      */
-    loadGridConfig(newConfig: GridConfig) {
-        this.gridConfig = structuredClone(newConfig);
-        // TODO: set sorting if it has it
-        // TODO: set grouping if it has it
+    loadGridConfig(gridConfig: GridConfig) {
+        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
+        this.parseConfig();
+        // TODO: append sorting to datasource if any
+
+        // TODO: append grouping to datasource if any
+
+        // TODO: also run grouping/sorting ?
+        this.dataSourceUpdated();
+        if (this.grid) {
+            this.grid.rebuild(true);
+        }
     }
 
     /**

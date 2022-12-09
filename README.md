@@ -69,8 +69,10 @@ Main rendering will be first focus
  * [x] resize columns
  * [x] resize pinned left/right
  * [x] even /odd coloring to rows (also when selected)
- * [ ] load setting
- * [ ] save setting
+ * [x] load setting
+   * [ ] support grouping/sorting/filter set
+ * [x] save setting
+    * [ ] support grouping/sorting/filter set
  * [ ] global readonly setting
  * [x] drag/drop column to change location
  * [ ] row/cell (incl header)
