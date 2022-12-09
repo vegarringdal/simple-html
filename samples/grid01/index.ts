@@ -151,6 +151,18 @@ createButton('use init config', () => {
     gridInterface.loadGridConfig(gridConfig);
 });
 
+createButton('set as readonly', () => {
+    const config = gridInterface.saveGridConfig();
+    config.readonly = true;
+    gridInterface.loadGridConfig(config);
+});
+
+createButton('set as editmode', () => {
+    const config = gridInterface.saveGridConfig();
+    config.readonly = false;
+    gridInterface.loadGridConfig(config);
+});
+
 /**
  * add to document
  */

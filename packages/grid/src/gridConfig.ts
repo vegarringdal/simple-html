@@ -49,7 +49,8 @@ export type Columns = {
 export type Attribute = {
     attribute: string;
     label?: string;
-    placeHolder?: string;
+    placeHolderRow?: string;
+    placeHolderFilter?:string;
     operator?: FilterComparisonOperator;
     type?: DataTypes;
     disabled?: boolean;

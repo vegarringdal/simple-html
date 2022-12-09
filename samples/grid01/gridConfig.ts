@@ -5,6 +5,7 @@ import { GridConfig } from '@simple-html/grid';
  * keep this in own file since it so big..
  */
 export const gridConfig: GridConfig = {
+
     columnsCenter: [
         {
             rows: ['company'],
@@ -19,6 +20,12 @@ export const gridConfig: GridConfig = {
             rows: ['date1'],
             width: 80
         },
+        
+        {
+            rows: ['isDumb'],
+            width: 80
+        },
+
 
         {
             rows: ['favoriteFruit'],
@@ -28,11 +35,17 @@ export const gridConfig: GridConfig = {
             rows: ['country'],
             width: 100
         },
-
-    
+        {
+            rows: ['longitude'],
+            width: 100
+        },
         {
             rows: ['tags'],
             width: 250
+        },
+        {
+            rows: ['isActive'],
+            width: 80
         },
 
         {
@@ -49,26 +62,28 @@ export const gridConfig: GridConfig = {
         },
 
         {
-            rows: ['date1'],
+            rows: ['date2'],
             width: 100
         },
 
 
     ],
     attributes: {
-        firstnamea: {
-            attribute: 'firstnamea',
-            readonly: true
-        },
         isActive: {
             attribute: 'isActive',
             type: 'boolean',
-            readonly: true
+         
+        },
+        phone: {
+            attribute: 'phone',
+            placeHolderRow: "wow",
+            placeHolderFilter: "custom placeholder"
+
         },
         isDumb: {
             attribute: 'isDumb',
             type: 'boolean',
-            readonly: true
+          
         },
         balance: {
             attribute: 'balance',
@@ -76,7 +91,8 @@ export const gridConfig: GridConfig = {
         },
         longitude: {
             attribute: 'longitude',
-            type: 'number'
+            type: 'number',
+            readonly: true
         },
         age: {
             attribute: 'age',

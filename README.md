@@ -66,19 +66,18 @@ Main rendering will be first focus
    * [x] support grouping/sorting/filter set
  * [x] save setting
     * [x] support grouping/sorting/filter set
- * [ ] global readonly setting
+ * [x] global readonly setting
  * [x] drag/drop column to change location
  * [ ] row/cell (incl header)
    * [x] add input to row
-   * [ ] able to set placeholder with config
-     * [ ] row
-     * [ ] header
+   * [x] able to set placeholder with config
+     * [x] row
+     * [x] header
    * [ ] able to add focus button (...) or dropdown icon with event callback
      * [ ] row
      * [ ] header
    * [x] edit cells
    * [ ] edit cells callback/event
-    * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
    * [x] readonly (row)
      * [ ] with callback, so you can also set it based on other row values
      * [ ] set "read" background/scratched, so its easy to see its a readonly even i edit mode
@@ -130,3 +129,4 @@ Want - but not needed for first version to replace old:
  * [ ] do we want excel similar column filter, when they enter focus mode?
    * I have something like this allready in old grid, so this one might need to be in added frist version
  * [ ] disabled? (or is just readonly good enough?) 
+ * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering

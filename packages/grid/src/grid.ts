@@ -2160,7 +2160,7 @@ export class Grid {
         if (attribute) {
             const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
 
-            const placeHolder = cellConfig.placeHolder || '🔍';
+            const placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
             let currentValue = cellConfig.currentFilterValue || ('' as any);
 
             if (cellConfig?.type === 'date') {
@@ -2176,7 +2176,7 @@ export class Grid {
                         type="checkbox"
                         .checked=${live(currentValue)}
                         .indeterminate=${currentValue !== true && currentValue !== false}
-                        placeholder=${placeHolder}
+                        placeholder=${placeHolderFilter}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -2219,7 +2219,7 @@ export class Grid {
                     html`<input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(currentValue)}
-                        placeholder=${placeHolder}
+                        placeholder=${placeHolderFilter}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             if (lastFilter !== (e.target as any).value) {
@@ -2368,6 +2368,7 @@ export class Grid {
         }
 
         if (attribute) {
+            const config = this.gridInterface.getGridConfig();
             const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
 
             if (cellConfig?.type === 'date') {
@@ -2382,7 +2383,7 @@ export class Grid {
                 value = (entity && entity[attribute]) || false;
             }
             let dimmed = '';
-            if (cellConfig.readonly) {
+            if (!config.readonly && cellConfig.readonly) {
                 dimmed = 'simple-html-readonly';
             }
 
@@ -2391,8 +2392,8 @@ export class Grid {
                     html`<input
                         .checked=${live(value)}
                         type="checkbox"
-                        .readonly=${cellConfig.readonly}
-                        .disabled=${cellConfig.readonly}
+                        .readonly=${config.readonly ? config.readonly : cellConfig.readonly}
+                        .disabled=${config.readonly ? config.readonly : cellConfig.readonly}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -2417,8 +2418,9 @@ export class Grid {
                         <input
                             style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                             .value=${live(value?.toString())}
-                            .readonly=${cellConfig.readonly}
-                            .disabled=${cellConfig.readonly}
+                            .readonly=${config.readonly ? config.readonly : cellConfig.readonly}
+                            .disabled=${config.readonly ? config.readonly : cellConfig.readonly}
+                            placeholder=${cellConfig.placeHolderRow}
                             @contextmenu=${(e: MouseEvent) => {
                                 e.preventDefault();
                                 this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
