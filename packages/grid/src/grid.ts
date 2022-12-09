@@ -262,7 +262,8 @@ export class Grid {
          * main elements
          */
 
-        const leftWidth = config.__leftWidth + this.getGroupingWidth(LEFT_PINNED_COLTYPE);
+        const leftGrouping = this.getGroupingWidth(LEFT_PINNED_COLTYPE);
+        const leftWidth = config.__leftWidth + leftGrouping;
 
         const panel = getElementByClassName(this.element, 'simple-html-grid-panel');
         panel.style.height = asPx(config.panelHeight);
@@ -303,6 +304,11 @@ export class Grid {
         } else {
             headerViewPortLeft.style.display = 'block';
         }
+        if(leftWidth === leftGrouping){
+            headerViewPortLeft.classList.add('pinned-left-grouping-only')
+        } else{
+            headerViewPortLeft.classList.remove('pinned-left-grouping-only')
+        }
 
         const headerViewPortMiddle = getElementByClassName(this.element, 'simple-html-grid-header-view-pinned-middle');
         headerViewPortMiddle.style.left = asPx(config.__selectSizeWidth + leftWidth);
@@ -315,6 +321,7 @@ export class Grid {
         } else {
             headerViewPortRight.style.display = 'block';
         }
+       
 
         /**
          * body viewports
@@ -333,7 +340,12 @@ export class Grid {
         if (leftWidth === 0) {
             bodyViewPortLeft.style.display = 'none';
         } else {
-            bodyViewPortLeft.style.display = 'block';
+             bodyViewPortLeft.style.display = 'block';
+        }
+        if(leftWidth === leftGrouping){
+            bodyViewPortLeft.classList.add('pinned-left-grouping-only')
+        } else{
+            bodyViewPortLeft.classList.remove('pinned-left-grouping-only')
         }
 
 
