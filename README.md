@@ -64,6 +64,7 @@ Main rendering will be first focus
  * [x] checkbox on row
  * [x] selection by using left row selector only
  * [x] select all top/left 
+   * [x] when grouped, selecting selector on group row selects all row in group
  * [x] multisort with shift key and colum label click
  * [x] grouping with expand/collapse in group rows
  * [x] resize columns
@@ -117,7 +118,7 @@ Main rendering will be first focus
    * [x] copy colum
       * [ ] need a event/callback for this
    * [x] copy row
-      * [ ] copy in correct oclumn order..
+      * [ ] copy in correct column order..
       * [ ] allow select columns in selector in header, to limit columns getting copied
       * [ ] need a event/callback for this
    * [ ] paste cell

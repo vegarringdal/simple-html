@@ -50,11 +50,7 @@ export class Selection {
         this.selectedRows = this.selection.size;
     }
 
-    public highlightRow(
-        e: MouseEvent,
-        currentRow: number,
-        overrideSelectionMode?: 'none' | 'single' | 'multiple'
-    ): void {
+    public highlightRow(e: MouseEvent, currentRow: number, overrideSelectionMode?: 'none' | 'single' | 'multiple'): void {
         if (overrideSelectionMode === 'none') {
             return;
         }
@@ -235,15 +231,36 @@ export class Selection {
         }
     }
 
+    /**
+     * internal, does not trigger event
+     * @param start 
+     * @param end 
+     */
     private selectRange(start: number, end: number): void {
         if (this.dataSource.getSelectionMode() === 'multiple') {
             this.selection.clear();
+
             for (let i = start; i < end + 1; i++) {
                 this.selection.add(this.getRowKey(i));
             }
             this.selectedRows = this.selection.size;
         }
         this.selectedRows = this.selection.size;
+    }
+
+    public selectRowRange(start: number, end: number, add = false): void {
+        if (this.dataSource.getSelectionMode() === 'multiple') {
+            if (!add) {
+                this.selection.clear();
+            }
+
+            for (let i = start; i < end + 1; i++) {
+                this.selection.add(this.getRowKey(i));
+            }
+            this.selectedRows = this.selection.size;
+        }
+        this.selectedRows = this.selection.size;
+        this.dataSource.__callSubscribers('selectionChange');
     }
 
     /**

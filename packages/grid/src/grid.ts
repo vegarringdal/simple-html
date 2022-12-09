@@ -304,10 +304,10 @@ export class Grid {
         } else {
             headerViewPortLeft.style.display = 'block';
         }
-        if(leftWidth === leftGrouping){
-            headerViewPortLeft.classList.add('pinned-left-grouping-only')
-        } else{
-            headerViewPortLeft.classList.remove('pinned-left-grouping-only')
+        if (leftWidth === leftGrouping) {
+            headerViewPortLeft.classList.add('pinned-left-grouping-only');
+        } else {
+            headerViewPortLeft.classList.remove('pinned-left-grouping-only');
         }
 
         const headerViewPortMiddle = getElementByClassName(this.element, 'simple-html-grid-header-view-pinned-middle');
@@ -321,7 +321,6 @@ export class Grid {
         } else {
             headerViewPortRight.style.display = 'block';
         }
-       
 
         /**
          * body viewports
@@ -340,14 +339,13 @@ export class Grid {
         if (leftWidth === 0) {
             bodyViewPortLeft.style.display = 'none';
         } else {
-             bodyViewPortLeft.style.display = 'block';
+            bodyViewPortLeft.style.display = 'block';
         }
-        if(leftWidth === leftGrouping){
-            bodyViewPortLeft.classList.add('pinned-left-grouping-only')
-        } else{
-            bodyViewPortLeft.classList.remove('pinned-left-grouping-only')
+        if (leftWidth === leftGrouping) {
+            bodyViewPortLeft.classList.add('pinned-left-grouping-only');
+        } else {
+            bodyViewPortLeft.classList.remove('pinned-left-grouping-only');
         }
-
 
         const bodyViewPortMiddle = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
         bodyViewPortMiddle.style.left = asPx(config.__selectSizeWidth + leftWidth);
@@ -2220,18 +2218,33 @@ export class Grid {
         render(
             html`<div
                 class=${currentEntitySelected + ' simple-html-absolute-fill'}
-                @click=${(e: any) => {
+                @click=${(e: MouseEvent) => {
+                    const ds = this.gridInterface.getDatasource();
                     if (rowData.__group) {
+                        const rows = ds.getRows();
+                        const selectRows = [];
+                        for (let i = row + 1; i < rows.length; i++) {
+                            const entity = rows[i];
+                            if (entity.__group) {
+                                i = rows.length;
+                                continue;
+                            }
+                            selectRows.push(i);
+                        }
+                        if(selectRows.length){
+                       
+                            ds.getSelection().selectRowRange(selectRows[0], selectRows[selectRows.length-1], e.ctrlKey)
+                            this.rebuild();
+                        }
+                       
+
                         console.log('row selected:', row);
                     } else {
-                        this.gridInterface
-                            .getDatasource()
-                            .getSelection()
-                            .highlightRow(e as any, row);
+                        ds.getSelection().highlightRow(e as any, row);
                     }
                 }}
             >
-                <span class="simple-html-selector-text">${row+1}</span>
+                <span class="simple-html-selector-text">${row + 1}</span>
             </div>`,
             cell as any
         );
