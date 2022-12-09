@@ -102,6 +102,42 @@ createButton('add to 10 rows', ()=>{
      ); 
  })
 
+ createButton('default data', ()=>{
+     datasource.setData(
+        structuredClone(dummydata).map((e: any) => {
+             //@ts-ignore
+             e.date1 = new Date(e.date1);
+             //@ts-ignore
+             e.date2 = new Date(e.date2);
+             return e;
+         })
+     ); 
+ })
+
+
+ createButton('select all', ()=>{
+    datasource.selectAll()
+ })
+
+ createButton('select first', ()=>{
+    datasource.selectFirst()
+ })
+
+ createButton('select next', ()=>{
+    datasource.selectNext()
+ })
+
+ createButton('select prev', ()=>{
+    datasource.selectPrev()
+ })
+
+ createButton('select last', ()=>{
+    datasource.selectLast()
+ })
+
+ createButton('select row 5', ()=>{
+    datasource.select(5)
+ })
 
 
 /**
