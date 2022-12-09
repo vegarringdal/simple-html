@@ -21,15 +21,7 @@ dev branch will have a lot of commits to just save current progress, as it gets 
 * `npm start grid01`
 ' open `http://localhost:8080`
 
-
-
-2022 - 12 - 02
-
-
-
-
 # info / Progress
-
 
 
 * all UI rebuilt to optimise scrolling vert/horz
@@ -90,7 +82,6 @@ Main rendering will be first focus
    * [x] readonly (row)
      * [ ] with callback, so you can also set it based on other row values
      * [ ] set "read" background/scratched, so its easy to see its a readonly even i edit mode
-   * [ ] disabled? (or is just readonly good enough?) 
  * [x] menu label
    * [x] GUI
    * [x] pin left
@@ -110,7 +101,6 @@ Main rendering will be first focus
    * [x] set is not blank
    * [x] operator (most used only, they can used advanced for others)
    * [x] advanced filter  (filter dialog)
- * [ ] do we want excel similar column filter, when they enter focus mode?
  * [ ] menu row
     * [x] GUI
    * [x] copy cell
@@ -119,7 +109,6 @@ Main rendering will be first focus
       * [ ] need a event/callback for this
    * [x] copy row
       * [ ] copy in correct column order..
-      * [ ] allow select columns in selector in header, to limit columns getting copied
       * [ ] need a event/callback for this
    * [ ] paste cell
      * [ ] event for when this happends, incase we need to edit others
@@ -130,13 +119,14 @@ Main rendering will be first focus
      * [x] and groups
      * [x] or groups
    * [ ] in operator (might work, not tested)
- * [ ] do we want a find all (find value in all columns/rows?)
  * [x] add current filter to footer
  * [x] total rows/filtered rows to footer
  * [x] clear filter with button in footer
-functions... its a bit crazy atm... but easier to work with atm
-   
 
-
-todo... keep adding all the minor stuff ass I remeber
-
+Want - but not needed for first version to replace old:
+ * [ ] find all function
+ * [ ] replace value
+ * [ ] allow select columns in selector in header, to limit columns getting copied
+ * [ ] do we want excel similar column filter, when they enter focus mode?
+   * I have something like this allready in old grid, so this one might need to be in added frist version
+ * [ ] disabled? (or is just readonly good enough?) 
