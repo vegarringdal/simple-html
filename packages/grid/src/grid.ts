@@ -135,10 +135,19 @@ export class Grid {
      */
     public triggerScrollEvent() {
         const el = getElementByClassName(this.element, 'simple-html-grid-middle-scroller');
-        if (true) {
-            this.horizontalScrollHandler(el.scrollLeft);
-            this.verticalScrollHandler(el.scrollTop);
+
+        function setScrollTop(element: HTMLElement, top: number) {
+            element.scrollTop = top;
         }
+
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-middle-scroller'), el.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-group'), el.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-selector'), el.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-left'), el.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle'), el.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-right'), el.scrollTop);
+        this.horizontalScrollHandler(el.scrollLeft);
+        this.verticalScrollHandler(el.scrollTop);
     }
 
     /**
@@ -2412,7 +2421,7 @@ export class Grid {
         if (event.clientX - 65 < 0) {
             contextMenu.style.left = asPx(5);
         }
-        
+
         const attributes = Object.keys(this.gridInterface.getGridConfig().attributes) || [];
 
         render(
@@ -2473,7 +2482,6 @@ export class Grid {
         if (event.clientX - 65 < 0) {
             contextMenu.style.left = asPx(5);
         }
-
 
         const attributes = Object.keys(this.gridInterface.getGridConfig().attributes) || [];
 
@@ -3613,9 +3621,13 @@ export class Grid {
         }
     }
 
-    public autoResizeColumns(useAttribute?: string) {
+    /**
+     * resizes columns
+     * @param onlyResizeAttribute null = all
+     */
+    public autoResizeColumns(onlyResizeAttribute?: string) {
         const attributes = this.gridInterface.getGridConfig().attributes;
-        const attributeKeys = useAttribute ? [useAttribute] : Object.keys(attributes);
+        const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
 
         let widths: number[] = attributeKeys.map((key) => {
             const attribute = attributes[key];
