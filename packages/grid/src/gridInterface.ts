@@ -1,4 +1,4 @@
-import { Datasource, Entity } from '@simple-html/datasource';
+import { Datasource, Entity, FilterArgument } from '@simple-html/datasource';
 import { getCellHeight } from './getCellHeight';
 import { Grid } from './grid';
 import { GridConfig } from './gridConfig';
@@ -15,10 +15,16 @@ export class GridInterface {
     private scrollHeights: number[];
     private scrollHeight: number;
 
+    /**
+     * for skipping events during setting gridconfig
+     */
+    private suppressEvents: boolean;
+
     constructor(gridConfig: GridConfig, datasource: Datasource) {
         this.gridConfig = JSON.parse(JSON.stringify(gridConfig));;
         this.dataSource = datasource;
         this.parseConfig();
+
         // TODO: append sorting to datasource if any
 
         // TODO: append grouping to datasource if any
@@ -132,8 +138,12 @@ export class GridInterface {
     saveGridConfig(): GridConfig {
         // TODO: get sorting and add it
         // TODO: get grouping and add it
+        const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
+        config.sortOrder = this.getDatasource().getLastSorting()
+        config.grouping = this.getDatasource().getGrouping()
+        config.filter = this.getDatasource().getFilter()
 
-        return JSON.parse(JSON.stringify(this.gridConfig));
+        return config;
     }
 
     openFilterEditor() {
@@ -146,17 +156,40 @@ export class GridInterface {
      * when you need load
      */
     loadGridConfig(gridConfig: GridConfig) {
+
+        this.suppressEvents = true;
+
+        const sortOrder = gridConfig.sortOrder
+        const grouping =  gridConfig.grouping
+        const filter =  gridConfig.filter
+       
         this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
+        this.gridConfig.sortOrder = null
+        this.gridConfig.grouping = null
+        this.gridConfig.filter = null
+
+        
         this.parseConfig();
-        // TODO: append sorting to datasource if any
-
-        // TODO: append grouping to datasource if any
-
-        // TODO: also run grouping/sorting ?
-        this.dataSourceUpdated();
-        if (this.grid) {
-            this.grid.rebuild(true);
+        if(filter){
+            this.getDatasource().setFilter(filter as FilterArgument)
+        } else{
+            this.getDatasource().setFilter(null)
         }
+        this.getDatasource().filter();
+        
+        if(sortOrder?.length && !grouping?.length){
+            this.getDatasource().sort(sortOrder)
+        } 
+       
+        if(grouping?.length){
+            this.getDatasource().group(grouping)
+        } else{
+            this.getDatasource().removeGroup()
+        }     
+
+        this.suppressEvents = false;
+        this.grid.rebuild();
+ 
     }
 
     /**
@@ -229,6 +262,11 @@ export class GridInterface {
      * do not use - used to handle event from datasource
      */
     handleEvent(e: any) {
+
+        if(this.suppressEvents){
+            return null;
+        }
+
         switch (true) {
             case e.type === 'collection-filtered' && e.data?.info === 'filter':
                 console.log('handleEvent:', e.type, e.data);

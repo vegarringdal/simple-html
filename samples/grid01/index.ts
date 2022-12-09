@@ -139,6 +139,7 @@ createButton('save config', () => {
 });
 
 createButton('load config', () => {
+
     if (!(globalThis as any)) {
         alert('no config saved, save on first');
     } else {

@@ -1,4 +1,5 @@
-import { FilterComparisonOperator, DataTypes } from '@simple-html/datasource';
+import { FilterComparisonOperator, DataTypes, GroupArgument } from '@simple-html/datasource';
+import { FilterArgument } from 'datasource/dist';
 
 export type GridConfig = {
     cellHeight: number;
@@ -18,7 +19,11 @@ export type GridConfig = {
     /**
      * will only be used on init
      */
-    grouping?: string[];
+    grouping?: GroupArgument[];
+     /**
+     * will only be used on init
+     */
+    filter?: FilterArgument;
 
     // private
 
