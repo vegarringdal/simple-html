@@ -2392,8 +2392,8 @@ export class Grid {
                     html`<input
                         .checked=${live(value)}
                         type="checkbox"
-                        .readonly=${config.readonly ? config.readonly : cellConfig.readonly}
-                        .disabled=${config.readonly ? config.readonly : cellConfig.readonly}
+                        .readOnly=${config.readonly ? config.readonly : cellConfig.readonly}
+                 
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -2418,8 +2418,8 @@ export class Grid {
                         <input
                             style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                             .value=${live(value?.toString())}
-                            .readonly=${config.readonly ? config.readonly : cellConfig.readonly}
-                            .disabled=${config.readonly ? config.readonly : cellConfig.readonly}
+                            .readOnly=${config.readonly ? config.readonly : cellConfig.readonly}
+                  
                             placeholder=${cellConfig.placeHolderRow}
                             @contextmenu=${(e: MouseEvent) => {
                                 e.preventDefault();

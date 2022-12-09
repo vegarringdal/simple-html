@@ -128,5 +128,4 @@ Want - but not needed for first version to replace old:
  * [ ] allow select columns in selector in header, to limit columns getting copied
  * [ ] do we want excel similar column filter, when they enter focus mode?
    * I have something like this allready in old grid, so this one might need to be in added frist version
- * [ ] disabled? (or is just readonly good enough?) 
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
