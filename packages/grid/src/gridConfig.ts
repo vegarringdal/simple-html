@@ -1,5 +1,5 @@
-import { FilterComparisonOperator, DataTypes, GroupArgument } from '@simple-html/datasource';
-import { FilterArgument } from 'datasource/dist';
+import { FilterComparisonOperator, DataTypes, GroupArgument, FilterArgument } from '@simple-html/datasource';
+
 
 export type GridConfig = {
     cellHeight: number;
