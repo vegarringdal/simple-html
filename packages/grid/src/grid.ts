@@ -46,9 +46,9 @@ export class Grid {
     private containerMiddleRowCache: RowCache[];
     private containerRightRowCache: RowCache[];
     // column cache
-    private containerLeftColumnCache: ColumnCache[] = []
-    private containerMiddleColumnCache: ColumnCache[] = []
-    private containerRightColumnCache: ColumnCache[] = []
+    private containerLeftColumnCache: ColumnCache[] = [];
+    private containerMiddleColumnCache: ColumnCache[] = [];
+    private containerRightColumnCache: ColumnCache[] = [];
     // scroll helpers
     private lastScrollTop: number = 0;
     private lastScrollLeft: number = 0;
@@ -65,8 +65,12 @@ export class Grid {
     private skipInitResizeEvent: boolean = false;
     private contextMenu: HTMLElement;
     private filterEditorContainer: HTMLElement;
-    columnChooserMenu: HTMLElement;
+    private columnChooserMenu: HTMLElement;
 
+    /**
+     * only to be used by grid interface
+     * @param element
+     */
     public connectElement(element: HTMLElement) {
         this.element = element;
         this.element.classList.add('simple-html-grid');
@@ -79,6 +83,10 @@ export class Grid {
         }
     }
 
+    /**
+     * only to be used by grid interface
+     * @param gridInterface
+     */
     public connectGridInterface(gridInterface: GridInterface) {
         this.gridInterface = gridInterface;
         this.gridInterface.connectGrid(this);
@@ -90,24 +98,6 @@ export class Grid {
             this.initResizerEvent();
             console.timeEnd('create');
         }
-    }
-
-    private initResizerEvent() {
-        if (this.skipInitResizeEvent) {
-            return;
-        }
-        new ResizeObserver(() => {
-            if (this.resizeInit) {
-                if (this.oldHeight !== this.element.clientHeight || this.oldWidth !== this.element.clientWidth) {
-                    if (this.resizeTimer) clearTimeout(this.resizeTimer);
-                    this.resizeTimer = setTimeout(() => {
-                        this.rebuild();
-                    }, 100);
-                }
-            } else {
-                this.resizeInit = true;
-            }
-        }).observe(this.element);
     }
 
     public disconnectElement() {
@@ -169,6 +159,24 @@ export class Grid {
         this.rebuildFooter();
         this.triggerScrollEvent();
         console.timeEnd('create');
+    }
+
+    private initResizerEvent() {
+        if (this.skipInitResizeEvent) {
+            return;
+        }
+        new ResizeObserver(() => {
+            if (this.resizeInit) {
+                if (this.oldHeight !== this.element.clientHeight || this.oldWidth !== this.element.clientWidth) {
+                    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+                    this.resizeTimer = setTimeout(() => {
+                        this.rebuild();
+                    }, 100);
+                }
+            } else {
+                this.resizeInit = true;
+            }
+        }).observe(this.element);
     }
 
     private createDom() {
@@ -454,15 +462,18 @@ export class Grid {
         const filterString = this.gridInterface.getDatasource().getFilterString();
         const scrollbarHeight = this.gridInterface.getGridConfig().__scrollbarSize;
 
-        const clearButton = filterString ? html`<div class="clear-button" @click=${()=>this.clearAllColumnFilters()}>Clear filter</div>`:null
-        const filterTemplate = html`<div style="display:flex">${clearButton} <span class="footer-query" style="margin:auto">${filterString}</span> </div>`
-        
+        const clearButton = filterString
+            ? html`<div class="clear-button" @click=${() => this.clearAllColumnFilters()}>Clear filter</div>`
+            : null;
+        const filterTemplate = html`<div style="display:flex">
+            ${clearButton} <span class="footer-query" style="margin:auto">${filterString}</span>
+        </div>`;
 
         render(
             html`<div style="display:flex;flex-direction: column;">
                 <div style="flex: 1 1 ${scrollbarHeight}px;"></div>
                 <span style="margin:auto">${filteredRows}/${totalRows}</span>
-               ${filterString ? filterTemplate: null}
+                ${filterString ? filterTemplate : null}
             </div>`,
             footer
         );
@@ -1228,6 +1239,108 @@ export class Grid {
     }
 
     /**
+     * helper for autoresize columns
+     */
+    public getTextWidth(text: string) {
+        // if given, use cached canvas for better performance
+        // else, create new canvas
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = this.getFont();
+        const metrics = context.measureText(text);
+        return metrics.width + 5;
+    }
+
+    /**
+     * opens filter editor with current filter
+     */
+    public openFilterEditor() {
+        this.removeContextMenu();
+
+        const defaultStartFilter: FilterArgument = {
+            type: 'GROUP',
+            logicalOperator: 'AND',
+            filterArguments: []
+        };
+
+        const dsFilter = this.gridInterface.getDatasource().getFilter();
+
+        const filterArg = dsFilter ? dsFilter : defaultStartFilter;
+
+        this.generateFilterEditor(structuredClone(filterArg));
+    }
+
+    /**
+     * resizes columns
+     * @param onlyResizeAttribute null = all
+     */
+    public autoResizeColumns(onlyResizeAttribute?: string) {
+        const attributes = this.gridInterface.getGridConfig().attributes;
+        const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
+
+        let widths: number[] = attributeKeys.map((key) => {
+            const attribute = attributes[key];
+            const length = attribute?.label?.length || attribute.attribute?.length;
+            return length + 4;
+        });
+        const text: string[] = attributeKeys.map((key) => {
+            const attribute = attributes[key];
+            if (attribute.type === 'date' && attribute?.label?.length < 5) {
+                return '19.19.2000 A';
+            }
+            return (attribute?.label || attribute.attribute) + 'sorter';
+        });
+
+        const data = this.gridInterface.getDatasource().getAllData();
+        data.forEach((row: any) => {
+            attributeKeys.forEach((key, i) => {
+                const att = attributes[key];
+
+                if (row && typeof row[att.attribute] === 'string') {
+                    if (widths[i] < row[att.attribute].length) {
+                        widths[i] = row[att.attribute].length;
+                        text[i] = row[att.attribute];
+                    }
+                }
+                if (row && typeof row[att.attribute] === 'number') {
+                    if (widths[i] < (row[att.attribute] + '').length) {
+                        widths[i] = (row[att.attribute] + '').length;
+                        text[i] = row[att.attribute];
+                    }
+                }
+            });
+        });
+
+        widths = widths.map((e: number) => (e ? e * 8 : 100));
+
+        const left = this.gridInterface.getGridConfig().columnsPinnedLeft || [];
+        const right = this.gridInterface.getGridConfig().columnsPinnedRight || [];
+        const center = this.gridInterface.getGridConfig().columnsCenter || [];
+
+        center
+            .concat(left)
+            .concat(right)
+            .forEach((g) => {
+                let x = 0;
+                g?.rows.forEach((rowAttribute) => {
+                    if (x < 750) {
+                        if (attributeKeys.indexOf(rowAttribute) !== -1) {
+                            const xx = widths[attributeKeys.indexOf(rowAttribute)];
+                            if (xx > x) {
+                                x = this.getTextWidth(text[attributeKeys.indexOf(rowAttribute)]) + 15;
+                            }
+                        }
+                    }
+                });
+                if (x) {
+                    g.width = x > 750 ? 750 : x;
+                }
+            });
+
+        this.rebuild();
+    }
+
+    /**
      * this adjust middle viewport, so scrolling width is correct compared to total columns and their width
      * @param height
      */
@@ -1795,19 +1908,6 @@ export class Grid {
                 }
             });
         }
-    }
-
-    /**
-     * helper for autoresize columns
-     */
-    public getTextWidth(text: string) {
-        // if given, use cached canvas for better performance
-        // else, create new canvas
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        context.font = this.getFont();
-        const metrics = context.measureText(text);
-        return metrics.width + 5;
     }
 
     /**
@@ -2838,8 +2938,7 @@ export class Grid {
         });
         this.rebuildHeaderColumns();
         datasource.filter();
-    };
-
+    }
 
     private contextmenuFilter(
         event: MouseEvent,
@@ -3030,9 +3129,6 @@ export class Grid {
             this.rebuildHeaderColumns();
             datasource.filter();
         };
-
-     
-
 
         render(
             html`<div class="simple-html-grid-menu">
@@ -3271,25 +3367,6 @@ export class Grid {
 
         document.body.appendChild(contextMenu);
         this.contextMenu = contextMenu;
-    }
-
-    /**
-     * opens filter editor with current filter
-     */
-    public openFilterEditor() {
-        this.removeContextMenu();
-
-        const defaultStartFilter: FilterArgument = {
-            type: 'GROUP',
-            logicalOperator: 'AND',
-            filterArguments: []
-        };
-
-        const dsFilter = this.gridInterface.getDatasource().getFilter();
-
-        const filterArg = dsFilter ? dsFilter : defaultStartFilter;
-
-        this.generateFilterEditor(structuredClone(filterArg));
     }
 
     /**
@@ -3651,75 +3728,5 @@ export class Grid {
             document.body.removeChild(this.contextMenu);
             this.contextMenu = null;
         }
-    }
-
-    /**
-     * resizes columns
-     * @param onlyResizeAttribute null = all
-     */
-    public autoResizeColumns(onlyResizeAttribute?: string) {
-        const attributes = this.gridInterface.getGridConfig().attributes;
-        const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
-
-        let widths: number[] = attributeKeys.map((key) => {
-            const attribute = attributes[key];
-            const length = attribute?.label?.length || attribute.attribute?.length;
-            return length + 4;
-        });
-        const text: string[] = attributeKeys.map((key) => {
-            const attribute = attributes[key];
-            if (attribute.type === 'date' && attribute?.label?.length < 5) {
-                return '19.19.2000 A';
-            }
-            return (attribute?.label || attribute.attribute) + 'sorter';
-        });
-
-        const data = this.gridInterface.getDatasource().getAllData();
-        data.forEach((row: any) => {
-            attributeKeys.forEach((key, i) => {
-                const att = attributes[key];
-
-                if (row && typeof row[att.attribute] === 'string') {
-                    if (widths[i] < row[att.attribute].length) {
-                        widths[i] = row[att.attribute].length;
-                        text[i] = row[att.attribute];
-                    }
-                }
-                if (row && typeof row[att.attribute] === 'number') {
-                    if (widths[i] < (row[att.attribute] + '').length) {
-                        widths[i] = (row[att.attribute] + '').length;
-                        text[i] = row[att.attribute];
-                    }
-                }
-            });
-        });
-
-        widths = widths.map((e: number) => (e ? e * 8 : 100));
-
-        const left = this.gridInterface.getGridConfig().columnsPinnedLeft || [];
-        const right = this.gridInterface.getGridConfig().columnsPinnedRight || [];
-        const center = this.gridInterface.getGridConfig().columnsCenter || [];
-
-        center
-            .concat(left)
-            .concat(right)
-            .forEach((g) => {
-                let x = 0;
-                g?.rows.forEach((rowAttribute) => {
-                    if (x < 750) {
-                        if (attributeKeys.indexOf(rowAttribute) !== -1) {
-                            const xx = widths[attributeKeys.indexOf(rowAttribute)];
-                            if (xx > x) {
-                                x = this.getTextWidth(text[attributeKeys.indexOf(rowAttribute)]) + 15;
-                            }
-                        }
-                    }
-                });
-                if (x) {
-                    g.width = x > 750 ? 750 : x;
-                }
-            });
-
-        this.rebuild();
     }
 }
