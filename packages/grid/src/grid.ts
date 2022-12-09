@@ -330,6 +330,12 @@ export class Grid {
         const bodyViewPortLeft = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-left');
         bodyViewPortLeft.style.left = asPx(config.__selectSizeWidth);
         bodyViewPortLeft.style.width = asPx(leftWidth);
+        if (leftWidth === 0) {
+            bodyViewPortLeft.style.display = 'none';
+        } else {
+            bodyViewPortLeft.style.display = 'block';
+        }
+
 
         const bodyViewPortMiddle = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
         bodyViewPortMiddle.style.left = asPx(config.__selectSizeWidth + leftWidth);
