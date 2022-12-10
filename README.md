@@ -113,11 +113,11 @@ Main rendering will be first focus
      * [ ] event for when this happends, incase we need to edit others
    * [ ] clear cell
      * [ ] event for when this happends, incase we need to edit others
- * [ ] advanced search dialog
+ * [x] advanced search dialog
    * [x] support groups
      * [x] and groups
      * [x] or groups
-   * [ ] in operator (might work, not tested)
+   * [x] in/not in operator (might work, not tested)
  * [x] add current filter to footer
  * [x] total rows/filtered rows to footer
  * [x] clear filter with button in footer

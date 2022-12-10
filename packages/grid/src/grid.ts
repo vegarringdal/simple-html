@@ -143,6 +143,7 @@ export class Grid {
     /**
      * this needs to be called on large changes, grouping/reorder of columns etc
      * @param rebuildHeader
+     * 
      */
     public rebuild(rebuildHeader = true) {
         console.time('create');
@@ -3512,10 +3513,10 @@ export class Grid {
          * @returns
          */
         const condition = (arg: FilterArgument, context: FilterArgument[]) => {
-            let filterValue = html`<input .value=${arg.value || ''} @input=${(e: any) => (arg.value = e.target.value)} />`;
+            let filterValue = html`<input .value=${arg.value || ''} @input=${(e: any) => (arg.value = e.target.value)} @change=${(e: any) => (arg.value = e.target.value)} />`;
 
             if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
-                filterValue = html`<textarea .value=${arg.value || ''}></textarea>`;
+                filterValue = html`<textarea .value=${arg.value || ''} @input=${(e: any) => (arg.value = e.target.value)} @change=${(e: any) => (arg.value = e.target.value)}></textarea>`;
             }
 
             if (arg.valueType === 'ATTRIBUTE') {
