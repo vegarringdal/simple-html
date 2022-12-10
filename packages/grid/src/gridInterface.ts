@@ -300,6 +300,7 @@ export class GridInterface {
      */
     public readonlySetter(callback: (attribute: string, rowData: Entity) => boolean | null) {
         this.readonlySetterFn = callback;
+        this.grid.triggerScrollEvent();
     }
 
     /**
@@ -321,7 +322,7 @@ export class GridInterface {
      */
     public handleEvent(e: any) {
         if (this.suppressEvents) {
-            return null;
+            return true;
         }
 
         switch (true) {
