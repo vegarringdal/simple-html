@@ -68,7 +68,7 @@ Main rendering will be first focus
     * [x] support grouping/sorting/filter set
  * [x] global readonly setting
  * [x] drag/drop column to change location
- * [ ] row/cell (incl header)
+ * [x] row/cell (incl header)
    * [x] add input to row
    * [x] able to set placeholder with config
      * [x] row
@@ -77,7 +77,6 @@ Main rendering will be first focus
      * [x] row
      * [x] header
    * [x] edit cells
-   * [ ] edit cells callback/event
    * [x] readonly (row)
      * [x] with callback, so you can also set it based on other row values
      * [x] set "read" background/scratched, so its easy to see its a readonly even i edit mode
@@ -125,6 +124,7 @@ Main rendering will be first focus
 Want - but not needed for first version to replace old:
  * [ ] find all function
  * [ ] replace value
+ * [ ] edit cells callback/event
  * [ ] allow select columns in selector in header, to limit columns getting copied
  * [ ] do we want excel similar column filter, when they enter focus mode?
    * I have something like this allready in old grid, so this one might need to be in added frist version
