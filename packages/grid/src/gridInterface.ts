@@ -14,6 +14,7 @@ export class GridInterface {
     private grid: Grid;
     private gridConfig: GridConfig;
     private dataSource: Datasource<any>;
+    private columnsSelected: Set<number>;
 
     // for variable scroll
     private scrollTops: number[];
@@ -36,6 +37,7 @@ export class GridInterface {
     private listeners: Set<callable> = new Set();
 
     constructor(gridConfig: GridConfig, datasource: Datasource) {
+        this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.loadGridConfig(gridConfig, true)
         this.__dataSourceUpdated();
@@ -180,6 +182,19 @@ export class GridInterface {
         if (this.grid) {
             this.grid.openFilterEditor();
         }
+    }
+
+
+    public __setSelectedColumn(number: number, add= false){
+        if(!add){
+            this.columnsSelected.clear();
+        }
+        this.columnsSelected.add(number)
+        this.grid.rebuild();
+    }
+
+    public __isColumnSelected(number: number){
+        return  this.columnsSelected.has(number);
     }
 
     /**

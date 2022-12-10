@@ -2305,11 +2305,17 @@ export class Grid {
             colNo = colNo + this.gridInterface.__getGridConfig().columnsCenter.length || 0;
             colNo = colNo + column + 1;
         }
+
+        let className = "simple-html-absolute-fill simple-html-label"
+        if(this.gridInterface.__isColumnSelected(colNo)){
+            className = "simple-html-absolute-fill simple-html-label simple-html-label-odd"
+        }
+
         render(
             html`<div
-                class="simple-html-absolute-fill simple-html-label"
-                @click=${() => {
-                    console.log('will add selection to this later:', column, colType);
+                class=${className}
+                @click=${(e:MouseEvent) => {
+                    this.gridInterface.__setSelectedColumn(colNo, e.ctrlKey)
                 }}
             >
                 <span class="simple-html-selector-text">${colNo}</span>
