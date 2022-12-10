@@ -166,29 +166,31 @@ createButton('set as editmode', () => {
 const datasourceEvents = {
     handleEvent:(e:any)=>{
         console.log("DATASOURCE EVENTS:", e.type, e.data)
+        return true; // to keep subscribing
     }
 }
 
 const gridInterfaceEvents = {
     handleEvent:(e:any)=>{
-        console.log("DATASOURCE EVENTS:", e.type, e.data)
+        console.log("GRIDINTERFACE EVENTS:", e.type, e.data)
+        return true; // to keep subscribing
     }
 }
 
-createButton('datasource.addEventListener\n (see console)', () => {
+createButton('datasource.addEventListener\n (see console - F12)', () => {
     datasource.addEventListener(datasourceEvents)
 });
 
-createButton('datasource.removeEventListener\n (see console)', () => {
+createButton('datasource.removeEventListener\n (see console - F12)', () => {
     datasource.removeEventListener(datasourceEvents)
 });
 
 
-createButton('gridInterface.addEventListener\n (see console)', () => {
+createButton('gridInterface.addEventListener\n (see console - F12)', () => {
     gridInterface.addEventListener(gridInterfaceEvents)
 });
 
-createButton('gridInterface.removeEventListener\n (see console)', () => {
+createButton('gridInterface.removeEventListener\n (see console - F12)', () => {
     gridInterface.removeEventListener(gridInterfaceEvents)
 });
 

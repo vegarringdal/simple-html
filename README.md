@@ -73,9 +73,9 @@ Main rendering will be first focus
    * [x] able to set placeholder with config
      * [x] row
      * [x] header
-   * [ ] able to add focus button (...) or dropdown icon with event callback
-     * [ ] row
-     * [ ] header
+   * [x] add focus event to cell, so you can make dropdown etc
+     * [x] row
+     * [x] header
    * [x] edit cells
    * [ ] edit cells callback/event
    * [x] readonly (row)

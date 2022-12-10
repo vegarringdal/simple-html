@@ -2223,6 +2223,18 @@ export class Grid {
                             lastFilter = (e.target as any).value;
                             this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
+                        @focus=${() => {
+                                this.gridInterface.__callSubscribers('cell-header-focus', {
+                                    cell,
+                                    row,
+                                    column,
+                                    celno,
+                                    colType,
+                                    cellType,
+                                    attribute,
+                                    rowData
+                                });
+                            }}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
                             if (keycode === 13) {
@@ -2419,6 +2431,18 @@ export class Grid {
                             @click=${() => {
                                 this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                                 this.triggerScrollEvent();
+                            }}
+                            @focus=${() => {
+                                this.gridInterface.__callSubscribers('cell-row-focus', {
+                                    cell,
+                                    row,
+                                    column,
+                                    celno,
+                                    colType,
+                                    cellType,
+                                    attribute,
+                                    rowData
+                                });
                             }}
                             @input=${(e: any) => {
                                 if (!cellConfig.readonly && cellConfig?.type !== 'date') {
