@@ -163,6 +163,35 @@ createButton('set as editmode', () => {
     gridInterface.loadGridConfig(config);
 });
 
+const datasourceEvents = {
+    handleEvent:(e:any)=>{
+        console.log("DATASOURCE EVENTS:", e.type, e.data)
+    }
+}
+
+const gridInterfaceEvents = {
+    handleEvent:(e:any)=>{
+        console.log("DATASOURCE EVENTS:", e.type, e.data)
+    }
+}
+
+createButton('datasource.addEventListener\n (see console)', () => {
+    datasource.addEventListener(datasourceEvents)
+});
+
+createButton('datasource.removeEventListener\n (see console)', () => {
+    datasource.removeEventListener(datasourceEvents)
+});
+
+
+createButton('gridInterface.addEventListener\n (see console)', () => {
+    gridInterface.addEventListener(gridInterfaceEvents)
+});
+
+createButton('gridInterface.removeEventListener\n (see console)', () => {
+    gridInterface.removeEventListener(gridInterfaceEvents)
+});
+
 /**
  * add to document
  */

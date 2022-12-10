@@ -326,7 +326,6 @@ export class GridInterface {
 
         switch (true) {
             case e.type === 'collection-filtered' && e.data?.info === 'filter':
-                console.log('handleEvent:', e.type, e.data);
                 this.grid.rebuild(false);
                 break;
             case e.type === 'collection-sorted':
@@ -334,13 +333,11 @@ export class GridInterface {
             case e.type === 'collection-expand':
             case e.type === 'collection-collapse':
             case e.type === 'collection-changed':
-                console.log('handleEvent:', e.type, e.data);
                 this.grid.rebuild();
 
                 break;
             case e.type === 'currentEntity':
             case e.type === 'selectionChange':
-                console.log('handleEvent:', e.type, e.data);
                 this.__dataSourceUpdated();
                 this.grid.triggerScrollEvent();
                 break;

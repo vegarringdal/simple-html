@@ -75,11 +75,9 @@ export class Grid {
         this.element = element;
         this.element.classList.add('simple-html-grid');
         if (this.gridInterface) {
-            console.time('create');
             this.gridInterface.parseConfig();
             this.createDom();
             this.initResizerEvent();
-            console.timeEnd('create');
         }
     }
 
@@ -92,11 +90,9 @@ export class Grid {
         this.gridInterface.connectGrid(this);
 
         if (this.element) {
-            console.time('create');
             this.gridInterface.parseConfig();
             this.createDom();
             this.initResizerEvent();
-            console.timeEnd('create');
         }
     }
 
@@ -143,10 +139,9 @@ export class Grid {
     /**
      * this needs to be called on large changes, grouping/reorder of columns etc
      * @param rebuildHeader
-     * 
+     *
      */
     public rebuild(rebuildHeader = true) {
-        console.time('create');
         this.gridInterface.__dataSourceUpdated(); // I really only need this for drag/drop
         this.updateHorizontalScrollWidth();
         this.updateMainElementSizes();
@@ -159,7 +154,6 @@ export class Grid {
         this.rebuildTopPanel();
         this.rebuildFooter();
         this.triggerScrollEvent();
-        console.timeEnd('create');
     }
 
     private initResizerEvent() {
@@ -2072,7 +2066,7 @@ export class Grid {
                 class="simple-html-absolute-fill simple-html-label-group"
                 style="padding-left:${rowData.__groupLvl * 15}px"
                 @click=${() => {
-                    console.log('column selected:', column, colType);
+                    console.log('group selected, do I want something here ?:', column, colType);
                 }}
             >
                 <div
@@ -2292,7 +2286,7 @@ export class Grid {
             html`<div
                 class="simple-html-absolute-fill simple-html-label"
                 @click=${() => {
-                    console.log('column selected:', column, colType);
+                    console.log('will add selection to this later:', column, colType);
                 }}
             >
                 <span class="simple-html-selector-text">${colNo}</span>
@@ -2338,8 +2332,6 @@ export class Grid {
                             ds.getSelection().selectRowRange(selectRows[0], selectRows[selectRows.length - 1], e.ctrlKey);
                             this.rebuild();
                         }
-
-                        console.log('row selected:', row);
                     } else {
                         ds.getSelection().highlightRow(e as any, row);
                     }
@@ -2394,7 +2386,6 @@ export class Grid {
                         .checked=${live(value)}
                         type="checkbox"
                         .readOnly=${config.readonly ? config.readonly : cellConfig.readonly}
-                 
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -2420,7 +2411,6 @@ export class Grid {
                             style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                             .value=${live(value?.toString())}
                             .readOnly=${config.readonly ? config.readonly : cellConfig.readonly}
-                  
                             placeholder=${cellConfig.placeHolderRow}
                             @contextmenu=${(e: MouseEvent) => {
                                 e.preventDefault();
@@ -2597,8 +2587,6 @@ export class Grid {
      * @param callback
      */
     private contextMenuAttributes(event: MouseEvent, cell: HTMLElement, callback: (attribute: string) => void) {
-        console.log('contextmenuLabel', event, cell);
-
         this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
@@ -2649,8 +2637,6 @@ export class Grid {
      * @param callback
      */
     private contextMenuOperator(event: MouseEvent, cell: HTMLElement, callback: (operator: string) => void) {
-        console.log('contextmenuLabel', event, cell);
-
         this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
@@ -2715,16 +2701,14 @@ export class Grid {
     private contextmenuLabel(
         event: MouseEvent,
         cell: HTMLCellElement,
-        row: number,
+        _row: number,
         column: number,
         celno: number,
         colType: ColType,
-        cellType: string,
+        _cellType: string,
         attribute: string,
-        rowData: Entity
+        _rowData: Entity
     ) {
-        console.log('contextmenuLabel', event, cell, row, column, celno, colType, cellType, attribute, rowData);
-
         this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
@@ -2946,16 +2930,14 @@ export class Grid {
     private contextmenuFilter(
         event: MouseEvent,
         cell: HTMLCellElement,
-        row: number,
-        column: number,
-        celno: number,
-        colType: ColType,
-        cellType: string,
+        _row: number,
+        _column: number,
+        _celno: number,
+        _colType: ColType,
+        _cellType: string,
         attribute: string,
-        rowData: Entity
+        _rowData: Entity
     ) {
-        console.log('contextmenuFilter', event, cell, row, column, celno, colType, cellType, attribute, rowData);
-
         this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
@@ -3174,7 +3156,6 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        console.log('event');
                         this.openFilterEditor();
                     }}
                 >
@@ -3285,16 +3266,14 @@ export class Grid {
     private contextmenuRow(
         event: MouseEvent,
         cell: HTMLCellElement,
-        row: number,
-        column: number,
-        celno: number,
-        colType: ColType,
-        cellType: string,
+        _row: number,
+        _column: number,
+        _celno: number,
+        _colType: ColType,
+        _cellType: string,
         attribute: string,
-        rowData: Entity
+        _rowData: Entity
     ) {
-        console.log('contextmenuRow', event, cell, row, column, celno, colType, cellType, attribute, rowData);
-
         this.removeContextMenu();
 
         const contextMenu = creatElement('div', 'simple-html-grid');
@@ -3513,10 +3492,18 @@ export class Grid {
          * @returns
          */
         const condition = (arg: FilterArgument, context: FilterArgument[]) => {
-            let filterValue = html`<input .value=${arg.value || ''} @input=${(e: any) => (arg.value = e.target.value)} @change=${(e: any) => (arg.value = e.target.value)} />`;
+            let filterValue = html`<input
+                .value=${arg.value || ''}
+                @input=${(e: any) => (arg.value = e.target.value)}
+                @change=${(e: any) => (arg.value = e.target.value)}
+            />`;
 
             if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
-                filterValue = html`<textarea .value=${arg.value || ''} @input=${(e: any) => (arg.value = e.target.value)} @change=${(e: any) => (arg.value = e.target.value)}></textarea>`;
+                filterValue = html`<textarea
+                    .value=${arg.value || ''}
+                    @input=${(e: any) => (arg.value = e.target.value)}
+                    @change=${(e: any) => (arg.value = e.target.value)}
+                ></textarea>`;
             }
 
             if (arg.valueType === 'ATTRIBUTE') {
