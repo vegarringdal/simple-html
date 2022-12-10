@@ -101,7 +101,7 @@ export class Grid {
     }
 
     public disconnectElement() {
-        this.gridInterface.disconnectGrid();
+        this.gridInterface.__disconnectGrid();
     }
 
     public disableResizeEvent() {
@@ -147,7 +147,7 @@ export class Grid {
      */
     public rebuild(rebuildHeader = true) {
         console.time('create');
-        this.gridInterface.dataSourceUpdated(); // I really only need this for drag/drop
+        this.gridInterface.__dataSourceUpdated(); // I really only need this for drag/drop
         this.updateHorizontalScrollWidth();
         this.updateMainElementSizes();
 
@@ -257,7 +257,7 @@ export class Grid {
         this.rebuildFooter();
         this.addScrollEventListeners();
 
-        this.updateVerticalScrollHeight(this.gridInterface.getScrollState().scrollHeight);
+        this.updateVerticalScrollHeight(this.gridInterface.__getScrollState().scrollHeight);
         this.updateHorizontalScrollWidth();
         this.horizontalScrollHandler(0);
         this.verticalScrollHandler(0);
@@ -265,7 +265,7 @@ export class Grid {
     }
 
     private updateMainElementSizes() {
-        const config = this.gridInterface.getGridConfig();
+        const config = this.gridInterface.__getGridConfig();
 
         /**
          * main elements
@@ -461,7 +461,7 @@ export class Grid {
         const totalRows = this.gridInterface.getDatasource().getAllData().length;
         const filteredRows = this.gridInterface.getDatasource().length();
         const filterString = this.gridInterface.getDatasource().getFilterString();
-        const scrollbarHeight = this.gridInterface.getGridConfig().__scrollbarSize;
+        const scrollbarHeight = this.gridInterface.__getGridConfig().__scrollbarSize;
 
         const clearButton = filterString
             ? html`<div class="clear-button" @click=${() => this.clearAllColumnFilters()}>Clear filter</div>`
@@ -485,7 +485,7 @@ export class Grid {
 
         const rect = scroller.getBoundingClientRect();
         const height = rect.height;
-        const config = this.gridInterface.getGridConfig();
+        const config = this.gridInterface.__getGridConfig();
         const rowsNeeded = Math.floor(height / config.cellHeight) + 5;
 
         /**
@@ -507,7 +507,7 @@ export class Grid {
                 const id = prefix + i.toString();
                 element.setAttribute('row-id', id);
                 element.style.transform = `translate3d(0px, ${top}px, 0px)`;
-                element.style.height = asPx(this.gridInterface.getScrollState().scrollHeights[i]);
+                element.style.height = asPx(this.gridInterface.__getScrollState().scrollHeights[i]);
 
                 if (i % 2 === 0) {
                     element.classList.add('simple-html-grid-row-even');
@@ -551,7 +551,7 @@ export class Grid {
             const cellno = (cell as HTMLCellElement).$celno;
             const coltype = (cell as HTMLCellElement).$coltype;
             const column = (cell as HTMLCellElement).$column;
-            const gridConfig = this.gridInterface.getGridConfig();
+            const gridConfig = this.gridInterface.__getGridConfig();
             const mainX = e.clientX;
             const mainY = e.clientY;
 
@@ -635,9 +635,9 @@ export class Grid {
                         const isPanel = classList?.contains('simple-html-grid-panel');
 
                         if ((newAttribute && newAttribute !== attribute) || isPanel) {
-                            const columnCenter = this.gridInterface.getGridConfig().columnsCenter;
-                            const columnLeft = this.gridInterface.getGridConfig().columnsPinnedLeft;
-                            const columnRight = this.gridInterface.getGridConfig().columnsPinnedRight;
+                            const columnCenter = this.gridInterface.__getGridConfig().columnsCenter;
+                            const columnLeft = this.gridInterface.__getGridConfig().columnsPinnedLeft;
+                            const columnRight = this.gridInterface.__getGridConfig().columnsPinnedRight;
 
                             switch (true) {
                                 case classList?.contains('simple-html-grid-panel'):
@@ -864,7 +864,7 @@ export class Grid {
      * this also applies on drag/drop logic and resize column
      */
     private rebuildHeaderColumns() {
-        const config = this.gridInterface.getGridConfig();
+        const config = this.gridInterface.__getGridConfig();
 
         /**
          * helper to generate cols and rows elements
@@ -1020,19 +1020,19 @@ export class Grid {
                         if (coltype === LEFT_PINNED_COLTYPE) {
                             column = this.containerLeftColumnCache.filter((e) => e.refID === refID);
                             columnNumber = column[0].column;
-                            col = this.gridInterface.getGridConfig().columnsPinnedLeft[columnNumber];
+                            col = this.gridInterface.__getGridConfig().columnsPinnedLeft[columnNumber];
                         }
 
                         if (coltype === MIDDLE_PINNED_COLTYPE) {
                             column = this.containerMiddleColumnCache.filter((e) => e.refID === refID);
                             columnNumber = column[0].column;
-                            col = this.gridInterface.getGridConfig().columnsCenter[columnNumber];
+                            col = this.gridInterface.__getGridConfig().columnsCenter[columnNumber];
                         }
 
                         if (coltype === RIGH_PINNED_COLTYPE) {
                             column = this.containerRightColumnCache.filter((e) => e.refID === refID);
                             columnNumber = column[0].column;
-                            col = this.gridInterface.getGridConfig().columnsPinnedRight[columnNumber];
+                            col = this.gridInterface.__getGridConfig().columnsPinnedRight[columnNumber];
                         }
 
                         const originalWidth = col.width;
@@ -1135,7 +1135,7 @@ export class Grid {
     }
 
     private rebuildRowColumns() {
-        const config = this.gridInterface.getGridConfig();
+        const config = this.gridInterface.__getGridConfig();
 
         /**
          * helper to generate cols and rows elements
@@ -1276,7 +1276,7 @@ export class Grid {
      * @param onlyResizeAttribute null = all
      */
     public autoResizeColumns(onlyResizeAttribute?: string) {
-        const attributes = this.gridInterface.getGridConfig().attributes;
+        const attributes = this.gridInterface.__getGridConfig().attributes;
         const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
 
         let widths: number[] = attributeKeys.map((key) => {
@@ -1314,9 +1314,9 @@ export class Grid {
 
         widths = widths.map((e: number) => (e ? e * 8 : 100));
 
-        const left = this.gridInterface.getGridConfig().columnsPinnedLeft || [];
-        const right = this.gridInterface.getGridConfig().columnsPinnedRight || [];
-        const center = this.gridInterface.getGridConfig().columnsCenter || [];
+        const left = this.gridInterface.__getGridConfig().columnsPinnedLeft || [];
+        const right = this.gridInterface.__getGridConfig().columnsPinnedRight || [];
+        const center = this.gridInterface.__getGridConfig().columnsCenter || [];
 
         center
             .concat(left)
@@ -1349,7 +1349,7 @@ export class Grid {
         const middlec = getElementByClassName(this.element, 'simple-html-grid-middle-scroller-body');
         middlec.style.width = asPx(
             this.gridInterface
-                .getGridConfig()
+                .__getGridConfig()
                 .columnsCenter.map((e) => e.width)
                 .reduce((prev, cur) => prev + cur, 0)
         );
@@ -1357,14 +1357,14 @@ export class Grid {
         const middlex = getElementByClassName(this.element, 'simple-html-grid-body-row-container-pinned-middle');
         middlex.style.width = asPx(
             this.gridInterface
-                .getGridConfig()
+                .__getGridConfig()
                 .columnsCenter.map((e) => e.width)
                 .reduce((prev, cur) => prev + cur, 0)
         );
         const middleh = getElementByClassName(this.element, 'simple-html-grid-header-row-container-pinned-middle');
         middleh.style.width = asPx(
             this.gridInterface
-                .getGridConfig()
+                .__getGridConfig()
                 .columnsCenter.map((e) => e.width)
                 .reduce((prev, cur) => prev + cur, 0)
         );
@@ -1449,13 +1449,13 @@ export class Grid {
         }
 
         const lastScrollTop = this.lastScrollTop;
-        const config = this.gridInterface.getGridConfig();
-        const rowTops = this.gridInterface.getScrollState().scrollTops;
-        const heights = this.gridInterface.getScrollState().scrollHeights;
+        const config = this.gridInterface.__getGridConfig();
+        const rowTops = this.gridInterface.__getScrollState().scrollTops;
+        const heights = this.gridInterface.__getScrollState().scrollHeights;
 
         const getTopRow = (fromtop = 0, findTop: number) => {
             let result = 0;
-            const tops = this.gridInterface.getScrollState().scrollTops;
+            const tops = this.gridInterface.__getScrollState().scrollTops;
             for (let i = fromtop; i < tops.length; i++) {
                 if (findTop <= tops[i]) {
                     result = i;
@@ -1528,7 +1528,7 @@ export class Grid {
 
             const widths: number[] = [];
             let lastLeft = 0;
-            const config = this.gridInterface.getGridConfig();
+            const config = this.gridInterface.__getGridConfig();
             config.columnsCenter.forEach((c) => {
                 widths.push(c.width);
                 lastLeft = lastLeft + c.width;
@@ -1724,7 +1724,7 @@ export class Grid {
     private horizontalScrollHandler(scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
         this.removeContextMenu();
 
-        const config = this.gridInterface.getGridConfig();
+        const config = this.gridInterface.__getGridConfig();
 
         let columns = config.columnsCenter;
         let columnCache = this.containerMiddleColumnCache;
@@ -1987,8 +1987,8 @@ export class Grid {
             });
         }
 
-        const keys = Object.keys(this.gridInterface.getGridConfig().attributes);
-        const columns = keys.map((e) => this.gridInterface.getGridConfig().attributes[e]);
+        const keys = Object.keys(this.gridInterface.__getGridConfig().attributes);
+        const columns = keys.map((e) => this.gridInterface.__getGridConfig().attributes[e]);
         columns.forEach((col) => {
             if (col.currentFilterValue !== null && col.currentFilterValue !== undefined && col.currentFilterValue !== '') {
                 filter.filterArguments.push({
@@ -2159,7 +2159,7 @@ export class Grid {
         rowData: Entity
     ) {
         if (attribute) {
-            const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+            const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
 
             const placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
             let currentValue = cellConfig.currentFilterValue || ('' as any);
@@ -2280,12 +2280,12 @@ export class Grid {
             colNo = column + 1;
         }
         if (colType === MIDDLE_PINNED_COLTYPE) {
-            colNo = this.gridInterface.getGridConfig().columnsPinnedLeft.length || 0;
+            colNo = this.gridInterface.__getGridConfig().columnsPinnedLeft.length || 0;
             colNo = colNo + column + 1;
         }
         if (colType === RIGH_PINNED_COLTYPE) {
-            colNo = this.gridInterface.getGridConfig().columnsPinnedLeft.length || 0;
-            colNo = colNo + this.gridInterface.getGridConfig().columnsCenter.length || 0;
+            colNo = this.gridInterface.__getGridConfig().columnsPinnedLeft.length || 0;
+            colNo = colNo + this.gridInterface.__getGridConfig().columnsCenter.length || 0;
             colNo = colNo + column + 1;
         }
         render(
@@ -2369,8 +2369,8 @@ export class Grid {
         }
 
         if (attribute) {
-            const config = this.gridInterface.getGridConfig();
-            const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+            const config = this.gridInterface.__getGridConfig();
+            const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
 
             if (cellConfig?.type === 'date') {
                 value = this.gridInterface.getDatasource().getDateFormater().fromDate(value);
@@ -2486,13 +2486,13 @@ export class Grid {
                 attribute = null;
                 break;
             case LEFT_PINNED_COLTYPE:
-                attribute = this.gridInterface.getGridConfig().columnsPinnedLeft[column]?.rows[celno];
+                attribute = this.gridInterface.__getGridConfig().columnsPinnedLeft[column]?.rows[celno];
                 break;
             case MIDDLE_PINNED_COLTYPE:
-                attribute = this.gridInterface.getGridConfig().columnsCenter[column]?.rows[celno];
+                attribute = this.gridInterface.__getGridConfig().columnsCenter[column]?.rows[celno];
                 break;
             case RIGH_PINNED_COLTYPE:
-                attribute = this.gridInterface.getGridConfig().columnsPinnedRight[column]?.rows[celno];
+                attribute = this.gridInterface.__getGridConfig().columnsPinnedRight[column]?.rows[celno];
                 break;
         }
 
@@ -2556,7 +2556,7 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-        const attributes = Object.keys(this.gridInterface.getGridConfig().attributes) || [];
+        const attributes = Object.keys(this.gridInterface.__getGridConfig().attributes) || [];
 
         render(
             html`<div class="simple-html-grid-menu ">
@@ -2617,7 +2617,7 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-        const attributes = Object.keys(this.gridInterface.getGridConfig().attributes) || [];
+        const attributes = Object.keys(this.gridInterface.__getGridConfig().attributes) || [];
 
         render(
             html`<div class="simple-html-grid-menu ">
@@ -2752,15 +2752,15 @@ export class Grid {
                 @click=${() => {
                     let width = 100;
                     if (colType === 'middle-pinned') {
-                        this.gridInterface.getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                        width = this.gridInterface.getGridConfig().columnsCenter[column].width;
+                        this.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                        width = this.gridInterface.__getGridConfig().columnsCenter[column].width;
                     }
                     if (colType === 'right-pinned') {
-                        this.gridInterface.getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
-                        width = this.gridInterface.getGridConfig().columnsPinnedRight[column].width;
+                        this.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                        width = this.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
                     }
 
-                    this.gridInterface.getGridConfig().columnsPinnedLeft.push({
+                    this.gridInterface.__getGridConfig().columnsPinnedLeft.push({
                         rows: [attribute],
                         width
                     });
@@ -2774,13 +2774,13 @@ export class Grid {
                 @click=${() => {
                     let width = 100;
                     if (colType === 'middle-pinned') {
-                        width = this.gridInterface.getGridConfig().columnsCenter[column].width;
+                        width = this.gridInterface.__getGridConfig().columnsCenter[column].width;
                     }
                     if (colType === 'right-pinned') {
-                        width = this.gridInterface.getGridConfig().columnsPinnedRight[column].width;
+                        width = this.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
                     }
 
-                    this.gridInterface.getGridConfig().columnsPinnedLeft.push({
+                    this.gridInterface.__getGridConfig().columnsPinnedLeft.push({
                         rows: [attribute],
                         width
                     });
@@ -2804,15 +2804,15 @@ export class Grid {
                 @click=${() => {
                     let width = 100;
                     if (colType === 'middle-pinned') {
-                        this.gridInterface.getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                        width = this.gridInterface.getGridConfig().columnsCenter[column].width;
+                        this.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                        width = this.gridInterface.__getGridConfig().columnsCenter[column].width;
                     }
                     if (colType === 'left-pinned') {
-                        this.gridInterface.getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
-                        width = this.gridInterface.getGridConfig().columnsPinnedLeft[column].width;
+                        this.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                        width = this.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
                     }
 
-                    this.gridInterface.getGridConfig().columnsPinnedRight.push({
+                    this.gridInterface.__getGridConfig().columnsPinnedRight.push({
                         rows: [attribute],
                         width
                     });
@@ -2826,13 +2826,13 @@ export class Grid {
                 @click=${() => {
                     let width = 100;
                     if (colType === 'middle-pinned') {
-                        width = this.gridInterface.getGridConfig().columnsCenter[column].width;
+                        width = this.gridInterface.__getGridConfig().columnsCenter[column].width;
                     }
                     if (colType === 'left-pinned') {
-                        width = this.gridInterface.getGridConfig().columnsPinnedLeft[column].width;
+                        width = this.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
                     }
 
-                    this.gridInterface.getGridConfig().columnsPinnedRight.push({
+                    this.gridInterface.__getGridConfig().columnsPinnedRight.push({
                         rows: [attribute],
                         width
                     });
@@ -2857,13 +2857,13 @@ export class Grid {
                     class="simple-html-grid-menu-item"
                     @click=${() => {
                         if (colType === 'middle-pinned') {
-                            this.gridInterface.getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                            this.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
                         }
                         if (colType === 'right-pinned') {
-                            this.gridInterface.getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                            this.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
                         }
                         if (colType === 'left-pinned') {
-                            this.gridInterface.getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                            this.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
                         }
                         this.rebuild(true);
                     }}
@@ -2934,7 +2934,7 @@ export class Grid {
     private clearAllColumnFilters() {
         const datasource = this.gridInterface.getDatasource();
         datasource.setFilter(null);
-        const attributes = this.gridInterface.getGridConfig().attributes;
+        const attributes = this.gridInterface.__getGridConfig().attributes;
         const keys = Object.keys(attributes);
         keys.forEach((key) => {
             attributes[key].currentFilterValue = null;
@@ -2973,7 +2973,7 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-        const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+        const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
 
         const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
         const notSelected = 'simple-html-grid-menu-item';
@@ -3069,7 +3069,7 @@ export class Grid {
             };
             loopFilter(currentFilter);
 
-            const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+            const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
 
             cellConfig.currentFilterValue = null;
 
@@ -3122,7 +3122,7 @@ export class Grid {
                     });
                 }
             };
-            const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+            const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
             if (cellConfig) {
                 cellConfig.currentFilterValue = null;
             }
@@ -3219,7 +3219,7 @@ export class Grid {
         let justData = '';
 
         const datasource = this.gridInterface.getDatasource();
-        const attConfig = this.gridInterface.getGridConfig().attributes;
+        const attConfig = this.gridInterface.__getGridConfig().attributes;
         const displayedRows = datasource.getRows();
         const dateformater = datasource.getDateFormater();
         const numberformater = datasource.getNumberFormater();
@@ -3337,7 +3337,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        const attributes = Object.keys(this.gridInterface.getGridConfig().attributes);
+                        const attributes = Object.keys(this.gridInterface.__getGridConfig().attributes);
                         this.copyPasteData(attributes, false);
                         this.removeContextMenu();
                     }}
@@ -3546,7 +3546,7 @@ export class Grid {
                                 this.contextMenuAttributes(e, e.target as HTMLCellElement, (attribute) => {
                                     arg.attribute = attribute;
 
-                                    const cellConfig = this.gridInterface.getGridConfig().attributes[attribute];
+                                    const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
                                     arg.attributeType = cellConfig.type || 'text';
                                     this.generateFilterEditor(structuredClone(filterArg));
                                 });
