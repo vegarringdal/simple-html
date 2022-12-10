@@ -2397,7 +2397,7 @@ export class Grid {
                     html`<input
                         .checked=${live(value)}
                         type="checkbox"
-                        .readOnly=${config.readonly ? config.readonly : cellConfig.readonly}
+                        .disabled=${config.readonly ? config.readonly : cellConfig.readonly}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
