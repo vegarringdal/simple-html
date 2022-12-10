@@ -2210,6 +2210,7 @@ export class Grid {
                 );
             } else {
                 let lastFilter = '';
+                let skipFocus = false
                 render(
                     html`<input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
@@ -2223,18 +2224,28 @@ export class Grid {
                             lastFilter = (e.target as any).value;
                             this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
-                        @focus=${() => {
-                                this.gridInterface.__callSubscribers('cell-header-focus', {
-                                    cell,
-                                    row,
-                                    column,
-                                    celno,
-                                    colType,
-                                    cellType,
-                                    attribute,
-                                    rowData
-                                });
+                        @mousedown=${(e: MouseEvent) => {
+                                if(e.button === 2){
+                                    skipFocus = true;
+                                }
                             }}
+                            @focus=${() => {
+                                if(skipFocus){
+                                    skipFocus = false;
+                                    return
+                                }
+                  
+                            this.gridInterface.__callSubscribers('cell-header-focus', {
+                                cell,
+                                row,
+                                column,
+                                celno,
+                                colType,
+                                cellType,
+                                attribute,
+                                rowData
+                            });
+                        }}
                         @keydown=${(e: KeyboardEvent) => {
                             const keycode = e.keyCode ? e.keyCode : e.which;
                             if (keycode === 13) {
@@ -2392,6 +2403,8 @@ export class Grid {
                 dimmed = 'simple-html-readonly';
             }
 
+     
+
             if (cellConfig.type === 'boolean') {
                 render(
                     html`<input
@@ -2416,6 +2429,7 @@ export class Grid {
                     cell as any
                 );
             } else {
+                let skipFocus = false;
                 render(
                     html` <div>
                         <div class=${dimmed}></div>
@@ -2432,7 +2446,16 @@ export class Grid {
                                 this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                                 this.triggerScrollEvent();
                             }}
+                            @mousedown=${(e: MouseEvent) => {
+                                if(e.button === 2){
+                                    skipFocus = true;
+                                }
+                            }}
                             @focus=${() => {
+                                if(skipFocus){
+                                    skipFocus = false
+                                    return
+                                }
                                 this.gridInterface.__callSubscribers('cell-row-focus', {
                                     cell,
                                     row,
@@ -3195,108 +3218,16 @@ export class Grid {
         this.contextMenu = contextMenu;
     }
 
-    private generateCopyPasteData(attributes: string[], onlyCurrentEntity: boolean) {
-        const TableOuterTop = `
-        <html>
-            <body>
-            <style>
-                table {
-                border-collapse: collapse;
-                border:.5pt solid windowtext;
-                }
-                td,
-                th {
-                    border-collapse: collapse;
-                    padding:3px;
-                    border:.5pt solid windowtext;
-                }
-            </style>
-        <table>`;
-        const TableOuterBottom = '</table></body></html>';
-
-        let tableHeader = '<tr>';
-        attributes.forEach((attribute) => {
-            tableHeader = tableHeader + '<th>' + this.prettyPrintString(attribute) + '</th>';
-        });
-        tableHeader = tableHeader + '</tr>';
-
-        let tableInnerData = '';
-        let justData = '';
-
-        const datasource = this.gridInterface.getDatasource();
-        const attConfig = this.gridInterface.__getGridConfig().attributes;
-        const displayedRows = datasource.getRows();
-        const dateformater = datasource.getDateFormater();
-        const numberformater = datasource.getNumberFormater();
-
-        const rows = datasource.getSelection().getSelectedRows();
-
-        const loopData = (entity: Entity) => {
-            if (!entity.__group) {
-                tableInnerData = tableInnerData + '<tr>';
-                attributes.forEach((attribute, i) => {
-                    const cellConfig = attConfig[attribute];
-                    const colData = entity[attribute];
-
-                    if (i > 0) {
-                        justData = justData + '\t';
-                    }
-
-                    if (cellConfig.type === 'date') {
-                        //
-                        const data = dateformater.fromDate(colData);
-                        justData = justData + data;
-                        tableInnerData = tableInnerData + '<td>' + data + '</td>';
-                    } else if (cellConfig.type === 'number') {
-                        //
-                        const data = numberformater.fromNumber(colData);
-                        justData = justData + data;
-                        tableInnerData = tableInnerData + '<td>' + data + '</td >';
-                    } else {
-                        //
-                        justData = justData + colData;
-                        tableInnerData = tableInnerData + '<td>' + (colData || '') + '</td>';
-                    }
-                });
-                justData = justData + '\n';
-                tableInnerData = tableInnerData + '</tr>';
-            }
-        };
-
-        if (onlyCurrentEntity) {
-            loopData(datasource.currentEntity);
-        } else {
-            rows.forEach((rowNumber) => {
-                loopData(displayedRows[rowNumber]);
-            });
-        }
-
-        return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
-    }
-
-    private copyPasteData(attributes: string[], onlyCurrentEntity: boolean) {
-        const [html, text] = this.generateCopyPasteData(attributes, onlyCurrentEntity);
-
-        function listener(e: any) {
-            e.clipboardData.setData('text/html', html);
-            e.clipboardData.setData('text/plain', text);
-            e.preventDefault();
-        }
-        document.addEventListener('copy', listener);
-        document.execCommand('copy');
-        document.removeEventListener('copy', listener);
-    }
-
     private contextmenuRow(
         event: MouseEvent,
         cell: HTMLCellElement,
-        _row: number,
-        _column: number,
-        _celno: number,
-        _colType: ColType,
-        _cellType: string,
+        row: number,
+        column: number,
+        celno: number,
+        colType: ColType,
+        cellType: string,
         attribute: string,
-        _rowData: Entity
+        rowData: Entity
     ) {
         this.removeContextMenu();
 
@@ -3315,6 +3246,108 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
+        const generateCopyPasteData = (attributes: string[], onlyCurrentEntity: boolean) => {
+            const TableOuterTop = `
+            <html>
+                <body>
+                <style>
+                    table {
+                    border-collapse: collapse;
+                    border:.5pt solid windowtext;
+                    }
+                    td,
+                    th {
+                        border-collapse: collapse;
+                        padding:3px;
+                        border:.5pt solid windowtext;
+                    }
+                </style>
+            <table>`;
+            const TableOuterBottom = '</table></body></html>';
+
+            let tableHeader = '<tr>';
+            attributes.forEach((attribute) => {
+                tableHeader = tableHeader + '<th>' + this.prettyPrintString(attribute) + '</th>';
+            });
+            tableHeader = tableHeader + '</tr>';
+
+            let tableInnerData = '';
+            let justData = '';
+
+            const datasource = this.gridInterface.getDatasource();
+            const attConfig = this.gridInterface.__getGridConfig().attributes;
+            const displayedRows = datasource.getRows();
+            const dateformater = datasource.getDateFormater();
+            const numberformater = datasource.getNumberFormater();
+
+            const selectedRows = datasource.getSelection().getSelectedRows();
+
+            const loopData = (entity: Entity) => {
+                if (!entity.__group) {
+                    tableInnerData = tableInnerData + '<tr>';
+                    attributes.forEach((attribute, i) => {
+                        const cellConfig = attConfig[attribute];
+                        const colData = entity[attribute];
+
+                        if (i > 0) {
+                            justData = justData + '\t';
+                        }
+
+                        if (cellConfig.type === 'date') {
+                            //
+                            const data = dateformater.fromDate(colData);
+                            justData = justData + data;
+                            tableInnerData = tableInnerData + '<td>' + data + '</td>';
+                        } else if (cellConfig.type === 'number') {
+                            //
+                            const data = numberformater.fromNumber(colData);
+                            justData = justData + data;
+                            tableInnerData = tableInnerData + '<td>' + data + '</td >';
+                        } else {
+                            //
+                            justData = justData + colData;
+                            tableInnerData = tableInnerData + '<td>' + (colData || '') + '</td>';
+                        }
+                    });
+                    justData = justData + '\n';
+                    tableInnerData = tableInnerData + '</tr>';
+                }
+            };
+
+            if (onlyCurrentEntity) {
+                loopData(datasource.currentEntity);
+            } else {
+                selectedRows.forEach((rowNumber) => {
+                    loopData(displayedRows[rowNumber]);
+                });
+            }
+
+            return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
+        };
+
+        const copyPasteData = (attributes: string[], onlyCurrentEntity: boolean) => {
+            const [html, text] = generateCopyPasteData(attributes, onlyCurrentEntity);
+
+            function listener(e: any) {
+                e.clipboardData.setData('text/html', html);
+                e.clipboardData.setData('text/plain', text);
+                e.preventDefault();
+            }
+            document.addEventListener('copy', listener);
+            document.execCommand('copy');
+            document.removeEventListener('copy', listener);
+        };
+
+        const clearRows = (attribute: string) => {
+            const datasource = this.gridInterface.getDatasource();
+            const displayedRows = datasource.getRows();
+            const selectedRows = datasource.getSelection().getSelectedRows();
+            selectedRows.forEach((rowNumber) => {
+                const entity = displayedRows[rowNumber];
+                entity[attribute] = null;
+            });
+        };
+
         render(
             html`<div class="simple-html-grid-menu">
                 <div class="simple-html-grid-menu-section">Copy:</div>
@@ -3322,7 +3355,17 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        this.copyPasteData([attribute], true);
+                        copyPasteData([attribute], true);
+                        this.gridInterface.__callSubscribers('copy-cell', {
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData
+                        });
                         this.removeContextMenu();
                     }}
                 >
@@ -3331,7 +3374,17 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        this.copyPasteData([attribute], false);
+                        copyPasteData([attribute], false);
+                        this.gridInterface.__callSubscribers('copy-column', {
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData
+                        });
                         this.removeContextMenu();
                     }}
                 >
@@ -3341,7 +3394,17 @@ export class Grid {
                     class="simple-html-grid-menu-item"
                     @click=${() => {
                         const attributes = Object.keys(this.gridInterface.__getGridConfig().attributes);
-                        this.copyPasteData(attributes, false);
+                        copyPasteData(attributes, false);
+                        this.gridInterface.__callSubscribers('copy-row', {
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData
+                        });
                         this.removeContextMenu();
                     }}
                 >
@@ -3353,6 +3416,17 @@ export class Grid {
                     class="simple-html-grid-menu-item"
                     @click=${() => {
                         alert('not implemented');
+                        this.gridInterface.__callSubscribers('paste', {
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData
+                        });
+                        this.removeContextMenu();
                     }}
                 >
                     Cell <i>(sel.rows)</i>
@@ -3362,7 +3436,19 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        alert('not implemented');
+                        clearRows(attribute);
+                        this.gridInterface.__callSubscribers('clear', {
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData
+                        });
+                        this.removeContextMenu();
+                        this.triggerScrollEvent();
                     }}
                 >
                     Cell <i>(sel. rows)</i>

@@ -103,16 +103,16 @@ Main rendering will be first focus
  * [ ] menu row
     * [x] GUI
    * [x] copy cell
-      * [ ] need a event/callback for this
+      * [x] need a event/callback for this
    * [x] copy colum
-      * [ ] need a event/callback for this
+      * [x] need a event/callback for this
    * [x] copy row
       * [ ] copy in correct column order..
-      * [ ] need a event/callback for this
+      * [x] need a event/callback for this
    * [ ] paste cell
      * [ ] event for when this happends, incase we need to edit others
-   * [ ] clear cell
-     * [ ] event for when this happends, incase we need to edit others
+   * [x] clear cell
+     * [x] event for when this happends
  * [x] advanced search dialog
    * [x] support groups
      * [x] and groups
