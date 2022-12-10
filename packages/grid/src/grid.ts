@@ -2399,7 +2399,15 @@ export class Grid {
                 value = (entity && entity[attribute]) || false;
             }
             let dimmed = '';
-            if (!config.readonly && cellConfig.readonly) {
+
+
+            let cellReadOnly = this.gridInterface.__callReadonlySetter(attribute, rowData)
+            if(cellReadOnly !== false && cellReadOnly !== true){
+                cellReadOnly = cellConfig.readonly
+            }
+
+
+            if (!config.readonly && cellReadOnly) {
                 dimmed = 'simple-html-readonly';
             }
 
@@ -2410,7 +2418,7 @@ export class Grid {
                     html`<input
                         .checked=${live(value)}
                         type="checkbox"
-                        .disabled=${config.readonly ? config.readonly : cellConfig.readonly}
+                        .disabled=${config.readonly ? config.readonly : cellReadOnly}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -2420,7 +2428,7 @@ export class Grid {
                             this.triggerScrollEvent();
                         }}
                         @change=${(e: any) => {
-                            if (!cellConfig.readonly) {
+                            if (!cellReadOnly) {
                                 entity[attribute] = e.target.checked ? false : true;
                                 e.target.checked = entity[attribute];
                             }
@@ -2436,7 +2444,7 @@ export class Grid {
                         <input
                             style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                             .value=${live(value?.toString())}
-                            .readOnly=${config.readonly ? config.readonly : cellConfig.readonly}
+                            .readOnly=${config.readonly ? config.readonly : cellReadOnly}
                             placeholder=${cellConfig.placeHolderRow}
                             @contextmenu=${(e: MouseEvent) => {
                                 e.preventDefault();
@@ -2468,16 +2476,16 @@ export class Grid {
                                 });
                             }}
                             @input=${(e: any) => {
-                                if (!cellConfig.readonly && cellConfig?.type !== 'date') {
+                                if (!cellReadOnly && cellConfig?.type !== 'date') {
                                     entity[attribute] = e.target.value;
                                 }
-                                if (!cellConfig.readonly && cellConfig.type === 'date') {
+                                if (!cellReadOnly && cellConfig.type === 'date') {
                                     entity[attribute] = this.gridInterface
                                         .getDatasource()
                                         .getDateFormater()
                                         .toDate(e.target.value);
                                 }
-                                if (!cellConfig.readonly && cellConfig.type === 'number') {
+                                if (!cellReadOnly && cellConfig.type === 'number') {
                                     entity[attribute] = this.gridInterface
                                         .getDatasource()
                                         .getNumberFormater()
@@ -2485,7 +2493,7 @@ export class Grid {
                                 }
                             }}
                             @change=${(e: any) => {
-                                if (!cellConfig.readonly && cellConfig?.type === 'date') {
+                                if (!cellReadOnly && cellConfig?.type === 'date') {
                                     entity[attribute] = this.gridInterface
                                         .getDatasource()
                                         .getDateFormater()

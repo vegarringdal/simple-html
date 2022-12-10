@@ -79,7 +79,7 @@ Main rendering will be first focus
    * [x] edit cells
    * [ ] edit cells callback/event
    * [x] readonly (row)
-     * [ ] with callback, so you can also set it based on other row values
+     * [x] with callback, so you can also set it based on other row values
      * [x] set "read" background/scratched, so its easy to see its a readonly even i edit mode
  * [x] menu label
    * [x] GUI

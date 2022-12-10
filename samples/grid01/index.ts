@@ -1,5 +1,5 @@
 import './index.css';
-import { Datasource } from '@simple-html/datasource';
+import { Datasource, Entity } from '@simple-html/datasource';
 import { GridInterface, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
 import { dummydata } from './dummyData';
@@ -139,7 +139,6 @@ createButton('save config', () => {
 });
 
 createButton('load config', () => {
-
     if (!(globalThis as any)) {
         alert('no config saved, save on first');
     } else {
@@ -164,34 +163,47 @@ createButton('set as editmode', () => {
 });
 
 const datasourceEvents = {
-    handleEvent:(e:any)=>{
-        console.log("DATASOURCE EVENTS:", e.type, e.data)
+    handleEvent: (e: any) => {
+        console.log('DATASOURCE EVENTS:', e.type, e.data);
         return true; // to keep subscribing
     }
-}
+};
 
 const gridInterfaceEvents = {
-    handleEvent:(e:any)=>{
-        console.log("GRIDINTERFACE EVENTS:", e.type, e.data)
+    handleEvent: (e: any) => {
+        console.log('GRIDINTERFACE EVENTS:', e.type, e.data);
         return true; // to keep subscribing
     }
-}
+};
 
 createButton('datasource.addEventListener\n (see console - F12)', () => {
-    datasource.addEventListener(datasourceEvents)
+    datasource.addEventListener(datasourceEvents);
 });
 
 createButton('datasource.removeEventListener\n (see console - F12)', () => {
-    datasource.removeEventListener(datasourceEvents)
+    datasource.removeEventListener(datasourceEvents);
 });
 
-
 createButton('gridInterface.addEventListener\n (see console - F12)', () => {
-    gridInterface.addEventListener(gridInterfaceEvents)
+    gridInterface.addEventListener(gridInterfaceEvents);
 });
 
 createButton('gridInterface.removeEventListener\n (see console - F12)', () => {
-    gridInterface.removeEventListener(gridInterfaceEvents)
+    gridInterface.removeEventListener(gridInterfaceEvents);
+});
+
+createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
+    gridInterface.readonlySetter((attribute: string, rowData: Entity) => {
+        if (rowData['isDumb'] === true && attribute === 'favoriteFruit') {
+            return true;
+        } else {
+            return false;
+        }
+    });
+});
+
+createButton('remove readonly favoriteFruit based on cell isDumb', () => {
+    gridInterface.readonlySetter(null);
 });
 
 /**
