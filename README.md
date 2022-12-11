@@ -2,7 +2,7 @@
 
 Only lit-html as dependency
 
-> version 5.0.0-next is the active version
+> version 5.0.0-next is the active version and will replace vesrion 4 in Dec 2022
 
 Its beeing used in some personal applications at work atm to get real world testing on what works
 good and not.
@@ -14,154 +14,30 @@ API docs:
 -   [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)
 -   [Datasource](https://vegarringdal.github.io/simple-html/datasource/index.html)
 
-Source code:
+Source code: (have minimal sample of usage)
 -   [Grid](https://github.com/vegarringdal/simple-html/tree/master/packages/grid)
 -   [Datasource](https://github.com/vegarringdal/simple-html/tree/master/packages/datasource)
 
 
-API docs
-
--   [Grid](https://simple-html.github.io/simple-html/grid/index.html)
--   [Datasource](https://simple-html.github.io/simple-html/datasource/index.html)
-
-# Developer sample 01
-
--   clone repo
--   `npm install`
--   `npm start grid01`
-
-### What happend to version 3.x.x
-
-Added branch for it, everything except grid/datsource could easily be replaced by React/lithtml or
-similar, so was no need for it.
-
-### BUILD / RELEASE
-
-`npm run build:all` builds all packages
-
-`npm run typedoc-grid` update typedoc grid `npm run typedoc-ds` update typedoc grid
-
-`npm run release:next` updates package.json and updates chnagelog (remove next if not test version)
-
-`git push --follow-tags origin master` to update github with new tag
-
-`npm run publish:all` publishes repo, you need to push
-
-### how to try samples
-
--   `clone repo`
--   run `npm install`
--   run samples
-
-    -   `npm start grid01`
-      - as simple as it can get
-    -   `npm start grid02`
-      - using lit-html will get a lot of sample code how methods of grid/datasource work
-
-    Will add more sample... just been to busy lately
-
-### Sampel code to show how simples grid would be made
-
-```ts
-import './index.css';
-import { Datasource } from '@simple-html/datasource';
-import { GridInterface, GridElement, GridConfig } from '@simple-html/grid';
-import "@simple-html/grid/dist/grid.css";
-
-/**
- * create datasource
- */
-const datasource = new Datasource();
-
-// add data
-datasource.setData([
-    { firstname: 'first1', lastname: 'last1' },
-    { firstname: 'first2', lastname: 'last2' },
-    { firstname: 'first3', lastname: 'last3' }
-]);
-
-/**
- * create gridConfig
- */
-const gridConfig: GridConfig = {
-    columnsCenter: [
-        {
-            rows: ['firstname'],
-            width: 100
-        },
-        {
-            rows: ['lastname'],
-            width: 100
-        }
-    ],
-    attributes: {
-        firstname: {
-            attribute: 'firstname'
-        },
-        lastname: {
-            attribute: 'lastname'
-        }
-    }
-};
-
-
-/**
- * create interface and add gridconfig and datasource to it
- */
-const gridInterface = new GridInterface(gridConfig, datasource);
-
-/**
- * create element for the grid
- */
-const element = document.createElement('simple-html-grid') as GridElement;
-element.style.width = '100%';
-element.style.height = '100%';
-element.style.display = 'flex';
-element.classList.add('simple-html-grid');
-element.connectInterface(gridInterface);
-
-document.body.appendChild(element);
-```
-
-
-
-
-
-# dev
-
-* `git clone https://github.com/vegarringdal/simple-html`
-* `git checkout 5.0.0`
-* `npm i`
-* `npm start grid01`
-' open `http://localhost:8080`
-
 # 5.0.0 Info / Progress
-
 
 * all UI rebuilt to optimise scrolling vert/horz
   * usign less custom componets, more wrapped into 1 class with methods
   * old grid had some really messy parts since all was to split into own classes/got expanded due to issues found at work in the begining, like 200 columns on a report
-* datasource mostly unchanged
+* 
 * gridinterface rebuilt from scratch
   * needed to support pinned left/right
   * tried to simplify more
   * remove all duplicate functions it had, people can just ise datasource
-* changed datasource defaults on filter
-  * number is greater than or equal
-  * text is equal
-    * so they can just use * to starts with/contains etc
-
-
+* datasource
+  * changed datasource defaults on filter
+    * number is greater than or equal
+    * text is equal
+      * so they can just use * to starts with/contains etc
 
 # TODO:
 
-List here is not final, but to make it easier for me to focus
-
-[demo](https://vegarringdal.github.io/rebuild-grid/index.html) Try and update it when I update the todo list, demo page will get expanded with more buttons etc as I get main parts in place
-
-
-Main rendering will be first focus
-
+Need for version "5.0.0":
  * [x] main UI parts
  * [x] virtual scrolling up/down
  * [x] virtual scrolling left/right middle section
@@ -236,21 +112,22 @@ Main rendering will be first focus
  * [x] total rows/filtered rows to footer
  * [x] clear filter with button in footer
 
-Want - but not needed for first version to replace old:
+Wanted/considering
  * [ ] find all function
  * [ ] replace value
  * [ ] edit cells callback/event
- 
  * [ ] do we want excel similar column filter, when they enter focus mode?
    * I have something like this allready in old grid, so this one might need to be in added frist version
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
 
+Other:
+- [ ] gridhub action for release/test/lock master branch
 
 
- ### BUILD / RELEASE
+# Dev
 
-* `npm run build:all` builds all packages
-* `npm run typedoc-grid` update typedoc grid `npm run typedoc-ds` update typedoc grid
-* `npm run release:next` updates package.json and updates chnagelog (remove next if not test version)
-* `git push --follow-tags origin master` to update github with new tag
-* `npm run publish:all` publishes repo, you need to push
+* `git clone https://github.com/vegarringdal/simple-html`
+* `git checkout 5.0.0`
+* `npm i`
+* `npm start grid01`
+' open `http://localhost:8080`
