@@ -1,7 +1,5 @@
 # @simple-html/grid
 
-Grid made for `@simple-html/datasource`
-
 Sample:
 - [sample](https://vegarringdal.github.io/rebuild-grid/index.html)
 
@@ -20,8 +18,7 @@ Features/Todo:
 Minimal sample:
 ```ts
 import './index.css';
-import { Datasource } from '@simple-html/datasource';
-import { GridInterface, GridElement, GridConfig } from '@simple-html/grid';
+import { GridInterface, GridElement, GridConfig, Datasource } from '@simple-html/grid';
 import "@simple-html/grid/dist/grid.css";
 
 /**

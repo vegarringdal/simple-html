@@ -1,6 +1,5 @@
 # grid-rebuild
 
-
 Only lit-html as dependency
 
 > version 5.0.0-next is the active version and will replace vesrion 4 in Dec 2022
@@ -15,11 +14,11 @@ Sample:
 
 API docs:
 -   [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)
--   [Datasource](https://vegarringdal.github.io/simple-html/datasource/index.html)
+
 
 Source code: (have minimal sample of usage)
 -   [Grid](https://github.com/vegarringdal/simple-html/tree/master/packages/grid)
--   [Datasource](https://github.com/vegarringdal/simple-html/tree/master/packages/datasource)
+
 
 
 # 5.0.0 Info / Progress
@@ -31,8 +30,9 @@ Source code: (have minimal sample of usage)
 * gridinterface rebuilt from scratch
   * needed to support pinned left/right
   * tried to simplify more
-  * remove all duplicate functions it had, people can just ise datasource
-* datasource
+  * remove all duplicate functions it had, people can just use interface.getDatasource()
+* `@simple-html/datasource`
+  * merged into `@simple-html/datasource`
   * changed datasource defaults on filter
     * number is greater than or equal
     * text is equal

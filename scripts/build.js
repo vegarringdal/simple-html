@@ -43,7 +43,7 @@ async function run() {
                         strictNullChecks: false,
                         experimentalDecorators: true
                     },
-                    exclude: ['dist', 'node_modules', '__tests__']
+                    exclude: ['dist', 'node_modules', '**/__tests__']
                 },
                 skipTsErrors: [2307], // I dont care about modules @simple-html/xxxxx
                 basePath: `./packages/${file.name}`,

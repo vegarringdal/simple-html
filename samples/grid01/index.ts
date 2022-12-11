@@ -1,5 +1,5 @@
 import './index.css';
-import { Datasource, Entity } from '@simple-html/datasource';
+import { Datasource, Entity } from '@simple-html/grid';
 import { GridInterface, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
 import { dummydata } from './dummyData';

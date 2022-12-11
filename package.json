@@ -1,5 +1,5 @@
 {
-    "name": "simple-html-rebuild",
+    "name": "simple-html",
     "version": "5.0.0-next.1",
     "description": "UI components without dependencies",
     "scripts": {
@@ -13,7 +13,6 @@
         "typecheck": "node typecheck",
         "eslint": "npm run eslint:run:packages && npm run eslint:run:samples",
         "eslint:run:packages": "eslint --fix ./packages/**/*.ts",
-        "eslint:run:samples": "eslint --fix ./samples/**/*.ts",
         "prettier:run": "prettier --write \"packages/**/*.ts\" \"samples/**/*.ts\"",
         "test": "jest",
         "test:watch": "jest --watch ",
@@ -23,8 +22,7 @@
         "release:patch": "standard-version --release-as patch",
         "release:major": "standard-version --release-as major",
         "release:next": "standard-version --prerelease next",
-        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/grid ./packages/grid/src/index.ts",
-        "typedoc-ds": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/datasource ./packages/datasource/src/index.ts"
+        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/grid ./packages/grid/src/index.ts ./packages/grid/src/datasource/grouping.ts ./packages/grid/src/datasource/filter.ts ./packages/grid/src/datasource/selection.ts ./packages/grid/src/datasource/sort.ts ./packages/grid/src/datasource/types.ts ./packages/grid/src/grid/gridConfig.ts ./packages/grid/src/grid/gridInterface.ts ./packages/grid/src/datasource/dataSource.ts ./packages/grid/src/grid/grid.ts"
     },
     "author": "Vegar Ringdal",
     "license": "MIT",

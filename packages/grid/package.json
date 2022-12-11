@@ -1,5 +1,5 @@
 {
-    "name": "@simple-html/grid-rebuild",
+    "name": "@simple-html/grid",
     "version": "5.0.0-next.1",
     "description": "Vanillajs Grid",
     "main": "dist/index.js",

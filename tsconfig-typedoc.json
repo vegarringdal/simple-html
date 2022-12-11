@@ -26,7 +26,6 @@
         "strictNullChecks": false,
         "experimentalDecorators": true,
         "paths": {
-            "@simple-html/datasource": ["./packages/datasource/src"],
             "@simple-html/grid": ["./packages/grid/src"]
         }
     },
