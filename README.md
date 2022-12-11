@@ -19,7 +19,49 @@ Source code:
 -   [Datasource](https://github.com/vegarringdal/simple-html/tree/master/packages/datasource)
 
 
-Minimal sample:
+API docs
+
+-   [Grid](https://simple-html.github.io/simple-html/grid/index.html)
+-   [Datasource](https://simple-html.github.io/simple-html/datasource/index.html)
+
+# Developer sample 01
+
+-   clone repo
+-   `npm install`
+-   `npm start grid01`
+
+### What happend to version 3.x.x
+
+Added branch for it, everything except grid/datsource could easily be replaced by React/lithtml or
+similar, so was no need for it.
+
+### BUILD / RELEASE
+
+`npm run build:all` builds all packages
+
+`npm run typedoc-grid` update typedoc grid `npm run typedoc-ds` update typedoc grid
+
+`npm run release:next` updates package.json and updates chnagelog (remove next if not test version)
+
+`git push --follow-tags origin master` to update github with new tag
+
+`npm run publish:all` publishes repo, you need to push
+
+### how to try samples
+
+-   `clone repo`
+-   run `npm install`
+-   run samples
+
+    -   `npm start grid01`
+      - as simple as it can get
+    -   `npm start grid02`
+      - using lit-html will get a lot of sample code how methods of grid/datasource work
+
+    Will add more sample... just been to busy lately
+
+### Sampel code to show how simples grid would be made
+
 ```ts
 import './index.css';
 import { Datasource } from '@simple-html/datasource';
