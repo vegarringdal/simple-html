@@ -1,11 +1,14 @@
 # grid-rebuild
 
+
 Only lit-html as dependency
 
 > version 5.0.0-next is the active version and will replace vesrion 4 in Dec 2022
 
+
 Its beeing used in some personal applications at work atm to get real world testing on what works
 good and not.
+
 
 Sample:
 [sample](https://vegarringdal.github.io/rebuild-grid/index.html)
@@ -131,3 +134,4 @@ Other:
 * `npm i`
 * `npm start grid01`
 ' open `http://localhost:8080`
+
