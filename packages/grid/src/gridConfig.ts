@@ -11,20 +11,11 @@ export type GridConfig = {
     columnsPinnedLeft?: Columns[];
     columnsCenter: Columns[];
     columnsPinnedRight?: Columns[];
-    /**
-     * will only be used on init
-     */
     sortOrder?: Sort[];
-    /**
-     * will only be used on init
-     */
     grouping?: GroupArgument[];
-    /**
-     * will only be used on init
-     */
     filter?: FilterArgument;
 
-    // private
+    // private/internals
     __attributes?: Record<string, Attribute>;
     __rowHeight?: number;
     __columnCells?: number;
