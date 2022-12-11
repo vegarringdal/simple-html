@@ -1,6 +1,6 @@
 # @simple-html/grid & @simple-html/datasource
 
-> 💡version 5.0.0 is under active development - and will replace version 4.0.0 withing December 2022
+> 💡version 5.0.0 is under active development - and will replace version 4.0.0 within December 2022
 
 Native html grid & datasource with no dependencies.
 
