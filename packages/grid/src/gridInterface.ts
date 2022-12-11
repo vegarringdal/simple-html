@@ -189,12 +189,21 @@ export class GridInterface {
         if(!add){
             this.columnsSelected.clear();
         }
-        this.columnsSelected.add(number)
-        this.grid.rebuild();
+        if(this.__isColumnSelected(number)){
+            this.columnsSelected.delete(number)
+        }else{
+            this.columnsSelected.add(number)
+        }
+        
+        this.grid.rebuildHeaderColumns();
     }
 
     public __isColumnSelected(number: number){
         return  this.columnsSelected.has(number);
+    }
+
+    public __selectedColumns(){
+        return this.columnsSelected.size
     }
 
     /**

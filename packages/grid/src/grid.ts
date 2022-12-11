@@ -857,7 +857,7 @@ export class Grid {
     /**
      * this also applies on drag/drop logic and resize column
      */
-    private rebuildHeaderColumns() {
+    public rebuildHeaderColumns() {
         const config = this.gridInterface.__getGridConfig();
 
         /**
@@ -2210,7 +2210,7 @@ export class Grid {
                 );
             } else {
                 let lastFilter = '';
-                let skipFocus = false
+                let skipFocus = false;
                 render(
                     html`<input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
@@ -2225,16 +2225,16 @@ export class Grid {
                             this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @mousedown=${(e: MouseEvent) => {
-                                if(e.button === 2){
-                                    skipFocus = true;
-                                }
-                            }}
-                            @focus=${() => {
-                                if(skipFocus){
-                                    skipFocus = false;
-                                    return
-                                }
-                  
+                            if (e.button === 2) {
+                                skipFocus = true;
+                            }
+                        }}
+                        @focus=${() => {
+                            if (skipFocus) {
+                                skipFocus = false;
+                                return;
+                            }
+
                             this.gridInterface.__callSubscribers('cell-header-focus', {
                                 cell,
                                 row,
@@ -2306,16 +2306,16 @@ export class Grid {
             colNo = colNo + column + 1;
         }
 
-        let className = "simple-html-absolute-fill simple-html-label"
-        if(this.gridInterface.__isColumnSelected(colNo)){
-            className = "simple-html-absolute-fill simple-html-label simple-html-label-odd"
+        let className = 'simple-html-absolute-fill simple-html-label';
+        if (this.gridInterface.__isColumnSelected(colNo)) {
+            className = 'simple-html-absolute-fill simple-html-label simple-html-label-odd';
         }
 
         render(
             html`<div
                 class=${className}
-                @click=${(e:MouseEvent) => {
-                    this.gridInterface.__setSelectedColumn(colNo, e.ctrlKey)
+                @click=${(e: MouseEvent) => {
+                    this.gridInterface.__setSelectedColumn(colNo, e.ctrlKey);
                 }}
             >
                 <span class="simple-html-selector-text">${colNo}</span>
@@ -2406,18 +2406,14 @@ export class Grid {
             }
             let dimmed = '';
 
-
-            let cellReadOnly = this.gridInterface.__callReadonlySetter(attribute, rowData)
-            if(cellReadOnly !== false && cellReadOnly !== true){
-                cellReadOnly = cellConfig.readonly
+            let cellReadOnly = this.gridInterface.__callReadonlySetter(attribute, rowData);
+            if (cellReadOnly !== false && cellReadOnly !== true) {
+                cellReadOnly = cellConfig.readonly;
             }
-
 
             if (!config.readonly && cellReadOnly) {
                 dimmed = 'simple-html-readonly';
             }
-
-     
 
             if (cellConfig.type === 'boolean') {
                 render(
@@ -2461,14 +2457,14 @@ export class Grid {
                                 this.triggerScrollEvent();
                             }}
                             @mousedown=${(e: MouseEvent) => {
-                                if(e.button === 2){
+                                if (e.button === 2) {
                                     skipFocus = true;
                                 }
                             }}
                             @focus=${() => {
-                                if(skipFocus){
-                                    skipFocus = false
-                                    return
+                                if (skipFocus) {
+                                    skipFocus = false;
+                                    return;
                                 }
                                 this.gridInterface.__callSubscribers('cell-row-focus', {
                                     cell,
@@ -3407,7 +3403,26 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        const attributes = Object.keys(this.gridInterface.__getGridConfig().attributes);
+                        const colLeft = this.gridInterface
+                            .__getGridConfig()
+                            .columnsPinnedLeft.flatMap((e) => e.rows.map((e) => e));
+                        const colCenter = this.gridInterface.__getGridConfig().columnsCenter.flatMap((e) => e.rows.map((e) => e));
+                        const colRight = this.gridInterface
+                            .__getGridConfig()
+                            .columnsPinnedRight.flatMap((e) => e.rows.map((e) => e));
+                        const allAttributes = colLeft.concat(colCenter).concat(colRight);
+
+                        let attributes: string[] = [];
+                        if (this.gridInterface.__selectedColumns()) {
+                            allAttributes.forEach((name, i) => {
+                                if (this.gridInterface.__isColumnSelected(i + 1)) {
+                                    attributes.push(name);
+                                }
+                            });
+                        } else {
+                            attributes = allAttributes;
+                        }
+
                         copyPasteData(attributes, false);
                         this.gridInterface.__callSubscribers('copy-row', {
                             cell,
