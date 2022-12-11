@@ -1,6 +1,6 @@
 {
     "name": "simple-html-rebuild",
-    "version": "5.0.0-next.1",
+    "version": "5.0.0-next.0",
     "description": "UI components without dependencies",
     "scripts": {
         "start": "ts-node config_devserver",
@@ -17,8 +17,8 @@
         "prettier:run": "prettier --write \"packages/**/*.ts\" \"samples/**/*.ts\"",
         "test": "jest",
         "test:watch": "jest --watch ",
-        "release": "standard-version  --prerelease nex",
-        "release-test": "standard-version  --dry-run",
+        "release": "standard-version  --prerelease next",
+        "release-test": "standard-version  --dry-run --prerelease next",
         "release:minor": "standard-version --release-as minor",
         "release:patch": "standard-version --release-as patch",
         "release:major": "standard-version --release-as major",
