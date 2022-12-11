@@ -44,8 +44,8 @@ export class GridInterface {
     }
 
     public parseConfig() {
-        if (!this.gridConfig.attributes) {
-            this.gridConfig.attributes = {};
+        if (!this.gridConfig.__attributes) {
+            this.gridConfig.__attributes = {};
         }
 
         if (!Array.isArray(this.gridConfig.columnsPinnedLeft)) {
@@ -119,11 +119,15 @@ export class GridInterface {
             this.gridConfig.__selectSizeWidth = 25;
         }
 
+        /**
+         * build up internal object with attributes
+         */
+
         this.gridConfig.columnsPinnedLeft.forEach((e) => {
             if (Array.isArray(e.rows)) {
                 e.rows.forEach((att) => {
-                    if (!this.gridConfig.attributes[att]) {
-                        this.gridConfig.attributes[att] = { attribute: att };
+                    if (!this.gridConfig.__attributes[att]) {
+                        this.gridConfig.__attributes[att] = { attribute: att };
                     }
                 });
             }
@@ -131,8 +135,8 @@ export class GridInterface {
         this.gridConfig.columnsPinnedRight.forEach((e) => {
             if (Array.isArray(e.rows)) {
                 e.rows.forEach((att) => {
-                    if (!this.gridConfig.attributes[att]) {
-                        this.gridConfig.attributes[att] = { attribute: att };
+                    if (!this.gridConfig.__attributes[att]) {
+                        this.gridConfig.__attributes[att] = { attribute: att };
                     }
                 });
             }
@@ -140,10 +144,19 @@ export class GridInterface {
         this.gridConfig.columnsCenter.forEach((e) => {
             if (Array.isArray(e.rows)) {
                 e.rows.forEach((att) => {
-                    if (!this.gridConfig.attributes[att]) {
-                        this.gridConfig.attributes[att] = { attribute: att };
+                    if (!this.gridConfig.__attributes[att]) {
+                        this.gridConfig.__attributes[att] = { attribute: att };
                     }
                 });
+            }
+        });
+
+        this.gridConfig.attributes?.forEach((att) => {
+            const name = att.attribute;
+            if (!this.gridConfig.__attributes[name]) {
+                this.gridConfig.__attributes[name] = att;
+            } else {
+                this.gridConfig.__attributes[name] = att;
             }
         });
     }
@@ -171,6 +184,15 @@ export class GridInterface {
      */
     public saveGridConfig(): GridConfig {
         const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
+
+        // convert attributes
+        const keys = Object.keys(config.__attributes);
+        config.attributes = [];
+        keys.forEach((key) => {
+            config.attributes.push(config.__attributes[key]);
+        });
+        config.__attributes = null;
+
         config.sortOrder = this.getDatasource().getLastSorting();
         config.grouping = this.getDatasource().getGrouping();
         config.filter = this.getDatasource().getFilter();

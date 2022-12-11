@@ -6,8 +6,8 @@ export type GridConfig = {
     footerHeight?: number;
     selectSizeHeight?: number;
     readonly?: boolean;
+    attributes: Attribute[]
     selectionMode?: 'multiple' | 'single';
-    attributes: Record<string, Attribute>;
     columnsPinnedLeft?: Columns[];
     columnsCenter: Columns[];
     columnsPinnedRight?: Columns[];
@@ -25,7 +25,7 @@ export type GridConfig = {
     filter?: FilterArgument;
 
     // private
-
+    __attributes?: Record<string, Attribute>;
     __rowHeight?: number;
     __columnCells?: number;
     __leftWidth?: number;

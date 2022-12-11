@@ -5,7 +5,6 @@ import { GridConfig } from '@simple-html/grid';
  * keep this in own file since it so big..
  */
 export const gridConfig: GridConfig = {
-
     columnsCenter: [
         {
             rows: ['company'],
@@ -20,12 +19,11 @@ export const gridConfig: GridConfig = {
             rows: ['date1'],
             width: 80
         },
-        
+
         {
             rows: ['isDumb'],
             width: 80
         },
-
 
         {
             rows: ['favoriteFruit'],
@@ -64,53 +62,48 @@ export const gridConfig: GridConfig = {
         {
             rows: ['date2'],
             width: 100
-        },
-
-
+        }
     ],
-    attributes: {
-        isActive: {
+    attributes: [
+        {
             attribute: 'isActive',
-            type: 'boolean',
-         
+            type: 'boolean'
         },
-        phone: {
+        {
             attribute: 'phone',
-            placeHolderRow: "wow",
-            placeHolderFilter: "custom placeholder"
-
+            placeHolderRow: 'wow',
+            placeHolderFilter: 'custom placeholder'
         },
-        isDumb: {
+        {
             attribute: 'isDumb',
-            type: 'boolean',
-          
+            type: 'boolean'
         },
-        balance: {
+        {
             attribute: 'balance',
             type: 'number'
         },
-        longitude: {
+        {
             attribute: 'longitude',
             type: 'number',
             readonly: true
         },
-        age: {
+        {
             attribute: 'age',
             type: 'number'
         },
-        index: {
+        {
             attribute: 'index',
             type: 'number'
         },
-        date1: {
-            attribute: 'date1',
+        {
+            attribute: 'dates1',
             type: 'date'
         },
-        date2: {
+        {
             attribute: 'date2',
             type: 'date'
         }
-    },
+    ],
     sortOrder: [
         {
             attribute: 'firstname',

@@ -50,14 +50,14 @@ const gridConfig: GridConfig = {
             width: 100
         }
     ],
-    attributes: {
-        firstname: {
+    attributes: [
+        {
             attribute: 'firstname'
         },
-        lastname: {
+        {
             attribute: 'lastname'
         }
-    }
+    ]
 };
 
 

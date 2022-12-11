@@ -1270,7 +1270,7 @@ export class Grid {
      * @param onlyResizeAttribute null = all
      */
     public autoResizeColumns(onlyResizeAttribute?: string) {
-        const attributes = this.gridInterface.__getGridConfig().attributes;
+        const attributes = this.gridInterface.__getGridConfig().__attributes;
         const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
 
         let widths: number[] = attributeKeys.map((key) => {
@@ -1976,8 +1976,8 @@ export class Grid {
             });
         }
 
-        const keys = Object.keys(this.gridInterface.__getGridConfig().attributes);
-        const columns = keys.map((e) => this.gridInterface.__getGridConfig().attributes[e]);
+        const keys = Object.keys(this.gridInterface.__getGridConfig().__attributes);
+        const columns = keys.map((e) => this.gridInterface.__getGridConfig().__attributes[e]);
         columns.forEach((col) => {
             if (col.currentFilterValue !== null && col.currentFilterValue !== undefined && col.currentFilterValue !== '') {
                 filter.filterArguments.push({
@@ -2148,7 +2148,7 @@ export class Grid {
         rowData: Entity
     ) {
         if (attribute) {
-            const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
+            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
 
             const placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
             let currentValue = cellConfig.currentFilterValue || ('' as any);
@@ -2386,7 +2386,7 @@ export class Grid {
 
         if (attribute) {
             const config = this.gridInterface.__getGridConfig();
-            const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
+            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
 
             if (cellConfig?.type === 'date') {
                 value = this.gridInterface.getDatasource().getDateFormater().fromDate(value);
@@ -2598,7 +2598,7 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-        const attributes = Object.keys(this.gridInterface.__getGridConfig().attributes) || [];
+        const attributes = Object.keys(this.gridInterface.__getGridConfig().__attributes) || [];
 
         render(
             html`<div class="simple-html-grid-menu ">
@@ -2657,7 +2657,7 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-        const attributes = Object.keys(this.gridInterface.__getGridConfig().attributes) || [];
+        const attributes = Object.keys(this.gridInterface.__getGridConfig().__attributes) || [];
 
         render(
             html`<div class="simple-html-grid-menu ">
@@ -2970,7 +2970,7 @@ export class Grid {
     private clearAllColumnFilters() {
         const datasource = this.gridInterface.getDatasource();
         datasource.setFilter(null);
-        const attributes = this.gridInterface.__getGridConfig().attributes;
+        const attributes = this.gridInterface.__getGridConfig().__attributes;
         const keys = Object.keys(attributes);
         keys.forEach((key) => {
             attributes[key].currentFilterValue = null;
@@ -3007,7 +3007,7 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-        const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
+        const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
 
         const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
         const notSelected = 'simple-html-grid-menu-item';
@@ -3103,7 +3103,7 @@ export class Grid {
             };
             loopFilter(currentFilter);
 
-            const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
+            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
 
             cellConfig.currentFilterValue = null;
 
@@ -3156,7 +3156,7 @@ export class Grid {
                     });
                 }
             };
-            const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
+            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
             if (cellConfig) {
                 cellConfig.currentFilterValue = null;
             }
@@ -3280,7 +3280,7 @@ export class Grid {
             let justData = '';
 
             const datasource = this.gridInterface.getDatasource();
-            const attConfig = this.gridInterface.__getGridConfig().attributes;
+            const attConfig = this.gridInterface.__getGridConfig().__attributes;
             const displayedRows = datasource.getRows();
             const dateformater = datasource.getDateFormater();
             const numberformater = datasource.getNumberFormater();
@@ -3667,7 +3667,7 @@ export class Grid {
                                 this.contextMenuAttributes(e, e.target as HTMLCellElement, (attribute) => {
                                     arg.attribute = attribute;
 
-                                    const cellConfig = this.gridInterface.__getGridConfig().attributes[attribute];
+                                    const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
                                     arg.attributeType = cellConfig.type || 'text';
                                     this.generateFilterEditor(structuredClone(filterArg));
                                 });
