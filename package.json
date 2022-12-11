@@ -36,27 +36,27 @@
     "devDependencies": {
         "@commitlint/cli": "^17.3.0",
         "@commitlint/config-conventional": "^17.3.0",
-        "@types/jest": "^29.2.3",
-        "@typescript-eslint/eslint-plugin": "^5.45.0",
-        "@typescript-eslint/parser": "^5.45.0",
-        "esbuild": "^0.15.16",
+        "@types/jest": "^29.2.4",
+        "@typescript-eslint/eslint-plugin": "^5.46.0",
+        "@typescript-eslint/parser": "^5.46.0",
+        "esbuild": "^0.16.4",
         "esbuild-helpers": "0.0.9",
-        "eslint": "^8.28.0",
+        "eslint": "^8.29.0",
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-prettier": "^4.2.1",
         "husky": "^8.0.2",
         "jest": "^29.3.1",
         "jest-environment-jsdom": "^29.3.1",
         "jsdom": "^20.0.3",
-        "lint-staged": "^13.0.4",
-        "prettier": "^2.8.0",
+        "lint-staged": "^13.1.0",
+        "prettier": "^2.8.1",
         "standard-version": "^9.5.0",
         "ts-jest": "^29.0.3",
         "ts-node": "^10.9.1",
-        "typedoc": "^0.23.21",
-        "typescript": "^4.9.3"
+        "typedoc": "^0.23.22",
+        "typescript": "^4.9.4"
     },
     "dependencies": {
-        "lit-html": "^2.4.0"
+        "lit-html": "^2.5.0"
     }
 }
