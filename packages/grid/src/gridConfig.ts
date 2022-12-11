@@ -50,7 +50,7 @@ export type Attribute = {
     attribute: string;
     label?: string;
     placeHolderRow?: string;
-    placeHolderFilter?:string;
+    placeHolderFilter?: string;
     operator?: FilterComparisonOperator;
     type?: DataTypes;
     disabled?: boolean;

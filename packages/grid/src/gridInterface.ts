@@ -39,7 +39,7 @@ export class GridInterface {
     constructor(gridConfig: GridConfig, datasource: Datasource) {
         this.columnsSelected = new Set();
         this.dataSource = datasource;
-        this.loadGridConfig(gridConfig, true)
+        this.loadGridConfig(gridConfig, true);
         this.__dataSourceUpdated();
     }
 
@@ -184,32 +184,31 @@ export class GridInterface {
         }
     }
 
-
-    public __setSelectedColumn(number: number, add= false){
-        if(!add){
+    public __setSelectedColumn(number: number, add = false) {
+        if (!add) {
             this.columnsSelected.clear();
         }
-        if(this.__isColumnSelected(number)){
-            this.columnsSelected.delete(number)
-        }else{
-            this.columnsSelected.add(number)
+        if (this.__isColumnSelected(number)) {
+            this.columnsSelected.delete(number);
+        } else {
+            this.columnsSelected.add(number);
         }
-        
+
         this.grid.rebuildHeaderColumns();
     }
 
-    public __isColumnSelected(number: number){
-        return  this.columnsSelected.has(number);
+    public __isColumnSelected(number: number) {
+        return this.columnsSelected.has(number);
     }
 
-    public __selectedColumns(){
-        return this.columnsSelected.size
+    public __selectedColumns() {
+        return this.columnsSelected.size;
     }
 
     /**
      * when you need load grid config
      */
-    public loadGridConfig(gridConfig: GridConfig, skipRebuild= false) {
+    public loadGridConfig(gridConfig: GridConfig, skipRebuild = false) {
         this.suppressEvents = true;
 
         const sortOrder = gridConfig.sortOrder;
@@ -241,11 +240,9 @@ export class GridInterface {
 
         this.suppressEvents = false;
 
-        if(!skipRebuild){
+        if (!skipRebuild) {
             this.grid.rebuild();
         }
-
-        
     }
 
     /**
