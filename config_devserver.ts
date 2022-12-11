@@ -86,7 +86,6 @@ const checker_client = TypeChecker({
             baseUrl: './',
             rootDir: '',
             paths: {
-                '@simple-html/datasource': ['./packages/datasource/src'],
                 '@simple-html/grid': ['./packages/grid/src']
             }
         },

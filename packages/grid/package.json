@@ -19,7 +19,7 @@
         "access": "public"
     },
     "dependencies": {
-        "@simple-html/datasource": "latest"
+        "lit-html": "^2.5.0"
     },
     "devDependencies": {}
 }
