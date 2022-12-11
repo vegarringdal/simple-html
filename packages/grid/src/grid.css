@@ -87,8 +87,13 @@ input {
     overflow-y: scroll;
     pointer-events: all;
     border-bottom: 2px solid var(--simple-html-grid-pinned-border);
+
+}
+
+.simple-html-grid-header .simple-html-grid-col {
     background-color: var(--simple-html-grid-sec-bg-color);
 }
+
 
 .simple-html-grid-body {
     box-sizing: border-box;
@@ -431,8 +436,12 @@ input {
     left: 0;
     min-width: 100%;
     pointer-events: all;
-    border-bottom: 1px solid var(--simple-html-grid-pinned-border);
+   /*  border-bottom: 1px solid var(--simple-html-grid-pinned-border); */
     background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid-body-row-container-selector .simple-html-grid-row{
+    border-bottom: 1px solid var(--simple-html-grid-pinned-border);
 }
 
 .simple-html-grid-row-even {
@@ -441,10 +450,6 @@ input {
 
 .simple-html-grid-row-odd {
     background-color: var(--simple-html-grid-main-bg-odd);
-}
-
-.simple-html-grid-row-extended {
-    border-bottom: 1px solid var(--simple-html-grid-pinned-border);
 }
 
 .simple-html-grid-col {

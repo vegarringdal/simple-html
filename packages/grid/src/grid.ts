@@ -1573,11 +1573,6 @@ export class Grid {
                         rowEl.style.transform = `translate3d(0px, ${e.top}px, 0px)`;
                         rowEl.style.height = asPx(heights[e.row]);
 
-                        rowEl.classList.remove('simple-html-grid-row-extended');
-                        if (heights[e.row] > config.cellHeight) {
-                            rowEl.classList.add('simple-html-grid-row-extended');
-                        }
-
                         if (colType === LEFT_PINNED_COLTYPE) {
                             this.containerLeftColumnCache.forEach((x, i) => {
                                 const id = e.id + ':' + i.toString();
