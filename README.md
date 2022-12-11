@@ -1,15 +1,26 @@
 # grid-rebuild
 
+Only lit-html as dependency
 
-> nexy version 5.0.0 repo, simplyfying and improving what I learne while using grid in prod
+Its beeing used in some personal applications at work atm to get real world testing on what works
+good and not.
+
+Sample:
+[sample](https://vegarringdal.github.io/rebuild-grid/index.html)
+
+API docs:
+-   [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)
+-   [Datasource](https://vegarringdal.github.io/simple-html/datasource/index.html)
+
+Source code:
+-   [Grid](https://github.com/vegarringdal/simple-html/tree/master/packages/grid)
+-   [Datasource](https://github.com/vegarringdal/simple-html/tree/master/packages/datasource)
+
+
+
+> next version 5.0.0 repo, simplyfying and improving what I learne while using grid in prod
 
 > not made any npm package yet
-
-Will add `lit-html` for cell rendering in cells/menus/filters. It will make it simpler for more custom work/overrides.
-
-Scrolling improvement have been worked on, and rerendering. Less custom elements for everything, gridinterface will have less duplicate code from datasource. More event driven.
-
-dev branch will have a lot of commits to just save current progress, as it gets more stable I will start adding change log
 
 
 
@@ -21,7 +32,7 @@ dev branch will have a lot of commits to just save current progress, as it gets 
 * `npm start grid01`
 ' open `http://localhost:8080`
 
-# info / Progress
+# 5.0.0 Info / Progress
 
 
 * all UI rebuilt to optimise scrolling vert/horz
