@@ -1,5 +1,7 @@
 # @simple-html/grid & @simple-html/datasource
 
+> 💡version 5.0.0 is under active development - and will replace version 4.0.0 withing December 2022
+
 Native html grid & datasource with no dependencies.
 
 Its beeing used in some personal applications at work atm to get real world testing on what works
@@ -21,10 +23,6 @@ API docs
 -   `npm install`
 -   `npm start grid01`
 
-### What happend to version 3.x.x
-
-Added branch for it, everything except grid/datsource could easily be replaced by React/lithtml or
-similar, so was no need for it.
 
 ### BUILD / RELEASE
 
