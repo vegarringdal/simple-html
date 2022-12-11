@@ -17,6 +17,7 @@ Features/Todo:
 - [todo](https://github.com/vegarringdal/simple-html)
 
 
+Minimal sample:
 ```ts
 import './index.css';
 import { Datasource } from '@simple-html/datasource';

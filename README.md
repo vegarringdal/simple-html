@@ -2,6 +2,8 @@
 
 Only lit-html as dependency
 
+> version 5.0.0-next is the active version
+
 Its beeing used in some personal applications at work atm to get real world testing on what works
 good and not.
 
@@ -17,10 +19,69 @@ Source code:
 -   [Datasource](https://github.com/vegarringdal/simple-html/tree/master/packages/datasource)
 
 
+Minimal sample:
+```ts
+import './index.css';
+import { Datasource } from '@simple-html/datasource';
+import { GridInterface, GridElement, GridConfig } from '@simple-html/grid';
+import "@simple-html/grid/dist/grid.css";
 
-> next version 5.0.0 repo, simplyfying and improving what I learne while using grid in prod
+/**
+ * create datasource
+ */
+const datasource = new Datasource();
 
-> not made any npm package yet
+// add data
+datasource.setData([
+    { firstname: 'first1', lastname: 'last1' },
+    { firstname: 'first2', lastname: 'last2' },
+    { firstname: 'first3', lastname: 'last3' }
+]);
+
+/**
+ * create gridConfig
+ */
+const gridConfig: GridConfig = {
+    columnsCenter: [
+        {
+            rows: ['firstname'],
+            width: 100
+        },
+        {
+            rows: ['lastname'],
+            width: 100
+        }
+    ],
+    attributes: {
+        firstname: {
+            attribute: 'firstname'
+        },
+        lastname: {
+            attribute: 'lastname'
+        }
+    }
+};
+
+
+/**
+ * create interface and add gridconfig and datasource to it
+ */
+const gridInterface = new GridInterface(gridConfig, datasource);
+
+/**
+ * create element for the grid
+ */
+const element = document.createElement('simple-html-grid') as GridElement;
+element.style.width = '100%';
+element.style.height = '100%';
+element.style.display = 'flex';
+element.classList.add('simple-html-grid');
+element.connectInterface(gridInterface);
+
+document.body.appendChild(element);
+```
+
+
 
 
 
@@ -141,3 +202,13 @@ Want - but not needed for first version to replace old:
  * [ ] do we want excel similar column filter, when they enter focus mode?
    * I have something like this allready in old grid, so this one might need to be in added frist version
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
+
+
+
+ ### BUILD / RELEASE
+
+* `npm run build:all` builds all packages
+* `npm run typedoc-grid` update typedoc grid `npm run typedoc-ds` update typedoc grid
+* `npm run release:next` updates package.json and updates chnagelog (remove next if not test version)
+* `git push --follow-tags origin master` to update github with new tag
+* `npm run publish:all` publishes repo, you need to push
