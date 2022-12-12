@@ -6,7 +6,7 @@ import { GridInterface } from './gridInterface';
  * it connects gridinterface to grid class
  */
 export class GridElement extends HTMLElement {
-    private gridInterface: GridInterface;
+    private gridInterface: GridInterface<any>;
     private grid: Grid;
 
     constructor() {
@@ -14,7 +14,7 @@ export class GridElement extends HTMLElement {
         this.grid = new Grid();
     }
 
-    connectInterface(value: GridInterface) {
+    connectInterface(value: GridInterface<any>) {
         this.gridInterface = value;
         this.grid.connectGridInterface(this.gridInterface);
     }

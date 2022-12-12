@@ -11,10 +11,10 @@ type callable = callF | callO;
 /**
  * grid interface is what user have access to controll grid behavior
  */
-export class GridInterface {
+export class GridInterface<T> {
     private grid: Grid;
     private gridConfig: GridConfig;
-    private dataSource: Datasource<any>;
+    private dataSource: Datasource<T>;
     private columnsSelected: Set<number>;
 
     // for variable scroll
@@ -42,22 +42,22 @@ export class GridInterface {
         this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
-        this.loadGridConfig(gridConfig, true);
+        this.loadConfig(gridConfig, true);
         this.__dataSourceUpdated();
     }
 
     /**
      * loads init config, useful when saved/loaded many different configs
      */
-    public loadInitConfig(){
-        this.loadGridConfig(this.initConfig, true);
+    public loadInitConfig() {
+        this.loadConfig(this.initConfig, true);
     }
 
     /**
      * in case you need to set new init config, to be used with loadInitConfig()
-     * @param gridConfig 
+     * @param gridConfig
      */
-    public updateInitConfig(gridConfig: GridConfig){
+    public updateInitConfig(gridConfig: GridConfig) {
         this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
     }
 
@@ -188,6 +188,10 @@ export class GridInterface {
         this.dataSource.addEventListener(this);
     }
 
+    public autoResizeColumns() {
+        this.grid.autoResizeColumns();
+    }
+
     /**
      * @internal
      * current Gridconfig, so not use this for saving
@@ -200,7 +204,7 @@ export class GridInterface {
     /**
      * when you need to save a copy
      */
-    public saveGridConfig(): GridConfig {
+    public saveConfig(): GridConfig {
         const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
 
         // convert attributes
@@ -248,7 +252,7 @@ export class GridInterface {
     /**
      * when you need load grid config
      */
-    public loadGridConfig(gridConfig: GridConfig, skipRebuild = false) {
+    public loadConfig(gridConfig: GridConfig, skipRebuild = false) {
         this.suppressEvents = true;
 
         const sortOrder = gridConfig.sortOrder;
@@ -285,24 +289,20 @@ export class GridInterface {
         }
     }
 
-
     /**
      * shows filter dialog
      */
-    public showFilterDialog(){
-        this.grid.openFilterEditor()
+    public showFilterDialog() {
+        this.grid.openFilterEditor();
     }
-
 
     /**
      * gets columns in order
      * by default it filters out selected columns
      */
-    public getAttributeColumns(filterSelectedColumns = true){
+    public getAttributeColumns(filterSelectedColumns = true) {
         this.grid.getAttributeColumns(filterSelectedColumns);
     }
-
-
 
     /**
      * current datasource

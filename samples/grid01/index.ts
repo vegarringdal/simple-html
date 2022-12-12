@@ -135,31 +135,31 @@ createButton('select row 5', () => {
 });
 
 createButton('save config', () => {
-    (globalThis as any).griconfig = gridInterface.saveGridConfig();
+    (globalThis as any).griconfig = gridInterface.saveConfig();
 });
 
 createButton('load config', () => {
     if (!(globalThis as any)) {
         alert('no config saved, save on first');
     } else {
-        gridInterface.loadGridConfig((globalThis as any).griconfig);
+        gridInterface.loadConfig((globalThis as any).griconfig);
     }
 });
 
 createButton('use init config', () => {
-    gridInterface.loadGridConfig(gridConfig);
+    gridInterface.loadConfig(gridConfig);
 });
 
 createButton('set as readonly', () => {
-    const config = gridInterface.saveGridConfig();
+    const config = gridInterface.saveConfig();
     config.readonly = true;
-    gridInterface.loadGridConfig(config);
+    gridInterface.loadConfig(config);
 });
 
 createButton('set as editmode', () => {
-    const config = gridInterface.saveGridConfig();
+    const config = gridInterface.saveConfig();
     config.readonly = false;
-    gridInterface.loadGridConfig(config);
+    gridInterface.loadConfig(config);
 });
 
 const datasourceEvents = {

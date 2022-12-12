@@ -37,7 +37,7 @@ interface HTMLCellElement extends HTMLElement {
  */
 export class Grid {
     private element: HTMLElement;
-    private gridInterface: GridInterface;
+    private gridInterface: GridInterface<any>;
     private body: HTMLElement;
     // row cache
     private containerGroupRowCache: RowCache[];
@@ -85,7 +85,7 @@ export class Grid {
      * only to be used by grid interface
      * @param gridInterface
      */
-    public connectGridInterface(gridInterface: GridInterface) {
+    public connectGridInterface(gridInterface: GridInterface<any>) {
         this.gridInterface = gridInterface;
         this.gridInterface.connectGrid(this);
 
