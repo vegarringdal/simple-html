@@ -1281,12 +1281,13 @@ export class Grid {
             const length = attribute?.label?.length || attribute.attribute?.length;
             return length + 4;
         });
+
         const text: string[] = attributeKeys.map((key) => {
             const attribute = attributes[key];
             if (attribute.type === 'date' && attribute?.label?.length < 5) {
                 return '19.19.2000 A';
             }
-            return (attribute?.label || attribute.attribute) + 'sorter';
+            return (attribute?.label || attribute.attribute) + '< > < <';
         });
 
         const data = this.gridInterface.getDatasource().getAllData();
@@ -1325,7 +1326,7 @@ export class Grid {
                         if (attributeKeys.indexOf(rowAttribute) !== -1) {
                             const xx = widths[attributeKeys.indexOf(rowAttribute)];
                             if (xx > x) {
-                                x = this.getTextWidth(text[attributeKeys.indexOf(rowAttribute)]) + 15;
+                                x = this.getTextWidth(text[attributeKeys.indexOf(rowAttribute)]) + 20;
                             }
                         }
                     }
@@ -2121,8 +2122,10 @@ export class Grid {
                 }
             });
 
-        const value = attribute;
         if (attribute) {
+            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
+            const label = cellConfig.label || this.prettyPrintString(cellConfig.attribute);
+
             render(
                 html`<div
                     class="simple-html-label"
@@ -2131,7 +2134,7 @@ export class Grid {
                         this.contextmenuLabel(e, cell, row, column, celno, colType, cellType, attribute, rowData);
                     }}
                 >
-                    ${value} ${iconAsc}
+                    ${label} ${iconAsc}
                 </div>`,
                 cell as any
             );
@@ -3417,7 +3420,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        const attributes = this.getAttributeColumns()
+                        const attributes = this.getAttributeColumns();
 
                         copyPasteData(attributes, false);
                         this.gridInterface.__callSubscribers('copy-row', {
