@@ -3223,6 +3223,26 @@ export class Grid {
         this.contextMenu = contextMenu;
     }
 
+    public getAttributeColumns(filterSelectedColumns = true) {
+        const colLeft = this.gridInterface.__getGridConfig().columnsPinnedLeft.flatMap((e) => e.rows.map((e) => e));
+        const colCenter = this.gridInterface.__getGridConfig().columnsCenter.flatMap((e) => e.rows.map((e) => e));
+        const colRight = this.gridInterface.__getGridConfig().columnsPinnedRight.flatMap((e) => e.rows.map((e) => e));
+        const allAttributes = colLeft.concat(colCenter).concat(colRight);
+
+        let attributes: string[] = [];
+        if (this.gridInterface.__selectedColumns()) {
+            allAttributes.forEach((name, i) => {
+                if (this.gridInterface.__isColumnSelected(i + 1) && filterSelectedColumns) {
+                    attributes.push(name);
+                }
+            });
+        } else {
+            attributes = allAttributes;
+        }
+
+        return attributes;
+    }
+
     private contextmenuRow(
         event: MouseEvent,
         cell: HTMLCellElement,
@@ -3281,11 +3301,9 @@ export class Grid {
 
             const datasource = this.gridInterface.getDatasource();
             const attConfig = this.gridInterface.__getGridConfig().__attributes;
-            const displayedRows = datasource.getRows();
             const dateformater = datasource.getDateFormater();
             const numberformater = datasource.getNumberFormater();
-
-            const selectedRows = datasource.getSelection().getSelectedRows();
+            const selectedRows = datasource.getSelectedRows();
 
             const loopData = (entity: Entity) => {
                 if (!entity.__group) {
@@ -3322,8 +3340,8 @@ export class Grid {
             if (onlyCurrentEntity) {
                 loopData(datasource.currentEntity);
             } else {
-                selectedRows.forEach((rowNumber) => {
-                    loopData(displayedRows[rowNumber]);
+                selectedRows.forEach((entity) => {
+                    loopData(entity);
                 });
             }
 
@@ -3345,10 +3363,8 @@ export class Grid {
 
         const clearRows = (attribute: string) => {
             const datasource = this.gridInterface.getDatasource();
-            const displayedRows = datasource.getRows();
-            const selectedRows = datasource.getSelection().getSelectedRows();
-            selectedRows.forEach((rowNumber) => {
-                const entity = displayedRows[rowNumber];
+            const selectedRows = datasource.getSelectedRows();
+            selectedRows.forEach((entity) => {
                 entity[attribute] = null;
             });
         };
@@ -3398,25 +3414,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        const colLeft = this.gridInterface
-                            .__getGridConfig()
-                            .columnsPinnedLeft.flatMap((e) => e.rows.map((e) => e));
-                        const colCenter = this.gridInterface.__getGridConfig().columnsCenter.flatMap((e) => e.rows.map((e) => e));
-                        const colRight = this.gridInterface
-                            .__getGridConfig()
-                            .columnsPinnedRight.flatMap((e) => e.rows.map((e) => e));
-                        const allAttributes = colLeft.concat(colCenter).concat(colRight);
-
-                        let attributes: string[] = [];
-                        if (this.gridInterface.__selectedColumns()) {
-                            allAttributes.forEach((name, i) => {
-                                if (this.gridInterface.__isColumnSelected(i + 1)) {
-                                    attributes.push(name);
-                                }
-                            });
-                        } else {
-                            attributes = allAttributes;
-                        }
+                        const attributes = this.getAttributeColumns()
 
                         copyPasteData(attributes, false);
                         this.gridInterface.__callSubscribers('copy-row', {

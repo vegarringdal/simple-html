@@ -608,6 +608,21 @@ export class Datasource<T = any> {
         this.__callSubscribers('select', { info: 'select-last' });
     }
 
+
+    /**
+     * returns selected data rows
+     * @returns 
+     */
+    public getSelectedRows(){
+        const displayedRows = this.getRows();
+        const selectedRows = this.getSelection().getSelectedRows();
+        const data: Entity[] = [];
+        selectedRows.forEach((row)=>{
+            data.push(displayedRows[row])
+        })
+        return data;
+    }
+
     /**
      * sets Intl Collator , this is used for sorting
      * @param code

@@ -36,12 +36,29 @@ export class GridInterface {
      * subscribed listerners, gets called when collection changes/is sorted/filtered etc
      */
     private listeners: Set<callable> = new Set();
+    private initConfig: GridConfig;
 
     constructor(gridConfig: GridConfig, datasource: Datasource) {
         this.columnsSelected = new Set();
         this.dataSource = datasource;
+        this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
         this.loadGridConfig(gridConfig, true);
         this.__dataSourceUpdated();
+    }
+
+    /**
+     * loads init config, useful when saved/loaded many different configs
+     */
+    public loadInitConfig(){
+        this.loadGridConfig(this.initConfig, true);
+    }
+
+    /**
+     * in case you need to set new init config, to be used with loadInitConfig()
+     * @param gridConfig 
+     */
+    public updateInitConfig(gridConfig: GridConfig){
+        this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
     }
 
     public parseConfig() {
@@ -267,6 +284,25 @@ export class GridInterface {
             this.grid.rebuild();
         }
     }
+
+
+    /**
+     * shows filter dialog
+     */
+    public showFilterDialog(){
+        this.grid.openFilterEditor()
+    }
+
+
+    /**
+     * gets columns in order
+     * by default it filters out selected columns
+     */
+    public getAttributeColumns(filterSelectedColumns = true){
+        this.grid.getAttributeColumns(filterSelectedColumns);
+    }
+
+
 
     /**
      * current datasource
