@@ -301,7 +301,7 @@ export class GridInterface<T> {
      * by default it filters out selected columns
      */
     public getAttributeColumns(filterSelectedColumns = true) {
-        this.grid.getAttributeColumns(filterSelectedColumns);
+        return this.grid.getAttributeColumns(filterSelectedColumns);
     }
 
     /**
