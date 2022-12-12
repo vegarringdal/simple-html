@@ -11,11 +11,13 @@ export type GridConfig = {
     columnsPinnedLeft?: Columns[];
     columnsCenter: Columns[];
     columnsPinnedRight?: Columns[];
-    sortOrder?: Sort[];
+    sorting?: Sort[];
     grouping?: GroupArgument[];
+    exspandedGroups?: string[];
     filter?: FilterArgument;
 
     // private/internals
+    // lets expand with internal gridConfig
     __attributes?: Record<string, Attribute>;
     __rowHeight?: number;
     __columnCells?: number;

@@ -215,7 +215,8 @@ export class GridInterface<T> {
         });
         config.__attributes = null;
 
-        config.sortOrder = this.getDatasource().getLastSorting();
+        config.exspandedGroups = this.getDatasource().getExpanded();
+        config.sorting = this.getDatasource().getLastSorting();
         config.grouping = this.getDatasource().getGrouping();
         config.filter = this.getDatasource().getFilter();
 
@@ -255,14 +256,16 @@ export class GridInterface<T> {
     public loadConfig(gridConfig: GridConfig, skipRebuild = false) {
         this.suppressEvents = true;
 
-        const sortOrder = gridConfig.sortOrder;
+        const sortOrder = gridConfig.sorting;
         const grouping = gridConfig.grouping;
         const filter = gridConfig.filter;
+        const exspandedGroups = gridConfig.exspandedGroups;
 
         this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
-        this.gridConfig.sortOrder = null;
+        this.gridConfig.sorting = null;
         this.gridConfig.grouping = null;
         this.gridConfig.filter = null;
+        this.gridConfig.exspandedGroups = null;
 
         this.parseConfig();
         if (filter) {
@@ -277,6 +280,7 @@ export class GridInterface<T> {
         }
 
         if (grouping?.length) {
+            this.getDatasource().setExpanded(exspandedGroups);
             this.getDatasource().group(grouping);
         } else {
             this.getDatasource().removeGroup();
