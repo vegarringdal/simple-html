@@ -304,6 +304,12 @@ export class GridInterface<T> {
         return this.grid.getAttributeColumns(filterSelectedColumns);
     }
 
+    public getOptionalAttributes() {
+        const attributes = new Set(Object.keys(this.gridConfig.__attributes));
+        this.getAttributeColumns(false).forEach((e) => attributes.delete(e));
+        return Array.from(attributes);
+    }
+
     /**
      * current datasource
      * @returns
