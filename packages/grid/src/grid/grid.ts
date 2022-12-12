@@ -3420,7 +3420,7 @@ export class Grid {
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        const attributes = this.getAttributeColumns();
+                        const attributes = this.getAttributeColumns(false);
 
                         copyPasteData(attributes, false);
                         this.gridInterface.__callSubscribers('copy-row', {
@@ -3437,6 +3437,27 @@ export class Grid {
                     }}
                 >
                     Row <i>(sel. rows)</i>
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        const attributes = this.getAttributeColumns();
+
+                        copyPasteData(attributes, false);
+                        this.gridInterface.__callSubscribers('copy-row-col', {
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData
+                        });
+                        this.removeContextMenu();
+                    }}
+                >
+                    Row <i>(sel. rows/col)</i>
                 </div>
                 <div class="simple-html-grid-menu-section">Paste:</div>
                 <hr class="hr-solid" />
