@@ -104,7 +104,7 @@ export const gridConfig: GridConfig = {
             type: 'date'
         }
     ],
-    sortOrder: [
+    sorting: [
         {
             attribute: 'firstname',
             ascending: true
