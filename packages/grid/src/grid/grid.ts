@@ -578,6 +578,9 @@ export class Grid {
                     dragElement.style.border = '1px solid ' + borderColor;
                     dragElement.style.left = asPx(mainX);
                     dragElement.style.top = asPx(mainY);
+                    dragElement.style.fontFamily = fontFamily;
+                    dragElement.style.fontWeight = fontWeight;
+                    dragElement.style.fontSize = fontSize;
                     dragElement.style.color = color;
 
                     const label = creatElement('SPAN', 'simple-html-draggable-element-label');
@@ -1243,7 +1246,7 @@ export class Grid {
         const context = canvas.getContext('2d');
         context.font = this.getFont();
         const metrics = context.measureText(text);
-        return metrics.width + 5;
+        return Math.floor(metrics.width + 5);
     }
 
     /**
