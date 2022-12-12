@@ -1263,7 +1263,14 @@ export class Grid {
 
         const dsFilter = this.gridInterface.getDatasource().getFilter();
 
-        const filterArg = dsFilter ? dsFilter : defaultStartFilter;
+        const filterArg = dsFilter?.type === "GROUP" ? dsFilter : defaultStartFilter;
+
+        if(dsFilter && dsFilter?.type !== "GROUP" && !Array.isArray(dsFilter)){
+            filterArg.filterArguments = [dsFilter]
+        }
+        if(Array.isArray(dsFilter) && dsFilter.length){
+            filterArg.filterArguments = dsFilter
+        }
 
         this.generateFilterEditor(structuredClone(filterArg));
     }
