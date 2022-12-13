@@ -132,8 +132,8 @@ export class Datasource<T = any> {
 
     /**
      * only mark for deletion, you can reset/bring it back with resetData()
-     * @param data 
-     * @param all 
+     * @param data
+     * @param all
      */
     public markForDeletion(data: Entity | Entity[], all = false) {
         this.__dataContainer.markForDeletion(data, all);
@@ -145,15 +145,15 @@ export class Datasource<T = any> {
 
     /**
      * remove data
-     * @param data 
-     * @param all 
+     * @param data
+     * @param all
      * @param rerunFilters if you plan to trigger many times in a loop then you want to set this to false until last one
-     * @returns 
+     * @returns
      */
-    public removeData(data: Entity | Entity[], all = false,  rerunFilters = true) {
+    public removeData(data: Entity | Entity[], all = false, rerunFilters = true) {
         const removed = this.__dataContainer.removeData(data, all);
-        if(rerunFilters){
-            this.__internalUpdate(true)
+        if (rerunFilters) {
+            this.__internalUpdate(true);
         }
         this.__callSubscribers('collection-changed', { removed: true, info: 'removeData', data });
         return removed;
@@ -457,8 +457,10 @@ export class Datasource<T = any> {
      * @param id null/undefined = all
      */
     public expandGroup(id?: string) {
-        this.__collectionDisplayed = this.__grouping.expandOneOrAll(id);
-        this.__callSubscribers('collection-expand');
+        if (this.__grouping.getGrouping().length) {
+            this.__collectionDisplayed = this.__grouping.expandOneOrAll(id);
+            this.__callSubscribers('collection-expand');
+        }
     }
 
     /**
@@ -466,8 +468,10 @@ export class Datasource<T = any> {
      * @param id null/undefined = all
      */
     public collapseGroup(id?: string) {
-        this.__collectionDisplayed = this.__grouping.collapseOneOrAll(id);
-        this.__callSubscribers('collection-collapse');
+        if (this.__grouping.getGrouping().length) {
+            this.__collectionDisplayed = this.__grouping.collapseOneOrAll(id);
+            this.__callSubscribers('collection-collapse');
+        }
     }
 
     /**
@@ -623,18 +627,17 @@ export class Datasource<T = any> {
         this.__callSubscribers('select', { info: 'select-last' });
     }
 
-
     /**
      * returns selected data rows
-     * @returns 
+     * @returns
      */
-    public getSelectedRows(){
+    public getSelectedRows() {
         const displayedRows = this.getRows();
         const selectedRows = this.getSelection().getSelectedRows();
         const data: Entity[] = [];
-        selectedRows.forEach((row)=>{
-            data.push(displayedRows[row])
-        })
+        selectedRows.forEach((row) => {
+            data.push(displayedRows[row]);
+        });
         return data;
     }
 
