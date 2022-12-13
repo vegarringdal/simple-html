@@ -1472,7 +1472,7 @@ export class Grid {
             'wheel',
             (event) => {
                 const x = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
-                this.focusElement.focus()
+                this.focusElement.focus();
                 const movement = x.scrollTop - (event as any).wheelDeltaY;
 
                 setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movement);
@@ -3417,6 +3417,52 @@ export class Grid {
             });
         };
 
+        const pasteAndClearTemplate = this.gridInterface.__getGridConfig().readonly
+            ? null
+            : html`<div class="simple-html-grid-menu-section">Paste:</div>
+                  <hr class="hr-solid" />
+                  <div
+                      class="simple-html-grid-menu-item"
+                      @click=${() => {
+                          alert('not implemented');
+                          this.gridInterface.__callSubscribers('paste', {
+                              cell,
+                              row,
+                              column,
+                              celno,
+                              colType,
+                              cellType,
+                              attribute,
+                              rowData
+                          });
+                          this.removeContextMenu();
+                      }}
+                  >
+                      Cell <i>(sel.rows)</i>
+                  </div>
+                  <div class="simple-html-grid-menu-section">Clear:</div>
+                  <hr class="hr-solid" />
+                  <div
+                      class="simple-html-grid-menu-item"
+                      @click=${() => {
+                          clearRows(attribute);
+                          this.gridInterface.__callSubscribers('clear', {
+                              cell,
+                              row,
+                              column,
+                              celno,
+                              colType,
+                              cellType,
+                              attribute,
+                              rowData
+                          });
+                          this.removeContextMenu();
+                          this.triggerScrollEvent();
+                      }}
+                  >
+                      Cell <i>(sel. rows)</i>
+                  </div>`;
+
         render(
             html`<div class="simple-html-grid-menu">
                 <div class="simple-html-grid-menu-section">Copy:</div>
@@ -3501,49 +3547,7 @@ export class Grid {
                 >
                     Row <i>(sel. rows/col)</i>
                 </div>
-                <div class="simple-html-grid-menu-section">Paste:</div>
-                <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                        this.gridInterface.__callSubscribers('paste', {
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData
-                        });
-                        this.removeContextMenu();
-                    }}
-                >
-                    Cell <i>(sel.rows)</i>
-                </div>
-                <div class="simple-html-grid-menu-section">Clear:</div>
-                <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        clearRows(attribute);
-                        this.gridInterface.__callSubscribers('clear', {
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData
-                        });
-                        this.removeContextMenu();
-                        this.triggerScrollEvent();
-                    }}
-                >
-                    Cell <i>(sel. rows)</i>
-                </div>
+                ${pasteAndClearTemplate}
             </div>`,
             contextMenu
         );
