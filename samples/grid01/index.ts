@@ -64,7 +64,7 @@ function createButton(title: string, callback: () => void) {
     btn.style.margin = '3px';
     containerbuttons.appendChild(btn);
 }
-
+toggelDarkGrid();
 createButton('toggle dark/light mode', () => {
     toggelDarkGrid();
 });
