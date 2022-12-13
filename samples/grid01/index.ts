@@ -35,10 +35,10 @@ const gridInterface = new GridInterface(gridConfig, datasource);
 const containerGrid = document.createElement('div');
 containerGrid.style.position = 'absolute';
 
-containerGrid.style.top = '0px';
-containerGrid.style.left = '250px';
-containerGrid.style.right = '0px';
-containerGrid.style.bottom = '0px';
+containerGrid.style.top = '10px';
+containerGrid.style.left = '260px';
+containerGrid.style.right = '10px';
+containerGrid.style.bottom = '10px';
 
 const containerbuttons = document.createElement('div');
 containerbuttons.style.position = 'absolute';

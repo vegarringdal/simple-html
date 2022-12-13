@@ -585,6 +585,8 @@ export class Grid {
             let dragElement: HTMLElement;
             let mouseUp = false;
 
+            const gridRect = this.element.getBoundingClientRect();
+
             // this is helpr to track if user is clicking or planing to use drag/drop
             let isClickEvent = setTimeout(() => {
                 if (attribute && !mouseUp) {
@@ -635,6 +637,20 @@ export class Grid {
             const mousemove = (event: MouseEvent) => {
                 if (dragElement) {
                     dragElement.style.transform = `translate3d(${event.clientX - mainX}px, ${event.clientY - mainY}px, 0px)`;
+                }
+                if (event.clientX < gridRect.left) {
+                    requestAnimationFrame(() => {
+                        const el = getElementByClassName(this.element, 'simple-html-grid-middle-scroller');
+                        el.scrollLeft = el.scrollLeft - 10;
+                        this.horizontalScrollHandler(el.scrollLeft, 'middle-pinned');
+                    });
+                }
+                if (event.clientX > gridRect.right) {
+                    requestAnimationFrame(() => {
+                        const el = getElementByClassName(this.element, 'simple-html-grid-middle-scroller');
+                        el.scrollLeft = el.scrollLeft + 10;
+                        this.horizontalScrollHandler(el.scrollLeft, 'middle-pinned');
+                    });
                 }
             };
 
