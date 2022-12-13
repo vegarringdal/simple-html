@@ -3417,6 +3417,95 @@ export class Grid {
             });
         };
 
+        const type = this.gridInterface.__getGridConfig().__attributes[attribute].type;
+        let summaryTemplate = html``;
+        if (type === 'number') {
+            function add(prev: number, cur: number) {
+                return parseFloat((prev + cur).toFixed(5));
+            }
+
+            function max(prev: number, cur: number) {
+                return cur > prev ? cur : prev;
+            }
+
+            function min(prev: number | null, cur: number) {
+                if (prev === null) {
+                    return cur;
+                }
+
+                return cur < prev ? cur : prev;
+            }
+
+            function avg(no: number, sum: number) {
+                return Math.round(sum / no);
+            }
+
+            const ds = this.gridInterface.getDatasource();
+            const selectedRows = ds.getSelection().getSelectedRows();
+            const numberFormater = ds.getNumberFormater();
+            const allrows = ds.getRows();
+
+            let curValue = 0;
+            let maxValue = 0;
+            let minValue: number = null;
+            selectedRows.forEach((index: number) => {
+                const x = allrows[index];
+                if (x && x[attribute]) {
+                    curValue = add(curValue, x[attribute]);
+                    maxValue = max(maxValue, x[attribute]);
+                    minValue = min(minValue, x[attribute]);
+                }
+            });
+
+            const curValueX = Math.round(curValue * 100) / 100;
+            const minValueX = Math.round(minValue * 100) / 100;
+            const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100;
+            const maxValueX = Math.round(maxValue * 100) / 100;
+
+            summaryTemplate = html` <div class="simple-html-grid-menu-section">Summary:</div>
+                <hr class="hr-solid" />
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Count: ${selectedRows.length}
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Sum: ${numberFormater.fromNumber(curValueX)}
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Max: ${numberFormater.fromNumber(maxValueX)}
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Min: ${numberFormater.fromNumber(minValueX)}
+                </div>
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                    }}
+                >
+                    Avg: ${numberFormater.fromNumber(avgValueX) || 0}
+                </div>`;
+        }
+
         const pasteAndClearTemplate = this.gridInterface.__getGridConfig().readonly
             ? null
             : html`<div class="simple-html-grid-menu-section">Paste:</div>
@@ -3547,7 +3636,7 @@ export class Grid {
                 >
                     Row <i>(sel. rows/col)</i>
                 </div>
-                ${pasteAndClearTemplate}
+                ${pasteAndClearTemplate} ${summaryTemplate}
             </div>`,
             contextMenu
         );
