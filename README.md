@@ -10,14 +10,14 @@ good and not.
 
 
 Sample:
-[sample](https://vegarringdal.github.io/rebuild-grid/index.html)
+* [sample](https://vegarringdal.github.io/rebuild-grid/index.html)
 
 API docs:
--   [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)
+*  [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)
 
 
 Source code: (have minimal sample of usage)
--   [Grid](https://github.com/vegarringdal/simple-html/tree/master/packages/grid)
+*  [Grid](https://github.com/vegarringdal/simple-html/packages/grid)
 
 
 

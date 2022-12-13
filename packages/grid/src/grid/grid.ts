@@ -66,6 +66,8 @@ export class Grid {
     private contextMenu: HTMLElement;
     private filterEditorContainer: HTMLElement;
     private columnChooserMenu: HTMLElement;
+    private clickListner: any;
+    focusElement: HTMLInputElement;
 
     /**
      * only to be used by grid interface
@@ -97,6 +99,22 @@ export class Grid {
     }
 
     public disconnectElement() {
+        this.removeContextMenu();
+
+        if (this.filterEditorContainer) {
+            document.body.removeChild(this.filterEditorContainer);
+            this.filterEditorContainer = null;
+        }
+
+        if (this.columnChooserMenu) {
+            document.body.removeChild(this.columnChooserMenu);
+            this.columnChooserMenu = null;
+        }
+
+        if (this.clickListner) {
+            document.removeEventListener('click', this.clickListner);
+        }
+
         this.gridInterface.__disconnectGrid();
     }
 
@@ -179,6 +197,12 @@ export class Grid {
         const header = creatElement(DIV, 'simple-html-grid-header');
         const body = creatElement(DIV, 'simple-html-grid-body');
 
+        // focus helper
+        const tmp = document.createElement('input');
+        tmp.style.opacity = '0';
+        body.appendChild(tmp);
+        this.focusElement = tmp;
+
         // will be used for scrollbar on right
         const bodyScroller = creatElement(DIV, 'simple-html-grid-body-scroller');
         const bodyScrollerRows = creatElement(DIV, 'simple-html-grid-body-scroller-rows');
@@ -250,12 +274,21 @@ export class Grid {
         this.rebuildTopPanel();
         this.rebuildFooter();
         this.addScrollEventListeners();
+        this.addClickEventListener();
 
         this.updateVerticalScrollHeight(this.gridInterface.__getScrollState().scrollHeight);
         this.updateHorizontalScrollWidth();
         this.horizontalScrollHandler(0);
         this.verticalScrollHandler(0);
         this.element.appendChild(body);
+    }
+
+    private addClickEventListener() {
+        this.clickListner = () => {
+            this.removeContextMenu();
+        };
+
+        document.addEventListener('click', this.removeContextMenu);
     }
 
     private updateMainElementSizes() {
@@ -1263,13 +1296,13 @@ export class Grid {
 
         const dsFilter = this.gridInterface.getDatasource().getFilter();
 
-        const filterArg = dsFilter?.type === "GROUP" ? dsFilter : defaultStartFilter;
+        const filterArg = dsFilter?.type === 'GROUP' ? dsFilter : defaultStartFilter;
 
-        if(dsFilter && dsFilter?.type !== "GROUP" && !Array.isArray(dsFilter)){
-            filterArg.filterArguments = [dsFilter]
+        if (dsFilter && dsFilter?.type !== 'GROUP' && !Array.isArray(dsFilter)) {
+            filterArg.filterArguments = [dsFilter];
         }
-        if(Array.isArray(dsFilter) && dsFilter.length){
-            filterArg.filterArguments = dsFilter
+        if (Array.isArray(dsFilter) && dsFilter.length) {
+            filterArg.filterArguments = dsFilter;
         }
 
         this.generateFilterEditor(structuredClone(filterArg));
@@ -1395,6 +1428,7 @@ export class Grid {
             'scroll',
             (event) => {
                 const x = event.currentTarget as HTMLElement;
+
                 setScrollTop(getElementByClassName(this.element, 'simple-html-grid-middle-scroller'), x.scrollTop);
                 setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-group'), x.scrollTop);
                 setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-selector'), x.scrollTop);
@@ -1418,6 +1452,7 @@ export class Grid {
             'scroll',
             (event) => {
                 const el = event.currentTarget as HTMLElement;
+
                 setScrollLeft(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle'), el.scrollLeft);
                 setScrollLeft(getElementByClassName(this.element, 'simple-html-grid-header-view-pinned-middle'), el.scrollLeft);
                 const scrollLeft = el.scrollLeft;
@@ -1437,7 +1472,7 @@ export class Grid {
             'wheel',
             (event) => {
                 const x = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
-
+                this.focusElement.focus()
                 const movement = x.scrollTop - (event as any).wheelDeltaY;
 
                 setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movement);
