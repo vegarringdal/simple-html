@@ -1515,17 +1515,17 @@ export class Grid {
             (event) => {
                 const x = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
                 this.focusElement.focus();
+
                 const currentY = event.touches[0].clientY;
                 const deltaY = currentY - lastY;
                 lastY = currentY;
                 const movementY = x.scrollTop - deltaY;
+                setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movementY);
 
                 const currentX = event.touches[0].clientX;
                 const deltaX = currentX - lastX;
                 lastX = currentX;
                 const movementX = x.scrollLeft - deltaX;
-
-                setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movementY);
                 setScrollLeft(getElementByClassName(this.element, ' simple-html-grid-middle-scroller'), movementX);
             },
             { passive: false }
