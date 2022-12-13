@@ -1495,6 +1495,41 @@ export class Grid {
             },
             { passive: false }
         );
+
+        let lastY = 0;
+        let lastX = 0;
+        this.element.addEventListener(
+            'touchstart',
+            (event) => {
+                lastY = event.touches[0].clientY;
+                lastX = event.touches[0].clientX;
+            },
+            { passive: false }
+        );
+
+        /**
+         *wheel event, only way to get it unless we disable pointer events
+         */
+        this.element.addEventListener(
+            'touchmove',
+            (event) => {
+                const x = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
+                this.focusElement.focus();
+                const currentY = event.touches[0].clientY;
+                const deltaY = currentY - lastY;
+                lastY = currentY;
+                const movementY = x.scrollTop - deltaY;
+
+                const currentX = event.touches[0].clientX;
+                const deltaX = currentX - lastX;
+                lastX = currentX;
+                const movementX = x.scrollLeft - deltaX;
+
+                setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movementY);
+                setScrollLeft(getElementByClassName(this.element, ' simple-html-grid-middle-scroller'), movementX);
+            },
+            { passive: false }
+        );
     }
 
     private verticalScrollHandler(scrollTop: number) {
