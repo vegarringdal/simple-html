@@ -130,6 +130,11 @@ export class Datasource<T = any> {
         }
     }
 
+    /**
+     * only mark for deletion, you can reset/bring it back with resetData()
+     * @param data 
+     * @param all 
+     */
     public markForDeletion(data: Entity | Entity[], all = false) {
         this.__dataContainer.markForDeletion(data, all);
         const eventTriggered = this.__internalUpdate(true);
@@ -138,8 +143,18 @@ export class Datasource<T = any> {
         }
     }
 
-    public removeData(data: Entity | Entity[], all = false) {
+    /**
+     * remove data
+     * @param data 
+     * @param all 
+     * @param rerunFilters if you plan to trigger many times in a loop then you want to set this to false until last one
+     * @returns 
+     */
+    public removeData(data: Entity | Entity[], all = false,  rerunFilters = true) {
         const removed = this.__dataContainer.removeData(data, all);
+        if(rerunFilters){
+            this.__internalUpdate(true)
+        }
         this.__callSubscribers('collection-changed', { removed: true, info: 'removeData', data });
         return removed;
     }
@@ -179,7 +194,7 @@ export class Datasource<T = any> {
      * @param add add to current, if false it replaces current collections
      * @param reRunFilter rerun current filter, grouping/sorting will run automatically
      */
-    public setData(data: EntityUnion<T>[], add = false, reRunFilter = false) {
+    public setData(data: any[], add = false, reRunFilter = false) {
         if (add) {
             const x = this.__dataContainer.setData(data, add);
             if (x) {
