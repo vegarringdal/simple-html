@@ -193,11 +193,11 @@ createButton('gridInterface.removeEventListener\n (see console - F12)', () => {
 });
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
-    gridInterface.readonlySetter((attribute: string, rowData: Entity) => {
+    gridInterface.readonlySetter((attribute: string, rowData: Entity, configReadonlySetting: boolean) => {
         if (rowData['isDumb'] === true && attribute === 'favoriteFruit') {
             return true;
         } else {
-            return false;
+            return configReadonlySetting;
         }
     });
 });

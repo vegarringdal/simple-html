@@ -2449,7 +2449,7 @@ export class Grid {
             }
             let dimmed = '';
 
-            let cellReadOnly = this.gridInterface.__callReadonlySetter(attribute, rowData);
+            let cellReadOnly = this.gridInterface.__callReadonlySetter(attribute, rowData, cellConfig.readonly || false);
             if (cellReadOnly !== false && cellReadOnly !== true) {
                 cellReadOnly = cellConfig.readonly;
             }

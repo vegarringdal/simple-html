@@ -30,7 +30,7 @@ export class GridInterface<T> {
     /**
      * for setting readonly based on row values
      */
-    private readonlySetterFn: (attribute: string, rowData: Entity) => boolean | null;
+    private readonlySetterFn: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null;
 
     /**
      * subscribed listerners, gets called when collection changes/is sorted/filtered etc
@@ -388,7 +388,7 @@ export class GridInterface<T> {
      * this is for enabling readonly based on row data
      * @param callback
      */
-    public readonlySetter(callback: (attribute: string, rowData: Entity) => boolean | null) {
+    public readonlySetter(callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) {
         this.readonlySetterFn = callback;
         this.grid.triggerScrollEvent();
     }
@@ -397,9 +397,9 @@ export class GridInterface<T> {
      * @internal
      * called by grid calss
      */
-    public __callReadonlySetter(attribute: string, rowData: Entity) {
+    public __callReadonlySetter(attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) {
         if (this.readonlySetterFn) {
-            return this.readonlySetterFn(attribute, rowData);
+            return this.readonlySetterFn(attribute, rowData, cellReadOnlyConfig);
         } else {
             return null;
         }
