@@ -3221,6 +3221,10 @@ export class Grid {
             data: this.dropDownFilterData(attribute, true, '')
         };
 
+        /**
+         * helper to get context, if we do not do it like this we risk getting another state
+         * @returns 
+         */
         function getContext() {
             return context;
         }
@@ -3301,7 +3305,8 @@ export class Grid {
             };
 
             /**
-             * top checkbox
+             * top checkbox - available
+             * will show only column filtered
              */
             const availableCheckbox = getContext().data.enableAvailableOnlyOption
                 ? html` <div style="padding:2px">
@@ -3310,16 +3315,21 @@ export class Grid {
                           type="checkbox"
                           .checked=${live(getContext().availableOnly)}
                           @click=${() => {
-                              getContext().selectAll =
+                              getContext().availableOnly = !getContext().availableOnly;
+                            getContext().selectAll =
                                   getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
                                   !getContext().availableOnly;
-                              getContext().availableOnly = !getContext().availableOnly;
+                                  getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
                               reRender();
                           }}
                       /><label
                           style="padding:2px"
                           @click=${() => {
                               getContext().availableOnly = !getContext().availableOnly;
+                              getContext().selectAll =
+                                  getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
+                                  !getContext().availableOnly;
+                                  getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
                               reRender();
                           }}
                           >Filter Available</label
