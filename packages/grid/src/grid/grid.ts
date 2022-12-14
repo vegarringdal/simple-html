@@ -3397,7 +3397,13 @@ export class Grid {
 
                 return html` <input
                     class="simple-html-grid-menu-item-input"
-                    style="outline:none;width: 100%;"
+                    style="border:1px solid transparent; width: 100%, margin:0"
+                    @focus=${(e:any)=>{
+                        e.target.style.border = ""
+                    }}
+                    @blur=${(e:any)=>{
+                       e.target.style.border = "1px solid transparent" 
+                    }}
                     placeholder="search"
                     .value=${getContext().searchInput}
                     @input=${(e: EventTarget) => clickHandler(e)}
