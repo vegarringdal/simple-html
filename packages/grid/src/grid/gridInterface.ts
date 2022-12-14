@@ -50,15 +50,19 @@ export class GridInterface<T> {
      * loads init config, useful when saved/loaded many different configs
      */
     public loadInitConfig() {
-        this.loadConfig(this.initConfig, true);
+        this.loadConfig(this.initConfig, false);
     }
 
     /**
      * in case you need to set new init config, to be used with loadInitConfig()
      * @param gridConfig
+     * @param load = false, but can be usedful if you want to update and load it
      */
-    public updateInitConfig(gridConfig: GridConfig) {
+    public updateInitConfig(gridConfig: GridConfig, load= false) {
         this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
+        if(load){
+            this.loadConfig(this.initConfig, false);
+        }
     }
 
     public parseConfig() {
