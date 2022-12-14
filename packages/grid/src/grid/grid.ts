@@ -3099,6 +3099,13 @@ export class Grid {
         datasource.filter();
     }
 
+    /**
+     * helper for column excel similar filter
+     * @param attribute
+     * @param availableOnly
+     * @param searchInput
+     * @returns
+     */
     private dropDownFilterData(attribute: string, availableOnly: boolean, searchInput: string) {
         const datasource = this.gridInterface.getDatasource();
         const type = this.gridInterface.__getGridConfig().__attributes[attribute].type || 'text';
@@ -3223,7 +3230,7 @@ export class Grid {
 
         /**
          * helper to get context, if we do not do it like this we risk getting another state
-         * @returns 
+         * @returns
          */
         function getContext() {
             return context;
@@ -3241,6 +3248,9 @@ export class Grid {
                 return null;
             }
 
+            /**
+             * update grid with new result
+             */
             const runFilterClick = () => {
                 const intersection = Array.from(getContext().data.dataFilterSetFull).filter(
                     (x) => !getContext().data.dataFilterSet.has(x)
@@ -3308,88 +3318,95 @@ export class Grid {
              * top checkbox - available
              * will show only column filtered
              */
-            const availableCheckbox = getContext().data.enableAvailableOnlyOption
-                ? html` <div style="padding:2px">
-                      <input
-                          style="padding:2px"
-                          type="checkbox"
-                          .checked=${live(getContext().availableOnly)}
-                          @click=${() => {
-                              getContext().availableOnly = !getContext().availableOnly;
-                            getContext().selectAll =
-                                  getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
-                                  !getContext().availableOnly;
-                                  getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
-                              reRender();
-                          }}
-                      /><label
-                          style="padding:2px"
-                          @click=${() => {
-                              getContext().availableOnly = !getContext().availableOnly;
-                              getContext().selectAll =
-                                  getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
-                                  !getContext().availableOnly;
-                                  getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
-                              reRender();
-                          }}
-                          >Filter Available</label
-                      >
-                  </div>`
-                : null;
-
-            /**
-             * container, ncluding select all button
-             */
-            const listContainerTemplate = html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                <div style="padding:2px">
+            const availableCheckbox = () => {
+                if (!getContext().data.enableAvailableOnlyOption) {
+                    return null;
+                }
+                return html` <div style="padding:2px">
                     <input
                         style="padding:2px"
                         type="checkbox"
-                        .checked=${live(getContext().selectAll)}
+                        .checked=${live(getContext().availableOnly)}
                         @click=${() => {
-                            getContext().selectAll = !getContext().selectAll;
-                            if (getContext().selectAll) {
-                                getContext().data.dataFilterSet = new Set(getContext().data.dataFilterSetFull);
-                            } else {
-                                getContext().data.dataFilterSet = new Set();
-                            }
+                            getContext().availableOnly = !getContext().availableOnly;
+                            getContext().selectAll =
+                                getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
+                                !getContext().availableOnly;
+                            getContext().data = this.dropDownFilterData(
+                                attribute,
+                                getContext().availableOnly,
+                                getContext().searchInput
+                            );
                             reRender();
                         }}
                     /><label
                         style="padding:2px"
                         @click=${() => {
-                            getContext().selectAll = !getContext().selectAll;
-                            if (getContext().selectAll) {
-                                getContext().data.dataFilterSet = new Set(getContext().data.dataFilterSetFull);
-                            } else {
-                                getContext().data.dataFilterSet = new Set();
-                            }
+                            getContext().availableOnly = !getContext().availableOnly;
+                            getContext().selectAll =
+                                getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
+                                !getContext().availableOnly;
+                            getContext().data = this.dropDownFilterData(
+                                attribute,
+                                getContext().availableOnly,
+                                getContext().searchInput
+                            );
                             reRender();
                         }}
-                        >Select All</label
+                        >Filter Available</label
                     >
-                </div>
-                ${filterValues()}
-            </div>`;
+                </div>`;
+            };
+
+            /**
+             * container, ncluding select all button
+             */
+            const listContainerTemplate = () => {
+                const clickHandler = () => {
+                    getContext().selectAll = !getContext().selectAll;
+                    if (getContext().selectAll) {
+                        getContext().data.dataFilterSet = new Set(getContext().data.dataFilterSetFull);
+                    } else {
+                        getContext().data.dataFilterSet = new Set();
+                    }
+                    reRender();
+                };
+
+                return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
+                    <div style="padding:2px">
+                        <input
+                            style="padding:2px"
+                            type="checkbox"
+                            .checked=${live(getContext().selectAll)}
+                            @click=${() => clickHandler()}
+                        /><label style="padding:2px" @click=${() => clickHandler()}>Select All</label>
+                    </div>
+                    ${filterValues()}
+                </div>`;
+            };
 
             /**
              * input field
              */
-            const inputTemplate = html` <input
-                class="simple-html-grid-menu-item-input"
-                style="outline:none;width: 100%;"
-                placeholder="search"
-                .value=${getContext().searchInput}
-                @input=${(e: any) => {
+            const inputTemplate = () => {
+                const clickHandler = (e: any) => {
                     getContext().searchInput = e.target.value || null;
                     getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
                     reRender();
-                }}
-            />`;
+                };
+
+                return html` <input
+                    class="simple-html-grid-menu-item-input"
+                    style="outline:none;width: 100%;"
+                    placeholder="search"
+                    .value=${getContext().searchInput}
+                    @input=${(e: EventTarget) => clickHandler(e)}
+                />`;
+            };
 
             return html` <div class="simple-html-grid-menu-section">Search:</div>
                 <hr class="hr-solid" />
-                ${availableCheckbox} ${inputTemplate} ${listContainerTemplate}
+                ${availableCheckbox()} ${inputTemplate()} ${listContainerTemplate()}
                 <div
                     class="simple-html-label-button-menu-bottom"
                     @click=${() => {
@@ -3625,6 +3642,11 @@ export class Grid {
         this.contextMenu = contextMenu;
     }
 
+    /**
+     * gets all attributes displayed
+     * @param filterSelectedColumns - by default filters out selected
+     * @returns 
+     */
     public getAttributeColumns(filterSelectedColumns = true) {
         const colLeft = this.gridInterface.__getGridConfig().columnsPinnedLeft.flatMap((e) => e.rows.map((e) => e));
         const colCenter = this.gridInterface.__getGridConfig().columnsCenter.flatMap((e) => e.rows.map((e) => e));
@@ -3771,9 +3793,18 @@ export class Grid {
             });
         };
 
-        const type = this.gridInterface.__getGridConfig().__attributes[attribute].type;
-        let summaryTemplate = html``;
-        if (type === 'number') {
+        
+
+        /**
+         * summaryTemplate
+         * @returns 
+         */
+        const summaryTemplate = () => {
+            const type = this.gridInterface.__getGridConfig().__attributes[attribute].type;
+            if (type !== 'number') {
+                return null;
+            }
+
             function add(prev: number, cur: number) {
                 return parseFloat((prev + cur).toFixed(5));
             }
@@ -3816,7 +3847,7 @@ export class Grid {
             const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100;
             const maxValueX = Math.round(maxValue * 100) / 100;
 
-            summaryTemplate = html` <div class="simple-html-grid-menu-section">Summary:</div>
+            return html` <div class="simple-html-grid-menu-section">Summary:</div>
                 <hr class="hr-solid" />
                 <div
                     class="simple-html-grid-menu-item"
@@ -3858,53 +3889,61 @@ export class Grid {
                 >
                     Avg: ${numberFormater.fromNumber(avgValueX) || 0}
                 </div>`;
-        }
+        };
 
-        const pasteAndClearTemplate = this.gridInterface.__getGridConfig().readonly
-            ? null
-            : html`<div class="simple-html-grid-menu-section">Paste:</div>
-                  <hr class="hr-solid" />
-                  <div
-                      class="simple-html-grid-menu-item"
-                      @click=${() => {
-                          alert('not implemented');
-                          this.gridInterface.__callSubscribers('paste', {
-                              cell,
-                              row,
-                              column,
-                              celno,
-                              colType,
-                              cellType,
-                              attribute,
-                              rowData
-                          });
-                          this.removeContextMenu();
-                      }}
-                  >
-                      Cell <i>(sel.rows)</i>
-                  </div>
-                  <div class="simple-html-grid-menu-section">Clear:</div>
-                  <hr class="hr-solid" />
-                  <div
-                      class="simple-html-grid-menu-item"
-                      @click=${() => {
-                          clearRows(attribute);
-                          this.gridInterface.__callSubscribers('clear', {
-                              cell,
-                              row,
-                              column,
-                              celno,
-                              colType,
-                              cellType,
-                              attribute,
-                              rowData
-                          });
-                          this.removeContextMenu();
-                          this.triggerScrollEvent();
-                      }}
-                  >
-                      Cell <i>(sel. rows)</i>
-                  </div>`;
+        /**
+         * pasteAndClearTemplate
+         * @returns 
+         */
+        const pasteAndClearTemplate = () => {
+            if (this.gridInterface.__getGridConfig().readonly) {
+                return null;
+            }
+
+            return html`<div class="simple-html-grid-menu-section">Paste:</div>
+                <hr class="hr-solid" />
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        alert('not implemented');
+                        this.gridInterface.__callSubscribers('paste', {
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData
+                        });
+                        this.removeContextMenu();
+                    }}
+                >
+                    Cell <i>(sel.rows)</i>
+                </div>
+                <div class="simple-html-grid-menu-section">Clear:</div>
+                <hr class="hr-solid" />
+                <div
+                    class="simple-html-grid-menu-item"
+                    @click=${() => {
+                        clearRows(attribute);
+                        this.gridInterface.__callSubscribers('clear', {
+                            cell,
+                            row,
+                            column,
+                            celno,
+                            colType,
+                            cellType,
+                            attribute,
+                            rowData
+                        });
+                        this.removeContextMenu();
+                        this.triggerScrollEvent();
+                    }}
+                >
+                    Cell <i>(sel. rows)</i>
+                </div>`;
+        };
 
         render(
             html`<div class="simple-html-grid-menu">
@@ -3990,7 +4029,7 @@ export class Grid {
                 >
                     Row <i>(sel. rows/col)</i>
                 </div>
-                ${pasteAndClearTemplate} ${summaryTemplate}
+                ${pasteAndClearTemplate()} ${summaryTemplate()}
             </div>`,
             contextMenu
         );
@@ -4304,40 +4343,42 @@ export class Grid {
             </div>`;
         };
 
-        const header = html`<div class="grid-text-title">Filter Editor</div>`;
+        const headerTemplate = () => html`<div class="grid-text-title">Filter Editor</div>`;
 
-        const footer = html`<div class="grid-flex-reverse grid-m-4">
-            <div
-                class="grid-button grid-text-center"
-                @click=${() => {
-                    this.removeContextMenu();
-                    filterEditorContainer.parentElement.removeChild(filterEditorContainer);
-                    this.filterEditorContainer = null;
-                    this.gridInterface.getDatasource().filter(structuredClone(filterArg));
-                }}
-            >
-                Filter & Close
-            </div>
-            <div
-                class="grid-button grid-text-center"
-                @click=${() => {
-                    this.removeContextMenu();
-                    this.gridInterface.getDatasource().filter(structuredClone(filterArg));
-                }}
-            >
-                Filter Only
-            </div>
-            <div
-                class="grid-button grid-text-center"
-                @click=${() => {
-                    this.removeContextMenu();
-                    filterEditorContainer.parentElement.removeChild(filterEditorContainer);
-                    this.filterEditorContainer = null;
-                }}
-            >
-                Close
-            </div>
-        </div>`;
+        const footerTemplate = () => {
+            return html`<div class="grid-flex-reverse grid-m-4">
+                <div
+                    class="grid-button grid-text-center"
+                    @click=${() => {
+                        this.removeContextMenu();
+                        filterEditorContainer.parentElement.removeChild(filterEditorContainer);
+                        this.filterEditorContainer = null;
+                        this.gridInterface.getDatasource().filter(structuredClone(filterArg));
+                    }}
+                >
+                    Filter & Close
+                </div>
+                <div
+                    class="grid-button grid-text-center"
+                    @click=${() => {
+                        this.removeContextMenu();
+                        this.gridInterface.getDatasource().filter(structuredClone(filterArg));
+                    }}
+                >
+                    Filter Only
+                </div>
+                <div
+                    class="grid-button grid-text-center"
+                    @click=${() => {
+                        this.removeContextMenu();
+                        filterEditorContainer.parentElement.removeChild(filterEditorContainer);
+                        this.filterEditorContainer = null;
+                    }}
+                >
+                    Close
+                </div>
+            </div>`;
+        };
 
         /**
          * render dialog
@@ -4345,9 +4386,9 @@ export class Grid {
         render(
             html`<div class="filter-editor-content">
                 <div class="grid-flex-column grid-w-full grid-h-full">
-                    ${header}
+                    ${headerTemplate()}
                     <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg, null)}</div>
-                    ${footer}
+                    ${footerTemplate}
                 </div>
             </div>`,
             filterEditorGridCssContext
