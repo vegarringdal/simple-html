@@ -3219,13 +3219,78 @@ export class Grid {
         let selectAll = true;
         let wait = false;
 
+        /**
+         * template for bottom excel like filter
+         * @param reRender 
+         * @returns 
+         */
         const searchTemplate = (reRender: () => void) => {
             const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
             const data = this.dropDownFilterData(attribute, availableOnly, searchInput);
+              const runFilterClick = () => {
+                debugger;
+                const intersection = Array.from(data.dataFilterSetFull).filter((x) => !data.dataFilterSet.has(x));
 
-            console.log(availableOnly);
+                if (intersection.length < data.dataFilterSet.size) {
+                    // if full we want to use NOT in
+                    this.filterCallback(
+                        {} as any,
+                        cellConfig,
+                        intersection.length ? intersection : null,
+                        searchInput ? searchInput : null,
+                        intersection.length ? true : false
+                    );
+                } else {
+                    this.filterCallback(
+                        {} as any,
+                        cellConfig,
+                        data.dataFilterSet.size ? Array.from(data.dataFilterSet) : null,
+                        searchInput ? searchInput : null,
+                        false
+                    );
+                }
+            };
 
-            let availableCheckbox = data.enableAvailableOnlyOption
+            /**
+             * items found
+             * @returns
+             */
+            const filterValues = () => {
+                const filterValueClick = (rowData: any) => {
+                    wait = true;
+                    selectAll = false;
+                    data.dataFilterSet.has(rowData) ? data.dataFilterSet.delete(rowData) : data.dataFilterSet.add(rowData);
+                    selectAll = data.dataFilterSetFull.size === data.dataFilterSet.size && !availableOnly;
+                    reRender();
+                };
+                return Array.from(data.dataFilterSetFull).map((rowData: any) => {
+                    return html`<div style="padding:2px">
+                        <input
+                            style="padding:2px"
+                            type="checkbox"
+                            @click="${() => {
+                                debugger;
+                                filterValueClick(rowData);
+                            }}}"
+                            .checked="${data.dataFilterSet.has(rowData)}"
+                        />
+                        <label
+                            @click="${() => {
+                                debugger;
+                                filterValueClick(rowData);
+                            }}}"
+                            style="padding:2px"
+                        >
+                            ${rowData === 'NULL' ? 'Blank' : rowData}
+                        </label>
+                    </div>`;
+                });
+            };
+
+            /**
+             * top checkbox
+             */
+            const availableCheckbox = data.enableAvailableOnlyOption
                 ? html` <div style="padding:2px">
                       <input
                           style="padding:2px"
@@ -3246,54 +3311,35 @@ export class Grid {
                   </div>`
                 : null;
 
-            const filterValues = () => {
-                const filterValueClick = (rowData: any) => {
-                    wait = true;
-                    selectAll = false;
-                    data.dataFilterSet.has(rowData) ? data.dataFilterSet.delete(rowData) : data.dataFilterSet.add(rowData);
-                    selectAll = data.dataFilterSetFull.size === data.dataFilterSet.size && !availableOnly;
-                    reRender();
-                };
-                return Array.from(data.dataFilterSetFull).map((rowData: any) => {
-                    return html`<div style="padding:2px">
-                        <input
-                            style="padding:2px"
-                            type="checkbox"
-                            .checked="${data.dataFilterSet.has(rowData)}"
-                            @click="${() => filterValueClick(rowData)}}"
-                        /><label style="padding:2px" @click="${() => filterValueClick(rowData)}}"
-                            >${rowData === 'NULL' ? 'Blank' : rowData}</label
-                        >
-                    </div>`;
-                });
-            };
+            /**
+             * container, ncluding select all button
+             */
+            const listContainerTemplate = html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
+                <div style="padding:2px">
+                    <input
+                        style="padding:2px"
+                        type="checkbox"
+                        .checked=${selectAll}
+                        @click=${() => {
+                            selectAll = selectAll ? false : true;
+                            reRender();
+                        }}
+                    /><label
+                        style="padding:2px"
+                        @click=${() => {
+                            selectAll = selectAll ? false : true;
+                            reRender();
+                        }}
+                        >Select All</label
+                    >
+                </div>
+                ${filterValues()}
+            </div>`;
 
-            let selectAllTemplate =
-                !availableOnly || !data.enableAvailableOnlyOption
-                    ? html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                          <div style="padding:2px">
-                              <input
-                                  style="padding:2px"
-                                  type="checkbox"
-                                  .checked=${selectAll}
-                                  @click=${() => {
-                                      selectAll = selectAll ? false : true;
-                                      reRender();
-                                  }}
-                              /><label
-                                  style="padding:2px"
-                                  @click=${() => {
-                                      selectAll = selectAll ? false : true;
-                                      reRender();
-                                  }}
-                                  >Select All</label
-                              >
-                          </div>
-                          ${filterValues()}
-                      </div>`
-                    : null;
-
-            let inputTemplate = html` <input
+            /**
+             * input field
+             */
+            const inputTemplate = html` <input
                 class="simple-html-grid-menu-item-input"
                 style="outline:none;width: 100%;"
                 placeholder="search"
@@ -3309,11 +3355,19 @@ export class Grid {
 
             return html` <div class="simple-html-grid-menu-section">Search:</div>
                 <hr class="hr-solid" />
-                ${availableCheckbox} ${inputTemplate} ${selectAllTemplate}`;
+                ${availableCheckbox} ${inputTemplate} ${listContainerTemplate}
+                <div
+                    class="simple-html-label-button-menu-bottom"
+                    @click=${() => {
+                        runFilterClick();
+                    }}
+                >
+                    Run Search
+                </div>`;
         };
 
         /**
-         * inner render so its easier to rerender
+         * inner render so its easier to rerender when excel filter changes
          */
         const innerRender = () => {
             const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
