@@ -17,7 +17,7 @@ async function run() {
                         rootDir: `./src`,
                         target: 'es2018',
                         module: 'esNext',
-                        lib: ['es2019', 'dom'],
+                        lib: ['es2021', 'dom'],
                         skipLibCheck: true,
                         moduleResolution: 'node',
                         isolatedModules: false,

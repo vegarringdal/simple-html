@@ -60,7 +60,7 @@ const checker_client = TypeChecker({
         compilerOptions: {
             target: 'es2018',
             module: 'esNext',
-            lib: ['es2019', 'dom'],
+            lib: ['es2021', 'dom'],
             moduleResolution: 'node',
             isolatedModules: false,
             preserveConstEnums: true,
