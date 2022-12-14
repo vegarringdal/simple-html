@@ -3214,10 +3214,18 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-        let searchInput = '';
-        let availableOnly = true;
-        let selectAll = true;
-        let wait = false;
+
+        const context = {
+            searchInput:"",
+            availableOnly: true,
+            selectAll:true,
+            data: this.dropDownFilterData(attribute, true, '')
+        }
+
+        function getContext(){
+            return context
+        }
+
 
         /**
          * template for bottom excel like filter
@@ -3226,30 +3234,30 @@ export class Grid {
          */
         const searchTemplate = (reRender: () => void) => {
             const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-            const data = this.dropDownFilterData(attribute, availableOnly, searchInput);
+            
 
-            if (!data) {
+            if (!getContext().data) {
                 return null;
             }
 
             const runFilterClick = () => {
-                const intersection = Array.from(data.dataFilterSetFull).filter((x) => !data.dataFilterSet.has(x));
+                const intersection = Array.from(getContext().data.dataFilterSetFull).filter((x) => !getContext().data.dataFilterSet.has(x));
 
-                if (intersection.length < data.dataFilterSet.size) {
+                if (intersection.length < getContext().data.dataFilterSet.size) {
                     // if full we want to use NOT in
                     this.filterCallback(
                         {} as any,
                         cellConfig,
                         intersection.length ? intersection : null,
-                        searchInput ? searchInput : null,
+                        getContext().searchInput ? getContext().searchInput : null,
                         intersection.length ? true : false
                     );
                 } else {
                     this.filterCallback(
                         {} as any,
                         cellConfig,
-                        data.dataFilterSet.size ? Array.from(data.dataFilterSet) : null,
-                        searchInput ? searchInput : null,
+                        getContext().data.dataFilterSet.size ? Array.from(getContext().data.dataFilterSet) : null,
+                        getContext().searchInput ? getContext().searchInput : null,
                         false
                     );
                 }
@@ -3261,18 +3269,22 @@ export class Grid {
              */
             const filterValues = () => {
                 const filterValueClick = (rowData: any) => {
-                    wait = true;
-                    selectAll = false;
-                    data.dataFilterSet.has(rowData) ? data.dataFilterSet.delete(rowData) : data.dataFilterSet.add(rowData);
-                    selectAll = data.dataFilterSetFull.size === data.dataFilterSet.size && !availableOnly;
+
+                    getContext().selectAll = false;
+                    if (getContext().data.dataFilterSet.has(rowData)) {
+                        getContext().data.dataFilterSet.delete(rowData);
+                    } else {
+                        getContext().data.dataFilterSet.add(rowData);
+                    }
+                    getContext().selectAll = getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size && !getContext().availableOnly;
                     reRender();
                 };
-                return Array.from(data.dataFilterSetFull).map((rowData: any) => {
+                return Array.from(getContext().data.dataFilterSetFull).map((rowData: any) => {
                     return html`<div style="padding:2px">
                         <input
                             style="padding:2px"
                             type="checkbox"
-                            .checked=${data.dataFilterSet.has(rowData)}
+                            .checked=${live(getContext().data.dataFilterSet.has(rowData))}
                             @click=${() => {
                                 filterValueClick(rowData);
                             }}
@@ -3291,20 +3303,20 @@ export class Grid {
             /**
              * top checkbox
              */
-            const availableCheckbox = data.enableAvailableOnlyOption
+            const availableCheckbox = getContext().data.enableAvailableOnlyOption
                 ? html` <div style="padding:2px">
                       <input
                           style="padding:2px"
                           type="checkbox"
-                          .checked=${availableOnly}
+                          .checked=${live(getContext().availableOnly)}
                           @click=${() => {
-                              availableOnly = availableOnly ? false : true;
+                              getContext().availableOnly = getContext().availableOnly ? false : true;
                               reRender();
                           }}
                       /><label
                           style="padding:2px"
                           @click=${() => {
-                              availableOnly = availableOnly ? false : true;
+                              getContext().availableOnly = getContext().availableOnly ? false : true;
                               reRender();
                           }}
                           >Filter Available</label
@@ -3320,15 +3332,15 @@ export class Grid {
                     <input
                         style="padding:2px"
                         type="checkbox"
-                        .checked=${selectAll}
+                        .checked=${live(getContext().selectAll)}
                         @click=${() => {
-                            selectAll = selectAll ? false : true;
+                            getContext().selectAll = getContext().selectAll ? false : true;
                             reRender();
                         }}
                     /><label
                         style="padding:2px"
                         @click=${() => {
-                            selectAll = selectAll ? false : true;
+                            getContext().selectAll = getContext().selectAll ? false : true;
                             reRender();
                         }}
                         >Select All</label
@@ -3344,12 +3356,10 @@ export class Grid {
                 class="simple-html-grid-menu-item-input"
                 style="outline:none;width: 100%;"
                 placeholder="search"
-                .value=${searchInput}
-                @click=${() => {
-                    // wat?
-                }}
+                .value=${getContext().searchInput}
                 @input=${(e: any) => {
-                    searchInput = e.target.value || null;
+                    getContext().searchInput = e.target.value || null;
+                    getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
                     reRender();
                 }}
             />`;
