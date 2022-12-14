@@ -114,13 +114,13 @@ Need for version "5.0.0":
  * [x] add current filter to footer
  * [x] total rows/filtered rows to footer
  * [x] clear filter with button in footer
+ * [ ] excel similar column filter, like we have in old grid
+ * [x] hold shift +contr and use mousewheel to scroll horizontal
 
 Wanted/considering
  * [ ] find all function
  * [ ] replace value
  * [ ] edit cells callback/event
- * [ ] do we want excel similar column filter, when they enter focus mode?
-   * I have something like this allready in old grid, so this one might need to be in added frist version
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
 
 Other:

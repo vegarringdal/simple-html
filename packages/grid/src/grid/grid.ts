@@ -180,11 +180,15 @@ export class Grid {
         }
         new ResizeObserver(() => {
             if (this.resizeInit) {
-                if (this.oldHeight !== this.element.clientHeight || this.oldWidth !== this.element.clientWidth) {
-                    if (this.resizeTimer) clearTimeout(this.resizeTimer);
-                    this.resizeTimer = setTimeout(() => {
-                        this.rebuild();
-                    }, 100);
+                if (this.oldHeight !== this.element.clientHeight || this.oldWidth !== this.element.clientWidth) {                   
+                    if(this.oldHeight < this.element.clientHeight || this.oldWidth !== this.element.clientWidth){                     
+                        this.oldHeight = this.element.clientHeight
+                        this.oldWidth = this.element.clientWidth
+                        if (this.resizeTimer) clearTimeout(this.resizeTimer);
+                        this.resizeTimer = setTimeout(() => {
+                            this.rebuild();
+                        }, 100);
+                    }
                 }
             } else {
                 this.resizeInit = true;
@@ -281,6 +285,9 @@ export class Grid {
         this.horizontalScrollHandler(0);
         this.verticalScrollHandler(0);
         this.element.appendChild(body);
+
+        this.oldHeight = this.element.clientHeight
+        this.oldWidth = this.element.clientWidth
     }
 
     private addClickEventListener() {
@@ -1487,11 +1494,20 @@ export class Grid {
         this.element.addEventListener(
             'wheel',
             (event) => {
-                const x = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
-                this.focusElement.focus();
-                const movement = x.scrollTop - (event as any).wheelDeltaY;
 
-                setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movement);
+                if(event.shiftKey && event.ctrlKey){
+                    event.preventDefault()
+                    const el = getElementByClassName(this.element, 'simple-html-grid-middle-scroller');
+                    const movement = el.scrollLeft - (event as any).wheelDeltaY;
+                    console.log(movement)
+                    setScrollLeft(getElementByClassName(this.element, ' simple-html-grid-middle-scroller'), movement);
+                } else{
+                    const el = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
+                    this.focusElement.focus();
+                    const movement = el.scrollTop - (event as any).wheelDeltaY;
+                    setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movement);
+                }
+                
             },
             { passive: false }
         );
