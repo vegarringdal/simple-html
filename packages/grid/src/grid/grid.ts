@@ -299,7 +299,7 @@ export class Grid {
                     keep = true;
                     break;
                 }
-                node = node.parentElement;
+                node = node.parentNode;
             }
 
             if (!keep) {
@@ -3334,39 +3334,25 @@ export class Grid {
                 if (!getContext().data.enableAvailableOnlyOption) {
                     return null;
                 }
+
+                const handleEvent = (e: MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    getContext().availableOnly = !getContext().availableOnly;
+                    getContext().selectAll =
+                        getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
+                        !getContext().availableOnly;
+                    getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
+                    reRender();
+                };
+
                 return html` <div style="padding:2px">
                     <input
                         style="padding:2px"
                         type="checkbox"
                         .checked=${live(getContext().availableOnly)}
-                        @click=${() => {
-                            getContext().availableOnly = !getContext().availableOnly;
-                            getContext().selectAll =
-                                getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
-                                !getContext().availableOnly;
-                            getContext().data = this.dropDownFilterData(
-                                attribute,
-                                getContext().availableOnly,
-                                getContext().searchInput
-                            );
-                            reRender();
-                        }}
-                    /><label
-                        style="padding:2px"
-                        @click=${() => {
-                            getContext().availableOnly = !getContext().availableOnly;
-                            getContext().selectAll =
-                                getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
-                                !getContext().availableOnly;
-                            getContext().data = this.dropDownFilterData(
-                                attribute,
-                                getContext().availableOnly,
-                                getContext().searchInput
-                            );
-                            reRender();
-                        }}
-                        >Filter Available</label
-                    >
+                        @click=${(e: MouseEvent) => handleEvent(e)}
+                    /><label style="padding:2px" @click=${(e: MouseEvent) => handleEvent(e)}>Filter Available</label>
                 </div>`;
             };
 
