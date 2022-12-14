@@ -180,10 +180,10 @@ export class Grid {
         }
         new ResizeObserver(() => {
             if (this.resizeInit) {
-                if (this.oldHeight !== this.element.clientHeight || this.oldWidth !== this.element.clientWidth) {                   
-                    if(this.oldHeight < this.element.clientHeight || this.oldWidth !== this.element.clientWidth){                     
-                        this.oldHeight = this.element.clientHeight
-                        this.oldWidth = this.element.clientWidth
+                if (this.oldHeight !== this.element.clientHeight || this.oldWidth !== this.element.clientWidth) {
+                    if (this.oldHeight < this.element.clientHeight || this.oldWidth !== this.element.clientWidth) {
+                        this.oldHeight = this.element.clientHeight;
+                        this.oldWidth = this.element.clientWidth;
                         if (this.resizeTimer) clearTimeout(this.resizeTimer);
                         this.resizeTimer = setTimeout(() => {
                             this.rebuild();
@@ -286,8 +286,8 @@ export class Grid {
         this.verticalScrollHandler(0);
         this.element.appendChild(body);
 
-        this.oldHeight = this.element.clientHeight
-        this.oldWidth = this.element.clientWidth
+        this.oldHeight = this.element.clientHeight;
+        this.oldWidth = this.element.clientWidth;
     }
 
     private addClickEventListener() {
@@ -1494,20 +1494,18 @@ export class Grid {
         this.element.addEventListener(
             'wheel',
             (event) => {
-
-                if(event.shiftKey && event.ctrlKey){
-                    event.preventDefault()
+                if (event.shiftKey && event.ctrlKey) {
+                    event.preventDefault();
                     const el = getElementByClassName(this.element, 'simple-html-grid-middle-scroller');
                     const movement = el.scrollLeft - (event as any).wheelDeltaY;
-                    console.log(movement)
+                    console.log(movement);
                     setScrollLeft(getElementByClassName(this.element, ' simple-html-grid-middle-scroller'), movement);
-                } else{
+                } else {
                     const el = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
                     this.focusElement.focus();
                     const movement = el.scrollTop - (event as any).wheelDeltaY;
                     setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movement);
                 }
-                
             },
             { passive: false }
         );
@@ -2272,95 +2270,111 @@ export class Grid {
                 currentValue = this.gridInterface.getDatasource().getDateFormater().fromDate(currentValue);
             }
 
-            // stop duplicate events
-            let filterRunning = false;
+            /**
+             * internal function, so we can rerender
+             */
+            const renderMenu = () => {
+                // stop duplicate events
+                let filterRunning = false;
 
-            if (cellConfig.type === 'boolean') {
-                render(
-                    html`<input
-                        type="checkbox"
-                        .checked=${live(currentValue)}
-                        .indeterminate=${currentValue !== true && currentValue !== false}
-                        placeholder=${placeHolderFilter}
-                        @contextmenu=${(e: MouseEvent) => {
-                            e.preventDefault();
-                            this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                        }}
-                        @change=${(e: any) => {
-                            if (!filterRunning) {
-                                filterRunning = true;
+                if (cellConfig.type === 'boolean') {
+                    render(
+                        html`<input
+                            type="checkbox"
+                            .checked=${live(currentValue)}
+                            .indeterminate=${currentValue !== true && currentValue !== false}
+                            placeholder=${placeHolderFilter}
+                            @contextmenu=${(e: MouseEvent) => {
+                                e.preventDefault();
+                                this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                            }}
+                            @change=${(e: any) => {
+                                if (!filterRunning) {
+                                    filterRunning = true;
 
-                                switch (true) {
-                                    case currentValue === '' &&
-                                        (e.target as any).checked === true &&
-                                        e.target.indeterminate === false:
-                                        this.filterCallback((e.target as any).checked.toString(), cellConfig);
-                                        currentValue = (e.target as any).checked.toString();
-                                        break;
-                                    case currentValue === 'true' &&
-                                        (e.target as any).checked === false &&
-                                        e.target.indeterminate === false:
-                                        this.filterCallback((e.target as any).checked.toString(), cellConfig);
-                                        currentValue = (e.target as any).checked.toString();
-                                        break;
-                                    case currentValue === 'false' &&
-                                        (e.target as any).checked === true &&
-                                        e.target.indeterminate === false:
-                                        this.filterCallback('', cellConfig);
-                                        e.target.indeterminate = true;
-                                        (e.target as any).checked = false;
-                                        currentValue = '';
+                                    switch (true) {
+                                        case currentValue === '' &&
+                                            (e.target as any).checked === true &&
+                                            e.target.indeterminate === false:
+                                            this.filterCallback((e.target as any).checked.toString(), cellConfig);
+                                            currentValue = (e.target as any).checked.toString();
+                                            break;
+                                        case currentValue === 'true' &&
+                                            (e.target as any).checked === false &&
+                                            e.target.indeterminate === false:
+                                            this.filterCallback((e.target as any).checked.toString(), cellConfig);
+                                            currentValue = (e.target as any).checked.toString();
+                                            break;
+                                        case currentValue === 'false' &&
+                                            (e.target as any).checked === true &&
+                                            e.target.indeterminate === false:
+                                            this.filterCallback('', cellConfig);
+                                            e.target.indeterminate = true;
+                                            (e.target as any).checked = false;
+                                            currentValue = '';
+                                    }
+
+                                    filterRunning = false;
+                                }
+                            }}
+                        />`,
+                        cell as any
+                    );
+                } else {
+                    let lastFilter = '';
+                    let skipFocus = false;
+                    render(
+                        html`<input
+                            style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
+                            .value=${live(currentValue)}
+                            placeholder=${placeHolderFilter}
+                            @contextmenu=${(e: MouseEvent) => {
+                                e.preventDefault();
+                                if (lastFilter !== (e.target as any).value) {
+                                    this.filterCallback((e.target as any).value, cellConfig);
+                                }
+                                lastFilter = (e.target as any).value;
+                                this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                            }}
+                            @mousedown=${(e: MouseEvent) => {
+                                if (e.button === 2) {
+                                    skipFocus = true;
+                                }
+                            }}
+                            @focus=${() => {
+                                if (skipFocus) {
+                                    skipFocus = false;
+                                    return;
                                 }
 
-                                filterRunning = false;
-                            }
-                        }}
-                    />`,
-                    cell as any
-                );
-            } else {
-                let lastFilter = '';
-                let skipFocus = false;
-                render(
-                    html`<input
-                        style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
-                        .value=${live(currentValue)}
-                        placeholder=${placeHolderFilter}
-                        @contextmenu=${(e: MouseEvent) => {
-                            e.preventDefault();
-                            if (lastFilter !== (e.target as any).value) {
-                                this.filterCallback((e.target as any).value, cellConfig);
-                            }
-                            lastFilter = (e.target as any).value;
-                            this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                        }}
-                        @mousedown=${(e: MouseEvent) => {
-                            if (e.button === 2) {
-                                skipFocus = true;
-                            }
-                        }}
-                        @focus=${() => {
-                            if (skipFocus) {
-                                skipFocus = false;
-                                return;
-                            }
+                                this.gridInterface.__callSubscribers('cell-header-focus', {
+                                    cell,
+                                    row,
+                                    column,
+                                    celno,
+                                    colType,
+                                    cellType,
+                                    attribute,
+                                    rowData
+                                });
+                            }}
+                            @keydown=${(e: KeyboardEvent) => {
+                                const keycode = e.keyCode ? e.keyCode : e.which;
+                                if (keycode === 13) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (!filterRunning) {
+                                        filterRunning = true;
 
-                            this.gridInterface.__callSubscribers('cell-header-focus', {
-                                cell,
-                                row,
-                                column,
-                                celno,
-                                colType,
-                                cellType,
-                                attribute,
-                                rowData
-                            });
-                        }}
-                        @keydown=${(e: KeyboardEvent) => {
-                            const keycode = e.keyCode ? e.keyCode : e.which;
-                            if (keycode === 13) {
-                                e.preventDefault();
-                                e.stopPropagation();
+                                        if (lastFilter !== (e.target as any).value) {
+                                            this.filterCallback((e.target as any).value, cellConfig);
+                                        }
+                                        lastFilter = (e.target as any).value;
+                                        filterRunning = false;
+                                    }
+                                }
+                            }}
+                            @change=${(e: any) => {
                                 if (!filterRunning) {
                                     filterRunning = true;
 
@@ -2370,23 +2384,14 @@ export class Grid {
                                     lastFilter = (e.target as any).value;
                                     filterRunning = false;
                                 }
-                            }
-                        }}
-                        @change=${(e: any) => {
-                            if (!filterRunning) {
-                                filterRunning = true;
+                            }}
+                        />`,
+                        cell as any
+                    );
+                }
+            };
 
-                                if (lastFilter !== (e.target as any).value) {
-                                    this.filterCallback((e.target as any).value, cellConfig);
-                                }
-                                lastFilter = (e.target as any).value;
-                                filterRunning = false;
-                            }
-                        }}
-                    />`,
-                    cell as any
-                );
-            }
+            renderMenu();
         } else {
             render(html`<div class="simple-html-dimmed"></div>`, cell as any);
         }
@@ -3094,6 +3099,93 @@ export class Grid {
         datasource.filter();
     }
 
+    private dropDownFilterData(attribute: string, availableOnly: boolean, searchInput: string) {
+        const datasource = this.gridInterface.getDatasource();
+        const type = this.gridInterface.__getGridConfig().__attributes[attribute].type || 'text';
+        let dataFilterSet = new Set();
+
+        if (type !== 'text') {
+            return null;
+        }
+
+        const data = availableOnly ? datasource.getRows(true) : datasource.getAllData();
+
+        const length = data.length;
+        let haveNull = false;
+        const search = searchInput && searchInput.replaceAll('%', '').replaceAll('*', '');
+
+        for (let i = 0; i < length; i++) {
+            // maybe I should let this be aoption ? the 200 size..
+            if (data[i] && data[i][attribute] && dataFilterSet.size < 50) {
+                if (typeof data[i][attribute] === 'string') {
+                    if (search) {
+                        if (data[i][attribute].toLocaleUpperCase().indexOf(search.toLocaleUpperCase()) !== -1) {
+                            dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
+                        }
+                    } else {
+                        dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
+                    }
+                }
+                if (typeof data[i][attribute] === 'number') {
+                    if (search) {
+                        if (data[i][attribute].toString().indexOf(search) !== -1) {
+                            dataFilterSet.add(data[i][attribute]);
+                        }
+                    } else {
+                        dataFilterSet.add(data[i][attribute]);
+                    }
+                }
+            } else {
+                haveNull = true;
+            }
+        }
+
+        if (haveNull) {
+            dataFilterSet.add('NULL'); // null so we can get the blanks
+        }
+
+        const tempArray = Array.from(dataFilterSet).sort();
+
+        if (haveNull) {
+            tempArray.unshift('NULL'); // null so we can get the blanks
+        }
+
+        const dataFilterSetFull = new Set(tempArray);
+        let selectAll = true;
+
+        // check if top level filter have attribute, if so.. use it
+        const oldFilter = datasource.getFilter();
+        if (oldFilter?.filterArguments?.length) {
+            oldFilter?.filterArguments.forEach((f: FilterArgument) => {
+                if (f.attribute === attribute) {
+                    if (Array.isArray(f.value as any)) {
+                        if (f.operator === 'IN') {
+                            dataFilterSet = new Set(f.value as any);
+                            selectAll = false;
+                        }
+                        if (f.operator === 'NOT_IN') {
+                            const tempSet = new Set(f.value as any);
+                            dataFilterSet = new Set(Array.from(dataFilterSetFull).filter((x) => !tempSet.has(x)));
+                            selectAll = false;
+                        }
+                    }
+                }
+            });
+        }
+
+        const dataSize = datasource.getRows(true).length;
+        const totalSize = datasource.getAllData().length;
+        const filterSetsSameSize = dataFilterSet.size === dataFilterSetFull.size;
+        const enableAvailableOnlyOption = dataSize !== totalSize && filterSetsSameSize;
+
+        return {
+            enableAvailableOnlyOption,
+            dataFilterSet,
+            dataFilterSetFull,
+            selectAll
+        };
+    }
+
     private contextmenuFilter(
         event: MouseEvent,
         cell: HTMLCellElement,
@@ -3122,217 +3214,324 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-        const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
+        let searchInput = '';
+        let availableOnly = true;
+        let selectAll = true;
+        let wait = false;
 
-        const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
-        const notSelected = 'simple-html-grid-menu-item';
+        const searchTemplate = (reRender: () => void) => {
+            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
+            const data = this.dropDownFilterData(attribute, availableOnly, searchInput);
 
-        if (!cellConfig.operator) {
-            cellConfig.operator = this.gridInterface.getDatasource().getFilterFromType(cellConfig.type);
-        }
+            console.log(availableOnly);
 
-        let filterTemplate = html` <div class="simple-html-grid-menu-section">Set Operator:</div>
-            <hr class="hr-solid" />
-            <div
-                class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
+            let availableCheckbox = data.enableAvailableOnlyOption
+                ? html` <div style="padding:2px">
+                      <input
+                          style="padding:2px"
+                          type="checkbox"
+                          .checked=${availableOnly}
+                          @click=${() => {
+                              availableOnly = availableOnly ? false : true;
+                              reRender();
+                          }}
+                      /><label
+                          style="padding:2px"
+                          @click=${() => {
+                              availableOnly = availableOnly ? false : true;
+                              reRender();
+                          }}
+                          >Filter Available</label
+                      >
+                  </div>`
+                : null;
+
+            const filterValues = () => {
+                const filterValueClick = (rowData: any) => {
+                    wait = true;
+                    selectAll = false;
+                    data.dataFilterSet.has(rowData) ? data.dataFilterSet.delete(rowData) : data.dataFilterSet.add(rowData);
+                    selectAll = data.dataFilterSetFull.size === data.dataFilterSet.size && !availableOnly;
+                    reRender();
+                };
+                return Array.from(data.dataFilterSetFull).map((rowData: any) => {
+                    return html`<div style="padding:2px">
+                        <input
+                            style="padding:2px"
+                            type="checkbox"
+                            .checked="${data.dataFilterSet.has(rowData)}"
+                            @click="${() => filterValueClick(rowData)}}"
+                        /><label style="padding:2px" @click="${() => filterValueClick(rowData)}}"
+                            >${rowData === 'NULL' ? 'Blank' : rowData}</label
+                        >
+                    </div>`;
+                });
+            };
+
+            let selectAllTemplate =
+                !availableOnly || !data.enableAvailableOnlyOption
+                    ? html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
+                          <div style="padding:2px">
+                              <input
+                                  style="padding:2px"
+                                  type="checkbox"
+                                  .checked=${selectAll}
+                                  @click=${() => {
+                                      selectAll = selectAll ? false : true;
+                                      reRender();
+                                  }}
+                              /><label
+                                  style="padding:2px"
+                                  @click=${() => {
+                                      selectAll = selectAll ? false : true;
+                                      reRender();
+                                  }}
+                                  >Select All</label
+                              >
+                          </div>
+                          ${filterValues()}
+                      </div>`
+                    : null;
+
+            let inputTemplate = html` <input
+                class="simple-html-grid-menu-item-input"
+                style="outline:none;width: 100%;"
+                placeholder="search"
+                .value=${searchInput}
                 @click=${() => {
-                    cellConfig.operator = 'EQUAL';
-                    this.removeContextMenu();
+                    // wat?
                 }}
-            >
-                Equal
-            </div>
-            <div
-                class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
-                @click=${() => {
-                    cellConfig.operator = 'NOT_EQUAL_TO';
-                    this.removeContextMenu();
+                @input=${(e: any) => {
+                    searchInput = e.target.value || null;
+                    reRender();
                 }}
-            >
-                Not Equal
-            </div>
-            <div
-                class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
-                @click=${() => {
-                    cellConfig.operator = 'CONTAINS';
-                    this.removeContextMenu();
-                }}
-            >
-                Contains
-            </div>`;
+            />`;
 
-        if (cellConfig.type === 'date' || cellConfig.type === 'number') {
-            filterTemplate = html` <div class="simple-html-grid-menu-section">Set Operator:</div>
+            return html` <div class="simple-html-grid-menu-section">Search:</div>
+                <hr class="hr-solid" />
+                ${availableCheckbox} ${inputTemplate} ${selectAllTemplate}`;
+        };
+
+        /**
+         * inner render so its easier to rerender
+         */
+        const innerRender = () => {
+            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
+
+            const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
+            const notSelected = 'simple-html-grid-menu-item';
+
+            if (!cellConfig.operator) {
+                cellConfig.operator = this.gridInterface.getDatasource().getFilterFromType(cellConfig.type);
+            }
+
+            let filterTemplate = html` <div class="simple-html-grid-menu-section">Set Operator:</div>
                 <hr class="hr-solid" />
                 <div
-                    class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                    class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                     @click=${() => {
-                        cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                        cellConfig.operator = 'EQUAL';
                         this.removeContextMenu();
                     }}
                 >
-                    Greater than or equal
+                    Equal
                 </div>
                 <div
-                    class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                    class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
                     @click=${() => {
-                        cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
+                        cellConfig.operator = 'NOT_EQUAL_TO';
                         this.removeContextMenu();
                     }}
                 >
-                    Less than or equal
+                    Not Equal
+                </div>
+                <div
+                    class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
+                    @click=${() => {
+                        cellConfig.operator = 'CONTAINS';
+                        this.removeContextMenu();
+                    }}
+                >
+                    Contains
                 </div>`;
-        }
 
-        if (
-            cellConfig.type !== 'text' &&
-            cellConfig.type !== 'number' &&
-            cellConfig.type !== 'date' &&
-            cellConfig.type !== undefined
-        ) {
-            filterTemplate = '' as any;
-        }
-
-        /**
-         * set blank or not blank filter
-         */
-        const setBlankOrNotBlank = (arg: 'IS_BLANK' | 'IS_NOT_BLANK') => {
-            const datasource = this.gridInterface.getDatasource();
-            const currentFilter = datasource.getFilter();
-
-            const loopFilter = (filter: FilterArgument) => {
-                if (filter && Array.isArray(filter.filterArguments)) {
-                    filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
-                        if (fi.attribute === attribute) {
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    });
-                    filter.filterArguments.forEach((fi: FilterArgument) => {
-                        if (fi.type === 'GROUP') {
-                            loopFilter(fi);
-                        }
-                    });
-                }
-            };
-            loopFilter(currentFilter);
-
-            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-
-            cellConfig.currentFilterValue = null;
-
-            if (currentFilter && Array.isArray(currentFilter.filterArguments)) {
-                currentFilter.filterArguments.push({
-                    type: 'CONDITION',
-                    attribute: cellConfig.attribute,
-                    operator: arg,
-                    attributeType: cellConfig.type
-                });
-                datasource.setFilter(currentFilter);
-            } else {
-                datasource.setFilter({
-                    type: 'GROUP',
-                    logicalOperator: 'AND',
-                    filterArguments: [
-                        {
-                            type: 'CONDITION',
-                            attribute: cellConfig.attribute,
-                            operator: arg,
-                            attributeType: cellConfig.type
-                        }
-                    ]
-                });
+            if (cellConfig.type === 'date' || cellConfig.type === 'number') {
+                filterTemplate = html` <div class="simple-html-grid-menu-section">Set Operator:</div>
+                    <hr class="hr-solid" />
+                    <div
+                        class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                        @click=${() => {
+                            cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                            this.removeContextMenu();
+                        }}
+                    >
+                        Greater than or equal
+                    </div>
+                    <div
+                        class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                        @click=${() => {
+                            cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
+                            this.removeContextMenu();
+                        }}
+                    >
+                        Less than or equal
+                    </div>`;
             }
 
-            datasource.filter();
-        };
+            if (
+                cellConfig.type !== 'text' &&
+                cellConfig.type !== 'number' &&
+                cellConfig.type !== 'date' &&
+                cellConfig.type !== undefined
+            ) {
+                filterTemplate = '' as any;
+            }
 
-        /**
-         * clear current column filter
-         */
-        const clearColumnFilter = () => {
-            const datasource = this.gridInterface.getDatasource();
-            const currentFilter = datasource.getFilter();
+            /**
+             * set blank or not blank filter
+             */
+            const setBlankOrNotBlank = (arg: 'IS_BLANK' | 'IS_NOT_BLANK') => {
+                const datasource = this.gridInterface.getDatasource();
+                const currentFilter = datasource.getFilter();
 
-            const loopFilter = (filter: FilterArgument) => {
-                if (filter && Array.isArray(filter.filterArguments)) {
-                    filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
-                        if (fi.attribute === attribute) {
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    });
-                    filter.filterArguments.forEach((fi: FilterArgument) => {
-                        if (fi.type === 'GROUP') {
-                            loopFilter(fi);
-                        }
-                    });
-                }
-            };
-            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-            if (cellConfig) {
+                const loopFilter = (filter: FilterArgument) => {
+                    if (filter && Array.isArray(filter.filterArguments)) {
+                        filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
+                            if (fi.attribute === attribute) {
+                                return false;
+                            } else {
+                                return true;
+                            }
+                        });
+                        filter.filterArguments.forEach((fi: FilterArgument) => {
+                            if (fi.type === 'GROUP') {
+                                loopFilter(fi);
+                            }
+                        });
+                    }
+                };
+                loopFilter(currentFilter);
+
+                const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
+
                 cellConfig.currentFilterValue = null;
-            }
 
-            loopFilter(currentFilter);
-            datasource.setFilter(currentFilter);
-            this.rebuildHeaderColumns();
-            datasource.filter();
+                if (currentFilter && Array.isArray(currentFilter.filterArguments)) {
+                    currentFilter.filterArguments.push({
+                        type: 'CONDITION',
+                        attribute: cellConfig.attribute,
+                        operator: arg,
+                        attributeType: cellConfig.type
+                    });
+                    datasource.setFilter(currentFilter);
+                } else {
+                    datasource.setFilter({
+                        type: 'GROUP',
+                        logicalOperator: 'AND',
+                        filterArguments: [
+                            {
+                                type: 'CONDITION',
+                                attribute: cellConfig.attribute,
+                                operator: arg,
+                                attributeType: cellConfig.type
+                            }
+                        ]
+                    });
+                }
+
+                datasource.filter();
+            };
+
+            /**
+             * clear current column filter
+             */
+            const clearColumnFilter = () => {
+                const datasource = this.gridInterface.getDatasource();
+                const currentFilter = datasource.getFilter();
+
+                const loopFilter = (filter: FilterArgument) => {
+                    if (filter && Array.isArray(filter.filterArguments)) {
+                        filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
+                            if (fi.attribute === attribute) {
+                                return false;
+                            } else {
+                                return true;
+                            }
+                        });
+                        filter.filterArguments.forEach((fi: FilterArgument) => {
+                            if (fi.type === 'GROUP') {
+                                loopFilter(fi);
+                            }
+                        });
+                    }
+                };
+                const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
+                if (cellConfig) {
+                    cellConfig.currentFilterValue = null;
+                }
+
+                loopFilter(currentFilter);
+                datasource.setFilter(currentFilter);
+                this.rebuildHeaderColumns();
+                datasource.filter();
+            };
+
+            render(
+                html`<div class="simple-html-grid-menu">
+                    <div class="simple-html-grid-menu-section">Filter:</div>
+                    <hr class="hr-solid" />
+                    <div
+                        class="simple-html-grid-menu-item"
+                        @click=${() => {
+                            clearColumnFilter();
+                        }}
+                    >
+                        Clear Filter
+                    </div>
+                    <div
+                        class="simple-html-grid-menu-item"
+                        @click=${() => {
+                            this.clearAllColumnFilters();
+                        }}
+                    >
+                        Clear All Filters
+                    </div>
+                    <hr class="hr-dashed" />
+                    <div
+                        class="simple-html-grid-menu-item"
+                        @click=${() => {
+                            setBlankOrNotBlank('IS_BLANK');
+                        }}
+                    >
+                        Set "Is Blank"
+                    </div>
+                    <div
+                        class="simple-html-grid-menu-item"
+                        @click=${() => {
+                            setBlankOrNotBlank('IS_NOT_BLANK');
+                        }}
+                    >
+                        Set "Is Not Blank"
+                    </div>
+                    <hr class="hr-dashed" />
+                    <div
+                        class="simple-html-grid-menu-item"
+                        @click=${() => {
+                            this.openFilterEditor();
+                        }}
+                    >
+                        Advanced Filter
+                    </div>
+
+                    ${filterTemplate}
+                    ${searchTemplate(() => {
+                        innerRender();
+                    })}
+                </div>`,
+                contextMenu
+            );
         };
-
-        render(
-            html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-section">Filter:</div>
-                <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        clearColumnFilter();
-                    }}
-                >
-                    Clear Filter
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        this.clearAllColumnFilters();
-                    }}
-                >
-                    Clear All Filters
-                </div>
-                <hr class="hr-dashed" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        setBlankOrNotBlank('IS_BLANK');
-                    }}
-                >
-                    Set "Is Blank"
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        setBlankOrNotBlank('IS_NOT_BLANK');
-                    }}
-                >
-                    Set "Is Not Blank"
-                </div>
-                <hr class="hr-dashed" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        this.openFilterEditor();
-                    }}
-                >
-                    Advanced Filter
-                </div>
-
-                ${filterTemplate}
-            </div>`,
-            contextMenu
-        );
+        innerRender();
 
         document.body.appendChild(contextMenu);
         this.contextMenu = contextMenu;

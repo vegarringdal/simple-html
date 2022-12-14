@@ -1145,3 +1145,26 @@ input {
 .pinned-left-grouping-only{
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
 }
+
+
+
+
+
+.simple-html-grid-menu-item-input{
+    box-sizing: border-box;
+    margin-left: 1px;
+    border: 0;
+    border-radius: initial;
+    height: 20px;
+    text-align: center;
+    overflow: hidden;
+    user-select: none;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-cell);
+    transition: initial;
+    outline-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-alt-bg-color);
+}
+
