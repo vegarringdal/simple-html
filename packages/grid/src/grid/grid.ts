@@ -3430,67 +3430,69 @@ export class Grid {
                 cellConfig.operator = this.gridInterface.getDatasource().getFilterFromType(cellConfig.type);
             }
 
-            let filterTemplate = html` <div class="simple-html-grid-menu-section">Set Operator:</div>
-                <hr class="hr-solid" />
-                <div
-                    class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
-                    @click=${() => {
-                        cellConfig.operator = 'EQUAL';
-                        this.removeContextMenu();
-                    }}
-                >
-                    Equal
-                </div>
-                <div
-                    class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
-                    @click=${() => {
-                        cellConfig.operator = 'NOT_EQUAL_TO';
-                        this.removeContextMenu();
-                    }}
-                >
-                    Not Equal
-                </div>
-                <div
-                    class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
-                    @click=${() => {
-                        cellConfig.operator = 'CONTAINS';
-                        this.removeContextMenu();
-                    }}
-                >
-                    Contains
-                </div>`;
+            const filterTemplate = () => {
+                if (
+                    cellConfig.type !== 'text' &&
+                    cellConfig.type !== 'number' &&
+                    cellConfig.type !== 'date' &&
+                    cellConfig.type !== undefined
+                ) {
+                    return null;
+                }
 
-            if (cellConfig.type === 'date' || cellConfig.type === 'number') {
-                filterTemplate = html` <div class="simple-html-grid-menu-section">Set Operator:</div>
+                if (cellConfig.type === 'date' || cellConfig.type === 'number') {
+                    return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
+                        <hr class="hr-solid" />
+                        <div
+                            class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                            @click=${() => {
+                                cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                                this.removeContextMenu();
+                            }}
+                        >
+                            Greater than or equal
+                        </div>
+                        <div
+                            class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                            @click=${() => {
+                                cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
+                                this.removeContextMenu();
+                            }}
+                        >
+                            Less than or equal
+                        </div>`;
+                }
+
+                return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
                     <hr class="hr-solid" />
                     <div
-                        class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                        class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                         @click=${() => {
-                            cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                            cellConfig.operator = 'EQUAL';
                             this.removeContextMenu();
                         }}
                     >
-                        Greater than or equal
+                        Equal
                     </div>
                     <div
-                        class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                        class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
-                            cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
+                            cellConfig.operator = 'NOT_EQUAL_TO';
                             this.removeContextMenu();
                         }}
                     >
-                        Less than or equal
+                        Not Equal
+                    </div>
+                    <div
+                        class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
+                        @click=${() => {
+                            cellConfig.operator = 'CONTAINS';
+                            this.removeContextMenu();
+                        }}
+                    >
+                        Contains
                     </div>`;
-            }
-
-            if (
-                cellConfig.type !== 'text' &&
-                cellConfig.type !== 'number' &&
-                cellConfig.type !== 'date' &&
-                cellConfig.type !== undefined
-            ) {
-                filterTemplate = '' as any;
-            }
+            };
 
             /**
              * set blank or not blank filter
@@ -3631,7 +3633,7 @@ export class Grid {
                     ${searchTemplate(() => {
                         innerRender();
                     })}
-                    <!--   ${filterTemplate} -->
+                    <!--   ${filterTemplate()} -->
                 </div>`,
                 contextMenu
             );
@@ -3645,7 +3647,7 @@ export class Grid {
     /**
      * gets all attributes displayed
      * @param filterSelectedColumns - by default filters out selected
-     * @returns 
+     * @returns
      */
     public getAttributeColumns(filterSelectedColumns = true) {
         const colLeft = this.gridInterface.__getGridConfig().columnsPinnedLeft.flatMap((e) => e.rows.map((e) => e));
@@ -3793,11 +3795,9 @@ export class Grid {
             });
         };
 
-        
-
         /**
          * summaryTemplate
-         * @returns 
+         * @returns
          */
         const summaryTemplate = () => {
             const type = this.gridInterface.__getGridConfig().__attributes[attribute].type;
@@ -3893,7 +3893,7 @@ export class Grid {
 
         /**
          * pasteAndClearTemplate
-         * @returns 
+         * @returns
          */
         const pasteAndClearTemplate = () => {
             if (this.gridInterface.__getGridConfig().readonly) {
@@ -3945,91 +3945,93 @@ export class Grid {
                 </div>`;
         };
 
+        const copyCellTemplate = () => {
+            const clickHandle = () => {
+                copyPasteData([attribute], true);
+                this.gridInterface.__callSubscribers('copy-cell', {
+                    cell,
+                    row,
+                    column,
+                    celno,
+                    colType,
+                    cellType,
+                    attribute,
+                    rowData
+                });
+                this.removeContextMenu();
+            };
+
+            return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Cell</div>`;
+        };
+
+        const copyColumnOnSelectedRowsTemplate = () => {
+            const clickHandle = () => {
+                copyPasteData([attribute], false);
+                this.gridInterface.__callSubscribers('copy-column', {
+                    cell,
+                    row,
+                    column,
+                    celno,
+                    colType,
+                    cellType,
+                    attribute,
+                    rowData
+                });
+                this.removeContextMenu();
+            };
+
+            return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Column <i>(sel.rows)</i></div>`;
+        };
+
+        const copyAllOnSelectedRowsTemplate = () => {
+            const clickHandle = () => {
+                const attributes = this.getAttributeColumns(false);
+
+                copyPasteData(attributes, false);
+                this.gridInterface.__callSubscribers('copy-row', {
+                    cell,
+                    row,
+                    column,
+                    celno,
+                    colType,
+                    cellType,
+                    attribute,
+                    rowData
+                });
+                this.removeContextMenu();
+            };
+
+            return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(sel. rows)</i></div>`;
+        };
+
+        const copySelectedColumnsOnSelectedRowsTemplate = () => {
+            const clickHandle = () => {
+                const attributes = this.getAttributeColumns();
+
+                copyPasteData(attributes, false);
+                this.gridInterface.__callSubscribers('copy-row-col', {
+                    cell,
+                    row,
+                    column,
+                    celno,
+                    colType,
+                    cellType,
+                    attribute,
+                    rowData
+                });
+                this.removeContextMenu();
+            };
+
+            return html`<div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(sel. rows/col)</i></div>`;
+        };
+
         render(
             html`<div class="simple-html-grid-menu">
                 <div class="simple-html-grid-menu-section">Copy:</div>
                 <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        copyPasteData([attribute], true);
-                        this.gridInterface.__callSubscribers('copy-cell', {
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData
-                        });
-                        this.removeContextMenu();
-                    }}
-                >
-                    Cell
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        copyPasteData([attribute], false);
-                        this.gridInterface.__callSubscribers('copy-column', {
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData
-                        });
-                        this.removeContextMenu();
-                    }}
-                >
-                    Column <i>(sel.rows)</i>
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        const attributes = this.getAttributeColumns(false);
 
-                        copyPasteData(attributes, false);
-                        this.gridInterface.__callSubscribers('copy-row', {
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData
-                        });
-                        this.removeContextMenu();
-                    }}
-                >
-                    Row <i>(sel. rows)</i>
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        const attributes = this.getAttributeColumns();
-
-                        copyPasteData(attributes, false);
-                        this.gridInterface.__callSubscribers('copy-row-col', {
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData
-                        });
-                        this.removeContextMenu();
-                    }}
-                >
-                    Row <i>(sel. rows/col)</i>
-                </div>
-                ${pasteAndClearTemplate()} ${summaryTemplate()}
+                ${copyCellTemplate()} ${copyColumnOnSelectedRowsTemplate()} ${copyAllOnSelectedRowsTemplate()}
+                ${copySelectedColumnsOnSelectedRowsTemplate()} ${pasteAndClearTemplate()} ${summaryTemplate()}
             </div>`,
             contextMenu
         );
