@@ -67,7 +67,7 @@ export class Grid {
     private filterEditorContainer: HTMLElement;
     private columnChooserMenu: HTMLElement;
     private clickListner: any;
-    focusElement: HTMLInputElement;
+    private focusElement: HTMLInputElement;
 
     /**
      * only to be used by grid interface
@@ -291,11 +291,23 @@ export class Grid {
     }
 
     private addClickEventListener() {
-        this.clickListner = () => {
-            this.removeContextMenu();
+        const clickListner = (e: any) => {
+            let node = e.target;
+            let keep = false;
+            while (node) {
+                if (node.classList?.contains('simple-html-grid-menu')) {
+                    keep = true;
+                    break;
+                }
+                node = node.parentElement;
+            }
+
+            if (!keep) {
+                this.removeContextMenu();
+            }
         };
 
-        document.addEventListener('click', this.removeContextMenu);
+        document.addEventListener('click', clickListner);
     }
 
     private updateMainElementSizes() {
@@ -3398,11 +3410,11 @@ export class Grid {
                 return html` <input
                     class="simple-html-grid-menu-item-input"
                     style="border:1px solid transparent; width: 100%, margin:0"
-                    @focus=${(e:any)=>{
-                        e.target.style.border = ""
+                    @focus=${(e: any) => {
+                        e.target.style.border = '';
                     }}
-                    @blur=${(e:any)=>{
-                       e.target.style.border = "1px solid transparent" 
+                    @blur=${(e: any) => {
+                        e.target.style.border = '1px solid transparent';
                     }}
                     placeholder="search"
                     .value=${getContext().searchInput}
@@ -4396,7 +4408,7 @@ export class Grid {
                 <div class="grid-flex-column grid-w-full grid-h-full">
                     ${headerTemplate()}
                     <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg, null)}</div>
-                    ${footerTemplate}
+                    ${footerTemplate()}
                 </div>
             </div>`,
             filterEditorGridCssContext
