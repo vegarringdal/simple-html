@@ -3221,14 +3221,18 @@ export class Grid {
 
         /**
          * template for bottom excel like filter
-         * @param reRender 
-         * @returns 
+         * @param reRender
+         * @returns
          */
         const searchTemplate = (reRender: () => void) => {
             const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
             const data = this.dropDownFilterData(attribute, availableOnly, searchInput);
-              const runFilterClick = () => {
-                debugger;
+
+            if (!data) {
+                return null;
+            }
+
+            const runFilterClick = () => {
                 const intersection = Array.from(data.dataFilterSetFull).filter((x) => !data.dataFilterSet.has(x));
 
                 if (intersection.length < data.dataFilterSet.size) {
@@ -3268,21 +3272,18 @@ export class Grid {
                         <input
                             style="padding:2px"
                             type="checkbox"
-                            @click="${() => {
-                                debugger;
+                            .checked=${data.dataFilterSet.has(rowData)}
+                            @click=${() => {
                                 filterValueClick(rowData);
-                            }}}"
-                            .checked="${data.dataFilterSet.has(rowData)}"
-                        />
-                        <label
-                            @click="${() => {
-                                debugger;
-                                filterValueClick(rowData);
-                            }}}"
+                            }}
+                        /><label
                             style="padding:2px"
+                            @click=${() => {
+                                filterValueClick(rowData);
+                            }}
                         >
-                            ${rowData === 'NULL' ? 'Blank' : rowData}
-                        </label>
+                            ${rowData === 'NULL' ? 'Blank' : rowData}</label
+                        >
                     </div>`;
                 });
             };
