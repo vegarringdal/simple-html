@@ -71,8 +71,7 @@ export const gridConfig: GridConfig = {
         },
         {
             attribute: 'phone',
-            placeHolderRow: 'wow',
-            placeHolderFilter: 'custom placeholder'
+            placeHolderRow: 'wow'
         },
         {
             attribute: 'isDumb',
@@ -96,12 +95,14 @@ export const gridConfig: GridConfig = {
             type: 'number'
         },
         {
-            attribute: 'dates1',
-            type: 'date'
+            attribute: 'date1',
+            type: "date",
+            placeHolderFilter:"YYYY-MM-DD"
         },
         {
             attribute: 'date2',
-            type: 'date'
+            type: 'date',
+            placeHolderFilter:"YYYY-MM-DD"
         }
     ],
     sorting: [
