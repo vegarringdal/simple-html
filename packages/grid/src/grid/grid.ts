@@ -4216,6 +4216,8 @@ export class Grid {
             if (arg.valueType === 'ATTRIBUTE') {
                 filterValue = html`<div
                     @click=${(e: MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         this.contextMenuAttributes(e, e.target as any, (attribute) => {
                             arg.value = attribute;
                             this.generateFilterEditor(structuredClone(filterArg));
@@ -4237,6 +4239,8 @@ export class Grid {
                         <div
                             class="grid-flex-1 grid-text-center"
                             @click=${(e: MouseEvent) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 this.contextMenuAttributes(e, e.target as HTMLCellElement, (attribute) => {
                                     arg.attribute = attribute;
 
@@ -4252,6 +4256,8 @@ export class Grid {
                         <div
                             class="grid-flex-1 grid-text-center"
                             @click=${(e: MouseEvent) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 this.contextMenuOperator(e, e.target as HTMLCellElement, (operator) => {
                                     arg.operator = operator.replace(' ', '_').toUpperCase() as any;
 
