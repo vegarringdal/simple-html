@@ -3214,18 +3214,16 @@ export class Grid {
             contextMenu.style.left = asPx(5);
         }
 
-
         const context = {
-            searchInput:"",
+            searchInput: '',
             availableOnly: true,
-            selectAll:true,
+            selectAll: true,
             data: this.dropDownFilterData(attribute, true, '')
-        }
+        };
 
-        function getContext(){
-            return context
+        function getContext() {
+            return context;
         }
-
 
         /**
          * template for bottom excel like filter
@@ -3234,19 +3232,20 @@ export class Grid {
          */
         const searchTemplate = (reRender: () => void) => {
             const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-            
 
             if (!getContext().data) {
                 return null;
             }
 
             const runFilterClick = () => {
-                const intersection = Array.from(getContext().data.dataFilterSetFull).filter((x) => !getContext().data.dataFilterSet.has(x));
+                const intersection = Array.from(getContext().data.dataFilterSetFull).filter(
+                    (x) => !getContext().data.dataFilterSet.has(x)
+                );
 
                 if (intersection.length < getContext().data.dataFilterSet.size) {
                     // if full we want to use NOT in
                     this.filterCallback(
-                        {} as any,
+                        null,
                         cellConfig,
                         intersection.length ? intersection : null,
                         getContext().searchInput ? getContext().searchInput : null,
@@ -3254,7 +3253,7 @@ export class Grid {
                     );
                 } else {
                     this.filterCallback(
-                        {} as any,
+                        null,
                         cellConfig,
                         getContext().data.dataFilterSet.size ? Array.from(getContext().data.dataFilterSet) : null,
                         getContext().searchInput ? getContext().searchInput : null,
@@ -3269,14 +3268,15 @@ export class Grid {
              */
             const filterValues = () => {
                 const filterValueClick = (rowData: any) => {
-
                     getContext().selectAll = false;
                     if (getContext().data.dataFilterSet.has(rowData)) {
                         getContext().data.dataFilterSet.delete(rowData);
                     } else {
                         getContext().data.dataFilterSet.add(rowData);
                     }
-                    getContext().selectAll = getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size && !getContext().availableOnly;
+                    getContext().selectAll =
+                        getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
+                        !getContext().availableOnly;
                     reRender();
                 };
                 return Array.from(getContext().data.dataFilterSetFull).map((rowData: any) => {
@@ -3310,13 +3310,16 @@ export class Grid {
                           type="checkbox"
                           .checked=${live(getContext().availableOnly)}
                           @click=${() => {
-                              getContext().availableOnly = getContext().availableOnly ? false : true;
+                              getContext().selectAll =
+                                  getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
+                                  !getContext().availableOnly;
+                              getContext().availableOnly = !getContext().availableOnly;
                               reRender();
                           }}
                       /><label
                           style="padding:2px"
                           @click=${() => {
-                              getContext().availableOnly = getContext().availableOnly ? false : true;
+                              getContext().availableOnly = !getContext().availableOnly;
                               reRender();
                           }}
                           >Filter Available</label
@@ -3334,13 +3337,23 @@ export class Grid {
                         type="checkbox"
                         .checked=${live(getContext().selectAll)}
                         @click=${() => {
-                            getContext().selectAll = getContext().selectAll ? false : true;
+                            getContext().selectAll = !getContext().selectAll;
+                            if (getContext().selectAll) {
+                                getContext().data.dataFilterSet = new Set(getContext().data.dataFilterSetFull);
+                            } else {
+                                getContext().data.dataFilterSet = new Set();
+                            }
                             reRender();
                         }}
                     /><label
                         style="padding:2px"
                         @click=${() => {
-                            getContext().selectAll = getContext().selectAll ? false : true;
+                            getContext().selectAll = !getContext().selectAll;
+                            if (getContext().selectAll) {
+                                getContext().data.dataFilterSet = new Set(getContext().data.dataFilterSetFull);
+                            } else {
+                                getContext().data.dataFilterSet = new Set();
+                            }
                             reRender();
                         }}
                         >Select All</label
@@ -3588,10 +3601,10 @@ export class Grid {
                         Advanced Filter
                     </div>
 
-                    ${filterTemplate}
                     ${searchTemplate(() => {
                         innerRender();
                     })}
+                    <!--   ${filterTemplate} -->
                 </div>`,
                 contextMenu
             );
