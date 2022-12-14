@@ -212,3 +212,8 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
 containerGrid.appendChild(element);
 document.body.appendChild(containerGrid);
 document.body.appendChild(containerbuttons);
+
+
+document.body.addEventListener('touchmove', (e)=>{
+    e.preventDefault()
+}, {passive:false})

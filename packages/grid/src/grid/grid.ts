@@ -1553,6 +1553,23 @@ export class Grid {
                 lastX = currentX;
                 const movementX = x.scrollLeft - deltaX;
                 setScrollLeft(getElementByClassName(this.element, ' simple-html-grid-middle-scroller'), movementX);
+
+                /* 
+                an idea...
+                
+                if(!event.target?.classList.contains('simple-html-grid-panel') && !event.target?.classList.contains('simple-html-grid-footer')){
+                    let currentY = event.touches[0].clientY;             
+                    const deltaY = currentY - lastY;
+                    lastY = currentY;
+                    const movementY = x.scrollTop - deltaY * 5;
+                    setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movementY);
+                } else{
+                    const currentX = event.touches[0].clientX;
+                    const deltaX = currentX - lastX;
+                    lastX = currentX;
+                    const movementX = x.scrollLeft - deltaX*5;
+                    setScrollLeft(getElementByClassName(this.element, ' simple-html-grid-middle-scroller'), movementX)
+                } */
             },
             { passive: false }
         );
