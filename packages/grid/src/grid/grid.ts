@@ -138,20 +138,21 @@ export class Grid {
      * this just rerenders row values, usefull for selection etc
      */
     public triggerScrollEvent() {
-        const el = getElementByClassName(this.element, 'simple-html-grid-middle-scroller');
+        const elBody = getElementByClassName(this.element, 'simple-html-grid-body-scroller');
+        const elMiddle = getElementByClassName(this.element, 'simple-html-grid-middle-scroller');
 
         function setScrollTop(element: HTMLElement, top: number) {
             element.scrollTop = top;
         }
 
-        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-middle-scroller'), el.scrollTop);
-        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-group'), el.scrollTop);
-        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-selector'), el.scrollTop);
-        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-left'), el.scrollTop);
-        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle'), el.scrollTop);
-        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-right'), el.scrollTop);
-        this.horizontalScrollHandler(el.scrollLeft);
-        this.verticalScrollHandler(el.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-middle-scroller'), elBody.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-group'), elBody.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-selector'), elBody.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-left'), elBody.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle'), elBody.scrollTop);
+        setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-right'), elBody.scrollTop);
+        this.horizontalScrollHandler(elMiddle.scrollLeft);
+        this.verticalScrollHandler(elMiddle.scrollTop);
     }
 
     /**
@@ -204,6 +205,7 @@ export class Grid {
         // focus helper
         const tmp = document.createElement('input');
         tmp.style.opacity = '0';
+
         body.appendChild(tmp);
         this.focusElement = tmp;
 
@@ -330,6 +332,7 @@ export class Grid {
         const body = getElementByClassName(this.element, 'simple-html-grid-body');
         body.style.top = asPx(config.panelHeight + config.__rowHeight * 2 + config.selectSizeHeight);
         body.style.bottom = asPx(config.footerHeight);
+        body.style.right = asPx(config.__scrollbarSize);
 
         const scrollerBody = getElementByClassName(this.element, 'simple-html-grid-body-scroller');
         scrollerBody.style.top = asPx(config.panelHeight + config.__rowHeight * 2 + config.selectSizeHeight);
@@ -383,7 +386,7 @@ export class Grid {
 
         const bodyViewPortGroup = getElementByClassName(this.element, 'simple-html-grid-body-view-group');
         bodyViewPortGroup.style.left = asPx(config.__selectSizeWidth);
-        bodyViewPortGroup.style.right = asPx(config.__scrollbarSize);
+        bodyViewPortGroup.style.right = asPx(0);
 
         const bodyViewPortSelector = getElementByClassName(this.element, 'simple-html-grid-body-view-selector');
         bodyViewPortSelector.style.width = asPx(config.__selectSizeWidth);
@@ -404,11 +407,11 @@ export class Grid {
 
         const bodyViewPortMiddle = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
         bodyViewPortMiddle.style.left = asPx(config.__selectSizeWidth + leftWidth);
-        bodyViewPortMiddle.style.right = asPx(config.__rightWidth + config.__scrollbarSize);
+        bodyViewPortMiddle.style.right = asPx(config.__rightWidth + 0);
 
         const bodyViewPortRight = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-right');
         bodyViewPortRight.style.width = asPx(config.__rightWidth);
-        bodyViewPortRight.style.right = asPx(config.__scrollbarSize);
+        bodyViewPortRight.style.right = asPx(0);
         if (config.__rightWidth === 0) {
             bodyViewPortRight.style.display = 'none';
         } else {
@@ -1513,7 +1516,7 @@ export class Grid {
                     console.log(movement);
                     setScrollLeft(getElementByClassName(this.element, ' simple-html-grid-middle-scroller'), movement);
                 } else {
-                    const el = getElementByClassName(this.element, 'simple-html-grid-body-view-pinned-middle');
+                    const el = getElementByClassName(this.element, 'simple-html-grid-body-scroller');
                     this.focusElement.focus();
                     const movement = el.scrollTop - (event as any).wheelDeltaY;
                     setScrollTop(getElementByClassName(this.element, 'simple-html-grid-body-scroller'), movement);
