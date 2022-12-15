@@ -13,7 +13,7 @@ export type GridConfig = {
     columnsPinnedRight?: Columns[];
     sorting?: Sort[];
     grouping?: GroupArgument[];
-    exspandedGroups?: string[];
+    expandedGroups?: string[];
     filter?: FilterArgument;
 
     // private/internals
