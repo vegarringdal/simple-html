@@ -1185,9 +1185,17 @@ export class Grid {
             RIGH_PINNED_COLTYPE
         );
 
+
+        /**
+         * for slection in top left cornor
+         */
         const selectorTopLeft = getElementByClassName(this.element, 'simple-html-grid-header-row-container-selector');
-        selectorTopLeft.onclick = () => {
-            this.gridInterface.getDatasource().selectAll();
+        selectorTopLeft.onclick = (e: MouseEvent) => {
+            if (e.ctrlKey) {
+                this.gridInterface.getDatasource().deSelectAll(true);
+            } else {
+                this.gridInterface.getDatasource().selectAll();
+            }
         };
     }
 

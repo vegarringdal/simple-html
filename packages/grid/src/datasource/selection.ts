@@ -42,12 +42,16 @@ export class Selection {
         this.selectedRows = this.selection.size;
     }
 
-    /**
-     * deselect all
-     */
-    public deSelectAll(): void {
+   /**
+    * 
+    * @param truggerEvent 
+    */
+    public deSelectAll(truggerEvent = false): void {
         this.selection.clear();
         this.selectedRows = this.selection.size;
+        if (truggerEvent) {
+            this.dataSource.__callSubscribers('selectionChange');
+        }
     }
 
     public highlightRow(e: MouseEvent, currentRow: number, overrideSelectionMode?: 'none' | 'single' | 'multiple'): void {

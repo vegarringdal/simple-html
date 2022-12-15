@@ -14,7 +14,7 @@ type callable = callF | callO;
 type EntityUnion<T> = Entity & T;
 
 /**
- * Helper class for calling internal sort, filter and grouping classes
+ * Helper class for calling internal sort, filter and grouping classesS
  *
  */
 export class Datasource<T = any> {
@@ -546,6 +546,13 @@ export class Datasource<T = any> {
      */
     public selectAll() {
         this.__selection.selectAll();
+    }
+
+    /**
+     * deSelectAll all rows displayed
+     */
+    public deSelectAll(triggerEvent=false) {
+        this.__selection.deSelectAll(triggerEvent);
     }
 
     /**
