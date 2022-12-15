@@ -187,7 +187,7 @@ export class GridInterface<T> {
      * do not use - used by grid to connect
      * @param grid
      */
-    connectGrid(grid: Grid) {
+    public connectGrid(grid: Grid) {
         this.grid = grid;
         this.dataSource.addEventListener(this);
     }
@@ -217,14 +217,14 @@ export class GridInterface<T> {
         keys.forEach((key) => {
             config.attributes.push(config.__attributes[key]);
         });
-       
-        delete config.__attributes
-        delete config.__rowHeight
-        delete config.__columnCells
-        delete config.__leftWidth
-        delete config.__rightWidth
-        delete config.__scrollbarSize
-        delete config.__selectSizeWidth
+
+        delete config.__attributes;
+        delete config.__rowHeight;
+        delete config.__columnCells;
+        delete config.__leftWidth;
+        delete config.__rightWidth;
+        delete config.__scrollbarSize;
+        delete config.__selectSizeWidth;
 
         config.expandedGroups = this.getDatasource().getExpanded();
         config.sorting = this.getDatasource().getLastSorting();
@@ -240,6 +240,9 @@ export class GridInterface<T> {
         }
     }
 
+    /**
+     * @internal
+     */
     public __setSelectedColumn(number: number, add = false) {
         if (!add) {
             this.columnsSelected.clear();
@@ -253,10 +256,16 @@ export class GridInterface<T> {
         this.grid.rebuildHeaderColumns();
     }
 
+    /**
+     * @internal
+     */
     public __isColumnSelected(number: number) {
         return this.columnsSelected.has(number);
     }
 
+    /**
+     * @internal
+     */
     public __selectedColumns() {
         return this.columnsSelected.size;
     }

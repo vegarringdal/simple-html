@@ -3,9 +3,15 @@ import { creatElement } from './createElement';
 import { getElementByClassName } from './getElementByClassName';
 import { asPx } from './asPx';
 import { Attribute, Columns } from './gridConfig';
-import { html, render, svg, TemplateResult } from 'lit-html';
-import { live } from 'lit-html/directives/live.js';
-import { Entity, FilterArgument } from '../datasource/types';
+import { html, render } from 'lit-html';
+import { FilterArgument } from '../datasource/types';
+import { renderHeaderFilter } from './renderHeaderFilter';
+import { renderHeaderSelector } from './renderHeaderSelector';
+import { renderRowSelector } from './renderRowSelector';
+import { renderRowCell } from './renderRowCell';
+import { renderHeaderLabel } from './renderHeaderLabel';
+import { renderRowGroup } from './renderRowGroup';
+import { generateFilterEditor } from './generateFilterEditor';
 
 export const MIDDLE_PINNED_COLTYPE = 'middle-pinned';
 export const LEFT_PINNED_COLTYPE = 'left-pinned';
@@ -36,38 +42,38 @@ export interface HTMLCellElement extends HTMLElement {
  * Grid class, this has logic for all scrolling/events
  */
 export class Grid {
-    private element: HTMLElement;
-    private gridInterface: GridInterface<any>;
-    private body: HTMLElement;
+    public element: HTMLElement;
+    public gridInterface: GridInterface<any>;
+    public body: HTMLElement;
     // row cache
-    private containerGroupRowCache: RowCache[];
-    private containerSelectorRowCache: RowCache[];
-    private containerLeftRowCache: RowCache[];
-    private containerMiddleRowCache: RowCache[];
-    private containerRightRowCache: RowCache[];
+    public containerGroupRowCache: RowCache[];
+    public containerSelectorRowCache: RowCache[];
+    public containerLeftRowCache: RowCache[];
+    public containerMiddleRowCache: RowCache[];
+    public containerRightRowCache: RowCache[];
     // column cache
-    private containerLeftColumnCache: ColumnCache[] = [];
-    private containerMiddleColumnCache: ColumnCache[] = [];
-    private containerRightColumnCache: ColumnCache[] = [];
+    public containerLeftColumnCache: ColumnCache[] = [];
+    public containerMiddleColumnCache: ColumnCache[] = [];
+    public containerRightColumnCache: ColumnCache[] = [];
     // scroll helpers
-    private lastScrollTop: number = 0;
-    private lastScrollLeft: number = 0;
-    private largeScrollLeftTimer: NodeJS.Timeout;
-    private largeScrollTopTimer: NodeJS.Timeout;
+    public lastScrollTop: number = 0;
+    public lastScrollLeft: number = 0;
+    public largeScrollLeftTimer: NodeJS.Timeout;
+    public largeScrollTopTimer: NodeJS.Timeout;
 
-    private rows: Map<string, HTMLElement> = new Map();
-    private columns: Map<string, HTMLElement> = new Map();
-    private oldHeight: number;
-    private oldWidth: number;
-    private resizeTimer: NodeJS.Timeout;
-    private resizeInit = false;
-    private columnsHeaders: Map<string, HTMLElement> = new Map();
-    private skipInitResizeEvent: boolean = false;
-    private contextMenu: HTMLElement;
-    private filterEditorContainer: HTMLElement;
-    private columnChooserMenu: HTMLElement;
-    private clickListner: any;
-    private focusElement: HTMLInputElement;
+    public rows: Map<string, HTMLElement> = new Map();
+    public columns: Map<string, HTMLElement> = new Map();
+    public oldHeight: number;
+    public oldWidth: number;
+    public resizeTimer: NodeJS.Timeout;
+    public resizeInit = false;
+    public columnsHeaders: Map<string, HTMLElement> = new Map();
+    public skipInitResizeEvent: boolean = false;
+    public contextMenu: HTMLElement;
+    public filterEditorContainer: HTMLElement;
+    public columnChooserMenu: HTMLElement;
+    public clickListner: any;
+    public focusElement: HTMLInputElement;
 
     /**
      * only to be used by grid interface
@@ -175,7 +181,7 @@ export class Grid {
         this.triggerScrollEvent();
     }
 
-    private initResizerEvent() {
+    public initResizerEvent() {
         if (this.skipInitResizeEvent) {
             return;
         }
@@ -197,7 +203,7 @@ export class Grid {
         }).observe(this.element);
     }
 
-    private createDom() {
+    public createDom() {
         const panel = creatElement(DIV, 'simple-html-grid-panel');
         const header = creatElement(DIV, 'simple-html-grid-header');
         const body = creatElement(DIV, 'simple-html-grid-body');
@@ -292,7 +298,7 @@ export class Grid {
         this.oldWidth = this.element.clientWidth;
     }
 
-    private addClickEventListener() {
+    public addClickEventListener() {
         const clickListner = (e: any) => {
             let node = e.target;
             let keep = false;
@@ -312,7 +318,7 @@ export class Grid {
         document.addEventListener('click', clickListner);
     }
 
-    private updateMainElementSizes() {
+    public updateMainElementSizes() {
         const config = this.gridInterface.__getGridConfig();
 
         /**
@@ -425,7 +431,7 @@ export class Grid {
      * logic for removing a group
      * hoving left side of grouping box
      */
-    private rebuildTopPanel() {
+    public rebuildTopPanel() {
         const panel = getElementByClassName(this.element, 'simple-html-grid-panel');
         panel.onmousemove = () => {
             if (panel.classList.contains('dragdrop-state') && !panel.classList.contains('simple-html-grid-col-resize-hover')) {
@@ -505,7 +511,7 @@ export class Grid {
         });
     }
 
-    private rebuildFooter() {
+    public rebuildFooter() {
         const footer = getElementByClassName(this.element, 'simple-html-grid-footer');
         const totalRows = this.gridInterface.getDatasource().getAllData().length;
         const filteredRows = this.gridInterface.getDatasource().length();
@@ -529,7 +535,7 @@ export class Grid {
         );
     }
 
-    private rebuildRows() {
+    public rebuildRows() {
         const scroller = getElementByClassName(this.element, 'simple-html-grid-body-scroller');
 
         const rect = scroller.getBoundingClientRect();
@@ -590,7 +596,7 @@ export class Grid {
         this.containerRightRowCache = addRows(containerRight, RIGH_PINNED_COLTYPE);
     }
 
-    private dragEvent(cell: HTMLCellElement, sortEnabled = true) {
+    public dragEvent(cell: HTMLCellElement, sortEnabled = true) {
         cell.addEventListener('mousedown', (e) => {
             if (e.button !== 0) {
                 return;
@@ -1185,7 +1191,6 @@ export class Grid {
             RIGH_PINNED_COLTYPE
         );
 
-
         /**
          * for slection in top left cornor
          */
@@ -1199,7 +1204,7 @@ export class Grid {
         };
     }
 
-    private getGroupingWidth(coltype: ColType) {
+    public getGroupingWidth(coltype: ColType) {
         if (coltype !== LEFT_PINNED_COLTYPE) {
             return 0;
         }
@@ -1210,7 +1215,7 @@ export class Grid {
         return groupingWidth;
     }
 
-    private rebuildRowColumns() {
+    public rebuildRowColumns() {
         const config = this.gridInterface.__getGridConfig();
 
         /**
@@ -1351,7 +1356,7 @@ export class Grid {
             filterArg.filterArguments = dsFilter;
         }
 
-        this.generateFilterEditor(structuredClone(filterArg));
+        generateFilterEditor(this, structuredClone(filterArg));
     }
 
     /**
@@ -1429,7 +1434,7 @@ export class Grid {
      * this adjust middle viewport, so scrolling width is correct compared to total columns and their width
      * @param height
      */
-    private updateHorizontalScrollWidth() {
+    public updateHorizontalScrollWidth() {
         const middlec = getElementByClassName(this.element, 'simple-html-grid-middle-scroller-body');
         middlec.style.width = asPx(
             this.gridInterface
@@ -1454,7 +1459,7 @@ export class Grid {
         );
     }
 
-    private addScrollEventListeners() {
+    public addScrollEventListeners() {
         const scroller = getElementByClassName(this.element, 'simple-html-grid-body-scroller');
 
         // helper
@@ -1586,7 +1591,7 @@ export class Grid {
         );
     }
 
-    private verticalScrollHandler(scrollTop: number) {
+    public verticalScrollHandler(scrollTop: number) {
         this.removeContextMenu();
 
         if (this.largeScrollTopTimer) {
@@ -1861,7 +1866,7 @@ export class Grid {
         }
     }
 
-    private horizontalScrollHandler(scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
+    public horizontalScrollHandler(scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
         this.removeContextMenu();
 
         const config = this.gridInterface.__getGridConfig();
@@ -2054,7 +2059,7 @@ export class Grid {
     /**
      * helper for autoresize columns
      */
-    private getFont() {
+    public getFont() {
         const ele = this?.element;
         if (ele) {
             return (
@@ -2071,7 +2076,7 @@ export class Grid {
      * filters columns
      * Internal usage only, do not call
      */
-    private filterCallback(
+    public filterCallback(
         value: string | number | null | undefined,
         col: Attribute,
         filterArray?: any[],
@@ -2187,486 +2192,6 @@ export class Grid {
         this.gridInterface.getDatasource().filter(filter);
     }
 
-    private renderRowGroup(
-        cell: HTMLCellElement,
-        _row: number,
-        column: number,
-        _celno: number,
-        colType: ColType,
-        _cellType: string,
-        _attribute: string,
-        rowData: Entity
-    ) {
-        if (rowData.__group) {
-            cell.style.display = 'block';
-            cell.style.zIndex = '10';
-        } else {
-            cell.style.display = 'none';
-        }
-
-        // TODO: I do not like how hardcoded grouping indent is
-        // add it as a option
-
-        render(
-            html`<div
-                class="simple-html-absolute-fill simple-html-label-group"
-                style="padding-left:${rowData.__groupLvl * 15}px"
-                @click=${() => {
-                    console.log('group selected, do I want something here ?:', column, colType);
-                }}
-            >
-                <div
-                    class="simple-html-grid-grouping-row"
-                    style="width:${rowData.__groupLvl * 15}px;display:${rowData.__groupLvl ? 'block' : 'none'}"
-                ></div>
-                <i
-                    @click=${() => {
-                        if (rowData.__groupExpanded) {
-                            this.gridInterface.getDatasource().collapseGroup(rowData.__groupID);
-                        } else {
-                            this.gridInterface.getDatasource().expandGroup(rowData.__groupID);
-                        }
-                    }}
-                >
-                    <svg class="simple-html-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                        ${rowData.__groupExpanded
-                            ? svg`<path d="M4.8 7.5h6.5v1H4.8z" />`
-                            : svg`<path d="M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z" />`}
-                    </svg></i
-                >
-                <span class=""> ${rowData.__groupName} (${rowData.__groupTotal})</span>
-            </div>`,
-            cell as any
-        );
-    }
-
-    private renderHeaderLabel(
-        cell: HTMLCellElement,
-        row: number,
-        column: number,
-        celno: number,
-        colType: ColType,
-        cellType: string,
-        attribute: string,
-        rowData: Entity
-    ) {
-        /**
-         * first get sort logic
-         */
-        let iconAsc: any = '';
-        this.gridInterface
-            .getDatasource()
-            .getLastSorting()
-            .forEach((sort, i) => {
-                if (sort.attribute === attribute) {
-                    iconAsc = html`<i class="simple-html-grid-sort-number" data-sortno=${i + 1}>
-                        <svg class="simple-html-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                            ${sort.ascending
-                                ? svg`<path d="M7.4 6L3 10h1.5L8 7l3.4 3H13L8.5 6h-1z" />`
-                                : svg`<path d="M7.4 10L3 6h1.5L8 9.2 11.3 6H13l-4.5 4h-1z" />`}
-                        </svg></i
-                    >`;
-                }
-            });
-
-        if (attribute) {
-            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-            const label = cellConfig.label || this.prettyPrintString(cellConfig.attribute);
-
-            render(
-                html`<div
-                    class="simple-html-label"
-                    @contextmenu=${(e: MouseEvent) => {
-                        e.preventDefault();
-                        this.contextmenuLabel(e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                    }}
-                >
-                    ${label} ${iconAsc}
-                </div>`,
-                cell as any
-            );
-        } else {
-            render(html`<div class="simple-html-dimmed"></div>`, cell as any);
-        }
-    }
-
-    private renderHeaderFilter(
-        cell: HTMLCellElement,
-        row: number,
-        column: number,
-        celno: number,
-        colType: ColType,
-        cellType: string,
-        attribute: string,
-        rowData: Entity
-    ) {
-        if (attribute) {
-            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-
-            const placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
-            let currentValue = cellConfig.currentFilterValue || ('' as any);
-
-            if (cellConfig?.type === 'date') {
-                currentValue = this.gridInterface.getDatasource().getDateFormater().fromDate(currentValue);
-            }
-
-            /**
-             * internal function, so we can rerender
-             */
-            const renderMenu = () => {
-                // stop duplicate events
-                let filterRunning = false;
-
-                if (cellConfig.type === 'boolean') {
-                    render(
-                        html`<input
-                            type="checkbox"
-                            .checked=${live(currentValue)}
-                            .indeterminate=${currentValue !== true && currentValue !== false}
-                            placeholder=${placeHolderFilter}
-                            @contextmenu=${(e: MouseEvent) => {
-                                e.preventDefault();
-                                this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                            }}
-                            @change=${(e: any) => {
-                                if (!filterRunning) {
-                                    filterRunning = true;
-
-                                    switch (true) {
-                                        case currentValue === '' &&
-                                            (e.target as any).checked === true &&
-                                            e.target.indeterminate === false:
-                                            this.filterCallback((e.target as any).checked.toString(), cellConfig);
-                                            currentValue = (e.target as any).checked.toString();
-                                            break;
-                                        case currentValue === 'true' &&
-                                            (e.target as any).checked === false &&
-                                            e.target.indeterminate === false:
-                                            this.filterCallback((e.target as any).checked.toString(), cellConfig);
-                                            currentValue = (e.target as any).checked.toString();
-                                            break;
-                                        case currentValue === 'false' &&
-                                            (e.target as any).checked === true &&
-                                            e.target.indeterminate === false:
-                                            this.filterCallback('', cellConfig);
-                                            e.target.indeterminate = true;
-                                            (e.target as any).checked = false;
-                                            currentValue = '';
-                                    }
-
-                                    filterRunning = false;
-                                }
-                            }}
-                        />`,
-                        cell as any
-                    );
-                } else {
-                    let lastFilter = '';
-                    let skipFocus = false;
-                    render(
-                        html`<input
-                            style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
-                            .value=${live(currentValue)}
-                            placeholder=${placeHolderFilter}
-                            @contextmenu=${(e: MouseEvent) => {
-                                e.preventDefault();
-                                if (lastFilter !== (e.target as any).value) {
-                                    this.filterCallback((e.target as any).value, cellConfig);
-                                }
-                                lastFilter = (e.target as any).value;
-                                this.contextmenuFilter(e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                            }}
-                            @mousedown=${(e: MouseEvent) => {
-                                if (e.button === 2) {
-                                    skipFocus = true;
-                                }
-                            }}
-                            @focus=${() => {
-                                if (skipFocus) {
-                                    skipFocus = false;
-                                    return;
-                                }
-
-                                this.gridInterface.__callSubscribers('cell-header-focus', {
-                                    cell,
-                                    row,
-                                    column,
-                                    celno,
-                                    colType,
-                                    cellType,
-                                    attribute,
-                                    rowData
-                                });
-                            }}
-                            @keydown=${(e: KeyboardEvent) => {
-                                const keycode = e.keyCode ? e.keyCode : e.which;
-                                if (keycode === 13) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (!filterRunning) {
-                                        filterRunning = true;
-
-                                        if (lastFilter !== (e.target as any).value) {
-                                            this.filterCallback((e.target as any).value, cellConfig);
-                                        }
-                                        lastFilter = (e.target as any).value;
-                                        filterRunning = false;
-                                    }
-                                }
-                            }}
-                            @change=${(e: any) => {
-                                if (!filterRunning) {
-                                    filterRunning = true;
-
-                                    if (lastFilter !== (e.target as any).value) {
-                                        this.filterCallback((e.target as any).value, cellConfig);
-                                    }
-                                    lastFilter = (e.target as any).value;
-                                    filterRunning = false;
-                                }
-                            }}
-                        />`,
-                        cell as any
-                    );
-                }
-            };
-
-            renderMenu();
-        } else {
-            render(html`<div class="simple-html-dimmed"></div>`, cell as any);
-        }
-    }
-
-    private renderHeaderSelector(
-        cell: HTMLCellElement,
-        _row: number,
-        column: number,
-        _celno: number,
-        colType: ColType,
-        _cellType: string,
-        _attribute: string,
-        _rowData: Entity
-    ) {
-        let colNo = 0;
-        if (colType === LEFT_PINNED_COLTYPE) {
-            colNo = column + 1;
-        }
-        if (colType === MIDDLE_PINNED_COLTYPE) {
-            colNo = this.gridInterface.__getGridConfig().columnsPinnedLeft.length || 0;
-            colNo = colNo + column + 1;
-        }
-        if (colType === RIGH_PINNED_COLTYPE) {
-            colNo = this.gridInterface.__getGridConfig().columnsPinnedLeft.length || 0;
-            colNo = colNo + this.gridInterface.__getGridConfig().columnsCenter.length || 0;
-            colNo = colNo + column + 1;
-        }
-
-        let className = 'simple-html-absolute-fill simple-html-label';
-        if (this.gridInterface.__isColumnSelected(colNo)) {
-            className = 'simple-html-absolute-fill simple-html-label simple-html-label-odd';
-        }
-
-        render(
-            html`<div
-                class=${className}
-                @click=${(e: MouseEvent) => {
-                    this.gridInterface.__setSelectedColumn(colNo, e.ctrlKey);
-                }}
-            >
-                <span class="simple-html-selector-text">${colNo}</span>
-            </div>`,
-            cell as any
-        );
-    }
-
-    private renderRowSelector(
-        cell: HTMLCellElement,
-        row: number,
-        _column: number,
-        _celno: number,
-        _colType: ColType,
-        _cellType: string,
-        _attribute: string,
-        rowData: Entity
-    ) {
-        let currentEntitySelected = '';
-        if (rowData === this.gridInterface.getDatasource().currentEntity) {
-            currentEntitySelected = row % 0 == 0 ? 'simple-html-label-even' : 'simple-html-label-odd';
-        } else {
-            currentEntitySelected = 'simple-html-label';
-        }
-
-        render(
-            html`<div
-                class=${currentEntitySelected + ' simple-html-absolute-fill'}
-                @click=${(e: MouseEvent) => {
-                    const ds = this.gridInterface.getDatasource();
-                    if (rowData.__group) {
-                        const rows = ds.getRows();
-                        const selectRows = [];
-                        for (let i = row + 1; i < rows.length; i++) {
-                            const entity = rows[i];
-                            if (entity.__group) {
-                                i = rows.length;
-                                continue;
-                            }
-                            selectRows.push(i);
-                        }
-                        if (selectRows.length) {
-                            ds.getSelection().selectRowRange(selectRows[0], selectRows[selectRows.length - 1], e.ctrlKey);
-                            this.rebuild();
-                        }
-                    } else {
-                        ds.getSelection().highlightRow(e as any, row);
-                    }
-                }}
-            >
-                <span class="simple-html-selector-text">${row + 1}</span>
-            </div>`,
-            cell as any
-        );
-    }
-
-    private renderRowCell(
-        cell: HTMLCellElement,
-        row: number,
-        column: number,
-        celno: number,
-        colType: ColType,
-        cellType: string,
-        attribute: string,
-        rowData: Entity
-    ) {
-        const entity = this.gridInterface.getDatasource().getRow(row);
-        let value = (entity && entity[attribute]?.toString()) || '';
-
-        if (entity?.__group) {
-            return;
-        }
-
-        if (attribute) {
-            const config = this.gridInterface.__getGridConfig();
-            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-
-            if (cellConfig?.type === 'date') {
-                value = this.gridInterface.getDatasource().getDateFormater().fromDate(value);
-            }
-
-            if (cellConfig?.type === 'number') {
-                value = this.gridInterface.getDatasource().getNumberFormater().fromNumber(value);
-            }
-
-            if (cellConfig.type === 'boolean') {
-                value = (entity && entity[attribute]) || false;
-            }
-            let dimmed = '';
-
-            let cellReadOnly = this.gridInterface.__callReadonlySetter(attribute, rowData, cellConfig.readonly || false);
-            if (cellReadOnly !== false && cellReadOnly !== true) {
-                cellReadOnly = cellConfig.readonly;
-            }
-
-            if (!config.readonly && cellReadOnly) {
-                dimmed = 'simple-html-readonly';
-            }
-
-            if (cellConfig.type === 'boolean') {
-                render(
-                    html`<input
-                        .checked=${live(value)}
-                        type="checkbox"
-                        .disabled=${config.readonly ? config.readonly : cellReadOnly}
-                        @contextmenu=${(e: MouseEvent) => {
-                            e.preventDefault();
-                            this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                        }}
-                        @click=${() => {
-                            this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
-                            this.triggerScrollEvent();
-                        }}
-                        @change=${(e: any) => {
-                            if (!cellReadOnly) {
-                                entity[attribute] = e.target.checked ? false : true;
-                                e.target.checked = entity[attribute];
-                            }
-                        }}
-                    />`,
-                    cell as any
-                );
-            } else {
-                let skipFocus = false;
-                render(
-                    html` <div>
-                        <div class=${dimmed}></div>
-                        <input
-                            style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
-                            .value=${live(value?.toString())}
-                            .readOnly=${config.readonly ? config.readonly : cellReadOnly}
-                            placeholder=${cellConfig.placeHolderRow}
-                            @contextmenu=${(e: MouseEvent) => {
-                                e.preventDefault();
-                                this.contextmenuRow(e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                            }}
-                            @click=${() => {
-                                this.gridInterface.getDatasource().setRowAsCurrentEntity(row);
-                                this.triggerScrollEvent();
-                            }}
-                            @mousedown=${(e: MouseEvent) => {
-                                if (e.button === 2) {
-                                    skipFocus = true;
-                                }
-                            }}
-                            @focus=${() => {
-                                if (skipFocus) {
-                                    skipFocus = false;
-                                    return;
-                                }
-                                this.gridInterface.__callSubscribers('cell-row-focus', {
-                                    cell,
-                                    row,
-                                    column,
-                                    celno,
-                                    colType,
-                                    cellType,
-                                    attribute,
-                                    rowData
-                                });
-                            }}
-                            @input=${(e: any) => {
-                                if (!cellReadOnly && cellConfig?.type !== 'date') {
-                                    entity[attribute] = e.target.value;
-                                }
-                                if (!cellReadOnly && cellConfig.type === 'date') {
-                                    entity[attribute] = this.gridInterface
-                                        .getDatasource()
-                                        .getDateFormater()
-                                        .toDate(e.target.value);
-                                }
-                                if (!cellReadOnly && cellConfig.type === 'number') {
-                                    entity[attribute] = this.gridInterface
-                                        .getDatasource()
-                                        .getNumberFormater()
-                                        .toNumber(e.target.value);
-                                }
-                            }}
-                            @change=${(e: any) => {
-                                if (!cellReadOnly && cellConfig?.type === 'date') {
-                                    entity[attribute] = this.gridInterface
-                                        .getDatasource()
-                                        .getDateFormater()
-                                        .toDate(e.target.value);
-                                }
-                            }}
-                        />
-                    </div>`,
-                    cell as any
-                );
-            }
-        } else {
-            render(html`<div class="simple-html-dimmed"></div>`, cell as any);
-        }
-    }
-
     /**
      * this is called by scrolling/rebuild logic, its job is to pass work to correct rendrer
      * @param cell
@@ -2675,7 +2200,7 @@ export class Grid {
      * @param celno
      * @param colType
      */
-    private cellRender(cell: HTMLElement, row: number, column: number, celno: number, colType: ColType) {
+    public cellRender(cell: HTMLElement, row: number, column: number, celno: number, colType: ColType) {
         const type = cell.getAttribute('type');
         const rowdata = this.gridInterface.getDatasource().getRow(row);
 
@@ -2706,428 +2231,31 @@ export class Grid {
         (cell as HTMLCellElement).$attribute = attribute;
 
         if (colType === GROUP_COLTYPE) {
-            this.renderRowGroup(cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+            renderRowGroup(this, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
         }
 
         if (type === 'label') {
-            this.renderHeaderLabel(cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+            renderHeaderLabel(this, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
         }
 
         if (type === 'filter') {
-            this.renderHeaderFilter(cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+            renderHeaderFilter(this, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
         }
 
         if (type === SELECTOR_COLTYPE) {
-            this.renderHeaderSelector(cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+            renderHeaderSelector(this, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
         }
 
         if (type === null && colType === SELECTOR_COLTYPE) {
-            this.renderRowSelector(cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+            renderRowSelector(this, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
         }
 
         if (type === 'row-cell') {
-            this.renderRowCell(cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+            renderRowCell(this, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
         }
     }
 
-    /**
-     * this is part of filter editor
-     * @param cell
-     * @param callback
-     */
-    private contextMenuColumnChooser(event: MouseEvent, cell: HTMLElement) {
-        this.removeContextMenu();
-
-        if (this.columnChooserMenu && this.columnChooserMenu.parentElement) {
-            document.body.removeChild(this.columnChooserMenu);
-        }
-
-        const contextMenu = creatElement('div', 'simple-html-grid');
-        contextMenu.classList.add('simple-html-grid-reset');
-        const rect = cell.getBoundingClientRect();
-
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.bottom + 50);
-        contextMenu.style.left = asPx(event.clientX - 65);
-        contextMenu.style.minWidth = asPx(130);
-
-        if (event.clientX + 70 > window.innerWidth) {
-            contextMenu.style.left = asPx(window.innerWidth - 150);
-        }
-        if (event.clientX - 65 < 0) {
-            contextMenu.style.left = asPx(5);
-        }
-
-        const attributes = Object.keys(this.gridInterface.__getGridConfig().__attributes) || [];
-
-        render(
-            html`<div class="simple-html-grid-menu ">
-                <div class="simple-html-grid-menu-section">All Fields:</div>
-                <hr class="hr-solid" />
-                <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                    ${attributes.sort().map((attribute) => {
-                        return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>
-                            ${this.prettyPrintString(attribute)}
-                        </div>`;
-                    })}
-                </div>
-                <div
-                    class="simple-html-label-button-menu-bottom"
-                    @click=${() => {
-                        document.body.removeChild(contextMenu);
-                    }}
-                >
-                    Close
-                </div>
-            </div>`,
-            contextMenu
-        );
-
-        const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
-
-        for (let i = 0; i < cells.length; i++) {
-            this.dragEvent(cells[i] as HTMLCellElement, false);
-        }
-
-        document.body.appendChild(contextMenu);
-        this.columnChooserMenu = contextMenu;
-    }
-
-    /**
-     * this is part of filter editor
-     * @param cell
-     * @param callback
-     */
-    private contextMenuAttributes(event: MouseEvent, cell: HTMLElement, callback: (attribute: string) => void) {
-        this.removeContextMenu();
-
-        const contextMenu = creatElement('div', 'simple-html-grid');
-        contextMenu.classList.add('simple-html-grid-reset');
-        const rect = cell.getBoundingClientRect();
-
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(event.clientX - 65);
-        contextMenu.style.minWidth = asPx(130);
-
-        if (event.clientX + 70 > window.innerWidth) {
-            contextMenu.style.left = asPx(window.innerWidth - 150);
-        }
-        if (event.clientX - 65 < 0) {
-            contextMenu.style.left = asPx(5);
-        }
-
-        const attributes = Object.keys(this.gridInterface.__getGridConfig().__attributes) || [];
-
-        render(
-            html`<div class="simple-html-grid-menu ">
-                <div class="simple-html-grid-menu-section">Available Fields:</div>
-                <hr class="hr-solid" />
-                <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                    ${attributes.sort().map((attribute) => {
-                        return html`<div
-                            class="simple-html-grid-menu-item"
-                            @click=${() => {
-                                callback(attribute);
-                            }}
-                        >
-                            ${this.prettyPrintString(attribute)}
-                        </div>`;
-                    })}
-                </div>
-            </div>`,
-            contextMenu
-        );
-
-        document.body.appendChild(contextMenu);
-        this.contextMenu = contextMenu;
-    }
-
-    /**
-     * this is part of filter editor
-     * @param cell
-     * @param callback
-     */
-    private contextMenuOperator(event: MouseEvent, cell: HTMLElement, callback: (operator: string) => void) {
-        this.removeContextMenu();
-
-        const contextMenu = creatElement('div', 'simple-html-grid');
-        contextMenu.classList.add('simple-html-grid-reset');
-        const rect = cell.getBoundingClientRect();
-
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(event.clientX - 65);
-        contextMenu.style.minWidth = asPx(130);
-
-        if (event.clientX + 70 > window.innerWidth) {
-            contextMenu.style.left = asPx(window.innerWidth - 150);
-        }
-        if (event.clientX - 65 < 0) {
-            contextMenu.style.left = asPx(5);
-        }
-
-        const operators = [
-            'EQUAL',
-            'LESS_THAN_OR_EQUAL_TO',
-            'GREATER_THAN_OR_EQUAL_TO',
-            'LESS_THAN',
-            'GREATER_THAN',
-            'CONTAINS',
-            'NOT_EQUAL_TO',
-            'DOES_NOT_CONTAIN',
-            'BEGIN_WITH',
-            'END_WITH',
-            'IN',
-            'NOT_IN',
-            'IS_BLANK',
-            'IS_NOT_BLANK'
-        ];
-
-        render(
-            html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-section">Operator:</div>
-                <hr class="hr-solid" />
-                <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                    ${operators.map((operator) => {
-                        const prettytext = this.prettyPrintString(operator);
-
-                        return html`<div
-                            class="simple-html-grid-menu-item"
-                            @click=${() => {
-                                callback(prettytext);
-                            }}
-                        >
-                            ${prettytext}
-                        </div>`;
-                    })}
-                </div>
-            </div>`,
-            contextMenu
-        );
-
-        document.body.appendChild(contextMenu);
-        this.contextMenu = contextMenu;
-    }
-
-    private contextmenuLabel(
-        event: MouseEvent,
-        cell: HTMLCellElement,
-        _row: number,
-        column: number,
-        celno: number,
-        colType: ColType,
-        _cellType: string,
-        attribute: string,
-        _rowData: Entity
-    ) {
-        this.removeContextMenu();
-
-        const contextMenu = creatElement('div', 'simple-html-grid');
-        contextMenu.classList.add('simple-html-grid-reset');
-        const rect = cell.getBoundingClientRect();
-
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(event.clientX - 65);
-        contextMenu.style.minWidth = asPx(130);
-
-        if (event.clientX + 70 > window.innerWidth) {
-            contextMenu.style.left = asPx(window.innerWidth - 150);
-        }
-        if (event.clientX - 65 < 0) {
-            contextMenu.style.left = asPx(5);
-        }
-
-        /**
-         * pin left depends on what this column it is
-         */
-        let pinLeftTemplate = html`
-            <div
-                class="simple-html-grid-menu-item"
-                @click=${() => {
-                    let width = 100;
-                    if (colType === 'middle-pinned') {
-                        this.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                        width = this.gridInterface.__getGridConfig().columnsCenter[column].width;
-                    }
-                    if (colType === 'right-pinned') {
-                        this.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
-                        width = this.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
-                    }
-
-                    this.gridInterface.__getGridConfig().columnsPinnedLeft.push({
-                        rows: [attribute],
-                        width
-                    });
-                    this.rebuild(true);
-                }}
-            >
-                Pin left
-            </div>
-            <div
-                class="simple-html-grid-menu-item"
-                @click=${() => {
-                    let width = 100;
-                    if (colType === 'middle-pinned') {
-                        width = this.gridInterface.__getGridConfig().columnsCenter[column].width;
-                    }
-                    if (colType === 'right-pinned') {
-                        width = this.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
-                    }
-
-                    this.gridInterface.__getGridConfig().columnsPinnedLeft.push({
-                        rows: [attribute],
-                        width
-                    });
-                    this.rebuild(true);
-                }}
-            >
-                Pin left (copy)
-            </div>
-        `;
-
-        if (colType === 'left-pinned') {
-            pinLeftTemplate = '' as any;
-        }
-
-        /**
-         * pin right depends on what this column it is
-         */
-        let pinRightTemplate = html`
-            <div
-                class="simple-html-grid-menu-item"
-                @click=${() => {
-                    let width = 100;
-                    if (colType === 'middle-pinned') {
-                        this.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                        width = this.gridInterface.__getGridConfig().columnsCenter[column].width;
-                    }
-                    if (colType === 'left-pinned') {
-                        this.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
-                        width = this.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
-                    }
-
-                    this.gridInterface.__getGridConfig().columnsPinnedRight.push({
-                        rows: [attribute],
-                        width
-                    });
-                    this.rebuild(true);
-                }}
-            >
-                Pin right
-            </div>
-            <div
-                class="simple-html-grid-menu-item"
-                @click=${() => {
-                    let width = 100;
-                    if (colType === 'middle-pinned') {
-                        width = this.gridInterface.__getGridConfig().columnsCenter[column].width;
-                    }
-                    if (colType === 'left-pinned') {
-                        width = this.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
-                    }
-
-                    this.gridInterface.__getGridConfig().columnsPinnedRight.push({
-                        rows: [attribute],
-                        width
-                    });
-                    this.rebuild(true);
-                }}
-            >
-                Pin right (copy)
-            </div>
-        `;
-
-        if (colType === 'right-pinned') {
-            pinRightTemplate = '' as any;
-        }
-
-        render(
-            html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-section">Column:</div>
-                <hr class="hr-solid" />
-
-                ${pinLeftTemplate} ${pinRightTemplate}
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        if (colType === 'middle-pinned') {
-                            this.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                        }
-                        if (colType === 'right-pinned') {
-                            this.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
-                        }
-                        if (colType === 'left-pinned') {
-                            this.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
-                        }
-                        this.rebuild(true);
-                    }}
-                >
-                    Hide
-                </div>
-                <hr class="hr-dashed" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${(e: MouseEvent) => {
-                        this.contextMenuColumnChooser(e, cell);
-                    }}
-                >
-                    Column chooser
-                </div>
-                <div class="simple-html-grid-menu-section">Size:</div>
-                <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        this.autoResizeColumns(attribute);
-                    }}
-                >
-                    Resize Column
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        this.autoResizeColumns();
-                    }}
-                >
-                    Resize all columns
-                </div>
-                <div class="simple-html-grid-menu-section">Grouping:</div>
-                <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        this.gridInterface.getDatasource().expandGroup();
-                    }}
-                >
-                    Expand all
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        this.gridInterface.getDatasource().collapseGroup();
-                    }}
-                >
-                    Collapse all
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        this.gridInterface.getDatasource().removeGroup();
-                    }}
-                >
-                    Clear all
-                </div>
-            </div>`,
-            contextMenu
-        );
-
-        document.body.appendChild(contextMenu);
-        this.contextMenu = contextMenu;
-    }
-
-    private clearAllColumnFilters() {
+    public clearAllColumnFilters() {
         const datasource = this.gridInterface.getDatasource();
         datasource.setFilter(null);
         const attributes = this.gridInterface.__getGridConfig().__attributes;
@@ -3146,7 +2274,7 @@ export class Grid {
      * @param searchInput
      * @returns
      */
-    private dropDownFilterData(attribute: string, availableOnly: boolean, searchInput: string) {
+    public dropDownFilterData(attribute: string, availableOnly: boolean, searchInput: string) {
         const datasource = this.gridInterface.getDatasource();
         const type = this.gridInterface.__getGridConfig().__attributes[attribute].type || 'text';
         let dataFilterSet = new Set();
@@ -3233,448 +2361,7 @@ export class Grid {
         };
     }
 
-    private contextmenuFilter(
-        event: MouseEvent,
-        cell: HTMLCellElement,
-        _row: number,
-        _column: number,
-        _celno: number,
-        _colType: ColType,
-        _cellType: string,
-        attribute: string,
-        _rowData: Entity
-    ) {
-        this.removeContextMenu();
 
-        const contextMenu = creatElement('div', 'simple-html-grid');
-        contextMenu.classList.add('simple-html-grid-reset');
-        const rect = cell.getBoundingClientRect();
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(event.clientX - 65);
-        contextMenu.style.minWidth = asPx(130);
-
-        if (event.clientX + 70 > window.innerWidth) {
-            contextMenu.style.left = asPx(window.innerWidth - 150);
-        }
-        if (event.clientX - 65 < 0) {
-            contextMenu.style.left = asPx(5);
-        }
-
-        const context = {
-            searchInput: '',
-            availableOnly: true,
-            selectAll: true,
-            data: this.dropDownFilterData(attribute, true, '')
-        };
-
-        /**
-         * helper to get context, if we do not do it like this we risk getting another state
-         * @returns
-         */
-        function getContext() {
-            return context;
-        }
-
-        /**
-         * template for bottom excel like filter
-         * @param reRender
-         * @returns
-         */
-        const searchTemplate = (reRender: () => void) => {
-            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-
-            if (!getContext().data) {
-                return null;
-            }
-
-            /**
-             * update grid with new result
-             */
-            const runFilterClick = () => {
-                const intersection = Array.from(getContext().data.dataFilterSetFull).filter(
-                    (x) => !getContext().data.dataFilterSet.has(x)
-                );
-
-                if (intersection.length < getContext().data.dataFilterSet.size) {
-                    // if full we want to use NOT in
-                    this.filterCallback(
-                        null,
-                        cellConfig,
-                        intersection.length ? intersection : null,
-                        getContext().searchInput ? getContext().searchInput : null,
-                        intersection.length ? true : false
-                    );
-                } else {
-                    this.filterCallback(
-                        null,
-                        cellConfig,
-                        getContext().data.dataFilterSet.size ? Array.from(getContext().data.dataFilterSet) : null,
-                        getContext().searchInput ? getContext().searchInput : null,
-                        false
-                    );
-                }
-            };
-
-            /**
-             * items found
-             * @returns
-             */
-            const filterValues = () => {
-                const filterValueClick = (rowData: any) => {
-                    getContext().selectAll = false;
-                    if (getContext().data.dataFilterSet.has(rowData)) {
-                        getContext().data.dataFilterSet.delete(rowData);
-                    } else {
-                        getContext().data.dataFilterSet.add(rowData);
-                    }
-                    getContext().selectAll =
-                        getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
-                        !getContext().availableOnly;
-                    reRender();
-                };
-                return Array.from(getContext().data.dataFilterSetFull).map((rowData: any) => {
-                    return html`<div style="padding:2px">
-                        <input
-                            style="padding:2px"
-                            type="checkbox"
-                            .checked=${live(getContext().data.dataFilterSet.has(rowData))}
-                            @click=${() => {
-                                filterValueClick(rowData);
-                            }}
-                        /><label
-                            style="padding:2px"
-                            @click=${() => {
-                                filterValueClick(rowData);
-                            }}
-                        >
-                            ${rowData === 'NULL' ? 'Blank' : rowData}</label
-                        >
-                    </div>`;
-                });
-            };
-
-            /**
-             * top checkbox - available
-             * will show only column filtered
-             */
-            const availableCheckbox = () => {
-                if (!getContext().data.enableAvailableOnlyOption) {
-                    return null;
-                }
-
-                const handleEvent = (e: MouseEvent) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    getContext().availableOnly = !getContext().availableOnly;
-                    getContext().selectAll =
-                        getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
-                        !getContext().availableOnly;
-                    getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
-                    reRender();
-                };
-
-                return html` <div style="padding:2px">
-                    <input
-                        style="padding:2px"
-                        type="checkbox"
-                        .checked=${live(getContext().availableOnly)}
-                        @click=${(e: MouseEvent) => handleEvent(e)}
-                    /><label style="padding:2px" @click=${(e: MouseEvent) => handleEvent(e)}>Filter Available</label>
-                </div>`;
-            };
-
-            /**
-             * container, ncluding select all button
-             */
-            const listContainerTemplate = () => {
-                const clickHandler = () => {
-                    getContext().selectAll = !getContext().selectAll;
-                    if (getContext().selectAll) {
-                        getContext().data.dataFilterSet = new Set(getContext().data.dataFilterSetFull);
-                    } else {
-                        getContext().data.dataFilterSet = new Set();
-                    }
-                    reRender();
-                };
-
-                return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                    <div style="padding:2px">
-                        <input
-                            style="padding:2px"
-                            type="checkbox"
-                            .checked=${live(getContext().selectAll)}
-                            @click=${() => clickHandler()}
-                        /><label style="padding:2px" @click=${() => clickHandler()}>Select All</label>
-                    </div>
-                    ${filterValues()}
-                </div>`;
-            };
-
-            /**
-             * input field
-             */
-            const inputTemplate = () => {
-                const clickHandler = (e: any) => {
-                    getContext().searchInput = e.target.value || null;
-                    getContext().data = this.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
-                    reRender();
-                };
-
-                return html` <input
-                    class="simple-html-grid-menu-item-input"
-                    style="border:1px solid transparent; width: 100%, margin:0"
-                    @focus=${(e: any) => {
-                        e.target.style.border = '';
-                    }}
-                    @blur=${(e: any) => {
-                        e.target.style.border = '1px solid transparent';
-                    }}
-                    placeholder="search"
-                    .value=${getContext().searchInput}
-                    @input=${(e: EventTarget) => clickHandler(e)}
-                />`;
-            };
-
-            return html` <div class="simple-html-grid-menu-section">Search:</div>
-                <hr class="hr-solid" />
-                ${availableCheckbox()} ${inputTemplate()} ${listContainerTemplate()}
-                <div
-                    class="simple-html-label-button-menu-bottom"
-                    @click=${() => {
-                        runFilterClick();
-                    }}
-                >
-                    Run Search
-                </div>`;
-        };
-
-        /**
-         * inner render so its easier to rerender when excel filter changes
-         */
-        const innerRender = () => {
-            const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-
-            const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
-            const notSelected = 'simple-html-grid-menu-item';
-
-            if (!cellConfig.operator) {
-                cellConfig.operator = this.gridInterface.getDatasource().getFilterFromType(cellConfig.type);
-            }
-
-            const filterTemplate = () => {
-                if (
-                    cellConfig.type !== 'text' &&
-                    cellConfig.type !== 'number' &&
-                    cellConfig.type !== 'date' &&
-                    cellConfig.type !== undefined
-                ) {
-                    return null;
-                }
-
-                if (cellConfig.type === 'date' || cellConfig.type === 'number') {
-                    return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
-                        <hr class="hr-solid" />
-                        <div
-                            class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
-                            @click=${() => {
-                                cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
-                                this.removeContextMenu();
-                            }}
-                        >
-                            Greater than or equal
-                        </div>
-                        <div
-                            class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
-                            @click=${() => {
-                                cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
-                                this.removeContextMenu();
-                            }}
-                        >
-                            Less than or equal
-                        </div>`;
-                }
-
-                return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
-                    <hr class="hr-solid" />
-                    <div
-                        class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
-                        @click=${() => {
-                            cellConfig.operator = 'EQUAL';
-                            this.removeContextMenu();
-                        }}
-                    >
-                        Equal
-                    </div>
-                    <div
-                        class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
-                        @click=${() => {
-                            cellConfig.operator = 'NOT_EQUAL_TO';
-                            this.removeContextMenu();
-                        }}
-                    >
-                        Not Equal
-                    </div>
-                    <div
-                        class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
-                        @click=${() => {
-                            cellConfig.operator = 'CONTAINS';
-                            this.removeContextMenu();
-                        }}
-                    >
-                        Contains
-                    </div>`;
-            };
-
-            /**
-             * set blank or not blank filter
-             */
-            const setBlankOrNotBlank = (arg: 'IS_BLANK' | 'IS_NOT_BLANK') => {
-                const datasource = this.gridInterface.getDatasource();
-                const currentFilter = datasource.getFilter();
-
-                const loopFilter = (filter: FilterArgument) => {
-                    if (filter && Array.isArray(filter.filterArguments)) {
-                        filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
-                            if (fi.attribute === attribute) {
-                                return false;
-                            } else {
-                                return true;
-                            }
-                        });
-                        filter.filterArguments.forEach((fi: FilterArgument) => {
-                            if (fi.type === 'GROUP') {
-                                loopFilter(fi);
-                            }
-                        });
-                    }
-                };
-                loopFilter(currentFilter);
-
-                const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-
-                cellConfig.currentFilterValue = null;
-
-                if (currentFilter && Array.isArray(currentFilter.filterArguments)) {
-                    currentFilter.filterArguments.push({
-                        type: 'CONDITION',
-                        attribute: cellConfig.attribute,
-                        operator: arg,
-                        attributeType: cellConfig.type
-                    });
-                    datasource.setFilter(currentFilter);
-                } else {
-                    datasource.setFilter({
-                        type: 'GROUP',
-                        logicalOperator: 'AND',
-                        filterArguments: [
-                            {
-                                type: 'CONDITION',
-                                attribute: cellConfig.attribute,
-                                operator: arg,
-                                attributeType: cellConfig.type
-                            }
-                        ]
-                    });
-                }
-
-                datasource.filter();
-            };
-
-            /**
-             * clear current column filter
-             */
-            const clearColumnFilter = () => {
-                const datasource = this.gridInterface.getDatasource();
-                const currentFilter = datasource.getFilter();
-
-                const loopFilter = (filter: FilterArgument) => {
-                    if (filter && Array.isArray(filter.filterArguments)) {
-                        filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
-                            if (fi.attribute === attribute) {
-                                return false;
-                            } else {
-                                return true;
-                            }
-                        });
-                        filter.filterArguments.forEach((fi: FilterArgument) => {
-                            if (fi.type === 'GROUP') {
-                                loopFilter(fi);
-                            }
-                        });
-                    }
-                };
-                const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-                if (cellConfig) {
-                    cellConfig.currentFilterValue = null;
-                }
-
-                loopFilter(currentFilter);
-                datasource.setFilter(currentFilter);
-                this.rebuildHeaderColumns();
-                datasource.filter();
-            };
-
-            render(
-                html`<div class="simple-html-grid-menu">
-                    <div class="simple-html-grid-menu-section">Filter:</div>
-                    <hr class="hr-solid" />
-                    <div
-                        class="simple-html-grid-menu-item"
-                        @click=${() => {
-                            clearColumnFilter();
-                        }}
-                    >
-                        Clear Filter
-                    </div>
-                    <div
-                        class="simple-html-grid-menu-item"
-                        @click=${() => {
-                            this.clearAllColumnFilters();
-                        }}
-                    >
-                        Clear All Filters
-                    </div>
-                    <hr class="hr-dashed" />
-                    <div
-                        class="simple-html-grid-menu-item"
-                        @click=${() => {
-                            setBlankOrNotBlank('IS_BLANK');
-                        }}
-                    >
-                        Set "Is Blank"
-                    </div>
-                    <div
-                        class="simple-html-grid-menu-item"
-                        @click=${() => {
-                            setBlankOrNotBlank('IS_NOT_BLANK');
-                        }}
-                    >
-                        Set "Is Not Blank"
-                    </div>
-                    <hr class="hr-dashed" />
-                    <div
-                        class="simple-html-grid-menu-item"
-                        @click=${() => {
-                            this.openFilterEditor();
-                        }}
-                    >
-                        Advanced Filter
-                    </div>
-
-                    ${searchTemplate(() => {
-                        innerRender();
-                    })}
-                    <!--   ${filterTemplate()} -->
-                </div>`,
-                contextMenu
-            );
-        };
-        innerRender();
-
-        document.body.appendChild(contextMenu);
-        this.contextMenu = contextMenu;
-    }
 
     /**
      * gets all attributes displayed
@@ -3701,383 +2388,12 @@ export class Grid {
         return attributes;
     }
 
-    private contextmenuRow(
-        event: MouseEvent,
-        cell: HTMLCellElement,
-        row: number,
-        column: number,
-        celno: number,
-        colType: ColType,
-        cellType: string,
-        attribute: string,
-        rowData: Entity
-    ) {
-        this.removeContextMenu();
-
-        const contextMenu = creatElement('div', 'simple-html-grid');
-        contextMenu.classList.add('simple-html-grid-reset');
-        const rect = cell.getBoundingClientRect();
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(event.clientX - 65);
-        contextMenu.style.minWidth = asPx(130);
-
-        if (event.clientX + 70 > window.innerWidth) {
-            contextMenu.style.left = asPx(window.innerWidth - 150);
-        }
-        if (event.clientX - 65 < 0) {
-            contextMenu.style.left = asPx(5);
-        }
-
-        const generateCopyPasteData = (attributes: string[], onlyCurrentEntity: boolean) => {
-            const TableOuterTop = `
-            <html>
-                <body>
-                <style>
-                    table {
-                    border-collapse: collapse;
-                    border:.5pt solid windowtext;
-                    }
-                    td,
-                    th {
-                        border-collapse: collapse;
-                        padding:3px;
-                        border:.5pt solid windowtext;
-                    }
-                </style>
-            <table>`;
-            const TableOuterBottom = '</table></body></html>';
-
-            let tableHeader = '<tr>';
-            attributes.forEach((attribute) => {
-                tableHeader = tableHeader + '<th>' + this.prettyPrintString(attribute) + '</th>';
-            });
-            tableHeader = tableHeader + '</tr>';
-
-            let tableInnerData = '';
-            let justData = '';
-
-            const datasource = this.gridInterface.getDatasource();
-            const attConfig = this.gridInterface.__getGridConfig().__attributes;
-            const dateformater = datasource.getDateFormater();
-            const numberformater = datasource.getNumberFormater();
-            const selectedRows = datasource.getSelectedRows();
-
-            const loopData = (entity: Entity) => {
-                if (!entity.__group) {
-                    tableInnerData = tableInnerData + '<tr>';
-                    attributes.forEach((attribute, i) => {
-                        const cellConfig = attConfig[attribute];
-                        const colData = entity[attribute];
-
-                        if (i > 0) {
-                            justData = justData + '\t';
-                        }
-
-                        if (cellConfig.type === 'date') {
-                            //
-                            const data = dateformater.fromDate(colData);
-                            justData = justData + data;
-                            tableInnerData = tableInnerData + '<td>' + data + '</td>';
-                        } else if (cellConfig.type === 'number') {
-                            //
-                            const data = numberformater.fromNumber(colData);
-                            justData = justData + data;
-                            tableInnerData = tableInnerData + '<td>' + data + '</td >';
-                        } else {
-                            //
-                            justData = justData + colData;
-                            tableInnerData = tableInnerData + '<td>' + (colData || '') + '</td>';
-                        }
-                    });
-                    justData = justData + '\n';
-                    tableInnerData = tableInnerData + '</tr>';
-                }
-            };
-
-            if (onlyCurrentEntity) {
-                loopData(datasource.currentEntity);
-            } else {
-                selectedRows.forEach((entity) => {
-                    loopData(entity);
-                });
-            }
-
-            return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
-        };
-
-        const copyPasteData = (attributes: string[], onlyCurrentEntity: boolean) => {
-            const [html, text] = generateCopyPasteData(attributes, onlyCurrentEntity);
-
-            function listener(e: any) {
-                e.clipboardData.setData('text/html', html);
-                e.clipboardData.setData('text/plain', text);
-                e.preventDefault();
-            }
-            document.addEventListener('copy', listener);
-            document.execCommand('copy');
-            document.removeEventListener('copy', listener);
-        };
-
-        const clearRows = (attribute: string) => {
-            const datasource = this.gridInterface.getDatasource();
-            const selectedRows = datasource.getSelectedRows();
-            selectedRows.forEach((entity) => {
-                entity[attribute] = null;
-            });
-        };
-
-        /**
-         * summaryTemplate
-         * @returns
-         */
-        const summaryTemplate = () => {
-            const type = this.gridInterface.__getGridConfig().__attributes[attribute].type;
-            if (type !== 'number') {
-                return null;
-            }
-
-            function add(prev: number, cur: number) {
-                return parseFloat((prev + cur).toFixed(5));
-            }
-
-            function max(prev: number, cur: number) {
-                return cur > prev ? cur : prev;
-            }
-
-            function min(prev: number | null, cur: number) {
-                if (prev === null) {
-                    return cur;
-                }
-
-                return cur < prev ? cur : prev;
-            }
-
-            function avg(no: number, sum: number) {
-                return Math.round(sum / no);
-            }
-
-            const ds = this.gridInterface.getDatasource();
-            const selectedRows = ds.getSelection().getSelectedRows();
-            const numberFormater = ds.getNumberFormater();
-            const allrows = ds.getRows();
-
-            let curValue = 0;
-            let maxValue = 0;
-            let minValue: number = null;
-            selectedRows.forEach((index: number) => {
-                const x = allrows[index];
-                if (x && x[attribute]) {
-                    curValue = add(curValue, x[attribute]);
-                    maxValue = max(maxValue, x[attribute]);
-                    minValue = min(minValue, x[attribute]);
-                }
-            });
-
-            const curValueX = Math.round(curValue * 100) / 100;
-            const minValueX = Math.round(minValue * 100) / 100;
-            const avgValueX = Math.round(avg(selectedRows.length, curValue) * 100) / 100;
-            const maxValueX = Math.round(maxValue * 100) / 100;
-
-            return html` <div class="simple-html-grid-menu-section">Summary:</div>
-                <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Count: ${selectedRows.length}
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Sum: ${numberFormater.fromNumber(curValueX)}
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Max: ${numberFormater.fromNumber(maxValueX)}
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Min: ${numberFormater.fromNumber(minValueX)}
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                    }}
-                >
-                    Avg: ${numberFormater.fromNumber(avgValueX) || 0}
-                </div>`;
-        };
-
-        /**
-         * pasteAndClearTemplate
-         * @returns
-         */
-        const pasteAndClearTemplate = () => {
-            if (this.gridInterface.__getGridConfig().readonly) {
-                return null;
-            }
-
-            return html`<div class="simple-html-grid-menu-section">Paste:</div>
-                <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        alert('not implemented');
-                        this.gridInterface.__callSubscribers('paste', {
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData
-                        });
-                        this.removeContextMenu();
-                    }}
-                >
-                    Cell <i>(sel.rows)</i>
-                </div>
-                <div class="simple-html-grid-menu-section">Clear:</div>
-                <hr class="hr-solid" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        clearRows(attribute);
-                        this.gridInterface.__callSubscribers('clear', {
-                            cell,
-                            row,
-                            column,
-                            celno,
-                            colType,
-                            cellType,
-                            attribute,
-                            rowData
-                        });
-                        this.removeContextMenu();
-                        this.triggerScrollEvent();
-                    }}
-                >
-                    Cell <i>(sel. rows)</i>
-                </div>`;
-        };
-
-        const copyCellTemplate = () => {
-            const clickHandle = () => {
-                copyPasteData([attribute], true);
-                this.gridInterface.__callSubscribers('copy-cell', {
-                    cell,
-                    row,
-                    column,
-                    celno,
-                    colType,
-                    cellType,
-                    attribute,
-                    rowData
-                });
-                this.removeContextMenu();
-            };
-
-            return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Cell</div>`;
-        };
-
-        const copyColumnOnSelectedRowsTemplate = () => {
-            const clickHandle = () => {
-                copyPasteData([attribute], false);
-                this.gridInterface.__callSubscribers('copy-column', {
-                    cell,
-                    row,
-                    column,
-                    celno,
-                    colType,
-                    cellType,
-                    attribute,
-                    rowData
-                });
-                this.removeContextMenu();
-            };
-
-            return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Column <i>(sel.rows)</i></div>`;
-        };
-
-        const copyAllOnSelectedRowsTemplate = () => {
-            const clickHandle = () => {
-                const attributes = this.getAttributeColumns(false);
-
-                copyPasteData(attributes, false);
-                this.gridInterface.__callSubscribers('copy-row', {
-                    cell,
-                    row,
-                    column,
-                    celno,
-                    colType,
-                    cellType,
-                    attribute,
-                    rowData
-                });
-                this.removeContextMenu();
-            };
-
-            return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(sel. rows)</i></div>`;
-        };
-
-        const copySelectedColumnsOnSelectedRowsTemplate = () => {
-            const clickHandle = () => {
-                const attributes = this.getAttributeColumns();
-
-                copyPasteData(attributes, false);
-                this.gridInterface.__callSubscribers('copy-row-col', {
-                    cell,
-                    row,
-                    column,
-                    celno,
-                    colType,
-                    cellType,
-                    attribute,
-                    rowData
-                });
-                this.removeContextMenu();
-            };
-
-            return html`<div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(sel. rows/col)</i></div>`;
-        };
-
-        render(
-            html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-section">Copy:</div>
-                <hr class="hr-solid" />
-
-                ${copyCellTemplate()} ${copyColumnOnSelectedRowsTemplate()} ${copyAllOnSelectedRowsTemplate()}
-                ${copySelectedColumnsOnSelectedRowsTemplate()} ${pasteAndClearTemplate()} ${summaryTemplate()}
-            </div>`,
-            contextMenu
-        );
-
-        document.body.appendChild(contextMenu);
-        this.contextMenu = contextMenu;
-    }
-
     /**
      * takes and turn first letter to upper/rest lowercase and lower hyphen into space
      * @param text
      * @returns
      */
-    private prettyPrintString(text: string) {
+    public prettyPrintString(text: string) {
         const prettytext = text
             .split('_')
             .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
@@ -4086,363 +2402,9 @@ export class Grid {
     }
 
     /**
-     * internal method to generate html for filter editor
-     * @param filterArg
-     */
-    private generateFilterEditor(filterArg: FilterArgument) {
-        if (this.filterEditorContainer) {
-            document.body.removeChild(this.filterEditorContainer);
-        }
-        /**
-         * main container holding data/setting center
-         */
-        const filterEditorContainer = creatElement('div', 'filter-editor-container');
-        const filterEditorGridCssContext = creatElement('div', 'simple-html-grid');
-        filterEditorContainer.appendChild(filterEditorGridCssContext);
-
-        /**
-         * Icon helper
-         * @param callback
-         * @returns
-         */
-        const trashIcon = (callback: (e: any) => void) => {
-            return html`<svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="simple-html-grid-icon-group-svg"
-                @click=${(e: any) => callback(e)}
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                />
-            </svg> `;
-        };
-
-        /**
-         * icon helper, switch between value and aattribute input
-         * @param arg
-         * @param callback
-         * @returns
-         */
-        const inputSwitchIcon = (arg: FilterArgument, callback: (e: any) => void) => {
-            return html`
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="simple-html-grid-icon-group-svg"
-                    @click=${(e: any) => {
-                        if (arg.valueType === 'ATTRIBUTE') {
-                            arg.valueType = 'VALUE';
-                        } else {
-                            arg.valueType = 'ATTRIBUTE';
-                        }
-                        callback(e);
-                    }}
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                    />
-                </svg>
-            `;
-        };
-
-        /**
-         * icon helper
-         * @param callback
-         * @returns
-         */
-        const addFilterConditionIcon = (callback: (e: any) => void) => {
-            return html`
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="simple-html-grid-icon-group-svg"
-                    @click=${(e: any) => callback(e)}
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"
-                    />
-                </svg>
-            `;
-        };
-
-        /**
-         * icon helper
-         * @param callback
-         * @returns
-         */
-        const addFilterGroupIcon = (callback: (e: any) => void) => {
-            return html`
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="simple-html-grid-icon-group-svg"
-                    @click=${(e: any) => callback(e)}
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
-                    />
-                </svg>
-            `;
-        };
-
-        /**
-         * generate html for condition
-         * @param arg
-         * @param context
-         * @returns
-         */
-        const condition = (arg: FilterArgument, context: FilterArgument[]) => {
-            let filterValue = html`<input
-                .value=${arg.value || ''}
-                @input=${(e: any) => (arg.value = e.target.value)}
-                @change=${(e: any) => (arg.value = e.target.value)}
-            />`;
-
-            if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
-                filterValue = html`<textarea
-                    .value=${arg.value || ''}
-                    @input=${(e: any) => (arg.value = e.target.value)}
-                    @change=${(e: any) => (arg.value = e.target.value)}
-                ></textarea>`;
-            }
-
-            if (arg.valueType === 'ATTRIBUTE') {
-                filterValue = html`<div
-                    @click=${(e: MouseEvent) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.contextMenuAttributes(e, e.target as any, (attribute) => {
-                            arg.value = attribute;
-                            this.generateFilterEditor(structuredClone(filterArg));
-                        });
-                    }}
-                >
-                    ${arg.value || 'Click me to select attribute'}
-                </div>`;
-            }
-
-            return html`<div>
-                <div class="grid-flex-column grid-condition">
-                    <div class="grid-flex">
-                        <div class="grid-flex-1 grid-text-label">Query Field:</div>
-                        <div class="grid-flex-1 grid-text-label">Operator:</div>
-                        <div class="grid-flex-1 grid-text-label">Filter value:</div>
-                    </div>
-                    <div class="grid-flex">
-                        <div
-                            class="grid-flex-1 grid-text-center"
-                            @click=${(e: MouseEvent) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                this.contextMenuAttributes(e, e.target as HTMLCellElement, (attribute) => {
-                                    arg.attribute = attribute;
-
-                                    const cellConfig = this.gridInterface.__getGridConfig().__attributes[attribute];
-                                    arg.attributeType = cellConfig.type || 'text';
-                                    this.generateFilterEditor(structuredClone(filterArg));
-                                });
-                            }}
-                        >
-                            ${arg.attribute ? arg.attribute : 'Click me to select field'}
-                        </div>
-
-                        <div
-                            class="grid-flex-1 grid-text-center"
-                            @click=${(e: MouseEvent) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                this.contextMenuOperator(e, e.target as HTMLCellElement, (operator) => {
-                                    arg.operator = operator.replace(' ', '_').toUpperCase() as any;
-
-                                    this.generateFilterEditor(structuredClone(filterArg));
-                                });
-                            }}
-                        >
-                            ${arg.operator
-                                ? arg.operator
-                                      .split('_')
-                                      .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
-                                      .join(' ')
-                                : 'Click me to select Operator'}
-                        </div>
-                        <div class="grid-flex-1 grid-text-center ">${filterValue}</div>
-                    </div>
-                    <div class="grid-flex-reverse grid-m-4">
-                        <div class="grid-m-4">
-                            ${trashIcon(() => {
-                                let x: number = null;
-                                context.forEach((row, i) => {
-                                    if (row === arg) {
-                                        x = i;
-                                    }
-                                });
-                                context.splice(x, 1);
-                                this.generateFilterEditor(structuredClone(filterArg));
-                            })}
-                        </div>
-                        <div class="grid-m-4">
-                            ${inputSwitchIcon(arg, () => {
-                                this.generateFilterEditor(structuredClone(filterArg));
-                            })}
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        };
-
-        /**
-         * generate html for group
-         * @param arg
-         * @param context
-         * @returns
-         */
-        const group = (arg: FilterArgument, context: FilterArgument[]): TemplateResult<1> => {
-            // collect all conditions, and inject them into html
-
-            const conditions =
-                arg.filterArguments?.filter((e) => e.type !== 'GROUP').map((e) => condition(e, arg.filterArguments)) || [];
-
-            // collect all groups, and inject them into html
-            const groupsArgs =
-                arg.filterArguments?.filter((e) => e.type === 'GROUP').map((e) => group(e, arg.filterArguments)) || [];
-
-            return html`<div>
-                <div class="grid-flex-column grid-sub-group">
-                    <div class="grid-flex grid-group">
-                        <div class="grid-flex grid-m-4">
-                            <div
-                                class="grid-m-4 grid-button-small grid-text-center grid-text-label"
-                                @click=${() => {
-                                    arg.logicalOperator = arg.logicalOperator === 'AND' ? 'OR' : 'AND';
-                                    this.generateFilterEditor(structuredClone(filterArg));
-                                }}
-                            >
-                                <span> ${arg.logicalOperator}</span>
-                            </div>
-                            <div class="grid-m-4">
-                                ${addFilterGroupIcon(() => {
-                                    arg.filterArguments.push({
-                                        type: 'GROUP',
-                                        logicalOperator: 'AND',
-                                        filterArguments: []
-                                    });
-                                    this.generateFilterEditor(structuredClone(filterArg));
-                                })}
-                            </div>
-                            <div class="grid-m-4">
-                                ${addFilterConditionIcon(() => {
-                                    arg.filterArguments.push({
-                                        type: 'CONDITION'
-                                    });
-                                    this.generateFilterEditor(structuredClone(filterArg));
-                                })}
-                            </div>
-                            <div class="grid-m-4">
-                                ${trashIcon(() => {
-                                    if (context) {
-                                        let x: number = null;
-                                        context.forEach((row, i) => {
-                                            if (row === arg) {
-                                                x = i;
-                                            }
-                                        });
-                                        context.splice(x, 1);
-                                        this.generateFilterEditor(structuredClone(filterArg));
-                                    } else {
-                                        arg.filterArguments = [];
-                                        this.generateFilterEditor(structuredClone(filterArg));
-                                    }
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid-flex-column grid-sub-group ">${conditions}</div>
-                    ${groupsArgs}
-                </div>
-            </div>`;
-        };
-
-        const headerTemplate = () => html`<div class="grid-text-title">Filter Editor</div>`;
-
-        const footerTemplate = () => {
-            return html`<div class="grid-flex-reverse grid-m-4">
-                <div
-                    class="grid-button grid-text-center"
-                    @click=${() => {
-                        this.removeContextMenu();
-                        filterEditorContainer.parentElement.removeChild(filterEditorContainer);
-                        this.filterEditorContainer = null;
-                        this.gridInterface.getDatasource().filter(structuredClone(filterArg));
-                    }}
-                >
-                    Filter & Close
-                </div>
-                <div
-                    class="grid-button grid-text-center"
-                    @click=${() => {
-                        this.removeContextMenu();
-                        this.gridInterface.getDatasource().filter(structuredClone(filterArg));
-                    }}
-                >
-                    Filter Only
-                </div>
-                <div
-                    class="grid-button grid-text-center"
-                    @click=${() => {
-                        this.removeContextMenu();
-                        filterEditorContainer.parentElement.removeChild(filterEditorContainer);
-                        this.filterEditorContainer = null;
-                    }}
-                >
-                    Close
-                </div>
-            </div>`;
-        };
-
-        /**
-         * render dialog
-         */
-        render(
-            html`<div class="filter-editor-content">
-                <div class="grid-flex-column grid-w-full grid-h-full">
-                    ${headerTemplate()}
-                    <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg, null)}</div>
-                    ${footerTemplate()}
-                </div>
-            </div>`,
-            filterEditorGridCssContext
-        );
-
-        document.body.appendChild(filterEditorContainer);
-
-        this.filterEditorContainer = filterEditorContainer;
-    }
-
-    /**
      * helper
      */
-    private removeContextMenu() {
+    public removeContextMenu() {
         if (this.contextMenu) {
             document.body.removeChild(this.contextMenu);
             this.contextMenu = null;
