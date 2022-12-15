@@ -7,24 +7,24 @@ import { html, render, svg, TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { Entity, FilterArgument } from '../datasource/types';
 
-const MIDDLE_PINNED_COLTYPE = 'middle-pinned';
-const LEFT_PINNED_COLTYPE = 'left-pinned';
-const RIGH_PINNED_COLTYPE = 'right-pinned';
-const SELECTOR_COLTYPE = 'selector';
-const GROUP_COLTYPE = 'group';
+export const MIDDLE_PINNED_COLTYPE = 'middle-pinned';
+export const LEFT_PINNED_COLTYPE = 'left-pinned';
+export const RIGH_PINNED_COLTYPE = 'right-pinned';
+export const SELECTOR_COLTYPE = 'selector';
+export const GROUP_COLTYPE = 'group';
 
-const DIV = 'DIV';
+export const DIV = 'DIV';
 
-type ColumnCache = { column: number; left: number; refID: number };
-type ColType =
+export type ColumnCache = { column: number; left: number; refID: number };
+export type ColType =
     | typeof GROUP_COLTYPE
     | typeof SELECTOR_COLTYPE
     | typeof LEFT_PINNED_COLTYPE
     | typeof MIDDLE_PINNED_COLTYPE
     | typeof RIGH_PINNED_COLTYPE;
-type RowCache = { id: string; row: number; top: number };
+export type RowCache = { id: string; row: number; top: number };
 
-interface HTMLCellElement extends HTMLElement {
+export interface HTMLCellElement extends HTMLElement {
     $row: number;
     $column: number;
     $coltype: ColType;

@@ -138,6 +138,7 @@ Need for version "5.0.0":
 # Release
 Will make github action
 
+* `npm run typedoc-grid` -> and commit..
 * `npm run build:all`
 * `npm run release`
 * `git push --follow-tags origin 5.0.0` -> 5.0.0 depends on branch..

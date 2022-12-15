@@ -4,9 +4,9 @@ import { getCellHeight } from './getCellHeight';
 import { Grid } from './grid';
 import { GridConfig } from './gridConfig';
 
-type callF = (...args: any[]) => any;
-type callO = { handleEvent: (...args: any[]) => any };
-type callable = callF | callO;
+export type callF = (...args: any[]) => any;
+export type callO = { handleEvent: (...args: any[]) => any };
+export type callable = callF | callO;
 
 /**
  * grid interface is what user have access to controll grid behavior

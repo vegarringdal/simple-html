@@ -7,11 +7,11 @@ import { DataContainer } from './dataContainer';
 import { DateFormaterDefault, DateFormaterType } from './dateFormaterDefault';
 import { NumberFormaterDot, NumberFormaterType } from './numberFormaterDot';
 
-type callF = (...args: any[]) => any;
-type callO = { handleEvent: (...args: any[]) => any };
-type callable = callF | callO;
+export type callF = (...args: any[]) => any;
+export type callO = { handleEvent: (...args: any[]) => any };
+export type callable = callF | callO;
 
-type EntityUnion<T> = Entity & T;
+export type EntityUnion<T> = Entity & T;
 
 /**
  * Helper class for calling internal sort, filter and grouping classesS
