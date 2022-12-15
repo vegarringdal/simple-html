@@ -1,7 +1,7 @@
 export { GridInterface } from './grid/gridInterface';
 export { GridElement } from './grid/gridElement';
 export { Grid } from './grid/grid';
-export { GridConfig } from './grid/GridConfig';
+export type { GridConfig, Attribute } from './grid/GridConfig';
 export type {
     FilterComparisonOperator,
     FilterAttributeSimple,
@@ -14,9 +14,13 @@ export type {
     SelectionMode,
     DataTypes
 } from './datasource/types';
-export { Entity, OPERATORS } from './datasource/types';
+export type { Entity } from './datasource/types';
+export { OPERATORS } from './datasource/types';
 export { EntityHandler } from './datasource/entity';
 export { Datasource } from './datasource/dataSource';
 export { DataContainer } from './datasource/dataContainer';
-export { NumberFormaterDot as NumberFormater, NumberFormaterType } from './datasource/numberFormaterDot';
-export { DateFormaterDefault as DateFormater, DateFormaterType } from './datasource/dateFormaterDefault';
+export { NumberFormaterDot } from './datasource/numberFormaterDot';
+export { DateFormaterDefault } from './datasource/dateFormaterDefault';
+export type { NumberFormaterType } from './datasource/numberFormaterDot';
+export type { DateFormaterType } from './datasource/dateFormaterDefault';
+

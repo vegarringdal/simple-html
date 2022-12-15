@@ -11,19 +11,52 @@ export type GridConfig = {
     columnsPinnedLeft?: Columns[];
     columnsCenter: Columns[];
     columnsPinnedRight?: Columns[];
+
+    /**
+     * sorting added when loading config, unless grouping overrides it
+     */
     sorting?: Sort[];
+    /**
+     * grouping added when loading config
+     */
     grouping?: GroupArgument[];
+    /**
+     * expandedGroups added when loading config
+     */
     expandedGroups?: string[];
+    /**
+     * filter added when loading config
+     */
     filter?: FilterArgument;
 
-    // private/internals
-    // lets expand with internal gridConfig
+    
+    /**
+     * @internal not exported in save config
+     */
     __attributes?: Record<string, Attribute>;
+      /**
+     * @internal not exported in save config
+     */
     __rowHeight?: number;
+      /**
+     * @internal not exported in save config
+     */
     __columnCells?: number;
+      /**
+     * @internal not exported in save config
+     */
     __leftWidth?: number;
+      /** 
+     * @internal not exported in save config
+     */
     __rightWidth?: number;
+      /**
+     * @internal not exported in save config
+     */
     __scrollbarSize?: number;
+      /**
+     * @internal not exported in save config
+     */
     __selectSizeWidth?: number;
 };
 

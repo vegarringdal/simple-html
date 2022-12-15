@@ -217,7 +217,14 @@ export class GridInterface<T> {
         keys.forEach((key) => {
             config.attributes.push(config.__attributes[key]);
         });
-        config.__attributes = null;
+       
+        delete config.__attributes
+        delete config.__rowHeight
+        delete config.__columnCells
+        delete config.__leftWidth
+        delete config.__rightWidth
+        delete config.__scrollbarSize
+        delete config.__selectSizeWidth
 
         config.expandedGroups = this.getDatasource().getExpanded();
         config.sorting = this.getDatasource().getLastSorting();
