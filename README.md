@@ -2,7 +2,7 @@
 
 Only lit-html as dependency
 
-> version 5.0.0-next is the active version and will replace vesrion 4 in Dec 2022
+> version 5.0.0-next is the active dev version and will replace version 4 in Dec 2022
 
 
 Its beeing used in some personal applications at work atm to get real world testing on what works
@@ -15,7 +15,6 @@ Sample:
 API docs:
 *  [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)
 
-
 Source code: (have minimal sample of usage)
 *  [Grid](https://github.com/vegarringdal/simple-html/packages/grid)
 
@@ -26,7 +25,6 @@ Source code: (have minimal sample of usage)
 * all UI rebuilt to optimise scrolling vert/horz
   * usign less custom componets, more wrapped into 1 class with methods
   * old grid had some really messy parts since all was to split into own classes/got expanded due to issues found at work in the begining, like 200 columns on a report
-* 
 * gridinterface rebuilt from scratch
   * needed to support pinned left/right
   * tried to simplify more
@@ -38,7 +36,7 @@ Source code: (have minimal sample of usage)
     * text is equal
       * so they can just use * to starts with/contains etc
 
-# TODO:
+# TODO / Features
 
 Need for version "5.0.0":
  * [x] main UI parts
@@ -115,15 +113,16 @@ Need for version "5.0.0":
  * [x] total rows/filtered rows to footer
  * [x] clear filter with button in footer
  * [ ] excel similar column filter, like we have in old grid
+   * mostly minor stuff left here
  * [x] hold shift +contr and use mousewheel to scroll horizontal
 
-Wanted/considering
+## Wanted/considering
  * [ ] find all function
  * [ ] replace value
  * [ ] edit cells callback/event
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
 
-Other:
+## Other:
 - [ ] gridhub action for release/test/lock master branch
 
 
@@ -135,3 +134,11 @@ Other:
 * `npm start grid01`
 ' open `http://localhost:8080`
 
+
+# Release
+Will make github action
+
+* `npm run build:all`
+* `npm run release`
+* `git push --follow-tags origin 5.0.0` -> 5.0.0 depends on branch..
+* `npm run publish:all`
