@@ -534,7 +534,7 @@ input {
     user-select: none;
 }
 
-.simple-html-dimmed {
+.simple-html-grid-row-odd .simple-html-dimmed {
     box-sizing: border-box;
     position: absolute;
     background-color: transparent;
@@ -546,9 +546,27 @@ input {
     bottom: 0;
     overflow: hidden;
     user-select: none;
-    filter: opacity(0.1);
-    background-image: repeating-linear-gradient(-45deg, transparent, transparent 1px, black 1px, black 4px);
-    background-image: repeating-linear-gradient(-45deg, transparent 0 1px, black 1px 2px);
+    cursor: not-allowed
+    /* filter: opacity(0.1); */
+   /*  background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, var(--simple-html-grid-main-bg-selected-odd) 1px, var(--simple-html-grid-main-bg-selected-odd) 4px); */
+}
+
+.simple-html-grid-row-even .simple-html-dimmed {
+    box-sizing: border-box;
+    position: absolute;
+    background-color: transparent;
+    left: 0;
+    right: 0;
+    border: 0;
+    outline: none;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    user-select: none;
+    cursor: not-allowed
+    /* filter: opacity(0.1); */
+  /*   background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, var(--simple-html-grid-main-bg-selected-even) 1px, var(--simple-html-grid-main-bg-selected-even) 4px); */
+
 }
 
 .simple-html-readonly {
