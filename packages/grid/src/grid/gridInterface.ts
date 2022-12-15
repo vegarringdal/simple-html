@@ -58,9 +58,9 @@ export class GridInterface<T> {
      * @param gridConfig
      * @param load = false, but can be usedful if you want to update and load it
      */
-    public updateInitConfig(gridConfig: GridConfig, load= false) {
+    public updateInitConfig(gridConfig: GridConfig, load = false) {
         this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
-        if(load){
+        if (load) {
             this.loadConfig(this.initConfig, false);
         }
     }
@@ -272,6 +272,7 @@ export class GridInterface<T> {
         this.gridConfig.expandedGroups = null;
 
         this.parseConfig();
+
         if (filter) {
             this.getDatasource().setFilter(filter as FilterArgument);
         } else {
@@ -279,15 +280,14 @@ export class GridInterface<T> {
         }
         this.getDatasource().filter();
 
-        if (sortOrder?.length && !grouping?.length) {
-            this.getDatasource().sort(sortOrder);
-        }
-
         if (grouping?.length) {
             this.getDatasource().setExpanded(exspandedGroups);
             this.getDatasource().group(grouping);
         } else {
             this.getDatasource().removeGroup();
+            if (sortOrder?.length && !grouping?.length) {
+                this.getDatasource().sort(sortOrder);
+            }
         }
 
         this.suppressEvents = false;
