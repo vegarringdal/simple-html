@@ -5,12 +5,6 @@ Only lit-html as dependency
 > version 5.0.0-next is the active dev version and will replace version 4 in Dec 2022.
 
 
-
-
-Its beeing used in some personal applications at work atm to get real world testing on what works
-good and not.
-
-
 Sample:
 * [sample](https://vegarringdal.github.io/rebuild-grid/index.html)
 
@@ -20,6 +14,68 @@ API docs:
 Source code: (have minimal sample of usage)
 *  [Grid](https://github.com/vegarringdal/simple-html/packages/grid)
 
+
+# Minimal code sample
+
+```ts
+import './index.css';
+import { GridInterface, GridElement, GridConfig, Datasource } from '@simple-html/grid';
+import "@simple-html/grid/dist/grid.css";
+
+/**
+ * create datasource
+ */
+const datasource = new Datasource();
+
+// add data
+datasource.setData([
+    { firstname: 'first1', lastname: 'last1' },
+    { firstname: 'first2', lastname: 'last2' },
+    { firstname: 'first3', lastname: 'last3' }
+]);
+
+/**
+ * create gridConfig
+ */
+const gridConfig: GridConfig = {
+    columnsCenter: [
+        {
+            rows: ['firstname'],
+            width: 100
+        },
+        {
+            rows: ['lastname'],
+            width: 100
+        }
+    ],
+    attributes: [
+        {
+            attribute: 'firstname'
+        },
+        {
+            attribute: 'lastname'
+        }
+    ]
+};
+
+
+/**
+ * create interface and add gridconfig and datasource to it
+ */
+const gridInterface = new GridInterface(gridConfig, datasource);
+
+/**
+ * create element for the grid
+ */
+const element = document.createElement('simple-html-grid') as GridElement;
+element.style.width = '100%';
+element.style.height = '100%';
+element.style.display = 'flex';
+element.classList.add('simple-html-grid');
+element.connectInterface(gridInterface);
+
+document.body.appendChild(element);
+```
 
 
 # 5.0.0 Info / Progress

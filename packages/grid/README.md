@@ -5,11 +5,9 @@ Sample:
 
 API docs:
 -   [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)
--   [Datasource](https://vegarringdal.github.io/simple-html/datasource/index.html)
 
 Source code:
--   [Grid](https://github.com/vegarringdal/simple-html/tree/master/packages/grid)
--   [Datasource](https://github.com/vegarringdal/simple-html/tree/master/packages/datasource)
+-   [Grid](https://github.com/vegarringdal/simple-html/packages/grid)
 
 Features/Todo:
 - [todo](https://github.com/vegarringdal/simple-html)
