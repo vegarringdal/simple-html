@@ -84,5 +84,5 @@ export type Attribute = {
     sortEnabled?: boolean;
     groupEnabled?: boolean;
     currentFilterValue?: string | number | boolean | Date;
-    blankAsZero?: boolean;
+    numberOverride?: "ZERO_TO_BLANK"|"BLANK_TO_ZERO";
 };

@@ -34,6 +34,14 @@ export const gridConfig: GridConfig = {
             width: 100
         },
         {
+            rows: ['balance'],
+            width: 100
+        },
+        {
+            rows: ['latitude'],
+            width: 100
+        },
+        {
             rows: ['longitude'],
             width: 100
         },
@@ -85,8 +93,12 @@ export const gridConfig: GridConfig = {
         {
             attribute: 'longitude',
             type: 'number',
-            blankAsZero:true
-           
+            numberOverride: 'ZERO_TO_BLANK'
+        },
+        {
+            attribute: 'latitude',
+            type: 'number',
+            numberOverride: 'BLANK_TO_ZERO'
         },
         {
             attribute: 'age',
@@ -98,13 +110,13 @@ export const gridConfig: GridConfig = {
         },
         {
             attribute: 'date1',
-            type: "date",
-            placeHolderFilter:"YYYY-MM-DD"
+            type: 'date',
+            placeHolderFilter: 'YYYY-MM-DD'
         },
         {
             attribute: 'date2',
             type: 'date',
-            placeHolderFilter:"YYYY-MM-DD"
+            placeHolderFilter: 'YYYY-MM-DD'
         }
     ],
     sorting: [
