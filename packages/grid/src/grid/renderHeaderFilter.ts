@@ -146,7 +146,7 @@ export function renderHeaderFilter(
                             }
                         }}
                         @change=${(e: any) => {
-                            console.log('change', (e.target as any).value, lastFilter);
+                            console.log('change',attribute, (e.target as any).value, lastFilter);
                             if (!filterRunning) {
                                 filterRunning = true;
 

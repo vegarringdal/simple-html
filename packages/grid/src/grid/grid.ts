@@ -366,7 +366,7 @@ export class Grid {
 
                 break;
             case 'number':
-                col.currentFilterValue = this.gridInterface
+                col.currentFilterValue = value === '' ? null : this.gridInterface
                     .getDatasource()
                     .getNumberFormater()
                     .toNumber(value as string);
