@@ -1,6 +1,6 @@
 import { Datasource } from '../datasource/dataSource';
 import { FilterArgument } from '../datasource/filterArgument';
-import { Entity } from "../datasource/Entity";
+import { Entity } from '../datasource/Entity';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
 import { getAttributeColumns } from './gridFunctions/getAttributeColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';

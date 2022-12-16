@@ -1,7 +1,7 @@
-import { SelectionMode } from "./SelectionMode";
+import { SelectionMode } from './SelectionMode';
 
 /**
  *  datasource
  */
 
-export type DatasourceConfigOptions = { selectionMode: SelectionMode; };
+export type DatasourceConfigOptions = { selectionMode: SelectionMode };

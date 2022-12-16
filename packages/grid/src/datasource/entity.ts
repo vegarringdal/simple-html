@@ -1,6 +1,5 @@
 import { EntityHandler } from './entityHandler';
 
-
 export interface Entity {
     __controller?: EntityHandler;
     __KEY?: string | number;

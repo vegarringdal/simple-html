@@ -1,5 +1,5 @@
 import { html, render } from 'lit-html';
-import { Entity } from "../../datasource/Entity";
+import { Entity } from '../../datasource/Entity';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { getAttributeColumns } from './getAttributeColumns';

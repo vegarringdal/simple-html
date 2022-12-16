@@ -1,5 +1,4 @@
-import { FilterComparisonOperator } from "./filterComparisonOperator";
-
+import { FilterComparisonOperator } from './filterComparisonOperator';
 
 export type FilterArgument = {
     type?: FilterExpressionType;
@@ -21,5 +20,3 @@ export interface FilterAttributeSimple {
     type: string;
 }
 export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date';
-
-

@@ -1,5 +1,5 @@
 import { render, html } from 'lit-html';
-import { Entity } from "../../datasource/Entity";
+import { Entity } from '../../datasource/Entity';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
 import { ColType } from './ColType';
