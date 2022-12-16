@@ -17,14 +17,15 @@
 <li><a href="grid_grid.Grid.html">Grid</a></li></ul>
 <h1>Class Grid</h1></div>
 <section class="tsd-panel tsd-comment">
-<div class="tsd-comment tsd-typography"><p>Grid class, this has logic for all scrolling/events</p>
+<div class="tsd-comment tsd-typography"><p>Grid class, this has logic for all scrolling/events
+most of functionality is moved into function where we pass this context</p>
 </div></section>
 <section class="tsd-panel tsd-hierarchy">
 <h4>Hierarchy</h4>
 <ul class="tsd-hierarchy">
 <li><span class="target">Grid</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:51</li></ul></aside>
+<li>Defined in packages/grid/src/grid/grid.ts:19</li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -67,30 +68,13 @@
 </div></section>
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading">Methods</h3>
-<div class="tsd-index-list"><a href="grid_grid.Grid.html#addClickEventListener" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="#FF4DB8" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12" id="icon-2048-path"></rect><path d="M9.162 16V7.24H10.578L11.514 10.072C11.602 10.328 11.674 10.584 11.73 10.84C11.794 11.088 11.842 11.28 11.874 11.416C11.906 11.28 11.954 11.088 12.018 10.84C12.082 10.584 12.154 10.324 12.234 10.06L13.122 7.24H14.538V16H13.482V12.82C13.482 12.468 13.49 12.068 13.506 11.62C13.53 11.172 13.558 10.716 13.59 10.252C13.622 9.78 13.654 9.332 13.686 8.908C13.726 8.476 13.762 8.1 13.794 7.78L12.366 12.16H11.334L9.894 7.78C9.934 8.092 9.97 8.456 10.002 8.872C10.042 9.28 10.078 9.716 10.11 10.18C10.142 10.636 10.166 11.092 10.182 11.548C10.206 12.004 10.218 12.428 10.218 12.82V16H9.162Z" fill="var(--color-text)" id="icon-2048-text"></path></svg><span>add<wbr/>Click<wbr/>Event<wbr/>Listener</span></a>
-<a href="grid_grid.Grid.html#cellRender" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>cell<wbr/>Render</span></a>
-<a href="grid_grid.Grid.html#clearAllColumnFilters" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>clear<wbr/>All<wbr/>Column<wbr/>Filters</span></a>
-<a href="grid_grid.Grid.html#connectElement" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>connect<wbr/>Element</span></a>
+<div class="tsd-index-list"><a href="grid_grid.Grid.html#connectElement" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="#FF4DB8" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12" id="icon-2048-path"></rect><path d="M9.162 16V7.24H10.578L11.514 10.072C11.602 10.328 11.674 10.584 11.73 10.84C11.794 11.088 11.842 11.28 11.874 11.416C11.906 11.28 11.954 11.088 12.018 10.84C12.082 10.584 12.154 10.324 12.234 10.06L13.122 7.24H14.538V16H13.482V12.82C13.482 12.468 13.49 12.068 13.506 11.62C13.53 11.172 13.558 10.716 13.59 10.252C13.622 9.78 13.654 9.332 13.686 8.908C13.726 8.476 13.762 8.1 13.794 7.78L12.366 12.16H11.334L9.894 7.78C9.934 8.092 9.97 8.456 10.002 8.872C10.042 9.28 10.078 9.716 10.11 10.18C10.142 10.636 10.166 11.092 10.182 11.548C10.206 12.004 10.218 12.428 10.218 12.82V16H9.162Z" fill="var(--color-text)" id="icon-2048-text"></path></svg><span>connect<wbr/>Element</span></a>
 <a href="grid_grid.Grid.html#connectGridInterface" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>connect<wbr/>Grid<wbr/>Interface</span></a>
 <a href="grid_grid.Grid.html#disableResizeEvent" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>disable<wbr/>Resize<wbr/>Event</span></a>
 <a href="grid_grid.Grid.html#disconnectElement" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>disconnect<wbr/>Element</span></a>
-<a href="grid_grid.Grid.html#dropDownFilterData" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>drop<wbr/>Down<wbr/>Filter<wbr/>Data</span></a>
 <a href="grid_grid.Grid.html#enableResizeEvent" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>enable<wbr/>Resize<wbr/>Event</span></a>
-<a href="grid_grid.Grid.html#filterCallback" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>filter<wbr/>Callback</span></a>
-<a href="grid_grid.Grid.html#getAttributeColumns" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Attribute<wbr/>Columns</span></a>
-<a href="grid_grid.Grid.html#getBody" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Body</span></a>
 <a href="grid_grid.Grid.html#getElement" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Element</span></a>
-<a href="grid_grid.Grid.html#getFont" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Font</span></a>
-<a href="grid_grid.Grid.html#getGroupingWidth" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Grouping<wbr/>Width</span></a>
-<a href="grid_grid.Grid.html#getTextWidth" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>get<wbr/>Text<wbr/>Width</span></a>
-<a href="grid_grid.Grid.html#initResizerEvent" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>init<wbr/>Resizer<wbr/>Event</span></a>
-<a href="grid_grid.Grid.html#openFilterEditor" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>open<wbr/>Filter<wbr/>Editor</span></a>
-<a href="grid_grid.Grid.html#prettyPrintString" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>pretty<wbr/>Print<wbr/>String</span></a>
 <a href="grid_grid.Grid.html#rebuild" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>rebuild</span></a>
-<a href="grid_grid.Grid.html#removeContextMenu" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>remove<wbr/>Context<wbr/>Menu</span></a>
-<a href="grid_grid.Grid.html#triggerScrollEvent" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>trigger<wbr/>Scroll<wbr/>Event</span></a>
-<a href="grid_grid.Grid.html#updateHorizontalScrollWidth" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>update<wbr/>Horizontal<wbr/>Scroll<wbr/>Width</span></a>
-<a href="grid_grid.Grid.html#updateVerticalScrollHeight" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>update<wbr/>Vertical<wbr/>Scroll<wbr/>Height</span></a>
 </div></section></div></details></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Constructors</h2>
@@ -106,183 +90,144 @@
 <h3 class="tsd-anchor-link"><span>body</span><a href="#body" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">body<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">HTMLElement</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:54</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:22</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="clickListner" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>click<wbr/>Listner</span><a href="#clickListner" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">click<wbr/>Listner<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:82</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:53</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="columnChooserMenu" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>column<wbr/>Chooser<wbr/>Menu</span><a href="#columnChooserMenu" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">column<wbr/>Chooser<wbr/>Menu<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">HTMLElement</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:81</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:52</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="columns" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>columns</span><a href="#columns" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">columns<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">HTMLElement</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:72</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:43</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="columnsHeaders" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>columns<wbr/>Headers</span><a href="#columnsHeaders" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">columns<wbr/>Headers<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">HTMLElement</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:77</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:48</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="containerGroupRowCache" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>container<wbr/>Group<wbr/>Row<wbr/>Cache</span><a href="#containerGroupRowCache" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">container<wbr/>Group<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <a href="../types/grid_grid.RowCache.html" class="tsd-signature-type" data-tsd-kind="Type alias">RowCache</a><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
+<div class="tsd-signature">container<wbr/>Group<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RowCache</span><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:56</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:25</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="containerLeftColumnCache" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>container<wbr/>Left<wbr/>Column<wbr/>Cache</span><a href="#containerLeftColumnCache" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">container<wbr/>Left<wbr/>Column<wbr/>Cache<span class="tsd-signature-symbol">:</span> <a href="../types/grid_grid.ColumnCache.html" class="tsd-signature-type" data-tsd-kind="Type alias">ColumnCache</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
+<div class="tsd-signature">container<wbr/>Left<wbr/>Column<wbr/>Cache<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ColumnCache</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:62</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:32</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="containerLeftRowCache" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>container<wbr/>Left<wbr/>Row<wbr/>Cache</span><a href="#containerLeftRowCache" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">container<wbr/>Left<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <a href="../types/grid_grid.RowCache.html" class="tsd-signature-type" data-tsd-kind="Type alias">RowCache</a><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
+<div class="tsd-signature">container<wbr/>Left<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RowCache</span><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:58</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:27</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="containerMiddleColumnCache" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>container<wbr/>Middle<wbr/>Column<wbr/>Cache</span><a href="#containerMiddleColumnCache" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">container<wbr/>Middle<wbr/>Column<wbr/>Cache<span class="tsd-signature-symbol">:</span> <a href="../types/grid_grid.ColumnCache.html" class="tsd-signature-type" data-tsd-kind="Type alias">ColumnCache</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
+<div class="tsd-signature">container<wbr/>Middle<wbr/>Column<wbr/>Cache<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ColumnCache</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:63</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:33</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="containerMiddleRowCache" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>container<wbr/>Middle<wbr/>Row<wbr/>Cache</span><a href="#containerMiddleRowCache" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">container<wbr/>Middle<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <a href="../types/grid_grid.RowCache.html" class="tsd-signature-type" data-tsd-kind="Type alias">RowCache</a><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
+<div class="tsd-signature">container<wbr/>Middle<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RowCache</span><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:59</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:28</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="containerRightColumnCache" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>container<wbr/>Right<wbr/>Column<wbr/>Cache</span><a href="#containerRightColumnCache" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">container<wbr/>Right<wbr/>Column<wbr/>Cache<span class="tsd-signature-symbol">:</span> <a href="../types/grid_grid.ColumnCache.html" class="tsd-signature-type" data-tsd-kind="Type alias">ColumnCache</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
+<div class="tsd-signature">container<wbr/>Right<wbr/>Column<wbr/>Cache<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ColumnCache</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:64</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:34</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="containerRightRowCache" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>container<wbr/>Right<wbr/>Row<wbr/>Cache</span><a href="#containerRightRowCache" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">container<wbr/>Right<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <a href="../types/grid_grid.RowCache.html" class="tsd-signature-type" data-tsd-kind="Type alias">RowCache</a><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
+<div class="tsd-signature">container<wbr/>Right<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RowCache</span><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:60</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:29</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="containerSelectorRowCache" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>container<wbr/>Selector<wbr/>Row<wbr/>Cache</span><a href="#containerSelectorRowCache" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">container<wbr/>Selector<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <a href="../types/grid_grid.RowCache.html" class="tsd-signature-type" data-tsd-kind="Type alias">RowCache</a><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
+<div class="tsd-signature">container<wbr/>Selector<wbr/>Row<wbr/>Cache<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RowCache</span><span class="tsd-signature-symbol">[]</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:57</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:26</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="contextMenu" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>context<wbr/>Menu</span><a href="#contextMenu" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">context<wbr/>Menu<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">HTMLElement</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:79</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:50</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="element" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>element</span><a href="#element" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">element<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">HTMLElement</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:52</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:20</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="filterEditorContainer" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>filter<wbr/>Editor<wbr/>Container</span><a href="#filterEditorContainer" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">filter<wbr/>Editor<wbr/>Container<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">HTMLElement</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:80</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:51</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="focusElement" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>focus<wbr/>Element</span><a href="#focusElement" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">focus<wbr/>Element<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">HTMLInputElement</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:83</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:54</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="gridInterface" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>grid<wbr/>Interface</span><a href="#gridInterface" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">grid<wbr/>Interface<span class="tsd-signature-symbol">:</span> <a href="grid_gridInterface.GridInterface.html" class="tsd-signature-type" data-tsd-kind="Class">GridInterface</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:53</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:21</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="largeScrollLeftTimer" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>large<wbr/>Scroll<wbr/>Left<wbr/>Timer</span><a href="#largeScrollLeftTimer" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">large<wbr/>Scroll<wbr/>Left<wbr/>Timer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Timeout</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:68</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:39</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="largeScrollTopTimer" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>large<wbr/>Scroll<wbr/>Top<wbr/>Timer</span><a href="#largeScrollTopTimer" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">large<wbr/>Scroll<wbr/>Top<wbr/>Timer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Timeout</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:69</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:40</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="lastScrollLeft" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>last<wbr/>Scroll<wbr/>Left</span><a href="#lastScrollLeft" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">last<wbr/>Scroll<wbr/>Left<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:67</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:38</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="lastScrollTop" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>last<wbr/>Scroll<wbr/>Top</span><a href="#lastScrollTop" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">last<wbr/>Scroll<wbr/>Top<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:66</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:37</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="oldHeight" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>old<wbr/>Height</span><a href="#oldHeight" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">old<wbr/>Height<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:73</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:44</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="oldWidth" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>old<wbr/>Width</span><a href="#oldWidth" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">old<wbr/>Width<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:74</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:45</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="resizeInit" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>resize<wbr/>Init</span><a href="#resizeInit" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">resize<wbr/>Init<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:76</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:47</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="resizeTimer" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>resize<wbr/>Timer</span><a href="#resizeTimer" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">resize<wbr/>Timer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Timeout</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:75</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:46</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="rows" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>rows</span><a href="#rows" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">rows<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">HTMLElement</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:71</li></ul></aside></section>
+<li>Defined in packages/grid/src/grid/grid.ts:42</li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="skipInitResizeEvent" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>skip<wbr/>Init<wbr/>Resize<wbr/>Event</span><a href="#skipInitResizeEvent" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">skip<wbr/>Init<wbr/>Resize<wbr/>Event<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:78</li></ul></aside></section></section>
+<li>Defined in packages/grid/src/grid/grid.ts:49</li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="addClickEventListener" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>add<wbr/>Click<wbr/>Event<wbr/>Listener</span><a href="#addClickEventListener" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="addClickEventListener.addClickEventListener-1">add<wbr/>Click<wbr/>Event<wbr/>Listener<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#addClickEventListener.addClickEventListener-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:213</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="cellRender" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>cell<wbr/>Render</span><a href="#cellRender" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="cellRender.cellRender-1">cell<wbr/>Render<span class="tsd-signature-symbol">(</span>cell<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLElement</span>, row<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, column<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, celno<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, colType<span class="tsd-signature-symbol">: </span><a href="../types/grid_grid.ColType.html" class="tsd-signature-type" data-tsd-kind="Type alias">ColType</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#cellRender.cellRender-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>this is called by scrolling/rebuild logic, its job is to pass work to correct rendrer</p>
-</div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>cell: <span class="tsd-signature-type">HTMLElement</span></h5></li>
-<li>
-<h5>row: <span class="tsd-signature-type">number</span></h5></li>
-<li>
-<h5>column: <span class="tsd-signature-type">number</span></h5></li>
-<li>
-<h5>celno: <span class="tsd-signature-type">number</span></h5></li>
-<li>
-<h5>colType: <a href="../types/grid_grid.ColType.html" class="tsd-signature-type" data-tsd-kind="Type alias">ColType</a></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:477</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="clearAllColumnFilters" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>clear<wbr/>All<wbr/>Column<wbr/>Filters</span><a href="#clearAllColumnFilters" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="clearAllColumnFilters.clearAllColumnFilters-1">clear<wbr/>All<wbr/>Column<wbr/>Filters<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#clearAllColumnFilters.clearAllColumnFilters-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:532</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="connectElement" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>connect<wbr/>Element</span><a href="#connectElement" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -297,7 +242,7 @@
 <h5>element: <span class="tsd-signature-type">HTMLElement</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:89</li></ul></aside></li></ul></section>
+<li>Defined in packages/grid/src/grid/grid.ts:60</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="connectGridInterface" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>connect<wbr/>Grid<wbr/>Interface</span><a href="#connectGridInterface" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -312,7 +257,7 @@
 <h5>gridInterface: <a href="grid_gridInterface.GridInterface.html" class="tsd-signature-type" data-tsd-kind="Class">GridInterface</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:103</li></ul></aside></li></ul></section>
+<li>Defined in packages/grid/src/grid/grid.ts:74</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="disableResizeEvent" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>disable<wbr/>Resize<wbr/>Event</span><a href="#disableResizeEvent" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -320,7 +265,7 @@
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:134</li></ul></aside></li></ul></section>
+<li>Defined in packages/grid/src/grid/grid.ts:105</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="disconnectElement" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>disconnect<wbr/>Element</span><a href="#disconnectElement" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -328,36 +273,7 @@
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:114</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="dropDownFilterData" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>drop<wbr/>Down<wbr/>Filter<wbr/>Data</span><a href="#dropDownFilterData" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="dropDownFilterData.dropDownFilterData-1">drop<wbr/>Down<wbr/>Filter<wbr/>Data<span class="tsd-signature-symbol">(</span>attribute<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, availableOnly<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span>, searchInput<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>dataFilterSet<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>dataFilterSetFull<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>enableAvailableOnlyOption<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>selectAll<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><a href="#dropDownFilterData.dropDownFilterData-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>helper for column excel similar filter</p>
-
-<h3>Returns</h3></div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>attribute: <span class="tsd-signature-type">string</span></h5></li>
-<li>
-<h5>availableOnly: <span class="tsd-signature-type">boolean</span></h5></li>
-<li>
-<h5>searchInput: <span class="tsd-signature-type">string</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">{ </span><br/><span>    </span>dataFilterSet<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>dataFilterSetFull<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>enableAvailableOnlyOption<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>selectAll<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></h4>
-<ul class="tsd-parameters">
-<li class="tsd-parameter">
-<h5>data<wbr/>Filter<wbr/>Set<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h5></li>
-<li class="tsd-parameter">
-<h5>data<wbr/>Filter<wbr/>Set<wbr/>Full<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h5></li>
-<li class="tsd-parameter">
-<h5>enable<wbr/>Available<wbr/>Only<wbr/>Option<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5></li>
-<li class="tsd-parameter">
-<h5>select<wbr/>All<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5></li></ul><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:551</li></ul></aside></li></ul></section>
+<li>Defined in packages/grid/src/grid/grid.ts:85</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="enableResizeEvent" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>enable<wbr/>Resize<wbr/>Event</span><a href="#enableResizeEvent" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -365,57 +281,7 @@
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:138</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="filterCallback" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>filter<wbr/>Callback</span><a href="#filterCallback" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="filterCallback.filterCallback-1">filter<wbr/>Callback<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span>, col<span class="tsd-signature-symbol">: </span><a href="../types/grid_gridConfig.Attribute.html" class="tsd-signature-type" data-tsd-kind="Type alias">Attribute</a>, filterArray<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span>, filterArrayAndValue<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, notinArray<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#filterCallback.filterCallback-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>filters columns
-Internal usage only, do not call</p>
-</div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>value: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5></li>
-<li>
-<h5>col: <a href="../types/grid_gridConfig.Attribute.html" class="tsd-signature-type" data-tsd-kind="Type alias">Attribute</a></h5></li>
-<li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> filterArray: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5></li>
-<li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> filterArrayAndValue: <span class="tsd-signature-type">string</span></h5></li>
-<li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> notinArray: <span class="tsd-signature-type">boolean</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:353</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getAttributeColumns" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>get<wbr/>Attribute<wbr/>Columns</span><a href="#getAttributeColumns" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="getAttributeColumns.getAttributeColumns-1">get<wbr/>Attribute<wbr/>Columns<span class="tsd-signature-symbol">(</span>filterSelectedColumns<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><a href="#getAttributeColumns.getAttributeColumns-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>gets all attributes displayed</p>
-
-<h3>Returns</h3></div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>filterSelectedColumns: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
-<div class="tsd-comment tsd-typography"><p>by default filters out selected</p>
-</div></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:643</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getBody" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>get<wbr/>Body</span><a href="#getBody" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="getBody.getBody-1">get<wbr/>Body<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLElement</span><a href="#getBody.getBody-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">HTMLElement</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:146</li></ul></aside></li></ul></section>
+<li>Defined in packages/grid/src/grid/grid.ts:109</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getElement" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Element</span><a href="#getElement" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -423,79 +289,7 @@ Internal usage only, do not call</p>
 <li class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">HTMLElement</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:142</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getFont" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>get<wbr/>Font</span><a href="#getFont" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="getFont.getFont-1">get<wbr/>Font<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><a href="#getFont.getFont-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>helper for autoresize columns</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:336</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getGroupingWidth" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>get<wbr/>Grouping<wbr/>Width</span><a href="#getGroupingWidth" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="getGroupingWidth.getGroupingWidth-1">get<wbr/>Grouping<wbr/>Width<span class="tsd-signature-symbol">(</span>coltype<span class="tsd-signature-symbol">: </span><a href="../types/grid_grid.ColType.html" class="tsd-signature-type" data-tsd-kind="Type alias">ColType</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><a href="#getGroupingWidth.getGroupingWidth-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>coltype: <a href="../types/grid_grid.ColType.html" class="tsd-signature-type" data-tsd-kind="Type alias">ColType</a></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:233</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getTextWidth" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>get<wbr/>Text<wbr/>Width</span><a href="#getTextWidth" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="getTextWidth.getTextWidth-1">get<wbr/>Text<wbr/>Width<span class="tsd-signature-symbol">(</span>text<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><a href="#getTextWidth.getTextWidth-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>helper for autoresize columns</p>
-</div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>text: <span class="tsd-signature-type">string</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:266</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="initResizerEvent" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>init<wbr/>Resizer<wbr/>Event</span><a href="#initResizerEvent" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="initResizerEvent.initResizerEvent-1">init<wbr/>Resizer<wbr/>Event<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#initResizerEvent.initResizerEvent-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:191</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="openFilterEditor" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>open<wbr/>Filter<wbr/>Editor</span><a href="#openFilterEditor" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="openFilterEditor.openFilterEditor-1">open<wbr/>Filter<wbr/>Editor<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#openFilterEditor.openFilterEditor-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>opens filter editor with current filter</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:279</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="prettyPrintString" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>pretty<wbr/>Print<wbr/>String</span><a href="#prettyPrintString" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="prettyPrintString.prettyPrintString-1">pretty<wbr/>Print<wbr/>String<span class="tsd-signature-symbol">(</span>text<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><a href="#prettyPrintString.prettyPrintString-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>takes and turn first letter to upper/rest lowercase and lower hyphen into space</p>
-
-<h3>Returns</h3></div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>text: <span class="tsd-signature-type">string</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:668</li></ul></aside></li></ul></section>
+<li>Defined in packages/grid/src/grid/grid.ts:113</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="rebuild" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>rebuild</span><a href="#rebuild" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -510,52 +304,7 @@ Internal usage only, do not call</p>
 <h5>rebuildHeader: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in packages/grid/src/grid/grid.ts:176</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="removeContextMenu" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>remove<wbr/>Context<wbr/>Menu</span><a href="#removeContextMenu" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="removeContextMenu.removeContextMenu-1">remove<wbr/>Context<wbr/>Menu<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#removeContextMenu.removeContextMenu-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>helper</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:679</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="triggerScrollEvent" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>trigger<wbr/>Scroll<wbr/>Event</span><a href="#triggerScrollEvent" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="triggerScrollEvent.triggerScrollEvent-1">trigger<wbr/>Scroll<wbr/>Event<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#triggerScrollEvent.triggerScrollEvent-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>this just rerenders row values, usefull for selection etc</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:153</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="updateHorizontalScrollWidth" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>update<wbr/>Horizontal<wbr/>Scroll<wbr/>Width</span><a href="#updateHorizontalScrollWidth" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="updateHorizontalScrollWidth.updateHorizontalScrollWidth-1">update<wbr/>Horizontal<wbr/>Scroll<wbr/>Width<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#updateHorizontalScrollWidth.updateHorizontalScrollWidth-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>this adjust middle viewport, so scrolling width is correct compared to total columns and their width</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:306</li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="updateVerticalScrollHeight" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>update<wbr/>Vertical<wbr/>Scroll<wbr/>Height</span><a href="#updateVerticalScrollHeight" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="updateVerticalScrollHeight.updateVerticalScrollHeight-1">update<wbr/>Vertical<wbr/>Scroll<wbr/>Height<span class="tsd-signature-symbol">(</span>height<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#updateVerticalScrollHeight.updateVerticalScrollHeight-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>this adjust viewports, so scrolling height is correct, compared to all rows and its height</p>
-</div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>height: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in packages/grid/src/grid/grid.ts:248</li></ul></aside></li></ul></section></section></div>
+<li>Defined in packages/grid/src/grid/grid.ts:122</li></ul></aside></li></ul></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -620,30 +369,13 @@ Internal usage only, do not call</p>
 <li class="tsd-kind-property tsd-parent-kind-class"><a href="grid_grid.Grid.html#resizeTimer" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg>resize<wbr/>Timer</a></li>
 <li class="tsd-kind-property tsd-parent-kind-class"><a href="grid_grid.Grid.html#rows" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg>rows</a></li>
 <li class="tsd-kind-property tsd-parent-kind-class"><a href="grid_grid.Grid.html#skipInitResizeEvent" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg>skip<wbr/>Init<wbr/>Resize<wbr/>Event</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#addClickEventListener" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>add<wbr/>Click<wbr/>Event<wbr/>Listener</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#cellRender" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>cell<wbr/>Render</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#clearAllColumnFilters" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>clear<wbr/>All<wbr/>Column<wbr/>Filters</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#connectElement" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>connect<wbr/>Element</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#connectGridInterface" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>connect<wbr/>Grid<wbr/>Interface</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#disableResizeEvent" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>disable<wbr/>Resize<wbr/>Event</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#disconnectElement" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>disconnect<wbr/>Element</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#dropDownFilterData" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>drop<wbr/>Down<wbr/>Filter<wbr/>Data</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#enableResizeEvent" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>enable<wbr/>Resize<wbr/>Event</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#filterCallback" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>filter<wbr/>Callback</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#getAttributeColumns" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Attribute<wbr/>Columns</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#getBody" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Body</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#getElement" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Element</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#getFont" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Font</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#getGroupingWidth" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Grouping<wbr/>Width</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#getTextWidth" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>get<wbr/>Text<wbr/>Width</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#initResizerEvent" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>init<wbr/>Resizer<wbr/>Event</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#openFilterEditor" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>open<wbr/>Filter<wbr/>Editor</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#prettyPrintString" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>pretty<wbr/>Print<wbr/>String</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#rebuild" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>rebuild</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#removeContextMenu" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>remove<wbr/>Context<wbr/>Menu</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#triggerScrollEvent" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>trigger<wbr/>Scroll<wbr/>Event</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#updateHorizontalScrollWidth" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>update<wbr/>Horizontal<wbr/>Scroll<wbr/>Width</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#updateVerticalScrollHeight" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>update<wbr/>Vertical<wbr/>Scroll<wbr/>Height</a></li></ul></li></ul></nav></div></div>
+<li class="tsd-kind-method tsd-parent-kind-class"><a href="grid_grid.Grid.html#rebuild" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>rebuild</a></li></ul></li></ul></nav></div></div>
 <div class="container tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
 <div class="overlay"></div><script src="../assets/main.js"></script></body></html>
