@@ -1,8 +1,10 @@
-# grid-rebuild
+# @simple-html/grid
 
 Only lit-html as dependency
 
-> version 5.0.0-next is the active dev version and will replace version 4 in Dec 2022
+> version 5.0.0-next is the active dev version and will replace version 4 in Dec 2022.
+
+
 
 
 Its beeing used in some personal applications at work atm to get real world testing on what works
@@ -30,7 +32,7 @@ Source code: (have minimal sample of usage)
   * tried to simplify more
   * remove all duplicate functions it had, people can just use interface.getDatasource()
 * `@simple-html/datasource`
-  * merged into `@simple-html/datasource`
+  * merged into `@simple-html/grid`
   * changed datasource defaults on filter
     * number is greater than or equal
     * text is equal
@@ -113,14 +115,17 @@ Need for version "5.0.0":
  * [x] add current filter to footer
  * [x] total rows/filtered rows to footer
  * [x] clear filter with button in footer
- * [ ] excel similar column filter, like we have in old grid
-   * mostly minor stuff left here
+ * [x] excel similar column filter, like we have in old grid
+   * this will only show first 50 rows.. important user knows this
  * [x] hold shift +contr and use mousewheel to scroll horizontal
+
+# Needed for editing
+* todo..
 
 ## Wanted/considering
  * [ ] find all function
  * [ ] replace value
- * [ ] edit cells callback/event
+ * [ ] edit cells callback/event (best way to really have controll is to add Entity handler to Datacontainer)
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
 
 ## Other:
