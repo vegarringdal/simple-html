@@ -1,6 +1,7 @@
 import { html, render } from 'lit-html';
 import { Entity } from '../datasource/types';
 import { asPx } from './asPx';
+import { autoResizeColumns } from './autoResizeColumns';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';
 import { creatElement } from './createElement';
 import { ColType, Grid, HTMLCellElement } from './grid';
@@ -176,7 +177,7 @@ export function contextmenuLabel(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    ctx.autoResizeColumns(attribute);
+                    autoResizeColumns(ctx, attribute);
                 }}
             >
                 Resize Column
@@ -184,7 +185,7 @@ export function contextmenuLabel(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    ctx.autoResizeColumns();
+                    autoResizeColumns(ctx);
                 }}
             >
                 Resize all columns

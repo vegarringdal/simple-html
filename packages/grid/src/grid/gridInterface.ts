@@ -1,8 +1,10 @@
 import { Datasource } from '../datasource/dataSource';
 import { Entity, FilterArgument } from '../datasource/types';
+import { autoResizeColumns } from './autoResizeColumns';
 import { getCellHeight } from './getCellHeight';
 import { Grid } from './grid';
 import { GridConfig } from './gridConfig';
+import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -193,7 +195,9 @@ export class GridInterface<T> {
     }
 
     public autoResizeColumns() {
-        this.grid.autoResizeColumns();
+        if (this.grid) {
+            autoResizeColumns(this.grid);
+        }
     }
 
     /**
@@ -252,8 +256,9 @@ export class GridInterface<T> {
         } else {
             this.columnsSelected.add(number);
         }
-
-        this.grid.rebuildHeaderColumns();
+        if (this.grid) {
+            rebuildHeaderColumns(this.grid);
+        }
     }
 
     /**

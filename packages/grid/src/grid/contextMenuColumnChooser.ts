@@ -1,6 +1,7 @@
 import { render, html } from 'lit-html';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
+import { dragEvent } from './dragEvent';
 import { Grid, HTMLCellElement } from './grid';
 
 /**
@@ -59,7 +60,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
     const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
 
     for (let i = 0; i < cells.length; i++) {
-        ctx.dragEvent(cells[i] as HTMLCellElement, false);
+        dragEvent(ctx, cells[i] as HTMLCellElement, false);
     }
 
     document.body.appendChild(contextMenu);

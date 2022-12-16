@@ -4,6 +4,7 @@ import { Entity, FilterArgument } from '../datasource/types';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { ColType, Grid, HTMLCellElement } from './grid';
+import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 
 export function contextmenuFilter(
     ctx: Grid,
@@ -384,7 +385,7 @@ export function contextmenuFilter(
 
             loopFilter(currentFilter);
             datasource.setFilter(currentFilter);
-            ctx.rebuildHeaderColumns();
+            rebuildHeaderColumns(ctx);
             datasource.filter();
         };
 
