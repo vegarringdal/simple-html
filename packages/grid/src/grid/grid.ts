@@ -647,9 +647,9 @@ export class Grid {
         const allAttributes = colLeft.concat(colCenter).concat(colRight);
 
         let attributes: string[] = [];
-        if (this.gridInterface.__selectedColumns()) {
+        if (filterSelectedColumns && this.gridInterface.__selectedColumns()) {
             allAttributes.forEach((name, i) => {
-                if (this.gridInterface.__isColumnSelected(i + 1) && filterSelectedColumns) {
+                if (this.gridInterface.__isColumnSelected(i + 1)) {
                     attributes.push(name);
                 }
             });
