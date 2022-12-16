@@ -162,6 +162,11 @@ createButton('set as editmode', () => {
     gridInterface.loadConfig(config);
 });
 
+
+createButton('Open Filter Editor', () => {
+   gridInterface.openFilterEditor();
+});
+
 const datasourceEvents = {
     handleEvent: (e: any) => {
         console.log('DATASOURCE EVENTS:', e.type, e.data);
