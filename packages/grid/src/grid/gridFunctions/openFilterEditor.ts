@@ -1,4 +1,4 @@
-import { FilterArgument } from '../../datasource/types';
+import { FilterArgument } from '../../datasource/filterArgument';
 import { generateFilterEditor } from './generateFilterEditor';
 import { Grid } from '../grid';
 import { removeContextMenu } from './removeContextMenu';

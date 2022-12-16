@@ -1,5 +1,5 @@
 import { html, render } from 'lit-html';
-import { Entity } from '../../datasource/types';
+import { Entity } from "../../datasource/Entity";
 import { asPx } from './asPx';
 import { autoResizeColumns } from './autoResizeColumns';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';

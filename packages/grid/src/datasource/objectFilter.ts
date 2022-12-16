@@ -1,4 +1,5 @@
-import { FilterAttributeSimple, FilterComparisonOperator } from './types';
+import { FilterAttributeSimple } from './filterArgument';
+import { FilterComparisonOperator } from "./filterComparisonOperator";
 
 export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     let result = true;

@@ -1,5 +1,5 @@
-import { Entity } from './types';
-import { EntityHandler } from './entity';
+import { Entity } from "./Entity";
+import { EntityHandler } from './entityHandler';
 
 let globalKeyCount = 0;
 

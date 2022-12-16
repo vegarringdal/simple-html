@@ -1,4 +1,6 @@
-import { Entity, FilterArgument, FilterComparisonOperator } from './types';
+import { FilterArgument } from './filterArgument';
+import { FilterComparisonOperator } from "./filterComparisonOperator";
+import { Entity } from "./Entity";
 import { objectFilter } from './objectFilter';
 import { Datasource } from './dataSource';
 

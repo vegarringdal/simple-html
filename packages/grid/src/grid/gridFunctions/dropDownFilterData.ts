@@ -1,4 +1,4 @@
-import { FilterArgument } from '../../datasource/types';
+import { FilterArgument } from '../../datasource/filterArgument';
 import { Grid } from '../grid';
 
 /**

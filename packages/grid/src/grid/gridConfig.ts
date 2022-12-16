@@ -1,4 +1,6 @@
-import { DataTypes, FilterArgument, FilterComparisonOperator, GroupArgument } from '../datasource/types';
+import { DataTypes, FilterArgument } from '../datasource/filterArgument';
+import { GroupArgument } from "../datasource/groupArgument";
+import { FilterComparisonOperator } from "../datasource/filterComparisonOperator";
 
 export type GridConfig = {
     cellHeight?: number;

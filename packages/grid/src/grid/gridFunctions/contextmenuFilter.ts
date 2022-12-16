@@ -1,6 +1,7 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import { Entity, FilterArgument } from '../../datasource/types';
+import { FilterArgument } from '../../datasource/filterArgument';
+import { Entity } from "../../datasource/Entity";
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { dropDownFilterData } from './dropDownFilterData';

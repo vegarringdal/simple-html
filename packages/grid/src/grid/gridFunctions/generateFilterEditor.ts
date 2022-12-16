@@ -1,5 +1,5 @@
 import { html, TemplateResult, render } from 'lit-html';
-import { FilterArgument } from '../../datasource/types';
+import { FilterArgument } from '../../datasource/filterArgument';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { creatElement } from './createElement';

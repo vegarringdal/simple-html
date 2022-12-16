@@ -1,4 +1,5 @@
-import { GroupArgument, Entity } from './types';
+import { GroupArgument } from "./groupArgument";
+import { Entity } from "./Entity";
 import { Datasource } from './dataSource';
 
 /**

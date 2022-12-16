@@ -3,20 +3,20 @@ export { GridElement } from './grid/gridElement';
 export { Grid } from './grid/grid';
 export type { GridConfig, Attribute } from './grid/GridConfig';
 export type {
-    FilterComparisonOperator,
     FilterAttributeSimple,
-    SortArgument,
-    GroupArgument,
     FilterLogicalOperator,
     FilterExpressionType,
     FilterValueType,
     FilterArgument,
-    SelectionMode,
     DataTypes
-} from './datasource/types';
-export type { Entity } from './datasource/types';
-export { OPERATORS } from './datasource/types';
-export { EntityHandler } from './datasource/entity';
+} from './datasource/filterArgument';
+export type { FilterComparisonOperator } from './datasource/filterComparisonOperator';
+export type { Entity } from './datasource/entity';
+export type { SortArgument } from './datasource/sortArgument';
+export type { GroupArgument } from './datasource/groupArgument';
+export type { SelectionMode } from './datasource/SelectionMode';
+export { OPERATORS } from './datasource/OPERATORS';
+export { EntityHandler } from './datasource/entityHandler';
 export { Datasource } from './datasource/dataSource';
 export { DataContainer } from './datasource/dataContainer';
 export { NumberFormaterDot } from './datasource/numberFormaterDot';
