@@ -427,6 +427,7 @@ export function contextmenuFilter(
                     Set "Is Not Blank"
                 </div>
                 <hr class="hr-dashed" />
+        
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
@@ -435,11 +436,11 @@ export function contextmenuFilter(
                 >
                     Advanced Filter
                 </div>
-
+                ${filterTemplate()} 
                 ${searchTemplate(() => {
                     innerRender();
                 })}
-                <!--   ${filterTemplate()} -->
+               
             </div>`,
             contextMenu
         );
