@@ -45,7 +45,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
 
     let largeScroll = false;
 
-    if (Math.abs(lastScrollTop - scrollTop) > config.__rowHeight * 15) {
+    if (Math.abs(lastScrollTop - scrollTop) > 500) {
         largeScroll = true;
     }
 
