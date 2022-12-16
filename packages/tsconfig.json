@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
-        "target": "es2018",
+        "target": "es2020",
         "module": "esNext",
-        "lib": ["es2019", "dom"],
+        "lib": ["es2021", "dom"],
         "moduleResolution": "node",
         "isolatedModules": false,
         "esModuleInterop": true,
@@ -29,9 +29,8 @@
         "baseUrl": "./",
         "rootDir": ".",
         "paths": {
-            "@simple-html/datasource": ["./datasource/src"],
             "@simple-html/grid": ["./grid/src"]
         }
     },
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", "packages/grid/dist"]
 }
