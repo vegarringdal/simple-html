@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.29](https://github.com/simple-html/simple-html/compare/v5.0.0-next.28...v5.0.0-next.29) (2022-12-16)
+
+
+### Bug Fixes
+
+* bug in filter editor, used replace when I should have used replaceAll ([5fc586e](https://github.com/simple-html/simple-html/commits/5fc586ec777e0df637361163ee524b257634157b))
+
 ## [5.0.0-next.28](https://github.com/simple-html/simple-html/compare/v4.0.1...v5.0.0-next.28) (2022-12-16)
 
 ## [5.0.0-next.27](https://github.com/simple-html/simple-html/compare/v5.0.0-next.26...v5.0.0-next.27) (2022-12-16)
