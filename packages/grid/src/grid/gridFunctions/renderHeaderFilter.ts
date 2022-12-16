@@ -3,7 +3,9 @@ import { live } from 'lit-html/directives/live.js';
 import { Entity } from '../../datasource/types';
 import { contextmenuFilter } from './contextmenuFilter';
 import { filterCallback } from './filterCallback';
-import { Grid, HTMLCellElement, ColType } from '../grid';
+import { Grid } from '../grid';
+import { HTMLCellElement } from "./HTMLCellElement";
+import { ColType } from "./ColType";
 
 export function renderHeaderFilter(
     ctx: Grid,

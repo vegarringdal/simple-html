@@ -1,19 +1,19 @@
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
 import {
-    ColType,
-    Grid,
+    Grid} from '../grid';
+import { ColType, RowCache } from "./ColType";
+import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE,
-    RowCache,
-    SELECTOR_COLTYPE
-} from '../grid';
+    RIGH_PINNED_COLTYPE, SELECTOR_COLTYPE
+} from "./GROUP_COLTYPE";
 import { renderCell } from './renderCell';
+import { removeContextMenu } from './removeContextMenu';
 
 export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
-    ctx.removeContextMenu();
+   removeContextMenu(ctx);
 
     if (ctx.largeScrollTopTimer) {
         return;

@@ -1,10 +1,14 @@
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
-import { ColType, Grid, LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from '../grid';
+import { Grid } from '../grid';
+import { ColType } from "./ColType";
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from "./GROUP_COLTYPE";
 import { renderCell } from './renderCell';
+import { getGroupingWidth } from './getGroupingWidth';
+import { removeContextMenu } from './removeContextMenu';
 
 export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
-    ctx.removeContextMenu();
+   removeContextMenu(ctx);
 
     const config = ctx.gridInterface.__getGridConfig();
 
@@ -116,7 +120,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
 
         const rowsWantedArray = Array.from(rowsWanted);
 
-        const LeftOffset = ctx.getGroupingWidth(type);
+        const LeftOffset = getGroupingWidth(ctx, type);
 
         columnCache.forEach((e) => {
             if (e.column < 0 && rowsWantedArray.length) {

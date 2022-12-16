@@ -3,7 +3,10 @@ import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { dragEvent } from './dragEvent';
 import { getElementByClassName } from './getElementByClassName';
-import { DIV, Grid, HTMLCellElement } from '../grid';
+import { Grid } from '../grid';
+import { DIV } from "./DIV";
+import { HTMLCellElement } from "./HTMLCellElement";
+import { getTextWidth } from './getTextWidth';
 
 /**
  * ctx also includes some of the grouping logic
@@ -33,7 +36,7 @@ export function rebuildTopPanel(ctx: Grid) {
     grouping.forEach((group) => {
         const label = creatElement('DIV', 'simple-html-grid-panel-label');
         (label as HTMLCellElement).$attribute = group.attribute;
-        label.style.width = asPx(ctx.getTextWidth(group.title) + 20);
+        label.style.width = asPx(getTextWidth(ctx, group.title) + 20);
 
         dragEvent(ctx, label as HTMLCellElement, false);
 

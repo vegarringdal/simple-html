@@ -1,4 +1,5 @@
 import { Grid } from '../grid';
+import { getTextWidth } from './getTextWidth';
 
 /**
  * resizes columns
@@ -58,7 +59,7 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
                     if (attributeKeys.indexOf(rowAttribute) !== -1) {
                         const xx = widths[attributeKeys.indexOf(rowAttribute)];
                         if (xx > x) {
-                            x = ctx.getTextWidth(text[attributeKeys.indexOf(rowAttribute)]) + 20;
+                            x = getTextWidth(ctx, text[attributeKeys.indexOf(rowAttribute)]) + 20;
                         }
                     }
                 }

@@ -1,6 +1,8 @@
 import { Grid } from '../grid';
 import { render, html } from 'lit-html';
-import { HTMLCellElement, ColType, LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from '../grid';
+import { HTMLCellElement } from "./HTMLCellElement";
+import { ColType } from "./ColType";
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from "./GROUP_COLTYPE";
 import { Entity } from '../../datasource/types';
 
 export function renderHeaderSelector(

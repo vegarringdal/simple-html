@@ -1,6 +1,8 @@
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
-import { Grid, LEFT_PINNED_COLTYPE } from '../grid';
+import { Grid } from '../grid';
+import { LEFT_PINNED_COLTYPE } from "./GROUP_COLTYPE";
+import { getGroupingWidth } from './getGroupingWidth';
 
 export function updateMainElementSizes(ctx: Grid) {
     const config = ctx.gridInterface.__getGridConfig();
@@ -9,7 +11,7 @@ export function updateMainElementSizes(ctx: Grid) {
      * main elements
      */
 
-    const leftGrouping = ctx.getGroupingWidth(LEFT_PINNED_COLTYPE);
+    const leftGrouping = getGroupingWidth(ctx, LEFT_PINNED_COLTYPE);
     const leftWidth = config.__leftWidth + leftGrouping;
 
     const panel = getElementByClassName(ctx.element, 'simple-html-grid-panel');

@@ -2,7 +2,9 @@ import { render, html } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { Entity } from '../../datasource/types';
 import { contextmenuRow } from './contextmenuRow';
-import { Grid, HTMLCellElement, ColType } from '../grid';
+import { Grid } from '../grid';
+import { HTMLCellElement } from "./HTMLCellElement";
+import { ColType } from "./ColType";
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function renderRowCell(

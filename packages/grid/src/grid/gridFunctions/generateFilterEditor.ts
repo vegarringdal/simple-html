@@ -3,7 +3,9 @@ import { FilterArgument } from '../../datasource/types';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { creatElement } from './createElement';
-import { Grid, HTMLCellElement } from '../grid';
+import { Grid } from '../grid';
+import { HTMLCellElement } from "./HTMLCellElement";
+import { removeContextMenu } from './removeContextMenu';
 
 /**
  * internal method to generate html for filter editor
@@ -309,7 +311,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
             <div
                 class="grid-button grid-text-center"
                 @click=${() => {
-                    ctx.removeContextMenu();
+                   removeContextMenu(ctx);
                     filterEditorContainer.parentElement.removeChild(filterEditorContainer);
                     ctx.filterEditorContainer = null;
                     ctx.gridInterface.getDatasource().filter(structuredClone(filterArg));
@@ -320,7 +322,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
             <div
                 class="grid-button grid-text-center"
                 @click=${() => {
-                    ctx.removeContextMenu();
+                   removeContextMenu(ctx);
                     ctx.gridInterface.getDatasource().filter(structuredClone(filterArg));
                 }}
             >
@@ -329,7 +331,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
             <div
                 class="grid-button grid-text-center"
                 @click=${() => {
-                    ctx.removeContextMenu();
+                   removeContextMenu(ctx);
                     filterEditorContainer.parentElement.removeChild(filterEditorContainer);
                     ctx.filterEditorContainer = null;
                 }}

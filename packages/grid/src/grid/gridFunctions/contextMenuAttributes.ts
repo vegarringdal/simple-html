@@ -3,6 +3,7 @@ import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { Grid } from '../grid';
 import { prettyPrintString } from './prettyPrintString';
+import { removeContextMenu } from './removeContextMenu';
 
 /**
  * ctx is part of filter editor
@@ -10,7 +11,7 @@ import { prettyPrintString } from './prettyPrintString';
  * @param callback
  */
 export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLElement, callback: (attribute: string) => void) {
-    ctx.removeContextMenu();
+    removeContextMenu(ctx);
 
     const contextMenu = creatElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');

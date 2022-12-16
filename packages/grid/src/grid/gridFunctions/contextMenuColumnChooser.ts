@@ -2,8 +2,10 @@ import { render, html } from 'lit-html';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { dragEvent } from './dragEvent';
-import { Grid, HTMLCellElement } from '../grid';
+import { Grid } from '../grid';
+import { HTMLCellElement } from './HTMLCellElement';
 import { prettyPrintString } from './prettyPrintString';
+import { removeContextMenu } from './removeContextMenu';
 
 /**
  * ctx is part of filter editor
@@ -11,7 +13,7 @@ import { prettyPrintString } from './prettyPrintString';
  * @param callback
  */
 export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTMLElement) {
-    ctx.removeContextMenu();
+    removeContextMenu(ctx);
 
     if (ctx.columnChooserMenu && ctx.columnChooserMenu.parentElement) {
         document.body.removeChild(ctx.columnChooserMenu);

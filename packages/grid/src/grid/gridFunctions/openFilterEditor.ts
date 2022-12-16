@@ -1,12 +1,13 @@
 import { FilterArgument } from '../../datasource/types';
 import { generateFilterEditor } from './generateFilterEditor';
 import { Grid } from '../grid';
+import { removeContextMenu } from './removeContextMenu';
 
 /**
  * opens filter editor with current filter
  */
 export function openFilterEditor(ctx: Grid) {
-    ctx.removeContextMenu();
+   removeContextMenu(ctx);
 
     const defaultStartFilter: FilterArgument = {
         type: 'GROUP',

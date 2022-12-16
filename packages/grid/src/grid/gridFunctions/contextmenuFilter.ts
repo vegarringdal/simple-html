@@ -5,9 +5,13 @@ import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { dropDownFilterData } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
-import { ColType, Grid, HTMLCellElement } from '../grid';
+import { Grid } from '../grid';
+import { HTMLCellElement } from "./HTMLCellElement";
+import { ColType } from "./ColType";
 import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
+import { clearAllColumnFilters } from './clearAllColumnFilters';
+import { removeContextMenu } from './removeContextMenu';
 
 export function contextmenuFilter(
     ctx: Grid,
@@ -21,7 +25,7 @@ export function contextmenuFilter(
     attribute: string,
     _rowData: Entity
 ) {
-    ctx.removeContextMenu();
+   removeContextMenu(ctx);
 
     const contextMenu = creatElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
@@ -258,7 +262,7 @@ export function contextmenuFilter(
                         class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
                             cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
-                            ctx.removeContextMenu();
+                           removeContextMenu(ctx);
                         }}
                     >
                         Greater than or equal
@@ -267,7 +271,7 @@ export function contextmenuFilter(
                         class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
                             cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
-                            ctx.removeContextMenu();
+                           removeContextMenu(ctx);
                         }}
                     >
                         Less than or equal
@@ -280,7 +284,7 @@ export function contextmenuFilter(
                     class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                     @click=${() => {
                         cellConfig.operator = 'EQUAL';
-                        ctx.removeContextMenu();
+                       removeContextMenu(ctx);
                     }}
                 >
                     Equal
@@ -289,7 +293,7 @@ export function contextmenuFilter(
                     class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
                     @click=${() => {
                         cellConfig.operator = 'NOT_EQUAL_TO';
-                        ctx.removeContextMenu();
+                       removeContextMenu(ctx);
                     }}
                 >
                     Not Equal
@@ -298,7 +302,7 @@ export function contextmenuFilter(
                     class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
                     @click=${() => {
                         cellConfig.operator = 'CONTAINS';
-                        ctx.removeContextMenu();
+                       removeContextMenu(ctx);
                     }}
                 >
                     Contains
@@ -409,7 +413,7 @@ export function contextmenuFilter(
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        ctx.clearAllColumnFilters();
+                        clearAllColumnFilters(ctx);
                     }}
                 >
                     Clear All Filters

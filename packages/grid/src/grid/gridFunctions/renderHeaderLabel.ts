@@ -1,7 +1,9 @@
 import { html, svg, render } from 'lit-html';
 import { Entity } from '../../datasource/types';
 import { contextmenuLabel } from './contextmenuLabel';
-import { HTMLCellElement, ColType, Grid } from '../grid';
+import { Grid } from '../grid';
+import { HTMLCellElement } from "./HTMLCellElement";
+import { ColType } from "./ColType";
 import { prettyPrintString } from './prettyPrintString';
 
 export function renderHeaderLabel(

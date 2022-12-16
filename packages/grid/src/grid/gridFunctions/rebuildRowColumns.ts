@@ -1,8 +1,12 @@
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { getElementByClassName } from './getElementByClassName';
-import { ColType, ColumnCache, DIV, Grid, LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from '../grid';
+import { Grid } from '../grid';
+import { DIV } from "./DIV";
+import { ColType, ColumnCache } from "./ColType";
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from "./GROUP_COLTYPE";
 import { Columns } from '../gridConfig';
+import { getGroupingWidth } from './getGroupingWidth';
 
 export function rebuildRowColumns(ctx: Grid) {
     const config = ctx.gridInterface.__getGridConfig();
@@ -22,7 +26,7 @@ export function rebuildRowColumns(ctx: Grid) {
         if (!parent) {
             console.log('err');
         } else {
-            let left = ctx.getGroupingWidth(coltype);
+            let left = getGroupingWidth(ctx, coltype);
             while (parent.firstChild) {
                 parent.removeChild(parent.firstChild);
             }

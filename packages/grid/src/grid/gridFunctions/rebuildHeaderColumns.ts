@@ -3,22 +3,26 @@ import { creatElement } from './createElement';
 import { dragEvent } from './dragEvent';
 import { getElementByClassName } from './getElementByClassName';
 import {
+    Grid} from '../grid';
+import { DIV } from "./DIV";
+import { HTMLCellElement } from "./HTMLCellElement";
+import {
     ColType,
-    ColumnCache,
-    DIV,
-    Grid,
-    HTMLCellElement,
+    ColumnCache
+} from "./ColType";
+import {
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
     RIGH_PINNED_COLTYPE,
     SELECTOR_COLTYPE
-} from '../grid';
+} from "./GROUP_COLTYPE";
 import { Columns } from '../gridConfig';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { renderCell } from './renderCell';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
 import { verticalScrollHandler } from './verticalScrollHandler';
+import { getGroupingWidth } from './getGroupingWidth';
 
 /**
  * ctx also applies on drag/drop logic and resize column
@@ -38,7 +42,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
         if (!parent) {
             console.log('err');
         } else {
-            let left = ctx.getGroupingWidth(coltype);
+            let left = getGroupingWidth(ctx, coltype);
 
             while (parent.firstChild) {
                 parent.removeChild(parent.firstChild);

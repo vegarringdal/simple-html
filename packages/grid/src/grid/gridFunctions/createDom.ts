@@ -1,6 +1,7 @@
 import { addScrollEventListeners } from './addScrollEventListeners';
 import { creatElement } from './createElement';
-import { DIV, Grid } from '../grid';
+import { Grid } from '../grid';
+import { DIV } from "./DIV";
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { rebuildFooter } from './rebuildFooter';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
@@ -11,6 +12,7 @@ import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
 import { updateVerticalScrollHeight } from './updateVerticalScrollHeight';
 import { verticalScrollHandler } from './verticalScrollHandler';
+import { addBodyClickListener } from './addBodyClickListener';
 
 export function createDom(ctx: Grid) {
     const panel = creatElement(DIV, 'simple-html-grid-panel');
@@ -95,7 +97,7 @@ export function createDom(ctx: Grid) {
     rebuildTopPanel(ctx);
     rebuildFooter(ctx);
     addScrollEventListeners(ctx);
-    ctx.addClickEventListener();
+    addBodyClickListener(ctx);
 
     updateVerticalScrollHeight(ctx, ctx.gridInterface.__getScrollState().scrollHeight);
     updateHorizontalScrollWidth(ctx);

@@ -1,6 +1,8 @@
 import { render, html, svg } from 'lit-html';
 import { Entity } from '../../datasource/types';
-import { HTMLCellElement, ColType, Grid } from '../grid';
+import { Grid } from '../grid';
+import { HTMLCellElement } from "./HTMLCellElement";
+import { ColType } from "./ColType";
 
 export function renderRowGroup(
     ctx: Grid,

@@ -1,8 +1,11 @@
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { getElementByClassName } from './getElementByClassName';
-import { DIV, Grid, HTMLCellElement } from '../grid';
+import { Grid } from '../grid';
+import { DIV } from "./DIV";
+import { HTMLCellElement } from "./HTMLCellElement";
 import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { getTextWidth } from './getTextWidth';
 
 export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) {
     cell.addEventListener('mousedown', (e) => {
@@ -28,7 +31,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
             if (attribute && !mouseUp) {
                 isClickEvent = null;
 
-                const width = ctx.getTextWidth(attribute) + 10;
+                const width = getTextWidth(ctx, attribute) + 10;
                 const backgroundColor = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-main-bg-color');
                 const fontSize = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-font-size');
                 const fontWeight = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-font-weight-header');

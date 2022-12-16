@@ -9,6 +9,7 @@ import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
+import { getTextWidth } from './gridFunctions/getTextWidth';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -299,7 +300,7 @@ export class GridInterface<T> {
         }
 
         this.gridConfig.__selectSizeWidth = Math.floor(
-            this.grid?.getTextWidth(this.dataSource.getRows().length.toString()) || 10
+            getTextWidth(this.grid, this.dataSource.getRows().length.toString()) || 10
         );
         if (this.gridConfig.__selectSizeWidth < 25) {
             this.gridConfig.__selectSizeWidth = 25;

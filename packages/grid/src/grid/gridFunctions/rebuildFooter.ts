@@ -1,6 +1,7 @@
 import { html, render } from 'lit-html';
 import { getElementByClassName } from './getElementByClassName';
 import { Grid } from '../grid';
+import { clearAllColumnFilters } from './clearAllColumnFilters';
 
 export function rebuildFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
@@ -10,7 +11,7 @@ export function rebuildFooter(ctx: Grid) {
     const scrollbarHeight = ctx.gridInterface.__getGridConfig().__scrollbarSize;
 
     const clearButton = filterString
-        ? html`<div class="clear-button" @click=${() => ctx.clearAllColumnFilters()}>Clear filter</div>`
+        ? html`<div class="clear-button" @click=${() => clearAllColumnFilters(ctx)}>Clear filter</div>`
         : null;
     const filterTemplate = html`<div style="display:flex">
         ${clearButton} <span class="footer-query" style="margin:auto">${filterString}</span>
