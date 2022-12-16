@@ -4,6 +4,9 @@ Only lit-html as dependency
 
 > version 5.0.0-next is the active dev version and will replace version 4 in Dec 2022.
 
+> This is mainly made for desktop, not mobile/pad. Usage on mobile/pad is not tested much, but basic touch events is added to scrolling
+
+> First phase of v5 is viewing, then editing. Viewing is 99% complete when this was merged into main branch, but some minor bugs might have been missed
 
 Sample:
 * [sample](https://vegarringdal.github.io/rebuild-grid/index.html)
