@@ -1,19 +1,19 @@
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
-import {
-    Grid} from '../grid';
-import { ColType, RowCache } from "./ColType";
+import { Grid } from '../grid';
+import { ColType, RowCache } from './ColType';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE, SELECTOR_COLTYPE
-} from "./GROUP_COLTYPE";
+    RIGH_PINNED_COLTYPE,
+    SELECTOR_COLTYPE
+} from './GROUP_COLTYPE';
 import { renderCell } from './renderCell';
 import { removeContextMenu } from './removeContextMenu';
 
 export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
-   removeContextMenu(ctx);
+    removeContextMenu(ctx);
 
     if (ctx.largeScrollTopTimer) {
         return;
@@ -173,7 +173,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                                     }
 
                                     for (let cc = 0; cc < elc.children.length; cc++) {
-                                        renderCell(ctx,elc.children[cc] as HTMLElement, e.row, x.column, cc, colType);
+                                        renderCell(ctx, elc.children[cc] as HTMLElement, e.row, x.column, cc, colType);
                                     }
                                 }
                             }
@@ -205,7 +205,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                                     }
 
                                     for (let cc = 0; cc < colEl.children.length; cc++) {
-                                        renderCell(ctx,colEl.children[cc] as HTMLElement, e.row, x.column, cc, colType);
+                                        renderCell(ctx, colEl.children[cc] as HTMLElement, e.row, x.column, cc, colType);
                                     }
                                 }
                             }
@@ -235,17 +235,17 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                                     }
 
                                     for (let cc = 0; cc < colEl.children.length; cc++) {
-                                        renderCell(ctx,colEl.children[cc] as HTMLElement, e.row, x.column, cc, colType);
+                                        renderCell(ctx, colEl.children[cc] as HTMLElement, e.row, x.column, cc, colType);
                                     }
                                 }
                             }
                         });
                     }
                     if (colType === GROUP_COLTYPE) {
-                        renderCell(ctx,rowEl as HTMLElement, e.row, 0, 0, colType);
+                        renderCell(ctx, rowEl as HTMLElement, e.row, 0, 0, colType);
                     }
                     if (colType === SELECTOR_COLTYPE) {
-                        renderCell(ctx,rowEl as HTMLElement, e.row, 0, 0, colType);
+                        renderCell(ctx, rowEl as HTMLElement, e.row, 0, 0, colType);
                     }
                 }
             } else {

@@ -5,8 +5,8 @@ import { autoResizeColumns } from './autoResizeColumns';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';
 import { creatElement } from './createElement';
 import { Grid } from '../grid';
-import { HTMLCellElement } from "./HTMLCellElement";
-import { ColType } from "./ColType";
+import { HTMLCellElement } from './HTMLCellElement';
+import { ColType } from './ColType';
 import { removeContextMenu } from './removeContextMenu';
 
 export function contextmenuLabel(
@@ -21,7 +21,7 @@ export function contextmenuLabel(
     attribute: string,
     _rowData: Entity
 ) {
-   removeContextMenu(ctx);
+    removeContextMenu(ctx);
 
     const contextMenu = creatElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');

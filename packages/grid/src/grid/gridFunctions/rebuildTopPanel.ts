@@ -4,8 +4,8 @@ import { creatElement } from './createElement';
 import { dragEvent } from './dragEvent';
 import { getElementByClassName } from './getElementByClassName';
 import { Grid } from '../grid';
-import { DIV } from "./DIV";
-import { HTMLCellElement } from "./HTMLCellElement";
+import { DIV } from './DIV';
+import { HTMLCellElement } from './HTMLCellElement';
 import { getTextWidth } from './getTextWidth';
 
 /**

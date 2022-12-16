@@ -1,16 +1,16 @@
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { getElementByClassName } from './getElementByClassName';
-import {
-    Grid} from '../grid';
-import { DIV } from "./DIV";
-import { RowCache } from "./ColType";
+import { Grid } from '../grid';
+import { DIV } from './DIV';
+import { RowCache } from './ColType';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE, SELECTOR_COLTYPE
-} from "./GROUP_COLTYPE";
+    RIGH_PINNED_COLTYPE,
+    SELECTOR_COLTYPE
+} from './GROUP_COLTYPE';
 
 export function rebuildRows(ctx: Grid) {
     const scroller = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');

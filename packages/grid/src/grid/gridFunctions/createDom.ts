@@ -1,7 +1,7 @@
 import { addScrollEventListeners } from './addScrollEventListeners';
 import { creatElement } from './createElement';
 import { Grid } from '../grid';
-import { DIV } from "./DIV";
+import { DIV } from './DIV';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { rebuildFooter } from './rebuildFooter';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';

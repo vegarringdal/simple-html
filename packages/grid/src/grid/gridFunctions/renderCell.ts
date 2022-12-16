@@ -1,13 +1,13 @@
+import { Grid } from '../grid';
+import { HTMLCellElement } from './HTMLCellElement';
+import { ColType } from './ColType';
 import {
-    Grid} from '../grid';
-import { HTMLCellElement } from "./HTMLCellElement";
-import { ColType } from "./ColType";
-import {
-    GROUP_COLTYPE, LEFT_PINNED_COLTYPE,
+    GROUP_COLTYPE,
+    LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
     RIGH_PINNED_COLTYPE,
     SELECTOR_COLTYPE
-} from "./GROUP_COLTYPE";
+} from './GROUP_COLTYPE';
 import { renderHeaderFilter } from './renderHeaderFilter';
 import { renderHeaderLabel } from './renderHeaderLabel';
 import { renderHeaderSelector } from './renderHeaderSelector';

@@ -1,4 +1,3 @@
-
 export const MIDDLE_PINNED_COLTYPE = 'middle-pinned';
 export const LEFT_PINNED_COLTYPE = 'left-pinned';
 export const RIGH_PINNED_COLTYPE = 'right-pinned';

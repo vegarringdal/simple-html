@@ -2,8 +2,8 @@ import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { getElementByClassName } from './getElementByClassName';
 import { Grid } from '../grid';
-import { DIV } from "./DIV";
-import { HTMLCellElement } from "./HTMLCellElement";
+import { DIV } from './DIV';
+import { HTMLCellElement } from './HTMLCellElement';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { getTextWidth } from './getTextWidth';
 
@@ -81,14 +81,14 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
                 requestAnimationFrame(() => {
                     const el = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
                     el.scrollLeft = el.scrollLeft - 10;
-                    horizontalScrollHandler(ctx,el.scrollLeft, 'middle-pinned');
+                    horizontalScrollHandler(ctx, el.scrollLeft, 'middle-pinned');
                 });
             }
             if (event.clientX > gridRect.right) {
                 requestAnimationFrame(() => {
                     const el = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
                     el.scrollLeft = el.scrollLeft + 10;
-                    horizontalScrollHandler(ctx,el.scrollLeft, 'middle-pinned');
+                    horizontalScrollHandler(ctx, el.scrollLeft, 'middle-pinned');
                 });
             }
         };

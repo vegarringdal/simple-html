@@ -1,6 +1,5 @@
 import { ColType } from './ColType';
 
-
 export interface HTMLCellElement extends HTMLElement {
     $row: number;
     $column: number;

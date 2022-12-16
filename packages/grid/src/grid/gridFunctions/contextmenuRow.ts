@@ -4,8 +4,8 @@ import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { getAttributeColumns } from './getAttributeColumns';
 import { Grid } from '../grid';
-import { HTMLCellElement } from "./HTMLCellElement";
-import { ColType } from "./ColType";
+import { HTMLCellElement } from './HTMLCellElement';
+import { ColType } from './ColType';
 import { prettyPrintString } from './prettyPrintString';
 import { triggerScrollEvent } from './triggerScrollEvent';
 import { removeContextMenu } from './removeContextMenu';
@@ -22,7 +22,7 @@ export function contextmenuRow(
     attribute: string,
     rowData: Entity
 ) {
-   removeContextMenu(ctx);
+    removeContextMenu(ctx);
 
     const contextMenu = creatElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
@@ -258,7 +258,7 @@ export function contextmenuRow(
                         attribute,
                         rowData
                     });
-                   removeContextMenu(ctx);
+                    removeContextMenu(ctx);
                 }}
             >
                 Cell <i>(sel.rows)</i>
@@ -279,7 +279,7 @@ export function contextmenuRow(
                         attribute,
                         rowData
                     });
-                   removeContextMenu(ctx);
+                    removeContextMenu(ctx);
                     triggerScrollEvent(ctx);
                 }}
             >
@@ -300,7 +300,7 @@ export function contextmenuRow(
                 attribute,
                 rowData
             });
-           removeContextMenu(ctx);
+            removeContextMenu(ctx);
         };
 
         return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Cell</div>`;
@@ -319,7 +319,7 @@ export function contextmenuRow(
                 attribute,
                 rowData
             });
-           removeContextMenu(ctx);
+            removeContextMenu(ctx);
         };
 
         return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Column <i>(sel.rows)</i></div>`;
@@ -340,7 +340,7 @@ export function contextmenuRow(
                 attribute,
                 rowData
             });
-           removeContextMenu(ctx);
+            removeContextMenu(ctx);
         };
 
         return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(sel. rows)</i></div>`;
@@ -361,7 +361,7 @@ export function contextmenuRow(
                 attribute,
                 rowData
             });
-           removeContextMenu(ctx);
+            removeContextMenu(ctx);
         };
 
         return html`<div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(sel. rows/col)</i></div>`;

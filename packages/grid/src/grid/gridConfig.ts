@@ -29,32 +29,31 @@ export type GridConfig = {
      */
     filter?: FilterArgument;
 
-    
     /**
      * @internal not exported in save config
      */
     __attributes?: Record<string, Attribute>;
-      /**
+    /**
      * @internal not exported in save config
      */
     __rowHeight?: number;
-      /**
+    /**
      * @internal not exported in save config
      */
     __columnCells?: number;
-      /**
+    /**
      * @internal not exported in save config
      */
     __leftWidth?: number;
-      /** 
+    /**
      * @internal not exported in save config
      */
     __rightWidth?: number;
-      /**
+    /**
      * @internal not exported in save config
      */
     __scrollbarSize?: number;
-      /**
+    /**
      * @internal not exported in save config
      */
     __selectSizeWidth?: number;
@@ -84,5 +83,5 @@ export type Attribute = {
     sortEnabled?: boolean;
     groupEnabled?: boolean;
     currentFilterValue?: string | number | boolean | Date;
-    numberOverride?: "ZERO_TO_BLANK"|"BLANK_TO_ZERO";
+    numberOverride?: 'ZERO_TO_BLANK' | 'BLANK_TO_ZERO';
 };

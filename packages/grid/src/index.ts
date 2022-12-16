@@ -23,4 +23,3 @@ export { NumberFormaterDot } from './datasource/numberFormaterDot';
 export { DateFormaterDefault } from './datasource/dateFormaterDefault';
 export type { NumberFormaterType } from './datasource/numberFormaterDot';
 export type { DateFormaterType } from './datasource/dateFormaterDefault';
-

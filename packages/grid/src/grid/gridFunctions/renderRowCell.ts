@@ -3,8 +3,8 @@ import { live } from 'lit-html/directives/live.js';
 import { Entity } from '../../datasource/types';
 import { contextmenuRow } from './contextmenuRow';
 import { Grid } from '../grid';
-import { HTMLCellElement } from "./HTMLCellElement";
-import { ColType } from "./ColType";
+import { HTMLCellElement } from './HTMLCellElement';
+import { ColType } from './ColType';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function renderRowCell(
@@ -35,10 +35,10 @@ export function renderRowCell(
 
         if (cellConfig?.type === 'number') {
             value = ctx.gridInterface.getDatasource().getNumberFormater().fromNumber(value);
-            if(cellConfig.numberOverride === "BLANK_TO_ZERO" && value === '' || value === undefined || value === null){
+            if ((cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') || value === undefined || value === null) {
                 value = '0';
             }
-            if(cellConfig.numberOverride === "ZERO_TO_BLANK" && value === '0' || value === 0){
+            if ((cellConfig.numberOverride === 'ZERO_TO_BLANK' && value === '0') || value === 0) {
                 value = '';
             }
         }

@@ -42,10 +42,10 @@ export class Selection {
         this.selectedRows = this.selection.size;
     }
 
-   /**
-    * 
-    * @param truggerEvent 
-    */
+    /**
+     *
+     * @param truggerEvent
+     */
     public deSelectAll(truggerEvent = false): void {
         this.selection.clear();
         this.selectedRows = this.selection.size;

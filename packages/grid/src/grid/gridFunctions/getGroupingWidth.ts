@@ -1,6 +1,6 @@
 import { Grid } from '../grid';
-import { ColType } from "./ColType";
-import { LEFT_PINNED_COLTYPE } from "./GROUP_COLTYPE";
+import { ColType } from './ColType';
+import { LEFT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 
 export function getGroupingWidth(ctx: Grid, coltype: ColType) {
     if (coltype !== LEFT_PINNED_COLTYPE) {

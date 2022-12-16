@@ -551,7 +551,7 @@ export class Datasource<T = any> {
     /**
      * deSelectAll all rows displayed
      */
-    public deSelectAll(triggerEvent=false) {
+    public deSelectAll(triggerEvent = false) {
         this.__selection.deSelectAll(triggerEvent);
     }
 

@@ -4,8 +4,8 @@ import { Entity } from '../../datasource/types';
 import { contextmenuFilter } from './contextmenuFilter';
 import { filterCallback } from './filterCallback';
 import { Grid } from '../grid';
-import { HTMLCellElement } from "./HTMLCellElement";
-import { ColType } from "./ColType";
+import { HTMLCellElement } from './HTMLCellElement';
+import { ColType } from './ColType';
 
 export function renderHeaderFilter(
     ctx: Grid,

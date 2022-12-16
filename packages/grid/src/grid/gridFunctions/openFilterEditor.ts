@@ -7,7 +7,7 @@ import { removeContextMenu } from './removeContextMenu';
  * opens filter editor with current filter
  */
 export function openFilterEditor(ctx: Grid) {
-   removeContextMenu(ctx);
+    removeContextMenu(ctx);
 
     const defaultStartFilter: FilterArgument = {
         type: 'GROUP',
