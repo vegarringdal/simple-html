@@ -1,14 +1,14 @@
 import { GridInterface } from './gridInterface';
-import { rebuildTopPanel } from './rebuildTopPanel';
-import { rebuildFooter } from './rebuildFooter';
-import { rebuildRows } from './rebuildRows';
-import { rebuildRowColumns } from './rebuildRowColumns';
-import { rebuildHeaderColumns } from './rebuildHeaderColumns';
-import { createDom } from './createDom';
-import { updateMainElementSizes } from './updateMainElementSizes';
-import { initResizerEvent } from './initResizerEvent';
-import { triggerScrollEvent } from './triggerScrollEvent';
-import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
+import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
+import { rebuildFooter } from './gridFunctions/rebuildFooter';
+import { rebuildRows } from './gridFunctions/rebuildRows';
+import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
+import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
+import { createDom } from './gridFunctions/createDom';
+import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
+import { initResizerEvent } from './gridFunctions/initResizerEvent';
+import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
+import { updateHorizontalScrollWidth } from './gridFunctions/updateHorizontalScrollWidth';
 
 export const MIDDLE_PINNED_COLTYPE = 'middle-pinned';
 export const LEFT_PINNED_COLTYPE = 'left-pinned';

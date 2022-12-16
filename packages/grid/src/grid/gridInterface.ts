@@ -1,14 +1,14 @@
 import { Datasource } from '../datasource/dataSource';
 import { Entity, FilterArgument } from '../datasource/types';
-import { autoResizeColumns } from './autoResizeColumns';
-import { getAttributeColumns } from './getAttributeColumns';
-import { getCellHeight } from './getCellHeight';
+import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
+import { getAttributeColumns } from './gridFunctions/getAttributeColumns';
+import { getCellHeight } from './gridFunctions/getCellHeight';
 import { Grid } from './grid';
 import { GridConfig } from './gridConfig';
-import { openFilterEditor } from './openFilterEditor';
-import { rebuildHeaderColumns } from './rebuildHeaderColumns';
-import { triggerScrollEvent } from './triggerScrollEvent';
-import { updateVerticalScrollHeight } from './updateVerticalScrollHeight';
+import { openFilterEditor } from './gridFunctions/openFilterEditor';
+import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
+import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
+import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
