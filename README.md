@@ -68,6 +68,7 @@ Need for version "5.0.0":
      * [x] row
      * [x] header
    * [x] edit cells
+   * [x] option to set zero rows to 0
    * [x] readonly (row)
      * [x] with callback, so you can also set it based on other row values
      * [x] set "read" background/scratched, so its easy to see its a readonly even i edit mode

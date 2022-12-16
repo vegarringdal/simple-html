@@ -84,4 +84,5 @@ export type Attribute = {
     sortEnabled?: boolean;
     groupEnabled?: boolean;
     currentFilterValue?: string | number | boolean | Date;
+    blankAsZero?: boolean;
 };

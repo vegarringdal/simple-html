@@ -79,12 +79,14 @@ export const gridConfig: GridConfig = {
         },
         {
             attribute: 'balance',
-            type: 'number'
+            type: 'number',
+            readonly: true
         },
         {
             attribute: 'longitude',
             type: 'number',
-            readonly: true
+            blankAsZero:true
+           
         },
         {
             attribute: 'age',

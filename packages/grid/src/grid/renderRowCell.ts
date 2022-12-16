@@ -32,6 +32,9 @@ export function renderRowCell(
 
         if (cellConfig?.type === 'number') {
             value = ctx.gridInterface.getDatasource().getNumberFormater().fromNumber(value);
+            if(cellConfig.blankAsZero && value === '' || value === undefined || value === null){
+                value = '0';
+            }
         }
 
         if (cellConfig.type === 'boolean') {
