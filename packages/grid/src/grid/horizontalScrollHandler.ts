@@ -1,6 +1,7 @@
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
 import { ColType, Grid, LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './grid';
+import { renderCell } from './renderCell';
 
 export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
     ctx.removeContextMenu();
@@ -155,7 +156,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
                                 if (transform !== colEl.style.transform) {
                                     colEl.style.transform = transform;
                                     for (let c = 0; c < colEl.children.length; c++) {
-                                        ctx.cellRender(colEl.children[c] as HTMLElement, e.row, x.column, c, idPrefix);
+                                        renderCell(ctx,colEl.children[c] as HTMLElement, e.row, x.column, c, idPrefix);
                                     }
                                 }
                                 if (width !== colEl.style.width) {
@@ -178,7 +179,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
 
                                 for (let c = 0; c < header.children.length; c++) {
                                     const cellNo = parseInt(header.children[c].getAttribute('cellNo'));
-                                    ctx.cellRender(header.children[c] as HTMLElement, 0, x.column, cellNo, idPrefix);
+                                    renderCell(ctx,header.children[c] as HTMLElement, 0, x.column, cellNo, idPrefix);
                                 }
                             }
                             if (width !== header.style.width) {

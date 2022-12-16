@@ -1,10 +1,14 @@
 import { Datasource } from '../datasource/dataSource';
 import { Entity, FilterArgument } from '../datasource/types';
 import { autoResizeColumns } from './autoResizeColumns';
+import { getAttributeColumns } from './getAttributeColumns';
 import { getCellHeight } from './getCellHeight';
 import { Grid } from './grid';
 import { GridConfig } from './gridConfig';
+import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
+import { triggerScrollEvent } from './triggerScrollEvent';
+import { updateVerticalScrollHeight } from './updateVerticalScrollHeight';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -240,7 +244,7 @@ export class GridInterface<T> {
 
     public openFilterEditor() {
         if (this.grid) {
-            this.grid.openFilterEditor();
+           openFilterEditor( this.grid);
         }
     }
 
@@ -319,19 +323,12 @@ export class GridInterface<T> {
     }
 
     /**
-     * shows filter dialog
-     */
-    public showFilterDialog() {
-        this.grid.openFilterEditor();
-    }
-
-    /**
      * gets columns in order
      * by default it filters out selected columns only
      * @param filterSelectedColumns = true by default
      */
     public getAttributeColumns(filterSelectedColumns = true) {
-        return this.grid.getAttributeColumns(filterSelectedColumns);
+        return getAttributeColumns(this.grid, filterSelectedColumns);
     }
 
     public getOptionalAttributes() {
@@ -392,7 +389,7 @@ export class GridInterface<T> {
 
         this.scrollHeight = count;
         if (this.grid && this.grid.getElement()) {
-            this.grid.updateVerticalScrollHeight(this.scrollHeight);
+            updateVerticalScrollHeight(this.grid, this.scrollHeight);
         }
     }
 
@@ -416,7 +413,7 @@ export class GridInterface<T> {
      */
     public readonlySetter(callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) {
         this.readonlySetterFn = callback;
-        this.grid.triggerScrollEvent();
+        triggerScrollEvent(this.grid);
     }
 
     /**
@@ -456,7 +453,7 @@ export class GridInterface<T> {
             case e.type === 'currentEntity':
             case e.type === 'selectionChange':
                 this.__dataSourceUpdated();
-                this.grid.triggerScrollEvent();
+                triggerScrollEvent(this.grid);
                 break;
             default:
                 console.log('skipping:', e.type, e.data);

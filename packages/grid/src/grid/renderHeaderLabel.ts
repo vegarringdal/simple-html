@@ -2,6 +2,7 @@ import { html, svg, render } from 'lit-html';
 import { Entity } from '../datasource/types';
 import { contextmenuLabel } from './contextmenuLabel';
 import { HTMLCellElement, ColType, Grid } from './grid';
+import { prettyPrintString } from './prettyPrintString';
 
 export function renderHeaderLabel(
     ctx: Grid,
@@ -35,7 +36,7 @@ export function renderHeaderLabel(
 
     if (attribute) {
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-        const label = cellConfig.label || ctx.prettyPrintString(cellConfig.attribute);
+        const label = cellConfig.label || prettyPrintString(cellConfig.attribute);
 
         render(
             html`<div

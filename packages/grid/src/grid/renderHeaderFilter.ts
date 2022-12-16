@@ -2,6 +2,7 @@ import { render, html } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { Entity } from '../datasource/types';
 import { contextmenuFilter } from './contextmenuFilter';
+import { filterCallback } from './filterCallback';
 import { Grid, HTMLCellElement, ColType } from './grid';
 
 export function renderHeaderFilter(
@@ -51,19 +52,19 @@ export function renderHeaderFilter(
                                     case currentValue === '' &&
                                         (e.target as any).checked === true &&
                                         e.target.indeterminate === false:
-                                        ctx.filterCallback((e.target as any).checked.toString(), cellConfig);
+                                        filterCallback(ctx, (e.target as any).checked.toString(), cellConfig);
                                         currentValue = (e.target as any).checked.toString();
                                         break;
                                     case currentValue === 'true' &&
                                         (e.target as any).checked === false &&
                                         e.target.indeterminate === false:
-                                        ctx.filterCallback((e.target as any).checked.toString(), cellConfig);
+                                        filterCallback(ctx, (e.target as any).checked.toString(), cellConfig);
                                         currentValue = (e.target as any).checked.toString();
                                         break;
                                     case currentValue === 'false' &&
                                         (e.target as any).checked === true &&
                                         e.target.indeterminate === false:
-                                        ctx.filterCallback('', cellConfig);
+                                        filterCallback(ctx, '', cellConfig);
                                         e.target.indeterminate = true;
                                         (e.target as any).checked = false;
                                         currentValue = '';
@@ -86,7 +87,7 @@ export function renderHeaderFilter(
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             if (lastFilter !== (e.target as any).value) {
-                                ctx.filterCallback((e.target as any).value, cellConfig);
+                                filterCallback(ctx, (e.target as any).value, cellConfig);
                             }
                             lastFilter = (e.target as any).value;
                             contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -122,7 +123,7 @@ export function renderHeaderFilter(
                                     filterRunning = true;
 
                                     if (lastFilter !== (e.target as any).value) {
-                                        ctx.filterCallback((e.target as any).value, cellConfig);
+                                        filterCallback(ctx, (e.target as any).value, cellConfig);
                                     }
                                     lastFilter = (e.target as any).value;
                                     filterRunning = false;
@@ -138,7 +139,7 @@ export function renderHeaderFilter(
                                     filterRunning = true;
 
                                     if (lastFilter !== (e.target as any).value) {
-                                        ctx.filterCallback((e.target as any).value, cellConfig);
+                                        filterCallback(ctx, (e.target as any).value, cellConfig);
                                     }
                                     lastFilter = (e.target as any).value;
                                     filterRunning = false;
@@ -146,12 +147,12 @@ export function renderHeaderFilter(
                             }
                         }}
                         @change=${(e: any) => {
-                            console.log('change',attribute, (e.target as any).value, lastFilter);
+                            console.log('change', attribute, (e.target as any).value, lastFilter);
                             if (!filterRunning) {
                                 filterRunning = true;
 
                                 if (lastFilter !== (e.target as any).value) {
-                                    ctx.filterCallback((e.target as any).value, cellConfig);
+                                    filterCallback(ctx, (e.target as any).value, cellConfig);
                                 }
                                 lastFilter = (e.target as any).value;
                                 filterRunning = false;

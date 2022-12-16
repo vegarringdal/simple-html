@@ -7,7 +7,9 @@ import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { rebuildRowColumns } from './rebuildRowColumns';
 import { rebuildRows } from './rebuildRows';
 import { rebuildTopPanel } from './rebuildTopPanel';
+import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
+import { updateVerticalScrollHeight } from './updateVerticalScrollHeight';
 import { verticalScrollHandler } from './verticalScrollHandler';
 
 export function createDom(ctx: Grid) {
@@ -95,8 +97,8 @@ export function createDom(ctx: Grid) {
     addScrollEventListeners(ctx);
     ctx.addClickEventListener();
 
-    ctx.updateVerticalScrollHeight(ctx.gridInterface.__getScrollState().scrollHeight);
-    ctx.updateHorizontalScrollWidth();
+    updateVerticalScrollHeight(ctx, ctx.gridInterface.__getScrollState().scrollHeight);
+    updateHorizontalScrollWidth(ctx);
     horizontalScrollHandler(ctx, 0);
     verticalScrollHandler(ctx, 0);
     ctx.element.appendChild(body);

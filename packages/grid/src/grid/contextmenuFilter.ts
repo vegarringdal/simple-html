@@ -3,7 +3,10 @@ import { live } from 'lit-html/directives/live.js';
 import { Entity, FilterArgument } from '../datasource/types';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
+import { dropDownFilterData } from './dropDownFilterData';
+import { filterCallback } from './filterCallback';
 import { ColType, Grid, HTMLCellElement } from './grid';
+import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 
 export function contextmenuFilter(
@@ -39,7 +42,7 @@ export function contextmenuFilter(
         searchInput: '',
         availableOnly: true,
         selectAll: true,
-        data: ctx.dropDownFilterData(attribute, true, '')
+        data: dropDownFilterData(ctx, attribute, true, '')
     };
 
     /**
@@ -72,7 +75,8 @@ export function contextmenuFilter(
 
             if (intersection.length < getContext().data.dataFilterSet.size) {
                 // if full we want to use NOT in
-                ctx.filterCallback(
+                filterCallback(
+                    ctx,
                     null,
                     cellConfig,
                     intersection.length ? intersection : null,
@@ -80,7 +84,8 @@ export function contextmenuFilter(
                     intersection.length ? true : false
                 );
             } else {
-                ctx.filterCallback(
+                filterCallback(
+                    ctx,
                     null,
                     cellConfig,
                     getContext().data.dataFilterSet.size ? Array.from(getContext().data.dataFilterSet) : null,
@@ -144,7 +149,7 @@ export function contextmenuFilter(
                 getContext().selectAll =
                     getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
                     !getContext().availableOnly;
-                getContext().data = ctx.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
+                getContext().data = dropDownFilterData(ctx, attribute, getContext().availableOnly, getContext().searchInput);
                 reRender();
             };
 
@@ -191,7 +196,7 @@ export function contextmenuFilter(
         const inputTemplate = () => {
             const clickHandler = (e: any) => {
                 getContext().searchInput = e.target.value || null;
-                getContext().data = ctx.dropDownFilterData(attribute, getContext().availableOnly, getContext().searchInput);
+                getContext().data = dropDownFilterData(ctx, attribute, getContext().availableOnly, getContext().searchInput);
                 reRender();
             };
 
@@ -427,20 +432,19 @@ export function contextmenuFilter(
                     Set "Is Not Blank"
                 </div>
                 <hr class="hr-dashed" />
-        
+
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        ctx.openFilterEditor();
+                        openFilterEditor(ctx);
                     }}
                 >
                     Advanced Filter
                 </div>
-                ${filterTemplate()} 
+                ${filterTemplate()}
                 ${searchTemplate(() => {
                     innerRender();
                 })}
-               
             </div>`,
             contextMenu
         );

@@ -15,6 +15,8 @@ import {
 } from './grid';
 import { Columns } from './gridConfig';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { renderCell } from './renderCell';
+import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
 import { verticalScrollHandler } from './verticalScrollHandler';
 
@@ -85,7 +87,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
 
                     columnElement.appendChild(cell);
 
-                    ctx.cellRender(cell, 0, i, y, coltype);
+                    renderCell(ctx, cell, 0, i, y, coltype);
                     top = top + config.cellHeight;
 
                     /**
@@ -127,7 +129,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                     cell.setAttribute('type', 'filter');
                     cell.setAttribute('cellNo', y.toString());
                     columnElement.appendChild(cell);
-                    ctx.cellRender(cell, 0, i, y, coltype);
+                    renderCell(ctx, cell, 0, i, y, coltype);
                     top = top + config.cellHeight;
                 }
 
@@ -142,7 +144,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                 cell.setAttribute('cellNo', '0');
 
                 columnElement.appendChild(cell);
-                ctx.cellRender(cell, 0, i, 0, coltype);
+                renderCell(ctx, cell, 0, i, 0, coltype);
 
                 /**
                  * logic for reszing column
@@ -209,23 +211,24 @@ export function rebuildHeaderColumns(ctx: Grid) {
 
                             if (coltype === LEFT_PINNED_COLTYPE) {
                                 horizontalScrollHandler(ctx, 0, coltype);
-                                horizontalScrollHandler(ctx,scrollLeft, MIDDLE_PINNED_COLTYPE);
+                                horizontalScrollHandler(ctx, scrollLeft, MIDDLE_PINNED_COLTYPE);
                             }
 
                             if (coltype === RIGH_PINNED_COLTYPE) {
-                                horizontalScrollHandler(ctx,0, coltype);
-                                horizontalScrollHandler(ctx,scrollLeft, MIDDLE_PINNED_COLTYPE);
+                                horizontalScrollHandler(ctx, 0, coltype);
+                                horizontalScrollHandler(ctx, scrollLeft, MIDDLE_PINNED_COLTYPE);
                             }
 
                             if (coltype === MIDDLE_PINNED_COLTYPE) {
-                                horizontalScrollHandler(ctx,scrollLeft, coltype);
+                                horizontalScrollHandler(ctx, scrollLeft, coltype);
                             }
 
-                            verticalScrollHandler(ctx, 
+                            verticalScrollHandler(
+                                ctx,
                                 getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle').scrollTop
                             );
 
-                            ctx.updateHorizontalScrollWidth();
+                            updateHorizontalScrollWidth(ctx);
                         }
                     };
 

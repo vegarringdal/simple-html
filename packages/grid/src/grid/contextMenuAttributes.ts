@@ -2,6 +2,7 @@ import { render, html } from 'lit-html';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { Grid } from './grid';
+import { prettyPrintString } from './prettyPrintString';
 
 /**
  * ctx is part of filter editor
@@ -41,7 +42,7 @@ export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLEl
                             callback(attribute);
                         }}
                     >
-                        ${ctx.prettyPrintString(attribute)}
+                        ${prettyPrintString(attribute)}
                     </div>`;
                 })}
             </div>

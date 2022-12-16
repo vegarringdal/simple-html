@@ -2,6 +2,7 @@ import { render, html } from 'lit-html';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { Grid } from './grid';
+import { prettyPrintString } from './prettyPrintString';
 
 /**
  * ctx is part of filter editor
@@ -50,7 +51,7 @@ export function contextMenuOperator(ctx: Grid, event: MouseEvent, cell: HTMLElem
             <hr class="hr-solid" />
             <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                 ${operators.map((operator) => {
-                    const prettytext = ctx.prettyPrintString(operator);
+                    const prettytext = prettyPrintString(operator);
 
                     return html`<div
                         class="simple-html-grid-menu-item"

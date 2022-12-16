@@ -10,6 +10,7 @@ import {
     RowCache,
     SELECTOR_COLTYPE
 } from './grid';
+import { renderCell } from './renderCell';
 
 export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
     ctx.removeContextMenu();
@@ -172,7 +173,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                                     }
 
                                     for (let cc = 0; cc < elc.children.length; cc++) {
-                                        ctx.cellRender(elc.children[cc] as HTMLElement, e.row, x.column, cc, colType);
+                                        renderCell(ctx,elc.children[cc] as HTMLElement, e.row, x.column, cc, colType);
                                     }
                                 }
                             }
@@ -204,7 +205,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                                     }
 
                                     for (let cc = 0; cc < colEl.children.length; cc++) {
-                                        ctx.cellRender(colEl.children[cc] as HTMLElement, e.row, x.column, cc, colType);
+                                        renderCell(ctx,colEl.children[cc] as HTMLElement, e.row, x.column, cc, colType);
                                     }
                                 }
                             }
@@ -234,17 +235,17 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                                     }
 
                                     for (let cc = 0; cc < colEl.children.length; cc++) {
-                                        ctx.cellRender(colEl.children[cc] as HTMLElement, e.row, x.column, cc, colType);
+                                        renderCell(ctx,colEl.children[cc] as HTMLElement, e.row, x.column, cc, colType);
                                     }
                                 }
                             }
                         });
                     }
                     if (colType === GROUP_COLTYPE) {
-                        ctx.cellRender(rowEl as HTMLElement, e.row, 0, 0, colType);
+                        renderCell(ctx,rowEl as HTMLElement, e.row, 0, 0, colType);
                     }
                     if (colType === SELECTOR_COLTYPE) {
-                        ctx.cellRender(rowEl as HTMLElement, e.row, 0, 0, colType);
+                        renderCell(ctx,rowEl as HTMLElement, e.row, 0, 0, colType);
                     }
                 }
             } else {

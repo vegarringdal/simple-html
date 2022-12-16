@@ -2,7 +2,10 @@ import { html, render } from 'lit-html';
 import { Entity } from '../datasource/types';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
+import { getAttributeColumns } from './getAttributeColumns';
 import { HTMLCellElement, ColType, Grid } from './grid';
+import { prettyPrintString } from './prettyPrintString';
+import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function contextmenuRow(
     ctx: Grid,
@@ -54,7 +57,7 @@ export function contextmenuRow(
 
         let tableHeader = '<tr>';
         attributes.forEach((attribute) => {
-            tableHeader = tableHeader + '<th>' + ctx.prettyPrintString(attribute) + '</th>';
+            tableHeader = tableHeader + '<th>' + prettyPrintString(attribute) + '</th>';
         });
         tableHeader = tableHeader + '</tr>';
 
@@ -274,7 +277,7 @@ export function contextmenuRow(
                         rowData
                     });
                     ctx.removeContextMenu();
-                    ctx.triggerScrollEvent();
+                    triggerScrollEvent(ctx);
                 }}
             >
                 Cell <i>(sel. rows)</i>
@@ -321,7 +324,7 @@ export function contextmenuRow(
 
     const copyAllOnSelectedRowsTemplate = () => {
         const clickHandle = () => {
-            const attributes = ctx.getAttributeColumns(false);
+            const attributes = getAttributeColumns(ctx, false);
 
             copyPasteData(attributes, false);
             ctx.gridInterface.__callSubscribers('copy-row', {
@@ -342,7 +345,7 @@ export function contextmenuRow(
 
     const copySelectedColumnsOnSelectedRowsTemplate = () => {
         const clickHandle = () => {
-            const attributes = ctx.getAttributeColumns();
+            const attributes = getAttributeColumns(ctx);
 
             copyPasteData(attributes, false);
             ctx.gridInterface.__callSubscribers('copy-row-col', {

@@ -3,6 +3,7 @@ import { live } from 'lit-html/directives/live.js';
 import { Entity } from '../datasource/types';
 import { contextmenuRow } from './contextmenuRow';
 import { Grid, HTMLCellElement, ColType } from './grid';
+import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function renderRowCell(
     ctx: Grid,
@@ -66,7 +67,7 @@ export function renderRowCell(
                     }}
                     @click=${() => {
                         ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
-                        ctx.triggerScrollEvent();
+                        triggerScrollEvent(ctx);
                     }}
                     @change=${(e: any) => {
                         if (!cellReadOnly) {
@@ -93,7 +94,7 @@ export function renderRowCell(
                         }}
                         @click=${() => {
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
-                            ctx.triggerScrollEvent();
+                            triggerScrollEvent(ctx);
                         }}
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {

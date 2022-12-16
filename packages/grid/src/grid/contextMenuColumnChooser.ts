@@ -3,6 +3,7 @@ import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { dragEvent } from './dragEvent';
 import { Grid, HTMLCellElement } from './grid';
+import { prettyPrintString } from './prettyPrintString';
 
 /**
  * ctx is part of filter editor
@@ -41,7 +42,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
             <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                 ${attributes.sort().map((attribute) => {
                     return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>
-                        ${ctx.prettyPrintString(attribute)}
+                        ${prettyPrintString(attribute)}
                     </div>`;
                 })}
             </div>
