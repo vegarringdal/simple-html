@@ -76,7 +76,7 @@ export function renderHeaderFilter(
                     cell as any
                 );
             } else {
-                let lastFilter = '';
+                let lastFilter = currentValue || '';
                 let skipFocus = false;
                 render(
                     html`<input
@@ -129,7 +129,24 @@ export function renderHeaderFilter(
                                 }
                             }
                         }}
+                        @blur=${(e: any) => {
+                            /**
+                             * I would have expected change to pick this up, but its not always doing so, so added this
+                             */
+                            if ((e.target as any).value !== lastFilter) {
+                                if (!filterRunning) {
+                                    filterRunning = true;
+
+                                    if (lastFilter !== (e.target as any).value) {
+                                        ctx.filterCallback((e.target as any).value, cellConfig);
+                                    }
+                                    lastFilter = (e.target as any).value;
+                                    filterRunning = false;
+                                }
+                            }
+                        }}
                         @change=${(e: any) => {
+                            console.log('change', (e.target as any).value, lastFilter);
                             if (!filterRunning) {
                                 filterRunning = true;
 
