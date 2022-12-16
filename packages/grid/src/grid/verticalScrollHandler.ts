@@ -19,7 +19,6 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
     }
 
     const lastScrollTop = ctx.lastScrollTop;
-    const config = ctx.gridInterface.__getGridConfig();
     const rowTops = ctx.gridInterface.__getScrollState().scrollTops;
     const heights = ctx.gridInterface.__getScrollState().scrollHeights;
 
