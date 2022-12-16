@@ -206,7 +206,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                             if (col.width < 50) {
                                 col.width = 50;
                             }
-                            ctx.gridInterface.parseConfig();
+                            ctx.gridInterface.__parseConfig();
                             updateMainElementSizes(ctx);
 
                             if (coltype === LEFT_PINNED_COLTYPE) {

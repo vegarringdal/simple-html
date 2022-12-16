@@ -80,7 +80,7 @@ export class Grid {
         this.element = element;
         this.element.classList.add('simple-html-grid');
         if (this.gridInterface) {
-            this.gridInterface.parseConfig();
+            this.gridInterface.__parseConfig();
             createDom(this);
             initResizerEvent(this);
         }
@@ -95,7 +95,7 @@ export class Grid {
         this.gridInterface.connectGrid(this);
 
         if (this.element) {
-            this.gridInterface.parseConfig();
+            this.gridInterface.__parseConfig();
             createDom(this);
             initResizerEvent(this);
         }

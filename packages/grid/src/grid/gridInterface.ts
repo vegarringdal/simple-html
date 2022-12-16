@@ -44,6 +44,11 @@ export class GridInterface<T> {
     private listeners: Set<callable> = new Set();
     private initConfig: GridConfig;
 
+    /**
+     *
+     * @param gridConfig
+     * @param datasource
+     */
     constructor(gridConfig: GridConfig, datasource: Datasource) {
         this.columnsSelected = new Set();
         this.dataSource = datasource;
@@ -71,7 +76,160 @@ export class GridInterface<T> {
         }
     }
 
-    public parseConfig() {
+    /**
+     * do not use - used by grid to connect
+     * @param grid
+     */
+    public connectGrid(grid: Grid) {
+        this.grid = grid;
+        this.dataSource.addEventListener(this);
+    }
+
+    public autoResizeColumns() {
+        if (this.grid) {
+            autoResizeColumns(this.grid);
+        }
+    }
+
+    /**
+     * when you need to save a copy
+     */
+    public saveConfig(): GridConfig {
+        const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
+
+        // convert attributes
+        const keys = Object.keys(config.__attributes);
+        config.attributes = [];
+        keys.forEach((key) => {
+            config.attributes.push(config.__attributes[key]);
+        });
+
+        delete config.__attributes;
+        delete config.__rowHeight;
+        delete config.__columnCells;
+        delete config.__leftWidth;
+        delete config.__rightWidth;
+        delete config.__scrollbarSize;
+        delete config.__selectSizeWidth;
+
+        config.expandedGroups = this.getDatasource().getExpanded();
+        config.sorting = this.getDatasource().getLastSorting();
+        config.grouping = this.getDatasource().getGrouping();
+        config.filter = this.getDatasource().getFilter();
+
+        return config;
+    }
+
+    public openFilterEditor() {
+        if (this.grid) {
+            openFilterEditor(this.grid);
+        }
+    }
+
+    /**
+     * when you need load grid config
+     */
+    public loadConfig(gridConfig: GridConfig, skipRebuild = false) {
+        this.suppressEvents = true;
+
+        const sortOrder = gridConfig.sorting;
+        const grouping = gridConfig.grouping;
+        const filter = gridConfig.filter;
+        const exspandedGroups = gridConfig.expandedGroups;
+
+        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
+        this.gridConfig.sorting = null;
+        this.gridConfig.grouping = null;
+        this.gridConfig.filter = null;
+        this.gridConfig.expandedGroups = null;
+
+        this.__parseConfig();
+
+        if (filter) {
+            this.getDatasource().setFilter(filter as FilterArgument);
+        } else {
+            this.getDatasource().setFilter(null);
+        }
+        this.getDatasource().filter();
+
+        if (grouping?.length) {
+            this.getDatasource().setExpanded(exspandedGroups);
+            this.getDatasource().group(grouping);
+        } else {
+            this.getDatasource().removeGroup();
+            if (sortOrder?.length && !grouping?.length) {
+                this.getDatasource().sort(sortOrder);
+            }
+        }
+
+        this.suppressEvents = false;
+
+        if (!skipRebuild) {
+            this.grid.rebuild();
+        }
+    }
+
+    /**
+     * gets columns in order
+     * by default it filters out selected columns only
+     * @param filterSelectedColumns = true by default
+     */
+    public getAttributeColumns(filterSelectedColumns = true) {
+        return getAttributeColumns(this.grid, filterSelectedColumns);
+    }
+
+    public getOptionalAttributes() {
+        const attributes = new Set(Object.keys(this.gridConfig.__attributes));
+        this.getAttributeColumns(false).forEach((e) => attributes.delete(e));
+        return Array.from(attributes);
+    }
+
+    /**
+     * adds event listener, useful when you need to do stuff based on
+     * @param callable
+     */
+    public addEventListener(callable: callable): void {
+        if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
+            throw new Error('callable sent to datasource event listner is wrong type');
+        }
+
+        if (!this.listeners.has(callable)) {
+            this.listeners.add(callable);
+        }
+    }
+
+    /**
+     * this is for enabling readonly based on row data
+     * @param callback
+     */
+    public readonlySetter(callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) {
+        this.readonlySetterFn = callback;
+        triggerScrollEvent(this.grid);
+    }
+
+    /**
+     * removes listener from datasource
+     * @param callable
+     */
+    public removeEventListener(callable: callable): void {
+        if (this.listeners.has(callable)) {
+            this.listeners.delete(callable);
+        }
+    }
+
+    /**
+     * current datasource
+     * @returns
+     */
+    public getDatasource() {
+        return this.dataSource;
+    }
+
+    /**
+     * @internal
+     * @private
+     */
+    public __parseConfig() {
         if (!this.gridConfig.__attributes) {
             this.gridConfig.__attributes = {};
         }
@@ -190,66 +348,25 @@ export class GridInterface<T> {
     }
 
     /**
-     * do not use - used by grid to connect
-     * @param grid
-     */
-    public connectGrid(grid: Grid) {
-        this.grid = grid;
-        this.dataSource.addEventListener(this);
-    }
-
-    public autoResizeColumns() {
-        if (this.grid) {
-            autoResizeColumns(this.grid);
-        }
-    }
-
-    /**
      * @internal
-     * current Gridconfig, so not use this for saving
-     * @returns
+     * @private
      */
     public __getGridConfig() {
         return this.gridConfig;
     }
 
     /**
-     * when you need to save a copy
+     * @internal
+     * @private
      */
-    public saveConfig(): GridConfig {
-        const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
-
-        // convert attributes
-        const keys = Object.keys(config.__attributes);
-        config.attributes = [];
-        keys.forEach((key) => {
-            config.attributes.push(config.__attributes[key]);
-        });
-
-        delete config.__attributes;
-        delete config.__rowHeight;
-        delete config.__columnCells;
-        delete config.__leftWidth;
-        delete config.__rightWidth;
-        delete config.__scrollbarSize;
-        delete config.__selectSizeWidth;
-
-        config.expandedGroups = this.getDatasource().getExpanded();
-        config.sorting = this.getDatasource().getLastSorting();
-        config.grouping = this.getDatasource().getGrouping();
-        config.filter = this.getDatasource().getFilter();
-
-        return config;
-    }
-
-    public openFilterEditor() {
-        if (this.grid) {
-           openFilterEditor( this.grid);
-        }
+    public __disconnectGrid() {
+        this.dataSource.removeEventListener(this);
+        this.grid = null;
     }
 
     /**
      * @internal
+     * @private
      */
     public __setSelectedColumn(number: number, add = false) {
         if (!add) {
@@ -267,6 +384,7 @@ export class GridInterface<T> {
 
     /**
      * @internal
+     * @private
      */
     public __isColumnSelected(number: number) {
         return this.columnsSelected.has(number);
@@ -274,91 +392,15 @@ export class GridInterface<T> {
 
     /**
      * @internal
+     * @private
      */
     public __selectedColumns() {
         return this.columnsSelected.size;
     }
 
     /**
-     * when you need load grid config
-     */
-    public loadConfig(gridConfig: GridConfig, skipRebuild = false) {
-        this.suppressEvents = true;
-
-        const sortOrder = gridConfig.sorting;
-        const grouping = gridConfig.grouping;
-        const filter = gridConfig.filter;
-        const exspandedGroups = gridConfig.expandedGroups;
-
-        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
-        this.gridConfig.sorting = null;
-        this.gridConfig.grouping = null;
-        this.gridConfig.filter = null;
-        this.gridConfig.expandedGroups = null;
-
-        this.parseConfig();
-
-        if (filter) {
-            this.getDatasource().setFilter(filter as FilterArgument);
-        } else {
-            this.getDatasource().setFilter(null);
-        }
-        this.getDatasource().filter();
-
-        if (grouping?.length) {
-            this.getDatasource().setExpanded(exspandedGroups);
-            this.getDatasource().group(grouping);
-        } else {
-            this.getDatasource().removeGroup();
-            if (sortOrder?.length && !grouping?.length) {
-                this.getDatasource().sort(sortOrder);
-            }
-        }
-
-        this.suppressEvents = false;
-
-        if (!skipRebuild) {
-            this.grid.rebuild();
-        }
-    }
-
-    /**
-     * gets columns in order
-     * by default it filters out selected columns only
-     * @param filterSelectedColumns = true by default
-     */
-    public getAttributeColumns(filterSelectedColumns = true) {
-        return getAttributeColumns(this.grid, filterSelectedColumns);
-    }
-
-    public getOptionalAttributes() {
-        const attributes = new Set(Object.keys(this.gridConfig.__attributes));
-        this.getAttributeColumns(false).forEach((e) => attributes.delete(e));
-        return Array.from(attributes);
-    }
-
-    /**
-     * current datasource
-     * @returns
-     */
-    public getDatasource() {
-        return this.dataSource;
-    }
-
-    /**
      * @internal
-     * do not use - used by grid to disconnect
-     * @returns
-     */
-    public __disconnectGrid() {
-        this.dataSource.removeEventListener(this);
-        this.grid = null;
-    }
-
-    /**
-     * @internal
-     * if its connected to grid or not
-     * @returns
+     * @private
      */
     public __isConnected(): boolean {
         return this.grid ? true : false;
@@ -366,10 +408,10 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * will update scroll tops/heights
+     * @private
      */
     public __dataSourceUpdated() {
-        this.parseConfig();
+        this.__parseConfig();
         this.scrollTops = [];
         this.scrollHeights = [];
         this.scrollHeight = 0;
@@ -394,10 +436,10 @@ export class GridInterface<T> {
     }
 
     /**
-     * @internal
      * scroll state have all row height and top values
      * this is used during a scroll event to move rows into right height
-     * @returns
+     * @internal
+     * @private
      */
     public __getScrollState() {
         return {
@@ -408,16 +450,8 @@ export class GridInterface<T> {
     }
 
     /**
-     * this is for enabling readonly based on row data
-     * @param callback
-     */
-    public readonlySetter(callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) {
-        this.readonlySetterFn = callback;
-        triggerScrollEvent(this.grid);
-    }
-
-    /**
      * @internal
+     * @private
      * called by grid calss
      */
     public __callReadonlySetter(attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) {
@@ -430,6 +464,7 @@ export class GridInterface<T> {
 
     /**
      * @internal
+     * @private
      * do not use - used to handle event from datasource
      * cant use __ since datasource wants it without
      */
@@ -463,31 +498,8 @@ export class GridInterface<T> {
     }
 
     /**
-     * adds event listener, useful when you need to do stuff based on
-     * @param callable
-     */
-    public addEventListener(callable: callable): void {
-        if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
-            throw new Error('callable sent to datasource event listner is wrong type');
-        }
-
-        if (!this.listeners.has(callable)) {
-            this.listeners.add(callable);
-        }
-    }
-
-    /**
-     * removes listener from datasource
-     * @param callable
-     */
-    public removeEventListener(callable: callable): void {
-        if (this.listeners.has(callable)) {
-            this.listeners.delete(callable);
-        }
-    }
-
-    /**
      * @internal
+     * @private
      * used to call subscribers, used by selection/sorting/filter/grouping controller
      * @param event
      * @param data
