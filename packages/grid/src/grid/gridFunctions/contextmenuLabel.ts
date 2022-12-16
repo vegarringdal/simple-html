@@ -6,7 +6,7 @@ import { contextMenuColumnChooser } from './contextMenuColumnChooser';
 import { creatElement } from './createElement';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './ColType';
+import { ColType } from './colType';
 import { removeContextMenu } from './removeContextMenu';
 
 export function contextmenuLabel(

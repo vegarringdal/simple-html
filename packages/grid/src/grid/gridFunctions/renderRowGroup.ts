@@ -2,7 +2,7 @@ import { render, html, svg } from 'lit-html';
 import { Entity } from '../../datasource/Entity';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './ColType';
+import { ColType } from './colType';
 
 export function renderRowGroup(
     ctx: Grid,

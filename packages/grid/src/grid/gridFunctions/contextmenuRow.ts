@@ -5,7 +5,7 @@ import { creatElement } from './createElement';
 import { getAttributeColumns } from './getAttributeColumns';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './ColType';
+import { ColType } from './colType';
 import { prettyPrintString } from './prettyPrintString';
 import { triggerScrollEvent } from './triggerScrollEvent';
 import { removeContextMenu } from './removeContextMenu';

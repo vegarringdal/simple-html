@@ -14,7 +14,7 @@ export type { FilterComparisonOperator } from './datasource/filterComparisonOper
 export type { Entity } from './datasource/entity';
 export type { SortArgument } from './datasource/sortArgument';
 export type { GroupArgument } from './datasource/groupArgument';
-export type { SelectionMode } from './datasource/SelectionMode';
+export type { SelectionMode } from './datasource/selectionMode';
 export { OPERATORS } from './datasource/OPERATORS';
 export { EntityHandler } from './datasource/entityHandler';
 export { Datasource } from './datasource/dataSource';

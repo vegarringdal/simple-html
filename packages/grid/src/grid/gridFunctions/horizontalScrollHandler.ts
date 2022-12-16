@@ -1,7 +1,7 @@
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
 import { Grid } from '../grid';
-import { ColType } from './ColType';
+import { ColType } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { renderCell } from './renderCell';
 import { getGroupingWidth } from './getGroupingWidth';

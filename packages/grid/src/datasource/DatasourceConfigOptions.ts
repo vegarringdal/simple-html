@@ -1,4 +1,4 @@
-import { SelectionMode } from './SelectionMode';
+import { SelectionMode } from './selectionMode';
 
 /**
  *  datasource
