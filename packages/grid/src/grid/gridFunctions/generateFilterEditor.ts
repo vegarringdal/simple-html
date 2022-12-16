@@ -195,7 +195,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             e.preventDefault();
                             e.stopPropagation();
                             contextMenuOperator(ctx, e, e.target as HTMLCellElement, (operator) => {
-                                arg.operator = operator.replace(' ', '_').toUpperCase() as any;
+                                arg.operator = operator.replaceAll(' ', '_').toUpperCase() as any;
 
                                 generateFilterEditor(ctx, structuredClone(filterArg));
                             });
