@@ -3,7 +3,7 @@ import { creatElement } from './createElement';
 import { getElementByClassName } from './getElementByClassName';
 import { Grid } from '../grid';
 import { DIV } from './DIV';
-import { RowCache } from './colType';
+import { RowCache } from './colTypes';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,

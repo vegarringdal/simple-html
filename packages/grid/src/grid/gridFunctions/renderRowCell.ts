@@ -4,7 +4,7 @@ import { Entity } from '../../datasource/Entity';
 import { contextmenuRow } from './contextmenuRow';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import { ColType } from './colTypes';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function renderRowCell(

@@ -5,7 +5,7 @@ import { contextmenuFilter } from './contextmenuFilter';
 import { filterCallback } from './filterCallback';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import { ColType } from './colTypes';
 
 export function renderHeaderFilter(
     ctx: Grid,

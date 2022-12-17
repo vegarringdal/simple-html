@@ -8,7 +8,7 @@ import { dropDownFilterData } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import { ColType } from './colTypes';
 import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { clearAllColumnFilters } from './clearAllColumnFilters';

@@ -1,6 +1,6 @@
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import { ColType } from './colTypes';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,

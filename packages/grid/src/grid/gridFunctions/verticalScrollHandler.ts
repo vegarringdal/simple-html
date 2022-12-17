@@ -1,7 +1,7 @@
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
 import { Grid } from '../grid';
-import { ColType, RowCache } from './colType';
+import { ColType, RowCache } from './colTypes';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
