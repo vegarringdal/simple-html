@@ -70,7 +70,6 @@ export function addScrollEventListeners(ctx: Grid) {
                 event.preventDefault();
                 const el = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
                 const movement = el.scrollLeft - (event as any).wheelDeltaY;
-                console.log(movement);
                 setScrollLeft(getElementByClassName(ctx.element, ' simple-html-grid-middle-scroller'), movement);
             } else {
                 const el = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
