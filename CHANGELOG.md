@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.30](https://github.com/simple-html/simple-html/compare/v5.0.0-next.29...v5.0.0-next.30) (2022-12-17)
+
+
+### Features
+
+* click on number cell summary copies value to clipboard ([5572f7e](https://github.com/simple-html/simple-html/commits/5572f7eab94dfff3e4f553171d47cfe164a97771))
+* focus button in cell ([4783a5a](https://github.com/simple-html/simple-html/commits/4783a5aeca806f3e99be9974f8e7d40ee9903bac))
+* option control display of placeholder on selected row only ([d703722](https://github.com/simple-html/simple-html/commits/d7037224f2984be3d1ddc011db7e6badb912ff21))
+* paste into cells ([24766d9](https://github.com/simple-html/simple-html/commits/24766d9f9a0d44158053d5b1be865fd031b0c123))
+
+
+### Bug Fixes
+
+* cell copy, need to send current cell to clipboard - not current enity ([f640635](https://github.com/simple-html/simple-html/commits/f6406352ac2bbccda7fa930317a0a3d8b3e2d52f))
+* remove console log in mousewheel scroll event ([fb36c3d](https://github.com/simple-html/simple-html/commits/fb36c3d8809aff09af0199cc9b35bcfd8769ad8c))
+
 ## [5.0.0-next.29](https://github.com/simple-html/simple-html/compare/v5.0.0-next.28...v5.0.0-next.29) (2022-12-16)
 
 
