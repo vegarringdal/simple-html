@@ -5,7 +5,7 @@ import { getElementByClassName } from './getElementByClassName';
 import { Grid } from '../grid';
 import { DIV } from './DIV';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType, ColumnCache } from './colTypes';
+import { ColType, ColumnCache } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { Columns } from '../gridConfig';
 import { horizontalScrollHandler } from './horizontalScrollHandler';

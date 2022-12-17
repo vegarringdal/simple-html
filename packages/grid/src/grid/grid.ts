@@ -9,7 +9,7 @@ import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateHorizontalScrollWidth } from './gridFunctions/updateHorizontalScrollWidth';
-import { RowCache, ColumnCache } from './gridFunctions/colTypes';
+import { RowCache, ColumnCache } from './gridFunctions/colType';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 
 /**

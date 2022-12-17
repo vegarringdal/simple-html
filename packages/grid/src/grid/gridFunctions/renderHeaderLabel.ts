@@ -3,7 +3,7 @@ import { Entity } from '../../datasource/Entity';
 import { contextmenuLabel } from './contextmenuLabel';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colTypes';
+import { ColType } from './colType';
 import { prettyPrintString } from './prettyPrintString';
 
 export function renderHeaderLabel(

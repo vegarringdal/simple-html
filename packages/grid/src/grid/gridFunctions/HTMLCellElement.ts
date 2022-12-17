@@ -1,4 +1,4 @@
-import { ColType } from './colTypes';
+import { ColType } from './colType';
 
 export interface HTMLCellElement extends HTMLElement {
     $row: number;
