@@ -1186,3 +1186,9 @@ input {
     background-color: var(--simple-html-grid-alt-bg-color);
 }
 
+.simple-html-grid-focus-button {
+    background-color: var(--simple-html-grid-alt-bg-color);
+    text-align: center;
+    z-index: 1000;
+    cursor: pointer;
+}

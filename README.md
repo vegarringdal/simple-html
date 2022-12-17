@@ -127,7 +127,7 @@ Need for version "5.0.0":
    * add focus event to cell, so you can make dropdown etc
      * [x] row
      * [x] header
-   * [ ] add option to add focus button addFocusButton: "FOCUS_GRID_READONLY" | "FOCUS_CELL_READONLY" | "FOCUS_IF_NOT_READONLY"
+   * [x] add option to add focus button addFocusButton: "SHOW_IF_GRID_NOT_READONLY" | "SHOW_IF_GRID_NOT_READONLY_AND_CELL_NOT_READONLY" | "ALWAYS"
    * [ ] option to stop manual editing, just allow paste/clear - useful for when you need dropdown/focus button to control when ends up there
    * [x] edit cells
    * [x] option to set blank rows to zero "0"  - (blank = undefined, "" null)

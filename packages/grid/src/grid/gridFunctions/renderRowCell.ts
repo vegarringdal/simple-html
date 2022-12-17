@@ -6,6 +6,9 @@ import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
 import { ColType } from './colType';
 import { triggerScrollEvent } from './triggerScrollEvent';
+import { creatElement } from './createElement';
+import { DIV } from './DIV';
+import { asPx } from './asPx';
 
 export function renderRowCell(
     ctx: Grid,
@@ -30,12 +33,11 @@ export function renderRowCell(
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
 
         let showPlaceHolder = true;
-        if(config.placeHolderRowCurrentEnityOnly){
+        if (config.placeHolderRowCurrentEnityOnly) {
             if (rowData !== ctx.gridInterface.getDatasource().currentEntity) {
-                showPlaceHolder = false
+                showPlaceHolder = false;
             }
         }
-        
 
         if (cellConfig?.type === 'date') {
             value = ctx.gridInterface.getDatasource().getDateFormater().fromDate(value);
@@ -96,8 +98,9 @@ export function renderRowCell(
                     <input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(value?.toString())}
+                        class="simple-html-grid-cell-input"
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
-                        placeholder=${showPlaceHolder ? cellConfig.placeHolderRow:''}
+                        placeholder=${showPlaceHolder ? cellConfig.placeHolderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -126,6 +129,66 @@ export function renderRowCell(
                                 attribute,
                                 rowData
                             });
+
+                            const addFocusButton = () => {
+                                const input = cell.getElementsByClassName('simple-html-grid-cell-input')[0] as HTMLElement;
+                                if (input) {
+                                    input.style.right = asPx(30);
+                                }
+
+                                const el = creatElement(DIV, 'simple-html-grid-focus-button');
+                                el.style.position = 'absolute';
+                                el.style.top = asPx(0);
+                                el.style.bottom = asPx(0);
+                                el.style.right = asPx(0);
+                                el.style.width = asPx(30);
+                                el.onclick = () => {
+                                    ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
+                                        cell,
+                                        row,
+                                        column,
+                                        celno,
+                                        colType,
+                                        cellType,
+                                        attribute,
+                                        rowData
+                                    });
+                                };
+
+                                el.innerText = '...';
+                                cell.appendChild(el);
+                            };
+
+                            switch (cellConfig.focusButton) {
+                                case 'SHOW_IF_GRID_NOT_READONLY':
+                                    if (!config.readonly) {
+                                        addFocusButton();
+                                    }
+                                    break;
+                                case 'SHOW_IF_GRID_AND_CELL_NOT_READONLY':
+                                    if (!config.readonly && !cellConfig.readonly) {
+                                        addFocusButton();
+                                    }
+                                    break;
+                                case 'ALWAYS':
+                                    console.log('ALWAYS');
+                                    addFocusButton();
+                            }
+                        }}
+                        @blur=${() => {
+                            // I need to delay this incase someone clicks on focus button
+                            setTimeout(() => {
+                                const focus = cell.getElementsByClassName('simple-html-grid-focus-button')[0];
+                                if (focus) {
+                                    if (focus.parentElement) {
+                                        focus.parentElement.removeChild(focus);
+                                    }
+                                }
+                                const input = cell.getElementsByClassName('simple-html-grid-cell-input')[0] as HTMLElement;
+                                if (input) {
+                                    input.style.right = null;
+                                }
+                            }, 100);
                         }}
                         @input=${(e: any) => {
                             if (!cellReadOnly && cellConfig?.type !== 'date') {
