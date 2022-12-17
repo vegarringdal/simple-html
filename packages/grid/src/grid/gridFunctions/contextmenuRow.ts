@@ -39,7 +39,7 @@ export function contextmenuRow(
         contextMenu.style.left = asPx(5);
     }
 
-    const generateCopyPasteData = (attributes: string[], onlyCurrentEntity: boolean) => {
+    const generateCopyPasteData = (attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity:any = null) => {
         const TableOuterTop = `
             <html>
                 <body>
@@ -106,8 +106,15 @@ export function contextmenuRow(
         };
 
         if (onlyCurrentEntity) {
-            loopData(datasource.currentEntity);
+            if(overRideCurrentEntity){
+                loopData(overRideCurrentEntity);
+            } else{
+                loopData(datasource.currentEntity);
+            }
+            
         } else {
+
+
             selectedRows.forEach((entity) => {
                 loopData(entity);
             });
@@ -116,8 +123,8 @@ export function contextmenuRow(
         return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
     };
 
-    const copyPasteData = (attributes: string[], onlyCurrentEntity: boolean) => {
-        const [html, text] = generateCopyPasteData(attributes, onlyCurrentEntity);
+    const copyPasteData = (attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity:any = null) => {
+        const [html, text] = generateCopyPasteData(attributes, onlyCurrentEntity, overRideCurrentEntity);
 
         function listener(e: any) {
             e.clipboardData.setData('text/html', html);
@@ -294,7 +301,7 @@ export function contextmenuRow(
 
     const copyCellTemplate = () => {
         const clickHandle = () => {
-            copyPasteData([attribute], true);
+            copyPasteData([attribute], true, rowData);
             ctx.gridInterface.__callSubscribers('copy-cell', {
                 cell,
                 row,
