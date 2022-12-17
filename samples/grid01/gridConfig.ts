@@ -80,7 +80,7 @@ export const gridConfig: GridConfig = {
         {
             attribute: 'phone',
             placeHolderRow: 'wow',
-            focusButton: "SHOW_IF_GRID_NOT_READONLY_AND_CELL_NOT_READONLY"
+            focusButton: "SHOW_IF_GRID_AND_CELL_NOT_READONLY"
         },
         {
             attribute: 'company',
