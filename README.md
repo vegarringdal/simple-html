@@ -17,6 +17,8 @@ API docs:
 Source code: (have minimal sample of usage)
 *  [Grid](https://github.com/vegarringdal/simple-html/packages/grid)
 
+BundlePhobia: (bundle size)
+* [Grid](https://bundlephobia.com/package/@simple-html/grid)
 
 # Minimal code sample
 
