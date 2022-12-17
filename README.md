@@ -100,41 +100,42 @@ document.body.appendChild(element);
 # TODO / Features
 
 Need for version "5.0.0":
- * [x] main UI parts
  * [x] virtual scrolling up/down
  * [x] virtual scrolling left/right middle section
  * [x] basic filter text/date/number
  * [x] checkbox filter
  * [x] checkbox on row
  * [x] selection by using left row selector only
- * [x] select all top/left 
+ * select all top/left 
    * [x] when grouped, selecting selector on group row selects all row in group
  * [x] multisort with shift key and colum label click
  * [x] grouping with expand/collapse in group rows
  * [x] resize columns
  * [x] resize pinned left/right
  * [x] even /odd coloring to rows (also when selected)
- * [x] load setting
+ * load setting
    * [x] support grouping/sorting/filter set
- * [x] save setting
+ * save setting
     * [x] support grouping/sorting/filter set
  * [x] global readonly setting
  * [x] drag/drop column to change location
- * [x] row/cell (incl header)
+ * row/cell (incl header)
    * [x] add input to row
-   * [x] able to set placeholder with config
+   * able to set placeholder with config
      * [x] row
      * [x] header
-   * [x] add focus event to cell, so you can make dropdown etc
+   * add focus event to cell, so you can make dropdown etc
      * [x] row
      * [x] header
+   * [ ] add option to add focus button addFocusButton: "FOCUS_GRID_READONLY" | "FOCUS_CELL_READONLY" | "FOCUS_IF_NOT_READONLY"
+   * [ ] option to stop manual editing, just allow paste/clear - useful for when you need dropdown/focus button to control when ends up there
    * [x] edit cells
-   * [x] option to set zero rows to 0
-   * [x] readonly (row)
+   * [x] option to set blank rows to zero "0"  - (blank = undefined, "" null)
+   * [x] option to set zero "0" to blank "" - (blank = undefined, "" null)
+   * readonly (row)
      * [x] with callback, so you can also set it based on other row values
      * [x] set "read" background/scratched, so its easy to see its a readonly even i edit mode
- * [x] menu label
-   * [x] GUI
+ * menu label
    * [x] pin left
    * [x] pin right
    * [x] hide
@@ -144,16 +145,14 @@ Need for version "5.0.0":
    * [x] collapse all groups
    * [x] expand all groups
    * [x] clear grouping
- * [x] menu filter
-   * [x] GUI
+ * menu filter
    * [x] clear filter
    * [x] clear all filters
    * [x] set is blank
    * [x] set is not blank
    * [x] operator (most used only, they can used advanced for others)
    * [x] advanced filter  (filter dialog)
- * [ ] menu row
-    * [x] GUI
+ * menu row
    * [x] copy cell
       * [x] need a event/callback for this
    * [x] copy colum
@@ -166,18 +165,20 @@ Need for version "5.0.0":
      * [ ] event for when this happends, incase we need to edit others
    * [x] clear cell
      * [x] event for when this happends
- * [x] advanced search dialog
-   * [x] support groups
+ * advanced search dialog
+   * support groups
      * [x] and groups
      * [x] or groups
-   * [x] in/not in operator (might work, not tested)
+   * [x] in/not in operator
+   * [ ] in/not in needs to look better, scrollbar needs css touchup
  * [x] add current filter to footer
  * [x] total rows/filtered rows to footer
  * [x] clear filter with button in footer
- * [x] excel similar column filter, like we have in old grid
-   * this will only show first 50 rows.. important user knows this
+ * excel similar column filter, like we have in old grid
+   * [x] this will only show first 50 rows.. important user knows this
  * [x] hold shift +contr and use mousewheel to scroll horizontal
-
+ * [ ] option to just display placehold on rows if they are the current entity, usefull to make grid with a lot of empty cell more clean, and placehold can be used as input helpers
+ 
 # Needed for editing
 * todo..
 
