@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.31](https://github.com/simple-html/simple-html/compare/v5.0.0-next.30...v5.0.0-next.31) (2022-12-17)
+
+
+### Features
+
+* able to trigger scroll event from grid interface update grid cells ([825e2f7](https://github.com/simple-html/simple-html/commits/825e2f762c9cb95049c6506e6929e86abced223d))
+
 ## [5.0.0-next.30](https://github.com/simple-html/simple-html/compare/v5.0.0-next.29...v5.0.0-next.30) (2022-12-17)
 
 
