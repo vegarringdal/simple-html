@@ -39,7 +39,7 @@ export function contextmenuRow(
         contextMenu.style.left = asPx(5);
     }
 
-    const generateCopyPasteData = (attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity:any = null) => {
+    const generateCopyPasteData = (attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity: any = null) => {
         const TableOuterTop = `
             <html>
                 <body>
@@ -106,15 +106,12 @@ export function contextmenuRow(
         };
 
         if (onlyCurrentEntity) {
-            if(overRideCurrentEntity){
+            if (overRideCurrentEntity) {
                 loopData(overRideCurrentEntity);
-            } else{
+            } else {
                 loopData(datasource.currentEntity);
             }
-            
         } else {
-
-
             selectedRows.forEach((entity) => {
                 loopData(entity);
             });
@@ -123,7 +120,7 @@ export function contextmenuRow(
         return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
     };
 
-    const copyData = (attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity:any = null) => {
+    const copyData = (attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity: any = null) => {
         const [html, text] = generateCopyPasteData(attributes, onlyCurrentEntity, overRideCurrentEntity);
 
         function listener(e: any) {
@@ -144,21 +141,18 @@ export function contextmenuRow(
         });
     };
 
-
-    const pasteIntoCells = (attribute:string, data: any) => {
+    const pasteIntoCells = (attribute: string, data: any) => {
         const datasource = ctx.gridInterface.getDatasource();
         const attConfig = ctx.gridInterface.__getGridConfig().__attributes;
-        const cellConfig = attConfig[attribute]
+        const cellConfig = attConfig[attribute];
         const dateformater = datasource.getDateFormater();
         const numberformater = datasource.getNumberFormater();
 
         datasource.getSelectedRows().forEach((entity) => {
             if (cellConfig.type === 'number') {
-                entity[attribute] =
-                    numberformater.toNumber(data);
+                entity[attribute] = numberformater.toNumber(data);
             } else if (cellConfig.type === 'date') {
-                entity[attribute] =
-                    dateformater.toDate(data);
+                entity[attribute] = dateformater.toDate(data);
             } else {
                 entity[attribute] = data;
             }
@@ -173,8 +167,8 @@ export function contextmenuRow(
                 entity
             });
         });
-        triggerScrollEvent(ctx)
-    }
+        triggerScrollEvent(ctx);
+    };
 
     /**
      * summaryTemplate
@@ -294,10 +288,9 @@ export function contextmenuRow(
                     let data;
                     if (navigator.clipboard.readText) {
                         data = await navigator.clipboard.readText();
-                        pasteIntoCells(attribute, data)
-                        
+                        pasteIntoCells(attribute, data);
                     }
-                    
+
                     removeContextMenu(ctx);
                 }}
             >

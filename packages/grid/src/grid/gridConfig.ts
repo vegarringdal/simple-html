@@ -18,7 +18,7 @@ export type GridConfig = {
      * displays only placeholder on current focused cell row/current entity row
      * default = true, so you need to set this to false to display on all rows
      */
-    placeHolderRowCurrentEnityOnly?:boolean
+    placeHolderRowCurrentEnityOnly?: boolean;
 
     /**
      * sorting added when loading config, unless grouping overrides it
@@ -92,5 +92,5 @@ export type Attribute = {
     groupEnabled?: boolean;
     currentFilterValue?: string | number | boolean | Date;
     numberOverride?: 'ZERO_TO_BLANK' | 'BLANK_TO_ZERO';
-    focusButton?: "SHOW_IF_GRID_NOT_READONLY" | "SHOW_IF_GRID_AND_CELL_NOT_READONLY" | "ALWAYS"
+    focusButton?: 'SHOW_IF_GRID_NOT_READONLY' | 'SHOW_IF_GRID_AND_CELL_NOT_READONLY' | 'ALWAYS';
 };
