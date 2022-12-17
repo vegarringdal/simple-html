@@ -163,8 +163,8 @@ Need for version "5.0.0":
       * [x] copy in correct column order..
       * [x] allow select columns in selector in header, to limit columns getting copied
       * [x] need a event/callback for this
-   * [ ] paste cell
-     * [ ] event for when this happends, incase we need to edit others
+   * [x] paste cell
+     * [x] event for when this happends, incase we need to edit others
    * [x] clear cell
      * [x] event for when this happends
  * advanced search dialog

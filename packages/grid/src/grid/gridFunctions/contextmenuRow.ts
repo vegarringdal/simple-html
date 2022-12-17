@@ -123,7 +123,7 @@ export function contextmenuRow(
         return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
     };
 
-    const copyPasteData = (attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity:any = null) => {
+    const copyData = (attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity:any = null) => {
         const [html, text] = generateCopyPasteData(attributes, onlyCurrentEntity, overRideCurrentEntity);
 
         function listener(e: any) {
@@ -143,6 +143,38 @@ export function contextmenuRow(
             entity[attribute] = null;
         });
     };
+
+
+    const pasteIntoCells = (attribute:string, data: any) => {
+        const datasource = ctx.gridInterface.getDatasource();
+        const attConfig = ctx.gridInterface.__getGridConfig().__attributes;
+        const cellConfig = attConfig[attribute]
+        const dateformater = datasource.getDateFormater();
+        const numberformater = datasource.getNumberFormater();
+
+        datasource.getSelectedRows().forEach((entity) => {
+            if (cellConfig.type === 'number') {
+                entity[attribute] =
+                    numberformater.toNumber(data);
+            } else if (cellConfig.type === 'date') {
+                entity[attribute] =
+                    dateformater.toDate(data);
+            } else {
+                entity[attribute] = data;
+            }
+            ctx.gridInterface.__callSubscribers('paste', {
+                cell,
+                row,
+                column,
+                celno,
+                colType,
+                cellType,
+                attribute,
+                entity
+            });
+        });
+        triggerScrollEvent(ctx)
+    }
 
     /**
      * summaryTemplate
@@ -258,18 +290,14 @@ export function contextmenuRow(
             <hr class="hr-solid" />
             <div
                 class="simple-html-grid-menu-item"
-                @click=${() => {
-                    alert('not implemented');
-                    ctx.gridInterface.__callSubscribers('paste', {
-                        cell,
-                        row,
-                        column,
-                        celno,
-                        colType,
-                        cellType,
-                        attribute,
-                        rowData
-                    });
+                @click=${async () => {
+                    let data;
+                    if (navigator.clipboard.readText) {
+                        data = await navigator.clipboard.readText();
+                        pasteIntoCells(attribute, data)
+                        
+                    }
+                    
                     removeContextMenu(ctx);
                 }}
             >
@@ -301,7 +329,7 @@ export function contextmenuRow(
 
     const copyCellTemplate = () => {
         const clickHandle = () => {
-            copyPasteData([attribute], true, rowData);
+            copyData([attribute], true, rowData);
             ctx.gridInterface.__callSubscribers('copy-cell', {
                 cell,
                 row,
@@ -320,7 +348,7 @@ export function contextmenuRow(
 
     const copyColumnOnSelectedRowsTemplate = () => {
         const clickHandle = () => {
-            copyPasteData([attribute], false);
+            copyData([attribute], false);
             ctx.gridInterface.__callSubscribers('copy-column', {
                 cell,
                 row,
@@ -341,7 +369,7 @@ export function contextmenuRow(
         const clickHandle = () => {
             const attributes = getAttributeColumns(ctx, false);
 
-            copyPasteData(attributes, false);
+            copyData(attributes, false);
             ctx.gridInterface.__callSubscribers('copy-row', {
                 cell,
                 row,
@@ -362,7 +390,7 @@ export function contextmenuRow(
         const clickHandle = () => {
             const attributes = getAttributeColumns(ctx);
 
-            copyPasteData(attributes, false);
+            copyData(attributes, false);
             ctx.gridInterface.__callSubscribers('copy-row-col', {
                 cell,
                 row,
