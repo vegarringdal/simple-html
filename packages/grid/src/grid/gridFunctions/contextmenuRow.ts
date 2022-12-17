@@ -193,40 +193,45 @@ export function contextmenuRow(
             <hr class="hr-solid" />
             <div
                 class="simple-html-grid-menu-item"
-                @click=${() => {
-                    alert('not implemented');
+                @click=${async () => {
+                    await navigator.clipboard.writeText(numberFormater.fromNumber(selectedRows.length));
+                    removeContextMenu(ctx);
                 }}
             >
                 Count: ${selectedRows.length}
             </div>
             <div
                 class="simple-html-grid-menu-item"
-                @click=${() => {
-                    alert('not implemented');
+                @click=${async () => {
+                    await navigator.clipboard.writeText(numberFormater.fromNumber(curValueX));
+                    removeContextMenu(ctx);
                 }}
             >
                 Sum: ${numberFormater.fromNumber(curValueX)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
-                @click=${() => {
-                    alert('not implemented');
+                @click=${async () => {
+                    await navigator.clipboard.writeText(numberFormater.fromNumber(maxValueX));
+                    removeContextMenu(ctx);
                 }}
             >
                 Max: ${numberFormater.fromNumber(maxValueX)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
-                @click=${() => {
-                    alert('not implemented');
+                @click=${async () => {
+                    await navigator.clipboard.writeText(numberFormater.fromNumber(minValueX));
+                    removeContextMenu(ctx);
                 }}
             >
                 Min: ${numberFormater.fromNumber(minValueX)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
-                @click=${() => {
-                    alert('not implemented');
+                @click=${async () => {
+                    await navigator.clipboard.writeText(numberFormater.fromNumber(avgValueX));
+                    removeContextMenu(ctx);
                 }}
             >
                 Avg: ${numberFormater.fromNumber(avgValueX) || 0}
