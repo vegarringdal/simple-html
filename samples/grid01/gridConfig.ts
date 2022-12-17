@@ -82,6 +82,14 @@ export const gridConfig: GridConfig = {
             placeHolderRow: 'wow'
         },
         {
+            attribute: 'company',
+            placeHolderRow: 'company'
+        },
+        {
+            attribute: 'country',
+            placeHolderRow: 'country'
+        },
+        {
             attribute: 'isDumb',
             type: 'boolean'
         },

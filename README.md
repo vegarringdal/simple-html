@@ -177,7 +177,7 @@ Need for version "5.0.0":
  * excel similar column filter, like we have in old grid
    * [x] this will only show first 50 rows.. important user knows this
  * [x] hold shift +contr and use mousewheel to scroll horizontal
- * [ ] option to just display placehold on rows if they are the current entity, usefull to make grid with a lot of empty cell more clean, and placehold can be used as input helpers
+ * [x] option to just display placehold on rows if they are the current entity, usefull to make grid with a lot of empty cell more clean, and placehold can be used as input helpers
  
 # Needed for editing
 * todo..

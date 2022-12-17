@@ -29,6 +29,14 @@ export function renderRowCell(
         const config = ctx.gridInterface.__getGridConfig();
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
 
+        let showPlaceHolder = true;
+        if(config.placeHolderRowCurrentEnityOnly){
+            if (rowData !== ctx.gridInterface.getDatasource().currentEntity) {
+                showPlaceHolder = false
+            }
+        }
+        
+
         if (cellConfig?.type === 'date') {
             value = ctx.gridInterface.getDatasource().getDateFormater().fromDate(value);
         }
@@ -89,7 +97,7 @@ export function renderRowCell(
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(value?.toString())}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
-                        placeholder=${cellConfig.placeHolderRow}
+                        placeholder=${showPlaceHolder ? cellConfig.placeHolderRow:''}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);

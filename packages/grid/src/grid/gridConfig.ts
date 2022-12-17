@@ -15,6 +15,12 @@ export type GridConfig = {
     columnsPinnedRight?: Columns[];
 
     /**
+     * displays only placeholder on current focused cell row/current entity row
+     * default = true, so you need to set this to false to display on all rows
+     */
+    placeHolderRowCurrentEnityOnly?:boolean
+
+    /**
      * sorting added when loading config, unless grouping overrides it
      */
     sorting?: Sort[];
