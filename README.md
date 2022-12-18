@@ -184,14 +184,17 @@ Need for version "5.0.0":
    * [x] this will only show first 50 rows.. important user knows this
  * [x] hold shift +contr and use mousewheel to scroll horizontal
  * [x] option to just display placehold on rows if they are the current entity, usefull to make grid with a lot of empty cell more clean, and placehold can be used as input helpers
- 
 
-## Wanted/considering
+
+## Wanted/considering (some will be part of 5.0.0)
  * [ ] find all function
  * [ ] replace value
  * [ ] edit cells callback/event (best way to really have controll is to add Entity handler to Datacontainer)
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
  * [ ] make mandatory color only show if there is no value ?
+ * [ ] first/next/prev/last/new entity, need some stratagy on how we want grid behave, scroll to or just stay where it is?
+ * [ ] datasource to genrate changelog ?
+    * datasource allready have mark for deletion, so it should be able to give all if used correctly, it it might be nice to have built in
 ## Other:
 - [ ] gridhub action for release/test/lock master branch
 
