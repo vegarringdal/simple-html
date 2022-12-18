@@ -86,13 +86,36 @@ export type Attribute = {
     placeHolderFilter?: string;
     operator?: FilterComparisonOperator;
     type?: DataTypes;
-    disabled?: boolean;
+  
+    /**
+     * sets cell to readonly, usefull if you need it to stay readonly if grid is not readonly
+     */
     readonly?: boolean;
-    sortEnabled?: boolean;
-    groupEnabled?: boolean;
+
+    /**
+     * @internal
+     * current filter value, this is really more of a internal state..
+     */
     currentFilterValue?: string | number | boolean | Date;
+
+    /**
+     * like the name says, default it to display value it have recived, but you might have other needs
+     */
     numberOverride?: 'ZERO_TO_BLANK' | 'BLANK_TO_ZERO';
+
+    /**
+     * like the name says, shows a focus button, you need to use the gridinterface event to do anythnig useful with it
+     * like dialog, dropdown etc
+     */
     focusButton?: 'SHOW_IF_GRID_NOT_READONLY' | 'SHOW_IF_GRID_AND_CELL_NOT_READONLY' | 'ALWAYS';
+
+    /**
+     * adds a blue ish color in background, highlighting cell, you can override color with css
+     */
     mandatory?: boolean;
+
+    /**
+     * usefull for fields where you have dropdown etc, but want to allow user to easly update column with copy paste
+     */
     allowPasteClearOnReadonly?: boolean;
 };
