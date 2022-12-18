@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.32](https://github.com/simple-html/simple-html/compare/v5.0.0-next.31...v5.0.0-next.32) (2022-12-18)
+
+
+### Features
+
+* allowPasteClearOnReadonly ([faa8a53](https://github.com/simple-html/simple-html/commits/faa8a53baef30d530f4f7225955c9a8381bf88cc))
+* mandatory backgorund option, to highlight cells ([ac2a2a9](https://github.com/simple-html/simple-html/commits/ac2a2a91a3d17c50c8a8d808f5fc2456645bf670))
+
 ## [5.0.0-next.31](https://github.com/simple-html/simple-html/compare/v5.0.0-next.30...v5.0.0-next.31) (2022-12-17)
 
 
