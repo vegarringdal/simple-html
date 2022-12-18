@@ -65,6 +65,9 @@ export function renderRowCell(
 
         if (!config.readonly && cellReadOnly) {
             dimmed = 'simple-html-readonly';
+        } 
+        if (!config.readonly && !cellReadOnly && cellConfig.mandatory) {
+            dimmed = 'simple-html-mandatory';
         }
 
         if (cellConfig.type === 'boolean') {

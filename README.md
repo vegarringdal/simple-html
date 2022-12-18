@@ -136,7 +136,11 @@ Need for version "5.0.0":
    * [x] option to set zero "0" to blank "" - (blank = undefined, "" null)
    * readonly (row)
      * [x] with callback, so you can also set it based on other row values
-     * [x] set "read" background/scratched, so its easy to see its a readonly even i edit mode
+     * [x] set "red" background/scratched, so its easy to see its a readonly even i edit mode
+       * to skip this you just override the `.simple-html-readonly` class
+   * mandatory
+     [x] set "red" background/scratched, so its easy to see its a readonly even i edit mode
+       * to skip this you just override the `.simple-html-mandatory` class 
  * menu label
    * [x] pin left
    * [x] pin right
@@ -181,15 +185,13 @@ Need for version "5.0.0":
  * [x] hold shift +contr and use mousewheel to scroll horizontal
  * [x] option to just display placehold on rows if they are the current entity, usefull to make grid with a lot of empty cell more clean, and placehold can be used as input helpers
  
-# Needed for editing
-* todo..
 
 ## Wanted/considering
  * [ ] find all function
  * [ ] replace value
  * [ ] edit cells callback/event (best way to really have controll is to add Entity handler to Datacontainer)
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
-
+ * [ ] make mandatory color only show if there is no value ?
 ## Other:
 - [ ] gridhub action for release/test/lock master branch
 

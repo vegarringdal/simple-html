@@ -93,4 +93,5 @@ export type Attribute = {
     currentFilterValue?: string | number | boolean | Date;
     numberOverride?: 'ZERO_TO_BLANK' | 'BLANK_TO_ZERO';
     focusButton?: 'SHOW_IF_GRID_NOT_READONLY' | 'SHOW_IF_GRID_AND_CELL_NOT_READONLY' | 'ALWAYS';
-};
+    mandatory?: boolean;
+}

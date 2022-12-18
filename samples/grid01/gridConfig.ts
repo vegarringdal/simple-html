@@ -89,7 +89,13 @@ export const gridConfig: GridConfig = {
         },
         {
             attribute: 'country',
-            placeHolderRow: 'country'
+            placeHolderRow: 'country',
+            mandatory:true
+        },
+        {
+            attribute: 'favoriteFruit',
+            placeHolderRow: 'favoriteFruit',
+            mandatory:true
         },
         {
             attribute: 'isDumb',
