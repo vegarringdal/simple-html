@@ -97,9 +97,9 @@ export class GridInterface<T> {
      * this will force scroll event and update cells
      * usefull if you have done any manual edits to datasource data and want grid updated
      */
-    public triggerScrollEvent(){
-        if(this.grid){
-            triggerScrollEvent(this.grid)
+    public triggerScrollEvent() {
+        if (this.grid) {
+            triggerScrollEvent(this.grid);
         }
     }
 
