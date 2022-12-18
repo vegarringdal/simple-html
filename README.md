@@ -130,7 +130,7 @@ Need for version "5.0.0":
      * [x] row
      * [x] header
    * [x] add option to add focus button addFocusButton: "SHOW_IF_GRID_NOT_READONLY" | "SHOW_IF_GRID_NOT_READONLY_AND_CELL_NOT_READONLY" | "ALWAYS"
-   * [ ] option to stop manual editing, just allow paste/clear - useful for when you need dropdown/focus button to control when ends up there
+   * [x] option to stop manual editing, just allow paste/clear - useful for when you need dropdown/focus button to control when ends up there `allowPasteClearOnReadonly`
    * [x] edit cells
    * [x] option to set blank rows to zero "0"  - (blank = undefined, "" null)
    * [x] option to set zero "0" to blank "" - (blank = undefined, "" null)

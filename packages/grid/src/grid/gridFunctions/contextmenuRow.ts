@@ -276,7 +276,12 @@ export function contextmenuRow(
      * @returns
      */
     const pasteAndClearTemplate = () => {
+        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+
         if (ctx.gridInterface.__getGridConfig().readonly) {
+            return null;
+        }
+        if (cellConfig.readonly && !cellConfig.allowPasteClearOnReadonly) {
             return null;
         }
 

@@ -80,22 +80,22 @@ export const gridConfig: GridConfig = {
         {
             attribute: 'phone',
             placeHolderRow: 'wow',
-            focusButton: "SHOW_IF_GRID_AND_CELL_NOT_READONLY"
+            focusButton: 'SHOW_IF_GRID_AND_CELL_NOT_READONLY'
         },
         {
             attribute: 'company',
             placeHolderRow: 'company',
-            focusButton: "SHOW_IF_GRID_NOT_READONLY"
+            focusButton: 'SHOW_IF_GRID_NOT_READONLY'
         },
         {
             attribute: 'country',
             placeHolderRow: 'country',
-            mandatory:true
+            mandatory: true
         },
         {
             attribute: 'favoriteFruit',
             placeHolderRow: 'favoriteFruit',
-            mandatory:true
+            mandatory: true
         },
         {
             attribute: 'isDumb',
@@ -105,6 +105,12 @@ export const gridConfig: GridConfig = {
             attribute: 'balance',
             type: 'number',
             readonly: true
+        },
+        {
+            attribute: 'picture',
+
+            readonly: true,
+            allowPasteClearOnReadonly: true
         },
         {
             attribute: 'longitude',
@@ -128,7 +134,7 @@ export const gridConfig: GridConfig = {
             attribute: 'date1',
             type: 'date',
             placeHolderFilter: 'YYYY-MM-DD',
-            focusButton:"ALWAYS"
+            focusButton: 'ALWAYS'
         },
         {
             attribute: 'date2',
