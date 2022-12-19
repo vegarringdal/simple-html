@@ -11,6 +11,7 @@ import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 import { getTextWidth } from './gridFunctions/getTextWidth';
+import { getElementByClassName } from './gridFunctions/getElementByClassName';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -507,6 +508,24 @@ export class GridInterface<T> {
             case e.type === 'selectionChange':
                 this.__dataSourceUpdated();
                 triggerScrollEvent(this.grid);
+                break;
+            case e.type === 'select':
+                this.__dataSourceUpdated();
+
+                const scrollEl = getElementByClassName(this.grid.getElement(), 'simple-html-grid-body-scroller');
+                const scrollElHeight = scrollEl?.clientHeight;
+                const scrollElScrollTop = scrollEl?.scrollTop;
+
+                const newTop = this.__getScrollState().scrollTops[e.data?.row];
+
+                if (newTop - this.__getGridConfig().__rowHeight < scrollElScrollTop) {
+                    scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
+                }
+
+                if (newTop + this.__getGridConfig().__rowHeight > scrollElHeight + scrollElScrollTop) {
+                    scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
+                }
+
                 break;
             default:
                 console.log('skipping:', e.type, e.data);

@@ -593,9 +593,10 @@ export class Datasource<T = any> {
      * @param row, if skipped we select the first
      */
     public select(row?: number, triggerSelect?: boolean): void {
-        this.__selection.highlightRow({} as any, row ? row - 1 : 0);
+        const selectedRow = row ? row - 1 : 0
+        this.__selection.highlightRow({} as any, selectedRow);
         if (triggerSelect) {
-            this.__callSubscribers('select');
+            this.__callSubscribers('select', { info: 'select-first', row: selectedRow });
         }
     }
 
@@ -604,7 +605,7 @@ export class Datasource<T = any> {
      */
     public selectFirst(): void {
         this.__selection.highlightRow({} as any, 0);
-        this.__callSubscribers('select', { info: 'select-first' });
+        this.__callSubscribers('select', { info: 'select-first', row: 0 });
     }
 
     /**
@@ -617,7 +618,7 @@ export class Datasource<T = any> {
             this.__selection.highlightRow({} as any, row);
         }
         this.__selection.highlightRow({} as any, row);
-        this.__callSubscribers('select', { info: 'select-prev' });
+        this.__callSubscribers('select', { info: 'select-prev', row });
     }
 
     /**
@@ -629,15 +630,16 @@ export class Datasource<T = any> {
             row = 0;
         }
         this.__selection.highlightRow({} as any, row);
-        this.__callSubscribers('select', { info: 'select-next' });
+        this.__callSubscribers('select', { info: 'select-next', row });
     }
 
     /**
      * updates current entity to last entity
      */
     public selectLast(): void {
-        this.__selection.highlightRow({} as any, this.__collectionDisplayed.length - 1);
-        this.__callSubscribers('select', { info: 'select-last' });
+        const row = this.__collectionDisplayed.length - 1
+        this.__selection.highlightRow({} as any, row);
+        this.__callSubscribers('select', { info: 'select-last', row });
     }
 
     /**
