@@ -142,10 +142,11 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
         />`;
 
         if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
+            const value = Array.isArray(arg.value) ? arg.value.filter((e) => e !== '').join('\n') : arg.value?.toString();
+
             filterValue = html`<textarea
-                .value=${arg.value || ''}
-                @input=${(e: any) => (arg.value = e.target.value)}
-                @change=${(e: any) => (arg.value = e.target.value)}
+                .value=${value || ''}
+                @change=${(e: any) => (arg.value = e.target.value.split('\n').filter((e: string) => e !== ''))}
             ></textarea>`;
         }
 
