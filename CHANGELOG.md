@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.33](https://github.com/simple-html/simple-html/compare/v5.0.0-next.32...v5.0.0-next.33) (2022-12-19)
+
+
+### Bug Fixes
+
+* in operator filter in filter editor ([435ec0c](https://github.com/simple-html/simple-html/commits/435ec0ce2ac23632f1c0c1b9e2838853103582c6))
+* windows path issues - it had messed up lower and uppercase ([e9f254c](https://github.com/simple-html/simple-html/commits/e9f254cc49d2c552e061d82c0e2aa0b4cde609fe))
+
 ## [5.0.0-next.32](https://github.com/simple-html/simple-html/compare/v5.0.0-next.31...v5.0.0-next.32) (2022-12-18)
 
 
