@@ -1,5 +1,5 @@
 import { FilterArgument } from '../../datasource/filterArgument';
-import { generateFilterEditor } from './generateFilterEditor';
+import { renderFilterEditor } from './renderFilterEditor';
 import { Grid } from '../grid';
 import { removeContextMenu } from './removeContextMenu';
 
@@ -26,5 +26,5 @@ export function openFilterEditor(ctx: Grid) {
         filterArg.filterArguments = dsFilter;
     }
 
-    generateFilterEditor(ctx, structuredClone(filterArg));
+    renderFilterEditor(ctx, structuredClone(filterArg));
 }

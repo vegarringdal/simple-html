@@ -11,7 +11,7 @@ import { removeContextMenu } from './removeContextMenu';
  * internal method to generate html for filter editor
  * @param filterArg
  */
-export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
+export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
     if (ctx.filterEditorContainer) {
         document.body.removeChild(ctx.filterEditorContainer);
     }
@@ -157,7 +157,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     e.stopPropagation();
                     contextMenuAttributes(ctx, e, e.target as any, (attribute) => {
                         arg.value = attribute;
-                        generateFilterEditor(ctx, structuredClone(filterArg));
+                        renderFilterEditor(ctx, structuredClone(filterArg));
                     });
                 }}
             >
@@ -183,7 +183,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
 
                                 const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
                                 arg.attributeType = cellConfig.type || 'text';
-                                generateFilterEditor(ctx, structuredClone(filterArg));
+                                renderFilterEditor(ctx, structuredClone(filterArg));
                             });
                         }}
                     >
@@ -198,7 +198,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             contextMenuOperator(ctx, e, e.target as HTMLCellElement, (operator) => {
                                 arg.operator = operator.replaceAll(' ', '_').toUpperCase() as any;
 
-                                generateFilterEditor(ctx, structuredClone(filterArg));
+                                renderFilterEditor(ctx, structuredClone(filterArg));
                             });
                         }}
                     >
@@ -221,12 +221,12 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                 }
                             });
                             context.splice(x, 1);
-                            generateFilterEditor(ctx, structuredClone(filterArg));
+                            renderFilterEditor(ctx, structuredClone(filterArg));
                         })}
                     </div>
                     <div class="grid-m-4">
                         ${inputSwitchIcon(arg, () => {
-                            generateFilterEditor(ctx, structuredClone(filterArg));
+                            renderFilterEditor(ctx, structuredClone(filterArg));
                         })}
                     </div>
                 </div>
@@ -257,7 +257,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             class="grid-m-4 grid-button-small grid-text-center grid-text-label"
                             @click=${() => {
                                 arg.logicalOperator = arg.logicalOperator === 'AND' ? 'OR' : 'AND';
-                                generateFilterEditor(ctx, structuredClone(filterArg));
+                                renderFilterEditor(ctx, structuredClone(filterArg));
                             }}
                         >
                             <span> ${arg.logicalOperator}</span>
@@ -269,7 +269,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                     logicalOperator: 'AND',
                                     filterArguments: []
                                 });
-                                generateFilterEditor(ctx, structuredClone(filterArg));
+                                renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
                         <div class="grid-m-4">
@@ -277,7 +277,7 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                 arg.filterArguments.push({
                                     type: 'CONDITION'
                                 });
-                                generateFilterEditor(ctx, structuredClone(filterArg));
+                                renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
                         <div class="grid-m-4">
@@ -290,10 +290,10 @@ export function generateFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                         }
                                     });
                                     context.splice(x, 1);
-                                    generateFilterEditor(ctx, structuredClone(filterArg));
+                                    renderFilterEditor(ctx, structuredClone(filterArg));
                                 } else {
                                     arg.filterArguments = [];
-                                    generateFilterEditor(ctx, structuredClone(filterArg));
+                                    renderFilterEditor(ctx, structuredClone(filterArg));
                                 }
                             })}
                         </div>
