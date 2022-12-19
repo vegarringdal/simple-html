@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.34](https://github.com/simple-html/simple-html/compare/v5.0.0-next.33...v5.0.0-next.34) (2022-12-19)
+
+
+### Features
+
+* first/prev/next/last trigger scroll event ([f7ce101](https://github.com/simple-html/simple-html/commits/f7ce101e48a80b19e3929d4fa529d8fc1ec0093b))
+
 ## [5.0.0-next.33](https://github.com/simple-html/simple-html/compare/v5.0.0-next.32...v5.0.0-next.33) (2022-12-19)
 
 
