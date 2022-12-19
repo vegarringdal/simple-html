@@ -126,12 +126,26 @@ createButton('select prev', () => {
     datasource.selectPrev();
 });
 
+
+
 createButton('select last', () => {
     datasource.selectLast();
 });
 
 createButton('select row 5', () => {
     datasource.select(5);
+});
+
+createButton('add new and scroll to', () => {
+    datasource.addNewEmpty();
+});
+
+createButton('add new with data', () => {
+    datasource.addNewEmpty({company: "Im a company"});
+});
+
+createButton('add new with data and do not scroll to it', () => {
+    datasource.addNewEmpty({company: "Who Im I"}, false);
 });
 
 createButton('save config', () => {
