@@ -1,7 +1,7 @@
 export { GridInterface } from './grid/gridInterface';
 export { GridElement } from './grid/gridElement';
 export { Grid } from './grid/grid';
-export type { GridConfig, Attribute } from './grid/GridConfig';
+export type { GridConfig, Attribute } from './grid/gridConfig';
 export type {
     FilterAttributeSimple,
     FilterLogicalOperator,

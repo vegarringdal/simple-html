@@ -1,5 +1,5 @@
 import { GroupArgument } from './groupArgument';
-import { Entity } from './Entity';
+import { Entity } from './entity';
 import { Datasource } from './dataSource';
 
 /**

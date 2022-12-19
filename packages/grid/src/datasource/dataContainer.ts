@@ -1,4 +1,4 @@
-import { Entity } from './Entity';
+import { Entity } from './entity';
 import { EntityHandler } from './entityHandler';
 
 let globalKeyCount = 0;

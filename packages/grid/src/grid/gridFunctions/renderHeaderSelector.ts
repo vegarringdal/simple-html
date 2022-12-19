@@ -3,7 +3,7 @@ import { render, html } from 'lit-html';
 import { HTMLCellElement } from './HTMLCellElement';
 import { ColType } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
-import { Entity } from '../../datasource/Entity';
+import { Entity } from '../../datasource/entity';
 
 export function renderHeaderSelector(
     ctx: Grid,

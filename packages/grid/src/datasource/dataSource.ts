@@ -8,7 +8,7 @@ import { SelectionMode } from './selectionMode';
 import { SortArgument } from './sortArgument';
 import { GroupArgument } from './groupArgument';
 import { OPERATORS } from './OPERATORS';
-import { Entity } from './Entity';
+import { Entity } from './entity';
 import { DataContainer } from './dataContainer';
 import { DateFormaterDefault, DateFormaterType } from './dateFormaterDefault';
 import { NumberFormaterDot, NumberFormaterType } from './numberFormaterDot';

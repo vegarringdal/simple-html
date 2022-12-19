@@ -1,6 +1,6 @@
 import { render, html } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import { Entity } from '../../datasource/Entity';
+import { Entity } from '../../datasource/entity';
 import { contextmenuFilter } from './contextmenuFilter';
 import { filterCallback } from './filterCallback';
 import { Grid } from '../grid';

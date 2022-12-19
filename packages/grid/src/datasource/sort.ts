@@ -1,5 +1,5 @@
 import { SortArgument } from './sortArgument';
-import { Entity } from './Entity';
+import { Entity } from './entity';
 
 export class Sort {
     private lastSorting: SortArgument[];

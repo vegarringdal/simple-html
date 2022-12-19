@@ -1,5 +1,5 @@
 import { html, svg, render } from 'lit-html';
-import { Entity } from '../../datasource/Entity';
+import { Entity } from '../../datasource/entity';
 import { contextmenuLabel } from './contextmenuLabel';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';

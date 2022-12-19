@@ -86,7 +86,7 @@ export type Attribute = {
     placeHolderFilter?: string;
     operator?: FilterComparisonOperator;
     type?: DataTypes;
-  
+
     /**
      * sets cell to readonly, usefull if you need it to stay readonly if grid is not readonly
      */
