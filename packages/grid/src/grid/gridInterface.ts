@@ -493,7 +493,7 @@ export class GridInterface<T> {
         }
 
         switch (true) {
-            case e.type === 'collection-filtered' && e.data?.info === 'filter':
+            case e.type === 'collection-filtered' && (e.data?.info === 'filter' || e.data?.info === 'markForDeletion' || e.data?.info === 'resetData'):
                 this.grid.rebuild(false);
                 break;
             case e.type === 'collection-sorted':

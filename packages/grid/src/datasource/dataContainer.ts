@@ -93,6 +93,35 @@ export class DataContainer {
     }
 
     /**
+     * returns a copy of changes
+     * @returns 
+     */
+    public getChanges() {
+        const newEntities: Entity[] = [];
+        const deletedEntities: Entity[] = this.__markedForDeletion.slice();
+        const modifiedEntities: Entity[] = [];
+        this.__collection.forEach((row) => {
+            if (row.__controller.__isNew) {
+                newEntities.push(row);
+            }
+            if (row.__controller.__edited) {
+                const data = {};
+                const editiedKeys = Object.keys(row.__controller.__editedProps);
+                data[row.__controller.__KEYSTRING || '__KEY'] = row['__KEY'];
+                editiedKeys.forEach((e) => (data[e] = row[e]));
+                modifiedEntities.push(data);
+            }
+        });
+        return JSON.parse(
+            JSON.stringify({
+                newEntities,
+                deletedEntities,
+                modifiedEntities
+            })
+        );
+    }
+
+    /**
      * mark data for deletion, will not show in searches/grouping
      * @param data set null if all
      * @param all remove all

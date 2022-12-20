@@ -315,7 +315,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     removeContextMenu(ctx);
                     filterEditorContainer.parentElement.removeChild(filterEditorContainer);
                     ctx.filterEditorContainer = null;
-                    ctx.gridInterface.getDatasource().filter(structuredClone(filterArg));
+                    ctx.gridInterface.getDatasource().filter(JSON.parse(JSON.stringify(filterArg)));
                 }}
             >
                 Filter & Close
@@ -324,7 +324,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 class="grid-button grid-text-center"
                 @click=${() => {
                     removeContextMenu(ctx);
-                    ctx.gridInterface.getDatasource().filter(structuredClone(filterArg));
+                    ctx.gridInterface.getDatasource().filter(JSON.parse(JSON.stringify(filterArg)));
                 }}
             >
                 Filter Only

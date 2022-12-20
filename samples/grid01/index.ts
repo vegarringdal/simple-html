@@ -126,8 +126,6 @@ createButton('select prev', () => {
     datasource.selectPrev();
 });
 
-
-
 createButton('select last', () => {
     datasource.selectLast();
 });
@@ -141,11 +139,11 @@ createButton('add new and scroll to', () => {
 });
 
 createButton('add new with data', () => {
-    datasource.addNewEmpty({company: "Im a company"});
+    datasource.addNewEmpty({ company: 'Im a company' });
 });
 
 createButton('add new with data and do not scroll to it', () => {
-    datasource.addNewEmpty({company: "Who Im I"}, false);
+    datasource.addNewEmpty({ company: 'Who Im I' }, false);
 });
 
 createButton('save config', () => {
@@ -158,6 +156,22 @@ createButton('load config', () => {
     } else {
         gridInterface.loadConfig((globalThis as any).griconfig);
     }
+});
+
+createButton('markForDeletion (selection)', () => {
+    datasource.markForDeletion(datasource.getSelectedRows());
+});
+
+createButton('get markForDeletion (see console)', () => {
+    console.log(datasource.getMarkedForDeletion());
+});
+
+createButton('reset data/changes', () => {
+    datasource.resetData();
+});
+
+createButton('get changes (ses console)', () => {
+    console.log(datasource.getChanges());
 });
 
 createButton('use init config', () => {
@@ -176,9 +190,8 @@ createButton('set as editmode', () => {
     gridInterface.loadConfig(config);
 });
 
-
 createButton('Open Filter Editor', () => {
-   gridInterface.openFilterEditor();
+    gridInterface.openFilterEditor();
 });
 
 const datasourceEvents = {
@@ -232,7 +245,10 @@ containerGrid.appendChild(element);
 document.body.appendChild(containerGrid);
 document.body.appendChild(containerbuttons);
 
-
-document.body.addEventListener('touchmove', (e)=>{
-    e.preventDefault()
-}, {passive:false})
+document.body.addEventListener(
+    'touchmove',
+    (e) => {
+        e.preventDefault();
+    },
+    { passive: false }
+);

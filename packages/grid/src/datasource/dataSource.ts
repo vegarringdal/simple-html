@@ -128,12 +128,23 @@ export class Datasource<T = any> {
         this.__dataContainer.clearMarkedForDeletion();
     }
 
+    /**
+     * resets all edited data and brings back marked for deletion
+     */
     public resetData() {
         this.__dataContainer.resetData();
         const eventTriggered = this.__internalUpdate(true);
         if (!eventTriggered) {
             this.__callSubscribers('collection-filtered', { info: 'resetData' });
         }
+    }
+
+    /**
+     * returns copy of all modified, new or marked for deletion
+     * changes to these do not edit anything in grid
+     */
+    public getChanges() {
+        return this.__dataContainer.getChanges();
     }
 
     /**
@@ -593,7 +604,7 @@ export class Datasource<T = any> {
      * @param row, if skipped we select the first
      */
     public select(row?: number, triggerSelect?: boolean): void {
-        const selectedRow = row ? row - 1 : 0
+        const selectedRow = row ? row - 1 : 0;
         this.__selection.highlightRow({} as any, selectedRow);
         if (triggerSelect) {
             this.__callSubscribers('select', { info: 'select-first', row: selectedRow });
@@ -637,7 +648,7 @@ export class Datasource<T = any> {
      * updates current entity to last entity
      */
     public selectLast(): void {
-        const row = this.__collectionDisplayed.length - 1
+        const row = this.__collectionDisplayed.length - 1;
         this.__selection.highlightRow({} as any, row);
         this.__callSubscribers('select', { info: 'select-last', row });
     }
