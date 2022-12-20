@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.35](https://github.com/simple-html/simple-html/compare/v5.0.0-next.34...v5.0.0-next.35) (2022-12-20)
+
+
+### Bug Fixes
+
+* marked for deletion and remove structuredClone (for teams) ([02c62d2](https://github.com/simple-html/simple-html/commits/02c62d240c5baadaea4e121b642faba1b2a72b7f))
+
 ## [5.0.0-next.34](https://github.com/simple-html/simple-html/compare/v5.0.0-next.33...v5.0.0-next.34) (2022-12-19)
 
 
