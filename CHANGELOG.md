@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.36](https://github.com/simple-html/simple-html/compare/v5.0.0-next.35...v5.0.0-next.36) (2022-12-21)
+
+
+### Features
+
+* add unpinning of columns [#38](https://vegarringdal//null/issues/38) ([cbe4f9b](https://github.com/simple-html/simple-html/commits/cbe4f9b3b7c8d76c8e2eda491bbbabd38e2b6fb6))
+
+
+### Bug Fixes
+
+* fix [#39](https://vegarringdal//null/issues/39) ([7353b15](https://github.com/simple-html/simple-html/commits/7353b151126e5f67fbbdee153c688b0acf302f3d))
+
 ## [5.0.0-next.35](https://github.com/simple-html/simple-html/compare/v5.0.0-next.34...v5.0.0-next.35) (2022-12-20)
 
 
