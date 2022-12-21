@@ -178,7 +178,13 @@ export class GridInterface<T> {
         this.suppressEvents = false;
 
         if (!skipRebuild) {
-            this.grid.rebuild();
+            if (this.grid) {
+                this.grid.rebuild();
+            } else {
+                this.__dataSourceUpdated();
+            }
+        } else {
+            this.__dataSourceUpdated();
         }
     }
 
@@ -493,7 +499,8 @@ export class GridInterface<T> {
         }
 
         switch (true) {
-            case e.type === 'collection-filtered' && (e.data?.info === 'filter' || e.data?.info === 'markForDeletion' || e.data?.info === 'resetData'):
+            case e.type === 'collection-filtered' &&
+                (e.data?.info === 'filter' || e.data?.info === 'markForDeletion' || e.data?.info === 'resetData'):
                 this.grid.rebuild(false);
                 break;
             case e.type === 'collection-sorted':
