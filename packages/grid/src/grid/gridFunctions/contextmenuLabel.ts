@@ -143,12 +143,48 @@ export function contextmenuLabel(
         pinRightTemplate = '' as any;
     }
 
+    /**
+     * unpins
+     */
+    let unPinTemplate = html`
+        <div
+            class="simple-html-grid-menu-item"
+            @click=${() => {
+                let width = 100;
+                if (colType === 'right-pinned') {
+                    ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                    width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
+                    ctx.gridInterface.__getGridConfig().columnsCenter.push({
+                        rows: [attribute],
+                        width
+                    });
+                }
+                if (colType === 'left-pinned') {
+                    ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                    width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
+                    ctx.gridInterface.__getGridConfig().columnsCenter.unshift({
+                        rows: [attribute],
+                        width
+                    });
+                }
+
+                ctx.rebuild(true);
+            }}
+        >
+            Unpin
+        </div>
+    `;
+
+    if (colType !== 'right-pinned' && colType !== 'left-pinned') {
+        unPinTemplate = '' as any;
+    }
+
     render(
         html`<div class="simple-html-grid-menu">
             <div class="simple-html-grid-menu-section">Column:</div>
             <hr class="hr-solid" />
 
-            ${pinLeftTemplate} ${pinRightTemplate}
+            ${pinLeftTemplate} ${pinRightTemplate}${unPinTemplate}
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
