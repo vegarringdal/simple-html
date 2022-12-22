@@ -100,7 +100,12 @@ export function contextmenuRow(
                         tableInnerData = tableInnerData + '<td>' + (colData || '') + '</td>';
                     }
                 });
-                justData = justData + '\n';
+                if(attributes.length === 1){
+                    justData = justData;
+                } else{
+                    justData = justData + '\n';
+                }
+                
                 tableInnerData = tableInnerData + '</tr>';
             }
         };
