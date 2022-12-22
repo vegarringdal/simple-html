@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.38](https://github.com/simple-html/simple-html/compare/v5.0.0-next.37...v5.0.0-next.38) (2022-12-22)
+
+
+### Bug Fixes
+
+* readonly setter ([c8b778a](https://github.com/simple-html/simple-html/commits/c8b778a6a6bbf2dbb9b2686fbbef8bce94ed3a75))
+
 ## [5.0.0-next.37](https://github.com/simple-html/simple-html/compare/v5.0.0-next.36...v5.0.0-next.37) (2022-12-22)
 
 
