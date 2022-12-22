@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.37](https://github.com/simple-html/simple-html/compare/v5.0.0-next.36...v5.0.0-next.37) (2022-12-22)
+
+
+### Bug Fixes
+
+* copy cell added linebreak ([a97ecf0](https://github.com/simple-html/simple-html/commits/a97ecf013ab8848eb5af34c17542e677b4f0c551))
+
 ## [5.0.0-next.36](https://github.com/simple-html/simple-html/compare/v5.0.0-next.35...v5.0.0-next.36) (2022-12-21)
 
 
