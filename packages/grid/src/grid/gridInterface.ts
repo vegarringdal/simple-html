@@ -223,7 +223,9 @@ export class GridInterface<T> {
      */
     public readonlySetter(callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) {
         this.readonlySetterFn = callback;
-        triggerScrollEvent(this.grid);
+        if (this.grid) {
+            triggerScrollEvent(this.grid);
+        }
     }
 
     /**
