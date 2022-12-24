@@ -204,7 +204,7 @@ Need for version "5.0.0":
 * `git clone https://github.com/vegarringdal/simple-html`
 * `git checkout 5.0.0`
 * `npm i`
-* `npm start grid01`
+* `npm start` this is alias for `npm start grid01` third arg is sample subfolder
 ' open `http://localhost:8080`
 
 
@@ -216,3 +216,8 @@ Will make github action
 * `npm run release`
 * `git push --follow-tags origin master` -> master depends on branch..
 * `npm run publish:all`
+
+
+# Update demo
+
+* `npm run build:demo`

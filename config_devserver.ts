@@ -2,7 +2,7 @@ import { clearFolders, addDefaultIndex, client, TypeChecker } from 'esbuild-help
 
 clearFolders('dist_client', 'dist_nodejs');
 
-const sample = process.argv[2];
+const sample = process.argv[2] || "grid01";
 
 /**
  * client bundle
