@@ -287,6 +287,9 @@ export class GridInterface<T> {
         if (this.gridConfig.selectionMode === null || this.gridConfig.selectionMode === undefined) {
             this.gridConfig.selectionMode = 'multiple';
         }
+
+        this.dataSource.setSelectionMode(this.gridConfig.selectionMode);
+
         if (
             this.gridConfig.placeHolderRowCurrentEnityOnly === null ||
             this.gridConfig.placeHolderRowCurrentEnityOnly === undefined
