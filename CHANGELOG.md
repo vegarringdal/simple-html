@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.39](https://github.com/simple-html/simple-html/compare/v5.0.0-next.38...v5.0.0-next.39) (2022-12-26)
+
+
+### Features
+
+* navigate with arrow keys ([fcae66d](https://github.com/simple-html/simple-html/commits/fcae66df8bab4655e9ec576b09e681c7d24a30ae))
+* use tab to navigate cells ([2afeb49](https://github.com/simple-html/simple-html/commits/2afeb495ee51719370bb79d5bd83d12411efb2a1))
+
+
+### Bug Fixes
+
+* dimmed background for mandatory and readonly on checkboxes ([89168c2](https://github.com/simple-html/simple-html/commits/89168c28d392072787c7f783b83c450bfafdeca0))
+* I forgot to pass selectionmode to datasource, so it was always multiselect ([d597c40](https://github.com/simple-html/simple-html/commits/d597c4084521ccf358119aad26d98bf9ee1aabcd))
+
 ## [5.0.0-next.38](https://github.com/simple-html/simple-html/compare/v5.0.0-next.37...v5.0.0-next.38) (2022-12-22)
 
 
