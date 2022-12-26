@@ -152,28 +152,31 @@ export function renderRowCell(
 
         if (cellConfig.type === 'boolean') {
             render(
-                html`<input
-                    .checked=${live(value)}
-                    type="checkbox"
-                    class=${` cellpos${row}-${column}`}
-                    @contextmenu=${(e: MouseEvent) => {
-                        e.preventDefault();
-                        contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                    }}
-                    @keydown=${(e: any) => {
-                        return tabFunction(e);
-                    }}
-                    @click=${() => {
-                        ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
-                        triggerScrollEvent(ctx);
-                    }}
-                    @change=${(e: any) => {
-                        if (!config.readonly) {
-                            entity[attribute] = e.target.checked ? false : true;
-                            e.target.checked = entity[attribute];
-                        }
-                    }}
-                />`,
+                html` <div>
+                    <div class=${dimmed}></div>
+                    <input
+                        .checked=${live(value)}
+                        type="checkbox"
+                        class=${` cellpos${row}-${column}`}
+                        @contextmenu=${(e: MouseEvent) => {
+                            e.preventDefault();
+                            contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                        }}
+                        @keydown=${(e: any) => {
+                            return tabFunction(e);
+                        }}
+                        @click=${() => {
+                            ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
+                            triggerScrollEvent(ctx);
+                        }}
+                        @change=${(e: any) => {
+                            if (!config.readonly) {
+                                entity[attribute] = e.target.checked ? false : true;
+                                e.target.checked = entity[attribute];
+                            }
+                        }}
+                    />
+                </div>`,
                 cell as any
             );
         } else {
