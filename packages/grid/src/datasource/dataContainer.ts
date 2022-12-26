@@ -94,7 +94,7 @@ export class DataContainer {
 
     /**
      * returns a copy of changes
-     * @returns 
+     * @returns
      */
     public getChanges() {
         const newEntities: Entity[] = [];
