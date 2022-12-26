@@ -9,6 +9,7 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 import { creatElement } from './createElement';
 import { DIV } from './DIV';
 import { asPx } from './asPx';
+import { getElementByClassName } from '../gridFunctions/getElementByClassName';
 
 export function renderRowCell(
     ctx: Grid,
@@ -70,22 +71,104 @@ export function renderRowCell(
             dimmed = 'simple-html-mandatory';
         }
 
+        const tabFunction = (e: any) => {
+            if (e.code === 'Tab') {
+                e.preventDefault();
+                const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
+                const scrollerRect = getElementByClassName(
+                    ctx.element,
+                    'simple-html-grid-middle-scroller'
+                ).getBoundingClientRect();
+                const cellRect = cell.getBoundingClientRect();
+                const innerWidth = scrollerEl.clientWidth;
+                const scrollleft = scrollerEl.scrollLeft;
+                const colLeft: number[] = [];
+                const widths: number[] = [];
+                let lastLeft = 0;
+                ctx.gridInterface.__getGridConfig().columnsCenter.forEach((c) => {
+                    colLeft.push(lastLeft);
+                    widths.push(c.width);
+                    lastLeft = lastLeft + c.width;
+                });
+
+                const columnleft = column < 2 ? column : column - 1;
+                const columnRight = column > colLeft.length ? column : column + 1;
+                const colLeftx = colLeft[columnleft];
+                const colRightx = colLeft[columnRight] + widths[columnRight];
+                const top = cellRect.top - scrollerRect.top;
+                const bottom = scrollerRect.bottom - cellRect.bottom;
+                const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
+
+                let gotorow = row;
+                let gotCol = column + (e.shiftKey ? -1 : 1);
+
+                if (bottom < rowHeight) {
+                    scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
+                }
+
+                if (top < rowHeight) {
+                    scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
+                }
+
+                switch (true) {
+                    case column === colLeft.length - 1 && e.shiftKey === false:
+                        scrollerEl.scrollLeft = 0;
+                        gotCol = 0;
+                        gotorow = row + 1;
+
+                        break;
+                    case column === 0 && e.shiftKey === true:
+                        scrollerEl.scrollLeft = scrollerEl.clientWidth + 60;
+                        gotCol = colLeft.length - 1;
+                        gotorow = row - 1;
+
+                        break;
+                    case innerWidth + scrollleft < colRightx:
+                        scrollerEl.scrollLeft = scrollerEl.scrollLeft + widths[columnRight];
+                        gotCol = column + 1;
+
+                        break;
+                    case scrollleft > colLeftx:
+                        scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
+                        gotCol = column - 1;
+
+                        break;
+                }
+
+                setTimeout(() => {
+                    const el = getElementByClassName(ctx.element, `cellpos${gotorow}-${gotCol}`);
+                    if (el) {
+                        el.focus();
+                        if (gotorow !== row) {
+                            ctx.gridInterface.getDatasource().setRowAsCurrentEntity(gotorow);
+                        }
+                    }
+                }, 100);
+
+                return false;
+            }
+            return true;
+        };
+
         if (cellConfig.type === 'boolean') {
             render(
                 html`<input
                     .checked=${live(value)}
                     type="checkbox"
-                    .disabled=${config.readonly ? config.readonly : cellReadOnly}
+                    class=${` cellpos${row}-${column}`}
                     @contextmenu=${(e: MouseEvent) => {
                         e.preventDefault();
                         contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                    }}
+                    @keydown=${(e: any) => {
+                        return tabFunction(e);
                     }}
                     @click=${() => {
                         ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                         triggerScrollEvent(ctx);
                     }}
                     @change=${(e: any) => {
-                        if (!cellReadOnly) {
+                        if (!config.readonly) {
                             entity[attribute] = e.target.checked ? false : true;
                             e.target.checked = entity[attribute];
                         }
@@ -101,7 +184,7 @@ export function renderRowCell(
                     <input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(value?.toString())}
-                        class="simple-html-grid-cell-input"
+                        class=${`simple-html-grid-cell-input cellpos${row}-${column}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
                         placeholder=${showPlaceHolder ? cellConfig.placeHolderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {
@@ -192,6 +275,9 @@ export function renderRowCell(
                                     input.style.right = null;
                                 }
                             }, 100);
+                        }}
+                        @keydown=${(e: any) => {
+                            return tabFunction(e);
                         }}
                         @input=${(e: any) => {
                             if (!cellReadOnly && cellConfig?.type !== 'date') {

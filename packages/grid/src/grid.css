@@ -1139,8 +1139,13 @@ input {
 .simple-html-grid input:focus {
     border: 1px dashed;
     outline: thin;
-    outline-color: var(--simple-html-grid-main-bg-color);
-    /* incase someone uses duplicate value class with opacity */
+    outline-color: var(--simple-html-grid-main-font-color);
+    opacity: 1;
+}
+
+.simple-html-grid input[type=checkbox]:focus {
+   
+    outline: 1px dashed var(--simple-html-grid-main-font-color);
     opacity: 1;
 }
 
