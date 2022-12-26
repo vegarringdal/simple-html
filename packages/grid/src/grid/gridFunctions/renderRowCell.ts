@@ -157,12 +157,12 @@ export function renderRowCell(
                             gotorow = row - 1;
 
                             break;
-                        case innerWidth + scrollleft < colRightx:
+                        case innerWidth + scrollleft < colRightx && shiftKey === false:
                             scrollerEl.scrollLeft = scrollerEl.scrollLeft + widths[columnRight];
                             gotCol = column + 1;
 
                             break;
-                        case scrollleft > colLeftx:
+                        case scrollleft > colLeftx && shiftKey === true:
                             scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
                             gotCol = column - 1;
 
