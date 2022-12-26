@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.40](https://github.com/simple-html/simple-html/compare/v5.0.0-next.39...v5.0.0-next.40) (2022-12-26)
+
+
+### Bug Fixes
+
+* key navigation ([0148a67](https://github.com/simple-html/simple-html/commits/0148a6792d584f04c505fb3ad7384097114c2e0a))
+
 ## [5.0.0-next.39](https://github.com/simple-html/simple-html/compare/v5.0.0-next.38...v5.0.0-next.39) (2022-12-26)
 
 
