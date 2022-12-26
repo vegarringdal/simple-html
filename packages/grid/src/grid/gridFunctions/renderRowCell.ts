@@ -71,8 +71,28 @@ export function renderRowCell(
             dimmed = 'simple-html-mandatory';
         }
 
-        const tabFunction = (e: any) => {
-            if (e.code === 'Tab') {
+        const keyNav = (e: any) => {
+            if (
+                e.code === 'Tab' ||
+                e.code === 'ArrowLeft' ||
+                e.code === 'ArrowRight' ||
+                e.code === 'ArrowUp' ||
+                e.code === 'ArrowDown'
+            ) {
+                let shiftKey = e.shiftKey;
+                if (e.code === 'ArrowLeft') {
+                    shiftKey = true;
+                }
+                if (e.code === 'ArrowRight') {
+                    shiftKey = false;
+                }
+                if (e.code === 'ArrowDown') {
+                    shiftKey = null;
+                }
+                if (e.code === 'ArrowUp') {
+                    shiftKey = null;
+                }
+
                 e.preventDefault();
                 const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
                 const scrollerRect = getElementByClassName(
@@ -100,7 +120,17 @@ export function renderRowCell(
                 const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
 
                 let gotorow = row;
-                let gotCol = column + (e.shiftKey ? -1 : 1);
+                if (e.code === 'ArrowDown') {
+                    gotorow = row + 1;
+                }
+                if (e.code === 'ArrowUp') {
+                    gotorow = row === 0 ? 0 : row - 1;
+                }
+
+                let gotCol = column + (shiftKey ? -1 : 1);
+                if (shiftKey === null) {
+                    gotCol = column;
+                }
 
                 if (bottom < rowHeight) {
                     scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
@@ -110,29 +140,34 @@ export function renderRowCell(
                     scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
                 }
 
-                switch (true) {
-                    case column === colLeft.length - 1 && e.shiftKey === false:
-                        scrollerEl.scrollLeft = 0;
-                        gotCol = 0;
-                        gotorow = row + 1;
+                if (shiftKey !== null) {
+                    switch (true) {
+                        case gotCol === 0:
+                            scrollerEl.scrollLeft = 0;
+                            break;
+                        case column === colLeft.length - 1 && shiftKey === false:
+                            scrollerEl.scrollLeft = 0;
+                            gotCol = 0;
+                            gotorow = row + 1;
 
-                        break;
-                    case column === 0 && e.shiftKey === true:
-                        scrollerEl.scrollLeft = scrollerEl.clientWidth + 60;
-                        gotCol = colLeft.length - 1;
-                        gotorow = row - 1;
+                            break;
+                        case column === 0 && shiftKey === true:
+                            scrollerEl.scrollLeft = scrollerEl.clientWidth + 60;
+                            gotCol = colLeft.length - 1;
+                            gotorow = row - 1;
 
-                        break;
-                    case innerWidth + scrollleft < colRightx:
-                        scrollerEl.scrollLeft = scrollerEl.scrollLeft + widths[columnRight];
-                        gotCol = column + 1;
+                            break;
+                        case innerWidth + scrollleft < colRightx:
+                            scrollerEl.scrollLeft = scrollerEl.scrollLeft + widths[columnRight];
+                            gotCol = column + 1;
 
-                        break;
-                    case scrollleft > colLeftx:
-                        scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
-                        gotCol = column - 1;
+                            break;
+                        case scrollleft > colLeftx:
+                            scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
+                            gotCol = column - 1;
 
-                        break;
+                            break;
+                    }
                 }
 
                 setTimeout(() => {
@@ -163,7 +198,7 @@ export function renderRowCell(
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: any) => {
-                            return tabFunction(e);
+                            return keyNav(e);
                         }}
                         @click=${() => {
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -280,7 +315,7 @@ export function renderRowCell(
                             }, 100);
                         }}
                         @keydown=${(e: any) => {
-                            return tabFunction(e);
+                            return keyNav(e);
                         }}
                         @input=${(e: any) => {
                             if (!cellReadOnly && cellConfig?.type !== 'date') {
