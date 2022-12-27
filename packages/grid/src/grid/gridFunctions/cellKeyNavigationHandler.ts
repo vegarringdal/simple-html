@@ -11,6 +11,8 @@ const ARROW_RIGHT_KEY = 'ArrowRight';
 const allowedKeys = [TAB_KEY, ARROW_UP_KEY, ARROW_DOWN_KEY, ARROW_LEFT_KEY, ARROW_RIGHT_KEY] as const;
 type CurrentKey = typeof TAB_KEY | typeof ARROW_UP_KEY | typeof ARROW_DOWN_KEY | typeof ARROW_LEFT_KEY | typeof ARROW_RIGHT_KEY;
 
+let waitForFocusTrigger = false;
+
 /**
  * there is a lot of weird logic here atm
  */
@@ -23,8 +25,14 @@ export const cellKeyNavigationHandler = (
     colType: ColType,
     event: any
 ) => {
+    if (waitForFocusTrigger) {
+        event.preventDefault();
+        return false;
+    }
+
     if (allowedKeys.includes(event.code)) {
         event.preventDefault();
+
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
         const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
         const cellRect = cell.getBoundingClientRect();
@@ -169,7 +177,7 @@ export const cellKeyNavigationHandler = (
                 /*todo*/
                 break;
         }
-
+        waitForFocusTrigger = true;
         setTimeout(() => {
             const el = getElementByClassName(ctx.element, `cellpos-${gotoColType}-${gotorow}-${gotCol}-${gotoCell}`);
             if (el) {
@@ -178,6 +186,7 @@ export const cellKeyNavigationHandler = (
                     ctx.gridInterface.getDatasource().setRowAsCurrentEntity(gotorow);
                 }
             }
+            waitForFocusTrigger = false;
         }, 100);
 
         return false;

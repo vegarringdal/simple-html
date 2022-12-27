@@ -7,11 +7,11 @@ import { GridConfig } from '@simple-html/grid';
 export const gridConfig: GridConfig = {
     columnsCenter: [
         {
-            rows: ['company'],
+            rows: ['company','country'],
             width: 200
         },
         {
-            rows: ['phone'],
+            rows: ['phone', 'date1'],
             width: 300
         },
 
