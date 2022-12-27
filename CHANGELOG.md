@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.41](https://github.com/simple-html/simple-html/compare/v5.0.0-next.40...v5.0.0-next.41) (2022-12-27)
+
+
+### Bug Fixes
+
+* tab and arrow key navigation in rows cells ([#41](https://vegarringdal//null/issues/41)) ([b6d5094](https://github.com/simple-html/simple-html/commits/b6d509405e200ad4b626148a9a397cddeceb394b))
+
 ## [5.0.0-next.40](https://github.com/simple-html/simple-html/compare/v5.0.0-next.39...v5.0.0-next.40) (2022-12-26)
 
 
