@@ -13,9 +13,9 @@ type CurrentKey = typeof TAB_KEY | typeof ARROW_UP_KEY | typeof ARROW_DOWN_KEY |
 let waitForFocusTrigger = false;
 
 /**
- * there is a lot of weird logic here atm
+ * this handler tab, and arrow key navigation on rows
  */
-export const cellKeyNavigationHandler = (
+export const cellKeyNavigationCellRowHandler = (
     ctx: Grid,
     cell: HTMLCellElement,
     row: number,

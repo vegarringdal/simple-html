@@ -9,7 +9,7 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 import { creatElement } from './createElement';
 import { DIV } from './DIV';
 import { asPx } from './asPx';
-import { cellKeyNavigationHandler } from './cellKeyNavigationHandler';
+import { cellKeyNavigationCellRowHandler } from './cellKeyNavigationHandler';
 
 export function renderRowCell(
     ctx: Grid,
@@ -84,7 +84,7 @@ export function renderRowCell(
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: any) => {
-                            return cellKeyNavigationHandler(ctx, cell, row, column, celno, colType, e);
+                            return cellKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @click=${() => {
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -200,7 +200,7 @@ export function renderRowCell(
                             }, 100);
                         }}
                         @keydown=${(e: any) => {
-                            return cellKeyNavigationHandler(ctx, cell, row, column, celno, colType, e);
+                            return cellKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @input=${(e: any) => {
                             if (!cellReadOnly && cellConfig?.type !== 'date') {
