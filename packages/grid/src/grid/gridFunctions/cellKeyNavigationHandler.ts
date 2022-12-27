@@ -235,10 +235,10 @@ export const cellKeyNavigationHandler = (
         });
 
         const config = ctx.gridInterface.__getGridConfig();
-        let gotoColType = colType;
+        const gotoColType = colType;
         let gotoCell = celno;
         let gotoRow = row;
-        let gotoCol = column;
+        const gotoCol = column;
 
         let isLastCell: boolean;
 
