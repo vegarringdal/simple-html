@@ -8,7 +8,7 @@ const ARROW_UP_KEY = 'ArrowUp';
 const ARROW_DOWN_KEY = 'ArrowDown';
 const ARROW_LEFT_KEY = 'ArrowLeft';
 const ARROW_RIGHT_KEY = 'ArrowRight';
-const allowedKeys = [TAB_KEY, ARROW_UP_KEY, ARROW_DOWN_KEY, ARROW_LEFT_KEY, ARROW_RIGHT_KEY] as const;
+const arrowKeys = [ARROW_UP_KEY, ARROW_DOWN_KEY, ARROW_LEFT_KEY, ARROW_RIGHT_KEY] as const;
 type CurrentKey = typeof TAB_KEY | typeof ARROW_UP_KEY | typeof ARROW_DOWN_KEY | typeof ARROW_LEFT_KEY | typeof ARROW_RIGHT_KEY;
 
 let waitForFocusTrigger = false;
@@ -30,7 +30,13 @@ export const cellKeyNavigationHandler = (
         return false;
     }
 
-    if (allowedKeys.includes(event.code)) {
+    const currentKey: CurrentKey = event.code;
+
+    if (arrowKeys.includes(event.code)) {
+        console.log('TODO- not implented');
+    }
+
+    if (currentKey === TAB_KEY) {
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
         const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
@@ -49,7 +55,7 @@ export const cellKeyNavigationHandler = (
             widths.push(c.width);
             lastLeft = lastLeft + c.width;
         });
-        const currentKey: CurrentKey = event.code;
+
         const reverse = event.shiftKey;
         const config = ctx.gridInterface.__getGridConfig();
         let gotoColType = colType;
@@ -59,11 +65,9 @@ export const cellKeyNavigationHandler = (
 
         let isLastCell: boolean;
 
-        let columns;
         switch (colType) {
             case 'left-pinned':
-                columns = config.columnsPinnedLeft;
-                if (currentKey === 'Tab' && !reverse) {
+                if (currentKey === TAB_KEY && !reverse) {
                     isLastCell = gotoCell === config.columnsPinnedLeft[column].rows.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
@@ -78,7 +82,7 @@ export const cellKeyNavigationHandler = (
                         gotoCell = 0;
                         gotoCol = 0;
                     }
-                } else if (currentKey === 'Tab' && reverse) {
+                } else if (currentKey === TAB_KEY && reverse) {
                     if (gotoCell !== 0) {
                         gotoCell = gotoCell - 1;
                     } else {
@@ -113,8 +117,8 @@ export const cellKeyNavigationHandler = (
 
             case 'middle-pinned':
                 console.log('middle');
-                columns = config.columnsPinnedRight;
-                if (currentKey === 'Tab' && !reverse) {
+
+                if (currentKey === TAB_KEY && !reverse) {
                     isLastCell = gotoCell === config.columnsCenter[column].rows.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
@@ -132,11 +136,12 @@ export const cellKeyNavigationHandler = (
                             gotoColType = 'left-pinned';
                             gotoCol = 0;
                             gotoCell = 0;
-                            gotoRow + 1;
+                            gotoRow = gotoRow + 1;
                         } else {
+                            scrollerEl.scrollLeft = 0;
                             gotoCol = 0;
                             gotoCell = 0;
-                            gotoRow + 1;
+                            gotoRow = gotoRow + 1;
                         }
                     } else {
                         const columnRight = column > colLeft.length ? column : column + 1;
@@ -161,11 +166,12 @@ export const cellKeyNavigationHandler = (
                             gotoCol = config.columnsPinnedLeft.length - 1;
                             gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
                         } else if (config.columnsPinnedRight.length) {
-                            gotoColType = 'left-pinned';
-                            gotoCol = config.columnsCenter.length - 1;
-                            gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
+                            gotoColType = 'right-pinned';
+                            gotoCol = config.columnsPinnedRight.length - 1;
+                            gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
                             gotoRow = gotoRow - 1;
                         } else {
+                            gotoColType = 'middle-pinned';
                             gotoCol = config.columnsCenter.length - 1;
                             gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
                             gotoRow = gotoRow - 1;
@@ -183,8 +189,7 @@ export const cellKeyNavigationHandler = (
                 break;
 
             case 'right-pinned':
-                columns = config.columnsPinnedRight;
-                if (currentKey === 'Tab' && !reverse) {
+                if (currentKey === TAB_KEY && !reverse) {
                     isLastCell = gotoCell === config.columnsPinnedRight[column].rows.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
@@ -193,23 +198,26 @@ export const cellKeyNavigationHandler = (
                         gotoCell = 0;
                     }
 
-                    if (!config.columnsPinnedLeft[gotoCol]) {
+                    if (!config.columnsPinnedRight[gotoCol]) {
                         gotoColType = config.columnsPinnedLeft.length ? 'left-pinned' : 'middle-pinned';
                         gotoCol = 0;
                         gotoCell = 0;
                         gotoRow = gotoRow + 1;
+                        if (gotoColType === 'middle-pinned') {
+                            scrollerEl.scrollLeft = 0;
+                        }
                     }
-                } else if (currentKey === 'Tab' && reverse) {
+                } else if (currentKey === TAB_KEY && reverse) {
                     if (gotoCell !== 0) {
                         gotoCell = gotoCell - 1;
                     } else {
                         gotoCol = gotoCol - 1;
-                        if (config.columnsPinnedLeft[gotoCol]) {
-                            gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
+                        if (config.columnsPinnedRight[gotoCol]) {
+                            gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
                         }
                     }
 
-                    if (!config.columnsPinnedLeft[gotoCol]) {
+                    if (!config.columnsPinnedRight[gotoCol]) {
                         gotoColType = 'middle-pinned';
                         scrollerEl.scrollLeft = scrollerEl.scrollWidth;
                         gotoCol = config.columnsCenter.length - 1;
@@ -241,166 +249,4 @@ export const cellKeyNavigationHandler = (
     }
 
     return false;
-    /*  if (allowedKeys.includes(event.code)) {
-        event.preventDefault();
-
-        const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-        const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
-        const innerWidth = scrollerEl.clientWidth;
-        const scrollleft = scrollerEl.scrollLeft;
-        const colLeft: number[] = [];
-        const widths: number[] = [];
-        let lastLeft = 0;
-        const columnsCenter = ctx.gridInterface.__getGridConfig().columnsCenter;
-        columnsCenter.forEach((c) => {
-            colLeft.push(lastLeft);
-            widths.push(c.width);
-            lastLeft = lastLeft + c.width;
-        });
-        const currentKey: CurrentKey = event.code;
-
-        let shiftKey = event.shiftKey;
-        if (currentKey === ARROW_LEFT_KEY) {
-            shiftKey = true;
-        }
-        if (currentKey === ARROW_RIGHT_KEY) {
-            shiftKey = false;
-        }
-        if (currentKey === ARROW_DOWN_KEY) {
-            shiftKey = null;
-        }
-        if (currentKey === ARROW_UP_KEY) {
-            shiftKey = null;
-        }
-
-        let gotoColType = colType;
-        let gotoCell = celno;
-        let gotorow = row;
-        let gotCol = column;
-
-        switch (colType) {
-            case 'left-pinned':
-              
-                break;
-
-            case 'middle-pinned':
-                const columnleft = column < 2 ? column : column - 1;
-                const columnRight = column > colLeft.length ? column : column + 1;
-                const colLeftx = colLeft[columnleft];
-                const colRightx = colLeft[columnRight] + widths[columnRight];
-                const top = cellRect.top - scrollerRect.top;
-                const bottom = scrollerRect.bottom - cellRect.bottom;
-                const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
-                const rows = columnsCenter[column].rows || [];
-
-                if (currentKey === ARROW_DOWN_KEY) {
-                    switch (true) {
-                        case celno === rows.length - 1:
-                            gotoCell = 0;
-                            gotorow = row + 1;
-                            break;
-                        case celno < rows.length - 1:
-                            gotoCell = celno + 1;
-                            break;
-                    }
-                }
-
-                if (currentKey === ARROW_UP_KEY) {
-                    switch (true) {
-                        case celno === 0:
-                            gotoCell = rows.length - 1;
-                            gotorow = row - 1;
-                            break;
-                        case celno > 0:
-                            gotoCell = celno - 1;
-
-                            break;
-                    }
-                }
-
-                if (bottom < rowHeight) {
-                    scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
-                }
-
-                if (top < rowHeight) {
-                    scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
-                }
-
-                // tab key logic
-                if (shiftKey !== null) {
-                    if (gotCol === 0) {
-                        scrollerEl.scrollLeft = 0;
-                    }
-
-                    if (shiftKey === true && celno > 0) {
-                        gotoCell = celno - 1;
-                        shiftKey = null;
-                    }
-
-                    if (shiftKey === false && celno < columnsCenter[column].rows.length - 1) {
-                        gotoCell = celno + 1;
-                        shiftKey = null;
-                    }
-
-                    if (shiftKey !== null) {
-                        gotCol = column + (shiftKey ? -1 : 1);
-                    }
-
-                    switch (true) {
-                        case column === colLeft.length - 1 && shiftKey === false:
-                            scrollerEl.scrollLeft = 0;
-                            gotoCell = 0;
-                            gotCol = 0;
-                            gotorow = row + 1;
-                            break;
-
-                        case column === 0 && shiftKey === true:
-                            scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-
-                            gotCol = colLeft.length - 1;
-                            gotorow = row - 1;
-                            gotoCell = columnsCenter[gotCol].rows.length - 1;
-                            break;
-
-                        case innerWidth + scrollleft < colRightx && shiftKey === false:
-                            scrollerEl.scrollLeft = scrollerEl.scrollLeft + widths[columnRight];
-                            gotoCell = 0;
-                            gotCol = column + 1;
-                            break;
-
-                        case scrollleft > colLeftx && shiftKey === true:
-                            scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
-                            gotCol = column - 1;
-                            gotoCell = columnsCenter[gotCol].rows.length - 1;
-                            break;
-                        case shiftKey === false || shiftKey === true:
-                            if (column > gotCol) {
-                                gotoCell = columnsCenter[gotCol].rows.length - 1;
-                            } else {
-                                gotoCell = 0;
-                            }
-                    }
-                }
-                break;
-
-            case 'right-pinned':
-               
-                break;
-        }
-        waitForFocusTrigger = true;
-        setTimeout(() => {
-            const el = getElementByClassName(ctx.element, `cellpos-${gotoColType}-${gotorow}-${gotCol}-${gotoCell}`);
-            if (el) {
-                el.focus();
-                if (gotorow !== row) {
-                    ctx.gridInterface.getDatasource().setRowAsCurrentEntity(gotorow);
-                }
-            }
-            waitForFocusTrigger = false;
-        }, 100);
-
-        return false;
-    }
-    return true; */
 };

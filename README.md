@@ -189,8 +189,9 @@ Need for version "5.0.0":
 ## Wanted/considering (some will be part of 5.0.0)
  * [ ] find all function
  * [ ] replace value
- * [x] user arrow keys to navigate cells & use tab key to navigate cells, hold shoft for reverse
-   * [ ] add support when using pinned columns and cell stacking
+ * user arrow keys to navigate cells & use tab key to navigate cells, hold shoft for reverse
+   * [ ] tab key with pinned columns and cells stacked
+   * [x] arrow keys
  * [ ] edit cells callback/event (best way to really have controll is to add Entity handler to Datacontainer)
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
  * [ ] make mandatory color only show if there is no value ?
