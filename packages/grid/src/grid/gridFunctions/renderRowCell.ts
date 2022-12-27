@@ -9,7 +9,7 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 import { creatElement } from './createElement';
 import { DIV } from './DIV';
 import { asPx } from './asPx';
-import { getElementByClassName } from '../gridFunctions/getElementByClassName';
+import { cellKeyNavigationCellRowHandler } from './cellKeyNavigationHandler';
 
 export function renderRowCell(
     ctx: Grid,
@@ -71,120 +71,6 @@ export function renderRowCell(
             dimmed = 'simple-html-mandatory';
         }
 
-        const keyNav = (e: any) => {
-            if (
-                e.code === 'Tab' ||
-                e.code === 'ArrowLeft' ||
-                e.code === 'ArrowRight' ||
-                e.code === 'ArrowUp' ||
-                e.code === 'ArrowDown'
-            ) {
-                let shiftKey = e.shiftKey;
-                if (e.code === 'ArrowLeft') {
-                    shiftKey = true;
-                }
-                if (e.code === 'ArrowRight') {
-                    shiftKey = false;
-                }
-                if (e.code === 'ArrowDown') {
-                    shiftKey = null;
-                }
-                if (e.code === 'ArrowUp') {
-                    shiftKey = null;
-                }
-
-                e.preventDefault();
-                const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-                const scrollerRect = getElementByClassName(
-                    ctx.element,
-                    'simple-html-grid-middle-scroller'
-                ).getBoundingClientRect();
-                const cellRect = cell.getBoundingClientRect();
-                const innerWidth = scrollerEl.clientWidth;
-                const scrollleft = scrollerEl.scrollLeft;
-                const colLeft: number[] = [];
-                const widths: number[] = [];
-                let lastLeft = 0;
-                ctx.gridInterface.__getGridConfig().columnsCenter.forEach((c) => {
-                    colLeft.push(lastLeft);
-                    widths.push(c.width);
-                    lastLeft = lastLeft + c.width;
-                });
-
-                const columnleft = column < 2 ? column : column - 1;
-                const columnRight = column > colLeft.length ? column : column + 1;
-                const colLeftx = colLeft[columnleft];
-                const colRightx = colLeft[columnRight] + widths[columnRight];
-                const top = cellRect.top - scrollerRect.top;
-                const bottom = scrollerRect.bottom - cellRect.bottom;
-                const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
-
-                let gotorow = row;
-                if (e.code === 'ArrowDown') {
-                    gotorow = row + 1;
-                }
-                if (e.code === 'ArrowUp') {
-                    gotorow = row === 0 ? 0 : row - 1;
-                }
-
-                let gotCol = column + (shiftKey ? -1 : 1);
-                if (shiftKey === null) {
-                    gotCol = column;
-                }
-
-                if (bottom < rowHeight) {
-                    scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
-                }
-
-                if (top < rowHeight) {
-                    scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
-                }
-
-                if (shiftKey !== null) {
-                    switch (true) {
-                        case gotCol === 0:
-                            scrollerEl.scrollLeft = 0;
-                            break;
-                        case column === colLeft.length - 1 && shiftKey === false:
-                            scrollerEl.scrollLeft = 0;
-                            gotCol = 0;
-                            gotorow = row + 1;
-
-                            break;
-                        case column === 0 && shiftKey === true:
-                            scrollerEl.scrollLeft = scrollerEl.clientWidth + 60;
-                            gotCol = colLeft.length - 1;
-                            gotorow = row - 1;
-
-                            break;
-                        case innerWidth + scrollleft < colRightx && shiftKey === false:
-                            scrollerEl.scrollLeft = scrollerEl.scrollLeft + widths[columnRight];
-                            gotCol = column + 1;
-
-                            break;
-                        case scrollleft > colLeftx && shiftKey === true:
-                            scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
-                            gotCol = column - 1;
-
-                            break;
-                    }
-                }
-
-                setTimeout(() => {
-                    const el = getElementByClassName(ctx.element, `cellpos${gotorow}-${gotCol}`);
-                    if (el) {
-                        el.focus();
-                        if (gotorow !== row) {
-                            ctx.gridInterface.getDatasource().setRowAsCurrentEntity(gotorow);
-                        }
-                    }
-                }, 100);
-
-                return false;
-            }
-            return true;
-        };
-
         if (cellConfig.type === 'boolean') {
             render(
                 html` <div>
@@ -192,13 +78,13 @@ export function renderRowCell(
                     <input
                         .checked=${live(value)}
                         type="checkbox"
-                        class=${` cellpos${row}-${column}`}
+                        class=${`cellpos-${colType}-${row}-${column}-${celno}`}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: any) => {
-                            return keyNav(e);
+                            return cellKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @click=${() => {
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -222,7 +108,7 @@ export function renderRowCell(
                     <input
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(value?.toString())}
-                        class=${`simple-html-grid-cell-input cellpos${row}-${column}`}
+                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
                         placeholder=${showPlaceHolder ? cellConfig.placeHolderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {
@@ -295,7 +181,6 @@ export function renderRowCell(
                                     }
                                     break;
                                 case 'ALWAYS':
-                                    console.log('ALWAYS');
                                     addFocusButton();
                             }
                         }}
@@ -315,7 +200,7 @@ export function renderRowCell(
                             }, 100);
                         }}
                         @keydown=${(e: any) => {
-                            return keyNav(e);
+                            return cellKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @input=${(e: any) => {
                             if (!cellReadOnly && cellConfig?.type !== 'date') {
