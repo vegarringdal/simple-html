@@ -8,7 +8,6 @@ const ARROW_UP_KEY = 'ArrowUp';
 const ARROW_DOWN_KEY = 'ArrowDown';
 const ARROW_LEFT_KEY = 'ArrowLeft';
 const ARROW_RIGHT_KEY = 'ArrowRight';
-const arrowKeys = [ARROW_UP_KEY, ARROW_DOWN_KEY, ARROW_LEFT_KEY, ARROW_RIGHT_KEY] as const;
 type CurrentKey = typeof TAB_KEY | typeof ARROW_UP_KEY | typeof ARROW_DOWN_KEY | typeof ARROW_LEFT_KEY | typeof ARROW_RIGHT_KEY;
 
 let waitForFocusTrigger = false;

@@ -5,7 +5,7 @@ import { GridConfig } from '@simple-html/grid';
  * keep this in own file since it so big..
  */
 export const gridConfig: GridConfig = {
-  /*   columnsPinnedLeft: [
+   /* columnsPinnedLeft: [
         {
             rows: ['company','country'],
             width: 200
@@ -14,8 +14,8 @@ export const gridConfig: GridConfig = {
             rows: ['phone', 'date1'],
             width: 300
         },
-    ], */
-     columnsPinnedRight: [
+    ],  */
+    /*  columnsPinnedRight: [
         {
             rows: ['company','country'],
             width: 200
@@ -24,7 +24,7 @@ export const gridConfig: GridConfig = {
             rows: ['phone', 'date1'],
             width: 300
         },
-    ],  
+    ],   */
     columnsCenter: [
         {
             rows: ['company','country'],
