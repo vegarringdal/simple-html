@@ -7,6 +7,8 @@ export type GridConfig = {
     panelHeight?: number;
     footerHeight?: number;
     selectSizeHeight?: number;
+    hideLabels: boolean;
+    hideFilter: boolean;
     readonly?: boolean;
     attributes: Attribute[];
     selectionMode?: 'multiple' | 'single';

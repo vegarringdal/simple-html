@@ -19,19 +19,31 @@ export function updateMainElementSizes(ctx: Grid) {
 
     const header = getElementByClassName(ctx.element, 'simple-html-grid-header');
     header.style.top = asPx(config.panelHeight);
-    header.style.height = asPx(config.__rowHeight * 2 + config.selectSizeHeight);
+
+    let headerHeight = config.__rowHeight * 2;
+    if (config.hideLabels && !config.hideFilter) {
+        headerHeight = config.__rowHeight * 1;
+    }
+    if (!config.hideLabels && config.hideFilter) {
+        headerHeight = config.__rowHeight * 1;
+    }
+    if (config.hideLabels && config.hideFilter) {
+        headerHeight = 0;
+    }
+
+    header.style.height = asPx(headerHeight + config.selectSizeHeight);
 
     const body = getElementByClassName(ctx.element, 'simple-html-grid-body');
-    body.style.top = asPx(config.panelHeight + config.__rowHeight * 2 + config.selectSizeHeight);
+    body.style.top = asPx(config.panelHeight + headerHeight + config.selectSizeHeight);
     body.style.bottom = asPx(config.footerHeight);
     body.style.right = asPx(config.__scrollbarSize);
 
     const scrollerBody = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
-    scrollerBody.style.top = asPx(config.panelHeight + config.__rowHeight * 2 + config.selectSizeHeight);
+    scrollerBody.style.top = asPx(config.panelHeight + headerHeight + config.selectSizeHeight);
     scrollerBody.style.bottom = asPx(config.footerHeight);
 
     const scrollerMiddle = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-    scrollerMiddle.style.top = asPx(config.panelHeight + config.__rowHeight * 2 + config.selectSizeHeight);
+    scrollerMiddle.style.top = asPx(config.panelHeight + headerHeight + config.selectSizeHeight);
     scrollerMiddle.style.bottom = asPx(config.footerHeight - config.__scrollbarSize);
     scrollerMiddle.style.left = asPx(config.__selectSizeWidth + leftWidth);
     scrollerMiddle.style.right = asPx(config.__rightWidth + config.__scrollbarSize);

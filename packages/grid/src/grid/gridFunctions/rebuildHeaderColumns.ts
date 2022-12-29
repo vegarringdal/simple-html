@@ -72,74 +72,80 @@ export function rebuildHeaderColumns(ctx: Grid) {
                 /**
                  * label cells
                  */
-                for (let y = 0; y < config.__columnCells; y++) {
-                    const cell = creatElement(DIV, 'simple-html-grid-col-cell');
-                    cell.classList.add('simple-html-label');
-                    cell.style.top = asPx(top);
-                    cell.style.height = asPx(config.cellHeight);
-                    cell.setAttribute('type', 'label');
-                    cell.setAttribute('cellNo', y.toString());
+                if (!config.hideLabels) {
+                    for (let y = 0; y < config.__columnCells; y++) {
+                        const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                        cell.classList.add('simple-html-label');
+                        cell.style.top = asPx(top);
+                        cell.style.height = asPx(config.cellHeight);
+                        cell.setAttribute('type', 'label');
+                        cell.setAttribute('cellNo', y.toString());
 
-                    columnElement.appendChild(cell);
+                        columnElement.appendChild(cell);
 
-                    renderCell(ctx, cell, 0, i, y, coltype);
-                    top = top + config.cellHeight;
+                        renderCell(ctx, cell, 0, i, y, coltype);
+                        top = top + config.cellHeight;
 
-                    /**
-                     * next part handles drop zones in cells, but only if they are/have attribute set
-                     */
-                    const addEvent = (child: HTMLElement, parent: HTMLElement) => {
-                        child.onmouseenter = () => {
-                            if ((parent as HTMLCellElement).$attribute) {
-                                child.classList.toggle('simple-html-grid-col-resize-hover');
-                            }
+                        /**
+                         * next part handles drop zones in cells, but only if they are/have attribute set
+                         */
+                        const addEvent = (child: HTMLElement, parent: HTMLElement) => {
+                            child.onmouseenter = () => {
+                                if ((parent as HTMLCellElement).$attribute) {
+                                    child.classList.toggle('simple-html-grid-col-resize-hover');
+                                }
+                            };
+                            child.onmouseleave = () => {
+                                if ((parent as HTMLCellElement).$attribute) {
+                                    child.classList.toggle('simple-html-grid-col-resize-hover');
+                                }
+                            };
+                            parent.appendChild(child);
                         };
-                        child.onmouseleave = () => {
-                            if ((parent as HTMLCellElement).$attribute) {
-                                child.classList.toggle('simple-html-grid-col-resize-hover');
-                            }
-                        };
-                        parent.appendChild(child);
-                    };
 
-                    addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-left'), cell);
-                    addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-right'), cell);
-                    addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-top'), cell);
-                    addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-bottom'), cell);
-                    addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-center'), cell);
+                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-left'), cell);
+                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-right'), cell);
+                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-top'), cell);
+                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-bottom'), cell);
+                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-center'), cell);
 
-                    /**
-                     * logic for dragdrop and sort event
-                     */
-                    dragEvent(ctx, cell as HTMLCellElement, true);
+                        /**
+                         * logic for dragdrop and sort event
+                         */
+                        dragEvent(ctx, cell as HTMLCellElement, true);
+                    }
                 }
 
                 /**
                  * input cells
                  */
-                for (let y = 0; y < config.__columnCells; y++) {
-                    const cell = creatElement(DIV, 'simple-html-grid-col-cell');
-                    cell.style.top = asPx(top);
-                    cell.style.height = asPx(config.cellHeight);
-                    cell.setAttribute('type', 'filter');
-                    cell.setAttribute('cellNo', y.toString());
-                    columnElement.appendChild(cell);
-                    renderCell(ctx, cell, 0, i, y, coltype);
-                    top = top + config.cellHeight;
+                if (!config.hideFilter) {
+                    for (let y = 0; y < config.__columnCells; y++) {
+                        const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                        cell.style.top = asPx(top);
+                        cell.style.height = asPx(config.cellHeight);
+                        cell.setAttribute('type', 'filter');
+                        cell.setAttribute('cellNo', y.toString());
+                        columnElement.appendChild(cell);
+                        renderCell(ctx, cell, 0, i, y, coltype);
+                        top = top + config.cellHeight;
+                    }
                 }
 
                 /**
                  * column selector
                  */
-                const cell = creatElement(DIV, 'simple-html-grid-col-cell');
-                cell.classList.add('simple-html-label');
-                cell.style.top = asPx(top);
-                cell.style.height = asPx(config.cellHeight);
-                cell.setAttribute('type', SELECTOR_COLTYPE);
-                cell.setAttribute('cellNo', '0');
+                if (config.selectSizeHeight) {
+                    const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                    cell.classList.add('simple-html-label');
+                    cell.style.top = asPx(top);
+                    cell.style.height = asPx(config.cellHeight);
+                    cell.setAttribute('type', SELECTOR_COLTYPE);
+                    cell.setAttribute('cellNo', '0');
 
-                columnElement.appendChild(cell);
-                renderCell(ctx, cell, 0, i, 0, coltype);
+                    columnElement.appendChild(cell);
+                    renderCell(ctx, cell, 0, i, 0, coltype);
+                }
 
                 /**
                  * logic for reszing column
