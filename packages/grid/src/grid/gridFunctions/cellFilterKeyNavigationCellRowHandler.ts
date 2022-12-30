@@ -375,24 +375,27 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         gotoCol = gotoCol - 1;
                         gotoCell = 100;
                     }
-
-                    if (!config.columnsPinnedLeft[gotoCol]) {
-                        gotoColType = config.columnsPinnedRight.length ? 'right-pinned' : 'middle-pinned';
-                        if (gotoColType === 'right-pinned') {
-                            gotoCol = config.columnsPinnedRight.length - 1;
-                            gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
-                        }
-                        if (gotoColType === 'middle-pinned') {
-                            gotoCol = config.columnsCenter.length - 1;
-                            gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
-                            scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                        }
+                    if (gotoCol < 0) {
+                        gotoCol = 0;
                     } else {
-                        if (gotoCol < column) {
-                            gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
-                        }
-                        if (gotoCol > column) {
-                            gotoCell = 0;
+                        if (!config.columnsPinnedLeft[gotoCol]) {
+                            gotoColType = config.columnsPinnedRight.length ? 'right-pinned' : 'middle-pinned';
+                            if (gotoColType === 'right-pinned') {
+                                gotoCol = config.columnsPinnedRight.length - 1;
+                                gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
+                            }
+                            if (gotoColType === 'middle-pinned') {
+                                gotoCol = config.columnsCenter.length - 1;
+                                gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
+                                scrollerEl.scrollLeft = scrollerEl.scrollWidth;
+                            }
+                        } else {
+                            if (gotoCol < column) {
+                                gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
+                            }
+                            if (gotoCol > column) {
+                                gotoCell = 0;
+                            }
                         }
                     }
                 }
@@ -437,32 +440,36 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         gotoCell = gotoCell - 1;
                     } else {
                         gotoCol = gotoCol - 1;
+
                         if (config.columnsCenter[gotoCol]) {
                             gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
                         }
                     }
-
-                    if (!config.columnsCenter[gotoCol]) {
-                        if (config.columnsPinnedLeft.length) {
-                            gotoColType = 'left-pinned';
-                            gotoCol = config.columnsPinnedLeft.length - 1;
-                            gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
-                        } else if (config.columnsPinnedRight.length) {
-                            gotoColType = 'right-pinned';
-                            gotoCol = config.columnsPinnedRight.length - 1;
-                            gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
-                        } else {
-                            gotoColType = 'middle-pinned';
-                            gotoCol = config.columnsCenter.length - 1;
-                            gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
-
-                            scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                        }
+                    if (gotoCol < 0) {
+                        gotoCol = 0;
                     } else {
-                        const columnleft = column < 2 ? column : column - 1;
-                        const colLeftx = colLeft[columnleft] - widths[columnleft];
-                        if (scrollleft > colLeftx) {
-                            scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
+                        if (!config.columnsCenter[gotoCol]) {
+                            if (config.columnsPinnedLeft.length) {
+                                gotoColType = 'left-pinned';
+                                gotoCol = config.columnsPinnedLeft.length - 1;
+                                gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
+                            } else if (config.columnsPinnedRight.length) {
+                                gotoColType = 'right-pinned';
+                                gotoCol = config.columnsPinnedRight.length - 1;
+                                gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
+                            } else {
+                                gotoColType = 'middle-pinned';
+                                gotoCol = config.columnsCenter.length - 1;
+                                gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
+
+                                scrollerEl.scrollLeft = scrollerEl.scrollWidth;
+                            }
+                        } else {
+                            const columnleft = column < 2 ? column : column - 1;
+                            const colLeftx = colLeft[columnleft] - widths[columnleft];
+                            if (scrollleft > colLeftx) {
+                                scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
+                            }
                         }
                     }
                 }

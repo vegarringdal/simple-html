@@ -487,6 +487,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                         gotoCell = gotoCell - 1;
                     } else {
                         gotoCol = gotoCol - 1;
+                       
                         if (config.columnsCenter[gotoCol]) {
                             gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
                         }
