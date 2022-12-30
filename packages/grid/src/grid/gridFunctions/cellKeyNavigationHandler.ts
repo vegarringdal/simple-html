@@ -15,7 +15,7 @@ let waitForFocusTrigger = false;
 /**
  * this handler tab, and arrow key navigation on rows
  */
-export const cellKeyNavigationCellRowHandler = (
+export const cellRowKeyNavigationCellRowHandler = (
     ctx: Grid,
     cell: HTMLCellElement,
     row: number,
