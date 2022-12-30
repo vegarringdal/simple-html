@@ -124,7 +124,7 @@ export function renderRowCell(
                                 skipFocus = true;
                             }
                         }}
-                        @focus=${() => {
+                        @focus=${(e: any) => {
                             if (skipFocus) {
                                 skipFocus = false;
                                 return;
@@ -161,7 +161,8 @@ export function renderRowCell(
                                         colType,
                                         cellType,
                                         attribute,
-                                        rowData
+                                        rowData,
+                                        target: e.target // so user can set focus back to cell
                                     });
                                 };
 
@@ -200,6 +201,54 @@ export function renderRowCell(
                             }, 100);
                         }}
                         @keydown=${(e: any) => {
+                            // if hidding spcae we want the option to trigger focus button if it exist
+                            if (e.code === 'Space') {
+                                switch (cellConfig.focusButton) {
+                                    case 'SHOW_IF_GRID_NOT_READONLY':
+                                        if (!config.readonly) {
+                                            ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
+                                                cell,
+                                                row,
+                                                column,
+                                                celno,
+                                                colType,
+                                                cellType,
+                                                attribute,
+                                                rowData,
+                                                target: e.target
+                                            });
+                                        }
+                                        break;
+                                    case 'SHOW_IF_GRID_AND_CELL_NOT_READONLY':
+                                        if (!config.readonly && !cellConfig.readonly) {
+                                            ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
+                                                cell,
+                                                row,
+                                                column,
+                                                celno,
+                                                colType,
+                                                cellType,
+                                                attribute,
+                                                rowData,
+                                                target: e.target
+                                            });
+                                        }
+                                        break;
+                                    case 'ALWAYS':
+                                        ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
+                                            cell,
+                                            row,
+                                            column,
+                                            celno,
+                                            colType,
+                                            cellType,
+                                            attribute,
+                                            rowData,
+                                            target: e.target
+                                        });
+                                }
+                            }
+
                             return cellKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @input=${(e: any) => {

@@ -192,7 +192,8 @@ Need for version "5.0.0":
  * user arrow keys to navigate "row" cells & use tab key to navigate cells, hold shoft for reverse
    * [x] tab key with pinned columns and cells stacked
    * [x] arrow keys
-   * do we also need something for filter ?
+   * [ ] use arrow keys on filter, usefull if using it as a dropdown
+ * [ ] focus on input, but we need to add a bounce/timeout to not filter on every keydown if typing fast
  * [ ] edit cells callback/event (best way to really have controll is to add Entity handler to Datacontainer)
  * [ ] option to override cell with callback, incase someone want svg and text etc, we can give them access to lit-html ctx for fast rendering
  * [ ] make mandatory color only show if there is no value ?
