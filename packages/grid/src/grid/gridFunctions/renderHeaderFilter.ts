@@ -6,6 +6,7 @@ import { filterCallback } from './filterCallback';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
 import { ColType } from './colType';
+import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigationCellRowHandler';
 
 export function renderHeaderFilter(
     ctx: Grid,
@@ -39,12 +40,17 @@ export function renderHeaderFilter(
                 render(
                     html`<input
                         type="checkbox"
+                        class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
                         .checked=${live(currentValue)}
                         .indeterminate=${currentValue !== true && currentValue !== false}
                         placeholder=${placeHolderFilter}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                        }}
+                        @keydown=${(e: KeyboardEvent) => {
+                         
+                            return cellFilterKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @change=${(e: any) => {
                             if (!filterRunning) {
@@ -83,6 +89,7 @@ export function renderHeaderFilter(
                 let skipFocus = false;
                 render(
                     html`<input
+                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(currentValue)}
                         placeholder=${placeHolderFilter}
@@ -131,6 +138,7 @@ export function renderHeaderFilter(
                                     filterRunning = false;
                                 }
                             }
+                            return cellFilterKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @blur=${(e: any) => {
                             /**
