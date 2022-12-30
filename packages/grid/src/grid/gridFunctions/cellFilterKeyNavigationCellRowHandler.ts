@@ -54,7 +54,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
         const config = ctx.gridInterface.__getGridConfig();
         let gotoColType = colType;
         let gotoCell = celno;
-        let gotoRow = row;
+        const gotoRow = row;
         let gotoCol = column;
         let filterClass = 'filter-';
 
@@ -236,7 +236,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
         const config = ctx.gridInterface.__getGridConfig();
         const gotoColType = colType;
         let gotoCell = celno;
-        let gotoRow = row;
+        const gotoRow = row;
         const gotoCol = column;
         let filterClass = 'filter-';
 
@@ -347,7 +347,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
         const config = ctx.gridInterface.__getGridConfig();
         let gotoColType = colType;
         let gotoCell = celno;
-        let gotoRow = row;
+        const gotoRow = row;
         let gotoCol = column;
         let filterClass = 'filter-';
 

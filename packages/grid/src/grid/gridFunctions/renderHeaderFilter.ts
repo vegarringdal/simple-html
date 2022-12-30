@@ -49,7 +49,6 @@ export function renderHeaderFilter(
                             contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: KeyboardEvent) => {
-                         
                             return cellFilterKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @change=${(e: any) => {
@@ -89,7 +88,7 @@ export function renderHeaderFilter(
                 let skipFocus = false;
                 render(
                     html`<input
-                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
+                        class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(currentValue)}
                         placeholder=${placeHolderFilter}
