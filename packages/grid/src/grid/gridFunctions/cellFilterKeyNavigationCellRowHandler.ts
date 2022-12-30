@@ -70,17 +70,20 @@ export const cellFilterKeyNavigationCellRowHandler = (
                     }
                 } else if (currentKey === ARROW_LEFT_KEY) {
                     gotoCol = gotoCol - 1;
-
-                    if (!config.columnsPinnedLeft[gotoCol]) {
-                        gotoColType = config.columnsPinnedRight.length ? 'right-pinned' : 'middle-pinned';
-                        if (gotoColType === 'right-pinned') {
-                        }
-                        if (gotoColType === 'middle-pinned') {
-                            scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                        }
+                    if (gotoCol < 0) {
+                        gotoCol = 0;
                     } else {
-                        if (gotoCol > column) {
-                            gotoCell = 0;
+                        if (!config.columnsPinnedLeft[gotoCol]) {
+                            gotoColType = config.columnsPinnedRight.length ? 'right-pinned' : 'middle-pinned';
+                            if (gotoColType === 'right-pinned') {
+                            }
+                            if (gotoColType === 'middle-pinned') {
+                                scrollerEl.scrollLeft = scrollerEl.scrollWidth;
+                            }
+                        } else {
+                            if (gotoCol > column) {
+                                gotoCell = 0;
+                            }
                         }
                     }
                 }
@@ -115,24 +118,27 @@ export const cellFilterKeyNavigationCellRowHandler = (
                     }
                 } else if (currentKey === ARROW_LEFT_KEY) {
                     gotoCol = gotoCol - 1;
-
-                    if (!config.columnsCenter[gotoCol]) {
-                        if (config.columnsPinnedLeft.length) {
-                            gotoColType = 'left-pinned';
-                            gotoCol = config.columnsPinnedLeft.length - 1;
-                        } else if (config.columnsPinnedRight.length) {
-                            gotoColType = 'right-pinned';
-                            gotoCol = config.columnsPinnedRight.length - 1;
-                        } else {
-                            gotoColType = 'middle-pinned';
-
-                            scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                        }
+                    if (gotoCol < 0) {
+                        gotoCol = 0;
                     } else {
-                        const columnleft = column < 2 ? column : column - 1;
-                        const colLeftx = colLeft[columnleft] - widths[columnleft];
-                        if (scrollleft > colLeftx) {
-                            scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
+                        if (!config.columnsCenter[gotoCol]) {
+                            if (config.columnsPinnedLeft.length) {
+                                gotoColType = 'left-pinned';
+                                gotoCol = config.columnsPinnedLeft.length - 1;
+                            } else if (config.columnsPinnedRight.length) {
+                                gotoColType = 'right-pinned';
+                                gotoCol = config.columnsPinnedRight.length - 1;
+                            } else {
+                                gotoColType = 'middle-pinned';
+
+                                scrollerEl.scrollLeft = scrollerEl.scrollWidth;
+                            }
+                        } else {
+                            const columnleft = column < 2 ? column : column - 1;
+                            const colLeftx = colLeft[columnleft] - widths[columnleft];
+                            if (scrollleft > colLeftx) {
+                                scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
+                            }
                         }
                     }
                 }
@@ -249,8 +255,6 @@ export const cellFilterKeyNavigationCellRowHandler = (
                 } else if (currentKey === ARROW_UP_KEY) {
                     if (gotoCell !== 0) {
                         gotoCell = gotoCell - 1;
-                    } else {
-                        gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
                     }
                 }
 
@@ -268,8 +272,6 @@ export const cellFilterKeyNavigationCellRowHandler = (
                 } else if (currentKey === ARROW_UP_KEY) {
                     if (gotoCell !== 0) {
                         gotoCell = gotoCell - 1;
-                    } else {
-                        gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
                     }
                 }
 
