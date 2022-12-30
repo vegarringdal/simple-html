@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.42](https://github.com/simple-html/simple-html/compare/v5.0.0-next.41...v5.0.0-next.42) (2022-12-30)
+
+
+### Features
+
+* make it easier to use grid as dropdown ([a9b2f68](https://github.com/simple-html/simple-html/commits/a9b2f6886a5679c66bc75a4c38f1fcec738d31dc))
+* option to hide filter or label in header ([6c1b157](https://github.com/simple-html/simple-html/commits/6c1b157bc519752f0dd7ab68ba31a82d16565218))
+
+
+### Bug Fixes
+
+* navigation to include filter also ([#43](https://vegarringdal//null/issues/43)) ([8b8d5e0](https://github.com/simple-html/simple-html/commits/8b8d5e097c7a453b0692d0f80edfbdeb65b5f1c5))
+
 ## [5.0.0-next.41](https://github.com/simple-html/simple-html/compare/v5.0.0-next.40...v5.0.0-next.41) (2022-12-27)
 
 
