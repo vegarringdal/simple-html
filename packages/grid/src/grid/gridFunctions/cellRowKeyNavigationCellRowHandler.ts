@@ -157,7 +157,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                         }
                     } else {
                         const columnleft = column < 2 ? column : column - 1;
-                        const colLeftx = colLeft[columnleft];
+                        const colLeftx = colLeft[columnleft] - widths[columnleft];
                         if (scrollleft > colLeftx) {
                             scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
                         }
@@ -519,7 +519,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                         }
                     } else {
                         const columnleft = column < 2 ? column : column - 1;
-                        const colLeftx = colLeft[columnleft];
+                        const colLeftx = colLeft[columnleft] - widths[columnleft];
                         if (scrollleft > colLeftx) {
                             scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
                         }
