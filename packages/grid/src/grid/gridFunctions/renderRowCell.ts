@@ -9,7 +9,7 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 import { creatElement } from './createElement';
 import { DIV } from './DIV';
 import { asPx } from './asPx';
-import { cellRowKeyNavigationCellRowHandler } from './cellKeyNavigationHandler';
+import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
 
 export function renderRowCell(
     ctx: Grid,
