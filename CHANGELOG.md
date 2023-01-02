@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.43](https://github.com/simple-html/simple-html/compare/v5.0.0-next.42...v5.0.0-next.43) (2023-01-02)
+
+
+### Bug Fixes
+
+* allow paste only, and readonly logic ([b46765c](https://github.com/simple-html/simple-html/commits/b46765c88e5e71f28ce532ad25ca9951661698bd))
+* make hide filter/label optional ([fe7b713](https://github.com/simple-html/simple-html/commits/fe7b7132d8b0728bf80c48461b4b9aaa96a5f7b9))
+
 ## [5.0.0-next.42](https://github.com/simple-html/simple-html/compare/v5.0.0-next.41...v5.0.0-next.42) (2022-12-30)
 
 
