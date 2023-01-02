@@ -134,7 +134,7 @@ export const gridConfig: GridConfig = {
             attribute: 'picture',
 
             readonly: true,
-            allowPasteClearOnReadonly: true
+            allowPasteClearOnly: true
         },
         {
             attribute: 'longitude',
