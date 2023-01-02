@@ -92,8 +92,12 @@ export function renderRowCell(
                         }}
                         @change=${(e: any) => {
                             if (!config.readonly) {
-                                entity[attribute] = e.target.checked ? false : true;
-                                e.target.checked = entity[attribute];
+                                if (cellConfig.allowPasteClearOnly) {
+                                    // nothing
+                                } else {
+                                    entity[attribute] = e.target.checked ? false : true;
+                                    e.target.checked = entity[attribute];
+                                }
                             }
                         }}
                     />
@@ -177,7 +181,7 @@ export function renderRowCell(
                                     }
                                     break;
                                 case 'SHOW_IF_GRID_AND_CELL_NOT_READONLY':
-                                    if (!config.readonly && !cellConfig.readonly) {
+                                    if (!config.readonly && !cellReadOnly) {
                                         addFocusButton();
                                     }
                                     break;
@@ -220,7 +224,7 @@ export function renderRowCell(
                                         }
                                         break;
                                     case 'SHOW_IF_GRID_AND_CELL_NOT_READONLY':
-                                        if (!config.readonly && !cellConfig.readonly) {
+                                        if (!config.readonly && !cellReadOnly) {
                                             ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
                                                 cell,
                                                 row,
@@ -252,12 +256,19 @@ export function renderRowCell(
                             return cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @input=${(e: any) => {
+                            if (cellConfig.allowPasteClearOnly) {
+                                e.target.value = entity[attribute];
+                                return;
+                            }
+
                             if (!cellReadOnly && cellConfig?.type !== 'date') {
                                 entity[attribute] = e.target.value;
                             }
+
                             if (!cellReadOnly && cellConfig.type === 'date') {
                                 entity[attribute] = ctx.gridInterface.getDatasource().getDateFormater().toDate(e.target.value);
                             }
+
                             if (!cellReadOnly && cellConfig.type === 'number') {
                                 entity[attribute] = ctx.gridInterface
                                     .getDatasource()
@@ -266,6 +277,9 @@ export function renderRowCell(
                             }
                         }}
                         @change=${(e: any) => {
+                            if (cellConfig.allowPasteClearOnly) {
+                                entity[attribute] = entity[attribute];
+                            }
                             if (!cellReadOnly && cellConfig?.type === 'date') {
                                 entity[attribute] = ctx.gridInterface.getDatasource().getDateFormater().toDate(e.target.value);
                             }

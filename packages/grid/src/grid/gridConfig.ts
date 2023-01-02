@@ -117,7 +117,7 @@ export type Attribute = {
     mandatory?: boolean;
 
     /**
-     * usefull for fields where you have dropdown etc, but want to allow user to easly update column with copy paste
+     * usefull for fields where you have dropdown etc, but want to allow user to update using copy/paste/clear + the dropdown
      */
-    allowPasteClearOnReadonly?: boolean;
+    allowPasteClearOnly?: boolean;
 };

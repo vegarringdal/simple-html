@@ -286,7 +286,13 @@ export function contextmenuRow(
         if (ctx.gridInterface.__getGridConfig().readonly) {
             return null;
         }
-        if (cellConfig.readonly && !cellConfig.allowPasteClearOnReadonly) {
+
+        let cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, rowData, cellConfig.readonly || false);
+        if (cellReadOnly !== false && cellReadOnly !== true) {
+            cellReadOnly = cellConfig.readonly;
+        }
+
+        if (cellReadOnly === true) {
             return null;
         }
 
