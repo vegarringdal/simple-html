@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.44](https://github.com/simple-html/simple-html/compare/v5.0.0-next.43...v5.0.0-next.44) (2023-01-03)
+
+
+### Bug Fixes
+
+* horizontal scroll with no data - headers was not updatig correctly ([eefe95e](https://github.com/simple-html/simple-html/commits/eefe95e7cf5f9cb93ddec7cad07cfcac4a758f8f))
+
 ## [5.0.0-next.43](https://github.com/simple-html/simple-html/compare/v5.0.0-next.42...v5.0.0-next.43) (2023-01-02)
 
 
