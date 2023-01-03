@@ -129,8 +129,11 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
             e.left = colLeft[e.column] + LeftOffset;
         });
 
-        rowCache.forEach((e) => {
-            if (e.row !== -1) {
+        // need to check data..
+        let noData = ctx.gridInterface.getDatasource().length() === 0;
+
+        rowCache.forEach((e, no) => {
+            if (e.row !== -1 || (noData && no)) {
                 columnCache.forEach((x, i) => {
                     const id = e.id + ':' + i.toString();
                     const colEl = ctx.columns.get(id);
