@@ -32,6 +32,9 @@ export const cellRowKeyNavigationCellRowHandler = (
     const currentKey: CurrentKey = event.code;
 
     if (currentKey === ARROW_LEFT_KEY || currentKey === ARROW_RIGHT_KEY) {
+        if (!event.altKey) {
+            return true;
+        }
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
         const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
@@ -235,6 +238,9 @@ export const cellRowKeyNavigationCellRowHandler = (
      * all logic if using arrow keys up or down
      */
     if (currentKey === ARROW_UP_KEY || currentKey === ARROW_DOWN_KEY) {
+        if (!event.altKey) {
+            return true;
+        }
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
         const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
