@@ -22,6 +22,7 @@ export function createDom(ctx: Grid) {
     // focus helper
     const tmp = document.createElement('input');
     tmp.style.opacity = '0';
+    tmp.setAttribute('aria-label', 'dummy cell, helper to set focus');
 
     body.appendChild(tmp);
     ctx.focusElement = tmp;

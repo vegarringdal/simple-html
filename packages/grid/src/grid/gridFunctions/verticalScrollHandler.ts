@@ -129,6 +129,9 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                     rowEl.classList.remove('simple-html-grid-row-even');
                     rowEl.classList.remove('simple-html-grid-row-odd');
 
+                    rowEl.setAttribute('role', 'row');
+                    rowEl.setAttribute('aria-rowindex', (e.row + 1).toString());
+
                     rowEl.classList.remove('simple-html-grid-selected-row-odd');
                     rowEl.classList.remove('simple-html-grid-selected-row-even');
                     if (selection.isSelected(e.row)) {

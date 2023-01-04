@@ -76,6 +76,8 @@ export function renderRowCell(
                 html` <div>
                     <div class=${dimmed}></div>
                     <input
+                        role="cell"
+                        aria-label=${attribute}
                         .checked=${live(value)}
                         type="checkbox"
                         class=${`cellpos-${colType}-${row}-${column}-${celno}`}
@@ -110,6 +112,8 @@ export function renderRowCell(
                 html` <div>
                     <div class=${dimmed}></div>
                     <input
+                        role="cell"
+                        aria-label=${attribute}
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(value?.toString())}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}`}

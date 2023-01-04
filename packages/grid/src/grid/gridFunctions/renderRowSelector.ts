@@ -47,7 +47,7 @@ export function renderRowSelector(
                 }
             }}
         >
-            <span class="simple-html-selector-text">${row + 1}</span>
+            <span role="cell" aria-label=${'row selector'} class="simple-html-selector-text">${row + 1}</span>
         </div>`,
         cell as any
     );
