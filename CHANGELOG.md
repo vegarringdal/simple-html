@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.45](https://github.com/simple-html/simple-html/compare/v5.0.0-next.44...v5.0.0-next.45) (2023-01-04)
+
+
+### Bug Fixes
+
+* copy columns ([43838bd](https://github.com/simple-html/simple-html/commits/43838bd2caaf1a5dcbd335eab60d4bad6029620c))
+* keynav - only active if alt key pressed ([4912a57](https://github.com/simple-html/simple-html/commits/4912a5705f88ab99c04924fa5d97cefd91052c48))
+* mandatory color/readonly color ([5302a6e](https://github.com/simple-html/simple-html/commits/5302a6e55ec2fb0d0dc74b5e10a916629b97bb27))
+
 ## [5.0.0-next.44](https://github.com/simple-html/simple-html/compare/v5.0.0-next.43...v5.0.0-next.44) (2023-01-03)
 
 
