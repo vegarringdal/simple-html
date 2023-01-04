@@ -100,7 +100,7 @@ export function contextmenuRow(
                         tableInnerData = tableInnerData + '<td>' + (colData || '') + '</td>';
                     }
                 });
-                if (attributes.length === 1) {
+                if (onlyCurrentEntity || overRideCurrentEntity) {
                     justData = justData;
                 } else {
                     justData = justData + '\n';
