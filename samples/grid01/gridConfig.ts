@@ -5,7 +5,7 @@ import { GridConfig } from '@simple-html/grid';
  * keep this in own file since it so big..
  */
 export const gridConfig: GridConfig = {
-    panelHeight: 0,
+    panelHeight: 25,
     /*  selectSizeHeight: 0, */
     hideLabels: false,
     hideFilter: false,

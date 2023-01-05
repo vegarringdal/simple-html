@@ -202,6 +202,27 @@ export function contextmenuLabel(
             >
                 Hide
             </div>
+            <div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    const grouping = ctx.gridInterface
+                        .getDatasource()
+                        .getGrouping()
+                        .map((e) => e.attribute);
+                    const sorting = ctx.gridInterface.getDatasource().getLastSorting();
+                    const newSorting: any = [];
+                    sorting.forEach((e) => {
+                        if (grouping.indexOf(e.attribute) !== -1) {
+                            newSorting.push(e);
+                        }
+                    });
+
+                    ctx.gridInterface.getDatasource().setOrderBy(newSorting);
+                    ctx.rebuild(true);
+                }}
+            >
+                Remove sorting
+            </div>
             <hr class="hr-dashed" />
             <div
                 class="simple-html-grid-menu-item"
@@ -229,6 +250,7 @@ export function contextmenuLabel(
             >
                 Resize all columns
             </div>
+
             <div class="simple-html-grid-menu-section">Grouping:</div>
             <hr class="hr-solid" />
             <div
