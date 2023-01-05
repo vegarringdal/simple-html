@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.47](https://github.com/simple-html/simple-html/compare/v5.0.0-next.46...v5.0.0-next.47) (2023-01-05)
+
+
+### Features
+
+* remove sorting - easier to work with new rows ([493c360](https://github.com/simple-html/simple-html/commits/493c360363385831d564a3ee7f9f1ba5b23bdea2))
+
 ## [5.0.0-next.46](https://github.com/simple-html/simple-html/compare/v5.0.0-next.45...v5.0.0-next.46) (2023-01-05)
 
 
