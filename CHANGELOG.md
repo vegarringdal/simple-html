@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.46](https://github.com/simple-html/simple-html/compare/v5.0.0-next.45...v5.0.0-next.46) (2023-01-05)
+
+
+### Bug Fixes
+
+* always show scrollbar ([2d42c39](https://github.com/simple-html/simple-html/commits/2d42c39bc9cc2442f4d42e6f2c4795c48ab7c0e0))
+* check if intreface datasource is updated ([6a6a3e1](https://github.com/simple-html/simple-html/commits/6a6a3e1c489005f819a1cfe4ec1667430b1cef8e))
+* filter editor ([ab5ae33](https://github.com/simple-html/simple-html/commits/ab5ae33dbf524594636b32d170bf16edb554eab7))
+* improve aria - needs more work ([17b5630](https://github.com/simple-html/simple-html/commits/17b56304808bea07261ce86cad774c2d26e8b445))
+
 ## [5.0.0-next.45](https://github.com/simple-html/simple-html/compare/v5.0.0-next.44...v5.0.0-next.45) (2023-01-04)
 
 
