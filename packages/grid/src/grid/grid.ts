@@ -63,6 +63,7 @@ export class Grid {
         if (this.gridInterface) {
             this.gridInterface.__parseConfig();
             createDom(this);
+            this.gridInterface.__dataSourceUpdated();
             initResizerEvent(this);
         }
     }
@@ -78,6 +79,7 @@ export class Grid {
         if (this.element) {
             this.gridInterface.__parseConfig();
             createDom(this);
+            this.gridInterface.__dataSourceUpdated();
             initResizerEvent(this);
         }
     }
