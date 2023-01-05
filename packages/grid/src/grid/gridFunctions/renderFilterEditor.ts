@@ -6,6 +6,7 @@ import { creatElement } from './createElement';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
 import { removeContextMenu } from './removeContextMenu';
+import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 
 /**
  * internal method to generate html for filter editor
@@ -307,6 +308,12 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
 
     const headerTemplate = () => html`<div class="grid-text-title">Filter Editor</div>`;
 
+    const clearOldValues = () => {
+        ctx.gridInterface.__getGridConfig().attributes.forEach((e) => {
+            e.currentFilterValue = '';
+        });
+    };
+
     const footerTemplate = () => {
         return html`<div class="grid-flex-reverse grid-m-4">
             <div
@@ -315,7 +322,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     removeContextMenu(ctx);
                     filterEditorContainer.parentElement.removeChild(filterEditorContainer);
                     ctx.filterEditorContainer = null;
+
                     ctx.gridInterface.getDatasource().filter(JSON.parse(JSON.stringify(filterArg)));
+                    clearOldValues();
+                    rebuildHeaderColumns(ctx);
                 }}
             >
                 Filter & Close
@@ -324,7 +334,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 class="grid-button grid-text-center"
                 @click=${() => {
                     removeContextMenu(ctx);
+
                     ctx.gridInterface.getDatasource().filter(JSON.parse(JSON.stringify(filterArg)));
+                    clearOldValues();
+                    rebuildHeaderColumns(ctx);
                 }}
             >
                 Filter Only

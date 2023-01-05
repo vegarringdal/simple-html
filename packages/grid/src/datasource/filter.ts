@@ -94,6 +94,8 @@ export class Filter {
                             }
                             values = (filter.value as string).toUpperCase().split('\n');
                             filter.value = values;
+                        } else {
+                            values = filter.value.map((e) => e?.toUpperCase() || '');
                         }
 
                         let data;
@@ -179,6 +181,8 @@ export class Filter {
                             }
                             values = (filter.value as string).toUpperCase().split('\n');
                             filter.value = values;
+                        } else {
+                            values = filter.value.map((e) => e?.toUpperCase() || '');
                         }
 
                         let data;
