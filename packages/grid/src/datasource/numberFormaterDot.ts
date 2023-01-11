@@ -19,6 +19,10 @@ export class NumberFormaterDot {
             returnValue;
         }
 
+        if (typeof returnValue === 'number') {
+            return returnValue;
+        }
+
         if (returnValue.includes(',') && !returnValue.includes('.')) {
             returnValue = returnValue.replace(',', '.');
         }

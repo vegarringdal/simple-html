@@ -256,6 +256,10 @@ export function contextmenuFilter(
                 return null;
             }
 
+            const updateFilter = () => {
+                filterCallback(ctx, cellConfig.currentFilterValue as any, cellConfig);
+            };
+
             if (cellConfig.type === 'date' || cellConfig.type === 'number') {
                 return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
                     <hr class="hr-solid" />
@@ -263,6 +267,7 @@ export function contextmenuFilter(
                         class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
                             cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                            updateFilter();
                             removeContextMenu(ctx);
                         }}
                     >
@@ -272,19 +277,32 @@ export function contextmenuFilter(
                         class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
                             cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
+                            updateFilter();
                             removeContextMenu(ctx);
                         }}
                     >
                         Less than or equal
+                    </div>
+                    <div
+                        class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
+                        @click=${() => {
+                            cellConfig.operator = 'EQUAL';
+                            updateFilter();
+                            removeContextMenu(ctx);
+                        }}
+                    >
+                        Equal
                     </div>`;
             }
 
-            return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
+            return html`
+                <div class="simple-html-grid-menu-section">Set Operator:</div>
                 <hr class="hr-solid" />
                 <div
                     class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                     @click=${() => {
                         cellConfig.operator = 'EQUAL';
+                        updateFilter();
                         removeContextMenu(ctx);
                     }}
                 >
@@ -294,6 +312,7 @@ export function contextmenuFilter(
                     class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
                     @click=${() => {
                         cellConfig.operator = 'NOT_EQUAL_TO';
+                        updateFilter();
                         removeContextMenu(ctx);
                     }}
                 >
@@ -303,11 +322,13 @@ export function contextmenuFilter(
                     class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
                     @click=${() => {
                         cellConfig.operator = 'CONTAINS';
+                        updateFilter();
                         removeContextMenu(ctx);
                     }}
                 >
                     Contains
-                </div>`;
+                </div>
+            `;
         };
 
         /**
