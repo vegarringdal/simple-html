@@ -129,8 +129,14 @@ export function contextmenuRow(
         const [html, text] = generateCopyPasteData(attributes, onlyCurrentEntity, overRideCurrentEntity);
 
         function listener(e: any) {
-            e.clipboardData.setData('text/html', html);
-            e.clipboardData.setData('text/plain', text);
+            // we only want text if it is
+            if (onlyCurrentEntity) {
+                e.clipboardData.setData('text/plain', text);
+            } else {
+                e.clipboardData.setData('text/html', html);
+                e.clipboardData.setData('text/plain', text);
+            }
+
             e.preventDefault();
         }
         document.addEventListener('copy', listener);
@@ -352,7 +358,7 @@ export function contextmenuRow(
             removeContextMenu(ctx);
         };
 
-        return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Cell</div>`;
+        return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Cell Value</div>`;
     };
 
     const copyColumnOnSelectedRowsTemplate = () => {
