@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.48](https://github.com/simple-html/simple-html/compare/v5.0.0-next.47...v5.0.0-next.48) (2023-01-11)
+
+
+### Features
+
+* event when operator is change from menu ([3c7c7bc](https://github.com/simple-html/simple-html/commits/3c7c7bcfa637fe6290a404ab5da523242f269a08))
+
+
+### Bug Fixes
+
+* chnage filter with menu needs to trigger filter ([151502d](https://github.com/simple-html/simple-html/commits/151502df97a621e89ed64d179d54dca1bd4667ef))
+* copy only cell value ([d0e0f03](https://github.com/simple-html/simple-html/commits/d0e0f035eab6a55be051a7a95375be3ac3df65fb))
+* hitting enter in filter should always trigger filter ([6538aa5](https://github.com/simple-html/simple-html/commits/6538aa506a5ebf01767d572755f98e4ca6724e5d))
+* paste into cells to skip readonly set by readonly setter ([1a98289](https://github.com/simple-html/simple-html/commits/1a982890f32037f22552adda4973e1a139c616bb))
+
 ## [5.0.0-next.47](https://github.com/simple-html/simple-html/compare/v5.0.0-next.46...v5.0.0-next.47) (2023-01-05)
 
 
