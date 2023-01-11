@@ -130,9 +130,9 @@ export function renderHeaderFilter(
                                 if (!filterRunning) {
                                     filterRunning = true;
 
-                                    if (lastFilter !== (e.target as any).value) {
-                                        filterCallback(ctx, (e.target as any).value, cellConfig);
-                                    }
+
+                                    filterCallback(ctx, (e.target as any).value, cellConfig);
+                                    
                                     lastFilter = (e.target as any).value;
                                     filterRunning = false;
                                 }
@@ -150,13 +150,13 @@ export function renderHeaderFilter(
                                     if (lastFilter !== (e.target as any).value) {
                                         filterCallback(ctx, (e.target as any).value, cellConfig);
                                     }
-                                    lastFilter = (e.target as any).value;
+                                    lastFilter = (e.target as any).value;                                
                                     filterRunning = false;
                                 }
                             }
                         }}
                         @change=${(e: any) => {
-                            console.log('change', attribute, (e.target as any).value, lastFilter);
+                      
                             if (!filterRunning) {
                                 filterRunning = true;
 
