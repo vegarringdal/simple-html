@@ -204,6 +204,15 @@ const datasourceEvents = {
 const gridInterfaceEvents = {
     handleEvent: (e: any) => {
         console.log('GRIDINTERFACE EVENTS:', e.type, e.data);
+
+
+        if(e.type === 'filter-operator-change'){
+            // sample on how you  would edit config and rerender headers
+            e.data.cellConfig.placeHolderFilter = e.data.cellConfig.operator
+            e.data.rebuildHeaderColumns(e.data.ctx);
+        }
+
+
         return true; // to keep subscribing
     }
 };
