@@ -158,8 +158,17 @@ export function contextmenuRow(
         const cellConfig = attConfig[attribute];
         const dateformater = datasource.getDateFormater();
         const numberformater = datasource.getNumberFormater();
+        if (ctx.gridInterface.__getGridConfig().readonly) {
+            return;
+        }
 
         datasource.getSelectedRows().forEach((entity) => {
+            let cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, entity, cellConfig.readonly || false);
+
+            if (cellReadOnly) {
+                return;
+            }
+
             if (cellConfig.type === 'number') {
                 entity[attribute] = numberformater.toNumber(data);
             } else if (cellConfig.type === 'date') {
@@ -178,6 +187,7 @@ export function contextmenuRow(
                 entity
             });
         });
+
         triggerScrollEvent(ctx);
     };
 
