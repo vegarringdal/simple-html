@@ -5,6 +5,10 @@
     "main": "dist/index.js",
     "module": "dist/index.js",
     "typings": "dist/index.d.ts",
+    "scripts": {
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
     "author": "Vegar Ringdal <vegar.ringdal@gmail.com>",
     "license": "MIT",
     "homepage": "https://github.com/vegarringdal/simple-html",
@@ -19,7 +23,7 @@
         "access": "public"
     },
     "dependencies": {
-        "lit-html": "^2.5.0"
+        "lit-html": "^2.6.1"
     },
     "devDependencies": {}
 }

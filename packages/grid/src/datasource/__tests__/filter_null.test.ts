@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,7 +18,7 @@ describe('string filter', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('string equal to', (done) => {
+    it('string equal to', () => {
         ds.filter({
             attribute: 'group',
             operator: 'IS_BLANK'
@@ -29,16 +30,14 @@ describe('string filter', () => {
             { name: 'Nilsman', group: null, age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: undefined, age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 
-    it('string equal to', (done) => {
+    it('string equal to', () => {
         ds.filter({
             attribute: 'group',
             operator: 'IS_NOT_BLANK'
         });
 
         expect(ds.getRows()).toEqual([{ name: 'Nils', group: 's', age: 32, born: new Date(1990, 0, 1), index: 3 }]);
-        done();
     });
 });

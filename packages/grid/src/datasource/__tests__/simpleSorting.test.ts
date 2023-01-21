@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,61 +18,61 @@ describe('datasource sort', () => {
         datasource.setData(simpleArray.slice());
     });
 
-    it('sort name ascending', (done) => {
+    it('sort name ascending', () => {
         datasource.sort({ attribute: 'name', ascending: true });
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person1');
-        done();
+        
     });
 
-    it('sort name descending', (done) => {
+    it('sort name descending', () => {
         datasource.sort({ attribute: 'name', ascending: false });
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person5');
-        done();
+        
     });
 
-    it('sort group ascending, name ascending', (done) => {
+    it('sort group ascending, name ascending', () => {
         datasource.sort([
             { attribute: 'group', ascending: true },
             { attribute: 'name', ascending: true }
         ]);
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person3');
-        done();
+        
     });
 
-    it('sort group ascending, name descending', (done) => {
+    it('sort group ascending, name descending', () => {
         datasource.sort([
             { attribute: 'group', ascending: true },
             { attribute: 'name', ascending: false }
         ]);
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person5');
-        done();
+        
     });
 
-    it('sort group descending, name ascending', (done) => {
+    it('sort group descending, name ascending', () => {
         datasource.sort([
             { attribute: 'group', ascending: false },
             { attribute: 'name', ascending: true }
         ]);
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person1');
-        done();
+        
     });
 
-    it('sort group ascending, name descending', (done) => {
+    it('sort group ascending, name descending', () => {
         datasource.sort([
             { attribute: 'group', ascending: false },
             { attribute: 'name', ascending: false }
         ]);
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person2');
-        done();
+        
     });
 
-    it('test adding to sort', (done) => {
+    it('test adding to sort', () => {
         datasource.sort({ attribute: 'group', ascending: false });
         datasource.sort({ attribute: 'name', ascending: false }, true);
 
@@ -83,46 +84,46 @@ describe('datasource sort', () => {
         obj = datasource.getRow(0);
         expect(obj.name).toEqual('person5');
 
-        done();
+        
     });
 
-    it('local compare on string', (done) => {
+    it('local compare on string', () => {
         datasource.setLocalCompare('no'); // need node 14.xx.xx or new browser for this to work
 
         datasource.sort([{ attribute: 'localCompare', ascending: true }]);
         const arr: string[] = datasource.getRows().map((x: any) => x.localCompare);
         expect(arr).toEqual(['a', 'b', 'æ', 'ø', 'å']);
-        done();
+        
     });
 
-    it('local compare on string2', (done) => {
+    it('local compare on string2', () => {
         datasource.setLocalCompare('no'); // need node 14.xx.xx or new browser for this to work
 
         datasource.sort([{ attribute: 'localCompare', ascending: false }]);
         const arr: string[] = datasource.getRows().map((x: any) => x.localCompare);
         expect(arr).toEqual(['å', 'ø', 'æ', 'b', 'a']);
-        done();
+        
     });
 
-    it('reset sort with default attribute', (done) => {
+    it('reset sort with default attribute', () => {
         datasource.resetSort('name');
         datasource.sort();
         expect((datasource.getRow(0) as any).name).toEqual('person1');
-        done();
+        
     });
 
-    it('numbersort', (done) => {
+    it('numbersort', () => {
         datasource.resetSort('num');
         datasource.sort();
         const arr: string[] = datasource.getRows().map((x: any) => x.num);
         expect(arr).toEqual([1, 2, 3, 4, 5]);
-        done();
+        
     });
 
-    it('numbersort2', (done) => {
+    it('numbersort2', () => {
         datasource.sort({ attribute: 'num', ascending: false });
         const arr: string[] = datasource.getRows().map((x: any) => x.num);
         expect(arr).toEqual([1, 2, 3, 4, 5].reverse());
-        done();
+        
     });
 });

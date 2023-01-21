@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,7 +18,7 @@ describe('string filter', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('string with GREATER_THAN', (done) => {
+    it('string with GREATER_THAN', () => {
         ds.filter({
             attribute: 'name',
             operator: 'GREATER_THAN',
@@ -31,10 +32,10 @@ describe('string filter', () => {
             { name: 'd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'e', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
+        
     });
 
-    it('string with GREATER_THAN_OR_EQUAL_TO', (done) => {
+    it('string with GREATER_THAN_OR_EQUAL_TO', () => {
         ds.filter({
             attribute: 'name',
             operator: 'GREATER_THAN_OR_EQUAL_TO',
@@ -48,10 +49,10 @@ describe('string filter', () => {
             { name: 'd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'e', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
+        
     });
 
-    it('string with LESS_THAN', (done) => {
+    it('string with LESS_THAN', () => {
         ds.filter({
             attribute: 'name',
             operator: 'LESS_THAN',
@@ -65,10 +66,10 @@ describe('string filter', () => {
             { name: 'd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'e', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
         ]);
-        done();
+        
     });
 
-    it('string with LESS_THAN', (done) => {
+    it('string with LESS_THAN', () => {
         ds.filter({
             attribute: 'name',
             operator: 'LESS_THAN_OR_EQUAL_TO',
@@ -82,6 +83,6 @@ describe('string filter', () => {
             { name: 'd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'e', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }  */
         ]);
-        done();
+        
     });
 });

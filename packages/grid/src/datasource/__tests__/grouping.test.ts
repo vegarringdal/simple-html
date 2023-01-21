@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,7 +18,7 @@ describe('string filter', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('single group - company', (done) => {
+    it('single group - company', () => {
         ds.group([{ attribute: 'company', title: 'Company' }]);
         const rows = ds.getRows();
         expect(rows.length).toEqual(3);
@@ -25,20 +26,20 @@ describe('string filter', () => {
         expect(rows[0].__groupName).toEqual('Company: comp1');
         expect(rows[1].__groupName).toEqual('Company: comp3');
         expect(rows[2].__groupName).toEqual('Company: comp5');
-        done();
+        
     });
 
-    it('single group - product', (done) => {
+    it('single group - product', () => {
         ds.group([{ attribute: 'product', title: 'Product' }]);
         const rows = ds.getRows();
         expect(rows.length).toEqual(2);
 
         expect(rows[0].__groupName).toEqual('Product: group1');
         expect(rows[1].__groupName).toEqual('Product: group2');
-        done();
+        
     });
 
-    it('single group - company - expand all & collpse all', (done) => {
+    it('single group - company - expand all & collpse all', () => {
         ds.group([{ attribute: 'company', title: 'Company' }]);
         const rows1 = ds.getRows();
         expect(rows1.length).toEqual(3);
@@ -52,10 +53,10 @@ describe('string filter', () => {
         const rows3 = ds.getRows();
         expect(rows3.length).toEqual(3);
 
-        done();
+        
     });
 
-    it('single group - company - expand first', (done) => {
+    it('single group - company - expand first', () => {
         ds.group([{ attribute: 'company', title: 'Company' }]);
         const rows1 = ds.getRows();
         expect(rows1.length).toEqual(3);
@@ -68,15 +69,15 @@ describe('string filter', () => {
         ds.collapseGroup(rows2[0].__groupID);
         const rows3 = ds.getRows();
         expect(rows3.length).toEqual(3);
-        done();
+        
     });
 
-    it('remove groups', (done) => {
+    it('remove groups', () => {
         ds.group([{ attribute: 'company', title: 'Company' }]);
         const rows1 = ds.getRows();
         expect(rows1.length).toEqual(3);
         ds.removeGroup();
         expect(ds.getRows().length).toEqual(5);
-        done();
+        
     });
 });

@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,7 +18,7 @@ describe('string filter', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('string with BEGIN_WITH', (done) => {
+    it('string with BEGIN_WITH', () => {
         ds.filter({
             attribute: 'name',
             operator: 'BEGIN_WITH',
@@ -31,10 +32,10 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }, */
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
+        
     });
 
-    it('string with BEGIN_WITH', (done) => {
+    it('string with BEGIN_WITH', () => {
         ds.filter({
             attribute: 'name',
             operator: 'BEGIN_WITH',
@@ -48,10 +49,10 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }, */
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
+        
     });
 
-    it('string with END_WITH', (done) => {
+    it('string with END_WITH', () => {
         ds.filter({
             attribute: 'name',
             operator: 'END_WITH',
@@ -65,10 +66,10 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
         ]);
-        done();
+        
     });
 
-    it('string with END_WITH', (done) => {
+    it('string with END_WITH', () => {
         ds.filter({
             attribute: 'name',
             operator: 'END_WITH',
@@ -82,10 +83,10 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
         ]);
-        done();
+        
     });
 
-    it('string with END_WITH', (done) => {
+    it('string with END_WITH', () => {
         ds.filter({
             attribute: 'name',
             operator: 'NOT_EQUAL_TO',
@@ -100,6 +101,6 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
+        
     });
 });

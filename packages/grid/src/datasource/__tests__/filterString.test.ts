@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,22 +18,22 @@ describe('datasource filterstring ', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('single', (done) => {
+    it('single', () => {
         ds.filter({ attribute: 'name', operator: 'EQUAL', value: 'person1' });
         expect(ds.getFilterString()).toEqual("([name] <<equal_to>> 'person1')".toUpperCase());
-        done();
+        
     });
 
-    it('2 attributes, default to and', (done) => {
+    it('2 attributes, default to and', () => {
         ds.filter([
             { attribute: 'group', operator: 'EQUAL', value: 'group1' },
             { attribute: 'name', operator: 'EQUAL', value: 'person1' }
         ]);
         expect(ds.getFilterString()).toEqual("([group] <<equal_to>> 'group1' AND [name] <<equal_to>> 'person1')".toUpperCase());
-        done();
+        
     });
 
-    it('or statement', (done) => {
+    it('or statement', () => {
         ds.filter({
             logicalOperator: 'OR',
             filterArguments: [
@@ -41,10 +42,10 @@ describe('datasource filterstring ', () => {
             ]
         });
         expect(ds.getFilterString()).toEqual("([group] <<equal_to>> 'group1' OR [name] <<equal_to>> 'person1')".toUpperCase());
-        done();
+        
     });
 
-    it('or statement with sub and statements', (done) => {
+    it('or statement with sub and statements', () => {
         ds.filter({
             logicalOperator: 'OR',
             filterArguments: [
@@ -67,10 +68,10 @@ describe('datasource filterstring ', () => {
         expect(ds.getFilterString()).toEqual(
             "(([group] <<equal_to>> 'group2' AND [name] <<equal_to>> 'person2') OR ([group] <<equal_to>> 'group1' AND [name] <<equal_to>> 'person4'))".toUpperCase()
         );
-        done();
+        
     });
 
-    it('and statement with sub or statements', (done) => {
+    it('and statement with sub or statements', () => {
         ds.filter({
             logicalOperator: 'AND',
             filterArguments: [
@@ -93,10 +94,10 @@ describe('datasource filterstring ', () => {
         expect(ds.getFilterString()).toEqual(
             "(([group] <<equal_to>> 'group1' OR [name] <<equal_to>> 'person2') AND ([group] <<equal_to>> 'group2' OR [name] <<equal_to>> 'person4'))".toUpperCase()
         );
-        done();
+        
     });
 
-    it('or statement with sub and statements', (done) => {
+    it('or statement with sub and statements', () => {
         ds.filter({
             type: 'GROUP',
             logicalOperator: 'AND',
@@ -153,6 +154,6 @@ describe('datasource filterstring ', () => {
         expect(ds.getFilterString()).toEqual(
             "([word5] <<start_with>> 'c' AND [word7] <<start_with>> 'c' AND ([word7] <<contains>> 'c' AND [word7] <<contains>> 'c'))".toUpperCase()
         );
-        done();
+        
     });
 });

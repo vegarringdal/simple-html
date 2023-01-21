@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { readFiles, logInfo } = require('./utils');
-const { clearFolders, copySync } = require('esbuild-helpers');
+const { clearFolders, copy } = require('esbuild-helpers');
 
 async function run() {
     const files = await readFiles('./packages');
@@ -57,7 +57,7 @@ async function run() {
 
             //copy css files
             logInfo(`${file.name}: copy css if any`);
-            copySync(`packages/${file.name}/src/**/*.css`, `packages/${file.name}/dist`);
+            await copy(`packages/${file.name}/src/**/*.css`, `packages/${file.name}/dist`);
         }
     }
 }

@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,17 +18,16 @@ describe('datasource filter with ', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('single', (done) => {
+    it('single', () => {
         ds.filter({ attribute: 'name', operator: 'EQUAL', value: 'person1' });
         expect(ds.getRows()).toEqual([
             { name: 'person1', group: 'group2', age: 34, index: 2 },
             { name: 'person1', group: 'group1', age: 32, index: 3 },
             { name: 'person1', group: 'group1', age: 56, index: 4 }
         ]);
-        done();
     });
 
-    it('2 attributes, default to and', (done) => {
+    it('2 attributes, default to and', () => {
         ds.filter([
             { attribute: 'group', operator: 'EQUAL', value: 'group1' },
             { attribute: 'name', operator: 'EQUAL', value: 'person1' }
@@ -36,10 +36,9 @@ describe('datasource filter with ', () => {
             { name: 'person1', group: 'group1', age: 32, index: 3 },
             { name: 'person1', group: 'group1', age: 56, index: 4 }
         ]);
-        done();
     });
 
-    it('or statement mpty', (done) => {
+    it('or statement mpty', () => {
         ds.filter({
             logicalOperator: 'OR',
             filterArguments: []
@@ -52,10 +51,9 @@ describe('datasource filter with ', () => {
             { name: 'person4', group: 'group1', age: 55, index: 5 }
         ]);
         expect(ds.getRows().length).toEqual(5);
-        done();
     });
 
-    it('or statement', (done) => {
+    it('or statement', () => {
         ds.filter({
             logicalOperator: 'OR',
             filterArguments: [
@@ -70,10 +68,9 @@ describe('datasource filter with ', () => {
             { name: 'person4', group: 'group1', age: 55, index: 5 }
         ]);
         expect(ds.getRows().length).toEqual(4);
-        done();
     });
 
-    it('or statement with sub and statements', (done) => {
+    it('or statement with sub and statements', () => {
         ds.filter({
             logicalOperator: 'OR',
             filterArguments: [
@@ -97,10 +94,9 @@ describe('datasource filter with ', () => {
             { name: 'person2', group: 'group2', age: 23, index: 1 },
             { name: 'person4', group: 'group1', age: 55, index: 5 }
         ]);
-        done();
     });
 
-    it('and statement with sub or statements', (done) => {
+    it('and statement with sub or statements', () => {
         ds.filter({
             logicalOperator: 'AND',
             filterArguments: [
@@ -124,6 +120,5 @@ describe('datasource filter with ', () => {
             { name: 'person2', group: 'group2', age: 23, index: 1 },
             { name: 'person4', group: 'group1', age: 55, index: 5 }
         ]);
-        done();
     });
 });

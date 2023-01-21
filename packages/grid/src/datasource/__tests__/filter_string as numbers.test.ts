@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -18,7 +19,7 @@ describe('number filter on string as number', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('attribute vs attribute not equal', (done) => {
+    it('attribute vs attribute not equal', () => {
         ds.filter({
             attribute: 'planned',
             operator: 'NOT_EQUAL_TO',
@@ -32,10 +33,10 @@ describe('number filter on string as number', () => {
             { tag: 'tag4', planned: '13', installed: '1' },
             { tag: 'tag5', planned: '1', installed: '9' }
         ]);
-        done();
+        
     });
 
-    it('attribute vs attribute equal', (done) => {
+    it('attribute vs attribute equal', () => {
         ds.filter({
             attribute: 'planned',
             operator: 'EQUAL',
@@ -51,6 +52,6 @@ describe('number filter on string as number', () => {
 
             { tag: 'tag6', planned: '1', installed: '1' }
         ]);
-        done();
+        
     });
 });

@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,7 +18,7 @@ describe('string filter', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('simple IN operator test with newline as split', (done) => {
+    it('simple IN operator test with newline as split', () => {
         ds.filter({
             attribute: 'name',
             operator: 'IN',
@@ -28,10 +29,9 @@ describe('string filter', () => {
             { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
             { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }
         ]);
-        done();
     });
 
-    it('simple NOT_IN operator test with newline as split', (done) => {
+    it('simple NOT_IN operator test with newline as split', () => {
         ds.filter({
             attribute: 'name',
             operator: 'NOT_IN',
@@ -43,10 +43,9 @@ describe('string filter', () => {
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 
-    it('simple IN operator test with newline as split 2', (done) => {
+    it('simple IN operator test with newline as split 2', () => {
         ds.filter({
             attribute: 'name',
             operator: 'IN',
@@ -57,10 +56,9 @@ describe('string filter', () => {
             { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 },
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 }
         ]);
-        done();
     });
 
-    it('simple IN operator test with newline as split, empty', (done) => {
+    it('simple IN operator test with newline as split, empty', () => {
         ds.filter({
             attribute: 'name',
             operator: 'IN',
@@ -68,10 +66,9 @@ describe('string filter', () => {
         });
 
         expect(ds.getRows()).toEqual([]);
-        done();
     });
 
-    it('simple NOT IN operator test with newline as split, all', (done) => {
+    it('simple NOT IN operator test with newline as split, all', () => {
         ds.filter({
             attribute: 'name',
             operator: 'NOT_IN',
@@ -85,10 +82,9 @@ describe('string filter', () => {
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 
-    it('simple IN operator test with newline as split, search agains numbers', (done) => {
+    it('simple IN operator test with newline as split, search agains numbers', () => {
         ds.filter({
             attribute: 'age',
             operator: 'IN',
@@ -100,10 +96,9 @@ describe('string filter', () => {
             { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 },
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 }
         ]);
-        done();
     });
 
-    it('simple IN operator test with array, search agains numbers', (done) => {
+    it('simple IN operator test with array, search agains numbers', () => {
         ds.filter({
             attribute: 'age',
             operator: 'IN',
@@ -115,10 +110,9 @@ describe('string filter', () => {
             { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 },
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 }
         ]);
-        done();
     });
 
-    it('simple IN operator test with array, search agains dates', (done) => {
+    it('simple IN operator test with array, search agains dates', () => {
         ds.filter({
             attribute: 'born',
             operator: 'IN',
@@ -130,10 +124,9 @@ describe('string filter', () => {
             { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 },
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 }
         ]);
-        done();
     });
 
-    it('simple IN operator test with array, search agains dates with AND logical operator', (done) => {
+    it('simple IN operator test with array, search agains dates with AND logical operator', () => {
         ds.filter({
             logicalOperator: 'AND',
             filterArguments: [
@@ -155,10 +148,9 @@ describe('string filter', () => {
             { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 },
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 }
         ]);
-        done();
     });
 
-    it('simple IN operator test with array, search agains dates with OR logical operator', (done) => {
+    it('simple IN operator test with array, search agains dates with OR logical operator', () => {
         ds.filter({
             logicalOperator: 'OR',
             filterArguments: [
@@ -182,6 +174,5 @@ describe('string filter', () => {
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 });

@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -23,7 +24,7 @@ describe('string filter', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('string with EQUAL - wildcard multiline', (done) => {
+    it('string with EQUAL - wildcard multiline', () => {
         ds.filter({
             attribute: 'name',
             operator: 'EQUAL',
@@ -43,10 +44,10 @@ describe('string filter', () => {
             { name: 'tgyh', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'eref\n\r', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
         ]);
-        done();
+        
     });
 
-    it('string with NOT_EQUAL_TO - wildcard multiline', (done) => {
+    it('string with NOT_EQUAL_TO - wildcard multiline', () => {
         ds.filter({
             attribute: 'name',
             operator: 'NOT_EQUAL_TO',
@@ -59,10 +60,10 @@ describe('string filter', () => {
             { name: 'tgyh', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'eref\n\r', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
+        
     });
 
-    it('string with NOT_EQUAL_TO - wildcard multiline', (done) => {
+    it('string with NOT_EQUAL_TO - wildcard multiline', () => {
         ds.filter({
             attribute: 'name',
             operator: 'NOT_EQUAL_TO',
@@ -73,10 +74,10 @@ describe('string filter', () => {
             { name: 'abcd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'tgyh', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }
         ]);
-        done();
+        
     });
 
-    it('string with EQUAL - wildcard multiline', (done) => {
+    it('string with EQUAL - wildcard multiline', () => {
         ds.filter({
             attribute: 'name',
             operator: 'EQUAL',
@@ -96,6 +97,6 @@ describe('string filter', () => {
             /*     { name: 'tgyh', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },  */
             { name: 'eref\n\r', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
+        
     });
 });

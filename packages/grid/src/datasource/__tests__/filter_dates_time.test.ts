@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 const simpleArray = [
@@ -22,7 +23,7 @@ describe('date filter equal, use only date and not time', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('date equal to', (done) => {
+    it('date equal to', () => {
         ds.filter({
             attribute: 'born',
             operator: 'EQUAL',
@@ -31,7 +32,6 @@ describe('date filter equal, use only date and not time', () => {
         });
 
         expect(ds.getRows()).toEqual([simpleArray[2]]);
-        done();
     });
 });
 
@@ -41,7 +41,7 @@ describe('date filter equal, use only date and not time', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('date equal to', (done) => {
+    it('date equal to', () => {
         ds.filter({
             attribute: 'born',
             operator: 'NOT_EQUAL_TO',
@@ -49,7 +49,6 @@ describe('date filter equal, use only date and not time', () => {
             attributeType: 'date'
         });
         expect(ds.getRows()).toEqual([simpleArray[0], simpleArray[1], simpleArray[3], simpleArray[4]]);
-        done();
     });
 });
 
@@ -59,7 +58,7 @@ describe('date filter greater', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('date equal to', (done) => {
+    it('date equal to', () => {
         ds.filter({
             attribute: 'born',
             operator: 'GREATER_THAN',
@@ -68,7 +67,6 @@ describe('date filter greater', () => {
         });
 
         expect(ds.getRows()).toEqual([simpleArray[3], simpleArray[4]]);
-        done();
     });
 });
 
@@ -78,7 +76,7 @@ describe('date filter greater or equal', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('date equal to', (done) => {
+    it('date equal to', () => {
         ds.filter({
             attribute: 'born',
             operator: 'GREATER_THAN_OR_EQUAL_TO',
@@ -87,7 +85,6 @@ describe('date filter greater or equal', () => {
         });
 
         expect(ds.getRows()).toEqual([simpleArray[2], simpleArray[3], simpleArray[4]]);
-        done();
     });
 });
 
@@ -97,7 +94,7 @@ describe('date filter less', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('date equal to', (done) => {
+    it('date equal to', () => {
         ds.filter({
             attribute: 'born',
             operator: 'LESS_THAN',
@@ -106,7 +103,6 @@ describe('date filter less', () => {
         });
 
         expect(ds.getRows()).toEqual([simpleArray[0], simpleArray[1]]);
-        done();
     });
 });
 
@@ -116,7 +112,7 @@ describe('date filter less or equal', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('date equal to', (done) => {
+    it('date equal to', () => {
         ds.filter({
             attribute: 'born',
             operator: 'LESS_THAN_OR_EQUAL_TO',
@@ -125,7 +121,6 @@ describe('date filter less or equal', () => {
         });
 
         expect(ds.getRows()).toEqual([simpleArray[0], simpleArray[1], simpleArray[2]]);
-        done();
     });
 });
 
@@ -135,7 +130,7 @@ describe('date filter missing filer to use greater than or equal to', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('date equal to', (done) => {
+    it('date equal to', () => {
         ds.filter({
             attribute: 'born',
             //            operator: 'GREATER_THAN',
@@ -144,6 +139,5 @@ describe('date filter missing filer to use greater than or equal to', () => {
         });
 
         expect(ds.getRows()).toEqual([simpleArray[2], simpleArray[3], simpleArray[4]]);
-        done();
     });
 });

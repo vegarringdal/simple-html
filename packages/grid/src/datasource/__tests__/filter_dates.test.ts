@@ -1,3 +1,4 @@
+import { describe, beforeAll, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
@@ -17,7 +18,7 @@ describe('date filter', () => {
         ds.setData(simpleArray.slice());
     });
 
-    it('date equal to', (done) => {
+    it('date equal to', () => {
         ds.filter({
             attribute: 'born',
             operator: 'EQUAL',
@@ -26,37 +27,33 @@ describe('date filter', () => {
         });
 
         expect(ds.getRows()).toEqual([{ name: 'person1', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }]);
-        done();
     });
 
-    it('date equal to, auto guess type based on input', (done) => {
+    it('date equal to, auto guess type based on input', () => {
         ds.filter({ attribute: 'born', operator: 'EQUAL', value: new Date(1990, 0, 1) });
 
         expect(ds.getRows()).toEqual([{ name: 'person1', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }]);
-        done();
     });
 
-    it('date greater than ', (done) => {
+    it('date greater than ', () => {
         ds.filter({ attribute: 'born', operator: 'GREATER_THAN', value: new Date(1990, 0, 1) });
 
         expect(ds.getRows()).toEqual([
             { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 
-    it('date less than ', (done) => {
+    it('date less than ', () => {
         ds.filter({ attribute: 'born', operator: 'LESS_THAN', value: new Date(1990, 0, 1) });
 
         expect(ds.getRows()).toEqual([
             { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
             { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }
         ]);
-        done();
     });
 
-    it('date greater or equal than ', (done) => {
+    it('date greater or equal than ', () => {
         ds.filter({
             attribute: 'born',
             operator: 'GREATER_THAN_OR_EQUAL_TO',
@@ -68,10 +65,9 @@ describe('date filter', () => {
             { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 
-    it('date less than ', (done) => {
+    it('date less than ', () => {
         ds.filter({
             attribute: 'born',
             operator: 'LESS_THAN_OR_EQUAL_TO',
@@ -83,10 +79,9 @@ describe('date filter', () => {
             { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person1', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }
         ]);
-        done();
     });
 
-    it('date less than ', (done) => {
+    it('date less than ', () => {
         ds.filter({
             attribute: 'born',
             operator: 'NOT_EQUAL_TO',
@@ -99,10 +94,9 @@ describe('date filter', () => {
             { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 
-    it('date contains will use greater or equal to ', (done) => {
+    it('date contains will use greater or equal to ', () => {
         ds.filter({
             attribute: 'born',
             operator: 'CONTAINS',
@@ -114,10 +108,9 @@ describe('date filter', () => {
             { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 
-    it('date begin with will use greater or equal to ', (done) => {
+    it('date begin with will use greater or equal to ', () => {
         ds.filter({
             attribute: 'born',
             operator: 'BEGIN_WITH',
@@ -129,10 +122,9 @@ describe('date filter', () => {
             { name: 'person1', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        done();
     });
 
-    it('date end with will use less than or equal to', (done) => {
+    it('date end with will use less than or equal to', () => {
         ds.filter({
             attribute: 'born',
             operator: 'END_WITH',
@@ -144,10 +136,9 @@ describe('date filter', () => {
             { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person1', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 }
         ]);
-        done();
     });
 
-    it('date does not contain will use less than ', (done) => {
+    it('date does not contain will use less than ', () => {
         ds.filter({
             attribute: 'born',
             operator: 'DOES_NOT_CONTAIN',
@@ -158,6 +149,5 @@ describe('date filter', () => {
             { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
             { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }
         ]);
-        done();
     });
 });
