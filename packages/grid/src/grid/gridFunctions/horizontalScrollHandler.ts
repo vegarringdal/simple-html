@@ -38,7 +38,19 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
         sectionElement = 'simple-html-grid-body-view-pinned-right';
     }
 
+    const delayScrollRender = () => {
+        ctx.largeScrollLeftTimer = setTimeout(() => {
+            ctx.largeScrollLeftTimer = null;
+
+            const el = getElementByClassName(ctx.element, sectionElement);
+            ctx.lastScrollLeft = el.scrollLeft - 5;
+            horizontalScrollHandler(ctx, el.scrollLeft);
+        }, 100);
+    };
+
     if (ctx.largeScrollLeftTimer) {
+        clearTimeout(ctx.largeScrollLeftTimer);
+        delayScrollRender();
         return;
     }
 
@@ -88,13 +100,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
         // large scroll will break logic on moving one and one, why bother
         clearTimeout(ctx.largeScrollLeftTimer);
 
-        ctx.largeScrollLeftTimer = setTimeout(() => {
-            ctx.largeScrollLeftTimer = null;
-
-            const el = getElementByClassName(ctx.element, sectionElement);
-            ctx.lastScrollLeft = el.scrollLeft - 5;
-            horizontalScrollHandler(ctx, el.scrollLeft);
-        }, 200);
+        delayScrollRender();
     } else {
         const rowsWanted = new Set<number>();
 
