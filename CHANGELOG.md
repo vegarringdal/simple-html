@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.49](https://github.com/simple-html/simple-html/compare/v5.0.0-next.48...v5.0.0-next.49) (2023-01-21)
+
+
+### Bug Fixes
+
+* delayed scroll, it was rendering since I did not update delay ([6659ead](https://github.com/simple-html/simple-html/commits/6659ead5814cc03a2b968f17f709c02165893741))
+* remove console log if not dev mode ([a61b095](https://github.com/simple-html/simple-html/commits/a61b0954c0373a383fb159c88ae5b2d38b480aed))
+* same dalay to vert scroll ([9fe3553](https://github.com/simple-html/simple-html/commits/9fe3553a79a7f8324be6ddff667817710d4a5b9b))
+
 ## [5.0.0-next.48](https://github.com/simple-html/simple-html/compare/v5.0.0-next.47...v5.0.0-next.48) (2023-01-11)
 
 
