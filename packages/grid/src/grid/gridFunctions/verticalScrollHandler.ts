@@ -15,7 +15,17 @@ import { removeContextMenu } from './removeContextMenu';
 export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
     removeContextMenu(ctx);
 
+    const delayScrollRender = () => {
+        ctx.largeScrollTopTimer = setTimeout(() => {
+            ctx.largeScrollTopTimer = null;
+            const el = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
+            verticalScrollHandler(ctx, el.scrollTop);
+        }, 200);
+    };
+
     if (ctx.largeScrollTopTimer) {
+        clearTimeout(ctx.largeScrollTopTimer);
+        delayScrollRender();
         return;
     }
 
@@ -53,12 +63,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
 
     if (largeScroll) {
         clearTimeout(ctx.largeScrollTopTimer);
-
-        ctx.largeScrollTopTimer = setTimeout(() => {
-            ctx.largeScrollTopTimer = null;
-            const el = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-            verticalScrollHandler(ctx, el.scrollTop);
-        }, 100);
+        delayScrollRender();
     } else {
         const rowsWanted = new Set<number>();
 
