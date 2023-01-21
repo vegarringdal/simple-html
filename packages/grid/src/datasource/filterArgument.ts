@@ -4,13 +4,16 @@ import { FilterComparisonOperator } from './filterComparisonOperator';
  * filter argument can be either group or expression
  * but it tries not to be strict
  * 
- *  
+ * Group Options
+ * ```ts
  * group = {
  *   type?: FilterGroup; // if filterArgument, it assumes "CONDITION"
  *   logicalOperator?: FilterLogicalOperator; // if nothing is set it assumes "AND"
  *   filterArguments?: FilterArgument[]; // if array then datasource assumes "GROUP"
  * };
- * 
+ * ```
+ * Expression options
+ * ```ts
  * expression = {
  *   type?: FilterExpressionType; // if no filterArguments, it assumes "CONDITION"
  *   attribute?: string | null;
@@ -20,6 +23,40 @@ import { FilterComparisonOperator } from './filterComparisonOperator';
  *   valueType?: FilterValueType | null;
  *   attributeType?: DataTypes;
  * };
+ * ```
+ * 
+ * Sample expression:
+ * ```ts
+ *  ds.filter({
+ *           attribute: 'born',
+ *           operator: 'EQUAL',
+ *           value: new Date(1990, 0, 1),
+ *           attributeType: 'date'
+ *       });
+ * ```
+ * 
+ * Sample using groups:
+ * ```ts
+ *  ds.filter({
+ *          logicalOperator: 'OR',
+ *          filterArguments: [
+ *              {
+ *                  logicalOperator: 'AND',
+ *                  filterArguments: [
+ *                      { attribute: 'group', operator: 'EQUAL', value: 'group2' },
+ *                      { attribute: 'name', operator: 'EQUAL', value: 'person2' }
+ *                  ]
+ *              },
+ *              {
+ *                  logicalOperator: 'AND',
+ *                  filterArguments: [
+ *                      { attribute: 'group', operator: 'EQUAL', value: 'group1' },
+ *                      { attribute: 'name', operator: 'EQUAL', value: 'person4' }
+ *                  ]
+ *              }
+ *          ]
+ *      });
+ *  ```    
  */
 export type FilterArgument = {
     type?: FilterExpressionType;
