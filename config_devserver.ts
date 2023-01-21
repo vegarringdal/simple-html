@@ -21,8 +21,7 @@ client(
         tsconfig: `./samples/tsconfig.json`,
         platform: 'browser',
         sourcemap: true,
-        logLevel: 'error',
-        incremental: true
+        logLevel: 'error'
     }
 );
 /**
