@@ -27,7 +27,7 @@ export function renderRowSelector(
             class=${currentEntitySelected + ' simple-html-absolute-fill'}
             @click=${(e: MouseEvent) => {
                 const ds = ctx.gridInterface.getDatasource();
-                if (rowData.__group) {
+                if (rowData?.__group) {
                     const rows = ds.getRows();
                     const selectRows = [];
                     for (let i = row + 1; i < rows.length; i++) {
