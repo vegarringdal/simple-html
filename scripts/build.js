@@ -37,7 +37,7 @@ async function run() {
                         noImplicitThis: false,
                         noUnusedLocals: true,
                         allowUnreachableCode: false,
-                        removeComments: true,
+                        removeComments: false,
                         emitDecoratorMetadata: false,
                         importHelpers: false,
                         strictNullChecks: false,
