@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.53](https://github.com/simple-html/simple-html/compare/v5.0.0-next.52...v5.0.0-next.53) (2023-01-22)
+
+
+### Bug Fixes
+
+* vertical scroll - stop renedering during large scroll ([f813842](https://github.com/simple-html/simple-html/commits/f8138425125003a3510fd4bb37132f08a6c647ea))
+
 ## [5.0.0-next.52](https://github.com/simple-html/simple-html/compare/v5.0.0-next.51...v5.0.0-next.52) (2023-01-22)
 
 ## [5.0.0-next.51](https://github.com/simple-html/simple-html/compare/v5.0.0-next.50...v5.0.0-next.51) (2023-01-22)
