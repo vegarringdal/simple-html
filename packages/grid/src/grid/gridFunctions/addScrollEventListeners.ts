@@ -22,19 +22,50 @@ export function addScrollEventListeners(ctx: Grid) {
     scroller.addEventListener(
         'scroll',
         (event) => {
-            const x = event.currentTarget as HTMLElement;
+            // declare
+            let delayScrollRender: () => void;
 
-            setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), x.scrollTop);
-            setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-group'), x.scrollTop);
-            setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-selector'), x.scrollTop);
-            setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-left'), x.scrollTop);
-            setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle'), x.scrollTop);
-            setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-right'), x.scrollTop);
+            /**
+             * updates scrolltop on all sections and rows
+             */
+            function scroll() {
+                const x = scroller;
 
-            // get scrolltop
-            const el = event.target as HTMLElement;
-            const scrollTop = el.scrollTop;
-            verticalScrollHandler(ctx, scrollTop);
+                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), x.scrollTop);
+                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-group'), x.scrollTop);
+                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-selector'), x.scrollTop);
+                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-left'), x.scrollTop);
+                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle'), x.scrollTop);
+                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-right'), x.scrollTop);
+
+                // get scrolltop
+                const el = event.target as HTMLElement;
+                const scrollTop = el.scrollTop;
+                const result = verticalScrollHandler(ctx, scrollTop);
+                if (result === false) {
+                    delayScrollRender();
+                }
+            }
+
+            /**
+             * create timer and call scroll after
+             */
+            delayScrollRender = () => {
+                ctx.largeScrollTopTimer = setTimeout(() => {
+                    ctx.largeScrollTopTimer = null;
+                    scroll();
+                }, 150);
+            };
+
+            /**
+             * check if we allready have time set, if we do we reset it
+             */
+            if (ctx.largeScrollTopTimer) {
+                clearTimeout(ctx.largeScrollTopTimer);
+                delayScrollRender();
+            } else {
+                scroll();
+            }
         },
         { passive: false }
     );

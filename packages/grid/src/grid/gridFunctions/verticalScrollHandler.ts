@@ -11,23 +11,10 @@ import {
 } from './GROUP_COLTYPE';
 import { renderCell } from './renderCell';
 import { removeContextMenu } from './removeContextMenu';
+import { hideAllRows } from './hideAllRows';
 
 export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
     removeContextMenu(ctx);
-
-    const delayScrollRender = () => {
-        ctx.largeScrollTopTimer = setTimeout(() => {
-            ctx.largeScrollTopTimer = null;
-            const el = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-            verticalScrollHandler(ctx, el.scrollTop);
-        }, 200);
-    };
-
-    if (ctx.largeScrollTopTimer) {
-        clearTimeout(ctx.largeScrollTopTimer);
-        delayScrollRender();
-        return;
-    }
 
     const lastScrollTop = ctx.lastScrollTop;
     const rowTops = ctx.gridInterface.__getScrollState().scrollTops;
@@ -62,8 +49,8 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
     ctx.lastScrollTop = scrollTop;
 
     if (largeScroll) {
-        clearTimeout(ctx.largeScrollTopTimer);
-        delayScrollRender();
+        hideAllRows(ctx);
+        return false;
     } else {
         const rowsWanted = new Set<number>();
 
@@ -291,5 +278,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
             e.row = ctx.containerGroupRowCache[i].row;
             updateRow(e, RIGH_PINNED_COLTYPE);
         });
+
+        return true;
     }
 }
