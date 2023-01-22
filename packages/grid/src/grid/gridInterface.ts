@@ -17,7 +17,7 @@ export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
 export type callable = callF | callO;
 
-declare const DEVELOPMENT: boolean;
+/* declare const DEVELOPMENT: boolean; */
 
 /**
  * grid interface is what user have access to controll grid behavior
@@ -542,9 +542,9 @@ export class GridInterface<T> {
 
                 break;
             default:
-                if (DEVELOPMENT === true) {
+                /* if (DEVELOPMENT === true) {
                     console.log('skipping:', e.type, e.data);
-                }
+                } */
         }
 
         return true; // to hold active
