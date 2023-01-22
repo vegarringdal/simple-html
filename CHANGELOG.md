@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.51](https://github.com/simple-html/simple-html/compare/v5.0.0-next.50...v5.0.0-next.51) (2023-01-22)
+
+
+### Bug Fixes
+
+* check if we have rowdata before using it ([01f99b8](https://github.com/simple-html/simple-html/commits/01f99b8229a04ea47b704d4899918969acf874f3))
+
 ## [5.0.0-next.50](https://github.com/simple-html/simple-html/compare/v5.0.0-next.49...v5.0.0-next.50) (2023-01-22)
 
 
