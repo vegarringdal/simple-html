@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.50](https://github.com/simple-html/simple-html/compare/v5.0.0-next.49...v5.0.0-next.50) (2023-01-22)
+
+
+### Bug Fixes
+
+* remove devlopment env - prod will be missing it ([4961751](https://github.com/simple-html/simple-html/commits/49617517d73006a3652c5c4aaf09b6cfb3f3f546))
+
 ## [5.0.0-next.49](https://github.com/simple-html/simple-html/compare/v5.0.0-next.48...v5.0.0-next.49) (2023-01-21)
 
 
