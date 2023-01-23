@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.54](https://github.com/simple-html/simple-html/compare/v5.0.0-next.53...v5.0.0-next.54) (2023-01-23)
+
+
+### Bug Fixes
+
+* dynamic readonly Fixes [#47](https://vegarringdal//null/issues/47) ([#48](https://vegarringdal//null/issues/48)) ([cd72379](https://github.com/simple-html/simple-html/commits/cd723793edf12fa66a21dd878d1eddbf5aacb917))
+
 ## [5.0.0-next.53](https://github.com/simple-html/simple-html/compare/v5.0.0-next.52...v5.0.0-next.53) (2023-01-22)
 
 
