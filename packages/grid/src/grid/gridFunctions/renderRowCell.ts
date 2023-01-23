@@ -93,7 +93,7 @@ export function renderRowCell(
                             triggerScrollEvent(ctx);
                         }}
                         @change=${(e: any) => {
-                            if (!config.readonly) {
+                            if (!cellReadOnly) {
                                 if (cellConfig.allowPasteClearOnly) {
                                     // nothing
                                 } else {
