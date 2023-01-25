@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.55](https://github.com/simple-html/simple-html/compare/v5.0.0-next.54...v5.0.0-next.55) (2023-01-25)
+
+
+### Bug Fixes
+
+* css border [#49](https://vegarringdal//null/issues/49) and run prettier on css ([feca8d1](https://github.com/simple-html/simple-html/commits/feca8d1476984901f8b5bc510a4aefa06ea098a7))
+
 ## [5.0.0-next.54](https://github.com/simple-html/simple-html/compare/v5.0.0-next.53...v5.0.0-next.54) (2023-01-23)
 
 
