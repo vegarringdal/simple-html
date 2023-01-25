@@ -87,20 +87,18 @@ input {
     overflow-y: scroll;
     pointer-events: all;
     border-bottom: 2px solid var(--simple-html-grid-pinned-border);
-
 }
 
 .simple-html-grid-header .simple-html-grid-col {
     background-color: var(--simple-html-grid-sec-bg-color);
 }
 
-
 .simple-html-grid-body {
     box-sizing: border-box;
     position: absolute;
     left: 0;
     right: 0;
-   
+
     border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
@@ -227,7 +225,6 @@ input {
     bottom: 0;
     top: 0;
 }
-
 
 .simple-html-grid-body-view-pinned-middle {
     box-sizing: border-box;
@@ -436,15 +433,19 @@ input {
     left: 0;
     min-width: 100%;
     pointer-events: all;
-/*    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);  */
+    /*    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);  */
     background-color: var(--simple-html-grid-sec-bg-color);
 }
 
-/* .simple-html-grid-body-row-container-group .simple-html-grid-row {
-    border-bottom: 1px solid var(--simple-html-grid-pinned-border);
-} */
+.simple-html-grid-grouping-row {
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+}
 
-.simple-html-grid-body-row-container-selector .simple-html-grid-row{
+.simple-html-grid-body-row-container-group .simple-html-grid-row {
+    border-bottom: 1px solid var(--simple-html-grid-pinned-border);
+}
+
+.simple-html-grid-body-row-container-selector .simple-html-grid-row {
     border-bottom: 1px solid var(--simple-html-grid-pinned-border);
 }
 
@@ -546,9 +547,9 @@ input {
     bottom: 0;
     overflow: hidden;
     user-select: none;
-    cursor: not-allowed
+    cursor: not-allowed;
     /* filter: opacity(0.1); */
-   /*  background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, var(--simple-html-grid-main-bg-selected-odd) 1px, var(--simple-html-grid-main-bg-selected-odd) 4px); */
+    /*  background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, var(--simple-html-grid-main-bg-selected-odd) 1px, var(--simple-html-grid-main-bg-selected-odd) 4px); */
 }
 
 .simple-html-grid-row-even .simple-html-dimmed {
@@ -563,10 +564,9 @@ input {
     bottom: 0;
     overflow: hidden;
     user-select: none;
-    cursor: not-allowed
+    cursor: not-allowed;
     /* filter: opacity(0.1); */
-  /*   background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, var(--simple-html-grid-main-bg-selected-even) 1px, var(--simple-html-grid-main-bg-selected-even) 4px); */
-
+    /*   background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, var(--simple-html-grid-main-bg-selected-even) 1px, var(--simple-html-grid-main-bg-selected-even) 4px); */
 }
 
 .simple-html-readonly {
@@ -582,9 +582,15 @@ input {
     overflow: hidden;
     user-select: none;
     filter: opacity(0.2);
-    background-image: repeating-linear-gradient(-45deg, rgb(255, 255, 255), rgb(255, 0, 0) 1px, rgb(255, 255, 255) ,1px, rgb(255, 0, 0) 1px);
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgb(255, 255, 255),
+        rgb(255, 0, 0) 1px,
+        rgb(255, 255, 255),
+        1px,
+        rgb(255, 0, 0) 1px
+    );
 }
-
 
 .simple-html-mandatory {
     box-sizing: border-box;
@@ -599,7 +605,14 @@ input {
     overflow: hidden;
     user-select: none;
     filter: opacity(0.2);
-    background-image: repeating-linear-gradient(45deg, rgb(255, 255, 255), rgb(0, 8, 255) 1px, rgb(255, 255, 255) ,1px, rgb(0, 8, 255) 1px);
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgb(255, 255, 255),
+        rgb(0, 8, 255) 1px,
+        rgb(255, 255, 255),
+        1px,
+        rgb(0, 8, 255) 1px
+    );
 }
 
 .simple-html-selector {
@@ -941,24 +954,22 @@ input {
     pointer-events: none;
 }
 
-
 .simple-html-grid-reset {
     background-color: var(--simple-html-grid-main-bg-color);
     border: 0px;
 }
 
-
-.simple-html-grid .footer-query{
+.simple-html-grid .footer-query {
     text-overflow: ellipsis;
     max-width: 90%;
 }
 
-.simple-html-grid .clear-button{
-  color: red;
-  font-weight: bold;
-  margin-left: 5px;
-  pointer-events: all;
-  cursor: pointer;
+.simple-html-grid .clear-button {
+    color: red;
+    font-weight: bold;
+    margin-left: 5px;
+    pointer-events: all;
+    cursor: pointer;
 }
 
 /****************************************************************************
@@ -1083,7 +1094,6 @@ input {
     filter: opacity(0.5);
     transition: initial;
     outline-color: var(--simple-html-grid-main-bg-color);
-  
 }
 
 .simple-html-grid .filter-editor-content .grid-overflow-auto {
@@ -1143,8 +1153,7 @@ input {
     opacity: 1;
 }
 
-.simple-html-grid input[type=checkbox]:focus {
-   
+.simple-html-grid input[type='checkbox']:focus {
     outline: 1px dashed var(--simple-html-grid-main-font-color);
     opacity: 1;
 }
@@ -1157,22 +1166,15 @@ input {
     opacity: 1;
 }
 
-
 /*
  * override left pinned border
  */
 
-
-
-.pinned-left-grouping-only{
+.pinned-left-grouping-only {
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-
-
-
-
-.simple-html-grid-menu-item-input{
+.simple-html-grid-menu-item-input {
     box-sizing: border-box;
     margin-left: 1px;
     border: 0;
