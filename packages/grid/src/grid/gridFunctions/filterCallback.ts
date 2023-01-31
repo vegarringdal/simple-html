@@ -14,6 +14,9 @@ export function filterCallback(
     filterArrayAndValue?: string,
     notinArray?: boolean
 ) {
+
+    const valueConverter = ctx.gridInterface.getDatasource().getValueFormater();
+
     switch (col.type) {
         case 'date':
             col.currentFilterValue = ctx.gridInterface
@@ -26,18 +29,19 @@ export function filterCallback(
             col.currentFilterValue =
                 value === ''
                     ? null
-                    : ctx.gridInterface.getDatasource().getValueFormater().toSource(value, col.type, col.attribute);
+                    : valueConverter.toSource(value, col.type, col.attribute);
 
             break;
         case 'boolean':
+            console.log("bool filter")
             if (value === '') {
                 col.currentFilterValue = null;
             }
             if (value === 'false') {
-                col.currentFilterValue = false;
+                col.currentFilterValue = valueConverter.toSource(false, col.type, col.attribute);
             }
             if (value === 'true') {
-                col.currentFilterValue = true;
+                col.currentFilterValue = valueConverter.toSource(true, col.type, col.attribute);
             }
 
             break;
