@@ -199,7 +199,7 @@ Need for version "5.0.0":
  * [ ] make mandatory color only show if there is no value ?
  * [x] first/next/prev/last/new entity, need some stratagy on how we want grid behave, scroll to or just stay where it is?
  * [ ] event when filter oprator is chnage from menu, incase you want to edit placehold for filter
- * [ ] have a valueFormater to modify values instead of just a number and date formater
+ * [x] have a valueFormater to modify values instead of just a number and date formater
     * this should be able to make it easier for custom formats on bools, etc
  * [ ] datasource to genrate changelog ?
     * datasource allready have mark for deletion, so it should be able to give all if used correctly, it it might be nice to have built in
