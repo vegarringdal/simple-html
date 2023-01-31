@@ -47,7 +47,7 @@ export function renderRowCell(
         if (cellReadOnly !== false && cellReadOnly !== true) {
             cellReadOnly = cellConfig.readonly || true;
         }
-     
+
         if (!config.readonly && cellReadOnly) {
             dimmed = 'simple-html-readonly';
         }
@@ -92,7 +92,7 @@ export function renderRowCell(
                             triggerScrollEvent(ctx);
                         }}
                         @change=${(e: any) => {
-                            if (!cellReadOnly) {
+                            if (!cellReadOnly && !config.readonly) {
                                 if (cellConfig.allowPasteClearOnly) {
                                     // nothing
                                 } else {
@@ -275,7 +275,7 @@ export function renderRowCell(
                                 return;
                             }
 
-                            if (!cellReadOnly) {
+                            if (!config.readonly && !cellReadOnly) {
                                 entity[attribute] = valueFormater.toSource(e.target.value, cellConfig.type, attribute);
                             }
                         }}
@@ -285,7 +285,7 @@ export function renderRowCell(
                                 return;
                             }
 
-                            if (!cellReadOnly) {
+                            if (!config.readonly && !cellReadOnly) {
                                 entity[attribute] = valueFormater.toSource(e.target.value, cellConfig.type, attribute);
                             }
                         }}
