@@ -257,11 +257,10 @@ export function contextmenuFilter(
             }
 
             const updateFilter = () => {
-                
                 filterCallback(ctx, cellConfig.currentFilterValue as any, cellConfig);
                 ctx.gridInterface.__callSubscribers('filter-operator-change', {
                     cellConfig,
-                    ctx:ctx,
+                    ctx: ctx,
                     rebuildHeaderColumns
                 });
             };

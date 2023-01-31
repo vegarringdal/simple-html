@@ -27,7 +27,6 @@ describe('string filter', () => {
         });
 
         expect(ds.getRows()).toEqual([{ name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }]);
-        
     });
 
     it('string not equal to', () => {
@@ -44,7 +43,6 @@ describe('string filter', () => {
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 },
             { name: 'aperson4a', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string begin with ', () => {
@@ -59,7 +57,6 @@ describe('string filter', () => {
             { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string end with ', () => {
@@ -70,7 +67,6 @@ describe('string filter', () => {
         });
 
         expect(ds.getRows()).toEqual([{ name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }]);
-        
     });
 
     it('string constains ', () => {
@@ -86,7 +82,6 @@ describe('string filter', () => {
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 },
             { name: 'aperson4a', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string does not constains ', () => {
@@ -100,7 +95,6 @@ describe('string filter', () => {
             { name: 'Nils', group: 'group1', age: 32, born: new Date(1990, 0, 1), index: 3 },
             { name: 'Nilsman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 }
         ]);
-        
     });
 
     it('string equal with wildcard * (same as begin with)', () => {
@@ -115,7 +109,6 @@ describe('string filter', () => {
             { name: 'person1', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string equal with wildcard * (same as end with)', () => {
@@ -126,7 +119,6 @@ describe('string filter', () => {
         });
 
         expect(ds.getRows()).toEqual([{ name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }]);
-        
     });
 
     it('string begin with & wildcard in the begining = contains', () => {
@@ -142,7 +134,6 @@ describe('string filter', () => {
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 },
             { name: 'aperson4a', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string end with wildcard in the end = contains', () => {
@@ -158,6 +149,5 @@ describe('string filter', () => {
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 },
             { name: 'aperson4a', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 });

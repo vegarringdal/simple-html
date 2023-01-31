@@ -7,7 +7,7 @@ import { getGroupingWidth } from './getGroupingWidth';
 export function updateMainElementSizes(ctx: Grid) {
     const config = ctx.gridInterface.__getGridConfig();
 
-    ctx.element.setAttribute("role", "table")
+    ctx.element.setAttribute('role', 'table');
 
     /**
      * main elements

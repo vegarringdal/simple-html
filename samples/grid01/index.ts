@@ -1,10 +1,12 @@
 import './index.css';
-import { Datasource, Entity } from '@simple-html/grid';
+import { Datasource, Entity, NumberFormaterComma, NumberFormaterDot, DateFormaterISO8601, DateFormaterDDMMYYYY } from '@simple-html/grid';
 import { GridInterface, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
 import { dummydata } from './dummyData';
 import { gridConfig } from './gridConfig';
 import { toggelDarkGrid } from './toggelDarkGrid';
+import { NumberFormaterCustom } from './numberFormaterCustom';
+import { DateFormaterCustom } from './dateFormaterCustom';
 
 /**
  * WARNING, this will be weird while I get main parts working
@@ -205,13 +207,11 @@ const gridInterfaceEvents = {
     handleEvent: (e: any) => {
         console.log('GRIDINTERFACE EVENTS:', e.type, e.data);
 
-
-        if(e.type === 'filter-operator-change'){
+        if (e.type === 'filter-operator-change') {
             // sample on how you  would edit config and rerender headers
-            e.data.cellConfig.placeHolderFilter = e.data.cellConfig.operator
+            e.data.cellConfig.placeHolderFilter = e.data.cellConfig.operator;
             e.data.rebuildHeaderColumns(e.data.ctx);
         }
-
 
         return true; // to keep subscribing
     }
@@ -232,6 +232,42 @@ createButton('gridInterface.addEventListener\n (see console - F12)', () => {
 createButton('gridInterface.removeEventListener\n (see console - F12)', () => {
     gridInterface.removeEventListener(gridInterfaceEvents);
 });
+
+createButton('overide default numberformater (comma)', () => {
+    datasource.setNumberFormater(NumberFormaterComma);
+    gridInterface.triggerScrollEvent()
+    
+});
+
+createButton('overide default numberformater (comma-custom)', () => {
+    datasource.setNumberFormater(NumberFormaterCustom);
+    gridInterface.triggerScrollEvent()
+    
+});
+
+createButton('use default numberformater (dot)', () => {
+    datasource.setNumberFormater(NumberFormaterDot);
+    gridInterface.triggerScrollEvent()
+});
+
+
+createButton('overide default Dateformater (DD.MM.YYYY)', () => {
+    datasource.setDateFormater(DateFormaterDDMMYYYY);
+    gridInterface.triggerScrollEvent()
+    
+});
+
+createButton('overide default Dateformater (DD.MM.YYYY/custom)', () => {
+    datasource.setDateFormater(DateFormaterCustom);
+    gridInterface.triggerScrollEvent()
+    
+});
+
+createButton('use default Dateformater (iso8601)', () => {
+    datasource.setDateFormater(DateFormaterISO8601);
+    gridInterface.triggerScrollEvent()
+});
+
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
     gridInterface.readonlySetter((attribute: string, rowData: Entity, configReadonlySetting: boolean) => {

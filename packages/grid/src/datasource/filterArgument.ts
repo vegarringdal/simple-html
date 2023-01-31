@@ -3,7 +3,7 @@ import { FilterComparisonOperator } from './filterComparisonOperator';
 /**
  * filter argument can be either group or expression
  * but it tries not to be strict
- * 
+ *
  * Group Options
  * ```ts
  * group = {
@@ -18,13 +18,13 @@ import { FilterComparisonOperator } from './filterComparisonOperator';
  *   type?: FilterExpressionType; // if no filterArguments, it assumes "CONDITION"
  *   attribute?: string | null;
  *   logicalOperator?: FilterLogicalOperator; // if no filterArguments, it assumes "NONE"
- *   operator?: FilterComparisonOperator | null; 
- *   value?: string | number | null | Date; 
+ *   operator?: FilterComparisonOperator | null;
+ *   value?: string | number | null | Date;
  *   valueType?: FilterValueType | null;
  *   attributeType?: DataTypes;
  * };
  * ```
- * 
+ *
  * Sample expression:
  * ```ts
  *  ds.filter({
@@ -34,7 +34,7 @@ import { FilterComparisonOperator } from './filterComparisonOperator';
  *           attributeType: 'date'
  *       });
  * ```
- * 
+ *
  * Sample using groups:
  * ```ts
  *  ds.filter({
@@ -56,7 +56,7 @@ import { FilterComparisonOperator } from './filterComparisonOperator';
  *              }
  *          ]
  *      });
- *  ```    
+ *  ```
  */
 export type FilterArgument = {
     type?: FilterExpressionType;

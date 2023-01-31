@@ -10,8 +10,10 @@ import { GroupArgument } from './groupArgument';
 import { OPERATORS } from './OPERATORS';
 import { Entity } from './entity';
 import { DataContainer } from './dataContainer';
-import { DateFormaterDefault, DateFormaterType } from './dateFormaterDefault';
-import { NumberFormaterDot, NumberFormaterType } from './numberFormaterDot';
+import { DateFormaterISO8601 } from './dateFormaterISO8601';
+import { DateAndNumberFormater, ValueFormater } from './valueFormater';
+import { NumberFormaterDot } from './numberFormaterDot';
+import { DefaultValueFormater } from './DefaultValueFormater';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -72,12 +74,14 @@ export class Datasource<T = any> {
     /**
      * default date formater
      */
-    private __dateFormater: DateFormaterType = DateFormaterDefault;
+    private __dateFormater: DateAndNumberFormater = DateFormaterISO8601;
 
     /**
      * default number formater
      */
-    private __numberFormater: NumberFormaterType = NumberFormaterDot;
+    private __numberFormater: DateAndNumberFormater = NumberFormaterDot;
+
+    private __valueFormater: ValueFormater;
 
     /**
      * current entity, use this with form etc if you have a grid with detail form
@@ -85,6 +89,7 @@ export class Datasource<T = any> {
     public currentEntity: EntityUnion<T> | null = null;
 
     constructor(dataContainer?: DataContainer, options?: DatasourceConfigOptions) {
+        this.__valueFormater = new DefaultValueFormater(this);
         this.__dataContainer = dataContainer || new DataContainer();
         this.__selectionMode = options?.selectionMode || 'multiple';
         this.__selection = new Selection(this);
@@ -93,12 +98,16 @@ export class Datasource<T = any> {
         this.__grouping = new Grouping();
     }
 
-    public setNumberFormater(formater: NumberFormaterType) {
+    public setNumberFormater(formater: DateAndNumberFormater) {
         this.__numberFormater = formater;
     }
 
-    public setDateFormater(formater: DateFormaterType) {
+    public setDateFormater(formater: DateAndNumberFormater) {
         this.__dateFormater = formater;
+    }
+
+    public setValueFormater(formater: ValueFormater) {
+        this.__valueFormater = formater;
     }
 
     public getNumberFormater() {
@@ -107,6 +116,10 @@ export class Datasource<T = any> {
 
     public getDateFormater() {
         return this.__dateFormater;
+    }
+
+    public getValueFormater() {
+        return this.__valueFormater;
     }
 
     /**
@@ -181,6 +194,13 @@ export class Datasource<T = any> {
      */
     public getAllData(): EntityUnion<T>[] {
         return this.__dataContainer.getDataSet() as any;
+    }
+
+    /**
+     * This returns datacontainer used
+     */
+    public getDataContainer() {
+        return this.__dataContainer;
     }
 
     /**
@@ -760,19 +780,10 @@ export class Datasource<T = any> {
             return '';
         }
 
-        const dateformater = this.getDateFormater();
-        const numformater = this.getNumberFormater();
+        const valueFormater = this.getValueFormater();
 
-        function convertValue(type: string, value: string | Date | number) {
-            if (type === 'date') {
-                return dateformater.fromDate(value);
-            }
-
-            if (type === 'number') {
-                return numformater.fromNumber(value);
-            }
-
-            return value;
+        function convertValue(type: any, value: string | Date | number, attribute: string) {
+            return valueFormater.fromSource(value, type, attribute);
         }
 
         const parser = function (obj: FilterArgument, queryString = '') {
@@ -787,7 +798,7 @@ export class Datasource<T = any> {
                                 `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
                                     obj.valueType === 'ATTRIBUTE'
                                         ? `[${obj.value}]`
-                                        : "'" + convertValue(obj.attributeType, obj.value) + "'"
+                                        : "'" + convertValue(obj.attributeType, obj.value, obj.attribute) + "'"
                                 }`;
                         } else {
                             // split newline into array

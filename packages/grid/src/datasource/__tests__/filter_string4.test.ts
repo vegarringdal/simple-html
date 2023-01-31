@@ -32,7 +32,6 @@ describe('string filter', () => {
             { name: 'd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'e', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string with GREATER_THAN_OR_EQUAL_TO', () => {
@@ -49,7 +48,6 @@ describe('string filter', () => {
             { name: 'd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'e', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string with LESS_THAN', () => {
@@ -66,7 +64,6 @@ describe('string filter', () => {
             { name: 'd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'e', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
         ]);
-        
     });
 
     it('string with LESS_THAN', () => {
@@ -83,6 +80,5 @@ describe('string filter', () => {
             { name: 'd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'e', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }  */
         ]);
-        
     });
 });

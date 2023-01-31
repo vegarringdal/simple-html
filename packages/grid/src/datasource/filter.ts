@@ -100,13 +100,13 @@ export class Filter {
 
                         let data;
                         if (filter.attributeType === 'date' && rowData) {
-                            data = ds.getDateFormater().fromDate(rowData[filter.attribute]);
+                            data = ds.getValueFormater().fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
                         } else {
                             if (filter.attributeType === 'number' && rowData) {
-                                data = ds.getNumberFormater().fromNumber(rowData[filter.attribute]);
+                                data = ds.getValueFormater().fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
                             } else {
                                 if (rowData && rowData[filter.attribute] !== null && rowData[filter.attribute] !== undefined) {
-                                    data = rowData && rowData[filter.attribute];
+                                    data = rowData && ds.getValueFormater().fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
                                     if (data && data.toUpperCase) {
                                         data = data.toUpperCase();
                                     }
@@ -187,10 +187,10 @@ export class Filter {
 
                         let data;
                         if (filter.attributeType === 'date' && rowData) {
-                            data = ds.getDateFormater().fromDate(rowData[filter.attribute]);
+                            data = ds.getValueFormater().fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
                         } else {
                             if (filter.attributeType === 'number' && rowData) {
-                                data = ds.getNumberFormater().fromNumber(rowData[filter.attribute]);
+                                data = ds.getValueFormater().fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
                             } else {
                                 if (rowData && rowData[filter.attribute] !== null && rowData[filter.attribute] !== undefined) {
                                     data = rowData && rowData[filter.attribute];

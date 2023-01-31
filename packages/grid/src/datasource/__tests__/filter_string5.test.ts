@@ -44,7 +44,6 @@ describe('string filter', () => {
             { name: 'tgyh', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'eref\n\r', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
         ]);
-        
     });
 
     it('string with NOT_EQUAL_TO - wildcard multiline', () => {
@@ -60,7 +59,6 @@ describe('string filter', () => {
             { name: 'tgyh', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'eref\n\r', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string with NOT_EQUAL_TO - wildcard multiline', () => {
@@ -74,7 +72,6 @@ describe('string filter', () => {
             { name: 'abcd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'tgyh', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }
         ]);
-        
     });
 
     it('string with EQUAL - wildcard multiline', () => {
@@ -97,6 +94,5 @@ describe('string filter', () => {
             /*     { name: 'tgyh', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },  */
             { name: 'eref\n\r', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 });

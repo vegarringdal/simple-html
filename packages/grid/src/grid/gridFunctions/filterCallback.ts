@@ -18,18 +18,15 @@ export function filterCallback(
         case 'date':
             col.currentFilterValue = ctx.gridInterface
                 .getDatasource()
-                .getDateFormater()
-                .toDate(value as string);
+                .getValueFormater()
+                .toSource(value, col.type, col.attribute);
 
             break;
         case 'number':
             col.currentFilterValue =
                 value === ''
                     ? null
-                    : ctx.gridInterface
-                          .getDatasource()
-                          .getNumberFormater()
-                          .toNumber(value as string);
+                    : ctx.gridInterface.getDatasource().getValueFormater().toSource(value, col.type, col.attribute);
 
             break;
         case 'boolean':

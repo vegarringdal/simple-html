@@ -1,7 +1,7 @@
 /**
  * numberformater, replaces dot with comma
  */
-export class NumberFormaterComma {
+export class NumberFormaterCustom {
     /**
      *
      * @param value Takes string and returns date
@@ -51,7 +51,7 @@ export class NumberFormaterComma {
     }
 
     static fromSourceDisplay(value: any): string | null | undefined {
-        return this.fromSource(value);
+        return parseInt(this.fromSource(value)+'').toFixed(2);
     }
 
     static placeholder() {

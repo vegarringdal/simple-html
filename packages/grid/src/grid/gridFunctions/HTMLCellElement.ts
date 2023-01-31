@@ -6,4 +6,8 @@ export interface HTMLCellElement extends HTMLElement {
     $coltype: ColType;
     $celno: number;
     $attribute: string;
+    /**
+     * helper to know if cell is focused
+     */
+    $focused: boolean;
 }
