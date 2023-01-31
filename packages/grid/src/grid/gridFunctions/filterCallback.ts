@@ -33,7 +33,6 @@ export function filterCallback(
 
             break;
         case 'boolean':
-            console.log("bool filter")
             if (value === '') {
                 col.currentFilterValue = null;
             }
