@@ -45,9 +45,9 @@ export function renderRowCell(
 
         let cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, rowData, cellConfig.readonly || false);
         if (cellReadOnly !== false && cellReadOnly !== true) {
-            cellReadOnly = cellConfig.readonly;
+            cellReadOnly = cellConfig.readonly || true;
         }
-
+     
         if (!config.readonly && cellReadOnly) {
             dimmed = 'simple-html-readonly';
         }
