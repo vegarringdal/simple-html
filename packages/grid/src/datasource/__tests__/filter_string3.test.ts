@@ -32,7 +32,6 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }, */
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string with BEGIN_WITH', () => {
@@ -49,7 +48,6 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 }, */
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 
     it('string with END_WITH', () => {
@@ -66,7 +64,6 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
         ]);
-        
     });
 
     it('string with END_WITH', () => {
@@ -83,7 +80,6 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 } */
         ]);
-        
     });
 
     it('string with END_WITH', () => {
@@ -101,6 +97,5 @@ describe('string filter', () => {
             { name: 'qperson244', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
             { name: 'person4', group: 'group1', age: 55, born: new Date(2000, 0, 1), index: 5 }
         ]);
-        
     });
 });

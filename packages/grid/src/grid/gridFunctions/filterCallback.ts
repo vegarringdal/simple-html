@@ -14,22 +14,18 @@ export function filterCallback(
     filterArrayAndValue?: string,
     notinArray?: boolean
 ) {
+    const valueConverter = ctx.gridInterface.getDatasource().getValueFormater();
+
     switch (col.type) {
         case 'date':
             col.currentFilterValue = ctx.gridInterface
                 .getDatasource()
-                .getDateFormater()
-                .toDate(value as string);
+                .getValueFormater()
+                .toSource(value, col.type, col.attribute);
 
             break;
         case 'number':
-            col.currentFilterValue =
-                value === ''
-                    ? null
-                    : ctx.gridInterface
-                          .getDatasource()
-                          .getNumberFormater()
-                          .toNumber(value as string);
+            col.currentFilterValue = value === '' ? null : valueConverter.toSource(value, col.type, col.attribute);
 
             break;
         case 'boolean':
@@ -37,10 +33,10 @@ export function filterCallback(
                 col.currentFilterValue = null;
             }
             if (value === 'false') {
-                col.currentFilterValue = false;
+                col.currentFilterValue = valueConverter.toSource(false, col.type, col.attribute);
             }
             if (value === 'true') {
-                col.currentFilterValue = true;
+                col.currentFilterValue = valueConverter.toSource(true, col.type, col.attribute);
             }
 
             break;

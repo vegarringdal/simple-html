@@ -54,6 +54,10 @@ export function toggelDarkGrid() {
     .simple-html-grid-header input::placeholder {
         filter: opacity(0.4);
     }
+
+    .simple-html-grid input[type="checkbox"] {
+        margin: 2px 
+    }
     
     `)
         );

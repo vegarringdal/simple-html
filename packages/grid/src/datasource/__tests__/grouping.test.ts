@@ -26,7 +26,6 @@ describe('string filter', () => {
         expect(rows[0].__groupName).toEqual('Company: comp1');
         expect(rows[1].__groupName).toEqual('Company: comp3');
         expect(rows[2].__groupName).toEqual('Company: comp5');
-        
     });
 
     it('single group - product', () => {
@@ -36,7 +35,6 @@ describe('string filter', () => {
 
         expect(rows[0].__groupName).toEqual('Product: group1');
         expect(rows[1].__groupName).toEqual('Product: group2');
-        
     });
 
     it('single group - company - expand all & collpse all', () => {
@@ -52,8 +50,6 @@ describe('string filter', () => {
         ds.collapseGroup();
         const rows3 = ds.getRows();
         expect(rows3.length).toEqual(3);
-
-        
     });
 
     it('single group - company - expand first', () => {
@@ -69,7 +65,6 @@ describe('string filter', () => {
         ds.collapseGroup(rows2[0].__groupID);
         const rows3 = ds.getRows();
         expect(rows3.length).toEqual(3);
-        
     });
 
     it('remove groups', () => {
@@ -78,6 +73,5 @@ describe('string filter', () => {
         expect(rows1.length).toEqual(3);
         ds.removeGroup();
         expect(ds.getRows().length).toEqual(5);
-        
     });
 });

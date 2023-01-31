@@ -22,14 +22,12 @@ describe('datasource sort', () => {
         datasource.sort({ attribute: 'name', ascending: true });
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person1');
-        
     });
 
     it('sort name descending', () => {
         datasource.sort({ attribute: 'name', ascending: false });
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person5');
-        
     });
 
     it('sort group ascending, name ascending', () => {
@@ -39,7 +37,6 @@ describe('datasource sort', () => {
         ]);
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person3');
-        
     });
 
     it('sort group ascending, name descending', () => {
@@ -49,7 +46,6 @@ describe('datasource sort', () => {
         ]);
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person5');
-        
     });
 
     it('sort group descending, name ascending', () => {
@@ -59,7 +55,6 @@ describe('datasource sort', () => {
         ]);
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person1');
-        
     });
 
     it('sort group ascending, name descending', () => {
@@ -69,7 +64,6 @@ describe('datasource sort', () => {
         ]);
         const obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person2');
-        
     });
 
     it('test adding to sort', () => {
@@ -83,8 +77,6 @@ describe('datasource sort', () => {
         datasource.sort({ attribute: 'name', ascending: false });
         obj = datasource.getRow(0);
         expect(obj.name).toEqual('person5');
-
-        
     });
 
     it('local compare on string', () => {
@@ -93,7 +85,6 @@ describe('datasource sort', () => {
         datasource.sort([{ attribute: 'localCompare', ascending: true }]);
         const arr: string[] = datasource.getRows().map((x: any) => x.localCompare);
         expect(arr).toEqual(['a', 'b', 'æ', 'ø', 'å']);
-        
     });
 
     it('local compare on string2', () => {
@@ -102,14 +93,12 @@ describe('datasource sort', () => {
         datasource.sort([{ attribute: 'localCompare', ascending: false }]);
         const arr: string[] = datasource.getRows().map((x: any) => x.localCompare);
         expect(arr).toEqual(['å', 'ø', 'æ', 'b', 'a']);
-        
     });
 
     it('reset sort with default attribute', () => {
         datasource.resetSort('name');
         datasource.sort();
         expect((datasource.getRow(0) as any).name).toEqual('person1');
-        
     });
 
     it('numbersort', () => {
@@ -117,13 +106,11 @@ describe('datasource sort', () => {
         datasource.sort();
         const arr: string[] = datasource.getRows().map((x: any) => x.num);
         expect(arr).toEqual([1, 2, 3, 4, 5]);
-        
     });
 
     it('numbersort2', () => {
         datasource.sort({ attribute: 'num', ascending: false });
         const arr: string[] = datasource.getRows().map((x: any) => x.num);
         expect(arr).toEqual([1, 2, 3, 4, 5].reverse());
-        
     });
 });

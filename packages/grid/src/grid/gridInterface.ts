@@ -542,7 +542,7 @@ export class GridInterface<T> {
 
                 break;
             default:
-                /* if (DEVELOPMENT === true) {
+            /* if (DEVELOPMENT === true) {
                     console.log('skipping:', e.type, e.data);
                 } */
         }

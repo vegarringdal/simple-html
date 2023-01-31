@@ -1,18 +1,35 @@
-export interface NumberFormaterType {
-    toNumber(value: any): number | null | undefined;
-    fromNumber(value: any): string | null | undefined;
-}
-
 /**
  * default number format, uses dot
  * this will convert comma to dot
  */
 export class NumberFormaterDot {
     /**
+     *
+     * @param value Takes string and returns date
+     */
+    static fromSource(value: any): string | null | undefined {
+        let returnValue = value;
+
+        if (isNaN(parseFloat(returnValue))) {
+            returnValue = '';
+        }
+
+        if (returnValue === null || returnValue === undefined) {
+            return returnValue;
+        }
+
+        if (returnValue.toString().includes(',')) {
+            returnValue = returnValue.toString().replace(',', '.');
+        }
+
+        return returnValue.toString();
+    }
+
+    /**
      * Takes value and return string
      * @param value
      */
-    static toNumber(value: any): number | null | undefined {
+    static toSource(value: any): number | null | undefined {
         let returnValue: any = value;
 
         if (returnValue === null || returnValue === 'undefined') {
@@ -38,25 +55,11 @@ export class NumberFormaterDot {
         return parseFloat(returnValue);
     }
 
-    /**
-     *
-     * @param value Takes string and returns date
-     */
-    static fromNumber(value: any): string | null | undefined {
-        let returnValue = value;
+    static fromSourceDisplay(value: any): string | null | undefined {
+        return this.fromSource(value);
+    }
 
-        if (isNaN(parseFloat(returnValue))) {
-            returnValue = '';
-        }
-
-        if (returnValue === null || returnValue === undefined) {
-            return returnValue;
-        }
-
-        if (returnValue.toString().includes(',')) {
-            returnValue = returnValue.toString().replace(',', '.');
-        }
-
-        return returnValue.toString();
+    static placeholder() {
+        return '';
     }
 }

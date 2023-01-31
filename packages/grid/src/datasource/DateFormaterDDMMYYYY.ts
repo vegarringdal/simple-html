@@ -1,18 +1,12 @@
-export interface DateFormaterType {
-    fromDate(value: any): string | null | undefined;
-    toDate(value: any): Date | null | undefined;
-    getPlaceHolderDate(): string;
-}
-
 /**
- * default dateformater - DD-MM-YYYY
+ * default dateformater - DD.MM.YYYY
  */
-export class DateFormater {
+export class DateFormaterDDMMYYYY {
     /**
      * Takes value and return string
      * @param value
      */
-    static fromDate(value: Date | string | null | undefined): string {
+    static fromSource(value: Date | string | null | undefined): string {
         let returnValue: any = value;
 
         if (returnValue === null || returnValue === undefined || returnValue === '') {
@@ -48,7 +42,7 @@ export class DateFormater {
      *
      * @param value Takes string and returns date
      */
-    static toDate(value: any): Date | null | undefined {
+    static toSource(value: any): Date | null | undefined {
         let returnValue = value;
 
         if (returnValue === null || returnValue === undefined) {
@@ -91,7 +85,11 @@ export class DateFormater {
         return returnValue;
     }
 
-    static getPlaceHolderDate() {
+    static fromSourceDisplay(value: Date | string | null | undefined): string {
+        return this.fromSource(value);
+    }
+
+    static placeholder() {
         return 'DD.MM.YYYY';
     }
 }

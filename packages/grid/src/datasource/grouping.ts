@@ -229,9 +229,9 @@ export class Grouping {
             groupID = typeof groupID === 'boolean' ? groupID.toString() : groupID;
             groupID =
                 typeof groupID?.toLocaleDateString === 'function'
-                    ? ds.getDateFormater().fromDate(groupID)
+                    ? ds.getValueFormater().fromSource(groupID, 'date', groupBy)
                     : typeof groupID?.toFixed === 'function'
-                    ? ds.getNumberFormater().fromNumber(groupID)
+                    ? ds.getValueFormater().fromSource(groupID, 'number', groupBy)
                     : groupID;
             groupID = groupID || ' blank';
 
@@ -271,9 +271,9 @@ export class Grouping {
                 let groupID = child[groupBy];
                 groupID =
                     typeof groupID?.toLocaleDateString === 'function'
-                        ? ds.getDateFormater().fromDate(groupID)
+                        ? ds.getValueFormater().fromSource(groupID, 'date', groupBy)
                         : typeof groupID?.toFixed === 'function'
-                        ? ds.getNumberFormater().fromNumber(groupID)
+                        ? ds.getValueFormater().fromSource(groupID, 'number', groupBy)
                         : groupID;
                 groupID = groupID || ' blank';
 

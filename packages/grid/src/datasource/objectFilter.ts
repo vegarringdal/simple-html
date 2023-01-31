@@ -51,12 +51,6 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
         }
     }
 
-    // helper for boolean
-    const typeBool: { true: boolean; false: boolean } = {
-        true: true,
-        false: false
-    };
-
     // lets set some defaults/corrections if its all wrong
     switch (type) {
         case 'date':
@@ -213,7 +207,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             }
             break;
         case 'boolean':
-            filterValue = typeBool[filter.value];
+            filterValue = filter.value;
             filterOperator = 'EQUAL';
             break;
 

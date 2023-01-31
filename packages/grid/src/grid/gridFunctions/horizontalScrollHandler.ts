@@ -136,7 +136,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
         });
 
         // need to check data..
-        let noData = ctx.gridInterface.getDatasource().length() === 0;
+        const noData = ctx.gridInterface.getDatasource().length() === 0;
 
         rowCache.forEach((e, no) => {
             if (e.row !== -1 || (noData && no)) {

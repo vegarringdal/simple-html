@@ -69,8 +69,8 @@ export function contextmenuRow(
 
         const datasource = ctx.gridInterface.getDatasource();
         const attConfig = ctx.gridInterface.__getGridConfig().__attributes;
-        const dateformater = datasource.getDateFormater();
-        const numberformater = datasource.getNumberFormater();
+        const valueformater = datasource.getValueFormater();
+
         const selectedRows = datasource.getSelectedRows();
 
         const loopData = (entity: Entity) => {
@@ -86,12 +86,12 @@ export function contextmenuRow(
 
                     if (cellConfig.type === 'date') {
                         //
-                        const data = dateformater.fromDate(colData);
+                        const data = valueformater.fromSource(colData, cellConfig.type, cellConfig.attribute);
                         justData = justData + data;
                         tableInnerData = tableInnerData + '<td>' + data + '</td>';
                     } else if (cellConfig.type === 'number') {
                         //
-                        const data = numberformater.fromNumber(colData);
+                        const data = valueformater.fromSource(colData, cellConfig.type, cellConfig.attribute);
                         justData = justData + data;
                         tableInnerData = tableInnerData + '<td>' + data + '</td >';
                     } else {
@@ -156,26 +156,21 @@ export function contextmenuRow(
         const datasource = ctx.gridInterface.getDatasource();
         const attConfig = ctx.gridInterface.__getGridConfig().__attributes;
         const cellConfig = attConfig[attribute];
-        const dateformater = datasource.getDateFormater();
-        const numberformater = datasource.getNumberFormater();
+        const valueFormater = datasource.getValueFormater();
+
         if (ctx.gridInterface.__getGridConfig().readonly) {
             return;
         }
 
         datasource.getSelectedRows().forEach((entity) => {
-            let cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, entity, cellConfig.readonly || false);
+            const cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, entity, cellConfig.readonly || false);
 
             if (cellReadOnly) {
                 return;
             }
 
-            if (cellConfig.type === 'number') {
-                entity[attribute] = numberformater.toNumber(data);
-            } else if (cellConfig.type === 'date') {
-                entity[attribute] = dateformater.toDate(data);
-            } else {
-                entity[attribute] = data;
-            }
+            entity[attribute] = valueFormater.toSource(data, cellConfig.type, attribute);
+
             ctx.gridInterface.__callSubscribers('paste', {
                 cell,
                 row,
@@ -223,7 +218,7 @@ export function contextmenuRow(
 
         const ds = ctx.gridInterface.getDatasource();
         const selectedRows = ds.getSelection().getSelectedRows();
-        const numberFormater = ds.getNumberFormater();
+        const valueFormater = ds.getValueFormater();
         const allrows = ds.getRows();
 
         let curValue = 0;
@@ -248,7 +243,7 @@ export function contextmenuRow(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(numberFormater.fromNumber(selectedRows.length));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(selectedRows.length, 'number', attribute));
                     removeContextMenu(ctx);
                 }}
             >
@@ -257,38 +252,38 @@ export function contextmenuRow(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(numberFormater.fromNumber(curValueX));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(curValueX, 'number', attribute));
                     removeContextMenu(ctx);
                 }}
             >
-                Sum: ${numberFormater.fromNumber(curValueX)}
+                Sum: ${valueFormater.fromSource(curValueX, 'number', attribute)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(numberFormater.fromNumber(maxValueX));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(maxValueX, 'number', attribute));
                     removeContextMenu(ctx);
                 }}
             >
-                Max: ${numberFormater.fromNumber(maxValueX)}
+                Max: ${valueFormater.fromSource(maxValueX, 'number', attribute)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(numberFormater.fromNumber(minValueX));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(minValueX, 'number', attribute));
                     removeContextMenu(ctx);
                 }}
             >
-                Min: ${numberFormater.fromNumber(minValueX)}
+                Min: ${valueFormater.fromSource(minValueX, 'number', attribute)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(numberFormater.fromNumber(avgValueX));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(avgValueX, 'number', attribute));
                     removeContextMenu(ctx);
                 }}
             >
-                Avg: ${numberFormater.fromNumber(avgValueX) || 0}
+                Avg: ${valueFormater.fromSource(avgValueX, 'number', attribute) || 0}
             </div>`;
     };
 

@@ -23,7 +23,7 @@ export function renderRowCell(
     rowData: Entity
 ) {
     const entity = ctx.gridInterface.getDatasource().getRow(row);
-    let value = (entity && entity[attribute]?.toString()) || '';
+    let value = (entity && entity[attribute]) || '';
 
     if (entity?.__group) {
         return;
@@ -32,6 +32,7 @@ export function renderRowCell(
     if (attribute) {
         const config = ctx.gridInterface.__getGridConfig();
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
 
         let showPlaceHolder = true;
         if (config.placeHolderRowCurrentEnityOnly) {
@@ -40,28 +41,11 @@ export function renderRowCell(
             }
         }
 
-        if (cellConfig?.type === 'date') {
-            value = ctx.gridInterface.getDatasource().getDateFormater().fromDate(value);
-        }
-
-        if (cellConfig?.type === 'number') {
-            value = ctx.gridInterface.getDatasource().getNumberFormater().fromNumber(value);
-            if ((cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') || value === undefined || value === null) {
-                value = '0';
-            }
-            if ((cellConfig.numberOverride === 'ZERO_TO_BLANK' && value === '0') || value === 0) {
-                value = '';
-            }
-        }
-
-        if (cellConfig.type === 'boolean') {
-            value = (entity && entity[attribute]) || false;
-        }
         let dimmed = '';
 
         let cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, rowData, cellConfig.readonly || false);
         if (cellReadOnly !== false && cellReadOnly !== true) {
-            cellReadOnly = cellConfig.readonly;
+            cellReadOnly = cellConfig.readonly || true;
         }
 
         if (!config.readonly && cellReadOnly) {
@@ -69,6 +53,21 @@ export function renderRowCell(
         }
         if (!config.readonly && !cellReadOnly && cellConfig.mandatory) {
             dimmed = 'simple-html-mandatory';
+        }
+
+        if (cell.$focused && !cellReadOnly && !config.readonly) {
+            value = valueFormater.fromSource(value, cellConfig.type, cellConfig.attribute);
+        } else {
+            value = valueFormater.fromSourceDisplay(value, cellConfig.type, cellConfig.attribute);
+        }
+
+        if (cellConfig?.type === 'number') {
+            if ((cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') || value === undefined || value === null) {
+                value = '0';
+            }
+            if ((cellConfig.numberOverride === 'ZERO_TO_BLANK' && value === '0') || value === 0) {
+                value = '';
+            }
         }
 
         if (cellConfig.type === 'boolean') {
@@ -93,12 +92,16 @@ export function renderRowCell(
                             triggerScrollEvent(ctx);
                         }}
                         @change=${(e: any) => {
-                            if (!cellReadOnly) {
+                            if (!cellReadOnly && !config.readonly) {
                                 if (cellConfig.allowPasteClearOnly) {
                                     // nothing
                                 } else {
-                                    entity[attribute] = e.target.checked ? false : true;
-                                    e.target.checked = entity[attribute];
+                                    entity[attribute] = valueFormater.toSource(
+                                        e.target.checked ? false : true,
+                                        cellConfig.type,
+                                        attribute
+                                    );
+                                    e.target.checked = valueFormater.fromSource(entity[attribute], cellConfig.type, attribute);
                                 }
                             }
                         }}
@@ -137,6 +140,9 @@ export function renderRowCell(
                                 skipFocus = false;
                                 return;
                             }
+
+                            cell.$focused = true;
+
                             ctx.gridInterface.__callSubscribers('cell-row-focus', {
                                 cell,
                                 row,
@@ -192,6 +198,8 @@ export function renderRowCell(
                                 case 'ALWAYS':
                                     addFocusButton();
                             }
+
+                            renderRowCell(ctx, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @blur=${() => {
                             // I need to delay this incase someone clicks on focus button
@@ -207,6 +215,8 @@ export function renderRowCell(
                                     input.style.right = null;
                                 }
                             }, 100);
+
+                            cell.$focused = false;
                         }}
                         @keydown=${(e: any) => {
                             // if hidding spcae we want the option to trigger focus button if it exist
@@ -261,31 +271,22 @@ export function renderRowCell(
                         }}
                         @input=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {
-                                e.target.value = entity[attribute];
+                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfig.type, attribute);
                                 return;
                             }
 
-                            if (!cellReadOnly && cellConfig?.type !== 'date') {
-                                entity[attribute] = e.target.value;
-                            }
-
-                            if (!cellReadOnly && cellConfig.type === 'date') {
-                                entity[attribute] = ctx.gridInterface.getDatasource().getDateFormater().toDate(e.target.value);
-                            }
-
-                            if (!cellReadOnly && cellConfig.type === 'number') {
-                                entity[attribute] = ctx.gridInterface
-                                    .getDatasource()
-                                    .getNumberFormater()
-                                    .toNumber(e.target.value);
+                            if (!config.readonly && !cellReadOnly) {
+                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfig.type, attribute);
                             }
                         }}
                         @change=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {
-                                entity[attribute] = entity[attribute];
+                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfig.type, attribute);
+                                return;
                             }
-                            if (!cellReadOnly && cellConfig?.type === 'date') {
-                                entity[attribute] = ctx.gridInterface.getDatasource().getDateFormater().toDate(e.target.value);
+
+                            if (!config.readonly && !cellReadOnly) {
+                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfig.type, attribute);
                             }
                         }}
                     />

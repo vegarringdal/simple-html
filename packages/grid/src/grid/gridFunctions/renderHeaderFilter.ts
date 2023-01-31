@@ -23,11 +23,9 @@ export function renderHeaderFilter(
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
 
         const placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
-        let currentValue = cellConfig.currentFilterValue || ('' as any);
+        const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
 
-        if (cellConfig?.type === 'date') {
-            currentValue = ctx.gridInterface.getDatasource().getDateFormater().fromDate(currentValue);
-        }
+        let currentValue = cellConfig.currentFilterValue || ('' as any);
 
         /**
          * internal function, so we can rerender
@@ -60,15 +58,15 @@ export function renderHeaderFilter(
                                         (e.target as any).checked === true &&
                                         e.target.indeterminate === false:
                                         filterCallback(ctx, (e.target as any).checked.toString(), cellConfig);
-                                        currentValue = (e.target as any).checked.toString();
+                                        currentValue = (e.target as any).checked;
                                         break;
-                                    case currentValue === 'true' &&
+                                    case currentValue === true &&
                                         (e.target as any).checked === false &&
                                         e.target.indeterminate === false:
                                         filterCallback(ctx, (e.target as any).checked.toString(), cellConfig);
-                                        currentValue = (e.target as any).checked.toString();
+                                        currentValue = (e.target as any).checked;
                                         break;
-                                    case currentValue === 'false' &&
+                                    case currentValue === false &&
                                         (e.target as any).checked === true &&
                                         e.target.indeterminate === false:
                                         filterCallback(ctx, '', cellConfig);
@@ -84,6 +82,8 @@ export function renderHeaderFilter(
                     cell as any
                 );
             } else {
+                currentValue = valueFormater.fromSource(currentValue, cellConfig?.type, cellConfig?.attribute);
+
                 let lastFilter = currentValue || '';
                 let skipFocus = false;
                 render(
@@ -130,9 +130,8 @@ export function renderHeaderFilter(
                                 if (!filterRunning) {
                                     filterRunning = true;
 
-
                                     filterCallback(ctx, (e.target as any).value, cellConfig);
-                                    
+
                                     lastFilter = (e.target as any).value;
                                     filterRunning = false;
                                 }
@@ -150,13 +149,12 @@ export function renderHeaderFilter(
                                     if (lastFilter !== (e.target as any).value) {
                                         filterCallback(ctx, (e.target as any).value, cellConfig);
                                     }
-                                    lastFilter = (e.target as any).value;                                
+                                    lastFilter = (e.target as any).value;
                                     filterRunning = false;
                                 }
                             }
                         }}
                         @change=${(e: any) => {
-                      
                             if (!filterRunning) {
                                 filterRunning = true;
 

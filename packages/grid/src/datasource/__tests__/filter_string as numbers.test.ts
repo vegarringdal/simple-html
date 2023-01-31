@@ -33,7 +33,6 @@ describe('number filter on string as number', () => {
             { tag: 'tag4', planned: '13', installed: '1' },
             { tag: 'tag5', planned: '1', installed: '9' }
         ]);
-        
     });
 
     it('attribute vs attribute equal', () => {
@@ -52,6 +51,5 @@ describe('number filter on string as number', () => {
 
             { tag: 'tag6', planned: '1', installed: '1' }
         ]);
-        
     });
 });
