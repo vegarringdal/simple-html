@@ -14,7 +14,6 @@ export function filterCallback(
     filterArrayAndValue?: string,
     notinArray?: boolean
 ) {
-
     const valueConverter = ctx.gridInterface.getDatasource().getValueFormater();
 
     switch (col.type) {
@@ -26,10 +25,7 @@ export function filterCallback(
 
             break;
         case 'number':
-            col.currentFilterValue =
-                value === ''
-                    ? null
-                    : valueConverter.toSource(value, col.type, col.attribute);
+            col.currentFilterValue = value === '' ? null : valueConverter.toSource(value, col.type, col.attribute);
 
             break;
         case 'boolean':

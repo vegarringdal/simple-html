@@ -24,7 +24,7 @@ export class DefaultValueFormater implements ValueFormater {
             return this.datasource.getNumberFormater().fromSource(value);
         }
         if (type === 'boolean') {
-            return  value || false
+            return value || false;
         }
 
         return value;
@@ -42,7 +42,7 @@ export class DefaultValueFormater implements ValueFormater {
             return this.datasource.getNumberFormater().toSource(value);
         }
         if (type === 'boolean') {
-            return  value || false
+            return value || false;
         }
 
         return value;
@@ -66,7 +66,6 @@ export class DefaultValueFormater implements ValueFormater {
         if (type === 'number') {
             return this.datasource.getNumberFormater().placeholder();
         }
-
 
         return '';
     }

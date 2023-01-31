@@ -51,7 +51,6 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
         }
     }
 
-
     // lets set some defaults/corrections if its all wrong
     switch (type) {
         case 'date':
@@ -208,7 +207,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             }
             break;
         case 'boolean':
-            filterValue = filter.value
+            filterValue = filter.value;
             filterOperator = 'EQUAL';
             break;
 

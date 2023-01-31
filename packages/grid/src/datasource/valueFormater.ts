@@ -1,13 +1,13 @@
-import { DataTypes } from "./filterArgument";
-import { Datasource } from "./dataSource";
+import { DataTypes } from './filterArgument';
+import { Datasource } from './dataSource';
 
 export interface ValueFormater {
-    datasource: Datasource
+    datasource: Datasource;
     /**
      * used by grid to insert in edit cells/filter
      * @param value
      */
-    fromSource(value: any, type: DataTypes ,attribute: string): any;
+    fromSource(value: any, type: DataTypes, attribute: string): any;
     /**
      * value user inputs gets converted to date
      * @param value
