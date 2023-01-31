@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.56](https://github.com/simple-html/simple-html/compare/v5.0.0-next.55...v5.0.0-next.56) (2023-01-31)
+
+
+### Features
+
+* improved valueformater, not limited to just number and date ([#51](https://vegarringdal//null/issues/51)) ([8a55b99](https://github.com/simple-html/simple-html/commits/8a55b997416ea12dd853c6b0c6c5506020ca1700))
+
 ## [5.0.0-next.55](https://github.com/simple-html/simple-html/compare/v5.0.0-next.54...v5.0.0-next.55) (2023-01-25)
 
 
