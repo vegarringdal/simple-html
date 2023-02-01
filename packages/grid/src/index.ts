@@ -24,3 +24,4 @@ export { DateFormaterISO8601 } from './datasource/dateFormaterISO8601';
 export { DateFormaterDDMMYYYY } from './datasource/dateFormaterDDMMYYYY';
 export { NumberFormaterComma } from './datasource/numberFormaterComma';
 export type { ValueFormater } from './datasource/valueFormater';
+export { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
