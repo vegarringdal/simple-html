@@ -42,10 +42,10 @@ export function renderRowCell(
         }
 
         let dimmed = '';
-
+        
         let cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, rowData, cellConfig.readonly || false);
         if (cellReadOnly !== false && cellReadOnly !== true) {
-            cellReadOnly = cellConfig.readonly || true;
+            cellReadOnly = cellConfig.readonly || false;
         }
 
         if (!config.readonly && cellReadOnly) {
