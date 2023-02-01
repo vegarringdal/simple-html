@@ -302,6 +302,11 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
 });
 
 {
+
+    /**
+     * dropdown sample
+     */
+
     let pop: HTMLElement | null = null;
 
     const gridInterfaceDropdownEventSample = {
@@ -319,6 +324,9 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                 const height = 300;
                 const width = 500;
                 
+                /**
+                 * first part here is to just keep it within screen size
+                 */
                 
                 let top = rect.bottom;
                 let left = rect.left;
@@ -329,6 +337,11 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                 if (window.innerWidth < rect.right + width) {
                     left = window.innerWidth - width - 3;
                 }
+
+                /**
+                 * add syle/calculated top/left
+                 * you might want to add some loading icon..
+                 */
 
                 element.style.width = width + 'px';
                 element.style.height = height + 'px';
@@ -342,8 +355,8 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                     selectSizeHeight: 1,
                     hideLabels: false,
                     hideFilter: false,
-                    footerHeight: 10,
-                    columnsCenter: [{ width: width, rows: ['WOW'] }],
+                    footerHeight: 10, // if you wan the scrollbar..
+                    columnsCenter: [{ width: width-45, rows: ['WOW'] }],
                     attributes: [
                         {
                             attribute: 'WOW',
