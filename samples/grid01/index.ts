@@ -1,5 +1,14 @@
 import './index.css';
-import { Datasource, Entity, NumberFormaterComma, NumberFormaterDot, DateFormaterISO8601, DateFormaterDDMMYYYY } from '@simple-html/grid';
+import {
+    Datasource,
+    Entity,
+    NumberFormaterComma,
+    NumberFormaterDot,
+    DateFormaterISO8601,
+    DateFormaterDDMMYYYY,
+    HTMLCellElement,
+    GridConfig
+} from '@simple-html/grid';
 import { GridInterface, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
 import { dummydata } from './dummyData';
@@ -38,7 +47,7 @@ const containerGrid = document.createElement('div');
 containerGrid.style.position = 'absolute';
 
 containerGrid.style.top = '10px';
-containerGrid.style.left = '260px';
+containerGrid.style.left = '510px';
 containerGrid.style.right = '10px';
 containerGrid.style.bottom = '10px';
 
@@ -50,6 +59,16 @@ containerbuttons.style.top = '0px';
 containerbuttons.style.width = '250px';
 containerbuttons.style.left = '0px';
 containerbuttons.style.bottom = '0px';
+
+const containerbuttons2 = document.createElement('div');
+containerbuttons2.style.position = 'absolute';
+containerbuttons2.style.display = 'flex';
+containerbuttons2.style.flexDirection = 'column';
+containerbuttons2.style.top = '0px';
+containerbuttons2.style.width = '250px';
+containerbuttons2.style.left = '250px';
+containerbuttons2.style.bottom = '0px';
+document.body.appendChild(containerbuttons2);
 
 const element = document.createElement('simple-html-grid') as GridElement;
 element.style.width = '100%';
@@ -64,7 +83,12 @@ function createButton(title: string, callback: () => void) {
     btn.innerText = title;
     btn.style.padding = '3px';
     btn.style.margin = '3px';
-    containerbuttons.appendChild(btn);
+
+    if (containerbuttons.children.length > 25) {
+        containerbuttons2.appendChild(btn);
+    } else {
+        containerbuttons.appendChild(btn);
+    }
 }
 toggelDarkGrid();
 createButton('toggle dark/light mode', () => {
@@ -235,39 +259,33 @@ createButton('gridInterface.removeEventListener\n (see console - F12)', () => {
 
 createButton('overide default numberformater (comma)', () => {
     datasource.setNumberFormater(NumberFormaterComma);
-    gridInterface.triggerScrollEvent()
-    
+    gridInterface.triggerScrollEvent();
 });
 
 createButton('overide default numberformater (comma-custom)', () => {
     datasource.setNumberFormater(NumberFormaterCustom);
-    gridInterface.triggerScrollEvent()
-    
+    gridInterface.triggerScrollEvent();
 });
 
 createButton('use default numberformater (dot)', () => {
     datasource.setNumberFormater(NumberFormaterDot);
-    gridInterface.triggerScrollEvent()
+    gridInterface.triggerScrollEvent();
 });
-
 
 createButton('overide default Dateformater (DD.MM.YYYY)', () => {
     datasource.setDateFormater(DateFormaterDDMMYYYY);
-    gridInterface.triggerScrollEvent()
-    
+    gridInterface.triggerScrollEvent();
 });
 
 createButton('overide default Dateformater (DD.MM.YYYY/custom)', () => {
     datasource.setDateFormater(DateFormaterCustom);
-    gridInterface.triggerScrollEvent()
-    
+    gridInterface.triggerScrollEvent();
 });
 
 createButton('use default Dateformater (iso8601)', () => {
     datasource.setDateFormater(DateFormaterISO8601);
-    gridInterface.triggerScrollEvent()
+    gridInterface.triggerScrollEvent();
 });
-
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
     gridInterface.readonlySetter((attribute: string, rowData: Entity, configReadonlySetting: boolean) => {
@@ -282,6 +300,108 @@ createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
 createButton('remove readonly favoriteFruit based on cell isDumb', () => {
     gridInterface.readonlySetter(null);
 });
+
+{
+    let pop: HTMLElement | null = null;
+
+    const gridInterfaceDropdownEventSample = {
+        handleEvent: (e: any) => {
+            
+            if (pop) {
+                pop.parentElement?.removeChild(pop);
+                pop = null;
+            }
+
+            if (e.type === 'cell-focus-button-click' && e.data?.attribute === 'company') {
+                const cell = e.data.cell as HTMLCellElement;
+                const rect = cell.getBoundingClientRect();
+                const element = document.createElement('simple-html-grid') as GridElement;
+                const height = 300;
+                const width = 500;
+                
+                
+                let top = rect.bottom;
+                let left = rect.left;
+
+                if (window.innerHeight < rect.bottom + height) {
+                    top = rect.top - height - 3;
+                }
+                if (window.innerWidth < rect.right + width) {
+                    left = window.innerWidth - width - 3;
+                }
+
+                element.style.width = width + 'px';
+                element.style.height = height + 'px';
+                element.style.display = 'absolute';
+                element.style.top = top + 'px';
+                element.style.left = left + 'px';
+                element.style.boxShadow = '16px 17px 8px 0px rgb(0 0 0 / 20%), 0 6px 20px 0 rgb(0 0 0 / 19%)';
+
+                const gridConfig: GridConfig = {
+                    panelHeight: 0,
+                    selectSizeHeight: 1,
+                    hideLabels: false,
+                    hideFilter: false,
+                    footerHeight: 10,
+                    columnsCenter: [{ width: width, rows: ['WOW'] }],
+                    attributes: [
+                        {
+                            attribute: 'WOW',
+                            label: 'select cable'
+                        }
+                    ]
+                };
+
+                const datasourceLocal = new Datasource();
+                
+                // dummy data for sample
+                for (let i = 0; i < 1000; i++) {
+                    datasourceLocal.setData([{ WOW: 'wow' + i }], true);
+                }
+
+                const gridInterface = new GridInterface(gridConfig, datasourceLocal);
+                element.classList.add('simple-html-grid');
+                element.connectInterface(gridInterface);
+                document.body.appendChild(element);
+                pop = element;
+
+                element.onclick = (x: any) => {
+                    if (x.target?.classList.contains('simple-html-grid-cell-input')) {
+                        pop.parentElement?.removeChild(pop);
+                        pop = null;
+                        datasource.currentEntity['company'] = datasourceLocal.currentEntity['WOW'];
+                        e.data.target?.focus();
+                    }
+                };
+
+                element.onkeydown = (x:any) => {
+                    if (x.code === 'Enter' && x.target?.classList.contains('simple-html-grid-cell-input')) {
+                        pop.parentElement?.removeChild(pop);
+                        pop = null;
+                        datasource.currentEntity['company'] = datasourceLocal.currentEntity['WOW'];
+                        e.data.target?.focus();
+                    }
+                };
+
+                setTimeout(() => {
+                    // set focus to first filter
+                    // but we want a timeout, so we do not get space clicked
+                    (element.getElementsByTagName('INPUT')[0] as HTMLInputElement)?.focus();
+                });
+            }
+
+            return true; // to keep subscribing
+        }
+    };
+
+    createButton('gridInterface.addEventListener - popup - company', () => {
+        gridInterface.addEventListener(gridInterfaceDropdownEventSample);
+    });
+
+    createButton('gridInterface.removeEventListener  - popup - company', () => {
+        gridInterface.removeEventListener(gridInterfaceDropdownEventSample);
+    });
+}
 
 /**
  * add to document
