@@ -206,7 +206,6 @@ Need for version "5.0.0":
 # Dev
 
 * `git clone https://github.com/vegarringdal/simple-html`
-* `git checkout 5.0.0`
 * `npm i`
 * `npm start` this is alias for `npm start grid01` third arg is sample subfolder
 ' open `http://localhost:8080`
