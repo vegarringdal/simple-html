@@ -1,7 +1,7 @@
 /**
  * default dateformater - YYYY-MM-DD
  */
-export class DateFormaterISO8601 {
+export class DateFormaterYYYYMMDDTHHMMSS {
     /**
      * Takes value and return string
      * @param value
@@ -32,7 +32,22 @@ export class DateFormaterISO8601 {
             if (day.length === 1) {
                 day = '0' + day;
             }
-            returnValue = `${year}-${month}-${day}`;
+
+            let hours = new Date(value).getHours().toString();
+            if (hours.length === 1) {
+                hours = '0' + hours;
+            }
+
+            let minutes = new Date(value).getMinutes().toString();
+            if (minutes.length === 1) {
+                minutes = '0' + minutes;
+            }
+
+            let seconds = new Date(value).getSeconds().toString();
+            if (seconds.length === 1) {
+                seconds = '0' + seconds;
+            }
+            returnValue = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
         }
 
         return returnValue;
@@ -57,22 +72,37 @@ export class DateFormaterISO8601 {
             return null;
         }
 
-        const x: any[] = returnValue.split('-');
+        const dateTime = returnValue.split('T');
+        const YYYYMMDD: any[] = dateTime[0].split('-');
+        const HHMMSS: any[] = dateTime[1]?.split(':') || [];
 
-        // 2019-01-01
-        if (!x[1]) {
+        // 01.01.2019
+        if (!YYYYMMDD[1]) {
             // by default, use current month
-            x[1] = new Date().getMonth() + 1;
+            YYYYMMDD[1] = new Date().getMonth() + 1;
         }
-        if (!x[2]) {
+        if (!YYYYMMDD[2]) {
             // by default, use current day
-            x[2] = new Date().getDate();
+            YYYYMMDD[2] = new Date().getDate();
+        }
+
+        if (!HHMMSS[0]) {
+            // by default, use hours
+            HHMMSS[0] = new Date().getHours();
+        }
+        if (!HHMMSS[1]) {
+            // by default, use minutes
+            HHMMSS[1] = new Date().getMinutes();
+        }
+        if (!HHMMSS[2]) {
+            // by default, use seconds
+            HHMMSS[2] = new Date().getSeconds();
         }
 
         returnValue = new Date(
-            x[0],
-            parseInt(x[1]) - 1,
-            parseInt(x[2]),
+            YYYYMMDD[0],
+            parseInt(YYYYMMDD[1]) - 1,
+            parseInt(YYYYMMDD[2]),
             new Date().getHours(),
             new Date().getMinutes(),
             new Date().getSeconds(),
@@ -94,6 +124,6 @@ export class DateFormaterISO8601 {
     }
 
     static placeholder() {
-        return 'YYYY-MM-DD';
+        return 'YYYY-MM-DDTHH:MM:SS';
     }
 }

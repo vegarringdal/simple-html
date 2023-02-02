@@ -10,7 +10,7 @@ import { GroupArgument } from './groupArgument';
 import { OPERATORS } from './OPERATORS';
 import { Entity } from './entity';
 import { DataContainer } from './dataContainer';
-import { DateFormaterISO8601 } from './dateFormaterISO8601';
+import { DateFormaterYYYYMMDD } from './DateFormaterYYYYMMDD';
 import { DateAndNumberFormater, ValueFormater } from './valueFormater';
 import { NumberFormaterDot } from './numberFormaterDot';
 import { DefaultValueFormater } from './DefaultValueFormater';
@@ -74,7 +74,7 @@ export class Datasource<T = any> {
     /**
      * default date formater
      */
-    private __dateFormater: DateAndNumberFormater = DateFormaterISO8601;
+    private __dateFormater: DateAndNumberFormater = DateFormaterYYYYMMDD;
 
     /**
      * default number formater

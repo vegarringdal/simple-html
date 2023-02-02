@@ -4,10 +4,12 @@ import {
     Entity,
     NumberFormaterComma,
     NumberFormaterDot,
-    DateFormaterISO8601,
+    DateFormaterYYYYMMDD,
     DateFormaterDDMMYYYY,
     HTMLCellElement,
-    GridConfig
+    GridConfig,
+    DateFormaterYYYYMMDDTHHMMSS,
+    DateFormaterDDMMYYYYTHHMMSS
 } from '@simple-html/grid';
 import { GridInterface, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
@@ -278,13 +280,23 @@ createButton('overide default Dateformater (DD.MM.YYYY)', () => {
     gridInterface.triggerRebuild();
 });
 
+createButton('overide default Dateformater (DD.MM.YYYYTHH:MM:SS)', () => {
+    datasource.setDateFormater(DateFormaterDDMMYYYYTHHMMSS);
+    gridInterface.triggerRebuild();
+});
+
 createButton('overide default Dateformater (DD.MM.YYYY/custom)', () => {
     datasource.setDateFormater(DateFormaterCustom);
     gridInterface.triggerRebuild();
 });
 
-createButton('use default Dateformater (iso8601)', () => {
-    datasource.setDateFormater(DateFormaterISO8601);
+createButton('use default Dateformater (YYYY-MM-DD)', () => {
+    datasource.setDateFormater(DateFormaterYYYYMMDD);
+    gridInterface.triggerRebuild();
+});
+
+createButton('use default Dateformater (YYYY-MM-DDTHH:MM:SS)', () => {
+    datasource.setDateFormater(DateFormaterYYYYMMDDTHHMMSS);
     gridInterface.triggerRebuild();
 });
 
