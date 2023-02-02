@@ -22,9 +22,6 @@ export function addScrollEventListeners(ctx: Grid) {
     scroller.addEventListener(
         'scroll',
         (event) => {
-            // declare
-            let delayScrollRender: () => void;
-
             /**
              * updates scrolltop on all sections and rows
              */
@@ -50,7 +47,7 @@ export function addScrollEventListeners(ctx: Grid) {
             /**
              * create timer and call scroll after
              */
-            delayScrollRender = () => {
+            const delayScrollRender = () => {
                 ctx.largeScrollTopTimer = setTimeout(() => {
                     ctx.largeScrollTopTimer = null;
                     scroll();

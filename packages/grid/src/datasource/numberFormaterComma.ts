@@ -54,6 +54,10 @@ export class NumberFormaterComma {
         return this.fromSource(value);
     }
 
+    static fromSourceGrouping(value: any): string | null | undefined {
+        return this.fromSourceDisplay(value);
+    }
+
     static placeholder() {
         return '';
     }

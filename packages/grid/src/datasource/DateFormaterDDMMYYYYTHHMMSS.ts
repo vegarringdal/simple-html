@@ -1,7 +1,7 @@
 /**
- * default dateformater - DD.MM.YYYY
+ * default dateformater - DD.MM.YYYYTHH:MM:SS
  */
-export class DateFormaterCustom {
+export class DateFormaterDDMMYYYYTHHMMSS {
     /**
      * Takes value and return string
      * @param value
@@ -32,7 +32,23 @@ export class DateFormaterCustom {
             if (day.length === 1) {
                 day = '0' + day;
             }
-            returnValue = `${day}.${month}.${year}`;
+
+            let hours = new Date(value).getHours().toString();
+            if (hours.length === 1) {
+                hours = '0' + hours;
+            }
+
+            let minutes = new Date(value).getMinutes().toString();
+            if (minutes.length === 1) {
+                minutes = '0' + minutes;
+            }
+
+            let seconds = new Date(value).getSeconds().toString();
+            if (seconds.length === 1) {
+                seconds = '0' + seconds;
+            }
+
+            returnValue = `${day}.${month}.${year}T${hours}:${minutes}:${seconds}`;
         }
 
         return returnValue;
@@ -57,25 +73,40 @@ export class DateFormaterCustom {
             return null;
         }
 
-        const x: any[] = returnValue.split('.');
+        const dateTime = returnValue.split('T');
+        const DDMMYYYY: any[] = dateTime[0].split('.');
+        const HHMMSS: any[] = dateTime[1]?.split(':') || [];
 
         // 01.01.2019
-        if (!x[1]) {
+        if (!DDMMYYYY[1]) {
             // by default, use current month
-            x[1] = new Date().getMonth() + 1;
+            DDMMYYYY[1] = new Date().getMonth() + 1;
         }
-        if (!x[2]) {
+        if (!DDMMYYYY[2]) {
             // by default, use current year
-            x[2] = new Date().getFullYear();
+            DDMMYYYY[2] = new Date().getFullYear();
+        }
+
+        if (!HHMMSS[0]) {
+            // by default, use hours
+            HHMMSS[0] = new Date().getHours();
+        }
+        if (!HHMMSS[1]) {
+            // by default, use minutes
+            HHMMSS[1] = new Date().getMinutes();
+        }
+        if (!HHMMSS[2]) {
+            // by default, use seconds
+            HHMMSS[2] = new Date().getSeconds();
         }
 
         returnValue = new Date(
-            x[2],
-            parseInt(x[1]) - 1,
-            parseInt(x[0]),
-            new Date().getHours(),
-            new Date().getMinutes(),
-            new Date().getSeconds(),
+            DDMMYYYY[2],
+            parseInt(DDMMYYYY[1]) - 1,
+            parseInt(DDMMYYYY[0]),
+            parseInt(HHMMSS[0]),
+            parseInt(HHMMSS[1]),
+            parseInt(HHMMSS[2]),
             new Date().getMilliseconds()
         );
         if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
@@ -86,14 +117,14 @@ export class DateFormaterCustom {
     }
 
     static fromSourceDisplay(value: Date | string | null | undefined): string {
-        return new Date(value).toDateString();
+        return this.fromSource(value);
     }
-    
+
     static fromSourceGrouping(value: Date | string | null | undefined): string {
-        return new Date(value).toDateString();
+        return this.fromSourceDisplay(value);
     }
 
     static placeholder() {
-        return 'DD.MM.YYYY';
+        return 'DD.MM.YYYYTHH:MM:SS';
     }
 }

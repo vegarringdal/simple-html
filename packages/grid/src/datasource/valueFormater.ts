@@ -23,6 +23,14 @@ export interface ValueFormater {
      * @param value
      */
     fromSourceDisplay(value: any, type: DataTypes, attribute: string): any;
+
+    /**
+     * how you want values grouped
+     * @param value
+     * @param type
+     * @param attribute
+     */
+    fromSourceGrouping(value: any, type: DataTypes, attribute: string): any;
 }
 
 export interface DateAndNumberFormater {
@@ -46,4 +54,9 @@ export interface DateAndNumberFormater {
      * @param value
      */
     fromSourceDisplay(value: any): any;
+    /**
+     * how you want values grouped
+     * @param value
+     */
+    fromSourceGrouping(value: any): any;
 }

@@ -4,10 +4,12 @@ import {
     Entity,
     NumberFormaterComma,
     NumberFormaterDot,
-    DateFormaterISO8601,
+    DateFormaterYYYYMMDD,
     DateFormaterDDMMYYYY,
     HTMLCellElement,
-    GridConfig
+    GridConfig,
+    DateFormaterYYYYMMDDTHHMMSS,
+    DateFormaterDDMMYYYYTHHMMSS
 } from '@simple-html/grid';
 import { GridInterface, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
@@ -259,32 +261,43 @@ createButton('gridInterface.removeEventListener\n (see console - F12)', () => {
 
 createButton('overide default numberformater (comma)', () => {
     datasource.setNumberFormater(NumberFormaterComma);
-    gridInterface.triggerScrollEvent();
+    gridInterface.triggerRebuild();
 });
 
 createButton('overide default numberformater (comma-custom)', () => {
     datasource.setNumberFormater(NumberFormaterCustom);
-    gridInterface.triggerScrollEvent();
+    gridInterface.triggerRebuild();
 });
 
 createButton('use default numberformater (dot)', () => {
+    debugger
     datasource.setNumberFormater(NumberFormaterDot);
-    gridInterface.triggerScrollEvent();
+    gridInterface.triggerRebuild();
 });
 
 createButton('overide default Dateformater (DD.MM.YYYY)', () => {
     datasource.setDateFormater(DateFormaterDDMMYYYY);
-    gridInterface.triggerScrollEvent();
+    gridInterface.triggerRebuild();
+});
+
+createButton('overide default Dateformater (DD.MM.YYYYTHH:MM:SS)', () => {
+    datasource.setDateFormater(DateFormaterDDMMYYYYTHHMMSS);
+    gridInterface.triggerRebuild();
 });
 
 createButton('overide default Dateformater (DD.MM.YYYY/custom)', () => {
     datasource.setDateFormater(DateFormaterCustom);
-    gridInterface.triggerScrollEvent();
+    gridInterface.triggerRebuild();
 });
 
-createButton('use default Dateformater (iso8601)', () => {
-    datasource.setDateFormater(DateFormaterISO8601);
-    gridInterface.triggerScrollEvent();
+createButton('use default Dateformater (YYYY-MM-DD)', () => {
+    datasource.setDateFormater(DateFormaterYYYYMMDD);
+    gridInterface.triggerRebuild();
+});
+
+createButton('use default Dateformater (YYYY-MM-DDTHH:MM:SS)', () => {
+    datasource.setDateFormater(DateFormaterYYYYMMDDTHHMMSS);
+    gridInterface.triggerRebuild();
 });
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {

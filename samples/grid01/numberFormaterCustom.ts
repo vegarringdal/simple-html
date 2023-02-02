@@ -54,6 +54,10 @@ export class NumberFormaterCustom {
         return parseInt(this.fromSource(value)+'').toFixed(2);
     }
 
+    static fromSourceGrouping(value: any): string | null | undefined {
+        return parseInt(this.fromSource(value)+'').toFixed(2);
+    }
+
     static placeholder() {
         return '';
     }

@@ -1,7 +1,7 @@
 /**
- * default dateformater - DD.MM.YYYY
+ * default dateformater - YYYY-MM-DD
  */
-export class DateFormaterCustom {
+export class DateFormaterYYYYMMDD {
     /**
      * Takes value and return string
      * @param value
@@ -32,7 +32,7 @@ export class DateFormaterCustom {
             if (day.length === 1) {
                 day = '0' + day;
             }
-            returnValue = `${day}.${month}.${year}`;
+            returnValue = `${year}-${month}-${day}`;
         }
 
         return returnValue;
@@ -57,22 +57,22 @@ export class DateFormaterCustom {
             return null;
         }
 
-        const x: any[] = returnValue.split('.');
+        const x: any[] = returnValue.split('-');
 
-        // 01.01.2019
+        // 2019-01-01
         if (!x[1]) {
             // by default, use current month
             x[1] = new Date().getMonth() + 1;
         }
         if (!x[2]) {
-            // by default, use current year
-            x[2] = new Date().getFullYear();
+            // by default, use current day
+            x[2] = new Date().getDate();
         }
 
         returnValue = new Date(
-            x[2],
+            x[0],
             parseInt(x[1]) - 1,
-            parseInt(x[0]),
+            parseInt(x[2]),
             new Date().getHours(),
             new Date().getMinutes(),
             new Date().getSeconds(),
@@ -86,14 +86,14 @@ export class DateFormaterCustom {
     }
 
     static fromSourceDisplay(value: Date | string | null | undefined): string {
-        return new Date(value).toDateString();
+        return this.fromSource(value);
     }
-    
+
     static fromSourceGrouping(value: Date | string | null | undefined): string {
-        return new Date(value).toDateString();
+        return this.fromSourceDisplay(value);
     }
 
     static placeholder() {
-        return 'DD.MM.YYYY';
+        return 'YYYY-MM-DD';
     }
 }
