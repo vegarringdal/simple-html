@@ -89,6 +89,10 @@ export class DateFormaterISO8601 {
         return this.fromSource(value);
     }
 
+    static fromSourceGrouping(value: Date | string | null | undefined): string {
+        return this.fromSourceDisplay(value);
+    }
+
     static placeholder() {
         return 'YYYY-MM-DD';
     }

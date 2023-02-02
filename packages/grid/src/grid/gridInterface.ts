@@ -206,6 +206,13 @@ export class GridInterface<T> {
     }
 
     /**
+     * trigger rebuild of all
+     */
+    public triggerRebuild() {
+        this.grid?.rebuild();
+    }
+
+    /**
      * adds event listener, useful when you need to do stuff based on
      * @param callable
      */

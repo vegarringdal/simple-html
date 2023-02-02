@@ -88,6 +88,10 @@ export class DateFormaterCustom {
     static fromSourceDisplay(value: Date | string | null | undefined): string {
         return new Date(value).toDateString();
     }
+    
+    static fromSourceGrouping(value: Date | string | null | undefined): string {
+        return new Date(value).toDateString();
+    }
 
     static placeholder() {
         return 'DD.MM.YYYY';

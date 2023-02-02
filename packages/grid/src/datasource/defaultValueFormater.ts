@@ -59,6 +59,10 @@ export class DefaultValueFormater implements ValueFormater {
         return this.fromSource(value, type, attribute);
     }
 
+    fromSourceGrouping(value: any, type: DataTypes, attribute: string): any {
+        return this.fromSourceDisplay(value, type, attribute);
+    }
+
     placeholder(type: DataTypes, _attribute: string) {
         if (type === 'date') {
             return this.datasource.getDateFormater().placeholder();
