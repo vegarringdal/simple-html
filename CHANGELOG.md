@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.58](https://github.com/simple-html/simple-html/compare/v5.0.0-next.57...v5.0.0-next.58) (2023-02-02)
+
+
+### Features
+
+* add datetime options and rename iso8601 to YYYYMMDD ([#52](https://vegarringdal//null/issues/52)) ([e4dfc21](https://github.com/simple-html/simple-html/commits/e4dfc21d0c2e8775c7c0f6e15fa8849c932adfb4))
+
 ## [5.0.0-next.57](https://github.com/simple-html/simple-html/compare/v5.0.0-next.56...v5.0.0-next.57) (2023-02-02)
 
 
