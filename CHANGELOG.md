@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.57](https://github.com/simple-html/simple-html/compare/v5.0.0-next.56...v5.0.0-next.57) (2023-02-02)
+
+
+### Bug Fixes
+
+* bug in readonly ([85ea69f](https://github.com/simple-html/simple-html/commits/85ea69ffd403dfdeedef601cdf1d235c1cfbda54))
+* export more inner elements ([4389871](https://github.com/simple-html/simple-html/commits/4389871403bf822efb5d7583d35e9841e2f4eb44))
+
 ## [5.0.0-next.56](https://github.com/simple-html/simple-html/compare/v5.0.0-next.55...v5.0.0-next.56) (2023-01-31)
 
 
