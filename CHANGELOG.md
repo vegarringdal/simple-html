@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.59](https://github.com/simple-html/simple-html/compare/v5.0.0-next.58...v5.0.0-next.59) (2023-02-03)
+
+
+### Bug Fixes
+
+* datetime to work in filter also ([76a727a](https://github.com/simple-html/simple-html/commits/76a727ab573f6065756fb3007d0d24d3e031695a))
+
 ## [5.0.0-next.58](https://github.com/simple-html/simple-html/compare/v5.0.0-next.57...v5.0.0-next.58) (2023-02-02)
 
 
