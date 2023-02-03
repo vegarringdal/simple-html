@@ -4,12 +4,7 @@ import { weekHeader } from './weekHeader';
 import { dayHeader } from './dayHeader';
 import { DateInterface } from '../dateInterface';
 
-export function headerRow(
-    context: DateInterface,
-    config: IDateConfig,
-    year: number,
-    month: number
-) {
+export function headerRow(context: DateInterface, config: IDateConfig, year: number, month: number) {
     const rows = new Array(8).fill('x');
     const height = config.rowHeight;
 
@@ -25,7 +20,5 @@ export function headerRow(
     });
 
     return html`<!-- function:headerRow -->
-        <simple-html-date-header-row style="height:${height}">
-            ${row}
-        </simple-html-date-header-row>`;
+        <div class="simple-html-date-header-row" style="height:${height}">${row}</div>`;
 }

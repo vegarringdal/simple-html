@@ -4,13 +4,7 @@ import { day } from './day';
 import { week } from './week';
 import { DateInterface } from '../dateInterface';
 
-export function dayRow(
-    context: DateInterface,
-    config: IDateConfig,
-    year: number,
-    month: number,
-    row: number
-) {
+export function dayRow(context: DateInterface, config: IDateConfig, year: number, month: number, row: number) {
     const rows = new Array(8).fill('x');
     const height = config.rowHeight;
 
@@ -26,5 +20,5 @@ export function dayRow(
     });
 
     return html`<!-- function:dayRow -->
-        <simple-html-date-day-row style="height:${height}"> ${days} </simple-html-date-day-row>`;
+        <div class="simple-html-date-day-row" style="height:${height}">${days}</div>`;
 }

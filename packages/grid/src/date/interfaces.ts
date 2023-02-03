@@ -18,6 +18,9 @@ export interface IDateConfig {
     monthMargin: string;
 
     hideDimmedDates: boolean;
+    showYearInMonth: boolean;
+
+    headerTitle: string;
 }
 
 export interface IStyle {

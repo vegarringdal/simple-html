@@ -3,13 +3,7 @@ import { html } from 'lit-html';
 import { getWeekNumbers } from '../utils/getWeekNumber';
 import { DateInterface } from '../dateInterface';
 
-export function week(
-    _context: DateInterface,
-    config: IDateConfig,
-    year: number,
-    month: number,
-    block: number
-) {
+export function week(_context: DateInterface, config: IDateConfig, year: number, month: number, block: number) {
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month === 11 ? 0 : month + 1, 0);
 
@@ -45,7 +39,5 @@ export function week(
     }
 
     return html`<!-- function:week -->
-        <simple-html-date-week>
-            ${getWeekNumbers(new Date(year, month, day), config.isoWeek)}
-        </simple-html-date-week>`;
+        <div class="simple-html-date-week">${getWeekNumbers(new Date(year, month, day), config.isoWeek)}</div>`;
 }

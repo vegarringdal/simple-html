@@ -43,13 +43,7 @@ function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
     }
 }
 
-export function day(
-    context: DateInterface,
-    config: IDateConfig,
-    year: number,
-    month: number,
-    block: number
-) {
+export function day(context: DateInterface, config: IDateConfig, year: number, month: number, block: number) {
     const FirstDateOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month === 11 ? 0 : month + 1, 0);
     let dayOfWeek = FirstDateOfMonth.getDay() - config.weekStart;
@@ -86,7 +80,7 @@ export function day(
         }
     }
 
-    const classList = [];
+    const classList = ['simple-html-date-day'];
 
     if (dimmedCell) {
         classList.push('simple-html-date-day-dimmed');
@@ -104,7 +98,7 @@ export function day(
     }
 
     return html`<!-- function:day -->
-        <simple-html-date-day
+        <div
             class=${classList.join(' ')}
             @click=${(e: MouseEvent) => {
                 clicked(e, context, currentDate);
@@ -112,5 +106,5 @@ export function day(
             }}
         >
             ${day}
-        </simple-html-date-day>`;
+        </div>`;
 }

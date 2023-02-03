@@ -19,7 +19,7 @@ export function month(context: DateInterface, config: IDateConfig, year: number,
 
     return html`<!-- function: month -->
 
-        <simple-html-date-month style="width:${width};margin:${margin};">
+        <div class="simple-html-date-month" style="width:${width};margin:${margin};">
             ${monthHeaderTemplate} ${headerRowTemplate} ${rowTemplates}
-        </simple-html-date-month>`;
+        </div>`;
 }
