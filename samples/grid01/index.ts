@@ -270,7 +270,7 @@ createButton('overide default numberformater (comma-custom)', () => {
 });
 
 createButton('use default numberformater (dot)', () => {
-    debugger
+    debugger;
     datasource.setNumberFormater(NumberFormaterDot);
     gridInterface.triggerRebuild();
 });
@@ -315,7 +315,6 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
 });
 
 {
-
     /**
      * dropdown sample
      */
@@ -324,7 +323,6 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
 
     const gridInterfaceDropdownEventSample = {
         handleEvent: (e: any) => {
-            
             if (pop) {
                 pop.parentElement?.removeChild(pop);
                 pop = null;
@@ -336,11 +334,11 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                 const element = document.createElement('simple-html-grid') as GridElement;
                 const height = 300;
                 const width = 500;
-                
+
                 /**
                  * first part here is to just keep it within screen size
                  */
-                
+
                 let top = rect.bottom;
                 let left = rect.left;
 
@@ -369,7 +367,7 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                     hideLabels: false,
                     hideFilter: false,
                     footerHeight: 10, // if you wan the scrollbar..
-                    columnsCenter: [{ width: width-45, rows: ['WOW'] }],
+                    columnsCenter: [{ width: width - 45, rows: ['WOW'] }],
                     attributes: [
                         {
                             attribute: 'WOW',
@@ -379,7 +377,7 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                 };
 
                 const datasourceLocal = new Datasource();
-                
+
                 // dummy data for sample
                 for (let i = 0; i < 1000; i++) {
                     datasourceLocal.setData([{ WOW: 'wow' + i }], true);
@@ -400,7 +398,7 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                     }
                 };
 
-                element.onkeydown = (x:any) => {
+                element.onkeydown = (x: any) => {
                     if (x.code === 'Enter' && x.target?.classList.contains('simple-html-grid-cell-input')) {
                         pop.parentElement?.removeChild(pop);
                         pop = null;

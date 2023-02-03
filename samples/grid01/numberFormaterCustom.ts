@@ -50,12 +50,16 @@ export class NumberFormaterCustom {
         return parseFloat(returnValue);
     }
 
+    static toFilter(value: any): Number | null | undefined {
+        return this.toSource(value);
+    }
+
     static fromSourceDisplay(value: any): string | null | undefined {
-        return parseInt(this.fromSource(value)+'').toFixed(2);
+        return parseInt(this.fromSource(value) + '').toFixed(2);
     }
 
     static fromSourceGrouping(value: any): string | null | undefined {
-        return parseInt(this.fromSource(value)+'').toFixed(2);
+        return parseInt(this.fromSource(value) + '').toFixed(2);
     }
 
     static placeholder() {

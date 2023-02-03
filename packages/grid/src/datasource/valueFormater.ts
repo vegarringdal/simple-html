@@ -9,10 +9,15 @@ export interface ValueFormater {
      */
     fromSource(value: any, type: DataTypes, attribute: string): any;
     /**
-     * value user inputs gets converted to date
+     * value user inputs gets converted to value
      * @param value
      */
     toSource(value: any, type: DataTypes, attribute: string): any;
+    /**
+     * value user inputs gets converted to value
+     * @param value
+     */
+    toFilter(value: any, type: DataTypes, attribute: string): any;
     /**
      * placeholder you want to be displayed
      */
@@ -40,10 +45,15 @@ export interface DateAndNumberFormater {
      */
     fromSource(value: any): any;
     /**
-     * value user inputs gets converted to date
+     * value user inputs gets converted
      * @param value
      */
     toSource(value: any): any;
+    /**
+     * value user inputs gets converted
+     * @param value
+     */
+    toFilter(value: any): any;
     /**
      * placeholder you want to be displayed
      */

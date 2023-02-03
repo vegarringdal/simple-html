@@ -55,6 +55,10 @@ export class NumberFormaterDot {
         return parseFloat(returnValue);
     }
 
+    static toFilter(value: any): number | null | undefined {
+        return this.toSource(value);
+    }
+
     static fromSourceDisplay(value: any): string | null | undefined {
         return this.fromSource(value);
     }

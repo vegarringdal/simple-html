@@ -60,9 +60,9 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     new Date(rowValue).getFullYear(),
                     new Date(rowValue).getMonth(),
                     new Date(rowValue).getDate(),
-                    0,
-                    0,
-                    0,
+                    new Date(rowValue).getHours(),
+                    new Date(rowValue).getMinutes(),
+                    new Date(rowValue).getSeconds(),
                     0
                 );
                 rowValue = rowValue.getTime();
@@ -76,9 +76,9 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     new Date(filter.value).getFullYear(),
                     new Date(filter.value).getMonth(),
                     new Date(filter.value).getDate(),
-                    0,
-                    0,
-                    0,
+                    new Date(filter.value).getHours(),
+                    new Date(filter.value).getMinutes(),
+                    new Date(filter.value).getSeconds(),
                     0
                 );
                 filterValue = filterValue.getTime();

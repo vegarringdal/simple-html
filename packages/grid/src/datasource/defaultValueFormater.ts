@@ -31,7 +31,7 @@ export class DefaultValueFormater implements ValueFormater {
     }
 
     /**
-     *
+     * will to use when setting to source
      * @param value Takes string and returns date
      */
     toSource(value: any, type: DataTypes, _attribute: string): any {
@@ -40,6 +40,27 @@ export class DefaultValueFormater implements ValueFormater {
         }
         if (type === 'number') {
             return this.datasource.getNumberFormater().toSource(value);
+        }
+        if (type === 'boolean') {
+            return value || false;
+        }
+
+        return value;
+    }
+
+    /**
+     * will be used in filters, you might want other logic here
+     * @param value
+     * @param type
+     * @param attribute
+     * @returns
+     */
+    toFilter(value: any, type: DataTypes, _attribute: string): any {
+        if (type === 'date') {
+            return this.datasource.getDateFormater().toFilter(value);
+        }
+        if (type === 'number') {
+            return this.datasource.getNumberFormater().toFilter(value);
         }
         if (type === 'boolean') {
             return value || false;

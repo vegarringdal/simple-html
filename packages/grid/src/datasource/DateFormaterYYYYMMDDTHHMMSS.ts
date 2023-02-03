@@ -103,9 +103,72 @@ export class DateFormaterYYYYMMDDTHHMMSS {
             YYYYMMDD[0],
             parseInt(YYYYMMDD[1]) - 1,
             parseInt(YYYYMMDD[2]),
-            new Date().getHours(),
-            new Date().getMinutes(),
-            new Date().getSeconds(),
+            parseInt(HHMMSS[0]),
+            parseInt(HHMMSS[1]),
+            parseInt(HHMMSS[2]),
+            new Date().getMilliseconds()
+        );
+        if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
+            returnValue = '';
+        }
+
+        return returnValue;
+    }
+
+    /**
+     * will be used in filters, you might want other logic here
+     * @param value
+     * @returns
+     */
+    static toFilter(value: any): any {
+        let returnValue = value;
+
+        if (returnValue === null || returnValue === undefined) {
+            return returnValue;
+        }
+
+        if (returnValue < 1) {
+            return null;
+        }
+
+        if (typeof returnValue !== 'string') {
+            return null;
+        }
+
+        const dateTime = returnValue.split('T');
+        const YYYYMMDD: any[] = dateTime[0].split('-');
+        const HHMMSS: any[] = dateTime[1]?.split(':') || [];
+
+        // 01.01.2019
+        if (!YYYYMMDD[1]) {
+            // by default, use current month
+            YYYYMMDD[1] = new Date().getMonth() + 1;
+        }
+        if (!YYYYMMDD[2]) {
+            // by default, use current day
+            YYYYMMDD[2] = new Date().getDate();
+        }
+
+        if (!HHMMSS[0]) {
+            // by default, use hours
+            HHMMSS[0] = 0;
+        }
+        if (!HHMMSS[1]) {
+            // by default, use minutes
+            HHMMSS[1] = 0;
+        }
+        if (!HHMMSS[2]) {
+            // by default, use seconds
+            HHMMSS[2] = 0;
+        }
+
+        returnValue = new Date(
+            YYYYMMDD[0],
+            parseInt(YYYYMMDD[1]) - 1,
+            parseInt(YYYYMMDD[2]),
+            parseInt(HHMMSS[0]),
+            parseInt(HHMMSS[1]),
+            parseInt(HHMMSS[2]),
             new Date().getMilliseconds()
         );
         if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {

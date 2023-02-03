@@ -85,10 +85,14 @@ export class DateFormaterCustom {
         return returnValue;
     }
 
+    static toFilter(value: any): Date | null | undefined {
+        return this.toSource(value);
+    }
+
     static fromSourceDisplay(value: Date | string | null | undefined): string {
         return new Date(value).toDateString();
     }
-    
+
     static fromSourceGrouping(value: Date | string | null | undefined): string {
         return new Date(value).toDateString();
     }

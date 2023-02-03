@@ -21,11 +21,11 @@ export function filterCallback(
             col.currentFilterValue = ctx.gridInterface
                 .getDatasource()
                 .getValueFormater()
-                .toSource(value, col.type, col.attribute);
+                .toFilter(value, col.type, col.attribute);
 
             break;
         case 'number':
-            col.currentFilterValue = value === '' ? null : valueConverter.toSource(value, col.type, col.attribute);
+            col.currentFilterValue = value === '' ? null : valueConverter.toFilter(value, col.type, col.attribute);
 
             break;
         case 'boolean':
@@ -33,10 +33,10 @@ export function filterCallback(
                 col.currentFilterValue = null;
             }
             if (value === 'false') {
-                col.currentFilterValue = valueConverter.toSource(false, col.type, col.attribute);
+                col.currentFilterValue = valueConverter.toFilter(false, col.type, col.attribute);
             }
             if (value === 'true') {
-                col.currentFilterValue = valueConverter.toSource(true, col.type, col.attribute);
+                col.currentFilterValue = valueConverter.toFilter(true, col.type, col.attribute);
             }
 
             break;

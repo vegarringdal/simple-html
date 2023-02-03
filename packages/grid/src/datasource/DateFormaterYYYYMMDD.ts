@@ -85,6 +85,46 @@ export class DateFormaterYYYYMMDD {
         return returnValue;
     }
 
+    /**
+     * will be used in filters, you might want other logic here
+     * @param value
+     * @returns
+     */
+    static toFilter(value: any): any {
+        let returnValue = value;
+
+        if (returnValue === null || returnValue === undefined) {
+            return returnValue;
+        }
+
+        if (returnValue < 1) {
+            return null;
+        }
+
+        if (typeof returnValue !== 'string') {
+            return null;
+        }
+
+        const x: any[] = returnValue.split('-');
+
+        // 2019-01-01
+        if (!x[1]) {
+            // by default, use current month
+            x[1] = new Date().getMonth() + 1;
+        }
+        if (!x[2]) {
+            // by default, use current day
+            x[2] = new Date().getDate();
+        }
+
+        returnValue = new Date(x[0], parseInt(x[1]) - 1, parseInt(x[2]), 0, 0, 0, 0);
+        if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
+            returnValue = '';
+        }
+
+        return returnValue;
+    }
+
     static fromSourceDisplay(value: Date | string | null | undefined): string {
         return this.fromSource(value);
     }

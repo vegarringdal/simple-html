@@ -197,8 +197,14 @@ Need for version "5.0.0":
  * [ ] event when filter oprator is chnage from menu, incase you want to edit placehold for filter
  * [x] have a valueFormater to modify values instead of just a number and date formater
     * this should be able to make it easier for custom formats on bools, etc
+    * [x] added formaters for dot or comma as decimal
+    * [x] date YYYY-MM-DD (iso8601)
+    * [x] datetime YYYY-MM-DDTHH:MM:SS
+    * [x] date DD.MM.YYYYTHH:MM:SS (typical eu/norway)
+    * [x] datetime DD.MM.YYYYTHH:MM:SS
  * [ ] datasource to genrate changelog ?
     * datasource allready have mark for deletion, so it should be able to give all if used correctly, it it might be nice to have built in
+    * this is mostly done, just have had time to test it much
 ## Other:
 - [ ] gridhub action for release/test/lock master branch
 
