@@ -120,7 +120,7 @@ export function renderHeaderFilter(
                                                 filterCallback(ctx, cellConfig.currentFilterValue as any, cellConfig);
                                             }
                                             lastFilter = cellConfig.currentFilterValue;
-                                            
+
                                             renderHeaderFilter(
                                                 ctx,
                                                 cell,

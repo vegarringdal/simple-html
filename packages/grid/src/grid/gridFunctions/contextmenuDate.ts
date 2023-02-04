@@ -18,7 +18,7 @@ export function contextmenuDate(
 
     const contextMenu = creatElement('div', 'simple-html-grid');
 
-    const config = ctx.gridInterface.__getGridConfig().datePickerConfig || {} as IDateConfig;
+    const config = ctx.gridInterface.__getGridConfig().datePickerConfig || ({} as IDateConfig);
 
     // todo - I should add these ass part of gridconfig
     const dateconfig: IDateConfig = {
