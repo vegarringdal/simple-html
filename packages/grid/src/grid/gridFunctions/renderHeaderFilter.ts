@@ -7,6 +7,7 @@ import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
 import { ColType } from './colType';
 import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigationCellRowHandler';
+import { contextmenuDate } from './contextmenuDate';
 
 export function renderHeaderFilter(
     ctx: Grid,
@@ -103,6 +104,37 @@ export function renderHeaderFilter(
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {
                                 skipFocus = true;
+                            }
+                        }}
+                        @click=${(e: any) => {
+                            if (cellConfig?.type === 'date') {
+                                setTimeout(() => {
+                                    contextmenuDate(
+                                        ctx,
+                                        e,
+                                        cell,
+                                        valueFormater.toFilter(rowData[attribute], 'date', attribute),
+                                        (value: Date | null) => {
+                                            cellConfig.currentFilterValue = valueFormater.fromSource(value, 'date', attribute);
+                                            if (lastFilter !== value) {
+                                                filterCallback(ctx, cellConfig.currentFilterValue as any, cellConfig);
+                                            }
+                                            lastFilter = cellConfig.currentFilterValue;
+                                            
+                                            renderHeaderFilter(
+                                                ctx,
+                                                cell,
+                                                row,
+                                                column,
+                                                celno,
+                                                colType,
+                                                cellType,
+                                                attribute,
+                                                rowData
+                                            );
+                                        }
+                                    );
+                                }, 2);
                             }
                         }}
                         @focus=${() => {
