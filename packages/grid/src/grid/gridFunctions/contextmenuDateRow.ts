@@ -37,6 +37,9 @@ export function contextmenuDateRow(
     if (event.clientX - 65 < 0) {
         contextMenu.style.left = asPx(5);
     }
+    if (rect.bottom + 313 > window.innerHeight) {
+        contextMenu.style.top = asPx(rect.top - 317);
+    }
 
     const dateconfig: IDateConfig = {
         monthsToShow: 1,
@@ -75,6 +78,7 @@ export function contextmenuDateRow(
 
     dateInterface.addEventListener({
         handleEvent: (e) => {
+            // maybe this should call back ?
             rowData[attribute] = e.data;
             ctx.gridInterface.triggerScrollEvent();
         }

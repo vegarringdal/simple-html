@@ -130,11 +130,25 @@ export function renderRowCell(
                         @click=${(e: any) => {
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                             triggerScrollEvent(ctx);
-                            setTimeout(() => {
-                                if (cellConfig?.type === 'date') {
-                                    contextmenuDateRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
-                                }
-                            });
+                            if (!cellReadOnly && !config.readonly) {
+                             
+                                setTimeout(() => {
+                                    if (cellConfig?.type === 'date') {
+                                        contextmenuDateRow(
+                                            ctx,
+                                            e,
+                                            cell,
+                                            row,
+                                            column,
+                                            celno,
+                                            colType,
+                                            cellType,
+                                            attribute,
+                                            rowData
+                                        );
+                                    }
+                                });
+                            }
                         }}
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {
