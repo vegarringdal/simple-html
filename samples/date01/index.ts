@@ -32,7 +32,8 @@ const dateconfig: IDateConfig = {
     hideDimmedDates: false,
     showYearInMonth: false,
     headerTitle: '2023',
-    datepicker: true
+    datepicker: true,
+    datepickerDate: new Date()
 };
 
 /**

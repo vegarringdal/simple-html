@@ -18,6 +18,7 @@ export class DateInterface {
     connectGridInterface(element: DateElement) {
         this.element = element;
         if (!this.isConnected) {
+            this.checkDatePicker();
             this.render();
         }
     }
@@ -25,7 +26,25 @@ export class DateInterface {
     connectElement(element: DateElement) {
         this.isConnected = true;
         this.element = element;
+        this.checkDatePicker();
         this.render();
+    }
+
+    checkDatePicker() {
+        if (this.config.datepicker) {
+            if (!this.config.datepickerDate) {
+                this.config.datepickerDate = new Date();
+               
+            }
+
+            this.config.startYear = this.config.datepickerDate.getFullYear();
+            this.config.startMonth = this.config.datepickerDate.getMonth();
+            this.config.datepickerHour = this.config.datepickerDate.getHours();
+            this.config.datepickerMinute = this.config.datepickerDate.getMinutes();
+            this.config.datepickerDate.setSeconds(0)
+            this.config.datepickerDate.setMilliseconds(0)
+            this.selected.add(this.config.datepickerDate.getTime());
+        }
     }
 
     disconnectElement() {
@@ -51,10 +70,20 @@ export class DateInterface {
         this.render();
     }
 
+    gotoNow() {
+        this.config = structuredClone(this.config);
+        this.selected = new Set();
+        const newDate = new Date();
+        newDate.setSeconds(0)
+        newDate.setMilliseconds(0)
+        this.selected.add(newDate.getTime());
+        this.config.datepickerDate = newDate
+        this.checkDatePicker();
+        console.log(this.config, this.selected, newDate)
+        this.render();
+    }
+
     setSelected(newSelectedDates: Date[]) {
-
-
-
         this.selected = new Set(newSelectedDates);
         this.render();
     }
@@ -87,8 +116,7 @@ export class DateInterface {
         const monthTemplates = [];
         const monthMargin = parseInt(this.config.monthMargin.replace('px', '')) * this.config.monthColumns * 2;
         const monthWidth = parseInt(this.config.monthWidth.replace('px', '')) * this.config.monthColumns;
-        this.element.style.width = monthMargin+monthWidth +'px'
-        
+        this.element.style.width = monthMargin + monthWidth + 'px';
 
         let i = 0;
         while (i < this.config.monthsToShow) {

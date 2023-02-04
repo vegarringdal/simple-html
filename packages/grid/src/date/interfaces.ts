@@ -23,6 +23,9 @@ export interface IDateConfig {
     headerTitle: string;
 
     datepicker: boolean;
+    datepickerDate?: Date;
+    datepickerHour?: number;
+    datepickerMinute?: number;
 }
 
 export interface IStyle {

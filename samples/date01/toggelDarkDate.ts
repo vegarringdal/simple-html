@@ -19,10 +19,10 @@ export function toggelDarkDate() {
         --simple-html-date-main-color: #f9f7f7;
         --simple-html-date-dimmed-color: #979494;
         --simple-html-date-week-color: #8b8b8b;
-        --simple-html-date-header-bg-border: #181515;
-        --simple-html-date-main-bg-border: #e6e5e5;
+        --simple-html-date-header-bg-border: #8b8b8b;
+        --simple-html-date-main-bg-border:  #979494;
         --simple-html-date-main-bg-selected: #234882;
-        --simple-html-date-main-bg-border: #e6e5e5;
+    
     }
 
 
