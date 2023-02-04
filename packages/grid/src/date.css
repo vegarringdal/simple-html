@@ -1,6 +1,6 @@
 .simple-html-date {
     text-align: initial;
-    --simple-html-date-main-bg-color: #f5f5f5;
+    --simple-html-date-main-bg-color: white;
     --simple-html-date-main-color: #2e2d2d;
     --simple-html-date-dimmed-color: #dfdfdf;
     --simple-html-date-week-color: #8b8b8b;
@@ -9,8 +9,10 @@
     --simple-html-date-main-bg-selected: #bdd4e7;
     --simple-html-date-main-bg-border: #e6e5e5;
     color: var(--simple-html-date-main-color);
+    background-color: var(--simple-html-date-main-bg-color);
     display: flex;
     flex-direction: column;
+    user-select: none;
 }
 
 .simple-html-date .simple-html-date-col {
@@ -25,30 +27,71 @@
 }
 .simple-html-date .simple-html-date-month-header {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-weight: 500;
-    border-bottom: 1px solid rgb(148, 139, 139);
+    margin-bottom: 5px;
+    
+}
+.simple-html-date .simple-html-date-month-header .year {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
 }
 
-.simple-html-date .simple-html-date-day-row {  
+.simple-html-date .icon{
+    width: 20px;
+    height: 20px;
+}
+
+.simple-html-date .simple-html-date-month-header .month {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    
+}
+.simple-html-date .simple-html-date-month-header .main {
+    flex: 1 1 0%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.simple-html-date .simple-html-date-month-header .side {
+    flex: 1 1 0%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--simple-html-date-dimmed-color);
+}
+
+.simple-html-date .simple-html-date-day-row {
     display: flex;
     box-sizing: border-box;
 }
 
-.simple-html-date .simple-html-date-header{
+.simple-html-date .simple-html-date-header {
+    flex: 1 1 0%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 500;
-    font-size: xx-large;
+    font-size: x-large;
+    font-weight: 600;
 }
+
+
 
 .simple-html-date .simple-html-date-header-row {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid rgb(167, 158, 158);
+    border-top: 1px solid var(--simple-html-date-main-bg-border);
+    border-bottom: 1px solid var(--simple-html-date-main-bg-border);
 }
 
 .simple-html-date .simple-html-date-week-header {
@@ -60,8 +103,10 @@
     align-items: center;
     justify-content: center;
     color: var(--simple-html-date-week-color);
-    font-weight: 500;
+    font-weight: 600;
+    user-select: none;
 }
+
 
 .simple-html-date .simple-html-date-day-header {
     position: relative;
@@ -71,7 +116,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 50;
+    font-weight: 500;
+    user-select: none;
 }
 
 .simple-html-date .simple-html-date-week {
@@ -92,11 +138,7 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    border: 1px solid transparent
+    border: 1px solid transparent;
 }
 
 .simple-html-date .simple-html-date-day-dimmed {
@@ -113,7 +155,7 @@
     pointer-events: none; /* disable hover */
 }
 
-.simple-html-date .simple-html-date-day:hover {
+.simple-html-date .simple-html-date-day:hover:not(.simple-html-date-day-dimmed) {
     border: 1px solid var(--simple-html-date-main-bg-border);
     color: var(--simple-html-date-main-color);
 }

@@ -21,6 +21,8 @@ export interface IDateConfig {
     showYearInMonth: boolean;
 
     headerTitle: string;
+
+    datepicker: boolean;
 }
 
 export interface IStyle {

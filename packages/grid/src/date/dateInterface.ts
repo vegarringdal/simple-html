@@ -8,7 +8,7 @@ export class DateInterface {
     public selected = new Set();
     public lastSelected: Date = null;
     public element: DateElement;
-    private config: IDateConfig;
+    public config: IDateConfig;
     private isConnected = false;
 
     constructor(config: IDateConfig) {
@@ -52,7 +52,29 @@ export class DateInterface {
     }
 
     setSelected(newSelectedDates: Date[]) {
+
+
+
         this.selected = new Set(newSelectedDates);
+        this.render();
+    }
+
+    nextMonth() {
+        this.config = structuredClone(this.config);
+        this.config.startMonth = this.config.startMonth + 1;
+        if (this.config.startMonth > 11) {
+            this.config.startMonth = 0;
+            this.config.startYear = this.config.startYear + 1;
+        }
+        this.render();
+    }
+    prevMonth() {
+        this.config = structuredClone(this.config);
+        this.config.startMonth = this.config.startMonth - 1;
+        if (this.config.startMonth < 0) {
+            this.config.startMonth = 11;
+            this.config.startYear = this.config.startYear - 1;
+        }
         this.render();
     }
 
@@ -63,6 +85,10 @@ export class DateInterface {
         let currentMonth = this.config.startMonth;
         let currentYear = this.config.startYear;
         const monthTemplates = [];
+        const monthMargin = parseInt(this.config.monthMargin.replace('px', '')) * this.config.monthColumns * 2;
+        const monthWidth = parseInt(this.config.monthWidth.replace('px', '')) * this.config.monthColumns;
+        this.element.style.width = monthMargin+monthWidth +'px'
+        
 
         let i = 0;
         while (i < this.config.monthsToShow) {

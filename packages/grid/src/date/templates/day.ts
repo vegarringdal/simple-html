@@ -3,6 +3,12 @@ import { html } from 'lit-html';
 import { DateInterface } from '../dateInterface';
 
 function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
+
+    if(ctx.config.datepicker){
+        ctx.selected.clear();
+    }
+
+
     let added = false;
     if (ctx.selected.has(currentDate.getTime())) {
         added = false;

@@ -4,11 +4,13 @@ import { DateInterface } from '../dateInterface';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function header(_context: DateInterface, config: IDateConfig) {
-    const monthMargin = parseInt(config.monthMargin.replace('px', '')) * config.monthColumns * 2;
-    const monthWidth = parseInt(config.monthWidth.replace('px', '')) * config.monthColumns;
+
+    if (config.datepicker) {
+        return ''
+    }
 
     return html`<!-- function:header -->
-        <div class="simple-html-date-header" style="width:${monthWidth + monthMargin}px">
-            <span>${config.headerTitle} </span>
+        <div class="simple-html-date-header">
+            <span class="main">${config.headerTitle} </span>
         </div>`;
 }

@@ -4,6 +4,7 @@ import { headerRow } from './headerRow';
 import { dayRow } from './dayRow';
 import { html } from 'lit-html';
 import { DateInterface } from '../dateInterface';
+import { time } from './time';
 
 export function month(context: DateInterface, config: IDateConfig, year: number, month: number) {
     const width = config.monthWidth;
@@ -11,6 +12,7 @@ export function month(context: DateInterface, config: IDateConfig, year: number,
 
     const monthHeaderTemplate = monthHeader(context, config, year, month);
     const headerRowTemplate = headerRow(context, config, year, month);
+    const timeTemplate = time(context, config, year, month);
 
     const rows = new Array(6).fill('x');
     const rowTemplates = rows.map((_x, i) => {
@@ -20,6 +22,6 @@ export function month(context: DateInterface, config: IDateConfig, year: number,
     return html`<!-- function: month -->
 
         <div class="simple-html-date-month" style="width:${width};margin:${margin};">
-            ${monthHeaderTemplate} ${headerRowTemplate} ${rowTemplates}
+            ${monthHeaderTemplate} ${headerRowTemplate} ${rowTemplates}${timeTemplate}
         </div>`;
 }
