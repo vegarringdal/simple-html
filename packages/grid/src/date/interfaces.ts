@@ -1,4 +1,3 @@
-
 export interface IDateConfig {
     monthsToShow: number;
     monthColumns: number;

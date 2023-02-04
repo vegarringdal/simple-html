@@ -7,10 +7,7 @@ export function getWeekNumbers(date: Date, isoWeek: boolean) {
     day = day >= 0 ? day : day + 7;
     const daynum =
         Math.floor(
-            (date.getTime() -
-                newYear.getTime() -
-                (date.getTimezoneOffset() - newYear.getTimezoneOffset()) * 60000) /
-                86400000
+            (date.getTime() - newYear.getTime() - (date.getTimezoneOffset() - newYear.getTimezoneOffset()) * 60000) / 86400000
         ) + 1;
     let weeknum;
     //if the year starts before the middle of a week

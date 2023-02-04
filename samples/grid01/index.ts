@@ -13,6 +13,7 @@ import {
 } from '@simple-html/grid';
 import { GridInterface, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
+import '../../packages/grid/src/date.css';
 import { dummydata } from './dummyData';
 import { gridConfig } from './gridConfig';
 import { toggelDarkGrid } from './toggelDarkGrid';

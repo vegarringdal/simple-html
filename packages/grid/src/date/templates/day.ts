@@ -3,12 +3,13 @@ import { html } from 'lit-html';
 import { DateInterface } from '../dateInterface';
 
 function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
+    event.preventDefault();
+    event.stopPropagation();
 
-    if(ctx.config.datepicker){
+    if (ctx.config.datepicker) {
         ctx.selected.clear();
-        ctx.selected
+        ctx.selected;
     }
-
 
     let added = false;
     if (ctx.selected.has(currentDate.getTime())) {
@@ -49,8 +50,8 @@ function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
         ctx.lastSelected = null;
     }
 
-    if(ctx.config.datepicker){
-        ctx.config.datepickerDate = currentDate
+    if (ctx.config.datepicker) {
+        ctx.config.datepickerDate = currentDate;
     }
 }
 
@@ -97,8 +98,8 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
         classList.push('simple-html-date-day-dimmed');
     }
 
-    const hour = context.config.datepickerHour || 0
-    const min = context.config.datepickerMinute || 0
+    const hour = context.config.datepickerHour || 0;
+    const min = context.config.datepickerMinute || 0;
 
     const currentDate = new Date(year, month, day, hour, min, 0, 0);
 

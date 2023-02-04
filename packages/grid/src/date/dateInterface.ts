@@ -4,12 +4,17 @@ import { IDateConfig, IStyle } from './interfaces';
 import { header } from './templates/header';
 import { month } from './templates/month';
 
+export type callF = (...args: any[]) => any;
+export type callO = { handleEvent: (...args: any[]) => any };
+export type callable = callF | callO;
+
 export class DateInterface {
     public selected = new Set();
     public lastSelected: Date = null;
     public element: DateElement;
     public config: IDateConfig;
     private isConnected = false;
+    private listeners: Set<callable> = new Set();
 
     constructor(config: IDateConfig) {
         this.config = config;
@@ -34,22 +39,40 @@ export class DateInterface {
         if (this.config.datepicker) {
             if (!this.config.datepickerDate) {
                 this.config.datepickerDate = new Date();
-               
             }
 
             this.config.startYear = this.config.datepickerDate.getFullYear();
             this.config.startMonth = this.config.datepickerDate.getMonth();
             this.config.datepickerHour = this.config.datepickerDate.getHours();
             this.config.datepickerMinute = this.config.datepickerDate.getMinutes();
-            this.config.datepickerDate.setSeconds(0)
-            this.config.datepickerDate.setMilliseconds(0)
+            this.config.datepickerDate.setSeconds(0);
+            this.config.datepickerDate.setMilliseconds(0);
             this.selected.add(this.config.datepickerDate.getTime());
         }
     }
 
     disconnectElement() {
         this.isConnected = false;
+        this.listeners.clear();
         console.log('disconnect');
+    }
+
+    callSubscribers(event: string, data = {}): void {
+        const keeping: any = [];
+        this.listeners.forEach((callable) => {
+            let keep: boolean;
+            if (typeof callable === 'function') {
+                keep = callable({ type: event, data: data });
+            } else {
+                if (typeof callable?.handleEvent === 'function') {
+                    keep = callable.handleEvent({ type: event, data: data });
+                }
+            }
+            if (keep) {
+                keeping.push(callable);
+            }
+        });
+        this.listeners = new Set(keeping);
     }
 
     selectRangeWithFromTo(fromDate: Date, toDate: Date) {
@@ -74,12 +97,12 @@ export class DateInterface {
         this.config = structuredClone(this.config);
         this.selected = new Set();
         const newDate = new Date();
-        newDate.setSeconds(0)
-        newDate.setMilliseconds(0)
+        newDate.setSeconds(0);
+        newDate.setMilliseconds(0);
         this.selected.add(newDate.getTime());
-        this.config.datepickerDate = newDate
+        this.config.datepickerDate = newDate;
         this.checkDatePicker();
-        console.log(this.config, this.selected, newDate)
+        console.log(this.config, this.selected, newDate);
         this.render();
     }
 
@@ -105,6 +128,22 @@ export class DateInterface {
             this.config.startYear = this.config.startYear - 1;
         }
         this.render();
+    }
+
+    addEventListener(callable: callable): void {
+        if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
+            throw new Error('callable sent to datasource event listner is wrong type');
+        }
+
+        if (!this.listeners.has(callable)) {
+            this.listeners.add(callable);
+        }
+    }
+
+    removeEventListener(callable: callable): void {
+        if (this.listeners.has(callable)) {
+            this.listeners.delete(callable);
+        }
     }
 
     render() {

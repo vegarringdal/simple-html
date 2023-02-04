@@ -19,7 +19,9 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         stroke-width="1.5"
                         stroke="currentColor"
                         class="icon"
-                        @click=${() => {
+                        @click=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             config.datepickerHour = config.datepickerHour - 1;
                             if (config.datepickerHour > 23) {
                                 config.datepickerHour = 0;
@@ -40,7 +42,13 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         type="number"
                         min="0"
                         max="23"
+                        @click=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }}
                         @change=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             config.datepickerHour = e.target.valueAsNumber;
                             if (config.datepickerHour > 23) {
                                 config.datepickerHour = 0;
@@ -61,7 +69,9 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         stroke-width="1.5"
                         stroke="currentColor"
                         class="icon"
-                        @click=${() => {
+                        @click=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             config.datepickerHour = config.datepickerHour + 1;
                             if (config.datepickerHour > 23) {
                                 config.datepickerHour = 0;
@@ -91,7 +101,9 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         stroke-width="1.5"
                         stroke="currentColor"
                         class="icon"
-                        @click=${() => {
+                        @click=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             config.datepickerMinute = config.datepickerMinute - 1;
                             if (config.datepickerMinute > 23) {
                                 config.datepickerMinute = 0;
@@ -112,7 +124,13 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         type="number"
                         min="0"
                         max="59"
+                        @click=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }}
                         @change=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             config.datepickerMinute = e.target.valueAsNumber;
                             if (config.datepickerMinute > 59) {
                                 config.datepickerMinute = 0;
@@ -134,7 +152,9 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         stroke-width="1.5"
                         stroke="currentColor"
                         class="icon"
-                        @click=${() => {
+                        @click=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             config.datepickerMinute = config.datepickerMinute + 1;
                             if (config.datepickerMinute > 59) {
                                 config.datepickerMinute = 0;
@@ -155,8 +175,22 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
         </div>
         <div class="date-flex-col">
             <div class="side"></div>
-            <button @click=${() => context.gotoNow()}>Now</button>
-            <button>Use</button>
+            <button
+                @click=${(e: any) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    context.gotoNow();
+                }}
+            >
+                Now
+            </button>
+            <button
+                @click=${() => {
+                    context.callSubscribers('date-select', config.datepickerDate);
+                }}
+            >
+                Use
+            </button>
         </div>
     </div>`;
 }

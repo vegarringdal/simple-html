@@ -15,7 +15,11 @@ export function monthHeader(context: DateInterface, config: IDateConfig, year: n
                         stroke-width="1.5"
                         stroke="currentColor"
                         class="icon"
-                        @click=${()=> context.prevMonth()}
+                        @click=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            context.prevMonth();
+                        }}
                     >
                         <path
                             stroke-linecap="round"
@@ -33,7 +37,11 @@ export function monthHeader(context: DateInterface, config: IDateConfig, year: n
                         stroke-width="1.5"
                         stroke="currentColor"
                         class="icon"
-                        @click=${()=> context.nextMonth()}
+                        @click=${(e: any) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            context.nextMonth();
+                        }}
                     >
                         <path
                             stroke-linecap="round"

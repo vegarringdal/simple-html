@@ -38,12 +38,17 @@
 .simple-html-date .simple-html-date-time .side input {
     text-align: center;
     outline: none;
+    color: var(--simple-html-date-main-color);
+    background-color: var(--simple-html-date-main-bg-color);
+    border: 0px;
+    
 }
 
 .simple-html-date .simple-html-date-time .side input::-webkit-outer-spin-button,
 .simple-html-date .simple-html-date-time .side input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
+    
 }
 
 .date-flex {

@@ -4,9 +4,8 @@ import { DateInterface } from '../dateInterface';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function header(_context: DateInterface, config: IDateConfig) {
-
     if (config.datepicker) {
-        return ''
+        return '';
     }
 
     return html`<!-- function:header -->

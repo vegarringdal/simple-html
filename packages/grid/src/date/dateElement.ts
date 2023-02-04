@@ -1,5 +1,5 @@
 import { DateInterface } from './dateInterface';
- 
+
 /**
  * this is custom element
  * it connects gridinterface to grid class

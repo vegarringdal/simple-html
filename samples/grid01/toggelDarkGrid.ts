@@ -58,6 +58,20 @@ export function toggelDarkGrid() {
     .simple-html-grid input[type="checkbox"] {
         margin: 2px 
     }
+
+    body,
+    .simple-html-date {
+        
+
+        --simple-html-date-main-bg-color: #374151;
+        --simple-html-date-main-color: #f9f7f7;
+        --simple-html-date-dimmed-color: #979494;
+        --simple-html-date-week-color: #8b8b8b;
+        --simple-html-date-header-bg-border: #8b8b8b;
+        --simple-html-date-main-bg-border:  #979494;
+        --simple-html-date-main-bg-selected: #234882;
+    
+    }
     
     `)
         );

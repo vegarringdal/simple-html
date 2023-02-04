@@ -152,13 +152,13 @@ export const gridConfig: GridConfig = {
         },
         {
             attribute: 'index',
-            type: 'number'
+            type: 'number',
+            focusButton: 'ALWAYS'
         },
         {
             attribute: 'date1',
             type: 'date',
-            placeHolderFilter: 'YYYY-MM-DD',
-            focusButton: 'ALWAYS'
+            placeHolderFilter: 'YYYY-MM-DD'
         },
         {
             attribute: 'date2',
