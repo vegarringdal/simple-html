@@ -20,5 +20,5 @@ export function dayRow(context: DateInterface, config: IDateConfig, year: number
     });
 
     return html`<!-- function:dayRow -->
-        <div class="simple-html-date-day-row" style="height:${height}">${days}</div>`;
+        <div class="simple-html-date-day-row" style="height:${height}px">${days}</div>`;
 }

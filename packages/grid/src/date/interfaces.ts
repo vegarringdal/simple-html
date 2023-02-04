@@ -1,30 +1,43 @@
 export interface IDateConfig {
+    /**
+     * is automatically 1 if datepicker= true
+     */
     monthsToShow: number;
+    /**
+     * is automatically 1 if datepicker= true
+     */
     monthColumns: number;
-    monthHeader: string[]; //'January' etc
+    monthHeader: string[];
 
-    startMonth: number; // 1-12
+    startMonth: number;
     startYear: number;
 
-    weekHeader: string[]; // 'Mon', 'Tue' etc
+    weekHeader: string[];
     weekStart: number;
 
     showWeek: boolean;
     isoWeek: boolean;
 
-    rowHeight: string;
-    monthWidth: string;
-    monthMargin: string;
+    rowHeight: number;
+    monthWidth: number;
+    monthMargin: number;
 
     hideDimmedDates: boolean;
     showYearInMonth: boolean;
 
+    /**
+     * is automatically hidden if datepicker= true
+     */
     headerTitle: string;
 
     datepicker: boolean;
     datepickerDate?: Date;
     datepickerHour?: number;
     datepickerMinute?: number;
+    /**
+     * helper if used in grid
+     */
+    datepickerHeight?: number;
 }
 
 export interface IStyle {

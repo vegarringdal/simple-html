@@ -202,7 +202,8 @@ Need for version "5.0.0":
     * [x] datetime YYYY-MM-DDTHH:MM:SS
     * [x] date DD.MM.YYYYTHH:MM:SS (typical eu/norway)
     * [x] datetime DD.MM.YYYYTHH:MM:SS
- * [ ] datasource to genrate changelog ?
+    * [x] add simple date/time pickere
+ * [ ] datasource to generate changelog ?
     * datasource allready have mark for deletion, so it should be able to give all if used correctly, it it might be nice to have built in
     * this is mostly done, just have had time to test it much
 ## Other:

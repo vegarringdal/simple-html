@@ -1,6 +1,7 @@
 import { DataTypes, FilterArgument } from '../datasource/filterArgument';
 import { GroupArgument } from '../datasource/groupArgument';
 import { FilterComparisonOperator } from '../datasource/filterComparisonOperator';
+import { IDateConfig } from '../date/interfaces';
 
 export type GridConfig = {
     cellHeight?: number;
@@ -15,6 +16,12 @@ export type GridConfig = {
     columnsPinnedLeft?: Columns[];
     columnsCenter: Columns[];
     columnsPinnedRight?: Columns[];
+
+    /**
+     * datepicker
+     * not all is passed on to intenal picker
+     */
+    datePickerConfig?: IDateConfig;
 
     /**
      * displays only placeholder on current focused cell row/current entity row

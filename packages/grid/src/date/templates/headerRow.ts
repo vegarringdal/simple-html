@@ -20,5 +20,5 @@ export function headerRow(context: DateInterface, config: IDateConfig, year: num
     });
 
     return html`<!-- function:headerRow -->
-        <div class="simple-html-date-header-row" style="height:${height}">${row}</div>`;
+        <div class="simple-html-date-header-row" style="height:${height}px">${row}</div>`;
 }

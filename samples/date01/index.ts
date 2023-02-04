@@ -26,9 +26,9 @@ const dateconfig: IDateConfig = {
         'December'
     ],
     weekStart: 1,
-    rowHeight: '22px',
-    monthWidth: '230px',
-    monthMargin: '10px',
+    rowHeight: 22,
+    monthWidth: 230,
+    monthMargin: 10,
     hideDimmedDates: false,
     showYearInMonth: false,
     headerTitle: '2023',

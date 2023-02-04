@@ -13,7 +13,6 @@ export class DateInterface {
     public lastSelected: Date = null;
     public element: DateElement;
     public config: IDateConfig;
-    private isConnected = false;
     private listeners: Set<callable> = new Set();
 
     constructor(config: IDateConfig) {
@@ -22,14 +21,13 @@ export class DateInterface {
 
     connectGridInterface(element: DateElement) {
         this.element = element;
-        if (!this.isConnected) {
+        if (this.element) {
             this.checkDatePicker();
             this.render();
         }
     }
 
     connectElement(element: DateElement) {
-        this.isConnected = true;
         this.element = element;
         this.checkDatePicker();
         this.render();
@@ -52,7 +50,7 @@ export class DateInterface {
     }
 
     disconnectElement() {
-        this.isConnected = false;
+        this.element = null;
         this.listeners.clear();
         console.log('disconnect');
     }
@@ -147,14 +145,20 @@ export class DateInterface {
     }
 
     render() {
-        if (!this.isConnected) {
+        if (!this.element) {
             return;
         }
+
+        if (this.config.datepicker) {
+            this.config.monthsToShow = 1;
+            this.config.monthColumns = 1;
+        }
+
         let currentMonth = this.config.startMonth;
         let currentYear = this.config.startYear;
         const monthTemplates = [];
-        const monthMargin = parseInt(this.config.monthMargin.replace('px', '')) * this.config.monthColumns * 2;
-        const monthWidth = parseInt(this.config.monthWidth.replace('px', '')) * this.config.monthColumns;
+        const monthMargin = this.config.monthMargin * this.config.monthColumns * 2;
+        const monthWidth = this.config.monthWidth * this.config.monthColumns;
         this.element.style.width = monthMargin + monthWidth + 'px';
 
         let i = 0;
