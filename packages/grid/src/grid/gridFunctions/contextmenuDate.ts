@@ -1,25 +1,18 @@
 import { html, render } from 'lit-html';
-import { Entity } from '../../datasource/entity';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
 import { removeContextMenu } from './removeContextMenu';
 import { IDateConfig } from '../../date/interfaces';
 import { DateInterface } from '../../date/dateInterface';
 
-export function contextmenuDateRow(
+export function contextmenuDate(
     ctx: Grid,
     event: MouseEvent,
     cell: HTMLCellElement,
-    _row: number,
-    _column: number,
-    _celno: number,
-    _colType: ColType,
-    _cellType: string,
-    attribute: string,
-    rowData: Entity
+    value: Date|null,
+    callback: (value: Date|null) => void
 ) {
     removeContextMenu(ctx);
 
@@ -71,7 +64,7 @@ export function contextmenuDateRow(
         showYearInMonth: false,
         headerTitle: '2023',
         datepicker: true,
-        datepickerDate: rowData[attribute]
+        datepickerDate: value
     };
 
     const dateInterface = new DateInterface(dateconfig);
@@ -79,8 +72,7 @@ export function contextmenuDateRow(
     dateInterface.addEventListener({
         handleEvent: (e) => {
             // maybe this should call back ?
-            rowData[attribute] = e.data;
-            ctx.gridInterface.triggerScrollEvent();
+            callback(e.data)
         }
     });
 
