@@ -113,7 +113,7 @@ export function renderHeaderFilter(
                                         ctx,
                                         e,
                                         cell,
-                                        valueFormater.toFilter(rowData[attribute], 'date', attribute),
+                                        valueFormater.toFilter(currentValue, 'date', attribute),
                                         (value: Date | null) => {
                                             cellConfig.currentFilterValue = valueFormater.fromSource(value, 'date', attribute);
                                             if (lastFilter !== value) {
