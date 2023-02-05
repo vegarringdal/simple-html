@@ -56,7 +56,7 @@ export function contextmenuDate(
 
     const rect = cell.getBoundingClientRect();
     contextMenu.style.position = 'absolute';
-    contextMenu.style.zIndex = '2000'
+    contextMenu.style.zIndex = '2000';
     contextMenu.style.top = asPx(rect.bottom + 2);
     contextMenu.style.left = asPx(rect.left + 2);
     contextMenu.style.minWidth = asPx(130);
