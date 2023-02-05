@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.62](https://github.com/simple-html/simple-html/compare/v5.0.0-next.61...v5.0.0-next.62) (2023-02-05)
+
+
+### Bug Fixes
+
+* remove unwanted console.log ([a88e6e5](https://github.com/simple-html/simple-html/commits/a88e6e58fc83459a877afd6d8ba7caa5b7b57723))
+
 ## [5.0.0-next.61](https://github.com/simple-html/simple-html/compare/v5.0.0-next.60...v5.0.0-next.61) (2023-02-05)
 
 
