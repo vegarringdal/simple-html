@@ -320,14 +320,9 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
      * dropdown sample
      */
 
-    let pop: HTMLElement | null = null;
-
     const gridInterfaceDropdownEventSample = {
         handleEvent: (e: any) => {
-            if (pop) {
-                pop.parentElement?.removeChild(pop);
-                pop = null;
-            }
+            gridInterface.removeContextMenuElement();
 
             if (e.type === 'cell-focus-button-click' && e.data?.attribute === 'company') {
                 const cell = e.data.cell as HTMLCellElement;
@@ -384,16 +379,14 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                     datasourceLocal.setData([{ WOW: 'wow' + i }], true);
                 }
 
-                const gridInterface = new GridInterface(gridConfig, datasourceLocal);
+                const gridInterfaceLocal = new GridInterface(gridConfig, datasourceLocal);
                 element.classList.add('simple-html-grid');
-                element.connectInterface(gridInterface);
+                element.connectInterface(gridInterfaceLocal);
                 document.body.appendChild(element);
-                pop = element;
 
                 element.onclick = (x: any) => {
                     if (x.target?.classList.contains('simple-html-grid-cell-input')) {
-                        pop.parentElement?.removeChild(pop);
-                        pop = null;
+                        gridInterface.removeContextMenuElement();
                         datasource.currentEntity['company'] = datasourceLocal.currentEntity['WOW'];
                         e.data.target?.focus();
                     }
@@ -401,8 +394,7 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
 
                 element.onkeydown = (x: any) => {
                     if (x.code === 'Enter' && x.target?.classList.contains('simple-html-grid-cell-input')) {
-                        pop.parentElement?.removeChild(pop);
-                        pop = null;
+                        gridInterface.removeContextMenuElement();
                         datasource.currentEntity['company'] = datasourceLocal.currentEntity['WOW'];
                         e.data.target?.focus();
                     }
@@ -411,6 +403,8 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
                 setTimeout(() => {
                     // set focus to first filter
                     // but we want a timeout, so we do not get space clicked
+
+                    gridInterface.setContextMenuElement(element);
                     (element.getElementsByTagName('INPUT')[0] as HTMLInputElement)?.focus();
                 });
             }
