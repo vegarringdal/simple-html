@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.63](https://github.com/simple-html/simple-html/compare/v5.0.0-next.62...v5.0.0-next.63) (2023-02-05)
+
+
+### Bug Fixes
+
+* cursor date picker ([5fb55f3](https://github.com/simple-html/simple-html/commits/5fb55f3b2637acd6dbe28a42bcd61bf6c7fa88de))
+* datepicker header filter was not using input value ([4e0c02a](https://github.com/simple-html/simple-html/commits/4e0c02a333d51743dcc85420121b14f3e4cff923))
+
 ## [5.0.0-next.62](https://github.com/simple-html/simple-html/compare/v5.0.0-next.61...v5.0.0-next.62) (2023-02-05)
 
 
