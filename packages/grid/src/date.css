@@ -92,6 +92,7 @@
     width: 20px;
     height: 20px;
     margin: 3px;
+    cursor: pointer;
 }
 
 .simple-html-date .simple-html-date-month-header .month {
