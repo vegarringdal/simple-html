@@ -52,7 +52,6 @@ export class DateInterface {
     disconnectElement() {
         this.element = null;
         this.listeners.clear();
-        console.log('disconnect');
     }
 
     callSubscribers(event: string, data = {}): void {
@@ -100,7 +99,6 @@ export class DateInterface {
         this.selected.add(newDate.getTime());
         this.config.datepickerDate = newDate;
         this.checkDatePicker();
-        console.log(this.config, this.selected, newDate);
         this.render();
     }
 
