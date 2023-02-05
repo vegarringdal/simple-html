@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.61](https://github.com/simple-html/simple-html/compare/v5.0.0-next.60...v5.0.0-next.61) (2023-02-05)
+
+
+### Features
+
+* date/time picker ([#53](https://vegarringdal//null/issues/53)) ([65a7be4](https://github.com/simple-html/simple-html/commits/65a7be4c38cbceeeaec64a484321ae2ad39b0951))
+
 ## [5.0.0-next.60](https://github.com/simple-html/simple-html/compare/v5.0.0-next.59...v5.0.0-next.60) (2023-02-03)
 
 ## [5.0.0-next.59](https://github.com/simple-html/simple-html/compare/v5.0.0-next.58...v5.0.0-next.59) (2023-02-03)
