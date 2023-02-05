@@ -1,0 +1,206 @@
+.simple-html-date {
+    text-align: initial;
+    --simple-html-date-main-bg-color: white;
+    --simple-html-date-main-color: #2e2d2d;
+    --simple-html-date-dimmed-color: #dfdfdf;
+    --simple-html-date-week-color: #8b8b8b;
+    --simple-html-date-header-bg-border: #181515;
+    --simple-html-date-main-bg-border: #e6e5e5;
+    --simple-html-date-main-bg-selected: #bdd4e7;
+    color: var(--simple-html-date-main-color);
+    background-color: var(--simple-html-date-main-bg-color);
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+}
+
+.simple-html-date .simple-html-date-col {
+    display: flex;
+    flex-direction: row;
+}
+
+.simple-html-date .simple-html-date-time {
+    border-top: 1px solid var(--simple-html-date-main-bg-border);
+    margin-top: 5px;
+    display: flex;
+    flex-direction: column;
+    color: var(--simple-html-date-week-color);
+}
+
+.simple-html-date .simple-html-date-time .side {
+    flex: 1 1 0%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px;
+}
+.simple-html-date .simple-html-date-time .side input {
+    text-align: center;
+    outline: none;
+    color: var(--simple-html-date-main-color);
+    background-color: var(--simple-html-date-main-bg-color);
+    border: 0px;
+    
+}
+
+.simple-html-date .simple-html-date-time .side input::-webkit-outer-spin-button,
+.simple-html-date .simple-html-date-time .side input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+    
+}
+
+.date-flex {
+    flex: 1 1 0%;
+    display: flex;
+}
+
+.date-flex-col {
+    width: 100%;
+    flex: 1 1 0%;
+    display: flex;
+}
+
+.date-flex-col button{ 
+    margin: 5px;
+    margin-top: 10px;
+}
+
+.simple-html-date .simple-html-date-month {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.simple-html-date .simple-html-date-month-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+.simple-html-date .simple-html-date-month-header .year {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    
+}
+
+.simple-html-date .icon {
+    width: 20px;
+    height: 20px;
+    margin: 3px;
+}
+
+.simple-html-date .simple-html-date-month-header .month {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: medium;
+}
+.simple-html-date .simple-html-date-month-header .main {
+    flex: 1 1 0%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.simple-html-date .simple-html-date-month-header .side {
+    flex: 1 1 0%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--simple-html-date-dimmed-color);
+}
+
+.simple-html-date .simple-html-date-day-row {
+    display: flex;
+    box-sizing: border-box;
+}
+
+.simple-html-date .simple-html-date-header {
+    flex: 1 1 0%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: x-large;
+    font-weight: 600;
+}
+
+.simple-html-date .simple-html-date-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid var(--simple-html-date-main-bg-border);
+    border-bottom: 1px solid var(--simple-html-date-main-bg-border);
+}
+
+.simple-html-date .simple-html-date-week-header {
+    position: relative;
+    margin-left: 1px;
+    margin-top: 1px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--simple-html-date-week-color);
+    font-weight: 600;
+    user-select: none;
+}
+
+.simple-html-date .simple-html-date-day-header {
+    position: relative;
+    margin-left: 1px;
+    margin-top: 1px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    user-select: none;
+}
+
+.simple-html-date .simple-html-date-week {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--simple-html-date-week-color);
+    font-weight: 100;
+    font-style: italic;
+}
+
+.simple-html-date .simple-html-date-day {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+}
+
+.simple-html-date .simple-html-date-day-dimmed {
+    color: var(--simple-html-date-dimmed-color);
+}
+
+.simple-html-date .simple-html-date-day-selected {
+    background-color: var(--simple-html-date-main-bg-selected);
+    border: 1px solid var(--simple-html-date-main-bg-border);
+    box-sizing: border-box;
+}
+
+.simple-html-date .simple-html-date-day-hidden {
+    pointer-events: none; /* disable hover */
+}
+
+.simple-html-date .simple-html-date-day:hover:not(.simple-html-date-day-dimmed) {
+    border: 1px solid var(--simple-html-date-main-bg-border);
+    color: var(--simple-html-date-main-color);
+}

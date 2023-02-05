@@ -10,6 +10,7 @@ import { creatElement } from './createElement';
 import { DIV } from './DIV';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
+import { contextmenuDate } from './contextmenuDate';
 
 export function renderRowCell(
     ctx: Grid,
@@ -126,9 +127,19 @@ export function renderRowCell(
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
-                        @click=${() => {
+                        @click=${(e: any) => {
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                             triggerScrollEvent(ctx);
+                            if (!cellReadOnly && !config.readonly) {
+                                setTimeout(() => {
+                                    if (cellConfig?.type === 'date') {
+                                        contextmenuDate(ctx, e, cell, rowData[attribute], (value: Date | null) => {
+                                            rowData[attribute] = value;
+                                            ctx.gridInterface.triggerScrollEvent();
+                                        });
+                                    }
+                                });
+                            }
                         }}
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {

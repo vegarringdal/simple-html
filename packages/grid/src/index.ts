@@ -27,3 +27,10 @@ export { DateFormaterDDMMYYYYTHHMMSS } from './datasource/DateFormaterDDMMYYYYTH
 export { NumberFormaterComma } from './datasource/numberFormaterComma';
 export type { ValueFormater } from './datasource/valueFormater';
 export { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
+
+/**
+ * date picker
+ */
+export type { IDateConfig, IStyle } from './date/interfaces';
+export { DateElement } from './date/dateElement';
+export { DateInterface } from './date/dateInterface';

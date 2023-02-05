@@ -7,6 +7,7 @@ import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
 import { removeContextMenu } from './removeContextMenu';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
+import { contextmenuDate } from './contextmenuDate';
 
 /**
  * internal method to generate html for filter editor
@@ -136,23 +137,46 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
      * @returns
      */
     const condition = (arg: FilterArgument, context: FilterArgument[]) => {
-        let filterValue = html`<input
-            .value=${arg.value || ''}
-            @input=${(e: any) => (arg.value = e.target.value)}
-            @change=${(e: any) => (arg.value = e.target.value)}
+        const type = ctx.gridInterface.__getGridConfig().__attributes[arg.attribute]?.type || 'text';
+        const attribute = arg.attribute;
+        const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
+        const value = valueFormater.fromSource(arg.value, type, attribute);
+
+        let filterElement = html`<input
+            .value=${value || ''}
+            @input=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute))}
+            @change=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute))}
+            @click=${(e: any) => {
+                if (type === 'date') {
+                    setTimeout(() => {
+                        contextmenuDate(
+                            ctx,
+                            e,
+                            e.target,
+                            valueFormater.toFilter(e.target.value, 'date', attribute),
+
+                            (value: Date | null) => {
+                                arg.value = value;
+                                console.log('render', arg.value);
+                                renderFilterEditor(ctx, structuredClone(filterArg));
+                            }
+                        );
+                    }, 2);
+                }
+            }}
         />`;
 
         if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
             const value = Array.isArray(arg.value) ? arg.value.filter((e) => e !== '').join('\n') : arg.value?.toString();
 
-            filterValue = html`<textarea
+            filterElement = html`<textarea
                 .value=${value || ''}
                 @change=${(e: any) => (arg.value = e.target.value.split('\n').filter((e: string) => e !== ''))}
             ></textarea>`;
         }
 
         if (arg.valueType === 'ATTRIBUTE') {
-            filterValue = html`<div
+            filterElement = html`<div
                 @click=${(e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -210,7 +234,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                   .join(' ')
                             : 'Click me to select Operator'}
                     </div>
-                    <div class="grid-flex-1 grid-text-center ">${filterValue}</div>
+                    <div class="grid-flex-1 grid-text-center ">${filterElement}</div>
                 </div>
                 <div class="grid-flex-reverse grid-m-4">
                     <div class="grid-m-4">

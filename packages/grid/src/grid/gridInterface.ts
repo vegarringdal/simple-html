@@ -12,6 +12,7 @@ import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
+import { removeContextMenu } from './gridFunctions/removeContextMenu';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -94,6 +95,34 @@ export class GridInterface<T> {
         if (this.grid) {
             autoResizeColumns(this.grid);
         }
+    }
+
+    /**
+     * contextMenu element can be used to attach own context menus
+     * practical since it will be removed if new is open/scroll happens
+     * @returns
+     */
+    public getContextMenuElement() {
+        return this.grid?.contextMenu;
+    }
+
+    /**
+     * contextMenu element can be used to attach own context menus
+     * practical since it will be removed if new is open/scroll happens
+     * @param el
+     */
+    public setContextMenuElement(el: HTMLElement) {
+        if (this.grid) {
+            this.grid.contextMenu = el;
+        }
+    }
+
+    /**
+     * contextMenu element can be used to attach own context menus
+     * practical since it will be removed if new is open/scroll happens
+     */
+    public removeContextMenuElement() {
+        removeContextMenu(this.grid);
     }
 
     /**
