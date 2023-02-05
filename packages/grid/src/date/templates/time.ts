@@ -176,6 +176,13 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
         <div class="date-flex-col">
             <div class="side"></div>
             <button
+                @click=${() => {
+                    context.callSubscribers('date-select', null);
+                }}
+            >
+                Clear
+            </button>
+            <button
                 @click=${(e: any) => {
                     e.preventDefault();
                     e.stopPropagation();
