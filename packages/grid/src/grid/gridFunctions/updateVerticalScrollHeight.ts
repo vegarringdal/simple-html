@@ -9,6 +9,9 @@ import { Grid } from '../grid';
 export function updateVerticalScrollHeight(ctx: Grid, height: number = 0) {
     // helper
     function setHeigth(element: HTMLElement, height: number) {
+        if (!element?.style) {
+            return;
+        }
         element.style.height = asPx(height);
     }
 
