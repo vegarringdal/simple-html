@@ -17,7 +17,7 @@ const simpleArray = [
 
 let ds: Datasource;
 
-describe('date filter equal, use only date and not time', () => {
+describe('date filter equal, will use date and time', () => {
     beforeAll(() => {
         ds = new Datasource();
         ds.setData(simpleArray.slice());
@@ -27,15 +27,16 @@ describe('date filter equal, use only date and not time', () => {
         ds.filter({
             attribute: 'born',
             operator: 'EQUAL',
-            value: new Date(1990, 0, 1),
+            value: new Date(1990, 0, 1, 6, 12, 1, 200),
             attributeType: 'date'
         });
+
 
         expect(ds.getRows()).toEqual([simpleArray[2]]);
     });
 });
 
-describe('date filter equal, use only date and not time', () => {
+describe('date filter equal, use only date and and time', () => {
     beforeAll(() => {
         ds = new Datasource();
         ds.setData(simpleArray.slice());
@@ -45,7 +46,7 @@ describe('date filter equal, use only date and not time', () => {
         ds.filter({
             attribute: 'born',
             operator: 'NOT_EQUAL_TO',
-            value: new Date(1990, 0, 1),
+            value: new Date(1990, 0, 1, 6, 12, 1, 200),
             attributeType: 'date'
         });
         expect(ds.getRows()).toEqual([simpleArray[0], simpleArray[1], simpleArray[3], simpleArray[4]]);
@@ -62,7 +63,7 @@ describe('date filter greater', () => {
         ds.filter({
             attribute: 'born',
             operator: 'GREATER_THAN',
-            value: new Date(1990, 0, 1),
+            value: new Date(1990, 0, 1, 6, 12, 1, 200),
             attributeType: 'date'
         });
 
@@ -80,7 +81,7 @@ describe('date filter greater or equal', () => {
         ds.filter({
             attribute: 'born',
             operator: 'GREATER_THAN_OR_EQUAL_TO',
-            value: new Date(1990, 0, 1),
+            value: new Date(1990, 0, 1, 6, 12, 1, 200),
             attributeType: 'date'
         });
 
@@ -98,7 +99,7 @@ describe('date filter less', () => {
         ds.filter({
             attribute: 'born',
             operator: 'LESS_THAN',
-            value: new Date(1990, 0, 1),
+            value: new Date(1990, 0, 1, 6, 12, 1, 200),
             attributeType: 'date'
         });
 
@@ -116,7 +117,7 @@ describe('date filter less or equal', () => {
         ds.filter({
             attribute: 'born',
             operator: 'LESS_THAN_OR_EQUAL_TO',
-            value: new Date(1990, 0, 1),
+            value: new Date(1990, 0, 1, 6, 12, 1, 200),
             attributeType: 'date'
         });
 
@@ -134,7 +135,7 @@ describe('date filter missing filer to use greater than or equal to', () => {
         ds.filter({
             attribute: 'born',
             //            operator: 'GREATER_THAN',
-            value: new Date(1990, 0, 1),
+            value: new Date(1990, 0, 1, 6, 12, 1, 200),
             attributeType: 'date'
         });
 
