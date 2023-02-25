@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.65](https://github.com/simple-html/simple-html/compare/v5.0.0-next.64...v5.0.0-next.65) (2023-02-25)
+
+
+### Bug Fixes
+
+* grouping when multiple lvl had no left margin ([04f4b4d](https://github.com/simple-html/simple-html/commits/04f4b4db5f59f988fbfeac9e59c1ea249fee54f9))
+
 ## [5.0.0-next.64](https://github.com/simple-html/simple-html/compare/v5.0.0-next.63...v5.0.0-next.64) (2023-02-22)
 
 
