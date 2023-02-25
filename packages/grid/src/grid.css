@@ -441,6 +441,8 @@ input {
     border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
+
+
 .simple-html-grid-body-row-container-group .simple-html-grid-row {
     border-bottom: 1px solid var(--simple-html-grid-pinned-border);
 }
@@ -800,6 +802,18 @@ input {
     left: 0;
     background-color: var(--simple-html-grid-main-bg-color);
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+.simple-html-grid-grouping-row-group {
+    height: 100%;
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background-color: var(--simple-html-grid-main-bg-color);
+    border-right: 1px solid var(--simple-html-grid-sec-bg-border);
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
