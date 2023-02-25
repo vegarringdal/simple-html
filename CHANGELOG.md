@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.67](https://github.com/simple-html/simple-html/compare/v5.0.0-next.66...v5.0.0-next.67) (2023-02-25)
+
+
+### Bug Fixes
+
+* add grouplvl to all rows in entity controller ([b06b664](https://github.com/simple-html/simple-html/commits/b06b664bc384c3de0c0b68cc8360216b014bb16a))
+
 ## [5.0.0-next.66](https://github.com/simple-html/simple-html/compare/v5.0.0-next.65...v5.0.0-next.66) (2023-02-25)
 
 
