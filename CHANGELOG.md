@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.66](https://github.com/simple-html/simple-html/compare/v5.0.0-next.65...v5.0.0-next.66) (2023-02-25)
+
+
+### Bug Fixes
+
+* header grouping border bottom when there should not be any ([c6a4366](https://github.com/simple-html/simple-html/commits/c6a4366f30f55fbdc511212bcfb09bc3fdb78d87))
+
 ## [5.0.0-next.65](https://github.com/simple-html/simple-html/compare/v5.0.0-next.64...v5.0.0-next.65) (2023-02-25)
 
 
