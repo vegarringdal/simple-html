@@ -25,6 +25,8 @@ export function renderRowGroup(
     // TODO: I do not like how hardcoded grouping indent is
     // add it as a option
 
+    console.log(rowData?.__groupLvl)
+
     render(
         html`<div
             class="simple-html-absolute-fill simple-html-label-group"

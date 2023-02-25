@@ -294,6 +294,8 @@ export class Grouping {
                     rebuiltChildrenArray.push(curGroup);
                     tempGroupArray.push(curGroup);
                 } else {
+                    // add group lvl it belongs to so we know if we parse collection
+                    child.__groupLvl = groupNo + 1;
                     curGroup.__groupChildren.push(child);
                     curGroup.__groupTotal++;
                 }
