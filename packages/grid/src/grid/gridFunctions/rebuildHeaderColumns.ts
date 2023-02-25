@@ -39,7 +39,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                 parent.removeChild(parent.firstChild);
             }
             if (coltype === 'left-pinned') {
-                const columnElement = creatElement(DIV, 'simple-html-grid-grouping-row');
+                const columnElement = creatElement(DIV, 'simple-html-grid-grouping-row-group');
                 columnElement.style.width = asPx(left);
                 if (left === 0) {
                     columnElement.style.display = 'none';
