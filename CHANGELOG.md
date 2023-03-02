@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.68](https://github.com/simple-html/simple-html/compare/v5.0.0-next.67...v5.0.0-next.68) (2023-03-02)
+
+
+### Bug Fixes
+
+* prettyprintstring ([1afeb62](https://github.com/simple-html/simple-html/commits/1afeb62cdcb96f2921cb8628245ebdb9c1e1c519))
+
 ## [5.0.0-next.67](https://github.com/simple-html/simple-html/compare/v5.0.0-next.66...v5.0.0-next.67) (2023-02-25)
 
 
