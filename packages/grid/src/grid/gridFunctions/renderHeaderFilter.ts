@@ -115,11 +115,14 @@ export function renderHeaderFilter(
                                         cell,
                                         valueFormater.toFilter(currentValue, 'date', attribute),
                                         (value: Date | null) => {
-                                            cellConfig.currentFilterValue = valueFormater.fromSource(value, 'date', attribute);
-                                            if (lastFilter !== value) {
-                                                filterCallback(ctx, cellConfig.currentFilterValue as any, cellConfig);
+                                            const filterValue = valueFormater.fromSource(value, 'date', attribute);
+                                            if (lastFilter !== filterValue) {
+                                                lastFilter = filterValue;
+                                                filterCallback(ctx, filterValue as any, cellConfig);
                                             }
-                                            lastFilter = cellConfig.currentFilterValue;
+                                            // TODO: need to check why date is inserted here and I need to reset
+                                            // potential other issues I just dont see atm
+                                            cellConfig.currentFilterValue = filterValue;
 
                                             renderHeaderFilter(
                                                 ctx,
