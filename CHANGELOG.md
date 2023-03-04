@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.69](https://github.com/simple-html/simple-html/compare/v5.0.0-next.68...v5.0.0-next.69) (2023-03-04)
+
+
+### Bug Fixes
+
+* add possible fix for react/vitejs issue where it does not cleanup before rebuilding ([7e955fc](https://github.com/simple-html/simple-html/commits/7e955fc62829f82535de072f93eac9524c6af4a8))
+* context menu on filter date got reset ([80bd5ea](https://github.com/simple-html/simple-html/commits/80bd5ea0f09e1795ac666a4cce9a32cf6dbcc793))
+* remove unwanted console.log with grouplvl ([2dcadb8](https://github.com/simple-html/simple-html/commits/2dcadb8a5b95f351f8032ac7a3851ec36515c527))
+
 ## [5.0.0-next.68](https://github.com/simple-html/simple-html/compare/v5.0.0-next.67...v5.0.0-next.68) (2023-03-02)
 
 
