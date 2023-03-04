@@ -14,7 +14,21 @@ export class GridElement extends HTMLElement {
         this.grid = new Grid();
     }
 
+    public enableCleanup = false; // just so I can test
+
     connectInterface(value: GridInterface<any>) {
+
+        /**
+         * noticed hmr in react have given me issues, so will try out this
+         */
+        if (this.enableCleanup) {
+            if (this.hasChildNodes) {
+                while (this.firstChild) {
+                    this.removeChild(this.firstChild);
+                }
+            }
+        }
+
         this.gridInterface = value;
         this.grid.connectGridInterface(this.gridInterface);
     }
