@@ -114,7 +114,8 @@ export const gridConfig: GridConfig = {
         {
             attribute: 'country',
             placeHolderRow: 'country',
-            mandatory: true
+            mandatory: true,
+            mandatoryOnlyIfEmpty: true
         },
         {
             attribute: 'favoriteFruit',

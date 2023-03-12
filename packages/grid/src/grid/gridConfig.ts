@@ -122,6 +122,11 @@ export type Attribute = {
      * adds a blue ish color in background, highlighting cell, you can override color with css
      */
     mandatory?: boolean;
+    
+    /**
+     * only show blue ish color in background if its empty
+     */
+    mandatoryOnlyIfEmpty?: boolean;
 
     /**
      * usefull for fields where you have dropdown etc, but want to allow user to update using copy/paste/clear + the dropdown

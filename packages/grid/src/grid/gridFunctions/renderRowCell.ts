@@ -52,6 +52,7 @@ export function renderRowCell(
         if (!config.readonly && cellReadOnly) {
             dimmed = 'simple-html-readonly';
         }
+
         if (!config.readonly && !cellReadOnly && cellConfig.mandatory) {
             dimmed = 'simple-html-mandatory';
         }
@@ -60,6 +61,12 @@ export function renderRowCell(
             value = valueFormater.fromSource(value, cellConfig.type, cellConfig.attribute);
         } else {
             value = valueFormater.fromSourceDisplay(value, cellConfig.type, cellConfig.attribute);
+        }
+
+        if (value) {
+            if (dimmed === 'simple-html-mandatory') {
+                dimmed = '';
+            }
         }
 
         if (cellConfig?.type === 'number') {
