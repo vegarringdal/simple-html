@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.70](https://github.com/simple-html/simple-html/compare/v5.0.0-next.69...v5.0.0-next.70) (2023-03-12)
+
+
+### Features
+
+* better mandatory background color option ([ce4c0e1](https://github.com/simple-html/simple-html/commits/ce4c0e1cec7f7d7c3629e8392d655a06d79e391c))
+
 ## [5.0.0-next.69](https://github.com/simple-html/simple-html/compare/v5.0.0-next.68...v5.0.0-next.69) (2023-03-04)
 
 
