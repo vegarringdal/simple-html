@@ -105,7 +105,7 @@ export class DataContainer {
                 newEntities.push(row);
             }
             if (row.__controller.__edited) {
-                const data = {};
+                const data: Record<string, any> = {};
                 const editiedKeys = Object.keys(row.__controller.__editedProps);
                 data[row.__controller.__KEYSTRING || '__KEY'] = row['__KEY'];
                 editiedKeys.forEach((e) => (data[e] = row[e]));

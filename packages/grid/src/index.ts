@@ -21,7 +21,7 @@ export { Datasource } from './datasource/dataSource';
 export { DataContainer } from './datasource/dataContainer';
 export { NumberFormaterDot } from './datasource/numberFormaterDot';
 export { DateFormaterYYYYMMDD } from './datasource/DateFormaterYYYYMMDD';
-export { DateFormaterDDMMYYYY } from './datasource/dateFormaterDDMMYYYY';
+export { DateFormaterDDMMYYYY } from './datasource/DateFormaterDDMMYYYY';
 export { DateFormaterYYYYMMDDTHHMMSS } from './datasource/DateFormaterYYYYMMDDTHHMMSS';
 export { DateFormaterDDMMYYYYTHHMMSS } from './datasource/DateFormaterDDMMYYYYTHHMMSS';
 export { NumberFormaterComma } from './datasource/numberFormaterComma';

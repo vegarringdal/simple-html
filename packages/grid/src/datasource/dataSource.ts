@@ -13,7 +13,7 @@ import { DataContainer } from './dataContainer';
 import { DateFormaterYYYYMMDD } from './DateFormaterYYYYMMDD';
 import { DateAndNumberFormater, ValueFormater } from './valueFormater';
 import { NumberFormaterDot } from './numberFormaterDot';
-import { DefaultValueFormater } from './DefaultValueFormater';
+import { DefaultValueFormater } from './defaultValueFormater';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };

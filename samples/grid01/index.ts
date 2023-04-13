@@ -1,7 +1,6 @@
 import './index.css';
 import {
     Datasource,
-    Entity,
     NumberFormaterComma,
     NumberFormaterDot,
     DateFormaterYYYYMMDD,
@@ -302,7 +301,7 @@ createButton('use default Dateformater (YYYY-MM-DDTHH:MM:SS)', () => {
 });
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
-    gridInterface.readonlySetter((attribute: string, rowData: Entity, configReadonlySetting: boolean) => {
+    gridInterface.readonlySetter((attribute: string, rowData: any, configReadonlySetting: boolean) => {
         if (rowData['isDumb'] === true && attribute === 'favoriteFruit') {
             return true;
         } else {
