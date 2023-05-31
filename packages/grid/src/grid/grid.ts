@@ -122,6 +122,12 @@ export class Grid {
      *
      */
     public rebuild(rebuildHeader = true) {
+        // never rebuild if element is not set
+        // incase someone call resize column before grid is generated
+        if (!this.element) {
+            return;
+        }
+
         this.gridInterface.__dataSourceUpdated(); // I really only need this for drag/drop
         updateHorizontalScrollWidth(this);
         updateMainElementSizes(this);

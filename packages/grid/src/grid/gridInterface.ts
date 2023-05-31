@@ -101,6 +101,7 @@ export class GridInterface<T> {
     public connectGrid(grid: Grid) {
         this.grid = grid;
         this.dataSource.addEventListener(this);
+        this.__callSubscribers('gridConnected', {});
     }
 
     public autoResizeColumns() {

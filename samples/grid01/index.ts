@@ -42,6 +42,14 @@ datasource.setData(
  */
 const gridInterface = new GridInterface(gridConfig, datasource);
 
+gridInterface.addEventListener({
+    handleEvent: (msg) => {
+        if (msg.type === 'gridConnected') {
+            gridInterface.autoResizeColumns();
+        }
+    }
+});
+
 /**
  * create container to how buttons and grid
  */
