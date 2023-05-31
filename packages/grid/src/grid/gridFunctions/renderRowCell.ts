@@ -78,16 +78,19 @@ export function renderRowCell(
             }
         }
 
+        const { inputClass, dimmedClass } = ctx.gridInterface.__callCellAppendClass(attribute, rowData, cellReadOnly);
+
         if (cellConfig.type === 'boolean') {
             render(
                 html` <div>
-                    <div class=${dimmed}></div>
+                    <div data-attribute-dimmed=${attribute} class=${dimmed + dimmedClass}></div>
                     <input
                         role="cell"
+                        data-attribute=${attribute}
                         aria-label=${attribute}
                         .checked=${live(value)}
                         type="checkbox"
-                        class=${`cellpos-${colType}-${row}-${column}-${celno}`}
+                        class=${`cellpos-${colType}-${row}-${column}-${celno} ${inputClass}`}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -121,13 +124,14 @@ export function renderRowCell(
             let skipFocus = false;
             render(
                 html` <div>
-                    <div class=${dimmed}></div>
+                    <div data-attribute-dimmed=${attribute} class=${dimmed + dimmedClass}></div>
                     <input
                         role="cell"
                         aria-label=${attribute}
+                        data-attribute=${attribute}
                         style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
                         .value=${live(value?.toString())}
-                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}`}
+                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
                         placeholder=${showPlaceHolder ? cellConfig.placeHolderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {
@@ -313,6 +317,6 @@ export function renderRowCell(
             );
         }
     } else {
-        render(html`<div class="simple-html-dimmed"></div>`, cell as any);
+        render(html`<div data-dimmed-emtpy class="simple-html-dimmed"></div>`, cell as any);
     }
 }

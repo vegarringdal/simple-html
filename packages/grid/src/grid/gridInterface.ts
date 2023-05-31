@@ -45,6 +45,18 @@ export class GridInterface<T> {
     private readonlySetterFn: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null;
 
     /**
+     * for adding classes on row lvl
+     */
+    private cellAppendClassSetterFn: (
+        attribute: string,
+        rowData: Entity,
+        cellReadOnlyConfig: boolean
+    ) => {
+        inputClass: string;
+        dimmedClass: string;
+    };
+
+    /**
      * subscribed listerners, gets called when collection changes/is sorted/filtered etc
      */
     private listeners: Set<callable> = new Set();
@@ -261,6 +273,20 @@ export class GridInterface<T> {
      */
     public readonlySetter(callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) {
         this.readonlySetterFn = callback;
+        if (this.grid) {
+            triggerScrollEvent(this.grid);
+        }
+    }
+
+    /**
+     * this is for enabling class append to input element and dimmed cell behind it
+     * dimmed cell can be used for graphics in class
+     * @param callback
+     */
+    public cellAppendClassSetter(
+        callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => { inputClass: string; dimmedClass: string }
+    ) {
+        this.cellAppendClassSetterFn = callback;
         if (this.grid) {
             triggerScrollEvent(this.grid);
         }
@@ -527,6 +553,22 @@ export class GridInterface<T> {
             return this.readonlySetterFn(attribute, rowData, cellReadOnlyConfig);
         } else {
             return null;
+        }
+    }
+
+    /**
+     * @internal
+     * @private
+     * called by grid calss
+     */
+    public __callCellAppendClass(attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) {
+        if (this.cellAppendClassSetterFn) {
+            return this.cellAppendClassSetterFn(attribute, rowData, cellReadOnlyConfig);
+        } else {
+            return {
+                inputClass: '',
+                dimmedClass: ''
+            };
         }
     }
 

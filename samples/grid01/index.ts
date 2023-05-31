@@ -270,7 +270,6 @@ createButton('overide default numberformater (comma-custom)', () => {
 });
 
 createButton('use default numberformater (dot)', () => {
-    debugger;
     datasource.setNumberFormater(NumberFormaterDot);
     gridInterface.triggerRebuild();
 });
@@ -312,6 +311,20 @@ createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
 
 createButton('remove readonly favoriteFruit based on cell isDumb', () => {
     gridInterface.readonlySetter(null);
+});
+
+createButton('append class dimmed favoriteFruit based on cell isDumb', () => {
+    gridInterface.cellAppendClassSetter((attribute: string, rowData: any, _isReadOnly: boolean) => {
+        if (rowData['isDumb'] === false && attribute === 'favoriteFruit') {
+            return { dimmedClass: 'yellow', inputClass: '' };
+        } else {
+            return { dimmedClass: '', inputClass: '' };
+        }
+    });
+});
+
+createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
+    gridInterface.cellAppendClassSetter(null);
 });
 
 {

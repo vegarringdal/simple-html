@@ -73,6 +73,12 @@ export function toggelDarkGrid() {
     
     }
     
+    .simple-html-grid input[data-attribute="date1"] {
+        color: yellow;  
+        border-color: white;
+        outline-color: white;
+      }
+    
     `)
         );
         document.body.appendChild(style);
