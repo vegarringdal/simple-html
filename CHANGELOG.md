@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.72](https://github.com/simple-html/simple-html/compare/v5.0.0-next.71...v5.0.0-next.72) (2023-05-31)
+
+
+### Features
+
+* add event for when grid is connected to interface ([f70bc17](https://github.com/simple-html/simple-html/commits/f70bc17b333d61c95546973d3172fe82d7e1be82))
+* open for callback to set class on row lvl and att data attributes to row and header label ([84d420d](https://github.com/simple-html/simple-html/commits/84d420d757c3187d7c071884394aa691d751a24a))
+
 ## [5.0.0-next.71](https://github.com/simple-html/simple-html/compare/v5.0.0-next.70...v5.0.0-next.71) (2023-04-13)
 
 ## [5.0.0-next.70](https://github.com/simple-html/simple-html/compare/v5.0.0-next.69...v5.0.0-next.70) (2023-03-12)
