@@ -7,10 +7,10 @@ import { Entity } from './entity';
 
 export class EntityHandler {
     [key: string]: any | undefined;
-    __editedProps?:Record<string, any> = {};
-    __originalValues?:Record<string, any> = {};
-    __currentValues?:Record<string, any> = {};
-    __newprops?:Record<string, any> = {};
+    __editedProps?: Record<string, any> = {};
+    __originalValues?: Record<string, any> = {};
+    __currentValues?: Record<string, any> = {};
+    __newprops?: Record<string, any> = {};
     __isNew? = false;
     __edited? = false;
     __controller?: EntityHandler;

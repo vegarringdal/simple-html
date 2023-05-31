@@ -122,7 +122,7 @@ export type Attribute = {
      * adds a blue ish color in background, highlighting cell, you can override color with css
      */
     mandatory?: boolean;
-    
+
     /**
      * only show blue ish color in background if its empty
      */

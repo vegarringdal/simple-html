@@ -157,7 +157,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
 
                             (value: Date | null) => {
                                 arg.value = value;
-                                   renderFilterEditor(ctx, structuredClone(filterArg));
+                                renderFilterEditor(ctx, structuredClone(filterArg));
                             }
                         );
                     }, 2);

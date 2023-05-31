@@ -31,7 +31,6 @@ describe('date filter equal, will use date and time', () => {
             attributeType: 'date'
         });
 
-
         expect(ds.getRows()).toEqual([simpleArray[2]]);
     });
 });

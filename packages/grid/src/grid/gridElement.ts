@@ -17,7 +17,6 @@ export class GridElement extends HTMLElement {
     public enableCleanup = false; // just so I can test
 
     connectInterface(value: GridInterface<any>) {
-
         /**
          * noticed hmr in react have given me issues, so will try out this
          */
