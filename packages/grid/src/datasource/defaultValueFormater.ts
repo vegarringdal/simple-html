@@ -27,7 +27,7 @@ export class DefaultValueFormater implements ValueFormater {
             return value || false;
         }
 
-        return value;
+        return value || "";
     }
 
     /**
