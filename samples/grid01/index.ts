@@ -361,8 +361,9 @@ createButton('cell focus custom menu 1 time', () => {
                         }
                     ],
                     e.data.cell,
-                    (e) => {
-                        console.log('selected:', e);
+                    (result) => {
+                        datasource.currentEntity[e.data.attribute] = result;
+                        gridInterface.triggerScrollEvent()
                         return true;
                     }
                 );
