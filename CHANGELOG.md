@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.74](https://github.com/simple-html/simple-html/compare/v5.0.0-next.73...v5.0.0-next.74) (2023-06-08)
+
+
+### Bug Fixes
+
+* key nav when grouped and enter key in edit more trigger keydown ([c27d0c8](https://github.com/simple-html/simple-html/commits/c27d0c8d11e113ae9b26e107e69649af2d36afe9))
+
 ## [5.0.0-next.73](https://github.com/simple-html/simple-html/compare/v5.0.0-next.72...v5.0.0-next.73) (2023-06-02)
 
 
