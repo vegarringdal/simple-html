@@ -46,7 +46,6 @@ export function contextMenuCustom(
                     class="simple-html-grid-menu-item"
                     @click=${() => {
                         const close = callback(data.value);
-                        console.log('no');
                         if (close) {
                             removeContextMenu(ctx);
                         }
