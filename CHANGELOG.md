@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.75](https://github.com/simple-html/simple-html/compare/v5.0.0-next.74...v5.0.0-next.75) (2023-06-08)
+
+
+### Features
+
+* custom context menu ([d56ab93](https://github.com/simple-html/simple-html/commits/d56ab93b15abf8e0002cc87a48d0293e13095c16))
+
 ## [5.0.0-next.74](https://github.com/simple-html/simple-html/compare/v5.0.0-next.73...v5.0.0-next.74) (2023-06-08)
 
 
