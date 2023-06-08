@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.76](https://github.com/simple-html/simple-html/compare/v5.0.0-next.75...v5.0.0-next.76) (2023-06-08)
+
+
+### Bug Fixes
+
+* default formater when value is undefined/null ([bd03231](https://github.com/simple-html/simple-html/commits/bd0323174bf909d2019e04ffd280dd92c54d64be))
+* forgot to remove console.log ([8efd526](https://github.com/simple-html/simple-html/commits/8efd526d0ffee9f8d71ca1e2ce7e78b305476e30))
+
 ## [5.0.0-next.75](https://github.com/simple-html/simple-html/compare/v5.0.0-next.74...v5.0.0-next.75) (2023-06-08)
 
 
