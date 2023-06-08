@@ -13,6 +13,7 @@ import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScroll
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -117,6 +118,22 @@ export class GridInterface<T> {
      */
     public getContextMenuElement() {
         return this.grid?.contextMenu;
+    }
+
+    /**
+     * small helper function to show context menu in same style as the rest
+     * @param event
+     * @param options
+     * @param cell
+     * @param callback
+     */
+    public contextMenuCustom(
+        event: MouseEvent,
+        options: { label: string; value: string; isHeader?: boolean }[],
+        cell: HTMLElement,
+        callback: (attribute: string) => void
+    ) {
+        contextMenuCustom(this.grid, event, cell, callback, options);
     }
 
     /**

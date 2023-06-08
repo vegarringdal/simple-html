@@ -151,6 +151,19 @@ export function renderRowCell(
                                     }
                                 });
                             }
+                            setTimeout(() => {
+                                ctx.gridInterface.__callSubscribers('cell-click', {
+                                    cell,
+                                    row,
+                                    column,
+                                    celno,
+                                    colType,
+                                    cellType,
+                                    attribute,
+                                    rowData,
+                                    originalEvent: e //incase user want to reuse
+                                });
+                            });
                         }}
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {
@@ -173,7 +186,8 @@ export function renderRowCell(
                                 colType,
                                 cellType,
                                 attribute,
-                                rowData
+                                rowData,
+                                originalEvent: e //incase user want to reuse
                             });
 
                             const addFocusButton = () => {
@@ -198,7 +212,8 @@ export function renderRowCell(
                                         cellType,
                                         attribute,
                                         rowData,
-                                        target: e.target // so user can set focus back to cell
+                                        target: e.target, // so user can set focus back to cell
+                                        originalEvent: e //incase user want to reuse
                                     });
                                 };
 
@@ -255,7 +270,8 @@ export function renderRowCell(
                                                 cellType,
                                                 attribute,
                                                 rowData,
-                                                target: e.target
+                                                target: e.target,
+                                                originalEvent: e //incase user want to reuse
                                             });
                                         }
                                         break;
@@ -270,7 +286,8 @@ export function renderRowCell(
                                                 cellType,
                                                 attribute,
                                                 rowData,
-                                                target: e.target
+                                                target: e.target,
+                                                originalEvent: e //incase user want to reuse
                                             });
                                         }
                                         break;
@@ -284,7 +301,8 @@ export function renderRowCell(
                                             cellType,
                                             attribute,
                                             rowData,
-                                            target: e.target
+                                            target: e.target,
+                                            originalEvent: e //incase user want to reuse
                                         });
                                 }
                             }

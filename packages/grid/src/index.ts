@@ -34,3 +34,6 @@ export { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
 export type { IDateConfig, IStyle } from './date/interfaces';
 export { DateElement } from './date/dateElement';
 export { DateInterface } from './date/dateInterface';
+
+// just incase anyone want to use it
+export { html, render } from 'lit-html';

@@ -321,6 +321,57 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
     gridInterface.readonlySetter(null);
 });
 
+createButton('cell focus custom menu 1 time', () => {
+    gridInterface.addEventListener({
+        handleEvent: (e) => {
+            console.log(e.type);
+            if (e.type === 'cell-click') {
+                gridInterface.contextMenuCustom(
+                    e.data.originalEvent,
+                    [
+                        {
+                            value: '1',
+                            isHeader: true,
+                            label: 'label1'
+                        },
+                        {
+                            value: '2',
+                            isHeader: false,
+                            label: 'label2'
+                        },
+                        {
+                            value: '3',
+                            isHeader: false,
+                            label: 'label3'
+                        },
+                        {
+                            value: '11',
+                            isHeader: true,
+                            label: 'label11'
+                        },
+                        {
+                            value: '12',
+                            isHeader: false,
+                            label: 'label12'
+                        },
+                        {
+                            value: '13',
+                            isHeader: false,
+                            label: 'label13'
+                        }
+                    ],
+                    e.data.cell,
+                    (e) => {
+                        console.log('selected:', e);
+                        return true;
+                    }
+                );
+            }
+            return true;
+        }
+    });
+});
+
 createButton('append class dimmed favoriteFruit based on cell isDumb', () => {
     gridInterface.cellAppendClassSetter((attribute: string, rowData: any, _isReadOnly: boolean) => {
         if (rowData['isDumb'] === false && attribute === 'favoriteFruit') {
