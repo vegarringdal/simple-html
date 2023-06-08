@@ -127,8 +127,8 @@ export class Grid {
         if (!this.element || !this.columns.size) {
             return;
         }
-        
 
+        
         this.gridInterface.__dataSourceUpdated(); // I really only need this for drag/drop
         updateHorizontalScrollWidth(this);
         updateMainElementSizes(this);

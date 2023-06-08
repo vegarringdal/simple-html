@@ -96,7 +96,7 @@ export function renderRowCell(
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: any) => {
-                            return cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
+                            return cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e, '');
                         }}
                         @click=${() => {
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
@@ -289,7 +289,12 @@ export function renderRowCell(
                                 }
                             }
 
-                            return cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
+                            let overrideKey = '';
+                            if (!config.readonly && !cellReadOnly && e.code === 'Enter') {
+                                overrideKey = 'ArrowDown';
+                            }
+
+                            return cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e, overrideKey);
                         }}
                         @input=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {

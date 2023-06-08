@@ -13,6 +13,44 @@ type CurrentKey = typeof TAB_KEY | typeof ARROW_UP_KEY | typeof ARROW_DOWN_KEY |
 let waitForFocusTrigger = false;
 
 /**
+ * helper to skip grouped rows
+ * @param ctx
+ * @param currentKey
+ * @param gotoRow
+ * @returns
+ */
+function overrideGroupRow(ctx: Grid, currentKey: string, gotoRow: number) {
+    let x = 0;
+
+    while (x < 100) {
+        const data = ctx.gridInterface.getDatasource().getRow(gotoRow + x);
+        if (!data?.__group) {
+            gotoRow = gotoRow + x;
+            x = 200;
+        } else {
+            switch (currentKey) {
+                case ARROW_RIGHT_KEY:
+                    x++;
+                    break;
+                case ARROW_DOWN_KEY:
+                    x++;
+                    break;
+                case ARROW_UP_KEY:
+                    x--;
+                    break;
+                case ARROW_LEFT_KEY:
+                    x--;
+                    break;
+                default:
+                    x++;
+            }
+        }
+    }
+
+    return gotoRow;
+}
+
+/**
  * this handler tab, and arrow key navigation on rows
  */
 export const cellFilterKeyNavigationCellRowHandler = (
@@ -58,7 +96,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
         const config = ctx.gridInterface.__getGridConfig();
         let gotoColType = colType;
         let gotoCell = celno;
-        const gotoRow = row;
+        let gotoRow = row;
         let gotoCol = column;
         let filterClass = 'filter-';
 
@@ -107,11 +145,13 @@ export const cellFilterKeyNavigationCellRowHandler = (
                             gotoCol = 0;
 
                             filterClass = '';
+                            gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         } else {
                             scrollerEl.scrollLeft = 0;
                             gotoCol = 0;
                             gotoCell = 0;
                             filterClass = '';
+                            gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         }
                     } else {
                         const columnRight = column > colLeft.length ? column : column + 1;
@@ -157,6 +197,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         gotoCol = 0;
 
                         filterClass = '';
+                        gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         if (gotoColType === 'middle-pinned') {
                             scrollerEl.scrollLeft = 0;
                         }
@@ -243,7 +284,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
         const config = ctx.gridInterface.__getGridConfig();
         const gotoColType = colType;
         let gotoCell = celno;
-        const gotoRow = row;
+        let gotoRow = row;
         const gotoCol = column;
         let filterClass = 'filter-';
 
@@ -257,6 +298,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         gotoCell = gotoCell + 1;
                     } else {
                         filterClass = '';
+                        gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         gotoCell = 0;
                     }
                 } else if (currentKey === ARROW_UP_KEY) {
@@ -274,6 +316,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         gotoCell = gotoCell + 1;
                     } else {
                         filterClass = '';
+                        gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         gotoCell = 0;
                     }
                 } else if (currentKey === ARROW_UP_KEY) {
@@ -291,6 +334,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         gotoCell = gotoCell + 1;
                     } else {
                         filterClass = '';
+                        gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         gotoCell = 0;
                     }
                 } else if (currentKey === ARROW_UP_KEY) {
@@ -354,7 +398,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
         const config = ctx.gridInterface.__getGridConfig();
         let gotoColType = colType;
         let gotoCell = celno;
-        const gotoRow = row;
+        let gotoRow = row;
         let gotoCol = column;
         let filterClass = 'filter-';
 
@@ -414,6 +458,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
             case 'middle-pinned':
                 if (currentKey === TAB_KEY && !reverse) {
                     isLastCell = gotoCell === config.columnsCenter[column].rows.length - 1;
+
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
                     } else {
@@ -431,11 +476,13 @@ export const cellFilterKeyNavigationCellRowHandler = (
                             gotoCol = 0;
                             gotoCell = 0;
                             filterClass = '';
+                            gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         } else {
                             scrollerEl.scrollLeft = 0;
                             gotoCol = 0;
                             gotoCell = 0;
                             filterClass = '';
+                            gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         }
                     } else {
                         const columnRight = column > colLeft.length ? column : column + 1;
@@ -500,6 +547,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         gotoCol = 0;
                         gotoCell = 0;
                         filterClass = '';
+                        gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                         if (gotoColType === 'middle-pinned') {
                             scrollerEl.scrollLeft = 0;
                         }
