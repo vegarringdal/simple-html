@@ -53,6 +53,8 @@ export class Grid {
     public clickListner: any;
     public focusElement: HTMLInputElement;
 
+    public domCreated = false;
+
     /**
      * only to be used by grid interface
      * @param element
@@ -64,6 +66,7 @@ export class Grid {
             this.gridInterface.__parseConfig();
             this.gridInterface.__dataSourceUpdated();
             createDom(this);
+            this.domCreated = true;
             initResizerEvent(this);
         }
     }
@@ -80,6 +83,7 @@ export class Grid {
             this.gridInterface.__parseConfig();
             this.gridInterface.__dataSourceUpdated();
             createDom(this);
+            this.domCreated = true;
             initResizerEvent(this);
         }
     }
@@ -124,11 +128,10 @@ export class Grid {
     public rebuild(rebuildHeader = true) {
         // never rebuild if element is not set/columns created
         // incase someone call resize column before grid is generated
-        if (!this.element || !this.columns.size) {
+        if (!this.element || !this.domCreated) {
             return;
         }
 
-        
         this.gridInterface.__dataSourceUpdated(); // I really only need this for drag/drop
         updateHorizontalScrollWidth(this);
         updateMainElementSizes(this);
