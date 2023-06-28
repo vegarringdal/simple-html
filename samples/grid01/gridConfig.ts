@@ -38,7 +38,10 @@ export const gridConfig: GridConfig = {
             rows: ['phone', 'date1'],
             width: 300
         },
-
+        {
+            rows: ['dynamicData'],
+            width: 80
+        },
         {
             rows: ['date1'],
             width: 80
@@ -100,6 +103,11 @@ export const gridConfig: GridConfig = {
         {
             attribute: 'isActive',
             type: 'boolean'
+        },
+        {
+            attribute: 'dynamicData',
+            type: 'text',
+            dynamicCellTypeColumn: "dynamicDataType"
         },
         {
             attribute: 'phone',

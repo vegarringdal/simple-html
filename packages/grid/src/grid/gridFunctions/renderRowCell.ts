@@ -35,6 +35,21 @@ export function renderRowCell(
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
         const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
 
+        let cellConfigType = cellConfig.type || 'text';
+        const dynCellType = cellConfig.dynamicCellTypeColumn;
+
+        if (dynCellType && cellConfig.type === 'text') {
+            const dynCellTypeValue = (entity && entity[dynCellType]) || '';
+            if (
+                dynCellTypeValue === 'text' ||
+                dynCellTypeValue === 'number' ||
+                dynCellTypeValue === 'date' ||
+                dynCellTypeValue === 'boolean'
+            ) {
+                cellConfigType = dynCellTypeValue;
+            }
+        }
+
         let showPlaceHolder = true;
         if (config.placeHolderRowCurrentEnityOnly) {
             if (rowData !== ctx.gridInterface.getDatasource().currentEntity) {
@@ -58,9 +73,9 @@ export function renderRowCell(
         }
 
         if (cell.$focused && !cellReadOnly && !config.readonly) {
-            value = valueFormater.fromSource(value, cellConfig.type, cellConfig.attribute);
+            value = valueFormater.fromSource(value, cellConfigType, cellConfig.attribute);
         } else {
-            value = valueFormater.fromSourceDisplay(value, cellConfig.type, cellConfig.attribute);
+            value = valueFormater.fromSourceDisplay(value, cellConfigType, cellConfig.attribute);
         }
 
         if (value) {
@@ -80,7 +95,7 @@ export function renderRowCell(
 
         const { inputClass, dimmedClass } = ctx.gridInterface.__callCellAppendClass(attribute, rowData, cellReadOnly);
 
-        if (cellConfig.type === 'boolean') {
+        if (cellConfigType === 'boolean') {
             render(
                 html` <div>
                     <div data-attribute-dimmed=${attribute} class=${dimmed + dimmedClass}></div>
@@ -109,10 +124,10 @@ export function renderRowCell(
                                 } else {
                                     entity[attribute] = valueFormater.toSource(
                                         e.target.checked ? false : true,
-                                        cellConfig.type,
+                                        cellConfigType,
                                         attribute
                                     );
-                                    e.target.checked = valueFormater.fromSource(entity[attribute], cellConfig.type, attribute);
+                                    e.target.checked = valueFormater.fromSource(entity[attribute], cellConfigType, attribute);
                                 }
                             }
                         }}
@@ -129,7 +144,7 @@ export function renderRowCell(
                         role="cell"
                         aria-label=${attribute}
                         data-attribute=${attribute}
-                        style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
+                        style=${cellConfigType === 'number' ? 'text-align: right' : ''}
                         .value=${live(value?.toString())}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
@@ -143,11 +158,17 @@ export function renderRowCell(
                             triggerScrollEvent(ctx);
                             if (!cellReadOnly && !config.readonly) {
                                 setTimeout(() => {
-                                    if (cellConfig?.type === 'date') {
-                                        contextmenuDate(ctx, e, cell, rowData[attribute], (value: Date | null) => {
-                                            rowData[attribute] = value;
-                                            ctx.gridInterface.triggerScrollEvent();
-                                        });
+                                    if (cellConfigType === 'date') {
+                                        contextmenuDate(
+                                            ctx,
+                                            e,
+                                            cell,
+                                            valueFormater.toSource(entity[attribute], cellConfigType, attribute),
+                                            (value: Date | null) => {
+                                                rowData[attribute] = value;
+                                                ctx.gridInterface.triggerScrollEvent();
+                                            }
+                                        );
                                     }
                                 });
                             }
@@ -316,22 +337,22 @@ export function renderRowCell(
                         }}
                         @input=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {
-                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfig.type, attribute);
+                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfigType, attribute);
                                 return;
                             }
 
                             if (!config.readonly && !cellReadOnly) {
-                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfig.type, attribute);
+                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfigType, attribute);
                             }
                         }}
                         @change=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {
-                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfig.type, attribute);
+                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfigType, attribute);
                                 return;
                             }
 
                             if (!config.readonly && !cellReadOnly) {
-                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfig.type, attribute);
+                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfigType, attribute);
                             }
                         }}
                     />

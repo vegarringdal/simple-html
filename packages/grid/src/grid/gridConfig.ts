@@ -95,6 +95,12 @@ export type Attribute = {
     placeHolderFilter?: string;
     operator?: FilterComparisonOperator;
     type?: DataTypes;
+    /**
+     * tries to look at value and set row cell based on it
+     * this way we can have number/text etc in same column
+     * PS! this can create side effects on filter/grouping/sorting
+     */
+    dynamicCellTypeColumn?: string;
 
     /**
      * sets cell to readonly, usefull if you need it to stay readonly if grid is not readonly

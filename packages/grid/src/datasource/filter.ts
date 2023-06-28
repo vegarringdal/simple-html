@@ -95,7 +95,16 @@ export class Filter {
                             values = (filter.value as string).toUpperCase().split('\n');
                             filter.value = values;
                         } else {
-                            values = filter.value.map((e) => e?.toUpperCase() || '');
+                            values = filter.value.map((e) => {
+                                if (e?.toUpperCase) {
+                                    return e.toUpperCase() || '';
+                                } else {
+                                    if (e.toString) {
+                                        return e.toString();
+                                    }
+                                    return e;
+                                }
+                            });
                         }
 
                         let data;
@@ -117,6 +126,9 @@ export class Filter {
                                             .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
                                     if (data && data.toUpperCase) {
                                         data = data.toUpperCase();
+                                    }
+                                    if (typeof data === 'boolean') {
+                                        data = data.toString();
                                     }
                                 }
                             }
@@ -190,7 +202,16 @@ export class Filter {
                             values = (filter.value as string).toUpperCase().split('\n');
                             filter.value = values;
                         } else {
-                            values = filter.value.map((e) => e?.toUpperCase() || '');
+                            values = filter.value.map((e) => {
+                                if (e?.toUpperCase) {
+                                    return e.toUpperCase() || '';
+                                } else {
+                                    if (e.toString) {
+                                        return e.toString();
+                                    }
+                                    return e;
+                                }
+                            });
                         }
 
                         let data;
@@ -208,6 +229,9 @@ export class Filter {
                                     data = rowData && rowData[filter.attribute];
                                     if (data && data.toUpperCase) {
                                         data = data.toUpperCase();
+                                    }
+                                    if (typeof data === 'boolean') {
+                                        data = data.toString();
                                     }
                                 }
                             }

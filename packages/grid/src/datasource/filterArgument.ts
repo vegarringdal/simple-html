@@ -77,4 +77,4 @@ export interface FilterAttributeSimple {
     attribute: string;
     type: string;
 }
-export type DataTypes = 'text' | 'number' | 'image' | 'boolean' | 'date';
+export type DataTypes = 'text' | 'number' | 'boolean' | 'date';

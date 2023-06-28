@@ -54,7 +54,7 @@ export const cellRowKeyNavigationCellRowHandler = (
     celno: number,
     colType: ColType,
     event: any,
-    codeOverride: string// when we want to force a action
+    codeOverride: string // when we want to force a action
 ) => {
     if (waitForFocusTrigger) {
         event.preventDefault();
