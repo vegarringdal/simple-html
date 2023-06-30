@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.79](https://github.com/simple-html/simple-html/compare/v5.0.0-next.78...v5.0.0-next.79) (2023-06-30)
+
+
+### Bug Fixes
+
+* number raw value was not used ([6af0fb7](https://github.com/simple-html/simple-html/commits/6af0fb792c2513c288f615f226a862829b7902ed))
+
 ## [5.0.0-next.78](https://github.com/simple-html/simple-html/compare/v5.0.0-next.77...v5.0.0-next.78) (2023-06-28)
 
 
