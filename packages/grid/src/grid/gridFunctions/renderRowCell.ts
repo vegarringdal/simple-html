@@ -24,7 +24,10 @@ export function renderRowCell(
     rowData: Entity
 ) {
     const entity = ctx.gridInterface.getDatasource().getRow(row);
-    let value = (entity && entity[attribute]) || '';
+    let value = entity && entity[attribute];
+    if (value === null && value === undefined) {
+        value = '';
+    }
 
     if (entity?.__group) {
         return;
@@ -88,7 +91,7 @@ export function renderRowCell(
             if ((cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') || value === undefined || value === null) {
                 value = '0';
             }
-            if ((cellConfig.numberOverride === 'ZERO_TO_BLANK' && value === '0') || value === 0) {
+            if (cellConfig.numberOverride === 'ZERO_TO_BLANK' && value === '0') {
                 value = '';
             }
         }

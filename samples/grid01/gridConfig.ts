@@ -35,6 +35,18 @@ export const gridConfig: GridConfig = {
             width: 200
         },
         {
+            rows: ['latitude'],
+            width: 100
+        },
+        {
+            rows: ['age'],
+            width: 100
+        },
+        {
+            rows: ['longitude'],
+            width: 100
+        },
+        {
             rows: ['phone', 'date1'],
             width: 300
         },
@@ -64,14 +76,7 @@ export const gridConfig: GridConfig = {
             rows: ['balance'],
             width: 100
         },
-        {
-            rows: ['latitude'],
-            width: 100
-        },
-        {
-            rows: ['longitude'],
-            width: 100
-        },
+        
         {
             rows: ['tags'],
             width: 250
