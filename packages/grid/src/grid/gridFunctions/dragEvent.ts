@@ -126,12 +126,12 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
                         const columnLeft = ctx.gridInterface.__getGridConfig().columnsPinnedLeft;
                         const columnRight = ctx.gridInterface.__getGridConfig().columnsPinnedRight;
 
+                        const attributes = ctx.gridInterface.__getGridConfig().__attributes;
+                        const attributeLabel = attributes[attribute].label || attribute;
+
                         switch (true) {
                             case classList?.contains('simple-html-grid-panel'):
                                 const newGrouping = ctx.gridInterface.getDatasource().getGrouping();
-
-                                const attributes = ctx.gridInterface.__getGridConfig().__attributes;
-                                const attributeLabel = attributes[attribute].label || attribute;
 
                                 newGrouping.push({ attribute: attribute, title: attributeLabel });
                                 ctx.gridInterface.getDatasource().group(newGrouping);
@@ -149,7 +149,8 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
                                         index = i;
                                     }
                                 });
-                                updateGrouping.splice(index, 0, { attribute: attribute, title: attribute });
+
+                                updateGrouping.splice(index, 0, { attribute: attribute, title: attributeLabel });
 
                                 ctx.gridInterface.getDatasource().group(updateGrouping);
 
