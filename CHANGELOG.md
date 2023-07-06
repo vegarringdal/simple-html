@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.81](https://github.com/simple-html/simple-html/compare/v5.0.0-next.80...v5.0.0-next.81) (2023-07-06)
+
+
+### Bug Fixes
+
+* label when reorder panel grouping ([44596fd](https://github.com/simple-html/simple-html/commits/44596fd45dace7d2f0a2c425b6a50dd4ea1d4459))
+
 ## [5.0.0-next.80](https://github.com/simple-html/simple-html/compare/v5.0.0-next.79...v5.0.0-next.80) (2023-07-06)
 
 
