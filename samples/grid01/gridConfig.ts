@@ -76,7 +76,7 @@ export const gridConfig: GridConfig = {
             rows: ['balance'],
             width: 100
         },
-        
+
         {
             rows: ['tags'],
             width: 250
@@ -112,7 +112,7 @@ export const gridConfig: GridConfig = {
         {
             attribute: 'dynamicData',
             type: 'text',
-            dynamicCellTypeColumn: "dynamicDataType"
+            dynamicCellTypeColumn: 'dynamicDataType'
         },
         {
             attribute: 'phone',
@@ -122,6 +122,7 @@ export const gridConfig: GridConfig = {
         {
             attribute: 'company',
             placeHolderRow: 'company',
+            label: 'my Company',
             focusButton: 'SHOW_IF_GRID_NOT_READONLY'
         },
         {

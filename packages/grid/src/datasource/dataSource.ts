@@ -14,6 +14,7 @@ import { DateFormaterYYYYMMDD } from './DateFormaterYYYYMMDD';
 import { DateAndNumberFormater, ValueFormater } from './valueFormater';
 import { NumberFormaterDot } from './numberFormaterDot';
 import { DefaultValueFormater } from './defaultValueFormater';
+import { Grid } from '../grid/grid';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -774,7 +775,7 @@ export class Datasource<T = any> {
         this.__internalUpdate(true);
     }
 
-    public getFilterString() {
+    public getFilterString(ctx?: Grid) {
         const filter = this.__filter.getFilter();
         if (!filter?.filterArguments?.length) {
             return '';
@@ -786,16 +787,24 @@ export class Datasource<T = any> {
             return valueFormater.fromSource(value, type, attribute);
         }
 
+        function label(attribute: string) {
+            if (!ctx) {
+                return attribute;
+            }
+            const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
+            return label || attribute;
+        }
+
         const parser = function (obj: FilterArgument, queryString = '') {
             if (obj) {
                 if (!obj.filterArguments || (obj.filterArguments && obj.filterArguments.length === 0)) {
                     if (obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK') {
-                        queryString = queryString + `[${obj.attribute}] <<${OPERATORS[obj.operator]}>>`;
+                        queryString = queryString + `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>>`;
                     } else {
                         if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                             queryString =
                                 queryString +
-                                `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> ${
+                                `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>> ${
                                     obj.valueType === 'ATTRIBUTE'
                                         ? `[${obj.value}]`
                                         : "'" + convertValue(obj.attributeType, obj.value, obj.attribute) + "'"
@@ -805,13 +814,13 @@ export class Datasource<T = any> {
                             if (Array.isArray(obj.value)) {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${obj.value.map((val) => {
+                                    `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>> [${obj.value.map((val) => {
                                         return `'${val}'`;
                                     })}]`;
                             } else {
                                 queryString =
                                     queryString +
-                                    `[${obj.attribute}] <<${OPERATORS[obj.operator]}>> [${(obj.value as string)
+                                    `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>> [${(obj.value as string)
                                         .split('\n')
                                         .map((val) => {
                                             return `'${val}'`;

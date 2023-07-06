@@ -13,7 +13,9 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
             return;
         }
 
+        const attributes = ctx.gridInterface.__getGridConfig().__attributes;
         const attribute = (cell as HTMLCellElement).$attribute;
+        const attributeLabel = attributes[attribute].label || attribute;
         const cellno = (cell as HTMLCellElement).$celno;
         const coltype = (cell as HTMLCellElement).$coltype;
         const column = (cell as HTMLCellElement).$column;
@@ -31,7 +33,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
             if (attribute && !mouseUp) {
                 isClickEvent = null;
 
-                const width = getTextWidth(ctx, attribute) + 10;
+                const width = getTextWidth(ctx, attributeLabel) + 10;
                 const backgroundColor = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-main-bg-color');
                 const fontSize = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-font-size');
                 const fontWeight = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-font-weight-header');
@@ -58,7 +60,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
                 dragElement.style.color = color;
 
                 const label = creatElement('SPAN', 'simple-html-draggable-element-label');
-                label.innerText = attribute;
+                label.innerText = attributeLabel;
                 label.style.fontFamily = fontFamily;
                 label.style.fontWeight = fontWeight;
                 label.style.fontSize = fontSize;
@@ -127,7 +129,11 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
                         switch (true) {
                             case classList?.contains('simple-html-grid-panel'):
                                 const newGrouping = ctx.gridInterface.getDatasource().getGrouping();
-                                newGrouping.push({ attribute: attribute, title: attribute });
+
+                                const attributes = ctx.gridInterface.__getGridConfig().__attributes;
+                                const attributeLabel = attributes[attribute].label || attribute;
+
+                                newGrouping.push({ attribute: attribute, title: attributeLabel });
                                 ctx.gridInterface.getDatasource().group(newGrouping);
 
                                 break;

@@ -7,7 +7,7 @@ export function rebuildFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
     const totalRows = ctx.gridInterface.getDatasource().getAllData().length;
     const filteredRows = ctx.gridInterface.getDatasource().length();
-    const filterString = ctx.gridInterface.getDatasource().getFilterString();
+    const filterString = ctx.gridInterface.getDatasource().getFilterString(ctx);
     const scrollbarHeight = ctx.gridInterface.__getGridConfig().__scrollbarSize;
 
     const clearButton = filterString

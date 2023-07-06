@@ -24,6 +24,14 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
     const filterEditorGridCssContext = creatElement('div', 'simple-html-grid');
     filterEditorContainer.appendChild(filterEditorGridCssContext);
 
+    function label(attribute: string) {
+        if (!ctx) {
+            return attribute;
+        }
+        const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
+        return label || attribute;
+    }
+
     /**
      * Icon helper
      * @param callback
@@ -180,7 +188,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     e.preventDefault();
                     e.stopPropagation();
                     contextMenuAttributes(ctx, e, e.target as any, (attribute) => {
-                        arg.value = attribute;
+                        arg.value = label(attribute);
                         renderFilterEditor(ctx, structuredClone(filterArg));
                     });
                 }}
@@ -211,7 +219,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             });
                         }}
                     >
-                        ${arg.attribute ? arg.attribute : 'Click me to select field'}
+                        ${arg.attribute ? label(arg.attribute) : 'Click me to select field'}
                     </div>
 
                     <div

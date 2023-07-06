@@ -43,8 +43,9 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
             <hr class="hr-solid" />
             <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                 ${attributes.sort().map((attribute) => {
+                    const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
                     return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>
-                        ${prettyPrintString(attribute)}
+                        ${label || prettyPrintString(attribute)}
                     </div>`;
                 })}
             </div>
