@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.80](https://github.com/simple-html/simple-html/compare/v5.0.0-next.79...v5.0.0-next.80) (2023-07-06)
+
+
+### Bug Fixes
+
+* label not used in dragdrop/content menus ([18d9bde](https://github.com/simple-html/simple-html/commits/18d9bde709e2b4f4a1d83e78b657759de936b857))
+
 ## [5.0.0-next.79](https://github.com/simple-html/simple-html/compare/v5.0.0-next.78...v5.0.0-next.79) (2023-06-30)
 
 
