@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.82](https://github.com/simple-html/simple-html/compare/v5.0.0-next.81...v5.0.0-next.82) (2023-07-07)
+
+
+### Bug Fixes
+
+* date formater clear value ([dfd2221](https://github.com/simple-html/simple-html/commits/dfd22214793988719753c38d9ac088628b5de495))
+* remove debugger statement ([b3e6676](https://github.com/simple-html/simple-html/commits/b3e6676c923987e796e3dfbf9bbd61af937242c6))
+* use label in copy rows ([04fa63e](https://github.com/simple-html/simple-html/commits/04fa63e02e06ce9b25bd7a6d62fe48c53d77e455))
+
 ## [5.0.0-next.81](https://github.com/simple-html/simple-html/compare/v5.0.0-next.80...v5.0.0-next.81) (2023-07-06)
 
 
