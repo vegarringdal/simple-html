@@ -10,7 +10,7 @@ export class DateFormaterDDMMYYYYTHHMMSS {
         let returnValue: any = value;
 
         if (returnValue === null || returnValue === undefined || returnValue === '') {
-            return returnValue;
+            return returnValue = '';
         }
 
         returnValue = new Date(returnValue).toDateString();

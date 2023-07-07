@@ -8,9 +8,9 @@ export class DateFormaterCustom {
      */
     static fromSource(value: Date | string | null | undefined): string {
         let returnValue: any = value;
-
+        debugger
         if (returnValue === null || returnValue === undefined || returnValue === '') {
-            return returnValue;
+            returnValue = '';
         }
 
         returnValue = new Date(returnValue).toDateString();
