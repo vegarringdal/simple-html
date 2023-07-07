@@ -32,6 +32,14 @@ export function contextmenuRow(
     contextMenu.style.left = asPx(event.clientX - 65);
     contextMenu.style.minWidth = asPx(130);
 
+    function label(attribute: string) {
+        if (!ctx) {
+            return prettyPrintString(attribute);
+        }
+        const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
+        return label || attribute;
+    }
+
     if (event.clientX + 70 > window.innerWidth) {
         contextMenu.style.left = asPx(window.innerWidth - 150);
     }
@@ -60,7 +68,7 @@ export function contextmenuRow(
 
         let tableHeader = '<tr>';
         attributes.forEach((attribute) => {
-            tableHeader = tableHeader + '<th>' + prettyPrintString(attribute) + '</th>';
+            tableHeader = tableHeader + '<th>' + label(attribute) + '</th>';
         });
         tableHeader = tableHeader + '</tr>';
 
