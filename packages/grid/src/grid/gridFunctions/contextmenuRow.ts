@@ -9,6 +9,7 @@ import { ColType } from './colType';
 import { prettyPrintString } from './prettyPrintString';
 import { triggerScrollEvent } from './triggerScrollEvent';
 import { removeContextMenu } from './removeContextMenu';
+import { DateFormaterYYYYMMDD } from '../../datasource/DateFormaterYYYYMMDD';
 
 export function contextmenuRow(
     ctx: Grid,
@@ -107,9 +108,9 @@ export function contextmenuRow(
                     }
 
                     if (dataType === 'date') {
-                        const data = colData;
+                        const data = DateFormaterYYYYMMDD.fromSource(colData);
                         justData = justData + data;
-                        tableInnerData = tableInnerData + '<td class="date">' + (data || '') + '</td>';
+                        tableInnerData = tableInnerData + '<td>' + data + '</td>';
                     } else if (dataType === 'number') {
                         const data = colData;
                         justData = justData + data;
