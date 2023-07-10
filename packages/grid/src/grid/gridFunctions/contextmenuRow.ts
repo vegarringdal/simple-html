@@ -52,9 +52,19 @@ export function contextmenuRow(
             <html>
                 <body>
                 <style>
+                   .number {
+                        mso-number-format:"General";
+                    }
+                   .text{
+                        mso-number-format:"\@";
+                    }
+                   .date {
+                        mso-number-format:"Short Date";
+                    }
                     table {
-                    border-collapse: collapse;
-                    border:.5pt solid windowtext;
+                        border-collapse: collapse;
+                        border:.5pt solid windowtext;
+                        mso-displayed-decimal-separator:"\.";
                     }
                     td,
                     th {
@@ -77,7 +87,6 @@ export function contextmenuRow(
 
         const datasource = ctx.gridInterface.getDatasource();
         const attConfig = ctx.gridInterface.__getGridConfig().__attributes;
-        const valueformater = datasource.getValueFormater();
 
         const selectedRows = datasource.getSelectedRows();
 
@@ -87,25 +96,28 @@ export function contextmenuRow(
                 attributes.forEach((attribute, i) => {
                     const cellConfig = attConfig[attribute];
                     const colData = entity[attribute];
+                    let dataType = cellConfig.type;
+
+                    if (cellConfig.dynamicCellTypeColumn) {
+                        dataType = entity[cellConfig.dynamicCellTypeColumn];
+                    }
 
                     if (i > 0) {
                         justData = justData + '\t';
                     }
 
-                    if (cellConfig.type === 'date') {
-                        //
-                        const data = valueformater.fromSource(colData, cellConfig.type, cellConfig.attribute);
+                    if (dataType === 'date') {
+                        const data = colData;
                         justData = justData + data;
-                        tableInnerData = tableInnerData + '<td>' + data + '</td>';
-                    } else if (cellConfig.type === 'number') {
-                        //
-                        const data = valueformater.fromSource(colData, cellConfig.type, cellConfig.attribute);
+                        tableInnerData = tableInnerData + '<td class="date">' + (data || '') + '</td>';
+                    } else if (dataType === 'number') {
+                        const data = colData;
                         justData = justData + data;
-                        tableInnerData = tableInnerData + '<td>' + data + '</td >';
+                        tableInnerData = tableInnerData + '<td class="number">' + (data || '') + '</td >';
                     } else {
                         //
                         justData = justData + colData;
-                        tableInnerData = tableInnerData + '<td>' + (colData || '') + '</td>';
+                        tableInnerData = tableInnerData + '<td class="text">' + (colData || '') + '</td>';
                     }
                 });
                 if (onlyCurrentEntity || overRideCurrentEntity) {
@@ -141,6 +153,7 @@ export function contextmenuRow(
             if (onlyCurrentEntity) {
                 e.clipboardData.setData('text/plain', text);
             } else {
+                console.log(html);
                 e.clipboardData.setData('text/html', html);
                 e.clipboardData.setData('text/plain', text);
             }

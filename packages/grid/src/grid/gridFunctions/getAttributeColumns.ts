@@ -6,20 +6,31 @@ import { Grid } from '../grid';
  * @returns
  */
 export function getAttributeColumns(ctx: Grid, filterSelectedColumns = true) {
-    const colLeft = ctx.gridInterface.__getGridConfig().columnsPinnedLeft.flatMap((e) => e.rows.map((e) => e));
-    const colCenter = ctx.gridInterface.__getGridConfig().columnsCenter.flatMap((e) => e.rows.map((e) => e));
-    const colRight = ctx.gridInterface.__getGridConfig().columnsPinnedRight.flatMap((e) => e.rows.map((e) => e));
+    const colLeft = ctx.gridInterface.__getGridConfig().columnsPinnedLeft.map((e) => e.rows);
+    const colCenter = ctx.gridInterface.__getGridConfig().columnsCenter.map((e) => e.rows);
+    const colRight = ctx.gridInterface.__getGridConfig().columnsPinnedRight.map((e) => e.rows);
     const allAttributes = colLeft.concat(colCenter).concat(colRight);
 
     let attributes: string[] = [];
+
     if (filterSelectedColumns && ctx.gridInterface.__selectedColumns()) {
-        allAttributes.forEach((name, i) => {
+        allAttributes.forEach((names, i) => {
             if (ctx.gridInterface.__isColumnSelected(i + 1)) {
-                attributes.push(name);
+                if (Array.isArray(names)) {
+                    names.forEach((n) => {
+                        attributes.push(n);
+                    });
+                }
             }
         });
     } else {
-        attributes = allAttributes;
+        allAttributes.forEach((names) => {
+            if (Array.isArray(names)) {
+                names.forEach((n) => {
+                    attributes.push(n);
+                });
+            }
+        });
     }
 
     return attributes;
