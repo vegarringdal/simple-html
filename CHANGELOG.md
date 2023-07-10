@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.83](https://github.com/simple-html/simple-html/compare/v5.0.0-next.82...v5.0.0-next.83) (2023-07-10)
+
+
+### Bug Fixes
+
+* improve copy/paste ([c8120a3](https://github.com/simple-html/simple-html/commits/c8120a3d83c4c3dfa42f78e1170f20bd8748c6b9))
+
 ## [5.0.0-next.82](https://github.com/simple-html/simple-html/compare/v5.0.0-next.81...v5.0.0-next.82) (2023-07-07)
 
 
