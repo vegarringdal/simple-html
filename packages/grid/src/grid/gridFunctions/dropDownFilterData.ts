@@ -54,7 +54,7 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
                 }
             }
 
-            if (typeof data[i][attribute] === 'object') {
+            if (data[i][attribute] && typeof data[i][attribute] === 'object') {
                 if (search) {
                     if (data[i][attribute].toISOString().indexOf(search) !== -1) {
                         dataFilterSet.add(data[i][attribute]);
