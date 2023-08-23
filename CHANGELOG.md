@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.85](https://github.com/simple-html/simple-html/compare/v5.0.0-next.84...v5.0.0-next.85) (2023-08-23)
+
+
+### Bug Fixes
+
+* header filter - dropdown failed to open ([aa0c1f6](https://github.com/simple-html/simple-html/commits/aa0c1f60cb9ff60d9a10ffafe8c8cd15d6ff1313))
+
 ## [5.0.0-next.84](https://github.com/simple-html/simple-html/compare/v5.0.0-next.83...v5.0.0-next.84) (2023-07-10)
 
 
