@@ -59,5 +59,9 @@ export function contextMenuCustom(
     );
 
     document.body.appendChild(contextMenu);
+    const menuRect = contextMenu.getBoundingClientRect();
+    if (menuRect.bottom > window.innerHeight) {
+        contextMenu.style.top = asPx(rect.top - menuRect.height);
+    }
     ctx.contextMenu = contextMenu;
 }

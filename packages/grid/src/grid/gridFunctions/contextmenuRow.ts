@@ -219,7 +219,12 @@ export function contextmenuRow(
         }
 
         function add(prev: number, cur: number) {
-            return parseFloat((prev + cur).toFixed(5));
+            let x = parseFloat(cur as any);
+            if (isNaN(x)) {
+                x = 0;
+            }
+
+            return parseFloat((prev + x).toFixed(5));
         }
 
         function max(prev: number, cur: number) {
@@ -461,5 +466,12 @@ export function contextmenuRow(
     );
 
     document.body.appendChild(contextMenu);
+
+    const menuRect = contextMenu.getBoundingClientRect();
+    if (menuRect.bottom > window.innerHeight) {
+        contextMenu.style.top = asPx(rect.top - menuRect.height);
+        console.log('checking');
+    }
+
     ctx.contextMenu = contextMenu;
 }
