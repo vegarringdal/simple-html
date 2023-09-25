@@ -154,7 +154,6 @@ export function contextmenuRow(
             if (onlyCurrentEntity) {
                 e.clipboardData.setData('text/plain', text);
             } else {
-                console.log(html);
                 e.clipboardData.setData('text/html', html);
                 e.clipboardData.setData('text/plain', text);
             }
@@ -470,7 +469,6 @@ export function contextmenuRow(
     const menuRect = contextMenu.getBoundingClientRect();
     if (menuRect.bottom > window.innerHeight) {
         contextMenu.style.top = asPx(rect.top - menuRect.height);
-        console.log('checking');
     }
 
     ctx.contextMenu = contextMenu;

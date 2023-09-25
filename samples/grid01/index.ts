@@ -232,14 +232,14 @@ createButton('Open Filter Editor', () => {
 
 const datasourceEvents = {
     handleEvent: (e: any) => {
-        console.log('DATASOURCE EVENTS:', e.type, e.data);
+        /*   console.log('DATASOURCE EVENTS:', e.type, e.data); */
         return true; // to keep subscribing
     }
 };
 
 const gridInterfaceEvents = {
     handleEvent: (e: any) => {
-        console.log('GRIDINTERFACE EVENTS:', e.type, e.data);
+        /* console.log('GRIDINTERFACE EVENTS:', e.type, e.data); */
 
         if (e.type === 'filter-operator-change') {
             // sample on how you  would edit config and rerender headers
@@ -324,7 +324,6 @@ createButton('remove readonly favoriteFruit based on cell isDumb', () => {
 createButton('cell focus custom menu 1 time', () => {
     gridInterface.addEventListener({
         handleEvent: (e) => {
-            console.log(e.type);
             if (e.type === 'cell-click') {
                 gridInterface.contextMenuCustom(
                     e.data.originalEvent,
@@ -363,7 +362,7 @@ createButton('cell focus custom menu 1 time', () => {
                     e.data.cell,
                     (result) => {
                         datasource.currentEntity[e.data.attribute] = result;
-                        gridInterface.triggerScrollEvent()
+                        gridInterface.triggerScrollEvent();
                         return true;
                     }
                 );
