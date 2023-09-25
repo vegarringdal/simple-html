@@ -11,7 +11,7 @@ export function getAttributeColumns(ctx: Grid, filterSelectedColumns = true) {
     const colRight = ctx.gridInterface.__getGridConfig().columnsPinnedRight.map((e) => e.rows);
     const allAttributes = colLeft.concat(colCenter).concat(colRight);
 
-    let attributes: string[] = [];
+    const attributes: string[] = [];
 
     if (filterSelectedColumns && ctx.gridInterface.__selectedColumns()) {
         allAttributes.forEach((names, i) => {
