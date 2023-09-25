@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.86](https://github.com/simple-html/simple-html/compare/v5.0.0-next.85...v5.0.0-next.86) (2023-09-25)
+
+
+### Bug Fixes
+
+* menu rect bottom when outside window ([409103e](https://github.com/simple-html/simple-html/commits/409103eea184f035044a6de5a7b439fa1a9d531d))
+
 ## [5.0.0-next.85](https://github.com/simple-html/simple-html/compare/v5.0.0-next.84...v5.0.0-next.85) (2023-08-23)
 
 
