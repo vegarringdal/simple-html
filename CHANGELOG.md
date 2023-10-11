@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.87](https://github.com/simple-html/simple-html/compare/v5.0.0-next.86...v5.0.0-next.87) (2023-10-11)
+
+
+### Bug Fixes
+
+* remove console.log messages ([079d291](https://github.com/simple-html/simple-html/commits/079d2913109c2beaa55b74c35a9d8e3d6279e005))
+* use sort with grouping on load config ([ec7a88a](https://github.com/simple-html/simple-html/commits/ec7a88a480ae10b978d6fca2e5f976bee7f9a44e))
+
 ## [5.0.0-next.86](https://github.com/simple-html/simple-html/compare/v5.0.0-next.85...v5.0.0-next.86) (2023-09-25)
 
 
