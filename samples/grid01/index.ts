@@ -232,7 +232,7 @@ createButton('Open Filter Editor', () => {
 
 const datasourceEvents = {
     handleEvent: (e: any) => {
-        /*   console.log('DATASOURCE EVENTS:', e.type, e.data); */
+        console.log('DATASOURCE EVENTS:', e.type, e.data);
         return true; // to keep subscribing
     }
 };

@@ -229,6 +229,10 @@ export class GridInterface<T> {
         if (grouping?.length) {
             this.getDatasource().setExpanded(exspandedGroups);
             this.getDatasource().group(grouping);
+            if (sortOrder?.length) {
+                // we asume they have control what they are sending in
+                this.getDatasource().sort(sortOrder);
+            }
         } else {
             this.getDatasource().removeGroup();
             if (sortOrder?.length && !grouping?.length) {
