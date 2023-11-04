@@ -5,7 +5,7 @@ Only lit-html as dependency
 > V.5.0.0 will soon be release, currently on next while I use it in a application to see missing features/stuff I need use the application
 
 Sample:
-* [sample](https://vegarringdal.github.io/rebuild-grid/index.html)
+* [sample](https://vegarringdal.github.io/simple-html/demo/index.html)
 
 API docs:
 *  [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)

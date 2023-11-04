@@ -2,7 +2,7 @@ import { clearFolders, addDefaultIndex, client, TypeChecker } from 'esbuild-help
 
 clearFolders('dist_client', 'dist_nodejs');
 
-const sample = process.argv[2] || "grid01";
+const sample = process.argv[2] || "demo";
 
 /**
  * client bundle
@@ -14,8 +14,8 @@ client(
         define: {
             DEVELOPMENT: 'false'
         },
-        entryPoints: [`./samples/${sample}/index.ts`],
-        outfile: `./dist/${sample}/index.js`,
+        entryPoints: [`./samples/grid01/index.ts`],
+        outfile: `./docs/${sample}/index.js`,
         minify: true,
         bundle: true,
         tsconfig: `./samples/tsconfig.json`,
@@ -29,7 +29,7 @@ client(
  * index file for project
  */
 addDefaultIndex({
-    distFolder: `dist/${sample}`,
+    distFolder: `docs/${sample}`,
     publicFolders: [],
     entry: './index.js',
     hbr: false,
