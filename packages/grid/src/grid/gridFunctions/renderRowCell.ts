@@ -100,9 +100,10 @@ export function renderRowCell(
 
         if (cellConfigType === 'boolean') {
             render(
-                html` <div>
+                html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${dimmed + dimmedClass}></div>
                     <input
+                        style="width:100%;"
                         role="cell"
                         data-attribute=${attribute}
                         aria-label=${attribute}
@@ -141,13 +142,15 @@ export function renderRowCell(
         } else {
             let skipFocus = false;
             render(
-                html` <div>
+                html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${dimmed + dimmedClass}></div>
                     <input
                         role="cell"
                         aria-label=${attribute}
                         data-attribute=${attribute}
-                        style=${cellConfigType === 'number' ? 'text-align: right' : ''}
+                        style=${cellConfigType === 'number'
+                            ? 'text-align: right;width:100%;height:100%;'
+                            : 'width:100%;height:100%;'}
                         .value=${live(value?.toString())}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}

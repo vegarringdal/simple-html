@@ -38,6 +38,7 @@ export function renderHeaderFilter(
             if (cellConfig.type === 'boolean') {
                 render(
                     html`<input
+                        style="width:100%"
                         type="checkbox"
                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
                         .checked=${live(currentValue)}
@@ -90,7 +91,9 @@ export function renderHeaderFilter(
                 render(
                     html`<input
                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
-                        style=${cellConfig?.type === 'number' ? 'text-align: right' : ''}
+                        style=${cellConfig?.type === 'number'
+                            ? 'text-align: right;width:100%;height:100%;'
+                            : 'width:100%;height:100%;'}
                         .value=${live(currentValue)}
                         placeholder=${placeHolderFilter}
                         @contextmenu=${(e: MouseEvent) => {
