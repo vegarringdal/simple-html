@@ -370,12 +370,22 @@ input {
     z-index: 10;
 }
 
+.simple-html-grid-middle-scroller {
+    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-width: thin;
+}
+
 /*
  * scrollbar
  */
 
 .simple-html-grid-body-scroller::-webkit-scrollbar {
     width: 10px;
+}
+
+.simple-html-grid-body-scroller {
+    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-width: thin;
 }
 
 .simple-html-grid-body-scroller::-webkit-scrollbar-thumb {
@@ -397,6 +407,11 @@ input {
     width: 10px;
 }
 
+.simple-html-grid-header {
+    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-width: thin;
+}
+
 .simple-html-grid-header::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     background-color: var(--simple-html-grid-main-bg-selected-odd);
@@ -410,6 +425,13 @@ input {
 
 .simple-html-dialog-scroller::-webkit-scrollbar {
     width: 10px;
+    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-width: thin;
+}
+
+.simple-html-dialog-scroller {
+    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-width: thin;
 }
 
 .simple-html-dialog-scroller::-webkit-scrollbar-thumb {
@@ -440,8 +462,6 @@ input {
 .simple-html-grid-grouping-row {
     border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
-
-
 
 .simple-html-grid-body-row-container-group .simple-html-grid-row {
     border-bottom: 1px solid var(--simple-html-grid-pinned-border);
