@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.89](https://github.com/simple-html/simple-html/compare/v5.0.0-next.88...v5.0.0-next.89) (2023-11-06)
+
+
+### Bug Fixes
+
+* scrollbars ([9f2c5b7](https://github.com/simple-html/simple-html/commits/9f2c5b7136741979a4d928672d1cabec8f2a2bdf))
+
 ## [5.0.0-next.88](https://github.com/simple-html/simple-html/compare/v5.0.0-next.87...v5.0.0-next.88) (2023-11-04)
 
 
