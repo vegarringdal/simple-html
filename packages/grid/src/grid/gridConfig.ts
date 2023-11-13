@@ -6,6 +6,11 @@ import { IDateConfig } from '../date/interfaces';
 export type GridConfig = {
     cellHeight?: number;
     panelHeight?: number;
+    /**
+     * useful for when you have long header text and need to wrap in in 2-3 height
+     * this will not work well with auto resize
+     */
+    cellHeaderLabelHeight?: number;
     footerHeight?: number;
     selectSizeHeight?: number;
     hideLabels?: boolean;
@@ -54,6 +59,10 @@ export type GridConfig = {
      * @internal not exported in save config
      */
     __rowHeight?: number;
+    /**
+     * @internal not exported in save config
+     */
+    __rowHeaderHeight?: number;
     /**
      * @internal not exported in save config
      */

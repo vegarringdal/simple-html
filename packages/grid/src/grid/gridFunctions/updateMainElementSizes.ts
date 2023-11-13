@@ -22,7 +22,7 @@ export function updateMainElementSizes(ctx: Grid) {
     const header = getElementByClassName(ctx.element, 'simple-html-grid-header');
     header.style.top = asPx(config.panelHeight);
 
-    let headerHeight = config.__rowHeight * 2;
+    let headerHeight = config.__rowHeaderHeight;
     if (config.hideLabels && !config.hideFilter) {
         headerHeight = config.__rowHeight * 1;
     }

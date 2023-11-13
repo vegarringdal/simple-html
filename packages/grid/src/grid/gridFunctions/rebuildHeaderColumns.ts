@@ -77,14 +77,14 @@ export function rebuildHeaderColumns(ctx: Grid) {
                         const cell = creatElement(DIV, 'simple-html-grid-col-cell');
                         cell.classList.add('simple-html-label');
                         cell.style.top = asPx(top);
-                        cell.style.height = asPx(config.cellHeight);
+                        cell.style.height = asPx(config.cellHeaderLabelHeight);
                         cell.setAttribute('type', 'label');
                         cell.setAttribute('cellNo', y.toString());
 
                         columnElement.appendChild(cell);
 
                         renderCell(ctx, cell, 0, i, y, coltype);
-                        top = top + config.cellHeight;
+                        top = top + config.cellHeaderLabelHeight;
 
                         /**
                          * next part handles drop zones in cells, but only if they are/have attribute set

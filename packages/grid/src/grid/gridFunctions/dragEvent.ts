@@ -33,7 +33,16 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
             if (attribute && !mouseUp) {
                 isClickEvent = null;
 
-                const width = getTextWidth(ctx, attributeLabel) + 10;
+                const rect = cell.parentElement.getBoundingClientRect();
+                let width = getTextWidth(ctx, attributeLabel) + 10;
+                if (gridConfig.cellHeaderLabelHeight !== gridConfig.cellHeight) {
+                    width = rect.width;
+                }
+
+                if (width < 100) {
+                    width = 100;
+                }
+
                 const backgroundColor = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-main-bg-color');
                 const fontSize = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-font-size');
                 const fontWeight = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-font-weight-header');
@@ -46,8 +55,9 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
                 const borderColor = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-main-bg-border');
 
                 dragElement = creatElement(DIV, 'simple-html-draggable-element');
-                dragElement.style.height = asPx(gridConfig.cellHeight);
-                dragElement.style.width = asPx(width < 100 ? 100 : width);
+                dragElement.style.height = asPx(gridConfig.cellHeaderLabelHeight);
+                dragElement.style.minWidth = asPx(width);
+                dragElement.style.maxWidth = asPx(width);
                 dragElement.style.backgroundColor = backgroundColor;
                 dragElement.style.boxShadow = 'inset 1px 1px 3px 0 ' + boxShadowColor;
                 dragElement.style.outline = '1px solid ' + backgroundColor;
@@ -59,7 +69,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
                 dragElement.style.fontSize = fontSize;
                 dragElement.style.color = color;
 
-                const label = creatElement('SPAN', 'simple-html-draggable-element-label');
+                const label = creatElement('DIV', 'simple-html-draggable-element-label');
                 label.innerText = attributeLabel;
                 label.style.fontFamily = fontFamily;
                 label.style.fontWeight = fontWeight;

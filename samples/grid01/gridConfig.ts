@@ -6,6 +6,7 @@ import { GridConfig } from '@simple-html/grid';
  */
 export const gridConfig: GridConfig = {
     panelHeight: 25,
+  /*   cellHeaderLabelHeight: 40, */
     /*  selectSizeHeight: 0, */
     hideLabels: false,
     hideFilter: false,
@@ -122,7 +123,7 @@ export const gridConfig: GridConfig = {
         {
             attribute: 'company',
             placeHolderRow: 'company',
-            label: 'my Company',
+            label: 'my Company name',
             focusButton: 'SHOW_IF_GRID_NOT_READONLY'
         },
         {

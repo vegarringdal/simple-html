@@ -361,6 +361,11 @@ export class GridInterface<T> {
         if (this.gridConfig.cellHeight === null || this.gridConfig.cellHeight === undefined) {
             this.gridConfig.cellHeight = 22;
         }
+
+        if (this.gridConfig.cellHeaderLabelHeight === null || this.gridConfig.cellHeaderLabelHeight === undefined) {
+            this.gridConfig.cellHeaderLabelHeight = this.gridConfig.cellHeight;
+        }
+
         if (this.gridConfig.panelHeight === null || this.gridConfig.panelHeight === undefined) {
             this.gridConfig.panelHeight = 0;
         }
@@ -391,6 +396,7 @@ export class GridInterface<T> {
         cells = getCellHeight(this.gridConfig.columnsCenter, cells);
 
         this.gridConfig.__rowHeight = cells * this.gridConfig.cellHeight;
+        this.gridConfig.__rowHeaderHeight = cells * this.gridConfig.cellHeight + cells * this.gridConfig.cellHeaderLabelHeight;
         this.gridConfig.__columnCells = cells;
 
         this.gridConfig.columnsPinnedLeft = this.gridConfig.columnsPinnedLeft.filter((e) => e.rows?.length);
