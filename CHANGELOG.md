@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.90](https://github.com/simple-html/simple-html/compare/v5.0.0-next.89...v5.0.0-next.90) (2023-11-13)
+
+
+### Features
+
+* cellHeaderLabelHeight ([4b856de](https://github.com/simple-html/simple-html/commits/4b856de2c1693182d4d86f3d7687bd972063a40a))
+
 ## [5.0.0-next.89](https://github.com/simple-html/simple-html/compare/v5.0.0-next.88...v5.0.0-next.89) (2023-11-06)
 
 
