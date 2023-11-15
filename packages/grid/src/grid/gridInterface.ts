@@ -501,6 +501,7 @@ export class GridInterface<T> {
         }
         if (this.grid) {
             rebuildHeaderColumns(this.grid);
+            this.grid.gridInterface.triggerScrollEvent();
         }
     }
 
