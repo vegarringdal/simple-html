@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.91](https://github.com/simple-html/simple-html/compare/v5.0.0-next.90...v5.0.0-next.91) (2023-11-15)
+
+
+### Bug Fixes
+
+* select on header rerendering could mess up layout ([62129c7](https://github.com/simple-html/simple-html/commits/62129c7e89d4a721e3ab6424c33efe73c8d8f3a9))
+
 ## [5.0.0-next.90](https://github.com/simple-html/simple-html/compare/v5.0.0-next.89...v5.0.0-next.90) (2023-11-13)
 
 
