@@ -183,17 +183,31 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
         }
 
         if (arg.valueType === 'ATTRIBUTE') {
+            // we need to get label from config
+            const ref = ctx.gridInterface.__getGridConfig().__attributes[`${arg.value}`];
+
+            let label = `${arg.value}`;
+            if (label === 'Null') {
+                label = '';
+            }
+            if (label === 'Undefined') {
+                label = '';
+            }
+            if (ref?.label) {
+                label = ref.label;
+            }
+
             filterElement = html`<div
                 @click=${(e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
                     contextMenuAttributes(ctx, e, e.target as any, (attribute) => {
-                        arg.value = label(attribute);
+                        arg.value = attribute;
                         renderFilterEditor(ctx, structuredClone(filterArg));
                     });
                 }}
             >
-                ${arg.value || 'Click me to select attribute'}
+                ${label || 'Click me to select attribute'}
             </div>`;
         }
 
