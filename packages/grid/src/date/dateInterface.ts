@@ -178,8 +178,10 @@ export class DateInterface {
                     columns.push(template);
                 }
             }
-            monthTemplates.push(html`<!-- month column -->
-                <div class="simple-html-date-col">${columns.map((x) => x)}</div>`);
+            monthTemplates.push(
+                html`<!-- month column -->
+                    <div class="simple-html-date-col">${columns.map((x) => x)}</div>`
+            );
         }
 
         render(

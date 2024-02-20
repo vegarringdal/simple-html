@@ -111,19 +111,19 @@ export class Filter {
                         if (filter.attributeType === 'date' && rowData) {
                             data = ds
                                 .getValueFormater()
-                                .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
+                                .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute, false);
                         } else {
                             if (filter.attributeType === 'number' && rowData) {
                                 data = ds
                                     .getValueFormater()
-                                    .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
+                                    .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute, false);
                             } else {
                                 if (rowData && rowData[filter.attribute] !== null && rowData[filter.attribute] !== undefined) {
                                     data =
                                         rowData &&
                                         ds
                                             .getValueFormater()
-                                            .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
+                                            .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute, false);
                                     if (data && data.toUpperCase) {
                                         data = data.toUpperCase();
                                     }
@@ -218,12 +218,12 @@ export class Filter {
                         if (filter.attributeType === 'date' && rowData) {
                             data = ds
                                 .getValueFormater()
-                                .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
+                                .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute, false);
                         } else {
                             if (filter.attributeType === 'number' && rowData) {
                                 data = ds
                                     .getValueFormater()
-                                    .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute);
+                                    .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute, false);
                             } else {
                                 if (rowData && rowData[filter.attribute] !== null && rowData[filter.attribute] !== undefined) {
                                     data = rowData && rowData[filter.attribute];

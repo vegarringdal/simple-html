@@ -118,7 +118,7 @@ describe('string filter', () => {
             operator: 'IN',
             attributeType: 'date',
             value: [new Date(1990, 0, 1), new Date(1995, 0, 1)].map((x) =>
-                ds.getValueFormater().fromSource(x, 'date', 'x')
+                ds.getValueFormater().fromSource(x, 'date', 'x', false)
             ) as any
         });
 
@@ -137,7 +137,7 @@ describe('string filter', () => {
                     operator: 'IN',
                     attributeType: 'date', // no automatic anymore when using array to speed it up
                     value: [new Date(1990, 0, 1), new Date(1995, 0, 1)].map((x) =>
-                        ds.getValueFormater().fromSource(x, 'date', 'x')
+                        ds.getValueFormater().fromSource(x, 'date', 'x', false)
                     ) as any
                 },
                 {
@@ -163,7 +163,7 @@ describe('string filter', () => {
                     operator: 'IN',
                     attributeType: 'date', // no automatic anymore when using array to speed it up
                     value: [new Date(2000, 0, 1), new Date(1995, 0, 1)].map((x) =>
-                        ds.getValueFormater().fromSource(x, 'date', 'x')
+                        ds.getValueFormater().fromSource(x, 'date', 'x', false)
                     ) as any
                 },
                 {

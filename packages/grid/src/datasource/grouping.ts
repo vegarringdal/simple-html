@@ -229,10 +229,10 @@ export class Grouping {
             groupID = typeof groupID === 'boolean' ? groupID.toString() : groupID;
             groupID =
                 typeof groupID?.toLocaleDateString === 'function'
-                    ? ds.getValueFormater().fromSourceGrouping(groupID, 'date', groupBy)
+                    ? ds.getValueFormater().fromSourceGrouping(groupID, 'date', groupBy, false)
                     : typeof groupID?.toFixed === 'function'
-                    ? ds.getValueFormater().fromSourceGrouping(groupID, 'number', groupBy)
-                    : groupID;
+                      ? ds.getValueFormater().fromSourceGrouping(groupID, 'number', groupBy, false)
+                      : groupID;
             groupID = groupID || ' blank';
 
             if (groupID !== lastGroupID) {
@@ -271,10 +271,10 @@ export class Grouping {
                 let groupID = child[groupBy];
                 groupID =
                     typeof groupID?.toLocaleDateString === 'function'
-                        ? ds.getValueFormater().fromSourceGrouping(groupID, 'date', groupBy)
+                        ? ds.getValueFormater().fromSourceGrouping(groupID, 'date', groupBy, false)
                         : typeof groupID?.toFixed === 'function'
-                        ? ds.getValueFormater().fromSourceGrouping(groupID, 'number', groupBy)
-                        : groupID;
+                          ? ds.getValueFormater().fromSourceGrouping(groupID, 'number', groupBy, false)
+                          : groupID;
                 groupID = groupID || ' blank';
 
                 if (groupID !== tempValue) {

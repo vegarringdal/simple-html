@@ -190,7 +190,7 @@ export function contextmenuRow(
                 return;
             }
 
-            entity[attribute] = valueFormater.toSource(data, cellConfig.type, attribute);
+            entity[attribute] = valueFormater.toSource(data, cellConfig.type, attribute, false);
 
             ctx.gridInterface.__callSubscribers('paste', {
                 cell,
@@ -269,7 +269,9 @@ export function contextmenuRow(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormater.fromSource(selectedRows.length, 'number', attribute));
+                    await navigator.clipboard.writeText(
+                        valueFormater.fromSource(selectedRows.length, 'number', attribute, false)
+                    );
                     removeContextMenu(ctx);
                 }}
             >
@@ -278,38 +280,38 @@ export function contextmenuRow(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormater.fromSource(curValueX, 'number', attribute));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(curValueX, 'number', attribute, false));
                     removeContextMenu(ctx);
                 }}
             >
-                Sum: ${valueFormater.fromSource(curValueX, 'number', attribute)}
+                Sum: ${valueFormater.fromSource(curValueX, 'number', attribute, false)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormater.fromSource(maxValueX, 'number', attribute));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(maxValueX, 'number', attribute, false));
                     removeContextMenu(ctx);
                 }}
             >
-                Max: ${valueFormater.fromSource(maxValueX, 'number', attribute)}
+                Max: ${valueFormater.fromSource(maxValueX, 'number', attribute, false)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormater.fromSource(minValueX, 'number', attribute));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(minValueX, 'number', attribute, false));
                     removeContextMenu(ctx);
                 }}
             >
-                Min: ${valueFormater.fromSource(minValueX, 'number', attribute)}
+                Min: ${valueFormater.fromSource(minValueX, 'number', attribute, false)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormater.fromSource(avgValueX, 'number', attribute));
+                    await navigator.clipboard.writeText(valueFormater.fromSource(avgValueX, 'number', attribute, false));
                     removeContextMenu(ctx);
                 }}
             >
-                Avg: ${valueFormater.fromSource(avgValueX, 'number', attribute) || 0}
+                Avg: ${valueFormater.fromSource(avgValueX, 'number', attribute, false) || 0}
             </div>`;
     };
 

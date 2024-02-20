@@ -84,7 +84,7 @@ export function renderHeaderFilter(
                     cell as any
                 );
             } else {
-                currentValue = valueFormater.fromSource(currentValue, cellConfig?.type, cellConfig?.attribute);
+                currentValue = valueFormater.fromSource(currentValue, cellConfig?.type, cellConfig?.attribute, true);
 
                 let lastFilter = currentValue || '';
                 let skipFocus = false;
@@ -116,9 +116,9 @@ export function renderHeaderFilter(
                                         ctx,
                                         e,
                                         cell,
-                                        valueFormater.toFilter(currentValue, 'date', attribute),
+                                        valueFormater.toFilter(currentValue, 'date', attribute, true),
                                         (value: Date | null) => {
-                                            const filterValue = valueFormater.fromSource(value, 'date', attribute);
+                                            const filterValue = valueFormater.fromSource(value, 'date', attribute, true);
                                             if (lastFilter !== filterValue) {
                                                 lastFilter = filterValue;
                                                 filterCallback(ctx, filterValue as any, cellConfig);

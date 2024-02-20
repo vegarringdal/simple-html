@@ -76,9 +76,9 @@ export function renderRowCell(
         }
 
         if (cell.$focused && !cellReadOnly && !config.readonly) {
-            value = valueFormater.fromSource(value, cellConfigType, cellConfig.attribute);
+            value = valueFormater.fromSource(value, cellConfigType, cellConfig.attribute, false);
         } else {
-            value = valueFormater.fromSourceDisplay(value, cellConfigType, cellConfig.attribute);
+            value = valueFormater.fromSourceDisplay(value, cellConfigType, cellConfig.attribute, false);
         }
 
         if (value) {
@@ -129,9 +129,15 @@ export function renderRowCell(
                                     entity[attribute] = valueFormater.toSource(
                                         e.target.checked ? false : true,
                                         cellConfigType,
-                                        attribute
+                                        attribute,
+                                        false
                                     );
-                                    e.target.checked = valueFormater.fromSource(entity[attribute], cellConfigType, attribute);
+                                    e.target.checked = valueFormater.fromSource(
+                                        entity[attribute],
+                                        cellConfigType,
+                                        attribute,
+                                        false
+                                    );
                                 }
                             }
                         }}
@@ -169,7 +175,7 @@ export function renderRowCell(
                                             ctx,
                                             e,
                                             cell,
-                                            valueFormater.toSource(entity[attribute], cellConfigType, attribute),
+                                            valueFormater.toSource(entity[attribute], cellConfigType, attribute, false),
                                             (value: Date | null) => {
                                                 rowData[attribute] = value;
                                                 ctx.gridInterface.triggerScrollEvent();
@@ -343,22 +349,22 @@ export function renderRowCell(
                         }}
                         @input=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {
-                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfigType, attribute);
+                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfigType, attribute, false);
                                 return;
                             }
 
                             if (!config.readonly && !cellReadOnly) {
-                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfigType, attribute);
+                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfigType, attribute, false);
                             }
                         }}
                         @change=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {
-                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfigType, attribute);
+                                e.target.value = valueFormater.fromSource(entity[attribute], cellConfigType, attribute, false);
                                 return;
                             }
 
                             if (!config.readonly && !cellReadOnly) {
-                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfigType, attribute);
+                                entity[attribute] = valueFormater.toSource(e.target.value, cellConfigType, attribute, false);
                             }
                         }}
                     />

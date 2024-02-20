@@ -148,12 +148,12 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
         const type = ctx.gridInterface.__getGridConfig().__attributes[arg.attribute]?.type || 'text';
         const attribute = arg.attribute;
         const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
-        const value = valueFormater.fromSource(arg.value, type, attribute);
+        const value = valueFormater.fromSource(arg.value, type, attribute, true);
 
         let filterElement = html`<input
             .value=${value || ''}
-            @input=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute))}
-            @change=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute))}
+            @input=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute, true))}
+            @change=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute, true))}
             @click=${(e: any) => {
                 if (type === 'date') {
                     setTimeout(() => {
@@ -161,7 +161,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             ctx,
                             e,
                             e.target,
-                            valueFormater.toFilter(e.target.value, 'date', attribute),
+                            valueFormater.toFilter(e.target.value, 'date', attribute, true),
 
                             (value: Date | null) => {
                                 arg.value = value;

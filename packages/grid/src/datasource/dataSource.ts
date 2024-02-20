@@ -784,7 +784,7 @@ export class Datasource<T = any> {
         const valueFormater = this.getValueFormater();
 
         function convertValue(type: any, value: string | Date | number, attribute: string) {
-            return valueFormater.fromSource(value, type, attribute);
+            return valueFormater.fromSource(value, type, attribute, true);
         }
 
         function label(attribute: string) {
