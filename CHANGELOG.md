@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.93](https://github.com/simple-html/simple-html/compare/v5.0.0-next.92...v5.0.0-next.93) (2024-02-20)
+
+
+### Bug Fixes
+
+* better value formater control ([c8a696d](https://github.com/simple-html/simple-html/commits/c8a696d61ac8a6ac4941e42e46d4f750ad25a668))
+
 ## [5.0.0-next.92](https://github.com/simple-html/simple-html/compare/v5.0.0-next.91...v5.0.0-next.92) (2024-01-15)
 
 
