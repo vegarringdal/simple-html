@@ -32,8 +32,8 @@ export class NumberFormaterDot {
     static toSource(value: any): number | null | undefined {
         let returnValue: any = value;
 
-        if (returnValue === null || returnValue === 'undefined') {
-            returnValue;
+        if (returnValue === null || returnValue === 'undefined' || returnValue === undefined) {
+            return null;
         }
 
         if (typeof returnValue === 'number') {
