@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.94](https://github.com/simple-html/simple-html/compare/v5.0.0-next.93...v5.0.0-next.94) (2024-08-06)
+
+
+### Bug Fixes
+
+* fix filter, was not able to set equal to number input ([00e0666](https://github.com/simple-html/simple-html/commits/00e0666a0be64cd946a1e55f58950345c4916631))
+
 ## [5.0.0-next.93](https://github.com/simple-html/simple-html/compare/v5.0.0-next.92...v5.0.0-next.93) (2024-02-20)
 
 
