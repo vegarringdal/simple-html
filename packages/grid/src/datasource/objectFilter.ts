@@ -150,23 +150,28 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
 
+            function updateRegex(input: string) {
+                return input.replace(/[.^$+?()[\]{}\\|]/g, '\\$&').replace(/\*/g, '.*').replace(/\%/g, '.*');
+              
+            }
+
             // I need to check for wildcards, old method did not support wildcard in the middle
             switch (filterOperator) {
                 case 'BEGIN_WITH':
                     newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(`^${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`, 'gim');
+                    filterValue = new RegExp(`^${updateRegex(filterValue as string)}.*`, 'gim');
                     break;
                 case 'CONTAINS':
                     newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(`.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}.*`, 'gim');
+                    filterValue = new RegExp(`.*${updateRegex(filterValue as string)}.*`, 'gim');
                     break;
                 case 'END_WITH':
                     newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(`.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}$`, 'gim');
+                    filterValue = new RegExp(`.*${updateRegex(filterValue as string)}$`, 'gim');
                     break;
                 case 'DOES_NOT_CONTAIN':
                     newFilterOperator = 'REGEX-NOT';
-                    filterValue = new RegExp(`.*${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}`, 'gim');
+                    filterValue = new RegExp(`.*${updateRegex(filterValue as string)}`, 'gim');
                     break;
                 case 'NOT_EQUAL_TO':
                     newFilterOperator = 'REGEX-NOT';
@@ -178,10 +183,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     if (filterValue[filterValue.length] !== '*' || filterValue[filterValue.length] !== '%') {
                         end = '$';
                     }
-                    filterValue = new RegExp(
-                        `${start}${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}${end}`,
-                        'gim'
-                    );
+                    filterValue = new RegExp(`${start}${updateRegex(filterValue as string)}${end}`, 'gim');
                     break;
                 default:
                     if (filterValue.split('*').length > 1 || filterValue.split('%').length > 1) {
@@ -194,10 +196,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                         if (filterValue[filterValue.length] !== '*' || filterValue[filterValue.length] !== '%') {
                             end = '$';
                         }
-                        filterValue = new RegExp(
-                            `${start}${(filterValue as string).replace(/\*/g, '.*').replace(/\%/g, '.*')}${end}`,
-                            'gim'
-                        );
+                        filterValue = new RegExp(`${start}${updateRegex(filterValue as string)}${end}`, 'gim');
                     }
             }
 
