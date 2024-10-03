@@ -1,5 +1,7 @@
 # @simple-html/grid
 
+Package: `npm i @simple-html/grid -D`
+
 Only lit-html as dependency
 
 > V.5.0.0 will soon be release, currently on next while I use it in a application to see missing features/stuff I need use the application
