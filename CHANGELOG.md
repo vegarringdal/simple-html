@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.96](https://github.com/simple-html/simple-html/compare/v5.0.0-next.95...v5.0.0-next.96) (2024-10-26)
+
+
+### Bug Fixes
+
+* get changes returned new with changes as modified record ([fb8aacb](https://github.com/simple-html/simple-html/commits/fb8aacbb75e2758f92124fa293dd539d9bc2dea4))
+
 ## [5.0.0-next.95](https://github.com/simple-html/simple-html/compare/v5.0.0-next.94...v5.0.0-next.95) (2024-09-12)
 
 ## [5.0.0-next.94](https://github.com/simple-html/simple-html/compare/v5.0.0-next.93...v5.0.0-next.94) (2024-08-06)
