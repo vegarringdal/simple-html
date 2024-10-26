@@ -151,8 +151,10 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             newFilterOperator = filterOperator;
 
             function updateRegex(input: string) {
-                return input.replace(/[.^$+?()[\]{}\\|]/g, '\\$&').replace(/\*/g, '.*').replace(/\%/g, '.*');
-              
+                return input
+                    .replace(/[.^$+?()[\]{}\\|]/g, '\\$&')
+                    .replace(/\*/g, '.*')
+                    .replace(/\%/g, '.*');
             }
 
             // I need to check for wildcards, old method did not support wildcard in the middle
