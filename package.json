@@ -7,7 +7,6 @@
         "build:demo": "ts-node config_demo_build",
         "build:all": "node ./scripts/build",
         "clean:dist": "node ./scripts/clean",
-        "sync": "node ./scripts/syncPackages",
         "publish:all": "npm publish --workspace packages/grid",
         "publish:test": "npm publish --workspace packages/grid --dry-run",
         "typecheck": "node typecheck",
