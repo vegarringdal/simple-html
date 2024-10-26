@@ -103,6 +103,7 @@ export class DataContainer {
         this.__collection.forEach((row) => {
             if (row.__controller.__isNew) {
                 newEntities.push(row);
+                return;
             }
             if (row.__controller.__edited) {
                 const data: Record<string, any> = {};
