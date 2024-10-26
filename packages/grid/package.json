@@ -14,7 +14,7 @@
     "homepage": "https://github.com/vegarringdal/simple-html",
     "repository": {
         "type": "git",
-        "url": "https://github.com/vegarringdal/simple-html"
+        "url": "git+https://github.com/vegarringdal/simple-html.git"
     },
     "bugs": {
         "url": "https://github.com/vegarringdal/simple-html/issues"
