@@ -25,7 +25,7 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
 
     for (let i = 0; i < length; i++) {
         // maybe I should let ctx be aoption ? the 200 size..
-        if (data[i] && data[i][attribute] !== undefined && dataFilterSet.size < 50) {
+        if (data[i] && data[i][attribute] && dataFilterSet.size < 50) {
             if (typeof data[i][attribute] === 'string') {
                 if (search) {
                     if (data[i][attribute].toLocaleUpperCase().indexOf(search.toLocaleUpperCase()) !== -1) {
