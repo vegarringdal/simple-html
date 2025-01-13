@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.97](https://github.com/simple-html/simple-html/compare/v5.0.0-next.96...v5.0.0-next.97) (2025-01-13)
+
+
+### Bug Fixes
+
+* dropdown filter to show null/blank as option ([800b17e](https://github.com/simple-html/simple-html/commits/800b17e33bde4c601954f643a67663fb6507a8a4))
+
 ## [5.0.0-next.96](https://github.com/simple-html/simple-html/compare/v5.0.0-next.95...v5.0.0-next.96) (2024-10-26)
 
 
