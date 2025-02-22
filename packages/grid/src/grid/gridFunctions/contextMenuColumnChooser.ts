@@ -25,6 +25,8 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
         document.body.removeChild(ctx.columnChooserMenu);
     }
 
+    let controller = new AbortController();
+   
 
     const reRender = () => {
         const rect = cell.getBoundingClientRect();
@@ -66,6 +68,8 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                     @input=${(e: any) => {
                         console.log(e.target.value);
                         currentColumnSearchvalue = e.target.value;
+                        controller.abort()
+                        controller = new AbortController();
                         reRender();
                     }}
                 />
@@ -91,7 +95,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
         const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
 
         for (let i = 0; i < cells.length; i++) {
-            dragEvent(ctx, cells[i] as HTMLCellElement, false);
+            dragEvent(ctx, cells[i] as HTMLCellElement, false,  controller.signal);
         }
         
     };

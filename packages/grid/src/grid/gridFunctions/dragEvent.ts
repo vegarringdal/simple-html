@@ -7,7 +7,7 @@ import { HTMLCellElement } from './HTMLCellElement';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { getTextWidth } from './getTextWidth';
 
-export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) {
+export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, abortSignal: AbortSignal| null) {
     cell.addEventListener('mousedown', (e) => {
         if (e.button !== 0) {
             return;
@@ -357,7 +357,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true) 
             }
         };
 
-        document.addEventListener('mousemove', mousemove);
-        document.addEventListener('mouseup', mouseup);
-    });
+        document.addEventListener('mousemove', mousemove, {signal: abortSignal});
+        document.addEventListener('mouseup', mouseup, {signal: abortSignal});
+    }, {signal: abortSignal});
 }
