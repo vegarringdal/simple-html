@@ -26,23 +26,22 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
     }
 
     let controller = new AbortController();
-   
+
+    const rect = cell.getBoundingClientRect();
+
+    contextMenu.style.position = 'absolute';
+    contextMenu.style.top = asPx(rect.bottom + 50);
+    contextMenu.style.left = asPx(event.clientX - 65);
+    contextMenu.style.minWidth = asPx(130);
+
+    if (event.clientX + 70 > window.innerWidth) {
+        contextMenu.style.left = asPx(window.innerWidth - 150);
+    }
+    if (event.clientX - 65 < 0) {
+        contextMenu.style.left = asPx(5);
+    }
 
     const reRender = () => {
-        const rect = cell.getBoundingClientRect();
-
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.bottom + 50);
-        contextMenu.style.left = asPx(event.clientX - 65);
-        contextMenu.style.minWidth = asPx(130);
-
-        if (event.clientX + 70 > window.innerWidth) {
-            contextMenu.style.left = asPx(window.innerWidth - 150);
-        }
-        if (event.clientX - 65 < 0) {
-            contextMenu.style.left = asPx(5);
-        }
-
         const attributes = Object.keys(ctx.gridInterface.__getGridConfig().__attributes) || [];
 
         const list = () => {
@@ -64,11 +63,11 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                 <input
                     class="simple-html-grid-menu-item-input"
                     .value=${live(currentColumnSearchvalue)}
-                    placeholder='search'
+                    placeholder="search"
                     @input=${(e: any) => {
                         console.log(e.target.value);
                         currentColumnSearchvalue = e.target.value;
-                        controller.abort()
+                        controller.abort();
                         controller = new AbortController();
                         reRender();
                     }}
@@ -95,9 +94,8 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
         const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
 
         for (let i = 0; i < cells.length; i++) {
-            dragEvent(ctx, cells[i] as HTMLCellElement, false,  controller.signal);
+            dragEvent(ctx, cells[i] as HTMLCellElement, false, controller.signal);
         }
-        
     };
     ctx.columnChooserMenu = contextMenu;
     document.body.appendChild(contextMenu);
