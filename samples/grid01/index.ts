@@ -40,7 +40,7 @@ datasource.setData(
 const oldFormater = datasource.getValueFormater();
 const oldFormaterFromSource = oldFormater.fromSource;
 oldFormater.fromSource = (value: any, type: any, attribute: string, isFilter) => {
-    if (attribute.startsWith('country') && !isFilter) {
+    if (attribute?.startsWith('country') && !isFilter) {
         return 'Open D';
     } else {
         return oldFormaterFromSource.apply(oldFormater, [value, type, attribute]);
