@@ -65,7 +65,6 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                     .value=${live(currentColumnSearchvalue)}
                     placeholder="search"
                     @input=${(e: any) => {
-                        console.log(e.target.value);
                         currentColumnSearchvalue = e.target.value;
                         controller.abort();
                         controller = new AbortController();

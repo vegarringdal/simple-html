@@ -44,7 +44,6 @@ export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLEl
                     .value=${live(currentColumnSearchvalue)}
                     placeholder="search"
                     @input=${(e: any) => {
-                        console.log(e.target.value);
                         currentColumnSearchvalue = e.target.value;
                         reRender();
                     }}
