@@ -8,6 +8,7 @@ import { getTextWidth } from './getTextWidth';
 export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
     const attributes = ctx.gridInterface.__getGridConfig().__attributes;
     const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
+    const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
 
     let widths: number[] = attributeKeys.map((key) => {
         const attribute = attributes[key];
@@ -16,11 +17,28 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
     });
 
     const text: string[] = attributeKeys.map((key) => {
-        const attribute = attributes[key];
-        if (attribute.type === 'date' && attribute?.label?.length < 5) {
+        const currAtt = attributes[key];
+        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[currAtt.attribute];
+        const placeholderFormat = valueFormater.placeholder(cellConfig.type, currAtt.attribute, true);
+
+        if (currAtt.type === 'date' && currAtt?.placeHolderFilter) {
+            if (currAtt?.label?.length < currAtt.placeHolderFilter.length) {
+                return currAtt?.label;
+            }
+            return currAtt?.placeHolderFilter;
+        }
+
+        if (currAtt.type === 'date' && !currAtt?.placeHolderFilter && placeholderFormat) {
+            if (currAtt?.label?.length < placeholderFormat.length) {
+                return currAtt?.label;
+            }
+            return placeholderFormat;
+        }
+
+        if (currAtt.type === 'date' && currAtt?.label?.length < 5) {
             return '19.19.2000 A';
         }
-        return (attribute?.label || attribute.attribute) + '< > < <';
+        return (currAtt?.label || currAtt.attribute) + '< > < <';
     });
 
     const data = ctx.gridInterface.getDatasource().getAllData();
@@ -43,7 +61,7 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
         });
     });
 
-    widths = widths.map((e: number) => (e ? e * 8 : 100));
+    widths = widths.map((e: number) => (e ? e * 2 : 100));
 
     const left = ctx.gridInterface.__getGridConfig().columnsPinnedLeft || [];
     const right = ctx.gridInterface.__getGridConfig().columnsPinnedRight || [];
@@ -59,7 +77,7 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
                     if (attributeKeys.indexOf(rowAttribute) !== -1) {
                         const xx = widths[attributeKeys.indexOf(rowAttribute)];
                         if (xx > x) {
-                            x = getTextWidth(ctx, text[attributeKeys.indexOf(rowAttribute)]) + 20;
+                            x = getTextWidth(ctx, text[attributeKeys.indexOf(rowAttribute)]) + 5;
                         }
                     }
                 }

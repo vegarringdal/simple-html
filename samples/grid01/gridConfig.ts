@@ -6,7 +6,7 @@ import { GridConfig } from '@simple-html/grid';
  */
 export const gridConfig: GridConfig = {
     panelHeight: 25,
-  /*   cellHeaderLabelHeight: 40, */
+    /*   cellHeaderLabelHeight: 40, */
     /*  selectSizeHeight: 0, */
     hideLabels: false,
     hideFilter: false,
@@ -173,13 +173,12 @@ export const gridConfig: GridConfig = {
         },
         {
             attribute: 'date1',
-            type: 'date',
-            placeHolderFilter: 'YYYY-MM-DD'
+            type: 'date'
         },
         {
             attribute: 'date2',
             type: 'date',
-            placeHolderFilter: 'YYYY-MM-DD'
+            placeHolderFilter: 'YYYY-MM-DD' // if you want to force
         }
     ],
     sorting: [
