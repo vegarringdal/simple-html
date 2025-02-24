@@ -152,6 +152,23 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
 
         let filterElement = html`<input
             .value=${value || ''}
+            @keydown=${(e: any) => {
+                if (e.key === 'Enter' && type === 'date') {
+                    setTimeout(() => {
+                        contextmenuDate(
+                            ctx,
+                            e,
+                            e.target,
+                            valueFormater.toFilter(e.target.value, 'date', attribute, true),
+
+                            (value: Date | null) => {
+                                arg.value = value;
+                                renderFilterEditor(ctx, structuredClone(filterArg));
+                            }
+                        );
+                    }, 2);
+                }
+            }}
             @input=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute, true))}
             @change=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute, true))}
             @click=${(e: any) => {

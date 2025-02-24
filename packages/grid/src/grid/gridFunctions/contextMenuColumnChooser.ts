@@ -6,6 +6,10 @@ import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
 import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
+import { live } from 'lit-html/directives/live.js';
+
+// might want to add this as part of context, so I can share it?
+let currentColumnSearchvalue = '';
 
 /**
  * ctx is part of filter editor
@@ -15,12 +19,14 @@ import { removeContextMenu } from './removeContextMenu';
 export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTMLElement) {
     removeContextMenu(ctx);
 
+    const contextMenu = creatElement('div', 'simple-html-grid');
+    contextMenu.classList.add('simple-html-grid-reset');
     if (ctx.columnChooserMenu && ctx.columnChooserMenu.parentElement) {
         document.body.removeChild(ctx.columnChooserMenu);
     }
 
-    const contextMenu = creatElement('div', 'simple-html-grid');
-    contextMenu.classList.add('simple-html-grid-reset');
+    let controller = new AbortController();
+
     const rect = cell.getBoundingClientRect();
 
     contextMenu.style.position = 'absolute';
@@ -35,38 +41,63 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
         contextMenu.style.left = asPx(5);
     }
 
-    const attributes = Object.keys(ctx.gridInterface.__getGridConfig().__attributes) || [];
+    const reRender = () => {
+        const attributes = Object.keys(ctx.gridInterface.__getGridConfig().__attributes) || [];
 
-    render(
-        html`<div class="simple-html-grid-menu ">
-            <div class="simple-html-grid-menu-section">All Fields:</div>
-            <hr class="hr-solid" />
-            <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                ${attributes.sort().map((attribute) => {
-                    const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
-                    return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>
-                        ${label || prettyPrintString(attribute)}
-                    </div>`;
-                })}
-            </div>
-            <div
-                class="simple-html-label-button-menu-bottom"
-                @click=${() => {
-                    document.body.removeChild(contextMenu);
-                }}
-            >
-                Close
-            </div>
-        </div>`,
-        contextMenu
-    );
+        const list = () => {
+            return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
+                ${attributes
+                    .filter((e) => e.toLowerCase().includes(currentColumnSearchvalue.toLowerCase()))
+                    .sort()
+                    .map((attribute) => {
+                        const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
+                        return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>
+                            ${label || prettyPrintString(attribute)}
+                        </div>`;
+                    })}
+            </div>`;
+        };
 
-    const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
+        const searchInput = () => {
+            return html`
+                <input
+                    class="simple-html-grid-menu-item-input"
+                    .value=${live(currentColumnSearchvalue)}
+                    placeholder="search"
+                    @input=${(e: any) => {
+                        currentColumnSearchvalue = e.target.value;
+                        controller.abort();
+                        controller = new AbortController();
+                        reRender();
+                    }}
+                />
+            `;
+        };
 
-    for (let i = 0; i < cells.length; i++) {
-        dragEvent(ctx, cells[i] as HTMLCellElement, false);
-    }
+        render(
+            html`<div class="simple-html-grid-menu ">
+                <div class="simple-html-grid-menu-section">All Fields:</div>
+                <hr class="hr-solid" />
+                ${searchInput()} ${list()}
+                <div
+                    class="simple-html-label-button-menu-bottom"
+                    @click=${() => {
+                        document.body.removeChild(contextMenu);
+                    }}
+                >
+                    Close
+                </div>
+            </div>`,
+            contextMenu
+        );
+        const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
 
-    document.body.appendChild(contextMenu);
+        for (let i = 0; i < cells.length; i++) {
+            dragEvent(ctx, cells[i] as HTMLCellElement, false, controller.signal);
+        }
+    };
     ctx.columnChooserMenu = contextMenu;
+    document.body.appendChild(contextMenu);
+
+    reRender();
 }

@@ -23,8 +23,16 @@ export function renderHeaderFilter(
     if (attribute) {
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
 
-        const placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
+        let placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
         const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
+
+        // if user have not set placeholder, then use placeholde in formater if any
+        if (!cellConfig.placeHolderFilter) {
+            const placeholderFormat = valueFormater.placeholder(cellConfig.type, attribute, true);
+            if (placeholderFormat) {
+                placeHolderFilter = placeholderFormat;
+            }
+        }
 
         let currentValue = cellConfig.currentFilterValue || ('' as any);
 
