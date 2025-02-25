@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.98](https://github.com/simple-html/simple-html/compare/v5.0.0-next.97...v5.0.0-next.98) (2025-02-25)
+
+
+### Features
+
+* add search in column chooser, improve datepicker uage in filter editor and column resize improvement on dates placeholder ([#59](https://vegarringdal//null/issues/59)) ([6677d55](https://github.com/simple-html/simple-html/commits/6677d55287ad0ed4051e945581492e4f43ae5042))
+
 ## [5.0.0-next.97](https://github.com/simple-html/simple-html/compare/v5.0.0-next.96...v5.0.0-next.97) (2025-01-13)
 
 
