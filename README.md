@@ -227,7 +227,7 @@ Will make github action
 * `npm run build:all`
 * `npm run release`
 * `git push --follow-tags origin master` -> master depends on branch..
-* `npm run publish:all`
+* `npm run publish:all --tag @simple-html/grid@5.0.0-next.98` -> set correct version
 
 
 # Update demo
