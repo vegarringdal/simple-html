@@ -14,7 +14,6 @@ export const getNextKey = function () {
  */
 export class DataContainer {
     private __collection: Entity[] = [];
-    private __markedForDeletion: Entity[] = [];
     private __keyAttribute = '';
     private EntityHandler = EntityHandler;
     /**
@@ -66,16 +65,20 @@ export class DataContainer {
      * @returns
      */
     public getMarkedForDeletion() {
-        return this.__markedForDeletion;
+        return this.__collection.filter((e) => e.__controller.__isDeleted);
     }
 
     /**
-     * resets data, all edits are resets and marked for deletetion if returned
+     * resets data, all edits are resets/tags are reset
+     * new entities are removed
      */
     public resetData() {
         const newEntities: Entity[] = [];
-        this.setData(this.__markedForDeletion, true);
+
         this.__collection.forEach((row) => {
+            if (row.__controller.__isDeleted) {
+                row.__controller.__isDeleted = false;
+            }
             if (row.__controller.__isNew) {
                 newEntities.push(row);
             }
@@ -88,8 +91,6 @@ export class DataContainer {
             }
         });
         this.removeData(newEntities);
-
-        this.__markedForDeletion = [];
     }
 
     /**
@@ -98,9 +99,13 @@ export class DataContainer {
      */
     public getChanges() {
         const newEntities: Entity[] = [];
-        const deletedEntities: Entity[] = this.__markedForDeletion.slice();
+        const deletedEntities: Entity[] = [];
         const modifiedEntities: Entity[] = [];
         this.__collection.forEach((row) => {
+            if (row.__controller.__isDeleted) {
+                deletedEntities.push(row);
+                return;
+            }
             if (row.__controller.__isNew) {
                 newEntities.push(row);
                 return;
@@ -129,25 +134,36 @@ export class DataContainer {
      */
     public markForDeletion(data: Entity | Entity[], all = false) {
         if (all) {
-            const removed = this.__collection.slice();
-            this.__collection = [];
-            this.__markedForDeletion = removed;
+            this.__collection.forEach((e) => {
+                if (e.__controller.__isNew) {
+                    const i = this.__collection.indexOf(e);
+                    this.__collection.splice(i, 1)[0];
+                } else {
+                    e.__controller.__isDeleted = true;
+                }
+            });
         }
 
         if (data) {
             if (Array.isArray(data)) {
-                const removed: Entity[] = [];
                 data.forEach((d) => {
                     const i = this.__collection.indexOf(d);
                     if (i !== -1) {
-                        removed.push(this.__collection.splice(i, 1)[0]);
+                        if (this.__collection[i]?.__controller.__isNew) {
+                            this.__collection.splice(i, 1)[0];
+                        } else {
+                            this.__collection[i].__controller.__isDeleted = true;
+                        }
                     }
                 });
-                this.__markedForDeletion = this.__markedForDeletion.concat(removed);
             } else {
                 const i = this.__collection.indexOf(data);
                 if (i !== -1) {
-                    this.__markedForDeletion.push(this.__collection.splice(i, 1)[0]);
+                    if (this.__collection[i]?.__controller.__isNew) {
+                        this.__collection.splice(i, 1)[0];
+                    } else {
+                        this.__collection[i].__controller.__isDeleted = true;
+                    }
                 }
             }
         }
@@ -157,7 +173,12 @@ export class DataContainer {
      *
      */
     public clearMarkedForDeletion() {
-        this.__markedForDeletion = [];
+        this.__collection.forEach((e) => {
+            if (e.__controller.__isDeleted) {
+                const i = this.__collection.indexOf(e);
+                this.__collection.splice(i, 1)[0];
+            }
+        });
     }
 
     /**
@@ -203,7 +224,6 @@ export class DataContainer {
      */
     public setData(data: any[], add = false, tagAsNew = false): Entity[] | void {
         if (!add) {
-            this.__markedForDeletion = [];
             this.__collection = [];
         }
 

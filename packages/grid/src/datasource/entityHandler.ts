@@ -12,7 +12,8 @@ export class EntityHandler {
     __currentValues?: Record<string, any> = {};
     __newprops?: Record<string, any> = {};
     __isNew? = false;
-    __edited? = false;
+    __isDeleted? = false;
+    __edited? = false; // change to isModified?
     __controller?: EntityHandler;
     __KEY?: string | number;
     __KEYSTRING?: string | number;
@@ -36,6 +37,7 @@ export class EntityHandler {
         if (
             [
                 '__KEY',
+                '__rowState',
                 '__group',
                 '__groupID',
                 '__groupName',
@@ -49,9 +51,22 @@ export class EntityHandler {
                 if (this.__KEYSTRING) {
                     return target[this.__KEYSTRING];
                 }
+            } else if (prop === '__rowState') {
+                if (this.__isDeleted) {
+                    return 'D';
+                }
+                if (this.__isNew) {
+                    return 'N';
+                }
+
+                if (this.__edited) {
+                    return 'M';
+                }
             }
+
             return this[prop];
         }
+
         return target[prop];
     }
 
@@ -63,6 +78,7 @@ export class EntityHandler {
             if (
                 [
                     '__KEY',
+                    '__rowState',
                     '__group',
                     '__groupID',
                     '__groupName',
@@ -78,6 +94,8 @@ export class EntityHandler {
                     } else {
                         this[prop] = value;
                     }
+                } else if (prop === '__rowState') {
+                    // nothing
                 } else {
                     this[prop] = value;
                 }
