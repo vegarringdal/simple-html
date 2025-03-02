@@ -35,7 +35,6 @@ export const gridConfig: GridConfig = {
             // you almost need to include this now
             // N = new, D = deleted, M=modified
             rows: ['__rowState'], 
-            
             width: 100
         },
         {
@@ -115,7 +114,8 @@ export const gridConfig: GridConfig = {
     attributes: [
         {
             attribute:'__rowState', // N = new, D = deleted, M=modified
-            label: "RS"
+            label: "RS",
+            readonly: true
         },
         {
             attribute: 'isActive',

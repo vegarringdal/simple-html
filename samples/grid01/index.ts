@@ -220,6 +220,12 @@ createButton('get changes (ses console)', () => {
     console.log(datasource.getChanges());
 });
 
+createButton('remove marked for deleted (no undo)', () => {
+
+    datasource.getDataContainer().clearMarkedForDeletion();
+    datasource.reloadDatasource();
+});
+
 createButton('use init config', () => {
     gridInterface.loadConfig(gridConfig);
 });

@@ -772,7 +772,10 @@ export class Datasource<T = any> {
 
     public reloadDatasource() {
         this.__collectionFiltered = this.getAllData();
-        this.__internalUpdate(true);
+        const eventTriggered = this.__internalUpdate(true);
+        if (!eventTriggered) {
+            this.__callSubscribers('collection-filtered', { info: 'filter' });
+        }
     }
 
     public getFilterString(ctx?: Grid) {

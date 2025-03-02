@@ -173,9 +173,15 @@ export class DataContainer {
      *
      */
     public clearMarkedForDeletion() {
+        const tempArr: Entity[] = [];
         this.__collection.forEach((e) => {
             if (e.__controller.__isDeleted) {
-                const i = this.__collection.indexOf(e);
+                tempArr.push(e);
+            }
+        });
+        tempArr.forEach((e) => {
+            const i = this.__collection.indexOf(e);
+            if (i !== -1) {
                 this.__collection.splice(i, 1)[0];
             }
         });
