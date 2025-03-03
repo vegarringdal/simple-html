@@ -69,6 +69,41 @@ export class DataContainer {
     }
 
     /**
+     * for selected rows only
+     * resets data, all edits are resets/tags are reset
+     * new entities are removed
+     */
+    public resetDataSelection(data: Entity[]) {
+        const newEntities: Entity[] = [];
+
+        if (data) {
+            if (Array.isArray(data)) {
+                data.forEach((d) => {
+                    const i = this.__collection.indexOf(d);
+                    if (i !== -1 && this.__collection[i]) {
+                        const row = this.__collection[i];
+                        if (row.__controller.__isDeleted) {
+                            row.__controller.__isDeleted = false;
+                        }
+                        if (row.__controller.__isNew) {
+                            newEntities.push(row);
+                        }
+                        if (row.__controller.__edited) {
+                            for (const k in row.__controller.__originalValues) {
+                                row[k] = row.__controller.__originalValues[k];
+                            }
+                            row.__controller.__editedProps = {};
+                            row.__controller.__edited = false;
+                        }
+                    }
+                });
+            }
+        }
+
+        this.removeData(newEntities);
+    }
+
+    /**
      * resets data, all edits are resets/tags are reset
      * new entities are removed
      */

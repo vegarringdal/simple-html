@@ -154,6 +154,17 @@ export class Datasource<T = any> {
     }
 
     /**
+     * resets all edited data and brings back marked for deletion
+     */
+    public resetDataSelectionOnly() {
+        this.__dataContainer.resetDataSelection(this.getSelectedRows());
+        const eventTriggered = this.__internalUpdate(true);
+        if (!eventTriggered) {
+            this.__callSubscribers('collection-filtered', { info: 'resetData' });
+        }
+    }
+
+    /**
      * returns copy of all modified, new or marked for deletion
      * changes to these do not edit anything in grid
      */
