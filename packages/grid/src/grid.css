@@ -761,19 +761,19 @@ input {
 }
 
 .simple-html-selector-text.row-is-modified {
-    color: yellow;
+    color: blue;
     filter: opacity(1);
     font-weight: bolder;
 }
 
 .simple-html-selector-text.row-is-new {
-    color: rgb(154, 154, 238);
+    color: green;
     filter: opacity(1);
     font-weight: bolder;
 }
 
 .simple-html-selector-text.row-is-deleted {
-    color: rgb(226, 86, 86);
+    color: red;
     filter: opacity(1);
     font-weight: bolder;
 }
