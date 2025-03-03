@@ -77,7 +77,7 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
                     if (attributeKeys.indexOf(rowAttribute) !== -1) {
                         const xx = widths[attributeKeys.indexOf(rowAttribute)];
                         if (xx > x) {
-                            x = getTextWidth(ctx, text[attributeKeys.indexOf(rowAttribute)]) + 5;
+                            x = getTextWidth(ctx, text[attributeKeys.indexOf(rowAttribute)]) + 15;
                         }
                     }
                 }
