@@ -47,6 +47,22 @@ export function toggelDarkGrid() {
         border-top: 0px;
     }
 
+    
+
+     .simple-html-selector-text.row-is-modified {
+        color: #9595f1;
+    }
+
+     .simple-html-selector-text.row-is-new {
+        color: #5ff95f;
+    }
+
+    .simple-html-selector-text.row-is-deleted {
+        color: red;
+    }
+
+    
+
     .simple-html-grid .filter-dialog-bottom-row button{
         border: 1px solid #515458;
     }

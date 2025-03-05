@@ -32,6 +32,12 @@ export const gridConfig: GridConfig = {
     ],   */
     columnsCenter: [
         {
+            // you almost need to include this now
+            // N = new, D = deleted, M=modified
+            rows: ['__rowState'], 
+            width: 20
+        },
+        {
             rows: ['company', 'country'],
             width: 200
         },
@@ -106,6 +112,11 @@ export const gridConfig: GridConfig = {
         }
     ],
     attributes: [
+        {
+            attribute:'__rowState', // N = new, D = deleted, M=modified
+            label: "RS",
+            readonly: true
+        },
         {
             attribute: 'isActive',
             type: 'boolean'

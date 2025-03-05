@@ -47,8 +47,29 @@ export function renderRowSelector(
                 }
             }}
         >
-            <span role="cell" aria-label=${'row selector'} class="simple-html-selector-text">${row + 1}</span>
+            <div class="${isModified(rowData)}">
+                <span role="cell" aria-label=${'row selector'} class="simple-html-selector-text"
+                    >${row + 1}</span
+                >
+            </div>
         </div>`,
         cell as any
     );
+}
+
+// helper to add class so we can override color when row is modified
+function isModified(rowData: Entity) {
+    if (rowData.__controller.__isDeleted) {
+        return 'row-is-deleted';
+    }
+
+    if (rowData.__controller.__isNew) {
+        return 'row-is-new';
+    }
+
+    if (rowData.__controller.__edited) {
+        return 'row-is-modified';
+    }
+
+    return '';
 }

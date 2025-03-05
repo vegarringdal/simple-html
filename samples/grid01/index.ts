@@ -216,8 +216,18 @@ createButton('reset data/changes', () => {
     datasource.resetData();
 });
 
+createButton('reset data/changes -selection', () => {
+    datasource.resetDataSelectionOnly();
+});
+
 createButton('get changes (ses console)', () => {
     console.log(datasource.getChanges());
+});
+
+createButton('remove marked for deleted (no undo)', () => {
+
+    datasource.getDataContainer().clearMarkedForDeletion();
+    datasource.reloadDatasource();
 });
 
 createButton('use init config', () => {

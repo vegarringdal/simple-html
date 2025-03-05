@@ -204,8 +204,8 @@ export function rebuildHeaderColumns(ctx: Grid) {
                                 col.width = originalWidth + (event.clientX - clientX);
                             }
 
-                            if (col.width < 50) {
-                                col.width = 50;
+                            if (col.width < 25) {
+                                col.width = 25;
                             }
                             ctx.gridInterface.__parseConfig();
                             updateMainElementSizes(ctx);
