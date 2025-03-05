@@ -760,23 +760,6 @@ input {
     filter: opacity(0.5);
 }
 
-.simple-html-selector-text.row-is-modified {
-    color: blue;
-    filter: opacity(1);
-    font-weight: bolder;
-}
-
-.simple-html-selector-text.row-is-new {
-    color: green;
-    filter: opacity(1);
-    font-weight: bolder;
-}
-
-.simple-html-selector-text.row-is-deleted {
-    color: red;
-    filter: opacity(1);
-    font-weight: bolder;
-}
 
 .simple-html-grid-col-resize {
     position: absolute;
