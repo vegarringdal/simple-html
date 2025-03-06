@@ -219,6 +219,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     e.preventDefault();
                     e.stopPropagation();
                     contextMenuAttributes(ctx, e, e.target as any, (attribute) => {
+                        removeContextMenu(ctx);
                         arg.value = attribute;
                         renderFilterEditor(ctx, structuredClone(filterArg));
                     });
@@ -242,6 +243,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             e.preventDefault();
                             e.stopPropagation();
                             contextMenuAttributes(ctx, e, e.target as HTMLCellElement, (attribute) => {
+                                removeContextMenu(ctx);
                                 arg.attribute = attribute;
 
                                 const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
@@ -259,8 +261,9 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             e.preventDefault();
                             e.stopPropagation();
                             contextMenuOperator(ctx, e, e.target as HTMLCellElement, (operator) => {
+                                removeContextMenu(ctx);
                                 arg.operator = operator.replaceAll(' ', '_').toUpperCase() as any;
-
+                                
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             });
                         }}
