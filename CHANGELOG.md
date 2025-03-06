@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.100](https://github.com/simple-html/simple-html/compare/v5.0.0-next.99...v5.0.0-next.100) (2025-03-06)
+
+
+### Bug Fixes
+
+* remove context menu in filter editor after select ([f6a4dc8](https://github.com/simple-html/simple-html/commits/f6a4dc81b389dd3b072c288deec2ae5292a4802c))
+
 ## [5.0.0-next.99](https://github.com/simple-html/simple-html/compare/v5.0.0-next.98...v5.0.0-next.99) (2025-03-06)
 
 
