@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.101](https://github.com/simple-html/simple-html/compare/v5.0.0-next.100...v5.0.0-next.101) (2025-03-06)
+
+
+### Features
+
+* add before group in filter editor ([811ef7a](https://github.com/simple-html/simple-html/commits/811ef7a598322e99218c19370b04a89d8104dafa))
+
 ## [5.0.0-next.100](https://github.com/simple-html/simple-html/compare/v5.0.0-next.99...v5.0.0-next.100) (2025-03-06)
 
 
