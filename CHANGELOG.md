@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.99](https://github.com/simple-html/simple-html/compare/v5.0.0-next.98...v5.0.0-next.99) (2025-03-06)
+
+
+### Features
+
+* refactor row state, deleted will be better handled, and option for showing rowstate (N, D, M) ([#60](https://vegarringdal//null/issues/60)) ([b6059b4](https://github.com/simple-html/simple-html/commits/b6059b4fe4251b1a2740d39c8608efafdb5b9cb7))
+
 ## [5.0.0-next.98](https://github.com/simple-html/simple-html/compare/v5.0.0-next.97...v5.0.0-next.98) (2025-02-25)
 
 
