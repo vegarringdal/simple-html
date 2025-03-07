@@ -59,15 +59,15 @@ export function renderRowSelector(
 
 // helper to add class so we can override color when row is modified
 function isModified(rowData: Entity) {
-    if (rowData.__controller.__isDeleted) {
+    if (rowData?.__controller?.__isDeleted) {
         return 'row-is-deleted';
     }
 
-    if (rowData.__controller.__isNew) {
+    if (rowData?.__controller?.__isNew) {
         return 'row-is-new';
     }
 
-    if (rowData.__controller.__edited) {
+    if (rowData?.__controller?.__edited) {
         return 'row-is-modified';
     }
 
