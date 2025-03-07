@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.102](https://github.com/simple-html/simple-html/compare/v5.0.0-next.101...v5.0.0-next.102) (2025-03-07)
+
+
+### Bug Fixes
+
+* grouping bug ([3f54732](https://github.com/simple-html/simple-html/commits/3f5473218e8b91c7e991ae44d21d3b45ff1739ba))
+
 ## [5.0.0-next.101](https://github.com/simple-html/simple-html/compare/v5.0.0-next.100...v5.0.0-next.101) (2025-03-06)
 
 
