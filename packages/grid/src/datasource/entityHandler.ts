@@ -18,7 +18,9 @@ export class EntityHandler {
     __KEY?: string | number;
     __KEYSTRING?: string | number;
     __group?: boolean;
+    __rowState?: string;
     __groupID?: string;
+    __rowError?: string;
     __groupName?: string;
     __groupLvl?: number;
     __groupTotal?: number;
@@ -38,6 +40,7 @@ export class EntityHandler {
             [
                 '__KEY',
                 '__rowState',
+                '__rowError',
                 '__group',
                 '__groupID',
                 '__groupName',
@@ -79,6 +82,7 @@ export class EntityHandler {
                 [
                     '__KEY',
                     '__rowState',
+                    '__rowError',
                     '__group',
                     '__groupID',
                     '__groupName',

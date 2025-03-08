@@ -69,6 +69,17 @@ export class DataContainer {
     }
 
     /**
+     * set data on __rowError on entities where key matches
+     * @param errors key, errormsg
+     */
+    public setErrors(errors: Map<string, string>) {
+        this.__collection.forEach((e) => {
+            const err = errors.get(e.__KEY.toString());
+            e.__rowError = err || null;
+        });
+    }
+
+    /**
      * for selected rows only
      * resets data, all edits are resets/tags are reset
      * new entities are removed

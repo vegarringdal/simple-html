@@ -6,6 +6,8 @@ export interface Entity {
     __KEY?: string | number;
     __group?: boolean;
     __groupID?: string;
+    __rowState?: string;
+    __rowError?: string;
     __groupName?: string;
     __groupLvl?: number;
     __groupTotal?: number;
