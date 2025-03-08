@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.103](https://github.com/simple-html/simple-html/compare/v5.0.0-next.102...v5.0.0-next.103) (2025-03-08)
+
+
+### Features
+
+* option to display error ([a7e2939](https://github.com/simple-html/simple-html/commits/a7e293994ef9637d60c89005483819feb8737994))
+
 ## [5.0.0-next.102](https://github.com/simple-html/simple-html/compare/v5.0.0-next.101...v5.0.0-next.102) (2025-03-07)
 
 
