@@ -1,6 +1,6 @@
 {
     "name": "@simple-html/grid",
-    "version": "5.0.0-next.103",
+    "version": "5.0.0-next.104",
     "description": "Vanillajs Grid",
     "main": "dist/index.js",
     "module": "dist/index.js",

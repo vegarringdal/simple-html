@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.104](https://github.com/simple-html/simple-html/compare/v5.0.0-next.103...v5.0.0-next.104) (2025-06-03)
+
+
+### Bug Fixes
+
+* improve dropdown filter with more use info and max rows ([e9fcffc](https://github.com/simple-html/simple-html/commits/e9fcffc6b26a8e533ed0b2dd0c1de4a326ceb5c1))
+
 ## [5.0.0-next.103](https://github.com/simple-html/simple-html/compare/v5.0.0-next.102...v5.0.0-next.103) (2025-03-08)
 
 
