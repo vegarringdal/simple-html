@@ -760,7 +760,6 @@ input {
     filter: opacity(0.5);
 }
 
-
 .simple-html-grid-col-resize {
     position: absolute;
     bottom: 0;
@@ -983,6 +982,20 @@ input {
     width: 0; /*  yes... they made it to messy */
     margin-top: 1px;
     margin-bottom: 1px;
+}
+
+.simple-html-grid .simple-html-grid-menu .max-row-info {
+    padding: 2px;
+    margin: auto;
+    width: fit-content;
+    filter: opacity(0.75);
+}
+
+.simple-html-grid .simple-html-grid-menu .max-row-info-warning {
+    padding: 2px;
+    color: red;
+    margin: auto;
+    width: fit-content;
 }
 
 .simple-html-draggable-element {

@@ -1,6 +1,8 @@
 import { FilterArgument } from '../../datasource/filterArgument';
 import { Grid } from '../grid';
 
+export const DROPDOWN_FILTER_MAX_ROWS = 100;
+
 /**
  * helper for column excel similar filter
  * @param attribute
@@ -25,7 +27,7 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
 
     for (let i = 0; i < length; i++) {
         // maybe I should let ctx be aoption ? the 200 size..
-        if (data[i] && data[i][attribute] && dataFilterSet.size < 50) {
+        if (data[i] && data[i][attribute] && dataFilterSet.size < DROPDOWN_FILTER_MAX_ROWS) {
             if (typeof data[i][attribute] === 'string') {
                 if (search) {
                     if (data[i][attribute].toLocaleUpperCase().indexOf(search.toLocaleUpperCase()) !== -1) {

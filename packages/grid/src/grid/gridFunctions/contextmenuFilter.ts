@@ -4,7 +4,7 @@ import { FilterArgument } from '../../datasource/filterArgument';
 import { Entity } from '../../datasource/entity';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
-import { dropDownFilterData } from './dropDownFilterData';
+import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { Grid } from '../grid';
 import { HTMLCellElement } from './HTMLCellElement';
@@ -182,7 +182,12 @@ export function contextmenuFilter(
                 reRender();
             };
 
+            // if we have more then DROPDOWN_FILTER_MAX_ROWS we display warning
+            // since we only display first DROPDOWN_FILTER_MAX_ROWS row
             return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
+                ${getContext().data.dataFilterSetFull.size > DROPDOWN_FILTER_MAX_ROWS
+                    ? html`<div class="max-row-info-warning">Showing only first ${DROPDOWN_FILTER_MAX_ROWS}  !</div>`
+                    : html`<div class="max-row-info">${getContext().data.dataFilterSetFull.size} rows found</div>`}
                 <div style="padding:2px">
                     <input
                         style="padding:2px"
@@ -191,6 +196,7 @@ export function contextmenuFilter(
                         @click=${() => clickHandler()}
                     /><label style="padding:2px" @click=${() => clickHandler()}>Select All</label>
                 </div>
+
                 ${filterValues()}
             </div>`;
         };
@@ -214,7 +220,7 @@ export function contextmenuFilter(
                 @blur=${(e: any) => {
                     e.target.style.border = '1px solid transparent';
                 }}
-                placeholder="search"
+                placeholder="type to search"
                 .value=${getContext().searchInput}
                 @input=${(e: EventTarget) => clickHandler(e)}
             />`;
