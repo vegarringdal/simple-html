@@ -14,7 +14,10 @@ import { removeContextMenu } from './removeContextMenu';
 import { hideAllRows } from './hideAllRows';
 
 export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
-    removeContextMenu(ctx);
+
+    if (ctx.gridInterface.__getGridConfig().autoRemoveContextMenuOnScrollEvent) {
+        removeContextMenu(ctx);
+    }
 
     const lastScrollTop = ctx.lastScrollTop;
     const rowTops = ctx.gridInterface.__getScrollState().scrollTops;

@@ -8,7 +8,10 @@ import { getGroupingWidth } from './getGroupingWidth';
 import { removeContextMenu } from './removeContextMenu';
 
 export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
-    removeContextMenu(ctx);
+
+    if (ctx.gridInterface.__getGridConfig().autoRemoveContextMenuOnScrollEvent) {
+        removeContextMenu(ctx);
+    }
 
     const config = ctx.gridInterface.__getGridConfig();
 

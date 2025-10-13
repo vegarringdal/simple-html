@@ -23,6 +23,12 @@ export type GridConfig = {
     columnsPinnedRight?: Columns[];
 
     /**
+     * if its a small screen you might not want this enabled
+     */
+    autoRemoveContextMenuOnScrollEvent?: boolean;
+    
+
+    /**
      * datepicker
      * not all is passed on to intenal picker
      */

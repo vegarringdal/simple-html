@@ -72,6 +72,9 @@ export class GridInterface<T> {
         this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
+        if (this.initConfig.autoRemoveContextMenuOnScrollEvent === null || this.initConfig.autoRemoveContextMenuOnScrollEvent === undefined) {
+            this.initConfig.autoRemoveContextMenuOnScrollEvent = false;
+        }
         this.loadConfig(gridConfig, true);
         this.__dataSourceUpdated();
     }
