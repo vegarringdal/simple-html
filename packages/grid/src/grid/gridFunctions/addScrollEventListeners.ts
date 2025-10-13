@@ -102,6 +102,7 @@ export function addScrollEventListeners(ctx: Grid) {
             } else {
                 const el = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
                 ctx.focusElement.focus();
+                ctx.focusElement.blur();
                 const movement = el.scrollTop - (event as any).wheelDeltaY;
                 setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-scroller'), movement);
             }
@@ -128,6 +129,7 @@ export function addScrollEventListeners(ctx: Grid) {
         (event) => {
             const x = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle');
             ctx.focusElement.focus();
+            ctx.focusElement.blur();
 
             const currentY = event.touches[0].clientY;
             const deltaY = currentY - lastY;
