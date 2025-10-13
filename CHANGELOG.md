@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.105](https://github.com/simple-html/simple-html/compare/v5.0.0-next.104...v5.0.0-next.105) (2025-10-13)
+
+
+### Bug Fixes
+
+* add option for setting contextmenu auto removal off ([9e7f173](https://github.com/simple-html/simple-html/commits/9e7f1737f15ed25175ddd3fb746e7dab2e35cc60))
+* blur right after focus, so we dont trigger keyboard on pad ([6f72975](https://github.com/simple-html/simple-html/commits/6f72975ad851d329e81602bb61a6998b7de8a6d7))
+
 ## [5.0.0-next.104](https://github.com/simple-html/simple-html/compare/v5.0.0-next.103...v5.0.0-next.104) (2025-06-03)
 
 
