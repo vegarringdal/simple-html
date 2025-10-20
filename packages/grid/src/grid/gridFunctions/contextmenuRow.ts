@@ -124,7 +124,7 @@ export function contextmenuRow(
                 if (onlyCurrentEntity || overRideCurrentEntity) {
                     justData = justData;
                 } else {
-                    justData = justData + '\n';
+                    justData = justData + '\r\n';
                 }
 
                 tableInnerData = tableInnerData + '</tr>';
