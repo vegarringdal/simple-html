@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.106](https://github.com/simple-html/simple-html/compare/v5.0.0-next.105...v5.0.0-next.106) (2025-10-20)
+
+
+### Bug Fixes
+
+* add carrage return to copy options ([e1639b2](https://github.com/simple-html/simple-html/commits/e1639b2c5c83d26c0b91e1f885d337d3d289ef6a))
+
 ## [5.0.0-next.105](https://github.com/simple-html/simple-html/compare/v5.0.0-next.104...v5.0.0-next.105) (2025-10-13)
 
 
