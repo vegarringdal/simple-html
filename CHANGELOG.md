@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0-next.107](https://github.com/simple-html/simple-html/compare/v5.0.0-next.106...v5.0.0-next.107) (2025-10-21)
+
+
+### Bug Fixes
+
+* close context menu on label/filer actions ([77f2419](https://github.com/simple-html/simple-html/commits/77f2419111337dcfb0148a839de18d7a31bbe1c3))
+
 ## [5.0.0-next.106](https://github.com/simple-html/simple-html/compare/v5.0.0-next.105...v5.0.0-next.106) (2025-10-20)
 
 
