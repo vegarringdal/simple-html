@@ -46,42 +46,44 @@ export function contextmenuLabel(
         <div
             class="simple-html-grid-menu-item"
             @click=${() => {
-                let width = 100;
-                if (colType === 'middle-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
-                }
-                if (colType === 'right-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
-                }
+            let width = 100;
+            if (colType === 'middle-pinned') {
+                ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
+            }
+            if (colType === 'right-pinned') {
+                ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
+            }
 
-                ctx.gridInterface.__getGridConfig().columnsPinnedLeft.push({
-                    rows: [attribute],
-                    width
-                });
-                ctx.rebuild(true);
-            }}
+            ctx.gridInterface.__getGridConfig().columnsPinnedLeft.push({
+                rows: [attribute],
+                width
+            });
+            ctx.rebuild(true);
+            removeContextMenu(ctx);
+        }}
         >
             Pin left
         </div>
         <div
             class="simple-html-grid-menu-item"
             @click=${() => {
-                let width = 100;
-                if (colType === 'middle-pinned') {
-                    width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
-                }
-                if (colType === 'right-pinned') {
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
-                }
+            let width = 100;
+            if (colType === 'middle-pinned') {
+                width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
+            }
+            if (colType === 'right-pinned') {
+                width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
+            }
 
-                ctx.gridInterface.__getGridConfig().columnsPinnedLeft.push({
-                    rows: [attribute],
-                    width
-                });
-                ctx.rebuild(true);
-            }}
+            ctx.gridInterface.__getGridConfig().columnsPinnedLeft.push({
+                rows: [attribute],
+                width
+            });
+            ctx.rebuild(true);
+            removeContextMenu(ctx);
+        }}
         >
             Pin left (copy)
         </div>
@@ -98,42 +100,44 @@ export function contextmenuLabel(
         <div
             class="simple-html-grid-menu-item"
             @click=${() => {
-                let width = 100;
-                if (colType === 'middle-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
-                }
-                if (colType === 'left-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
-                }
+            let width = 100;
+            if (colType === 'middle-pinned') {
+                ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
+            }
+            if (colType === 'left-pinned') {
+                ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
+            }
 
-                ctx.gridInterface.__getGridConfig().columnsPinnedRight.push({
-                    rows: [attribute],
-                    width
-                });
-                ctx.rebuild(true);
-            }}
+            ctx.gridInterface.__getGridConfig().columnsPinnedRight.push({
+                rows: [attribute],
+                width
+            });
+            ctx.rebuild(true);
+            removeContextMenu(ctx);
+        }}
         >
             Pin right
         </div>
         <div
             class="simple-html-grid-menu-item"
             @click=${() => {
-                let width = 100;
-                if (colType === 'middle-pinned') {
-                    width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
-                }
-                if (colType === 'left-pinned') {
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
-                }
+            let width = 100;
+            if (colType === 'middle-pinned') {
+                width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
+            }
+            if (colType === 'left-pinned') {
+                width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
+            }
 
-                ctx.gridInterface.__getGridConfig().columnsPinnedRight.push({
-                    rows: [attribute],
-                    width
-                });
-                ctx.rebuild(true);
-            }}
+            ctx.gridInterface.__getGridConfig().columnsPinnedRight.push({
+                rows: [attribute],
+                width
+            });
+            ctx.rebuild(true);
+            removeContextMenu(ctx);
+        }}
         >
             Pin right (copy)
         </div>
@@ -150,26 +154,27 @@ export function contextmenuLabel(
         <div
             class="simple-html-grid-menu-item"
             @click=${() => {
-                let width = 100;
-                if (colType === 'right-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
-                    ctx.gridInterface.__getGridConfig().columnsCenter.push({
-                        rows: [attribute],
-                        width
-                    });
-                }
-                if (colType === 'left-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
-                    ctx.gridInterface.__getGridConfig().columnsCenter.unshift({
-                        rows: [attribute],
-                        width
-                    });
-                }
+            let width = 100;
+            if (colType === 'right-pinned') {
+                ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
+                ctx.gridInterface.__getGridConfig().columnsCenter.push({
+                    rows: [attribute],
+                    width
+                });
+            }
+            if (colType === 'left-pinned') {
+                ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
+                ctx.gridInterface.__getGridConfig().columnsCenter.unshift({
+                    rows: [attribute],
+                    width
+                });
+            }
 
-                ctx.rebuild(true);
-            }}
+            ctx.rebuild(true);
+            removeContextMenu(ctx);
+        }}
         >
             Unpin
         </div>
@@ -188,38 +193,40 @@ export function contextmenuLabel(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    if (colType === 'middle-pinned') {
-                        ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                    }
-                    if (colType === 'right-pinned') {
-                        ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
-                    }
-                    if (colType === 'left-pinned') {
-                        ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
-                    }
-                    ctx.rebuild(true);
-                }}
+                if (colType === 'middle-pinned') {
+                    ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                }
+                if (colType === 'right-pinned') {
+                    ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                }
+                if (colType === 'left-pinned') {
+                    ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                }
+                ctx.rebuild(true);
+                removeContextMenu(ctx);
+            }}
             >
                 Hide
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    const grouping = ctx.gridInterface
-                        .getDatasource()
-                        .getGrouping()
-                        .map((e) => e.attribute);
-                    const sorting = ctx.gridInterface.getDatasource().getLastSorting();
-                    const newSorting: any = [];
-                    sorting.forEach((e) => {
-                        if (grouping.indexOf(e.attribute) !== -1) {
-                            newSorting.push(e);
-                        }
-                    });
+                const grouping = ctx.gridInterface
+                    .getDatasource()
+                    .getGrouping()
+                    .map((e) => e.attribute);
+                const sorting = ctx.gridInterface.getDatasource().getLastSorting();
+                const newSorting: any = [];
+                sorting.forEach((e) => {
+                    if (grouping.indexOf(e.attribute) !== -1) {
+                        newSorting.push(e);
+                    }
+                });
 
-                    ctx.gridInterface.getDatasource().setOrderBy(newSorting);
-                    ctx.rebuild(true);
-                }}
+                ctx.gridInterface.getDatasource().setOrderBy(newSorting);
+                ctx.rebuild(true);
+                removeContextMenu(ctx);
+            }}
             >
                 Remove sorting
             </div>
@@ -227,8 +234,8 @@ export function contextmenuLabel(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${(e: MouseEvent) => {
-                    contextMenuColumnChooser(ctx, e, cell);
-                }}
+                contextMenuColumnChooser(ctx, e, cell);
+            }}
             >
                 Column chooser
             </div>
@@ -237,16 +244,18 @@ export function contextmenuLabel(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    autoResizeColumns(ctx, attribute);
-                }}
+                autoResizeColumns(ctx, attribute);
+                removeContextMenu(ctx);
+            }}
             >
                 Resize Column
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    autoResizeColumns(ctx);
-                }}
+                autoResizeColumns(ctx);
+                removeContextMenu(ctx);
+            }}
             >
                 Resize all columns
             </div>
@@ -256,24 +265,27 @@ export function contextmenuLabel(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    ctx.gridInterface.getDatasource().expandGroup();
-                }}
+                ctx.gridInterface.getDatasource().expandGroup();
+                removeContextMenu(ctx);
+            }}
             >
                 Expand all
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    ctx.gridInterface.getDatasource().collapseGroup();
-                }}
+                ctx.gridInterface.getDatasource().collapseGroup();
+                removeContextMenu(ctx);
+            }}
             >
                 Collapse all
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    ctx.gridInterface.getDatasource().removeGroup();
-                }}
+                ctx.gridInterface.getDatasource().removeGroup();
+                removeContextMenu(ctx);
+            }}
             >
                 Clear all
             </div>

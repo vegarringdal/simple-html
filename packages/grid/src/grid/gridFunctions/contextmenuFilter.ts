@@ -98,6 +98,8 @@ export function contextmenuFilter(
                     false
                 );
             }
+
+            removeContextMenu(ctx);
         };
 
         /**
@@ -124,13 +126,13 @@ export function contextmenuFilter(
                         type="checkbox"
                         .checked=${live(getContext().data.dataFilterSet.has(rowData))}
                         @click=${() => {
-                            filterValueClick(rowData);
-                        }}
+                        filterValueClick(rowData);
+                    }}
                     /><label
                         style="padding:2px"
                         @click=${() => {
-                            filterValueClick(rowData);
-                        }}
+                        filterValueClick(rowData);
+                    }}
                     >
                         ${rowData === 'NULL' ? 'Blank' : rowData}</label
                     >
@@ -232,8 +234,8 @@ export function contextmenuFilter(
             <div
                 class="simple-html-label-button-menu-bottom"
                 @click=${() => {
-                    runFilterClick();
-                }}
+                runFilterClick();
+            }}
             >
                 Run Search
             </div>`;
@@ -277,30 +279,30 @@ export function contextmenuFilter(
                     <div
                         class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
-                            cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
-                            updateFilter();
-                            removeContextMenu(ctx);
-                        }}
+                        cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                        updateFilter();
+                        removeContextMenu(ctx);
+                    }}
                     >
                         Greater than or equal
                     </div>
                     <div
                         class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
-                            cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
-                            updateFilter();
-                            removeContextMenu(ctx);
-                        }}
+                        cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
+                        updateFilter();
+                        removeContextMenu(ctx);
+                    }}
                     >
                         Less than or equal
                     </div>
                     <div
                         class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                         @click=${() => {
-                            cellConfig.operator = 'EQUAL';
-                            updateFilter();
-                            removeContextMenu(ctx);
-                        }}
+                        cellConfig.operator = 'EQUAL';
+                        updateFilter();
+                        removeContextMenu(ctx);
+                    }}
                     >
                         Equal
                     </div>`;
@@ -312,30 +314,30 @@ export function contextmenuFilter(
                 <div
                     class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                     @click=${() => {
-                        cellConfig.operator = 'EQUAL';
-                        updateFilter();
-                        removeContextMenu(ctx);
-                    }}
+                    cellConfig.operator = 'EQUAL';
+                    updateFilter();
+                    removeContextMenu(ctx);
+                }}
                 >
                     Equal
                 </div>
                 <div
                     class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
                     @click=${() => {
-                        cellConfig.operator = 'NOT_EQUAL_TO';
-                        updateFilter();
-                        removeContextMenu(ctx);
-                    }}
+                    cellConfig.operator = 'NOT_EQUAL_TO';
+                    updateFilter();
+                    removeContextMenu(ctx);
+                }}
                 >
                     Not Equal
                 </div>
                 <div
                     class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
                     @click=${() => {
-                        cellConfig.operator = 'CONTAINS';
-                        updateFilter();
-                        removeContextMenu(ctx);
-                    }}
+                    cellConfig.operator = 'CONTAINS';
+                    updateFilter();
+                    removeContextMenu(ctx);
+                }}
                 >
                     Contains
                 </div>
@@ -438,16 +440,18 @@ export function contextmenuFilter(
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        clearColumnFilter();
-                    }}
+                    clearColumnFilter();
+                    removeContextMenu(ctx);
+                }}
                 >
                     Clear Filter
                 </div>
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        clearAllColumnFilters(ctx);
-                    }}
+                    clearAllColumnFilters(ctx);
+                    removeContextMenu(ctx);
+                }}
                 >
                     Clear All Filters
                 </div>
@@ -455,16 +459,18 @@ export function contextmenuFilter(
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        setBlankOrNotBlank('IS_BLANK');
-                    }}
+                    setBlankOrNotBlank('IS_BLANK');
+                    removeContextMenu(ctx);
+                }}
                 >
                     Set "Is Blank"
                 </div>
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        setBlankOrNotBlank('IS_NOT_BLANK');
-                    }}
+                    setBlankOrNotBlank('IS_NOT_BLANK');
+                    removeContextMenu(ctx);
+                }}
                 >
                     Set "Is Not Blank"
                 </div>
@@ -473,8 +479,8 @@ export function contextmenuFilter(
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                        openFilterEditor(ctx);
-                    }}
+                    openFilterEditor(ctx);
+                }}
                 >
                     Advanced Filter
                 </div>
