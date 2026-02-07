@@ -1,7 +1,7 @@
 {
   "recommendations": [
     "eamodio.gitlens",
-    "pflannery.vscode-versionlens",
+    "legalfina.npm-version-lens",
     "esbenp.prettier-vscode",
     "bierner.jsdoc-markdown-highlighting"
   ]
