@@ -76,6 +76,55 @@ TS6 made `baseUrl` and `moduleResolution: "node"` (node10) hard deprecation erro
   transitive `@types/node`, which broke the `NodeJS.Timeout` annotations in `grid/grid.ts`.
   See the note below — those annotations should not be there at all.
 
+### Real bugs found by the biome lint pass
+
+These were not style issues — each was a genuine defect surfaced by a lint rule.
+
+* **`row % 0` instead of `row % 2`** — `gridFunctions/renderRowSelector.ts`
+  `row % 0` is always `NaN`, and `NaN == 0` is false, so the even/odd striping on the
+  current-entity row selector always took the "odd" branch. The `simple-html-label-even`
+  class was dead. Found via `noDoubleEquals`.
+* **Proxy `set` trap returned a value instead of `true`** — `datasource/entityHandler.ts`
+  `return (obj[this.__KEYSTRING] = value)` returns `value`. ES modules are strict mode,
+  where a `set` trap returning a falsy value throws `TypeError: 'set' on proxy: trap
+  returned falsish`. Setting `__KEY` to `0`, `''` or `null` would crash. Every other path
+  in that trap returns `true`. Found via `noAssignInExpressions`.
+* **`typecheck` only ever failed on semantic errors** — `typecheck.js`
+  The guard used the comma operator, which evaluates to its *last* operand only. So
+  `optionsErrors`, `globalErrors` and `syntacticErrors` were computed and thrown away —
+  a tsconfig option error could never fail the build. Found via `noCommaOperator`.
+  Now `||` across all four.
+* **`spawner()` could hang forever** — `scripts/utils.js`
+  The promise had a `reject` parameter but no `error` handler, so if a child process
+  failed to start (ENOENT etc.) the promise never settled and the build hung with no
+  output. Found via `noUnusedFunctionParameters`.
+
+### Biome cleanup applied
+
+~500 diagnostics down to zero.
+
+* Mechanical, applied via `biome check --write` and scoped `--unsafe` runs:
+  173 `useImportType`, 75 `organizeImports`, 57 `useTemplate`, 34 `useParseIntRadix`,
+  21 `format`, 17 `useOptionalChain`, plus smaller counts of `useLiteralKeys`,
+  `noUselessTernary`, `useNodejsImportProtocol`, `noUselessConstructor`.
+* `isNaN` -> `Number.isNaN` (8) — checked each call site first. Every argument was
+  already `parseFloat(...)` or `Number(...)`, so there is no coercion difference.
+* `hasOwnProperty` -> `Object.hasOwn` (2) — needed `lib` bumped `es2021` -> `es2022` in
+  `packages/tsconfig.json`. **This raises the runtime floor** to Chrome 93 / Firefox 92 /
+  Safari 15.4.
+* Dead `x = x` self-assignments removed (4), unused `catch` bindings dropped to
+  optional catch binding (3), `let` declarations given explicit types (6).
+
+Two rules were deliberately overridden rather than obeyed:
+
+* `noStaticOnlyClass` **off** — the formatters (`DateFormaterYYYYMMDD`, `NumberFormaterDot`,
+  ...) are static-only classes exported as public API. Converting them to plain objects
+  would be a breaking change for consumers.
+* `noConfusingVoidType` suppressed on `contextMenuCustom` — its `callback` is typed
+  `(attribute: string) => boolean | void` on purpose, so callers can return nothing or a
+  boolean to close the menu. Biome's suggested `boolean | undefined` would reject every
+  void-returning callback.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -90,11 +139,9 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
 * **`NodeJS.Timeout` in a browser library** — `grid/grid.ts` types its scroll/resize timers as
   `NodeJS.Timeout`, which is why the package needs `@types/node` at all. `ReturnType<typeof setTimeout>`
   is correct here and drops the dependency.
-* **~500 biome diagnostics** on the existing code, none applied yet. Bulk is mechanical
-  (173 `useImportType`, 75 `organizeImports`, 57 `useTemplate`, 21 `format`). A handful look
-  like real defects worth reading individually rather than autofixing:
-  `noSwitchDeclarations` (12), `noSelfAssign` (4), `noDoubleEquals` (3),
-  `useIterableCallbackReturn` (2), `noImplicitAnyLet` (6).
+* **Duplicated writes in the proxy set trap** — `datasource/entityHandler.ts` assigns
+  `this.__currentValues[prop] = value; obj[prop] = value;` twice in a row at the end of
+  `set()`. Harmless but almost certainly a bad merge.
 * **Duplication in hot paths** — `verticalScrollHandler.ts` has three near-identical ~30 line
   blocks for left/middle/right that differ only in cache + widths array. Same shape in
   `horizontalScrollHandler.ts`.

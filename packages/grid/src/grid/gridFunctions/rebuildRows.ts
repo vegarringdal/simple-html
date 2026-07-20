@@ -1,9 +1,8 @@
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
+import type { RowCache } from './colType';
 import { creatElement } from './createElement';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
 import { DIV } from './DIV';
-import { RowCache } from './colType';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
@@ -11,6 +10,7 @@ import {
     RIGH_PINNED_COLTYPE,
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
+import { getElementByClassName } from './getElementByClassName';
 
 export function rebuildRows(ctx: Grid) {
     const scroller = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');

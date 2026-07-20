@@ -1,15 +1,15 @@
 import { html, render } from 'lit-html';
-import { Entity } from '../../datasource/entity';
+import { DateFormaterYYYYMMDD } from '../../datasource/DateFormaterYYYYMMDD';
+import type { Entity } from '../../datasource/entity';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
+import type { ColType } from './colType';
 import { creatElement } from './createElement';
 import { getAttributeColumns } from './getAttributeColumns';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import type { HTMLCellElement } from './HTMLCellElement';
 import { prettyPrintString } from './prettyPrintString';
-import { triggerScrollEvent } from './triggerScrollEvent';
 import { removeContextMenu } from './removeContextMenu';
-import { DateFormaterYYYYMMDD } from '../../datasource/DateFormaterYYYYMMDD';
+import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function contextmenuRow(
     ctx: Grid,
@@ -57,7 +57,7 @@ export function contextmenuRow(
                         mso-number-format:"General";
                     }
                    .text{
-                        mso-number-format:"\@";
+                        mso-number-format:"@";
                     }
                    .date {
                         mso-number-format:"Short Date";
@@ -65,7 +65,7 @@ export function contextmenuRow(
                     table {
                         border-collapse: collapse;
                         border:.5pt solid windowtext;
-                        mso-displayed-decimal-separator:"\.";
+                        mso-displayed-decimal-separator:".";
                     }
                     td,
                     th {
@@ -79,9 +79,9 @@ export function contextmenuRow(
 
         let tableHeader = '<tr>';
         attributes.forEach((attribute) => {
-            tableHeader = tableHeader + '<th>' + label(attribute) + '</th>';
+            tableHeader = `${tableHeader}<th>${label(attribute)}</th>`;
         });
-        tableHeader = tableHeader + '</tr>';
+        tableHeader = `${tableHeader}</tr>`;
 
         let tableInnerData = '';
         let justData = '';
@@ -93,7 +93,7 @@ export function contextmenuRow(
 
         const loopData = (entity: Entity) => {
             if (!entity.__group) {
-                tableInnerData = tableInnerData + '<tr>';
+                tableInnerData = `${tableInnerData}<tr>`;
                 attributes.forEach((attribute, i) => {
                     const cellConfig = attConfig[attribute];
                     const colData = entity[attribute];
@@ -104,30 +104,29 @@ export function contextmenuRow(
                     }
 
                     if (i > 0) {
-                        justData = justData + '\t';
+                        justData = `${justData}\t`;
                     }
 
                     if (dataType === 'date') {
                         const data = DateFormaterYYYYMMDD.fromSource(colData);
                         justData = justData + data;
-                        tableInnerData = tableInnerData + '<td>' + data + '</td>';
+                        tableInnerData = `${tableInnerData}<td>${data}</td>`;
                     } else if (dataType === 'number') {
                         const data = colData;
                         justData = justData + data;
-                        tableInnerData = tableInnerData + '<td class="number">' + (data || '') + '</td >';
+                        tableInnerData = `${tableInnerData}<td class="number">${data || ''}</td >`;
                     } else {
                         //
                         justData = justData + colData;
-                        tableInnerData = tableInnerData + '<td class="text">' + (colData || '') + '</td>';
+                        tableInnerData = `${tableInnerData}<td class="text">${colData || ''}</td>`;
                     }
                 });
-                if (onlyCurrentEntity || overRideCurrentEntity) {
-                    justData = justData;
-                } else {
-                    justData = justData + '\r\n';
+                // single entity copy is one line only, so no trailing carriage return
+                if (!onlyCurrentEntity && !overRideCurrentEntity) {
+                    justData = `${justData}\r\n`;
                 }
 
-                tableInnerData = tableInnerData + '</tr>';
+                tableInnerData = `${tableInnerData}</tr>`;
             }
         };
 
@@ -219,7 +218,7 @@ export function contextmenuRow(
 
         function add(prev: number, cur: number) {
             let x = parseFloat(cur as any);
-            if (isNaN(x)) {
+            if (Number.isNaN(x)) {
                 x = 0;
             }
 
@@ -252,7 +251,7 @@ export function contextmenuRow(
         let minValue: number = null;
         selectedRows.forEach((index: number) => {
             const x = allrows[index];
-            if (x && x[attribute]) {
+            if (x?.[attribute]) {
                 curValue = add(curValue, x[attribute]);
                 maxValue = max(maxValue, x[attribute]);
                 minValue = min(minValue, x[attribute]);
@@ -340,7 +339,7 @@ export function contextmenuRow(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    let data;
+                    let data: string;
                     if (navigator.clipboard.readText) {
                         data = await navigator.clipboard.readText();
                         pasteIntoCells(attribute, data);

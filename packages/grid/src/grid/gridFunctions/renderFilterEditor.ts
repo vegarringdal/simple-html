@@ -1,13 +1,13 @@
-import { html, TemplateResult, render } from 'lit-html';
-import { FilterArgument } from '../../datasource/filterArgument';
+import { html, render, type TemplateResult } from 'lit-html';
+import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Grid } from '../grid';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
-import { creatElement } from './createElement';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { removeContextMenu } from './removeContextMenu';
-import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { contextmenuDate } from './contextmenuDate';
+import { creatElement } from './createElement';
+import type { HTMLCellElement } from './HTMLCellElement';
+import { rebuildHeaderColumns } from './rebuildHeaderColumns';
+import { removeContextMenu } from './removeContextMenu';
 
 /**
  * internal method to generate html for filter editor
@@ -287,12 +287,14 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             });
                         }}
                     >
-                        ${arg.operator
-                            ? arg.operator
-                                  .split('_')
-                                  .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
-                                  .join(' ')
-                            : 'Click me to select Operator'}
+                        ${
+                            arg.operator
+                                ? arg.operator
+                                      .split('_')
+                                      .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
+                                      .join(' ')
+                                : 'Click me to select Operator'
+                        }
                     </div>
                     <div class="grid-flex-1 grid-text-center ">${filterElement}</div>
                 </div>
@@ -349,7 +351,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                         </div>
                         <div class="grid-m-4">
                             ${addFilterGroupIcon(false, () => {
-                                let oldFilters = arg.filterArguments;
+                                const oldFilters = arg.filterArguments;
                                 arg.filterArguments = [
                                     {
                                         type: 'GROUP',

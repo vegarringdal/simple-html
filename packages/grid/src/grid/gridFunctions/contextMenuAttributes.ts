@@ -1,10 +1,10 @@
-import { render, html } from 'lit-html';
+import { html, render } from 'lit-html';
+import { live } from 'lit-html/directives/live.js';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
-import { Grid } from '../grid';
 import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
-import { live } from 'lit-html/directives/live.js';
 
 // might want to add this as part of context, so I can share it?
 let currentColumnSearchvalue = '';

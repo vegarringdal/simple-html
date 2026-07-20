@@ -1,16 +1,16 @@
-import { GridInterface } from './gridInterface';
-import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
-import { rebuildFooter } from './gridFunctions/rebuildFooter';
-import { rebuildRows } from './gridFunctions/rebuildRows';
-import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
-import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
+import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
-import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
+import { rebuildFooter } from './gridFunctions/rebuildFooter';
+import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
+import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
+import { rebuildRows } from './gridFunctions/rebuildRows';
+import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
+import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateHorizontalScrollWidth } from './gridFunctions/updateHorizontalScrollWidth';
-import { RowCache, ColumnCache } from './gridFunctions/colType';
-import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
+import type { GridInterface } from './gridInterface';
 
 /**
  * Grid class, this has logic for all scrolling/events

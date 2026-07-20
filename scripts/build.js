@@ -48,7 +48,7 @@ async function run() {
                 name: `build ${file.name}`
             });
             checker.printSettings();
-            let result = checker.inspectOnly();
+            const result = checker.inspectOnly();
             checker.printOnly(result);
             logInfo(`${file.name}: emit js`);
             result.oldProgram.emit();

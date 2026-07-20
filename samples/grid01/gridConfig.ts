@@ -1,4 +1,4 @@
-import { GridConfig } from '@simple-html/grid';
+import type { GridConfig } from '@simple-html/grid';
 
 /**
  * simple gridconfig
@@ -34,7 +34,7 @@ export const gridConfig: GridConfig = {
         {
             // you almost need to include this now
             // N = new, D = deleted, M=modified
-            rows: ['__rowState'], 
+            rows: ['__rowState'],
             width: 20
         },
         {
@@ -113,8 +113,8 @@ export const gridConfig: GridConfig = {
     ],
     attributes: [
         {
-            attribute:'__rowState', // N = new, D = deleted, M=modified
-            label: "RS",
+            attribute: '__rowState', // N = new, D = deleted, M=modified
+            label: 'RS',
             readonly: true
         },
         {

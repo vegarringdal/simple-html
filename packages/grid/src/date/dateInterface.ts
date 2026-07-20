@@ -1,6 +1,6 @@
-import { render, html } from 'lit-html';
-import { DateElement } from './dateElement';
-import { IDateConfig, IStyle } from './interfaces';
+import { html, render } from 'lit-html';
+import type { DateElement } from './dateElement';
+import type { IDateConfig, IStyle } from './interfaces';
 import { header } from './templates/header';
 import { month } from './templates/month';
 
@@ -157,7 +157,7 @@ export class DateInterface {
         const monthTemplates = [];
         const monthMargin = this.config.monthMargin * this.config.monthColumns * 2;
         const monthWidth = this.config.monthWidth * this.config.monthColumns;
-        this.element.style.width = monthMargin + monthWidth + 'px';
+        this.element.style.width = `${monthMargin + monthWidth}px`;
 
         let i = 0;
         while (i < this.config.monthsToShow) {

@@ -1,10 +1,10 @@
-import { Entity } from './entity';
+import type { Entity } from './entity';
 import { EntityHandler } from './entityHandler';
 
 let globalKeyCount = 0;
 
 // we need 1 for all datasources not using uniqueKeyAttribute
-export const getNextKey = function () {
+export const getNextKey = () => {
     globalKeyCount--;
     return globalKeyCount;
 };
@@ -159,8 +159,10 @@ export class DataContainer {
             if (row.__controller.__edited) {
                 const data: Record<string, any> = {};
                 const editiedKeys = Object.keys(row.__controller.__editedProps);
-                data[row.__controller.__KEYSTRING || '__KEY'] = row['__KEY'];
-                editiedKeys.forEach((e) => (data[e] = row[e]));
+                data[row.__controller.__KEYSTRING || '__KEY'] = row.__KEY;
+                editiedKeys.forEach((e) => {
+                    data[e] = row[e];
+                });
                 modifiedEntities.push(data);
             }
         });
@@ -274,13 +276,13 @@ export class DataContainer {
      * @param tagAsNew
      * @returns
      */
-    public setData(data: any[], add = false, tagAsNew = false): Entity[] | void {
+    public setData(data: any[], add = false, tagAsNew = false): Entity[] | undefined {
         if (!add) {
             this.__collection = [];
         }
 
         const x = Array.from(data, (o: any | Entity) => {
-            if (o && o.__controller) {
+            if (o?.__controller) {
                 if (o && !(o as any).__KEY) {
                     (o as any).__KEY = this.getKey();
                 }
@@ -307,7 +309,7 @@ export class DataContainer {
     public replace(data: any[], index: number, remove: number) {
         // todo
         const x = Array.from(data, (o: any | Entity) => {
-            if (o && o.__controller) {
+            if (o?.__controller) {
                 return o;
             } else {
                 return new Proxy(o, new this.EntityHandler(this.__keyAttribute, false) as any);

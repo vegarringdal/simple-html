@@ -1,19 +1,19 @@
-import { Datasource } from '../datasource/dataSource';
-import { FilterArgument } from '../datasource/filterArgument';
-import { Entity } from '../datasource/entity';
+import type { Datasource } from '../datasource/dataSource';
+import type { Entity } from '../datasource/entity';
+import type { FilterArgument } from '../datasource/filterArgument';
+import type { Grid } from './grid';
+import type { GridConfig } from './gridConfig';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
+import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
 import { getAttributeColumns } from './gridFunctions/getAttributeColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
-import { Grid } from './grid';
-import { GridConfig } from './gridConfig';
+import { getElementByClassName } from './gridFunctions/getElementByClassName';
+import { getTextWidth } from './gridFunctions/getTextWidth';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
+import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
-import { getTextWidth } from './gridFunctions/getTextWidth';
-import { getElementByClassName } from './gridFunctions/getElementByClassName';
-import { removeContextMenu } from './gridFunctions/removeContextMenu';
-import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -72,7 +72,10 @@ export class GridInterface<T> {
         this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
-        if (this.initConfig.autoRemoveContextMenuOnScrollEvent === null || this.initConfig.autoRemoveContextMenuOnScrollEvent === undefined) {
+        if (
+            this.initConfig.autoRemoveContextMenuOnScrollEvent === null ||
+            this.initConfig.autoRemoveContextMenuOnScrollEvent === undefined
+        ) {
             this.initConfig.autoRemoveContextMenuOnScrollEvent = false;
         }
         this.loadConfig(gridConfig, true);
@@ -267,7 +270,9 @@ export class GridInterface<T> {
 
     public getOptionalAttributes() {
         const attributes = new Set(Object.keys(this.gridConfig.__attributes));
-        this.getAttributeColumns(false).forEach((e) => attributes.delete(e));
+        this.getAttributeColumns(false).forEach((e) => {
+            attributes.delete(e);
+        });
         return Array.from(attributes);
     }
 
@@ -524,7 +529,7 @@ export class GridInterface<T> {
      * @private
      */
     public __isConnected(): boolean {
-        return this.grid ? true : false;
+        return !!this.grid;
     }
 
     /**
@@ -551,7 +556,7 @@ export class GridInterface<T> {
         });
 
         this.scrollHeight = count;
-        if (this.grid && this.grid.getElement()) {
+        if (this.grid?.getElement()) {
             updateVerticalScrollHeight(this.grid, this.scrollHeight);
         }
     }
@@ -628,7 +633,7 @@ export class GridInterface<T> {
                 this.__dataSourceUpdated();
                 triggerScrollEvent(this.grid);
                 break;
-            case e.type === 'select':
+            case e.type === 'select': {
                 this.__dataSourceUpdated();
 
                 const scrollEl = getElementByClassName(this.grid.getElement(), 'simple-html-grid-body-scroller');
@@ -646,6 +651,7 @@ export class GridInterface<T> {
                 }
 
                 break;
+            }
             default:
             /* if (DEVELOPMENT === true) {
                     console.log('skipping:', e.type, e.data);

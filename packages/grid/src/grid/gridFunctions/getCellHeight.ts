@@ -1,4 +1,4 @@
-import { Columns } from '../gridConfig';
+import type { Columns } from '../gridConfig';
 
 /**
  * small helper to get cell heigth by looping column config

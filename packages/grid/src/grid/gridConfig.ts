@@ -1,7 +1,7 @@
-import { DataTypes, FilterArgument } from '../datasource/filterArgument';
-import { GroupArgument } from '../datasource/groupArgument';
-import { FilterComparisonOperator } from '../datasource/filterComparisonOperator';
-import { IDateConfig } from '../date/interfaces';
+import type { DataTypes, FilterArgument } from '../datasource/filterArgument';
+import type { FilterComparisonOperator } from '../datasource/filterComparisonOperator';
+import type { GroupArgument } from '../datasource/groupArgument';
+import type { IDateConfig } from '../date/interfaces';
 
 export type GridConfig = {
     cellHeight?: number;
@@ -26,7 +26,6 @@ export type GridConfig = {
      * if its a small screen you might not want this enabled
      */
     autoRemoveContextMenuOnScrollEvent?: boolean;
-    
 
     /**
      * datepicker

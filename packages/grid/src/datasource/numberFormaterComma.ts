@@ -9,7 +9,7 @@ export class NumberFormaterComma {
     static fromSource(value: any): string | null | undefined {
         let returnValue = value;
 
-        if (isNaN(parseFloat(returnValue))) {
+        if (Number.isNaN(parseFloat(returnValue))) {
             returnValue = '';
         }
 
@@ -39,7 +39,7 @@ export class NumberFormaterComma {
             returnValue = returnValue.replace(',', '.');
         }
 
-        if (isNaN(parseFloat(returnValue))) {
+        if (Number.isNaN(parseFloat(returnValue))) {
             return 0;
         }
 
@@ -51,15 +51,15 @@ export class NumberFormaterComma {
     }
 
     static toFilter(value: any): number | null | undefined {
-        return this.toSource(value);
+        return NumberFormaterComma.toSource(value);
     }
 
     static fromSourceDisplay(value: any): string | null | undefined {
-        return this.fromSource(value);
+        return NumberFormaterComma.fromSource(value);
     }
 
     static fromSourceGrouping(value: any): string | null | undefined {
-        return this.fromSourceDisplay(value);
+        return NumberFormaterComma.fromSourceDisplay(value);
     }
 
     static placeholder() {

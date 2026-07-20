@@ -1,8 +1,8 @@
 {
-  "recommendations": [
-    "eamodio.gitlens",
-    "pflannery.vscode-versionlens",
-    "esbenp.prettier-vscode",
-    "bierner.jsdoc-markdown-highlighting"
-  ]
+    "recommendations": [
+        "eamodio.gitlens",
+        "pflannery.vscode-versionlens",
+        "esbenp.prettier-vscode",
+        "bierner.jsdoc-markdown-highlighting"
+    ]
 }

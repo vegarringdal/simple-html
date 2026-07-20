@@ -1,7 +1,7 @@
-import { render, html } from 'lit-html';
+import { html, render } from 'lit-html';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
-import { Grid } from '../grid';
 import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
 
@@ -14,6 +14,7 @@ export function contextMenuCustom(
     ctx: Grid,
     event: MouseEvent,
     cell: HTMLElement,
+    // biome-ignore lint/suspicious/noConfusingVoidType: callers may return nothing, or a boolean to close the menu
     callback: (attribute: string) => boolean | void,
     options: { label: string; value: string; isHeader?: boolean }[]
 ) {

@@ -1,6 +1,6 @@
-import { GroupArgument } from './groupArgument';
-import { Entity } from './entity';
-import { Datasource } from './dataSource';
+import type { Datasource } from './dataSource';
+import type { Entity } from './entity';
+import type { GroupArgument } from './groupArgument';
 
 /**
  * This takes care the generating the flat array the grid can use for grouping
@@ -96,7 +96,7 @@ export class Grouping {
     }
 
     public expandOneOrAll(id: string, array?: Set<string>) {
-        let all = id ? false : true; // if no id, then all
+        let all = !id; // if no id, then all
         if (!id) {
             if (array) {
                 all = false;
@@ -160,7 +160,7 @@ export class Grouping {
      * @param id string id
      */
     public collapseOneOrAll(id?: string) {
-        const all = id ? false : true; // if no id, then all
+        const all = !id; // if no id, then all
         id = id === undefined ? null : id;
 
         const collection: Entity[] = [];
@@ -237,7 +237,7 @@ export class Grouping {
 
             if (groupID !== lastGroupID) {
                 curGroup = {
-                    __groupName: this.toUppercase(title) + ': ' + groupID,
+                    __groupName: `${this.toUppercase(title)}: ${groupID}`,
                     __group: true,
                     __groupID: groupID,
                     __groupLvl: groupNo,
@@ -280,8 +280,8 @@ export class Grouping {
                 if (groupID !== tempValue) {
                     const gidc = element.__groupID;
                     curGroup = {
-                        __groupName: this.toUppercase(title) + ': ' + groupID,
-                        __groupID: gidc + '-' + groupID,
+                        __groupName: `${this.toUppercase(title)}: ${groupID}`,
+                        __groupID: `${gidc}-${groupID}`,
                         __group: true,
                         __groupLvl: groupNo,
                         __groupChildren: [child],

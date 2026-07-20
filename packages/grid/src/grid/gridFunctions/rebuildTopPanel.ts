@@ -1,12 +1,12 @@
-import { render, html } from 'lit-html';
+import { html, render } from 'lit-html';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
+import { DIV } from './DIV';
 import { dragEvent } from './dragEvent';
 import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
-import { DIV } from './DIV';
-import { HTMLCellElement } from './HTMLCellElement';
 import { getTextWidth } from './getTextWidth';
+import type { HTMLCellElement } from './HTMLCellElement';
 
 /**
  * ctx also includes some of the grouping logic

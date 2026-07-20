@@ -1,9 +1,9 @@
-import { IDateConfig } from '../interfaces';
-import { monthHeader } from './monthHeader';
-import { headerRow } from './headerRow';
-import { dayRow } from './dayRow';
 import { html } from 'lit-html';
-import { DateInterface } from '../dateInterface';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
+import { dayRow } from './dayRow';
+import { headerRow } from './headerRow';
+import { monthHeader } from './monthHeader';
 import { time } from './time';
 
 export function month(context: DateInterface, config: IDateConfig, year: number, month: number) {

@@ -1,8 +1,8 @@
-import { clearFolders, addDefaultIndex, client, TypeChecker } from 'esbuild-helpers';
+import { addDefaultIndex, clearFolders, client, TypeChecker } from 'esbuild-helpers';
 
 clearFolders('dist_client', 'dist_nodejs');
 
-const sample = process.argv[2] || "grid01";
+const sample = process.argv[2] || 'grid01';
 
 /**
  * client bundle

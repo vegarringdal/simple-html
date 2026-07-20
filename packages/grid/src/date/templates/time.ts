@@ -1,7 +1,7 @@
-import { IDateConfig } from '../interfaces';
 import { html } from 'lit-html';
-import { DateInterface } from '../dateInterface';
 import { live } from 'lit-html/directives/live.js';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
 
 export function time(context: DateInterface, config: IDateConfig, _year: number, _month: number) {
     const width = config.monthWidth;

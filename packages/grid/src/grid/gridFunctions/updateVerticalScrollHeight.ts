@@ -1,6 +1,6 @@
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
 
 /**
  * ctx adjust viewports, so scrolling height is correct, compared to all rows and its height

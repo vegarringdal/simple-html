@@ -1,7 +1,7 @@
-import { IDateConfig } from '../interfaces';
 import { html } from 'lit-html';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
 import { getWeekNumbers } from '../utils/getWeekNumber';
-import { DateInterface } from '../dateInterface';
 
 export function week(_context: DateInterface, config: IDateConfig, year: number, month: number, block: number) {
     const firstDayOfMonth = new Date(year, month, 1);

@@ -1,6 +1,6 @@
-import { IDateConfig } from '../interfaces';
 import { html } from 'lit-html';
-import { DateInterface } from '../dateInterface';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function header(_context: DateInterface, config: IDateConfig) {

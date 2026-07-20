@@ -1,16 +1,16 @@
-import { render, html } from 'lit-html';
+import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import { Entity } from '../../datasource/entity';
-import { contextmenuRow } from './contextmenuRow';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
-import { triggerScrollEvent } from './triggerScrollEvent';
-import { creatElement } from './createElement';
-import { DIV } from './DIV';
+import type { Entity } from '../../datasource/entity';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
+import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
+import { contextmenuRow } from './contextmenuRow';
+import { creatElement } from './createElement';
+import { DIV } from './DIV';
+import type { HTMLCellElement } from './HTMLCellElement';
+import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function renderRowCell(
     ctx: Grid,
@@ -24,7 +24,7 @@ export function renderRowCell(
     rowData: Entity
 ) {
     const entity = ctx.gridInterface.getDatasource().getRow(row);
-    let value = entity && entity[attribute];
+    let value = entity?.[attribute];
     if (value === null && value === undefined) {
         value = '';
     }
@@ -42,7 +42,7 @@ export function renderRowCell(
         const dynCellType = cellConfig.dynamicCellTypeColumn;
 
         if (dynCellType && cellConfig.type === 'text') {
-            const dynCellTypeValue = (entity && entity[dynCellType]) || '';
+            const dynCellTypeValue = entity?.[dynCellType] || '';
             if (
                 dynCellTypeValue === 'text' ||
                 dynCellTypeValue === 'number' ||
@@ -127,7 +127,7 @@ export function renderRowCell(
                                     // nothing
                                 } else {
                                     entity[attribute] = valueFormater.toSource(
-                                        e.target.checked ? false : true,
+                                        !e.target.checked,
                                         cellConfigType,
                                         attribute,
                                         false
@@ -154,9 +154,9 @@ export function renderRowCell(
                         role="cell"
                         aria-label=${attribute}
                         data-attribute=${attribute}
-                        style=${cellConfigType === 'number'
-                            ? 'text-align: right;width:100%;height:100%;'
-                            : 'width:100%;height:100%;'}
+                        style=${
+                            cellConfigType === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'
+                        }
                         .value=${live(value?.toString())}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}

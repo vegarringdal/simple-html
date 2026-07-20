@@ -1,4 +1,4 @@
-import { Grid } from '../grid';
+import type { Grid } from '../grid';
 
 export function initResizerEvent(ctx: Grid) {
     if (ctx.skipInitResizeEvent) {

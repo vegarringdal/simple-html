@@ -4,5 +4,5 @@
  * @returns
  */
 export function asPx(value: number) {
-    return value + 'px';
+    return `${value}px`;
 }

@@ -1,6 +1,5 @@
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import type { Grid } from '../grid';
+import type { ColType } from './colType';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
@@ -8,6 +7,7 @@ import {
     RIGH_PINNED_COLTYPE,
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
+import type { HTMLCellElement } from './HTMLCellElement';
 import { renderHeaderFilter } from './renderHeaderFilter';
 import { renderHeaderLabel } from './renderHeaderLabel';
 import { renderHeaderSelector } from './renderHeaderSelector';

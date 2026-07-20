@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "es2020",
         "module": "esNext",
-        "lib": ["es2021", "dom"],
+        "lib": ["es2022", "dom"],
         "moduleResolution": "bundler",
         "types": ["node"],
         "isolatedModules": false,

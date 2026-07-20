@@ -1,13 +1,13 @@
-import { render, html } from 'lit-html';
+import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import { Entity } from '../../datasource/entity';
+import type { Entity } from '../../datasource/entity';
+import type { Grid } from '../grid';
+import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigationCellRowHandler';
+import type { ColType } from './colType';
+import { contextmenuDate } from './contextmenuDate';
 import { contextmenuFilter } from './contextmenuFilter';
 import { filterCallback } from './filterCallback';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
-import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigationCellRowHandler';
-import { contextmenuDate } from './contextmenuDate';
+import type { HTMLCellElement } from './HTMLCellElement';
 
 export function renderHeaderFilter(
     ctx: Grid,
@@ -99,9 +99,11 @@ export function renderHeaderFilter(
                 render(
                     html`<input
                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
-                        style=${cellConfig?.type === 'number'
-                            ? 'text-align: right;width:100%;height:100%;'
-                            : 'width:100%;height:100%;'}
+                        style=${
+                            cellConfig?.type === 'number'
+                                ? 'text-align: right;width:100%;height:100%;'
+                                : 'width:100%;height:100%;'
+                        }
                         .value=${live(currentValue)}
                         placeholder=${placeHolderFilter}
                         @contextmenu=${(e: MouseEvent) => {

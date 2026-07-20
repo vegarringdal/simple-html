@@ -1,6 +1,6 @@
-import { IDateConfig } from '../interfaces';
 import { html } from 'lit-html';
-import { DateInterface } from '../dateInterface';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
 
 export function monthHeader(context: DateInterface, config: IDateConfig, year: number, month: number) {
     if (config.datepicker) {
@@ -55,6 +55,6 @@ export function monthHeader(context: DateInterface, config: IDateConfig, year: n
 
     return html`<!-- function:monthHeader -->
         <div class="simple-html-date-month-header">
-            <span class="main"> ${config.monthHeader[month]}${config.showYearInMonth ? '-' + year : ''} </span>
+            <span class="main"> ${config.monthHeader[month]}${config.showYearInMonth ? `-${year}` : ''} </span>
         </div>`;
 }

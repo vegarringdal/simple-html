@@ -1,9 +1,9 @@
-import {
+import type {
     GROUP_COLTYPE,
-    SELECTOR_COLTYPE,
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE
+    RIGH_PINNED_COLTYPE,
+    SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
 
 export type ColumnCache = { column: number; left: number; refID: number };

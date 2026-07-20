@@ -1,10 +1,10 @@
-import { describe, beforeAll, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
     {
-        name: `somef\n\r\cool\nthing`,
+        name: `somef\n\rcool\nthing`,
         group: 'group2',
         age: 23,
         born: new Date(1980, 0, 1),
@@ -33,7 +33,7 @@ describe('string filter', () => {
 
         expect(ds.getRows()).toEqual([
             {
-                name: `somef\n\r\cool\nthing`,
+                name: `somef\n\rcool\nthing`,
                 group: 'group2',
                 age: 23,
                 born: new Date(1980, 0, 1),
@@ -83,7 +83,7 @@ describe('string filter', () => {
 
         expect(ds.getRows()).toEqual([
             {
-                name: `somef\n\r\cool\nthing`,
+                name: `somef\n\rcool\nthing`,
                 group: 'group2',
                 age: 23,
                 born: new Date(1980, 0, 1),

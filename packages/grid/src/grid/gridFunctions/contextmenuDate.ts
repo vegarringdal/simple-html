@@ -1,11 +1,11 @@
+import type { DateElement } from '../../date/dateElement';
+import { DateInterface } from '../../date/dateInterface';
+import type { IDateConfig } from '../../date/interfaces';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
+import type { HTMLCellElement } from './HTMLCellElement';
 import { removeContextMenu } from './removeContextMenu';
-import { IDateConfig } from '../../date/interfaces';
-import { DateInterface } from '../../date/dateInterface';
-import { DateElement } from '../../date/dateElement';
 
 export function contextmenuDate(
     ctx: Grid,

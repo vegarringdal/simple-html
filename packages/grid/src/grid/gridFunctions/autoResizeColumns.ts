@@ -1,4 +1,4 @@
-import { Grid } from '../grid';
+import type { Grid } from '../grid';
 import { getTextWidth } from './getTextWidth';
 
 /**
@@ -38,7 +38,7 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
         if (currAtt.type === 'date' && currAtt?.label?.length < 5) {
             return '19.19.2000 A';
         }
-        return (currAtt?.label || currAtt.attribute) + '< > < <';
+        return `${currAtt?.label || currAtt.attribute}< > < <`;
     });
 
     const data = ctx.gridInterface.getDatasource().getAllData();
@@ -53,8 +53,8 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
                 }
             }
             if (row && typeof row[att.attribute] === 'number') {
-                if (widths[i] < (row[att.attribute] + '').length) {
-                    widths[i] = (row[att.attribute] + '').length;
+                if (widths[i] < `${row[att.attribute]}`.length) {
+                    widths[i] = `${row[att.attribute]}`.length;
                     text[i] = row[att.attribute];
                 }
             }

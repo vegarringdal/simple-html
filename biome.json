@@ -6,7 +6,16 @@
         "useIgnoreFile": true
     },
     "files": {
-        "includes": ["**/*.ts", "**/*.js", "**/*.json", "!**/*.d.ts", "!dist/**", "!docs/**", "!node_modules/**"]
+        "includes": [
+            "**/*.ts",
+            "**/*.js",
+            "**/*.json",
+            "!**/*.d.ts",
+            "!dist",
+            "!docs",
+            "!node_modules",
+            "!samples/grid01/dummyData.ts"
+        ]
     },
     "formatter": {
         "enabled": true,
@@ -24,7 +33,7 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": true,
+            "preset": "recommended",
             "suspicious": {
                 "noExplicitAny": "off"
             },
@@ -33,6 +42,9 @@
             },
             "correctness": {
                 "noUnusedVariables": "warn"
+            },
+            "complexity": {
+                "noStaticOnlyClass": "off"
             }
         }
     }

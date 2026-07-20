@@ -1,8 +1,8 @@
-import { clearFolders, addDefaultIndex, client, TypeChecker } from 'esbuild-helpers';
+import { addDefaultIndex, clearFolders, client, TypeChecker } from 'esbuild-helpers';
 
 clearFolders('dist_client', 'dist_nodejs');
 
-const sample = process.argv[2] || "demo";
+const sample = process.argv[2] || 'demo';
 
 /**
  * client bundle
@@ -21,8 +21,7 @@ client(
         tsconfig: `./samples/tsconfig.json`,
         platform: 'browser',
         sourcemap: false,
-        logLevel: 'error',
-     
+        logLevel: 'error'
     }
 );
 /**
@@ -92,4 +91,3 @@ const checker_client = TypeChecker({
 
 checker_client.printSettings();
 checker_client.inspectAndPrint();
-

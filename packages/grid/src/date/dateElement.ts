@@ -1,4 +1,4 @@
-import { DateInterface } from './dateInterface';
+import type { DateInterface } from './dateInterface';
 
 /**
  * this is custom element
@@ -6,10 +6,6 @@ import { DateInterface } from './dateInterface';
  */
 export class DateElement extends HTMLElement {
     private dateInterface: DateInterface;
-
-    constructor() {
-        super();
-    }
 
     connectInterface(dateInterface: DateInterface) {
         this.dateInterface = dateInterface;

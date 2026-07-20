@@ -1,4 +1,4 @@
-import { Entity } from './entity';
+import type { Entity } from './entity';
 
 /**
  * @internal
@@ -94,7 +94,9 @@ export class EntityHandler {
             ) {
                 if (prop === '__KEY') {
                     if (this.__KEYSTRING) {
-                        return (obj[this.__KEYSTRING] = value);
+                        obj[this.__KEYSTRING] = value;
+                        // proxy set trap must return true, returning the value throws on falsy values
+                        return true;
                     } else {
                         this[prop] = value;
                     }
@@ -107,12 +109,12 @@ export class EntityHandler {
         }
 
         if (update) {
-            if (!this.__newprops.hasOwnProperty(prop)) {
+            if (!Object.hasOwn(this.__newprops, prop)) {
                 this.__originalValues[prop] = obj[prop];
                 this.__newprops[prop] = true;
             }
 
-            if (!this.__editedProps.hasOwnProperty(prop) && !this.__isNew) {
+            if (!Object.hasOwn(this.__editedProps, prop) && !this.__isNew) {
                 this.__originalValues[prop] = obj[prop];
                 this.__editedProps[prop] = true;
             } else {
@@ -134,7 +136,7 @@ export class EntityHandler {
                         0,
                         0
                     );
-                } catch (e) {
+                } catch {
                     _original = null;
                 }
             }

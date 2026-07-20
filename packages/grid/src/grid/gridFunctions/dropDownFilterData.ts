@@ -1,5 +1,5 @@
-import { FilterArgument } from '../../datasource/filterArgument';
-import { Grid } from '../grid';
+import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Grid } from '../grid';
 
 export const DROPDOWN_FILTER_MAX_ROWS = 100;
 
@@ -23,11 +23,11 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
 
     const length = data.length;
     let haveNull = false;
-    const search = searchInput && searchInput.replaceAll('%', '').replaceAll('*', '');
+    const search = searchInput?.replaceAll('%', '').replaceAll('*', '');
 
     for (let i = 0; i < length; i++) {
         // maybe I should let ctx be aoption ? the 200 size..
-        if (data[i] && data[i][attribute] && dataFilterSet.size < DROPDOWN_FILTER_MAX_ROWS) {
+        if (data[i]?.[attribute] && dataFilterSet.size < DROPDOWN_FILTER_MAX_ROWS) {
             if (typeof data[i][attribute] === 'string') {
                 if (search) {
                     if (data[i][attribute].toLocaleUpperCase().indexOf(search.toLocaleUpperCase()) !== -1) {

@@ -1,6 +1,6 @@
-import { IDateConfig } from '../interfaces';
 import { html } from 'lit-html';
-import { DateInterface } from '../dateInterface';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
 
 function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
     event.preventDefault();

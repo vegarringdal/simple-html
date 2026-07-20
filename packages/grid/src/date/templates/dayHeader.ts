@@ -1,6 +1,6 @@
-import { IDateConfig } from '../interfaces';
 import { html } from 'lit-html';
-import { DateInterface } from '../dateInterface';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
 
 export function dayHeader(_context: DateInterface, config: IDateConfig, _year: number, _month: number, block: number) {
     let start = config.weekStart;

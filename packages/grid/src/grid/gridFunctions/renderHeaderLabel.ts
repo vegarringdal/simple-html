@@ -1,9 +1,9 @@
-import { html, svg, render } from 'lit-html';
-import { Entity } from '../../datasource/entity';
+import { html, render, svg } from 'lit-html';
+import type { Entity } from '../../datasource/entity';
+import type { Grid } from '../grid';
+import type { ColType } from './colType';
 import { contextmenuLabel } from './contextmenuLabel';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import type { HTMLCellElement } from './HTMLCellElement';
 import { prettyPrintString } from './prettyPrintString';
 
 export function renderHeaderLabel(
@@ -28,9 +28,11 @@ export function renderHeaderLabel(
             if (sort.attribute === attribute) {
                 iconAsc = html`<i class="simple-html-grid-sort-number" data-sortno=${i + 1}>
                     <svg class="simple-html-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                        ${sort.ascending
-                            ? svg`<path d="M7.4 6L3 10h1.5L8 7l3.4 3H13L8.5 6h-1z" />`
-                            : svg`<path d="M7.4 10L3 6h1.5L8 9.2 11.3 6H13l-4.5 4h-1z" />`}
+                        ${
+                            sort.ascending
+                                ? svg`<path d="M7.4 6L3 10h1.5L8 7l3.4 3H13L8.5 6h-1z" />`
+                                : svg`<path d="M7.4 10L3 6h1.5L8 9.2 11.3 6H13l-4.5 4h-1z" />`
+                        }
                     </svg></i
                 >`;
             }

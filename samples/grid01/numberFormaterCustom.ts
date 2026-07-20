@@ -9,7 +9,7 @@ export class NumberFormaterCustom {
     static fromSource(value: any): string | null | undefined {
         let returnValue = value;
 
-        if (isNaN(parseFloat(returnValue))) {
+        if (Number.isNaN(parseFloat(returnValue))) {
             returnValue = '';
         }
 
@@ -39,7 +39,7 @@ export class NumberFormaterCustom {
             returnValue = returnValue.replace(',', '.');
         }
 
-        if (isNaN(parseFloat(returnValue))) {
+        if (Number.isNaN(parseFloat(returnValue))) {
             return 0;
         }
 
@@ -50,16 +50,16 @@ export class NumberFormaterCustom {
         return parseFloat(returnValue);
     }
 
-    static toFilter(value: any): Number | null | undefined {
-        return this.toSource(value);
+    static toFilter(value: any): number | null | undefined {
+        return NumberFormaterCustom.toSource(value);
     }
 
     static fromSourceDisplay(value: any): string | null | undefined {
-        return parseInt(this.fromSource(value) + '').toFixed(2);
+        return parseInt(`${NumberFormaterCustom.fromSource(value)}`, 10).toFixed(2);
     }
 
     static fromSourceGrouping(value: any): string | null | undefined {
-        return parseInt(this.fromSource(value) + '').toFixed(2);
+        return parseInt(`${NumberFormaterCustom.fromSource(value)}`, 10).toFixed(2);
     }
 
     static placeholder() {

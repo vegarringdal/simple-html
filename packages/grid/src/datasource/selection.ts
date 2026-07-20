@@ -1,4 +1,4 @@
-import { Datasource } from './dataSource';
+import type { Datasource } from './dataSource';
 
 export class Selection {
     private selectedRows: number;
@@ -105,13 +105,14 @@ export class Selection {
                             this.lastRowSelected = currentRow;
                             break;
 
-                        case this.lastKeyKodeUsed === 'ctrl' && currentKeyKode === 'shift':
+                        case this.lastKeyKodeUsed === 'ctrl' && currentKeyKode === 'shift': {
                             const oldSel = this.getSelectedRows();
                             this.selectRange(this.lastRowSelected, currentRow);
                             const newSel = this.getSelectedRows();
                             this.setSelectedRows(oldSel.concat(newSel));
 
                             break;
+                        }
 
                         case this.lastKeyKodeUsed === 'ctrl' && currentKeyKode === 'ctrl':
                             isSel = this.isSelected(currentRow);
@@ -192,7 +193,7 @@ export class Selection {
      * todo, optional key
      */
     private getRowKey(row: number): string | number {
-        return this.dataSource.getRow(row) && this.dataSource.getRow(row).__KEY;
+        return this.dataSource.getRow(row)?.__KEY;
     }
 
     private getRowKeys(): any[] {

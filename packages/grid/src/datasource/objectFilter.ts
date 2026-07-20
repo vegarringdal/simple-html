@@ -1,5 +1,5 @@
-import { FilterAttributeSimple } from './filterArgument';
-import { FilterComparisonOperator } from './filterComparisonOperator';
+import type { FilterAttributeSimple } from './filterArgument';
+import type { FilterComparisonOperator } from './filterComparisonOperator';
 
 export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     let result = true;
@@ -66,8 +66,8 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     0
                 );
                 rowValue = rowValue.getTime();
-            } catch (err) {
-                rowValue = rowValue;
+            } catch {
+                // conversion failed, keep rowValue as it was
             }
 
             try {
@@ -82,7 +82,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     0
                 );
                 filterValue = filterValue.getTime();
-            } catch (err) {
+            } catch {
                 filterValue = filter.value;
             }
 
@@ -113,9 +113,9 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 filterValue = 0;
             }
             try {
-                rowValue = isNaN(Number(rowValue)) ? 0 : Number(rowValue);
-            } catch (err) {
-                rowValue = rowValue;
+                rowValue = Number.isNaN(Number(rowValue)) ? 0 : Number(rowValue);
+            } catch {
+                // conversion failed, keep rowValue as it was
             }
 
             if (filterOperator === 'END_WITH') {
@@ -137,15 +137,15 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
             }
             break;
-        case 'text':
+        case 'text': {
             if (rowValue === null || rowValue === undefined) {
                 rowValue = '';
             } else {
-                rowValue = rowValue + ''; // incase we got something else
+                rowValue = `${rowValue}`; // incase we got something else
                 rowValue = rowValue.toLowerCase();
             }
 
-            filterValue = filter.value + ''; // incase we got something else
+            filterValue = `${filter.value}`; // incase we got something else
             filterValue = filterValue.toLowerCase();
             filterOperator = filterOperator || 'BEGIN_WITH';
             newFilterOperator = filterOperator;
@@ -154,7 +154,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 return input
                     .replace(/[.^$+?()[\]{}\\|]/g, '\\$&')
                     .replace(/\*/g, '.*')
-                    .replace(/\%/g, '.*');
+                    .replace(/%/g, '.*');
             }
 
             // I need to check for wildcards, old method did not support wildcard in the middle
@@ -175,7 +175,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     newFilterOperator = 'REGEX-NOT';
                     filterValue = new RegExp(`.*${updateRegex(filterValue as string)}`, 'gim');
                     break;
-                case 'NOT_EQUAL_TO':
+                case 'NOT_EQUAL_TO': {
                     newFilterOperator = 'REGEX-NOT';
                     let start = '';
                     if (filterValue[0] !== '*' || filterValue[0] !== '%') {
@@ -187,6 +187,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                     }
                     filterValue = new RegExp(`${start}${updateRegex(filterValue as string)}${end}`, 'gim');
                     break;
+                }
                 default:
                     if (filterValue.split('*').length > 1 || filterValue.split('%').length > 1) {
                         newFilterOperator = 'REGEX';
@@ -207,6 +208,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 filterOperator = newFilterOperator as any;
             }
             break;
+        }
         case 'boolean':
             filterValue = filter.value;
             filterOperator = 'EQUAL';
@@ -217,12 +219,12 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
             // and also call i from here.. or just make it fail?
             try {
                 rowValue = rowValue.toLowerCase();
-            } catch (err) {
-                rowValue = rowValue;
+            } catch {
+                // conversion failed, keep rowValue as it was
             }
             try {
                 filterValue = filter.value.toLowerCase();
-            } catch (err) {
+            } catch {
                 filterValue = filter.value;
             }
             filterOperator = filterOperator || 'EQUAL';

@@ -1,7 +1,6 @@
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
-import { ColType, RowCache } from './colType';
+import type { ColType, RowCache } from './colType';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
@@ -9,12 +8,12 @@ import {
     RIGH_PINNED_COLTYPE,
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
-import { renderCell } from './renderCell';
-import { removeContextMenu } from './removeContextMenu';
+import { getElementByClassName } from './getElementByClassName';
 import { hideAllRows } from './hideAllRows';
+import { removeContextMenu } from './removeContextMenu';
+import { renderCell } from './renderCell';
 
 export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
-
     if (ctx.gridInterface.__getGridConfig().autoRemoveContextMenuOnScrollEvent) {
         removeContextMenu(ctx);
     }
@@ -132,7 +131,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
 
                     if (colType === LEFT_PINNED_COLTYPE) {
                         ctx.containerLeftColumnCache.forEach((x, i) => {
-                            const id = e.id + ':' + i.toString();
+                            const id = `${e.id}:${i.toString()}`;
                             const elc = ctx.columns.get(id);
 
                             if (elc && x.column !== -1) {
@@ -162,7 +161,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                     }
                     if (colType === MIDDLE_PINNED_COLTYPE) {
                         ctx.containerMiddleColumnCache.forEach((x, i) => {
-                            const id = e.id + ':' + i.toString();
+                            const id = `${e.id}:${i.toString()}`;
                             const colEl = ctx.columns.get(id);
 
                             if (colEl && x.column !== -1) {
@@ -194,7 +193,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                     }
                     if (colType === RIGH_PINNED_COLTYPE) {
                         ctx.containerRightColumnCache.forEach((x, i) => {
-                            const id = e.id + ':' + i.toString();
+                            const id = `${e.id}:${i.toString()}`;
                             const colEl = ctx.columns.get(id);
 
                             if (colEl && x.column !== -1) {

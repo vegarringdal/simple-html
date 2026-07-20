@@ -10,7 +10,7 @@ export class DateFormaterYYYYMMDDTHHMMSS {
         let returnValue: any = value;
 
         if (returnValue === null || returnValue === undefined || returnValue === '') {
-            return (returnValue = '');
+            return '';
         }
 
         returnValue = new Date(returnValue).toDateString();
@@ -26,26 +26,26 @@ export class DateFormaterYYYYMMDDTHHMMSS {
             const year = new Date(value).getFullYear();
             let month = (new Date(value).getMonth() + 1).toString();
             if (month.length === 1) {
-                month = '0' + month;
+                month = `0${month}`;
             }
             let day = new Date(value).getDate().toString();
             if (day.length === 1) {
-                day = '0' + day;
+                day = `0${day}`;
             }
 
             let hours = new Date(value).getHours().toString();
             if (hours.length === 1) {
-                hours = '0' + hours;
+                hours = `0${hours}`;
             }
 
             let minutes = new Date(value).getMinutes().toString();
             if (minutes.length === 1) {
-                minutes = '0' + minutes;
+                minutes = `0${minutes}`;
             }
 
             let seconds = new Date(value).getSeconds().toString();
             if (seconds.length === 1) {
-                seconds = '0' + seconds;
+                seconds = `0${seconds}`;
             }
             returnValue = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
         }
@@ -101,11 +101,11 @@ export class DateFormaterYYYYMMDDTHHMMSS {
 
         returnValue = new Date(
             YYYYMMDD[0],
-            parseInt(YYYYMMDD[1]) - 1,
-            parseInt(YYYYMMDD[2]),
-            parseInt(HHMMSS[0]),
-            parseInt(HHMMSS[1]),
-            parseInt(HHMMSS[2]),
+            parseInt(YYYYMMDD[1], 10) - 1,
+            parseInt(YYYYMMDD[2], 10),
+            parseInt(HHMMSS[0], 10),
+            parseInt(HHMMSS[1], 10),
+            parseInt(HHMMSS[2], 10),
             new Date().getMilliseconds()
         );
         if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
@@ -164,11 +164,11 @@ export class DateFormaterYYYYMMDDTHHMMSS {
 
         returnValue = new Date(
             YYYYMMDD[0],
-            parseInt(YYYYMMDD[1]) - 1,
-            parseInt(YYYYMMDD[2]),
-            parseInt(HHMMSS[0]),
-            parseInt(HHMMSS[1]),
-            parseInt(HHMMSS[2]),
+            parseInt(YYYYMMDD[1], 10) - 1,
+            parseInt(YYYYMMDD[2], 10),
+            parseInt(HHMMSS[0], 10),
+            parseInt(HHMMSS[1], 10),
+            parseInt(HHMMSS[2], 10),
             new Date().getMilliseconds()
         );
         if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
@@ -179,11 +179,11 @@ export class DateFormaterYYYYMMDDTHHMMSS {
     }
 
     static fromSourceDisplay(value: Date | string | null | undefined): string {
-        return this.fromSource(value);
+        return DateFormaterYYYYMMDDTHHMMSS.fromSource(value);
     }
 
     static fromSourceGrouping(value: Date | string | null | undefined): string {
-        return this.fromSourceDisplay(value);
+        return DateFormaterYYYYMMDDTHHMMSS.fromSourceDisplay(value);
     }
 
     static placeholder() {
