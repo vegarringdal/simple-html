@@ -175,39 +175,37 @@ Both sides are now normalised with `.getTime()`, so the comparison is between ti
 The day-only behaviour is unchanged and now covered: a different *time* on the same day is
 still not an edit, a different *day* still is.
 
-### Browser level gui tests (playwright)
+### Browser level gui tests - tried with playwright, then removed
 
-The happy-dom tests cannot cover the interactive half of the grid: happy-dom does no
-layout, so element sizes have to be stubbed, and anything depending on real geometry
-(resize, drag/drop, menu positioning, key navigation) would only be asserting against
-those stubs. Those features run in a real chromium instead.
+A playwright setup was built and working (32 tests against the real sample in chromium:
+sorting, label menu, row menu copy, date picker, column resize and reorder), then removed
+again. The interactive half of the grid needs real layout and real events, which happy-dom
+cannot give, but a browser suite is not worth the weight here - it does not replace the
+manual pass anyway, since it checks behaviour and not appearance.
 
-* `playwright.config.ts` — chromium only, viewport 1600x900, reuses a running dev server
-* `e2e/` — 18 tests: sorting, context menus, column resize, column reorder, filtering,
-  scrolling, footer counts
-* `e2e/helpers.ts` — reads back only the rows that are actually on screen, since the grid
-  recycles row elements and hides the unused ones
+If it is ever revisited, the notes below are what cost the most time to work out.
 
-Scripts: `e2e`, `e2e:record`, `e2e:ui`, `e2e:report`, `e2e:install`.
+* the playwright recorder (`playwright codegen`) **does** capture right clicks, but **not**
+  drag operations. So menus can be recorded, resize and reorder have to be hand written
+  with raw mouse events.
+* the recorder toolbar overlays the top of the page, which is exactly where the grid header
+  is, so the sample has to be pushed down to record anything in the header.
+* happy-dom needs `canvas.getContext('2d').measureText` and element sizes stubbed, since it
+  does no layout. See `grid/__tests__/gridTestHelpers.ts`, which is still in use.
 
-#### Recording instead of writing
+#### Behaviour the browser testing turned up
 
-`npm run e2e:record` opens the app with the playwright recorder and writes what you click
-to `e2e/_recording.spec.ts`. That is the intended way to add tests here - the recorded
-selectors are the ones that actually match what you clicked.
+Independent of the tooling, and worth keeping:
 
-Worth knowing, found the hard way:
-
-* the recorder does **not** capture right clicks or drag operations, so context menus,
-  column resize and column reorder have to be hand written. They are, in
-  `contextMenu.spec.ts` and `columnResizeAndReorder.spec.ts`, and they reuse the selectors
-  the recorder found for the labels.
-* the header stacks two overlapping `.simple-html-label` elements at the same coordinates,
-  so a hand picked label selector gets rejected as "covered". `getByText('Age')` works.
-* the resize handle spans the whole header height, but the filter input covers its lower
-  half - grab it near the top or the click lands in the filter box instead.
-* the sample grid container was moved down to `top: 60px` so the recorder toolbar does not
-  cover the grid header.
+* **columns are virtualised horizontally** - a column that is off screen does not exist in
+  the dom at all
+* **the paste and clear row menu entries differ by one space** - `Cell (sel.rows)` is
+  Paste, `Cell (sel. rows)` is Clear. Easy to hit the wrong one, for a test *or* a user.
+  Worth renaming.
+* **the resize handle spans the full header height but the filter input covers its lower
+  half** - only the top part of the handle is actually grabbable
+* **two `.simple-html-label` elements are stacked at the same coordinates** in the header,
+  so the lower one intercepts clicks aimed at the upper one
 
 ### Test suite expanded before touching more code
 

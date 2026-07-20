@@ -5,6 +5,3 @@ npm-debug.log
 dist
 packages/*/dist
 coverage
-.playwright-browsers
-playwright-report
-test-results
