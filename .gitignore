@@ -3,5 +3,6 @@ npm-debug.log
 .idea
 .cache
 dist_dev/
+docs/
 #packages/*/dist
 coverage

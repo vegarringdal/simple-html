@@ -1,21 +1,19 @@
 # @simple-html/grid
 
-Package: `None afetr 20.07.2026, will use just branches from now on`
+> Package: `None after 20.07.2026, will use just branches from now on`
 
 Only lit-html as dependency
 
 
 Sample:
-* [sample](https://vegarringdal.github.io/simple-html/demo/index.html)
+* see `npm start`
 
 API docs:
-*  [Grid](https://vegarringdal.github.io/simple-html/grid/index.html)
+* see `npm run typedoc-grid` and see docs folder
 
 Source code: (have minimal sample of usage)
-*  [Grid](https://github.com/vegarringdal/simple-html/packages/grid)
+* see `/packages/grid`
 
-BundlePhobia: (bundle size)
-* [Grid](https://bundlephobia.com/package/@simple-html/grid)
 
 # Minimal code sample
 
