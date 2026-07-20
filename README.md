@@ -1,8 +1,8 @@
 # @simple-html/grid
 
-> Package: `None after 20.07.2026, will use just branches`
+Only lit-html as dependency, you need to install this manually, since --allow-git=root will skip it
 
-Only lit-html as dependency
+> Package: `None - after 20.07.2026, will use just branches`
 
 
 # Sample:
