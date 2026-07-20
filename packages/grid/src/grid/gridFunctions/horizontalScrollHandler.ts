@@ -1,14 +1,13 @@
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
-import { ColType } from './colType';
+import type { ColType } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
-import { renderCell } from './renderCell';
+import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 import { removeContextMenu } from './removeContextMenu';
+import { renderCell } from './renderCell';
 
 export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: ColType = MIDDLE_PINNED_COLTYPE) {
-
     if (ctx.gridInterface.__getGridConfig().autoRemoveContextMenuOnScrollEvent) {
         removeContextMenu(ctx);
     }
@@ -144,7 +143,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
         rowCache.forEach((e, no) => {
             if (e.row !== -1 || (noData && no)) {
                 columnCache.forEach((x, i) => {
-                    const id = e.id + ':' + i.toString();
+                    const id = `${e.id}:${i.toString()}`;
                     const colEl = ctx.columns.get(id);
 
                     if (x.column === -1) {
@@ -194,7 +193,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
                                 header.style.transform = transform;
 
                                 for (let c = 0; c < header.children.length; c++) {
-                                    const cellNo = parseInt(header.children[c].getAttribute('cellNo'));
+                                    const cellNo = parseInt(header.children[c].getAttribute('cellNo'), 10);
                                     renderCell(ctx, header.children[c] as HTMLElement, 0, x.column, cellNo, idPrefix);
                                 }
                             }

@@ -1,17 +1,17 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import { FilterArgument } from '../../datasource/filterArgument';
-import { Entity } from '../../datasource/entity';
+import type { Entity } from '../../datasource/entity';
+import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
+import { clearAllColumnFilters } from './clearAllColumnFilters';
+import type { ColType } from './colType';
 import { creatElement } from './createElement';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import type { HTMLCellElement } from './HTMLCellElement';
 import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
-import { clearAllColumnFilters } from './clearAllColumnFilters';
 import { removeContextMenu } from './removeContextMenu';
 
 export function contextmenuFilter(
@@ -86,7 +86,7 @@ export function contextmenuFilter(
                     cellConfig,
                     intersection.length ? intersection : null,
                     getContext().searchInput ? getContext().searchInput : null,
-                    intersection.length ? true : false
+                    !!intersection.length
                 );
             } else {
                 filterCallback(
@@ -119,22 +119,33 @@ export function contextmenuFilter(
                     !getContext().availableOnly;
                 reRender();
             };
+            /**
+             * row count per value, in parentheses.
+             * Only shown when the list is complete - if values were dropped because of the
+             * DROPDOWN_FILTER_MAX_ROWS cap the counts would be misleading.
+             */
+            const countFor = (rowData: any) => {
+                if (getContext().data.truncated) {
+                    return '';
+                }
+                const count = getContext().data.counts?.get(rowData);
+                return count ? ` (${count})` : '';
+            };
+
             return Array.from(getContext().data.dataFilterSetFull).map((rowData: any) => {
-                return html`<div style="padding:2px">
+                return html`<div class="simple-html-grid-menu-checkbox">
                     <input
-                        style="padding:2px"
                         type="checkbox"
                         .checked=${live(getContext().data.dataFilterSet.has(rowData))}
                         @click=${() => {
-                        filterValueClick(rowData);
-                    }}
+                            filterValueClick(rowData);
+                        }}
                     /><label
-                        style="padding:2px"
                         @click=${() => {
-                        filterValueClick(rowData);
-                    }}
+                            filterValueClick(rowData);
+                        }}
                     >
-                        ${rowData === 'NULL' ? 'Blank' : rowData}</label
+                        ${rowData === 'NULL' ? 'Blank' : rowData}${countFor(rowData)}</label
                     >
                 </div>`;
             });
@@ -187,16 +198,16 @@ export function contextmenuFilter(
             // if we have more then DROPDOWN_FILTER_MAX_ROWS we display warning
             // since we only display first DROPDOWN_FILTER_MAX_ROWS row
             return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                ${getContext().data.dataFilterSetFull.size > DROPDOWN_FILTER_MAX_ROWS
-                    ? html`<div class="max-row-info-warning">Showing only first ${DROPDOWN_FILTER_MAX_ROWS}  !</div>`
-                    : html`<div class="max-row-info">${getContext().data.dataFilterSetFull.size} rows found</div>`}
-                <div style="padding:2px">
-                    <input
-                        style="padding:2px"
-                        type="checkbox"
-                        .checked=${live(getContext().selectAll)}
+                ${
+                    getContext().data.truncated
+                        ? html`<div class="max-row-info-warning">Showing only first ${DROPDOWN_FILTER_MAX_ROWS}  !</div>`
+                        : html`<div class="max-row-info">${getContext().data.dataFilterSetFull.size} rows found</div>`
+                }
+                <div class="simple-html-grid-menu-checkbox">
+                    <input type="checkbox" .checked=${live(getContext().selectAll)} @click=${() => clickHandler()} /><label
                         @click=${() => clickHandler()}
-                    /><label style="padding:2px" @click=${() => clickHandler()}>Select All</label>
+                        >Select All</label
+                    >
                 </div>
 
                 ${filterValues()}
@@ -234,8 +245,8 @@ export function contextmenuFilter(
             <div
                 class="simple-html-label-button-menu-bottom"
                 @click=${() => {
-                runFilterClick();
-            }}
+                    runFilterClick();
+                }}
             >
                 Run Search
             </div>`;
@@ -279,30 +290,30 @@ export function contextmenuFilter(
                     <div
                         class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
-                        cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
-                        updateFilter();
-                        removeContextMenu(ctx);
-                    }}
+                            cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
+                            updateFilter();
+                            removeContextMenu(ctx);
+                        }}
                     >
                         Greater than or equal
                     </div>
                     <div
                         class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
-                        cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
-                        updateFilter();
-                        removeContextMenu(ctx);
-                    }}
+                            cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
+                            updateFilter();
+                            removeContextMenu(ctx);
+                        }}
                     >
                         Less than or equal
                     </div>
                     <div
                         class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                         @click=${() => {
-                        cellConfig.operator = 'EQUAL';
-                        updateFilter();
-                        removeContextMenu(ctx);
-                    }}
+                            cellConfig.operator = 'EQUAL';
+                            updateFilter();
+                            removeContextMenu(ctx);
+                        }}
                     >
                         Equal
                     </div>`;
@@ -314,30 +325,30 @@ export function contextmenuFilter(
                 <div
                     class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
                     @click=${() => {
-                    cellConfig.operator = 'EQUAL';
-                    updateFilter();
-                    removeContextMenu(ctx);
-                }}
+                        cellConfig.operator = 'EQUAL';
+                        updateFilter();
+                        removeContextMenu(ctx);
+                    }}
                 >
                     Equal
                 </div>
                 <div
                     class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
                     @click=${() => {
-                    cellConfig.operator = 'NOT_EQUAL_TO';
-                    updateFilter();
-                    removeContextMenu(ctx);
-                }}
+                        cellConfig.operator = 'NOT_EQUAL_TO';
+                        updateFilter();
+                        removeContextMenu(ctx);
+                    }}
                 >
                     Not Equal
                 </div>
                 <div
                     class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
                     @click=${() => {
-                    cellConfig.operator = 'CONTAINS';
-                    updateFilter();
-                    removeContextMenu(ctx);
-                }}
+                        cellConfig.operator = 'CONTAINS';
+                        updateFilter();
+                        removeContextMenu(ctx);
+                    }}
                 >
                     Contains
                 </div>
@@ -440,18 +451,18 @@ export function contextmenuFilter(
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                    clearColumnFilter();
-                    removeContextMenu(ctx);
-                }}
+                        clearColumnFilter();
+                        removeContextMenu(ctx);
+                    }}
                 >
                     Clear Filter
                 </div>
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                    clearAllColumnFilters(ctx);
-                    removeContextMenu(ctx);
-                }}
+                        clearAllColumnFilters(ctx);
+                        removeContextMenu(ctx);
+                    }}
                 >
                     Clear All Filters
                 </div>
@@ -459,18 +470,18 @@ export function contextmenuFilter(
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                    setBlankOrNotBlank('IS_BLANK');
-                    removeContextMenu(ctx);
-                }}
+                        setBlankOrNotBlank('IS_BLANK');
+                        removeContextMenu(ctx);
+                    }}
                 >
                     Set "Is Blank"
                 </div>
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                    setBlankOrNotBlank('IS_NOT_BLANK');
-                    removeContextMenu(ctx);
-                }}
+                        setBlankOrNotBlank('IS_NOT_BLANK');
+                        removeContextMenu(ctx);
+                    }}
                 >
                     Set "Is Not Blank"
                 </div>
@@ -479,8 +490,8 @@ export function contextmenuFilter(
                 <div
                     class="simple-html-grid-menu-item"
                     @click=${() => {
-                    openFilterEditor(ctx);
-                }}
+                        openFilterEditor(ctx);
+                    }}
                 >
                     Advanced Filter
                 </div>

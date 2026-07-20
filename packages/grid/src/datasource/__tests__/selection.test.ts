@@ -1,4 +1,4 @@
-import { describe, beforeAll, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 
 const simpleArray = [{ name: 'person1' }, { name: 'person2' }, { name: 'person3' }, { name: 'person4' }, { name: 'person5' }];

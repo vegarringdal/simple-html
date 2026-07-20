@@ -1,6 +1,6 @@
-import { Datasource } from './dataSource';
-import { DataTypes } from './filterArgument';
-import { ValueFormater } from './valueFormater';
+import type { Datasource } from './dataSource';
+import type { DataTypes } from './filterArgument';
+import type { ValueFormater } from './valueFormater';
 
 /**
  * default dateformater - YYYY-MM-DD

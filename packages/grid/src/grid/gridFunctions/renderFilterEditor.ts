@@ -1,26 +1,49 @@
-import { html, TemplateResult, render } from 'lit-html';
-import { FilterArgument } from '../../datasource/filterArgument';
+import { html, render, type TemplateResult } from 'lit-html';
+import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Grid } from '../grid';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
-import { creatElement } from './createElement';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { removeContextMenu } from './removeContextMenu';
-import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { contextmenuDate } from './contextmenuDate';
+import { creatElement } from './createElement';
+import type { HTMLCellElement } from './HTMLCellElement';
+import { rebuildHeaderColumns } from './rebuildHeaderColumns';
+import { removeContextMenu } from './removeContextMenu';
+import { attachTooltips, hideTooltip, tooltip, tooltipsEnabled } from './tooltip';
 
 /**
  * internal method to generate html for filter editor
  * @param filterArg
  */
 export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
+    /**
+     * the dialog is thrown away and rebuilt on every edit, so remember where the user put
+     * it and how big they made it, otherwise it jumps back to the middle on every click
+     */
+    let savedBox: { left: string; top: string; width: string; height: string } | null = null;
+
+    hideTooltip();
+
     if (ctx.filterEditorContainer) {
+        const previous = ctx.filterEditorContainer.querySelector('.filter-editor-content') as HTMLElement;
+        if (previous?.style.left) {
+            savedBox = {
+                left: previous.style.left,
+                top: previous.style.top,
+                width: previous.style.width,
+                height: previous.style.height
+            };
+        }
         document.body.removeChild(ctx.filterEditorContainer);
     }
     /**
      * main container holding data/setting center
      */
     const filterEditorContainer = creatElement('div', 'filter-editor-container');
+    if (tooltipsEnabled(ctx)) {
+        // data-tooltip is always written, this is what renders the built in tooltip for it
+        filterEditorContainer.classList.add('simple-html-grid-tooltips');
+        attachTooltips(filterEditorContainer);
+    }
     const filterEditorGridCssContext = creatElement('div', 'simple-html-grid');
     filterEditorContainer.appendChild(filterEditorGridCssContext);
 
@@ -233,7 +256,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 label = ref.label;
             }
 
+            // same look as the other two pickers, it opens a menu the same way
             filterElement = html`<div
+                class="grid-pick grid-text-center"
+                data-tooltip=${tooltip(ctx, 'filterEditor.pickValueAttribute')}
                 @click=${(e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -257,7 +283,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 </div>
                 <div class="grid-flex">
                     <div
-                        class="grid-flex-1 grid-text-center"
+                        class="grid-flex-1 grid-text-center grid-pick"
+                        data-tooltip=${tooltip(ctx, 'filterEditor.pickAttribute')}
                         @click=${(e: MouseEvent) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -275,7 +302,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     </div>
 
                     <div
-                        class="grid-flex-1 grid-text-center"
+                        class="grid-flex-1 grid-text-center grid-pick"
+                        data-tooltip=${tooltip(ctx, 'filterEditor.pickOperator')}
                         @click=${(e: MouseEvent) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -287,17 +315,19 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             });
                         }}
                     >
-                        ${arg.operator
-                            ? arg.operator
-                                  .split('_')
-                                  .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
-                                  .join(' ')
-                            : 'Click me to select Operator'}
+                        ${
+                            arg.operator
+                                ? arg.operator
+                                      .split('_')
+                                      .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
+                                      .join(' ')
+                                : 'Click me to select Operator'
+                        }
                     </div>
                     <div class="grid-flex-1 grid-text-center ">${filterElement}</div>
                 </div>
                 <div class="grid-flex-reverse grid-m-4">
-                    <div class="grid-m-4">
+                    <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.deleteCondition')}>
                         ${trashIcon(() => {
                             let x: number = null;
                             context.forEach((row, i) => {
@@ -309,7 +339,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             renderFilterEditor(ctx, structuredClone(filterArg));
                         })}
                     </div>
-                    <div class="grid-m-4">
+                    <div
+                        class="grid-m-4"
+                        data-tooltip=${tooltip(ctx, arg.valueType === 'ATTRIBUTE' ? 'filterEditor.useValue' : 'filterEditor.useAttribute')}
+                    >
                         ${inputSwitchIcon(arg, () => {
                             renderFilterEditor(ctx, structuredClone(filterArg));
                         })}
@@ -340,6 +373,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     <div class="grid-flex grid-m-4">
                         <div
                             class="grid-m-4 grid-button-small grid-text-center grid-text-label"
+                            data-tooltip=${tooltip(ctx, arg.logicalOperator === 'AND' ? 'filterEditor.operatorAnd' : 'filterEditor.operatorOr')}
                             @click=${() => {
                                 arg.logicalOperator = arg.logicalOperator === 'AND' ? 'OR' : 'AND';
                                 renderFilterEditor(ctx, structuredClone(filterArg));
@@ -347,9 +381,9 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                         >
                             <span> ${arg.logicalOperator}</span>
                         </div>
-                        <div class="grid-m-4">
+                        <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.wrapGroup')}>
                             ${addFilterGroupIcon(false, () => {
-                                let oldFilters = arg.filterArguments;
+                                const oldFilters = arg.filterArguments;
                                 arg.filterArguments = [
                                     {
                                         type: 'GROUP',
@@ -361,7 +395,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
-                        <div class="grid-m-4">
+                        <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.addSubGroup')}>
                             ${addFilterGroupIcon(true, () => {
                                 arg.filterArguments.push({
                                     type: 'GROUP',
@@ -372,7 +406,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
-                        <div class="grid-m-4">
+                        <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.addCondition')}>
                             ${addFilterConditionIcon(() => {
                                 arg.filterArguments.push({
                                     type: 'CONDITION'
@@ -380,7 +414,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
-                        <div class="grid-m-4">
+                        <div
+                            class="grid-m-4"
+                            data-tooltip=${tooltip(ctx, context ? 'filterEditor.deleteGroup' : 'filterEditor.clearAll')}
+                        >
                             ${trashIcon(() => {
                                 if (context) {
                                     let x: number = null;
@@ -405,7 +442,20 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
         </div>`;
     };
 
-    const headerTemplate = () => html`<div class="grid-text-title">Filter Editor</div>`;
+    /**
+     * closes the dialog, used by the titlebar X and the Close button
+     */
+    const closeEditor = () => {
+        removeContextMenu(ctx);
+        hideTooltip();
+        filterEditorContainer.parentElement?.removeChild(filterEditorContainer);
+        ctx.filterEditorContainer = null;
+    };
+
+    const headerTemplate = () => html`<div class="grid-text-title filter-editor-titlebar">
+        <span data-tooltip=${tooltip(ctx, 'filterEditor.title')}>Filter Editor</span>
+        <span class="filter-editor-close" data-tooltip=${tooltip(ctx, 'filterEditor.close')} @click=${() => closeEditor()}>&#10005;</span>
+    </div>`;
 
     const clearOldValues = () => {
         ctx.gridInterface.__getGridConfig().attributes.forEach((e) => {
@@ -414,13 +464,13 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
     };
 
     const footerTemplate = () => {
-        return html`<div class="grid-flex-reverse grid-m-4">
+        return html`<div class="grid-flex-reverse grid-m-4 filter-editor-footer">
             <div
-                class="grid-button grid-text-center"
+                class="grid-button grid-text-center grid-button-primary"
+                data-tooltip=${tooltip(ctx, 'filterEditor.filterAndClose')}
                 @click=${() => {
                     removeContextMenu(ctx);
-                    filterEditorContainer.parentElement.removeChild(filterEditorContainer);
-                    ctx.filterEditorContainer = null;
+                    closeEditor();
 
                     ctx.gridInterface.getDatasource().filter(JSON.parse(JSON.stringify(filterArg)));
                     clearOldValues();
@@ -431,6 +481,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
             </div>
             <div
                 class="grid-button grid-text-center"
+                data-tooltip=${tooltip(ctx, 'filterEditor.filterOnly')}
                 @click=${() => {
                     removeContextMenu(ctx);
 
@@ -443,16 +494,28 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
             </div>
             <div
                 class="grid-button grid-text-center"
-                @click=${() => {
-                    removeContextMenu(ctx);
-                    filterEditorContainer.parentElement.removeChild(filterEditorContainer);
-                    ctx.filterEditorContainer = null;
-                }}
+                data-tooltip=${tooltip(ctx, 'filterEditor.closeButton')}
+                @click=${() => closeEditor()}
             >
                 Close
             </div>
         </div>`;
     };
+
+    /**
+     * grab areas for resizing, one per edge and one per corner.
+     * css `resize` only gives the bottom right corner, so these are wired up by hand.
+     */
+    const resizeHandles = () => html`
+        <div class="simple-html-resize-handle handle-n"></div>
+        <div class="simple-html-resize-handle handle-s"></div>
+        <div class="simple-html-resize-handle handle-w"></div>
+        <div class="simple-html-resize-handle handle-e"></div>
+        <div class="simple-html-resize-handle handle-nw"></div>
+        <div class="simple-html-resize-handle handle-ne"></div>
+        <div class="simple-html-resize-handle handle-sw"></div>
+        <div class="simple-html-resize-handle handle-se"></div>
+    `;
 
     /**
      * render dialog
@@ -464,6 +527,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg, null)}</div>
                 ${footerTemplate()}
             </div>
+            ${resizeHandles()}
         </div>`,
         filterEditorGridCssContext
     );
@@ -471,4 +535,137 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
     document.body.appendChild(filterEditorContainer);
 
     ctx.filterEditorContainer = filterEditorContainer;
+
+    /**
+     * position + size.
+     * The css only gives a default size, left/top are set here so the dialog can be
+     * dragged and resized without fighting a translate(-50%, -50%).
+     */
+    const content = filterEditorGridCssContext.querySelector('.filter-editor-content') as HTMLElement;
+    if (content) {
+        if (savedBox) {
+            content.style.left = savedBox.left;
+            content.style.top = savedBox.top;
+            content.style.width = savedBox.width;
+            content.style.height = savedBox.height;
+        } else {
+            // first open, center it on the viewport
+            content.style.left = `${Math.max(0, Math.round((window.innerWidth - content.offsetWidth) / 2))}px`;
+            content.style.top = `${Math.max(0, Math.round((window.innerHeight - content.offsetHeight) / 2))}px`;
+        }
+
+        makeDialogDraggable(content, content.querySelector('.filter-editor-titlebar') as HTMLElement);
+        makeDialogResizable(content);
+    }
+}
+
+/**
+ * resize from any edge or corner.
+ *
+ * Each handle says which edges it moves: dragging a west or north edge has to move
+ * left/top as well as the size, otherwise the opposite edge would walk across the screen.
+ */
+function makeDialogResizable(dialog: HTMLElement) {
+    const edges: Record<string, { north: boolean; south: boolean; west: boolean; east: boolean }> = {
+        'handle-n': { north: true, south: false, west: false, east: false },
+        'handle-s': { north: false, south: true, west: false, east: false },
+        'handle-w': { north: false, south: false, west: true, east: false },
+        'handle-e': { north: false, south: false, west: false, east: true },
+        'handle-nw': { north: true, south: false, west: true, east: false },
+        'handle-ne': { north: true, south: false, west: false, east: true },
+        'handle-sw': { north: false, south: true, west: true, east: false },
+        'handle-se': { north: false, south: true, west: false, east: true }
+    };
+
+    dialog.querySelectorAll('.simple-html-resize-handle').forEach((handle) => {
+        const side = Object.keys(edges).find((name) => handle.classList.contains(name));
+        if (!side) {
+            return;
+        }
+        const edge = edges[side];
+
+        (handle as HTMLElement).addEventListener('mousedown', (event: MouseEvent) => {
+            if (event.button !== 0) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+
+            const startX = event.clientX;
+            const startY = event.clientY;
+            const rect = dialog.getBoundingClientRect();
+
+            const style = window.getComputedStyle(dialog);
+            const minWidth = Number.parseInt(style.minWidth, 10) || 200;
+            const minHeight = Number.parseInt(style.minHeight, 10) || 120;
+
+            const mousemove = (e: MouseEvent) => {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                if (edge.east) {
+                    dialog.style.width = `${Math.max(minWidth, rect.width + dx)}px`;
+                }
+                if (edge.west) {
+                    // clamp the width first, so the left edge stops instead of pushing past it
+                    const width = Math.max(minWidth, rect.width - dx);
+                    dialog.style.width = `${width}px`;
+                    dialog.style.left = `${Math.round(rect.left + (rect.width - width))}px`;
+                }
+                if (edge.south) {
+                    dialog.style.height = `${Math.max(minHeight, rect.height + dy)}px`;
+                }
+                if (edge.north) {
+                    const height = Math.max(minHeight, rect.height - dy);
+                    dialog.style.height = `${height}px`;
+                    dialog.style.top = `${Math.round(rect.top + (rect.height - height))}px`;
+                }
+            };
+
+            const mouseup = () => {
+                document.removeEventListener('mousemove', mousemove);
+                document.removeEventListener('mouseup', mouseup);
+            };
+
+            document.addEventListener('mousemove', mousemove);
+            document.addEventListener('mouseup', mouseup);
+        });
+    });
+}
+
+/**
+ * drag the dialog around by its titlebar, kept inside the window
+ */
+function makeDialogDraggable(dialog: HTMLElement, handle: HTMLElement) {
+    if (!handle) {
+        return;
+    }
+
+    handle.addEventListener('mousedown', (event: MouseEvent) => {
+        // let the close button in the titlebar do its own thing
+        if (event.button !== 0 || (event.target as HTMLElement)?.classList.contains('filter-editor-close')) {
+            return;
+        }
+        event.preventDefault();
+
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const rect = dialog.getBoundingClientRect();
+
+        const mousemove = (e: MouseEvent) => {
+            // keep a bit of the dialog on screen so it can always be grabbed again
+            const left = Math.min(Math.max(rect.left + e.clientX - startX, 20 - rect.width), window.innerWidth - 40);
+            const top = Math.min(Math.max(rect.top + e.clientY - startY, 0), window.innerHeight - 30);
+            dialog.style.left = `${Math.round(left)}px`;
+            dialog.style.top = `${Math.round(top)}px`;
+        };
+
+        const mouseup = () => {
+            document.removeEventListener('mousemove', mousemove);
+            document.removeEventListener('mouseup', mouseup);
+        };
+
+        document.addEventListener('mousemove', mousemove);
+        document.addEventListener('mouseup', mouseup);
+    });
 }

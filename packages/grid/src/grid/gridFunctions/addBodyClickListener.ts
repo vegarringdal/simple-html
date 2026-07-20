@@ -1,4 +1,4 @@
-import { Grid } from '../grid';
+import type { Grid } from '../grid';
 import { removeContextMenu } from './removeContextMenu';
 
 /**

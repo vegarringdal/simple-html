@@ -1,19 +1,19 @@
+import type { Grid } from '../grid';
+import type { Columns } from '../gridConfig';
 import { asPx } from './asPx';
+import type { ColType, ColumnCache } from './colType';
 import { creatElement } from './createElement';
-import { dragEvent } from './dragEvent';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
 import { DIV } from './DIV';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType, ColumnCache } from './colType';
+import { dragEvent } from './dragEvent';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
-import { Columns } from '../gridConfig';
+import { getElementByClassName } from './getElementByClassName';
+import { getGroupingWidth } from './getGroupingWidth';
+import type { HTMLCellElement } from './HTMLCellElement';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { renderCell } from './renderCell';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
 import { verticalScrollHandler } from './verticalScrollHandler';
-import { getGroupingWidth } from './getGroupingWidth';
 
 /**
  * ctx also applies on drag/drop logic and resize column
@@ -165,7 +165,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  */
                 resizeElement.onmousedown = (event) => {
                     // resizing event started, we need to get refID (created column number)
-                    const refID = parseInt((event.target as HTMLElement).parentElement.getAttribute('refID'));
+                    const refID = parseInt((event.target as HTMLElement).parentElement.getAttribute('refID'), 10);
 
                     // first section here is to collect data we need
                     const clientX = event.clientX;

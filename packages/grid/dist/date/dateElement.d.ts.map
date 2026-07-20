@@ -1,0 +1,1 @@
+{"version":3,"file":"dateElement.d.ts","sourceRoot":"","sources":["../../src/date/dateElement.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,iBAAiB,CAAC;AAErD;;;GAGG;AACH,qBAAa,WAAY,SAAQ,WAAW;IACxC,OAAO,CAAC,aAAa,CAAgB;IAErC,gBAAgB,CAAC,aAAa,EAAE,aAAa;IAKtC,iBAAiB;IAMjB,oBAAoB;CAG9B"}

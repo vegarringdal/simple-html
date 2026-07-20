@@ -1,7 +1,7 @@
-import { FilterArgument } from '../../datasource/filterArgument';
-import { renderFilterEditor } from './renderFilterEditor';
-import { Grid } from '../grid';
+import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Grid } from '../grid';
 import { removeContextMenu } from './removeContextMenu';
+import { renderFilterEditor } from './renderFilterEditor';
 
 /**
  * opens filter editor with current filter

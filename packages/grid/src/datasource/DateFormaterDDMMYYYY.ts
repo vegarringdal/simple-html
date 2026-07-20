@@ -10,7 +10,7 @@ export class DateFormaterDDMMYYYY {
         let returnValue: any = value;
 
         if (returnValue === null || returnValue === undefined || returnValue === '') {
-            return (returnValue = '');
+            return '';
         }
 
         returnValue = new Date(returnValue).toDateString();
@@ -26,11 +26,11 @@ export class DateFormaterDDMMYYYY {
             const year = new Date(value).getFullYear();
             let month = (new Date(value).getMonth() + 1).toString();
             if (month.length === 1) {
-                month = '0' + month;
+                month = `0${month}`;
             }
             let day = new Date(value).getDate().toString();
             if (day.length === 1) {
-                day = '0' + day;
+                day = `0${day}`;
             }
             returnValue = `${day}.${month}.${year}`;
         }
@@ -71,8 +71,8 @@ export class DateFormaterDDMMYYYY {
 
         returnValue = new Date(
             x[2],
-            parseInt(x[1]) - 1,
-            parseInt(x[0]),
+            parseInt(x[1], 10) - 1,
+            parseInt(x[0], 10),
             new Date().getHours(),
             new Date().getMinutes(),
             new Date().getSeconds(),
@@ -117,7 +117,7 @@ export class DateFormaterDDMMYYYY {
             x[2] = new Date().getFullYear();
         }
 
-        returnValue = new Date(x[2], parseInt(x[1]) - 1, parseInt(x[0]), 0, 0, 0, 0);
+        returnValue = new Date(x[2], parseInt(x[1], 10) - 1, parseInt(x[0], 10), 0, 0, 0, 0);
         if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
             returnValue = '';
         }
@@ -126,11 +126,11 @@ export class DateFormaterDDMMYYYY {
     }
 
     static fromSourceDisplay(value: Date | string | null | undefined): string {
-        return this.fromSource(value);
+        return DateFormaterDDMMYYYY.fromSource(value);
     }
 
     static fromSourceGrouping(value: Date | string | null | undefined): string {
-        return this.fromSourceDisplay(value);
+        return DateFormaterDDMMYYYY.fromSourceDisplay(value);
     }
 
     static placeholder() {

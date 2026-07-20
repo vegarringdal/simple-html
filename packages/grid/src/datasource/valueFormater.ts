@@ -1,5 +1,5 @@
-import { DataTypes } from './filterArgument';
-import { Datasource } from './dataSource';
+import type { Datasource } from './dataSource';
+import type { DataTypes } from './filterArgument';
 
 export interface ValueFormater {
     datasource: Datasource;

@@ -1,7 +1,7 @@
 import { html, render } from 'lit-html';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
+import type { Grid } from '../grid';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
+import { getElementByClassName } from './getElementByClassName';
 
 export function rebuildFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');

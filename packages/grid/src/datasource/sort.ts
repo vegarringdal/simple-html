@@ -1,5 +1,5 @@
-import { SortArgument } from './sortArgument';
-import { Entity } from './entity';
+import type { Entity } from './entity';
+import type { SortArgument } from './sortArgument';
 
 export class Sort {
     private lastSorting: SortArgument[];
@@ -87,7 +87,7 @@ export class Sort {
             for (let i = 0; i < thisSort.length && result === 0; ++i) {
                 // loop until all are sorted
                 const currentObj = thisSort[i];
-                const isDate = this.dates.indexOf(currentObj.attribute) !== -1 ? true : false;
+                const isDate = this.dates.indexOf(currentObj.attribute) !== -1;
                 const v1 = obj1[currentObj.attribute] || '';
                 const v2 = obj2[currentObj.attribute] || '';
 
@@ -110,7 +110,7 @@ export class Sort {
                         // ASC
                         if (isDate) {
                             let vv1 = -1;
-                            if (v1 && v1.getTime) {
+                            if (v1?.getTime) {
                                 vv1 =
                                     new Date(
                                         new Date(v1).getFullYear(),
@@ -124,7 +124,7 @@ export class Sort {
                             }
 
                             let vv2 = 0;
-                            if (v2 && v2.getTime) {
+                            if (v2?.getTime) {
                                 vv2 =
                                     new Date(
                                         new Date(v2).getFullYear(),
@@ -162,7 +162,7 @@ export class Sort {
                     } else {
                         if (isDate) {
                             let vv1 = -1;
-                            if (v1 && v1.getTime) {
+                            if (v1?.getTime) {
                                 vv1 =
                                     new Date(
                                         new Date(v1).getFullYear(),
@@ -176,7 +176,7 @@ export class Sort {
                             }
 
                             let vv2 = 0;
-                            if (v2 && v2.getTime) {
+                            if (v2?.getTime) {
                                 vv2 =
                                     new Date(
                                         new Date(v2).getFullYear(),

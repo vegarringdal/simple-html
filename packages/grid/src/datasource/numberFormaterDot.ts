@@ -10,7 +10,7 @@ export class NumberFormaterDot {
     static fromSource(value: any): string | null | undefined {
         let returnValue = value;
 
-        if (isNaN(parseFloat(returnValue))) {
+        if (Number.isNaN(parseFloat(returnValue))) {
             returnValue = '';
         }
 
@@ -44,7 +44,7 @@ export class NumberFormaterDot {
             returnValue = returnValue.replace(',', '.');
         }
 
-        if (isNaN(parseFloat(returnValue))) {
+        if (Number.isNaN(parseFloat(returnValue))) {
             return 0;
         }
 
@@ -56,15 +56,15 @@ export class NumberFormaterDot {
     }
 
     static toFilter(value: any): number | null | undefined {
-        return this.toSource(value);
+        return NumberFormaterDot.toSource(value);
     }
 
     static fromSourceDisplay(value: any): string | null | undefined {
-        return this.fromSource(value);
+        return NumberFormaterDot.fromSource(value);
     }
 
     static fromSourceGrouping(value: any): string | null | undefined {
-        return this.fromSourceDisplay(value);
+        return NumberFormaterDot.fromSourceDisplay(value);
     }
 
     static placeholder() {

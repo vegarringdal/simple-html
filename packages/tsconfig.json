@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
-        "target": "es2020",
+        "target": "es2025",
         "module": "esNext",
-        "lib": ["es2021", "dom"],
-        "moduleResolution": "node",
+        "lib": ["es2025", "dom"],
+        "moduleResolution": "bundler",
         "isolatedModules": false,
         "esModuleInterop": true,
         "preserveConstEnums": true,
@@ -25,7 +25,6 @@
         "importHelpers": false,
         "strictNullChecks": false,
         "experimentalDecorators": true,
-        "baseUrl": "./",
         "rootDir": ".",
         "paths": {
             "@simple-html/grid": ["./grid/src"]

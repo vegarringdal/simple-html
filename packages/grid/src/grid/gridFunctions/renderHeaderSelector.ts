@@ -1,9 +1,9 @@
-import { Grid } from '../grid';
-import { render, html } from 'lit-html';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import { html, render } from 'lit-html';
+import type { Entity } from '../../datasource/entity';
+import type { Grid } from '../grid';
+import type { ColType } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
-import { Entity } from '../../datasource/entity';
+import type { HTMLCellElement } from './HTMLCellElement';
 
 export function renderHeaderSelector(
     ctx: Grid,

@@ -1,5 +1,5 @@
+import type { Grid } from '../grid';
 import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { verticalScrollHandler } from './verticalScrollHandler';
 

@@ -1,6 +1,6 @@
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
 
 /**
  * ctx adjust middle viewport, so scrolling width is correct compared to total columns and their width

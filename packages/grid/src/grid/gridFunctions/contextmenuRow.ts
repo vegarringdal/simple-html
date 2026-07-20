@@ -1,15 +1,17 @@
 import { html, render } from 'lit-html';
-import { Entity } from '../../datasource/entity';
+import { DateFormaterYYYYMMDD } from '../../datasource/DateFormaterYYYYMMDD';
+import type { Entity } from '../../datasource/entity';
+import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
+import type { ColType } from './colType';
 import { creatElement } from './createElement';
 import { getAttributeColumns } from './getAttributeColumns';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import type { HTMLCellElement } from './HTMLCellElement';
 import { prettyPrintString } from './prettyPrintString';
-import { triggerScrollEvent } from './triggerScrollEvent';
+import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
-import { DateFormaterYYYYMMDD } from '../../datasource/DateFormaterYYYYMMDD';
+import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function contextmenuRow(
     ctx: Grid,
@@ -57,7 +59,7 @@ export function contextmenuRow(
                         mso-number-format:"General";
                     }
                    .text{
-                        mso-number-format:"\@";
+                        mso-number-format:"@";
                     }
                    .date {
                         mso-number-format:"Short Date";
@@ -65,7 +67,7 @@ export function contextmenuRow(
                     table {
                         border-collapse: collapse;
                         border:.5pt solid windowtext;
-                        mso-displayed-decimal-separator:"\.";
+                        mso-displayed-decimal-separator:".";
                     }
                     td,
                     th {
@@ -79,9 +81,9 @@ export function contextmenuRow(
 
         let tableHeader = '<tr>';
         attributes.forEach((attribute) => {
-            tableHeader = tableHeader + '<th>' + label(attribute) + '</th>';
+            tableHeader = `${tableHeader}<th>${label(attribute)}</th>`;
         });
-        tableHeader = tableHeader + '</tr>';
+        tableHeader = `${tableHeader}</tr>`;
 
         let tableInnerData = '';
         let justData = '';
@@ -93,7 +95,7 @@ export function contextmenuRow(
 
         const loopData = (entity: Entity) => {
             if (!entity.__group) {
-                tableInnerData = tableInnerData + '<tr>';
+                tableInnerData = `${tableInnerData}<tr>`;
                 attributes.forEach((attribute, i) => {
                     const cellConfig = attConfig[attribute];
                     const colData = entity[attribute];
@@ -104,30 +106,29 @@ export function contextmenuRow(
                     }
 
                     if (i > 0) {
-                        justData = justData + '\t';
+                        justData = `${justData}\t`;
                     }
 
                     if (dataType === 'date') {
                         const data = DateFormaterYYYYMMDD.fromSource(colData);
                         justData = justData + data;
-                        tableInnerData = tableInnerData + '<td>' + data + '</td>';
+                        tableInnerData = `${tableInnerData}<td>${data}</td>`;
                     } else if (dataType === 'number') {
                         const data = colData;
                         justData = justData + data;
-                        tableInnerData = tableInnerData + '<td class="number">' + (data || '') + '</td >';
+                        tableInnerData = `${tableInnerData}<td class="number">${data || ''}</td >`;
                     } else {
                         //
                         justData = justData + colData;
-                        tableInnerData = tableInnerData + '<td class="text">' + (colData || '') + '</td>';
+                        tableInnerData = `${tableInnerData}<td class="text">${colData || ''}</td>`;
                     }
                 });
-                if (onlyCurrentEntity || overRideCurrentEntity) {
-                    justData = justData;
-                } else {
-                    justData = justData + '\r\n';
+                // single entity copy is one line only, so no trailing carriage return
+                if (!onlyCurrentEntity && !overRideCurrentEntity) {
+                    justData = `${justData}\r\n`;
                 }
 
-                tableInnerData = tableInnerData + '</tr>';
+                tableInnerData = `${tableInnerData}</tr>`;
             }
         };
 
@@ -219,7 +220,7 @@ export function contextmenuRow(
 
         function add(prev: number, cur: number) {
             let x = parseFloat(cur as any);
-            if (isNaN(x)) {
+            if (Number.isNaN(x)) {
                 x = 0;
             }
 
@@ -252,7 +253,7 @@ export function contextmenuRow(
         let minValue: number = null;
         selectedRows.forEach((index: number) => {
             const x = allrows[index];
-            if (x && x[attribute]) {
+            if (x?.[attribute]) {
                 curValue = add(curValue, x[attribute]);
                 maxValue = max(maxValue, x[attribute]);
                 minValue = min(minValue, x[attribute]);
@@ -340,7 +341,7 @@ export function contextmenuRow(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    let data;
+                    let data: string;
                     if (navigator.clipboard.readText) {
                         data = await navigator.clipboard.readText();
                         pasteIntoCells(attribute, data);
@@ -372,6 +373,96 @@ export function contextmenuRow(
                 }}
             >
                 Cell <i>(sel. rows)</i>
+            </div>`;
+    };
+
+    /**
+     * Filter on the value in the cell that was right clicked.
+     *
+     * Replace throws away whatever filter is there and keeps only this one, add keeps the
+     * existing filter and puts this condition in front of it, joined with AND.
+     */
+    const filterTemplate = () => {
+        if (rowData?.__group) {
+            // a group row has no value of its own to filter on
+            return null;
+        }
+
+        const datasource = ctx.gridInterface.getDatasource();
+        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const value = rowData?.[attribute];
+        const isBlank = value === null || value === undefined || value === '';
+
+        const conditionForCell = (): FilterArgument =>
+            ({
+                type: 'CONDITION',
+                attribute,
+                attributeType: cellConfig?.type || 'text',
+                valueType: 'VALUE',
+                // filtering a blank cell on EQUAL '' would match nothing useful
+                operator: isBlank ? 'IS_BLANK' : 'EQUAL',
+                value: isBlank ? null : value
+            }) as FilterArgument;
+
+        const applyFilter = (filterArgument: FilterArgument) => {
+            datasource.filter(filterArgument);
+            // the quick filter inputs in the header would otherwise still show the old text
+            ctx.gridInterface.__getGridConfig().attributes.forEach((e) => {
+                e.currentFilterValue = '';
+            });
+            rebuildHeaderColumns(ctx);
+            removeContextMenu(ctx);
+        };
+
+        const replaceFilter = () => {
+            applyFilter({
+                type: 'GROUP',
+                logicalOperator: 'AND',
+                filterArguments: [conditionForCell()]
+            } as FilterArgument);
+        };
+
+        const addToFilter = () => {
+            const current = datasource.getFilter();
+            let existing: FilterArgument[] = [];
+            if (current?.filterArguments?.length) {
+                existing = current.filterArguments;
+            } else if (current) {
+                // a single condition that was never wrapped in a group
+                existing = [current];
+            }
+
+            applyFilter({
+                type: 'GROUP',
+                logicalOperator: 'AND',
+                filterArguments: [conditionForCell(), ...existing]
+            } as FilterArgument);
+        };
+
+        return html`<div class="simple-html-grid-menu-section">Filter:</div>
+            <hr class="hr-solid" />
+            <div class="simple-html-grid-menu-item" @click=${() => replaceFilter()}>Replace filter <i>(all)</i></div>
+            <div class="simple-html-grid-menu-item" @click=${() => addToFilter()}>Add to filter <i>(and)</i></div>`;
+    };
+
+    /**
+     * dim cells that repeat the value of the row above
+     */
+    const dimRepeatedTemplate = () => {
+        const gridConfig = ctx.gridInterface.__getGridConfig();
+        const enabled = gridConfig.dimRepeatedValues === true;
+
+        return html`<div class="simple-html-grid-menu-section">View:</div>
+            <hr class="hr-solid" />
+            <div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    gridConfig.dimRepeatedValues = !enabled;
+                    removeContextMenu(ctx);
+                    triggerScrollEvent(ctx);
+                }}
+            >
+                ${enabled ? '✓ ' : ''}Use dimmed values
             </div>`;
     };
 
@@ -461,7 +552,8 @@ export function contextmenuRow(
             <hr class="hr-solid" />
 
             ${copyCellTemplate()} ${copyColumnOnSelectedRowsTemplate()} ${copyAllOnSelectedRowsTemplate()}
-            ${copySelectedColumnsOnSelectedRowsTemplate()} ${pasteAndClearTemplate()} ${summaryTemplate()}
+            ${copySelectedColumnsOnSelectedRowsTemplate()} ${filterTemplate()} ${dimRepeatedTemplate()}
+            ${pasteAndClearTemplate()} ${summaryTemplate()}
         </div>`,
         contextMenu
     );

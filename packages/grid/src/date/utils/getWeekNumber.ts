@@ -9,7 +9,7 @@ export function getWeekNumbers(date: Date, isoWeek: boolean) {
         Math.floor(
             (date.getTime() - newYear.getTime() - (date.getTimezoneOffset() - newYear.getTimezoneOffset()) * 60000) / 86400000
         ) + 1;
-    let weeknum;
+    let weeknum: number;
     //if the year starts before the middle of a week
     if (day < 4) {
         weeknum = Math.floor((daynum + day - 1) / 7) + 1;

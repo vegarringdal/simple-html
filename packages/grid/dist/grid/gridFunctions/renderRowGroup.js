@@ -1,0 +1,44 @@
+import { html, render, svg } from 'lit-html';
+export function renderRowGroup(ctx, cell, _row, column, _celno, colType, _cellType, _attribute, rowData) {
+    if (rowData?.__group) {
+        cell.style.display = 'block';
+        cell.style.zIndex = '10';
+    }
+    else {
+        cell.style.display = 'none';
+    }
+    // TODO: I do not like how hardcoded grouping indent is
+    // add it as a option
+    render(html `<div
+            class="simple-html-absolute-fill simple-html-label-group"
+            style="padding-left:${rowData?.__groupLvl * 15 || 0}px"
+            @click=${() => {
+        console.log('group selected, do I want something here ?:', column, colType);
+    }}
+        >
+            <div
+                class="${rowData?.__groupID ? 'simple-html-grid-grouping-row-group' : 'simple-html-grid-grouping-row'}"
+                style="width:${rowData?.__groupLvl * 15 || 0}px;display:${rowData?.__groupLvl || 0 ? 'block' : 'none'}"
+            ></div>
+            <i
+                @click=${() => {
+        if (rowData?.__groupID) {
+            if (rowData?.__groupExpanded) {
+                ctx.gridInterface.getDatasource().collapseGroup(rowData.__groupID);
+            }
+            else {
+                ctx.gridInterface.getDatasource().expandGroup(rowData.__groupID);
+            }
+        }
+    }}
+            >
+                <svg class="simple-html-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                    ${rowData?.__groupExpanded
+        ? svg `<path d="M4.8 7.5h6.5v1H4.8z" />`
+        : svg `<path d="M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z" />`}
+                </svg></i
+            >
+            <span class=""> ${rowData?.__groupName} (${rowData?.__groupTotal})</span>
+        </div>`, cell);
+}
+//# sourceMappingURL=renderRowGroup.js.map

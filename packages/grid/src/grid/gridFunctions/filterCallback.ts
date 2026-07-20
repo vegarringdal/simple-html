@@ -1,6 +1,6 @@
-import { FilterArgument } from '../../datasource/filterArgument';
-import { Grid } from '../grid';
-import { Attribute } from '../gridConfig';
+import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Grid } from '../grid';
+import type { Attribute } from '../gridConfig';
 
 /**
  * filters columns

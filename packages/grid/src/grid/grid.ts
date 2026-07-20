@@ -1,16 +1,16 @@
-import { GridInterface } from './gridInterface';
-import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
-import { rebuildFooter } from './gridFunctions/rebuildFooter';
-import { rebuildRows } from './gridFunctions/rebuildRows';
-import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
-import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
+import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
-import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
+import { rebuildFooter } from './gridFunctions/rebuildFooter';
+import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
+import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
+import { rebuildRows } from './gridFunctions/rebuildRows';
+import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
+import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateHorizontalScrollWidth } from './gridFunctions/updateHorizontalScrollWidth';
-import { RowCache, ColumnCache } from './gridFunctions/colType';
-import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
+import type { GridInterface } from './gridInterface';
 
 /**
  * Grid class, this has logic for all scrolling/events
@@ -36,14 +36,14 @@ export class Grid {
     // scroll helpers
     public lastScrollTop: number = 0;
     public lastScrollLeft: number = 0;
-    public largeScrollLeftTimer: NodeJS.Timeout;
-    public largeScrollTopTimer: NodeJS.Timeout;
+    public largeScrollLeftTimer: ReturnType<typeof setTimeout>;
+    public largeScrollTopTimer: ReturnType<typeof setTimeout>;
 
     public rows: Map<string, HTMLElement> = new Map();
     public columns: Map<string, HTMLElement> = new Map();
     public oldHeight: number;
     public oldWidth: number;
-    public resizeTimer: NodeJS.Timeout;
+    public resizeTimer: ReturnType<typeof setTimeout>;
     public resizeInit = false;
     public columnsHeaders: Map<string, HTMLElement> = new Map();
     public skipInitResizeEvent: boolean = false;

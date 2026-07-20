@@ -1,8 +1,8 @@
-import { render, html, svg } from 'lit-html';
-import { Entity } from '../../datasource/entity';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import { html, render, svg } from 'lit-html';
+import type { Entity } from '../../datasource/entity';
+import type { Grid } from '../grid';
+import type { ColType } from './colType';
+import type { HTMLCellElement } from './HTMLCellElement';
 
 export function renderRowGroup(
     ctx: Grid,
@@ -49,9 +49,11 @@ export function renderRowGroup(
                 }}
             >
                 <svg class="simple-html-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                    ${rowData?.__groupExpanded
-                        ? svg`<path d="M4.8 7.5h6.5v1H4.8z" />`
-                        : svg`<path d="M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z" />`}
+                    ${
+                        rowData?.__groupExpanded
+                            ? svg`<path d="M4.8 7.5h6.5v1H4.8z" />`
+                            : svg`<path d="M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z" />`
+                    }
                 </svg></i
             >
             <span class=""> ${rowData?.__groupName} (${rowData?.__groupTotal})</span>

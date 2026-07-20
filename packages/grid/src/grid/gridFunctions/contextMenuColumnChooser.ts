@@ -1,12 +1,12 @@
-import { render, html } from 'lit-html';
+import { html, render } from 'lit-html';
+import { live } from 'lit-html/directives/live.js';
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
 import { dragEvent } from './dragEvent';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
+import type { HTMLCellElement } from './HTMLCellElement';
 import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
-import { live } from 'lit-html/directives/live.js';
 
 // might want to add this as part of context, so I can share it?
 let currentColumnSearchvalue = '';
@@ -21,7 +21,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
 
     const contextMenu = creatElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
-    if (ctx.columnChooserMenu && ctx.columnChooserMenu.parentElement) {
+    if (ctx.columnChooserMenu?.parentElement) {
         document.body.removeChild(ctx.columnChooserMenu);
     }
 

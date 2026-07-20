@@ -1,4 +1,4 @@
-import { EntityHandler } from './entityHandler';
+import type { EntityHandler } from './entityHandler';
 
 export interface Entity {
     [key: string]: any | undefined;

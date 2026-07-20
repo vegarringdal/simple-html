@@ -15,11 +15,11 @@ async function run() {
                     compilerOptions: {
                         outDir: `./dist`,
                         rootDir: `./src`,
-                        target: 'es2018',
+                        target: 'es2025',
                         module: 'esNext',
-                        lib: ['es2021', 'dom'],
+                        lib: ['es2025', 'dom'],
                         skipLibCheck: true,
-                        moduleResolution: 'node',
+                        moduleResolution: 'bundler',
                         isolatedModules: false,
                         preserveConstEnums: true,
                         allowSyntheticDefaultImports: true,
@@ -48,7 +48,7 @@ async function run() {
                 name: `build ${file.name}`
             });
             checker.printSettings();
-            let result = checker.inspectOnly();
+            const result = checker.inspectOnly();
             checker.printOnly(result);
             logInfo(`${file.name}: emit js`);
             result.oldProgram.emit();

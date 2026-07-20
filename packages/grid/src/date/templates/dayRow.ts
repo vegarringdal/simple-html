@@ -1,8 +1,8 @@
-import { IDateConfig } from '../interfaces';
 import { html } from 'lit-html';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
 import { day } from './day';
 import { week } from './week';
-import { DateInterface } from '../dateInterface';
 
 export function dayRow(context: DateInterface, config: IDateConfig, year: number, month: number, row: number) {
     const rows = new Array(8).fill('x');

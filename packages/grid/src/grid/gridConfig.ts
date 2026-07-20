@@ -1,7 +1,7 @@
-import { DataTypes, FilterArgument } from '../datasource/filterArgument';
-import { GroupArgument } from '../datasource/groupArgument';
-import { FilterComparisonOperator } from '../datasource/filterComparisonOperator';
-import { IDateConfig } from '../date/interfaces';
+import type { DataTypes, FilterArgument } from '../datasource/filterArgument';
+import type { FilterComparisonOperator } from '../datasource/filterComparisonOperator';
+import type { GroupArgument } from '../datasource/groupArgument';
+import type { IDateConfig } from '../date/interfaces';
 
 export type GridConfig = {
     cellHeight?: number;
@@ -26,7 +26,29 @@ export type GridConfig = {
      * if its a small screen you might not want this enabled
      */
     autoRemoveContextMenuOnScrollEvent?: boolean;
-    
+
+    /**
+     * dims a cell when it repeats the value of the row above, so only the first row of a
+     * run of equal values reads at full strength. Default = false.
+     *
+     * A cell always shows at full strength again at the start of a group, and blanks are
+     * never dimmed. Can be toggled from the row context menu.
+     */
+    dimRepeatedValues?: boolean;
+
+    /**
+     * renders the built in tooltip on buttons/icons, default = true
+     *
+     * the `data-tooltip` attribute is always written to the elements, also when this is
+     * false, so you can hook up your own tooltip library instead
+     */
+    tooltips?: boolean;
+
+    /**
+     * override the built in tooltip texts, keyed by tooltip id.
+     * import `TOOLTIPS` to see the ids and their default text
+     */
+    tooltipText?: Record<string, string>;
 
     /**
      * datepicker

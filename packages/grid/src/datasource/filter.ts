@@ -1,8 +1,8 @@
-import { FilterArgument } from './filterArgument';
-import { FilterComparisonOperator } from './filterComparisonOperator';
-import { Entity } from './entity';
+import type { Datasource } from './dataSource';
+import type { Entity } from './entity';
+import type { FilterArgument } from './filterArgument';
+import type { FilterComparisonOperator } from './filterComparisonOperator';
 import { objectFilter } from './objectFilter';
-import { Datasource } from './dataSource';
 
 export class Filter {
     private currentFilter: FilterArgument;
@@ -76,7 +76,11 @@ export class Filter {
                         return true;
                     }
                 }
-                if (filter.logicalOperator === 'NONE' || filter.logicalOperator === null || filter.logicalOperator == undefined) {
+                if (
+                    filter.logicalOperator === 'NONE' ||
+                    filter.logicalOperator === null ||
+                    filter.logicalOperator === undefined
+                ) {
                     let value = filter.value;
                     if (filter.valueType === 'ATTRIBUTE') {
                         if (typeof filter.value === 'string') {
@@ -107,7 +111,7 @@ export class Filter {
                             });
                         }
 
-                        let data;
+                        let data: any;
                         if (filter.attributeType === 'date' && rowData) {
                             data = ds
                                 .getValueFormater()
@@ -124,7 +128,7 @@ export class Filter {
                                         ds
                                             .getValueFormater()
                                             .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute, false);
-                                    if (data && data.toUpperCase) {
+                                    if (data?.toUpperCase) {
                                         data = data.toUpperCase();
                                     }
                                     if (typeof data === 'boolean') {
@@ -133,7 +137,7 @@ export class Filter {
                                 }
                             }
                         }
-                        let temp;
+                        let temp: number;
                         if (data === null || data === undefined || data === '' || data === 0) {
                             temp = values.indexOf('NULL');
                         } else {
@@ -183,7 +187,11 @@ export class Filter {
                         return false;
                     }
                 }
-                if (filter.logicalOperator === 'NONE' || filter.logicalOperator === null || filter.logicalOperator == undefined) {
+                if (
+                    filter.logicalOperator === 'NONE' ||
+                    filter.logicalOperator === null ||
+                    filter.logicalOperator === undefined
+                ) {
                     let value = filter.value;
                     if (filter.valueType === 'ATTRIBUTE') {
                         if (typeof filter.value === 'string') {
@@ -214,7 +222,7 @@ export class Filter {
                             });
                         }
 
-                        let data;
+                        let data: any;
                         if (filter.attributeType === 'date' && rowData) {
                             data = ds
                                 .getValueFormater()
@@ -226,8 +234,8 @@ export class Filter {
                                     .fromSource(rowData[filter.attribute], filter.attributeType, filter.attribute, false);
                             } else {
                                 if (rowData && rowData[filter.attribute] !== null && rowData[filter.attribute] !== undefined) {
-                                    data = rowData && rowData[filter.attribute];
-                                    if (data && data.toUpperCase) {
+                                    data = rowData?.[filter.attribute];
+                                    if (data?.toUpperCase) {
                                         data = data.toUpperCase();
                                     }
                                     if (typeof data === 'boolean') {
@@ -237,7 +245,7 @@ export class Filter {
                             }
                         }
 
-                        let temp;
+                        let temp: number;
                         if (data === null || data === undefined || data === '' || data === 0) {
                             temp = values.indexOf('NULL');
                         } else {

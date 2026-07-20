@@ -1,7 +1,7 @@
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import type { Grid } from '../grid';
+import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
+import type { HTMLCellElement } from './HTMLCellElement';
 
 const TAB_KEY = 'Tab';
 const ARROW_UP_KEY = 'ArrowUp';

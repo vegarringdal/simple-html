@@ -1,11 +1,11 @@
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { creatElement } from './createElement';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
 import { DIV } from './DIV';
-import { HTMLCellElement } from './HTMLCellElement';
-import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { getElementByClassName } from './getElementByClassName';
 import { getTextWidth } from './getTextWidth';
+import type { HTMLCellElement } from './HTMLCellElement';
+import { horizontalScrollHandler } from './horizontalScrollHandler';
 
 export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, abortSignal: AbortSignal = undefined) {
     cell.addEventListener(
@@ -61,9 +61,9 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                     dragElement.style.minWidth = asPx(width);
                     dragElement.style.maxWidth = asPx(width);
                     dragElement.style.backgroundColor = backgroundColor;
-                    dragElement.style.boxShadow = 'inset 1px 1px 3px 0 ' + boxShadowColor;
-                    dragElement.style.outline = '1px solid ' + backgroundColor;
-                    dragElement.style.border = '1px solid ' + borderColor;
+                    dragElement.style.boxShadow = `inset 1px 1px 3px 0 ${boxShadowColor}`;
+                    dragElement.style.outline = `1px solid ${backgroundColor}`;
+                    dragElement.style.border = `1px solid ${borderColor}`;
                     dragElement.style.left = asPx(mainX);
                     dragElement.style.top = asPx(mainY);
                     dragElement.style.fontFamily = fontFamily;
@@ -142,14 +142,15 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                             const attributeLabel = attributes[attribute].label || attribute;
 
                             switch (true) {
-                                case classList?.contains('simple-html-grid-panel'):
+                                case classList?.contains('simple-html-grid-panel'): {
                                     const newGrouping = ctx.gridInterface.getDatasource().getGrouping();
 
                                     newGrouping.push({ attribute: attribute, title: attributeLabel });
                                     ctx.gridInterface.getDatasource().group(newGrouping);
 
                                     break;
-                                case classList?.contains('simple-html-grid-drop-zone-left-panel'):
+                                }
+                                case classList?.contains('simple-html-grid-drop-zone-left-panel'): {
                                     const updateGrouping = ctx.gridInterface
                                         .getDatasource()
                                         .getGrouping()
@@ -167,6 +168,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                                     ctx.gridInterface.getDatasource().group(updateGrouping);
 
                                     break;
+                                }
                                 case classList?.contains('simple-html-grid-drop-zone-left'):
                                     /**
                                      * old
@@ -350,9 +352,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                         .getLastSorting()
                         ?.filter((e) => e.attribute === attribute);
                     if (sortOrder.length) {
-                        ctx.gridInterface
-                            .getDatasource()
-                            .sort({ ascending: sortOrder[0].ascending ? false : true, attribute }, event.shiftKey);
+                        ctx.gridInterface.getDatasource().sort({ ascending: !sortOrder[0].ascending, attribute }, event.shiftKey);
                     } else {
                         ctx.gridInterface.getDatasource().sort({ ascending: true, attribute }, event.shiftKey);
                     }

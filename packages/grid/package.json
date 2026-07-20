@@ -7,7 +7,8 @@
     "typings": "dist/index.d.ts",
     "scripts": {
         "test": "vitest run",
-        "test:watch": "vitest"
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include=src/** --coverage.reporter=text"
     },
     "author": "Vegar Ringdal <vegar.ringdal@gmail.com>",
     "license": "MIT",
@@ -23,7 +24,7 @@
         "access": "public"
     },
     "dependencies": {
-        "lit-html": "^2.6.1"
+        "lit-html": "^3.3.3"
     },
     "devDependencies": {}
 }

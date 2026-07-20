@@ -1,5 +1,25 @@
 # Changelog
 
+See branch, is change log says **DEV** its beeing tested.
+
+5.0.1: **DEV**
+- refactored all, and updated packages
+- removed eslint and added biomejs
+- added dimmed cells  (right click cell)
+- added right click to add rows to filter
+- filter resizble
+- count on filter right click data
+
+
+
+
+
+
+
+----------------------
+
+
+
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## [5.0.0-next.107](https://github.com/simple-html/simple-html/compare/v5.0.0-next.106...v5.0.0-next.107) (2025-10-21)

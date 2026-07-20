@@ -1,93 +1,36 @@
-import { clearFolders, addDefaultIndex, client, TypeChecker } from 'esbuild-helpers';
+import { addDefaultIndex, clearFolders, client, TypeChecker } from 'esbuild-helpers';
+import { clientOptions, DEV_OUTPUT_ROOT, INDEX_TEMPLATE, TS_CONFIG } from './config_shared';
 
 clearFolders('dist_client', 'dist_nodejs');
 
-const sample = process.argv[2] || "grid01";
+const sample = process.argv[2] || 'grid01';
 
 /**
- * client bundle
+ * client bundle, watched and unminified
  */
 client(
     { watch: [`./samples/${sample}/**/*.*`, './packages/**/*.*'] },
-    {
-        color: true,
-        define: {
-            DEVELOPMENT: 'true'
-        },
-        entryPoints: [`./samples/${sample}/index.ts`],
-        outfile: `./dist/${sample}/index.js`,
-        minify: false,
-        bundle: true,
-        tsconfig: `./samples/tsconfig.json`,
-        platform: 'browser',
-        sourcemap: true,
-        logLevel: 'error'
-    }
+    clientOptions({ entrySample: sample, outSample: sample, outputRoot: DEV_OUTPUT_ROOT, development: true })
 );
+
 /**
  * index file for project
  */
 addDefaultIndex({
-    distFolder: `dist/${sample}`,
+    distFolder: `${DEV_OUTPUT_ROOT}/${sample}`,
     publicFolders: [],
     entry: './index.js',
     hbr: true,
     devServer: true,
     devServerPort: 8080,
     userInjectOnHbr: 'window.location.reload();',
-    indexTemplate: /*html*/ `<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Document</title>
-        <link href="./index.css" rel="stylesheet" />
-       
-       
-        $bundle
-      </head>
-      <body>
-      </body>
-      </html>
-      `
+    indexTemplate: INDEX_TEMPLATE
 });
 
 const checker_client = TypeChecker({
-    basePath: `./`,
+    basePath: './',
     name: 'checker_client',
-    tsConfigJsonContent: {
-        compilerOptions: {
-            target: 'es2018',
-            module: 'esNext',
-            lib: ['es2021', 'dom'],
-            moduleResolution: 'node',
-            isolatedModules: false,
-            preserveConstEnums: true,
-            allowSyntheticDefaultImports: true,
-            skipLibCheck: true,
-            sourceMap: true,
-            inlineSources: true,
-            declaration: true,
-            noImplicitAny: true,
-            noImplicitReturns: true,
-            noUnusedParameters: true,
-            noFallthroughCasesInSwitch: true,
-            noImplicitThis: false,
-            noUnusedLocals: true,
-            allowUnreachableCode: false,
-            removeComments: true,
-            emitDecoratorMetadata: false,
-            importHelpers: false,
-            strictNullChecks: false,
-            experimentalDecorators: true,
-            baseUrl: './',
-            rootDir: '',
-            paths: {
-                '@simple-html/grid': ['./packages/grid/src']
-            }
-        },
-        exclude: ['node_modules', 'config_devserver.ts', 'dist']
-    }
+    tsConfigJsonContent: TS_CONFIG
 });
 
 checker_client.printSettings();

@@ -1,8 +1,8 @@
 import { html } from 'lit-html';
-import { IDateConfig } from '../interfaces';
-import { weekHeader } from './weekHeader';
+import type { DateInterface } from '../dateInterface';
+import type { IDateConfig } from '../interfaces';
 import { dayHeader } from './dayHeader';
-import { DateInterface } from '../dateInterface';
+import { weekHeader } from './weekHeader';
 
 export function headerRow(context: DateInterface, config: IDateConfig, year: number, month: number) {
     const rows = new Array(8).fill('x');

@@ -1,5 +1,5 @@
-import { FilterArgument } from '../../datasource/filterArgument';
-import { Grid } from '../grid';
+import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Grid } from '../grid';
 
 export const DROPDOWN_FILTER_MAX_ROWS = 100;
 
@@ -23,50 +23,73 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
 
     const length = data.length;
     let haveNull = false;
-    const search = searchInput && searchInput.replaceAll('%', '').replaceAll('*', '');
+    const search = searchInput?.replaceAll('%', '').replaceAll('*', '');
+
+    /**
+     * how many rows each distinct value has. Counted for every row, also the ones past the
+     * DROPDOWN_FILTER_MAX_ROWS cap, so the numbers are only shown when nothing was cut off.
+     */
+    const counts = new Map<any, number>();
+
+    /**
+     * set when a value had to be dropped because the cap was reached.
+     * The list size cannot be used to detect this - the cap stops the set at exactly
+     * DROPDOWN_FILTER_MAX_ROWS, so "size > max" was only ever true when a blank pushed it
+     * one over.
+     */
+    let truncated = false;
+
+    const addValue = (value: any) => {
+        counts.set(value, (counts.get(value) || 0) + 1);
+        if (dataFilterSet.size < DROPDOWN_FILTER_MAX_ROWS || dataFilterSet.has(value)) {
+            dataFilterSet.add(value);
+        } else {
+            truncated = true;
+        }
+    };
 
     for (let i = 0; i < length; i++) {
-        // maybe I should let ctx be aoption ? the 200 size..
-        if (data[i] && data[i][attribute] && dataFilterSet.size < DROPDOWN_FILTER_MAX_ROWS) {
+        if (data[i]?.[attribute]) {
             if (typeof data[i][attribute] === 'string') {
                 if (search) {
                     if (data[i][attribute].toLocaleUpperCase().indexOf(search.toLocaleUpperCase()) !== -1) {
-                        dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
+                        addValue(data[i][attribute].toLocaleUpperCase());
                     }
                 } else {
-                    dataFilterSet.add(data[i][attribute].toLocaleUpperCase());
+                    addValue(data[i][attribute].toLocaleUpperCase());
                 }
             }
             if (typeof data[i][attribute] === 'number') {
                 if (search) {
                     if (data[i][attribute].toString().indexOf(search) !== -1) {
-                        dataFilterSet.add(data[i][attribute]);
+                        addValue(data[i][attribute]);
                     }
                 } else {
-                    dataFilterSet.add(data[i][attribute]);
+                    addValue(data[i][attribute]);
                 }
             }
             if (typeof data[i][attribute] === 'boolean') {
                 if (search) {
                     if (data[i][attribute].toString().indexOf(search) !== -1) {
-                        dataFilterSet.add(data[i][attribute]);
+                        addValue(data[i][attribute]);
                     }
                 } else {
-                    dataFilterSet.add(data[i][attribute]);
+                    addValue(data[i][attribute]);
                 }
             }
 
             if (data[i][attribute] && typeof data[i][attribute] === 'object') {
                 if (search) {
                     if (data[i][attribute].toISOString().indexOf(search) !== -1) {
-                        dataFilterSet.add(data[i][attribute]);
+                        addValue(data[i][attribute]);
                     }
                 } else {
-                    dataFilterSet.add(data[i][attribute].toISOString());
+                    addValue(data[i][attribute].toISOString());
                 }
             }
         } else {
             haveNull = true;
+            counts.set('NULL', (counts.get('NULL') || 0) + 1);
         }
     }
 
@@ -112,6 +135,10 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
         enableAvailableOnlyOption,
         dataFilterSet,
         dataFilterSetFull,
-        selectAll
+        selectAll,
+        /** true when values were dropped because of the DROPDOWN_FILTER_MAX_ROWS cap */
+        truncated,
+        /** rows per distinct value, only meaningful when nothing was truncated */
+        counts
     };
 }

@@ -1,20 +1,20 @@
-import { Filter } from './filter';
-import { Sort } from './sort';
-import { Grouping } from './grouping';
-import { Selection } from './selection';
-import { FilterArgument } from './filterArgument';
-import { DatasourceConfigOptions } from './datasourceConfigOptions';
-import { SelectionMode } from './selectionMode';
-import { SortArgument } from './sortArgument';
-import { GroupArgument } from './groupArgument';
-import { OPERATORS } from './OPERATORS';
-import { Entity } from './entity';
-import { DataContainer } from './dataContainer';
+import type { Grid } from '../grid/grid';
 import { DateFormaterYYYYMMDD } from './DateFormaterYYYYMMDD';
-import { DateAndNumberFormater, ValueFormater } from './valueFormater';
-import { NumberFormaterDot } from './numberFormaterDot';
+import { DataContainer } from './dataContainer';
+import type { DatasourceConfigOptions } from './datasourceConfigOptions';
 import { DefaultValueFormater } from './defaultValueFormater';
-import { Grid } from '../grid/grid';
+import type { Entity } from './entity';
+import { Filter } from './filter';
+import type { FilterArgument } from './filterArgument';
+import type { GroupArgument } from './groupArgument';
+import { Grouping } from './grouping';
+import { NumberFormaterDot } from './numberFormaterDot';
+import { OPERATORS } from './OPERATORS';
+import { Selection } from './selection';
+import type { SelectionMode } from './selectionMode';
+import { Sort } from './sort';
+import type { SortArgument } from './sortArgument';
+import type { DateAndNumberFormater, ValueFormater } from './valueFormater';
 
 export type callF = (...args: any[]) => any;
 export type callO = { handleEvent: (...args: any[]) => any };
@@ -633,7 +633,8 @@ export class Datasource<T = any> {
 
     /**
      * sets current entity and selection, start on 1 not 0
-     * @param row, if skipped we select the first
+     * @param row if skipped we select the first
+     * @param triggerSelect also fire the select event, so the grid scrolls to the row
      */
     public select(row?: number, triggerSelect?: boolean): void {
         const selectedRow = row ? row - 1 : 0;
@@ -809,11 +810,11 @@ export class Datasource<T = any> {
             return label || attribute;
         }
 
-        const parser = function (obj: FilterArgument, queryString = '') {
+        const parser = (obj: FilterArgument, queryString = '') => {
             if (obj) {
                 if (!obj.filterArguments || (obj.filterArguments && obj.filterArguments.length === 0)) {
                     if (obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK') {
-                        queryString = queryString + `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>>`;
+                        queryString = `${queryString}[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>>`;
                     } else {
                         if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
                             queryString =
@@ -821,7 +822,7 @@ export class Datasource<T = any> {
                                 `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>> ${
                                     obj.valueType === 'ATTRIBUTE'
                                         ? `[${obj.value}]`
-                                        : "'" + convertValue(obj.attributeType, obj.value, obj.attribute) + "'"
+                                        : `'${convertValue(obj.attributeType, obj.value, obj.attribute)}'`
                                 }`;
                         } else {
                             // split newline into array
@@ -845,13 +846,13 @@ export class Datasource<T = any> {
                 } else {
                     obj.filterArguments.forEach((y, i) => {
                         if (i > 0) {
-                            queryString = queryString + ` ${obj.logicalOperator} `;
+                            queryString = `${queryString} ${obj.logicalOperator} `;
                         } else {
-                            queryString = queryString + `(`;
+                            queryString = `${queryString}(`;
                         }
                         queryString = parser(y, queryString);
                         if (obj.filterArguments.length - 1 === i) {
-                            queryString = queryString + `)`;
+                            queryString = `${queryString})`;
                         }
                     });
                 }

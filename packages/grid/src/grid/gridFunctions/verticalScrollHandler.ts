@@ -1,7 +1,6 @@
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
-import { ColType, RowCache } from './colType';
+import type { ColType, RowCache } from './colType';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
@@ -9,12 +8,12 @@ import {
     RIGH_PINNED_COLTYPE,
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
-import { renderCell } from './renderCell';
-import { removeContextMenu } from './removeContextMenu';
+import { getElementByClassName } from './getElementByClassName';
 import { hideAllRows } from './hideAllRows';
+import { removeContextMenu } from './removeContextMenu';
+import { renderCell } from './renderCell';
 
 export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
-
     if (ctx.gridInterface.__getGridConfig().autoRemoveContextMenuOnScrollEvent) {
         removeContextMenu(ctx);
     }
@@ -91,27 +90,10 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
             }
         });
 
-        const widths: number[] = [];
-        let lastLeft = 0;
         const config = ctx.gridInterface.__getGridConfig();
-        config.columnsCenter.forEach((c) => {
-            widths.push(c.width);
-            lastLeft = lastLeft + c.width;
-        });
-
-        const widthsLeft: number[] = [];
-        lastLeft = 0;
-        config.columnsPinnedLeft.forEach((c) => {
-            widthsLeft.push(c.width);
-            lastLeft = lastLeft + c.width;
-        });
-
-        const widthsRight: number[] = [];
-        lastLeft = 0;
-        config.columnsPinnedRight.forEach((c) => {
-            widthsRight.push(c.width);
-            lastLeft = lastLeft + c.width;
-        });
+        const widths = config.columnsCenter.map((c) => c.width);
+        const widthsLeft = config.columnsPinnedLeft.map((c) => c.width);
+        const widthsRight = config.columnsPinnedRight.map((c) => c.width);
 
         const updateRow = (e: RowCache, colType: ColType) => {
             if (e.row !== -1) {
@@ -149,7 +131,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
 
                     if (colType === LEFT_PINNED_COLTYPE) {
                         ctx.containerLeftColumnCache.forEach((x, i) => {
-                            const id = e.id + ':' + i.toString();
+                            const id = `${e.id}:${i.toString()}`;
                             const elc = ctx.columns.get(id);
 
                             if (elc && x.column !== -1) {
@@ -179,7 +161,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                     }
                     if (colType === MIDDLE_PINNED_COLTYPE) {
                         ctx.containerMiddleColumnCache.forEach((x, i) => {
-                            const id = e.id + ':' + i.toString();
+                            const id = `${e.id}:${i.toString()}`;
                             const colEl = ctx.columns.get(id);
 
                             if (colEl && x.column !== -1) {
@@ -211,7 +193,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                     }
                     if (colType === RIGH_PINNED_COLTYPE) {
                         ctx.containerRightColumnCache.forEach((x, i) => {
-                            const id = e.id + ':' + i.toString();
+                            const id = `${e.id}:${i.toString()}`;
                             const colEl = ctx.columns.get(id);
 
                             if (colEl && x.column !== -1) {
@@ -254,11 +236,8 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
             }
         };
 
+        // updateRow sets e.top itself, and does it without the row -1 / row 0 edge cases
         ctx.containerGroupRowCache.forEach((e) => {
-            if (e.row) {
-                e.top = rowTops[e.row];
-            }
-
             updateRow(e, GROUP_COLTYPE);
         });
 

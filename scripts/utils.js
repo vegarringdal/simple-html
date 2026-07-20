@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 // @ts-check
-const fs = require('fs');
-const path = require('path');
-const spawn = require('child_process').spawn;
+const fs = require('node:fs');
+const path = require('node:path');
+const spawn = require('node:child_process').spawn;
 /**
  * Writes to file and returns promise
  *
  */
 const renameFolder = (oldPath, newPath) => {
     return new Promise((resolve, reject) => {
-        fs.rename(path.resolve(oldPath), path.resolve(newPath), function (err) {
+        fs.rename(path.resolve(oldPath), path.resolve(newPath), (err) => {
             if (err) {
                 reject(err);
             } else {
@@ -48,23 +48,19 @@ const readFile = (file) => {
 
 const readFiles = (folder) => {
     return new Promise((resolve, reject) => {
-        fs.readdir(
-            path.resolve(process.cwd(), folder),
-            { withFileTypes: true },
-            function (err, files) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(files);
-                }
+        fs.readdir(path.resolve(process.cwd(), folder), { withFileTypes: true }, (err, files) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(files);
             }
-        );
+        });
     });
 };
 
 const writeFile = (file, data) => {
     return new Promise((resolve, reject) => {
-        fs.writeFile(path.resolve(file), data, function (err) {
+        fs.writeFile(path.resolve(file), data, (err) => {
             if (err) {
                 reject(err);
             } else {
@@ -104,11 +100,11 @@ const print = (color, comment, error) => {
     }
 };
 
-const logInfo = function (comment, color = 'green') {
+const logInfo = (comment, color = 'green') => {
     print(color, comment, false);
 };
 
-const logError = function (comment) {
+const logError = (comment) => {
     print('red', comment, true);
 };
 
@@ -118,7 +114,9 @@ const spawner = (cmd, args, dirname, display = false) => {
             stdio: display ? 'inherit' : 'ignore',
             cwd: dirname
         });
-        childSpawn.on('exit', function (code) {
+        // without this the promise never settles if the process fails to start
+        childSpawn.on('error', reject);
+        childSpawn.on('exit', (code) => {
             resolve(code);
         });
     });

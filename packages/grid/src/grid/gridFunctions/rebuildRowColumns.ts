@@ -1,11 +1,11 @@
+import type { Grid } from '../grid';
+import type { Columns } from '../gridConfig';
 import { asPx } from './asPx';
+import type { ColType, ColumnCache } from './colType';
 import { creatElement } from './createElement';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
 import { DIV } from './DIV';
-import { ColType, ColumnCache } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
-import { Columns } from '../gridConfig';
+import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 
 export function rebuildRowColumns(ctx: Grid) {
@@ -46,7 +46,7 @@ export function rebuildRowColumns(ctx: Grid) {
                  */
                 const columnElement = creatElement(DIV, 'simple-html-grid-col');
 
-                const id = rowId + ':' + i.toString();
+                const id = `${rowId}:${i.toString()}`;
                 ctx.columns.set(id, columnElement);
                 columnElement.style.transform = `translate3d(${left}px, 0px, 0px)`;
                 columnElement.style.width = asPx(columns[i].width);

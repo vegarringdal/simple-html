@@ -1,8 +1,8 @@
-import { render, html } from 'lit-html';
-import { Entity } from '../../datasource/entity';
-import { Grid } from '../grid';
-import { HTMLCellElement } from './HTMLCellElement';
-import { ColType } from './colType';
+import { html, render } from 'lit-html';
+import type { Entity } from '../../datasource/entity';
+import type { Grid } from '../grid';
+import type { ColType } from './colType';
+import type { HTMLCellElement } from './HTMLCellElement';
 
 export function renderRowSelector(
     ctx: Grid,
@@ -17,14 +17,14 @@ export function renderRowSelector(
 ) {
     let currentEntitySelected = '';
     if (rowData === ctx.gridInterface.getDatasource().currentEntity) {
-        currentEntitySelected = row % 0 == 0 ? 'simple-html-label-even' : 'simple-html-label-odd';
+        currentEntitySelected = row % 2 === 0 ? 'simple-html-label-even' : 'simple-html-label-odd';
     } else {
         currentEntitySelected = 'simple-html-label';
     }
 
     render(
         html`<div
-            class=${currentEntitySelected + ' simple-html-absolute-fill'}
+            class=${`${currentEntitySelected} simple-html-absolute-fill`}
             @click=${(e: MouseEvent) => {
                 const ds = ctx.gridInterface.getDatasource();
                 if (rowData?.__group) {

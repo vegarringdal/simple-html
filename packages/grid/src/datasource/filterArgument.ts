@@ -1,4 +1,4 @@
-import { FilterComparisonOperator } from './filterComparisonOperator';
+import type { FilterComparisonOperator } from './filterComparisonOperator';
 
 /**
  * filter argument can be either group or expression

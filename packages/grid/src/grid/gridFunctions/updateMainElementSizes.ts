@@ -1,7 +1,7 @@
+import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { getElementByClassName } from './getElementByClassName';
-import { Grid } from '../grid';
 import { LEFT_PINNED_COLTYPE } from './GROUP_COLTYPE';
+import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 
 export function updateMainElementSizes(ctx: Grid) {

@@ -1,5 +1,5 @@
 import { Grid } from './grid';
-import { GridInterface } from './gridInterface';
+import type { GridInterface } from './gridInterface';
 
 /**
  * this is custom element

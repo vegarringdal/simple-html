@@ -1,23 +1,24 @@
 import './index.css';
 import {
     Datasource,
-    NumberFormaterComma,
-    NumberFormaterDot,
-    DateFormaterYYYYMMDD,
     DateFormaterDDMMYYYY,
-    HTMLCellElement,
-    GridConfig,
+    DateFormaterDDMMYYYYTHHMMSS,
+    DateFormaterYYYYMMDD,
     DateFormaterYYYYMMDDTHHMMSS,
-    DateFormaterDDMMYYYYTHHMMSS
+    type GridConfig,
+    type GridElement,
+    GridInterface,
+    type HTMLCellElement,
+    NumberFormaterComma,
+    NumberFormaterDot
 } from '@simple-html/grid';
-import { GridInterface, GridElement } from '@simple-html/grid';
 import '../../packages/grid/src/grid.css';
 import '../../packages/grid/src/date.css';
+import { DateFormaterCustom } from './dateFormaterCustom';
 import { dummydata } from './dummyData';
 import { gridConfig } from './gridConfig';
-import { toggelDarkGrid } from './toggelDarkGrid';
 import { NumberFormaterCustom } from './numberFormaterCustom';
-import { DateFormaterCustom } from './dateFormaterCustom';
+import { toggelDarkGrid } from './toggelDarkGrid';
 
 /**
  * WARNING, this will be weird while I get main parts working
@@ -29,9 +30,7 @@ import { DateFormaterCustom } from './dateFormaterCustom';
 const datasource = new Datasource();
 datasource.setData(
     structuredClone(dummydata).map((e: any) => {
-        //@ts-ignore
         e.date1 = new Date(e.date1);
-        //@ts-ignore
         e.date2 = new Date(e.date2);
         return e;
     })
@@ -43,7 +42,7 @@ oldFormater.fromSource = (value: any, type: any, attribute: string, isFilter) =>
     if (attribute?.startsWith('country') && !isFilter) {
         return 'Open D';
     } else {
-        return oldFormaterFromSource.apply(oldFormater, [value, type, attribute]);
+        return oldFormaterFromSource.apply(oldFormater, [value, type, attribute, isFilter]);
     }
 };
 
@@ -119,9 +118,7 @@ createButton('set to 10 rows', () => {
     const data = (structuredClone(dummydata) as any[]).slice(1, 10);
     datasource.setData(
         data.map((e: any) => {
-            //@ts-ignore
             e.date1 = new Date(e.date1);
-            //@ts-ignore
             e.date2 = new Date(e.date2);
             return e;
         })
@@ -132,9 +129,7 @@ createButton('add to 10 rows', () => {
     const data = (structuredClone(dummydata) as any[]).slice(datasource.length(), datasource.length() + 10);
     datasource.setData(
         data.map((e: any) => {
-            //@ts-ignore
             e.date1 = new Date(e.date1);
-            //@ts-ignore
             e.date2 = new Date(e.date2);
             return e;
         }),
@@ -146,9 +141,7 @@ createButton('add to 100 rows', () => {
     const data = (structuredClone(dummydata) as any[]).slice(datasource.length(), datasource.length() + 100);
     datasource.setData(
         data.map((e: any) => {
-            //@ts-ignore
             e.date1 = new Date(e.date1);
-            //@ts-ignore
             e.date2 = new Date(e.date2);
             return e;
         }),
@@ -225,7 +218,6 @@ createButton('get changes (ses console)', () => {
 });
 
 createButton('remove marked for deleted (no undo)', () => {
-
     datasource.getDataContainer().clearMarkedForDeletion();
     datasource.reloadDatasource();
 });
@@ -329,7 +321,7 @@ createButton('use default Dateformater (YYYY-MM-DDTHH:MM:SS)', () => {
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
     gridInterface.readonlySetter((attribute: string, rowData: any, configReadonlySetting: boolean) => {
-        if (rowData['isDumb'] === true && attribute === 'favoriteFruit') {
+        if (rowData.isDumb === true && attribute === 'favoriteFruit') {
             return true;
         } else {
             return configReadonlySetting;
@@ -394,7 +386,7 @@ createButton('cell focus custom menu 1 time', () => {
 
 createButton('append class dimmed favoriteFruit based on cell isDumb', () => {
     gridInterface.cellAppendClassSetter((attribute: string, rowData: any, _isReadOnly: boolean) => {
-        if (rowData['isDumb'] === false && attribute === 'favoriteFruit') {
+        if (rowData.isDumb === false && attribute === 'favoriteFruit') {
             return { dimmedClass: 'yellow', inputClass: '' };
         } else {
             return { dimmedClass: '', inputClass: '' };
@@ -441,11 +433,11 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
                  * you might want to add some loading icon..
                  */
 
-                element.style.width = width + 'px';
-                element.style.height = height + 'px';
+                element.style.width = `${width}px`;
+                element.style.height = `${height}px`;
                 element.style.display = 'absolute';
-                element.style.top = top + 'px';
-                element.style.left = left + 'px';
+                element.style.top = `${top}px`;
+                element.style.left = `${left}px`;
                 element.style.boxShadow = '16px 17px 8px 0px rgb(0 0 0 / 20%), 0 6px 20px 0 rgb(0 0 0 / 19%)';
 
                 const gridConfig: GridConfig = {
@@ -467,7 +459,7 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
 
                 // dummy data for sample
                 for (let i = 0; i < 1000; i++) {
-                    datasourceLocal.setData([{ WOW: 'wow' + i }], true);
+                    datasourceLocal.setData([{ WOW: `wow${i}` }], true);
                 }
 
                 const gridInterfaceLocal = new GridInterface(gridConfig, datasourceLocal);
@@ -478,7 +470,7 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
                 element.onclick = (x: any) => {
                     if (x.target?.classList.contains('simple-html-grid-cell-input')) {
                         gridInterface.removeContextMenuElement();
-                        datasource.currentEntity['company'] = datasourceLocal.currentEntity['WOW'];
+                        datasource.currentEntity.company = datasourceLocal.currentEntity.WOW;
                         e.data.target?.focus();
                     }
                 };
@@ -486,7 +478,7 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
                 element.onkeydown = (x: any) => {
                     if (x.code === 'Enter' && x.target?.classList.contains('simple-html-grid-cell-input')) {
                         gridInterface.removeContextMenuElement();
-                        datasource.currentEntity['company'] = datasourceLocal.currentEntity['WOW'];
+                        datasource.currentEntity.company = datasourceLocal.currentEntity.WOW;
                         e.data.target?.focus();
                     }
                 };

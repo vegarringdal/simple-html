@@ -25,11 +25,11 @@ export class DateFormaterCustom {
             const year = new Date(value).getFullYear();
             let month = (new Date(value).getMonth() + 1).toString();
             if (month.length === 1) {
-                month = '0' + month;
+                month = `0${month}`;
             }
             let day = new Date(value).getDate().toString();
             if (day.length === 1) {
-                day = '0' + day;
+                day = `0${day}`;
             }
             returnValue = `${day}.${month}.${year}`;
         }
@@ -70,8 +70,8 @@ export class DateFormaterCustom {
 
         returnValue = new Date(
             x[2],
-            parseInt(x[1]) - 1,
-            parseInt(x[0]),
+            parseInt(x[1], 10) - 1,
+            parseInt(x[0], 10),
             new Date().getHours(),
             new Date().getMinutes(),
             new Date().getSeconds(),
@@ -85,7 +85,7 @@ export class DateFormaterCustom {
     }
 
     static toFilter(value: any): Date | null | undefined {
-        return this.toSource(value);
+        return DateFormaterCustom.toSource(value);
     }
 
     static fromSourceDisplay(value: Date | string | null | undefined): string {
