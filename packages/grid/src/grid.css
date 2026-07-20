@@ -855,6 +855,7 @@ input {
     right: 0;
 }
 
+/* every icon using this class is clickable - filter editor actions and the remove group X */
 .simple-html-grid .simple-html-grid-icon-group-svg {
     fill: transparent;
     width: 15px;
@@ -863,6 +864,7 @@ input {
     display: block;
     color: inherit;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .simple-html-grid-sort-number {
@@ -1032,35 +1034,180 @@ input {
     right: 0;
     bottom: 0;
     margin: 0;
-    padding: px;
+    padding: 0;
     box-sizing: border-box;
     overflow: hidden;
     z-index: 500;
 }
 
+/**
+ * left/top are set from renderFilterEditor so the dialog can be dragged, the size here is
+ * only the starting size - the user can resize from the bottom right corner
+ */
 .simple-html-grid .filter-editor-content {
     background-color: var(--simple-html-grid-main-bg-color);
     position: fixed;
     width: 650px;
     height: 650px;
-    top: 50%;
-    left: 50%;
-    /* bring your own prefixes */
-    transform: translate(-50%, -50%);
+    min-width: 460px;
+    min-height: 240px;
+    max-width: 100vw;
+    max-height: 100vh;
+    overflow: hidden;
+    box-sizing: border-box;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    border-radius: 4px;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+}
+
+/**
+ * Resize grab areas, one per edge and one per corner.
+ * css `resize` only offers the bottom right corner, so these are wired up in
+ * renderFilterEditor instead.
+ */
+.simple-html-grid .filter-editor-content .simple-html-resize-handle {
+    position: absolute;
+    z-index: 2;
+}
+
+.simple-html-grid .filter-editor-content .handle-n,
+.simple-html-grid .filter-editor-content .handle-s {
+    left: 0;
+    right: 0;
+    height: 5px;
+    cursor: ns-resize;
+}
+
+.simple-html-grid .filter-editor-content .handle-n {
+    top: 0;
+}
+
+.simple-html-grid .filter-editor-content .handle-s {
+    bottom: 0;
+}
+
+.simple-html-grid .filter-editor-content .handle-w,
+.simple-html-grid .filter-editor-content .handle-e {
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    cursor: ew-resize;
+}
+
+.simple-html-grid .filter-editor-content .handle-w {
+    left: 0;
+}
+
+.simple-html-grid .filter-editor-content .handle-e {
+    right: 0;
+}
+
+/* corners sit on top of the edges, so the diagonal cursor wins there */
+.simple-html-grid .filter-editor-content .handle-nw,
+.simple-html-grid .filter-editor-content .handle-ne,
+.simple-html-grid .filter-editor-content .handle-sw,
+.simple-html-grid .filter-editor-content .handle-se {
+    width: 12px;
+    height: 12px;
+    z-index: 3;
+}
+
+.simple-html-grid .filter-editor-content .handle-nw {
+    top: 0;
+    left: 0;
+    cursor: nwse-resize;
+}
+
+.simple-html-grid .filter-editor-content .handle-ne {
+    top: 0;
+    right: 0;
+    cursor: nesw-resize;
+}
+
+.simple-html-grid .filter-editor-content .handle-sw {
+    bottom: 0;
+    left: 0;
+    cursor: nesw-resize;
+}
+
+.simple-html-grid .filter-editor-content .handle-se {
+    bottom: 0;
+    right: 0;
+    cursor: nwse-resize;
+}
+
+.simple-html-grid .filter-editor-content .filter-editor-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: move;
+    user-select: none;
+    margin: 0;
+    padding: 4px 8px;
+}
+
+.simple-html-grid .filter-editor-content .filter-editor-close {
+    cursor: pointer;
+    padding: 0 6px;
+    border-radius: 3px;
+    font-size: var(--simple-html-grid-font-size);
+}
+
+.simple-html-grid .filter-editor-content .filter-editor-close:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .filter-editor-content .filter-editor-footer {
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    padding-top: 6px;
+    margin-bottom: 8px;
 }
 
 .simple-html-grid .filter-editor-content .grid-button {
     min-width: 100px;
     margin: 2px;
-    padding: 1px;
+    padding: 3px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+    background-color: var(--simple-html-grid-sec-bg-color);
     border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid .filter-editor-content .grid-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .filter-editor-content .grid-button-primary {
+    font-weight: var(--simple-html-grid-font-weight-header);
+    border-color: var(--simple-html-grid-pinned-border);
+}
+
+/**
+ * the "click me to select ..." cells that open the attribute/operator menus
+ */
+.simple-html-grid .filter-editor-content .grid-pick {
+    cursor: pointer;
+    border-radius: 3px;
+    border: 1px dashed var(--simple-html-grid-main-bg-border);
+    margin: 0 2px;
+    padding: 1px 2px;
+}
+
+.simple-html-grid .filter-editor-content .grid-pick:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
 .simple-html-grid .filter-editor-content .grid-button-small {
     min-width: 40px;
     margin: 2px;
     padding: 1px;
+    cursor: pointer;
+    border-radius: 3px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid .filter-editor-content .grid-button-small:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
 .simple-html-grid .filter-editor-content .grid-flex-reverse {
@@ -1116,6 +1263,40 @@ input {
     text-align: center;
 }
 
+/**
+ * Built in tooltip.
+ *
+ * The element is created once and lives on document.body, positioned from js - see
+ * gridFunctions/tooltip.ts. It cannot be a ::after on the element it describes, because
+ * the filter editor clips its content (overflow hidden, needed for resize) and the
+ * tooltip would be cut off at the edges.
+ *
+ * data-tooltip is always written to the elements. The `tooltips` grid config option, on
+ * by default, decides whether this built in one is rendered - turn it off and hook up
+ * your own tooltip library on the same attribute.
+ */
+/**
+ * the element also carries .simple-html-grid, so font family/size/weight and the theme
+ * colours come from there and the tooltip always matches the grid text.
+ * The compound selector is only to win over the position/overflow in that base rule.
+ */
+.simple-html-grid.simple-html-grid-tooltip {
+    position: fixed;
+    z-index: 600;
+    max-width: 260px;
+    width: max-content;
+    height: auto;
+    padding: 3px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    text-align: left;
+    white-space: normal;
+    overflow: visible;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    pointer-events: none;
+}
+
 .simple-html-grid .filter-editor-content .grid-text-title {
     font-family: var(--simple-html-grid-font-family);
     font-size: medium;
@@ -1142,6 +1323,20 @@ input {
     filter: opacity(0.5);
     transition: initial;
     outline-color: var(--simple-html-grid-main-bg-color);
+}
+
+/**
+ * The AND/OR toggle shares .grid-text-label with the small captions above the condition
+ * fields, but it is a button you click - it should not be dimmed like a caption.
+ * Comes after the rule above so it wins on background too.
+ */
+.simple-html-grid .filter-editor-content .grid-button-small.grid-text-label {
+    filter: none;
+    background-color: transparent;
+}
+
+.simple-html-grid .filter-editor-content .grid-button-small.grid-text-label:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
 .simple-html-grid .filter-editor-content .grid-overflow-auto {

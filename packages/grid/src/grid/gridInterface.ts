@@ -387,6 +387,10 @@ export class GridInterface<T> {
             this.gridConfig.selectionMode = 'multiple';
         }
 
+        if (this.gridConfig.tooltips === null || this.gridConfig.tooltips === undefined) {
+            this.gridConfig.tooltips = true;
+        }
+
         this.dataSource.setSelectionMode(this.gridConfig.selectionMode);
 
         if (

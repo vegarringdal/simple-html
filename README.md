@@ -4,7 +4,9 @@ Package: `npm i @simple-html/grid -D`
 
 Only lit-html as dependency
 
-> V.5.0.0 will soon be release, currently on next while I use it in a application to see missing features/stuff I need use the application
+> V.5.0.0.next is very stable for reading/displaying data. 
+
+
 
 Sample:
 * [sample](https://vegarringdal.github.io/simple-html/demo/index.html)

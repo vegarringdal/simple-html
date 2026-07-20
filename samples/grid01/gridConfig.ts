@@ -6,6 +6,18 @@ import type { GridConfig } from '@simple-html/grid';
  */
 export const gridConfig: GridConfig = {
     panelHeight: 25,
+    /**
+     * built in tooltip, default true.
+     * data-tooltip is written to the elements either way, so you can turn this off and
+     * use your own tooltip library instead
+     */
+    tooltips: true,
+    /**
+     * override any of the built in tooltip texts, import TOOLTIPS to see the ids
+     */
+    tooltipText: {
+        // 'filterEditor.addCondition': 'Legg til betingelse'
+    },
     /*   cellHeaderLabelHeight: 40, */
     /*  selectSizeHeight: 0, */
     hideLabels: false,

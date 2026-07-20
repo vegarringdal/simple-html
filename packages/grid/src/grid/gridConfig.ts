@@ -28,6 +28,20 @@ export type GridConfig = {
     autoRemoveContextMenuOnScrollEvent?: boolean;
 
     /**
+     * renders the built in tooltip on buttons/icons, default = true
+     *
+     * the `data-tooltip` attribute is always written to the elements, also when this is
+     * false, so you can hook up your own tooltip library instead
+     */
+    tooltips?: boolean;
+
+    /**
+     * override the built in tooltip texts, keyed by tooltip id.
+     * import `TOOLTIPS` to see the ids and their default text
+     */
+    tooltipText?: Record<string, string>;
+
+    /**
      * datepicker
      * not all is passed on to intenal picker
      */

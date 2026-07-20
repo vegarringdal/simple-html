@@ -275,6 +275,35 @@ matching test - deliberately, so it stays a visible decision.
 * **`fromSource` on an iso date-only string is timezone dependent** — `new Date('2019-01-01')`
   parses as UTC midnight, so west of UTC it formats as the previous day.
 
+### Filter editor: styling, drag, resize and tooltips
+
+`gridFunctions/renderFilterEditor.ts`, `gridFunctions/tooltip.ts`, `grid.css`
+
+* **draggable** by its titlebar, clamped so a bit of it always stays on screen
+* **resizable from every edge and corner** - 8 grab areas wired up in js. css `resize`
+  only ever offers the bottom right corner, so it is not used. Dragging a west or north
+  edge moves left/top as well as the size, otherwise the opposite edge walks across the
+  screen. `min-width` 460px / `min-height` 240px so it cannot be collapsed.
+* the dialog is rebuilt from scratch on every edit, so position and size are now read off
+  the old dialog and reapplied - without that it jumped back to the middle on every click
+* the css centering (`top/left: 50%` + `translate(-50%, -50%)`) was replaced by left/top
+  set in js, since a transform fights both dragging and resizing
+* titlebar got a close X, buttons got hover states, the two "click me to select ..." cells
+  got a dashed border so they read as clickable, footer got a separating border
+* fixed `padding: px` in `.filter-editor-container`, which was not valid css
+
+#### Tooltips
+
+Every button and icon in the filter editor now carries `data-tooltip`.
+
+* `tooltips` in the grid config turns the **built in** tooltip on and off, default on.
+  `data-tooltip` is written either way, so an external tooltip library can be used instead.
+  The built in one only renders when the container has `.simple-html-grid-tooltips`.
+* `tooltipText` in the grid config overrides individual texts by id
+* `TOOLTIPS` is exported from the package so the ids and their defaults can be looked up
+
+Covered by `grid/__tests__/filterEditor.test.ts`.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

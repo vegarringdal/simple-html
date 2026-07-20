@@ -34,4 +34,5 @@ export { Grid } from './grid/grid';
 export type { Attribute, GridConfig } from './grid/gridConfig';
 export { GridElement } from './grid/gridElement';
 export { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
+export { TOOLTIPS } from './grid/gridFunctions/tooltip';
 export { GridInterface } from './grid/gridInterface';
