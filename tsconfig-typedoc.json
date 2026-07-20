@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
-        "target": "es2018",
+        "target": "es2025",
         "module": "esNext",
-        "lib": ["es2021", "dom"],
-        "moduleResolution": "node",
+        "lib": ["es2025", "dom"],
+        "moduleResolution": "bundler",
         "isolatedModules": false,
         "preserveConstEnums": true,
         "allowSyntheticDefaultImports": true,
@@ -27,5 +27,16 @@
             "@simple-html/grid": ["./packages/grid/src"]
         }
     },
-    "exclude": ["node_modules"]
+    "exclude": [
+        "node_modules",
+        "dist",
+        "dist_dev",
+        "docs",
+        "packages/*/dist",
+        "config_devserver.ts",
+        "config_demo_build.ts",
+        "config_shared.ts",
+        "typecheck.js",
+        "scripts"
+    ]
 }

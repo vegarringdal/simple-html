@@ -400,6 +400,31 @@ Output:
 * dev server -> `dist_dev/<sample>`, throwaway and gitignored (was `dist`)
 * demo build -> `docs/demo`, unchanged, this is what github pages serves
 
+### typedoc-grid was broken
+
+`tsconfig-typedoc.json`, `typedoc.json` (new), `package.json`
+
+`npm run typedoc-grid` failed with 5 errors and generated nothing. It was the last config
+the TypeScript 6 migration missed:
+
+* `moduleResolution: node` and `lib: es2021` -> `bundler` / `es2025`, same as everywhere
+  else. The old lib is why `Object.hasOwn` in `entityHandler.ts` errored here but nowhere
+  else.
+* the node build scripts were being pulled into the docs typecheck, so `process` was
+  undefined. Added to `exclude`, together with the build output folders.
+* the entry list still pointed at `datasource/types.ts`, a file that no longer exists
+
+Then the remaining warnings were cleared:
+
+* the `@param row,` in `dataSource.select` had a comma in the parameter **name**, so typedoc
+  could not match it to the argument. The `triggerSelect` argument was undocumented.
+* types that back public API but were not in the docs got added as entry points -
+  `valueFormater`, `datasourceConfigOptions`, `colType`, `GROUP_COLTYPE`, `dateInterface`
+* `typedoc.json` added with `externalSymbolLinkMappings`, so the re-exported lit-html
+  `html` / `render` link out to lit.dev instead of warning
+
+Now runs with 0 errors and 0 warnings.
+
 ### biome was formatting the built package
 
 `biome.json`

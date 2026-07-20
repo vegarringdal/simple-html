@@ -633,7 +633,8 @@ export class Datasource<T = any> {
 
     /**
      * sets current entity and selection, start on 1 not 0
-     * @param row, if skipped we select the first
+     * @param row if skipped we select the first
+     * @param triggerSelect also fire the select event, so the grid scrolls to the row
      */
     public select(row?: number, triggerSelect?: boolean): void {
         const selectedRow = row ? row - 1 : 0;

@@ -1,11 +1,8 @@
 # @simple-html/grid
 
-Package: `npm i @simple-html/grid -D`
+Package: `None afetr 20.07.2026, will use just branches from now on`
 
 Only lit-html as dependency
-
-> V.5.0.0.next is very stable for reading/displaying data. 
-
 
 
 Sample:
