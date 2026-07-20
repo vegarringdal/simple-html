@@ -61,7 +61,7 @@ const checker_client = TypeChecker({
             target: 'es2018',
             module: 'esNext',
             lib: ['es2021', 'dom'],
-            moduleResolution: 'node',
+            moduleResolution: 'bundler',
             isolatedModules: false,
             preserveConstEnums: true,
             allowSyntheticDefaultImports: true,
@@ -81,7 +81,6 @@ const checker_client = TypeChecker({
             importHelpers: false,
             strictNullChecks: false,
             experimentalDecorators: true,
-            baseUrl: './',
             rootDir: '',
             paths: {
                 '@simple-html/grid': ['./packages/grid/src']

@@ -3,7 +3,8 @@
         "target": "es2020",
         "module": "esNext",
         "lib": ["es2021", "dom"],
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
+        "types": ["node"],
         "isolatedModules": false,
         "esModuleInterop": true,
         "preserveConstEnums": true,
@@ -25,7 +26,6 @@
         "importHelpers": false,
         "strictNullChecks": false,
         "experimentalDecorators": true,
-        "baseUrl": "./",
         "rootDir": ".",
         "paths": {
             "@simple-html/grid": ["./grid/src"]

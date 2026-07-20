@@ -3,7 +3,7 @@
         "target": "es2018",
         "module": "esNext",
         "lib": ["es2021", "dom"],
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "isolatedModules": false,
         "preserveConstEnums": true,
         "allowSyntheticDefaultImports": true,

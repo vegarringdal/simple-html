@@ -23,7 +23,7 @@
         "access": "public"
     },
     "dependencies": {
-        "lit-html": "^2.6.1"
+        "lit-html": "^3.3.3"
     },
     "devDependencies": {}
 }
