@@ -12,8 +12,10 @@
             "**/*.json",
             "!**/*.d.ts",
             "!dist",
+            "!dist_dev",
             "!docs",
             "!node_modules",
+            "!**/dist",
             "!samples/grid01/dummyData.ts"
         ]
     },

@@ -1,0 +1,1 @@
+{"version":3,"file":"groupArgument.js","sourceRoot":"","sources":["../../src/datasource/groupArgument.ts"],"names":[],"mappings":"AAAA;;GAEG","sourcesContent":["/**\n * grouping interfaces\n */\n\nexport interface GroupArgument {\n    title: string;\n    attribute: string;\n}\n"]}

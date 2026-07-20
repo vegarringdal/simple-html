@@ -379,6 +379,43 @@ so the dimming can be restyled or replaced without touching the grid.
 
 Covered by `grid/__tests__/dimRepeatedValues.test.ts`.
 
+### Build configs deduplicated
+
+`config_shared.ts` (new), `config_devserver.ts`, `config_demo_build.ts`
+
+The two build configs were the same file with different switches. Everything they agreed on
+moved to `config_shared.ts`:
+
+* `TS_CONFIG` - the typechecker options, which were duplicated **word for word**. That is
+  why the TypeScript 6 `baseUrl` / `moduleResolution` migration had to be applied twice.
+* `INDEX_TEMPLATE` - the html shell
+* `clientOptions()` - esbuild options, with `development` picking minify/sourcemap/define
+* `DEV_OUTPUT_ROOT` / `DEMO_OUTPUT_ROOT` - where each build writes
+
+The two files are down to what actually differs: the dev server watches, serves on 8080 and
+keeps the typechecker running, the demo build does one minified pass and stops.
+
+Output:
+
+* dev server -> `dist_dev/<sample>`, throwaway and gitignored (was `dist`)
+* demo build -> `docs/demo`, unchanged, this is what github pages serves
+
+### biome was formatting the built package
+
+`biome.json`
+
+`packages/*/dist` was taken out of `.gitignore` so the package can be installed straight
+from a git branch for testing against a real app. Biome uses the ignore file
+(`vcs.useIgnoreFile`), so the moment that line went, `biome check --write` started
+reformatting the emitted `packages/grid/dist` - 101 files in one run.
+
+`!**/dist` added to `biome.json` `files.includes`, so the exclusion no longer depends on
+what happens to be gitignored. Back to 160 files checked.
+
+Anything already in `packages/grid/dist` should be regenerated with `npm run build:all`
+before committing, so what is published is what tsc emitted rather than what biome
+reformatted.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
