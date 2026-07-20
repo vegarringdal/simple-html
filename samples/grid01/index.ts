@@ -65,7 +65,9 @@ gridInterface.addEventListener({
 const containerGrid = document.createElement('div');
 containerGrid.style.position = 'absolute';
 
-containerGrid.style.top = '10px';
+// the playwright recorder toolbar overlays the top of the page, and the grid header is
+// what you need to reach when recording sorting/resize/drag, so keep it clear of it
+containerGrid.style.top = '60px';
 containerGrid.style.left = '510px';
 containerGrid.style.right = '10px';
 containerGrid.style.bottom = '10px';

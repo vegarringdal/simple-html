@@ -175,6 +175,40 @@ Both sides are now normalised with `.getTime()`, so the comparison is between ti
 The day-only behaviour is unchanged and now covered: a different *time* on the same day is
 still not an edit, a different *day* still is.
 
+### Browser level gui tests (playwright)
+
+The happy-dom tests cannot cover the interactive half of the grid: happy-dom does no
+layout, so element sizes have to be stubbed, and anything depending on real geometry
+(resize, drag/drop, menu positioning, key navigation) would only be asserting against
+those stubs. Those features run in a real chromium instead.
+
+* `playwright.config.ts` — chromium only, viewport 1600x900, reuses a running dev server
+* `e2e/` — 18 tests: sorting, context menus, column resize, column reorder, filtering,
+  scrolling, footer counts
+* `e2e/helpers.ts` — reads back only the rows that are actually on screen, since the grid
+  recycles row elements and hides the unused ones
+
+Scripts: `e2e`, `e2e:record`, `e2e:ui`, `e2e:report`, `e2e:install`.
+
+#### Recording instead of writing
+
+`npm run e2e:record` opens the app with the playwright recorder and writes what you click
+to `e2e/_recording.spec.ts`. That is the intended way to add tests here - the recorded
+selectors are the ones that actually match what you clicked.
+
+Worth knowing, found the hard way:
+
+* the recorder does **not** capture right clicks or drag operations, so context menus,
+  column resize and column reorder have to be hand written. They are, in
+  `contextMenu.spec.ts` and `columnResizeAndReorder.spec.ts`, and they reuse the selectors
+  the recorder found for the labels.
+* the header stacks two overlapping `.simple-html-label` elements at the same coordinates,
+  so a hand picked label selector gets rejected as "covered". `getByText('Age')` works.
+* the resize handle spans the whole header height, but the filter input covers its lower
+  half - grab it near the top or the click lands in the filter box instead.
+* the sample grid container was moved down to `top: 60px` so the recorder toolbar does not
+  cover the grid header.
+
 ### Test suite expanded before touching more code
 
 The point was to have a safety net in place before any larger refactor, so the risky
