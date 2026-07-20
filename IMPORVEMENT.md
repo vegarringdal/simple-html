@@ -160,6 +160,74 @@ The dev server runs its own typechecker over `samples` + `packages`, which is st
 * **Wrong arity in `samples/grid01/index.ts` (1)** — a `valueFormater.fromSource` override
   called through with 3 args when the signature takes 4, silently dropping `isFilter`.
 
+### Test suite expanded before touching more code
+
+The point was to have a safety net in place before any larger refactor, so the risky
+areas are pinned down first. No existing test was modified or renamed - only new files.
+
+128 tests -> 447 tests. Statement coverage 12.7% -> 40.6%.
+
+| area | before | after |
+| --- | --- | --- |
+| `src/datasource` | 45.8% | 82.3% |
+| `src/grid` (core) | 0% | 56.1% |
+| `src/grid/gridFunctions` | 0% | 23.4% |
+
+New test files:
+
+* `datasource/__tests__/entityHandler.test.ts` (30) — proxy edit tracking, `__rowState`
+  precedence, `__KEY` handling. Includes a regression test for the falsy `__KEY` crash.
+* `datasource/__tests__/dataContainer.test.ts` (34) — change tracking: `getChanges`,
+  `markForDeletion`, `resetData`, `resetDataSelection`, `setErrors`, `replace`.
+* `datasource/__tests__/filterSortGroupPipeline.test.ts` (18) — filter, sort and grouping
+  **combined**. The pre-existing tests only ever exercise one of the three at a time, so
+  the `__internalUpdate` path that rebuilds displayed-from-filtered was untested.
+* 7 formatter test files (204) — every date/number formatter plus `defaultValueFormater`.
+* `grid/__tests__/gridSmoke.test.ts` + `gridRendering.test.ts` (33) — gui tests.
+
+Tooling added: `happy-dom` (gui test environment), `@vitest/coverage-v8`, and a
+`test:coverage` script.
+
+#### About the gui tests
+
+happy-dom renders the grid for real, so these assert on behaviour rather than structure:
+sorting reorders the rendered values, a filter changes the footer count, grouping inserts
+group rows and collapse/expand hides/shows data rows, selection applies the right classes.
+
+Two stubs are needed, both in `grid/__tests__/gridTestHelpers.ts`:
+* `stubCanvas()` — the grid measures text via `canvas.getContext('2d').measureText` and
+  happy-dom has no canvas.
+* `stubElementSizes()` — happy-dom does no layout, so everything reports size 0 and the
+  virtual scroller renders nothing.
+
+#### Where more `data-attribute`s would help
+
+Row cells already carry `data-attribute`, which is what makes reading rows back clean.
+These still have to be matched on class name or read from the datasource instead:
+* group rows — no attribute for group name or level
+* footer — the "filtered/total" counts are only available as text
+* row selector cells — no marker at all
+
+### Formatter issues found while writing tests (not fixed)
+
+Current behaviour is encoded in the tests, so fixing any of these means updating the
+matching test - deliberately, so it stays a visible decision.
+
+* **`numberFormaterComma.ts` `toSource` throws on `null`, `undefined` and numbers.** The
+  guard body is a bare `returnValue;` with no `return`, so it falls through to
+  `returnValue.includes(',')`. `NumberFormaterDot.toSource` handles all three, so the two
+  formatters are **not** interchangeable.
+* **Dead null branch in both `fromSource`s** — `parseFloat(null)` is `NaN`, so the value is
+  already `''` before the null check. `fromSource(null)` returns `''`, never `null`,
+  contradicting the declared `string | null | undefined`.
+* **`toFilter` in both `*THHMMSS` formatters stamps `new Date().getMilliseconds()`** while
+  zeroing hours/minutes/seconds, giving filter boundaries random milliseconds. The non-`T`
+  formatters correctly pass `0`.
+* **`toSource`/`toFilter` reject `Date` objects**, returning `null` via the
+  `typeof !== 'string'` guard.
+* **`fromSource` on an iso date-only string is timezone dependent** — `new Date('2019-01-01')`
+  parses as UTC midnight, so west of UTC it formats as the previous day.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -174,9 +242,16 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
 * **`NodeJS.Timeout` in a browser library** — `grid/grid.ts` types its scroll/resize timers as
   `NodeJS.Timeout`, which is why the package needs `@types/node` at all. `ReturnType<typeof setTimeout>`
   is correct here and drops the dependency.
+* **Dates never clear the edited flag** — `datasource/entityHandler.ts` `set()` normalises
+  both sides of a date to midnight and then compares them with `===`, which compares object
+  identity, so two equal dates are never equal. A date edited back to its original value
+  stays flagged as edited, unlike every other type. Comparing `.getTime()` fixes it.
+  Confirmed and pinned by a test in `entityHandler.test.ts` marked CURRENT BEHAVIOUR.
 * **Duplicated writes in the proxy set trap** — `datasource/entityHandler.ts` assigns
   `this.__currentValues[prop] = value; obj[prop] = value;` twice in a row at the end of
   `set()`. Harmless but almost certainly a bad merge.
+* **`src/date` (the date picker) has no tests at all** — 0% coverage. `src/grid/gridFunctions`
+  is at 23%; the context menus, drag/drop and key navigation are the largest untested parts.
 * **Duplication in hot paths** — `verticalScrollHandler.ts` has three near-identical ~30 line
   blocks for left/middle/right that differ only in cache + widths array. Same shape in
   `horizontalScrollHandler.ts`.

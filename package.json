@@ -14,6 +14,7 @@
         "lint:fix": "biome check --write .",
         "format": "biome format --write .",
         "test": "npm run test --workspaces",
+        "test:coverage": "npm run test:coverage --workspaces",
         "test:watch": "npm run test:watch --workspaces",
         "release": "standard-version  --prerelease next",
         "release-test": "standard-version  --dry-run --prerelease next",
@@ -29,8 +30,10 @@
     "devDependencies": {
         "@biomejs/biome": "2.5.4",
         "@types/node": "^26.1.1",
+        "@vitest/coverage-v8": "4.1.10",
         "esbuild": "0.28.1",
         "esbuild-helpers": "2.0.5",
+        "happy-dom": "20.11.0",
         "lit-html": "3.3.3",
         "standard-version": "9.5.0",
         "tsx": "4.23.1",
