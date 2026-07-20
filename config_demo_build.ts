@@ -57,9 +57,9 @@ const checker_client = TypeChecker({
     name: 'checker_client',
     tsConfigJsonContent: {
         compilerOptions: {
-            target: 'es2018',
+            target: 'es2025',
             module: 'esNext',
-            lib: ['es2021', 'dom'],
+            lib: ['es2025', 'dom'],
             moduleResolution: 'bundler',
             isolatedModules: false,
             preserveConstEnums: true,
@@ -85,7 +85,7 @@ const checker_client = TypeChecker({
                 '@simple-html/grid': ['./packages/grid/src']
             }
         },
-        exclude: ['node_modules', 'config_devserver.ts', 'dist']
+        exclude: ['node_modules', 'config_devserver.ts', 'config_demo_build.ts', 'dist']
     }
 });
 

@@ -36,14 +36,14 @@ export class Grid {
     // scroll helpers
     public lastScrollTop: number = 0;
     public lastScrollLeft: number = 0;
-    public largeScrollLeftTimer: NodeJS.Timeout;
-    public largeScrollTopTimer: NodeJS.Timeout;
+    public largeScrollLeftTimer: ReturnType<typeof setTimeout>;
+    public largeScrollTopTimer: ReturnType<typeof setTimeout>;
 
     public rows: Map<string, HTMLElement> = new Map();
     public columns: Map<string, HTMLElement> = new Map();
     public oldHeight: number;
     public oldWidth: number;
-    public resizeTimer: NodeJS.Timeout;
+    public resizeTimer: ReturnType<typeof setTimeout>;
     public resizeInit = false;
     public columnsHeaders: Map<string, HTMLElement> = new Map();
     public skipInitResizeEvent: boolean = false;

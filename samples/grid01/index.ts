@@ -30,9 +30,7 @@ import { toggelDarkGrid } from './toggelDarkGrid';
 const datasource = new Datasource();
 datasource.setData(
     structuredClone(dummydata).map((e: any) => {
-        //@ts-expect-error
         e.date1 = new Date(e.date1);
-        //@ts-expect-error
         e.date2 = new Date(e.date2);
         return e;
     })
@@ -44,7 +42,7 @@ oldFormater.fromSource = (value: any, type: any, attribute: string, isFilter) =>
     if (attribute?.startsWith('country') && !isFilter) {
         return 'Open D';
     } else {
-        return oldFormaterFromSource.apply(oldFormater, [value, type, attribute]);
+        return oldFormaterFromSource.apply(oldFormater, [value, type, attribute, isFilter]);
     }
 };
 
@@ -120,9 +118,7 @@ createButton('set to 10 rows', () => {
     const data = (structuredClone(dummydata) as any[]).slice(1, 10);
     datasource.setData(
         data.map((e: any) => {
-            //@ts-expect-error
             e.date1 = new Date(e.date1);
-            //@ts-expect-error
             e.date2 = new Date(e.date2);
             return e;
         })
@@ -133,9 +129,7 @@ createButton('add to 10 rows', () => {
     const data = (structuredClone(dummydata) as any[]).slice(datasource.length(), datasource.length() + 10);
     datasource.setData(
         data.map((e: any) => {
-            //@ts-expect-error
             e.date1 = new Date(e.date1);
-            //@ts-expect-error
             e.date2 = new Date(e.date2);
             return e;
         }),
@@ -147,9 +141,7 @@ createButton('add to 100 rows', () => {
     const data = (structuredClone(dummydata) as any[]).slice(datasource.length(), datasource.length() + 100);
     datasource.setData(
         data.map((e: any) => {
-            //@ts-expect-error
             e.date1 = new Date(e.date1);
-            //@ts-expect-error
             e.date2 = new Date(e.date2);
             return e;
         }),

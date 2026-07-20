@@ -125,6 +125,41 @@ Two rules were deliberately overridden rather than obeyed:
   boolean to close the menu. Biome's suggested `boolean | undefined` would reject every
   void-returning callback.
 
+### ES target raised to es2025
+
+`target` and `lib` set to `es2025` everywhere they were declared, which had drifted apart:
+
+| file | was | now |
+| --- | --- | --- |
+| `packages/tsconfig.json` | target es2020, lib es2021 | es2025 |
+| `samples/tsconfig.json` | target es2018, lib es2021 | es2025 |
+| `config_devserver.ts` | target es2018, lib es2021 | es2025 |
+| `config_demo_build.ts` | target es2018, lib es2021 | es2025 |
+| `scripts/build.js` | target es2018, lib es2021 | es2025 |
+
+`scripts/build.js` is the one that matters for consumers — it emits the published `dist`,
+so the package now ships untranspiled es2025. It also still used the deprecated
+`moduleResolution: 'node'`, now `bundler`.
+
+### `npm start` typecheck errors fixed (18)
+
+The dev server runs its own typechecker over `samples` + `packages`, which is stricter than
+`npm run typecheck` (that one only covers `packages`). It was failing on:
+
+* **`NodeJS.Timeout` in `grid/grid.ts` (3)** — a browser library should not depend on node
+  types. Replaced with `ReturnType<typeof setTimeout>`, which also let the temporary
+  `"types": ["node"]` come back out of `packages/tsconfig.json`.
+* **CSS side-effect imports (5)** — TS6 reports these as TS2882. Added `samples/css.d.ts`
+  with `declare module '*.css';`.
+* **`process` not found in `config_demo_build.ts` (1)** — it is a node script being pulled
+  into a browser typecheck. Added to the `exclude` list, which already had
+  `config_devserver.ts`.
+* **Unused `@ts-expect-error` (8)** — biome's `noTsIgnore` rewrote `@ts-ignore` to
+  `@ts-expect-error`. Since `e` was already `any` there was never an error to suppress, so
+  they became errors themselves. Removed.
+* **Wrong arity in `samples/grid01/index.ts` (1)** — a `valueFormater.fromSource` override
+  called through with 3 args when the signature takes 4, silently dropping `isFilter`.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

@@ -1,10 +1,9 @@
 {
     "compilerOptions": {
-        "target": "es2020",
+        "target": "es2025",
         "module": "esNext",
-        "lib": ["es2022", "dom"],
+        "lib": ["es2025", "dom"],
         "moduleResolution": "bundler",
-        "types": ["node"],
         "isolatedModules": false,
         "esModuleInterop": true,
         "preserveConstEnums": true,
