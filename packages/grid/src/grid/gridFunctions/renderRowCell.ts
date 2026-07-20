@@ -10,6 +10,7 @@ import { contextmenuRow } from './contextmenuRow';
 import { creatElement } from './createElement';
 import { DIV } from './DIV';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { isRepeatedValue } from './isRepeatedValue';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function renderRowCell(
@@ -98,6 +99,10 @@ export function renderRowCell(
 
         const { inputClass, dimmedClass } = ctx.gridInterface.__callCellAppendClass(attribute, rowData, cellReadOnly);
 
+        // dims cells that repeat the row above, resets at the start of every group
+        const repeated = isRepeatedValue(ctx, row, attribute);
+        const repeatedClass = repeated ? ' simple-html-grid-repeated-value' : '';
+
         if (cellConfigType === 'boolean') {
             render(
                 html` <div style="width:100%;height:100%;">
@@ -106,10 +111,11 @@ export function renderRowCell(
                         style="width:100%;"
                         role="cell"
                         data-attribute=${attribute}
+                        data-repeated-value=${repeated ? 'true' : 'false'}
                         aria-label=${attribute}
                         .checked=${live(value)}
                         type="checkbox"
-                        class=${`cellpos-${colType}-${row}-${column}-${celno} ${inputClass}`}
+                        class=${`cellpos-${colType}-${row}-${column}-${celno} ${inputClass}${repeatedClass}`}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -154,11 +160,12 @@ export function renderRowCell(
                         role="cell"
                         aria-label=${attribute}
                         data-attribute=${attribute}
+                        data-repeated-value=${repeated ? 'true' : 'false'}
                         style=${
                             cellConfigType === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'
                         }
                         .value=${live(value?.toString())}
-                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}`}
+                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}${repeatedClass}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
                         placeholder=${showPlaceHolder ? cellConfig.placeHolderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {

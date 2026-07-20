@@ -353,6 +353,32 @@ Details worth knowing:
 
 Covered by `grid/__tests__/rowMenuFilter.test.ts`.
 
+### Dim repeated values
+
+`gridFunctions/isRepeatedValue.ts`, `gridFunctions/renderRowCell.ts`, `gridFunctions/contextmenuRow.ts`
+
+A cell that repeats the value of the row above is dimmed, so only the first row of a run of
+equal values reads at full strength. Off by default, toggled with **View: Use dimmed
+values** in the row context menu, and `dimRepeatedValues` in the grid config.
+
+* **grouping resets it** - the comparison is against the previous row in the *displayed*
+  collection, and a group header sits between two groups, so the first data row of every
+  group always shows fully. That falls out of the design rather than needing a special case.
+* the comparison is on the **displayed** value, not the raw one. This is a visual feature -
+  if a value formater makes two different source values render as the same text they look
+  repeated and should dim. The sample rewrites every `country` cell to "Open D" while the
+  underlying data differs per row, and comparing raw values left that column undimmed.
+  Comparing displayed values also handles dates for free, two Date objects are never `===`.
+* the dynamic type column is honoured, same type resolution the cell rendering uses
+* blanks are never dimmed, a run of faded empty cells just looks broken
+* row indexes are absolute in the displayed collection, not in the recycled dom rows, so it
+  stays correct while scrolling
+
+`data-repeated-value="true|false"` is written to every cell input regardless of the setting,
+so the dimming can be restyled or replaced without touching the grid.
+
+Covered by `grid/__tests__/dimRepeatedValues.test.ts`.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

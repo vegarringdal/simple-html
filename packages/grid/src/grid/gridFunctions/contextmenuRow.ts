@@ -445,6 +445,27 @@ export function contextmenuRow(
             <div class="simple-html-grid-menu-item" @click=${() => addToFilter()}>Add to filter <i>(and)</i></div>`;
     };
 
+    /**
+     * dim cells that repeat the value of the row above
+     */
+    const dimRepeatedTemplate = () => {
+        const gridConfig = ctx.gridInterface.__getGridConfig();
+        const enabled = gridConfig.dimRepeatedValues === true;
+
+        return html`<div class="simple-html-grid-menu-section">View:</div>
+            <hr class="hr-solid" />
+            <div
+                class="simple-html-grid-menu-item"
+                @click=${() => {
+                    gridConfig.dimRepeatedValues = !enabled;
+                    removeContextMenu(ctx);
+                    triggerScrollEvent(ctx);
+                }}
+            >
+                ${enabled ? '✓ ' : ''}Use dimmed values
+            </div>`;
+    };
+
     const copyCellTemplate = () => {
         const clickHandle = () => {
             copyData([attribute], true, rowData);
@@ -531,8 +552,8 @@ export function contextmenuRow(
             <hr class="hr-solid" />
 
             ${copyCellTemplate()} ${copyColumnOnSelectedRowsTemplate()} ${copyAllOnSelectedRowsTemplate()}
-            ${copySelectedColumnsOnSelectedRowsTemplate()} ${filterTemplate()} ${pasteAndClearTemplate()}
-            ${summaryTemplate()}
+            ${copySelectedColumnsOnSelectedRowsTemplate()} ${filterTemplate()} ${dimRepeatedTemplate()}
+            ${pasteAndClearTemplate()} ${summaryTemplate()}
         </div>`,
         contextMenu
     );

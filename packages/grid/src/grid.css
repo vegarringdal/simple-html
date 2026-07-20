@@ -873,6 +873,14 @@ input {
     right: 0;
 }
 
+/**
+ * a cell repeating the value of the row above, when dimRepeatedValues is on.
+ * data-repeated-value is on the input either way, so this can be restyled or replaced.
+ */
+.simple-html-grid .simple-html-grid-repeated-value {
+    filter: opacity(0.3);
+}
+
 /* every icon using this class is clickable - filter editor actions and the remove group X */
 .simple-html-grid .simple-html-grid-icon-group-svg {
     fill: transparent;

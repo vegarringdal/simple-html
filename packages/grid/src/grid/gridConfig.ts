@@ -28,6 +28,15 @@ export type GridConfig = {
     autoRemoveContextMenuOnScrollEvent?: boolean;
 
     /**
+     * dims a cell when it repeats the value of the row above, so only the first row of a
+     * run of equal values reads at full strength. Default = false.
+     *
+     * A cell always shows at full strength again at the start of a group, and blanks are
+     * never dimmed. Can be toggled from the row context menu.
+     */
+    dimRepeatedValues?: boolean;
+
+    /**
      * renders the built in tooltip on buttons/icons, default = true
      *
      * the `data-tooltip` attribute is always written to the elements, also when this is
