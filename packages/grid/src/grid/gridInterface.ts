@@ -350,7 +350,7 @@ export class GridInterface<T> {
         if (!Array.isArray(this.gridConfig.columnsPinnedRight)) {
             this.gridConfig.columnsPinnedRight = [];
         }
-        if (!Array.isArray(this.gridConfig.columnsPinnedLeft)) {
+        if (!Array.isArray(this.gridConfig.columnsCenter)) {
             this.gridConfig.columnsCenter = [];
         }
 
@@ -463,12 +463,7 @@ export class GridInterface<T> {
         });
 
         this.gridConfig.attributes?.forEach((att) => {
-            const name = att.attribute;
-            if (!this.gridConfig.__attributes[name]) {
-                this.gridConfig.__attributes[name] = att;
-            } else {
-                this.gridConfig.__attributes[name] = att;
-            }
+            this.gridConfig.__attributes[att.attribute] = att;
         });
     }
 
