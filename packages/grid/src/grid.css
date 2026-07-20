@@ -522,10 +522,18 @@ input {
     user-select: none;
 }
 
+/**
+ * action button at the bottom of a context menu - "Run Search" in the column filter and
+ * "Close" in the column chooser
+ */
 .simple-html-label-button-menu-bottom {
-    border-top: 1px solid var(--simple-html-grid-main-bg-border);
-    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
-    background-color: var(--simple-html-grid-main-bg-color);
+    box-sizing: border-box;
+    display: block;
+    margin: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    border-radius: 3px;
+    background-color: var(--simple-html-grid-sec-bg-color);
     pointer-events: all;
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
@@ -533,6 +541,16 @@ input {
     text-align: center;
     overflow: hidden;
     user-select: none;
+    cursor: pointer;
+}
+
+.simple-html-label-button-menu-bottom:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the old inset shadow reused as a pressed state */
+.simple-html-label-button-menu-bottom:active {
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
 .simple-html-label-odd {
@@ -957,6 +975,39 @@ input {
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/**
+ * everything clickable in a context menu gets the hand.
+ * The section headers are not clickable, they have pointer-events: none above.
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item,
+.simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom,
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox,
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox input,
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox label {
+    cursor: pointer;
+}
+
+/**
+ * a row in the excel style value list - checkbox plus label, the whole row is clickable
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox {
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox label {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-selected {

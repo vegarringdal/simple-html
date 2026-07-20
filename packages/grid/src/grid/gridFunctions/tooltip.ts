@@ -26,6 +26,7 @@ export const TOOLTIPS: Record<string, string> = {
     'filterEditor.closeButton': 'Close the dialog and leave the current filter as it is',
     'filterEditor.pickAttribute': 'Pick which column this condition looks at',
     'filterEditor.pickOperator': 'Pick how the value is compared, for example equal or greater than',
+    'filterEditor.pickValueAttribute': 'Pick which column to compare against',
     'filterEditor.deleteCondition': 'Delete this condition',
     'filterEditor.deleteGroup': 'Delete this group and everything in it',
     'filterEditor.clearAll': 'Clear all conditions',

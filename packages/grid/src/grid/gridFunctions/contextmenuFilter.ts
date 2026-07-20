@@ -119,22 +119,33 @@ export function contextmenuFilter(
                     !getContext().availableOnly;
                 reRender();
             };
+            /**
+             * row count per value, in parentheses.
+             * Only shown when the list is complete - if values were dropped because of the
+             * DROPDOWN_FILTER_MAX_ROWS cap the counts would be misleading.
+             */
+            const countFor = (rowData: any) => {
+                if (getContext().data.truncated) {
+                    return '';
+                }
+                const count = getContext().data.counts?.get(rowData);
+                return count ? ` (${count})` : '';
+            };
+
             return Array.from(getContext().data.dataFilterSetFull).map((rowData: any) => {
-                return html`<div style="padding:2px">
+                return html`<div class="simple-html-grid-menu-checkbox">
                     <input
-                        style="padding:2px"
                         type="checkbox"
                         .checked=${live(getContext().data.dataFilterSet.has(rowData))}
                         @click=${() => {
                             filterValueClick(rowData);
                         }}
                     /><label
-                        style="padding:2px"
                         @click=${() => {
                             filterValueClick(rowData);
                         }}
                     >
-                        ${rowData === 'NULL' ? 'Blank' : rowData}</label
+                        ${rowData === 'NULL' ? 'Blank' : rowData}${countFor(rowData)}</label
                     >
                 </div>`;
             });
@@ -188,17 +199,15 @@ export function contextmenuFilter(
             // since we only display first DROPDOWN_FILTER_MAX_ROWS row
             return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                 ${
-                    getContext().data.dataFilterSetFull.size > DROPDOWN_FILTER_MAX_ROWS
+                    getContext().data.truncated
                         ? html`<div class="max-row-info-warning">Showing only first ${DROPDOWN_FILTER_MAX_ROWS}  !</div>`
                         : html`<div class="max-row-info">${getContext().data.dataFilterSetFull.size} rows found</div>`
                 }
-                <div style="padding:2px">
-                    <input
-                        style="padding:2px"
-                        type="checkbox"
-                        .checked=${live(getContext().selectAll)}
+                <div class="simple-html-grid-menu-checkbox">
+                    <input type="checkbox" .checked=${live(getContext().selectAll)} @click=${() => clickHandler()} /><label
                         @click=${() => clickHandler()}
-                    /><label style="padding:2px" @click=${() => clickHandler()}>Select All</label>
+                        >Select All</label
+                    >
                 </div>
 
                 ${filterValues()}

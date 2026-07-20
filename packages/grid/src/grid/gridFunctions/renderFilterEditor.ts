@@ -256,7 +256,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 label = ref.label;
             }
 
+            // same look as the other two pickers, it opens a menu the same way
             filterElement = html`<div
+                class="grid-pick grid-text-center"
+                data-tooltip=${tooltip(ctx, 'filterEditor.pickValueAttribute')}
                 @click=${(e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();

@@ -304,6 +304,55 @@ Every button and icon in the filter editor now carries `data-tooltip`.
 
 Covered by `grid/__tests__/filterEditor.test.ts`.
 
+### Filter context menu: row counts, cursors, button styling
+
+`gridFunctions/dropDownFilterData.ts`, `gridFunctions/contextmenuFilter.ts`, `grid.css`
+
+* **row count per value** in the excel style value list, shown as `VALUE (12)`. Counted for
+  every row including the ones past the cap, but only displayed when nothing was cut off -
+  a count next to a truncated list would be misleading.
+* Blanks are counted too, so the `Blank` entry gets a number as well.
+
+**The "Showing only first 100" warning never worked properly.** It tested
+`dataFilterSetFull.size > DROPDOWN_FILTER_MAX_ROWS`, but the cap stops the set at exactly
+100, so that could only ever be true when a blank pushed it to 101. A column with 500
+distinct values and no blanks silently showed 100 of them with no warning at all. There is
+now an explicit `truncated` flag set at the point a value is dropped.
+
+* every clickable thing in a context menu got `cursor: pointer` - menu items, the value
+  checkboxes and their labels, and the bottom action button
+* the value rows became a real class instead of inline padding, so they can have a hover
+  state and ellipsis on long values
+* the bottom action button ("Run Search", and "Close" in the column chooser, same class)
+  restyled as an actual button - border, radius, margin, hover and a pressed state
+* icons using `.simple-html-grid-icon-group-svg` got `cursor: pointer`, which also covers
+  the remove grouping X in the top panel
+
+Covered by `grid/__tests__/dropDownFilterData.test.ts`.
+
+### Row menu: filter on the value in the cell
+
+`gridFunctions/contextmenuRow.ts`
+
+New "Filter:" section in the right click menu on a cell:
+
+* **Replace filter (all)** - throws away the current filter, keeps only a condition on this
+  cell's value
+* **Add to filter (and)** - keeps the current filter and puts this condition **in front** of
+  it, joined with AND
+
+Details worth knowing:
+
+* a blank cell filters with `IS_BLANK` rather than `EQUAL ''`, which would match nothing
+* the quick filter inputs in the header are cleared when this runs, otherwise they keep
+  showing text that no longer matches the filter that is actually applied
+* the section is hidden on group rows, they have no value of their own
+* it filters on the **source** value, not the displayed one. With a value formater that
+  rewrites the display (like the country override in the sample) the filter uses what is
+  really in the data.
+
+Covered by `grid/__tests__/rowMenuFilter.test.ts`.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

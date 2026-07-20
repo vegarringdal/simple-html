@@ -1,6 +1,7 @@
 import { html, render } from 'lit-html';
 import { DateFormaterYYYYMMDD } from '../../datasource/DateFormaterYYYYMMDD';
 import type { Entity } from '../../datasource/entity';
+import type { FilterArgument } from '../../datasource/filterArgument';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { ColType } from './colType';
@@ -8,6 +9,7 @@ import { creatElement } from './createElement';
 import { getAttributeColumns } from './getAttributeColumns';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { prettyPrintString } from './prettyPrintString';
+import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
@@ -374,6 +376,75 @@ export function contextmenuRow(
             </div>`;
     };
 
+    /**
+     * Filter on the value in the cell that was right clicked.
+     *
+     * Replace throws away whatever filter is there and keeps only this one, add keeps the
+     * existing filter and puts this condition in front of it, joined with AND.
+     */
+    const filterTemplate = () => {
+        if (rowData?.__group) {
+            // a group row has no value of its own to filter on
+            return null;
+        }
+
+        const datasource = ctx.gridInterface.getDatasource();
+        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const value = rowData?.[attribute];
+        const isBlank = value === null || value === undefined || value === '';
+
+        const conditionForCell = (): FilterArgument =>
+            ({
+                type: 'CONDITION',
+                attribute,
+                attributeType: cellConfig?.type || 'text',
+                valueType: 'VALUE',
+                // filtering a blank cell on EQUAL '' would match nothing useful
+                operator: isBlank ? 'IS_BLANK' : 'EQUAL',
+                value: isBlank ? null : value
+            }) as FilterArgument;
+
+        const applyFilter = (filterArgument: FilterArgument) => {
+            datasource.filter(filterArgument);
+            // the quick filter inputs in the header would otherwise still show the old text
+            ctx.gridInterface.__getGridConfig().attributes.forEach((e) => {
+                e.currentFilterValue = '';
+            });
+            rebuildHeaderColumns(ctx);
+            removeContextMenu(ctx);
+        };
+
+        const replaceFilter = () => {
+            applyFilter({
+                type: 'GROUP',
+                logicalOperator: 'AND',
+                filterArguments: [conditionForCell()]
+            } as FilterArgument);
+        };
+
+        const addToFilter = () => {
+            const current = datasource.getFilter();
+            let existing: FilterArgument[] = [];
+            if (current?.filterArguments?.length) {
+                existing = current.filterArguments;
+            } else if (current) {
+                // a single condition that was never wrapped in a group
+                existing = [current];
+            }
+
+            applyFilter({
+                type: 'GROUP',
+                logicalOperator: 'AND',
+                filterArguments: [conditionForCell(), ...existing]
+            } as FilterArgument);
+        };
+
+        return html`<div class="simple-html-grid-menu-section">Filter:</div>
+            <hr class="hr-solid" />
+            <div class="simple-html-grid-menu-item" @click=${() => replaceFilter()}>Replace filter <i>(all)</i></div>
+            <div class="simple-html-grid-menu-item" @click=${() => addToFilter()}>Add to filter <i>(and)</i></div>`;
+    };
+
     const copyCellTemplate = () => {
         const clickHandle = () => {
             copyData([attribute], true, rowData);
@@ -460,7 +531,8 @@ export function contextmenuRow(
             <hr class="hr-solid" />
 
             ${copyCellTemplate()} ${copyColumnOnSelectedRowsTemplate()} ${copyAllOnSelectedRowsTemplate()}
-            ${copySelectedColumnsOnSelectedRowsTemplate()} ${pasteAndClearTemplate()} ${summaryTemplate()}
+            ${copySelectedColumnsOnSelectedRowsTemplate()} ${filterTemplate()} ${pasteAndClearTemplate()}
+            ${summaryTemplate()}
         </div>`,
         contextMenu
     );
