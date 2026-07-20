@@ -160,6 +160,21 @@ The dev server runs its own typechecker over `samples` + `packages`, which is st
 * **Wrong arity in `samples/grid01/index.ts` (1)** — a `valueFormater.fromSource` override
   called through with 3 args when the signature takes 4, silently dropping `isFilter`.
 
+### Dates never cleared the edited flag
+
+`datasource/entityHandler.ts` `set()`
+
+To decide whether a row is still modified, `set()` normalises both the original and the new
+value to midnight and compares them. Both sides were `Date` objects and the comparison was
+`===`, which is object identity - two `Date`s holding the same moment are never `===`. So a
+date edited back to its original value stayed flagged as edited forever, unlike every other
+type, and the row kept showing up in `getChanges()` with nothing actually changed.
+
+Both sides are now normalised with `.getTime()`, so the comparison is between timestamps.
+
+The day-only behaviour is unchanged and now covered: a different *time* on the same day is
+still not an edit, a different *day* still is.
+
 ### Test suite expanded before touching more code
 
 The point was to have a safety net in place before any larger refactor, so the risky
@@ -242,11 +257,6 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
 * **`NodeJS.Timeout` in a browser library** — `grid/grid.ts` types its scroll/resize timers as
   `NodeJS.Timeout`, which is why the package needs `@types/node` at all. `ReturnType<typeof setTimeout>`
   is correct here and drops the dependency.
-* **Dates never clear the edited flag** — `datasource/entityHandler.ts` `set()` normalises
-  both sides of a date to midnight and then compares them with `===`, which compares object
-  identity, so two equal dates are never equal. A date edited back to its original value
-  stays flagged as edited, unlike every other type. Comparing `.getTime()` fixes it.
-  Confirmed and pinned by a test in `entityHandler.test.ts` marked CURRENT BEHAVIOUR.
 * **Duplicated writes in the proxy set trap** — `datasource/entityHandler.ts` assigns
   `this.__currentValues[prop] = value; obj[prop] = value;` twice in a row at the end of
   `set()`. Harmless but almost certainly a bad merge.

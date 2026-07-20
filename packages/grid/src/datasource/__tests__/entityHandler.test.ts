@@ -125,20 +125,32 @@ describe('entityHandler - edit tracking', () => {
     });
 
     /**
-     * CURRENT BEHAVIOUR, not necessarily wanted.
-     *
-     * set() normalises both sides of a date to midnight and then compares with ===,
-     * which compares object identity, so two equal dates are never equal. A date edited
-     * back to its original value therefore stays flagged as edited, unlike every other type.
-     * Comparing .getTime() would fix it - update this test when it is fixed.
+     * dates are compared as timestamps - two Date objects are never === even when they
+     * hold the same moment, so comparing the objects would leave the row flagged forever
      */
-    it('expect a date set back to its original value to still count as edited', () => {
+    it('expect a date set back to its original value to clear the edited flag', () => {
         const row = makeRow({ when: new Date(2020, 0, 1) });
         row.when = new Date(2021, 5, 5);
         expect(row.__controller.__edited).toEqual(true);
 
         row.when = new Date(2020, 0, 1);
+        expect(row.__controller.__edited).toEqual(false);
+    });
+
+    it('expect a date changed to a different day to stay edited', () => {
+        const row = makeRow({ when: new Date(2020, 0, 1) });
+        row.when = new Date(2020, 0, 2);
         expect(row.__controller.__edited).toEqual(true);
+    });
+
+    /**
+     * only the day matters - both sides are normalised to midnight before comparing,
+     * so a different time on the same day is not treated as a change
+     */
+    it('expect a different time on the same day to not count as an edit', () => {
+        const row = makeRow({ when: new Date(2020, 0, 1, 8, 30, 0) });
+        row.when = new Date(2020, 0, 1, 17, 45, 0);
+        expect(row.__controller.__edited).toEqual(false);
     });
 
     it('expect a non date value set back to its original to clear the flag, for contrast', () => {

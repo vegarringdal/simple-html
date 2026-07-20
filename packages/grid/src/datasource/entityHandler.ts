@@ -125,6 +125,7 @@ export class EntityHandler {
             let _value = value;
 
             // if date, clear the "timezone/time part"
+            // compared as a timestamp - two Date objects are never === even when equal
             if (_original instanceof Date) {
                 try {
                     _original = new Date(
@@ -135,7 +136,7 @@ export class EntityHandler {
                         0,
                         0,
                         0
-                    );
+                    ).getTime();
                 } catch {
                     _original = null;
                 }
@@ -149,7 +150,7 @@ export class EntityHandler {
                     0,
                     0,
                     0
-                );
+                ).getTime();
             }
 
             if (_original === _value || ((_original === null || _original === undefined) && _value === '')) {
