@@ -5,7 +5,11 @@ See branch, is change log says **DEV** its beeing tested.
 5.0.1: **DEV**
 - refactored all, and updated packages
 - removed eslint and added biomejs
-- 
+- added dimmed cells  (right click cell)
+- added right click to add rows to filter
+- filter resizble
+- count on filter right click data
+
 
 
 

@@ -7,8 +7,6 @@
         "build:demo": "tsx config_demo_build",
         "build:all": "node ./scripts/build",
         "clean:dist": "node ./scripts/clean",
-        "publish:all": "npm publish --workspace packages/grid",
-        "publish:test": "npm publish --workspace packages/grid --dry-run",
         "typecheck": "node typecheck",
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
