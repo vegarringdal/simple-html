@@ -486,6 +486,24 @@ shared abstractions collapsed: no `development` flag, no `outputRoot` parameter,
 * stale `config_demo_build.ts` / `config_shared.ts` entries dropped from the tsconfig
   excludes
 
+### npm run build now packs a tgz into ./build
+
+`scripts/build.js`, `package.json`
+
+After emitting `dist`, the build wipes and recreates `./build` (gitignored) and runs
+`npm pack --pack-destination ./build`, so `./build` always holds exactly the latest
+`simple-html-grid-<version>.tgz`.
+
+This surfaced that the package had no `files` allowlist, so `npm pack` was shipping the
+whole repo - 570 files, 13 MB, mostly the 11 MB `samples/grid01/dummyData.ts`, plus
+`.claude`, `.vscode`, config and scripts. Added `files: ["dist", "src", "README.md",
+"LICENSE"]`. The tgz is now 335 kB, and `src` is included so consumers get working
+go-to-definition from the `.d.ts.map` files.
+
+The requested `--pack-destination` was `./dist`, changed to `./build`: `dist` is the content
+being packed and is wiped at the start of every build, so a tgz there would be packed into
+the next tarball and then deleted.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

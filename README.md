@@ -1,15 +1,17 @@
 # @simple-html/grid
 
-Only lit-html as dependency, you need to install this manually, since --allow-git=root will skip it
+Only lit-html as dependency, you need to install this manually
 
-> Package: `None - after 20.07.2026, will use just branches`
+# package
 
+Just run `npm run build` and copy the tgz file to you project
+```json
+"dependencies": {
+  "@simple-html/grid": "file:./libs/simple-html-grid-5.0.1.tgz"
+}
+```
 
-# Sample:
-* see `npm start`
-
-
-# Dev
+# Dev / Sample
 
 * `git clone https://github.com/vegarringdal/simple-html`
 * `npm i`
