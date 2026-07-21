@@ -5,4 +5,5 @@ npm-debug.log
 dist_dev/
 docs/
 dist/
+build/
 coverage

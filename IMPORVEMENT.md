@@ -474,6 +474,18 @@ Gotchas hit on the way, noted so they are not rediscovered:
   scattered `.d.ts` / `.js` next to every `.ts` in the repo. All cleaned up, the scoped
   build no longer does it.
 
+### Dropped the demo build, merged the dev server config
+
+Demos are run locally now (no github pages build), so `config_demo_build.ts` is gone and
+`config_shared.ts` folded back into `config_devserver.ts`. With one consumer left, the
+shared abstractions collapsed: no `development` flag, no `outputRoot` parameter, no
+`entrySample` vs `outSample` - the dev server is always watched, unminified, dev, output to
+`dist_dev`. The `TS_CONFIG` / `INDEX_TEMPLATE` / `clientOptions` indirection is inlined.
+
+* `build:demo` and `clean:dist` scripts removed, `build:all` renamed to `build`
+* stale `config_demo_build.ts` / `config_shared.ts` entries dropped from the tsconfig
+  excludes
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

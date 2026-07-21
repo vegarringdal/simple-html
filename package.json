@@ -7,9 +7,7 @@
     "typings": "dist/index.d.ts",
     "scripts": {
         "start": "tsx config_devserver",
-        "build:demo": "tsx config_demo_build",
-        "build:all": "node ./scripts/build",
-        "clean:dist": "node ./scripts/clean",
+        "build": "node ./scripts/build",
         "typecheck": "node typecheck",
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
