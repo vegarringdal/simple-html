@@ -12,8 +12,8 @@ import {
     NumberFormaterComma,
     NumberFormaterDot
 } from '@simple-html/grid';
-import '../../packages/grid/src/grid.css';
-import '../../packages/grid/src/date.css';
+import '../../src/grid.css';
+import '../../src/date.css';
 import { DateFormaterCustom } from './dateFormaterCustom';
 import { dummydata } from './dummyData';
 import { gridConfig } from './gridConfig';

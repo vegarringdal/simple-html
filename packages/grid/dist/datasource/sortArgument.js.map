@@ -1,1 +1,0 @@
-{"version":3,"file":"sortArgument.js","sourceRoot":"","sources":["../../src/datasource/sortArgument.ts"],"names":[],"mappings":"AAAA;;GAEG","sourcesContent":["/**\n *  sorting interfaces\n */\n\nexport interface SortArgument {\n    attribute: string;\n    ascending: boolean;\n}\n"]}

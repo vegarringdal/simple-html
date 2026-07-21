@@ -1,1 +1,0 @@
-{"version":3,"file":"dragEvent.d.ts","sourceRoot":"","sources":["../../../src/grid/gridFunctions/dragEvent.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,SAAS,CAAC;AAMpC,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,mBAAmB,CAAC;AAGzD,wBAAgB,SAAS,CAAC,GAAG,EAAE,IAAI,EAAE,IAAI,EAAE,eAAe,EAAE,WAAW,UAAO,EAAE,WAAW,GAAE,WAAuB,QAqWnH"}

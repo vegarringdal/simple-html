@@ -1,15 +1,90 @@
 # Changelog
 
-See branch, is change log says **DEV** its beeing tested.
+## 5.0.1
 
-5.0.1: **DEV**
-- refactored all, and updated packages
-- removed eslint and added biomejs
-- added dimmed cells  (right click cell)
-- added right click to add rows to filter
-- filter resizble
-- count on filter right click data
+Large maintenance release: the whole codebase was refactored, the toolchain and all
+dependencies were updated, the test suite was tripled, and several new grid features landed.
 
+### ⚠️ Breaking changes
+- **Release strategy changed — no more `npm publish`.** Releases now happen by installing the
+  package straight from a git branch, so `standard-version` and its `.versionrc.json` are
+  gone, and `dist` is committed to the branch. Update your dependency to point at the git
+  ref instead of the npm registry.
+- **`lit-html` bumped `^2.6.1` → `^3.3.3`.** Kept as a range so consumers can dedupe, but
+  this breaks anyone still on lit-html 2.
+- **Published output is now untranspiled es2025.** `scripts/build.js` emits at `target`/`lib`
+  `es2025`, so the package raises its runtime floor.
+- **Runtime floor also raised to es2022** by `hasOwnProperty` → `Object.hasOwn` (Chrome 93 /
+  Firefox 92 / Safari 15.4 or newer).
+
+### Features
+- **Filter on a cell's value from the row menu** — the right-click cell menu gains a *Filter:*
+  section with **Replace filter (all)** and **Add to filter (and)** (the new condition is
+  ANDed in front of the existing filter). Filters on the *source* value (not the displayed
+  one), uses `IS_BLANK` for empty cells, clears the header quick-filter inputs so they can't
+  disagree with what's applied, and is hidden on group rows.
+- **Dim repeated values** — a cell that repeats the value of the row directly above is dimmed
+  so only the first row of a run reads at full strength. Off by default; toggle via **View:
+  Use dimmed values** in the row menu or `dimRepeatedValues` in the grid config. Compares the
+  *displayed* value (so value-formatter output and dates work), grouping resets it at each
+  group's first row, blanks are never dimmed, and it stays correct while scrolling.
+  `data-repeated-value="true|false"` is written to every cell so the styling can be replaced.
+- **Resizable filter editor** — the filter dialog can now be dragged by its titlebar and
+  resized from any edge or corner (min 460×240), keeping its position/size across rebuilds.
+  Added a close button, button hover/pressed states, and clearer affordances on the clickable
+  cells.
+- **Tooltips in the filter editor** — every button/icon carries `data-tooltip`. `tooltips`
+  grid config toggles the built-in tooltip (default on); `tooltipText` overrides individual
+  strings by id; `TOOLTIPS` is exported so ids and defaults can be looked up. `data-tooltip`
+  is always written so an external tooltip library can be used instead.
+- **Row counts in the filter value list** — the Excel-style value picker shows `VALUE (12)`,
+  including a count on the `Blank` entry. Counts are only shown when nothing was truncated, so
+  a count never sits next to a cut-off list.
+
+### Fixes
+- **`columnsCenter` default checked the wrong property** in `__parseConfig()` — a config with
+  `columnsPinnedLeft` set but `columnsCenter` missing fell through the guard and crashed later.
+- **Filter dropdown "showing first 100" warning never fired correctly** — it could only ever
+  trigger when a blank pushed the set to 101; a column with 500 distinct values silently
+  showed 100 with no warning. Now driven by an explicit `truncated` flag.
+- **Dates never cleared the edited flag** — `set()` compared two `Date` objects with `===`
+  (always false), so a date edited back to its original stayed flagged as changed forever.
+  Now compared by `.getTime()`.
+- **Proxy `set` trap returned `value` instead of `true`** — setting `__KEY` to a falsy value
+  (`0`, `''`, `null`) threw in strict mode.
+- **`row % 0` instead of `row % 2`** in the row selector — even/odd striping always took the
+  odd branch, so `simple-html-label-even` was dead.
+- **`typecheck.js` swallowed option/global/syntactic errors** — a comma operator meant only
+  semantic errors could ever fail the build.
+- **Build `spawner()` could hang forever** — a failed child process (ENOENT etc.) never
+  settled the promise; now handled.
+- Various scroll-handler cleanups (dead `lastLeft` accumulator, wrong `e.top` pre-pass that
+  skipped row 0 and mis-set recycled rows).
+
+### Tooling / build
+- **ESLint + Prettier → [Biome](https://biomejs.dev/); ts-node → tsx.** Formatter settings
+  carried over 1:1; ~500 lint diagnostics driven to zero.
+- **TypeScript 5.6 → 6, and all deps updated and pinned** (biome 2.5.4, esbuild 0.28.1,
+  lit-html 3.3.3, vitest 4.1.10, typedoc 0.28.20, …). Config migrated for TS6
+  (`moduleResolution: node → bundler`, `baseUrl` removed).
+- **ES target raised to es2025** across all tsconfigs and build scripts (had drifted between
+  es2018/es2020/es2021).
+- **Flattened the npm workspace into a single package** — `packages/grid/src` → `src`, the two
+  manifests merged into one root `@simple-html/grid`, build/clean/test scripts rewritten for
+  the single package.
+- **`npm run build` now packs a `.tgz` into `./build`** and adds a `files` allowlist, dropping
+  the published tarball from 570 files / 13 MB to 335 kB (`src` included for go-to-definition).
+- **Dropped the live docs/demo.** The GitHub Pages demo build is gone and samples run locally
+  now, so the dev/demo build configs (deduplicated into `config_shared.ts`, then collapsed
+  back into a single `config_devserver.ts`) reduced to one watched, unminified dev server
+  writing to `dist_dev`.
+- Fixed `typedoc-grid` (was failing with 5 errors, now 0 errors / 0 warnings); stopped Biome
+  from reformatting the emitted `dist`.
+
+### Tests
+- **128 → 447 tests; statement coverage 12.7% → 40.6%** ahead of the refactor. New coverage
+  for the entity proxy, change tracking, the combined filter/sort/group pipeline, every
+  date/number formatter, and behaviour-level GUI tests (via happy-dom) for the new features.
 
 
 

@@ -24,7 +24,7 @@
         "strictNullChecks": false,
         "experimentalDecorators": true,
         "paths": {
-            "@simple-html/grid": ["../packages/grid/src"]
+            "@simple-html/grid": ["../src"]
         }
     },
     "exclude": ["node_modules"]

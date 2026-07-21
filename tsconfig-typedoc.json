@@ -24,19 +24,8 @@
         "strictNullChecks": false,
         "experimentalDecorators": true,
         "paths": {
-            "@simple-html/grid": ["./packages/grid/src"]
+            "@simple-html/grid": ["./src"]
         }
     },
-    "exclude": [
-        "node_modules",
-        "dist",
-        "dist_dev",
-        "docs",
-        "packages/*/dist",
-        "config_devserver.ts",
-        "config_demo_build.ts",
-        "config_shared.ts",
-        "typecheck.js",
-        "scripts"
-    ]
+    "exclude": ["node_modules", "dist", "dist_dev", "docs", "config_devserver.ts", "typecheck.js", "scripts"]
 }

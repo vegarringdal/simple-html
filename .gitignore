@@ -4,5 +4,6 @@ npm-debug.log
 .cache
 dist_dev/
 docs/
-#packages/*/dist
+dist/
+build/
 coverage

@@ -1,15 +1,19 @@
 # @simple-html/grid
 
-Only lit-html as dependency
+Only lit-html as dependency, you need to install this manually
 
-> Package: `None - after 20.07.2026, will use just branches`
+# package
 
+> mostly just me using this, so making it very simple for me to try out new stuff/patch
 
-# Sample:
-* see `npm start`
+Just run `npm run build` and copy the tgz file under `build` to you project
+```json
+"dependencies": {
+  "@simple-html/grid": "file:./libs/simple-html-grid-X.X.X.tgz"
+}
+```
 
-
-# Dev
+# Dev / Sample
 
 * `git clone https://github.com/vegarringdal/simple-html`
 * `npm i`

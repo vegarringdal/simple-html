@@ -1,24 +1,41 @@
 {
-    "name": "simple-html",
+    "name": "@simple-html/grid",
     "version": "5.0.1",
-    "description": "UI components without dependencies",
+    "description": "Vanillajs Grid",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "typings": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "src",
+        "README.md",
+        "LICENSE"
+    ],
     "scripts": {
         "start": "tsx config_devserver",
-        "build:demo": "tsx config_demo_build",
-        "build:all": "node ./scripts/build",
-        "clean:dist": "node ./scripts/clean",
+        "build": "node ./scripts/build",
         "typecheck": "node typecheck",
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
         "format": "biome format --write .",
-        "test": "npm run test --workspaces",
-        "test:coverage": "npm run test:coverage --workspaces",
-        "test:watch": "npm run test:watch --workspaces",
-        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/grid ./packages/grid/src/index.ts ./packages/grid/src/datasource/grouping.ts ./packages/grid/src/datasource/filter.ts ./packages/grid/src/datasource/selection.ts ./packages/grid/src/datasource/sort.ts ./packages/grid/src/datasource/valueFormater.ts ./packages/grid/src/datasource/datasourceConfigOptions.ts ./packages/grid/src/grid/gridFunctions/colType.ts ./packages/grid/src/grid/gridFunctions/GROUP_COLTYPE.ts ./packages/grid/src/date/dateInterface.ts ./packages/grid/src/grid/gridConfig.ts ./packages/grid/src/grid/gridInterface.ts ./packages/grid/src/datasource/dataSource.ts ./packages/grid/src/grid/grid.ts"
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include=src/** --coverage.reporter=text",
+        "test:watch": "vitest",
+        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/grid ./src/index.ts ./src/datasource/grouping.ts ./src/datasource/filter.ts ./src/datasource/selection.ts ./src/datasource/sort.ts ./src/datasource/valueFormater.ts ./src/datasource/datasourceConfigOptions.ts ./src/grid/gridFunctions/colType.ts ./src/grid/gridFunctions/GROUP_COLTYPE.ts ./src/date/dateInterface.ts ./src/grid/gridConfig.ts ./src/grid/gridInterface.ts ./src/datasource/dataSource.ts ./src/grid/grid.ts"
     },
-    "author": "Vegar Ringdal",
+    "author": "Vegar Ringdal <vegar.ringdal@gmail.com>",
     "license": "MIT",
-    "standard-version": {},
+    "homepage": "https://github.com/vegarringdal/simple-html",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vegarringdal/simple-html.git"
+    },
+    "bugs": {
+        "url": "https://github.com/vegarringdal/simple-html/issues"
+    },
+    "dependencies": {
+        "lit-html": "^3.3.3"
+    },
     "devDependencies": {
         "@biomejs/biome": "2.5.4",
         "@types/node": "^26.1.1",
@@ -26,13 +43,9 @@
         "esbuild": "0.28.1",
         "esbuild-helpers": "2.0.5",
         "happy-dom": "20.11.0",
-        "lit-html": "3.3.3",
         "tsx": "4.23.1",
         "typedoc": "0.28.20",
         "typescript": "6.0.3",
         "vitest": "4.1.10"
-    },
-    "workspaces": [
-        "packages/grid"
-    ]
+    }
 }

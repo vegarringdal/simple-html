@@ -1,62 +1,72 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const { readFiles, logInfo } = require('./utils');
-const { clearFolders, copy } = require('esbuild-helpers');
+const fs = require('node:fs');
+const { logInfo, spawner } = require('./utils');
+const { clearFolders, copy, TypeChecker } = require('esbuild-helpers');
 
+/**
+ * Builds src -> dist for the single @simple-html/grid package.
+ * Emits js + d.ts, copies the css alongside, then packs a tgz into ./build.
+ */
 async function run() {
-    const files = await readFiles('./packages');
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.isDirectory() && file.name !== 'template-package') {
-            logInfo(`\n\n ${file.name}: Remove old dist folder`);
-            clearFolders(`packages/${file.name}/dist/`);
+    logInfo('\n\n Remove old dist folder');
+    clearFolders('dist/');
 
-            const checker = require('esbuild-helpers').TypeChecker({
-                tsConfigOverride: {
-                    compilerOptions: {
-                        outDir: `./dist`,
-                        rootDir: `./src`,
-                        target: 'es2025',
-                        module: 'esNext',
-                        lib: ['es2025', 'dom'],
-                        skipLibCheck: true,
-                        moduleResolution: 'bundler',
-                        isolatedModules: false,
-                        preserveConstEnums: true,
-                        allowSyntheticDefaultImports: true,
-                        sourceMap: true,
-                        inlineSources: true,
-                        preserveSymlinks: true,
-                        declaration: true,
-                        declarationMap: true,
-                        noImplicitAny: true,
-                        noImplicitReturns: true,
-                        noUnusedParameters: true,
-                        noFallthroughCasesInSwitch: true,
-                        noImplicitThis: false,
-                        noUnusedLocals: true,
-                        allowUnreachableCode: false,
-                        removeComments: false,
-                        emitDecoratorMetadata: false,
-                        importHelpers: false,
-                        strictNullChecks: false,
-                        experimentalDecorators: true
-                    },
-                    exclude: ['dist', 'node_modules', '**/__tests__']
-                },
-                skipTsErrors: [2307], // I dont care about modules @simple-html/xxxxx
-                basePath: `./packages/${file.name}`,
-                name: `build ${file.name}`
-            });
-            checker.printSettings();
-            const result = checker.inspectOnly();
-            checker.printOnly(result);
-            logInfo(`${file.name}: emit js`);
-            result.oldProgram.emit();
+    const checker = TypeChecker({
+        tsConfigOverride: {
+            compilerOptions: {
+                outDir: './dist',
+                rootDir: './src',
+                target: 'es2025',
+                module: 'esNext',
+                lib: ['es2025', 'dom'],
+                skipLibCheck: true,
+                moduleResolution: 'bundler',
+                isolatedModules: false,
+                preserveConstEnums: true,
+                allowSyntheticDefaultImports: true,
+                sourceMap: true,
+                inlineSources: true,
+                preserveSymlinks: true,
+                declaration: true,
+                declarationMap: true,
+                noImplicitAny: true,
+                noImplicitReturns: true,
+                noUnusedParameters: true,
+                noFallthroughCasesInSwitch: true,
+                noImplicitThis: false,
+                noUnusedLocals: true,
+                allowUnreachableCode: false,
+                removeComments: false,
+                emitDecoratorMetadata: false,
+                importHelpers: false,
+                strictNullChecks: false,
+                experimentalDecorators: true
+            },
+            include: ['src'],
+            exclude: ['dist', 'node_modules', '**/__tests__']
+        },
+        skipTsErrors: [2307], // module @simple-html/xxxxx resolution, not relevant here
+        basePath: './',
+        name: 'build grid'
+    });
 
-            //copy css files
-            logInfo(`${file.name}: copy css if any`);
-            await copy(`packages/${file.name}/src/**/*.css`, `packages/${file.name}/dist`);
-        }
+    checker.printSettings();
+    const result = checker.inspectOnly();
+    checker.printOnly(result);
+
+    logInfo('emit js');
+    result.oldProgram.emit();
+
+    logInfo('copy css if any');
+    await copy('src/**/*.css', 'dist');
+
+    // pack a tgz into ./build - wiped and recreated each run so it only holds the latest
+    logInfo('pack tgz into ./build');
+    fs.rmSync('./build', { recursive: true, force: true });
+    fs.mkdirSync('./build', { recursive: true });
+    const code = await spawner('npm', ['pack', '--pack-destination', './build'], process.cwd(), true);
+    if (code !== 0) {
+        throw new Error(`npm pack failed with exit code ${code}`);
     }
 }
 run();

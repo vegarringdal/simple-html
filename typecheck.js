@@ -1,5 +1,5 @@
 const checker = require('esbuild-helpers').TypeChecker({
-    basePath: './packages',
+    basePath: './',
     tsConfig: 'tsconfig.json'
 });
 checker.printSettings();

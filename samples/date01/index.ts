@@ -1,5 +1,5 @@
 import './index.css';
-import '../../packages/grid/src/date.css';
+import '../../src/date.css';
 import { type DateElement, DateInterface, type IDateConfig } from '@simple-html/grid';
 import { toggelDarkDate } from './toggelDarkDate';
 
