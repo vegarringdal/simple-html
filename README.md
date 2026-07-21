@@ -4,10 +4,12 @@ Only lit-html as dependency, you need to install this manually
 
 # package
 
-Just run `npm run build` and copy the tgz file to you project
+> mostly just me using this, so making it very simple for me to try out new stuff/patch
+
+Just run `npm run build` and copy the tgz file under `build` to you project
 ```json
 "dependencies": {
-  "@simple-html/grid": "file:./libs/simple-html-grid-5.0.1.tgz"
+  "@simple-html/grid": "file:./libs/simple-html-grid-X.X.X.tgz"
 }
 ```
 
