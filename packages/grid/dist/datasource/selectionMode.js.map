@@ -1,1 +1,0 @@
-{"version":3,"file":"selectionMode.js","sourceRoot":"","sources":["../../src/datasource/selectionMode.ts"],"names":[],"mappings":"AAAA;;GAEG","sourcesContent":["/**\n *  selecting\n */\n\nexport type SelectionMode = 'none' | 'single' | 'multiple';\n"]}

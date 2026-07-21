@@ -441,6 +441,39 @@ Anything already in `packages/grid/dist` should be regenerated with `npm run bui
 before committing, so what is published is what tsc emitted rather than what biome
 reformatted.
 
+### Flattened the workspace into a single package
+
+The repo was a one-package npm workspace (`packages/grid`). Since releases now happen by
+installing straight from a git branch rather than `npm publish`, the workspace layer was
+pure overhead and is gone.
+
+* `packages/grid/src` -> `src`, `packages/grid/dist` -> `dist` (both via `git mv`)
+* the two `package.json` files merged into one root manifest named `@simple-html/grid` -
+  it carries both the dev tooling and the package identity (`main`/`module`/`typings` ->
+  `dist`, `lit-html` as a dependency, repo/bugs/homepage). `workspaces` removed.
+* `test` / `test:coverage` / `test:watch` were `npm run ... --workspaces`, now plain
+  `vitest` since there is no workspace to fan out to
+* `packages/tsconfig.json` -> root `tsconfig.json`, paths `@simple-html/grid` -> `./src`
+* `scripts/build.js` and `clean.js` looped over `packages/*`; rewritten to build the single
+  `src` -> `dist`. The build scopes itself with `include: ['src']` - `basePath` is now the
+  repo root, so without that it dragged the samples and node config scripts into the emit
+  and complained they were outside `rootDir`.
+* paths repointed in `samples/tsconfig.json`, the sample css imports, `config_shared.ts`,
+  `config_devserver.ts` (watch globs), `typecheck.js`, `tsconfig-typedoc.json` and the
+  `typedoc-grid` script
+* deleted the orphaned `.versionrc.json` - it listed bumpFiles for half a dozen packages
+  that never existed, and standard-version was already gone
+
+Gotchas hit on the way, noted so they are not rediscovered:
+
+* the merge dropped `happy-dom` from devDependencies by accident, which took out the 6
+  browser-env grid tests with a "failed to start forks worker" rather than a clear error
+* the root `tsconfig.json` now covers the whole repo, so the node config scripts have to be
+  in `exclude` or `process` is undefined during typecheck
+* the first build ran before `include: ['src']` was added and, with `declaration: true`,
+  scattered `.d.ts` / `.js` next to every `.ts` in the repo. All cleaned up, the scoped
+  build no longer does it.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

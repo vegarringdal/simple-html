@@ -48,7 +48,7 @@ export const TS_CONFIG = {
         experimentalDecorators: true,
         rootDir: '',
         paths: {
-            '@simple-html/grid': ['./packages/grid/src']
+            '@simple-html/grid': ['./src']
         }
     },
     // node scripts have no business in a browser typecheck, and build output is not source

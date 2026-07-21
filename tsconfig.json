@@ -27,8 +27,18 @@
         "experimentalDecorators": true,
         "rootDir": ".",
         "paths": {
-            "@simple-html/grid": ["./grid/src"]
+            "@simple-html/grid": ["./src"]
         }
     },
-    "exclude": ["node_modules", "packages/grid/dist"]
+    "exclude": [
+        "node_modules",
+        "dist",
+        "dist_dev",
+        "docs",
+        "config_devserver.ts",
+        "config_demo_build.ts",
+        "config_shared.ts",
+        "typecheck.js",
+        "scripts"
+    ]
 }

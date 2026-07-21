@@ -9,7 +9,7 @@ const sample = process.argv[2] || 'grid01';
  * client bundle, watched and unminified
  */
 client(
-    { watch: [`./samples/${sample}/**/*.*`, './packages/**/*.*'] },
+    { watch: [`./samples/${sample}/**/*.*`, './src/**/*.*'] },
     clientOptions({ entrySample: sample, outSample: sample, outputRoot: DEV_OUTPUT_ROOT, development: true })
 );
 
@@ -35,4 +35,4 @@ const checker_client = TypeChecker({
 
 checker_client.printSettings();
 checker_client.inspectAndPrint();
-checker_client.worker_watch(['./samples', './packages']);
+checker_client.worker_watch(['./samples', './src']);

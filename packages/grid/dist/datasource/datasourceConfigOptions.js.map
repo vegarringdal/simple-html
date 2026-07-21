@@ -1,1 +1,0 @@
-{"version":3,"file":"datasourceConfigOptions.js","sourceRoot":"","sources":["../../src/datasource/datasourceConfigOptions.ts"],"names":[],"mappings":"","sourcesContent":["import type { SelectionMode } from './selectionMode';\n\n/**\n *  datasource\n */\n\nexport type DatasourceConfigOptions = { selectionMode: SelectionMode };\n"]}
