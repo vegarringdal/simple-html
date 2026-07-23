@@ -151,3 +151,80 @@ describe('datasource filterstring ', () => {
         );
     });
 });
+
+describe('datasource filter tree (footer chips)', () => {
+    let ds2: Datasource;
+    beforeAll(() => {
+        ds2 = new Datasource();
+        ds2.setData(simpleArray.slice());
+    });
+
+    it('no filter -> null', () => {
+        expect(ds2.getFilterTree()).toEqual(null);
+    });
+
+    it('single condition -> group with one condition child', () => {
+        ds2.filter({ attribute: 'name', operator: 'EQUAL', value: 'person1' });
+        expect(ds2.getFilterTree()).toEqual({
+            kind: 'group',
+            logicalOperator: 'AND',
+            children: [{ kind: 'condition', label: 'name', operator: 'EQUAL', value: 'person1', hasValue: true }]
+        });
+    });
+
+    it('group keeps its logical operator', () => {
+        ds2.filter({
+            logicalOperator: 'OR',
+            filterArguments: [
+                { attribute: 'group', operator: 'EQUAL', value: 'group1' },
+                { attribute: 'name', operator: 'CONTAINS', value: 'person' }
+            ]
+        });
+        expect(ds2.getFilterTree()).toEqual({
+            kind: 'group',
+            logicalOperator: 'OR',
+            children: [
+                { kind: 'condition', label: 'group', operator: 'EQUAL', value: 'group1', hasValue: true },
+                { kind: 'condition', label: 'name', operator: 'CONTAINS', value: 'person', hasValue: true }
+            ]
+        });
+    });
+
+    it('blank operators carry no value', () => {
+        ds2.filter([{ attribute: 'name', operator: 'IS_BLANK' }]);
+        expect(ds2.getFilterTree()?.children[0]).toEqual({
+            kind: 'condition',
+            label: 'name',
+            operator: 'IS_BLANK',
+            value: '',
+            hasValue: false
+        });
+    });
+
+    it('nested groups preserve their structure', () => {
+        ds2.filter({
+            logicalOperator: 'OR',
+            filterArguments: [
+                {
+                    logicalOperator: 'AND',
+                    filterArguments: [
+                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
+                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
+                    ]
+                },
+                { attribute: 'group', operator: 'EQUAL', value: 'group1' }
+            ]
+        });
+        const tree = ds2.getFilterTree();
+        expect(tree?.logicalOperator).toEqual('OR');
+        expect(tree?.children[0].kind).toEqual('group');
+        expect((tree?.children[0] as { children: unknown[] }).children).toHaveLength(2);
+        expect(tree?.children[1]).toEqual({
+            kind: 'condition',
+            label: 'group',
+            operator: 'EQUAL',
+            value: 'group1',
+            hasValue: true
+        });
+    });
+});

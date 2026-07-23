@@ -1068,17 +1068,175 @@ input {
     border: 0px;
 }
 
-.simple-html-grid .footer-query {
-    text-overflow: ellipsis;
-    max-width: 90%;
+.simple-html-grid .footer-inner {
+    position: relative;
+    box-sizing: border-box;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding-bottom: 4px;
 }
 
-.simple-html-grid .clear-button {
-    color: red;
-    font-weight: bold;
-    margin-left: 5px;
+.simple-html-grid .footer-count {
+    flex: 0 0 auto;
+    line-height: 1.2;
+}
+
+/* filter active - float the count in the scrollbar band, painted in front of the horizontal
+ * scrollbar (which is a later sibling and would otherwise cover it), so it costs no vertical
+ * space and the chips keep the rest of the height */
+.simple-html-grid .footer-inner.has-filter {
+    justify-content: center;
+}
+
+.simple-html-grid .footer-inner.has-filter .footer-count {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    /* a small opaque pill so the number stays readable over the scrollbar track/thumb */
+    width: fit-content;
+    max-width: 100%;
+    padding: 0 6px;
+    border-radius: 8px;
+    background-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    text-align: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+/* filter too large to show as chips - a single summary box */
+.simple-html-grid .footer-filter-toomany {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    padding: 1px 10px;
+    border: 1px dashed var(--simple-html-grid-pinned-border);
+    border-radius: 10px;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-sec-font-color);
+    white-space: nowrap;
+}
+
+.simple-html-grid .footer-filter {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+    padding: 0 6px;
     pointer-events: all;
+}
+
+.simple-html-grid .footer-filter-clear {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    box-sizing: border-box;
+    padding: 1px 7px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 10px;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
     cursor: pointer;
+}
+
+.simple-html-grid .footer-filter-clear:hover {
+    border-color: #d98282;
+    color: #c0392b;
+}
+
+.simple-html-grid .footer-filter-clear:active {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid .footer-filter-chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 5px;
+    min-width: 0;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* a nested filter group - a subtle bracket around its conditions so grouping reads */
+.simple-html-grid .footer-filter-group {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 5px;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 1px 6px;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    border-radius: 12px;
+    background-color: color-mix(in srgb, var(--simple-html-grid-sec-bg-color) 55%, transparent);
+}
+
+.simple-html-grid .footer-filter-connector {
+    flex: 0 0 auto;
+    color: var(--simple-html-grid-sec-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    font-size: 0.9em;
+    letter-spacing: 0.5px;
+}
+
+.simple-html-grid .footer-filter-chip {
+    flex: 0 1 auto;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+    box-sizing: border-box;
+    max-width: 260px;
+    padding: 1px 8px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 10px;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    white-space: nowrap;
+}
+
+.simple-html-grid .footer-filter-chips:hover .footer-filter-chip {
+    border-color: var(--simple-html-grid-pinned-border);
+}
+
+.simple-html-grid .footer-filter-attr {
+    flex: 0 0 auto;
+    font-weight: var(--simple-html-grid-font-weight-header);
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid .footer-filter-op {
+    flex: 0 0 auto;
+    color: var(--simple-html-grid-main-font-color);
+    opacity: 0.75;
+}
+
+.simple-html-grid .footer-filter-value {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid .footer-filter-value::before {
+    content: "'";
+}
+
+.simple-html-grid .footer-filter-value::after {
+    content: "'";
 }
 
 /****************************************************************************

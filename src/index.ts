@@ -6,6 +6,7 @@ export { DateFormaterYYYYMMDD } from './datasource/DateFormaterYYYYMMDD';
 export { DateFormaterYYYYMMDDTHHMMSS } from './datasource/DateFormaterYYYYMMDDTHHMMSS';
 export { DataContainer } from './datasource/dataContainer';
 export { Datasource } from './datasource/dataSource';
+export type { FilterConditionNode, FilterGroupNode, FilterNode } from './datasource/dataSource';
 export type { Entity } from './datasource/entity';
 export { EntityHandler } from './datasource/entityHandler';
 export type {
