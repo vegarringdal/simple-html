@@ -40,6 +40,16 @@ dependencies were updated, the test suite was tripled, and several new grid feat
 - **Row counts in the filter value list** — the Excel-style value picker shows `VALUE (12)`,
   including a count on the `Blank` entry. Counts are only shown when nothing was truncated, so
   a count never sits next to a cut-off list.
+- **Active-filter footer redesigned** — the raw `[COL] <<EQUAL_TO>> 'x'` string in the footer
+  is replaced by readable chips (attribute · operator · value), with nested filter groups
+  drawn as bracketed clusters so precedence stays visible, and `AND`/`OR` connectors between
+  them. Operators show as symbols (`= ≠ < ≤ > ≥`) or short words (`contains`, `is blank`).
+  Clicking the chips opens the filter editor pre-loaded with the current filter, and the
+  *Clear filter* text became a proper pill button. The `filteredRows/totalRows` count floats
+  over the scrollbar so it costs no vertical space, and on a narrow grid (or past the 5-statement
+  cap) the chips collapse to a single `N filters — click to edit` box rather than clipping.
+  New `Datasource.getFilterTree()` exposes the active filter as a `FilterNode` tree
+  (`FilterGroupNode` / `FilterConditionNode`, all exported) for custom rendering.
 
 ### Fixes
 - **`columnsCenter` default checked the wrong property** in `__parseConfig()` — a config with
