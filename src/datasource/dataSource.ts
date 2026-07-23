@@ -23,6 +23,30 @@ export type callable = callF | callO;
 export type EntityUnion<T> = Entity & T;
 
 /**
+ * A single filter condition, ready for display. `value` is already run through the value
+ * formater; blank operators (`IS_BLANK` / `IS_NOT_BLANK`) have no value, flagged by `hasValue`.
+ */
+export interface FilterConditionNode {
+    kind: 'condition';
+    label: string;
+    operator: string;
+    value: string;
+    hasValue: boolean;
+}
+
+/**
+ * A group of filter nodes joined by one logical operator, mirroring the nesting in the
+ * filter editor so grouping/precedence can be shown rather than flattened away.
+ */
+export interface FilterGroupNode {
+    kind: 'group';
+    logicalOperator: 'AND' | 'OR';
+    children: FilterNode[];
+}
+
+export type FilterNode = FilterConditionNode | FilterGroupNode;
+
+/**
  * Helper class for calling internal sort, filter and grouping classesS
  *
  */
@@ -860,5 +884,67 @@ export class Datasource<T = any> {
             return queryString;
         };
         return parser(this.__filter.getFilter()).toUpperCase();
+    }
+
+    /**
+     * Same information as {@link getFilterString}, but as a tree of {@link FilterNode}s that
+     * keeps the group nesting, so the footer can render grouped conditions as clusters
+     * instead of a flat, ambiguous list. Returns `null` when no filter is active. The root is
+     * always a group, even for a single condition.
+     */
+    public getFilterTree(ctx?: Grid): FilterGroupNode | null {
+        const filter = this.__filter.getFilter();
+        if (!filter?.filterArguments?.length) {
+            return null;
+        }
+
+        const valueFormater = this.getValueFormater();
+
+        const label = (attribute: string) => {
+            if (!ctx) {
+                return attribute;
+            }
+            return ctx.gridInterface.__getGridConfig().__attributes[attribute]?.label || attribute;
+        };
+
+        const build = (obj: FilterArgument): FilterNode | null => {
+            if (!obj) {
+                return null;
+            }
+            if (obj.filterArguments && obj.filterArguments.length > 0) {
+                return {
+                    kind: 'group',
+                    logicalOperator: (obj.logicalOperator as 'AND' | 'OR') || 'AND',
+                    children: obj.filterArguments.map(build).filter((n): n is FilterNode => n !== null)
+                };
+            }
+
+            const blank = obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK';
+            let value = '';
+            if (!blank) {
+                if (obj.operator === 'IN' || obj.operator === 'NOT_IN') {
+                    const list = Array.isArray(obj.value) ? obj.value : String(obj.value ?? '').split('\n');
+                    value = list.join(', ');
+                } else if (obj.valueType === 'ATTRIBUTE') {
+                    value = `[${obj.value}]`;
+                } else {
+                    value = String(valueFormater.fromSource(obj.value as any, obj.attributeType as any, obj.attribute, true));
+                }
+            }
+
+            return {
+                kind: 'condition',
+                label: label(obj.attribute as string),
+                operator: obj.operator as string,
+                value,
+                hasValue: !blank
+            };
+        };
+
+        const root = build(filter);
+        if (root && root.kind === 'group') {
+            return root;
+        }
+        return { kind: 'group', logicalOperator: 'AND', children: root ? [root] : [] };
     }
 }
