@@ -1,6 +1,6 @@
 # @simple-html/grid
 
-Only lit-html as dependency, you need to install this manually
+Only lit-html as dependency `npm i lit-html`, you need to install this manually
 
 # package
 
