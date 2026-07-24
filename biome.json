@@ -1,0 +1,53 @@
+{
+    "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "includes": [
+            "**/*.ts",
+            "**/*.js",
+            "**/*.json",
+            "!**/*.d.ts",
+            "!dist",
+            "!dist_dev",
+            "!docs",
+            "!node_modules",
+            "!**/dist",
+            "!samples/grid01/dummyData.ts"
+        ]
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 130
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "single",
+            "semicolons": "always",
+            "trailingCommas": "none"
+        }
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "preset": "recommended",
+            "suspicious": {
+                "noExplicitAny": "off"
+            },
+            "style": {
+                "noInferrableTypes": "off"
+            },
+            "correctness": {
+                "noUnusedVariables": "warn"
+            },
+            "complexity": {
+                "noStaticOnlyClass": "off"
+            }
+        }
+    }
+}

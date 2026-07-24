@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "target": "es2025",
+        "module": "esNext",
+        "lib": ["es2025", "dom"],
+        "moduleResolution": "bundler",
+        "isolatedModules": false,
+        "esModuleInterop": true,
+        "preserveConstEnums": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "sourceMap": true,
+        "inlineSources": true,
+        "declaration": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitThis": false,
+        "noUnusedLocals": true,
+        "allowUnreachableCode": false,
+        "removeComments": true,
+        "emitDecoratorMetadata": false,
+        "importHelpers": false,
+        "strictNullChecks": false,
+        "experimentalDecorators": true,
+        "rootDir": ".",
+        "paths": {
+            "@simple-html/grid": ["./src"]
+        }
+    },
+    "exclude": ["node_modules", "dist", "dist_dev", "docs", "config_devserver.ts", "typecheck.js", "scripts"]
+}

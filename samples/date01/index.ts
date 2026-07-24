@@ -1,6 +1,6 @@
 import './index.css';
-import '../../packages/grid/src/date.css';
-import { DateElement, DateInterface, IDateConfig } from '@simple-html/grid';
+import '../../src/date.css';
+import { type DateElement, DateInterface, type IDateConfig } from '@simple-html/grid';
 import { toggelDarkDate } from './toggelDarkDate';
 
 const dateconfig: IDateConfig = {

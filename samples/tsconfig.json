@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
-        "target": "es2018",
+        "target": "es2025",
         "module": "esNext",
-        "lib": ["es2021", "dom"],
-        "moduleResolution": "node",
+        "lib": ["es2025", "dom"],
+        "moduleResolution": "bundler",
         "isolatedModules": false,
         "preserveConstEnums": true,
         "allowSyntheticDefaultImports": true,
@@ -24,7 +24,7 @@
         "strictNullChecks": false,
         "experimentalDecorators": true,
         "paths": {
-            "@simple-html/grid": ["../packages/grid/src"]
+            "@simple-html/grid": ["../src"]
         }
     },
     "exclude": ["node_modules"]

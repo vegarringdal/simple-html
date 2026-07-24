@@ -1,0 +1,10 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "externalSymbolLinkMappings": {
+        "lit-html": {
+            "TemplateResult": "https://lit.dev/docs/api/templates/#TemplateResult",
+            "RenderOptions": "https://lit.dev/docs/api/templates/#RenderOptions",
+            "svg": "https://lit.dev/docs/api/templates/#svg"
+        }
+    }
+}

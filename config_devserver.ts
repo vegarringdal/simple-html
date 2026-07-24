@@ -1,34 +1,38 @@
-import { clearFolders, addDefaultIndex, client, TypeChecker } from 'esbuild-helpers';
+import { addDefaultIndex, clearFolders, client, TypeChecker } from 'esbuild-helpers';
+
+/**
+ * Local dev server: builds a sample, serves it on 8080 with hot reload, and runs a
+ * background typechecker over src + samples.
+ *
+ * `npm start` -> grid01, `npm start <sample>` for another folder under samples/.
+ * Output is throwaway and gitignored (dist_dev).
+ */
+
+const sample = process.argv[2] || 'grid01';
+const OUTPUT_ROOT = 'dist_dev';
 
 clearFolders('dist_client', 'dist_nodejs');
 
-const sample = process.argv[2] || "grid01";
-
-/**
- * client bundle
- */
 client(
-    { watch: [`./samples/${sample}/**/*.*`, './packages/**/*.*'] },
+    { watch: [`./samples/${sample}/**/*.*`, './src/**/*.*'] },
     {
         color: true,
         define: {
             DEVELOPMENT: 'true'
         },
         entryPoints: [`./samples/${sample}/index.ts`],
-        outfile: `./dist/${sample}/index.js`,
+        outfile: `./${OUTPUT_ROOT}/${sample}/index.js`,
         minify: false,
         bundle: true,
-        tsconfig: `./samples/tsconfig.json`,
+        tsconfig: './samples/tsconfig.json',
         platform: 'browser',
         sourcemap: true,
         logLevel: 'error'
     }
 );
-/**
- * index file for project
- */
+
 addDefaultIndex({
-    distFolder: `dist/${sample}`,
+    distFolder: `${OUTPUT_ROOT}/${sample}`,
     publicFolders: [],
     entry: './index.js',
     hbr: true,
@@ -42,8 +46,8 @@ addDefaultIndex({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Document</title>
         <link href="./index.css" rel="stylesheet" />
-       
-       
+
+
         $bundle
       </head>
       <body>
@@ -53,14 +57,14 @@ addDefaultIndex({
 });
 
 const checker_client = TypeChecker({
-    basePath: `./`,
+    basePath: './',
     name: 'checker_client',
     tsConfigJsonContent: {
         compilerOptions: {
-            target: 'es2018',
+            target: 'es2025',
             module: 'esNext',
-            lib: ['es2021', 'dom'],
-            moduleResolution: 'node',
+            lib: ['es2025', 'dom'],
+            moduleResolution: 'bundler',
             isolatedModules: false,
             preserveConstEnums: true,
             allowSyntheticDefaultImports: true,
@@ -80,16 +84,16 @@ const checker_client = TypeChecker({
             importHelpers: false,
             strictNullChecks: false,
             experimentalDecorators: true,
-            baseUrl: './',
             rootDir: '',
             paths: {
-                '@simple-html/grid': ['./packages/grid/src']
+                '@simple-html/grid': ['./src']
             }
         },
-        exclude: ['node_modules', 'config_devserver.ts', 'dist']
+        // node scripts have no business in a browser typecheck, and build output is not source
+        exclude: ['node_modules', 'config_devserver.ts', 'dist', 'dist_dev', 'docs']
     }
 });
 
 checker_client.printSettings();
 checker_client.inspectAndPrint();
-checker_client.worker_watch(['./samples', './packages']);
+checker_client.worker_watch(['./samples', './src']);

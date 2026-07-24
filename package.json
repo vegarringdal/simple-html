@@ -1,48 +1,51 @@
 {
-    "name": "simple-html",
-    "version": "5.0.0-next.107",
-    "description": "UI components without dependencies",
+    "name": "@simple-html/grid",
+    "version": "5.0.1",
+    "description": "Vanillajs Grid",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "typings": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "src",
+        "README.md",
+        "LICENSE"
+    ],
     "scripts": {
-        "start": "ts-node config_devserver",
-        "build:demo": "ts-node config_demo_build",
-        "build:all": "node ./scripts/build",
-        "clean:dist": "node ./scripts/clean",
-        "publish:all": "npm publish --workspace packages/grid",
-        "publish:test": "npm publish --workspace packages/grid --dry-run",
+        "start": "tsx config_devserver",
+        "build": "node ./scripts/build",
         "typecheck": "node typecheck",
-        "eslint": "npm run eslint:run:packages",
-        "eslint:run:packages": "eslint --fix ./packages/**/*.ts",
-        "prettier:run": "prettier --write \"packages/**/*.ts\" \"samples/**/*.ts\"",
-        "test": "npm run test --workspaces",
-        "test:watch": "npm run test:watch --workspaces",
-        "release": "standard-version  --prerelease next",
-        "release-test": "standard-version  --dry-run --prerelease next",
-        "release:minor": "standard-version --release-as minor",
-        "release:patch": "standard-version --release-as patch",
-        "release:major": "standard-version --release-as major",
-        "release:next": "standard-version --prerelease next",
-        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/grid ./packages/grid/src/index.ts ./packages/grid/src/datasource/grouping.ts ./packages/grid/src/datasource/filter.ts ./packages/grid/src/datasource/selection.ts ./packages/grid/src/datasource/sort.ts ./packages/grid/src/datasource/types.ts ./packages/grid/src/grid/gridConfig.ts ./packages/grid/src/grid/gridInterface.ts ./packages/grid/src/datasource/dataSource.ts ./packages/grid/src/grid/grid.ts"
+        "lint": "biome check .",
+        "lint:fix": "biome check --write .",
+        "format": "biome format --write .",
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include=src/** --coverage.reporter=text",
+        "test:watch": "vitest",
+        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/grid ./src/index.ts ./src/datasource/grouping.ts ./src/datasource/filter.ts ./src/datasource/selection.ts ./src/datasource/sort.ts ./src/datasource/valueFormater.ts ./src/datasource/datasourceConfigOptions.ts ./src/grid/gridFunctions/colType.ts ./src/grid/gridFunctions/GROUP_COLTYPE.ts ./src/date/dateInterface.ts ./src/grid/gridConfig.ts ./src/grid/gridInterface.ts ./src/datasource/dataSource.ts ./src/grid/grid.ts"
     },
-    "author": "Vegar Ringdal",
+    "author": "Vegar Ringdal <vegar.ringdal@gmail.com>",
     "license": "MIT",
-    "standard-version": {},
-    "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "7.18.0",
-        "@typescript-eslint/parser": "7.18.0",
-        "esbuild": "0.24.0",
-        "esbuild-helpers": "2.0.1",
-        "eslint": "8.57.1",
-        "eslint-config-prettier": "9.1.0",
-        "eslint-plugin-prettier": "5.2.1",
-        "lit-html": "3.2.1",
-        "prettier": "3.3.3",
-        "standard-version": "9.5.0",
-        "ts-node": "10.9.2",
-        "typedoc": "0.26.10",
-        "typescript": "5.6.3",
-        "vitest": "2.1.3"
+    "homepage": "https://github.com/vegarringdal/simple-html",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vegarringdal/simple-html.git"
     },
-    "workspaces": [
-        "packages/grid"
-    ]
+    "bugs": {
+        "url": "https://github.com/vegarringdal/simple-html/issues"
+    },
+    "dependencies": {
+        "lit-html": "3.3.3"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.5.4",
+        "@types/node": "26.1.1",
+        "@vitest/coverage-v8": "4.1.10",
+        "esbuild": "0.28.1",
+        "esbuild-helpers": "2.0.5",
+        "happy-dom": "20.11.0",
+        "tsx": "4.23.1",
+        "typedoc": "0.28.20",
+        "typescript": "6.0.3",
+        "vitest": "4.1.10"
+    }
 }
