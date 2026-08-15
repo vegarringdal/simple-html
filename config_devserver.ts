@@ -8,7 +8,7 @@ import { addDefaultIndex, clearFolders, client, TypeChecker } from 'esbuild-help
  * Output is throwaway and gitignored (dist_dev).
  */
 
-const sample = process.argv[2] || 'grid01';
+const sample = process.argv[2] || 'demo';
 const OUTPUT_ROOT = 'dist_dev';
 
 clearFolders('dist_client', 'dist_nodejs');

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx esbuild *)",
+      "Bash(chromium-cli --session demo)",
+      "Bash(command -v chromium chromium-browser google-chrome chrome headless_shell)",
+      "Bash(command -v flatpak)",
+      "Bash(command -v firefox)",
+      "Bash(rpm -qa)",
+      "Bash(npm init *)",
+      "Bash(npx playwright-core *)",
+      "Bash(node drive.js)",
+      "Bash(kill 11959)",
+      "Bash(timeout 60 sh -c 'until curl -sf http://localhost:8080 >/dev/null; do sleep 1; done')"
+    ]
+  }
+}
