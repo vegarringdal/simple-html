@@ -75,6 +75,7 @@ export function generateRows(count = 500): any[] {
 export function baseGridConfig(): GridConfig {
     return {
         panelHeight: 25,
+        readonly: false, // grid defaults to readonly: true when not set
         hideLabels: false,
         hideFilter: false,
         columnsCenter: [

@@ -5,7 +5,7 @@ export const basicGrid: DemoSample = {
     title: 'Basic grid',
     group: 'Getting started',
     description:
-        'Minimal setup: create a Datasource with your rows, wrap it in a GridInterface with a config, and connect it to a <simple-html-grid> element. Columns can be sorted (click label), filtered (input row), resized and reordered out of the box.',
+        'Minimal setup: create a Datasource with your rows, wrap it in a GridInterface with a config, and connect it to a <simple-html-grid> element. Columns can be sorted (click label), filtered (input row), resized and reordered out of the box. Note: the grid defaults to readonly - set readonly: false in the config to allow editing.',
     code: `
 import { Datasource, GridInterface, type GridConfig, type GridElement } from '@simple-html/grid';
 import '@simple-html/grid/dist/grid.css';
@@ -13,6 +13,7 @@ import '@simple-html/grid/dist/grid.css';
 // columnsCenter controls the layout, attributes controls cell type/behavior
 const gridConfig: GridConfig = {
     panelHeight: 25,
+    readonly: false, // NB: the grid defaults to readonly: true when not set
     columnsCenter: [
         { rows: ['company'], width: 170 },
         { rows: ['country'], width: 120 },

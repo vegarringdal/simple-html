@@ -1,5 +1,6 @@
 import type { DemoSample } from './demoUtils';
 import { basicGrid } from './samples/basicGrid';
+import { cellStyling } from './samples/cellStyling';
 import { columnLayout } from './samples/columnLayout';
 import { contextMenu } from './samples/contextMenu';
 import { datepicker } from './samples/datepicker';
@@ -8,6 +9,7 @@ import { editing } from './samples/editing';
 import { events } from './samples/events';
 import { filtering } from './samples/filtering';
 import { formatters } from './samples/formatters';
+import { rowsData } from './samples/rowsData';
 import { saveLoadConfig } from './samples/saveLoadConfig';
 import { selection } from './samples/selection';
 import { sortingGrouping } from './samples/sortingGrouping';
@@ -22,10 +24,12 @@ export const SAMPLES: DemoSample[] = [
     sortingGrouping,
     filtering,
     selection,
+    rowsData,
     editing,
     contextMenu,
     dropdownGrid,
     formatters,
+    cellStyling,
     events,
     saveLoadConfig,
     datepicker

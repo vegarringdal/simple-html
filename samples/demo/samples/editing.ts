@@ -6,9 +6,13 @@ export const editing: DemoSample = {
     title: 'Editing & row state',
     group: 'Editing',
     description:
-        'Cells are editable by default. The datasource tracks new/modified/deleted rows (see the RS column: N/M/D) so you can collect changes and send them to a server, or throw them away. Edit some cells and click "Show changes".',
+        'The grid defaults to readonly: true, so set readonly: false in the config to edit cells. The datasource tracks new/modified/deleted rows (see the RS column: N/M/D) so you can collect changes and send them to a server, or throw them away. Edit some cells and click "Show changes".',
     code: `
-// readonly is config, per attribute or for the whole grid
+// the grid defaults to readonly: true - enable editing in the config,
+// or per attribute with { attribute: 'x', readonly: true/false }
+const gridConfig: GridConfig = { readonly: false, ... };
+
+// toggle it later via config
 const config = gridInterface.saveConfig();
 config.readonly = true;
 gridInterface.loadConfig(config);

@@ -302,6 +302,26 @@ body {
     min-height: 140px;
 }
 
+/* cell overlay classes for the cellAppendClassSetter sample -
+   the dimmed element is unstyled for editable cells, so position it ourselves */
+.demo-cell-low,
+.demo-cell-high {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.demo-cell-low {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.demo-cell-high {
+    background: rgba(34, 197, 94, 0.25);
+}
+
 .demo-grid-host.centered {
     display: flex;
     align-items: flex-start;

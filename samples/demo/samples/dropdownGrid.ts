@@ -9,6 +9,8 @@ export const dropdownGrid: DemoSample = {
         'A cell can show a focus button (magnifier) via the focusButton attribute option. Here clicking it opens a second, filterable grid as a dropdown and writes the picked value back. Click a company cell, then the button.',
     code: `
 // in the main grid config, enable the focus button on the attribute
+// NB: the grid defaults to readonly: true, so with this option the button
+// only shows when the config has readonly: false
 { attribute: 'company', focusButton: 'SHOW_IF_GRID_NOT_READONLY' }
 
 gridInterface.addEventListener({
@@ -19,6 +21,7 @@ gridInterface.addEventListener({
             // build a small grid to use as dropdown
             const dropdown = document.createElement('simple-html-grid') as GridElement;
             dropdown.classList.add('simple-html-grid');
+            dropdown.style.position = 'fixed';
             dropdown.style.width = '300px';
             dropdown.style.height = '250px';
             dropdown.style.top = rect.bottom + 'px';
@@ -78,6 +81,7 @@ gridInterface.addEventListener({
 
                     const dropdown = document.createElement('simple-html-grid') as GridElement;
                     dropdown.classList.add('simple-html-grid');
+                    dropdown.style.position = 'fixed';
                     dropdown.style.width = width + 'px';
                     dropdown.style.height = height + 'px';
                     dropdown.style.top = top + 'px';

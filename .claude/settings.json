@@ -11,7 +11,10 @@
       "Bash(npx playwright-core *)",
       "Bash(node drive.js)",
       "Bash(kill 11959)",
-      "Bash(timeout 60 sh -c 'until curl -sf http://localhost:8080 >/dev/null; do sleep 1; done')"
+      "Bash(timeout 60 sh -c 'until curl -sf http://localhost:8080 >/dev/null; do sleep 1; done')",
+      "Bash(curl -sf http://localhost:8080)",
+      "Bash(node drive2.js)",
+      "Bash(node probe.js)"
     ]
   }
 }
