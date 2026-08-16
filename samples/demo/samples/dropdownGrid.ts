@@ -6,12 +6,14 @@ export const dropdownGrid: DemoSample = {
     title: 'Grid as dropdown',
     group: 'Editing',
     description:
-        'A cell can show a focus button (magnifier) via the focusButton attribute option. Here clicking it opens a second, filterable grid as a dropdown and writes the picked value back. Click a company cell, then the button.',
+        'A cell can show a focus button via the focusButton attribute option. Here clicking it (or hitting Space in the cell) opens a second, filterable grid as a dropdown and writes the picked value back. The company cell itself is readonly, so the dropdown is the only way to change the value.',
     code: `
-// in the main grid config, enable the focus button on the attribute
+// in the main grid config, enable the focus button on the attribute.
 // NB: the grid defaults to readonly: true, so with this option the button
-// only shows when the config has readonly: false
-{ attribute: 'company', focusButton: 'SHOW_IF_GRID_NOT_READONLY' }
+// only shows when the config has readonly: false.
+// readonly on the attribute blocks manual typing, so the dropdown
+// (button or Space in the cell) is the only way to set the value
+{ attribute: 'company', readonly: true, focusButton: 'SHOW_IF_GRID_NOT_READONLY' }
 
 gridInterface.addEventListener({
     handleEvent: (e) => {
@@ -54,6 +56,7 @@ gridInterface.addEventListener({
         const config = baseGridConfig();
         for (const attribute of config.attributes) {
             if (attribute.attribute === 'company') {
+                attribute.readonly = true;
                 attribute.focusButton = 'SHOW_IF_GRID_NOT_READONLY';
             }
         }
@@ -136,6 +139,6 @@ gridInterface.addEventListener({
             }
         });
 
-        ui.log('click a company cell, then the magnifier button that appears');
+        ui.log('click a company cell, then the ... button that appears (or hit Space in the cell)');
     }
 };

@@ -6,10 +6,14 @@ import { addDefaultIndex, clearFolders, client, TypeChecker } from 'esbuild-help
  *
  * `npm start` -> grid01, `npm start <sample>` for another folder under samples/.
  * Output is throwaway and gitignored (dist_dev).
+ *
+ * PORT env overrides the dev server port (hot reload websocket uses PORT+1),
+ * e.g. `PORT=8090 npm start demo` to run next to another instance on 8080.
  */
 
 const sample = process.argv[2] || 'demo';
 const OUTPUT_ROOT = 'dist_dev';
+const PORT = Number(process.env.PORT) || 8080;
 
 clearFolders('dist_client', 'dist_nodejs');
 
@@ -37,7 +41,8 @@ addDefaultIndex({
     entry: './index.js',
     hbr: true,
     devServer: true,
-    devServerPort: 8080,
+    devServerPort: PORT,
+    webSocketPort: PORT + 1,
     userInjectOnHbr: 'window.location.reload();',
     indexTemplate: /*html*/ `<!DOCTYPE html>
     <html lang="en">

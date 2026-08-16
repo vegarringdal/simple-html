@@ -14,7 +14,23 @@
       "Bash(timeout 60 sh -c 'until curl -sf http://localhost:8080 >/dev/null; do sleep 1; done')",
       "Bash(curl -sf http://localhost:8080)",
       "Bash(node drive2.js)",
-      "Bash(node probe.js)"
+      "Bash(node probe.js)",
+      "Bash(awk '{print $1}')",
+      "Bash(xargs -r kill)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --max-time 2 http://localhost:8080)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --max-time 2 http://localhost:8081)",
+      "Bash(PORT=8090 timeout 25 npm start demo)",
+      "Bash(timeout 20 sh -c 'until curl -sf http://localhost:8090 >/dev/null; do sleep 1; done')",
+      "Bash(curl -s http://localhost:8090)",
+      "Bash(curl -s --max-time 2 -o /dev/null http://localhost:8090)",
+      "Bash(curl -s --max-time 2 -o /dev/null http://localhost:8080)",
+      "Bash(echo \"src exit: $?\")",
+      "Bash(PORT=8090 npm start demo)",
+      "Bash(timeout 60 sh -c 'until curl -sf http://localhost:8090 >/dev/null; do sleep 1; done')",
+      "Bash(node drive3.js)",
+      "Bash(node drive4.js)",
+      "Bash(sed -i \"s|text=/begin/i'\\)|text=/^Contains$/'\\)|\" drive4.js)",
+      "Bash(sed -i 's|text=/\\\\^Contains\\\\$/|text=Contains|' drive4.js)"
     ]
   }
 }

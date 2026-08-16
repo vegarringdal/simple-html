@@ -242,6 +242,11 @@ export function renderRowCell(
                                 el.style.bottom = asPx(0);
                                 el.style.right = asPx(0);
                                 el.style.width = asPx(30);
+                                el.onmousedown = (event: MouseEvent) => {
+                                    // dont steal focus from the cell input - its blur removes this button
+                                    // after 100ms, so a slow click (mousedown -> mouseup) lost its target
+                                    event.preventDefault();
+                                };
                                 el.onclick = () => {
                                     ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
                                         cell,
