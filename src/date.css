@@ -7,6 +7,12 @@
     --simple-html-date-header-bg-border: #181515;
     --simple-html-date-main-bg-border: #e6e5e5;
     --simple-html-date-main-bg-selected: #bdd4e7;
+    /* same defaults as the grid, so the widget looks identical standalone -
+       without these it inherits whatever font the page happens to have */
+    --simple-html-date-font-size: 11px;
+    --simple-html-date-font-family: 'Roboto', 'Helvetica', 'Arial', 'sans-serif';
+    font-family: var(--simple-html-date-font-family);
+    font-size: var(--simple-html-date-font-size);
     color: var(--simple-html-date-main-color);
     background-color: var(--simple-html-date-main-bg-color);
     display: flex;
@@ -38,10 +44,11 @@
 .simple-html-date .simple-html-date-time .side input {
     text-align: center;
     outline: none;
+    font-family: inherit;
+    font-size: inherit;
     color: var(--simple-html-date-main-color);
     background-color: var(--simple-html-date-main-bg-color);
     border: 0px;
-    
 }
 
 .simple-html-date .simple-html-date-time .side input::-webkit-outer-spin-button,
@@ -62,9 +69,25 @@
     display: flex;
 }
 
-.date-flex-col button{ 
+.date-flex-col button{
     margin: 5px;
     margin-top: 10px;
+}
+
+/* Clear/Now/Use - follow the widget theme instead of native button chrome */
+.simple-html-date button {
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--simple-html-date-main-color);
+    background-color: var(--simple-html-date-main-bg-color);
+    border: 1px solid var(--simple-html-date-main-bg-border);
+    border-radius: 3px;
+    padding: 3px 10px;
+    cursor: pointer;
+}
+
+.simple-html-date button:hover {
+    background-color: var(--simple-html-date-main-bg-selected);
 }
 
 .simple-html-date .simple-html-date-month {

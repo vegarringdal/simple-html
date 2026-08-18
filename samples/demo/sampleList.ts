@@ -3,7 +3,6 @@ import { basicGrid } from './samples/basicGrid';
 import { cellStyling } from './samples/cellStyling';
 import { columnLayout } from './samples/columnLayout';
 import { contextMenu } from './samples/contextMenu';
-import { datepicker } from './samples/datepicker';
 import { dropdownGrid } from './samples/dropdownGrid';
 import { dynamicCellTypes } from './samples/dynamicCellTypes';
 import { editing } from './samples/editing';
@@ -50,7 +49,5 @@ export const SAMPLES: DemoSample[] = [
     // config
     saveLoadConfig,
     tooltips,
-    miscConfig,
-    // date picker
-    datepicker
+    miscConfig
 ];

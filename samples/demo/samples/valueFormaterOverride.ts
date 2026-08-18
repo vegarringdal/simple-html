@@ -5,25 +5,25 @@ export const valueFormaterOverride: DemoSample = {
     title: 'Value formater override',
     group: 'Formatting',
     description:
-        'The datasource routes every cell value through a ValueFormater. You can wrap its fromSource to rewrite display values per attribute - here country is displayed uppercase without touching the data. isFilter tells you if the value is for the filter row. setValueFormater() replaces the whole thing.',
+        'The datasource routes every cell value through a ValueFormater. fromSourceDisplay is what normal cells render, while fromSource is used for edit cells and the filter row - so override fromSourceDisplay to change how values are shown without touching what the user edits. Here country displays uppercase, but click into a cell and you edit the real value.',
     code: `
 // grab the active formater and keep the original method
 const formater = datasource.getValueFormater();
-const originalFromSource = formater.fromSource;
+const originalDisplay = formater.fromSourceDisplay;
 
-formater.fromSource = (value, type, attribute, isFilter) => {
-    // NB: fromSource is also what edit cells show, so what you return
-    // here is what the user edits - keep it round-trippable
-    if (attribute === 'country' && !isFilter && value) {
+// fromSourceDisplay = what normal cells show.
+// fromSource = edit/filter value, so editing still shows the real value
+formater.fromSourceDisplay = (value, type, attribute, isFilter) => {
+    if (attribute === 'country' && value) {
         return String(value).toUpperCase();
     }
-    return originalFromSource.apply(formater, [value, type, attribute, isFilter]);
+    return originalDisplay.apply(formater, [value, type, attribute, isFilter]);
 };
 
 gridInterface.triggerRebuild();
 
 // restore
-formater.fromSource = originalFromSource;
+formater.fromSourceDisplay = originalDisplay;
 gridInterface.triggerRebuild();
 
 // or implement the full ValueFormater interface and replace it
@@ -35,20 +35,20 @@ datasource.setValueFormater(myValueFormater);
         const { datasource, gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
 
         const formater = datasource.getValueFormater();
-        const originalFromSource = formater.fromSource;
+        const originalDisplay = formater.fromSourceDisplay;
 
         ui.button('Uppercase country (display only)', () => {
-            formater.fromSource = (value: any, type: any, attribute: string, isFilter: boolean) => {
-                if (attribute === 'country' && !isFilter && value) {
+            formater.fromSourceDisplay = (value: any, type: any, attribute: string, isFilter: boolean) => {
+                if (attribute === 'country' && value) {
                     return String(value).toUpperCase();
                 }
-                return originalFromSource.apply(formater, [value, type, attribute, isFilter]);
+                return originalDisplay.apply(formater, [value, type, attribute, isFilter]);
             };
             gridInterface.triggerRebuild();
-            ui.log('country cells now display uppercase, the data itself is untouched');
+            ui.log('country displays uppercase - click into a cell: you edit the real value');
         });
         ui.button('Restore default', () => {
-            formater.fromSource = originalFromSource;
+            formater.fromSourceDisplay = originalDisplay;
             gridInterface.triggerRebuild();
         });
         ui.button('Log a raw row (console)', () => {

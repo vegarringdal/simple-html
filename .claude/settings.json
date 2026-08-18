@@ -30,7 +30,9 @@
       "Bash(node drive3.js)",
       "Bash(node drive4.js)",
       "Bash(sed -i \"s|text=/begin/i'\\)|text=/^Contains$/'\\)|\" drive4.js)",
-      "Bash(sed -i 's|text=/\\\\^Contains\\\\$/|text=Contains|' drive4.js)"
+      "Bash(sed -i 's|text=/\\\\^Contains\\\\$/|text=Contains|' drive4.js)",
+      "Bash(node drive5.js)",
+      "Bash(node drive6.js)"
     ]
   }
 }
