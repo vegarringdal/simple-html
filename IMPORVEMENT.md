@@ -199,8 +199,8 @@ Independent of the tooling, and worth keeping:
 
 * **columns are virtualised horizontally** - a column that is off screen does not exist in
   the dom at all
-* **the paste and clear row menu entries differ by one space** - `Cell (sel.rows)` is
-  Paste, `Cell (sel. rows)` is Clear. Easy to hit the wrong one, for a test *or* a user.
+* **the paste and clear row menu entries differ by one space** - `Cell (selected rows)` is
+  Paste, `Cell (selected rows)` is Clear. Easy to hit the wrong one, for a test *or* a user.
   Worth renaming.
 * **the resize handle spans the full header height but the filter input covers its lower
   half** - only the top part of the handle is actually grabbable
@@ -503,6 +503,24 @@ go-to-definition from the `.d.ts.map` files.
 The requested `--pack-destination` was `./dist`, changed to `./build`: `dist` is the content
 being packed and is wiped at the start of every build, so a tgz there would be packed into
 the next tarball and then deleted.
+
+### Demo shell: scrollbars styled like the grid's
+`samples/demo/index.css`
+
+The sidebar nav, the "How to use" code panel and the activity log all scroll, but had no
+scrollbar styling, so they got the browser default (wide, light track, arrow buttons) -
+which stood out badly against the dark sidebar and next to the grid's thin flat scrollers.
+
+One shared rule now covers the three scrolling areas, mirroring what `grid.css` does for
+the grid's own scrollers: `scrollbar-color` + `scrollbar-width: thin` for the standard
+properties, and the `::-webkit-scrollbar` thumb/track fallbacks (10px, inset shadow) for
+browsers without them. The rule reads two variables, `--demo-scroll-thumb` and
+`--demo-scroll-track`, so each area sets the pair that fits its background:
+
+* `body` / `body.dark` - the grid's own light/dark thumb and track colours, so the log
+  above the grid matches it in both themes
+* `.sidebar` - always dark, uses the sidebar's own hover/border greys
+* `.code-panel` - always dark, uses the panel's summary/border colours
 
 ## Considered, not done
 

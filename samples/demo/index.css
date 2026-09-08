@@ -22,6 +22,47 @@ body.dark {
     --demo-border: #4b5563;
 }
 
+/* scrollbars - same look as the grid's own scrollers (thin, flat, themed thumb + track).
+   the shared rule reads two variables, each scrolling area sets the pair that fits its background */
+
+:root,
+body {
+    --demo-scroll-thumb: #bdd4e7;
+    --demo-scroll-track: #ffffff;
+}
+
+body.dark {
+    --demo-scroll-thumb: #234882;
+    --demo-scroll-track: #4b5563;
+}
+
+.sidebar-nav,
+.code-scroll,
+.demo-log {
+    scrollbar-color: var(--demo-scroll-thumb) var(--demo-scroll-track);
+    scrollbar-width: thin;
+}
+
+.sidebar-nav::-webkit-scrollbar,
+.code-scroll::-webkit-scrollbar,
+.demo-log::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb,
+.code-scroll::-webkit-scrollbar-thumb,
+.demo-log::-webkit-scrollbar-thumb {
+    background-color: var(--demo-scroll-thumb);
+    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+}
+
+.sidebar-nav::-webkit-scrollbar-track,
+.code-scroll::-webkit-scrollbar-track,
+.demo-log::-webkit-scrollbar-track {
+    background-color: var(--demo-scroll-track);
+}
+
 body {
     margin: 0;
     font-family:
@@ -48,6 +89,8 @@ body {
     flex-direction: column;
     background: #111827;
     color: #d1d5db;
+    --demo-scroll-thumb: #374151;
+    --demo-scroll-track: #1f2937;
 }
 
 .sidebar-header {
@@ -166,6 +209,8 @@ body {
     border: 1px solid #1e293b;
     border-radius: 8px;
     overflow: hidden;
+    --demo-scroll-thumb: #334155;
+    --demo-scroll-track: #101a30;
 }
 
 .code-summary {

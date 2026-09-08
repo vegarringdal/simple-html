@@ -350,7 +350,7 @@ export function contextmenuRow(
                     removeContextMenu(ctx);
                 }}
             >
-                Cell <i>(sel.rows)</i>
+                Cell <i>(selected rows)</i>
             </div>
             <div class="simple-html-grid-menu-section">Clear:</div>
             <hr class="hr-solid" />
@@ -372,7 +372,7 @@ export function contextmenuRow(
                     triggerScrollEvent(ctx);
                 }}
             >
-                Cell <i>(sel. rows)</i>
+                Cell <i>(selected rows)</i>
             </div>`;
     };
 
@@ -501,7 +501,7 @@ export function contextmenuRow(
             removeContextMenu(ctx);
         };
 
-        return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Column <i>(sel.rows)</i></div>`;
+        return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Column <i>(selected rows)</i></div>`;
     };
 
     const copyAllOnSelectedRowsTemplate = () => {
@@ -522,7 +522,7 @@ export function contextmenuRow(
             removeContextMenu(ctx);
         };
 
-        return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(sel. rows)</i></div>`;
+        return html` <div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(selected rows)</i></div>`;
     };
 
     const copySelectedColumnsOnSelectedRowsTemplate = () => {
@@ -543,7 +543,7 @@ export function contextmenuRow(
             removeContextMenu(ctx);
         };
 
-        return html`<div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(sel. rows/col)</i></div>`;
+        return html`<div class="simple-html-grid-menu-item" @click=${() => clickHandle()}>Row <i>(selected rows/col)</i></div>`;
     };
 
     render(
