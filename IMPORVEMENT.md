@@ -490,6 +490,8 @@ shared abstractions collapsed: no `development` flag, no `outputRoot` parameter,
 * stale `config_demo_build.ts` / `config_shared.ts` entries dropped from the tsconfig
   excludes
 
+**Update:** a demo build is back, for github pages only - see *Demo published to gh-pages*.
+
 ### npm run build now packs a tgz into ./build
 
 `scripts/build.js`, `package.json`
@@ -626,6 +628,29 @@ that fails on the old code. Low ones are listed under *Candidates*.
 
 `filter_dates_time.test.ts` "date filter missing filer to use greater than or equal to" is now
 "date filter missing operator is ignored" - it pinned the old `>=` fallback.
+
+### Demo published to gh-pages
+
+`.github/workflows/demo.yml` (new), `scripts/buildDemo.js` (new), `package.json`, `.gitignore`,
+`biome.json`
+
+Every push to `v6_maybe` builds the samples app and force pushes it to the `gh-pages` branch, so
+the branch can be tried in a browser at https://airemote.github.io/simple-html/ (the fork).
+
+* `npm run build:demo` - one plain esbuild pass over `samples/demo` into `dist_demo`
+  (gitignored, excluded from biome): minified js + sourcemap, the css esbuild collects from the
+  app's imports, an `index.html`, and `.nojekyll`. Same entry and tsconfig `paths` as the dev
+  server, without `esbuild-helpers` - there is nothing to serve or watch.
+* paths in the html are relative, a project site is served from `/<repo>/`, not `/`
+* the script tag is `defer` - the app appends itself to `document.body` the moment it runs
+* `gh-pages` only holds the latest build: a fresh single commit, force pushed
+* the workflow does not run the tests, a failing test should not stop a branch from being tried
+* can also be run by hand from the Actions tab (`workflow_dispatch`)
+
+One time setup on github, not in code:
+* a fork has Actions turned off until they are enabled on its Actions tab
+* after the first run created the branch: Settings -> Pages -> Source "Deploy from a branch",
+  `gh-pages`, `/ (root)`
 
 ## Considered, not done
 

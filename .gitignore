@@ -7,3 +7,4 @@ docs/
 dist/
 build/
 coverage
+dist_demo/

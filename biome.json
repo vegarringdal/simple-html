@@ -13,6 +13,7 @@
             "!**/*.d.ts",
             "!dist",
             "!dist_dev",
+            "!dist_demo",
             "!docs",
             "!node_modules",
             "!**/dist",
