@@ -18,11 +18,14 @@ const config = (datePickerConfig: any = undefined): GridConfig =>
             { rows: ['name'], width: 100 },
             { rows: ['born'], width: 100 }
         ],
-        attributes: [{ attribute: 'name' }, { attribute: 'born', type: 'date' }],
+        attributes: [{ attribute: 'name' }, { attribute: 'born' }],
         datePickerConfig
     }) as GridConfig;
 
 const data = () => [{ name: 'a', born: new Date(2001, 4, 17) }];
+
+// the type of a column comes from the datasource
+const fields = { fields: { born: 'date' as const } };
 
 /**
  * clicks the date cell, the grid opens the picker in a timeout
@@ -45,7 +48,7 @@ beforeEach(() => {
 
 describe('grid date picker', () => {
     it('expect the picker to open on the date in the cell', async () => {
-        const { element } = await mountGrid(config(), data());
+        const { element } = await mountGrid(config(), data(), fields);
 
         const picker = await openPicker(element);
 
@@ -54,7 +57,7 @@ describe('grid date picker', () => {
     });
 
     it('expect the picker to open on the date when the data holds it as an iso string', async () => {
-        const { element } = await mountGrid(config(), [{ name: 'a', born: '2001-05-17' }]);
+        const { element } = await mountGrid(config(), [{ name: 'a', born: '2001-05-17' }], fields);
 
         const picker = await openPicker(element);
 
@@ -63,7 +66,7 @@ describe('grid date picker', () => {
     });
 
     it('expect weekStart in datePickerConfig not to change the size of the picker', async () => {
-        const { element } = await mountGrid(config({ weekStart: 1 }), data());
+        const { element } = await mountGrid(config({ weekStart: 1 }), data(), fields);
 
         const picker = await openPicker(element);
 
@@ -72,7 +75,7 @@ describe('grid date picker', () => {
     });
 
     it('expect weekStart 0 to start the week on sunday', async () => {
-        const { element } = await mountGrid(config({ weekStart: 0 }), data());
+        const { element } = await mountGrid(config({ weekStart: 0 }), data(), fields);
 
         const picker = await openPicker(element);
 

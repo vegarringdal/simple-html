@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import type { Formatter } from '../../datasource/formatter';
 import type { GridConfig } from '../gridConfig';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
@@ -86,20 +87,21 @@ describe('dimRepeatedValues - on', () => {
     });
 });
 
-describe('dimRepeatedValues - value formatters', () => {
+describe('dimRepeatedValues - field formatters', () => {
     /**
      * this is a visual feature - if a formatter makes two different source values render as
      * the same text, they look repeated and should dim
      */
     it('expect two different source values that display the same to count as repeated', async () => {
-        const mounted = await mountGrid(dimConfig(), [
-            { firstname: 'aaa', lastname: 'x', age: 1 },
-            { firstname: 'bbb', lastname: 'x', age: 2 }
-        ]);
-
-        const formatter = mounted.datasource.getValueFormatter();
-        formatter.fromSource = () => 'same for everything';
-        mounted.gridInterface.triggerScrollEvent();
+        const same: Formatter = { format: () => 'same for everything', parse: (text) => text };
+        const mounted = await mountGrid(
+            dimConfig(),
+            [
+                { firstname: 'aaa', lastname: 'x', age: 1 },
+                { firstname: 'bbb', lastname: 'x', age: 2 }
+            ],
+            { fields: { age: 'number', firstname: { formatter: same } } }
+        );
 
         expect(repeatedFlags(mounted.element, 'firstname')).toEqual(['false', 'true']);
     });

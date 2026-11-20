@@ -1,6 +1,7 @@
 import { html, render } from 'lit-html';
-import type { Listener } from '../listener';
+import { Emitter, type EventHandler } from '../emitter';
 import type { DateElement } from './dateElement';
+import type { DateEvents } from './dateEvents';
 import type { IDateConfig, IStyle } from './interfaces';
 import { header } from './templates/header';
 import { month } from './templates/month';
@@ -11,7 +12,10 @@ export class DateInterface {
     // undefined until connected, null after disconnectElement()
     public element?: DateElement | null;
     public config: IDateConfig;
-    private listeners: Set<Listener> = new Set();
+    /**
+     * the handlers subscribed with on()
+     */
+    private events = new Emitter<DateEvents>();
 
     constructor(config: IDateConfig) {
         this.config = config;
@@ -47,27 +51,45 @@ export class DateInterface {
         }
     }
 
+    /**
+     * called when the element is removed from the dom, unsubscribes every handler
+     */
     disconnectElement() {
         this.element = null;
-        this.listeners.clear();
+        this.events.clear();
     }
 
-    callSubscribers(event: string, data: unknown = {}): void {
-        const keeping: any = [];
-        this.listeners.forEach((callable) => {
-            let keep: boolean | undefined;
-            if (typeof callable === 'function') {
-                keep = callable({ type: event, data: data });
-            } else {
-                if (typeof callable?.handleEvent === 'function') {
-                    keep = callable.handleEvent({ type: event, data: data });
-                }
-            }
-            if (keep) {
-                keeping.push(callable);
-            }
-        });
-        this.listeners = new Set(keeping);
+    /**
+     * @internal
+     * sends an event to the handlers subscribed with on(), used by the templates
+     */
+    __callSubscribers<Type extends keyof DateEvents>(type: Type, data: DateEvents[Type]): void {
+        this.events.emit(type, data);
+    }
+
+    /**
+     * Subscribes to an event of the date picker. The handler gets the event's payload, typed
+     * from {@link DateEvents} - see there for every event and what it sends.
+     *
+     * The handler stays subscribed until you call the function this returns, or the date element
+     * is removed from the dom. What the handler returns is ignored (in v5 it had to return `true`
+     * to stay subscribed).
+     *
+     * @param type the event name
+     * @param handler called with the payload every time the event is sent
+     * @returns a function that unsubscribes the handler
+     *
+     * @example
+     * ```ts
+     * const off = dateInterface.on('date-select', (date) => {
+     *     input.value = date ? date.toLocaleString() : '';
+     * });
+     *
+     * off(); // unsubscribe
+     * ```
+     */
+    on<Type extends keyof DateEvents>(type: Type, handler: EventHandler<DateEvents[Type]>): () => void {
+        return this.events.on(type, handler);
     }
 
     selectRangeWithFromTo(fromDate: Date, toDate: Date) {
@@ -122,22 +144,6 @@ export class DateInterface {
             this.config.startYear = this.config.startYear - 1;
         }
         this.render();
-    }
-
-    addEventListener(callable: Listener): void {
-        if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
-            throw new Error('callable sent to datasource event listner is wrong type');
-        }
-
-        if (!this.listeners.has(callable)) {
-            this.listeners.add(callable);
-        }
-    }
-
-    removeEventListener(callable: Listener): void {
-        if (this.listeners.has(callable)) {
-            this.listeners.delete(callable);
-        }
     }
 
     render() {

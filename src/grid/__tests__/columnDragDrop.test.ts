@@ -14,7 +14,7 @@ const data = () => [
     { firstname: 'b', lastname: 'y', age: 2 }
 ];
 
-const attributes = [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age', type: 'number' as const }];
+const attributes = [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age' }];
 
 const centerRows = (gridInterface: any) => gridInterface.__getGridConfig().columnsCenter.map((column: any) => column.rows);
 

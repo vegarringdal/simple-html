@@ -76,7 +76,7 @@ describe('row menu - replace filter', () => {
     it('expect the header text of a column not listed in attributes to be cleared', async () => {
         const config = simpleConfig();
         // lastname is only named in the column rows
-        config.attributes = [{ attribute: 'firstname' }, { attribute: 'age', type: 'number' }];
+        config.attributes = [{ attribute: 'firstname' }, { attribute: 'age' }];
         const { element } = await mountGrid(config, data());
         typeInHeaderFilter(element, 'lastname', 'x');
 

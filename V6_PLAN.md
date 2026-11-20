@@ -79,14 +79,14 @@ Tasks:
 
 ## Phase 1 - datasource
 
-5. [ ] **A schema on the datasource** - the biggest design win. Today types live in three places
+5. [x] **A schema on the datasource** - the biggest design win. Today types live in three places
        that can disagree: the grid's `attributes[].type`, `datasource.setDates([...])` for
        sorting, and `attributeType` on every filter condition. Give the datasource the field list
        (`new Datasource({ key: 'id', fields: { born: { type: 'date' }, age: { type: 'number' } } })`)
        and let sorting, grouping, filtering, formatting and the grid all read it. **L**
-6. [ ] **`date` and `datetime` as separate types**, replacing the `includesTime` flag added in v5.
+6. [x] **`date` and `datetime` as separate types**, replacing the `includesTime` flag added in v5.
        A date only field filters on the day, a datetime keeps the time. Comes with 5. **S**
-7. [ ] **Formatters per field.** Today there is one `ValueFormater` per datasource that switches on
+7. [x] **Formatters per field.** Today there is one `ValueFormater` per datasource that switches on
        type (and on attribute name for anything custom), on top of static formatter classes with
        six methods (`fromSource`, `toSource`, `toFilter`, `fromSourceDisplay`,
        `fromSourceGrouping`, `placeholder`). v6: a field takes a formatter object
@@ -98,7 +98,7 @@ Tasks:
        `getFilterTree()` already returns - `{ group: 'AND' | 'OR', children }` or
        `{ field, operator, value }` - as the input format too, with small builders
        (`and(...)`, `or(...)`, `eq('name', 'x')`). The type comes from the schema. **M**
-9. [ ] **Group rows are not entities.** `getRows()` returns group headers and data rows in one list,
+9. [x] **Group rows are not entities.** `getRows()` returns group headers and data rows in one list,
        and group headers are fake entities (`__group`, `__groupID` ...). That caused a whole class
        of bugs: selecting headers, pasting onto them. Return display rows as
        `{ kind: 'group' | 'data' }`, keep the user's objects clean, and keep the edit tracking
@@ -111,15 +111,115 @@ Tasks:
 12. [ ] **Options objects instead of boolean flags**: `setData(data, add, reRunFilter)`,
         `removeData(data, all, rerunFilters)`, `markForDeletion(data, all)`,
         `deSelectAll(triggerEvent)`, `sort(args, add)`. Call sites then explain themselves. **S**
-13. [ ] **Typed events**: today one listener receives every event and switches on a string name,
+13. [x] **Typed events**: today one listener receives every event and switches on a string name,
         payloads are untyped, names mix `collection-filtered` with `selectionChange`, and
         `Datasource`/`GridInterface` each have their own copy of the listener code. v6: one event
         map type, `on('filter', fn)` returning an unsubscribe function, one naming style. The
         events guide is generated from the map. Also removes a trap found in phase 0: a listener is
         only kept if it returns something truthy, one that returns nothing is dropped after the
         first event. **M**
-14. [ ] `getFilterString(ctx?: Grid)` / `getFilterTree(ctx?: Grid)` - the datasource should not
+14. [x] `getFilterString(ctx?: Grid)` / `getFilterTree(ctx?: Grid)` - the datasource should not
         know the grid. With the schema (5) the labels come from the fields. **S, after 5**
+
+### Phase 1 design
+
+Decided before coding, so the steps fit together. Names may still change in review.
+
+**Schema (5, 6, 14)** - the datasource knows its fields:
+
+```ts
+type FieldType = 'text' | 'number' | 'boolean' | 'date' | 'datetime';
+
+interface FieldConfig {
+    type?: FieldType;      // default 'text'
+    label?: string;        // default: the field name. The grid's column label falls back to it
+    formatter?: Formatter; // default: the datasource's formatter for the type
+}
+
+new Datasource({
+    key?: string,                                        // was new DataContainer('id')
+    fields?: Record<string, FieldType | FieldConfig>,    // { born: 'date', age: { type: 'number', label: 'Age' } }
+    formatters?: Partial<Record<FieldType, Formatter>>,  // the default per type
+    selectionMode?: SelectionMode,
+    container?: DataContainer                            // share data between datasources
+});
+```
+
+- the grid's `Attribute.type` is removed, the grid reads the type from the datasource. Sorting,
+  grouping, filtering and edit tracking read it too, so `setDates()` and the `includesTime` flag
+  go away.
+- `date` compares on the day (filter, sort, edit tracking), `datetime` on the full timestamp
+- `dynamicCellTypeColumn` stays: the grid resolves the type per row and asks for that type's
+  formatter, `datasource.getFormatter(field, type?)`
+- `getFilterString()` / `getFilterTree()` take no grid any more, labels come from the fields
+
+**Formatters (7)** - one small interface, per field:
+
+```ts
+interface Formatter {
+    format(value: unknown): string;     // value -> text: cells, group headers, value list, filter string
+    parse(text: string): unknown;       // typed text -> value to store. Blank -> null
+    parseFilter?(text: string): unknown; // typed filter text -> value to filter on. Default: parse
+    placeholder?: string;
+}
+```
+
+- the built-ins keep their names (`DateFormatterYYYYMMDD` ...) but become plain objects with these
+  methods. Defaults: text, `NumberFormatterDot`, `DateFormatterYYYYMMDD`,
+  `DateFormatterYYYYMMDDTHHMMSS`, boolean.
+- `ValueFormatter`, `setValueFormatter()`, `setDateFormatter()`, `setNumberFormatter()` and their
+  getters are removed - a custom formatter goes on the field, a different default in `formatters`
+- booleans are not formatted for the checkbox, the grid uses the raw value
+
+**Filter format (8)**:
+
+```ts
+type FilterExpression = FilterGroup | FilterCondition;
+interface FilterGroup { group: 'AND' | 'OR'; children: FilterExpression[] }
+interface FilterCondition { field: string; operator: FilterOperator; value?: unknown; valueField?: string }
+
+datasource.filter(and(where('age', 'GREATER_THAN', 18), or(where('a', 'EQUAL', 'x'), where('a', 'EQUAL', 'y'))));
+```
+
+- `valueField` compares to another field (was `valueType: 'ATTRIBUTE'`). No `type`,
+  `logicalOperator: 'NONE'`, `attributeType` - the type comes from the schema.
+- operator names stay as they are
+- incomplete conditions (the filter editor's drafts) are still ignored at runtime
+- `getFilterTree()` keeps returning the display tree (labels, formatted values) for the footer
+
+**Group rows (9)** - their own type, not entities:
+
+- `GroupRow` with the `__group*` fields; `Entity` loses them (keeps `__groupLvl`, data rows use it
+  for indentation)
+- `getRows()` returns `(Entity | GroupRow)[]`, `getRows(true)` `Entity[]`; `isGroupRow(row)`
+- selection and editing only ever take entities
+
+**Change tracking (11)**: `getChanges()` gets a typed result, leaves out props edited back to
+their original value, and tracks a time change on a `datetime` field.
+
+**Options objects (12)**: no positional booleans. `setData(rows, { add, refilter })`,
+`sort(args, { add })`, `group(groups, { add })`, `select(row, { notify })`,
+`deselectAll({ notify })`, `addNewEmpty(row, { scrollTo })`. The `all` flags become their own
+methods: `markAllForDeletion()`, `removeAllData()`.
+
+**Events (13)** - one `Emitter` used by the datasource, grid interface and date interface:
+
+```ts
+const off = datasource.on('collection-filtered', (data) => { ... }); // typed payload
+off(); // unsubscribe
+```
+
+- an event map type per class, so the payload is typed; the events guide is generated from it
+- the return value of a handler is ignored (no more "return true to keep listening")
+- one naming style, kebab case: `selectionChange` -> `selection-change`,
+  `currentEntity` -> `current-entity`, `gridConnected` -> `grid-connected`
+- `addEventListener` / `removeEventListener` are removed
+
+**0 is blank (10)**: kept as it is and documented.
+
+**Order of work**: events, group rows, schema + formatters, filter format, change tracking +
+options objects. Each step updates the grid, the samples (they are the docs), the tests, JSDoc
+with `@example` on new public API, and `MIGRATION.md`.
 
 ## Phase 2 - grid interface and config
 
@@ -170,11 +270,70 @@ Tasks:
         event, one shared code path instead of three near identical left/middle/right blocks,
         remove the dead `largeScroll` branch. Matters for wide grids. **M**
 
+## Phase 5 - editing
+
+27. [ ] **Edited cell marker**: a small corner marker on a cell whose value differs from the
+        original (the datasource already tracks this per field). Hovering it shows the original
+        value. **S-M**
+28. [ ] **Undo**: per cell (from the marker or the row menu, restores the original), per row
+        (revert row), and an undo/redo history - Ctrl+Z / Ctrl+Y - covering edits, paste and
+        clear. **M**
+29. [ ] **Row status built in**: the row selector shows the row's state - new, edited, deleted
+        (struck through), error (with its message) - with proper icons and theme variables. Plus a
+        "changed rows only" filter. **S-M**
+30. [ ] **Multiline text**: a field option `multiline`, and automatic for text containing a newline.
+        The cell shows the first line with a marker when there is more; editing opens an overlay
+        editor anchored at the cell - a bigger textarea, Esc cancels, Ctrl+Enter saves. Rows keep
+        a fixed height, virtual scrolling depends on it. **M**
+31. [ ] **Validation in the schema**: `required`, `min`/`max`, `pattern`, a custom
+        `validate(value, row)`. The error shows on the cell and in the row status. Replaces the
+        grid's `mandatory` options. **M**
+
+## Phase 6 - selection and clipboard
+
+32. [ ] **Cell ranges**: click-drag, shift+click and shift+arrows select a rectangle of cells, across
+        columns and pinned sections; Ctrl/Cmd adds another range. **M-L**
+33. [ ] **Clipboard like a spreadsheet**: copy a range as tab separated text (pastes into
+        Excel/Sheets), paste one into a range (several rows and columns, respecting readonly and
+        validation, one undo step), Delete clears a range. **M**
+34. [ ] **Fill down** (Ctrl+D) and a drag-fill handle. **M**
+35. [ ] **Summary of the selection** in the footer: count, sum, average, min, max. Replaces the row
+        menu summary, which has known bugs. **S**
+
+## Phase 7 - live data
+
+36. [ ] **Reactive cells**: setting a property from code (`row.price = 10`) re-renders the visible
+        cells on its own, batched per frame - no `triggerScrollEvent()` after edits from code. **S-M**
+37. [ ] **Merge by key**: `datasource.upsert(rows, { removeMissing })` updates rows by key, adds new
+        ones, keeps selection, scroll position and expanded groups, and runs filter/sort/group
+        once. For polling or push updates from a server. **M**
+38. [ ] **Show what changed**: a short highlight on cells a merge changed. A merge that hits a cell
+        the user is editing, or has edited and not saved, is marked as a conflict instead of
+        overwriting it. **M**
+
+Needs phase 4: a merge every second on a large grid has to stay cheap.
+
+## Phase 8 - more
+
+39. [ ] **Custom cell rendering** per column (a lit-html template: badges, links, progress bars,
+        icons) and conditional formatting (cell/row classes from a function or simple rules). **M**
+40. [ ] **Aggregates**: sum/count/average in each group row, and a totals row in the footer. **M**
+41. [ ] **Export** the filtered and sorted rows, or the selected range, as CSV. xlsx later if
+        needed. **S**
+42. [ ] **Find** (Ctrl+F) in the grid: highlight matches, next/previous. **M**
+
+Every feature gets a demo sample and a guide page.
+
 ## Order
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies
 almost everything after it. Then config/state (15-16) and events (13), UI, performance.
+
+The features (phases 5-8) come after, because they build on those: validation and the multiline
+type need the schema, reactive cells need the events, ranges and the overlay editor need pointer
+events and the popover/dialog work, live data needs the performance work. Editing first (the
+most asked for), then selection and clipboard, then live data, then the rest.
 
 Documentation goes along with each item: the migration guide and changelog in every phase, JSDoc
 for what the phase adds or changes. The docs *site* is built once the API stops moving, after

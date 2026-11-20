@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { isGroupRow } from '../entity';
 
 /**
  * Groups are built from runs of equal values in the sorted rows, so the group key has to agree
@@ -10,7 +11,7 @@ import { Datasource } from '../dataSource';
 const groups = (ds: Datasource) =>
     ds
         .getRows()
-        .filter((r) => r.__group)
+        .filter(isGroupRow)
         .map((r) => [r.__groupID, r.__groupTotal]);
 
 describe('grouping - one group per value', () => {
@@ -47,7 +48,7 @@ describe('grouping - one group per value', () => {
         ]);
         ds.group([{ attribute: 'b', title: 'b' }]);
         ds.expandGroup('false');
-        expect(ds.getRows().map((r) => (r.__group ? `G:${r.__groupID}` : r.v))).toEqual(['G: blank', 'G:false', 1, 3]);
+        expect(ds.getRows().map((r) => (isGroupRow(r) ? `G:${r.__groupID}` : r.v))).toEqual(['G: blank', 'G:false', 1, 3]);
     });
 
     it('expect false to be its own sub group, not part of the blank sub group', () => {

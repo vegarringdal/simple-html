@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DataContainer } from '../dataContainer';
-import type { DataEntity } from '../entity';
+import { type DataEntity, isGroupRow } from '../entity';
 
 /**
  * EntityHandler is the proxy handler behind every row.
@@ -246,7 +246,8 @@ describe('entityHandler - group properties', () => {
         container.setData([data]);
         const row = container.getDataSet()[0];
 
-        row.__group = true;
+        // the Entity type says a data row never has __group, set it past the type to test the proxy
+        Reflect.set(row, '__group', true);
         row.__groupLvl = 2;
         row.__groupName = 'group1';
 
@@ -258,10 +259,17 @@ describe('entityHandler - group properties', () => {
 
     it('expect group properties to not count as edits', () => {
         const row = makeRow({ name: 'person1' });
-        row.__group = true;
+        Reflect.set(row, '__group', true);
         row.__groupID = 'id1';
         row.__groupExpanded = true;
         expect(row.__controller.__edited).toEqual(false);
+    });
+
+    it('expect a __group property in the data to be hidden, so the row is still a data row', () => {
+        const row = makeRow({ name: 'person1', __group: true, __groupID: 'x' });
+        expect(row.__group).toBeUndefined();
+        expect(row.__groupID).toBeUndefined();
+        expect(isGroupRow(row)).toBe(false);
     });
 
     it('expect __rowError to be settable and readable', () => {

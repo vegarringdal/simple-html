@@ -1,198 +1,36 @@
+import { formatDate, parseDate } from './dateFormatterParts';
+import type { Formatter } from './formatter';
+
 /**
- * default dateformatter - DD.MM.YYYYTHH:MM:SS
+ * Formatter for a date with time as `DD.MM.YYYYTHH:MM:SS`, e.g. `20.11.2026T13:45:12`.
+ *
+ * - `format` - a `Date` (or a date string/timestamp) as `20.11.2026T13:45:12`, `''` for a blank or
+ *   invalid date
+ * - `parse` - `'20.11.2026T13:45:12'` as a `Date`. A month or year left out is the current one, and so
+ *   are the hours, minutes and seconds left out. A `Date` passes through, null and undefined are
+ *   returned as they are, `''` gives null and text that is no date gives `''`
+ * - `parseFilter` - like `parse`, but the time parts left out are 0, and so are the milliseconds:
+ *   `'20.11.2026'` is 2026-11-20 00:00:00.000. A `Date` passes through
+ * - `placeholder` - `'DD.MM.YYYYTHH:MM:SS'`
+ *
+ * @example
+ * ```ts
+ * DateFormatterDDMMYYYYTHHMMSS.format(new Date(2026, 10, 20, 13, 45, 12)); // '20.11.2026T13:45:12'
+ *
+ * const datasource = new Datasource({
+ *     fields: { lastLogin: { type: 'datetime', formatter: DateFormatterDDMMYYYYTHHMMSS } }
+ * });
+ * ```
  */
-export class DateFormatterDDMMYYYYTHHMMSS {
-    /**
-     * includes time, date filters compare with time, see `ValueFormatter.dateIncludesTime`
-     */
-    static includesTime = true;
-
-    /**
-     * Takes value and return string
-     * @param value
-     */
-    static fromSource(value: Date | string | null | undefined): string {
-        let returnValue: any = value;
-
-        if (value === null || value === undefined || value === '') {
-            return '';
-        }
-
-        returnValue = new Date(returnValue).toDateString();
-
-        // clear if not valid date
-        if (returnValue === 'Invalid Date') {
-            returnValue = '';
-        }
-
-        if (returnValue) {
-            // get our formating
-
-            const year = new Date(value).getFullYear();
-            let month = (new Date(value).getMonth() + 1).toString();
-            if (month.length === 1) {
-                month = `0${month}`;
-            }
-            let day = new Date(value).getDate().toString();
-            if (day.length === 1) {
-                day = `0${day}`;
-            }
-
-            let hours = new Date(value).getHours().toString();
-            if (hours.length === 1) {
-                hours = `0${hours}`;
-            }
-
-            let minutes = new Date(value).getMinutes().toString();
-            if (minutes.length === 1) {
-                minutes = `0${minutes}`;
-            }
-
-            let seconds = new Date(value).getSeconds().toString();
-            if (seconds.length === 1) {
-                seconds = `0${seconds}`;
-            }
-
-            returnValue = `${day}.${month}.${year}T${hours}:${minutes}:${seconds}`;
-        }
-
-        return returnValue;
-    }
-
-    /**
-     *
-     * @param value Takes string and returns date
-     */
-    static toSource(value: any): Date | null | undefined {
-        let returnValue = value;
-
-        if (returnValue === null || returnValue === undefined) {
-            return returnValue;
-        }
-
-        if (returnValue < 1) {
-            return null;
-        }
-
-        if (typeof returnValue !== 'string') {
-            return null;
-        }
-
-        const dateTime = returnValue.split('T');
-        const DDMMYYYY: any[] = dateTime[0].split('.');
-        const HHMMSS: any[] = dateTime[1]?.split(':') || [];
-
-        // 01.01.2019
-        if (!DDMMYYYY[1]) {
-            // by default, use current month
-            DDMMYYYY[1] = new Date().getMonth() + 1;
-        }
-        if (!DDMMYYYY[2]) {
-            // by default, use current year
-            DDMMYYYY[2] = new Date().getFullYear();
-        }
-
-        if (!HHMMSS[0]) {
-            // by default, use hours
-            HHMMSS[0] = new Date().getHours();
-        }
-        if (!HHMMSS[1]) {
-            // by default, use minutes
-            HHMMSS[1] = new Date().getMinutes();
-        }
-        if (!HHMMSS[2]) {
-            // by default, use seconds
-            HHMMSS[2] = new Date().getSeconds();
-        }
-
-        returnValue = new Date(
-            DDMMYYYY[2],
-            parseInt(DDMMYYYY[1], 10) - 1,
-            parseInt(DDMMYYYY[0], 10),
-            parseInt(HHMMSS[0], 10),
-            parseInt(HHMMSS[1], 10),
-            parseInt(HHMMSS[2], 10),
-            new Date().getMilliseconds()
-        );
-        if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
-            returnValue = '';
-        }
-
-        return returnValue;
-    }
-
-    /**
-     * will be used in filters, you might want other logic here
-     * @param value
-     * @returns
-     */
-    static toFilter(value: any): any {
-        let returnValue = value;
-
-        if (returnValue === null || returnValue === undefined) {
-            return returnValue;
-        }
-
-        if (returnValue < 1) {
-            return null;
-        }
-
-        if (typeof returnValue !== 'string') {
-            return null;
-        }
-
-        const dateTime = returnValue.split('T');
-        const DDMMYYYY: any[] = dateTime[0].split('.');
-        const HHMMSS: any[] = dateTime[1]?.split(':') || [];
-
-        // 01.01.2019
-        if (!DDMMYYYY[1]) {
-            // by default, use current month
-            DDMMYYYY[1] = new Date().getMonth() + 1;
-        }
-        if (!DDMMYYYY[2]) {
-            // by default, use current year
-            DDMMYYYY[2] = new Date().getFullYear();
-        }
-
-        if (!HHMMSS[0]) {
-            // by default, use hours
-            HHMMSS[0] = 0;
-        }
-        if (!HHMMSS[1]) {
-            // by default, use minutes
-            HHMMSS[1] = 0;
-        }
-        if (!HHMMSS[2]) {
-            // by default, use seconds
-            HHMMSS[2] = 0;
-        }
-
-        returnValue = new Date(
-            DDMMYYYY[2],
-            parseInt(DDMMYYYY[1], 10) - 1,
-            parseInt(DDMMYYYY[0], 10),
-            parseInt(HHMMSS[0], 10),
-            parseInt(HHMMSS[1], 10),
-            parseInt(HHMMSS[2], 10),
-            new Date().getMilliseconds()
-        );
-        if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
-            returnValue = '';
-        }
-
-        return returnValue;
-    }
-
-    static fromSourceDisplay(value: Date | string | null | undefined): string {
-        return DateFormatterDDMMYYYYTHHMMSS.fromSource(value);
-    }
-
-    static fromSourceGrouping(value: Date | string | null | undefined): string {
-        return DateFormatterDDMMYYYYTHHMMSS.fromSourceDisplay(value);
-    }
-
-    static placeholder() {
-        return 'DD.MM.YYYYTHH:MM:SS';
-    }
-}
+export const DateFormatterDDMMYYYYTHHMMSS = {
+    format(value: unknown): string {
+        return formatDate(value, 'DMY', true);
+    },
+    parse(text: unknown): Date | '' | null | undefined {
+        return parseDate(text, 'DMY', true, false);
+    },
+    parseFilter(text: unknown): Date | '' | null | undefined {
+        return parseDate(text, 'DMY', true, true);
+    },
+    placeholder: 'DD.MM.YYYYTHH:MM:SS'
+} satisfies Formatter;

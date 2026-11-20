@@ -721,6 +721,59 @@ same pass: `creatElement`, `RIGH_PINNED_COLTYPE`, `clickListner`, `exspandedGrou
 `lastKeyKodeUsed`, `deSelect`, `toggelDark*` in the samples. `selectSizeHeight` stayed - it
 really is a height.
 
+### v6 phase 1 - datasource
+
+`V6_PLAN.md` items 5-14, design in its *Phase 1 design* section. Done in steps, each one updates
+the grid, tests, samples and `MIGRATION.md`.
+
+#### Step 1 - typed events (item 13)
+
+* one `Emitter` (`src/emitter.ts`) for the datasource, grid interface and date interface, with an
+  event map type each (`DatasourceEvents`, `GridEvents`, `DateEvents`), so `on()` is typed and
+  returns its own unsubscribe function
+* the "return true to keep listening" rule is gone - found in phase 0, a listener returning nothing
+  was dropped after its first event. Two handlers in the codebase relied on being dropped that way
+  (`contextmenuDate`, grid01's `grid-connected`); both are harmless now, checked.
+* `selectionChange`, `currentEntity`, `gridConnected` -> kebab case like every other event
+* the grid interface subscribes to its datasource per event and keeps the unsubscribe functions
+  for disconnect. The tests count live subscriptions with a spy on `datasource.on`: once no grid
+  is connected the handlers do nothing, so a missed unsubscribe would not show through `rebuild`.
+* `filter-operator-change` handed out the internal `Grid` (`ctx`) and `rebuildHeaderColumns` to
+  call with it. Replaced by a `rebuildHeader()` closure, rather than silencing typedoc's "not
+  exported" warning for `Grid`.
+
+#### Step 2 - group rows are their own type (item 9)
+
+* `GroupRow` (exported) no longer extends `Entity`, `isGroupRow()` replaces every `.__group` check
+* `Entity` gets `__group?: never`. Without it the index signature (`[key: string]: any`) made a
+  `GroupRow` assignable to `Entity`, so `markForDeletion(groupRow)` still compiled.
+* `getRows()` / `getRows(true)` / `getRow()` are typed by what they return, with overloads
+* `currentEntity` really can be a group row: keyboard navigation into the header filter row calls
+  `setRowAsCurrentEntity(0)`, which is a group row when grouped. Typed as the union rather than
+  changing what the user sees.
+* `cell-header-focus` `rowData` is `getRow(0)` - a group row, `undefined` with no rows, and stale
+  after a filter (the header is not re-rendered). Typed honestly, see *Candidates*.
+
+#### Step 3 - fields and formatters (items 5, 6, 7, 14)
+
+* `new Datasource({ key, fields, formatters, selectionMode, container })`. The type of a field
+  lives in one place now: the grid's `Attribute.type`, `setDates()` and the v5 `includesTime` flag
+  are gone, the grid asks `getField()` / `getFormatter()`.
+* `date` compares and sorts on the day, `datetime` with time
+* `Formatter` is `format` / `parse` / `parseFilter?` / `placeholder?`. The six v5 methods were
+  three really: `fromSourceDisplay` and `fromSourceGrouping` only ever called `fromSource` in the
+  built-ins, and `isFilter` was never used.
+* the grid has two small helpers that hold the rules in one place: `getCellType()` (the field's
+  type, or the per-row type from `dynamicCellTypeColumn`) and `getColumnLabel()`
+  (`Attribute.label || field label || name`)
+* the grid only ever calls `parse` / `parseFilter` with text - a stored Date or number is
+  formatted first
+* fixed while porting: the comma formatter threw on null, `*THHMMSS` filter boundaries had random
+  milliseconds, a `Date` given to parse came back as null. The last one also fixed changing the
+  operator of a date header filter, which used to drop the filter.
+* text fields show `0` and `false` (v5: blank). Without it 0 grouped with the blanks while sorting
+  put it among the numbers.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -744,6 +797,22 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
 * **Test coverage gaps** — 57 test files (39 datasource, 17 grid, 1 date), 634 tests, 66%
   statement coverage: `src/datasource` 89%, `src/grid` core 80%, `src/grid/gridFunctions` 55%,
   `src/date` 56%. Still thin: the label/operator/custom context menus and the column chooser.
+* **Found in v6 phase 1 (not fixed yet)**:
+  * moving the focus into the header filter row makes row 0 the current row, also when the grid
+    is not grouped
+  * `cell-header-focus` sends `getRow(0)` as `rowData` - unrelated to the header, and stale after
+    a filter
+  * `__groupLvl` on data rows: set by grouping but not used for indentation (that is
+    `getGroupingWidth`), only set on the first row of each group with one grouping level, and
+    never reset
+  * `getRow(n)` out of range returns `undefined`, its type does not say so
+  * one `format` for both the cell and its edit input - v5 could differ (`fromSourceDisplay`).
+    No built-in used it; an optional `formatForEdit` would bring it back if needed.
+  * formatters are fixed when the datasource is made, there is no setter to switch them
+  * the value list lists raw values for text fields, and IN on a text field compares raw text
+  * `autoResizeColumns`: the "label shorter than the date placeholder" measuring looks backwards
+  * three `@example` blocks in `dataSource.ts` use an undeclared `datasource` - they fail once
+    examples are typechecked (docs work)
 * **Low severity bugs left from the code review** (high and medium are fixed, see *Bug sweep*):
   * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
   * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the

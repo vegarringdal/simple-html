@@ -1,4 +1,20 @@
-import type { GridConfig } from '@simple-html/grid';
+import type { FieldConfig, FieldType, GridConfig } from '@simple-html/grid';
+
+/**
+ * the fields of the dummy data that are not text, for the datasource. The grid takes the
+ * column types from the datasource
+ */
+export const gridFields: Record<string, FieldType | FieldConfig> = {
+    isActive: 'boolean',
+    isDumb: 'boolean',
+    balance: 'number',
+    longitude: 'number',
+    latitude: 'number',
+    age: 'number',
+    index: 'number',
+    date1: 'date',
+    date2: { type: 'date', label: 'date 2' }
+};
 
 /**
  * simple gridconfig
@@ -130,12 +146,10 @@ export const gridConfig: GridConfig = {
             readonly: true
         },
         {
-            attribute: 'isActive',
-            type: 'boolean'
+            attribute: 'isActive'
         },
         {
             attribute: 'dynamicData',
-            type: 'text',
             dynamicCellTypeColumn: 'dynamicDataType'
         },
         {
@@ -161,12 +175,10 @@ export const gridConfig: GridConfig = {
             mandatory: true
         },
         {
-            attribute: 'isDumb',
-            type: 'boolean'
+            attribute: 'isDumb'
         },
         {
             attribute: 'balance',
-            type: 'number',
             readonly: true
         },
         {
@@ -177,30 +189,24 @@ export const gridConfig: GridConfig = {
         },
         {
             attribute: 'longitude',
-            type: 'number',
             numberOverride: 'ZERO_TO_BLANK'
         },
         {
             attribute: 'latitude',
-            type: 'number',
             numberOverride: 'BLANK_TO_ZERO'
         },
         {
-            attribute: 'age',
-            type: 'number'
+            attribute: 'age'
         },
         {
             attribute: 'index',
-            type: 'number',
             focusButton: 'ALWAYS'
         },
         {
-            attribute: 'date1',
-            type: 'date'
+            attribute: 'date1'
         },
         {
             attribute: 'date2',
-            type: 'date',
             placeHolderFilter: 'YYYY-MM-DD' // if you want to force
         }
     ],

@@ -1,12 +1,13 @@
-import type { Entity } from '../../datasource/entity';
+import { type Entity, isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
+import { getCellType } from './getCellType';
 
 /**
  * True when this cell shows the same thing as the row directly above it, and should be
  * dimmed.
  *
  * The comparison is on the **displayed** value, not the raw one. This is a visual feature -
- * if a value formatter makes two different source values render as the same text, they look
+ * if the field's formatter makes two different source values render as the same text, they look
  * repeated to the user and should dim. Comparing the raw values would leave a column of
  * identical looking text undimmed.
  *
@@ -26,33 +27,25 @@ export function isRepeatedValue(ctx: Grid, row: number, attribute: string): bool
 
     const previous = datasource.getRow(row - 1);
     // start of a group, or nothing above - show it
-    if (!previous || previous.__group) {
+    if (!previous || isGroupRow(previous)) {
         return false;
     }
 
     const current = datasource.getRow(row);
-    if (!current || current.__group) {
+    if (!current || isGroupRow(current)) {
         return false;
     }
-
-    const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-    const valueFormatter = datasource.getValueFormatter();
 
     /**
      * same type resolution the cell rendering uses, so a dynamic type column is honoured
      */
-    const displayed = (entity: Entity) => {
-        let type = cellConfig?.type || 'text';
-        if (cellConfig?.dynamicCellTypeColumn) {
-            type = entity[cellConfig.dynamicCellTypeColumn] || type;
-        }
-        return valueFormatter.fromSource(entity[attribute], type, attribute, false);
-    };
+    const displayed = (entity: Entity) =>
+        datasource.getFormatter(attribute, getCellType(ctx, attribute, entity)).format(entity[attribute]);
 
     const previousValue = displayed(previous);
 
     // a run of blanks is not something worth collapsing, it just looks broken
-    if (previousValue === null || previousValue === undefined || previousValue === '') {
+    if (previousValue === '') {
         return false;
     }
 

@@ -1,5 +1,5 @@
 import { html, render } from 'lit-html';
-import type { Entity } from '../../datasource/entity';
+import type { Entity, GroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { autoResizeColumns } from './autoResizeColumns';
@@ -19,7 +19,8 @@ export function contextmenuLabel(
     colType: ColType,
     _cellType: string,
     attribute: string,
-    _rowData: Entity
+    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
+    _rowData: Entity | GroupRow | undefined
 ) {
     removeContextMenu(ctx);
 

@@ -3,6 +3,7 @@ import { basicGrid } from './samples/basicGrid';
 import { cellStyling } from './samples/cellStyling';
 import { columnLayout } from './samples/columnLayout';
 import { contextMenu } from './samples/contextMenu';
+import { customFormatter } from './samples/customFormatter';
 import { dropdownGrid } from './samples/dropdownGrid';
 import { dynamicCellTypes } from './samples/dynamicCellTypes';
 import { editing } from './samples/editing';
@@ -17,7 +18,6 @@ import { saveLoadConfig } from './samples/saveLoadConfig';
 import { selection } from './samples/selection';
 import { sortingGrouping } from './samples/sortingGrouping';
 import { tooltips } from './samples/tooltips';
-import { valueFormatterOverride } from './samples/valueFormatterOverride';
 
 /**
  * order here = order in the sidebar, samples with the same group are
@@ -41,8 +41,8 @@ export const SAMPLES: DemoSample[] = [
     mandatoryPlaceholders,
     // formatting
     formatters,
+    customFormatter,
     cellStyling,
-    valueFormatterOverride,
     // events
     events,
     filterOperatorHeader,

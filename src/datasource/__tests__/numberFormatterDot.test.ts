@@ -1,120 +1,119 @@
 import { describe, expect, it } from 'vitest';
+import { parseFilterText } from '../formatter';
 import { NumberFormatterDot } from '../numberFormatterDot';
 
-describe('NumberFormatterDot.fromSource', () => {
+describe('NumberFormatterDot.format', () => {
     it('expect null to be empty string', () => {
-        expect(NumberFormatterDot.fromSource(null)).toEqual('');
+        expect(NumberFormatterDot.format(null)).toEqual('');
     });
 
     it('expect undefined to be empty string', () => {
-        expect(NumberFormatterDot.fromSource(undefined)).toEqual('');
+        expect(NumberFormatterDot.format(undefined)).toEqual('');
     });
 
     it('expect empty string to be empty string', () => {
-        expect(NumberFormatterDot.fromSource('')).toEqual('');
+        expect(NumberFormatterDot.format('')).toEqual('');
     });
 
     it('expect a non numeric string to be empty string', () => {
-        expect(NumberFormatterDot.fromSource('abc')).toEqual('');
+        expect(NumberFormatterDot.format('abc')).toEqual('');
     });
 
     it('expect number to be converted to string', () => {
-        expect(NumberFormatterDot.fromSource(1234)).toEqual('1234');
+        expect(NumberFormatterDot.format(1234)).toEqual('1234');
     });
 
     it('expect zero to be string zero', () => {
-        expect(NumberFormatterDot.fromSource(0)).toEqual('0');
+        expect(NumberFormatterDot.format(0)).toEqual('0');
     });
 
     it('expect negative number to be converted to string', () => {
-        expect(NumberFormatterDot.fromSource(-12.5)).toEqual('-12.5');
+        expect(NumberFormatterDot.format(-12.5)).toEqual('-12.5');
     });
 
     it('expect decimal number to keep dot as separator', () => {
-        expect(NumberFormatterDot.fromSource(12.5)).toEqual('12.5');
+        expect(NumberFormatterDot.format(12.5)).toEqual('12.5');
     });
 
     it('expect comma separated string to be converted to dot', () => {
-        expect(NumberFormatterDot.fromSource('12,5')).toEqual('12.5');
+        expect(NumberFormatterDot.format('12,5')).toEqual('12.5');
     });
 
     it('expect dot separated string to be unchanged', () => {
-        expect(NumberFormatterDot.fromSource('12.5')).toEqual('12.5');
+        expect(NumberFormatterDot.format('12.5')).toEqual('12.5');
     });
 });
 
-describe('NumberFormatterDot.toSource', () => {
+describe('NumberFormatterDot.parse', () => {
     it('expect null to be null', () => {
-        expect(NumberFormatterDot.toSource(null)).toEqual(null);
+        expect(NumberFormatterDot.parse(null)).toEqual(null);
     });
 
     it('expect undefined to be null', () => {
-        expect(NumberFormatterDot.toSource(undefined)).toEqual(null);
+        expect(NumberFormatterDot.parse(undefined)).toEqual(null);
     });
 
     it('expect the string undefined to be null', () => {
-        expect(NumberFormatterDot.toSource('undefined')).toEqual(null);
+        expect(NumberFormatterDot.parse('undefined')).toEqual(null);
     });
 
     it('expect empty string to be 0', () => {
-        expect(NumberFormatterDot.toSource('')).toEqual(0);
+        expect(NumberFormatterDot.parse('')).toEqual(0);
     });
 
     it('expect non numeric string to be 0', () => {
-        expect(NumberFormatterDot.toSource('abc')).toEqual(0);
+        expect(NumberFormatterDot.parse('abc')).toEqual(0);
     });
 
     it('expect string zero to be 0', () => {
-        expect(NumberFormatterDot.toSource('0')).toEqual(0);
+        expect(NumberFormatterDot.parse('0')).toEqual(0);
     });
 
     it('expect number to be returned as is', () => {
-        expect(NumberFormatterDot.toSource(12.5)).toEqual(12.5);
+        expect(NumberFormatterDot.parse(12.5)).toEqual(12.5);
     });
 
     it('expect dot separated string to be a number', () => {
-        expect(NumberFormatterDot.toSource('12.5')).toEqual(12.5);
+        expect(NumberFormatterDot.parse('12.5')).toEqual(12.5);
     });
 
     it('expect comma separated string to be a number', () => {
-        expect(NumberFormatterDot.toSource('12,5')).toEqual(12.5);
+        expect(NumberFormatterDot.parse('12,5')).toEqual(12.5);
     });
 
     it('expect negative comma separated string to be a negative number', () => {
-        expect(NumberFormatterDot.toSource('-12,5')).toEqual(-12.5);
+        expect(NumberFormatterDot.parse('-12,5')).toEqual(-12.5);
     });
 
     it('expect string containing both dot and comma to only parse up to the comma', () => {
-        expect(NumberFormatterDot.toSource('1.234,5')).toEqual(1.234);
+        expect(NumberFormatterDot.parse('1.234,5')).toEqual(1.234);
     });
 
-    it('expect round trip toSource then fromSource to keep the value', () => {
-        expect(NumberFormatterDot.fromSource(NumberFormatterDot.toSource('12,5'))).toEqual('12.5');
+    it('expect round trip parse then format to keep the value', () => {
+        expect(NumberFormatterDot.format(NumberFormatterDot.parse('12,5'))).toEqual('12.5');
     });
 
-    it('expect round trip fromSource then toSource to keep the value', () => {
-        expect(NumberFormatterDot.toSource(NumberFormatterDot.fromSource(12.5))).toEqual(12.5);
+    it('expect round trip format then parse to keep the value', () => {
+        expect(NumberFormatterDot.parse(NumberFormatterDot.format(12.5))).toEqual(12.5);
     });
 });
 
 describe('NumberFormatterDot misc', () => {
-    it('expect toFilter to be same as toSource', () => {
-        expect(NumberFormatterDot.toFilter('12,5')).toEqual(12.5);
+    it('expect a filter to be parsed like a cell, there is no parseFilter', () => {
+        expect(NumberFormatterDot).not.toHaveProperty('parseFilter');
+        expect(parseFilterText(NumberFormatterDot, '12,5')).toEqual(12.5);
     });
 
-    it('expect toFilter of null to be null', () => {
-        expect(NumberFormatterDot.toFilter(null)).toEqual(null);
+    it('expect no placeholder, the header filter shows its search icon', () => {
+        expect(NumberFormatterDot).not.toHaveProperty('placeholder');
     });
 
-    it('expect fromSourceDisplay to be same as fromSource', () => {
-        expect(NumberFormatterDot.fromSourceDisplay('12,5')).toEqual(NumberFormatterDot.fromSource('12,5'));
-    });
-
-    it('expect fromSourceGrouping to be same as fromSource', () => {
-        expect(NumberFormatterDot.fromSourceGrouping(12.5)).toEqual('12.5');
-    });
-
-    it('expect placeholder to be empty string', () => {
-        expect(NumberFormatterDot.placeholder()).toEqual('');
+    it('expect a variant made with spread to keep the parse', () => {
+        const twoDecimals = {
+            ...NumberFormatterDot,
+            format: (value: unknown) => (typeof value === 'number' ? value.toFixed(2) : '')
+        };
+        expect(twoDecimals.format(12.5)).toEqual('12.50');
+        expect(twoDecimals.parse('12,5')).toEqual(12.5);
     });
 });

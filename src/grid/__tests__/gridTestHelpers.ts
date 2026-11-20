@@ -1,4 +1,5 @@
 import { Datasource } from '../../datasource/dataSource';
+import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { GridInterface } from '../gridInterface';
@@ -67,8 +68,13 @@ export const simpleConfig = (): GridConfig => ({
         { rows: ['lastname'], width: 100 },
         { rows: ['age'], width: 100 }
     ],
-    attributes: [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age', type: 'number' }]
+    attributes: [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age' }]
 });
+
+/**
+ * the datasource fields for simpleData: age is a number, the rest text
+ */
+export const simpleFields = (): DatasourceOptions => ({ fields: { age: 'number' } });
 
 export type MountedGrid = {
     element: GridElement;
@@ -78,12 +84,17 @@ export type MountedGrid = {
 
 /**
  * builds a datasource + interface + custom element and attaches it to the document
+ * @param options the datasource's options, its fields: the types of the columns come from here
  */
-export async function mountGrid(config: GridConfig = simpleConfig(), data: any[] = simpleData()): Promise<MountedGrid> {
+export async function mountGrid(
+    config: GridConfig = simpleConfig(),
+    data: any[] = simpleData(),
+    options: DatasourceOptions = simpleFields()
+): Promise<MountedGrid> {
     // the custom element registers itself on import
     await import('../gridElement');
 
-    const datasource = new Datasource();
+    const datasource = new Datasource(options);
     datasource.setData(data);
 
     const gridInterface = new GridInterface(config, datasource);

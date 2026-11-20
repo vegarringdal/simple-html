@@ -1,14 +1,16 @@
 import { html, render } from 'lit-html';
 import { DateFormatterYYYYMMDD } from '../../datasource/DateFormatterYYYYMMDD';
-import type { Entity } from '../../datasource/entity';
+import { DateFormatterYYYYMMDDTHHMMSS } from '../../datasource/DateFormatterYYYYMMDDTHHMMSS';
+import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import type { FilterArgument } from '../../datasource/filterArgument';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { ColType } from './colType';
 import { createElement } from './createElement';
 import { getAttributeColumns } from './getAttributeColumns';
+import { getCellType } from './getCellType';
+import { getColumnLabel } from './getColumnLabel';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { prettyPrintString } from './prettyPrintString';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
 import { triggerScrollEvent } from './triggerScrollEvent';
@@ -35,13 +37,7 @@ export function contextmenuRow(
     contextMenu.style.left = asPx(event.clientX - 65);
     contextMenu.style.minWidth = asPx(130);
 
-    function label(attribute: string) {
-        if (!ctx) {
-            return prettyPrintString(attribute);
-        }
-        const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
-        return label || attribute;
-    }
+    const label = (attribute: string) => getColumnLabel(ctx, attribute);
 
     if (event.clientX + 70 > window.innerWidth) {
         contextMenu.style.left = asPx(window.innerWidth - 150);
@@ -89,28 +85,24 @@ export function contextmenuRow(
         let justData = '';
 
         const datasource = ctx.gridInterface.getDatasource();
-        const attConfig = ctx.gridInterface.__getGridConfig().__attributes;
 
         const selectedRows = datasource.getSelectedRows();
 
-        const loopData = (entity: Entity) => {
-            if (!entity.__group) {
+        const loopData = (entity: Entity | GroupRow | null) => {
+            if (entity && !isGroupRow(entity)) {
                 tableInnerData = `${tableInnerData}<tr>`;
                 attributes.forEach((attribute, i) => {
-                    const cellConfig = attConfig[attribute];
                     const colData = entity[attribute];
-                    let dataType = cellConfig.type;
-
-                    if (cellConfig.dynamicCellTypeColumn) {
-                        dataType = entity[cellConfig.dynamicCellTypeColumn];
-                    }
+                    const dataType = getCellType(ctx, attribute, entity);
 
                     if (i > 0) {
                         justData = `${justData}\t`;
                     }
 
-                    if (dataType === 'date') {
-                        const data = DateFormatterYYYYMMDD.fromSource(colData);
+                    // dates are copied in a fixed format, whatever the field's formatter shows
+                    if (dataType === 'date' || dataType === 'datetime') {
+                        const formatter = dataType === 'date' ? DateFormatterYYYYMMDD : DateFormatterYYYYMMDDTHHMMSS;
+                        const data = formatter.format(colData);
                         justData = justData + data;
                         tableInnerData = `${tableInnerData}<td>${data}</td>`;
                     } else if (dataType === 'number') {
@@ -197,11 +189,9 @@ export function contextmenuRow(
         });
     };
 
-    const pasteIntoCells = (attribute: string, data: any) => {
+    const pasteIntoCells = (attribute: string, data: string) => {
         const datasource = ctx.gridInterface.getDatasource();
-        const attConfig = ctx.gridInterface.__getGridConfig().__attributes;
-        const cellConfig = attConfig[attribute];
-        const valueFormatter = datasource.getValueFormatter();
+        const formatter = datasource.getFormatter(attribute);
 
         if (ctx.gridInterface.__getGridConfig().readonly) {
             return;
@@ -212,8 +202,7 @@ export function contextmenuRow(
                 return;
             }
 
-            // type can be unset (the default formatter treats it as text), ValueFormatter's type is too strict
-            entity[attribute] = valueFormatter.toSource(data, cellConfig.type!, attribute, false);
+            entity[attribute] = formatter.parse(data);
 
             ctx.gridInterface.__callSubscribers('paste', {
                 cell,
@@ -235,7 +224,7 @@ export function contextmenuRow(
      * @returns
      */
     const summaryTemplate = () => {
-        const type = ctx.gridInterface.__getGridConfig().__attributes[attribute].type;
+        const { type, formatter } = ctx.gridInterface.getDatasource().getField(attribute);
         if (type !== 'number') {
             return null;
         }
@@ -267,7 +256,6 @@ export function contextmenuRow(
 
         const ds = ctx.gridInterface.getDatasource();
         const selectedRows = ds.getSelection().getSelectedRows();
-        const valueFormatter = ds.getValueFormatter();
         const allrows = ds.getRows();
 
         let curValue = 0;
@@ -293,9 +281,7 @@ export function contextmenuRow(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(
-                        valueFormatter.fromSource(selectedRows.length, 'number', attribute, false)
-                    );
+                    await navigator.clipboard.writeText(String(selectedRows.length));
                     removeContextMenu(ctx);
                 }}
             >
@@ -304,38 +290,38 @@ export function contextmenuRow(
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormatter.fromSource(curValueX, 'number', attribute, false));
+                    await navigator.clipboard.writeText(formatter.format(curValueX));
                     removeContextMenu(ctx);
                 }}
             >
-                Sum: ${valueFormatter.fromSource(curValueX, 'number', attribute, false)}
+                Sum: ${formatter.format(curValueX)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormatter.fromSource(maxValueX, 'number', attribute, false));
+                    await navigator.clipboard.writeText(formatter.format(maxValueX));
                     removeContextMenu(ctx);
                 }}
             >
-                Max: ${valueFormatter.fromSource(maxValueX, 'number', attribute, false)}
+                Max: ${formatter.format(maxValueX)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormatter.fromSource(minValueX, 'number', attribute, false));
+                    await navigator.clipboard.writeText(formatter.format(minValueX));
                     removeContextMenu(ctx);
                 }}
             >
-                Min: ${valueFormatter.fromSource(minValueX, 'number', attribute, false)}
+                Min: ${formatter.format(minValueX)}
             </div>
             <div
                 class="simple-html-grid-menu-item"
                 @click=${async () => {
-                    await navigator.clipboard.writeText(valueFormatter.fromSource(avgValueX, 'number', attribute, false));
+                    await navigator.clipboard.writeText(formatter.format(avgValueX));
                     removeContextMenu(ctx);
                 }}
             >
-                Avg: ${valueFormatter.fromSource(avgValueX, 'number', attribute, false) || 0}
+                Avg: ${formatter.format(avgValueX) || 0}
             </div>`;
     };
 
@@ -410,13 +396,12 @@ export function contextmenuRow(
      * existing filter and puts this condition in front of it, joined with AND.
      */
     const filterTemplate = () => {
-        if (rowData?.__group) {
+        if (isGroupRow(rowData)) {
             // a group row has no value of its own to filter on
             return null;
         }
 
         const datasource = ctx.gridInterface.getDatasource();
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
         const value = rowData?.[attribute];
         const isBlank = value === null || value === undefined || value === '';
 
@@ -424,7 +409,7 @@ export function contextmenuRow(
             ({
                 type: 'CONDITION',
                 attribute,
-                attributeType: cellConfig?.type || 'text',
+                attributeType: datasource.getField(attribute).type,
                 valueType: 'VALUE',
                 // filtering a blank cell on EQUAL '' would match nothing useful
                 operator: isBlank ? 'IS_BLANK' : 'EQUAL',

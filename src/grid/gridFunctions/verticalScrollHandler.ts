@@ -1,3 +1,4 @@
+import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { ColType, RowCache } from './colType';
@@ -135,7 +136,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                             const elc = ctx.columns.get(id);
 
                             if (elc && x.column !== -1) {
-                                if (rowdata?.__group) {
+                                if (isGroupRow(rowdata)) {
                                     elc.style.display = 'none';
                                 } else {
                                     if (elc.style.display !== 'block') {
@@ -165,7 +166,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                             const colEl = ctx.columns.get(id);
 
                             if (colEl && x.column !== -1) {
-                                if (rowdata?.__group) {
+                                if (isGroupRow(rowdata)) {
                                     colEl.style.display = 'none';
                                 } else {
                                     if (colEl.style.display !== 'block') {
@@ -197,7 +198,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                             const colEl = ctx.columns.get(id);
 
                             if (colEl && x.column !== -1) {
-                                if (rowdata?.__group) {
+                                if (isGroupRow(rowdata)) {
                                     colEl.style.display = 'none';
                                 } else {
                                     if (colEl.style.display !== 'block') {

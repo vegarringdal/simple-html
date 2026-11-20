@@ -1,4 +1,5 @@
 import type { Grid } from '../grid';
+import { getColumnLabel } from './getColumnLabel';
 import { getTextWidth } from './getTextWidth';
 
 /**
@@ -8,39 +9,36 @@ import { getTextWidth } from './getTextWidth';
 export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
     const attributes = ctx.gridInterface.__getGridConfig().__attributes;
     const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
-    const valueFormatter = ctx.gridInterface.getDatasource().getValueFormatter();
+    const datasource = ctx.gridInterface.getDatasource();
 
-    let widths: number[] = attributeKeys.map((key) => {
-        const attribute = attributes[key];
-        const length = attribute?.label?.length || attribute.attribute?.length;
-        return length + 4;
-    });
+    let widths: number[] = attributeKeys.map((key) => getColumnLabel(ctx, key).length + 4);
 
     const text: string[] = attributeKeys.map((key) => {
         const currAtt = attributes[key];
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[currAtt.attribute];
-        // type can be unset (the default formatter treats it as text), ValueFormatter's type is too strict
-        const placeholderFormat = valueFormatter.placeholder(cellConfig.type!, currAtt.attribute, true);
+        const { type, formatter } = datasource.getField(key);
+        const isDate = type === 'date' || type === 'datetime';
+        const placeholderFormat = formatter.placeholder;
+        // a label that was given, on the column or the field. A missing one never counts as shorter
+        const givenLabel = currAtt?.label || datasource.__getFieldConfig(key)?.label;
 
-        // a missing label never counts as shorter, undefined < number is false
-        if (currAtt.type === 'date' && currAtt?.placeHolderFilter) {
-            if (currAtt.label != null && currAtt.label.length < currAtt.placeHolderFilter.length) {
-                return currAtt.label;
+        if (isDate && currAtt?.placeHolderFilter) {
+            if (givenLabel !== undefined && givenLabel.length < currAtt.placeHolderFilter.length) {
+                return givenLabel;
             }
             return currAtt?.placeHolderFilter;
         }
 
-        if (currAtt.type === 'date' && !currAtt?.placeHolderFilter && placeholderFormat) {
-            if (currAtt.label != null && currAtt.label.length < placeholderFormat.length) {
-                return currAtt.label;
+        if (isDate && !currAtt?.placeHolderFilter && placeholderFormat) {
+            if (givenLabel !== undefined && givenLabel.length < placeholderFormat.length) {
+                return givenLabel;
             }
             return placeholderFormat;
         }
 
-        if (currAtt.type === 'date' && currAtt.label != null && currAtt.label.length < 5) {
+        if (isDate && givenLabel !== undefined && givenLabel.length < 5) {
             return '19.19.2000 A';
         }
-        return `${currAtt?.label || currAtt.attribute}< > < <`;
+        return `${getColumnLabel(ctx, key)}< > < <`;
     });
 
     const data = ctx.gridInterface.getDatasource().getAllData();

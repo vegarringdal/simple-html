@@ -1,5 +1,6 @@
 import type { Datasource } from './dataSource';
 import type { Entity } from './entity';
+import type { FieldType } from './field';
 import type { FilterArgument } from './filterArgument';
 import type { FilterComparisonOperator } from './filterComparisonOperator';
 import { isBlank } from './isBlank';
@@ -23,10 +24,9 @@ export class Filter {
     public getFilterFromType(type: string): FilterComparisonOperator {
         switch (type) {
             case 'date':
+            case 'datetime':
             case 'number':
                 return 'GREATER_THAN_OR_EQUAL_TO';
-            case 'bool':
-                return 'EQUAL';
             default:
                 return 'EQUAL';
         }
@@ -70,12 +70,13 @@ export class Filter {
             return result;
         }
 
-        if (!isCompleteCondition(arg)) {
+        const type = conditionType(arg, ds);
+        if (!isCompleteCondition(arg, type)) {
             return null;
         }
 
         if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
-            return this.inStatement(rowData, arg, ds);
+            return this.inStatement(rowData, arg, type, ds);
         }
 
         let value = arg.value;
@@ -87,19 +88,12 @@ export class Filter {
             }
         }
 
-        // a formatter without dateIncludesTime keeps comparing dates with time
-        const dateOnly = ds.getValueFormatter().dateIncludesTime?.(arg.attribute) === false;
-
-        return objectFilter(
-            rowData,
-            {
-                value: value,
-                operator: arg.operator,
-                attribute: arg.attribute,
-                type: arg.attributeType
-            },
-            dateOnly
-        );
+        return objectFilter(rowData, {
+            value: value,
+            operator: arg.operator,
+            attribute: arg.attribute,
+            type
+        });
     }
 
     /**
@@ -107,7 +101,7 @@ export class Filter {
      * boolean in the row matches the same value in the list. A blank row value (or 0, same as
      * IS_BLANK) only matches the list value 'NULL'.
      */
-    private inStatement(rowData: Entity, filter: CompleteCondition, ds: Datasource): boolean {
+    private inStatement(rowData: Entity, filter: CompleteCondition, type: FieldType, ds: Datasource): boolean {
         if (typeof filter.value === 'string') {
             // stored back as an array, the filter dropdown only shows array values as checked
             filter.value = filter.value.toUpperCase().split('\n') as any;
@@ -121,9 +115,9 @@ export class Filter {
         }
 
         let data: any = rowData?.[filter.attribute];
-        if (filter.attributeType === 'date' || filter.attributeType === 'number') {
+        if (type === 'date' || type === 'datetime' || type === 'number') {
             // the formatted text, same as what is shown and typed into the list
-            data = ds.getValueFormatter().fromSource(data, filter.attributeType, filter.attribute, false);
+            data = ds.getFormatter(filter.attribute, type).format(data);
         }
 
         const key = data === null || data === undefined || data === '' || data === 0 ? 'NULL' : String(data).toUpperCase();
@@ -135,15 +129,30 @@ export class Filter {
 
 /**
  * @internal
+ * The type a condition compares as: the field's type when the field is listed in the datasource's
+ * `fields`, else the condition's own `attributeType`, else 'text'.
+ * `attributeType` is only the fallback while conditions still carry it - the schema is the one
+ * source of truth for the fields it lists.
+ */
+export function conditionType(arg: FilterArgument, ds: Datasource): FieldType {
+    if (arg.attribute && ds.__getFieldConfig(arg.attribute)) {
+        return ds.getField(arg.attribute).type;
+    }
+    return arg.attributeType ?? 'text';
+}
+
+/**
+ * @internal
  * true if a condition can not be evaluated and is ignored: no attribute, no operator, or a date
  * condition with a blank value (null, undefined, '', invalid Date). IS_BLANK / IS_NOT_BLANK take no
  * value, and an ATTRIBUTE value is the name of the other attribute, so neither is checked for a blank value.
+ * @param type the type the condition compares as, see conditionType
  */
-export function isIncompleteCondition(arg: FilterArgument): boolean {
+export function isIncompleteCondition(arg: FilterArgument, type: FieldType | undefined = arg.attributeType): boolean {
     if (!arg.attribute || !arg.operator) {
         return true;
     }
-    const isDate = arg.attributeType === 'date' || arg.value instanceof Date;
+    const isDate = type === 'date' || type === 'datetime' || arg.value instanceof Date;
     const takesValue = arg.operator !== 'IS_BLANK' && arg.operator !== 'IS_NOT_BLANK' && arg.valueType !== 'ATTRIBUTE';
     return isDate && takesValue && isBlank(arg.value);
 }
@@ -157,9 +166,10 @@ export type CompleteCondition = FilterArgument & { attribute: string; operator: 
 /**
  * @internal
  * the opposite of isIncompleteCondition, as a type guard so TS knows attribute and operator are set
+ * @param type the type the condition compares as, see conditionType
  */
-export function isCompleteCondition(arg: FilterArgument): arg is CompleteCondition {
-    return !isIncompleteCondition(arg);
+export function isCompleteCondition(arg: FilterArgument, type?: FieldType): arg is CompleteCondition {
+    return !isIncompleteCondition(arg, type ?? arg.attributeType);
 }
 
 /**

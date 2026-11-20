@@ -43,6 +43,95 @@ what to change in your code. Released in phases.
   is exported
 - `Listener` is the one type for event listeners (was three identical `callable` types)
 
+### Phase 1 - datasource
+
+#### ⚠️ Breaking changes
+- **Events are subscribed with `on()`**: `addEventListener` / `removeEventListener` are removed
+  from `Datasource`, `GridInterface` and `DateInterface`. `on(name, handler)` subscribes to one
+  event and returns a function that unsubscribes. The handler gets the payload, not
+  `{ type, data }`, typed from the event name.
+- **What a handler returns is ignored**: no more `return true` to keep listening. In v5 a listener
+  that returned nothing was dropped after its first event.
+- **Event names are kebab case**: `selectionChange` -> `selection-change`, `currentEntity` ->
+  `current-entity`, `gridConnected` -> `grid-connected`.
+- **`Listener` is removed**, and `DateInterface.callSubscribers()` is internal
+  (`__callSubscribers`).
+- **Group rows are not entities**: the group header rows in `getRows()` have their own type,
+  `GroupRow`. `getRows()` returns `(EntityUnion<T> | GroupRow)[]`, `getRows(true)`
+  `EntityUnion<T>[]` (the type follows the argument), `getRow()` `EntityUnion<T> | GroupRow`.
+  The `__group*` field names are unchanged.
+- **`Entity` lost `__groupID`, `__groupName`, `__groupTotal`, `__groupChildren` and
+  `__groupExpanded`**, and `__group` is typed `never` on it: a group row can not be passed where
+  an entity is expected (`markForDeletion()`, `removeData()` ...). `__groupLvl` stays.
+- **`currentEntity` is `EntityUnion<T> | GroupRow | null`**: moving the focus from the first data
+  row up into the header filter row while grouped makes the group row above current, and so does
+  `setRowAsCurrentEntity()` with a group row's index.
+- **`getSelectedRows()` returns `EntityUnion<T>[]`** (was `Entity[]`), never a group row.
+- **The `cell-header-focus` event's `rowData` is `Entity | GroupRow | undefined`**: it is the first
+  displayed row, a group row when grouped. The other cell events and `readonlySetter()` /
+  `cellAppendClassSetter()` only get data rows, documented now.
+- **`new Datasource(options)`** replaces `new Datasource(dataContainer, options)`: `key`, `fields`,
+  `formatters`, `selectionMode` and `container` (to share rows) in one object. A `key` that is not
+  the container's key throws. `DatasourceConfigOptions` is replaced by `DatasourceOptions`.
+- **Types live in the datasource's `fields`**: `Attribute.type` is removed from the grid config,
+  the grid, sorting, grouping and filtering read `datasource.getField(name).type`. A field that is
+  not listed is `'text'`. `DataTypes` is renamed `FieldType`.
+- **`setDates()` is removed**: a `date` field sorts on the day.
+- **`date` and `datetime` replace `includesTime`**: a `date` field filters, sorts and groups on the
+  day, a `datetime` field on the timestamp. `includesTime` on the date formatters and
+  `ValueFormatter.dateIncludesTime()` are removed. Filter conditions' `attributeType` is only used
+  for fields that are not listed.
+- **Formatters are per field**: `ValueFormatter`, `DefaultValueFormatter`, `DateAndNumberFormatter`,
+  `setValueFormatter()` / `getValueFormatter()`, `setDateFormatter()` / `getDateFormatter()` and
+  `setNumberFormatter()` / `getNumberFormatter()` are removed. A field takes a `formatter`, the
+  `formatters` option sets the default per type.
+- **The built-in formatters are plain objects** with the `Formatter` methods: `fromSource`,
+  `fromSourceDisplay` and `fromSourceGrouping` are `format`, `toSource` is `parse`, `toFilter` is
+  `parseFilter`, `placeholder()` is the `placeholder` property (only the date formatters have one).
+  One `format` for the readonly cell and the edit input.
+- **`getFilterString()` / `getFilterTree()` take an optional `label(field)` function** instead of the
+  grid. The labels default to the field labels.
+- **A text field shows 0 and false** (the v5 default formatter showed them blank), and a field that
+  is not listed groups on its value as text - a `Date` in it is no longer grouped by day.
+- **`dynamicCellTypeColumn` applies to any text field**, a field that is not listed included (v5
+  needed `type: 'text'` on the column). It can name `'datetime'`.
+- **`FilterArgument.value` can be a boolean** in the type, as the boolean header filter already set it.
+
+#### Fixed
+- `NumberFormatterComma` `parse` (was `toSource`) threw on null, undefined and a number
+- the `*THHMMSS` formatters' `parseFilter` (was `toFilter`) put the current milliseconds on a filter
+  boundary, they are 0 now
+- the date formatters' `parse` / `parseFilter` gave null for a `Date`: it passes through now, a date
+  only `parseFilter` moves it to the start of its day
+- changing the operator of a date column's header filter dropped the filter
+- a boolean typed into the filter editor was kept as text and never matched; pasted text into a
+  boolean column was stored as text
+- the date formatters turned a value that is no date, text or number (`true`) into `1970-01-01`
+
+#### Added
+- event maps `DatasourceEvents`, `GridEvents`, `DateEvents`, with every event and its payload
+  documented, plus `GridCellEventData` and `EventHandler` to type a handler written on its own
+- `GroupRow`, the type of a group header row, and `isGroupRow(row)` to tell it from a data row
+  (narrows the type, takes `null`/`undefined`)
+- the schema: `FieldType` (`'datetime'` is new), `FieldConfig` (`type`, `label`, `formatter`),
+  `datasource.getField(name)` (the resolved `Field`) and `datasource.getFormatter(field, type?)`
+- `FieldConfig.label`: the grid's column label falls back to it (`Attribute.label` still wins)
+- the `Formatter` interface, and `TextFormatter` / `BooleanFormatter`, the defaults for `text` and
+  `boolean` fields
+- `DataContainer.getKeyAttribute()`
+- demo: the formatters sample uses per field formatters and the `formatters` option, the value
+  formatter override sample is replaced by a custom formatter sample
+
+#### Internal
+- one `Emitter` (`src/emitter.ts`) instead of three copies of the listener code
+- the grid interface subscribes to each datasource event it follows and unsubscribes on
+  disconnect. Connecting the same interface again subscribes once.
+- the grid and the datasource check for group rows with `isGroupRow()`, not by reading `__group`
+- the four date formatters share one implementation (`dateFormatterParts.ts`), the two number
+  formatters one parser
+- the grid reads a column's type, label and formatter in one place each: `getCellType()` (with
+  `dynamicCellTypeColumn`), `getColumnLabel()` and `datasource.getFormatter()`
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

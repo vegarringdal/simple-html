@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DataContainer } from '../dataContainer';
 import { Datasource } from '../dataSource';
+import type { FilterArgument } from '../filterArgument';
 
 /**
  * Bugs found while turning on TypeScript strict mode.
@@ -42,17 +43,24 @@ describe('getFilterString - same rules as the filter itself', () => {
         expect(ds.getFilterString()).toEqual("([A] <<EQUAL_TO>> 'X' AND [G] <<EQUAL_TO>> 'ONE')");
     });
 
-    it('expect an attribute missing from the grid config to show its own name', () => {
-        const ds = new Datasource();
-        ds.setData(rows());
-        ds.filter({
+    it('expect a field without a label to show its own name, a label from fields, or what label() gives', () => {
+        const filter: FilterArgument = {
             type: 'GROUP',
             logicalOperator: 'AND',
             filterArguments: [{ type: 'CONDITION', attribute: 'a', operator: 'EQUAL', value: 'x', attributeType: 'text' }]
-        });
-        const gridWithoutA = { gridInterface: { __getGridConfig: () => ({ __attributes: {} }) } } as any;
+        };
 
-        expect(ds.getFilterString(gridWithoutA)).toEqual("([A] <<EQUAL_TO>> 'X')");
+        const ds = new Datasource();
+        ds.setData(rows());
+        ds.filter(filter);
+        expect(ds.getFilterString()).toEqual("([A] <<EQUAL_TO>> 'X')");
+
+        const labelled = new Datasource({ fields: { a: { label: 'Letter' } } });
+        labelled.setData(rows());
+        labelled.filter(filter);
+        expect(labelled.getFilterString()).toEqual("([LETTER] <<EQUAL_TO>> 'X')");
+        // the grid passes its column labels, it used to pass the grid itself
+        expect(labelled.getFilterString((field) => `column ${field}`)).toEqual("([COLUMN A] <<EQUAL_TO>> 'X')");
     });
 });
 

@@ -1,18 +1,27 @@
 import type { EntityHandler } from './entityHandler';
 
+/**
+ * A data row: one of your objects, as the datasource hands it out. Group header rows are not
+ * entities, see {@link GroupRow}.
+ */
 export interface Entity {
     [key: string]: any | undefined;
     __controller?: EntityHandler;
     __KEY?: string | number;
-    __group?: boolean;
-    __groupID?: string;
     __rowState?: string;
     __rowError?: string | null;
-    __groupName?: string;
+    /**
+     * Written by grouping: how many group levels the row sits under. Do not rely on it - it is not
+     * set on every row (with one grouping level only the first row of each group gets it) and not
+     * cleared when the grouping is removed. The grid shows nothing from it on a data row.
+     */
     __groupLvl?: number;
-    __groupTotal?: number;
-    __groupChildren?: Entity[];
-    __groupExpanded?: boolean;
+    /**
+     * A data row never has `__group`, only a {@link GroupRow} has it (`true`). Declared so the two
+     * types stay apart: a group row can not be passed where an entity is expected, and
+     * `row.__group` tells them apart. {@link isGroupRow} is the readable way to check.
+     */
+    __group?: never;
 }
 
 /**
@@ -24,16 +33,66 @@ export interface DataEntity extends Entity {
 }
 
 /**
- * @internal
- * A group row, made by Grouping with all its group fields set. Its children are data rows, or the
- * group rows of the next level when grouped on more than one attribute.
+ * A group header row. When the datasource is grouped, the displayed rows
+ * (`datasource.getRows()`) mix your data rows with these headers - one per group, in front of
+ * its rows. A group row is made by the datasource, it is not one of your objects: it can not be
+ * selected, edited or marked for deletion, and `getRows(true)`, `getSelectedRows()` and
+ * `getAllData()` never contain one. Tell the two kinds apart with {@link isGroupRow}.
+ *
+ * Read the fields, do not change them - expand and collapse with `datasource.expandGroup(id)` /
+ * `collapseGroup(id)`.
+ *
+ * @example
+ * ```ts
+ * datasource.group([{ attribute: 'country', title: 'Country' }]);
+ *
+ * for (const row of datasource.getRows()) {
+ *     if (isGroupRow(row)) {
+ *         console.log(row.__groupName, row.__groupTotal, row.__groupExpanded ? 'open' : 'closed');
+ *     } else {
+ *         console.log('  ', row.name);
+ *     }
+ * }
+ * ```
  */
-export interface GroupEntity extends Entity {
+export interface GroupRow {
+    /** always `true`, the mark of a group row - see {@link isGroupRow} */
     __group: true;
+    /**
+     * id of the group, for `expandGroup(id)` / `collapseGroup(id)`. The grouped value; on a
+     * sub group the ids of the groups above it come first, joined by `-`: `'NORWAY-apple'`
+     */
     __groupID: string;
+    /** the text the grid shows: the group's title and value, `'Country: NORWAY'` */
     __groupName: string;
+    /** the grouping level, 0 for the first `group()` attribute. The grid indents the row by it */
     __groupLvl: number;
+    /** number of data rows in the group, the ones in its sub groups included */
     __groupTotal: number;
-    __groupChildren: Entity[];
+    /** the rows in the group: data rows, or the group rows of the next level when grouped on more than one attribute */
+    __groupChildren: (GroupRow | Entity)[];
+    /** `true` when the group is expanded and its rows are displayed */
     __groupExpanded: boolean;
+}
+
+/**
+ * `true` when the row is a group header row, `false` for a data row - and for `null` or
+ * `undefined`, so it can be given `datasource.getRow(n)` or `datasource.currentEntity` as they
+ * are. It narrows the type, a data row's own fields can be read after it.
+ *
+ * @example
+ * ```ts
+ * const row = datasource.getRow(0);
+ * if (isGroupRow(row)) {
+ *     datasource.expandGroup(row.__groupID);
+ * } else {
+ *     console.log(row.name);
+ * }
+ *
+ * // only the data rows: getRows(true) does the same
+ * const dataRows = datasource.getRows().filter((row) => !isGroupRow(row));
+ * ```
+ */
+export function isGroupRow(row: Entity | GroupRow | null | undefined): row is GroupRow {
+    return row?.__group === true;
 }

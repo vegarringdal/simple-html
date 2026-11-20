@@ -3,11 +3,11 @@ import type { FilterComparisonOperator } from './filterComparisonOperator';
 import { isBlank } from './isBlank';
 
 /**
- * tests one row against one condition
- * @param dateOnly compare dates on the day only, time ignored on both sides. For date formats
- * without time, see `ValueFormatter.dateIncludesTime`
+ * tests one row against one condition.
+ * `filter.type` is the field type: a `date` compares on the day (the time is ignored on both the row
+ * value and the filter value), a `datetime` on the full timestamp (milliseconds ignored)
  */
-export function objectFilter(rowData: any, filter: FilterAttributeSimple, dateOnly = false) {
+export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     let result = true;
 
     // vars
@@ -18,7 +18,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple, dateOn
     let newFilterOperator: filterExtended;
     let type: string = filter.type || 'text';
 
-    if (filter.value instanceof Date) {
+    if (filter.value instanceof Date && type !== 'datetime') {
         // little chance someone sends in date if they do not want to query for it
         type = 'date';
     }
@@ -27,11 +27,13 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple, dateOn
         type = 'number';
     }
 
+    const isDate = type === 'date' || type === 'datetime';
+
     rowValue = rowData[filter.attribute];
 
     // if is blank or is not blank then just check right away
     if ('IS_BLANK' === filterOperator) {
-        if (type === 'date') {
+        if (isDate) {
             if (rowValue && typeof rowValue === 'object' && rowValue.toString && rowValue.toString() === 'Invalid Date') {
                 return true;
             }
@@ -45,7 +47,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple, dateOn
     }
 
     if ('IS_NOT_BLANK' === filterOperator) {
-        if (type === 'date') {
+        if (isDate) {
             if (rowValue && typeof rowValue === 'object' && rowValue.toString && rowValue.toString() === 'Invalid Date') {
                 return false;
             }
@@ -60,8 +62,9 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple, dateOn
     // lets set some defaults/corrections if its all wrong
     switch (type) {
         case 'date':
-            rowValue = toFilterTime(rowValue, dateOnly);
-            filterValue = toFilterTime(filter.value, dateOnly);
+        case 'datetime':
+            rowValue = toFilterTime(rowValue, type === 'date');
+            filterValue = toFilterTime(filter.value, type === 'date');
 
             if (filterOperator === 'END_WITH') {
                 filterOperator = 'LESS_THAN_OR_EQUAL_TO';

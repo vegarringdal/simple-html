@@ -50,7 +50,7 @@ describe('header label cells', () => {
                     { rows: ['firstname', 'lastname'], width: 100 },
                     { rows: ['age'], width: 100 }
                 ],
-                attributes: [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age', type: 'number' }]
+                attributes: [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age' }]
             },
             [{ firstname: 'a', lastname: 'b', age: 1 }]
         );

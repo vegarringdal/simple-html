@@ -1,68 +1,36 @@
+import type { Formatter } from './formatter';
+import { formatNumber, parseNumber } from './numberFormatterDot';
+
 /**
- * numberformatter, replaces dot with comma
+ * Formatter for numbers with a comma as the decimal separator: `12,5`.
+ *
+ * - `format` - a number as text with a comma, `12.5` -> `'12,5'`. Anything that does not read as a
+ *   number (null, undefined, `'abc'`) gives `''`
+ * - `parse` / `parseFilter` - `'12,5'` and `'12.5'` both give 12.5. A number passes through,
+ *   null and undefined give null, text that is no number (`''` too) gives 0
+ *
+ * @example
+ * ```ts
+ * NumberFormatterComma.format(1234.5); // '1234,5'
+ * NumberFormatterComma.parse('12,5'); // 12.5
+ *
+ * // one field
+ * const datasource = new Datasource({
+ *     fields: { price: { type: 'number', formatter: NumberFormatterComma } }
+ * });
+ *
+ * // or every number field
+ * const datasource2 = new Datasource({
+ *     fields: { price: 'number', amount: 'number' },
+ *     formatters: { number: NumberFormatterComma }
+ * });
+ * ```
  */
-export class NumberFormatterComma {
-    /**
-     *
-     * @param value Takes string and returns date
-     */
-    static fromSource(value: any): string | null | undefined {
-        let returnValue = value;
-
-        if (Number.isNaN(parseFloat(returnValue))) {
-            returnValue = '';
-        }
-
-        if (returnValue === null || returnValue === undefined) {
-            return returnValue;
-        }
-
-        if (returnValue.toString().includes('.')) {
-            returnValue = returnValue.toString().replace('.', ',');
-        }
-
-        return returnValue.toString();
+export const NumberFormatterComma = {
+    format(value: unknown): string {
+        return formatNumber(value, ',');
+    },
+    parse(text: unknown): number | null {
+        return parseNumber(text);
     }
-
-    /**
-     * Takes value and return string
-     * @param value
-     */
-    static toSource(value: any): number | null | undefined {
-        let returnValue: any = value;
-
-        if (returnValue === null || returnValue === 'undefined') {
-            returnValue;
-        }
-
-        if (returnValue.includes(',') && !returnValue.includes('.')) {
-            returnValue = returnValue.replace(',', '.');
-        }
-
-        if (Number.isNaN(parseFloat(returnValue))) {
-            return 0;
-        }
-
-        if (returnValue === '0') {
-            return 0;
-        }
-
-        return parseFloat(returnValue);
-    }
-
-    static toFilter(value: any): number | null | undefined {
-        return NumberFormatterComma.toSource(value);
-    }
-
-    static fromSourceDisplay(value: any): string | null | undefined {
-        return NumberFormatterComma.fromSource(value);
-    }
-
-    static fromSourceGrouping(value: any): string | null | undefined {
-        return NumberFormatterComma.fromSourceDisplay(value);
-    }
-
-    static placeholder() {
-        return '';
-    }
-}
+} satisfies Formatter;

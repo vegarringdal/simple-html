@@ -19,8 +19,8 @@ beforeEach(() => {
 
 describe('filter editor - typed values', () => {
     /**
-     * a typed date went through toSource, which stamps the current time of day on it, so EQUAL
-     * never matched and ">=" left out the day itself. The header filter uses toFilter (midnight).
+     * a typed date went through toSource (now parse), which stamps the current time of day on it, so
+     * EQUAL never matched and ">=" left out the day itself. The header filter uses parseFilter (midnight).
      */
     it('expect a typed date to match rows on that day', async () => {
         const { datasource, gridInterface } = await mountGrid(
@@ -29,12 +29,13 @@ describe('filter editor - typed values', () => {
                     { rows: ['name'], width: 100 },
                     { rows: ['born'], width: 100 }
                 ],
-                attributes: [{ attribute: 'name' }, { attribute: 'born', type: 'date' }]
+                attributes: [{ attribute: 'name' }, { attribute: 'born' }]
             },
             [
                 { name: 'a', born: new Date(2001, 4, 17) },
                 { name: 'b', born: new Date(2001, 4, 18) }
-            ]
+            ],
+            { fields: { born: 'date' } }
         );
         // a condition with field and operator already picked
         datasource.filter({
@@ -66,7 +67,7 @@ describe('filter editor - header filter inputs', () => {
     it('expect applying to clear the header text of a column not listed in attributes', async () => {
         const config = simpleConfig();
         // lastname is only named in the column rows
-        config.attributes = [{ attribute: 'firstname' }, { attribute: 'age', type: 'number' }];
+        config.attributes = [{ attribute: 'firstname' }, { attribute: 'age' }];
         const { element, datasource, gridInterface } = await mountGrid(config);
         typeInHeaderFilter(element, 'lastname', 'last1');
         expect(datasource.getRows(true)).toHaveLength(1);

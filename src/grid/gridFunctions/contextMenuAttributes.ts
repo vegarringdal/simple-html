@@ -3,7 +3,7 @@ import { live } from 'lit-html/directives/live.js';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { createElement } from './createElement';
-import { prettyPrintString } from './prettyPrintString';
+import { getColumnLabel } from './getColumnLabel';
 import { removeContextMenu } from './removeContextMenu';
 
 // might want to add this as part of context, so I can share it?
@@ -61,14 +61,13 @@ export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLEl
                         .filter((e) => e.toLowerCase().includes(currentColumnSearchvalue.toLowerCase()))
                         .sort()
                         .map((attribute) => {
-                            const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
                             return html`<div
                                 class="simple-html-grid-menu-item"
                                 @click=${() => {
                                     callback(attribute);
                                 }}
                             >
-                                ${label || prettyPrintString(attribute)}
+                                ${getColumnLabel(ctx, attribute, true)}
                             </div>`;
                         })}
                 </div>

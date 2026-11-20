@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import type { DatasourceEvents } from '../datasourceEvents';
+import { isGroupRow } from '../entity';
 
 /**
  * Changes to the data have to show up in the displayed rows, not only in the data container.
@@ -11,17 +13,16 @@ describe('displayed rows - clearMarkedForDeletion', () => {
         ds.setData([{ v: 1 }, { v: 2 }, { v: 3 }]);
         ds.markForDeletion(ds.getAllData()[1]);
 
-        const events: any[] = [];
-        ds.addEventListener((e: any) => {
-            events.push(e);
-            return true;
+        const changes: DatasourceEvents['collection-changed'][] = [];
+        ds.on('collection-changed', (data) => {
+            changes.push(data);
         });
         ds.clearMarkedForDeletion();
 
         expect(ds.getAllData().map((r) => r.v)).toEqual([1, 3]);
         expect(ds.getRows().map((r) => r.v)).toEqual([1, 3]);
         expect(ds.length(true)).toEqual(2);
-        expect(events.map((e) => e.type)).toContain('collection-changed');
+        expect(changes).toEqual([{ removed: true, info: 'clearMarkedForDeletion' }]);
     });
 
     it('expect the filter to stay applied after clearing', () => {
@@ -44,7 +45,7 @@ describe('displayed rows - addNewEmpty while grouped', () => {
         ds.group([{ attribute: 'g', title: 'g' }]);
         return ds;
     };
-    const shown = (ds: Datasource) => ds.getRows().map((r) => (r.__group ? `G:${r.__groupID}` : r.v));
+    const shown = (ds: Datasource) => ds.getRows().map((r) => (isGroupRow(r) ? `G:${r.__groupID}` : r.v));
 
     it('expect the new row to be inside its group and its group expanded', () => {
         const ds = grouped();

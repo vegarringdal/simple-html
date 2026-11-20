@@ -1,3 +1,4 @@
+import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { ColType } from './colType';
@@ -161,7 +162,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
 
                         if (colEl) {
                             const rowdata = ctx.gridInterface.getDatasource().getRow(e.row);
-                            if (rowdata?.__group) {
+                            if (isGroupRow(rowdata)) {
                                 colEl.style.display = 'none';
                             } else {
                                 colEl.style.display = 'block';

@@ -118,3 +118,57 @@ describe('date picker - bugs found by strict mode', () => {
         expect(() => element.remove()).not.toThrow();
     });
 });
+
+describe('date picker - date-select event', () => {
+    /**
+     * the Clear / Now / Use buttons under the time row
+     */
+    function button(element: HTMLElement, text: string) {
+        return Array.from(element.querySelectorAll('.simple-html-date-time button')).find(
+            (b) => b.textContent?.trim() === text
+        ) as HTMLButtonElement;
+    }
+
+    it('expect Use to send the picked date and Clear to send null, to the same handler', () => {
+        const { dateInterface, element } = mount(config({ datepickerDate: new Date(2026, 3, 15, 10, 40) }));
+        const received: (Date | null)[] = [];
+        // returns nothing, and still gets both events
+        dateInterface.on('date-select', (date) => {
+            received.push(date);
+        });
+
+        button(element, 'Use').click();
+        button(element, 'Clear').click();
+
+        expect(received).toHaveLength(2);
+        expect(received[0]?.getTime()).toEqual(new Date(2026, 3, 15, 10, 40).getTime());
+        expect(received[1]).toBeNull();
+    });
+
+    it('expect the function on() returns to unsubscribe', () => {
+        const { dateInterface, element } = mount(config());
+        const received: (Date | null)[] = [];
+        const off = dateInterface.on('date-select', (date) => {
+            received.push(date);
+        });
+
+        off();
+        button(element, 'Use').click();
+
+        expect(received).toEqual([]);
+    });
+
+    it('expect removing the element to unsubscribe every handler', () => {
+        const { dateInterface, element } = mount(config());
+        const received: (Date | null)[] = [];
+        dateInterface.on('date-select', (date) => {
+            received.push(date);
+        });
+        const use = button(element, 'Use');
+
+        element.remove();
+        use.click();
+
+        expect(received).toEqual([]);
+    });
+});

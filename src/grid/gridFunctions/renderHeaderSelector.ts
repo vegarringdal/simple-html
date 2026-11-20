@@ -1,5 +1,5 @@
 import { html, render } from 'lit-html';
-import type { Entity } from '../../datasource/entity';
+import type { Entity, GroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import type { ColType } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
@@ -14,7 +14,8 @@ export function renderHeaderSelector(
     colType: ColType,
     _cellType: string,
     _attribute: string | null,
-    _rowData: Entity
+    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
+    _rowData: Entity | GroupRow | undefined
 ) {
     let colNo = 0;
     if (colType === LEFT_PINNED_COLTYPE) {

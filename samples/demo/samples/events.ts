@@ -1,3 +1,4 @@
+import type { DatasourceEvents, GridEvents } from '@simple-html/grid';
 import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 export const events: DemoSample = {
@@ -5,42 +6,67 @@ export const events: DemoSample = {
     title: 'Event listeners',
     group: 'Events',
     description:
-        'Both the datasource and the grid interface accept event listeners. The listener gets { type, data } and must return true to stay subscribed. Interact with the grid (click, edit, sort, filter) and watch the log.',
+        'The datasource and the grid interface both have events. on(name, handler) subscribes to one event: the handler gets its payload (typed from DatasourceEvents / GridEvents), and on() returns a function that unsubscribes. Interact with the grid (click, edit, sort, filter) and watch the log.',
     code: `
-const listener = {
-    handleEvent: (e) => {
-        console.log(e.type, e.data);
-        return true; // return true to keep subscribing
-    }
-};
+// datasource: data, sorting, filtering, grouping and selection
+const off = datasource.on('collection-filtered', (data) => {
+    console.log('filtered by', data.info, '-', datasource.length(true), 'rows');
+});
 
-// selection/sorting/filtering/data events
-datasource.addEventListener(listener);
+datasource.on('selection-change', () => {
+    console.log(datasource.getSelectedRows().length, 'rows selected');
+});
 
-// cell clicks, edits, column events etc
-gridInterface.addEventListener(listener);
+// grid interface: cell clicks and focus, copy/paste from the row menu
+gridInterface.on('cell-click', (data) => {
+    console.log('clicked', data.attribute, 'in row', data.row, data.rowData);
+});
 
-// later
-datasource.removeEventListener(listener);
-gridInterface.removeEventListener(listener);
+// the handler stays subscribed until you call what on() returned
+off();
 `,
     run(stage) {
         const ui = createStage(stage);
         const { datasource, gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
 
-        datasource.addEventListener({
-            handleEvent: (e: any) => {
-                ui.log('datasource: ' + e.type);
-                return true;
-            }
-        });
+        // every event, so the log shows them all
+        const datasourceEvents: (keyof DatasourceEvents)[] = [
+            'collection-changed',
+            'collection-filtered',
+            'collection-sorted',
+            'collection-grouped',
+            'collection-expand',
+            'collection-collapse',
+            'current-entity',
+            'selection-change',
+            'select'
+        ];
+        for (const type of datasourceEvents) {
+            datasource.on(type, () => {
+                ui.log('datasource: ' + type);
+            });
+        }
 
-        gridInterface.addEventListener({
-            handleEvent: (e: any) => {
-                ui.log('gridInterface: ' + e.type + (e.data?.attribute ? ' (' + e.data.attribute + ')' : ''));
-                return true;
-            }
-        });
+        const gridEvents: (keyof GridEvents)[] = [
+            'grid-connected',
+            'cell-click',
+            'cell-row-focus',
+            'cell-focus-button-click',
+            'cell-header-focus',
+            'filter-operator-change',
+            'paste',
+            'clear',
+            'copy-cell',
+            'copy-column',
+            'copy-row',
+            'copy-row-col'
+        ];
+        for (const type of gridEvents) {
+            gridInterface.on(type, (data) => {
+                const attribute = 'attribute' in data ? ' (' + data.attribute + ')' : '';
+                ui.log('gridInterface: ' + type + attribute);
+            });
+        }
 
         ui.log('interact with the grid to see events...');
     }

@@ -1,9 +1,11 @@
 import type { Datasource } from '../datasource/dataSource';
-import type { Entity } from '../datasource/entity';
+import type { DatasourceEvents } from '../datasource/datasourceEvents';
+import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FilterArgument } from '../datasource/filterArgument';
-import type { Listener } from '../listener';
+import { Emitter, type EventHandler } from '../emitter';
 import type { Grid } from './grid';
 import type { GridConfig, ParsedGridConfig } from './gridConfig';
+import type { GridEvents } from './gridEvents';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
 import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
 import { getAttributeColumns } from './gridFunctions/getAttributeColumns';
@@ -54,9 +56,15 @@ export class GridInterface<T> {
         | null;
 
     /**
-     * subscribed listerners, gets called when collection changes/is sorted/filtered etc
+     * the handlers subscribed with on(), called on cell clicks, copy/paste etc
      */
-    private listeners: Set<Listener> = new Set();
+    private events = new Emitter<GridEvents>();
+
+    /**
+     * unsubscribe functions of the grid's handlers on the datasource events,
+     * set by connectGrid and called by __disconnectGrid
+     */
+    private datasourceSubscriptions: (() => void)[] = [];
     private initConfig: GridConfig;
 
     /**
@@ -104,8 +112,8 @@ export class GridInterface<T> {
      */
     public connectGrid(grid: Grid) {
         this.grid = grid;
-        this.dataSource.addEventListener(this);
-        this.__callSubscribers('gridConnected', {});
+        this.subscribeToDatasource();
+        this.__callSubscribers('grid-connected', {});
     }
 
     public autoResizeColumns() {
@@ -295,22 +303,38 @@ export class GridInterface<T> {
     }
 
     /**
-     * adds event listener, useful when you need to do stuff based on
-     * @param callable
+     * Subscribes to an event of the grid: cell clicks and focus, copy/paste from the row menu ...
+     * The handler gets the event's payload, typed from {@link GridEvents} - see there for every
+     * event and what it sends. Sorting, filtering, selection and data changes are events of the
+     * datasource: `gridInterface.getDatasource().on(...)`, see {@link DatasourceEvents}.
+     *
+     * The handler stays subscribed until you call the function this returns. What the handler
+     * returns is ignored (in v5 it had to return `true` to stay subscribed).
+     *
+     * @param type the event name
+     * @param handler called with the payload every time the event is sent
+     * @returns a function that unsubscribes the handler
+     *
+     * @example
+     * ```ts
+     * const off = gridInterface.on('cell-click', (data) => {
+     *     if (data.attribute === 'company') {
+     *         console.log('company clicked:', data.rowData.company);
+     *     }
+     * });
+     *
+     * off(); // unsubscribe
+     * ```
      */
-    public addEventListener(callable: Listener): void {
-        if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
-            throw new Error('callable sent to datasource event listner is wrong type');
-        }
-
-        if (!this.listeners.has(callable)) {
-            this.listeners.add(callable);
-        }
+    public on<Type extends keyof GridEvents>(type: Type, handler: EventHandler<GridEvents[Type]>): () => void {
+        return this.events.on(type, handler);
     }
 
     /**
      * this is for enabling readonly based on row data
-     * @param callback
+     * @param callback called per cell: return `true`/`false` to override the column's `readonly`,
+     * `null` to keep it. `rowData` is the cell's data row, never a group row - a group row has no
+     * cells. `null` removes the callback
      */
     public readonlySetter(
         callback: ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) | null
@@ -324,7 +348,8 @@ export class GridInterface<T> {
     /**
      * this is for enabling class append to input element and dimmed cell behind it
      * dimmed cell can be used for graphics in class
-     * @param callback
+     * @param callback called per cell. `rowData` is the cell's data row, never a group row - a
+     * group row has no cells. `null` removes the callback
      */
     public cellAppendClassSetter(
         // null removes it again
@@ -335,16 +360,6 @@ export class GridInterface<T> {
         this.cellAppendClassSetterFn = callback;
         if (this.grid) {
             triggerScrollEvent(this.grid);
-        }
-    }
-
-    /**
-     * removes listener from datasource
-     * @param callable
-     */
-    public removeEventListener(callable: Listener): void {
-        if (this.listeners.has(callable)) {
-            this.listeners.delete(callable);
         }
     }
 
@@ -505,7 +520,7 @@ export class GridInterface<T> {
      * @private
      */
     public __disconnectGrid() {
-        this.dataSource.removeEventListener(this);
+        this.unsubscribeFromDatasource();
         this.grid = null;
     }
 
@@ -568,8 +583,8 @@ export class GridInterface<T> {
         const row = this.gridConfig.__rowHeight;
         let count = 0;
 
-        this.dataSource.getRows().forEach((ent: Entity) => {
-            const height = ent.__group ? cell : row;
+        this.dataSource.getRows().forEach((ent) => {
+            const height = isGroupRow(ent) ? cell : row;
             this.scrollTops.push(count);
             this.scrollHeights.push(height);
             count = count + height;
@@ -625,91 +640,92 @@ export class GridInterface<T> {
     }
 
     /**
-     * @internal
-     * @private
-     * do not use - used to handle event from datasource
-     * cant use __ since datasource wants it without
+     * Subscribes the connected grid to the datasource events it has to follow.
+     * Unsubscribes first, so a second connectGrid does not subscribe twice.
      */
-    public handleEvent(e: any) {
-        if (this.suppressEvents) {
-            return true;
+    private subscribeToDatasource() {
+        this.unsubscribeFromDatasource();
+
+        // the handlers do nothing while loadConfig runs (suppressEvents), it rebuilds once when
+        // done, or when no grid is connected
+        const follow = <Type extends keyof DatasourceEvents>(
+            type: Type,
+            handler: (data: DatasourceEvents[Type], grid: Grid) => void
+        ) =>
+            this.dataSource.on(type, (data) => {
+                if (!this.suppressEvents && this.grid) {
+                    handler(data, this.grid);
+                }
+            });
+
+        this.datasourceSubscriptions = [
+            follow('collection-filtered', (data, grid) => {
+                // '__internalUpdate, forced' comes before a collection-changed, that one rebuilds
+                if (data.info === 'filter' || data.info === 'markForDeletion' || data.info === 'resetData') {
+                    grid.rebuild(false);
+                }
+            }),
+            follow('collection-sorted', (_data, grid) => grid.rebuild()),
+            follow('collection-grouped', (_data, grid) => grid.rebuild()),
+            follow('collection-expand', (_data, grid) => grid.rebuild()),
+            follow('collection-collapse', (_data, grid) => grid.rebuild()),
+            follow('collection-changed', (_data, grid) => grid.rebuild()),
+            follow('current-entity', (_data, grid) => this.updateRows(grid)),
+            follow('selection-change', (_data, grid) => this.updateRows(grid)),
+            follow('select', (data, grid) => this.scrollToRow(grid, data.row))
+        ];
+    }
+
+    /**
+     * Unsubscribes the grid from the datasource events, see subscribeToDatasource
+     */
+    private unsubscribeFromDatasource() {
+        for (const unsubscribe of this.datasourceSubscriptions) {
+            unsubscribe();
+        }
+        this.datasourceSubscriptions = [];
+    }
+
+    /**
+     * renders the rows again, for a new current entity or selection
+     */
+    private updateRows(grid: Grid) {
+        this.__dataSourceUpdated();
+        triggerScrollEvent(grid);
+    }
+
+    /**
+     * scrolls the row into view when it is outside of it, for the datasource select event
+     * @param row index in the displayed rows
+     */
+    private scrollToRow(grid: Grid, row: number) {
+        this.__dataSourceUpdated();
+
+        // connected with connectInterface, but not put in the dom yet - nothing to scroll
+        if (!grid.domCreated) {
+            return;
         }
 
-        // the datasource only calls this while a grid is connected: connectGrid adds the
-        // listener, __disconnectGrid removes it before it clears this.grid
-        switch (true) {
-            case e.type === 'collection-filtered' &&
-                (e.data?.info === 'filter' || e.data?.info === 'markForDeletion' || e.data?.info === 'resetData'):
-                this.grid!.rebuild(false);
-                break;
-            case e.type === 'collection-sorted':
-            case e.type === 'collection-grouped':
-            case e.type === 'collection-expand':
-            case e.type === 'collection-collapse':
-            case e.type === 'collection-changed':
-                this.grid!.rebuild();
+        const scrollEl = getElementByClassName(grid.getElement(), 'simple-html-grid-body-scroller');
+        const scrollElHeight = scrollEl?.clientHeight;
+        const scrollElScrollTop = scrollEl?.scrollTop;
 
-                break;
-            case e.type === 'currentEntity':
-            case e.type === 'selectionChange':
-                this.__dataSourceUpdated();
-                triggerScrollEvent(this.grid!);
-                break;
-            case e.type === 'select': {
-                this.__dataSourceUpdated();
+        const newTop = this.__getScrollState().scrollTops[row];
 
-                // connected with connectInterface, but not put in the dom yet - nothing to scroll
-                if (!this.grid!.domCreated) {
-                    break;
-                }
-
-                const scrollEl = getElementByClassName(this.grid!.getElement(), 'simple-html-grid-body-scroller');
-                const scrollElHeight = scrollEl?.clientHeight;
-                const scrollElScrollTop = scrollEl?.scrollTop;
-
-                const newTop = this.__getScrollState().scrollTops[e.data?.row];
-
-                if (newTop - this.__getGridConfig().__rowHeight < scrollElScrollTop) {
-                    scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
-                }
-
-                if (newTop + this.__getGridConfig().__rowHeight > scrollElHeight + scrollElScrollTop) {
-                    scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
-                }
-
-                break;
-            }
-            default:
-            /* if (DEVELOPMENT === true) {
-                    console.log('skipping:', e.type, e.data);
-                } */
+        if (newTop - this.__getGridConfig().__rowHeight < scrollElScrollTop) {
+            scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
         }
 
-        return true; // to hold active
+        if (newTop + this.__getGridConfig().__rowHeight > scrollElHeight + scrollElScrollTop) {
+            scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
+        }
     }
 
     /**
      * @internal
-     * @private
-     * used to call subscribers, used by selection/sorting/filter/grouping controller
-     * @param event
-     * @param data
+     * sends an event to the handlers subscribed with on(), used by the grid's cells and menus
      */
-    public __callSubscribers(event: string, data = {}): void {
-        const keeping: any = [];
-        this.listeners.forEach((callable) => {
-            let keep: boolean | undefined;
-            if (typeof callable === 'function') {
-                keep = callable({ type: event, data: data });
-            } else {
-                if (typeof callable?.handleEvent === 'function') {
-                    keep = callable.handleEvent({ type: event, data: data });
-                }
-            }
-            if (keep) {
-                keeping.push(callable);
-            }
-        });
-        this.listeners = new Set(keeping);
+    public __callSubscribers<Type extends keyof GridEvents>(type: Type, data: GridEvents[Type]): void {
+        this.events.emit(type, data);
     }
 }

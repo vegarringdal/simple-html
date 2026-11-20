@@ -1,14 +1,27 @@
 import { html, render, type TemplateResult } from 'lit-html';
 import type { FilterArgument } from '../../datasource/filterArgument';
+import { parseFilterText } from '../../datasource/formatter';
+import { TextFormatter } from '../../datasource/textFormatter';
 import type { Grid } from '../grid';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { contextmenuDate } from './contextmenuDate';
 import { createElement } from './createElement';
+import { getColumnLabel } from './getColumnLabel';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
 import { attachTooltips, hideTooltip, tooltip, tooltipsEnabled } from './tooltip';
+
+/**
+ * what a formatter gave, as a value a condition can hold - anything else is no value
+ */
+function conditionValue(value: unknown): FilterArgument['value'] {
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value instanceof Date) {
+        return value;
+    }
+    return null;
+}
 
 /**
  * internal method to generate html for filter editor
@@ -47,13 +60,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
     const filterEditorGridCssContext = createElement('div', 'simple-html-grid');
     filterEditorContainer.appendChild(filterEditorGridCssContext);
 
-    function label(attribute: string) {
-        if (!ctx) {
-            return attribute;
-        }
-        const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
-        return label || attribute;
-    }
+    const label = (attribute: string) => getColumnLabel(ctx, attribute);
 
     /**
      * Icon helper
@@ -187,24 +194,22 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
      * @returns
      */
     const condition = (arg: FilterArgument, context: FilterArgument[]) => {
-        // attribute is unset on a new condition, a key of undefined/null reads "undefined"/"null"
-        const type = ctx.gridInterface.__getGridConfig().__attributes[`${arg.attribute}`]?.type || 'text';
-        // only passed on to the value formatter, which gets it unset too on a new condition.
-        // ValueFormatter's attribute type is too strict for that
-        const attribute = arg.attribute!;
-        const valueFormatter = ctx.gridInterface.getDatasource().getValueFormatter();
-        const value = valueFormatter.fromSource(arg.value, type, attribute, true);
+        // a new condition has no attribute yet, it is text until one is picked
+        const field = arg.attribute ? ctx.gridInterface.getDatasource().getField(arg.attribute) : null;
+        const formatter = field?.formatter ?? TextFormatter;
+        const isDate = field?.type === 'date' || field?.type === 'datetime';
+        const value = formatter.format(arg.value);
 
         let filterElement = html`<input
             .value=${value || ''}
             @keydown=${(e: any) => {
-                if (e.key === 'Enter' && type === 'date') {
+                if (e.key === 'Enter' && isDate) {
                     setTimeout(() => {
                         contextmenuDate(
                             ctx,
                             e,
                             e.target,
-                            valueFormatter.toFilter(e.target.value, 'date', attribute, true),
+                            parseFilterText(formatter, e.target.value),
 
                             (value: Date | null) => {
                                 arg.value = value;
@@ -214,16 +219,16 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     }, 2);
                 }
             }}
-            @input=${(e: any) => (arg.value = valueFormatter.toFilter(e.target.value, type, attribute, true))}
-            @change=${(e: any) => (arg.value = valueFormatter.toFilter(e.target.value, type, attribute, true))}
+            @input=${(e: any) => (arg.value = conditionValue(parseFilterText(formatter, e.target.value)))}
+            @change=${(e: any) => (arg.value = conditionValue(parseFilterText(formatter, e.target.value)))}
             @click=${(e: any) => {
-                if (type === 'date') {
+                if (isDate) {
                     setTimeout(() => {
                         contextmenuDate(
                             ctx,
                             e,
                             e.target,
-                            valueFormatter.toFilter(e.target.value, 'date', attribute, true),
+                            parseFilterText(formatter, e.target.value),
 
                             (value: Date | null) => {
                                 arg.value = value;
@@ -245,19 +250,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
         }
 
         if (arg.valueType === 'ATTRIBUTE') {
-            // we need to get label from config
-            const ref = ctx.gridInterface.__getGridConfig().__attributes[`${arg.value}`];
-
-            let label = `${arg.value}`;
-            if (label === 'Null') {
-                label = '';
-            }
-            if (label === 'Undefined') {
-                label = '';
-            }
-            if (ref?.label) {
-                label = ref.label;
-            }
+            // the value is the name of the attribute to compare with
+            const label = arg.value ? getColumnLabel(ctx, String(arg.value)) : '';
 
             // same look as the other two pickers, it opens a menu the same way
             filterElement = html`<div
@@ -295,8 +289,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                 removeContextMenu(ctx);
                                 arg.attribute = attribute;
 
-                                const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-                                arg.attributeType = cellConfig.type || 'text';
+                                arg.attributeType = ctx.gridInterface.getDatasource().getField(attribute).type;
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             });
                         }}

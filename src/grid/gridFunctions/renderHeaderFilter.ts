@@ -1,6 +1,7 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import type { Entity } from '../../datasource/entity';
+import type { Entity, GroupRow } from '../../datasource/entity';
+import { parseFilterText } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
@@ -18,22 +19,15 @@ export function renderHeaderFilter(
     colType: ColType,
     cellType: string,
     attribute: string | null,
-    rowData: Entity
+    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
+    rowData: Entity | GroupRow | undefined
 ) {
     if (attribute) {
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const { type, formatter } = ctx.gridInterface.getDatasource().getField(attribute);
 
-        let placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
-        const valueFormatter = ctx.gridInterface.getDatasource().getValueFormatter();
-
-        // if user have not set placeholder, then use placeholde in formatter if any
-        if (!cellConfig.placeHolderFilter) {
-            // type can be unset (the default formatter treats it as text), ValueFormatter's type is too strict
-            const placeholderFormat = valueFormatter.placeholder(cellConfig.type!, attribute, true);
-            if (placeholderFormat) {
-                placeHolderFilter = placeholderFormat;
-            }
-        }
+        // the column's own placeholder, else the formatter's (YYYY-MM-DD), else the search icon
+        const placeHolderFilter = cellConfig.placeHolderFilter || formatter.placeholder || '🔍';
 
         let currentValue = cellConfig.currentFilterValue || ('' as any);
 
@@ -44,7 +38,7 @@ export function renderHeaderFilter(
             // stop duplicate events
             let filterRunning = false;
 
-            if (cellConfig.type === 'boolean') {
+            if (type === 'boolean') {
                 render(
                     html`<input
                         style="width:100%"
@@ -93,19 +87,14 @@ export function renderHeaderFilter(
                     cell as any
                 );
             } else {
-                // type can be unset (the default formatter treats it as text), ValueFormatter's type is too strict
-                currentValue = valueFormatter.fromSource(currentValue, cellConfig.type!, cellConfig?.attribute, true);
+                currentValue = formatter.format(currentValue);
 
                 let lastFilter = currentValue || '';
                 let skipFocus = false;
                 render(
                     html`<input
                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
-                        style=${
-                            cellConfig?.type === 'number'
-                                ? 'text-align: right;width:100%;height:100%;'
-                                : 'width:100%;height:100%;'
-                        }
+                        style=${type === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'}
                         .value=${live(currentValue)}
                         placeholder=${placeHolderFilter}
                         @contextmenu=${(e: MouseEvent) => {
@@ -122,18 +111,18 @@ export function renderHeaderFilter(
                             }
                         }}
                         @click=${(e: any) => {
-                            if (cellConfig?.type === 'date') {
+                            if (type === 'date' || type === 'datetime') {
                                 setTimeout(() => {
                                     contextmenuDate(
                                         ctx,
                                         e,
                                         cell,
-                                        valueFormatter.toFilter(currentValue, 'date', attribute, true),
+                                        parseFilterText(formatter, currentValue),
                                         (value: Date | null) => {
-                                            const filterValue = valueFormatter.fromSource(value, 'date', attribute, true);
+                                            const filterValue = formatter.format(value);
                                             if (lastFilter !== filterValue) {
                                                 lastFilter = filterValue;
-                                                filterCallback(ctx, filterValue as any, cellConfig);
+                                                filterCallback(ctx, filterValue, cellConfig);
                                             }
                                             // TODO: need to check why date is inserted here and I need to reset
                                             // potential other issues I just dont see atm

@@ -10,7 +10,7 @@ import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTes
 
 const config = () => {
     const base = simpleConfig();
-    base.attributes = [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age', type: 'number' }];
+    base.attributes = [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age' }];
     return base;
 };
 

@@ -2,6 +2,7 @@ import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { getTextWidth } from './getTextWidth';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -15,13 +16,12 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                 return;
             }
 
-            const attributes = ctx.gridInterface.__getGridConfig().__attributes;
             // a column with fewer rows than the tallest one has empty label cells, nothing to drag
             const attribute = (cell as HTMLCellElement).$attribute;
             if (!attribute) {
                 return;
             }
-            const attributeLabel = attributes[attribute]?.label || attribute;
+            const attributeLabel = getColumnLabel(ctx, attribute);
             const cellno = (cell as HTMLCellElement).$celno;
             const coltype = (cell as HTMLCellElement).$coltype;
             const column = (cell as HTMLCellElement).$column;
@@ -151,8 +151,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                             const columnLeft = ctx.gridInterface.__getGridConfig().columnsPinnedLeft;
                             const columnRight = ctx.gridInterface.__getGridConfig().columnsPinnedRight;
 
-                            const attributes = ctx.gridInterface.__getGridConfig().__attributes;
-                            const attributeLabel = attributes[attribute].label || attribute;
+                            const attributeLabel = getColumnLabel(ctx, attribute);
 
                             switch (true) {
                                 case classList?.contains('simple-html-grid-panel'): {

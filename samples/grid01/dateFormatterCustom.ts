@@ -1,104 +1,28 @@
+import { DateFormatterDDMMYYYY, type Formatter } from '@simple-html/grid';
+
 /**
- * default dateformatter - DD.MM.YYYY
+ * the weekday in front of the date, the user can type it or leave it out
  */
-export class DateFormatterCustom {
-    /**
-     * Takes value and return string
-     * @param value
-     */
-    static fromSource(value: Date | string | null | undefined): string {
-        if (value === null || value === undefined || value === '') {
-            return '';
+const withoutWeekday = (text: string) => text.replace(/^[A-Za-z]+ /, '');
+
+/**
+ * custom date formatter sample: DD.MM.YYYY with the day of the week in front, `Fri 05.01.2024`.
+ * Built from DateFormatterDDMMYYYY: format adds the weekday, parse takes it off again.
+ */
+export const DateFormatterCustom: Formatter = {
+    ...DateFormatterDDMMYYYY,
+    format(value: unknown): string {
+        const text = DateFormatterDDMMYYYY.format(value);
+        if (text === '' || !(value instanceof Date)) {
+            return text;
         }
-
-        let returnValue: any = value;
-        returnValue = new Date(returnValue).toDateString();
-
-        // clear if not valid date
-        if (returnValue === 'Invalid Date') {
-            returnValue = '';
-        }
-
-        if (returnValue) {
-            // get our formating
-
-            const year = new Date(value).getFullYear();
-            let month = (new Date(value).getMonth() + 1).toString();
-            if (month.length === 1) {
-                month = `0${month}`;
-            }
-            let day = new Date(value).getDate().toString();
-            if (day.length === 1) {
-                day = `0${day}`;
-            }
-            returnValue = `${day}.${month}.${year}`;
-        }
-
-        return returnValue;
-    }
-
-    /**
-     *
-     * @param value Takes string and returns date
-     */
-    static toSource(value: any): Date | null | undefined {
-        let returnValue = value;
-
-        if (returnValue === null || returnValue === undefined) {
-            return returnValue;
-        }
-
-        if (returnValue < 1) {
-            return null;
-        }
-
-        if (typeof returnValue !== 'string') {
-            return null;
-        }
-
-        const x: any[] = returnValue.split('.');
-
-        // 01.01.2019
-        if (!x[1]) {
-            // by default, use current month
-            x[1] = new Date().getMonth() + 1;
-        }
-        if (!x[2]) {
-            // by default, use current year
-            x[2] = new Date().getFullYear();
-        }
-
-        returnValue = new Date(
-            x[2],
-            parseInt(x[1], 10) - 1,
-            parseInt(x[0], 10),
-            new Date().getHours(),
-            new Date().getMinutes(),
-            new Date().getSeconds(),
-            new Date().getMilliseconds()
-        );
-        if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
-            returnValue = '';
-        }
-
-        return returnValue;
-    }
-
-    static toFilter(value: any): Date | null | undefined {
-        return DateFormatterCustom.toSource(value);
-    }
-
-    static fromSourceDisplay(value: Date | string | null | undefined): string {
-        // note: null shows the 1970 epoch date and undefined "Invalid Date", fromSource() gives '' for both
-        return new Date(value!).toDateString();
-    }
-
-    static fromSourceGrouping(value: Date | string | null | undefined): string {
-        // note: null shows the 1970 epoch date and undefined "Invalid Date", fromSource() gives '' for both
-        return new Date(value!).toDateString();
-    }
-
-    static placeholder() {
-        return 'DD.MM.YYYY';
-    }
-}
+        return `${value.toDateString().slice(0, 3)} ${text}`;
+    },
+    parse(text: string): unknown {
+        return DateFormatterDDMMYYYY.parse(withoutWeekday(text));
+    },
+    parseFilter(text: string): unknown {
+        return DateFormatterDDMMYYYY.parseFilter(withoutWeekday(text));
+    },
+    placeholder: 'Day DD.MM.YYYY'
+};

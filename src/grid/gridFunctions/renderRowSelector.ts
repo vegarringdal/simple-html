@@ -1,5 +1,5 @@
 import { html, render } from 'lit-html';
-import type { Entity } from '../../datasource/entity';
+import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import type { ColType } from './colType';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -13,7 +13,7 @@ export function renderRowSelector(
     _colType: ColType,
     _cellType: string | null,
     _attribute: string | null,
-    rowData: Entity
+    rowData: Entity | GroupRow | undefined
 ) {
     let currentEntitySelected = '';
     if (rowData === ctx.gridInterface.getDatasource().currentEntity) {
@@ -27,12 +27,13 @@ export function renderRowSelector(
             class=${`${currentEntitySelected} simple-html-absolute-fill`}
             @click=${(e: MouseEvent) => {
                 const ds = ctx.gridInterface.getDatasource();
-                if (rowData?.__group) {
+                if (isGroupRow(rowData)) {
+                    // selects the data rows of the group, up to the next group row
                     const rows = ds.getRows();
                     const selectRows = [];
                     for (let i = row + 1; i < rows.length; i++) {
                         const entity = rows[i];
-                        if (entity.__group) {
+                        if (isGroupRow(entity)) {
                             i = rows.length;
                             continue;
                         }
@@ -57,8 +58,12 @@ export function renderRowSelector(
     );
 }
 
-// helper to add class so we can override color when row is modified
-function isModified(rowData: Entity) {
+// helper to add class so we can override color when row is modified. A group row is never modified
+function isModified(rowData: Entity | GroupRow | undefined) {
+    if (!rowData || isGroupRow(rowData)) {
+        return '';
+    }
+
     if (rowData?.__controller?.__isDeleted) {
         return 'row-is-deleted';
     }

@@ -1,4 +1,12 @@
-import { Datasource, type GridConfig, type GridElement, GridInterface } from '@simple-html/grid';
+import {
+    Datasource,
+    type DatasourceOptions,
+    type FieldConfig,
+    type FieldType,
+    type GridConfig,
+    type GridElement,
+    GridInterface
+} from '@simple-html/grid';
 
 /**
  * one entry per tab in the samples app
@@ -59,7 +67,22 @@ export function generateRows(count = 500): any[] {
 }
 
 /**
- * shared starting point, returns a fresh object every call so samples can mutate it
+ * the fields of generateRows(): the type and label of each field. A field not listed is text,
+ * labelled with its name. Returns a fresh object every call so samples can mutate it
+ */
+export function baseFields(): Record<string, FieldType | FieldConfig> {
+    return {
+        age: 'number',
+        balance: 'number',
+        date1: { type: 'date', label: 'date' },
+        isActive: { type: 'boolean', label: 'active' },
+        favoriteFruit: { label: 'fruit' }
+    };
+}
+
+/**
+ * shared starting point, returns a fresh object every call so samples can mutate it.
+ * The column types and labels come from the datasource, see baseFields()
  */
 export function baseGridConfig(): GridConfig {
     return {
@@ -80,11 +103,11 @@ export function baseGridConfig(): GridConfig {
         attributes: [
             { attribute: 'company' },
             { attribute: 'country' },
-            { attribute: 'age', type: 'number' },
-            { attribute: 'balance', type: 'number' },
-            { attribute: 'date1', type: 'date', label: 'date' },
-            { attribute: 'isActive', type: 'boolean', label: 'active' },
-            { attribute: 'favoriteFruit', label: 'fruit' },
+            { attribute: 'age' },
+            { attribute: 'balance' },
+            { attribute: 'date1' },
+            { attribute: 'isActive' },
+            { attribute: 'favoriteFruit' },
             { attribute: 'phone' }
         ]
     };
@@ -92,9 +115,15 @@ export function baseGridConfig(): GridConfig {
 
 /**
  * creates datasource + interface + element and mounts it into host
+ * @param options the datasource options, default the fields of generateRows()
  */
-export function mountGrid(host: HTMLElement, config: GridConfig, rows?: any[]) {
-    const datasource = new Datasource();
+export function mountGrid(
+    host: HTMLElement,
+    config: GridConfig,
+    rows?: any[],
+    options: DatasourceOptions = { fields: baseFields() }
+) {
+    const datasource = new Datasource(options);
     datasource.setData(rows || generateRows());
 
     const gridInterface = new GridInterface(config, datasource);

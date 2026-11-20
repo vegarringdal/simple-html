@@ -1,4 +1,4 @@
-import type { DataTypes, FilterArgument } from '../datasource/filterArgument';
+import type { FilterArgument } from '../datasource/filterArgument';
 import type { FilterComparisonOperator } from '../datasource/filterComparisonOperator';
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { IDateConfig } from '../date/interfaces';
@@ -156,17 +156,26 @@ export type Columns = {
     width: number;
 };
 
+/**
+ * A column of the grid. Its type comes from the datasource (`datasource.getField(attribute).type`),
+ * set it in the datasource's `fields`, not here.
+ */
 export type Attribute = {
     attribute: string;
+    /**
+     * the column's header text. Left out, the label of the datasource field (`FieldConfig.label`) is
+     * used, and without that the attribute name
+     */
     label?: string;
     placeHolderRow?: string;
     placeHolderFilter?: string;
     operator?: FilterComparisonOperator;
-    type?: DataTypes;
     /**
-     * tries to look at value and set row cell based on it
-     * this way we can have number/text etc in same column
-     * PS! this can create side effects on filter/grouping/sorting
+     * the name of another column whose value in the row is the type of this cell -
+     * `'text' | 'number' | 'boolean' | 'date' | 'datetime'`. A number/text/date etc in the same
+     * column, for property/value style data. Only for a `text` field (the default), and a value that
+     * is no type leaves the cell `text`.
+     * PS! sorting, grouping and filtering still use the field's own type
      */
     dynamicCellTypeColumn?: string;
 

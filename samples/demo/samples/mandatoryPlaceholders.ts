@@ -8,6 +8,8 @@ export const mandatoryPlaceholders: DemoSample = {
     description:
         'mandatory: true renders a striped marker on empty editable cells (it clears as soon as the cell has a value). placeHolderRow shows a placeholder in empty cells - by default only on the current row, controlled by placeHolderRowCurrentEntityOnly. placeHolderFilter overrides the placeholder in the filter row. Click around the empty rows to see the placeholders follow the current row.',
     code: `
+const datasource = new Datasource({ fields: { date1: { type: 'date', label: 'date' } } });
+
 const gridConfig: GridConfig = {
     readonly: false,
     // placeholders show on the current row only, set false for all rows
@@ -31,8 +33,8 @@ const gridConfig: GridConfig = {
         },
         {
             attribute: 'date1',
-            type: 'date',
-            placeHolderFilter: 'YYYY-MM-DD' // force a specific filter hint
+            // a date field shows the formatter's placeholder (YYYY-MM-DD), this one wins over it
+            placeHolderFilter: 'from date...'
         }
     ]
 };
@@ -58,7 +60,7 @@ const gridConfig: GridConfig = {
                 },
                 { attribute: 'country', mandatory: true, mandatoryOnlyIfEmpty: true },
                 { attribute: 'phone', placeHolderRow: 'type a phone number' },
-                { attribute: 'date1', type: 'date', label: 'date', placeHolderFilter: 'YYYY-MM-DD' }
+                { attribute: 'date1', placeHolderFilter: 'from date...' }
             ]
         };
 

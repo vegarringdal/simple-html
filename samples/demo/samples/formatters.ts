@@ -1,123 +1,86 @@
-import { DateFormatterDDMMYYYY, DateFormatterYYYYMMDD, NumberFormatterComma, NumberFormatterDot } from '@simple-html/grid';
-import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
+import { type DatasourceOptions, DateFormatterDDMMYYYY, type Formatter, NumberFormatterComma } from '@simple-html/grid';
+import { baseFields, baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 /**
- * custom number formatter sample: comma decimals + space as thousand separator
+ * custom number formatter: two decimals, comma, space as thousand separator. 12345.6 -> '12 345,60'
  */
-class MyNumberFormatter {
-    static fromSource(value: any): string | null | undefined {
-        if (value === null || value === undefined) {
-            return value;
-        }
-        return String(value).replace('.', ',');
-    }
-
-    static toSource(value: any): number | null | undefined {
-        const parsed = parseFloat(String(value).replace(',', '.'));
-        return Number.isNaN(parsed) ? 0 : parsed;
-    }
-
-    static toFilter(value: any): number | null | undefined {
-        return MyNumberFormatter.toSource(value);
-    }
-
-    static fromSourceDisplay(value: any): string | null | undefined {
-        const parsed = parseFloat(value);
-        if (Number.isNaN(parsed)) {
-            return '';
-        }
-        return parsed
-            .toFixed(2)
-            .replace('.', ',')
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    }
-
-    static fromSourceGrouping(value: any): string | null | undefined {
-        return MyNumberFormatter.fromSourceDisplay(value);
-    }
-
-    static placeholder() {
-        return '';
-    }
-}
+const money: Formatter = {
+    format: (value) =>
+        typeof value === 'number'
+            ? value
+                  .toFixed(2)
+                  .replace('.', ',')
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+            : '',
+    // take the spaces out, then the built-in parser: '12 345,60' -> 12345.6
+    parse: (text) => NumberFormatterComma.parse(text.replaceAll(' ', ''))
+};
 
 export const formatters: DemoSample = {
     id: 'formatters',
     title: 'Number & date formatters',
     group: 'Formatting',
     description:
-        'The datasource formats number/date cells through pluggable formatters. A few are built in, and you can implement your own by following the same interface. Watch the balance and date columns when you switch.',
+        'Every field of the datasource has a formatter: format turns a value into the text the grid shows, parse turns typed text back into a value. A field gets the default formatter of its type, unless it has its own. Change the default of a type with the formatters option. Formatters are set when the datasource is made, so the buttons build the grid again - watch the balance and date columns.',
     code: `
 import {
-    NumberFormatterComma, // 1.234,56
-    NumberFormatterDot, // 1,234.56 (default)
+    Datasource,
+    NumberFormatterComma, // 1234,56
+    NumberFormatterDot, // 1234.56 (default for number)
     DateFormatterDDMMYYYY, // 31.12.2026
-    DateFormatterYYYYMMDD // 2026-12-31 (default)
+    DateFormatterYYYYMMDD, // 2026-12-31 (default for date)
+    type Formatter
 } from '@simple-html/grid';
 
-datasource.setNumberFormatter(NumberFormatterComma);
-datasource.setDateFormatter(DateFormatterDDMMYYYY);
+// the default formatter of a type, for every field of that type
+const datasource = new Datasource({
+    fields: { age: 'number', balance: 'number', date1: 'date' },
+    formatters: { number: NumberFormatterComma, date: DateFormatterDDMMYYYY }
+});
 
-// rebuild cells so the new format shows
-gridInterface.triggerRebuild();
+// or one field
+const datasource2 = new Datasource({
+    fields: {
+        age: 'number',
+        balance: { type: 'number', formatter: NumberFormatterComma },
+        date1: 'date'
+    }
+});
 
-// or implement your own (static class with these methods):
-class MyNumberFormatter {
-    static fromSource(value) {
-        // source value -> string shown in edit/filter inputs
-        return value === null || value === undefined ? value : String(value).replace('.', ',');
-    }
-    static toSource(value) {
-        // user typed string -> source value
-        const parsed = parseFloat(String(value).replace(',', '.'));
-        return Number.isNaN(parsed) ? 0 : parsed;
-    }
-    static toFilter(value) {
-        return MyNumberFormatter.toSource(value);
-    }
-    static fromSourceDisplay(value) {
-        // source value -> string shown in normal cells
-        const parsed = parseFloat(value);
-        if (Number.isNaN(parsed)) {
-            return '';
-        }
-        // 12345.6 -> 12 345,60
-        return parsed.toFixed(2).replace('.', ',').replace(/\\B(?=(\\d{3})+(?!\\d))/g, ' ');
-    }
-    static fromSourceGrouping(value) {
-        return MyNumberFormatter.fromSourceDisplay(value);
-    }
-    static placeholder() {
-        return '';
-    }
-}
-datasource.setNumberFormatter(MyNumberFormatter);
-
-// datasource.setValueFormatter() gives full control of ALL cell values
+// or your own: an object with format (value -> text) and parse (typed text -> value)
+const money: Formatter = {
+    format: (value) =>
+        typeof value === 'number'
+            ? value.toFixed(2).replace('.', ',').replace(/\\B(?=(\\d{3})+(?!\\d))/g, ' ') // 12 345,60
+            : '',
+    parse: (text) => NumberFormatterComma.parse(text.replaceAll(' ', ''))
+};
+const datasource3 = new Datasource({
+    fields: { balance: { type: 'number', formatter: money } }
+});
 `,
     run(stage) {
         const ui = createStage(stage);
-        const { datasource, gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
 
-        ui.button('Number: comma (1.234,56)', () => {
-            datasource.setNumberFormatter(NumberFormatterComma);
-            gridInterface.triggerRebuild();
+        // formatters are part of the datasource, a new one means a new datasource
+        const show = (options: DatasourceOptions) => {
+            ui.gridHost.replaceChildren();
+            mountGrid(ui.gridHost, baseGridConfig(), undefined, options);
+        };
+
+        show({ fields: baseFields() });
+
+        ui.button('Defaults (1234.56, 2026-12-31)', () => {
+            show({ fields: baseFields() });
         });
-        ui.button('Number: dot (1,234.56)', () => {
-            datasource.setNumberFormatter(NumberFormatterDot);
-            gridInterface.triggerRebuild();
+        ui.button('All numbers comma, all dates DD.MM.YYYY', () => {
+            show({ fields: baseFields(), formatters: { number: NumberFormatterComma, date: DateFormatterDDMMYYYY } });
         });
-        ui.button('Date: DD.MM.YYYY', () => {
-            datasource.setDateFormatter(DateFormatterDDMMYYYY);
-            gridInterface.triggerRebuild();
+        ui.button('Only balance comma', () => {
+            show({ fields: { ...baseFields(), balance: { type: 'number', formatter: NumberFormatterComma } } });
         });
-        ui.button('Date: YYYY-MM-DD', () => {
-            datasource.setDateFormatter(DateFormatterYYYYMMDD);
-            gridInterface.triggerRebuild();
-        });
-        ui.button('Number: custom (12 345,60)', () => {
-            datasource.setNumberFormatter(MyNumberFormatter);
-            gridInterface.triggerRebuild();
+        ui.button('Balance custom (12 345,60)', () => {
+            show({ fields: { ...baseFields(), balance: { type: 'number', formatter: money } } });
         });
     }
 };

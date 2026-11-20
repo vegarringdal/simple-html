@@ -13,7 +13,7 @@ export const DROPDOWN_FILTER_MAX_ROWS = 100;
  */
 export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: boolean, searchInput: string | null) {
     const datasource = ctx.gridInterface.getDatasource();
-    const type = ctx.gridInterface.__getGridConfig().__attributes[attribute].type || 'text';
+    const type = ctx.gridInterface.getDatasource().getField(attribute).type;
     let dataFilterSet = new Set();
 
     if (type !== 'text') {

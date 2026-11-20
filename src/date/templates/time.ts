@@ -187,7 +187,7 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
             <div class="side"></div>
             <button
                 @click=${() => {
-                    context.callSubscribers('date-select', null);
+                    context.__callSubscribers('date-select', null);
                 }}
             >
                 Clear
@@ -203,7 +203,7 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
             </button>
             <button
                 @click=${() => {
-                    context.callSubscribers('date-select', config.datepickerDate);
+                    context.__callSubscribers('date-select', config.datepickerDate!);
                 }}
             >
                 Use

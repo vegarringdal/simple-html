@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { isGroupRow } from '../entity';
 
 /**
  * Group header rows can never be selected. They have no key, and selecting one put `undefined`
@@ -20,7 +21,7 @@ const grouped = () => {
     return ds;
 };
 
-const selectedValues = (ds: Datasource) => ds.getSelectedRows().map((r) => (r.__group ? `G:${r.__groupID}` : r.v));
+const selectedValues = (ds: Datasource) => ds.getSelectedRows().map((r) => (isGroupRow(r) ? `G:${r.__groupID}` : r.v));
 
 describe('selection - group header rows', () => {
     it('expect selectAll to only select data rows', () => {

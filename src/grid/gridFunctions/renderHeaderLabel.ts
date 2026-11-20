@@ -1,10 +1,10 @@
 import { html, render, svg } from 'lit-html';
-import type { Entity } from '../../datasource/entity';
+import type { Entity, GroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import type { ColType } from './colType';
 import { contextmenuLabel } from './contextmenuLabel';
+import { getColumnLabel } from './getColumnLabel';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { prettyPrintString } from './prettyPrintString';
 
 export function renderHeaderLabel(
     ctx: Grid,
@@ -15,7 +15,8 @@ export function renderHeaderLabel(
     colType: ColType,
     cellType: string,
     attribute: string | null,
-    rowData: Entity
+    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
+    rowData: Entity | GroupRow | undefined
 ) {
     /**
      * first get sort logic
@@ -39,8 +40,7 @@ export function renderHeaderLabel(
         });
 
     if (attribute) {
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-        const label = cellConfig.label || prettyPrintString(cellConfig.attribute);
+        const label = getColumnLabel(ctx, attribute, true);
 
         render(
             html`<div

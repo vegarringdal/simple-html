@@ -7,11 +7,15 @@ import { createElement } from './createElement';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { removeContextMenu } from './removeContextMenu';
 
+/**
+ * opens the date picker under a cell
+ * @param value the date to open on, anything that is not a valid Date opens on today
+ */
 export function contextmenuDate(
     ctx: Grid,
     _event: MouseEvent,
     cell: HTMLCellElement,
-    value: Date | null,
+    value: unknown,
     callback: (value: Date | null) => void
 ) {
     removeContextMenu(ctx);
@@ -66,11 +70,9 @@ export function contextmenuDate(
 
     const dateInterface = new DateInterface(dateconfig);
 
-    dateInterface.addEventListener({
-        handleEvent: (e) => {
-            // maybe this should call back ?
-            callback(e.data);
-        }
+    // no need to unsubscribe: removing the menu removes the date element, and that unsubscribes
+    dateInterface.on('date-select', (date) => {
+        callback(date);
     });
 
     const dateElement = createElement('simple-html-date', 'simple-html-date') as DateElement;

@@ -1,3 +1,4 @@
+import { isGroupRow } from '@simple-html/grid';
 import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 export const sortingGrouping: DemoSample = {
@@ -5,7 +6,7 @@ export const sortingGrouping: DemoSample = {
     title: 'Sorting & grouping',
     group: 'Datasource',
     description:
-        'Sorting and grouping live on the datasource. Users can click headers to sort (shift-click for multi sort) and drag columns to the panel to group - the buttons below do the same from code.',
+        'Sorting and grouping live on the datasource. Users can click headers to sort (shift-click for multi sort) and drag columns to the panel to group - the buttons below do the same from code. When grouped, getRows() has a group row in front of each group: isGroupRow() tells it from a data row, getRows(true) leaves the group rows out.',
     code: `
 // sort by a single column
 datasource.sort({ attribute: 'company', ascending: true });
@@ -27,6 +28,15 @@ datasource.group([
 
 datasource.expandGroup(); // expand all
 datasource.collapseGroup(); // collapse all
+
+// the displayed rows have a group row in front of each group
+datasource.getRows().forEach((row) => {
+    if (isGroupRow(row)) {
+        console.log(row.__groupName, row.__groupTotal, 'rows');
+    }
+});
+datasource.getRows(true); // the data rows only, never a group row
+
 datasource.removeGroup(); // remove all grouping
 `,
     run(stage) {
@@ -56,6 +66,15 @@ datasource.removeGroup(); // remove all grouping
         });
         ui.button('Collapse all', () => {
             datasource.collapseGroup();
+        });
+        ui.button('Log group rows', () => {
+            // the displayed rows have a group row in front of each group
+            datasource.getRows().forEach((row) => {
+                if (isGroupRow(row)) {
+                    ui.log(`${row.__groupName}, ${row.__groupTotal} rows`);
+                }
+            });
+            ui.log(`${datasource.getRows(true).length} data rows - getRows(true)`);
         });
         ui.button('Remove grouping', () => {
             datasource.removeGroup();

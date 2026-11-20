@@ -8,6 +8,17 @@ export const columnLayout: DemoSample = {
     description:
         'Columns can be pinned left/right, and one column can stack several attributes as rows. Try scrolling horizontally - pinned columns stay put. The RS column shows row state (N=new, M=modified, D=deleted).',
     code: `
+// the types and labels of the fields are on the datasource
+const datasource = new Datasource({
+    fields: {
+        age: 'number',
+        balance: 'number',
+        date1: { type: 'date', label: 'date' },
+        isActive: { type: 'boolean', label: 'active' },
+        favoriteFruit: { label: 'fruit' }
+    }
+});
+
 const gridConfig: GridConfig = {
     panelHeight: 25,
     columnsPinnedLeft: [
@@ -30,11 +41,11 @@ const gridConfig: GridConfig = {
         { attribute: 'company' },
         { attribute: 'country' },
         { attribute: 'phone' },
-        { attribute: 'date1', type: 'date', label: 'date' },
-        { attribute: 'age', type: 'number' },
-        { attribute: 'favoriteFruit', label: 'fruit' },
-        { attribute: 'isActive', type: 'boolean', label: 'active' },
-        { attribute: 'balance', type: 'number' }
+        { attribute: 'date1' },
+        { attribute: 'age' },
+        { attribute: 'favoriteFruit' },
+        { attribute: 'isActive' },
+        { attribute: 'balance' }
     ]
 };
 `,
@@ -57,11 +68,11 @@ const gridConfig: GridConfig = {
                 { attribute: 'company' },
                 { attribute: 'country' },
                 { attribute: 'phone' },
-                { attribute: 'date1', type: 'date', label: 'date' },
-                { attribute: 'age', type: 'number' },
-                { attribute: 'favoriteFruit', label: 'fruit' },
-                { attribute: 'isActive', type: 'boolean', label: 'active' },
-                { attribute: 'balance', type: 'number' }
+                { attribute: 'date1' },
+                { attribute: 'age' },
+                { attribute: 'favoriteFruit' },
+                { attribute: 'isActive' },
+                { attribute: 'balance' }
             ]
         };
         mountGrid(ui.gridHost, config);

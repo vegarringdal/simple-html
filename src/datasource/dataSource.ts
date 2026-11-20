@@ -1,12 +1,15 @@
-import type { GridInterface } from '../grid/gridInterface';
-import type { Listener } from '../listener';
+import { Emitter, type EventHandler } from '../emitter';
+import { BooleanFormatter } from './booleanFormatter';
 import { DateFormatterYYYYMMDD } from './DateFormatterYYYYMMDD';
+import { DateFormatterYYYYMMDDTHHMMSS } from './DateFormatterYYYYMMDDTHHMMSS';
 import { DataContainer } from './dataContainer';
-import type { DatasourceConfigOptions } from './datasourceConfigOptions';
-import { DefaultValueFormatter } from './defaultValueFormatter';
-import type { Entity } from './entity';
-import { Filter, isCompleteCondition, isFilterGroup } from './filter';
+import type { DatasourceEvents } from './datasourceEvents';
+import type { DatasourceOptions } from './datasourceOptions';
+import { type Entity, type GroupRow, isGroupRow } from './entity';
+import { type Field, type FieldConfig, type FieldType, isFieldType } from './field';
+import { conditionType, Filter, isCompleteCondition, isFilterGroup } from './filter';
 import type { FilterArgument } from './filterArgument';
+import type { Formatter } from './formatter';
 import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
 import { NumberFormatterDot } from './numberFormatterDot';
@@ -15,13 +18,14 @@ import { Selection } from './selection';
 import type { SelectionMode } from './selectionMode';
 import { Sort } from './sort';
 import type { SortArgument } from './sortArgument';
-import type { DateAndNumberFormatter, ValueFormatter } from './valueFormatter';
+import { TextFormatter } from './textFormatter';
 
 export type EntityUnion<T> = Entity & T;
 
 /**
- * A single filter condition, ready for display. `value` is already run through the value
- * formatter; blank operators (`IS_BLANK` / `IS_NOT_BLANK`) have no value, flagged by `hasValue`.
+ * A single filter condition, ready for display. `label` is the field's label (see
+ * `getFilterTree()`), `value` is already run through the field's formatter; blank operators
+ * (`IS_BLANK` / `IS_NOT_BLANK`) have no value, flagged by `hasValue`.
  */
 export interface FilterConditionNode {
     kind: 'condition';
@@ -69,9 +73,9 @@ export class Datasource<T = any> {
     private __collectionFiltered: Entity[] = [];
 
     /**
-     * This is the data that is sorted/filtered and grouped
+     * This is the data that is sorted/filtered and grouped: data rows, and the group rows when grouped
      */
-    private __collectionDisplayed: Entity[] = [];
+    private __collectionDisplayed: (Entity | GroupRow)[] = [];
 
     /**
      * datacontainer is holding the data, you can have many datasources sharing 1 datacontainer
@@ -89,59 +93,91 @@ export class Datasource<T = any> {
     private __selectionMode: SelectionMode = 'multiple';
 
     /**
-     * subscribed listerners, gets called when collection changes/is sorted/filtered etc
+     * the handlers subscribed with on(), called when the collection changes/is sorted/filtered etc
      */
-    private __listeners: Set<Listener> = new Set();
+    private __events = new Emitter<DatasourceEvents>();
 
     /**
-     * default date formatter
+     * the fields from the `fields` option, the shorthand `born: 'date'` written out as `{ type: 'date' }`
      */
-    private __dateFormatter: DateAndNumberFormatter = DateFormatterYYYYMMDD;
+    private __fields = new Map<string, FieldConfig>();
 
     /**
-     * default number formatter
+     * the default formatter per type, the built-in ones with the `formatters` option on top
      */
-    private __numberFormatter: DateAndNumberFormatter = NumberFormatterDot;
-
-    private __valueFormatter: ValueFormatter;
+    private __formatters: Record<FieldType, Formatter>;
 
     /**
-     * current entity, use this with form etc if you have a grid with detail form
+     * The current row: the one last clicked, selected or set with `setRowAsCurrentEntity()`. Use it
+     * for a detail form next to the grid. `null` until a row is made current.
+     *
+     * When grouped it can be a {@link GroupRow}: moving the focus up from the first data row into
+     * the header filter row makes row 0 current, and that is a group row when grouped.
+     * `setRowAsCurrentEntity(row)` does the same for a group row's index. Clicking a group row,
+     * `select()` and `selectNext()` ... never make one current. Check with {@link isGroupRow}.
+     *
+     * @example
+     * ```ts
+     * datasource.on('current-entity', () => {
+     *     const row = datasource.currentEntity;
+     *     if (row && !isGroupRow(row)) {
+     *         form.show(row);
+     *     } else {
+     *         form.clear();
+     *     }
+     * });
+     * ```
      */
-    public currentEntity: EntityUnion<T> | null = null;
+    public currentEntity: EntityUnion<T> | GroupRow | null = null;
 
-    constructor(dataContainer?: DataContainer, options?: DatasourceConfigOptions) {
-        this.__valueFormatter = new DefaultValueFormatter(this);
-        this.__dataContainer = dataContainer || new DataContainer();
-        this.__selectionMode = options?.selectionMode || 'multiple';
+    /**
+     * @param options the key, the fields and their formatters, the selection mode, or a data
+     * container shared with another datasource - all optional, see {@link DatasourceOptions}
+     * @throws when `key` and `container` are both given and `key` is not the container's key, or a
+     * field has a type that does not exist
+     *
+     * @example
+     * ```ts
+     * const datasource = new Datasource({
+     *     key: 'id',
+     *     fields: { born: 'date', age: { type: 'number', label: 'Age' } }
+     * });
+     * datasource.setData([{ id: 1, name: 'Ann', born: new Date(1990, 4, 17), age: 36 }]);
+     * ```
+     */
+    constructor(options: DatasourceOptions = {}) {
+        const { key, container } = options;
+        if (container && key !== undefined && key !== container.getKeyAttribute()) {
+            throw new Error(
+                `Datasource: key '${key}' is not the key of the container ('${container.getKeyAttribute()}'), give the key to the DataContainer only`
+            );
+        }
+        this.__dataContainer = container || new DataContainer(key);
+
+        const formatters = options.formatters || {};
+        this.__formatters = {
+            text: formatters.text ?? TextFormatter,
+            number: formatters.number ?? NumberFormatterDot,
+            boolean: formatters.boolean ?? BooleanFormatter,
+            date: formatters.date ?? DateFormatterYYYYMMDD,
+            datetime: formatters.datetime ?? DateFormatterYYYYMMDDTHHMMSS
+        };
+
+        for (const [name, field] of Object.entries(options.fields || {})) {
+            const config: FieldConfig = typeof field === 'string' ? { type: field } : { ...field };
+            // a typo in plain js would otherwise show up much later, as a field without a formatter
+            if (config.type !== undefined && !isFieldType(config.type)) {
+                throw new Error(`Datasource: field '${name}' has an unknown type '${config.type}'`);
+            }
+            this.__fields.set(name, config);
+        }
+
+        this.__selectionMode = options.selectionMode || 'multiple';
         this.__selection = new Selection(this);
         this.__filter = new Filter();
-        this.__sorting = new Sort();
+        // the type is looked up once per sort, not per row
+        this.__sorting = new Sort((attribute) => this.getField(attribute).type);
         this.__grouping = new Grouping();
-    }
-
-    public setNumberFormatter(formatter: DateAndNumberFormatter) {
-        this.__numberFormatter = formatter;
-    }
-
-    public setDateFormatter(formatter: DateAndNumberFormatter) {
-        this.__dateFormatter = formatter;
-    }
-
-    public setValueFormatter(formatter: ValueFormatter) {
-        this.__valueFormatter = formatter;
-    }
-
-    public getNumberFormatter() {
-        return this.__numberFormatter;
-    }
-
-    public getDateFormatter() {
-        return this.__dateFormatter;
-    }
-
-    public getValueFormatter() {
-        return this.__valueFormatter;
     }
 
     /**
@@ -151,8 +187,67 @@ export class Datasource<T = any> {
         return 'Datasource';
     }
 
-    public setDates(x: string[]) {
-        this.__sorting.setDateAttribute(x);
+    /**
+     * A field as the datasource sees it: its type, label and formatter, with every default filled in.
+     * A field that is not listed in `fields` is a `'text'` field labelled with its name.
+     *
+     * @param name the field name, the property on the row
+     *
+     * @example
+     * ```ts
+     * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
+     *
+     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD }
+     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter }
+     * ```
+     */
+    public getField(name: string): Field {
+        const config = this.__fields.get(name);
+        return {
+            name,
+            type: config?.type ?? 'text',
+            label: config?.label || name,
+            formatter: this.getFormatter(name)
+        };
+    }
+
+    /**
+     * The formatter for a field: its own (`FieldConfig.formatter`), else the datasource's default for
+     * its type.
+     *
+     * @param field the field name. A field that is not listed in `fields` is `'text'`
+     * @param type use this type instead of the field's. When it is not the field's type, the default
+     * formatter for `type` is returned - the field's own formatter is written for its own type. The
+     * grid uses it for `dynamicCellTypeColumn`, where another column of the row decides the type.
+     *
+     * @example
+     * ```ts
+     * const datasource = new Datasource({
+     *     fields: { price: { type: 'number', formatter: NumberFormatterComma }, born: 'date' }
+     * });
+     *
+     * datasource.getFormatter('price').format(12.5); // '12,5'
+     * datasource.getFormatter('born').format(new Date(2026, 10, 20)); // '2026-11-20'
+     * datasource.getFormatter('value', 'number').parse('12.5'); // 12.5, the default number formatter
+     * ```
+     */
+    public getFormatter(field: string, type?: FieldType): Formatter {
+        const config = this.__fields.get(field);
+        const fieldType = config?.type ?? 'text';
+        if (type && type !== fieldType) {
+            return this.__formatters[type];
+        }
+        return config?.formatter ?? this.__formatters[fieldType];
+    }
+
+    /**
+     * @internal
+     * the field as it was given in `fields` (the shorthand written out), undefined when it is not
+     * listed. The filter uses it to tell a listed field from one that is not, and the grid for a label
+     * that was really given
+     */
+    public __getFieldConfig(name: string): FieldConfig | undefined {
+        return this.__fields.get(name);
     }
 
     public getMarkedForDeletion(): EntityUnion<T>[] {
@@ -246,15 +341,17 @@ export class Datasource<T = any> {
      * @param row
      */
     public __select(row: number) {
-        this.currentEntity = this.__collectionDisplayed[row] as Entity & T;
+        // out of range is undefined, made null below
+        this.currentEntity = this.__collectionDisplayed[row] as EntityUnion<T> | GroupRow;
         if (this.currentEntity === undefined) {
             this.currentEntity = null; // so its always a entity or null, makes it easier to work with
         }
-        this.__callSubscribers('currentEntity');
+        this.__callSubscribers('current-entity', {});
     }
 
     /**
-     * sets row as current entity
+     * sets row as current entity. A group row's index makes the group row current, see
+     * {@link currentEntity}
      * @param row 0 based like array, not like the select
      */
     public setRowAsCurrentEntity(row: number) {
@@ -442,7 +539,7 @@ export class Datasource<T = any> {
         }
 
         // group if any config set
-        this.__callSubscribers('collection-sorted');
+        this.__callSubscribers('collection-sorted', {});
     }
 
     /**
@@ -548,7 +645,7 @@ export class Datasource<T = any> {
         // setGrouping() alone does not build the groups, there is nothing to expand until it is applied
         if (this.__grouping.hasGroups()) {
             this.__collectionDisplayed = this.__grouping.expandOneOrAll(id);
-            this.__callSubscribers('collection-expand');
+            this.__callSubscribers('collection-expand', {});
         }
     }
 
@@ -560,56 +657,45 @@ export class Datasource<T = any> {
         // setGrouping() alone does not build the groups, there is nothing to collapse until it is applied
         if (this.__grouping.hasGroups()) {
             this.__collectionDisplayed = this.__grouping.collapseOneOrAll(id);
-            this.__callSubscribers('collection-collapse');
+            this.__callSubscribers('collection-collapse', {});
         }
     }
 
     /**
      * @internal
-     * used to call subscribers, used by selection/sorting/filter/grouping controller
-     * @param event
-     * @param data
+     * sends an event to the handlers subscribed with on(), used by the datasource itself and the
+     * selection controller
      */
-    public __callSubscribers(event: string, data = {}): void {
-        const keeping: any = [];
-        this.__listeners.forEach((callable) => {
-            let keep: boolean | undefined;
-            if (typeof callable === 'function') {
-                keep = callable({ type: event, data: data });
-            } else {
-                if (typeof callable?.handleEvent === 'function') {
-                    keep = callable.handleEvent({ type: event, data: data });
-                }
-            }
-            if (keep) {
-                keeping.push(callable);
-            }
-        });
-        this.__listeners = new Set(keeping);
+    public __callSubscribers<Type extends keyof DatasourceEvents>(type: Type, data: DatasourceEvents[Type]): void {
+        this.__events.emit(type, data);
     }
 
     /**
-     * adds event listener, this is called when collection is changed by sorting/grouping etc
-     * @param callable
+     * Subscribes to an event. The handler gets the event's payload, typed from
+     * {@link DatasourceEvents} - see there for every event and what it sends.
+     *
+     * The handler stays subscribed until you call the function this returns. What the handler
+     * returns is ignored (in v5 it had to return `true` to stay subscribed).
+     *
+     * @param type the event name
+     * @param handler called with the payload every time the event is sent
+     * @returns a function that unsubscribes the handler
+     *
+     * @example
+     * ```ts
+     * const off = datasource.on('collection-filtered', (data) => {
+     *     console.log('filtered by', data.info, '-', datasource.length(true), 'rows');
+     * });
+     *
+     * datasource.on('current-entity', () => {
+     *     console.log('current row', datasource.currentEntity);
+     * });
+     *
+     * off(); // unsubscribe
+     * ```
      */
-    public addEventListener(callable: Listener): void {
-        if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
-            throw new Error('callable sent to datasource event listner is wrong type');
-        }
-
-        if (!this.__listeners.has(callable)) {
-            this.__listeners.add(callable);
-        }
-    }
-
-    /**
-     * removes listener from datasource
-     * @param callable
-     */
-    public removeEventListener(callable: Listener): void {
-        if (this.__listeners.has(callable)) {
-            this.__listeners.delete(callable);
-        }
+    public on<Type extends keyof DatasourceEvents>(type: Type, handler: EventHandler<DatasourceEvents[Type]>): () => void {
+        return this.__events.on(type, handler);
     }
 
     /**
@@ -653,22 +739,49 @@ export class Datasource<T = any> {
     }
 
     /**
-     * returns 1 row sorted/grouped/filtered, start on 0
+     * returns 1 row of the displayed rows (`getRows()`), start on 0. When grouped it can be a
+     * {@link GroupRow}, check with {@link isGroupRow}. Out of range gives `undefined`.
      * @param rowNo
      */
-    public getRow(rowNo: number): EntityUnion<T> {
-        return this.__collectionDisplayed[rowNo] as any;
+    public getRow(rowNo: number): EntityUnion<T> | GroupRow {
+        return this.__collectionDisplayed[rowNo] as EntityUnion<T> | GroupRow;
     }
 
     /**
-     * returns all rows sorted/grouped/filtered
-     * @param onlyDataRows only get sorted/filtered and skip group
+     * Returns the rows as they are displayed: filtered, sorted and grouped. When grouped, that
+     * is your data rows with a {@link GroupRow} in front of each group, and the rows of a
+     * collapsed group left out.
+     *
+     * `getRows(true)` returns the data rows only - filtered and sorted, never a group row, and
+     * the rows of collapsed groups included. The return type follows the argument.
+     *
+     * @param onlyDataRows `true` to skip the group rows
+     *
+     * @example
+     * ```ts
+     * datasource.group([{ attribute: 'country', title: 'Country' }]);
+     *
+     * // data rows and group rows, as the grid shows them
+     * datasource.getRows().forEach((row) => {
+     *     if (isGroupRow(row)) {
+     *         console.log(row.__groupName);
+     *     } else {
+     *         console.log(row.name);
+     *     }
+     * });
+     *
+     * // data rows only, no check needed
+     * const names = datasource.getRows(true).map((row) => row.name);
+     * ```
      */
-    public getRows(onlyDataRows?: boolean): EntityUnion<T>[] {
+    public getRows(onlyDataRows: true): EntityUnion<T>[];
+    public getRows(onlyDataRows?: false): (EntityUnion<T> | GroupRow)[];
+    public getRows(onlyDataRows?: boolean): (EntityUnion<T> | GroupRow)[];
+    public getRows(onlyDataRows?: boolean): (EntityUnion<T> | GroupRow)[] {
         if (onlyDataRows) {
-            return this.__collectionFiltered as any;
+            return this.__collectionFiltered as EntityUnion<T>[];
         } else {
-            return this.__collectionDisplayed as any;
+            return this.__collectionDisplayed as (EntityUnion<T> | GroupRow)[];
         }
     }
 
@@ -738,7 +851,7 @@ export class Datasource<T = any> {
      */
     private __findDataRow(start: number, step: 1 | -1): number {
         for (let i = start; i >= 0 && i < this.__collectionDisplayed.length; i += step) {
-            if (!this.__collectionDisplayed[i].__group) {
+            if (!isGroupRow(this.__collectionDisplayed[i])) {
                 return i;
             }
         }
@@ -748,7 +861,7 @@ export class Datasource<T = any> {
     /**
      * selects the row and fires the select event, does nothing if there is no row (-1)
      */
-    private __selectAndNotify(row: number, info: string): void {
+    private __selectAndNotify(row: number, info: DatasourceEvents['select']['info']): void {
         if (row === -1) {
             return;
         }
@@ -757,15 +870,19 @@ export class Datasource<T = any> {
     }
 
     /**
-     * returns selected data rows
+     * returns the selected rows, in displayed order. Data rows only, a group row can not be selected
      * @returns
      */
-    public getSelectedRows() {
+    public getSelectedRows(): EntityUnion<T>[] {
         const displayedRows = this.getRows();
         const selectedRows = this.getSelection().getSelectedRows();
-        const data: Entity[] = [];
+        const data: EntityUnion<T>[] = [];
         selectedRows.forEach((row) => {
-            data.push(displayedRows[row]);
+            const entity = displayedRows[row];
+            // the selection never has a group row in it, the check is for the type
+            if (!isGroupRow(entity)) {
+                data.push(entity);
+            }
         });
         return data;
     }
@@ -863,33 +980,31 @@ export class Datasource<T = any> {
     }
 
     /**
-     * The filter as text, e.g. `([NAME] <<EQUAL_TO>> 'X')`.
-     * @param ctx pass the grid to show column labels instead of attribute names
+     * The filter as text, e.g. `([NAME] <<EQUAL_TO>> 'X')`. Values are shown with the field's
+     * formatter.
+     *
+     * @param label the name to show for a field. Default the field's label (`FieldConfig.label`, else
+     * the field name). The grid passes its column labels.
+     *
+     * @example
+     * ```ts
+     * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
+     * datasource.filter({ attribute: 'born', operator: 'GREATER_THAN', value: new Date(1990, 0, 1) });
+     *
+     * datasource.getFilterString(); // "([BORN] <<GREATER_THAN>> '1990-01-01')"
+     * datasource.getFilterString((field) => field.toUpperCase() + '!'); // "([BORN!] <<GREATER_THAN>> '1990-01-01')"
+     * ```
      */
-    public getFilterString(ctx?: { gridInterface: GridInterface<any> }) {
+    public getFilterString(label: (field: string) => string = (field) => this.getField(field).label): string {
         const filter = this.__filter.getFilter();
         if (!filter?.filterArguments?.length) {
             return '';
         }
 
-        const valueFormatter = this.getValueFormatter();
-
-        function convertValue(type: any, value: string | Date | number | null | undefined, attribute: string) {
-            return valueFormatter.fromSource(value, type, attribute, true);
-        }
-
-        function label(attribute: string) {
-            if (!ctx) {
-                return attribute;
-            }
-            // an attribute the filter uses does not have to be in the grid config
-            return ctx.gridInterface.__getGridConfig().__attributes[attribute]?.label || attribute;
-        }
-
         // same rules as filter() and getFilterTree(): isFilterGroup decides group or condition,
         // an incomplete condition is ignored, and so is a group with nothing to show in it
         const shown = (arg: FilterArgument): boolean =>
-            isFilterGroup(arg) ? (arg.filterArguments || []).some(shown) : isCompleteCondition(arg);
+            isFilterGroup(arg) ? (arg.filterArguments || []).some(shown) : isCompleteCondition(arg, conditionType(arg, this));
 
         const parser = (obj: FilterArgument, queryString = ''): string => {
             if (isFilterGroup(obj)) {
@@ -906,7 +1021,8 @@ export class Datasource<T = any> {
                 return queryString;
             }
 
-            if (!isCompleteCondition(obj)) {
+            const type = conditionType(obj, this);
+            if (!isCompleteCondition(obj, type)) {
                 return queryString;
             }
 
@@ -919,7 +1035,7 @@ export class Datasource<T = any> {
                 const value =
                     obj.valueType === 'ATTRIBUTE'
                         ? `[${obj.value}]`
-                        : `'${convertValue(obj.attributeType, obj.value, attribute)}'`;
+                        : `'${this.getFormatter(attribute, type).format(obj.value)}'`;
                 return `${queryString}[${label(attribute)}] <<${OPERATORS[obj.operator]}>> ${value}`;
             }
 
@@ -936,21 +1052,26 @@ export class Datasource<T = any> {
      * keeps the group nesting, so the footer can render grouped conditions as clusters
      * instead of a flat, ambiguous list. Returns `null` when no filter is active. The root is
      * always a group, even for a single condition.
+     *
+     * @param label the name to show for a field. Default the field's label (`FieldConfig.label`, else
+     * the field name). The grid passes its column labels.
+     *
+     * @example
+     * ```ts
+     * const datasource = new Datasource({ fields: { age: { type: 'number', label: 'Age' } } });
+     * datasource.filter({ attribute: 'age', operator: 'GREATER_THAN', value: 18 });
+     *
+     * datasource.getFilterTree();
+     * // { kind: 'group', logicalOperator: 'AND', children: [
+     * //     { kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true }
+     * // ] }
+     * ```
      */
-    public getFilterTree(ctx?: { gridInterface: GridInterface<any> }): FilterGroupNode | null {
+    public getFilterTree(label: (field: string) => string = (field) => this.getField(field).label): FilterGroupNode | null {
         const filter = this.__filter.getFilter();
         if (!filter?.filterArguments?.length) {
             return null;
         }
-
-        const valueFormatter = this.getValueFormatter();
-
-        const label = (attribute: string) => {
-            if (!ctx) {
-                return attribute;
-            }
-            return ctx.gridInterface.__getGridConfig().__attributes[attribute]?.label || attribute;
-        };
 
         const build = (obj: FilterArgument): FilterNode | null => {
             if (!obj) {
@@ -967,7 +1088,8 @@ export class Datasource<T = any> {
                 };
             }
             // the filter ignores incomplete conditions, so they are not shown either
-            if (!isCompleteCondition(obj)) {
+            const type = conditionType(obj, this);
+            if (!isCompleteCondition(obj, type)) {
                 return null;
             }
 
@@ -980,7 +1102,7 @@ export class Datasource<T = any> {
                 } else if (obj.valueType === 'ATTRIBUTE') {
                     value = `[${obj.value}]`;
                 } else {
-                    value = String(valueFormatter.fromSource(obj.value as any, obj.attributeType as any, obj.attribute, true));
+                    value = this.getFormatter(obj.attribute, type).format(obj.value);
                 }
             }
 

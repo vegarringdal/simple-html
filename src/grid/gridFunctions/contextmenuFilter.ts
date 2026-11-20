@@ -1,6 +1,6 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import type { Entity } from '../../datasource/entity';
+import type { Entity, GroupRow } from '../../datasource/entity';
 import type { FilterArgument } from '../../datasource/filterArgument';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
@@ -24,7 +24,8 @@ export function contextmenuFilter(
     _colType: ColType,
     _cellType: string,
     attribute: string,
-    _rowData: Entity
+    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
+    _rowData: Entity | GroupRow | undefined
 ) {
     removeContextMenu(ctx);
 
@@ -259,35 +260,30 @@ export function contextmenuFilter(
      */
     const innerRender = () => {
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const type = ctx.gridInterface.getDatasource().getField(attribute).type;
 
         const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
         const notSelected = 'simple-html-grid-menu-item';
 
         if (!cellConfig.operator) {
-            // getFilterFromType gives the same for a missing type as for 'text'
-            cellConfig.operator = ctx.gridInterface.getDatasource().getFilterFromType(cellConfig.type ?? 'text');
+            cellConfig.operator = ctx.gridInterface.getDatasource().getFilterFromType(type);
         }
 
         const filterTemplate = () => {
-            if (
-                cellConfig.type !== 'text' &&
-                cellConfig.type !== 'number' &&
-                cellConfig.type !== 'date' &&
-                cellConfig.type !== undefined
-            ) {
+            // a boolean column has no operators to choose from
+            if (type === 'boolean') {
                 return null;
             }
 
             const updateFilter = () => {
-                filterCallback(ctx, cellConfig.currentFilterValue as any, cellConfig);
+                filterCallback(ctx, cellConfig.currentFilterValue, cellConfig);
                 ctx.gridInterface.__callSubscribers('filter-operator-change', {
                     cellConfig,
-                    ctx: ctx,
-                    rebuildHeaderColumns
+                    rebuildHeader: () => rebuildHeaderColumns(ctx)
                 });
             };
 
-            if (cellConfig.type === 'date' || cellConfig.type === 'number') {
+            if (type === 'date' || type === 'datetime' || type === 'number') {
                 return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
                     <hr class="hr-solid" />
                     <div
@@ -391,7 +387,7 @@ export function contextmenuFilter(
                 type: 'CONDITION',
                 attribute: cellConfig.attribute,
                 operator: arg,
-                attributeType: cellConfig.type
+                attributeType: type
             };
 
             if (currentFilter?.logicalOperator === 'AND' && Array.isArray(currentFilter.filterArguments)) {

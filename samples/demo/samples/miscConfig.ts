@@ -8,16 +8,18 @@ export const miscConfig: DemoSample = {
     description:
         'Grab bag: dimRepeatedValues dims cells repeating the value of the row above (sort by country and toggle it - also available in the row right-click menu). numberOverride maps between blank and 0 per column (bonus hides zeros, age shows blanks as 0). website only accepts paste/clear, no typing. autoResizeColumns() sizes columns to content.',
     code: `
+const datasource = new Datasource({ fields: { bonus: 'number', age: 'number' } });
+
 const gridConfig: GridConfig = {
     readonly: false,
     // dim cells that repeat the value of the row above (also in row context menu)
     dimRepeatedValues: true,
     columnsCenter: [ ... ],
     attributes: [
-        // 0 is displayed as blank
-        { attribute: 'bonus', type: 'number', numberOverride: 'ZERO_TO_BLANK' },
+        // 0 is displayed as blank (number fields only)
+        { attribute: 'bonus', numberOverride: 'ZERO_TO_BLANK' },
         // blank is displayed as 0
-        { attribute: 'age', type: 'number', numberOverride: 'BLANK_TO_ZERO' },
+        { attribute: 'age', numberOverride: 'BLANK_TO_ZERO' },
         // typing is blocked, only paste (ctrl+v) and clearing allowed
         { attribute: 'website', allowPasteClearOnly: true }
     ]
@@ -42,8 +44,8 @@ gridInterface.autoResizeColumns();
             attributes: [
                 { attribute: 'country' },
                 { attribute: 'company' },
-                { attribute: 'bonus', type: 'number', numberOverride: 'ZERO_TO_BLANK' },
-                { attribute: 'age', type: 'number', numberOverride: 'BLANK_TO_ZERO' },
+                { attribute: 'bonus', numberOverride: 'ZERO_TO_BLANK' },
+                { attribute: 'age', numberOverride: 'BLANK_TO_ZERO' },
                 { attribute: 'website', allowPasteClearOnly: true }
             ]
         };
@@ -62,7 +64,9 @@ gridInterface.autoResizeColumns();
             }
         });
 
-        const { datasource, gridInterface } = mountGrid(ui.gridHost, config, rows);
+        const { datasource, gridInterface } = mountGrid(ui.gridHost, config, rows, {
+            fields: { bonus: 'number', age: 'number' }
+        });
 
         ui.button('Sort by country', () => {
             datasource.sort({ attribute: 'country', ascending: true });

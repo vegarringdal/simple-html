@@ -1,6 +1,6 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import type { Entity } from '../../datasource/entity';
+import { type Entity, isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
@@ -9,6 +9,7 @@ import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { getCellType } from './getCellType';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
 import { triggerScrollEvent } from './triggerScrollEvent';
@@ -25,31 +26,21 @@ export function renderRowCell(
     rowData: Entity
 ) {
     const entity = ctx.gridInterface.getDatasource().getRow(row);
-    let value = entity?.[attribute];
 
-    if (entity?.__group) {
+    // a group row has no cells, the grid hides them
+    if (isGroupRow(entity)) {
         return;
     }
 
     if (attribute) {
         const config = ctx.gridInterface.__getGridConfig();
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-        const valueFormatter = ctx.gridInterface.getDatasource().getValueFormatter();
+        const datasource = ctx.gridInterface.getDatasource();
 
-        let cellConfigType = cellConfig.type || 'text';
-        const dynCellType = cellConfig.dynamicCellTypeColumn;
-
-        if (dynCellType && cellConfig.type === 'text') {
-            const dynCellTypeValue = entity?.[dynCellType] || '';
-            if (
-                dynCellTypeValue === 'text' ||
-                dynCellTypeValue === 'number' ||
-                dynCellTypeValue === 'date' ||
-                dynCellTypeValue === 'boolean'
-            ) {
-                cellConfigType = dynCellTypeValue;
-            }
-        }
+        // the field's type, and the type of this cell - dynamicCellTypeColumn can change it per row
+        const fieldType = datasource.getField(attribute).type;
+        const cellConfigType = getCellType(ctx, attribute, entity);
+        const formatter = datasource.getFormatter(attribute, cellConfigType);
 
         let showPlaceHolder = true;
         if (config.placeHolderRowCurrentEntityOnly) {
@@ -73,20 +64,18 @@ export function renderRowCell(
             dimmed = 'simple-html-mandatory';
         }
 
-        if (cell.$focused && !cellReadOnly && !config.readonly) {
-            value = valueFormatter.fromSource(value, cellConfigType, cellConfig.attribute, false);
-        } else {
-            value = valueFormatter.fromSourceDisplay(value, cellConfigType, cellConfig.attribute, false);
-        }
+        // a checkbox shows the raw value, every other cell the text from the field's formatter
+        const checked = Boolean(entity?.[attribute]);
+        let value = formatter.format(entity?.[attribute]);
 
-        if (value) {
+        if (cellConfigType === 'boolean' ? checked : value) {
             if (dimmed === 'simple-html-mandatory') {
                 dimmed = '';
             }
         }
 
-        if (cellConfig?.type === 'number') {
-            if ((cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') || value === undefined || value === null) {
+        if (fieldType === 'number') {
+            if (cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') {
                 value = '0';
             }
             if (cellConfig.numberOverride === 'ZERO_TO_BLANK' && value === '0') {
@@ -110,7 +99,7 @@ export function renderRowCell(
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
                         aria-label=${attribute}
-                        .checked=${live(value)}
+                        .checked=${live(checked)}
                         type="checkbox"
                         class=${`cellpos-${colType}-${row}-${column}-${celno} ${inputClass}${repeatedClass}`}
                         @contextmenu=${(e: MouseEvent) => {
@@ -129,18 +118,9 @@ export function renderRowCell(
                                 if (cellConfig.allowPasteClearOnly) {
                                     // nothing
                                 } else {
-                                    entity[attribute] = valueFormatter.toSource(
-                                        !e.target.checked,
-                                        cellConfigType,
-                                        attribute,
-                                        false
-                                    );
-                                    e.target.checked = valueFormatter.fromSource(
-                                        entity[attribute],
-                                        cellConfigType,
-                                        attribute,
-                                        false
-                                    );
+                                    // booleans are not parsed, the checkbox gives the value
+                                    entity[attribute] = !e.target.checked;
+                                    e.target.checked = Boolean(entity[attribute]);
                                 }
                             }
                         }}
@@ -161,7 +141,7 @@ export function renderRowCell(
                         style=${
                             cellConfigType === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'
                         }
-                        .value=${live(value?.toString())}
+                        .value=${live(value)}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}${repeatedClass}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
                         placeholder=${showPlaceHolder ? cellConfig.placeHolderRow : ''}
@@ -174,18 +154,15 @@ export function renderRowCell(
                             triggerScrollEvent(ctx);
                             if (!cellReadOnly && !config.readonly) {
                                 setTimeout(() => {
-                                    if (cellConfigType === 'date') {
+                                    if (cellConfigType === 'date' || cellConfigType === 'datetime') {
+                                        const current = entity[attribute];
                                         contextmenuDate(
                                             ctx,
                                             e,
                                             cell,
-                                            // a Date is passed as it is - toSource only parses strings, it
-                                            // turned a Date into null and the picker opened on today.
-                                            // Anything else (an iso string in the data) still goes
-                                            // through toSource, which is what parsed it before
-                                            entity[attribute] instanceof Date
-                                                ? entity[attribute]
-                                                : valueFormatter.toSource(entity[attribute], cellConfigType, attribute, false),
+                                            // a Date as it is. Text in the data (an iso string) is read by
+                                            // the formatter, anything else opens the picker on today
+                                            typeof current === 'string' ? formatter.parse(current) : current,
                                             (value: Date | null) => {
                                                 rowData[attribute] = value;
                                                 ctx.gridInterface.triggerScrollEvent();
@@ -365,22 +342,22 @@ export function renderRowCell(
                         }}
                         @input=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {
-                                e.target.value = valueFormatter.fromSource(entity[attribute], cellConfigType, attribute, false);
+                                e.target.value = formatter.format(entity[attribute]);
                                 return;
                             }
 
                             if (!config.readonly && !cellReadOnly) {
-                                entity[attribute] = valueFormatter.toSource(e.target.value, cellConfigType, attribute, false);
+                                entity[attribute] = formatter.parse(e.target.value);
                             }
                         }}
                         @change=${(e: any) => {
                             if (cellConfig.allowPasteClearOnly) {
-                                e.target.value = valueFormatter.fromSource(entity[attribute], cellConfigType, attribute, false);
+                                e.target.value = formatter.format(entity[attribute]);
                                 return;
                             }
 
                             if (!config.readonly && !cellReadOnly) {
-                                entity[attribute] = valueFormatter.toSource(e.target.value, cellConfigType, attribute, false);
+                                entity[attribute] = formatter.parse(e.target.value);
                             }
                         }}
                     />

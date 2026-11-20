@@ -1,3 +1,4 @@
+import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import type { ParsedGridConfig } from '../gridConfig';
 import { nextSection, sectionColumns } from './cellRowKeyNavigationCellRowHandler';
@@ -26,7 +27,7 @@ function overrideGroupRow(ctx: Grid, currentKey: string, gotoRow: number) {
 
     while (x < 100) {
         const data = ctx.gridInterface.getDatasource().getRow(gotoRow + x);
-        if (!data?.__group) {
+        if (!isGroupRow(data)) {
             gotoRow = gotoRow + x;
             x = 200;
         } else {

@@ -46,15 +46,19 @@ import { GridInterface, GridElement, GridConfig, Datasource } from '@simple-html
 import '@simple-html/grid/grid.css';
 
 /**
- * create datasource
+ * create datasource, with the fields that are not text
  */
-const datasource = new Datasource();
+const datasource = new Datasource({
+    fields: {
+        born: { type: 'date', label: 'Born' }
+    }
+});
 
 // add data
 datasource.setData([
-    { firstname: 'first1', lastname: 'last1' },
-    { firstname: 'first2', lastname: 'last2' },
-    { firstname: 'first3', lastname: 'last3' }
+    { firstname: 'first1', lastname: 'last1', born: new Date(1990, 0, 1) },
+    { firstname: 'first2', lastname: 'last2', born: new Date(1985, 5, 17) },
+    { firstname: 'first3', lastname: 'last3', born: new Date(2001, 11, 24) }
 ]);
 
 /**
@@ -69,14 +73,22 @@ const gridConfig: GridConfig = {
         {
             rows: ['lastname'],
             width: 100
+        },
+        {
+            rows: ['born'],
+            width: 100
         }
     ],
+    // the column type and label come from the datasource fields
     attributes: [
         {
             attribute: 'firstname'
         },
         {
             attribute: 'lastname'
+        },
+        {
+            attribute: 'born'
         }
     ]
 };

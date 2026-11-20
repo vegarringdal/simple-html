@@ -27,6 +27,20 @@ export class DataContainer {
     }
 
     /**
+     * The field that identifies a row, as given to the constructor. `undefined` when there is none,
+     * then every row gets a generated key.
+     *
+     * @example
+     * ```ts
+     * const container = new DataContainer('id');
+     * container.getKeyAttribute(); // 'id'
+     * ```
+     */
+    public getKeyAttribute(): string | undefined {
+        return this.__keyAttribute;
+    }
+
+    /**
      * so user can override if they want
      */
     public overrideEntityHandler(entityHandler: any) {

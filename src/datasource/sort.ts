@@ -1,4 +1,5 @@
 import type { Entity } from './entity';
+import type { FieldType } from './field';
 import { isBlank } from './isBlank';
 import type { SortArgument } from './sortArgument';
 
@@ -6,16 +7,15 @@ export class Sort {
     private lastSorting: SortArgument[];
     private currentSorting: SortArgument[];
     private localeCompareCode: Intl.Collator | null;
-    dates: string[] = [];
 
-    constructor() {
+    /**
+     * @param fieldType the type of a field, from the datasource's schema: a `date` field sorts on the
+     * day, everything else on the value (a `datetime` on the full timestamp)
+     */
+    constructor(private fieldType: (attribute: string) => FieldType) {
         this.lastSorting = [];
         this.currentSorting = [];
         this.localeCompareCode = null;
-    }
-
-    public setDateAttribute(dates: string[] = []) {
-        this.dates = dates;
     }
 
     public setLocaleCompare(code: string, options?: any): void {
@@ -79,12 +79,13 @@ export class Sort {
 
     public runOrderBy(array: Entity[]): void {
         const thisSort = this.getOrderBy();
+        // looked up once, not for every compare
+        const dayOnly = thisSort.map((sortArg) => this.fieldType(sortArg.attribute) === 'date');
 
         array.sort((obj1: any, obj2: any) => {
             // first sort argument that tells the rows apart decides
-            for (const sortArg of thisSort) {
-                const isDate = this.dates.indexOf(sortArg.attribute) !== -1;
-                const result = this.compareAscending(obj1[sortArg.attribute], obj2[sortArg.attribute], isDate);
+            for (const [i, sortArg] of thisSort.entries()) {
+                const result = this.compareAscending(obj1[sortArg.attribute], obj2[sortArg.attribute], dayOnly[i]);
                 if (result !== 0) {
                     // descending is the ascending result flipped, so blanks end up last
                     return sortArg.ascending === true ? result : -result;
@@ -102,11 +103,12 @@ export class Sort {
      * - blanks (null, undefined, '', invalid Date) are equal to each other and come before any value
      * - 0 and false are real values, so 0 sorts between negative and positive numbers, false before true
      * - strings use the collator when one is set
+     * - two dates compare by their timestamp, or by their day only with `dayOnly`
      *
      * Grouping relies on this: values this returns 0 for must end up next to each other
      * and get the same group key.
      */
-    private compareAscending(v1: any, v2: any, isDate: boolean): number {
+    private compareAscending(v1: any, v2: any, dayOnly: boolean): number {
         const blank1 = isBlank(v1);
         const blank2 = isBlank(v2);
         if (blank1 || blank2) {
@@ -116,8 +118,8 @@ export class Sort {
             return blank1 ? -1 : 1;
         }
 
-        if (isDate) {
-            // attributes registered with setDates() sort on the day only
+        if (dayOnly) {
+            // a `date` field sorts on the day only
             v1 = this.toDay(v1);
             v2 = this.toDay(v2);
         }

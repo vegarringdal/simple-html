@@ -18,7 +18,8 @@ datasource.removeData(datasource.getSelectedRows());
 
 datasource.length(); // rows in current (filtered) view
 datasource.getAllData(); // everything in the data container
-datasource.getRows(); // current view, sorted/filtered/grouped
+datasource.getRows(); // current view, sorted/filtered/grouped - with the group rows, see isGroupRow()
+datasource.getRows(true); // current view, data rows only
 `,
     run(stage) {
         const ui = createStage(stage);
@@ -43,7 +44,9 @@ datasource.getRows(); // current view, sorted/filtered/grouped
             ui.log('removed ' + selected.length + ' rows -> ' + datasource.length() + ' left');
         });
         ui.button('Row count', () => {
-            ui.log('view: ' + datasource.length() + ' rows, container: ' + datasource.getAllData().length + ' rows');
+            const view = datasource.length();
+            const dataRows = datasource.getRows(true).length;
+            ui.log(`view: ${view} rows (${dataRows} data rows), container: ${datasource.getAllData().length} rows`);
         });
     }
 };

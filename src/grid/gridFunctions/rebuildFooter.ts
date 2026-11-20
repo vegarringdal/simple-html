@@ -2,6 +2,7 @@ import { html, render } from 'lit-html';
 import type { FilterGroupNode, FilterNode } from '../../datasource/dataSource';
 import type { Grid } from '../grid';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
+import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { openFilterEditor } from './openFilterEditor';
 
@@ -78,7 +79,7 @@ export function rebuildFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
     const totalRows = ctx.gridInterface.getDatasource().getAllData().length;
     const filteredRows = ctx.gridInterface.getDatasource().length();
-    const filterTree = ctx.gridInterface.getDatasource().getFilterTree(ctx);
+    const filterTree = ctx.gridInterface.getDatasource().getFilterTree((field) => getColumnLabel(ctx, field));
     const scrollbarHeight = ctx.gridInterface.__getGridConfig().__scrollbarSize;
 
     const conditionCount = filterTree ? countConditions(filterTree) : 0;

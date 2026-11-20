@@ -1,5 +1,6 @@
 import { isFilterGroup } from '../../datasource/filter';
 import type { FilterArgument } from '../../datasource/filterArgument';
+import { parseFilterText } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import type { Attribute } from '../gridConfig';
 
@@ -11,46 +12,36 @@ type FilterGroup = FilterArgument & { filterArguments: FilterArgument[] };
 /**
  * filters columns
  * used by header filters
+ * @param value what the user typed, or the column's current filter value (a Date or number) when the
+ * filter is run again with another operator - that is formatted first, the formatter parses text only
  */
 export function filterCallback(
     ctx: Grid,
-    value: string | number | null | undefined,
+    value: string | number | Date | boolean | null | undefined,
     col: Attribute,
     filterArray?: any[] | null,
     filterArrayAndValue?: string | null,
     notinArray?: boolean
 ) {
-    const valueConverter = ctx.gridInterface.getDatasource().getValueFormatter();
+    const datasource = ctx.gridInterface.getDatasource();
+    const { type, formatter } = datasource.getField(col.attribute);
+    const text = typeof value === 'string' ? value : formatter.format(value);
 
-    switch (col.type) {
+    switch (type) {
         case 'date':
-            col.currentFilterValue = ctx.gridInterface
-                .getDatasource()
-                .getValueFormatter()
-                .toFilter(value, col.type, col.attribute, true);
-
-            break;
+        case 'datetime':
         case 'number':
-            col.currentFilterValue = value === '' ? null : valueConverter.toFilter(value, col.type, col.attribute, true);
+            col.currentFilterValue = text === '' ? null : asFilterValue(parseFilterText(formatter, text));
 
             break;
         case 'boolean':
-            if (value === '') {
-                col.currentFilterValue = null;
-            }
-            if (value === 'false') {
-                col.currentFilterValue = valueConverter.toFilter(false, col.type, col.attribute, true);
-            }
-            if (value === 'true') {
-                col.currentFilterValue = valueConverter.toFilter(true, col.type, col.attribute, true);
-            }
+            // the header checkbox: 'true', 'false' or '' for no filter. Not parsed, it is not typed text
+            col.currentFilterValue = text === 'true' ? true : text === 'false' ? false : null;
 
             break;
         default:
             col.currentFilterValue = filterArrayAndValue ? filterArrayAndValue : value;
     }
-
-    const datasource = ctx.gridInterface.getDatasource();
 
     /**
      * A header filter only owns the top level conditions on its own column. Those are replaced,
@@ -64,7 +55,8 @@ export function filterCallback(
         logicalOperator: 'NONE',
         valueType: 'VALUE',
         attribute: col.attribute,
-        attributeType: (col.type as any) || 'text',
+        // the datasource takes the type from its fields, this is for a filter saved and loaded elsewhere
+        attributeType: type,
         operator,
         value: conditionValue
     });
@@ -73,10 +65,7 @@ export function filterCallback(
         // search text from the value list menu, always a contains
         filter.filterArguments.push(condition('CONTAINS', filterArrayAndValue));
     } else if (col.currentFilterValue !== null && col.currentFilterValue !== undefined && col.currentFilterValue !== '') {
-        // getFilterFromType gives the same for a missing type as for 'text'
-        filter.filterArguments.push(
-            condition(col.operator || datasource.getFilterFromType(col.type ?? 'text'), col.currentFilterValue)
-        );
+        filter.filterArguments.push(condition(col.operator || datasource.getFilterFromType(type), col.currentFilterValue));
     }
 
     if (filterArray) {
@@ -89,6 +78,16 @@ export function filterCallback(
     }
 
     datasource.filter(filter);
+}
+
+/**
+ * what a formatter gave, as a value the column can hold as its filter value - anything else is no filter
+ */
+function asFilterValue(value: unknown): Attribute['currentFilterValue'] {
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value instanceof Date) {
+        return value;
+    }
+    return null;
 }
 
 /**

@@ -1,73 +1,72 @@
+import type { Formatter } from './formatter';
+
 /**
- * default number format, uses dot
- * this will convert comma to dot
+ * @internal
+ * Typed text as a number, shared by the built-in number formatters: a comma is the decimal
+ * separator when there is no dot (`'12,5'` is 12.5). parseFloat reads up to the first character
+ * it can not use, so `'1.234,5'` is 1.234.
+ *
+ * - null, undefined and the text `'undefined'` give null
+ * - a number passes through
+ * - text that is no number, `''` included, gives 0
  */
-export class NumberFormatterDot {
-    /**
-     *
-     * @param value Takes string and returns date
-     */
-    static fromSource(value: any): string | null | undefined {
-        let returnValue = value;
-
-        if (Number.isNaN(parseFloat(returnValue))) {
-            returnValue = '';
-        }
-
-        if (returnValue === null || returnValue === undefined) {
-            return returnValue;
-        }
-
-        if (returnValue.toString().includes(',')) {
-            returnValue = returnValue.toString().replace(',', '.');
-        }
-
-        return returnValue.toString();
+export function parseNumber(text: unknown): number | null {
+    if (text === null || text === undefined || text === 'undefined') {
+        return null;
+    }
+    if (typeof text === 'number') {
+        return text;
     }
 
-    /**
-     * Takes value and return string
-     * @param value
-     */
-    static toSource(value: any): number | null | undefined {
-        let returnValue: any = value;
-
-        if (returnValue === null || returnValue === 'undefined' || returnValue === undefined) {
-            return null;
-        }
-
-        if (typeof returnValue === 'number') {
-            return returnValue;
-        }
-
-        if (returnValue.includes(',') && !returnValue.includes('.')) {
-            returnValue = returnValue.replace(',', '.');
-        }
-
-        if (Number.isNaN(parseFloat(returnValue))) {
-            return 0;
-        }
-
-        if (returnValue === '0') {
-            return 0;
-        }
-
-        return parseFloat(returnValue);
+    let value = String(text);
+    if (value.includes(',') && !value.includes('.')) {
+        value = value.replace(',', '.');
     }
 
-    static toFilter(value: any): number | null | undefined {
-        return NumberFormatterDot.toSource(value);
-    }
+    const result = parseFloat(value);
+    return Number.isNaN(result) ? 0 : result;
+}
 
-    static fromSourceDisplay(value: any): string | null | undefined {
-        return NumberFormatterDot.fromSource(value);
-    }
-
-    static fromSourceGrouping(value: any): string | null | undefined {
-        return NumberFormatterDot.fromSourceDisplay(value);
-    }
-
-    static placeholder() {
+/**
+ * @internal
+ * A number as text with the given decimal separator, '' for anything that does not read as a
+ * number. Text that does is kept as it is, apart from the first `.` or `,` becoming `separator`.
+ */
+export function formatNumber(value: unknown, separator: '.' | ','): string {
+    // parseFloat turns the value into text first, so a number and its text give the same answer
+    if (Number.isNaN(parseFloat(String(value)))) {
         return '';
     }
+    return String(value).replace(separator === '.' ? ',' : '.', separator);
 }
+
+/**
+ * Formatter for numbers with a dot as the decimal separator: `12.5`. The default for `number` fields.
+ *
+ * - `format` - a number as text, `12.5` -> `'12.5'`. Anything that does not read as a number
+ *   (null, undefined, `'abc'`) gives `''`
+ * - `parse` / `parseFilter` - `'12.5'` and `'12,5'` both give 12.5. A number passes through,
+ *   null and undefined give null, text that is no number (`''` too) gives 0
+ *
+ * @example
+ * ```ts
+ * NumberFormatterDot.format(1234.5); // '1234.5'
+ * NumberFormatterDot.parse('12,5'); // 12.5
+ *
+ * // the default, set it to be explicit
+ * const datasource = new Datasource({
+ *     fields: { price: { type: 'number', formatter: NumberFormatterDot } }
+ * });
+ *
+ * // a variant: spread it and replace what you need
+ * const twoDecimals = { ...NumberFormatterDot, format: (value: unknown) => (typeof value === 'number' ? value.toFixed(2) : '') };
+ * ```
+ */
+export const NumberFormatterDot = {
+    format(value: unknown): string {
+        return formatNumber(value, '.');
+    },
+    parse(text: unknown): number | null {
+        return parseNumber(text);
+    }
+} satisfies Formatter;

@@ -1,3 +1,4 @@
+import type { FieldType } from './field';
 import type { FilterComparisonOperator } from './filterComparisonOperator';
 
 /**
@@ -19,9 +20,9 @@ import type { FilterComparisonOperator } from './filterComparisonOperator';
  *   attribute?: string | null;
  *   logicalOperator?: FilterLogicalOperator; // if no filterArguments, it assumes "NONE"
  *   operator?: FilterComparisonOperator | null;
- *   value?: string | number | null | Date;
+ *   value?: string | number | boolean | null | Date;
  *   valueType?: FilterValueType | null;
- *   attributeType?: DataTypes;
+ *   attributeType?: FieldType; // only used when the field is not in the datasource's `fields`
  * };
  * ```
  *
@@ -63,9 +64,13 @@ export type FilterArgument = {
     logicalOperator?: FilterLogicalOperator;
     attribute?: string | null; //only optional if type is group
     operator?: FilterComparisonOperator | null; //only optional if type is group
-    value?: string | number | null | Date; //only optional if type is group
+    value?: string | number | boolean | null | Date; //only optional if type is group
     valueType?: FilterValueType | null;
-    attributeType?: DataTypes; //only optional if type is group
+    /**
+     * the type to compare as, for a field that is not listed in the datasource's `fields`. A listed
+     * field always compares as its own type. Left out, the condition compares as 'text'
+     */
+    attributeType?: FieldType;
     filterArguments?: FilterArgument[];
 };
 export type FilterLogicalOperator = 'AND' | 'OR' | 'NONE';
@@ -77,4 +82,3 @@ export interface FilterAttributeSimple {
     attribute: string;
     type?: string; // objectFilter uses 'text' if not set
 }
-export type DataTypes = 'text' | 'number' | 'boolean' | 'date';

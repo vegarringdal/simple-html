@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { isGroupRow } from '../entity';
 
 /**
  * The datasource keeps three collections: all data -> filtered -> displayed.
@@ -79,7 +80,7 @@ describe('pipeline - filter then group', () => {
 
         ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
 
-        expect(ds.getRows().filter((r: any) => r.__group)).toHaveLength(1);
+        expect(ds.getRows().filter(isGroupRow)).toHaveLength(1);
     });
 
     it('expect a filter matching nothing to leave no groups', () => {
@@ -110,7 +111,7 @@ describe('pipeline - grouping with sorting', () => {
 
         const comp1 = ds
             .getRows()
-            .filter((r: any) => !r.__group && r.company === 'comp1')
+            .filter((r) => !isGroupRow(r) && r.company === 'comp1')
             .map((r: any) => r.name);
         expect(comp1).toEqual(['c', 'b', 'a']);
     });
@@ -122,8 +123,8 @@ describe('pipeline - grouping with sorting', () => {
 
         const levels = ds
             .getRows()
-            .filter((r: any) => r.__group)
-            .map((r: any) => r.__groupLvl);
+            .filter(isGroupRow)
+            .map((r) => r.__groupLvl);
         expect(Math.max(...levels)).toBeGreaterThan(Math.min(...levels));
     });
 

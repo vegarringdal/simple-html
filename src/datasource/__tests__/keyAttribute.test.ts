@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { DataContainer } from '../dataContainer';
 import { Datasource } from '../dataSource';
 
 /**
@@ -9,7 +8,7 @@ import { Datasource } from '../dataSource';
 
 describe('key attribute', () => {
     it('expect a key of 0 to be kept', () => {
-        const ds = new Datasource(new DataContainer('id'));
+        const ds = new Datasource({ key: 'id' });
         ds.setData([
             { id: 0, name: 'zero' },
             { id: 1, name: 'one' }
@@ -19,7 +18,7 @@ describe('key attribute', () => {
     });
 
     it('expect a row with key 0 to be selectable by its key', () => {
-        const ds = new Datasource(new DataContainer('id'));
+        const ds = new Datasource({ key: 'id' });
         ds.setData([
             { id: 0, name: 'zero' },
             { id: 1, name: 'one' }

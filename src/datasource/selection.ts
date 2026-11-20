@@ -1,4 +1,5 @@
 import type { Datasource } from './dataSource';
+import { isGroupRow } from './entity';
 
 export class Selection {
     private selectedRows: number;
@@ -32,7 +33,7 @@ export class Selection {
     public selectAll() {
         this.selectRange(0, this.dataSource.length() - 1);
         // update selection on rows
-        this.dataSource.__callSubscribers('selectionChange');
+        this.dataSource.__callSubscribers('selection-change', {});
     }
 
     /**
@@ -54,7 +55,7 @@ export class Selection {
         this.selection.clear();
         this.selectedRows = this.selection.size;
         if (truggerEvent) {
-            this.dataSource.__callSubscribers('selectionChange');
+            this.dataSource.__callSubscribers('selection-change', {});
         }
     }
 
@@ -64,7 +65,7 @@ export class Selection {
         }
 
         // group header rows can never be selected or be the current entity
-        if (this.dataSource.getRow(currentRow)?.__group) {
+        if (isGroupRow(this.dataSource.getRow(currentRow))) {
             return;
         }
 
@@ -173,7 +174,7 @@ export class Selection {
                 this.lastKeyCodeUsed = currentKeyCode;
 
                 // update selection on rows
-                this.dataSource.__callSubscribers('selectionChange');
+                this.dataSource.__callSubscribers('selection-change', {});
             }
         } else {
             // same row clicked again
@@ -194,7 +195,7 @@ export class Selection {
                 this.select(currentRow, false);
             }
             // update selection on rows
-            this.dataSource.__callSubscribers('selectionChange');
+            this.dataSource.__callSubscribers('selection-change', {});
         }
     }
 
@@ -210,7 +211,7 @@ export class Selection {
      */
     private isDataRow(row: number): boolean {
         const entity = this.dataSource.getRow(row);
-        return !!entity && !entity.__group;
+        return !!entity && !isGroupRow(entity);
     }
 
     /**
@@ -283,7 +284,7 @@ export class Selection {
             this.selectedRows = this.selection.size;
         }
         this.selectedRows = this.selection.size;
-        this.dataSource.__callSubscribers('selectionChange');
+        this.dataSource.__callSubscribers('selection-change', {});
     }
 
     /**
@@ -295,7 +296,7 @@ export class Selection {
         if (this.selectedRows > 0) {
             this.dataSource.getRows().forEach((row, index) => {
                 // group headers have no key, never report them even if undefined got into the selection
-                if (!row.__group && this.selection.has(row.__KEY)) {
+                if (!isGroupRow(row) && this.selection.has(row.__KEY)) {
                     array.push(index);
                 }
             });
@@ -326,7 +327,7 @@ export class Selection {
      * trigger grid to update row to show selection
      */
     public triggerSelectionChange() {
-        this.dataSource.__callSubscribers('selectionChange');
+        this.dataSource.__callSubscribers('selection-change', {});
     }
 
     /**

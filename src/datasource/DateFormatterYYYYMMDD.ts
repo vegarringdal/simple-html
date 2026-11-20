@@ -1,144 +1,40 @@
+import { formatDate, parseDate } from './dateFormatterParts';
+import type { Formatter } from './formatter';
+
 /**
- * default dateformatter - YYYY-MM-DD
+ * Formatter for dates as `YYYY-MM-DD`, e.g. `2026-11-20`. The default for `date` fields.
+ *
+ * - `format` - a `Date` (or a date string/timestamp) as `2026-11-20`, `''` for a blank or invalid date
+ * - `parse` - `'2026-11-20'` as a `Date`. A month or day left out is the current one
+ *   (`'2026'` is today's month and day in 2026), and the time of day is the current time, so an
+ *   edited date keeps a time. A `Date` passes through, null and undefined are returned as they are,
+ *   `''` gives null and text that is no date gives `''`
+ * - `parseFilter` - like `parse`, but at the start of the day (00:00:00.000). A `Date` is moved to the
+ *   start of its day
+ * - `placeholder` - `'YYYY-MM-DD'`
+ *
+ * @example
+ * ```ts
+ * DateFormatterYYYYMMDD.format(new Date(2026, 10, 20, 13, 45)); // '2026-11-20'
+ * DateFormatterYYYYMMDD.parse('2026-11-20'); // Date 2026-11-20, current time of day
+ * DateFormatterYYYYMMDD.parseFilter('2026-11-20'); // Date 2026-11-20 00:00:00
+ *
+ * // the default for date fields, set it on one field or as the default to be explicit
+ * const datasource = new Datasource({
+ *     fields: { born: { type: 'date', formatter: DateFormatterYYYYMMDD } },
+ *     formatters: { date: DateFormatterYYYYMMDD }
+ * });
+ * ```
  */
-export class DateFormatterYYYYMMDD {
-    /**
-     * date only, date filters match on the day, see `ValueFormatter.dateIncludesTime`
-     */
-    static includesTime = false;
-
-    /**
-     * Takes value and return string
-     * @param value
-     */
-    static fromSource(value: Date | string | null | undefined): string {
-        let returnValue: any = value;
-
-        if (value === null || value === undefined || value === '') {
-            return '';
-        }
-
-        returnValue = new Date(returnValue).toDateString();
-
-        // clear if not valid date
-        if (returnValue === 'Invalid Date') {
-            returnValue = '';
-        }
-
-        if (returnValue) {
-            // get our formating
-
-            const year = new Date(value).getFullYear();
-            let month = (new Date(value).getMonth() + 1).toString();
-            if (month.length === 1) {
-                month = `0${month}`;
-            }
-            let day = new Date(value).getDate().toString();
-            if (day.length === 1) {
-                day = `0${day}`;
-            }
-            returnValue = `${year}-${month}-${day}`;
-        }
-
-        return returnValue;
-    }
-
-    /**
-     *
-     * @param value Takes string and returns date
-     */
-    static toSource(value: any): Date | null | undefined {
-        let returnValue = value;
-
-        if (returnValue === null || returnValue === undefined) {
-            return returnValue;
-        }
-
-        if (returnValue < 1) {
-            return null;
-        }
-
-        if (typeof returnValue !== 'string') {
-            return null;
-        }
-
-        const x: any[] = returnValue.split('-');
-
-        // 2019-01-01
-        if (!x[1]) {
-            // by default, use current month
-            x[1] = new Date().getMonth() + 1;
-        }
-        if (!x[2]) {
-            // by default, use current day
-            x[2] = new Date().getDate();
-        }
-
-        returnValue = new Date(
-            x[0],
-            parseInt(x[1], 10) - 1,
-            parseInt(x[2], 10),
-            new Date().getHours(),
-            new Date().getMinutes(),
-            new Date().getSeconds(),
-            new Date().getMilliseconds()
-        );
-        if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
-            returnValue = '';
-        }
-
-        return returnValue;
-    }
-
-    /**
-     * will be used in filters, you might want other logic here
-     * @param value
-     * @returns
-     */
-    static toFilter(value: any): any {
-        let returnValue = value;
-
-        if (returnValue === null || returnValue === undefined) {
-            return returnValue;
-        }
-
-        if (returnValue < 1) {
-            return null;
-        }
-
-        if (typeof returnValue !== 'string') {
-            return null;
-        }
-
-        const x: any[] = returnValue.split('-');
-
-        // 2019-01-01
-        if (!x[1]) {
-            // by default, use current month
-            x[1] = new Date().getMonth() + 1;
-        }
-        if (!x[2]) {
-            // by default, use current day
-            x[2] = new Date().getDate();
-        }
-
-        returnValue = new Date(x[0], parseInt(x[1], 10) - 1, parseInt(x[2], 10), 0, 0, 0, 0);
-        if (returnValue && typeof returnValue === 'object' && returnValue.toString() === 'Invalid Date') {
-            returnValue = '';
-        }
-
-        return returnValue;
-    }
-
-    static fromSourceDisplay(value: Date | string | null | undefined): string {
-        return DateFormatterYYYYMMDD.fromSource(value);
-    }
-
-    static fromSourceGrouping(value: Date | string | null | undefined): string {
-        return DateFormatterYYYYMMDD.fromSourceDisplay(value);
-    }
-
-    static placeholder() {
-        return 'YYYY-MM-DD';
-    }
-}
+export const DateFormatterYYYYMMDD = {
+    format(value: unknown): string {
+        return formatDate(value, 'YMD', false);
+    },
+    parse(text: unknown): Date | '' | null | undefined {
+        return parseDate(text, 'YMD', false, false);
+    },
+    parseFilter(text: unknown): Date | '' | null | undefined {
+        return parseDate(text, 'YMD', false, true);
+    },
+    placeholder: 'YYYY-MM-DD'
+} satisfies Formatter;

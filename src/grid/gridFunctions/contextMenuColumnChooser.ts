@@ -4,8 +4,8 @@ import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { createElement } from './createElement';
 import { dragEvent } from './dragEvent';
+import { getColumnLabel } from './getColumnLabel';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
 
 // might want to add this as part of context, so I can share it?
@@ -50,9 +50,8 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                     .filter((e) => e.toLowerCase().includes(currentColumnSearchvalue.toLowerCase()))
                     .sort()
                     .map((attribute) => {
-                        const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
                         return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>
-                            ${label || prettyPrintString(attribute)}
+                            ${getColumnLabel(ctx, attribute, true)}
                         </div>`;
                     })}
             </div>`;
