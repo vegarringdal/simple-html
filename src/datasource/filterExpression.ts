@@ -2,7 +2,8 @@
  * How a {@link FilterCondition} compares the row's value with its `value`. The field's type (from
  * the datasource's `fields`, `'text'` when it is not listed) decides how the two are compared.
  *
- * - `EQUAL` - text: the same, ignoring case. Number: the same. `date`: the same day, `datetime`: the same second
+ * - `EQUAL` - text: the same, ignoring case - the whole text, `'an'` does not match `'Ann'` (use a
+ *   wildcard, `'an*'`, or `CONTAINS`). Number: the same. `date`: the same day, `datetime`: the same second
  * - `NOT_EQUAL_TO` - the opposite of `EQUAL`
  * - `LESS_THAN` - number and date: smaller / earlier. Text: compared as lower case text
  * - `LESS_THAN_OR_EQUAL_TO` - `LESS_THAN` or `EQUAL`
@@ -23,11 +24,17 @@
  * apart from `IN` / `NOT_IN` and the blank ones.
  *
  * **0 is blank.** A row value of 0 counts as blank, on purpose: in ERP style data 0 and empty mean
- * the same. For number fields `IS_BLANK` matches 0 too and `IS_NOT_BLANK` leaves it out, and the
- * header's value list (shown for text fields) puts a 0 under its "Blank" entry.
+ * the same. `IS_BLANK` matches a 0 (the number, in any field - the text `'0'` is not blank) and
+ * `IS_NOT_BLANK` leaves it out, and the header's value list (shown for text fields) puts a 0 under its
+ * "Blank" entry. `IN` / `NOT_IN` take a 0 in a text field as `'NULL'`; a number field compares its
+ * formatted text there, `'0'`. The other way round, a blank row value of
+ * a number field compares as 0: `where('age', 'LESS_THAN', 5)` matches the rows without an age.
  *
+ * @sample filtering
  * @example
  * ```ts
+ * import { where } from '@simple-html/grid';
+ *
  * datasource.filter(where('age', 'GREATER_THAN_OR_EQUAL_TO', 18));
  * datasource.filter(where('name', 'CONTAINS', 'son'));
  * datasource.filter(where('country', 'IN', ['Norway', 'Sweden']));
@@ -66,8 +73,11 @@ export type FilterOperator =
  *
  * {@link where} builds one. A `valueField` condition is written out:
  *
+ * @sample filtering
  * @example
  * ```ts
+ * import { where } from '@simple-html/grid';
+ *
  * where('age', 'GREATER_THAN', 18); // { field: 'age', operator: 'GREATER_THAN', value: 18 }
  *
  * // rows changed after they were approved
@@ -91,8 +101,11 @@ export interface FilterCondition {
  *
  * {@link and} and {@link or} build one.
  *
+ * @sample filtering
  * @example
  * ```ts
+ * import { and, type FilterGroup, or, where } from '@simple-html/grid';
+ *
  * // age >= 18 AND (country = 'Norway' OR country = 'Sweden')
  * const filter: FilterGroup = {
  *     group: 'AND',
@@ -126,6 +139,7 @@ export interface FilterGroup {
  *
  * Build one with {@link and}, {@link or} and {@link where}, or write the objects out.
  *
+ * @sample filtering
  * @example
  * ```ts
  * import { and, or, where } from '@simple-html/grid';
@@ -147,8 +161,11 @@ export type FilterExpression = FilterGroup | FilterCondition;
  *
  * @param children conditions and groups. None gives an empty group, which filters out nothing
  *
+ * @sample filtering
  * @example
  * ```ts
+ * import { and, where } from '@simple-html/grid';
+ *
  * // country = 'Norway' AND age < 30
  * datasource.filter(and(where('country', 'EQUAL', 'Norway'), where('age', 'LESS_THAN', 30)));
  * ```
@@ -162,8 +179,11 @@ export function and(...children: FilterExpression[]): FilterGroup {
  *
  * @param children conditions and groups. None gives an empty group, which filters out nothing
  *
+ * @sample filtering
  * @example
  * ```ts
+ * import { or, where } from '@simple-html/grid';
+ *
  * // country = 'Norway' OR country = 'Sweden'
  * datasource.filter(or(where('country', 'EQUAL', 'Norway'), where('country', 'EQUAL', 'Sweden')));
  * ```
@@ -180,8 +200,11 @@ export function or(...children: FilterExpression[]): FilterGroup {
  * @param value what to compare with. Leave it out for `IS_BLANK` / `IS_NOT_BLANK`, the condition
  * then has no `value` property
  *
+ * @sample filtering
  * @example
  * ```ts
+ * import { where } from '@simple-html/grid';
+ *
  * where('age', 'GREATER_THAN', 18); // { field: 'age', operator: 'GREATER_THAN', value: 18 }
  * where('born', 'LESS_THAN', new Date(2000, 0, 1));
  * where('country', 'NOT_IN', ['Norway', 'Sweden']);

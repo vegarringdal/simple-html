@@ -14,6 +14,10 @@ import type { GridInterface } from './gridInterface';
  *
  * @example
  * ```ts
+ * import { type GridConfig, type GridElement, GridInterface } from '@simple-html/grid';
+ *
+ * declare const config: GridConfig;
+ *
  * const element = document.createElement('simple-html-grid') as GridElement;
  * element.style.width = '100%';
  * element.style.height = '100%';
@@ -24,6 +28,22 @@ import type { GridInterface } from './gridInterface';
 export class GridElement extends HTMLElement {
     private grid: Grid;
 
+    /**
+     * Made by `document.createElement('simple-html-grid')`, or `new GridElement()` - `createGrid()` does
+     * that. Connect an interface with {@link connectInterface} before or after it is put on the page.
+     *
+     * @example
+     * ```ts
+     * import { type GridConfig, GridElement, GridInterface } from '@simple-html/grid';
+     *
+     * declare const config: GridConfig;
+     *
+     * const element = new GridElement();
+     * element.style.height = '400px';
+     * element.connectInterface(new GridInterface(config, datasource));
+     * host.appendChild(element);
+     * ```
+     */
     constructor() {
         super();
         this.grid = new Grid(this);
@@ -39,9 +59,13 @@ export class GridElement extends HTMLElement {
      *
      * @example
      * ```ts
+     * import { type GridConfig, type GridElement, GridInterface } from '@simple-html/grid';
+     *
+     * declare const config: GridConfig;
+     *
      * const element = document.createElement('simple-html-grid') as GridElement;
      * element.connectInterface(new GridInterface(config, datasource));
-     * container.appendChild(element);
+     * host.appendChild(element);
      * ```
      */
     public connectInterface(value: GridInterface<any>) {

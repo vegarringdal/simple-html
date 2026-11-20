@@ -7,6 +7,15 @@ import type { HTMLCellElement } from './gridFunctions/HTMLCellElement';
 /**
  * The cell a grid event happened on. Most {@link GridEvents} send this, some with more fields.
  * `cell-header-focus` sends it with a different `rowData`, see there.
+ *
+ * @example
+ * ```ts
+ * import type { EventHandler, GridCellEventData } from '@simple-html/grid';
+ *
+ * const logCell: EventHandler<GridCellEventData> = (data) => console.log(data.attribute, data.row, data.rowData);
+ * gridInterface.on('copy-cell', logCell);
+ * gridInterface.on('clear', logCell);
+ * ```
  */
 export interface GridCellEventData {
     /** the cell element */
@@ -34,6 +43,7 @@ export interface GridCellEventData {
  * Subscribe with `gridInterface.on(name, handler)`, the payload is typed from this map.
  * `on()` returns a function that unsubscribes.
  *
+ * @sample events
  * @example
  * ```ts
  * const off = gridInterface.on('cell-click', (data) => {
@@ -57,14 +67,21 @@ export interface GridEvents {
 
     /**
      * A data cell was clicked. Sent in a `setTimeout` after the click, so the row is already the
-     * current entity. `originalEvent` is the click.
+     * current entity. `originalEvent` is the click. Not sent for a boolean (checkbox) cell.
      */
-    'cell-click': GridCellEventData & { originalEvent: MouseEvent };
+    'cell-click': GridCellEventData & {
+        /** the click */
+        originalEvent: MouseEvent;
+    };
 
     /**
-     * A data cell got focus, by click or keyboard. `originalEvent` is the focus event.
+     * A data cell got focus, by click or keyboard. `originalEvent` is the focus event. Not sent for a
+     * boolean (checkbox) cell.
      */
-    'cell-row-focus': GridCellEventData & { originalEvent: FocusEvent };
+    'cell-row-focus': GridCellEventData & {
+        /** the focus event of the cell's input */
+        originalEvent: FocusEvent;
+    };
 
     /**
      * The focus button of a cell was clicked, or Space pressed in the cell. The button is shown
@@ -74,7 +91,9 @@ export interface GridEvents {
      * - `originalEvent`: the focus event of the cell (button clicked) or the keydown (Space)
      */
     'cell-focus-button-click': GridCellEventData & {
+        /** the cell's input, focus it to give the focus back to the cell */
         target: HTMLElement;
+        /** the focus event of the cell (button clicked) or the keydown (Space) */
         originalEvent: FocusEvent | KeyboardEvent;
     };
 
@@ -86,7 +105,10 @@ export interface GridEvents {
      * is grouped, and `undefined` when no rows were displayed - check with `isGroupRow()` before
      * reading it as a data row.
      */
-    'cell-header-focus': Omit<GridCellEventData, 'rowData'> & { rowData: Entity | GroupRow | undefined };
+    'cell-header-focus': Omit<GridCellEventData, 'rowData'> & {
+        /** the first displayed row, not the header's own: a group row when grouped, `undefined` without rows */
+        rowData: Entity | GroupRow | undefined;
+    };
 
     /**
      * An operator was picked in the "Set Operator" part of the filter cell menu, and the filter
@@ -100,6 +122,7 @@ export interface GridEvents {
      *
      * Was `{ cellConfig, rebuildHeader }` in v5, with the operator in `cellConfig.operator`.
      *
+     * @sample filter-operator-header
      * @example
      * ```ts
      * gridInterface.on('filter-operator-change', (data) => {
@@ -109,9 +132,13 @@ export interface GridEvents {
      * ```
      */
     'filter-operator-change': {
+        /** the column's field */
         field: string;
+        /** the operator picked */
         operator: FilterOperator;
+        /** the column's options as the grid uses them, change them to change what the header shows */
         column: ColumnConfig;
+        /** renders the header again, call it after changing `column` */
         rebuildHeader: () => void;
     };
 
@@ -119,7 +146,10 @@ export interface GridEvents {
      * Pasted from the row menu (Paste: Cell). Sent once per selected row pasted into, `entity`
      * is that row. The other fields are the cell the menu was opened on.
      */
-    paste: Omit<GridCellEventData, 'rowData'> & { entity: Entity };
+    paste: Omit<GridCellEventData, 'rowData'> & {
+        /** the row pasted into */
+        entity: Entity;
+    };
 
     /**
      * Cleared from the row menu (Clear: Cell): the column, in the selected rows.

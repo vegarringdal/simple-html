@@ -9,8 +9,11 @@ import type { Formatter } from './formatter';
  * - `parse` / `parseFilter` - `'true'` (any case, spaces around it ignored) is true, blank text,
  *   null and undefined are null, any other text is false. A boolean passes through
  *
+ * @sample formatters
  * @example
  * ```ts
+ * import { BooleanFormatter, Datasource } from '@simple-html/grid';
+ *
  * BooleanFormatter.format(true); // 'true'
  * BooleanFormatter.parse('TRUE'); // true
  * BooleanFormatter.parse(''); // null
@@ -23,9 +26,11 @@ import type { Formatter } from './formatter';
  * ```
  */
 export const BooleanFormatter = {
+    /** `'true'` / `'false'`, `''` for null and undefined */
     format(value: unknown): string {
         return value === null || value === undefined ? '' : String(value);
     },
+    /** `'true'` (any case) is true, blank text is null, other text false */
     parse(text: unknown): boolean | null {
         if (typeof text === 'boolean') {
             return text;

@@ -724,8 +724,8 @@ if (saved?.filter) {
 
 ### 0 is blank - unchanged, on purpose
 
-A row value of 0 still counts as blank: for number fields `IS_BLANK` matches 0 and `IS_NOT_BLANK`
-leaves it out, and the header's value list (text fields) puts a 0 under "Blank". In ERP style data
+A row value of 0 still counts as blank: `IS_BLANK` matches a numeric 0 (in any field, not only
+number fields) and `IS_NOT_BLANK` leaves it out, and the header's value list (text fields) puts a 0 under "Blank". In ERP style data
 0 and empty mean the same, and changing it would silently change what existing filters match. It
 is documented on `FilterOperator`.
 
@@ -789,9 +789,9 @@ datasource.markAllForDeletion();
 const count = datasource.getDataRows().length;
 ```
 
-TypeScript reports every old call. **In plain js a boolean in place of the options is not an
-error: it is ignored, and the defaults apply** - `setData(rows, true)` replaces the rows instead of
-adding them, `markForDeletion(null, true)` marks nothing. Search your code for these methods.
+TypeScript reports every old call, and in plain js an old call **throws a `TypeError`** that
+shows the v6 form (see the top of this section) - so `setData(rows, true)` can not quietly replace
+the rows it was meant to add.
 
 Also changed:
 

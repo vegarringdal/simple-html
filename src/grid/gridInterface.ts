@@ -37,8 +37,16 @@ import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
  * Make one with {@link createGrid}, which also puts the grid on the page. `new GridInterface()` is for
  * a `<simple-html-grid>` element you place yourself, see {@link GridElement}.
  *
+ * @typeParam T the type of the rows, from the datasource: a `Datasource<Person>` gives a
+ * `GridInterface<Person>`
+ *
+ * @sample basic-grid
  * @example
  * ```ts
+ * import { createGrid, type GridConfig } from '@simple-html/grid';
+ *
+ * declare const config: GridConfig;
+ *
  * const gridInterface = createGrid(document.getElementById('grid')!, { config, datasource });
  *
  * gridInterface.on('cell-click', (data) => console.log(data.attribute, data.rowData));
@@ -106,10 +114,14 @@ export class GridInterface<T> {
      *
      * @example
      * ```ts
+     * import { type GridConfig, type GridElement, GridInterface } from '@simple-html/grid';
+     *
+     * declare const config: GridConfig;
+     *
      * const gridInterface = new GridInterface(config, datasource);
      * const element = document.createElement('simple-html-grid') as GridElement;
      * element.connectInterface(gridInterface);
-     * container.appendChild(element);
+     * host.appendChild(element);
      * ```
      */
     constructor(gridConfig: GridConfig, datasource: Datasource<T>) {
@@ -138,6 +150,7 @@ export class GridInterface<T> {
      * It is a copy: changing it changes nothing in the grid, and what the user does later does not
      * change it. Give it to {@link setState} to go back to it.
      *
+     * @sample grid-state
      * @example
      * ```ts
      * const state = gridInterface.getState();
@@ -179,8 +192,13 @@ export class GridInterface<T> {
      *
      * @param state the parts to set
      *
+     * @sample grid-state
      * @example
      * ```ts
+     * import type { GridState } from '@simple-html/grid';
+     *
+     * declare const savedState: GridState;
+     *
      * // a whole state, saved before
      * gridInterface.setState(savedState);
      *
@@ -200,8 +218,11 @@ export class GridInterface<T> {
      * no grouping, no filter, no header filters. A `layout` or `initialState` given to
      * {@link updateConfig} since is the one it goes back to.
      *
+     * @sample grid-state
      * @example
      * ```ts
+     * import { GridInterface } from '@simple-html/grid';
+     *
      * const gridInterface = new GridInterface(
      *     {
      *         layout: { center: [{ fields: ['name'], width: 100 }, { fields: ['age'], width: 100 }] },
@@ -255,6 +276,7 @@ export class GridInterface<T> {
      *
      * @param config the parts of the config to change
      *
+     * @sample misc-options
      * @example
      * ```ts
      * gridInterface.updateConfig({ readonly: false }); // editing on
@@ -398,6 +420,8 @@ export class GridInterface<T> {
      *
      * @example
      * ```ts
+     * import { Datasource, type Formatter } from '@simple-html/grid';
+     *
      * // a formatter that reads a setting of your own
      * let decimals = 2;
      * const price: Formatter = {
@@ -426,9 +450,13 @@ export class GridInterface<T> {
      *
      * @example
      * ```ts
-     * const gridInterface = createGrid(container, { config, datasource });
+     * import { createGrid, type GridConfig } from '@simple-html/grid';
+     *
+     * declare const config: GridConfig;
+     *
+     * const gridInterface = createGrid(host, { config, datasource });
      * // ...
-     * gridInterface.destroy(); // container is empty again
+     * gridInterface.destroy(); // host is empty again
      * ```
      */
     public destroy() {
@@ -452,9 +480,14 @@ export class GridInterface<T> {
      * {@link createGrid}, or from a `grid-connected` handler for an element you connect yourself. It
      * does nothing before the interface is connected to an element.
      *
+     * @sample misc-options
      * @example
      * ```ts
-     * const gridInterface = createGrid(container, { config, datasource });
+     * import { createGrid, type GridConfig } from '@simple-html/grid';
+     *
+     * declare const config: GridConfig;
+     *
+     * const gridInterface = createGrid(host, { config, datasource });
      * gridInterface.autoResizeColumns();
      * ```
      */
@@ -466,8 +499,9 @@ export class GridInterface<T> {
 
     /**
      * Opens the filter editor, the dialog where the user builds a filter of conditions and AND/OR
-     * groups. It starts with the filter the datasource has now. The grid's row menu and header have
-     * no button for it: call this from a button of your own.
+     * groups. It starts with the filter the datasource has now. The user opens it from the header
+     * filter's menu ("Advanced Filter") or by clicking the filter shown in the footer; call this from a
+     * button of your own.
      *
      * Does nothing while the grid is not on the page.
      *
@@ -518,7 +552,9 @@ export class GridInterface<T> {
      *
      * @example
      * ```ts
-     * const gridInterface = createGrid(container, {
+     * import { createGrid } from '@simple-html/grid';
+     *
+     * const gridInterface = createGrid(host, {
      *     config: { columns: { phone: {} }, layout: { center: [{ fields: ['name'], width: 100 }] } },
      *     datasource
      * });
@@ -564,6 +600,8 @@ export class GridInterface<T> {
      * moved left when it sticks out on the right.
      * @param entries what the menu shows, in order. Entries whose `visible` returns `false` are left out
      *
+     * @sample context-menu
+     * @sample dropdown-grid
      * @example
      * ```ts
      * // a value picker on a cell
@@ -582,6 +620,8 @@ export class GridInterface<T> {
      * });
      *
      * // an element of your own under a cell, closed with the grid's menus
+     * declare const cell: HTMLElement;
+     * declare const myPicker: HTMLElement;
      * gridInterface.openMenu(cell, [{ type: 'block', id: 'picker', element: myPicker }]);
      * ```
      */
@@ -607,6 +647,7 @@ export class GridInterface<T> {
      *
      * Replaces v5's `removeContextMenuElement()`.
      *
+     * @sample dropdown-grid
      * @example
      * ```ts
      * // moving to another cell closes a dropdown opened from a cell
@@ -633,6 +674,7 @@ export class GridInterface<T> {
      * @param handler called with the payload every time the event is sent
      * @returns a function that unsubscribes the handler
      *
+     * @sample events
      * @example
      * ```ts
      * const off = gridInterface.on('cell-click', (data) => {

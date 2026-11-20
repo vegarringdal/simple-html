@@ -13,8 +13,11 @@ import type { Formatter } from './formatter';
  *   start of its day
  * - `placeholder` - `'DD.MM.YYYY'`
  *
+ * @sample formatters
  * @example
  * ```ts
+ * import { Datasource, DateFormatterDDMMYYYY } from '@simple-html/grid';
+ *
  * DateFormatterDDMMYYYY.format(new Date(2026, 10, 20)); // '20.11.2026'
  * DateFormatterDDMMYYYY.parseFilter('20.11.2026'); // Date 2026-11-20 00:00:00
  *
@@ -31,14 +34,18 @@ import type { Formatter } from './formatter';
  * ```
  */
 export const DateFormatterDDMMYYYY = {
+    /** a `Date` as text, `''` for a blank or invalid date */
     format(value: unknown): string {
         return formatDate(value, 'DMY', false);
     },
+    /** typed text as a `Date`, at the current time of day; a `Date` passes through */
     parse(text: unknown): Date | '' | null | undefined {
         return parseDate(text, 'DMY', false, false);
     },
+    /** typed filter text as a `Date` at 00:00:00 */
     parseFilter(text: unknown): Date | '' | null | undefined {
         return parseDate(text, 'DMY', false, true);
     },
+    /** shown in an empty header filter */
     placeholder: 'DD.MM.YYYY'
 } satisfies Formatter;

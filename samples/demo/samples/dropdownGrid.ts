@@ -7,52 +7,13 @@ export const dropdownGrid: DemoSample = {
     group: 'Editing',
     description:
         'A cell can show a focus button via the focusButton column option. Here clicking it (or hitting Space in the cell) opens a second, filterable grid as a dropdown and writes the picked value back. The dropdown is opened with openMenu() as a block, so the grid closes it as it does its own menus: a click outside, another menu. The company cell itself is readonly, so the dropdown is the only way to change the value.',
-    code: `
-// in the main grid config, enable the focus button on the column.
-// NB: the grid defaults to readonly: true, so with this option the button
-// only shows when the config has readonly: false.
-// readonly on the column blocks manual typing, so the dropdown
-// (button or Space in the cell) is the only way to set the value
-columns: {
-    company: { readonly: true, focusButton: 'SHOW_IF_GRID_NOT_READONLY' }
-}
-
-gridInterface.on('cell-focus-button-click', (data) => {
-    if (data.attribute === 'company') {
-        // build a small grid to use as dropdown. The element is placed by hand here, not with
-        // createGrid: openMenu() puts it on the page (the grid adds its simple-html-grid class itself)
-        const dropdown = document.createElement('simple-html-grid') as GridElement;
-        dropdown.style.width = '300px';
-        dropdown.style.height = '250px';
-
-        const localDatasource = new Datasource();
-        localDatasource.setData(companies); // [{ company: 'ACME CORP' }, ...]
-
-        const localInterface = new GridInterface(dropdownConfig, localDatasource);
-        dropdown.connectInterface(localInterface);
-
-        // clicking a row in the dropdown writes the value back
-        dropdown.onclick = (x) => {
-            if (x.target.classList.contains('simple-html-grid-cell-input')) {
-                gridInterface.closeMenu();
-                data.rowData.company = localDatasource.currentEntity.company;
-                gridInterface.refresh(); // show the value
-                data.target.focus(); // back to the cell
-            }
-        };
-
-        // a menu with the grid as a block: opened under the cell, kept in the window, and closed
-        // with the grid's menus - a click outside it, another menu opening, closeMenu()
-        gridInterface.openMenu(data.cell, [{ type: 'block', id: 'company-picker', element: dropdown }]);
-    }
-});
-
-// moving to another cell closes an open dropdown
-gridInterface.on('cell-row-focus', () => gridInterface.closeMenu());
-`,
     run(stage) {
         const ui = createStage(stage);
         const config = baseGridConfig();
+        // the focus button on the company cells. NB: the grid defaults to readonly: true, so with this
+        // option the button only shows when the config has readonly: false (baseGridConfig has).
+        // readonly on the column blocks typing, so the dropdown (button or Space in the cell) is the
+        // only way to set the value
         config.columns = { company: { readonly: true, focusButton: 'SHOW_IF_GRID_NOT_READONLY' } };
         const { gridInterface } = mountGrid(ui.gridHost, config);
 
@@ -65,7 +26,8 @@ gridInterface.on('cell-row-focus', () => gridInterface.closeMenu());
             if (data.attribute === 'company') {
                 const width = 300;
 
-                // placed by hand: openMenu() puts it on the page, the grid adds its css class itself
+                // a small grid as the dropdown. Placed by hand, not with createGrid: openMenu() puts it
+                // on the page, the grid adds its css class itself
                 const dropdown = document.createElement('simple-html-grid') as GridElement;
                 dropdown.style.width = `${width}px`;
                 dropdown.style.height = '250px';
@@ -112,7 +74,8 @@ gridInterface.on('cell-row-focus', () => gridInterface.closeMenu());
                     }
                 };
 
-                // a menu with the grid as a block, under the cell: closed with the grid's menus
+                // a menu with the grid as a block: opened under the cell, kept in the window, and closed
+                // with the grid's menus - a click outside it, another menu opening, closeMenu()
                 gridInterface.openMenu(data.cell, [{ type: 'block', id: 'company-picker', element: dropdown }]);
 
                 // focus the filter input in a timeout, so the Space that opened it is not typed into it

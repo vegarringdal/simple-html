@@ -124,7 +124,7 @@ what to change in your code. Released in phases.
   `group(groups, { add })`, `select(row, { notify })`, `deselectAll({ notify })`,
   `addNewEmpty(row, { scrollTo })`, `removeData(rows, { refilter })` and the container's
   `setData(rows, { add, isNew })`. The defaults are unchanged. In plain js a boolean passed the v5
-  way is ignored, the defaults apply.
+  way throws a `TypeError` that shows the v6 form.
 - **The `all` flags are methods**: `markForDeletion(null, true)` is `markAllForDeletion()`,
   `removeData(null, true)` is `removeAllData()`, on the datasource and the container.
   `markForDeletion()` / `removeData()` take a row or a list, not `null`.

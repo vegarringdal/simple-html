@@ -863,6 +863,31 @@ Phase 1 is complete with this step: 500 tests at the start of v6, 884 now.
 
 Phase 2 is complete with this step: 1012 tests.
 
+### v6 docs - the demo is the docs site
+
+* the samples app is the docs site: Guides (`guides/NN-slug.md`, rendered with `marked` at build
+  time), Samples, and API pages built from typedoc's model, all in the demo shell, published to
+  gh-pages by the existing workflow. Hash routes `#guide/..`, `#sample/..`, `#api/..`; old
+  `#<sampleId>` links still work.
+* guides link the way they would on GitHub (`04-datasource.md#selection`), the build turns them
+  into site links
+* a ```` ```sample <id> ```` block in a guide embeds the running sample with its source
+* samples show their real source file (`?raw` import through an esbuild plugin); the hand copied
+  `code` strings, which could drift from what ran, are gone
+* `npm run check:docs`: typedoc validation as errors (including "not documented"), every
+  ```` ```ts ```` block in the guides and every `@example` compiled against `dist` (241 blocks),
+  every sample id and guide link resolved. A prelude declares `datasource`, `gridInterface` and
+  `host` as globals so examples stay short.
+* `.github/workflows/checks.yml` runs typecheck, tests, lint, check:typings and check:docs on
+  push and pull requests, one job each; the demo deploy does not wait for it
+* `.claude` excluded from biome - `.claude/settings.json` is tracked and its formatting was the one
+  lint error left
+* 11 guides, JSDoc on every public export (158 undocumented -> 0), 107 `@sample` links, README
+  rewritten
+* `docs/` is gitignored (typedoc output), so the site build code lives in `scripts/site`
+
+Writing the guides against the real code found mismatches - fixed next, see the step after this.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

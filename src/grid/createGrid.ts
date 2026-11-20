@@ -7,6 +7,17 @@ import { GridInterface } from './gridInterface';
  * What {@link createGrid} needs: the config and the datasource.
  *
  * @typeParam T the type of the rows
+ *
+ * @example
+ * ```ts
+ * import { type CreateGridOptions, createGrid, Datasource } from '@simple-html/grid';
+ *
+ * const options: CreateGridOptions<{ name: string }> = {
+ *     config: { layout: { center: [{ fields: ['name'], width: 150 }] } },
+ *     datasource: new Datasource<{ name: string }>()
+ * };
+ * const gridInterface = createGrid(host, options);
+ * ```
  */
 export interface CreateGridOptions<T> {
     /** the columns, the layout and the options, see {@link GridConfig} */
@@ -29,6 +40,7 @@ export interface CreateGridOptions<T> {
  * @param options the config and the datasource
  * @returns the grid interface, to work with the grid
  *
+ * @sample basic-grid
  * @example
  * ```ts
  * import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';

@@ -13,8 +13,14 @@ import type { GridInterface } from './gridInterface';
  * An entry with a `visible` callback that returns `false` is left out. A section header or separator
  * is shown as long as it is in the list: hide it together with the entries under it.
  *
+ * @sample context-menu
  * @example
  * ```ts
+ * import type { MenuEntry } from '@simple-html/grid';
+ *
+ * declare const pick: (fruit: string | null) => void;
+ * declare const event: MouseEvent;
+ *
  * const entries: MenuEntry[] = [
  *     { type: 'section', id: 'fruit', label: 'Pick a fruit:' },
  *     { id: 'fruit.apple', label: 'Apple', action: () => pick('Apple') },
@@ -32,8 +38,11 @@ export type MenuEntry = MenuItem | MenuSection | MenuSeparator | MenuBlock;
  *
  * `type` can be left out, an entry without one is an item.
  *
+ * @sample context-menu
  * @example
  * ```ts
+ * import { isGroupRow, type MenuItem } from '@simple-html/grid';
+ *
  * const logRow: MenuItem = {
  *     id: 'my.logRow',
  *     label: 'Log row',
@@ -72,10 +81,13 @@ export interface MenuItem {
  *
  * @example
  * ```ts
+ * import type { MenuSection } from '@simple-html/grid';
+ *
  * const section: MenuSection = { type: 'section', id: 'my.export', label: 'Export:' };
  * ```
  */
 export interface MenuSection {
+    /** always `'section'` */
     type: 'section';
     /** a name for the entry, unique in its menu. See {@link MENU_IDS} for the grid's own */
     id: string;
@@ -90,10 +102,13 @@ export interface MenuSection {
  *
  * @example
  * ```ts
+ * import type { MenuSeparator } from '@simple-html/grid';
+ *
  * const separator: MenuSeparator = { type: 'separator', id: 'my.separator' };
  * ```
  */
 export interface MenuSeparator {
+    /** always `'separator'` */
     type: 'separator';
     /** a name for the entry, unique in its menu. See {@link MENU_IDS} for the grid's own */
     id: string;
@@ -112,8 +127,15 @@ export interface MenuSeparator {
  * Also for something bigger than a list of items in a menu of your own: a second grid as a dropdown,
  * which then closes with the grid's menus (outside click, scroll, another menu opening).
  *
+ * @sample dropdown-grid
  * @example
  * ```ts
+ * import { Datasource, type GridConfig, type GridElement, GridInterface } from '@simple-html/grid';
+ *
+ * declare const cell: HTMLElement;
+ * declare const dropdownConfig: GridConfig;
+ * const dropdownDatasource = new Datasource();
+ *
  * // a grid to pick from, opened under a cell
  * const dropdown = document.createElement('simple-html-grid') as GridElement;
  * dropdown.style.width = '300px';
@@ -123,6 +145,7 @@ export interface MenuSeparator {
  * ```
  */
 export interface MenuBlock {
+    /** always `'block'` */
     type: 'block';
     /** a name for the entry, unique in its menu. See {@link MENU_IDS} for the grid's own */
     id: string;
@@ -138,6 +161,8 @@ export interface MenuBlock {
  *
  * @example
  * ```ts
+ * import { isGroupRow, type MenuItem } from '@simple-html/grid';
+ *
  * const copyKey: MenuItem = {
  *     id: 'my.copyKey',
  *     label: 'Copy key',
@@ -186,6 +211,11 @@ export interface MenuContext {
  *
  * @example
  * ```ts
+ * import type { MenuEntry, MenuPosition } from '@simple-html/grid';
+ *
+ * declare const button: HTMLButtonElement;
+ * declare const entries: MenuEntry[];
+ *
  * const rect = button.getBoundingClientRect();
  * const position: MenuPosition = { x: rect.left, y: rect.bottom };
  * gridInterface.openMenu(position, entries);
@@ -211,8 +241,11 @@ export interface MenuPosition {
  * The grid's own entries are new objects every time, change them as you like. Left out, a menu shows
  * its defaults.
  *
+ * @sample context-menu
  * @example
  * ```ts
+ * import type { GridConfig } from '@simple-html/grid';
+ *
  * const config: GridConfig = {
  *     layout: { center: [{ fields: ['name'], width: 150 }] },
  *     menus: {
@@ -319,8 +352,13 @@ export interface GridMenus {
  * | `filter.operator.contains` | Contains | a text field |
  * | `filter.values` | the value list: "Search:", search box, a checkbox per value, "Run Search" - a {@link MenuBlock} | a text field |
  *
+ * @sample context-menu
  * @example
  * ```ts
+ * import { type GridConfig, type GridLayout, MENU_IDS } from '@simple-html/grid';
+ *
+ * declare const layout: GridLayout;
+ *
  * // a row menu without the copy entries
  * const config: GridConfig = {
  *     layout,
@@ -331,6 +369,7 @@ export interface GridMenus {
  * ```
  */
 export const MENU_IDS = {
+    /** the row menu's ids, right click on a cell */
     row: [
         'row.copy',
         'row.copy.cell',
@@ -353,6 +392,7 @@ export const MENU_IDS = {
         'row.summary.min',
         'row.summary.avg'
     ],
+    /** the header menu's ids, right click on a header label */
     header: [
         'header.column',
         'header.column.pinLeft',
@@ -372,6 +412,7 @@ export const MENU_IDS = {
         'header.grouping.collapseAll',
         'header.grouping.clear'
     ],
+    /** the filter menu's ids, right click on a header filter */
     filter: [
         'filter.filter',
         'filter.filter.clear',

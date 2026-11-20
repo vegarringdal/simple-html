@@ -7,8 +7,11 @@ import type { Formatter } from './formatter';
  *   `String()`: 0 is `'0'`, false is `'false'`
  * - `parse` / `parseFilter` - the text as it is
  *
+ * @sample custom-formatter
  * @example
  * ```ts
+ * import { Datasource, TextFormatter } from '@simple-html/grid';
+ *
  * TextFormatter.format(null); // ''
  * TextFormatter.format(42); // '42'
  *
@@ -20,9 +23,11 @@ import type { Formatter } from './formatter';
  * ```
  */
 export const TextFormatter = {
+    /** the value as text, `''` for null and undefined */
     format(value: unknown): string {
         return value === null || value === undefined ? '' : String(value);
     },
+    /** the text as it is */
     parse(text: string): string {
         return text;
     }

@@ -11,6 +11,14 @@
  *
  * @example
  * ```ts
+ * import { Datasource } from '@simple-html/grid';
+ *
+ * interface Person {
+ *     id: number;
+ *     name: string;
+ *     city: string;
+ * }
+ *
  * const datasource = new Datasource<Person>({ key: 'id' });
  * datasource.setData([{ id: 7, name: 'Ann', city: 'Oslo' }]);
  * datasource.getDataRows()[0].city = 'Bergen';
@@ -45,8 +53,19 @@ export type ModifiedEntity<T> = Partial<T> & {
  * - `datetime`, and every other field - to the second, the milliseconds are ignored (they are not
  *   shown, and typing a time stamps the current ones). A time only change is an edit.
  *
+ * @sample editing
  * @example
  * ```ts
+ * import { Datasource } from '@simple-html/grid';
+ *
+ * interface Person {
+ *     id: number;
+ *     name: string;
+ *     born: Date | null;
+ *     lastLogin: Date | null;
+ * }
+ * declare const rowsFromServer: Person[];
+ *
  * const datasource = new Datasource<Person>({ key: 'id', fields: { born: 'date', lastLogin: 'datetime' } });
  * datasource.setData(rowsFromServer);
  * // ... the user edits, adds and deletes rows in the grid

@@ -8,16 +8,17 @@ import {
 } from '@simple-html/grid';
 
 /**
- * one entry per tab in the samples app
- * `code` is the curated "how to use" snippet shown above the running demo,
+ * one sample of the docs site, a file in samples/: its page is #sample/<id>, and a guide shows it
+ * running with a ```sample <id> block. The site shows the sample's file as its source (sampleList.ts),
+ * so what the file does is what the reader sees.
  * `run` mounts the live demo into the stage element
  */
 export interface DemoSample {
     id: string;
     title: string;
+    /** the group in the sidebar */
     group: string;
     description: string;
-    code: string;
     run: (stage: HTMLElement) => void;
 }
 

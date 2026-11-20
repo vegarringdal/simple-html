@@ -1,22 +1,27 @@
 import type { Grid } from '../grid';
 
 /**
- * Default tooltip texts, keyed by id.
+ * Default tooltip texts, keyed by id: the tooltips of the filter editor's buttons and icons.
  *
- * The id is what you override with `tooltipText` in the grid config:
+ * The id is what you override with `tooltipText` in the grid config. `data-tooltip` is written to the
+ * elements no matter what `tooltips` is set to, so you can hook up your own tooltip library and just
+ * turn the built in one off.
  *
+ * @sample tooltips
+ * @example
  * ```ts
+ * import { type GridConfig, TOOLTIPS } from '@simple-html/grid';
+ *
+ * TOOLTIPS['filterEditor.addCondition']; // 'Add a condition to this group'
+ *
  * const gridConfig: GridConfig = {
+ *     layout: { center: [{ fields: ['name'], width: 150 }] },
  *     tooltips: true, // default, set false to not render the built in tooltip
  *     tooltipText: {
  *         'filterEditor.addCondition': 'Legg til betingelse'
- *     },
- *     ...
+ *     }
  * };
  * ```
- *
- * `data-tooltip` is written to the elements no matter what `tooltips` is set to, so you can
- * hook up your own tooltip library and just turn the built in one off.
  */
 export const TOOLTIPS: Record<string, string> = {
     'filterEditor.title': 'Drag to move the dialog',

@@ -38,6 +38,7 @@ body.dark {
 
 .sidebar-nav,
 .code-scroll,
+.doc-scroll,
 .demo-log {
     scrollbar-color: var(--demo-scroll-thumb) var(--demo-scroll-track);
     scrollbar-width: thin;
@@ -45,6 +46,7 @@ body.dark {
 
 .sidebar-nav::-webkit-scrollbar,
 .code-scroll::-webkit-scrollbar,
+.doc-scroll::-webkit-scrollbar,
 .demo-log::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -52,6 +54,7 @@ body.dark {
 
 .sidebar-nav::-webkit-scrollbar-thumb,
 .code-scroll::-webkit-scrollbar-thumb,
+.doc-scroll::-webkit-scrollbar-thumb,
 .demo-log::-webkit-scrollbar-thumb {
     background-color: var(--demo-scroll-thumb);
     box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
@@ -59,6 +62,7 @@ body.dark {
 
 .sidebar-nav::-webkit-scrollbar-track,
 .code-scroll::-webkit-scrollbar-track,
+.doc-scroll::-webkit-scrollbar-track,
 .demo-log::-webkit-scrollbar-track {
     background-color: var(--demo-scroll-track);
 }
@@ -116,6 +120,26 @@ body {
     padding: 6px 0 10px;
 }
 
+/* Guides, Samples, API: folds */
+.nav-section-title {
+    padding: 14px 16px 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.nav-section-title::before {
+    content: '▸ ';
+    color: #6b7280;
+}
+
+.nav-section[open] > .nav-section-title::before {
+    content: '▾ ';
+}
+
 .nav-group {
     padding: 14px 16px 4px;
     font-size: 10px;
@@ -131,6 +155,8 @@ body {
     padding: 6px 16px;
     font-size: 13px;
     text-align: left;
+    text-decoration: none;
+    overflow-wrap: anywhere;
     color: #d1d5db;
     background: none;
     border: none;
@@ -365,4 +391,147 @@ body {
 
 .demo-cell-high {
     background: rgba(34, 197, 94, 0.25);
+}
+
+/* ------------------------------------------------- guides and API pages */
+
+.doc-scroll {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.doc {
+    max-width: 920px;
+    padding: 16px 22px 48px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.doc h1 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.doc h2 {
+    margin: 32px 0 10px;
+    padding-bottom: 4px;
+    font-size: 17px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--demo-border);
+}
+
+.doc h3 {
+    margin: 22px 0 8px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.doc a {
+    color: var(--demo-accent);
+}
+
+.doc :not(pre) > code {
+    padding: 1px 5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 12.5px;
+    background: var(--demo-panel);
+    border: 1px solid var(--demo-border);
+    border-radius: 4px;
+}
+
+.doc table {
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+}
+
+.doc th,
+.doc td {
+    padding: 5px 10px;
+    text-align: left;
+    vertical-align: top;
+    border: 1px solid var(--demo-border);
+}
+
+.doc th {
+    background: var(--demo-panel);
+}
+
+.doc blockquote {
+    margin: 12px 0;
+    padding: 2px 14px;
+    color: var(--demo-muted);
+    border-left: 3px solid var(--demo-border);
+}
+
+/* ts blocks in guides and JSDoc, and the signatures on the API pages: the code panel's colors */
+.doc pre.code-block {
+    margin: 12px 0;
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #abb2bf;
+    background: #0d1424;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    scrollbar-color: #334155 #101a30;
+    scrollbar-width: thin;
+}
+
+.doc pre.code-block a.tok-type {
+    text-decoration: underline dotted;
+}
+
+.doc-kind {
+    margin: -8px 0 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--demo-muted);
+}
+
+.doc-member {
+    padding-top: 2px;
+}
+
+.doc-samples {
+    font-size: 13px;
+}
+
+.doc-missing {
+    color: #ef4444;
+}
+
+/* a live sample in a guide: the source and the running sample, in a frame */
+.doc-sample {
+    margin: 16px 0;
+    padding: 0 0 4px;
+    background: var(--demo-bg);
+    border: 1px solid var(--demo-border);
+    border-radius: 8px;
+}
+
+.doc-sample-title {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.doc-sample-title a {
+    font-weight: normal;
+}
+
+.doc-sample .code-panel {
+    margin: 8px 12px 0;
+}
+
+.doc-sample .stage {
+    flex: none;
+    height: 460px;
+    margin: 12px;
 }

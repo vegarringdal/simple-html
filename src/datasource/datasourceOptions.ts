@@ -13,14 +13,17 @@ import type { SelectionMode } from './selectionMode';
  *   type from here. See {@link FieldConfig} and {@link FieldType}.
  * - `formatters` - the default formatter per type, for the fields without a formatter of their own.
  *   The types left out keep the built-in default (see {@link FieldType}).
- * - `selectionMode` - `'multiple'` (default), `'single'` or `'none'`.
- * - `container` - share the data with another datasource: both show the same rows, each with its
- *   own filter, sort, grouping and selection. Give the key to the container
+ * - `selectionMode` - `'multiple'` (default), `'single'` or `'none'`. A grid replaces it with its own
+ *   `GridConfig.selectionMode` (default `'multiple'`): with a grid, set it in the grid config.
+ * - `container` - share the data with another datasource, each with its own filter, sort, grouping
+ *   and selection. Rows added or removed through one show in the other after its
+ *   `reloadDatasource()` (or a `filter()`) - they are not kept in sync on their own. Give the key to the container
  *   (`new DataContainer('id')`); a `key` that is not the container's throws. The edits are tracked
  *   by the container, with the field types of every datasource on it (a `date` field compares on
  *   the day): a field listed by two of them must have the same type in both, the second datasource
  *   throws if not. A field listed by one only has that one's type.
  *
+ * @sample formatters
  * @example
  * ```ts
  * import { DataContainer, Datasource, DateFormatterDDMMYYYY, NumberFormatterComma } from '@simple-html/grid';
@@ -59,11 +62,14 @@ export interface DatasourceOptions {
 
     /**
      * the default formatter for each type, used by the fields that have no formatter of their own
+     *
+     * @sample formatters
      */
     formatters?: Partial<Record<FieldType, Formatter>>;
 
     /**
-     * how rows can be selected, default `'multiple'`
+     * how rows can be selected, default `'multiple'`. A grid sets its own `GridConfig.selectionMode` on
+     * the datasource, which replaces this one
      */
     selectionMode?: SelectionMode;
 

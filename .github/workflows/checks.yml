@@ -1,0 +1,36 @@
+# The checks of the repo, on every push and pull request. Each check is a job of its own, so they
+# all run and report even when one of them fails.
+# The demo workflow (demo.yml) does not wait for these: the site is deployed either way.
+name: checks
+
+on:
+    push:
+    pull_request:
+
+permissions:
+    contents: read
+
+jobs:
+    check:
+        name: ${{ matrix.check }}
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                check:
+                    - npm run typecheck
+                    - npx vitest run
+                    - npx biome check . --diagnostic-level=error
+                    - npm run check:typings
+                    - npm run check:docs
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: npm
+
+            - run: npm ci
+
+            - run: ${{ matrix.check }}

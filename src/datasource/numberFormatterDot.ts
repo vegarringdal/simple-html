@@ -48,8 +48,11 @@ export function formatNumber(value: unknown, separator: '.' | ','): string {
  * - `parse` / `parseFilter` - `'12.5'` and `'12,5'` both give 12.5. A number passes through,
  *   null and undefined give null, text that is no number (`''` too) gives 0
  *
+ * @sample formatters
  * @example
  * ```ts
+ * import { Datasource, NumberFormatterDot } from '@simple-html/grid';
+ *
  * NumberFormatterDot.format(1234.5); // '1234.5'
  * NumberFormatterDot.parse('12,5'); // 12.5
  *
@@ -63,9 +66,11 @@ export function formatNumber(value: unknown, separator: '.' | ','): string {
  * ```
  */
 export const NumberFormatterDot = {
+    /** a number as text with a dot, `''` for anything that is no number */
     format(value: unknown): string {
         return formatNumber(value, '.');
     },
+    /** typed text as a number: `'12.5'` and `'12,5'` are 12.5 */
     parse(text: unknown): number | null {
         return parseNumber(text);
     }

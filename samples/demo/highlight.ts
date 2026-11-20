@@ -1,6 +1,7 @@
 /**
  * tiny dependency-free typescript syntax highlighter for the code panels
- * returns html with <span class="tok-*"> wrappers, input is fully escaped
+ * returns html with <span class="tok-*"> wrappers, input is fully escaped.
+ * A template literal is one string, ${} in it included
  */
 
 const KEYWORDS = new Set([
@@ -62,7 +63,7 @@ function wrap(cls: string, text: string): string {
 
 export function highlightTs(code: string): string {
     const re =
-        /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")|(\b\d[\d_]*(?:\.\d[\d_]*)?\b)|([A-Za-z_$][A-Za-z0-9_$]*)/g;
+        /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`)|(\b\d[\d_]*(?:\.\d[\d_]*)?\b)|([A-Za-z_$][A-Za-z0-9_$]*)/g;
 
     let out = '';
     let last = 0;

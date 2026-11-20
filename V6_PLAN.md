@@ -31,12 +31,12 @@ every push. So the docs become the demo app, with three kinds of pages in the si
 
 Tasks:
 
-- [ ] Site build: markdown guides + `sample` blocks + API pages from typedoc's json, in the demo
+- [x] Site build: markdown guides + `sample` blocks + API pages from typedoc's json, in the demo
       shell, published by the existing gh-pages workflow. A small markdown library (`marked` or
       similar) as a devDependency, not a hand written parser. **M**
-- [ ] Samples show their real source file. **S**
-- [ ] **JSDoc on every public export**, with an `@example` on everything a user calls. **S per item**
-- [ ] **Docs checked in CI**, so they can not rot:
+- [x] Samples show their real source file. **S**
+- [x] **JSDoc on every public export**, with an `@example` on everything a user calls. **S per item**
+- [x] **Docs checked in CI**, so they can not rot:
   - typedoc validation as an error: every public export documented, no broken `{@link}`s
     (it already runs with 0 errors and 0 warnings - keep it that way)
   - every `@example` and every guide ```` ```ts ```` block is pulled out into a file and
@@ -44,7 +44,8 @@ Tasks:
     leaving a wrong example behind.
 
   **S-M**
-- [ ] **Guides**, written as each area lands: **M in total**
+- [ ] **Guides**, written as each area lands: **M in total** - 11 written after phase 2; theming,
+      keyboard, texts and accessibility come with phase 3
   - getting started - install, css, first grid
   - config reference - every option, its default, and a sample showing it
   - datasource - data, editing, change tracking, keys
@@ -56,7 +57,7 @@ Tasks:
   - texts / translation, and accessibility
 - [ ] **Migration guide v5 -> v6** - every breaking change with before/after code. Collected while
       working, not reconstructed at the end. **S per item**
-- [ ] README rewritten around the v6 API and pointing to the site, CHANGELOG entry per change. **S**
+- [x] README rewritten around the v6 API and pointing to the site, CHANGELOG entry per change. **S**
 
 ## Phase 0 - foundations, they make everything after this safer
 

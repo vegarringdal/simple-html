@@ -6,21 +6,77 @@ import type { IDateConfig, IStyle } from './interfaces';
 import { header } from './templates/header';
 import { month } from './templates/month';
 
+/**
+ * A date picker or a calendar: its config, the selected dates and the `date-select` event. It is shown in
+ * a `<simple-html-date>` element ({@link DateElement}). The grid uses one for its date cells and date
+ * header filters; make one yourself for a date picker or calendar outside a grid. See {@link IDateConfig}
+ * for the two modes.
+ *
+ * Import `@simple-html/grid/date.css` for its styles.
+ *
+ * @example
+ * ```ts
+ * import { type DateElement, DateInterface, type IDateConfig } from '@simple-html/grid';
+ * import '@simple-html/grid/date.css';
+ *
+ * declare const config: IDateConfig; // see IDateConfig, with datepicker: true
+ *
+ * const dateInterface = new DateInterface(config);
+ * const element = document.createElement('simple-html-date') as DateElement;
+ * element.classList.add('simple-html-date');
+ * element.connectInterface(dateInterface);
+ * host.appendChild(element);
+ *
+ * dateInterface.on('date-select', (date) => {
+ *     console.log(date ? date.toISOString() : 'cleared');
+ * });
+ * ```
+ */
 export class DateInterface {
+    /**
+     * The selected days, as timestamps (`date.getTime()` of the day at 00:00 in a calendar, at the
+     * picked time in a date picker). Read it with {@link getSelected}.
+     */
     public selected = new Set();
+    /**
+     * The day clicked last, the start of a shift+click range. `null` after a day was clicked off again.
+     */
     public lastSelected: Date | null = null;
-    // undefined until connected, null after disconnectElement()
+    /**
+     * The element it is shown in: `undefined` until connected, `null` after the element left the page.
+     */
     public element?: DateElement | null;
+    /**
+     * The config. The picker replaces it with a changed copy when the month or time changes
+     * (`nextMonth()`, `gotoNow()` ...), so read it here, not from the object you passed in.
+     */
     public config: IDateConfig;
     /**
      * the handlers subscribed with on()
      */
     private events = new Emitter<DateEvents>();
 
+    /**
+     * @param config what to show, see {@link IDateConfig}. Not copied: a date picker sets the start
+     * month and year, the time and `datepickerDate` in it
+     *
+     * @example
+     * ```ts
+     * import { DateInterface, type IDateConfig } from '@simple-html/grid';
+     *
+     * declare const config: IDateConfig;
+     * const dateInterface = new DateInterface({ ...config, datepicker: false, monthsToShow: 3, monthColumns: 3 });
+     * ```
+     */
     constructor(config: IDateConfig) {
         this.config = config;
     }
 
+    /**
+     * Called by `element.connectInterface()`: shows the picker in the element. You do not need to call it.
+     *
+     * @param element the `<simple-html-date>` element
+     */
     connectGridInterface(element: DateElement) {
         this.element = element;
         if (this.element) {
@@ -29,12 +85,23 @@ export class DateInterface {
         }
     }
 
+    /**
+     * Called by the element when it is put on the page: renders the picker in it. You do not need to call
+     * it.
+     *
+     * @param element the `<simple-html-date>` element
+     */
     connectElement(element: DateElement) {
         this.element = element;
         this.checkDatePicker();
         this.render();
     }
 
+    /**
+     * Called when the element connects: in a date picker it sets the start month and year, the hour and
+     * the minutes from `datepickerDate` (today when it is blank) and selects that date. Does nothing in a
+     * calendar. You do not need to call it.
+     */
     checkDatePicker() {
         if (this.config.datepicker) {
             if (!this.config.datepickerDate) {
@@ -52,7 +119,8 @@ export class DateInterface {
     }
 
     /**
-     * called when the element is removed from the dom, unsubscribes every handler
+     * Called by the element when it is removed from the page: forgets the element and unsubscribes every
+     * handler subscribed with {@link on}. You do not need to call it.
      */
     disconnectElement() {
         this.element = null;
@@ -81,6 +149,11 @@ export class DateInterface {
      *
      * @example
      * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * const input = document.querySelector('input')!;
      * const off = dateInterface.on('date-select', (date) => {
      *     input.value = date ? date.toLocaleString() : '';
      * });
@@ -92,24 +165,74 @@ export class DateInterface {
         return this.events.on(type, handler);
     }
 
+    /**
+     * Not implemented: it only logs a warning.
+     *
+     * @param fromDate the first date of the range
+     * @param toDate the last date of the range
+     */
     selectRangeWithFromTo(fromDate: Date, toDate: Date) {
         console.warn('Not implemented', fromDate, toDate);
     }
 
+    /**
+     * Not implemented: it only logs a warning.
+     *
+     * @param StyleArray the dates to style, see {@link IStyle}
+     */
     styleRange(StyleArray: IStyle[]) {
         // rerun in you have priorty colors, start with lowest
         console.warn('Not implemented', StyleArray);
     }
 
+    /**
+     * The selected days, as timestamps (numbers): the days clicked in a calendar, the date picked in a
+     * date picker. In the order they were selected.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * const dates = dateInterface.getSelected().map((time) => new Date(time as number));
+     * ```
+     */
     getSelected() {
         return Array.from(this.selected);
     }
 
+    /**
+     * Unselects every day and renders the picker again.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * dateInterface.clearSelection();
+     * dateInterface.getSelected(); // []
+     * ```
+     */
     clearSelection() {
         this.selected = new Set();
         this.render();
     }
 
+    /**
+     * Goes to the current date and time: picks it, shows its month. What the date picker's "Now" button
+     * does. Does not send `date-select`.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * dateInterface.gotoNow();
+     * ```
+     */
     gotoNow() {
         this.config = structuredClone(this.config);
         this.selected = new Set();
@@ -122,11 +245,43 @@ export class DateInterface {
         this.render();
     }
 
+    /**
+     * Replaces the selected days and renders the picker again.
+     *
+     * A day is shown selected when the selection has its timestamp (a number, the day at 00:00 in a
+     * calendar): `Date` objects are kept as given and are not matched, so pass `date.getTime()`.
+     *
+     * @param newSelectedDates the days to select
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * const days = [new Date(2026, 10, 20), new Date(2026, 10, 21)];
+     * // the type says Date, the calendar matches the timestamps
+     * dateInterface.setSelected(days.map((day) => day.getTime()) as unknown as Date[]);
+     * ```
+     */
     setSelected(newSelectedDates: Date[]) {
         this.selected = new Set(newSelectedDates);
         this.render();
     }
 
+    /**
+     * Shows the next month, what the arrow in the month header does.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * dateInterface.nextMonth();
+     * dateInterface.config.startMonth; // one later, 0 again after December
+     * ```
+     */
     nextMonth() {
         this.config = structuredClone(this.config);
         this.config.startMonth = this.config.startMonth + 1;
@@ -136,6 +291,18 @@ export class DateInterface {
         }
         this.render();
     }
+    /**
+     * Shows the month before, what the arrow in the month header does.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * dateInterface.prevMonth();
+     * ```
+     */
     prevMonth() {
         this.config = structuredClone(this.config);
         this.config.startMonth = this.config.startMonth - 1;
@@ -146,6 +313,20 @@ export class DateInterface {
         this.render();
     }
 
+    /**
+     * Renders the picker in its element again. The methods that change what is shown call it; call it
+     * after changing `config` yourself. Does nothing while no element is connected.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * dateInterface.config.hideDimmedDates = true;
+     * dateInterface.render();
+     * ```
+     */
     render() {
         if (!this.element) {
             return;

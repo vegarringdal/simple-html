@@ -7,29 +7,15 @@ export const events: DemoSample = {
     group: 'Events',
     description:
         'The datasource and the grid interface both have events. on(name, handler) subscribes to one event: the handler gets its payload (typed from DatasourceEvents / GridEvents), and on() returns a function that unsubscribes. Interact with the grid (click, edit, sort, filter) and watch the log.',
-    code: `
-// datasource: data, sorting, filtering, grouping and selection
-const off = datasource.on('collection-filtered', (data) => {
-    console.log('filtered by', data.info, '-', datasource.getDataRows().length, 'rows');
-});
-
-datasource.on('selection-change', () => {
-    console.log(datasource.getSelectedRows().length, 'rows selected');
-});
-
-// grid interface: cell clicks and focus, copy/paste from the row menu
-gridInterface.on('cell-click', (data) => {
-    console.log('clicked', data.attribute, 'in row', data.row, data.rowData);
-});
-
-// the handler stays subscribed until you call what on() returned
-off();
-`,
     run(stage) {
         const ui = createStage(stage);
         const { datasource, gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
 
-        // every event, so the log shows them all
+        // on(name, handler) subscribes, the handler gets the payload of the event. on() returns a
+        // function that unsubscribes: const off = datasource.on('select', handler); off();
+
+        // every event, so the log shows them all. The datasource: data, sorting, filtering,
+        // grouping and selection
         const datasourceEvents: (keyof DatasourceEvents)[] = [
             'collection-changed',
             'collection-filtered',
@@ -47,6 +33,7 @@ off();
             });
         }
 
+        // the grid interface: cell clicks and focus, copy/paste from the row menu
         const gridEvents: (keyof GridEvents)[] = [
             'grid-connected',
             'cell-click',

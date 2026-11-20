@@ -9,8 +9,11 @@ import { formatNumber, parseNumber } from './numberFormatterDot';
  * - `parse` / `parseFilter` - `'12,5'` and `'12.5'` both give 12.5. A number passes through,
  *   null and undefined give null, text that is no number (`''` too) gives 0
  *
+ * @sample formatters
  * @example
  * ```ts
+ * import { Datasource, NumberFormatterComma } from '@simple-html/grid';
+ *
  * NumberFormatterComma.format(1234.5); // '1234,5'
  * NumberFormatterComma.parse('12,5'); // 12.5
  *
@@ -27,9 +30,11 @@ import { formatNumber, parseNumber } from './numberFormatterDot';
  * ```
  */
 export const NumberFormatterComma = {
+    /** a number as text with a comma, `''` for anything that is no number */
     format(value: unknown): string {
         return formatNumber(value, ',');
     },
+    /** typed text as a number: `'12,5'` and `'12.5'` are 12.5 */
     parse(text: unknown): number | null {
         return parseNumber(text);
     }

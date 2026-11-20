@@ -1,4 +1,6 @@
 import { addDefaultIndex, client, TypeChecker } from 'esbuild-helpers';
+// the guides, the API pages and the sources of the samples of the docs site (samples/demo)
+import { docsPlugin } from './scripts/site/esbuildPlugin';
 
 /**
  * Local dev server: builds a sample, serves it on 8080 with hot reload, and runs a
@@ -16,7 +18,7 @@ const OUTPUT_ROOT = 'dist_dev';
 const PORT = Number(process.env.PORT) || 8080;
 
 client(
-    { watch: [`./samples/${sample}/**/*.*`, './src/**/*.*'] },
+    { watch: [`./samples/${sample}/**/*.*`, './src/**/*.*', './guides/**/*.*'] },
     {
         color: true,
         define: {
@@ -29,6 +31,7 @@ client(
         tsconfig: './samples/tsconfig.json',
         platform: 'browser',
         sourcemap: true,
+        plugins: [docsPlugin()],
         logLevel: 'error'
     }
 );

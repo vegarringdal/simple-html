@@ -13,8 +13,11 @@ import type { Formatter } from './formatter';
  *   `'20.11.2026'` is 2026-11-20 00:00:00.000. A `Date` passes through
  * - `placeholder` - `'DD.MM.YYYYTHH:MM:SS'`
  *
+ * @sample formatters
  * @example
  * ```ts
+ * import { Datasource, DateFormatterDDMMYYYYTHHMMSS } from '@simple-html/grid';
+ *
  * DateFormatterDDMMYYYYTHHMMSS.format(new Date(2026, 10, 20, 13, 45, 12)); // '20.11.2026T13:45:12'
  *
  * const datasource = new Datasource({
@@ -23,14 +26,18 @@ import type { Formatter } from './formatter';
  * ```
  */
 export const DateFormatterDDMMYYYYTHHMMSS = {
+    /** a `Date` as text, `''` for a blank or invalid date */
     format(value: unknown): string {
         return formatDate(value, 'DMY', true);
     },
+    /** typed text as a `Date`, the time parts left out are the current time; a `Date` passes through */
     parse(text: unknown): Date | '' | null | undefined {
         return parseDate(text, 'DMY', true, false);
     },
+    /** typed filter text as a `Date`, the time parts left out are 0 */
     parseFilter(text: unknown): Date | '' | null | undefined {
         return parseDate(text, 'DMY', true, true);
     },
+    /** shown in an empty header filter */
     placeholder: 'DD.MM.YYYYTHH:MM:SS'
 } satisfies Formatter;

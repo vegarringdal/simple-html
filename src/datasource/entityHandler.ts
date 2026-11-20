@@ -2,34 +2,64 @@ import type { Entity } from './entity';
 import type { FieldType } from './field';
 
 /**
- * Entity will keep track of edited properties of the row object.
- * Not exported from the package, but part of the typings: it is the type of `Entity.__controller`.
+ * The `Proxy` handler every row is wrapped in: it keeps the row's original values and tracks which
+ * fields were edited, whether the row is new or marked for deletion, and answers the row's `__` fields
+ * (`__KEY`, `__rowState` ...). The data container makes one per row.
+ *
+ * Exported as a type only: it is the type of `Entity.__controller`. Read its fields, do not change them -
+ * use the datasource's methods (`markForDeletion()`, `resetData()` ...).
+ *
+ * @example
+ * ```ts
+ * const row = datasource.getDataRows()[0];
+ * row.name = 'Anna';
+ * row.__controller?.__edited; // true
+ * row.__controller?.__originalValues.name; // the name before the edit
+ * ```
  */
-
 export class EntityHandler {
+    /** the other fields, see the ones below */
     [key: string]: any | undefined;
     /**
      * per property set on the row: `true` while its value differs from the original, `false` once
      * it was set back to it. `getChanges()` reports the `true` ones
      */
     __editedProps: Record<string, boolean> = {};
+    /** the value each field had before its first edit, per field that was set */
     __originalValues: Record<string, any> = {};
+    /** the value last set, per field that was set */
     __currentValues: Record<string, any> = {};
+    /** the fields set on the row since it was made, `true` each */
     __newprops: Record<string, any> = {};
+    /** `true` for a new row: `addNewEmpty()`, or the container's `setData(rows, { isNew: true })` */
     __isNew? = false;
+    /** `true` while the row is marked for deletion */
     __isDeleted? = false;
+    /** `true` while a field differs from its original value */
     __edited? = false; // change to isModified?
+    /** not used: reading `row.__controller` gives the handler itself */
     __controller?: EntityHandler;
+    /** the row's generated key, when the container has no key field */
     __KEY?: string | number;
+    /** the container's key field, `undefined` when there is none */
     __KEYSTRING?: string | number;
+    /** not used on a data row, it is never a group row */
     __group?: boolean;
+    /** not used: `row.__rowState` is computed from `__isNew`, `__isDeleted` and `__edited` */
     __rowState?: string;
+    /** not used on a data row */
     __groupID?: string;
+    /** the row's error, read as `row.__rowError`, see `DataContainer.setErrors()` */
     __rowError?: string | null;
+    /** not used on a data row */
     __groupName?: string;
+    /** the grouping level the row sits under, read as `row.__groupLvl` */
     __groupLvl?: number;
+    /** not used on a data row */
     __groupTotal?: number;
+    /** not used on a data row */
     __groupChildren?: Entity[];
+    /** not used on a data row */
     __groupExpanded?: boolean;
 
     /**
@@ -49,6 +79,10 @@ export class EntityHandler {
         this.__fieldType = options.fieldType ?? (() => undefined);
     }
 
+    /**
+     * The proxy's get trap, called by the `Proxy` when a field of the row is read. Not for calling
+     * yourself.
+     */
     get(target: any, prop: string) {
         if (prop === '__controller') {
             return this;
@@ -90,6 +124,10 @@ export class EntityHandler {
         return target[prop];
     }
 
+    /**
+     * The proxy's set trap, called by the `Proxy` when a field of the row is set: it records the edit.
+     * Not for calling yourself.
+     */
     set(obj: any, prop: string, value: any) {
         let update = true;
 

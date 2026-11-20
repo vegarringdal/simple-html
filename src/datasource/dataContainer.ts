@@ -14,9 +14,27 @@ export const getNextKey = () => {
 };
 
 /**
- * Holds the rows and tracks their edits (`getChanges()`). One container can be shared by several
- * datasources, see `DatasourceOptions.container`. The field types for the edit tracking come from
- * the `fields` of the datasources made on it.
+ * Holds the rows and tracks their edits (`getChanges()`). Every datasource has one: a new one by
+ * default, or the one given as `DatasourceOptions.container` - several datasources can share it and
+ * so show the same rows, each with its own filter, sort, grouping and selection. The field types for
+ * the edit tracking come from the `fields` of the datasources made on it.
+ *
+ * Most of the time you do not use it directly: the datasource's methods call it and also rebuild the
+ * displayed rows and send the events. The container's own methods do neither - after changing the rows
+ * here, call `datasource.reloadDatasource()` to show them.
+ *
+ * @example
+ * ```ts
+ * import { DataContainer, Datasource } from '@simple-html/grid';
+ *
+ * // two datasources, e.g. two grids, on the same rows
+ * const container = new DataContainer('id');
+ * const left = new Datasource({ container, fields: { born: 'date' } });
+ * const right = new Datasource({ container, fields: { born: 'date' } });
+ *
+ * left.setData([{ id: 1, name: 'Ann', born: new Date(1990, 4, 17) }]);
+ * right.getAllData(); // the same row
+ * ```
  */
 export class DataContainer {
     private __collection: DataEntity[] = [];
@@ -29,8 +47,17 @@ export class DataContainer {
      */
     private __fieldTypes = new Map<string, FieldType>();
     /**
+     * @param UniqueKeyAttribute the field that identifies a row, e.g. `'id'`. The selection follows it,
+     * so it survives replacing the rows with fresh ones from a server. Left out, every row gets a
+     * generated key (a negative number)
      *
-     * @param UniqueKeyAttribute fo selection usage, this way it can be persistant when dealing with remote data
+     * @example
+     * ```ts
+     * import { DataContainer, Datasource } from '@simple-html/grid';
+     *
+     * const container = new DataContainer('id');
+     * const datasource = new Datasource({ container });
+     * ```
      */
     constructor(UniqueKeyAttribute?: string) {
         // we want to add sufix just incase its something like a new
@@ -43,6 +70,8 @@ export class DataContainer {
      *
      * @example
      * ```ts
+     * import { DataContainer } from '@simple-html/grid';
+     *
      * const container = new DataContainer('id');
      * container.getKeyAttribute(); // 'id'
      * ```
@@ -76,7 +105,28 @@ export class DataContainer {
     }
 
     /**
-     * so user can override if they want
+     * Replaces the class that wraps every row in a `Proxy` and tracks its edits, for the rows set from
+     * now on. An advanced hook: the class gets the {@link EntityHandler} constructor options
+     * (`{ key, isNew, fieldType }`) and must implement the proxy traps and the fields the grid reads
+     * (`__isNew`, `__isDeleted`, `__edited` ...). `EntityHandler` is exported as a type only, so it can
+     * not be extended - you write the whole handler.
+     *
+     * @param entityHandler the class to use instead of `EntityHandler`
+     *
+     * @example
+     * ```ts
+     * import { DataContainer, type FieldType } from '@simple-html/grid';
+     *
+     * // a handler class of your own, with the same constructor as EntityHandler
+     * declare const MyEntityHandler: new (options: {
+     *     key?: string;
+     *     isNew?: boolean;
+     *     fieldType?: (field: string) => FieldType | undefined;
+     * }) => ProxyHandler<object>;
+     *
+     * const container = new DataContainer('id');
+     * container.overrideEntityHandler(MyEntityHandler);
+     * ```
      */
     public overrideEntityHandler(entityHandler: any) {
         this.EntityHandler = entityHandler;
@@ -104,32 +154,68 @@ export class DataContainer {
     }
 
     /**
-     * return collection slice
-     * @returns
+     * Every row in the container, in the order they were set: the rows marked for deletion included,
+     * no filter, sort or grouping. A new array, the rows in it are the container's own (not copies).
+     * `datasource.getAllData()` is the same.
+     *
+     * @example
+     * ```ts
+     * import { DataContainer } from '@simple-html/grid';
+     *
+     * const container = new DataContainer('id');
+     * container.setData([{ id: 1, name: 'Ann' }, { id: 2, name: 'Bob' }]);
+     * container.getDataSet().map((row) => row.name); // ['Ann', 'Bob']
+     * ```
      */
     public getDataSet() {
         return this.__collection.slice();
     }
 
     /**
-     * gives you the entire collection
-     * @returns array of entities
+     * The number of rows in the container, the rows marked for deletion included. Was `lenght()` in v5.
+     *
+     * @example
+     * ```ts
+     * const count = datasource.getDataContainer().length(); // every row, no filter
+     * ```
      */
     public length() {
         return this.__collection.length;
     }
 
     /**
-     * return entities marked for deletion
-     * @returns
+     * The rows marked for deletion (`markForDeletion()` / `markAllForDeletion()`), still in the
+     * container until `clearMarkedForDeletion()`.
+     *
+     * @example
+     * ```ts
+     * const container = datasource.getDataContainer();
+     * container.markForDeletion(datasource.getSelectedRows());
+     * container.getMarkedForDeletion().length; // the rows just marked
+     * ```
      */
     public getMarkedForDeletion() {
         return this.__collection.filter((e) => e.__controller.__isDeleted);
     }
 
     /**
-     * set data on __rowError on entities where key matches
-     * @param errors key, errormsg
+     * Sets `__rowError` on the rows: the message for the rows whose key is in the map, `null` for every
+     * other row - so each call replaces the errors of the call before. For errors a server sent back
+     * after saving.
+     *
+     * The grid does not show `__rowError` itself: read it in `GridConfig.cellClass` (to color the row)
+     * or show it next to the grid, and call `gridInterface.refresh()` after this to render the cells
+     * again.
+     *
+     * @param errors the error message per row, keyed by the row's key as text (`'7'` for `id: 7`)
+     *
+     * @example
+     * ```ts
+     * datasource.getDataContainer().setErrors(new Map([['7', 'Name is already taken']]));
+     * gridInterface.refresh();
+     *
+     * datasource.getAllData().filter((row) => row.__rowError); // the rows with an error
+     * ```
      */
     public setErrors(errors: Map<string, string>) {
         this.__collection.forEach((e) => {
@@ -140,9 +226,18 @@ export class DataContainer {
     }
 
     /**
-     * for selected rows only
-     * resets data, all edits are resets/tags are reset
-     * new entities are removed
+     * {@link resetData} for the given rows only: their edits are undone, a row marked for deletion is
+     * unmarked, and a new row is removed. `datasource.resetDataSelectionOnly()` calls it with the
+     * selected rows. Does not rebuild a datasource's displayed rows.
+     *
+     * @param data the rows to reset. Rows that are not in the container are skipped
+     *
+     * @example
+     * ```ts
+     * const container = datasource.getDataContainer();
+     * container.resetDataSelection(datasource.getSelectedRows());
+     * datasource.reloadDatasource(); // show it
+     * ```
      */
     public resetDataSelection(data: Entity[]) {
         const newEntities: Entity[] = [];
@@ -175,8 +270,16 @@ export class DataContainer {
     }
 
     /**
-     * resets data, all edits are resets/tags are reset
-     * new entities are removed
+     * Throws away every change since the data was set: edited rows get their original values back,
+     * rows marked for deletion are unmarked, and new rows (from `addNewEmpty()`) are removed. Rows
+     * removed for good (`removeData()`, `clearMarkedForDeletion()`) do not come back.
+     * `datasource.resetData()` calls it and also rebuilds the displayed rows - use that one.
+     *
+     * @example
+     * ```ts
+     * datasource.getDataContainer().resetData();
+     * datasource.getChanges(); // { newEntities: [], modifiedEntities: [], deletedEntities: [] }
+     * ```
      */
     public resetData() {
         const newEntities: Entity[] = [];
@@ -209,6 +312,8 @@ export class DataContainer {
      *
      * @example
      * ```ts
+     * import { DataContainer } from '@simple-html/grid';
+     *
      * const container = new DataContainer('id');
      * container.setData([{ id: 1, name: 'Ann' }, { id: 2, name: 'Bob' }]);
      * const [ann, bob] = container.getDataSet();
@@ -256,6 +361,7 @@ export class DataContainer {
      *
      * @example
      * ```ts
+     * const container = datasource.getDataContainer();
      * const [first, second] = container.getDataSet();
      * container.markForDeletion(first);
      * container.markForDeletion([first, second]);
@@ -283,6 +389,7 @@ export class DataContainer {
      *
      * @example
      * ```ts
+     * const container = datasource.getDataContainer();
      * container.markAllForDeletion();
      * container.getChanges().deletedEntities; // every row that is not new
      * ```
@@ -297,7 +404,16 @@ export class DataContainer {
     }
 
     /**
+     * Removes the rows marked for deletion from the container, for good: `getChanges()` no longer lists
+     * them in `deletedEntities` and `resetData()` does not bring them back. Call it once the deletes
+     * are saved. `datasource.clearMarkedForDeletion()` calls it and rebuilds the displayed rows.
      *
+     * @example
+     * ```ts
+     * const container = datasource.getDataContainer();
+     * const { deletedEntities } = container.getChanges(); // send these first
+     * container.clearMarkedForDeletion();
+     * ```
      */
     public clearMarkedForDeletion() {
         const tempArr: DataEntity[] = [];
@@ -323,6 +439,7 @@ export class DataContainer {
      *
      * @example
      * ```ts
+     * const container = datasource.getDataContainer();
      * const [first] = container.getDataSet();
      * container.removeData(first); // [first]
      * ```
@@ -348,6 +465,7 @@ export class DataContainer {
      *
      * @example
      * ```ts
+     * const container = datasource.getDataContainer();
      * container.removeAllData();
      * container.getDataSet(); // []
      * ```
@@ -369,6 +487,8 @@ export class DataContainer {
      *
      * @example
      * ```ts
+     * import { DataContainer } from '@simple-html/grid';
+     *
      * const container = new DataContainer('id');
      * container.setData([{ id: 1, name: 'Ann' }]);
      * container.setData([{ id: 2, name: 'Bob' }], { add: true });
@@ -389,10 +509,20 @@ export class DataContainer {
     }
 
     /**
-     * replaced entity wtih index
-     * @param data
-     * @param index
-     * @param remove
+     * Puts rows in at a position in the container, replacing `remove` rows there - `Array.splice` for
+     * the container's rows. The new rows are wrapped and get a key like `setData()` gives them, they are
+     * not new rows. Call `datasource.reloadDatasource()` after to show them.
+     *
+     * @param data your objects
+     * @param index where they go, 0 based
+     * @param remove how many rows from `index` on are removed for good
+     *
+     * @example
+     * ```ts
+     * const container = datasource.getDataContainer();
+     * container.replace([{ id: 9, name: 'Zed' }], 1, 1); // the second row is replaced
+     * datasource.reloadDatasource();
+     * ```
      */
     public replace(data: any[], index: number, remove: number) {
         const x = Array.from(data, (o: any | Entity) => this.toEntity(o, false));

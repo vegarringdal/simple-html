@@ -7,51 +7,23 @@ export const mandatoryPlaceholders: DemoSample = {
     group: 'Cells',
     description:
         'mandatory: true renders a striped marker on empty editable cells (it clears as soon as the cell has a value). placeholderRow shows a placeholder in empty cells - by default only on the current row, controlled by placeholderRowCurrentEntityOnly. placeholderFilter overrides the placeholder in the filter row. Click around the empty rows to see the placeholders follow the current row.',
-    code: `
-const datasource = new Datasource({ fields: { date1: { type: 'date', label: 'date' } } });
-
-const gridConfig: GridConfig = {
-    readonly: false,
-    // placeholders show on the current row only, set false for all rows
-    placeholderRowCurrentEntityOnly: true, // default
-    columns: {
-        company: {
-            mandatory: true, // striped marker while the cell is empty
-            placeholderRow: 'company is mandatory',
-            placeholderFilter: 'search company...'
-        },
-        country: {
-            mandatory: true,
-            mandatoryOnlyIfEmpty: true
-        },
-        phone: {
-            placeholderRow: 'type a phone number'
-        },
-        date1: {
-            // a date field shows the formatter's placeholder (YYYY-MM-DD), this one wins over it
-            placeholderFilter: 'from date...'
-        }
-    },
-    layout: { center: [ ... ] }
-};
-
-// change it while the grid is shown
-gridInterface.updateConfig({ placeholderRowCurrentEntityOnly: false });
-`,
     run(stage) {
         const ui = createStage(stage);
 
         const config: GridConfig = {
             panelHeight: 25,
             readonly: false,
+            // placeholders show on the current row only, set false for all rows
+            placeholderRowCurrentEntityOnly: true, // default
             columns: {
                 company: {
-                    mandatory: true,
+                    mandatory: true, // striped marker while the cell is empty
                     placeholderRow: 'company is mandatory',
                     placeholderFilter: 'search company...'
                 },
                 country: { mandatory: true, mandatoryOnlyIfEmpty: true },
                 phone: { placeholderRow: 'type a phone number' },
+                // a date field shows the formatter's placeholder (YYYY-MM-DD), this one wins over it
                 date1: { placeholderFilter: 'from date...' }
             },
             layout: {
@@ -79,6 +51,7 @@ gridInterface.updateConfig({ placeholderRowCurrentEntityOnly: false });
 
         const { gridInterface } = mountGrid(ui.gridHost, config, rows);
 
+        // change it while the grid is shown
         ui.button('Placeholders on all rows', () => {
             gridInterface.updateConfig({ placeholderRowCurrentEntityOnly: false });
         });

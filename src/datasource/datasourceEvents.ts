@@ -7,6 +7,7 @@ import type { GroupArgument } from './groupArgument';
  * Subscribe with `datasource.on(name, handler)`, the payload is typed from this map.
  * `on()` returns a function that unsubscribes. Events with nothing to tell send an empty object.
  *
+ * @sample events
  * @example
  * ```ts
  * const off = datasource.on('collection-filtered', (data) => {
@@ -29,9 +30,13 @@ export interface DatasourceEvents {
      * - `clearMarkedForDeletion()`: `{ removed: true, info: 'clearMarkedForDeletion' }`
      */
     'collection-changed': {
+        /** `setData()` / `addNewEmpty()`: `true` when rows were added, `false` when the data was replaced */
         added?: boolean;
+        /** `true` when rows were removed */
         removed?: true;
+        /** which method removed rows */
         info?: 'removeData' | 'clearMarkedForDeletion';
+        /** `removeData()`: the rows passed in. `removeAllData()`: `null` */
         data?: Entity | Entity[] | null;
     };
 
@@ -45,6 +50,7 @@ export interface DatasourceEvents {
      *   sorting or grouping. Sent before their `collection-changed`.
      */
     'collection-filtered': {
+        /** what rebuilt the displayed rows, see above */
         info: 'filter' | 'resetData' | 'markForDeletion' | '__internalUpdate, forced';
     };
 
@@ -60,7 +66,9 @@ export interface DatasourceEvents {
      * - `removeGroup()`: `{ info: 'removeGroup' }`, after the `'group'` event of the grouping that is left
      */
     'collection-grouped': {
+        /** `'group'` from `group()`, `'removeGroup'` from `removeGroup()` */
         info: 'group' | 'removeGroup';
+        /** the grouping now applied, with `info: 'group'`. `[]` when the grouping was removed */
         groupings?: GroupArgument[];
     };
 
@@ -96,7 +104,9 @@ export interface DatasourceEvents {
      *   `selectLast()` `'select-last'`
      */
     select: {
+        /** what selected it, see above */
         info: 'select-first' | 'select-prev' | 'select-next' | 'select-last';
+        /** the index of the row in the displayed rows, 0 based */
         row: number;
     };
 }

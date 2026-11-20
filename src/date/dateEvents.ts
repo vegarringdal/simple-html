@@ -7,6 +7,10 @@
  *
  * @example
  * ```ts
+ * import { DateInterface } from '@simple-html/grid';
+ *
+ * declare const dateInterface: DateInterface;
+ *
  * const off = dateInterface.on('date-select', (date) => {
  *     console.log(date ? date.toISOString() : 'cleared');
  * });
@@ -16,7 +20,9 @@
 export interface DateEvents {
     /**
      * A date was picked in the date picker (`datepicker: true`): the "Use" button sends the
-     * picked date and time, the "Clear" button sends `null`.
+     * picked date and time, the "Clear" button sends `null`. Clicking a day only picks it, "Now" goes
+     * to the current date and time; neither sends the event. A calendar (`datepicker: false`) never
+     * sends it - read `dateInterface.getSelected()`.
      */
     'date-select': Date | null;
 }

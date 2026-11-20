@@ -17,8 +17,12 @@ import type { GridMenus } from './gridMenus';
  * The grid does not change the object you pass in: it keeps its own copy of `columns`, `layout` and
  * `initialState`, the parts it changes while the user works.
  *
+ * @sample basic-grid
+ * @sample column-layout
  * @example
  * ```ts
+ * import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';
+ *
  * const datasource = new Datasource({ fields: { age: 'number', born: 'date' } });
  *
  * const config: GridConfig = {
@@ -51,14 +55,22 @@ export type GridConfig = {
      * grid starts with (unless `initialState.layout` is given) and `resetState()` goes back to. The
      * user changes it - drag/drop, pinning, the column chooser, resizing - those changes are in
      * `getState().layout`.
+     *
+     * @sample column-layout
      */
     layout: GridLayout;
     /**
      * The state the grid starts in, and `resetState()` goes back to: sorted, grouped, filtered ...
      * What is left out starts empty (no sorting, no filter ...), the layout is `layout`.
      *
+     * The grid applies it to the datasource when it is made: a filter, sort or grouping set on the
+     * datasource before is replaced, and cleared when `initialState` leaves it out.
+     *
+     * @sample grid-state
      * @example
      * ```ts
+     * import { type GridConfig, where } from '@simple-html/grid';
+     *
      * const config: GridConfig = {
      *     layout: { center: [{ fields: ['name'], width: 100 }, { fields: ['age'], width: 100 }] },
      *     initialState: {
@@ -76,26 +88,35 @@ export type GridConfig = {
     /** height of the top panel (grouping) in px, default 25 */
     panelHeight?: number;
     /**
-     * height of a header label cell in px, default `cellHeight`.
-     * useful for when you have long header text and need to wrap in in 2-3 height
-     * this will not work well with auto resize
+     * height of a header label cell in px, default `cellHeight`. Make it 2-3 times `cellHeight` for long
+     * labels that wrap. `autoResizeColumns()` measures the label on one line
      */
     cellHeaderLabelHeight?: number;
     /** height of the footer in px, default 45 */
     footerHeight?: number;
     /** height of the column selector row under the header filters in px, default 18 */
     selectSizeHeight?: number;
-    /** hides the header labels */
+    /** hides the row of header labels (the column names, click to sort), default false */
     hideLabels?: boolean;
-    /** hides the header filter row */
+    /** hides the row of header filters, default false */
     hideFilter?: boolean;
-    /** the whole grid is readonly, default true */
+    /**
+     * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
+     * or clear. Set `false` to edit; the column's `readonly` and `isReadonly` can still make cells
+     * readonly
+     */
     readonly?: boolean;
-    /** default `'multiple'`, set on the datasource */
+    /**
+     * how rows can be selected, default `'multiple'` (ctrl+click, shift+click). The grid sets it on the
+     * datasource every time it is built, so it replaces the datasource's own `selectionMode`
+     *
+     * @sample selection
+     */
     selectionMode?: 'multiple' | 'single';
 
     /**
-     * if its a small screen you might not want this enabled
+     * closes the open menu (the right click menus, `openMenu()`, the date picker ...) when the grid is
+     * scrolled, default false. Leave it off where scrolling happens by accident, on a small touch screen
      */
     autoRemoveContextMenuOnScrollEvent?: boolean;
 
@@ -105,6 +126,8 @@ export type GridConfig = {
      *
      * A cell always shows at full strength again at the start of a group, and blanks are
      * never dimmed. Can be toggled from the row context menu.
+     *
+     * @sample misc-options
      */
     dimRepeatedValues?: boolean;
 
@@ -113,24 +136,32 @@ export type GridConfig = {
      *
      * the `data-tooltip` attribute is always written to the elements, also when this is
      * false, so you can hook up your own tooltip library instead
+     *
+     * @sample tooltips
      */
     tooltips?: boolean;
 
     /**
      * override the built in tooltip texts, keyed by tooltip id.
      * import `TOOLTIPS` to see the ids and their default text
+     *
+     * @sample tooltips
      */
     tooltipText?: Record<string, string>;
 
     /**
-     * datepicker
-     * not all is passed on to intenal picker
+     * the date picker of date cells and date header filters. Of the {@link IDateConfig} the grid reads
+     * `showWeek`, `isoWeek`, `weekHeader`, `monthHeader`, `weekStart`, `rowHeight`, `monthWidth`,
+     * `monthMargin`, `hideDimmedDates`, `showYearInMonth` and `datepickerHeight`, and sets the rest
+     * itself. The type wants every field. Left out: English names, weeks from monday, week numbers shown
      */
     datePickerConfig?: IDateConfig;
 
     /**
      * shows a column's `placeholderRow` on the current row (the current entity) only.
      * default = true, so you need to set this to false to display on all rows
+     *
+     * @sample mandatory-placeholders
      */
     placeholderRowCurrentEntityOnly?: boolean;
 
@@ -151,8 +182,11 @@ export type GridConfig = {
      * @param field the cell's field
      * @param readonlyByConfig the column's `readonly` option, `false` when it is not set
      *
+     * @sample cell-styling
      * @example
      * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
      * const config: GridConfig = {
      *     readonly: false,
      *     layout: { center: [{ fields: ['company'], width: 150 }, { fields: ['isActive'], width: 80 }] },
@@ -175,8 +209,11 @@ export type GridConfig = {
      * @param row the cell's row. Always a data row: a group row has no cells
      * @param field the cell's field
      *
+     * @sample cell-styling
      * @example
      * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
      * // .low { position: absolute; inset: 0; background: rgba(239, 68, 68, 0.25); }
      * const config: GridConfig = {
      *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['balance'], width: 100 }] },
@@ -203,8 +240,11 @@ export type GridConfig = {
      * Replaces v5's `contextMenuCustom()` for the grid's own menus; a menu of your own is opened with
      * `gridInterface.openMenu()`.
      *
+     * @sample context-menu
      * @example
      * ```ts
+     * import { type GridConfig, isGroupRow } from '@simple-html/grid';
+     *
      * const config: GridConfig = {
      *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['age'], width: 80 }] },
      *     menus: {
@@ -232,8 +272,11 @@ export type GridConfig = {
  * The css classes `GridConfig.cellClass` adds to a cell. Each is one or more class names, separated
  * by spaces, the same as a `class` attribute.
  *
+ * @sample cell-styling
  * @example
  * ```ts
+ * import type { CellClass } from '@simple-html/grid';
+ *
  * const negative: CellClass = { input: 'negative-text', background: 'negative-background' };
  * ```
  */
@@ -257,8 +300,11 @@ export interface CellClass {
  * - `center` - scrolls sideways
  * - `right` - pinned to the right
  *
+ * @sample column-layout
  * @example
  * ```ts
+ * import type { GridLayout } from '@simple-html/grid';
+ *
  * const layout: GridLayout = {
  *     left: [{ fields: ['name'], width: 150 }],
  *     center: [
@@ -286,8 +332,11 @@ export interface GridLayout {
  * Every column gets as many cells as the column with the most fields; a column with fewer fields
  * leaves the rest empty. A column without fields is left out.
  *
+ * @sample column-layout
  * @example
  * ```ts
+ * import type { LayoutColumn } from '@simple-html/grid';
+ *
  * const single: LayoutColumn = { fields: ['name'], width: 150 };
  * const stacked: LayoutColumn = { fields: ['firstName', 'lastName'], width: 120 };
  * ```
@@ -306,8 +355,11 @@ export interface LayoutColumn {
  * The type of the column comes from the datasource (`datasource.getField(field).type`), set it in the
  * datasource's `fields`, not here.
  *
+ * @sample basic-grid
  * @example
  * ```ts
+ * import type { ColumnConfig } from '@simple-html/grid';
+ *
  * const columns: Record<string, ColumnConfig> = {
  *     company: { label: 'Company', mandatory: true, placeholderRow: 'required' },
  *     age: { operator: 'EQUAL', numberOverride: 'ZERO_TO_BLANK' },
@@ -322,14 +374,24 @@ export type ColumnConfig = {
      * used, and without that the field name
      */
     label?: string;
-    /** shown in an empty cell, see `GridConfig.placeholderRowCurrentEntityOnly` */
+    /**
+     * shown in an empty cell, see `GridConfig.placeholderRowCurrentEntityOnly`
+     *
+     * @sample mandatory-placeholders
+     */
     placeholderRow?: string;
-    /** shown in the empty header filter. Default: the formatter's placeholder (date fields), else a search icon */
+    /**
+     * shown in the empty header filter. Default: the formatter's placeholder (date fields), else a search icon
+     *
+     * @sample mandatory-placeholders
+     */
     placeholderFilter?: string;
     /**
      * the operator the column's header filter starts with. Default `'GREATER_THAN_OR_EQUAL_TO'` for
      * number and date fields, `'EQUAL'` for the rest. The operator the user picks in the header
      * filter's menu is state: `GridState.headerFilters[field].operator`
+     *
+     * @sample filter-operator-header
      */
     operator?: FilterOperator;
     /**
@@ -338,37 +400,56 @@ export type ColumnConfig = {
      * column, for property/value style data. Only for a `text` field (the default), and a value that
      * is no type leaves the cell `text`.
      * PS! sorting, grouping and filtering still use the field's own type
+     *
+     * @sample dynamic-cell-types
      */
     dynamicCellTypeColumn?: string;
 
     /**
-     * sets cell to readonly, usefull if you need it to stay readonly if grid is not readonly
+     * makes the column's cells readonly while the grid is editable (`GridConfig.readonly: false`). The
+     * grid draws red stripes behind them. `GridConfig.isReadonly` can decide per row instead
      */
     readonly?: boolean;
 
     /**
-     * like the name says, default it to display value it have recived, but you might have other needs
+     * for a number field, what a cell shows - the value is not changed: `'ZERO_TO_BLANK'` shows 0 as an
+     * empty cell, `'BLANK_TO_ZERO'` shows an empty value as `0`. Default: the value as the formatter
+     * shows it
+     *
+     * @sample misc-options
      */
     numberOverride?: 'ZERO_TO_BLANK' | 'BLANK_TO_ZERO';
 
     /**
-     * like the name says, shows a focus button, you need to use the gridinterface event to do anythnig useful with it
-     * like dialog, dropdown etc
+     * shows a `...` button at the right of the cell while it has focus; clicking it, or Space in the cell,
+     * sends the `cell-focus-button-click` event - open a dialog or a dropdown from there. When it is
+     * shown: `'SHOW_IF_GRID_NOT_READONLY'` the grid is editable, `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`
+     * the grid and the cell are editable, `'ALWAYS'` always. Not on a boolean (checkbox) cell
+     *
+     * @sample dropdown-grid
      */
     focusButton?: 'SHOW_IF_GRID_NOT_READONLY' | 'SHOW_IF_GRID_AND_CELL_NOT_READONLY' | 'ALWAYS';
 
     /**
-     * adds a blue ish color in background, highlighting cell, you can override color with css
+     * marks the empty cells of the column with blue stripes while the grid and the cell are editable: a
+     * value the user has to fill in. The mark is gone once the cell has a value (a checked checkbox for
+     * a boolean). Restyle it with the `simple-html-mandatory` class. It does not stop a save, check the
+     * values yourself
+     *
+     * @sample mandatory-placeholders
      */
     mandatory?: boolean;
 
     /**
-     * only show blue ish color in background if its empty
+     * has no effect: `mandatory` marks only the empty cells already. Kept so v5 configs compile
      */
     mandatoryOnlyIfEmpty?: boolean;
 
     /**
-     * usefull for fields where you have dropdown etc, but want to allow user to update using copy/paste/clear + the dropdown
+     * the cells can not be typed in, only changed by the row menu's paste and clear (and by your own
+     * code, e.g. a dropdown from `focusButton`). Typed text is undone right away
+     *
+     * @sample misc-options
      */
     allowPasteClearOnly?: boolean;
 };
@@ -382,8 +463,11 @@ export type ColumnConfig = {
  * JSON. A `Date` then comes back as its ISO text, which a `date` or `datetime` field filters on the
  * same.
  *
+ * @sample grid-state
  * @example
  * ```ts
+ * import type { GridState } from '@simple-html/grid';
+ *
  * // keep what the user did, and give it back next time
  * localStorage.setItem('my-grid', JSON.stringify(gridInterface.getState()));
  *
@@ -417,8 +501,11 @@ export interface GridState {
 /**
  * The header filter of one column, see `GridState.headerFilters`.
  *
+ * @sample grid-state
  * @example
  * ```ts
+ * import type { HeaderFilter } from '@simple-html/grid';
+ *
  * const headerFilters: Record<string, HeaderFilter> = {
  *     name: { value: 'ann*' }, // typed in the name column, with the column's operator
  *     age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' }, // the operator picked in the menu

@@ -1,0 +1,148 @@
+# Sorting and grouping
+
+Sorting and grouping are done by the datasource. The user does them in the grid's header, you do
+them from code, and the grid shows the result.
+
+## Sorting
+
+The user clicks a header label to sort on that column, ascending. A second click sorts it
+descending. Shift+click adds the column to the sort there is. The header menu's "Remove sorting"
+removes the sort, apart from the grouped fields.
+
+From code:
+
+```ts
+datasource.sort({ attribute: 'company', ascending: true }); // replaces the sort there was
+datasource.sort({ attribute: 'age', ascending: false }, { add: true }); // company, then age
+
+datasource.sort([
+    { attribute: 'country', ascending: true },
+    { attribute: 'company', ascending: false }
+]);
+
+datasource.sort(); // sort again with the sort there is, e.g. after edits
+datasource.getLastSorting(); // [{ attribute: 'country', ascending: true }, { attribute: 'company', ascending: false }]
+```
+
+- With `{ add: true }`, a field that is in the sort already gets the new direction and keeps its
+  place. A list (`sort([a, b])`) always replaces the sort.
+- `setOrderBy(args, { add })` sets the sort without sorting, `sort()` sorts.
+- `resetSort()` clears the sort, the rows keep their order. `filter()` after it gives them back the
+  order they were set in.
+- The sort stays when the data changes: `setData()` sorts the new rows.
+
+How values compare:
+
+- Empty values (`null`, `undefined`, `''`, an invalid date) come first when ascending, last when
+  descending. `0` and `false` are values, not empty.
+- Text is compared with `localeCompare`. `datasource.setLocaleCompare('nb')` sorts it with the
+  rules of a language (an `Intl.Collator`).
+- A `date` field sorts on the day, the time is ignored. A `datetime` field sorts on the full time.
+
+The sort is part of the grid's [state](03-state.md): `getState().sorting`. To start sorted, put it
+in the config's `initialState`.
+
+## Grouping
+
+The user groups by dragging a header label to the panel above the header. A group shows as a chip
+in the panel: its icon removes it, and the chips can be dragged to change the order. A group row
+shows the group's name and its number of rows, and its `+` / `-` icon expands or collapses it. The
+header menu has "Expand all", "Collapse all" and "Clear all".
+
+From code:
+
+```ts
+datasource.group([{ attribute: 'country', title: 'Country' }]);
+datasource.group([{ attribute: 'company', title: 'Company' }], { add: true }); // country, then company
+
+datasource.expandGroup(); // every group
+datasource.collapseGroup(); // every group
+datasource.expandGroup('Norway'); // one group, by its id
+
+datasource.group([]); // no grouping. removeGroup() does the same
+```
+
+- `attribute` is the field, `title` the text in front of the value in the group row:
+  `Country: Norway`. Its first letter is shown in upper case.
+- `group()` sorts the rows on the grouped fields, ascending, and replaces the sort there was. A
+  `sort()` after it sorts within the groups, the grouped fields stay first.
+- **Groups start collapsed**, only the ids given to `setExpanded()` start expanded. `getExpanded()`
+  lists the expanded ids.
+- A row is grouped on its value as the field's formatter shows it: a `date` field groups by day, a
+  number with its decimals as the formatter shows them. The rows with an empty value are one group
+  at the top, its id is `' blank'`.
+- Use `group()` to group. `setGrouping()` only stores the grouping for the next `group()`, and the
+  rows are not sorted for it.
+- `removeGroup(group)` removes one level. It needs the object `getGrouping()` returned, a copy is
+  not found.
+
+The grouping and the expanded groups are part of the grid's [state](03-state.md):
+`getState().grouping` and `expandedGroups`.
+
+```sample sorting-grouping
+```
+
+## Group rows
+
+When the datasource is grouped, `getRows()` has a group row in front of each group, and leaves out
+the rows of a collapsed group. A group row is a `GroupRow`, made by the datasource, not one of your
+objects. `isGroupRow(row)` tells it from a data row, and narrows the type:
+
+```ts
+import { isGroupRow } from '@simple-html/grid';
+
+datasource.group([{ attribute: 'country', title: 'Country' }]);
+datasource.expandGroup();
+
+for (const row of datasource.getRows()) {
+    if (isGroupRow(row)) {
+        console.log(row.__groupName, row.__groupTotal); // 'Country: Norway', 2
+    } else {
+        console.log('  ', row.name);
+    }
+}
+
+// the data rows only, the rows of collapsed groups included
+const names = datasource.getDataRows().map((row) => row.name);
+```
+
+| field | what it is |
+| --- | --- |
+| `__group` | always `true` |
+| `__groupID` | the id for `expandGroup(id)` / `collapseGroup(id)`: the value as formatted, e.g. `'Norway'` |
+| `__groupName` | the text the grid shows: `'Country: Norway'` |
+| `__groupLvl` | the level, 0 for the first grouped field. The grid indents by it |
+| `__groupTotal` | the number of data rows in the group, its sub groups included |
+| `__groupChildren` | its rows: data rows, or the group rows of the next level |
+| `__groupExpanded` | `true` when the group is expanded |
+
+Read the fields, do not change them. A group row can not be selected, edited or marked for
+deletion: `getSelectedRows()`, `getDataRows()` and `getAllData()` never have one. `getRow(n)` and
+`currentEntity` can, check them with `isGroupRow()`.
+
+## Groups in groups
+
+Each field given to `group()` is one level. The id of a sub group starts with the ids of the groups
+above it, joined by `-`:
+
+```ts
+import { isGroupRow } from '@simple-html/grid';
+
+datasource.group([
+    { attribute: 'country', title: 'Country' },
+    { attribute: 'company', title: 'Company' }
+]);
+
+datasource.expandGroup('Norway'); // the first level
+datasource.expandGroup('Norway-ACME'); // company ACME in Norway
+
+const ids = datasource
+    .getRows()
+    .filter(isGroupRow)
+    .map((row) => `${'  '.repeat(row.__groupLvl)}${row.__groupID}`);
+```
+
+- A sub group can only be expanded while the group above it is expanded:
+  `expandGroup('Norway-ACME')` does nothing while `Norway` is collapsed.
+- A sub group stays expanded when the group above it is collapsed and expanded again.
+- `expandGroup()` and `collapseGroup()` without an id work on every level.

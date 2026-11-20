@@ -22,36 +22,127 @@ import { Sort } from './sort';
 import type { SortArgument } from './sortArgument';
 import { TextFormatter } from './textFormatter';
 
+/**
+ * A data row as the datasource hands it out: your object `T` and the fields of an {@link Entity} - the
+ * key, the row state, the error and the edit tracking controller. `getDataRows()`, `getSelectedRows()`,
+ * `getAllData()` ... return these.
+ *
+ * The row is your own object, wrapped in a `Proxy` that tracks the edits: setting a field on it is an
+ * edit (`getChanges()`).
+ *
+ * @typeParam T the type of your rows, the `T` of `Datasource<T>`
+ *
+ * @example
+ * ```ts
+ * import { Datasource, type EntityUnion } from '@simple-html/grid';
+ *
+ * interface Person {
+ *     id: number;
+ *     name: string;
+ * }
+ *
+ * const datasource = new Datasource<Person>({ key: 'id' });
+ * datasource.setData([{ id: 1, name: 'Ann' }]);
+ * const ann: EntityUnion<Person> = datasource.getDataRows()[0];
+ * ann.name; // 'Ann'
+ * ann.__rowState; // undefined: not edited
+ * ```
+ */
 export type EntityUnion<T> = Entity & T;
 
 /**
- * A single filter condition, ready for display. `label` is the field's label (see
- * `getFilterTree()`), `value` is already run through the field's formatter; blank operators
- * (`IS_BLANK` / `IS_NOT_BLANK`) have no value, flagged by `hasValue`.
+ * One condition of {@link FilterGroupNode}, ready to show: the field's label and the value as text.
+ * Part of what `getFilterTree()` returns.
+ *
+ * @example
+ * ```ts
+ * import type { FilterConditionNode } from '@simple-html/grid';
+ *
+ * const describe = (node: FilterConditionNode) => (node.hasValue ? `${node.label} ${node.operator} ${node.value}` : `${node.label} ${node.operator}`);
+ * ```
  */
 export interface FilterConditionNode {
+    /** always `'condition'` */
     kind: 'condition';
+    /** the field's label, or what the `label` function given to `getFilterTree()` returns */
     label: string;
+    /** the operator's name, e.g. `'EQUAL'`, see {@link FilterOperator} */
     operator: string;
+    /**
+     * the value as text: formatted with the field's formatter, the values of `IN` / `NOT_IN` joined by
+     * `', '`, a `valueField` as `[label]`. `''` for `IS_BLANK` / `IS_NOT_BLANK`
+     */
     value: string;
+    /** `false` for `IS_BLANK` / `IS_NOT_BLANK`, they take no value */
     hasValue: boolean;
 }
 
 /**
- * A group of filter nodes joined by one logical operator, mirroring the nesting in the
- * filter editor so grouping/precedence can be shown rather than flattened away.
+ * A group of filter nodes joined by one logical operator, as `getFilterTree()` returns it. It keeps the
+ * nesting of the filter, so the grouping can be shown, not flattened away - the grid's footer draws
+ * these as bracketed chips.
+ *
+ * @example
+ * ```ts
+ * import type { FilterNode } from '@simple-html/grid';
+ *
+ * // the filter as text: (age GREATER_THAN 18 AND (country EQUAL Norway OR country EQUAL Sweden))
+ * const toText = (node: FilterNode): string =>
+ *     node.kind === 'group'
+ *         ? `(${node.children.map(toText).join(` ${node.logicalOperator} `)})`
+ *         : `${node.label} ${node.operator} ${node.value}`;
+ *
+ * const tree = datasource.getFilterTree();
+ * const text = tree ? toText(tree) : 'no filter';
+ * ```
  */
 export interface FilterGroupNode {
+    /** always `'group'` */
     kind: 'group';
+    /** how the children are joined: `'AND'`, or `'OR'` */
     logicalOperator: 'AND' | 'OR';
+    /** the conditions and groups in it. The conditions the filter ignores are left out */
     children: FilterNode[];
 }
 
+/**
+ * A node of the tree `datasource.getFilterTree()` returns: a {@link FilterGroupNode} or a
+ * {@link FilterConditionNode}. Tell them apart by `kind`.
+ */
 export type FilterNode = FilterConditionNode | FilterGroupNode;
 
 /**
- * Helper class for calling internal sort, filter and grouping classesS
+ * The rows of a grid, and what is done with them: the data, the fields (type, label and formatter of
+ * each), the filter, sorting, grouping, selection, the current row and the edits (`getChanges()`).
+ * It works without a grid too.
  *
+ * A grid shows one datasource: give it to `createGrid()`. What you do here - `filter()`, `sort()`,
+ * `setData()` ... - sends an event (see {@link DatasourceEvents}), and the grid shows the result.
+ *
+ * @typeParam T the type of your rows. The rows the datasource hands out are {@link EntityUnion}`<T>`:
+ * your object with the key and the edit tracking fields
+ *
+ * @sample basic-grid
+ * @example
+ * ```ts
+ * import { Datasource, where } from '@simple-html/grid';
+ *
+ * interface Person {
+ *     id: number;
+ *     name: string;
+ *     born: Date;
+ * }
+ *
+ * const datasource = new Datasource<Person>({ key: 'id', fields: { born: 'date' } });
+ * datasource.setData([
+ *     { id: 1, name: 'Ann', born: new Date(1990, 4, 17) },
+ *     { id: 2, name: 'Bob', born: new Date(1985, 0, 2) }
+ * ]);
+ *
+ * datasource.filter(where('name', 'BEGIN_WITH', 'a'));
+ * datasource.sort({ attribute: 'born', ascending: false });
+ * datasource.getDataRows().map((row) => row.name); // ['Ann']
+ * ```
  */
 export class Datasource<T = any> {
     /**
@@ -118,14 +209,21 @@ export class Datasource<T = any> {
      * `setRowAsCurrentEntity(row)` does the same for a group row's index. Clicking a group row,
      * `select()` and `selectNext()` ... never make one current. Check with {@link isGroupRow}.
      *
+     * `setData()` does not change it: after new rows are set it can still be a row of the old data,
+     * until a row is made current again. The `current-entity` event is sent when it changes.
+     *
      * @example
      * ```ts
+     * import { isGroupRow } from '@simple-html/grid';
+     *
+     * declare const detailForm: { show(row: object): void; clear(): void };
+     *
      * datasource.on('current-entity', () => {
      *     const row = datasource.currentEntity;
      *     if (row && !isGroupRow(row)) {
-     *         form.show(row);
+     *         detailForm.show(row);
      *     } else {
-     *         form.clear();
+     *         detailForm.clear();
      *     }
      * });
      * ```
@@ -141,6 +239,8 @@ export class Datasource<T = any> {
      *
      * @example
      * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
      * const datasource = new Datasource({
      *     key: 'id',
      *     fields: { born: 'date', age: { type: 'number', label: 'Age' } }
@@ -189,7 +289,14 @@ export class Datasource<T = any> {
     }
 
     /**
-     * so I can check
+     * Always `'Datasource'`. Tells a datasource from other objects without `instanceof`, which fails when
+     * two copies of the package are loaded.
+     *
+     * @example
+     * ```ts
+     * const isDatasource = (value: any) => value?.type === 'Datasource';
+     * isDatasource(datasource); // true
+     * ```
      */
     public get type() {
         return 'Datasource';
@@ -203,6 +310,8 @@ export class Datasource<T = any> {
      *
      * @example
      * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
      * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
      *
      * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD }
@@ -230,6 +339,8 @@ export class Datasource<T = any> {
      *
      * @example
      * ```ts
+     * import { Datasource, NumberFormatterComma } from '@simple-html/grid';
+     *
      * const datasource = new Datasource({
      *     fields: { price: { type: 'number', formatter: NumberFormatterComma }, born: 'date' }
      * });
@@ -257,10 +368,34 @@ export class Datasource<T = any> {
         return this.__fields.get(name);
     }
 
+    /**
+     * The rows marked for deletion with {@link markForDeletion} / {@link markAllForDeletion}: still in
+     * the data until {@link clearMarkedForDeletion}. The same rows as `getChanges().deletedEntities`,
+     * but the rows themselves, not copies.
+     *
+     * @example
+     * ```ts
+     * datasource.markForDeletion(datasource.getSelectedRows());
+     * datasource.getMarkedForDeletion().length; // the rows just marked
+     * ```
+     */
     public getMarkedForDeletion(): EntityUnion<T>[] {
         return this.__dataContainer.getMarkedForDeletion() as EntityUnion<T>[];
     }
 
+    /**
+     * Removes the rows marked for deletion for good, once the deletes are saved: they leave the rows,
+     * `getChanges()` no longer lists them in `deletedEntities`, and `resetData()` does not bring them
+     * back. Sends `collection-changed` with `{ removed: true, info: 'clearMarkedForDeletion' }`.
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * const { deletedEntities } = datasource.getChanges();
+     * await fetch('/api/people/delete', { method: 'POST', body: JSON.stringify(deletedEntities) });
+     * datasource.clearMarkedForDeletion();
+     * ```
+     */
     public clearMarkedForDeletion() {
         this.__dataContainer.clearMarkedForDeletion();
         // the rows are gone from the container, rebuild the displayed rows or they stay on screen.
@@ -270,7 +405,22 @@ export class Datasource<T = any> {
     }
 
     /**
-     * resets all edited data and brings back marked for deletion
+     * Throws away every change since the data was set: edited rows get their original values back,
+     * rows marked for deletion are unmarked, and new rows (from `addNewEmpty()`) are removed. Then the
+     * displayed rows are rebuilt. Rows removed for good (`removeData()`, `clearMarkedForDeletion()`) do
+     * not come back.
+     *
+     * The changes are those of the data container, so of every datasource sharing it.
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * datasource.getDataRows()[0].name = 'Changed';
+     * datasource.addNewEmpty({ name: 'New' });
+     *
+     * datasource.resetData();
+     * datasource.getChanges(); // { newEntities: [], modifiedEntities: [], deletedEntities: [] }
+     * ```
      */
     public resetData() {
         this.__dataContainer.resetData();
@@ -281,7 +431,14 @@ export class Datasource<T = any> {
     }
 
     /**
-     * resets all edited data and brings back marked for deletion
+     * {@link resetData} for the selected rows only: their edits are undone, the ones marked for deletion
+     * are unmarked, and the new ones are removed. The other rows keep their changes.
+     *
+     * @example
+     * ```ts
+     * datasource.select(1); // the first row
+     * datasource.resetDataSelectionOnly(); // only that row gets its original values back
+     * ```
      */
     public resetDataSelectionOnly() {
         this.__dataContainer.resetDataSelection(this.getSelectedRows());
@@ -299,8 +456,17 @@ export class Datasource<T = any> {
      *
      * The changes are those of the data container, so of every datasource sharing it.
      *
+     * @sample editing
      * @example
      * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * interface Person {
+     *     id: number;
+     *     name: string;
+     *     born: Date;
+     * }
+     *
      * const datasource = new Datasource<Person>({ key: 'id', fields: { born: 'date' } });
      * datasource.setData([
      *     { id: 1, name: 'Ann', born: new Date(1990, 4, 17) },
@@ -330,6 +496,7 @@ export class Datasource<T = any> {
      *
      * @param rows a row or a list of rows, e.g. `getSelectedRows()`
      *
+     * @sample editing
      * @example
      * ```ts
      * datasource.markForDeletion(datasource.getSelectedRows());
@@ -346,6 +513,7 @@ export class Datasource<T = any> {
      * Marks every row for deletion, see {@link markForDeletion}. Was `markForDeletion(null, true)`
      * in v5.
      *
+     * @sample editing
      * @example
      * ```ts
      * datasource.markAllForDeletion();
@@ -378,11 +546,13 @@ export class Datasource<T = any> {
      * last.
      * @returns the rows removed
      *
+     * @sample rows-data
      * @example
      * ```ts
      * datasource.removeData(datasource.getSelectedRows());
      *
      * // many calls: rebuild the displayed rows once, at the end
+     * const rows = datasource.getAllData().filter((row) => row.archived);
      * rows.forEach((row, i) => datasource.removeData(row, { refilter: i === rows.length - 1 }));
      * ```
      */
@@ -403,6 +573,7 @@ export class Datasource<T = any> {
      *
      * @returns the rows removed
      *
+     * @sample rows-data
      * @example
      * ```ts
      * datasource.removeAllData();
@@ -417,14 +588,35 @@ export class Datasource<T = any> {
     }
 
     /**
-     * This is the data in the dataContainer
+     * Every row in the data: no filter, sort or grouping, the rows marked for deletion included, never a
+     * group row. A new array, the rows in it are the rows themselves (not copies). Shared with every
+     * datasource on the same data container.
+     *
+     * {@link getDataRows} has the rows that pass the filter, sorted; {@link getRows} what the grid shows.
+     *
+     * @sample rows-data
+     * @example
+     * ```ts
+     * import { where } from '@simple-html/grid';
+     *
+     * datasource.filter(where('age', 'GREATER_THAN', 60));
+     * datasource.getDataRows().length; // the rows over 60
+     * datasource.getAllData().length; // every row
+     * ```
      */
     public getAllData(): EntityUnion<T>[] {
         return this.__dataContainer.getDataSet() as any;
     }
 
     /**
-     * This returns datacontainer used
+     * The data container that holds the rows and tracks the edits: the one given as
+     * `DatasourceOptions.container`, or the one the datasource made. See {@link DataContainer}.
+     *
+     * @example
+     * ```ts
+     * const container = datasource.getDataContainer();
+     * container.setErrors(new Map([['7', 'Name is already taken']]));
+     * ```
      */
     public getDataContainer() {
         return this.__dataContainer;
@@ -445,9 +637,17 @@ export class Datasource<T = any> {
     }
 
     /**
-     * sets row as current entity. A group row's index makes the group row current, see
-     * {@link currentEntity}
-     * @param row 0 based like array, not like the select
+     * Makes a displayed row the current entity ({@link currentEntity}) and sends `current-entity`. The
+     * selection is not changed. A group row's index makes the group row current, an index out of range
+     * makes it `null`.
+     *
+     * @param row the index in the displayed rows (`getRows()`), 0 based - not 1 based like {@link select}
+     *
+     * @example
+     * ```ts
+     * datasource.setRowAsCurrentEntity(0); // the first displayed row
+     * datasource.currentEntity; // that row
+     * ```
      */
     public setRowAsCurrentEntity(row: number) {
         this.__select(row);
@@ -462,8 +662,15 @@ export class Datasource<T = any> {
      * @param options.refilter `true` to run the current filter on the rows, default `false`: every row
      * set is shown, also one the filter would leave out
      *
+     * The selection follows the key (`DatasourceOptions.key`): rows that come back with the same key stay
+     * selected. {@link currentEntity} is not changed.
+     *
+     * @sample rows-data
      * @example
      * ```ts
+     * declare const rowsFromServer: object[];
+     * declare const moreRows: object[];
+     *
      * datasource.setData(rowsFromServer);
      * datasource.setData(moreRows, { add: true });
      * datasource.setData(moreRows, { add: true, refilter: true }); // keep the filter applied
@@ -487,10 +694,14 @@ export class Datasource<T = any> {
      * Adds a new row at the end: `getChanges()` lists it in `newEntities`, its `__rowState` is `'N'`.
      * When grouped it is put in its group, and the group is expanded.
      *
+     * The row gets a generated key, a negative number: with a key field it is written there
+     * (`{ company: 'NEW COMPANY', id: -1 }`), else it is the row's `__KEY`.
+     *
      * @param row the values of the new row, default none. The object itself becomes the row.
      * @param options.scrollTo `false` to leave the selection as it is, default `true`: the new row is
      * selected and made current, and the grid scrolls to it
      *
+     * @sample editing
      * @example
      * ```ts
      * datasource.addNewEmpty();
@@ -528,6 +739,18 @@ export class Datasource<T = any> {
         }
     }
 
+    /**
+     * The sort that is set: the fields and directions, the first decides. When grouped, the grouped
+     * fields come first. `[]` when the rows are not sorted. It is what `GridState.sorting` holds.
+     *
+     * It is the datasource's own array, not a copy - do not change it.
+     *
+     * @example
+     * ```ts
+     * datasource.sort({ attribute: 'name', ascending: true });
+     * datasource.getLastSorting(); // [{ attribute: 'name', ascending: true }]
+     * ```
+     */
     public getLastSorting() {
         return this.__sorting.getLastSort();
     }
@@ -589,6 +812,7 @@ export class Datasource<T = any> {
      * @param args the field and direction, or a list of them
      * @param options.add `true` to add to the current sort, default `false`
      *
+     * @sample sorting-grouping
      * @example
      * ```ts
      * datasource.sort({ attribute: 'company', ascending: true });
@@ -696,6 +920,7 @@ export class Datasource<T = any> {
      * @param expression a condition or a group of them, see {@link FilterExpression}. Build it with
      * {@link and}, {@link or} and {@link where}.
      *
+     * @sample filtering
      * @example
      * ```ts
      * import { and, or, where } from '@simple-html/grid';
@@ -725,10 +950,16 @@ export class Datasource<T = any> {
      * Groups the rows: a {@link GroupRow} in front of each group, in `getRows()`. The rows are sorted
      * on the grouped fields, ascending. `group([])` removes the grouping.
      *
+     * The groups start collapsed, apart from the ones whose id is in {@link getExpanded} (set with
+     * {@link setExpanded}, or expanded before): `getRows()` has only the group rows until a group is
+     * expanded. The rows are grouped on their value as the field's formatter shows it, so a `date` field
+     * groups by day; every blank value (null, undefined, `''`) is one group with the id `' blank'`.
+     *
      * @param groups the fields to group on, the first is the outer group
      * @param options.add `true` to add the groups after the current grouping, default `false`: they
      * replace it
      *
+     * @sample sorting-grouping
      * @example
      * ```ts
      * datasource.group([{ attribute: 'country', title: 'Country' }]);
@@ -766,8 +997,23 @@ export class Datasource<T = any> {
     }
 
     /**
-     * Removed group
-     * @param group undefined = remove all groups
+     * Removes one level of grouping, or all of it. The sort is set to the grouped fields that are left
+     * (none: the rows keep the order they are in). Sends `collection-grouped` twice: `info: 'group'` with
+     * the grouping left, then `info: 'removeGroup'`.
+     *
+     * @param group the level to remove: the object from {@link getGrouping}, a copy with the same values
+     * is not found. Left out, all grouping is removed
+     *
+     * @sample sorting-grouping
+     * @example
+     * ```ts
+     * datasource.group([
+     *     { attribute: 'country', title: 'Country' },
+     *     { attribute: 'company', title: 'Company' }
+     * ]);
+     * datasource.removeGroup(datasource.getGrouping()[0]); // grouped on company only
+     * datasource.removeGroup(); // not grouped
+     * ```
      */
     public removeGroup(group?: GroupArgument) {
         if (group) {
@@ -785,8 +1031,22 @@ export class Datasource<T = any> {
     }
 
     /**
-     * expand 1 or all groups
-     * @param id null/undefined = all
+     * Expands a group, so its rows are displayed, or every group with their sub groups. Sends
+     * `collection-expand`. Does nothing while the datasource is not grouped.
+     *
+     * A sub group is only shown when the group above it is expanded: expanding it while its parent is
+     * collapsed does nothing.
+     *
+     * @param id the group's `__groupID` (see {@link GroupRow}), e.g. `'Norway'` or `'Norway-Apple'` for a
+     * sub group. Left out, every group is expanded
+     *
+     * @sample sorting-grouping
+     * @example
+     * ```ts
+     * datasource.group([{ attribute: 'country', title: 'Country' }]);
+     * datasource.expandGroup('Norway'); // the rows of Norway are shown
+     * datasource.expandGroup(); // every group
+     * ```
      */
     public expandGroup(id?: string) {
         // setGrouping() alone does not build the groups, there is nothing to expand until it is applied
@@ -797,8 +1057,19 @@ export class Datasource<T = any> {
     }
 
     /**
-     * collapse 1 or all groups
-     * @param id null/undefined = all
+     * Collapses a group, so only its group row is displayed, or every group with their sub groups.
+     * Sends `collection-collapse`. Does nothing while the datasource is not grouped.
+     *
+     * The rows of a collapsed group are not in `getRows()`, but they are in `getDataRows()`.
+     *
+     * @param id the group's `__groupID` (see {@link GroupRow}). Left out, every group is collapsed
+     *
+     * @sample sorting-grouping
+     * @example
+     * ```ts
+     * datasource.collapseGroup('Norway');
+     * datasource.collapseGroup(); // every group: getRows() has the group rows only
+     * ```
      */
     public collapseGroup(id?: string) {
         // setGrouping() alone does not build the groups, there is nothing to collapse until it is applied
@@ -828,6 +1099,7 @@ export class Datasource<T = any> {
      * @param handler called with the payload every time the event is sent
      * @returns a function that unsubscribes the handler
      *
+     * @sample events
      * @example
      * ```ts
      * const off = datasource.on('collection-filtered', (data) => {
@@ -861,14 +1133,33 @@ export class Datasource<T = any> {
     }
 
     /**
-     * return selection mode used
+     * How rows can be selected: `'multiple'`, `'single'` or `'none'`, see {@link SelectionMode}.
+     *
+     * A grid sets its own `GridConfig.selectionMode` (default `'multiple'`) on the datasource every time
+     * it is built, so with a grid this is the grid's.
+     *
+     * @example
+     * ```ts
+     * if (datasource.getSelectionMode() === 'multiple') {
+     *     datasource.selectAll();
+     * }
+     * ```
      */
     public getSelectionMode(): SelectionMode {
         return this.__selectionMode;
     }
 
     /**
-     * Selects all rows displayed
+     * Selects every displayed data row - not the rows of collapsed groups or the ones the filter leaves
+     * out - and sends `selection-change`. Selects nothing unless the selection mode is `'multiple'`.
+     * Clicking the grid's top left corner does the same (ctrl+click there deselects every row).
+     *
+     * @sample selection
+     * @example
+     * ```ts
+     * datasource.selectAll();
+     * datasource.getSelectedRows().length; // every displayed data row
+     * ```
      */
     public selectAll() {
         this.__selection.selectAll();
@@ -880,6 +1171,7 @@ export class Datasource<T = any> {
      * @param options.notify `true` to send the `selection-change` event, so the grid shows it.
      * Default `false`: the grid shows it on its next redraw
      *
+     * @sample selection
      * @example
      * ```ts
      * datasource.deselectAll({ notify: true });
@@ -891,16 +1183,41 @@ export class Datasource<T = any> {
     }
 
     /**
-     * replace selection mode used, if blank it will be set to 'none'
+     * Sets how rows can be selected: `'multiple'`, `'single'` or `'none'`. A blank value is `'none'`. The
+     * rows selected before stay selected.
+     *
+     * A grid sets its own `GridConfig.selectionMode` (default `'multiple'`) on the datasource every time
+     * it is built, which replaces this: with a grid, use `gridInterface.updateConfig({ selectionMode })`.
+     *
+     * @param mode the selection mode, see {@link SelectionMode}
+     *
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * const datasource = new Datasource(); // not shown in a grid
+     * datasource.setSelectionMode('single');
+     * ```
      */
     public setSelectionMode(mode: SelectionMode): void {
         this.__selectionMode = mode || 'none';
     }
 
     /**
-     * returns 1 row of the displayed rows (`getRows()`), start on 0. When grouped it can be a
-     * {@link GroupRow}, check with {@link isGroupRow}. Out of range gives `undefined`.
-     * @param rowNo
+     * One row of the displayed rows, `getRows()[rowNo]`. When grouped it can be a {@link GroupRow}, check
+     * with {@link isGroupRow}. Out of range gives `undefined`, though the type does not say so.
+     *
+     * @param rowNo the index in the displayed rows, 0 based
+     *
+     * @example
+     * ```ts
+     * import { isGroupRow } from '@simple-html/grid';
+     *
+     * const row = datasource.getRow(0);
+     * if (row && !isGroupRow(row)) {
+     *     console.log(row.name);
+     * }
+     * ```
      */
     public getRow(rowNo: number): EntityUnion<T> | GroupRow {
         return this.__collectionDisplayed[rowNo] as EntityUnion<T> | GroupRow;
@@ -913,8 +1230,12 @@ export class Datasource<T = any> {
      *
      * {@link getDataRows} returns the data rows only - never a group row (was `getRows(true)` in v5).
      *
+     * @sample rows-data
+     * @sample sorting-grouping
      * @example
      * ```ts
+     * import { isGroupRow } from '@simple-html/grid';
+     *
      * datasource.group([{ attribute: 'country', title: 'Country' }]);
      *
      * // data rows and group rows, as the grid shows them
@@ -940,6 +1261,7 @@ export class Datasource<T = any> {
      *
      * It is the datasource's own list, not a copy - do not change it.
      *
+     * @sample rows-data
      * @example
      * ```ts
      * datasource.group([{ attribute: 'country', title: 'Country' }]);
@@ -962,6 +1284,9 @@ export class Datasource<T = any> {
      * @param options.notify `true` to send the `select` event, so the grid scrolls to the row.
      * Default `false`
      *
+     * With selection mode `'none'` the row is made current, but not selected.
+     *
+     * @sample selection
      * @example
      * ```ts
      * datasource.select(5); // the fifth displayed row, getRow(4)
@@ -982,14 +1307,29 @@ export class Datasource<T = any> {
     }
 
     /**
-     * updates current entity to first
+     * Selects the first displayed data row, makes it current and sends `select` (`info: 'select-first'`),
+     * so the grid scrolls to it. Does nothing when no data row is displayed.
+     *
+     * @sample selection
+     * @example
+     * ```ts
+     * datasource.selectFirst();
+     * datasource.currentEntity; // the first data row
+     * ```
      */
     public selectFirst(): void {
         this.__selectAndNotify(this.__findDataRow(0, 1), 'select-first');
     }
 
     /**
-     * updates current entity, if first when running this it will select the last
+     * Selects the data row above the current one, makes it current and sends `select`
+     * (`info: 'select-prev'`). From the first row it goes to the last. Group rows are skipped.
+     *
+     * @sample selection
+     * @example
+     * ```ts
+     * document.getElementById('prev')!.onclick = () => datasource.selectPrev();
+     * ```
      */
     public selectPrev(): void {
         let row = this.__findDataRow(this.__currentEntityIndex() - 1, -1);
@@ -1000,7 +1340,15 @@ export class Datasource<T = any> {
     }
 
     /**
-     * updates current entity, if on last it will end on up the first
+     * Selects the data row below the current one, makes it current and sends `select`
+     * (`info: 'select-next'`). From the last row it goes to the first, and without a current row it
+     * starts at the first. Group rows are skipped.
+     *
+     * @sample selection
+     * @example
+     * ```ts
+     * document.getElementById('next')!.onclick = () => datasource.selectNext();
+     * ```
      */
     public selectNext(): void {
         let row = this.__findDataRow(this.__currentEntityIndex() + 1, 1);
@@ -1011,7 +1359,14 @@ export class Datasource<T = any> {
     }
 
     /**
-     * updates current entity to last entity
+     * Selects the last displayed data row, makes it current and sends `select` (`info: 'select-last'`),
+     * so the grid scrolls to it. Does nothing when no data row is displayed.
+     *
+     * @sample selection
+     * @example
+     * ```ts
+     * datasource.selectLast();
+     * ```
      */
     public selectLast(): void {
         this.__selectAndNotify(this.__findDataRow(this.__collectionDisplayed.length - 1, -1), 'select-last');
@@ -1049,8 +1404,19 @@ export class Datasource<T = any> {
     }
 
     /**
-     * returns the selected rows, in displayed order. Data rows only, a group row can not be selected
-     * @returns
+     * The selected rows, in the order they are displayed. Data rows only, a group row can not be
+     * selected.
+     *
+     * Only displayed rows are returned: a selected row in a collapsed group, or one the filter leaves
+     * out, is not in it (it is selected again once it is displayed).
+     *
+     * @sample selection
+     * @example
+     * ```ts
+     * datasource.on('selection-change', () => {
+     *     console.log(datasource.getSelectedRows().map((row) => row.name));
+     * });
+     * ```
      */
     public getSelectedRows(): EntityUnion<T>[] {
         const displayedRows = this.getRows();
@@ -1067,9 +1433,19 @@ export class Datasource<T = any> {
     }
 
     /**
-     * sets Intl Collator , this is used for sorting
-     * @param code
-     * @param options
+     * Sorts text with an `Intl.Collator` for a language, from the next sort on. Without it text is
+     * sorted with `localeCompare()` of the browser's language. Filtering is not changed.
+     *
+     * Was `setLocalCompare()` in v5.
+     *
+     * @param code the language, e.g. `'nb'` - `å` sorts after `z`
+     * @param options the `Intl.Collator` options, e.g. `{ sensitivity: 'base' }`
+     *
+     * @example
+     * ```ts
+     * datasource.setLocaleCompare('nb');
+     * datasource.sort({ attribute: 'name', ascending: true }); // ... 'Zara', 'Øystein', 'Åse'
+     * ```
      */
     public setLocaleCompare(code: string, options?: any) {
         // should we also use this for filter ?
@@ -1077,8 +1453,19 @@ export class Datasource<T = any> {
     }
 
     /**
-     * resets current sort
-     * @param defaultSortAttribute attribute name if you have a default you want to use
+     * Clears the sort, without sorting: the rows keep their order until the displayed rows are built
+     * again (`filter()`, `setData()` ...), then they are in the order they were set. No event is sent.
+     *
+     * @param defaultSortAttribute a field to sort on ascending instead, set the same way (not run)
+     *
+     * @example
+     * ```ts
+     * datasource.resetSort();
+     * datasource.getLastSorting(); // []
+     *
+     * datasource.resetSort('name');
+     * datasource.sort(); // sorted on name, ascending
+     * ```
      */
     public resetSort(defaultSortAttribute?: string): void {
         this.__sorting.reset(defaultSortAttribute);
@@ -1103,21 +1490,46 @@ export class Datasource<T = any> {
     }
 
     /**
-     * returns current sortorder config
+     * The sort that is set, with {@link setOrderBy} or {@link sort}: the same fields and directions as
+     * {@link getLastSorting}. The datasource's own array, not a copy.
+     *
+     * @example
+     * ```ts
+     * datasource.setOrderBy({ attribute: 'company', ascending: true });
+     * datasource.getOrderBy(); // [{ attribute: 'company', ascending: true }]
+     * ```
      */
     public getOrderBy() {
         return this.__sorting.getOrderBy();
     }
 
     /**
-     * returns current grouing config
+     * The grouping: the fields grouped on, the outer group first. `[]` when not grouped. It is what
+     * `GridState.grouping` holds. The datasource's own array, not a copy - change the grouping with
+     * {@link group}.
+     *
+     * @sample sorting-grouping
+     * @example
+     * ```ts
+     * datasource.group([{ attribute: 'country', title: 'Country' }]);
+     * datasource.getGrouping(); // [{ attribute: 'country', title: 'Country' }]
+     * ```
      */
     public getGrouping() {
         return this.__grouping.getGrouping();
     }
 
     /**
-     * sets current grouing config
+     * Sets the grouping without grouping: `group()` groups the rows. Until then `getRows()` is not
+     * grouped and `expandGroup()` / `collapseGroup()` do nothing.
+     *
+     * @param group the fields to group on, the outer group first
+     *
+     * @example
+     * ```ts
+     * datasource.setGrouping([{ attribute: 'country', title: 'Country' }]);
+     * datasource.group(datasource.getGrouping()); // grouped now
+     * ```
      */
     public setGrouping(group: GroupArgument[]) {
         this.__grouping.setGrouping(group);
@@ -1127,14 +1539,30 @@ export class Datasource<T = any> {
     }
 
     /**
-     * sets current expanded ids
+     * Sets which groups are expanded, by their `__groupID`, for the next {@link group}: those groups start
+     * expanded, the rest collapsed. The groups shown now do not change.
+     *
+     * @param x the group ids, e.g. `['Norway', 'Norway-Apple']`
+     *
+     * @example
+     * ```ts
+     * datasource.setExpanded(['Norway']);
+     * datasource.group([{ attribute: 'country', title: 'Country' }]); // Norway is expanded
+     * ```
      */
     public setExpanded(x: string[]) {
         this.__grouping.setExpanded(x);
     }
 
     /**
-     * gets current expanded ids
+     * The ids (`__groupID`) of the expanded groups. It is what `GridState.expandedGroups` holds. A new
+     * array.
+     *
+     * @example
+     * ```ts
+     * datasource.expandGroup('Norway');
+     * datasource.getExpanded(); // ['Norway']
+     * ```
      */
     public getExpanded() {
         return this.__grouping.getExpanded();
@@ -1146,8 +1574,11 @@ export class Datasource<T = any> {
      *
      * It is the datasource's own object, not a copy.
      *
+     * @sample filtering
      * @example
      * ```ts
+     * import { where } from '@simple-html/grid';
+     *
      * datasource.filter(where('age', 'GREATER_THAN', 18));
      * datasource.getFilter(); // { field: 'age', operator: 'GREATER_THAN', value: 18 }
      *
@@ -1173,6 +1604,19 @@ export class Datasource<T = any> {
         return this.__selection;
     }
 
+    /**
+     * The operator a header filter of this type starts with: `'GREATER_THAN_OR_EQUAL_TO'` for
+     * `'number'`, `'date'` and `'datetime'`, `'EQUAL'` for the rest. The grid uses it for a column
+     * without an `operator` in its config.
+     *
+     * @param type a field type, see {@link FieldType}
+     *
+     * @example
+     * ```ts
+     * datasource.getFilterFromType('number'); // 'GREATER_THAN_OR_EQUAL_TO'
+     * datasource.getFilterFromType('text'); // 'EQUAL'
+     * ```
+     */
     public getFilterFromType(type: string) {
         return this.__filter.getFilterFromType(type);
     }
@@ -1182,8 +1626,11 @@ export class Datasource<T = any> {
      *
      * @param expression a condition or a group, see {@link FilterExpression}, or null for no filter
      *
+     * @sample filtering
      * @example
      * ```ts
+     * import { where } from '@simple-html/grid';
+     *
      * datasource.setFilter(where('age', 'GREATER_THAN', 18));
      * datasource.filter(); // runs it
      * ```
@@ -1192,6 +1639,18 @@ export class Datasource<T = any> {
         this.__filter.setFilter(expression);
     }
 
+    /**
+     * Builds the displayed rows again from every row in the data container: filtered, sorted and grouped
+     * the way the datasource is. Sends `collection-filtered` (`info: 'filter'`). For rows changed in the
+     * data container directly (`getDataContainer().setData()`, `replace()` ...), or by another datasource
+     * on the same container.
+     *
+     * @example
+     * ```ts
+     * datasource.getDataContainer().setData([{ id: 3, name: 'Cid' }], { add: true });
+     * datasource.reloadDatasource(); // the new row is shown, if the filter lets it through
+     * ```
+     */
     public reloadDatasource() {
         this.__collectionFiltered = this.getAllData();
         const eventTriggered = this.__internalUpdate(true);
@@ -1208,13 +1667,16 @@ export class Datasource<T = any> {
      * @param label the name to show for a field. Default the field's label (`FieldConfig.label`, else
      * the field name). The grid passes its column labels.
      *
+     * @sample filtering
      * @example
      * ```ts
+     * import { and, Datasource, or, where } from '@simple-html/grid';
+     *
      * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
      * datasource.filter(where('born', 'GREATER_THAN', new Date(1990, 0, 1)));
      *
      * datasource.getFilterString(); // "([BORN] <<GREATER_THAN>> '1990-01-01')"
-     * datasource.getFilterString((field) => field.toUpperCase() + '!'); // "([BORN!] <<GREATER_THAN>> '1990-01-01')"
+     * datasource.getFilterString((field: string) => `${field}!`); // "([BORN!] <<GREATER_THAN>> '1990-01-01')"
      *
      * datasource.filter(and(where('a', 'EQUAL', 'x'), or(where('b', 'EQUAL', 'y'), where('b', 'EQUAL', 'z'))));
      * datasource.getFilterString(); // "([A] <<EQUAL_TO>> 'X' AND ([B] <<EQUAL_TO>> 'Y' OR [B] <<EQUAL_TO>> 'Z'))"
@@ -1266,8 +1728,11 @@ export class Datasource<T = any> {
      * @param label the name to show for a field. Default the field's label (`FieldConfig.label`, else
      * the field name). The grid passes its column labels.
      *
+     * @sample filtering
      * @example
      * ```ts
+     * import { Datasource, where } from '@simple-html/grid';
+     *
      * const datasource = new Datasource({ fields: { age: { type: 'number', label: 'Age' } } });
      * datasource.filter(where('age', 'GREATER_THAN', 18));
      *

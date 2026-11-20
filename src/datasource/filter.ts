@@ -88,8 +88,8 @@ export class Filter {
 
     /**
      * IN / NOT_IN. The list and the row value are both compared as upper case text, so a number or
-     * boolean in the row matches the same value in the list. A blank row value (or 0, same as
-     * IS_BLANK) only matches the list value 'NULL'.
+     * boolean in the row matches the same value in the list. A blank row value only matches the list
+     * value 'NULL', and so does a 0 in a text field - a number field compares its formatted text, '0'.
      */
     private inStatement(rowData: Entity, condition: FilterCondition, type: FieldType, ds: Datasource): boolean {
         // a list, or text with one value per line

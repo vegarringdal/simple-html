@@ -7,36 +7,6 @@ export const dynamicCellTypes: DemoSample = {
     group: 'Cells',
     description:
         'With dynamicCellTypeColumn one column\'s cell type is driven per row by another column\'s value ("text" | "number" | "date" | "datetime" | "boolean"). The field itself must be a text field (the default). Each row is formatted with the datasource\'s default formatter for its type. Useful for property/value style data. Try editing a valueType cell to another type - the value cell switches (date cells get the picker, boolean a checkbox, numbers align right).',
-    code: `
-// value is not listed, so it is a text field - that is what dynamic types need
-const datasource = new Datasource({ fields: { rowNo: 'number' } });
-
-const gridConfig: GridConfig = {
-    readonly: false,
-    columns: {
-        rowNo: { readonly: true },
-        value: { dynamicCellTypeColumn: 'valueType' } // this rows column decides the type
-    },
-    layout: {
-        center: [
-            { fields: ['rowNo'], width: 60 },
-            { fields: ['valueType'], width: 110 },
-            { fields: ['value'], width: 220 }
-        ]
-    }
-};
-
-const rows = [
-    { rowNo: 1, valueType: 'text', value: 'hello world' },
-    { rowNo: 2, valueType: 'number', value: 1234.5 },
-    { rowNo: 3, valueType: 'date', value: new Date(2026, 7, 15) },
-    { rowNo: 4, valueType: 'datetime', value: new Date(2026, 7, 15, 13, 45) },
-    { rowNo: 5, valueType: 'boolean', value: true }
-];
-
-// a row is formatted with datasource.getFormatter('value', row.valueType):
-// the default formatter of that type
-`,
     run(stage) {
         const ui = createStage(stage);
 
@@ -45,6 +15,7 @@ const rows = [
             readonly: false,
             columns: {
                 rowNo: { readonly: true },
+                // the valueType of the row decides the type of its value cell
                 value: { dynamicCellTypeColumn: 'valueType' }
             },
             layout: {
@@ -67,6 +38,9 @@ const rows = [
             });
         }
 
+        // value is not in the fields, so it is a text field - that is what dynamic types need.
+        // A row is formatted with datasource.getFormatter('value', row.valueType): the default
+        // formatter of that type
         mountGrid(ui.gridHost, config, rows, { fields: { rowNo: 'number' } });
     }
 };

@@ -14,8 +14,11 @@ import type { Formatter } from './formatter';
  *
  * A field that is not listed in `fields` is `'text'`.
  *
+ * @sample formatters
  * @example
  * ```ts
+ * import { Datasource } from '@simple-html/grid';
+ *
  * const datasource = new Datasource({
  *     fields: {
  *         age: 'number',
@@ -46,8 +49,11 @@ export function isFieldType(value: unknown): value is FieldType {
  * How one field of the datasource is described in `DatasourceOptions.fields`. All of it is
  * optional, and writing just the type (`born: 'date'`) is the same as `born: { type: 'date' }`.
  *
+ * @sample custom-formatter
  * @example
  * ```ts
+ * import { Datasource, NumberFormatterComma } from '@simple-html/grid';
+ *
  * const datasource = new Datasource({
  *     fields: {
  *         born: 'date',
@@ -79,6 +85,12 @@ export interface FieldConfig {
 
 /**
  * A field as the datasource resolved it: every default filled in. Returned by `datasource.getField()`.
+ *
+ * @example
+ * ```ts
+ * const { type, label, formatter } = datasource.getField('born');
+ * formatter.format(new Date(2026, 10, 20)); // '2026-11-20' for a date field with the default formatter
+ * ```
  */
 export interface Field {
     /** the field name, the property on the row */
