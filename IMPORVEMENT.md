@@ -829,6 +829,21 @@ Phase 1 is complete with this step: 500 tests at the start of v6, 884 now.
 * options are not state, so changing one at runtime needs a new interface for now - `updateConfig`
   comes in step 2
 
+#### Step 2 - setup, callbacks, runtime config, method names (items 17, 18, 20)
+
+* `createGrid(host, { config, datasource })` and `destroy()`. `destroy()` cleans up every listener
+  and observer, also after the host already left the page.
+* `isReadonly(row, field, readonlyByConfig)` / `cellClass(row, field)` in the config replace
+  `readonlySetter` / `cellAppendClassSetter`
+* `updateConfig(partial)` changes options at runtime, one rebuild. The row menu's "Use dimmed
+  values" goes through it too - otherwise the next `updateConfig` undid the toggle.
+* `refresh()` / `rebuild()` / `getLayoutFields()` / `getHiddenFields()` replace
+  `triggerScrollEvent` / `triggerRebuild` / `getAttributeColumns(bool)` / `getOptionalAttributes`
+* fixed: the per-cell background class was glued to `simple-html-readonly` /
+  `simple-html-mandatory` without a space, so neither class worked on those cells
+* fixed: `disableResizeEvent()` / `enableResizeEvent()` did the opposite of their names
+* note: `grid-connected` fires inside `createGrid()`, before anyone can subscribe
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -879,7 +894,6 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
   * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
   * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the
     html version, values not html escaped
-  * `Grid.disableResizeEvent()` / `enableResizeEvent()` do the opposite of their names
   * dim repeated values compares `fromSource`, the cell shows `fromSourceDisplay`; ignores
     `numberOverride`; the row below is not re-dimmed after an edit
   * `getChanges().modifiedEntities` still lists props edited back to their original value

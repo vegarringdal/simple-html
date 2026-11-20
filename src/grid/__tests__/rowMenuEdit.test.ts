@@ -28,9 +28,11 @@ beforeEach(() => {
 });
 
 describe('row menu - clear', () => {
-    it('expect clear to skip selected rows the readonly setter marks readonly', async () => {
-        const { element, datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false }, data());
-        gridInterface.readonlySetter((_attribute, rowData: any) => (rowData.firstname === 'b' ? true : null));
+    it('expect clear to skip selected rows the isReadonly callback marks readonly', async () => {
+        const { element, datasource } = await mountGrid(
+            { ...simpleConfig(), readonly: false, isReadonly: (row) => (row.firstname === 'b' ? true : null) },
+            data()
+        );
         datasource.getSelection().selectRowRange(0, 2);
 
         openRowMenu(element, 'lastname', 0);

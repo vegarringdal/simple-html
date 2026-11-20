@@ -347,8 +347,8 @@ body {
     min-height: 140px;
 }
 
-/* cell overlay classes for the cellAppendClassSetter sample -
-   the dimmed element is unstyled for editable cells, so position it ourselves */
+/* cell background classes for the cellClass sample -
+   the element behind the input has no size of its own on editable cells, so position it ourselves */
 .demo-cell-low,
 .demo-cell-high {
     position: absolute;

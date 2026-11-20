@@ -20,7 +20,7 @@ gridInterface.on('cell-click', (data) => {
             data.cell,
             (result) => {
                 data.rowData[data.attribute] = result;
-                gridInterface.triggerScrollEvent(); // rerender rows
+                gridInterface.refresh(); // render the cells again
             }
         );
     }
@@ -39,7 +39,7 @@ gridInterface.on('cell-click', (data) => {
                 );
                 gridInterface.contextMenuCustom(data.originalEvent, items, data.cell, (result: string) => {
                     data.rowData[data.attribute] = result;
-                    gridInterface.triggerScrollEvent();
+                    gridInterface.refresh();
                     ui.log('picked: ' + result);
                 });
             }

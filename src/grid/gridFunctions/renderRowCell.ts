@@ -51,10 +51,8 @@ export function renderRowCell(
 
         let dimmed = '';
 
-        let cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, rowData, cellConfig.readonly || false);
-        if (cellReadOnly !== false && cellReadOnly !== true) {
-            cellReadOnly = cellConfig.readonly || false;
-        }
+        // the config's isReadonly() decides, and when it gives no answer the column's readonly
+        const cellReadOnly = ctx.gridInterface.__isCellReadonly(entity, attribute);
 
         if (!config.readonly && cellReadOnly) {
             dimmed = 'simple-html-readonly';
@@ -83,7 +81,9 @@ export function renderRowCell(
             }
         }
 
-        const { inputClass, dimmedClass } = ctx.gridInterface.__callCellAppendClass(attribute, rowData, cellReadOnly);
+        // the classes of the config's cellClass(), '' without one
+        const cellClass = ctx.gridInterface.__getCellClass(entity, attribute);
+        const backgroundClass = `${dimmed} ${cellClass.background}`;
 
         // dims cells that repeat the row above, resets at the start of every group
         const repeated = isRepeatedValue(ctx, row, attribute);
@@ -92,7 +92,7 @@ export function renderRowCell(
         if (cellConfigType === 'boolean') {
             render(
                 html` <div style="width:100%;height:100%;">
-                    <div data-attribute-dimmed=${attribute} class=${dimmed + dimmedClass}></div>
+                    <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
                     <input
                         style="width:100%;"
                         role="cell"
@@ -101,7 +101,7 @@ export function renderRowCell(
                         aria-label=${attribute}
                         .checked=${live(checked)}
                         type="checkbox"
-                        class=${`cellpos-${colType}-${row}-${column}-${celno} ${inputClass}${repeatedClass}`}
+                        class=${`cellpos-${colType}-${row}-${column}-${celno} ${cellClass.input}${repeatedClass}`}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -132,7 +132,7 @@ export function renderRowCell(
             let skipFocus = false;
             render(
                 html` <div style="width:100%;height:100%;">
-                    <div data-attribute-dimmed=${attribute} class=${dimmed + dimmedClass}></div>
+                    <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
                     <input
                         role="cell"
                         aria-label=${attribute}
@@ -142,7 +142,7 @@ export function renderRowCell(
                             cellConfigType === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'
                         }
                         .value=${live(value)}
-                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}${repeatedClass}`}
+                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
                         placeholder=${showPlaceHolder ? cellConfig.placeholderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {
@@ -165,7 +165,7 @@ export function renderRowCell(
                                             typeof current === 'string' ? formatter.parse(current) : current,
                                             (value: Date | null) => {
                                                 rowData[attribute] = value;
-                                                ctx.gridInterface.triggerScrollEvent();
+                                                triggerScrollEvent(ctx);
                                             }
                                         );
                                     }

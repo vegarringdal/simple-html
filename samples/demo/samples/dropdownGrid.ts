@@ -21,9 +21,9 @@ gridInterface.on('cell-focus-button-click', (data) => {
     if (data.attribute === 'company') {
         const rect = data.cell.getBoundingClientRect();
 
-        // build a small grid to use as dropdown
+        // build a small grid to use as dropdown. The element is placed by hand here, not with
+        // createGrid: it is positioned on its own (the grid adds its simple-html-grid class itself)
         const dropdown = document.createElement('simple-html-grid') as GridElement;
-        dropdown.classList.add('simple-html-grid');
         dropdown.style.position = 'fixed';
         dropdown.style.width = '300px';
         dropdown.style.height = '250px';
@@ -42,6 +42,7 @@ gridInterface.on('cell-focus-button-click', (data) => {
             if (x.target.classList.contains('simple-html-grid-cell-input')) {
                 gridInterface.removeContextMenuElement();
                 data.rowData.company = localDatasource.currentEntity.company;
+                gridInterface.refresh(); // show the value
                 data.target.focus(); // back to the cell
             }
         };
@@ -80,8 +81,8 @@ gridInterface.on('cell-focus-button-click', (data) => {
                     left = window.innerWidth - width - 3;
                 }
 
+                // placed by hand: positioned on its own, the grid adds its css class itself
                 const dropdown = document.createElement('simple-html-grid') as GridElement;
-                dropdown.classList.add('simple-html-grid');
                 dropdown.style.position = 'fixed';
                 dropdown.style.width = width + 'px';
                 dropdown.style.height = height + 'px';
@@ -111,7 +112,7 @@ gridInterface.on('cell-focus-button-click', (data) => {
                 const applyValue = () => {
                     gridInterface.removeContextMenuElement();
                     data.rowData.company = localDatasource.currentEntity?.company;
-                    gridInterface.triggerScrollEvent();
+                    gridInterface.refresh();
                     data.target.focus();
                 };
 

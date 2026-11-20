@@ -233,15 +233,15 @@ with `@example` on new public API, and `MIGRATION.md`.
         `attributes`. Any column missing from `attributes` is created implicitly in
         `__attributes`, and that split caused the v5 bug where header text survived for unlisted
         columns. One keyed list of columns, with the layout referencing the keys. **M**
-17. [ ] **Setup in one call.** The README needs `createElement` + style + class +
+17. [x] **Setup in one call.** The README needs `createElement` + style + class +
         `connectInterface`. v6: `createGrid(container, { config, datasource })`, or the element
         with a property; the grid sets its own class. Drop the `enableCleanup` test flag. **S**
-18. [ ] **Callbacks in the config**: `readonlySetter` / `cellAppendClassSetter` become
+18. [x] **Callbacks in the config**: `readonlySetter` / `cellAppendClassSetter` become
         `isReadonly(row, field)` / `cellClass(row, field)` in the config, or per column. **S**
 19. [ ] **Menus as data.** Row and header menu entries as a list - built-in ones plus custom
         ones - instead of `contextMenuCustom` / `setContextMenuElement`. Users can then hide,
         reorder or add entries. **M**
-20. [ ] **Audit the rest of the public methods**: `autoResizeColumns`, `triggerRebuild`,
+20. [x] **Audit the rest of the public methods**: `autoResizeColumns`, `triggerRebuild`,
         `triggerScrollEvent`, `getAttributeColumns(filterSelectedColumns)`,
         `getOptionalAttributes`, `openFilterEditor` - keep and document, rename, or make
         internal. **S**

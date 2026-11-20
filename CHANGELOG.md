@@ -236,16 +236,35 @@ what to change in your code. Released in phases.
   `ColumnConfig.operator` is the operator a header filter starts with; v5 wrote the picked operator
   into it.
 - **Options are not part of the state**: v5's `saveConfig()` / `loadConfig()` also carried every
-  option (`readonly`, `tooltips` ...). To change one while the grid is shown, connect a new
-  `GridInterface` with the changed config and `initialState: old.getState()`. `dimRepeatedValues`
-  toggled from the row menu is not in the state.
+  option (`readonly`, `tooltips` ...). To change one while the grid is shown, use
+  `gridInterface.updateConfig()`. `dimRepeatedValues` toggled from the row menu is not in the state.
 - **`filter-operator-change` sends `{ field, operator, column, rebuildHeader }`** (was
   `{ cellConfig, rebuildHeader }`, with the operator in `cellConfig.operator`).
 - The internal sizes (`__rowHeight` ...) are no longer on the `GridConfig` type.
+- **`readonlySetter()` and `cellAppendClassSetter()` are removed**: the callbacks are in the config,
+  `GridConfig.isReadonly(row, field, readonlyByConfig)` and `GridConfig.cellClass(row, field)`. The row
+  comes first, `cellClass` has no third argument, and it returns `{ input, background }` (was
+  `{ inputClass, dimmedClass }`, both optional now) or `null` / `undefined` for no classes. Set or
+  remove them later with `updateConfig()`.
+- **Methods renamed**: `triggerScrollEvent()` -> `refresh()`, `triggerRebuild()` -> `rebuild()`,
+  `getOptionalAttributes()` -> `getHiddenFields()`, `getAttributeColumns(filterSelectedColumns)` ->
+  `getLayoutFields({ selectedOnly })`. `getLayoutFields()` gives every field by default (v5's default
+  was the selected columns), and `{ selectedOnly: true }` gives `[]` when no column is selected (v5
+  gave every field). A boolean in place of the options throws a `TypeError`.
+- **`GridElement.enableCleanup` is removed** (a test flag), and `connectedCallback()` /
+  `disconnectedCallback()` are left out of the typings - the browser calls them.
+- **`new GridInterface(config, datasource)` takes the row type from the datasource**: a
+  `Datasource<Person>` gives a `GridInterface<Person>`.
 
 #### Fixed
 - a boolean header filter set to `false` showed as empty after the header was rebuilt, and a number
   header filter of 0 showed nothing (the value was read with `||`)
+- the class from `cellClass` (v5 `dimmedClass`) was joined to the grid's `simple-html-readonly` /
+  `simple-html-mandatory` class without a space, so on a readonly or mandatory cell of an editable grid
+  neither class applied
+- the internal `Grid.disableResizeEvent()` / `enableResizeEvent()` did the opposite of their names.
+  They also take effect right away now: disable disconnects the resize observer (and cancels a pending
+  resize rebuild), enable makes it again for a grid in the dom
 
 #### Added
 - `GridConfig.columns`, `GridConfig.layout`, `GridConfig.initialState`, and the types
@@ -253,8 +272,21 @@ what to change in your code. Released in phases.
 - `gridInterface.getState()`, `setState(state)`, `resetState()`, documented with examples
 - `MIGRATION.md`: a function that converts a v5 config
 - demo: the save & load sample is a state sample (`getState` / `setState` / `resetState`,
-  `initialState`), the column layout sample logs the layout, the samples that toggle an option
-  connect a new interface
+  `initialState`), the column layout sample logs the layout
+- **`createGrid(host, { config, datasource })`**: makes the interface and a `<simple-html-grid>`
+  element that fills the host, connects them, adds the element and returns the interface. Type
+  `CreateGridOptions`
+- **`gridInterface.destroy()`**: removes the element and disconnects the grid from the datasource,
+  the document and the `on()` handlers
+- **`gridInterface.updateConfig(partial)`**: changes options while the grid is shown and rebuilds
+  once. The keys given change, `undefined` gives back the default, `columns` replaces every column's
+  options, `layout` is shown right away (as `setState({ layout })`) and is what `resetState()` goes
+  back to, `initialState` only changes what a later `resetState()` goes back to
+- `GridConfig.isReadonly`, `GridConfig.cellClass` and the type `CellClass`
+- JSDoc with examples on `GridInterface` and `GridElement`: every public method, and the class
+- README and the demo use `createGrid()`; the samples that change an option use `updateConfig()`,
+  the cell styling sample the config callbacks. `MIGRATION.md`: setup, callbacks, `updateConfig()`
+  and a table of every renamed or removed method
 
 #### Internal
 - the grid reads `layout.left` / `layout.center` / `layout.right` and `columns` where it read
@@ -265,6 +297,13 @@ what to change in your code. Released in phases.
   `getHeaderFilterOperator()` picks the operator a header filter uses
 - `filterCallback()` takes the field, not the column config
 - the state tests replace the save/load config tests (`gridState.test.ts`)
+- the grid knows its element from the start (`new Grid(element)`), and the interface remembers the
+  grid it was connected to last, so `destroy()` also works after the element left the dom
+- one internal check for a readonly cell, `__isCellReadonly()`, used by the cells and the row menu's
+  paste and clear; `__getCellClass()` for the classes
+- the row menu's "Use dimmed values" goes through `updateConfig()`, so a later `updateConfig()` keeps it
+- tests: `createGrid.test.ts`, `updateConfig.test.ts`, `cellCallbacks.test.ts`, and refresh / rebuild
+  / resize toggle tests in `gridLifecycle.test.ts`
 
 ## 5.0.1
 

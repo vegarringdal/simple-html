@@ -42,7 +42,7 @@ import '@simple-html/grid/date.css'; // the date picker
 
 ```ts
 import './index.css';
-import { GridInterface, GridElement, GridConfig, Datasource } from '@simple-html/grid';
+import { createGrid, type GridConfig, Datasource } from '@simple-html/grid';
 import '@simple-html/grid/grid.css';
 
 /**
@@ -81,21 +81,15 @@ const gridConfig: GridConfig = {
 
 
 /**
- * create interface and add gridconfig and datasource to it
+ * put the grid in a container: it fills it, so the container needs a height
+ * <div id="grid" style="height: 400px"></div>
  */
-const gridInterface = new GridInterface(gridConfig, datasource);
+const gridInterface = createGrid(document.getElementById('grid')!, { config: gridConfig, datasource });
 
 /**
- * create element for the grid
+ * change an option while the grid is shown
  */
-const element = document.createElement('simple-html-grid') as GridElement;
-element.style.width = '100%';
-element.style.height = '100%';
-element.style.display = 'flex';
-element.classList.add('simple-html-grid');
-element.connectInterface(gridInterface);
-
-document.body.appendChild(element);
+gridInterface.updateConfig({ readonly: false });
 
 /**
  * what the user changed - column order and widths, sorting, filters ... - is the state
@@ -103,6 +97,21 @@ document.body.appendChild(element);
 const state = gridInterface.getState();
 gridInterface.setState(state); // later: back to it
 gridInterface.resetState(); // back to the start
+
+/**
+ * done with the grid: takes it off the page and disconnects it
+ */
+gridInterface.destroy();
+```
+
+To place and size the element yourself, use `<simple-html-grid>` and connect an interface to it:
+
+```ts
+const element = document.createElement('simple-html-grid') as GridElement;
+element.style.width = '100%';
+element.style.height = '100%';
+element.connectInterface(new GridInterface(gridConfig, datasource));
+container.appendChild(element);
 ```
 
 

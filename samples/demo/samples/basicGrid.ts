@@ -5,9 +5,9 @@ export const basicGrid: DemoSample = {
     title: 'Basic grid',
     group: 'Getting started',
     description:
-        'Minimal setup: create a Datasource with your rows and the types of your fields, wrap it in a GridInterface with a config, and connect it to a <simple-html-grid> element. Columns can be sorted (click label), filtered (input row), resized and reordered out of the box. Note: the grid defaults to readonly - set readonly: false in the config to allow editing.',
+        'Minimal setup: create a Datasource with your rows and the types of your fields, write a config, and createGrid() puts the grid in a container of your page. Columns can be sorted (click label), filtered (input row), resized and reordered out of the box. Note: the grid defaults to readonly - set readonly: false in the config to allow editing.',
     code: `
-import { Datasource, GridInterface, type GridConfig, type GridElement } from '@simple-html/grid';
+import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';
 import '@simple-html/grid/grid.css';
 
 // the datasource knows the fields: their type, label and formatter. A field not listed is text
@@ -41,14 +41,11 @@ const gridConfig: GridConfig = {
     }
 };
 
-const gridInterface = new GridInterface(gridConfig, datasource);
+// the grid fills the container, so give it a size: <div id="grid" style="height: 400px"></div>
+const gridInterface = createGrid(document.getElementById('grid')!, { config: gridConfig, datasource });
 
-const grid = document.createElement('simple-html-grid') as GridElement;
-grid.classList.add('simple-html-grid');
-grid.style.width = '100%';
-grid.style.height = '100%';
-grid.connectInterface(gridInterface);
-document.body.appendChild(grid);
+// later, when the grid is not needed any more: takes it off the page
+gridInterface.destroy();
 `,
     run(stage) {
         const ui = createStage(stage);

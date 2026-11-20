@@ -285,7 +285,7 @@ describe('setState', () => {
         expect(headerLabel(element, 'nick_name')).toEqual('Nick Name');
         expect(renderedColumn(element, 'nick_name')).toEqual(['b']);
         // the fields that left the layout can be added back from the column chooser
-        expect(gridInterface.getOptionalAttributes().sort()).toEqual(['age', 'lastname']);
+        expect(gridInterface.getHiddenFields().sort()).toEqual(['age', 'lastname']);
     });
 
     it('expect an empty sort to remove the sort and give the rows their own order back', async () => {
@@ -495,7 +495,7 @@ describe('columns', () => {
         expect(gridInterface.getState().filter).toEqual(
             and(where('lastname', 'EQUAL', 'last2'), where('age', 'GREATER_THAN_OR_EQUAL_TO', 20))
         );
-        expect(gridInterface.getOptionalAttributes()).toEqual([]);
+        expect(gridInterface.getHiddenFields()).toEqual([]);
     });
 
     it('expect a columns entry that is not in the layout to be offered by the column chooser', async () => {
@@ -503,8 +503,8 @@ describe('columns', () => {
         config.columns = { firstname: {}, extra: { label: 'Extra' } };
         const { gridInterface } = await mountGrid(config);
 
-        expect(gridInterface.getOptionalAttributes()).toEqual(['extra']);
-        expect(gridInterface.getAttributeColumns(false)).toEqual(['firstname', 'lastname', 'age']);
+        expect(gridInterface.getHiddenFields()).toEqual(['extra']);
+        expect(gridInterface.getLayoutFields()).toEqual(['firstname', 'lastname', 'age']);
     });
 
     it('expect the column operator to be the header filter default', async () => {

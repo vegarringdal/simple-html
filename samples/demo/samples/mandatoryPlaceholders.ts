@@ -1,5 +1,5 @@
 import type { GridConfig } from '@simple-html/grid';
-import { createStage, type DemoSample, generateRows, mountGrid, reconfigure } from '../demoUtils';
+import { createStage, type DemoSample, generateRows, mountGrid } from '../demoUtils';
 
 export const mandatoryPlaceholders: DemoSample = {
     id: 'mandatory-placeholders',
@@ -34,6 +34,9 @@ const gridConfig: GridConfig = {
     },
     layout: { center: [ ... ] }
 };
+
+// change it while the grid is shown
+gridInterface.updateConfig({ placeholderRowCurrentEntityOnly: false });
 `,
     run(stage) {
         const ui = createStage(stage);
@@ -74,17 +77,13 @@ const gridConfig: GridConfig = {
             }
         });
 
-        const { element, gridInterface: first } = mountGrid(ui.gridHost, config, rows);
-        let gridInterface = first;
+        const { gridInterface } = mountGrid(ui.gridHost, config, rows);
 
-        // an option is config: a new interface with the changed config, in the state the old one is in
         ui.button('Placeholders on all rows', () => {
-            config.placeholderRowCurrentEntityOnly = false;
-            gridInterface = reconfigure(element, gridInterface, config);
+            gridInterface.updateConfig({ placeholderRowCurrentEntityOnly: false });
         });
         ui.button('Placeholders on current row only (default)', () => {
-            config.placeholderRowCurrentEntityOnly = true;
-            gridInterface = reconfigure(element, gridInterface, config);
+            gridInterface.updateConfig({ placeholderRowCurrentEntityOnly: true });
         });
     }
 };

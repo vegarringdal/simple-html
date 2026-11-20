@@ -7,9 +7,8 @@ export function addScrollEventListeners(ctx: Grid) {
     const scroller = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
 
     /**
-     * the wheel/touch listeners sit on the grid element itself, so they survive the dom being
-     * built again (gridElement enableCleanup). Drop the old ones first, or every wheel tick
-     * scrolls twice
+     * the wheel/touch listeners sit on the grid element itself, Grid.destroy() removes them with this
+     * signal. The listeners of an earlier call are dropped first, or every wheel tick would scroll twice
      */
     ctx.scrollListenersAbort?.abort();
     ctx.scrollListenersAbort = new AbortController();

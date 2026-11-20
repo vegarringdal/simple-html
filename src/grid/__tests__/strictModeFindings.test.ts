@@ -37,8 +37,8 @@ describe('grid interface without a connected grid', () => {
         expect(() => gridInterface.contextMenuCustom(new MouseEvent('contextmenu'), [], cell, () => {})).not.toThrow();
         expect(() => gridInterface.removeContextMenuElement()).not.toThrow();
         // the columns come from the config, no grid needed
-        expect(gridInterface.getAttributeColumns(false)).toEqual(['firstname', 'lastname', 'age']);
-        expect(gridInterface.getOptionalAttributes()).toEqual([]);
+        expect(gridInterface.getLayoutFields()).toEqual(['firstname', 'lastname', 'age']);
+        expect(gridInterface.getHiddenFields()).toEqual([]);
     });
 });
 

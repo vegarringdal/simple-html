@@ -109,9 +109,8 @@ describe('grid lifecycle - connecting a new interface', () => {
         expect(gridInterface.__isConnected()).toBe(false);
     });
 
-    it('expect enableCleanup + connectInterface twice to build the dom and the wheel listener once', async () => {
+    it('expect connectInterface twice to keep the dom and the wheel listener once', async () => {
         const { element } = await mountGrid();
-        element.enableCleanup = true;
 
         const datasource2 = new Datasource();
         datasource2.setData(simpleData());
@@ -120,7 +119,7 @@ describe('grid lifecycle - connecting a new interface', () => {
         expect(element.querySelectorAll('.simple-html-grid-panel')).toHaveLength(1);
         expect(renderedRows(element)).toHaveLength(5);
 
-        // the wheel listener sits on the element itself, so it is not removed with the children
+        // the wheel listener sits on the element itself: one tick scrolls once
         const scroller = element.querySelector('.simple-html-grid-body-scroller') as HTMLElement;
         scroller.scrollTop = 0;
         const wheel = new Event('wheel');
@@ -209,9 +208,11 @@ describe('grid lifecycle - before the element is in the dom', () => {
 
     it('expect interface calls that re-render not to throw', async () => {
         const { gridInterface } = await connectedButNotAppended();
-        expect(() => gridInterface.readonlySetter(() => null)).not.toThrow();
-        expect(() => gridInterface.cellAppendClassSetter(() => ({ inputClass: '', dimmedClass: '' }))).not.toThrow();
-        expect(() => gridInterface.triggerScrollEvent()).not.toThrow();
+        expect(() => gridInterface.updateConfig({ isReadonly: () => null, cellClass: () => null })).not.toThrow();
+        expect(() => gridInterface.updateConfig({ layout: { center: [{ fields: ['age'], width: 50 }] } })).not.toThrow();
+        expect(() => gridInterface.refresh()).not.toThrow();
+        expect(() => gridInterface.rebuild()).not.toThrow();
+        expect(() => gridInterface.autoResizeColumns()).not.toThrow();
     });
 
     it('expect the grid to render normally once appended', async () => {
@@ -239,7 +240,7 @@ describe('grid lifecycle - created while hidden', () => {
     });
 });
 
-describe('grid lifecycle - triggerScrollEvent', () => {
+describe('grid lifecycle - refresh', () => {
     it('expect rows to render even when the last scroll position is far away', async () => {
         const data = Array.from({ length: 400 }, (_, i) => ({ firstname: `f${i}`, lastname: 'x', age: i }));
         const { element, gridInterface } = await mountGrid(simpleConfig(), data);
@@ -256,8 +257,125 @@ describe('grid lifecycle - triggerScrollEvent', () => {
         element.querySelectorAll<HTMLElement>('*').forEach((el) => {
             el.scrollTop = 0;
         });
-        gridInterface.triggerScrollEvent();
+        gridInterface.refresh();
 
         expect(renderedRows(element)[0]?.rowIndex).toBe(1);
+    });
+});
+
+describe('grid lifecycle - refresh and rebuild', () => {
+    const rowElements = (element: GridElement) =>
+        element.querySelectorAll('.simple-html-grid-body-row-container-pinned-middle > .simple-html-grid-row').length;
+
+    it('expect refresh to show a value set on a row object, without a rebuild', async () => {
+        const { element, datasource, gridInterface } = await mountGrid();
+        const rebuild = vi.spyOn(gridOf(element), 'rebuild');
+
+        // set outside of the grid's editing: the grid does not know
+        datasource.getRow(0).firstname = 'changed';
+        expect(renderedColumn(element, 'firstname')[0]).toBe('first1');
+
+        gridInterface.refresh();
+
+        expect(renderedColumn(element, 'firstname')[0]).toBe('changed');
+        expect(rebuild).not.toHaveBeenCalled();
+    });
+
+    it('expect rebuild to build the rows again for a size the grid was not told about', async () => {
+        const { element, gridInterface } = await mountGrid();
+        // 600px / 22px a row, and 5 extra
+        expect(rowElements(element)).toBe(32);
+
+        stubElementSizes(1200, 1000);
+        gridInterface.refresh();
+        expect(rowElements(element)).toBe(32);
+
+        gridInterface.rebuild();
+        expect(rowElements(element)).toBe(59);
+        expect(renderedColumn(element, 'firstname')).toEqual(['first1', 'first2', 'first3', 'first4', 'first5']);
+    });
+
+    it('expect refresh and rebuild to do nothing once the grid is removed', async () => {
+        const { element, gridInterface } = await mountGrid();
+        const rebuild = vi.spyOn(gridOf(element), 'rebuild');
+        element.remove();
+
+        gridInterface.refresh();
+        gridInterface.rebuild();
+
+        expect(rebuild).not.toHaveBeenCalled();
+    });
+});
+
+describe('grid lifecycle - disableResizeEvent / enableResizeEvent', () => {
+    it('expect disableResizeEvent to disconnect the resize observer', async () => {
+        const { element } = await mountGrid();
+        const grid = gridOf(element);
+        const observer = resizeObserver.current();
+
+        grid.disableResizeEvent();
+
+        expect(observer.disconnected).toBe(true);
+        expect(grid.resizeObserver).toBeNull();
+    });
+
+    it('expect disableResizeEvent to cancel a pending resize rebuild', async () => {
+        const { element } = await mountGrid();
+        const grid = gridOf(element);
+        vi.useFakeTimers();
+        stubElementSizes(700, 1000);
+        resizeObserver.current().fire(); // grew, schedules a rebuild
+        const rebuild = vi.spyOn(grid, 'rebuild');
+
+        grid.disableResizeEvent();
+        vi.advanceTimersByTime(500);
+
+        expect(rebuild).not.toHaveBeenCalled();
+    });
+
+    it('expect a disabled grid that is moved in the dom to get no resize observer', async () => {
+        const { element } = await mountGrid();
+        gridOf(element).disableResizeEvent();
+        const observers = resizeObserver.instances.length;
+
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        host.appendChild(element); // disconnectedCallback + connectedCallback
+
+        expect(resizeObserver.instances.length).toBe(observers);
+    });
+
+    it('expect enableResizeEvent to rebuild on a resize again', async () => {
+        const { element } = await mountGrid();
+        const grid = gridOf(element);
+        grid.disableResizeEvent();
+
+        grid.enableResizeEvent();
+
+        const observer = resizeObserver.current();
+        expect(observer.disconnected).toBe(false);
+        expect(observer.observed).toContain(element);
+
+        vi.useFakeTimers();
+        const rebuild = vi.spyOn(grid, 'rebuild');
+        stubElementSizes(700, 1000);
+        observer.fire();
+        vi.advanceTimersByTime(500);
+        expect(rebuild).toHaveBeenCalledTimes(1);
+    });
+
+    it('expect enableResizeEvent on a grid that is not in the dom to wait until it is', async () => {
+        const { element } = await mountGrid();
+        const grid = gridOf(element);
+        grid.disableResizeEvent();
+        element.remove();
+        const observers = resizeObserver.instances.length;
+
+        grid.enableResizeEvent();
+        expect(resizeObserver.instances.length).toBe(observers);
+
+        document.body.appendChild(element);
+        expect(resizeObserver.instances.length).toBe(observers + 1);
+        expect(resizeObserver.current().observed).toContain(element);
     });
 });

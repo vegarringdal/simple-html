@@ -37,7 +37,8 @@ export { DateInterface } from './date/dateInterface';
  */
 export type { IDateConfig, IStyle } from './date/interfaces';
 export type { EventHandler } from './emitter';
-export type { ColumnConfig, GridConfig, GridLayout, GridState, HeaderFilter, LayoutColumn } from './grid/gridConfig';
+export { type CreateGridOptions, createGrid } from './grid/createGrid';
+export type { CellClass, ColumnConfig, GridConfig, GridLayout, GridState, HeaderFilter, LayoutColumn } from './grid/gridConfig';
 export { GridElement } from './grid/gridElement';
 export type { GridCellEventData, GridEvents } from './grid/gridEvents';
 export type { ColType } from './grid/gridFunctions/colType';

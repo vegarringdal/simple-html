@@ -105,17 +105,23 @@ describe('group rows - row selector', () => {
 });
 
 describe('group rows - callbacks and events', () => {
-    it('expect readonlySetter and cellAppendClassSetter to only get data rows', async () => {
-        const { datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false }, data());
+    it('expect the isReadonly and cellClass callbacks to only get data rows', async () => {
         const seen: Entity[] = [];
-        gridInterface.readonlySetter((_attribute, rowData) => {
-            seen.push(rowData);
-            return null;
-        });
-        gridInterface.cellAppendClassSetter((_attribute, rowData) => {
-            seen.push(rowData);
-            return { inputClass: '', dimmedClass: '' };
-        });
+        const { datasource } = await mountGrid(
+            {
+                ...simpleConfig(),
+                readonly: false,
+                isReadonly: (row) => {
+                    seen.push(row);
+                    return null;
+                },
+                cellClass: (row) => {
+                    seen.push(row);
+                    return null;
+                }
+            },
+            data()
+        );
 
         datasource.group([{ attribute: 'lastname', title: 'lastname' }]);
         datasource.expandGroup();

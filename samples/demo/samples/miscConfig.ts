@@ -1,12 +1,12 @@
 import type { GridConfig } from '@simple-html/grid';
-import { createStage, type DemoSample, generateRows, mountGrid, reconfigure } from '../demoUtils';
+import { createStage, type DemoSample, generateRows, mountGrid } from '../demoUtils';
 
 export const miscConfig: DemoSample = {
     id: 'misc-options',
     title: 'Misc options',
     group: 'Config',
     description:
-        "Grab bag: dimRepeatedValues dims cells repeating the value of the row above (sort by country and toggle it - also available in the row right-click menu). numberOverride maps between blank and 0 per column (bonus hides zeros, age shows blanks as 0). website only accepts paste/clear, no typing. autoResizeColumns() sizes columns to content. An option is config, not state: to change one later, connect a new GridInterface with the changed config, started in the old one's state.",
+        'Grab bag: dimRepeatedValues dims cells repeating the value of the row above (sort by country and toggle it - also available in the row right-click menu). numberOverride maps between blank and 0 per column (bonus hides zeros, age shows blanks as 0). website only accepts paste/clear, no typing. autoResizeColumns() sizes columns to content. updateConfig() changes an option while the grid is shown, the sorting, filter and column order stay.',
     code: `
 const datasource = new Datasource({ fields: { bonus: 'number', age: 'number' } });
 
@@ -28,12 +28,8 @@ const gridConfig: GridConfig = {
 // size columns to their content
 gridInterface.autoResizeColumns();
 
-// change an option later: a new interface with the changed config, in the state the old one is in
-const next = new GridInterface(
-    { ...gridConfig, dimRepeatedValues: false, initialState: gridInterface.getState() },
-    datasource
-);
-element.connectInterface(next);
+// change an option later, the state (sorting, filter, column order ...) stays
+gridInterface.updateConfig({ dimRepeatedValues: false });
 `,
     run(stage) {
         const ui = createStage(stage);
@@ -71,22 +67,18 @@ element.connectInterface(next);
             }
         });
 
-        const mounted = mountGrid(ui.gridHost, config, rows, {
+        const { datasource, gridInterface } = mountGrid(ui.gridHost, config, rows, {
             fields: { bonus: 'number', age: 'number' }
         });
-        const { datasource, element } = mounted;
-        let gridInterface = mounted.gridInterface;
 
         ui.button('Sort by country', () => {
             datasource.sort({ attribute: 'country', ascending: true });
         });
         ui.button('dimRepeatedValues: on', () => {
-            config.dimRepeatedValues = true;
-            gridInterface = reconfigure(element, gridInterface, config);
+            gridInterface.updateConfig({ dimRepeatedValues: true });
         });
         ui.button('dimRepeatedValues: off', () => {
-            config.dimRepeatedValues = false;
-            gridInterface = reconfigure(element, gridInterface, config);
+            gridInterface.updateConfig({ dimRepeatedValues: false });
         });
         ui.button('autoResizeColumns()', () => {
             gridInterface.autoResizeColumns();

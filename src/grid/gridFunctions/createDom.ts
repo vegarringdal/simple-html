@@ -103,8 +103,7 @@ export function createDom(ctx: Grid) {
     updateVerticalScrollHeight(ctx, ctx.gridInterface.__getScrollState().scrollHeight);
     updateHorizontalScrollWidth(ctx);
 
-    // new dom starts at the top/left. When the dom is built again (gridElement enableCleanup) the
-    // last positions are from the old dom, and a far away one makes the handler hide all rows
+    // a new dom starts at the top/left. A last position far away would make the handler hide all rows
     ctx.lastScrollTop = 0;
     ctx.lastScrollLeft = 0;
     horizontalScrollHandler(ctx, 0);

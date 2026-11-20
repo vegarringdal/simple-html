@@ -1,5 +1,6 @@
 import './index.css';
 import {
+    createGrid,
     Datasource,
     type DatasourceEvents,
     DateFormatterDDMMYYYY,
@@ -66,15 +67,6 @@ datasource.setData(
 );
 
 /**
- * create interface. let: the readonly buttons connect a new one, readonly is config
- */
-let gridInterface = new GridInterface(gridConfig, datasource);
-
-gridInterface.on('grid-connected', () => {
-    gridInterface.autoResizeColumns();
-});
-
-/**
  * create container to how buttons and grid
  */
 const containerGrid = document.createElement('div');
@@ -84,6 +76,13 @@ containerGrid.style.top = '10px';
 containerGrid.style.left = '510px';
 containerGrid.style.right = '10px';
 containerGrid.style.bottom = '10px';
+document.body.appendChild(containerGrid);
+
+/**
+ * create the grid in its container, and size the columns to their content
+ */
+const gridInterface = createGrid(containerGrid, { config: gridConfig, datasource });
+gridInterface.autoResizeColumns();
 
 const containerbuttons = document.createElement('div');
 containerbuttons.style.position = 'absolute';
@@ -103,13 +102,6 @@ containerbuttons2.style.width = '250px';
 containerbuttons2.style.left = '250px';
 containerbuttons2.style.bottom = '0px';
 document.body.appendChild(containerbuttons2);
-
-const element = document.createElement('simple-html-grid') as GridElement;
-element.style.width = '100%';
-element.style.height = '100%';
-element.style.display = 'flex';
-element.classList.add('simple-html-grid');
-element.connectInterface(gridInterface);
 
 function createButton(title: string, callback: () => void) {
     const btn = document.createElement('button');
@@ -245,20 +237,14 @@ createButton('reset state (initialState)', () => {
 });
 
 /**
- * readonly is config, not state: a new interface with the changed config, started in the state the
- * old one is in. Handlers subscribed with on() and the setters belong to the old interface
+ * readonly is config, updateConfig() changes it while the grid is shown. The state stays as it is
  */
-const setReadonly = (readonly: boolean) => {
-    gridInterface = new GridInterface({ ...gridConfig, readonly, initialState: gridInterface.getState() }, datasource);
-    element.connectInterface(gridInterface);
-};
-
 createButton('set as readonly', () => {
-    setReadonly(true);
+    gridInterface.updateConfig({ readonly: true });
 });
 
 createButton('set as editmode', () => {
-    setReadonly(false);
+    gridInterface.updateConfig({ readonly: false });
 });
 
 createButton('Open Filter Editor', () => {
@@ -321,57 +307,54 @@ createButton('gridInterface events off\n (see console - F12)', () => {
 
 createButton('overide default numberformatter (comma)', () => {
     numberFormatter = NumberFormatterComma;
-    gridInterface.triggerRebuild();
+    gridInterface.rebuild();
 });
 
 createButton('overide default numberformatter (comma-custom)', () => {
     numberFormatter = NumberFormatterCustom;
-    gridInterface.triggerRebuild();
+    gridInterface.rebuild();
 });
 
 createButton('use default numberformatter (dot)', () => {
     numberFormatter = NumberFormatterDot;
-    gridInterface.triggerRebuild();
+    gridInterface.rebuild();
 });
 
 createButton('overide default Dateformatter (DD.MM.YYYY)', () => {
     dateFormatter = DateFormatterDDMMYYYY;
-    gridInterface.triggerRebuild();
+    gridInterface.rebuild();
 });
 
 createButton('overide default Dateformatter (DD.MM.YYYYTHH:MM:SS)', () => {
     dateFormatter = DateFormatterDDMMYYYYTHHMMSS;
-    gridInterface.triggerRebuild();
+    gridInterface.rebuild();
 });
 
 createButton('overide default Dateformatter (DD.MM.YYYY/custom)', () => {
     dateFormatter = DateFormatterCustom;
-    gridInterface.triggerRebuild();
+    gridInterface.rebuild();
 });
 
 createButton('use default Dateformatter (YYYY-MM-DD)', () => {
     dateFormatter = DateFormatterYYYYMMDD;
-    gridInterface.triggerRebuild();
+    gridInterface.rebuild();
 });
 
 createButton('use default Dateformatter (YYYY-MM-DDTHH:MM:SS)', () => {
     dateFormatter = DateFormatterYYYYMMDDTHHMMSS;
-    gridInterface.triggerRebuild();
+    gridInterface.rebuild();
 });
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
-    gridInterface.readonlySetter((attribute: string, rowData: any, configReadonlySetting: boolean) => {
-        if (rowData.isDumb === true && attribute === 'favoriteFruit') {
-            return true;
-        } else {
-            return configReadonlySetting;
-        }
+    gridInterface.updateConfig({
+        // null: the column config decides
+        isReadonly: (row, field) => (row.isDumb === true && field === 'favoriteFruit' ? true : null)
     });
 });
 
 createButton('remove readonly favoriteFruit based on cell isDumb', () => {
-    // gives no answer, so the column config decides, same as no setter
-    gridInterface.readonlySetter(null);
+    // no callback: the column config decides
+    gridInterface.updateConfig({ isReadonly: undefined });
 });
 
 createButton('cell focus custom menu 1 time', () => {
@@ -415,25 +398,21 @@ createButton('cell focus custom menu 1 time', () => {
             data.cell,
             (result) => {
                 data.rowData[data.attribute] = result;
-                gridInterface.triggerScrollEvent();
+                gridInterface.refresh();
             }
         );
     });
 });
 
-createButton('append class dimmed favoriteFruit based on cell isDumb', () => {
-    gridInterface.cellAppendClassSetter((attribute: string, rowData: any, _isReadOnly: boolean) => {
-        if (rowData.isDumb === false && attribute === 'favoriteFruit') {
-            return { dimmedClass: 'yellow', inputClass: '' };
-        } else {
-            return { dimmedClass: '', inputClass: '' };
-        }
+createButton('append class background favoriteFruit based on cell isDumb', () => {
+    gridInterface.updateConfig({
+        cellClass: (row, field) => (row.isDumb === false && field === 'favoriteFruit' ? { background: 'yellow' } : null)
     });
 });
 
-createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
-    // no extra classes, same as no setter
-    gridInterface.cellAppendClassSetter(null);
+createButton('remove class background favoriteFruit based on cell isDumb', () => {
+    // no extra classes
+    gridInterface.updateConfig({ cellClass: undefined });
 });
 
 {
@@ -495,8 +474,8 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
                 datasourceLocal.setData([{ WOW: `wow${i}` }], { add: true });
             }
 
+            // placed by hand, it is positioned on its own. The grid adds its css class itself
             const gridInterfaceLocal = new GridInterface(gridConfig, datasourceLocal);
-            element.classList.add('simple-html-grid');
             element.connectInterface(gridInterfaceLocal);
             document.body.appendChild(element);
 
@@ -551,8 +530,6 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
 /**
  * add to document
  */
-containerGrid.appendChild(element);
-document.body.appendChild(containerGrid);
 document.body.appendChild(containerbuttons);
 
 document.body.addEventListener(

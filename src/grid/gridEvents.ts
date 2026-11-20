@@ -49,6 +49,9 @@ export interface GridEvents {
     /**
      * A grid element connected to this interface: `element.connectInterface(gridInterface)`,
      * or the element was put back in the dom. Empty payload. Was `gridConnected` in v5.
+     *
+     * `createGrid()` connects before it returns: a handler subscribed after it hears this only when
+     * the element is put back in the dom.
      */
     'grid-connected': Record<string, never>;
 

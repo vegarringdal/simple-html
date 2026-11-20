@@ -1,11 +1,10 @@
 import {
+    createGrid,
     Datasource,
     type DatasourceOptions,
     type FieldConfig,
     type FieldType,
-    type GridConfig,
-    type GridElement,
-    GridInterface
+    type GridConfig
 } from '@simple-html/grid';
 
 /**
@@ -107,7 +106,7 @@ export function baseGridConfig(): GridConfig {
 }
 
 /**
- * creates datasource + interface + element and mounts it into host
+ * creates the datasource and puts a grid for it in host, with createGrid
  * @param options the datasource options, default the fields of generateRows()
  */
 export function mountGrid(
@@ -119,27 +118,9 @@ export function mountGrid(
     const datasource = new Datasource(options);
     datasource.setData(rows || generateRows());
 
-    const gridInterface = new GridInterface(config, datasource);
+    const gridInterface = createGrid(host, { config, datasource });
 
-    const element = document.createElement('simple-html-grid') as GridElement;
-    element.classList.add('simple-html-grid');
-    element.style.width = '100%';
-    element.style.height = '100%';
-    element.style.display = 'flex';
-    element.connectInterface(gridInterface);
-    host.appendChild(element);
-
-    return { datasource, gridInterface, element };
-}
-
-/**
- * An option is config, not state: to change one, make a new grid interface with the changed config,
- * started in the state the old one is in, and connect it to the element. Returns the new interface
- */
-export function reconfigure(element: GridElement, current: GridInterface<unknown>, config: GridConfig): GridInterface<unknown> {
-    const next = new GridInterface({ ...config, initialState: current.getState() }, current.getDatasource());
-    element.connectInterface(next);
-    return next;
+    return { datasource, gridInterface };
 }
 
 /**

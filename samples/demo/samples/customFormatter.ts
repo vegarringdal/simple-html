@@ -51,10 +51,10 @@ datasource.getFormatter('country').format('Norway'); // 'NORWAY'
     run(stage) {
         const ui = createStage(stage);
 
-        // formatters are part of the datasource, a new one means a new datasource
+        // formatters are part of the datasource, a new one means a new datasource - and a new grid
         let mounted = mountGrid(ui.gridHost, baseGridConfig());
         const show = (options: DatasourceOptions) => {
-            ui.gridHost.replaceChildren();
+            mounted.gridInterface.destroy();
             mounted = mountGrid(ui.gridHost, baseGridConfig(), undefined, options);
         };
 

@@ -5,7 +5,9 @@ import type { Grid } from '../grid';
  */
 export function getFont(ctx: Grid | null | undefined) {
     const ele = ctx?.element;
-    if (ele) {
+    // the grid knows its element before it is in the dom (connectInterface first): the css only
+    // applies once it is, so until then the fixed font below. attach() measures again after
+    if (ele?.isConnected) {
         return (
             window.getComputedStyle(ele).getPropertyValue('font-size') +
             ' ' +

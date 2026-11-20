@@ -1,16 +1,27 @@
+import { assertOptions } from '../datasource/assertOptions';
 import type { Datasource } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import type { Grid } from './grid';
-import type { GridConfig, GridLayout, GridState, HeaderFilter, LayoutColumn, ParsedGridConfig } from './gridConfig';
+import type {
+    CellClass,
+    GridConfig,
+    GridLayout,
+    GridOptions,
+    GridState,
+    HeaderFilter,
+    LayoutColumn,
+    ParsedGridConfig,
+    ParsedGridOptions
+} from './gridConfig';
 import type { GridEvents } from './gridEvents';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
 import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
-import { getAttributeColumns } from './gridFunctions/getAttributeColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
+import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
@@ -18,17 +29,39 @@ import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 
-/* declare const DEVELOPMENT: boolean; */
-
 /**
- * grid interface is what user have access to controll grid behavior
+ * The grid: its config, its datasource and its state. What you call to work with a grid - read and
+ * set the state, change an option, subscribe to events, re-render.
+ *
+ * Make one with {@link createGrid}, which also puts the grid on the page. `new GridInterface()` is for
+ * a `<simple-html-grid>` element you place yourself, see {@link GridElement}.
+ *
+ * @example
+ * ```ts
+ * const gridInterface = createGrid(document.getElementById('grid')!, { config, datasource });
+ *
+ * gridInterface.on('cell-click', (data) => console.log(data.attribute, data.rowData));
+ * gridInterface.updateConfig({ readonly: false });
+ * const state = gridInterface.getState();
+ *
+ * gridInterface.destroy(); // done with it
+ * ```
  */
 export class GridInterface<T> {
     // not there until connectGrid, null after __disconnectGrid
     private grid?: Grid | null;
+    // the grid connectGrid was given last. Kept while its element is out of the dom (__disconnectGrid
+    // clears `grid`, it connects again when the element is put back), so destroy() can remove it then too
+    private lastGrid?: Grid | null;
     // a copy of the config with every default filled in, __parseConfig() computes the sizes.
     // Its layout is the state's: the user changes it
     private gridConfig: ParsedGridConfig;
+    // the options as written - the config without columns, layout and initialState - so updateConfig()
+    // can fill in the defaults again: cellHeaderLabelHeight follows cellHeight ...
+    private options: GridOptions;
+    // copies of the config's layout and initialState: the state resetState() goes back to
+    private configLayout: Required<GridLayout>;
+    private initialState: Partial<GridState>;
     private dataSource: Datasource<T>;
     private columnsSelected: Set<number>;
 
@@ -42,18 +75,6 @@ export class GridInterface<T> {
      * when done
      */
     private suppressEvents = false;
-
-    /**
-     * for setting readonly based on row values
-     */
-    private readonlySetterFn?: ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) | null;
-
-    /**
-     * for adding classes on row lvl
-     */
-    private cellAppendClassSetterFn?:
-        | ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => { inputClass: string; dimmedClass: string })
-        | null;
 
     /**
      * the handlers subscribed with on(), called on cell clicks, copy/paste etc
@@ -73,33 +94,40 @@ export class GridInterface<T> {
     private headerFilters: Record<string, HeaderFilter> = {};
 
     /**
-     * the state the grid starts in and resetState() goes back to: the config's initialState, with
-     * the config's layout and empty values for what it leaves out. A copy, applyState() copies it again
-     */
-    private startState: GridState;
-
-    /**
+     * Most of the time {@link createGrid} makes the interface. Make it yourself for a
+     * `<simple-html-grid>` element you place on your own, and connect it with
+     * `element.connectInterface()`.
+     *
      * @param gridConfig the columns, the layout and the options, see {@link GridConfig}. The object is
      * not changed, the grid copies the parts it changes
      * @param datasource the rows. The grid applies `gridConfig.initialState` to it: its sorting,
      * grouping and filter are replaced (left out, they are cleared)
+     *
+     * @example
+     * ```ts
+     * const gridInterface = new GridInterface(config, datasource);
+     * const element = document.createElement('simple-html-grid') as GridElement;
+     * element.connectInterface(gridInterface);
+     * container.appendChild(element);
+     * ```
      */
-    constructor(gridConfig: GridConfig, datasource: Datasource) {
+    constructor(gridConfig: GridConfig, datasource: Datasource<T>) {
         this.columnsSelected = new Set();
         this.dataSource = datasource;
-        this.gridConfig = withDefaults(gridConfig);
 
-        // structuredClone, not JSON: it keeps the Dates of a filter
-        const initialState = structuredClone(gridConfig.initialState ?? {});
-        this.startState = {
-            layout: initialState.layout ?? copyLayout(gridConfig.layout),
-            sorting: initialState.sorting ?? [],
-            grouping: initialState.grouping ?? [],
-            expandedGroups: initialState.expandedGroups ?? [],
-            filter: initialState.filter ?? null,
-            headerFilters: initialState.headerFilters ?? {}
+        const { columns, layout, initialState, ...options } = gridConfig;
+        this.options = options;
+        this.gridConfig = {
+            ...withDefaults(options),
+            columns: structuredClone(columns ?? {}),
+            layout: copyLayout(layout),
+            ...NO_SIZES
         };
-        this.applyState(structuredClone(this.startState));
+        this.configLayout = copyLayout(layout);
+        // structuredClone, not JSON: it keeps the Dates of a filter
+        this.initialState = structuredClone(initialState ?? {});
+
+        this.applyState(this.getStartState());
     }
 
     /**
@@ -168,7 +196,8 @@ export class GridInterface<T> {
     /**
      * Goes back to the state the grid started in: `GridConfig.initialState`, with the config's
      * `layout` (unless `initialState` has one). What `initialState` leaves out is cleared - no sorting,
-     * no grouping, no filter, no header filters.
+     * no grouping, no filter, no header filters. A `layout` or `initialState` given to
+     * {@link updateConfig} since is the one it goes back to.
      *
      * @example
      * ```ts
@@ -185,7 +214,80 @@ export class GridInterface<T> {
      * ```
      */
     public resetState() {
-        this.applyState(structuredClone(this.startState));
+        this.applyState(this.getStartState());
+    }
+
+    /**
+     * The state the grid starts in and resetState() goes back to: the config's initialState, with the
+     * config's layout and empty values for what it leaves out. A new copy every call, applyState()
+     * hands its parts on to the datasource and the grid, and they change them in place
+     */
+    private getStartState(): GridState {
+        const initialState = structuredClone(this.initialState);
+        return {
+            layout: initialState.layout ?? copyLayout(this.configLayout),
+            sorting: initialState.sorting ?? [],
+            grouping: initialState.grouping ?? [],
+            expandedGroups: initialState.expandedGroups ?? [],
+            filter: initialState.filter ?? null,
+            headerFilters: initialState.headerFilters ?? {}
+        };
+    }
+
+    /**
+     * Changes options of the config while the grid is shown: `readonly`, `hideLabels`, the sizes,
+     * `tooltips`, the `isReadonly` / `cellClass` callbacks, `columns` ... and rebuilds the grid once.
+     *
+     * - **Only the keys given change**, the rest stay as they are. A key given as `undefined` goes
+     *   back to its default - `layout` excepted, a grid always has one.
+     * - **`columns` replaces the options of every column**, nothing is merged: a field left out gets
+     *   the defaults.
+     * - **`layout` is shown right away**, as `setState({ layout })` does: the column order, pinning and
+     *   widths the user made are replaced. It is also the layout `resetState()` goes back to from now
+     *   on (unless `initialState` has a layout).
+     * - **`initialState` changes nothing now**: it is the state a later `resetState()` goes back to.
+     *   Call `resetState()` after to apply it.
+     *
+     * The rest of the state - sorting, grouping, filter, header filters - is kept, and so are the
+     * handlers subscribed with {@link on}. The object passed in is not changed, the grid copies
+     * `columns`, `layout` and `initialState`.
+     *
+     * @param config the parts of the config to change
+     *
+     * @example
+     * ```ts
+     * gridInterface.updateConfig({ readonly: false }); // editing on
+     * gridInterface.updateConfig({ hideFilter: true, cellHeight: 30 });
+     * gridInterface.updateConfig({ isReadonly: (row, field) => (field === 'name' ? row.locked : null) });
+     * gridInterface.updateConfig({ cellClass: undefined }); // the callback is removed
+     *
+     * // the columns the config starts with, shown now and what resetState() goes back to
+     * gridInterface.updateConfig({ layout: { center: [{ fields: ['name'], width: 200 }] } });
+     * ```
+     */
+    public updateConfig(config: Partial<GridConfig>) {
+        const { columns, layout, initialState, ...options } = config;
+
+        this.options = { ...this.options, ...options };
+        // in place, so code that got the parsed config before reads the new options too
+        Object.assign(this.gridConfig, withDefaults(this.options));
+
+        // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option
+        if ('columns' in config) {
+            this.gridConfig.columns = structuredClone(columns ?? {});
+        }
+        if ('initialState' in config) {
+            this.initialState = structuredClone(initialState ?? {});
+        }
+
+        // a grid always has a layout, `layout: undefined` keeps it
+        if (layout) {
+            this.configLayout = copyLayout(layout);
+            this.applyState({ layout: copyLayout(layout) });
+        } else {
+            // rebuilds once, the state stays as it is
+            this.applyState({});
+        }
     }
 
     /**
@@ -253,14 +355,181 @@ export class GridInterface<T> {
      */
     public connectGrid(grid: Grid) {
         this.grid = grid;
+        this.lastGrid = grid;
         this.subscribeToDatasource();
         this.__callSubscribers('grid-connected', {});
     }
 
+    /**
+     * Renders the visible cells again, with the values the rows have now. For when something the
+     * cells show changed without the grid knowing: a value set on a row object outside of the grid's
+     * editing, or what the config's `isReadonly` / `cellClass` read. Cheap, the columns and the
+     * header are not built again - that is {@link rebuild}.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * Was `triggerScrollEvent()` in v5.
+     *
+     * @example
+     * ```ts
+     * gridInterface.on('cell-click', (data) => {
+     *     data.rowData.lastClicked = new Date().toISOString();
+     *     gridInterface.refresh();
+     * });
+     * ```
+     */
+    public refresh() {
+        if (this.grid) {
+            triggerScrollEvent(this.grid);
+        }
+    }
+
+    /**
+     * Builds the grid again: sizes, rows, columns, header, grouping panel and footer, then renders the
+     * cells. For when more than the visible cells changed: what a formatter returns (the header
+     * filters show it too), the size of the element without a resize event, a column's options changed
+     * in place. To change an option, use {@link updateConfig} - it rebuilds too. For the cells only,
+     * {@link refresh} is cheaper.
+     *
+     * Does nothing while the grid is not on the page, it is built when it is put there.
+     *
+     * Was `triggerRebuild()` in v5.
+     *
+     * @example
+     * ```ts
+     * // a formatter that reads a setting of your own
+     * let decimals = 2;
+     * const price: Formatter = {
+     *     format: (value) => (typeof value === 'number' ? value.toFixed(decimals) : ''),
+     *     parse: (text) => (text.trim() === '' ? null : Number(text))
+     * };
+     * const datasource = new Datasource({ fields: { price: { type: 'number', formatter: price } } });
+     * // ...
+     * decimals = 0;
+     * gridInterface.rebuild(); // the cells and the header filter show the prices without decimals
+     * ```
+     */
+    public rebuild() {
+        this.grid?.rebuild();
+    }
+
+    /**
+     * Removes the grid from the page and disconnects it: from the datasource, the document and the
+     * handlers subscribed with {@link on}. For a grid made with {@link createGrid}, when you are done
+     * with it. The datasource is not changed, it can be shown again in a new grid.
+     *
+     * The element is removed also when you placed it yourself (`element.connectInterface()`). Removing
+     * such an element from the page disconnects the grid as well: there `destroy()` is not needed.
+     *
+     * Do not use the interface after this: make a new one.
+     *
+     * @example
+     * ```ts
+     * const gridInterface = createGrid(container, { config, datasource });
+     * // ...
+     * gridInterface.destroy(); // container is empty again
+     * ```
+     */
+    public destroy() {
+        const grid = this.lastGrid;
+        this.lastGrid = null;
+        // connectInterface() can have put another interface in the element since: not ours to remove
+        if (grid && grid.gridInterface === this) {
+            grid.destroy();
+        }
+        // the element was not in the dom (then nothing calls it), or shows another interface now
+        this.__disconnectGrid();
+        this.events.clear();
+    }
+
+    /**
+     * Sizes the columns to their content: the label, the header filter's placeholder, and the longest
+     * value of the fields in each column (every row, not only the filtered ones). A column is at most
+     * 750px. Rebuilds the grid.
+     *
+     * Measures the text with the grid's font, so call it once the grid is on the page: right after
+     * {@link createGrid}, or from a `grid-connected` handler for an element you connect yourself. It
+     * does nothing before the interface is connected to an element.
+     *
+     * @example
+     * ```ts
+     * const gridInterface = createGrid(container, { config, datasource });
+     * gridInterface.autoResizeColumns();
+     * ```
+     */
     public autoResizeColumns() {
         if (this.grid) {
             autoResizeColumns(this.grid);
         }
+    }
+
+    /**
+     * Opens the filter editor, the dialog where the user builds a filter of conditions and AND/OR
+     * groups. It starts with the filter the datasource has now. The grid's row menu and header have
+     * no button for it: call this from a button of your own.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('advanced-filter')!.onclick = () => gridInterface.openFilterEditor();
+     * ```
+     */
+    public openFilterEditor() {
+        if (this.grid) {
+            openFilterEditor(this.grid);
+        }
+    }
+
+    /**
+     * The fields in the layout now, in the order the user sees them: pinned left, center, pinned right,
+     * left to right, and top to bottom within a column of stacked fields.
+     *
+     * With `selectedOnly`, only the fields of the columns the user selected - by clicking the column
+     * numbers under the header filters, ctrl+click for more. None selected gives `[]`.
+     *
+     * Was `getAttributeColumns(filterSelectedColumns)` in v5, which gave the selected columns by default
+     * and every column when none was selected.
+     *
+     * @param options.selectedOnly only the fields of the selected columns, default `false`
+     *
+     * @example
+     * ```ts
+     * gridInterface.getLayoutFields(); // ['name', 'age', 'born', 'company']
+     * gridInterface.getLayoutFields({ selectedOnly: true }); // ['age', 'born'] - one column, two fields
+     *
+     * // the selected columns, or every column when none is selected
+     * const selected = gridInterface.getLayoutFields({ selectedOnly: true });
+     * const toExport = selected.length ? selected : gridInterface.getLayoutFields();
+     * ```
+     */
+    public getLayoutFields(options: { selectedOnly?: boolean } = {}): string[] {
+        assertOptions('getLayoutFields', options, 'getLayoutFields({ selectedOnly: true })');
+        return getLayoutFields(this, options);
+    }
+
+    /**
+     * The fields the grid knows that are not in the layout now: the ones the column chooser can add
+     * back. The grid knows the keys of `GridConfig.columns`, and every field that has been in the
+     * layout.
+     *
+     * Was `getOptionalAttributes()` in v5.
+     *
+     * @example
+     * ```ts
+     * const gridInterface = createGrid(container, {
+     *     config: { columns: { phone: {} }, layout: { center: [{ fields: ['name'], width: 100 }] } },
+     *     datasource
+     * });
+     * gridInterface.getHiddenFields(); // ['phone']
+     * ```
+     */
+    public getHiddenFields(): string[] {
+        const fields = new Set(Object.keys(this.gridConfig.columns));
+        for (const field of getLayoutFields(this)) {
+            fields.delete(field);
+        }
+        return Array.from(fields);
     }
 
     /**
@@ -314,50 +583,6 @@ export class GridInterface<T> {
     }
 
     /**
-     * this will force scroll event and update cells
-     * usefull if you have done any manual edits to datasource data and want grid updated
-     */
-    public triggerScrollEvent() {
-        if (this.grid) {
-            triggerScrollEvent(this.grid);
-        }
-    }
-
-    public openFilterEditor() {
-        if (this.grid) {
-            openFilterEditor(this.grid);
-        }
-    }
-
-    /**
-     * gets columns in order
-     * by default it filters out selected columns only
-     * @param filterSelectedColumns = true by default
-     */
-    public getAttributeColumns(filterSelectedColumns = true) {
-        return getAttributeColumns(this, filterSelectedColumns);
-    }
-
-    /**
-     * the fields the grid knows - the keys of `GridConfig.columns`, and every field that was in the
-     * layout - that are not in the layout now: the ones the column chooser can add back
-     */
-    public getOptionalAttributes() {
-        const attributes = new Set(Object.keys(this.gridConfig.columns));
-        this.getAttributeColumns(false).forEach((e) => {
-            attributes.delete(e);
-        });
-        return Array.from(attributes);
-    }
-
-    /**
-     * trigger rebuild of all
-     */
-    public triggerRebuild() {
-        this.grid?.rebuild();
-    }
-
-    /**
      * Subscribes to an event of the grid: cell clicks and focus, copy/paste from the row menu ...
      * The handler gets the event's payload, typed from {@link GridEvents} - see there for every
      * event and what it sends. Sorting, filtering, selection and data changes are events of the
@@ -386,43 +611,15 @@ export class GridInterface<T> {
     }
 
     /**
-     * this is for enabling readonly based on row data
-     * @param callback called per cell: return `true`/`false` to override the column's `readonly`,
-     * `null` to keep it. `rowData` is the cell's data row, never a group row - a group row has no
-     * cells. `null` removes the callback
+     * The datasource the grid shows: its rows, selection, sorting, filter and the events for them.
+     *
+     * @example
+     * ```ts
+     * const datasource = gridInterface.getDatasource();
+     * datasource.on('selection-change', () => console.log(datasource.getSelectedRows().length, 'selected'));
+     * ```
      */
-    public readonlySetter(
-        callback: ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) | null
-    ) {
-        this.readonlySetterFn = callback;
-        if (this.grid) {
-            triggerScrollEvent(this.grid);
-        }
-    }
-
-    /**
-     * this is for enabling class append to input element and dimmed cell behind it
-     * dimmed cell can be used for graphics in class
-     * @param callback called per cell. `rowData` is the cell's data row, never a group row - a
-     * group row has no cells. `null` removes the callback
-     */
-    public cellAppendClassSetter(
-        // null removes it again
-        callback:
-            | ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => { inputClass: string; dimmedClass: string })
-            | null
-    ) {
-        this.cellAppendClassSetterFn = callback;
-        if (this.grid) {
-            triggerScrollEvent(this.grid);
-        }
-    }
-
-    /**
-     * current datasource
-     * @returns
-     */
-    public getDatasource() {
+    public getDatasource(): Datasource<T> {
         return this.dataSource;
     }
 
@@ -560,7 +757,7 @@ export class GridInterface<T> {
         }
         if (this.grid) {
             rebuildHeaderColumns(this.grid);
-            this.grid.gridInterface.triggerScrollEvent();
+            triggerScrollEvent(this.grid);
         }
     }
 
@@ -633,31 +830,23 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * @private
-     * called by grid calss
+     * Is the cell readonly: the config's `isReadonly()` decides, and when it gives no answer (anything
+     * but `true` / `false`) the column's `readonly` option. The grid's own `readonly` is not part of it,
+     * the callers check that first
      */
-    public __callReadonlySetter(attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) {
-        if (this.readonlySetterFn) {
-            return this.readonlySetterFn(attribute, rowData, cellReadOnlyConfig);
-        } else {
-            return null;
-        }
+    public __isCellReadonly(row: Entity, field: string): boolean {
+        const readonlyByConfig = this.gridConfig.columns[field]?.readonly ?? false;
+        const readonly = this.gridConfig.isReadonly?.(row, field, readonlyByConfig);
+        return typeof readonly === 'boolean' ? readonly : readonlyByConfig;
     }
 
     /**
      * @internal
-     * @private
-     * called by grid calss
+     * The css classes the config's `cellClass()` gives the cell, '' for the ones it leaves out
      */
-    public __callCellAppendClass(attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) {
-        if (this.cellAppendClassSetterFn) {
-            return this.cellAppendClassSetterFn(attribute, rowData, cellReadOnlyConfig);
-        } else {
-            return {
-                inputClass: '',
-                dimmedClass: ''
-            };
-        }
+    public __getCellClass(row: Entity, field: string): Required<CellClass> {
+        const classes = this.gridConfig.cellClass?.(row, field);
+        return { input: classes?.input ?? '', background: classes?.background ?? '' };
     }
 
     /**
@@ -752,18 +941,14 @@ export class GridInterface<T> {
 }
 
 /**
- * A copy of the config with every default filled in, for the grid to work with. The sizes are
- * computed by `__parseConfig()`. `layout` and `columns` are copied deep, the grid changes them (the
- * user moves columns around, a `filter-operator-change` handler can change a column); the other
- * options are only read. `initialState` is left out, the interface keeps it as its start state.
+ * The options with every default filled in, for the grid to work with. A shallow copy: the options are
+ * only read. `columns` and `layout` are copied deep by the interface itself, the grid changes them
+ * (the user moves columns around, a `filter-operator-change` handler can change a column).
  */
-function withDefaults(config: GridConfig): ParsedGridConfig {
-    const { columns, layout, initialState, ...options } = config;
+function withDefaults(options: GridOptions): ParsedGridOptions {
     const cellHeight = options.cellHeight ?? 22;
     return {
         ...options,
-        columns: structuredClone(columns ?? {}),
-        layout: copyLayout(layout),
         cellHeight,
         cellHeaderLabelHeight: options.cellHeaderLabelHeight ?? cellHeight,
         panelHeight: options.panelHeight ?? 25,
@@ -772,16 +957,22 @@ function withDefaults(config: GridConfig): ParsedGridConfig {
         readonly: options.readonly ?? true,
         selectionMode: options.selectionMode ?? 'multiple',
         tooltips: options.tooltips ?? true,
-        placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
-        __rowHeight: 0,
-        __rowHeaderHeight: 0,
-        __columnCells: 0,
-        __leftWidth: 0,
-        __rightWidth: 0,
-        __scrollbarSize: 0,
-        __selectSizeWidth: 0
+        placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true
     };
 }
+
+/**
+ * The internal sizes before `__parseConfig()` computes them
+ */
+const NO_SIZES = {
+    __rowHeight: 0,
+    __rowHeaderHeight: 0,
+    __columnCells: 0,
+    __leftWidth: 0,
+    __rightWidth: 0,
+    __scrollbarSize: 0,
+    __selectSizeWidth: 0
+};
 
 /**
  * A copy of a layout, with `left` and `right` always there. A list that is missing (plain js) is

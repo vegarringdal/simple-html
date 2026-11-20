@@ -9,8 +9,11 @@
 import {
     and,
     BooleanFormatter,
+    type CellClass,
     type Changes,
     type ColumnConfig,
+    type CreateGridOptions,
+    createGrid,
     DataContainer,
     Datasource,
     type DatasourceEvents,
@@ -230,10 +233,54 @@ console.log(headerOperator);
 const filterText: string = datasource.getFilterString((field) => field.toUpperCase());
 console.log(filterText, datasource.getFilterTree()?.children);
 const gridInterface = new GridInterface(config, datasource);
-// the callbacks only get data rows, never a group row
-gridInterface.readonlySetter((attribute: string, row: Entity) => (attribute === 'name' ? row.__rowState === 'D' : null));
+
+// one call: the element, sized to fill the host, connected and added to it
+const host = document.createElement('div');
+const createOptions: CreateGridOptions<unknown> = { config, datasource };
+const created: GridInterface<unknown> = createGrid(host, createOptions);
+// the callbacks in the config, they only get data rows - never a group row
+const negative: CellClass = { input: 'negative-text', background: 'negative-background' };
+const withCallbacks: GridConfig = {
+    layout,
+    isReadonly: (row: Entity, field: string, readonlyByConfig: boolean) =>
+        field === 'name' ? row.__rowState === 'D' : readonlyByConfig,
+    cellClass: (row, field) => (field === 'price' && row.price < 0 ? negative : null)
+};
+const fromConfig: GridInterface<unknown> = createGrid(host, { config: withCallbacks, datasource });
+fromConfig.updateConfig({ isReadonly: () => null, cellClass: () => undefined });
+fromConfig.updateConfig({ isReadonly: undefined, cellClass: () => ({ input: 'only-input' }) });
+// options while the grid is shown, the layout now, the initial state for a later resetState()
+created.updateConfig({ readonly: false, hideLabels: true, hideFilter: true, cellHeight: 30, tooltips: false });
+created.updateConfig({ columns: { name: nameColumn }, layout: { center: [stacked] }, initialState: { sorting: [] } });
+created.refresh();
+created.rebuild();
+created.autoResizeColumns();
+created.openFilterEditor();
+const layoutFields: string[] = created.getLayoutFields();
+const selectedFields: string[] = created.getLayoutFields({ selectedOnly: true });
+const hiddenFields: string[] = created.getHiddenFields();
+console.log(layoutFields, selectedFields, hiddenFields);
+created.destroy();
+fromConfig.destroy();
+// @ts-expect-error readonlySetter is gone: GridConfig.isReadonly
 gridInterface.readonlySetter(null);
+// @ts-expect-error cellAppendClassSetter is gone: GridConfig.cellClass
 gridInterface.cellAppendClassSetter(null);
+// @ts-expect-error triggerScrollEvent is refresh()
+gridInterface.triggerScrollEvent();
+// @ts-expect-error triggerRebuild is rebuild()
+gridInterface.triggerRebuild();
+// @ts-expect-error getAttributeColumns is getLayoutFields({ selectedOnly })
+gridInterface.getAttributeColumns(false);
+// @ts-expect-error getOptionalAttributes is getHiddenFields()
+gridInterface.getOptionalAttributes();
+// @ts-expect-error no positional boolean: getLayoutFields({ selectedOnly: true })
+gridInterface.getLayoutFields(true);
+// @ts-expect-error the v5 names: input and background
+const v5Classes: CellClass = { inputClass: 'a', dimmedClass: 'b' };
+// @ts-expect-error isReadonly returns a boolean, null or undefined
+const wrongReadonly: GridConfig = { layout, isReadonly: () => 'yes' };
+console.log(v5Classes, wrongReadonly);
 // events: on() types the payload from the event map, and returns the unsubscribe function
 const offCellClick: () => void = gridInterface.on('cell-click', (data) => {
     const cell: HTMLCellElement = data.cell;
@@ -319,6 +366,10 @@ for (const row of people.getRows()) {
     }
 }
 const names: string[] = people.getDataRows().map((row) => row.name);
+// createGrid takes the row type from the datasource
+const peopleGrid: GridInterface<Person> = createGrid(host, { config, datasource: people });
+const peopleRows: Person[] = peopleGrid.getDatasource().getDataRows();
+console.log(peopleRows);
 // filtering the group rows out narrows the type too (TypeScript infers the predicate)
 const shownNames: string[] = people
     .getRows()
@@ -398,8 +449,11 @@ const dateInterface = new DateInterface({
 const onDate: EventHandler<DateEvents['date-select']> = (date) => console.log(date?.getTime());
 dateInterface.on('date-select', onDate);
 
+// the element, placed by hand
 const element = document.createElement('simple-html-grid') as GridElement;
 element.connectInterface(gridInterface);
+// @ts-expect-error the enableCleanup test flag is gone
+element.enableCleanup = true;
 
 console.log(TOOLTIPS);
 

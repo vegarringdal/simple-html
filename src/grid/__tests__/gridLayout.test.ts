@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { GridInterface } from '../gridInterface';
 import { centerColumns, visibleCenterAttributes } from './gridLifecycleHelpers';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { dragResizeHandle } from './interactionTestHelpers';
@@ -61,10 +60,8 @@ describe('grid layout - header height', () => {
         expect(header.style.height).toBe('62px');
         expect(body.style.top).toBe('87px');
 
-        // the other way around the header holds filter rows, which are cellHeight tall. An option is
-        // config, not state: a new interface with the changed config, connected to the same element
-        const other = new GridInterface({ ...config, hideFilter: false, hideLabels: true }, gridInterface.getDatasource());
-        element.connectInterface(other);
+        // the other way around the header holds filter rows, which are cellHeight tall
+        gridInterface.updateConfig({ hideFilter: false, hideLabels: true });
         expect(header.style.height).toBe('40px');
     });
 });

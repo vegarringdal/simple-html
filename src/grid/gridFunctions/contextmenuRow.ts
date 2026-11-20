@@ -7,9 +7,9 @@ import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { ColType } from './colType';
 import { createElement } from './createElement';
-import { getAttributeColumns } from './getAttributeColumns';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
+import { getLayoutFields } from './getLayoutFields';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
@@ -159,19 +159,6 @@ export function contextmenuRow(
     };
 
     /**
-     * is this cell readonly for this row - same rule the cell rendering uses: the readonly
-     * setter decides, and when it gives no answer the column config does
-     */
-    const isCellReadOnly = (attribute: string, entity: Entity) => {
-        const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
-        const cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, entity, cellConfig.readonly || false);
-        if (cellReadOnly === true || cellReadOnly === false) {
-            return cellReadOnly;
-        }
-        return cellConfig.readonly || false;
-    };
-
-    /**
      * clear and paste work on every selected row, not just the one right clicked, so each row
      * has to be checked on its own
      */
@@ -183,7 +170,7 @@ export function contextmenuRow(
         const datasource = ctx.gridInterface.getDatasource();
         const selectedRows = datasource.getSelectedRows();
         selectedRows.forEach((entity) => {
-            if (!isCellReadOnly(attribute, entity)) {
+            if (!ctx.gridInterface.__isCellReadonly(entity, attribute)) {
                 entity[attribute] = null;
             }
         });
@@ -198,7 +185,7 @@ export function contextmenuRow(
         }
 
         datasource.getSelectedRows().forEach((entity) => {
-            if (isCellReadOnly(attribute, entity)) {
+            if (ctx.gridInterface.__isCellReadonly(entity, attribute)) {
                 return;
             }
 
@@ -330,22 +317,11 @@ export function contextmenuRow(
      * @returns
      */
     const pasteAndClearTemplate = () => {
-        const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
-
         if (ctx.gridInterface.__getGridConfig().readonly) {
             return null;
         }
 
-        let cellReadOnly: boolean | null | undefined = ctx.gridInterface.__callReadonlySetter(
-            attribute,
-            rowData,
-            cellConfig.readonly || false
-        );
-        if (cellReadOnly !== false && cellReadOnly !== true) {
-            cellReadOnly = cellConfig.readonly;
-        }
-
-        if (cellReadOnly === true) {
+        if (ctx.gridInterface.__isCellReadonly(rowData, attribute)) {
             return null;
         }
 
@@ -450,17 +426,16 @@ export function contextmenuRow(
      * dim cells that repeat the value of the row above
      */
     const dimRepeatedTemplate = () => {
-        const gridConfig = ctx.gridInterface.__getGridConfig();
-        const enabled = gridConfig.dimRepeatedValues === true;
+        const enabled = ctx.gridInterface.__getGridConfig().dimRepeatedValues === true;
 
         return html`<div class="simple-html-grid-menu-section">View:</div>
             <hr class="hr-solid" />
             <div
                 class="simple-html-grid-menu-item"
                 @click=${() => {
-                    gridConfig.dimRepeatedValues = !enabled;
                     removeContextMenu(ctx);
-                    triggerScrollEvent(ctx);
+                    // an option: set it as updateConfig() does, or the next updateConfig() would undo it
+                    ctx.gridInterface.updateConfig({ dimRepeatedValues: !enabled });
                 }}
             >
                 ${enabled ? '✓ ' : ''}Use dimmed values
@@ -507,7 +482,7 @@ export function contextmenuRow(
 
     const copyAllOnSelectedRowsTemplate = () => {
         const clickHandle = () => {
-            const attributes = getAttributeColumns(ctx.gridInterface, false);
+            const attributes = getLayoutFields(ctx.gridInterface);
 
             copyData(attributes, false);
             ctx.gridInterface.__callSubscribers('copy-row', {
@@ -528,7 +503,9 @@ export function contextmenuRow(
 
     const copySelectedColumnsOnSelectedRowsTemplate = () => {
         const clickHandle = () => {
-            const attributes = getAttributeColumns(ctx.gridInterface);
+            // no column selected: every column
+            const selected = getLayoutFields(ctx.gridInterface, { selectedOnly: true });
+            const attributes = selected.length ? selected : getLayoutFields(ctx.gridInterface);
 
             copyData(attributes, false);
             ctx.gridInterface.__callSubscribers('copy-row-col', {

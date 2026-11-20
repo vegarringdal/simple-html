@@ -1,3 +1,4 @@
+import type { GridConfig } from '@simple-html/grid';
 import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 export const cellStyling: DemoSample = {
@@ -5,81 +6,83 @@ export const cellStyling: DemoSample = {
     title: 'Cell styling & readonly',
     group: 'Formatting',
     description:
-        'cellAppendClassSetter() lets you append css classes to cells based on the row data - here balance cells get a red/green tint by value. readonlySetter() does the same for readonly state - here company becomes readonly on inactive rows. Both take a callback (or null to remove it).',
+        'cellClass in the config adds css classes to a cell from its row - here balance cells get a red/green tint by value. isReadonly does the same for readonly - here company becomes readonly on inactive rows. Both are called per cell when it is rendered; updateConfig() sets or removes them while the grid is shown.',
     code: `
-/* the class you append to dimmedClass is an overlay, so position it:
+/* the background class goes on the element behind the cell's input, give it a size:
 .cell-low {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    inset: 0;
     background: rgba(239, 68, 68, 0.22);
     pointer-events: none;
 }
 */
 
-// color cells based on row values
-gridInterface.cellAppendClassSetter((attribute, rowData, _isReadOnly) => {
-    if (attribute === 'balance') {
-        if (rowData.balance < 500) {
-            return { dimmedClass: 'cell-low', inputClass: '' };
+const gridConfig: GridConfig = {
+    readonly: false,
+    layout: { center: [ ... ] },
+
+    // color cells based on row values: input is a class on the cell's input (the text),
+    // background one on the element behind it. null: no classes
+    cellClass: (row, field) => {
+        if (field === 'balance' && row.balance < 500) {
+            return { background: 'cell-low' };
         }
-        if (rowData.balance > 2500) {
-            return { dimmedClass: 'cell-high', inputClass: '' };
+        if (field === 'balance' && row.balance > 2500) {
+            return { background: 'cell-high' };
         }
+        return null;
+    },
+
+    // readonly based on row values. null: the column config decides (readonlyByConfig)
+    isReadonly: (row, field, readonlyByConfig) => {
+        if (field === 'company' && row.isActive === false) {
+            return true;
+        }
+        return null;
     }
-    return { dimmedClass: '', inputClass: '' };
-});
+};
 
-// readonly based on row values (configReadonly = what the config says)
-gridInterface.readonlySetter((attribute, rowData, configReadonly) => {
-    if (attribute === 'company' && rowData.isActive === false) {
-        return true;
-    }
-    return configReadonly;
-});
+const gridInterface = createGrid(container, { config: gridConfig, datasource });
 
-gridInterface.triggerRebuild(); // rerender cells
+// set or remove them while the grid is shown - undefined removes a callback
+gridInterface.updateConfig({ cellClass: undefined });
+gridInterface.updateConfig({ isReadonly: undefined });
 
-// pass null to remove the callbacks again
-gridInterface.cellAppendClassSetter(null);
-gridInterface.readonlySetter(null);
+// what a callback reads changed, without the grid knowing: render the cells again
+gridInterface.refresh();
 `,
     run(stage) {
         const ui = createStage(stage);
         const { gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
 
-        ui.button('Color balance cells', () => {
-            gridInterface.cellAppendClassSetter((attribute: string, rowData: any, _isReadOnly: boolean) => {
-                if (attribute === 'balance') {
-                    if (rowData.balance < 500) {
-                        return { dimmedClass: 'demo-cell-low', inputClass: '' };
-                    }
-                    if (rowData.balance > 2500) {
-                        return { dimmedClass: 'demo-cell-high', inputClass: '' };
-                    }
+        const balanceColors: GridConfig['cellClass'] = (row, field) => {
+            if (field === 'balance') {
+                if (row.balance < 500) {
+                    return { background: 'demo-cell-low' };
                 }
-                return { dimmedClass: '', inputClass: '' };
-            });
-            gridInterface.triggerRebuild();
+                if (row.balance > 2500) {
+                    return { background: 'demo-cell-high' };
+                }
+            }
+            return null;
+        };
+
+        ui.button('Color balance cells', () => {
+            gridInterface.updateConfig({ cellClass: balanceColors });
         });
         ui.button('Remove coloring', () => {
-            // no extra classes, same as no setter
-            gridInterface.cellAppendClassSetter(null);
-            gridInterface.triggerRebuild();
+            // no extra classes, same as no callback
+            gridInterface.updateConfig({ cellClass: undefined });
         });
         ui.button('Readonly company when inactive', () => {
-            gridInterface.readonlySetter((attribute: string, rowData: any, configReadonly: boolean) => {
-                if (attribute === 'company' && rowData.isActive === false) {
-                    return true;
-                }
-                return configReadonly;
+            gridInterface.updateConfig({
+                isReadonly: (row, field) => (field === 'company' && row.isActive === false ? true : null)
             });
-            gridInterface.triggerRebuild();
             ui.log('company cells on rows with active=false are now readonly (dimmed)');
         });
         ui.button('Remove readonly rule', () => {
-            // gives no answer, so the column config decides, same as no setter
-            gridInterface.readonlySetter(null);
-            gridInterface.triggerRebuild();
+            // the column config decides again, same as a callback that returns null
+            gridInterface.updateConfig({ isReadonly: undefined });
         });
     }
 };

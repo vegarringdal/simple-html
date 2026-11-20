@@ -35,7 +35,7 @@ describe('grid footer - incomplete filter nodes', () => {
             children: [{ kind: 'condition', label: undefined, operator: undefined, value: '', hasValue: false } as any]
         });
 
-        expect(() => gridInterface.triggerRebuild()).not.toThrow();
+        expect(() => gridInterface.rebuild()).not.toThrow();
         expect(renderedRows(element)).toHaveLength(5);
         expect(footerText(element)).toContain('5/5');
     });

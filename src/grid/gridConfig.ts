@@ -1,3 +1,4 @@
+import type { Entity } from '../datasource/entity';
 import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
@@ -9,6 +10,8 @@ import type { IDateConfig } from '../date/interfaces';
  * order and widths, sorting, grouping, filters - is the {@link GridState}: read it with
  * `gridInterface.getState()`, set it with `setState()`, and give the state the grid starts in as
  * `initialState`.
+ *
+ * To change an option while the grid is shown, use `gridInterface.updateConfig()`.
  *
  * The grid does not change the object you pass in: it keeps its own copy of `columns`, `layout` and
  * `initialState`, the parts it changes while the user works.
@@ -32,7 +35,7 @@ import type { IDateConfig } from '../date/interfaces';
  *     initialState: { sorting: [{ attribute: 'name', ascending: true }] }
  * };
  *
- * const gridInterface = new GridInterface(config, datasource);
+ * const gridInterface = createGrid(document.getElementById('grid')!, { config, datasource });
  * ```
  */
 export type GridConfig = {
@@ -129,7 +132,85 @@ export type GridConfig = {
      * default = true, so you need to set this to false to display on all rows
      */
     placeholderRowCurrentEntityOnly?: boolean;
+
+    /**
+     * Makes a cell readonly, or editable, from the values of its row. Called every time a cell is
+     * rendered, and by the row menu's paste and clear for each selected row.
+     *
+     * Return `true` (readonly) or `false` (editable). `null` or `undefined` leaves it to the config:
+     * the column's `readonly` option, which is passed in as `readonlyByConfig`. The grid's own
+     * `readonly: true` makes every cell readonly, whatever this returns.
+     *
+     * Called often: keep it fast. When what it reads changes, call `gridInterface.refresh()` to render
+     * the cells again.
+     *
+     * Replaces v5's `gridInterface.readonlySetter(callback)`; the row comes first now.
+     *
+     * @param row the cell's row. Always a data row: a group row has no cells
+     * @param field the cell's field
+     * @param readonlyByConfig the column's `readonly` option, `false` when it is not set
+     *
+     * @example
+     * ```ts
+     * const config: GridConfig = {
+     *     readonly: false,
+     *     layout: { center: [{ fields: ['company'], width: 150 }, { fields: ['isActive'], width: 80 }] },
+     *     // company can not be edited on an inactive row, every other cell follows the config
+     *     isReadonly: (row, field) => (field === 'company' && row.isActive === false ? true : null)
+     * };
+     * ```
+     */
+    isReadonly?: (row: Entity, field: string, readonlyByConfig: boolean) => boolean | null | undefined;
+
+    /**
+     * Adds css classes to a cell, from the values of its row: to color a cell by its value, say. Called
+     * every time a cell is rendered, keep it fast. See {@link CellClass} for where each class goes.
+     *
+     * Return `null` or `undefined` for no classes of your own.
+     *
+     * Replaces v5's `gridInterface.cellAppendClassSetter(callback)`: `inputClass` is `input`,
+     * `dimmedClass` is `background`, the row comes first and the third argument (readonly) is gone.
+     *
+     * @param row the cell's row. Always a data row: a group row has no cells
+     * @param field the cell's field
+     *
+     * @example
+     * ```ts
+     * // .low { position: absolute; inset: 0; background: rgba(239, 68, 68, 0.25); }
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['balance'], width: 100 }] },
+     *     cellClass: (row, field) => {
+     *         if (field === 'balance' && row.balance < 0) {
+     *             return { background: 'low', input: 'bold-text' };
+     *         }
+     *         return null;
+     *     }
+     * };
+     * ```
+     */
+    cellClass?: (row: Entity, field: string) => CellClass | null | undefined;
 };
+
+/**
+ * The css classes `GridConfig.cellClass` adds to a cell. Each is one or more class names, separated
+ * by spaces, the same as a `class` attribute.
+ *
+ * @example
+ * ```ts
+ * const negative: CellClass = { input: 'negative-text', background: 'negative-background' };
+ * ```
+ */
+export interface CellClass {
+    /** added to the cell's `<input>`: the text. Was `inputClass` in v5 */
+    input?: string;
+    /**
+     * added to the element behind the input, which fills the cell. The input is transparent, so this
+     * is the cell's background - the grid draws the readonly and mandatory stripes there. On an
+     * editable cell it has no size (the grid's readonly and mandatory classes give it one): give the
+     * class `position: absolute; inset: 0`. Was `dimmedClass` in v5
+     */
+    background?: string;
+}
 
 /**
  * Where the columns go. Each list is a list of columns from left to right; a column shows one field,
@@ -317,14 +398,16 @@ export interface HeaderFilter {
 
 /**
  * @internal
- * The config as the grid works with it, after `GridInterface.__parseConfig()`: every default
- * is filled in and the internal sizes are computed, so these are never undefined. `columns` has an
- * entry for every field of the layout.
- *
- * `layout` is the grid's own copy, the user changes it (drag/drop, pinning, the column chooser,
- * resizing) - it is the state's layout, `getState()` hands out a copy of it.
+ * The options of the config: all of it but `columns`, `layout` and `initialState`, the parts the grid
+ * copies and changes.
  */
-export type ParsedGridConfig = Omit<GridConfig, 'columns' | 'layout' | 'initialState'> &
+export type GridOptions = Omit<GridConfig, 'columns' | 'layout' | 'initialState'>;
+
+/**
+ * @internal
+ * The options with every default filled in, so these are never undefined.
+ */
+export type ParsedGridOptions = GridOptions &
     Required<
         Pick<
             GridConfig,
@@ -338,14 +421,24 @@ export type ParsedGridConfig = Omit<GridConfig, 'columns' | 'layout' | 'initialS
             | 'tooltips'
             | 'placeholderRowCurrentEntityOnly'
         >
-    > & {
-        columns: Record<string, ColumnConfig>;
-        layout: Required<GridLayout>;
-        __rowHeight: number;
-        __rowHeaderHeight: number;
-        __columnCells: number;
-        __leftWidth: number;
-        __rightWidth: number;
-        __scrollbarSize: number;
-        __selectSizeWidth: number;
-    };
+    >;
+
+/**
+ * @internal
+ * The config as the grid works with it: the options with every default filled in, and the internal
+ * sizes `GridInterface.__parseConfig()` computes. `columns` has an entry for every field of the layout.
+ *
+ * `layout` is the grid's own copy, the user changes it (drag/drop, pinning, the column chooser,
+ * resizing) - it is the state's layout, `getState()` hands out a copy of it.
+ */
+export type ParsedGridConfig = ParsedGridOptions & {
+    columns: Record<string, ColumnConfig>;
+    layout: Required<GridLayout>;
+    __rowHeight: number;
+    __rowHeaderHeight: number;
+    __columnCells: number;
+    __leftWidth: number;
+    __rightWidth: number;
+    __scrollbarSize: number;
+    __selectSizeWidth: number;
+};

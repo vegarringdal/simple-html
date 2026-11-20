@@ -103,10 +103,11 @@ export async function mountGrid(
 
     const gridInterface = new GridInterface(config, datasource);
 
+    // placed by hand, not with createGrid: the tests of createGrid are in createGrid.test.ts.
+    // The grid adds its simple-html-grid class itself
     const element = document.createElement('simple-html-grid') as GridElement;
     element.style.width = '100%';
     element.style.height = '100%';
-    element.classList.add('simple-html-grid');
     document.body.appendChild(element);
     element.connectInterface(gridInterface);
 

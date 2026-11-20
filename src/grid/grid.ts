@@ -18,8 +18,9 @@ import type { GridInterface } from './gridInterface';
  * most of functionality is moved into function where we pass this context
  */
 export class Grid {
-    // set by connectElement/connectGridInterface, and createDom, before anything reads them
-    public element!: HTMLElement;
+    // the simple-html-grid element. Empty until createDom builds the grid in it
+    public element: HTMLElement;
+    // set by connectGridInterface, and createDom, before anything reads them
     public gridInterface!: GridInterface<any>;
     public body!: HTMLElement;
 
@@ -63,12 +64,18 @@ export class Grid {
     public domCreated = false;
 
     /**
-     * only to be used by grid interface
-     * called every time the element is added to the dom, also when it is just moved
-     * @param element
+     * @param element the simple-html-grid element the grid is built in
      */
-    public connectElement(element: HTMLElement) {
+    constructor(element: HTMLElement) {
         this.element = element;
+    }
+
+    /**
+     * only to be used by grid element
+     * called every time the element is added to the dom, also when it is just moved
+     */
+    public connectElement() {
+        // here and not in the constructor: a custom element must not get attributes in its constructor
         this.element.classList.add('simple-html-grid');
         if (this.gridInterface) {
             this.attach();
@@ -89,7 +96,7 @@ export class Grid {
         this.gridInterface.connectGrid(this);
 
         // not in the dom yet (or removed from it), connectElement does the rest when it is added
-        if (this.element?.isConnected) {
+        if (this.element.isConnected) {
             this.attach();
         }
     }
@@ -155,12 +162,39 @@ export class Grid {
         this.gridInterface?.__disconnectGrid();
     }
 
-    public disableResizeEvent() {
-        this.skipInitResizeEvent = false;
+    /**
+     * Removes the element from the dom for good, for `GridInterface.destroy()`: everything
+     * disconnectElement() undoes, and the listeners on the element itself
+     */
+    public destroy() {
+        this.element.remove();
+        // the element may not have been in the dom, then remove() did not call disconnectedCallback.
+        // Running disconnectElement() twice is harmless
+        this.disconnectElement();
+        this.scrollListenersAbort?.abort();
     }
 
-    public enableResizeEvent() {
+    /**
+     * Stops rebuilding the grid when the element changes size: the resize observer is disconnected,
+     * and not made again when the element is put back in the dom. In v5 this did the opposite.
+     */
+    public disableResizeEvent() {
         this.skipInitResizeEvent = true;
+        this.resizeObserver?.disconnect();
+        this.resizeObserver = null;
+        clearTimeout(this.resizeTimer ?? undefined);
+        this.resizeTimer = null;
+    }
+
+    /**
+     * Rebuilds the grid when the element changes size again, after disableResizeEvent(). A grid in
+     * the dom gets its resize observer back right away. In v5 this did the opposite.
+     */
+    public enableResizeEvent() {
+        this.skipInitResizeEvent = false;
+        if (this.domCreated && this.element.isConnected) {
+            initResizerEvent(this);
+        }
     }
 
     public getElement() {
@@ -173,9 +207,9 @@ export class Grid {
      *
      */
     public rebuild(rebuildHeader = true) {
-        // never rebuild if element is not set/columns created
+        // never rebuild before the dom is created
         // incase someone call resize column before grid is generated
-        if (!this.element || !this.domCreated) {
+        if (!this.domCreated) {
             return;
         }
 

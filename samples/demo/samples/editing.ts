@@ -1,5 +1,5 @@
 import type { GridConfig } from '@simple-html/grid';
-import { baseGridConfig, createStage, type DemoSample, mountGrid, reconfigure } from '../demoUtils';
+import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 export const editing: DemoSample = {
     id: 'editing',
@@ -12,10 +12,8 @@ export const editing: DemoSample = {
 // or per column with columns: { x: { readonly: true/false } }
 const gridConfig: GridConfig = { readonly: false, ... };
 
-// readonly is config: to toggle it, connect a new interface with the changed config,
-// started in the state the old one is in (sorting, filter, column order ...)
-const next = new GridInterface({ ...gridConfig, readonly: true, initialState: gridInterface.getState() }, datasource);
-element.connectInterface(next);
+// toggle it while the grid is shown: sorting, filter, column order ... stay as they are
+gridInterface.updateConfig({ readonly: true });
 
 // add a new row (scrolls to it), optionally with data
 datasource.addNewEmpty({ company: 'NEW COMPANY' });
@@ -38,14 +36,14 @@ datasource.resetData();
         config.layout.center.unshift({ fields: ['__rowState'], width: 20 });
         config.columns = { __rowState: { label: 'RS', readonly: true } };
 
-        const { datasource, element, gridInterface: first } = mountGrid(ui.gridHost, config);
-        let gridInterface = first;
+        const { datasource, gridInterface } = mountGrid(ui.gridHost, config);
         datasource.setSelectionMode('multiple');
 
+        let readonly = config.readonly;
         ui.button('Toggle readonly', () => {
-            config.readonly = !config.readonly;
-            gridInterface = reconfigure(element, gridInterface, config);
-            ui.log('grid readonly: ' + config.readonly);
+            readonly = !readonly;
+            gridInterface.updateConfig({ readonly });
+            ui.log(`grid readonly: ${readonly}`);
         });
         ui.button('Add new row', () => {
             datasource.addNewEmpty({ company: 'NEW COMPANY' });

@@ -95,7 +95,7 @@ describe('grid rendering - reacting to data changes', () => {
         const { element, datasource, gridInterface } = await mountGrid();
 
         datasource.getRow(0).firstname = 'edited';
-        gridInterface.triggerScrollEvent();
+        gridInterface.refresh();
 
         expect(renderedColumn(element, 'firstname')[0]).toEqual('edited');
     });

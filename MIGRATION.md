@@ -267,8 +267,9 @@ filter row while grouped (row 0 becomes current, and that is a group row), or af
 
 The `cell-header-focus` event's `rowData` is not the header's own row: it is the first displayed
 row. When grouped that is a group row, and `undefined` when there were no rows. The other cell
-events (`cell-click`, `cell-row-focus`, ...), `readonlySetter()` and `cellAppendClassSetter()` only
-ever get data rows, their types are unchanged.
+events (`cell-click`, `cell-row-focus`, ...) and the config's `isReadonly` / `cellClass` (were
+`readonlySetter()` / `cellAppendClassSetter()`, see [The callbacks are in the config](#the-callbacks-are-in-the-config-isreadonly-and-cellclass))
+only ever get data rows.
 
 ## Fields and formatters
 
@@ -1017,7 +1018,7 @@ gridInterface.resetState();
 | `saveConfig()` | `getState()` - the state only, not the options |
 | `loadConfig(config)` | `setState(state)` - applies what it is given, keeps the rest |
 | `loadInitConfig()` | `resetState()` |
-| `updateInitConfig(config)` | `GridConfig.initialState` - or a new `GridInterface`, see below |
+| `updateInitConfig(config)` | `GridConfig.initialState`, or `updateConfig({ initialState })` later |
 | config `sorting`, `grouping`, `expandedGroups`, `filter` | `GridConfig.initialState` |
 | attribute `currentFilterValue` | `headerFilters[field].value` |
 | the operator picked in the menu, in the attribute's `operator` | `headerFilters[field].operator` |
@@ -1061,8 +1062,8 @@ What changes:
   in v5, where the filter and `currentFilterValue` were saved apart. `getState()` gives both.
 * **Options are config, not state.** `saveConfig()` / `loadConfig()` also carried `readonly`,
   `tooltips`, `cellHeight` and every other option, and a changed copy could be loaded. To change an
-  option while the grid is shown, make a new `GridInterface` with the changed config, started in the
-  old one's state, and connect it to the element:
+  option while the grid is shown, use `updateConfig()`, see
+  [`updateConfig()`](#updateconfig-changes-options-while-the-grid-is-shown):
 
   ```ts
   // v5
@@ -1071,13 +1072,11 @@ What changes:
   gridInterface.loadConfig(config);
 
   // v6
-  const next = new GridInterface({ ...gridConfig, readonly: true, initialState: gridInterface.getState() }, datasource);
-  element.connectInterface(next);
+  gridInterface.updateConfig({ readonly: true });
   ```
 
-  Handlers subscribed with `on()` and `readonlySetter()` / `cellAppendClassSetter()` belong to the
-  old interface, set them on the new one. `dimRepeatedValues`, which the row menu can toggle, is an
-  option too: `getState()` does not have it.
+  `dimRepeatedValues`, which the row menu can toggle, is an option too: `getState()` does not have
+  it.
 * **The constructor applies `initialState` to the datasource**: its sorting, grouping and filter are
   replaced, and cleared when `initialState` leaves them out. v5 cleared the filter and the grouping
   too (and so the sort), but left the rows in the order they were sorted in.
@@ -1199,6 +1198,190 @@ A column's `type` is dropped, list the field's type in the datasource's `fields`
 user had picked in v5 was saved in the attribute, it stays the column's `operator` - the header
 filter starts with it.
 
+## Setup, callbacks and methods of the grid
+
+### `createGrid()`: a grid on the page in one call
+
+v5 needed an interface, an element, its size, its css class and `connectInterface()`. In v6
+`createGrid()` does it all and returns the interface:
+
+```ts
+// v5
+const gridInterface = new GridInterface(gridConfig, datasource);
+const element = document.createElement('simple-html-grid') as GridElement;
+element.style.width = '100%';
+element.style.height = '100%';
+element.style.display = 'flex';
+element.classList.add('simple-html-grid');
+element.connectInterface(gridInterface);
+container.appendChild(element);
+
+// v6
+const gridInterface = createGrid(container, { config: gridConfig, datasource });
+```
+
+The element fills the container (width and height 100%), so the container needs a height - as
+before.
+
+The `<simple-html-grid>` element stays, for placing and sizing it yourself. It adds its
+`simple-html-grid` class itself (v5 did too, when it was put in the page), so that line can go. So
+can `display: flex`: the css gives the element `display: block`, and everything in it is positioned
+absolute.
+
+```ts
+// v6, the element placed by hand
+const element = document.createElement('simple-html-grid') as GridElement;
+element.style.width = '100%';
+element.style.height = '100%';
+element.connectInterface(new GridInterface(gridConfig, datasource));
+container.appendChild(element);
+```
+
+* **`element.enableCleanup` is removed.** It was a test flag: with it `connectInterface()` emptied the
+  element and built the grid's dom again. Without it - the default - the dom is kept and rebuilt for
+  the new interface, which is what v6 always does.
+* **`createGrid()` connects before it returns**, so a `grid-connected` handler subscribed after it
+  does not hear that first connect. To size the columns at the start, call `autoResizeColumns()`
+  right after `createGrid()`.
+
+### `destroy()`: done with a grid
+
+`gridInterface.destroy()` is new. It removes the element from the page and disconnects the grid
+from the datasource and the document, and drops the handlers subscribed with `on()`. The datasource
+is not changed. Do not use the interface after it.
+
+```ts
+// v5
+element.remove();
+
+// v6
+gridInterface.destroy();
+```
+
+Removing the element still works, and still disconnects the grid: an element you placed yourself
+does not need `destroy()`. `destroy()` removes it too, when it is called.
+
+### The callbacks are in the config: `isReadonly` and `cellClass`
+
+`readonlySetter()` and `cellAppendClassSetter()` are removed. The callbacks are options of the
+config, so they are there from the first render, and `updateConfig()` sets or removes them later:
+
+```ts
+// v5
+gridInterface.readonlySetter((attribute, rowData, cellReadOnlyConfig) => {
+    if (attribute === 'company' && rowData.isActive === false) {
+        return true;
+    }
+    return null; // the column config decides
+});
+gridInterface.cellAppendClassSetter((attribute, rowData, cellReadOnly) => {
+    if (attribute === 'balance' && rowData.balance < 0) {
+        return { inputClass: 'negative-text', dimmedClass: 'negative-background' };
+    }
+    return { inputClass: '', dimmedClass: '' };
+});
+gridInterface.readonlySetter(null); // removed again
+
+// v6
+const gridConfig: GridConfig = {
+    layout: { center: [ ... ] },
+    isReadonly: (row, field, readonlyByConfig) => (field === 'company' && row.isActive === false ? true : null),
+    cellClass: (row, field) =>
+        field === 'balance' && row.balance < 0 ? { input: 'negative-text', background: 'negative-background' } : null
+};
+gridInterface.updateConfig({ isReadonly: undefined }); // removed again
+```
+
+| v5 | v6 |
+| --- | --- |
+| `readonlySetter(callback)` | `GridConfig.isReadonly`, or `updateConfig({ isReadonly })` |
+| `cellAppendClassSetter(callback)` | `GridConfig.cellClass`, or `updateConfig({ cellClass })` |
+| `readonlySetter(null)` / `cellAppendClassSetter(null)` | `updateConfig({ isReadonly: undefined })` / `updateConfig({ cellClass: undefined })` |
+| readonly callback `(attribute, rowData, cellReadOnlyConfig)` | `isReadonly(row, field, readonlyByConfig)` - the row first |
+| class callback `(attribute, rowData, cellReadOnly)` | `cellClass(row, field)` - the row first, no third argument |
+| `{ inputClass, dimmedClass }` | `{ input, background }` (`CellClass`), both optional. `null` / `undefined` for no classes |
+
+* **`inputClass` is `input`**: the class goes on the cell's `<input>`, the text.
+* **`dimmedClass` is `background`**: the class goes on the element behind the input. The input is
+  transparent, so it is the cell's background; the grid draws the readonly and mandatory stripes
+  there. As in v5 the element has no size on an editable cell (the grid's readonly and mandatory
+  classes give it one): give your class `position: absolute; inset: 0`.
+* **`cellClass` has no third argument.** v5 passed whether the cell is readonly. Both callbacks are
+  yours: call the same check from `cellClass` if you need it.
+* **`isReadonly` works as `readonlySetter` did**: `true` / `false` decide, anything else
+  (`null`, `undefined`) leaves it to the column's `readonly`, which is passed in as
+  `readonlyByConfig`. The grid's `readonly: true` still wins, and the row menu's paste and clear ask
+  it for every selected row.
+* **Fixed**: the background class is now separated from the grid's own `simple-html-readonly` /
+  `simple-html-mandatory` class by a space. v5 joined them (`simple-html-readonlynegative-background`),
+  so on a readonly or mandatory cell of an editable grid neither class applied.
+
+### `updateConfig()` changes options while the grid is shown
+
+v5 changed an option with `saveConfig()`, a change, and `loadConfig()`. In v6 `updateConfig()` takes
+the options to change and rebuilds the grid once:
+
+```ts
+// v5
+const config = gridInterface.saveConfig();
+config.readonly = false;
+config.cellHeight = 30;
+gridInterface.loadConfig(config);
+
+// v6
+gridInterface.updateConfig({ readonly: false, cellHeight: 30 });
+```
+
+* **Only the keys given change.** A key given as `undefined` goes back to its default
+  (`updateConfig({ readonly: undefined })` makes the grid readonly again, its default). `layout`
+  excepted: a grid always has one, `layout: undefined` is ignored.
+* **`columns` replaces the options of every column**, nothing is merged: a field left out gets the
+  defaults.
+* **`layout` is shown right away**, the same as `setState({ layout })`: the column order, pinning and
+  widths the user made are replaced. It is also the layout `resetState()` goes back to from then on,
+  unless `initialState` has a layout.
+* **`initialState` changes nothing now**: it is the state the next `resetState()` goes back to. Call
+  `resetState()` after `updateConfig({ initialState })` to apply it at once.
+* **The rest is kept**: the sorting, grouping, filter and header filters, and the handlers subscribed
+  with `on()`.
+
+### Renamed and removed methods
+
+No method takes a positional boolean any more, as in the datasource (see
+[Options objects instead of boolean flags](#options-objects-instead-of-boolean-flags)).
+
+| v5 | v6 |
+| --- | --- |
+| `gridInterface.triggerScrollEvent()` | `refresh()` - renders the visible cells again |
+| `gridInterface.triggerRebuild()` | `rebuild()` - builds the whole grid again |
+| `gridInterface.getAttributeColumns()` / `getAttributeColumns(true)` | `getLayoutFields({ selectedOnly: true })` - `[]` when no column is selected, v5 gave every field then |
+| `gridInterface.getAttributeColumns(false)` | `getLayoutFields()` |
+| `gridInterface.getOptionalAttributes()` | `getHiddenFields()` |
+| `gridInterface.readonlySetter(callback)` | removed: `GridConfig.isReadonly`, see [above](#the-callbacks-are-in-the-config-isreadonly-and-cellclass) |
+| `gridInterface.cellAppendClassSetter(callback)` | removed: `GridConfig.cellClass`, see [above](#the-callbacks-are-in-the-config-isreadonly-and-cellclass) |
+| `element.enableCleanup` | removed, see [`createGrid()`](#creategrid-a-grid-on-the-page-in-one-call) |
+| `element.connectedCallback()` / `disconnectedCallback()` | not in the typings: the browser calls them |
+| - | new: `createGrid()`, `gridInterface.updateConfig()`, `gridInterface.destroy()` |
+
+Kept, and documented now: `autoResizeColumns()`, `openFilterEditor()`, `getDatasource()`, `on()`,
+`getState()` / `setState()` / `resetState()` and `element.connectInterface()`. The context menu
+methods (`contextMenuCustom()`, `getContextMenuElement()`, `setContextMenuElement()`,
+`removeContextMenuElement()`) are unchanged for now; the menus are redone next.
+
+To keep v5's `getAttributeColumns()` - the selected columns, or every column when none is selected:
+
+```ts
+const selected = gridInterface.getLayoutFields({ selectedOnly: true });
+const fields = selected.length ? selected : gridInterface.getLayoutFields();
+```
+
+In plain JavaScript an old name throws `... is not a function`, and `getLayoutFields(true)` throws a
+`TypeError` that shows the v6 way to write it.
+
+`new GridInterface(config, datasource)` takes the row type from the datasource: a
+`Datasource<Person>` gives a `GridInterface<Person>`, and so does `createGrid()`. v5 typed the
+datasource without its row type.
+
 ## Internals are no longer in the typings
 
 Members meant for the grid itself were public and showed up in autocomplete. They are tagged
@@ -1231,5 +1414,5 @@ Types that public signatures use are now exported, so you can name them: `ColTyp
 `DataEntity`, and the grid config's `ColumnConfig`, `GridLayout`, `LayoutColumn`, `GridState` and
 `HeaderFilter` (see [Grid config](#grid-config)).
 
-`readonlySetter(null)` and `cellAppendClassSetter(null)` were always allowed at runtime (they
-remove the callback). The types say so now.
+`readonlySetter()` and `cellAppendClassSetter()` are gone, the callbacks are in the config: see
+[The callbacks are in the config](#the-callbacks-are-in-the-config-isreadonly-and-cellclass).
