@@ -14,6 +14,11 @@ export function addBodyClickListener(ctx: Grid) {
     }
 
     const clickListener = (e: any) => {
+        // the click that opened the menu (openMenu() in a click handler), see showMenu
+        if (ctx.menuJustOpened) {
+            return;
+        }
+
         let node = e.target;
         let keep = false;
         while (node) {

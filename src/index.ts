@@ -45,3 +45,14 @@ export type { ColType } from './grid/gridFunctions/colType';
 export type { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
 export { TOOLTIPS } from './grid/gridFunctions/tooltip';
 export { GridInterface } from './grid/gridInterface';
+export {
+    type GridMenus,
+    MENU_IDS,
+    type MenuBlock,
+    type MenuContext,
+    type MenuEntry,
+    type MenuItem,
+    type MenuPosition,
+    type MenuSection,
+    type MenuSeparator
+} from './grid/gridMenus';

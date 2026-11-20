@@ -361,46 +361,18 @@ createButton('cell focus custom menu 1 time', () => {
     const off = gridInterface.on('cell-click', (data) => {
         // 1 time: unsubscribe on the first click
         off();
-        gridInterface.contextMenuCustom(
-            data.originalEvent,
-            [
-                {
-                    value: '1',
-                    isHeader: true,
-                    label: 'label1'
-                },
-                {
-                    value: '2',
-                    isHeader: false,
-                    label: 'label2'
-                },
-                {
-                    value: '3',
-                    isHeader: false,
-                    label: 'label3'
-                },
-                {
-                    value: '11',
-                    isHeader: true,
-                    label: 'label11'
-                },
-                {
-                    value: '12',
-                    isHeader: false,
-                    label: 'label12'
-                },
-                {
-                    value: '13',
-                    isHeader: false,
-                    label: 'label13'
-                }
-            ],
-            data.cell,
-            (result) => {
-                data.rowData[data.attribute] = result;
-                gridInterface.refresh();
-            }
-        );
+        const pick = (value: string) => {
+            data.rowData[data.attribute] = value;
+            gridInterface.refresh();
+        };
+        gridInterface.openMenu(data.cell, [
+            { type: 'section', id: 'label1', label: 'label1:' },
+            { id: 'label2', label: 'label2', action: () => pick('2') },
+            { id: 'label3', label: 'label3', action: () => pick('3') },
+            { type: 'section', id: 'label11', label: 'label11:' },
+            { id: 'label12', label: 'label12', action: () => pick('12') },
+            { id: 'label13', label: 'label13', action: () => pick('13') }
+        ]);
     });
 });
 
@@ -421,39 +393,17 @@ createButton('remove class background favoriteFruit based on cell isDumb', () =>
      */
 
     const openDropdown: EventHandler<GridEvents['cell-focus-button-click']> = (data) => {
-        gridInterface.removeContextMenuElement();
-
         if (data.attribute === 'company') {
-            const rect = data.cell.getBoundingClientRect();
             const element = document.createElement('simple-html-grid') as GridElement;
             const height = 300;
             const width = 500;
 
             /**
-             * first part here is to just keep it within screen size
-             */
-
-            let top = rect.bottom;
-            let left = rect.left;
-
-            if (window.innerHeight < rect.bottom + height) {
-                top = rect.top - height - 3;
-            }
-            if (window.innerWidth < rect.right + width) {
-                left = window.innerWidth - width - 3;
-            }
-
-            /**
-             * add syle/calculated top/left
+             * the size: openMenu() places it under the cell and keeps it within the screen
              * you might want to add some loading icon..
              */
-
             element.style.width = `${width}px`;
             element.style.height = `${height}px`;
-            element.style.display = 'absolute';
-            element.style.top = `${top}px`;
-            element.style.left = `${left}px`;
-            element.style.boxShadow = '16px 17px 8px 0px rgb(0 0 0 / 20%), 0 6px 20px 0 rgb(0 0 0 / 19%)';
 
             const gridConfig: GridConfig = {
                 panelHeight: 0,
@@ -474,14 +424,13 @@ createButton('remove class background favoriteFruit based on cell isDumb', () =>
                 datasourceLocal.setData([{ WOW: `wow${i}` }], { add: true });
             }
 
-            // placed by hand, it is positioned on its own. The grid adds its css class itself
+            // placed by hand, openMenu() puts it on the page. The grid adds its css class itself
             const gridInterfaceLocal = new GridInterface(gridConfig, datasourceLocal);
             element.connectInterface(gridInterfaceLocal);
-            document.body.appendChild(element);
 
             element.onclick = (x: any) => {
                 if (x.target?.classList.contains('simple-html-grid-cell-input')) {
-                    gridInterface.removeContextMenuElement();
+                    gridInterface.closeMenu();
                     data.rowData.company = datasourceLocal.currentEntity?.WOW;
                     data.target.focus();
                 }
@@ -489,17 +438,18 @@ createButton('remove class background favoriteFruit based on cell isDumb', () =>
 
             element.onkeydown = (x: any) => {
                 if (x.code === 'Enter' && x.target?.classList.contains('simple-html-grid-cell-input')) {
-                    gridInterface.removeContextMenuElement();
+                    gridInterface.closeMenu();
                     data.rowData.company = datasourceLocal.currentEntity?.WOW;
                     data.target.focus();
                 }
             };
 
+            // a menu with the grid as a block: closed on scroll, outside click, another menu
+            gridInterface.openMenu(data.cell, [{ type: 'block', id: 'cable-picker', element }]);
+
             setTimeout(() => {
                 // set focus to first filter
                 // but we want a timeout, so we do not get space clicked
-
-                gridInterface.setContextMenuElement(element);
                 (element.getElementsByTagName('INPUT')[0] as HTMLInputElement)?.focus();
             });
         }
@@ -514,7 +464,7 @@ createButton('remove class background favoriteFruit based on cell isDumb', () =>
         }
         dropdownEventsOff = [
             // moving to another cell closes an open dropdown
-            gridInterface.on('cell-row-focus', () => gridInterface.removeContextMenuElement()),
+            gridInterface.on('cell-row-focus', () => gridInterface.closeMenu()),
             gridInterface.on('cell-focus-button-click', openDropdown)
         ];
     });

@@ -34,8 +34,10 @@ describe('grid interface without a connected grid', () => {
         const gridInterface = new GridInterface(simpleConfig(), new Datasource());
         const cell = document.createElement('div');
 
-        expect(() => gridInterface.contextMenuCustom(new MouseEvent('contextmenu'), [], cell, () => {})).not.toThrow();
-        expect(() => gridInterface.removeContextMenuElement()).not.toThrow();
+        // v5 contextMenuCustom() / removeContextMenuElement(), now openMenu() / closeMenu()
+        expect(() => gridInterface.openMenu(cell, [{ id: 'a', label: 'a', action: () => {} }])).not.toThrow();
+        expect(document.querySelector('.simple-html-grid-menu')).toBeNull();
+        expect(() => gridInterface.closeMenu()).not.toThrow();
         // the columns come from the config, no grid needed
         expect(gridInterface.getLayoutFields()).toEqual(['firstname', 'lastname', 'age']);
         expect(gridInterface.getHiddenFields()).toEqual([]);

@@ -255,6 +255,14 @@ what to change in your code. Released in phases.
   `disconnectedCallback()` are left out of the typings - the browser calls them.
 - **`new GridInterface(config, datasource)` takes the row type from the datasource**: a
   `Datasource<Person>` gives a `GridInterface<Person>`.
+- **`contextMenuCustom()`, `getContextMenuElement()`, `setContextMenuElement()` and
+  `removeContextMenuElement()` are removed**: `openMenu(at, entries)` opens a menu of your own,
+  `closeMenu()` closes the open menu. An item has its own `action` (v5: one callback for every
+  `{ value, label, isHeader }`), clicking it closes the menu (v5 kept it open unless the callback
+  returned `true`), and labels are shown as given (v5 pretty printed them and added a colon to a
+  header). An element that should close with the menus, a dropdown grid, is a block of the menu:
+  `openMenu(cell, [{ type: 'block', id, element }])` places it, where v5 had you place it and register
+  it with `setContextMenuElement()`. `getContextMenuElement()` has no replacement.
 
 #### Fixed
 - a boolean header filter set to `false` showed as empty after the header was rebuilt, and a number
@@ -265,6 +273,13 @@ what to change in your code. Released in phases.
 - the internal `Grid.disableResizeEvent()` / `enableResizeEvent()` did the opposite of their names.
   They also take effect right away now: disable disconnects the resize observer (and cancels a pending
   resize rebuild), enable makes it again for a grid in the dom
+- a menu opened from a click handler (v5 `contextMenuCustom()`) was closed again by that same click
+  reaching the document; it stays open now
+- a click inside an element registered with `setContextMenuElement()` (the dropdown grid sample)
+  closed it, so its filter input could only be used from the keyboard. A block in a menu stays open
+- the header and filter menus could open below the bottom of the window, they open above the cell
+  when there is no room below (as the row menu did). A menu that sticks out on the right of the
+  window is moved in
 
 #### Added
 - `GridConfig.columns`, `GridConfig.layout`, `GridConfig.initialState`, and the types
@@ -287,6 +302,22 @@ what to change in your code. Released in phases.
 - README and the demo use `createGrid()`; the samples that change an option use `updateConfig()`,
   the cell styling sample the config callbacks. `MIGRATION.md`: setup, callbacks, `updateConfig()`
   and a table of every renamed or removed method
+- **Menus as data**: the row, header and filter menus are lists of entries - items, section headers,
+  separators and blocks (`MenuEntry`: `MenuItem`, `MenuSection`, `MenuSeparator`, `MenuBlock`) - each
+  with a stable id. **`GridConfig.menus`** (`GridMenus`) has a function per menu, `row`, `header` and
+  `filter`, that gets the built-in entries and the `MenuContext` (field, row, row index, cell, grid
+  interface, datasource) and returns the entries to show: hide, reorder, relabel or add. An item
+  takes `action(context)`, and optional `hint`, `visible(context)`, `disabled(context)` and
+  `selected(context)`
+- **`MENU_IDS`**: every built-in id per menu, in the order shown, documented with its label and
+  when it is shown. The header filter's value list is one block entry, `filter.values`
+- **`gridInterface.openMenu(at, entries)`** opens a menu of your own at a mouse event, a position
+  (`MenuPosition`) or under an element; **`closeMenu()`** closes the open menu, the grid's own too
+- menu entries carry their id in a `data-menu-id` attribute; a disabled item has the class
+  `simple-html-grid-menu-item-disabled` and `aria-disabled="true"`
+- demo: the custom cell menu sample is a menus sample (`menus` hides a built-in entry and adds a
+  part of its own, `openMenu()` as a value picker), the dropdown sample opens its grid with
+  `openMenu()` as a block. `MIGRATION.md`: the menus, before and after
 
 #### Internal
 - the grid reads `layout.left` / `layout.center` / `layout.right` and `columns` where it read
@@ -304,6 +335,18 @@ what to change in your code. Released in phases.
 - the row menu's "Use dimmed values" goes through `updateConfig()`, so a later `updateConfig()` keeps it
 - tests: `createGrid.test.ts`, `updateConfig.test.ts`, `cellCallbacks.test.ts`, and refresh / rebuild
   / resize toggle tests in `gridLifecycle.test.ts`
+- one renderer for every entry menu (`showMenu()`): the row, header and filter menus and `openMenu()`
+  share the markup, the placement and the closing. The three menus build their default entries, the
+  config's `menus` function changes them; `contextMenuCustom.ts` is gone. Rendering is unchanged: the
+  same elements and css classes, a section header followed by its solid line, the separators dashed.
+  The value list's parts are in one element of their own (a flex column, as the menu is)
+- an item click closes the menu first, then runs the action, so an action can open another menu.
+  The column chooser opens at the mouse position of the right click (it used the click on its menu
+  item)
+- the value list renders only itself again when values are checked or searched (it rendered the
+  whole filter menu)
+- tests: `gridMenus.test.ts` - the ids, hiding, reordering, custom entries and their context,
+  `visible` / `disabled`, `openMenu()` / `closeMenu()`, a dropdown grid as a block
 
 ## 5.0.1
 

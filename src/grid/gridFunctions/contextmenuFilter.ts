@@ -3,10 +3,9 @@ import { live } from 'lit-html/directives/live.js';
 import type { Entity, GroupRow } from '../../datasource/entity';
 import { and, type FilterExpression, type FilterOperator, isFilterGroup, where } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
-import { asPx } from './asPx';
+import type { MenuBlock, MenuContext, MenuEntry, MenuItem } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
-import { createElement } from './createElement';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
@@ -14,82 +13,142 @@ import type { HTMLCellElement } from './HTMLCellElement';
 import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
+import { placeUnderCell, showMenu } from './showMenu';
 
+/**
+ * Opens the filter menu, the right click menu of a header filter: the default entries (see
+ * MENU_IDS.filter), changed by `GridConfig.menus.filter`.
+ */
 export function contextmenuFilter(
     ctx: Grid,
     event: MouseEvent,
     cell: HTMLCellElement,
-    _row: number,
+    row: number,
     _column: number,
     _celno: number,
     _colType: ColType,
     _cellType: string,
     attribute: string,
     // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
-    _rowData: Entity | GroupRow | undefined
+    rowData: Entity | GroupRow | undefined
 ) {
-    removeContextMenu(ctx);
+    const context: MenuContext = {
+        menu: 'filter',
+        field: attribute,
+        row: rowData,
+        rowIndex: row,
+        cell,
+        gridInterface: ctx.gridInterface,
+        datasource: ctx.gridInterface.getDatasource()
+    };
 
-    const contextMenu = createElement('div', 'simple-html-grid');
-    contextMenu.classList.add('simple-html-grid-reset');
-    const rect = cell.getBoundingClientRect();
-    contextMenu.style.position = 'absolute';
-    contextMenu.style.top = asPx(rect.bottom + 2);
-    contextMenu.style.left = asPx(event.clientX - 65);
-    contextMenu.style.minWidth = asPx(130);
+    const defaults = filterMenuEntries(ctx, attribute);
+    const entries = ctx.gridInterface.__getGridConfig().menus?.filter?.(defaults, context) ?? defaults;
 
-    if (event.clientX + 70 > window.innerWidth) {
-        contextMenu.style.left = asPx(window.innerWidth - 150);
-    }
-    if (event.clientX - 65 < 0) {
-        contextMenu.style.left = asPx(5);
-    }
+    showMenu(ctx, entries, context, placeUnderCell(event, cell));
+}
 
-    const context = {
-        searchInput: '',
+/**
+ * The filter menu's default entries, new objects every call. The ids are documented in MENU_IDS.filter
+ */
+function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
+    const type = ctx.gridInterface.getDatasource().getField(attribute).type;
+
+    // the operator picked before (state), else the column's, else the type's default
+    const current = getHeaderFilterOperator(ctx, attribute);
+
+    /**
+     * the operator picked is state, the filter runs again with the value the cell has
+     */
+    const setOperator = (picked: FilterOperator) => {
+        ctx.gridInterface.__setHeaderFilterOperator(attribute, picked);
+        filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
+        ctx.gridInterface.__callSubscribers('filter-operator-change', {
+            field: attribute,
+            operator: picked,
+            column: ctx.gridInterface.__getGridConfig().columns[attribute],
+            rebuildHeader: () => rebuildHeaderColumns(ctx)
+        });
+    };
+
+    // a boolean column has no operators to choose from. Number and date columns have the range ones,
+    // text columns not equal and contains
+    const hasOperators = () => type !== 'boolean';
+    const isRange = () => type === 'date' || type === 'datetime' || type === 'number';
+    const isText = () => type !== 'boolean' && !isRange();
+
+    const operatorItem = (id: string, label: string, operator: FilterOperator, visible: () => boolean): MenuItem => ({
+        id,
+        label,
+        visible,
+        selected: () => current === operator,
+        action: () => setOperator(operator)
+    });
+
+    return [
+        { type: 'section', id: 'filter.filter', label: 'Filter:' },
+        { id: 'filter.filter.clear', label: 'Clear Filter', action: () => clearColumnFilter(ctx, attribute) },
+        { id: 'filter.filter.clearAll', label: 'Clear All Filters', action: () => clearAllColumnFilters(ctx) },
+        { type: 'separator', id: 'filter.filter.blankSeparator' },
+        { id: 'filter.filter.isBlank', label: 'Set "Is Blank"', action: () => setBlankOrNotBlank(ctx, attribute, 'IS_BLANK') },
+        {
+            id: 'filter.filter.isNotBlank',
+            label: 'Set "Is Not Blank"',
+            action: () => setBlankOrNotBlank(ctx, attribute, 'IS_NOT_BLANK')
+        },
+        { type: 'separator', id: 'filter.filter.advancedSeparator' },
+        { id: 'filter.filter.advanced', label: 'Advanced Filter', action: () => openFilterEditor(ctx) },
+        { type: 'section', id: 'filter.operator', label: 'Set Operator:', visible: hasOperators },
+        operatorItem('filter.operator.greaterThanOrEqualTo', 'Greater than or equal', 'GREATER_THAN_OR_EQUAL_TO', isRange),
+        operatorItem('filter.operator.lessThanOrEqualTo', 'Less than or equal', 'LESS_THAN_OR_EQUAL_TO', isRange),
+        operatorItem('filter.operator.equal', 'Equal', 'EQUAL', hasOperators),
+        operatorItem('filter.operator.notEqualTo', 'Not Equal', 'NOT_EQUAL_TO', isText),
+        operatorItem('filter.operator.contains', 'Contains', 'CONTAINS', isText),
+        valueListBlock(ctx, attribute)
+    ];
+}
+
+/**
+ * The excel style value list: "Search:", a search box, a checkbox per value and "Run Search". One
+ * block (`filter.values`) with an element of its own, which it renders again as the user checks values
+ * and types. Only for a text field, dropDownFilterData gives null for the rest.
+ */
+function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
+    const element = document.createElement('div');
+    element.setAttribute('data-menu-id', 'filter.values');
+    // its parts are laid out as they were when they were entries of the menu itself (a flex column)
+    element.style.display = 'flex';
+    element.style.flexDirection = 'column';
+
+    const state = {
+        searchInput: '' as string | null,
         availableOnly: true,
         selectAll: true,
         data: dropDownFilterData(ctx, attribute, true, '')
     };
 
-    /**
-     * helper to get context, if we do not do it like ctx we risk getting another state
-     * @returns
-     */
-    function getContext() {
-        return context;
-    }
+    const block: MenuBlock = { type: 'block', id: 'filter.values', element, visible: () => state.data !== null };
 
-    /**
-     * template for bottom excel like filter
-     * @param reRender
-     * @returns
-     */
-    const searchTemplate = (reRender: () => void) => {
-        if (!getContext().data) {
-            return null;
+    const reRender = () => {
+        const data = state.data;
+        if (!data) {
+            return;
         }
-
-        /**
-         * data is only null when the column is not a text column (see dropDownFilterData), so it
-         * stays set for everything below
-         */
-        const getData = () => getContext().data!;
 
         /**
          * update grid with new result
          */
         const runFilterClick = () => {
-            const intersection = Array.from(getData().dataFilterSetFull).filter((x) => !getData().dataFilterSet.has(x));
+            const intersection = Array.from(data.dataFilterSetFull).filter((x) => !data.dataFilterSet.has(x));
 
-            if (intersection.length < getData().dataFilterSet.size) {
+            if (intersection.length < data.dataFilterSet.size) {
                 // if full we want to use NOT in
                 filterCallback(
                     ctx,
                     null,
                     attribute,
                     intersection.length ? intersection : null,
-                    getContext().searchInput ? getContext().searchInput : null,
+                    state.searchInput ? state.searchInput : null,
                     !!intersection.length
                 );
             } else {
@@ -97,8 +156,8 @@ export function contextmenuFilter(
                     ctx,
                     null,
                     attribute,
-                    getData().dataFilterSet.size ? Array.from(getData().dataFilterSet) : null,
-                    getContext().searchInput ? getContext().searchInput : null,
+                    data.dataFilterSet.size ? Array.from(data.dataFilterSet) : null,
+                    state.searchInput ? state.searchInput : null,
                     false
                 );
             }
@@ -108,18 +167,16 @@ export function contextmenuFilter(
 
         /**
          * items found
-         * @returns
          */
         const filterValues = () => {
-            const filterValueClick = (rowData: any) => {
-                getContext().selectAll = false;
-                if (getData().dataFilterSet.has(rowData)) {
-                    getData().dataFilterSet.delete(rowData);
+            const filterValueClick = (value: unknown) => {
+                state.selectAll = false;
+                if (data.dataFilterSet.has(value)) {
+                    data.dataFilterSet.delete(value);
                 } else {
-                    getData().dataFilterSet.add(rowData);
+                    data.dataFilterSet.add(value);
                 }
-                getContext().selectAll =
-                    getData().dataFilterSetFull.size === getData().dataFilterSet.size && !getContext().availableOnly;
+                state.selectAll = data.dataFilterSetFull.size === data.dataFilterSet.size && !state.availableOnly;
                 reRender();
             };
             /**
@@ -127,28 +184,28 @@ export function contextmenuFilter(
              * Only shown when the list is complete - if values were dropped because of the
              * DROPDOWN_FILTER_MAX_ROWS cap the counts would be misleading.
              */
-            const countFor = (rowData: any) => {
-                if (getData().truncated) {
+            const countFor = (value: unknown) => {
+                if (data.truncated) {
                     return '';
                 }
-                const count = getData().counts?.get(rowData);
+                const count = data.counts?.get(value);
                 return count ? ` (${count})` : '';
             };
 
-            return Array.from(getData().dataFilterSetFull).map((rowData: any) => {
+            return Array.from(data.dataFilterSetFull).map((value) => {
                 return html`<div class="simple-html-grid-menu-checkbox">
                     <input
                         type="checkbox"
-                        .checked=${live(getData().dataFilterSet.has(rowData))}
+                        .checked=${live(data.dataFilterSet.has(value))}
                         @click=${() => {
-                            filterValueClick(rowData);
+                            filterValueClick(value);
                         }}
                     /><label
                         @click=${() => {
-                            filterValueClick(rowData);
+                            filterValueClick(value);
                         }}
                     >
-                        ${rowData === 'NULL' ? 'Blank' : rowData}${countFor(rowData)}</label
+                        ${value === 'NULL' ? 'Blank' : value}${countFor(value)}</label
                     >
                 </div>`;
             });
@@ -159,17 +216,16 @@ export function contextmenuFilter(
          * will show only column filtered
          */
         const availableCheckbox = () => {
-            if (!getData().enableAvailableOnlyOption) {
+            if (!data.enableAvailableOnlyOption) {
                 return null;
             }
 
             const handleEvent = (e: MouseEvent) => {
                 e.preventDefault();
                 e.stopPropagation();
-                getContext().availableOnly = !getContext().availableOnly;
-                getContext().selectAll =
-                    getData().dataFilterSetFull.size === getData().dataFilterSet.size && !getContext().availableOnly;
-                getContext().data = dropDownFilterData(ctx, attribute, getContext().availableOnly, getContext().searchInput);
+                state.availableOnly = !state.availableOnly;
+                state.selectAll = data.dataFilterSetFull.size === data.dataFilterSet.size && !state.availableOnly;
+                state.data = dropDownFilterData(ctx, attribute, state.availableOnly, state.searchInput);
                 reRender();
             };
 
@@ -177,7 +233,7 @@ export function contextmenuFilter(
                 <input
                     style="padding:2px"
                     type="checkbox"
-                    .checked=${live(getContext().availableOnly)}
+                    .checked=${live(state.availableOnly)}
                     @click=${(e: MouseEvent) => handleEvent(e)}
                 /><label style="padding:2px" @click=${(e: MouseEvent) => handleEvent(e)}>Filter Available</label>
             </div>`;
@@ -188,11 +244,11 @@ export function contextmenuFilter(
          */
         const listContainerTemplate = () => {
             const clickHandler = () => {
-                getContext().selectAll = !getContext().selectAll;
-                if (getContext().selectAll) {
-                    getData().dataFilterSet = new Set(getData().dataFilterSetFull);
+                state.selectAll = !state.selectAll;
+                if (state.selectAll) {
+                    data.dataFilterSet = new Set(data.dataFilterSetFull);
                 } else {
-                    getData().dataFilterSet = new Set();
+                    data.dataFilterSet = new Set();
                 }
                 reRender();
             };
@@ -201,12 +257,12 @@ export function contextmenuFilter(
             // since we only display first DROPDOWN_FILTER_MAX_ROWS row
             return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                 ${
-                    getData().truncated
+                    data.truncated
                         ? html`<div class="max-row-info-warning">Showing only first ${DROPDOWN_FILTER_MAX_ROWS}  !</div>`
-                        : html`<div class="max-row-info">${getData().dataFilterSetFull.size} rows found</div>`
+                        : html`<div class="max-row-info">${data.dataFilterSetFull.size} rows found</div>`
                 }
                 <div class="simple-html-grid-menu-checkbox">
-                    <input type="checkbox" .checked=${live(getContext().selectAll)} @click=${() => clickHandler()} /><label
+                    <input type="checkbox" .checked=${live(state.selectAll)} @click=${() => clickHandler()} /><label
                         @click=${() => clickHandler()}
                         >Select All</label
                     >
@@ -220,238 +276,83 @@ export function contextmenuFilter(
          * input field
          */
         const inputTemplate = () => {
-            const clickHandler = (e: any) => {
-                getContext().searchInput = e.target.value || null;
-                getContext().data = dropDownFilterData(ctx, attribute, getContext().availableOnly, getContext().searchInput);
+            const inputHandler = (e: Event) => {
+                state.searchInput = (e.target as HTMLInputElement).value || null;
+                state.data = dropDownFilterData(ctx, attribute, state.availableOnly, state.searchInput);
                 reRender();
             };
 
             return html` <input
                 class="simple-html-grid-menu-item-input"
                 style="border:1px solid transparent; width: 100%; margin:0"
-                @focus=${(e: any) => {
-                    e.target.style.border = '';
+                @focus=${(e: FocusEvent) => {
+                    (e.target as HTMLInputElement).style.border = '';
                 }}
-                @blur=${(e: any) => {
-                    e.target.style.border = '1px solid transparent';
+                @blur=${(e: FocusEvent) => {
+                    (e.target as HTMLInputElement).style.border = '1px solid transparent';
                 }}
                 placeholder="type to search"
-                .value=${getContext().searchInput}
-                @input=${(e: EventTarget) => clickHandler(e)}
+                .value=${state.searchInput}
+                @input=${(e: Event) => inputHandler(e)}
             />`;
         };
 
-        return html` <div class="simple-html-grid-menu-section">Search:</div>
-            <hr class="hr-solid" />
-            ${availableCheckbox()} ${inputTemplate()} ${listContainerTemplate()}
-            <div
-                class="simple-html-label-button-menu-bottom"
-                @click=${() => {
-                    runFilterClick();
-                }}
-            >
-                Run Search
-            </div>`;
-    };
-
-    /**
-     * inner render so its easier to rerender when excel filter changes
-     */
-    const innerRender = () => {
-        const type = ctx.gridInterface.getDatasource().getField(attribute).type;
-
-        const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
-        const notSelected = 'simple-html-grid-menu-item';
-
-        // the operator picked before (state), else the column's, else the type's default
-        const operator = getHeaderFilterOperator(ctx, attribute);
-
-        const filterTemplate = () => {
-            // a boolean column has no operators to choose from
-            if (type === 'boolean') {
-                return null;
-            }
-
-            /**
-             * the operator picked is state, the filter runs again with the value the cell has
-             */
-            const setOperator = (picked: FilterOperator) => {
-                ctx.gridInterface.__setHeaderFilterOperator(attribute, picked);
-                filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
-                ctx.gridInterface.__callSubscribers('filter-operator-change', {
-                    field: attribute,
-                    operator: picked,
-                    column: ctx.gridInterface.__getGridConfig().columns[attribute],
-                    rebuildHeader: () => rebuildHeaderColumns(ctx)
-                });
-            };
-
-            if (type === 'date' || type === 'datetime' || type === 'number') {
-                return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
-                    <hr class="hr-solid" />
-                    <div
-                        class=${operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
-                        @click=${() => {
-                            setOperator('GREATER_THAN_OR_EQUAL_TO');
-                            removeContextMenu(ctx);
-                        }}
-                    >
-                        Greater than or equal
-                    </div>
-                    <div
-                        class=${operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
-                        @click=${() => {
-                            setOperator('LESS_THAN_OR_EQUAL_TO');
-                            removeContextMenu(ctx);
-                        }}
-                    >
-                        Less than or equal
-                    </div>
-                    <div
-                        class=${operator === 'EQUAL' ? selected : notSelected}
-                        @click=${() => {
-                            setOperator('EQUAL');
-                            removeContextMenu(ctx);
-                        }}
-                    >
-                        Equal
-                    </div>`;
-            }
-
-            return html`
-                <div class="simple-html-grid-menu-section">Set Operator:</div>
-                <hr class="hr-solid" />
-                <div
-                    class=${operator === 'EQUAL' ? selected : notSelected}
-                    @click=${() => {
-                        setOperator('EQUAL');
-                        removeContextMenu(ctx);
-                    }}
-                >
-                    Equal
-                </div>
-                <div
-                    class=${operator === 'NOT_EQUAL_TO' ? selected : notSelected}
-                    @click=${() => {
-                        setOperator('NOT_EQUAL_TO');
-                        removeContextMenu(ctx);
-                    }}
-                >
-                    Not Equal
-                </div>
-                <div
-                    class=${operator === 'CONTAINS' ? selected : notSelected}
-                    @click=${() => {
-                        setOperator('CONTAINS');
-                        removeContextMenu(ctx);
-                    }}
-                >
-                    Contains
-                </div>
-            `;
-        };
-
-        /**
-         * set blank or not blank filter: replaces the column's conditions, everything else is kept
-         */
-        const setBlankOrNotBlank = (operator: 'IS_BLANK' | 'IS_NOT_BLANK') => {
-            const datasource = ctx.gridInterface.getDatasource();
-            const rest = withoutField(datasource.getFilter(), attribute);
-            const blankCondition = where(attribute, operator);
-
-            ctx.gridInterface.__setHeaderFilterValue(attribute, null);
-
-            if (rest && isFilterGroup(rest) && rest.group !== 'OR') {
-                // an AND root (anything but OR is AND, as the filter runs it): one more condition in it
-                datasource.setFilter(and(...rest.children, blankCondition));
-            } else if (rest && (!isFilterGroup(rest) || rest.children.length)) {
-                // an OR root, or a single condition on another column. Pushed into an OR group the
-                // condition would widen the filter instead of narrowing it, so it is kept whole and ANDed
-                datasource.setFilter(and(blankCondition, rest));
-            } else {
-                datasource.setFilter(and(blankCondition));
-            }
-
-            // the header input still showed the text filter that was just replaced
-            rebuildHeaderColumns(ctx);
-            datasource.filter();
-        };
-
-        /**
-         * clear current column filter
-         */
-        const clearColumnFilter = () => {
-            const datasource = ctx.gridInterface.getDatasource();
-            ctx.gridInterface.__setHeaderFilterValue(attribute, null);
-
-            datasource.setFilter(withoutField(datasource.getFilter(), attribute));
-            rebuildHeaderColumns(ctx);
-            datasource.filter();
-        };
-
         render(
-            html`<div class="simple-html-grid-menu">
-                <div class="simple-html-grid-menu-section">Filter:</div>
+            html` <div class="simple-html-grid-menu-section">Search:</div>
                 <hr class="hr-solid" />
+                ${availableCheckbox()} ${inputTemplate()} ${listContainerTemplate()}
                 <div
-                    class="simple-html-grid-menu-item"
+                    class="simple-html-label-button-menu-bottom"
                     @click=${() => {
-                        clearColumnFilter();
-                        removeContextMenu(ctx);
+                        runFilterClick();
                     }}
                 >
-                    Clear Filter
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        clearAllColumnFilters(ctx);
-                        removeContextMenu(ctx);
-                    }}
-                >
-                    Clear All Filters
-                </div>
-                <hr class="hr-dashed" />
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        setBlankOrNotBlank('IS_BLANK');
-                        removeContextMenu(ctx);
-                    }}
-                >
-                    Set "Is Blank"
-                </div>
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        setBlankOrNotBlank('IS_NOT_BLANK');
-                        removeContextMenu(ctx);
-                    }}
-                >
-                    Set "Is Not Blank"
-                </div>
-                <hr class="hr-dashed" />
-
-                <div
-                    class="simple-html-grid-menu-item"
-                    @click=${() => {
-                        openFilterEditor(ctx);
-                    }}
-                >
-                    Advanced Filter
-                </div>
-                ${filterTemplate()}
-                ${searchTemplate(() => {
-                    innerRender();
-                })}
-            </div>`,
-            contextMenu
+                    Run Search
+                </div>`,
+            element
         );
     };
-    innerRender();
 
-    document.body.appendChild(contextMenu);
-    ctx.contextMenu = contextMenu;
+    reRender();
+    return block;
+}
+
+/**
+ * set blank or not blank filter: replaces the column's conditions, everything else is kept
+ */
+function setBlankOrNotBlank(ctx: Grid, attribute: string, operator: 'IS_BLANK' | 'IS_NOT_BLANK') {
+    const datasource = ctx.gridInterface.getDatasource();
+    const rest = withoutField(datasource.getFilter(), attribute);
+    const blankCondition = where(attribute, operator);
+
+    ctx.gridInterface.__setHeaderFilterValue(attribute, null);
+
+    if (rest && isFilterGroup(rest) && rest.group !== 'OR') {
+        // an AND root (anything but OR is AND, as the filter runs it): one more condition in it
+        datasource.setFilter(and(...rest.children, blankCondition));
+    } else if (rest && (!isFilterGroup(rest) || rest.children.length)) {
+        // an OR root, or a single condition on another column. Pushed into an OR group the
+        // condition would widen the filter instead of narrowing it, so it is kept whole and ANDed
+        datasource.setFilter(and(blankCondition, rest));
+    } else {
+        datasource.setFilter(and(blankCondition));
+    }
+
+    // the header input still showed the text filter that was just replaced
+    rebuildHeaderColumns(ctx);
+    datasource.filter();
+}
+
+/**
+ * clear current column filter
+ */
+function clearColumnFilter(ctx: Grid, attribute: string) {
+    const datasource = ctx.gridInterface.getDatasource();
+    ctx.gridInterface.__setHeaderFilterValue(attribute, null);
+
+    datasource.setFilter(withoutField(datasource.getFilter(), attribute));
+    rebuildHeaderColumns(ctx);
+    datasource.filter();
 }
 
 /**

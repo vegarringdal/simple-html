@@ -844,6 +844,25 @@ Phase 1 is complete with this step: 500 tests at the start of v6, 884 now.
 * fixed: `disableResizeEvent()` / `enableResizeEvent()` did the opposite of their names
 * note: `grid-connected` fires inside `createGrid()`, before anyone can subscribe
 
+#### Step 3 - menus as data (item 19)
+
+* the row, header and filter menus are lists of entries (`MenuItem` / `MenuSection` /
+  `MenuSeparator` / `MenuBlock`) drawn by one renderer (`showMenu.ts`) with the old markup and
+  css classes. `GridConfig.menus.row/header/filter(defaults, context)` can hide, reorder or add.
+* every built-in entry has a stable id, listed in the exported `MENU_IDS` (its order is the
+  default order). Phase 3's texts map keys on these ids.
+* the filter menu's value list (search, checkboxes, Run Search) is one `MenuBlock`: it can be
+  hidden or moved, not rebuilt from items, and it redraws only itself while the user types
+* `openMenu(at, entries)` / `closeMenu()` replace the four `contextMenu*` methods; an element
+  placed in a menu (the dropdown grid sample) is a block entry
+* fixed: a menu opened from a click handler closed straight away (the same click reached the
+  document), and a click inside a block closed the menu - the dropdown grid's filter only
+  worked from the keyboard
+* header and filter menus open above the cell when there is no room below, like the row menu;
+  every menu shifts left when it would stick out on the right
+
+Phase 2 is complete with this step: 1012 tests.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -890,6 +909,9 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
     options
   * a date picked in a header filter's date picker is stored as text, a typed one as a `Date`
   * the column chooser keeps listing fields that were once in the layout
+  * some menu labels are built when the menu opens ("Count: 5", "✓ Use dimmed values") and the
+    value list's own texts have no ids yet - phase 3's texts map needs both
+  * in an `openMenu` menu the context fields are placeholders (`field: ''`, `rowIndex: -1`)
 * **Low severity bugs left from the code review** (high and medium are fixed, see *Bug sweep*):
   * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
   * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the

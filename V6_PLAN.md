@@ -238,7 +238,7 @@ with `@example` on new public API, and `MIGRATION.md`.
         with a property; the grid sets its own class. Drop the `enableCleanup` test flag. **S**
 18. [x] **Callbacks in the config**: `readonlySetter` / `cellAppendClassSetter` become
         `isReadonly(row, field)` / `cellClass(row, field)` in the config, or per column. **S**
-19. [ ] **Menus as data.** Row and header menu entries as a list - built-in ones plus custom
+19. [x] **Menus as data.** Row and header menu entries as a list - built-in ones plus custom
         ones - instead of `contextMenuCustom` / `setContextMenuElement`. Users can then hide,
         reorder or add entries. **M**
 20. [x] **Audit the rest of the public methods**: `autoResizeColumns`, `triggerRebuild`,

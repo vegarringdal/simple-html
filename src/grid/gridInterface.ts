@@ -18,7 +18,6 @@ import type {
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
-import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { getLayoutFields } from './gridFunctions/getLayoutFields';
@@ -26,8 +25,10 @@ import { getTextWidth } from './gridFunctions/getTextWidth';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
+import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
 
 /**
  * The grid: its config, its datasource and its state. What you call to work with a grid - read and
@@ -533,50 +534,87 @@ export class GridInterface<T> {
     }
 
     /**
-     * contextMenu element can be used to attach own context menus
-     * practical since it will be removed if new is open/scroll happens
-     * @returns
+     * Opens a menu of your own, in the grid's menu style: a value picker for a cell, the actions of a
+     * button, a second grid as a dropdown ({@link MenuBlock}). See {@link MenuEntry} for what it can
+     * show. To change the grid's own right click menus, use `GridConfig.menus`.
+     *
+     * The menu open before is closed: there is one menu at a time. The grid closes this one, as its
+     * own, on a click outside it, when another menu opens, on scroll (with
+     * `autoRemoveContextMenuOnScrollEvent`) and when the grid leaves the page. Clicking an item closes
+     * it too, then calls the item's action; clicking in a block does not. {@link closeMenu} closes it
+     * from code.
+     *
+     * Called from a click handler the menu stays open: the click that opened it does not count as a
+     * click outside it.
+     *
+     * The callbacks of the entries get a {@link MenuContext} with `menu: 'custom'`, the grid and the
+     * datasource; it has no field, row or cell - your entries know what they were made for.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * Replaces v5's `contextMenuCustom()` and `setContextMenuElement()`.
+     *
+     * @param at where it opens:
+     * - a mouse event: its top left corner at the mouse
+     * - a {@link MenuPosition} `{ x, y }`: its top left corner there, in px from the window's left and
+     *   top edges
+     * - an element: under the element, lined up with its left edge
+     *
+     * It is kept in the window: opened above the point (or the element) when there is no room below,
+     * moved left when it sticks out on the right.
+     * @param entries what the menu shows, in order. Entries whose `visible` returns `false` are left out
+     *
+     * @example
+     * ```ts
+     * // a value picker on a cell
+     * gridInterface.on('cell-click', (data) => {
+     *     if (data.attribute === 'fruit') {
+     *         const pick = (fruit: string) => {
+     *             data.rowData.fruit = fruit;
+     *             gridInterface.refresh();
+     *         };
+     *         gridInterface.openMenu(data.originalEvent, [
+     *             { type: 'section', id: 'fruit', label: 'Pick a fruit:' },
+     *             { id: 'fruit.apple', label: 'Apple', action: () => pick('Apple') },
+     *             { id: 'fruit.banana', label: 'Banana', action: () => pick('Banana') }
+     *         ]);
+     *     }
+     * });
+     *
+     * // an element of your own under a cell, closed with the grid's menus
+     * gridInterface.openMenu(cell, [{ type: 'block', id: 'picker', element: myPicker }]);
+     * ```
      */
-    public getContextMenuElement() {
-        return this.grid?.contextMenu;
-    }
-
-    /**
-     * small helper function to show context menu in same style as the rest
-     * @param event
-     * @param options
-     * @param cell
-     * @param callback
-     */
-    public contextMenuCustom(
-        event: MouseEvent,
-        options: { label: string; value: string; isHeader?: boolean }[],
-        cell: HTMLElement,
-        callback: (attribute: string) => void
-    ) {
+    public openMenu(at: MouseEvent | MenuPosition | HTMLElement, entries: MenuEntry[]) {
         // no grid connected (not in the dom yet, or removed): nothing to open the menu in
         if (this.grid) {
-            contextMenuCustom(this.grid, event, cell, callback, options);
+            const context: MenuContext = {
+                menu: 'custom',
+                field: '',
+                row: undefined,
+                rowIndex: -1,
+                cell: undefined,
+                gridInterface: this,
+                datasource: this.dataSource
+            };
+            showMenu(this.grid, entries, context, placeAt(at));
         }
     }
 
     /**
-     * contextMenu element can be used to attach own context menus
-     * practical since it will be removed if new is open/scroll happens
-     * @param el
+     * Closes the menu that is open: one opened with {@link openMenu}, or one of the grid's own right
+     * click menus. Does nothing when no menu is open.
+     *
+     * Replaces v5's `removeContextMenuElement()`.
+     *
+     * @example
+     * ```ts
+     * // moving to another cell closes a dropdown opened from a cell
+     * gridInterface.on('cell-row-focus', () => gridInterface.closeMenu());
+     * ```
      */
-    public setContextMenuElement(el: HTMLElement) {
-        if (this.grid) {
-            this.grid.contextMenu = el;
-        }
-    }
-
-    /**
-     * contextMenu element can be used to attach own context menus
-     * practical since it will be removed if new is open/scroll happens
-     */
-    public removeContextMenuElement() {
-        // no grid connected: there is no menu to remove
+    public closeMenu() {
+        // no grid connected: there is no menu to close
         if (this.grid) {
             removeContextMenu(this.grid);
         }

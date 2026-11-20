@@ -1361,12 +1361,15 @@ No method takes a positional boolean any more, as in the datasource (see
 | `gridInterface.cellAppendClassSetter(callback)` | removed: `GridConfig.cellClass`, see [above](#the-callbacks-are-in-the-config-isreadonly-and-cellclass) |
 | `element.enableCleanup` | removed, see [`createGrid()`](#creategrid-a-grid-on-the-page-in-one-call) |
 | `element.connectedCallback()` / `disconnectedCallback()` | not in the typings: the browser calls them |
-| - | new: `createGrid()`, `gridInterface.updateConfig()`, `gridInterface.destroy()` |
+| `gridInterface.contextMenuCustom(event, options, cell, callback)` | `openMenu(at, entries)`, see [Menus](#menus) |
+| `gridInterface.setContextMenuElement(element)` | `openMenu(at, [{ type: 'block', id, element }])`, see [Menus](#menus) |
+| `gridInterface.removeContextMenuElement()` | `closeMenu()` |
+| `gridInterface.getContextMenuElement()` | removed, see [Menus](#menus) |
+| - | new: `createGrid()`, `gridInterface.updateConfig()`, `gridInterface.destroy()`, `openMenu()`, `closeMenu()`, `GridConfig.menus` |
 
 Kept, and documented now: `autoResizeColumns()`, `openFilterEditor()`, `getDatasource()`, `on()`,
 `getState()` / `setState()` / `resetState()` and `element.connectInterface()`. The context menu
-methods (`contextMenuCustom()`, `getContextMenuElement()`, `setContextMenuElement()`,
-`removeContextMenuElement()`) are unchanged for now; the menus are redone next.
+methods are replaced by `openMenu()` / `closeMenu()`, see [Menus](#menus).
 
 To keep v5's `getAttributeColumns()` - the selected columns, or every column when none is selected:
 
@@ -1381,6 +1384,147 @@ In plain JavaScript an old name throws `... is not a function`, and `getLayoutFi
 `new GridInterface(config, datasource)` takes the row type from the datasource: a
 `Datasource<Person>` gives a `GridInterface<Person>`, and so does `createGrid()`. v5 typed the
 datasource without its row type.
+
+## Menus
+
+The right click menus are lists of entries now, each with an id: the grid's own menus can be changed
+from the config, and `openMenu()` opens one of your own with the same entries. `contextMenuCustom()`,
+`getContextMenuElement()`, `setContextMenuElement()` and `removeContextMenuElement()` are removed.
+
+An entry (`MenuEntry`) is one of:
+
+| entry | shown as |
+| --- | --- |
+| `{ id, label, action, hint?, visible?, disabled?, selected? }` - `MenuItem`, `type: 'item'` can be left out | an item to click: the menu closes, then `action(context)` runs. `hint` is shown in italics after the label |
+| `{ type: 'section', id, label }` - `MenuSection` | a section header, "Copy:" |
+| `{ type: 'separator', id }` - `MenuSeparator` | a dashed line |
+| `{ type: 'block', id, element }` - `MenuBlock` | your element, as it is |
+
+`visible`, `disabled` and `selected` are called with the `MenuContext` when the menu opens: what it was
+opened on (`field`, `row`, `rowIndex`, `cell`), the `gridInterface` and the `datasource`.
+
+### The grid's own menus: `GridConfig.menus`
+
+v5 had no way to change the row, header or filter menu. In v6 `GridConfig.menus` has a function per
+menu - `row` (a cell), `header` (a header label), `filter` (a header filter). It gets the grid's own
+entries and the context, and returns what to show:
+
+```ts
+const gridConfig: GridConfig = {
+    layout: { center: [ ... ] },
+    menus: {
+        row: (defaults, context) => [
+            // hide built-in entries by id
+            ...defaults.filter((entry) => !entry.id.startsWith('row.summary')),
+            // add your own
+            { type: 'section', id: 'my.section', label: 'Mine:' },
+            { id: 'my.logRow', label: 'Log row', action: () => console.log(context.field, context.row) }
+        ],
+        // reorder: the value list first
+        filter: (defaults) => [
+            ...defaults.filter((entry) => entry.id === 'filter.values'),
+            ...defaults.filter((entry) => entry.id !== 'filter.values')
+        ]
+    }
+};
+```
+
+* **Every built-in entry has an id**, listed with its label in `MENU_IDS` (exported, in the order the
+  menus show them): `row.copy.cell`, `row.paste.cell`, `header.column.hide`, `filter.values` ... A
+  section is `menu.section`, what is under it `menu.section.entry`.
+* **`defaults` always has every entry.** The ones that do not apply have a `visible` callback that
+  hides them: paste and clear on a readonly cell, the summary of a column that is not a number, the
+  operators of another type. A section header or separator is shown as long as it is in the list:
+  hide it with the entries under it.
+* **The header filter's value list** (the search box, a checkbox per value and "Run Search") is one
+  entry, the block `filter.values`: hide or move it as a whole.
+* `updateConfig({ menus })` changes them while the grid is shown, `updateConfig({ menus: undefined })`
+  gives back the defaults.
+
+### A menu of your own: `openMenu()` and `closeMenu()`
+
+`contextMenuCustom()` took a list of `{ value, label, isHeader }` and one callback for all of them. In
+v6 each item has its own action:
+
+```ts
+// v5
+gridInterface.contextMenuCustom(
+    data.originalEvent,
+    [
+        { value: '', label: 'Pick a fruit', isHeader: true },
+        { value: 'Apple', label: 'Apple', isHeader: false },
+        { value: 'Banana', label: 'Banana', isHeader: false }
+    ],
+    data.cell,
+    (value) => {
+        data.rowData.fruit = value;
+        gridInterface.triggerScrollEvent();
+    }
+);
+
+// v6
+const pick = (fruit: string) => {
+    data.rowData.fruit = fruit;
+    gridInterface.refresh();
+};
+gridInterface.openMenu(data.originalEvent, [
+    { type: 'section', id: 'fruit', label: 'Pick a fruit:' },
+    { id: 'fruit.apple', label: 'Apple', action: () => pick('Apple') },
+    { id: 'fruit.banana', label: 'Banana', action: () => pick('Banana') }
+]);
+
+gridInterface.closeMenu(); // v5: removeContextMenuElement()
+```
+
+* **Where it opens**: `openMenu()` takes a mouse event (its top left corner at the mouse), a position
+  `{ x, y }` in px from the window's edges (`MenuPosition`), or an element (under it, lined up with
+  its left edge). v5 always opened under the cell, around the mouse: pass the cell,
+  `openMenu(data.cell, entries)`, to open under it. Like the grid's own menus it is kept in the
+  window.
+* **Clicking an item closes the menu.** v5 kept it open unless the callback returned `true`.
+* **Labels are shown as given.** v5 ran them through a "pretty print" (`APPLE_PIE` -> `Apple Pie`)
+  and added a colon to a header. Write `'Pick a fruit:'` for a section that looks like the grid's own.
+* **Opened from a click handler it stays open**: the click that opened it does not count as a click
+  outside it. v5 closed it right away, a dropdown had to be registered with `setContextMenuElement()`
+  in a `setTimeout`.
+* The context the items get has `menu: 'custom'`, no field, row or cell: close over what you need, as
+  above.
+
+### A dropdown as a menu: a block
+
+`setContextMenuElement(element)` made an element you had placed yourself close with the grid's menus:
+on a click outside, on scroll, when another menu opened. In v6 the element is a block of a menu:
+`openMenu()` puts it on the page and places it, and the grid closes it as any menu.
+
+```ts
+// v5
+dropdown.style.position = 'fixed';
+dropdown.style.top = `${rect.bottom}px`; // and code to keep it in the window
+dropdown.style.left = `${rect.left}px`;
+document.body.appendChild(dropdown);
+setTimeout(() => gridInterface.setContextMenuElement(dropdown));
+// after a pick
+gridInterface.removeContextMenuElement();
+
+// v6
+gridInterface.openMenu(data.cell, [{ type: 'block', id: 'company-picker', element: dropdown }]);
+// after a pick
+gridInterface.closeMenu();
+```
+
+* The element is shown in the menu's frame (border and shadow), so drop your own position and shadow;
+  set its size.
+* **A click in the block does not close the menu**. In v5 a click in the element closed it, unless the
+  element was in a `simple-html-grid-menu` element.
+* **`getContextMenuElement()` is removed.** The grid keeps the open menu to itself; keep a reference
+  to your own element if you need it.
+
+### Other changes to the menus
+
+* The header and filter menus open above the cell when they do not fit below it, as the row menu
+  did. Every menu is moved left when it sticks out on the right of the window.
+* The entries carry their id in a `data-menu-id` attribute, for css and tests.
+* A disabled item gets the class `simple-html-grid-menu-item-disabled` and `aria-disabled="true"`.
 
 ## Internals are no longer in the typings
 

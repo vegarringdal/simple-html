@@ -55,6 +55,8 @@ export class Grid {
     public skipInitResizeEvent: boolean = false;
     // not there until a menu/editor is opened, null after it is closed
     public contextMenu?: HTMLElement | null;
+    // true from a menu opening until the task that opened it ends, see showMenu
+    public menuJustOpened = false;
     public filterEditorContainer?: HTMLElement | null;
     public columnChooserMenu?: HTMLElement | null;
     public clickListener: any;

@@ -6,7 +6,7 @@ export const dropdownGrid: DemoSample = {
     title: 'Grid as dropdown',
     group: 'Editing',
     description:
-        'A cell can show a focus button via the focusButton column option. Here clicking it (or hitting Space in the cell) opens a second, filterable grid as a dropdown and writes the picked value back. The company cell itself is readonly, so the dropdown is the only way to change the value.',
+        'A cell can show a focus button via the focusButton column option. Here clicking it (or hitting Space in the cell) opens a second, filterable grid as a dropdown and writes the picked value back. The dropdown is opened with openMenu() as a block, so the grid closes it as it does its own menus: a click outside, another menu. The company cell itself is readonly, so the dropdown is the only way to change the value.',
     code: `
 // in the main grid config, enable the focus button on the column.
 // NB: the grid defaults to readonly: true, so with this option the button
@@ -19,38 +19,36 @@ columns: {
 
 gridInterface.on('cell-focus-button-click', (data) => {
     if (data.attribute === 'company') {
-        const rect = data.cell.getBoundingClientRect();
-
         // build a small grid to use as dropdown. The element is placed by hand here, not with
-        // createGrid: it is positioned on its own (the grid adds its simple-html-grid class itself)
+        // createGrid: openMenu() puts it on the page (the grid adds its simple-html-grid class itself)
         const dropdown = document.createElement('simple-html-grid') as GridElement;
-        dropdown.style.position = 'fixed';
         dropdown.style.width = '300px';
         dropdown.style.height = '250px';
-        dropdown.style.top = rect.bottom + 'px';
-        dropdown.style.left = rect.left + 'px';
 
         const localDatasource = new Datasource();
         localDatasource.setData(companies); // [{ company: 'ACME CORP' }, ...]
 
         const localInterface = new GridInterface(dropdownConfig, localDatasource);
         dropdown.connectInterface(localInterface);
-        document.body.appendChild(dropdown);
 
         // clicking a row in the dropdown writes the value back
         dropdown.onclick = (x) => {
             if (x.target.classList.contains('simple-html-grid-cell-input')) {
-                gridInterface.removeContextMenuElement();
+                gridInterface.closeMenu();
                 data.rowData.company = localDatasource.currentEntity.company;
                 gridInterface.refresh(); // show the value
                 data.target.focus(); // back to the cell
             }
         };
 
-        // register as context menu, so grid closes it on scroll/outside click
-        gridInterface.setContextMenuElement(dropdown);
+        // a menu with the grid as a block: opened under the cell, kept in the window, and closed
+        // with the grid's menus - a click outside it, another menu opening, closeMenu()
+        gridInterface.openMenu(data.cell, [{ type: 'block', id: 'company-picker', element: dropdown }]);
     }
 });
+
+// moving to another cell closes an open dropdown
+gridInterface.on('cell-row-focus', () => gridInterface.closeMenu());
 `,
     run(stage) {
         const ui = createStage(stage);
@@ -60,35 +58,17 @@ gridInterface.on('cell-focus-button-click', (data) => {
 
         // moving to another cell closes an open dropdown
         gridInterface.on('cell-row-focus', () => {
-            gridInterface.removeContextMenuElement();
+            gridInterface.closeMenu();
         });
 
         gridInterface.on('cell-focus-button-click', (data) => {
-            gridInterface.removeContextMenuElement();
-
             if (data.attribute === 'company') {
-                const rect = data.cell.getBoundingClientRect();
                 const width = 300;
-                const height = 250;
 
-                // keep it within the viewport
-                let top = rect.bottom;
-                let left = rect.left;
-                if (window.innerHeight < rect.bottom + height) {
-                    top = rect.top - height - 3;
-                }
-                if (window.innerWidth < rect.right + width) {
-                    left = window.innerWidth - width - 3;
-                }
-
-                // placed by hand: positioned on its own, the grid adds its css class itself
+                // placed by hand: openMenu() puts it on the page, the grid adds its css class itself
                 const dropdown = document.createElement('simple-html-grid') as GridElement;
-                dropdown.style.position = 'fixed';
-                dropdown.style.width = width + 'px';
-                dropdown.style.height = height + 'px';
-                dropdown.style.top = top + 'px';
-                dropdown.style.left = left + 'px';
-                dropdown.style.boxShadow = '0 6px 20px 0 rgb(0 0 0 / 30%)';
+                dropdown.style.width = `${width}px`;
+                dropdown.style.height = '250px';
 
                 const dropdownConfig: GridConfig = {
                     panelHeight: 0,
@@ -107,30 +87,37 @@ gridInterface.on('cell-focus-button-click', (data) => {
 
                 const localInterface = new GridInterface(dropdownConfig, localDatasource);
                 dropdown.connectInterface(localInterface);
-                document.body.appendChild(dropdown);
 
                 const applyValue = () => {
-                    gridInterface.removeContextMenuElement();
-                    data.rowData.company = localDatasource.currentEntity?.company;
+                    gridInterface.closeMenu();
+                    const current = localDatasource.currentEntity;
+                    data.rowData.company = current?.company;
                     gridInterface.refresh();
                     data.target.focus();
+                    ui.log(`picked: ${current?.company}`);
                 };
 
-                dropdown.onclick = (x: any) => {
-                    if (x.target?.classList.contains('simple-html-grid-cell-input')) {
+                dropdown.onclick = (x: MouseEvent) => {
+                    if (x.target instanceof HTMLElement && x.target.classList.contains('simple-html-grid-cell-input')) {
                         applyValue();
                     }
                 };
-                dropdown.onkeydown = (x: any) => {
-                    if (x.code === 'Enter' && x.target?.classList.contains('simple-html-grid-cell-input')) {
+                dropdown.onkeydown = (x: KeyboardEvent) => {
+                    if (
+                        x.code === 'Enter' &&
+                        x.target instanceof HTMLElement &&
+                        x.target.classList.contains('simple-html-grid-cell-input')
+                    ) {
                         applyValue();
                     }
                 };
 
+                // a menu with the grid as a block, under the cell: closed with the grid's menus
+                gridInterface.openMenu(data.cell, [{ type: 'block', id: 'company-picker', element: dropdown }]);
+
+                // focus the filter input in a timeout, so the Space that opened it is not typed into it
                 setTimeout(() => {
-                    // register as context menu element and focus the filter input
-                    gridInterface.setContextMenuElement(dropdown);
-                    (dropdown.getElementsByTagName('INPUT')[0] as HTMLInputElement)?.focus();
+                    (dropdown.getElementsByTagName('INPUT')[0] as HTMLInputElement | undefined)?.focus();
                 });
             }
         });

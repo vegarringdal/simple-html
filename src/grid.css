@@ -1022,6 +1022,18 @@ input {
     background-color: var(--simple-html-grid-main-bg-selected-odd);
 }
 
+/**
+ * a menu item whose `disabled` callback returned true: greyed out, clicking it does nothing
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-disabled {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-disabled:hover {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
 .simple-html-grid .simple-html-grid-menu .hr-solid {
     border-top: 0px dashed;
     border-bottom: 0px solid;

@@ -3,6 +3,7 @@ import type { FilterExpression, FilterOperator } from '../datasource/filterExpre
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
+import type { GridMenus } from './gridMenus';
 
 /**
  * The grid's config: the options of each column (`columns`), where the columns go (`layout`), sizes
@@ -189,6 +190,42 @@ export type GridConfig = {
      * ```
      */
     cellClass?: (row: Entity, field: string) => CellClass | null | undefined;
+
+    /**
+     * Changes the grid's right click menus: hide entries, reorder them, change their labels, add your
+     * own. One function per menu - `row` (a cell), `header` (a header label), `filter` (a header
+     * filter) - that gets the grid's own entries and what the menu was opened on, and returns the
+     * entries to show. Called every time the menu opens. A menu without a function shows its defaults.
+     *
+     * The ids of the grid's own entries are listed in `MENU_IDS`, see {@link GridMenus} and
+     * {@link MenuEntry}. Set or remove the functions later with `gridInterface.updateConfig({ menus })`.
+     *
+     * Replaces v5's `contextMenuCustom()` for the grid's own menus; a menu of your own is opened with
+     * `gridInterface.openMenu()`.
+     *
+     * @example
+     * ```ts
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['age'], width: 80 }] },
+     *     menus: {
+     *         // no "Clear:" in the row menu, and an entry of your own at the end
+     *         row: (defaults, context) => [
+     *             ...defaults.filter((entry) => entry.id !== 'row.clear' && entry.id !== 'row.clear.cell'),
+     *             { type: 'section', id: 'my.section', label: 'Row:' },
+     *             {
+     *                 id: 'my.logRow',
+     *                 label: 'Log row',
+     *                 visible: () => !isGroupRow(context.row),
+     *                 action: () => console.log(context.field, context.row)
+     *             }
+     *         ],
+     *         // the header menu without the grouping part
+     *         header: (defaults) => defaults.filter((entry) => !entry.id.startsWith('header.grouping'))
+     *     }
+     * };
+     * ```
+     */
+    menus?: GridMenus;
 };
 
 /**

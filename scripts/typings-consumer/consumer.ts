@@ -38,6 +38,7 @@ import {
     type GridEvents,
     GridInterface,
     type GridLayout,
+    type GridMenus,
     type GridState,
     type GroupArgument,
     type GroupRow,
@@ -45,6 +46,14 @@ import {
     type HTMLCellElement,
     isGroupRow,
     type LayoutColumn,
+    MENU_IDS,
+    type MenuBlock,
+    type MenuContext,
+    type MenuEntry,
+    type MenuItem,
+    type MenuPosition,
+    type MenuSection,
+    type MenuSeparator,
     type ModifiedEntity,
     NumberFormatterComma,
     NumberFormatterDot,
@@ -276,6 +285,70 @@ gridInterface.getAttributeColumns(false);
 gridInterface.getOptionalAttributes();
 // @ts-expect-error no positional boolean: getLayoutFields({ selectedOnly: true })
 gridInterface.getLayoutFields(true);
+// menus as data: GridConfig.menus changes the grid's own menus, openMenu() opens one of your own
+const logRow: MenuItem = {
+    id: 'my.logRow',
+    label: 'Log row',
+    hint: 'console',
+    action: (context: MenuContext) => {
+        const menu: 'row' | 'header' | 'filter' | 'custom' = context.menu;
+        const field: string = context.field;
+        const index: number = context.rowIndex;
+        const cell: HTMLElement | undefined = context.cell;
+        const grid: GridInterface<unknown> = context.gridInterface;
+        const rows: Entity[] = context.datasource.getDataRows();
+        if (context.row && !isGroupRow(context.row)) {
+            const row: Entity = context.row;
+            console.log(row.name);
+        }
+        console.log(menu, field, index, cell, grid, rows);
+    },
+    visible: (context) => context.field !== '',
+    disabled: (context) => context.datasource.getSelectedRows().length === 0,
+    selected: () => false
+};
+const mySection: MenuSection = { type: 'section', id: 'my.section', label: 'Mine:' };
+const mySeparator: MenuSeparator = { type: 'separator', id: 'my.separator', visible: () => true };
+const myBlock: MenuBlock = { type: 'block', id: 'my.block', element: document.createElement('div') };
+const menus: GridMenus = {
+    row: (defaults, context) => [
+        ...defaults.filter((entry) => entry.id !== 'row.copy.cell'),
+        mySection,
+        logRow,
+        context.row ? mySeparator : myBlock
+    ],
+    header: (defaults) =>
+        defaults.map((entry) => (entry.id === 'header.column.hide' ? { ...entry, label: 'Hide column' } : entry)),
+    filter: (defaults) => [...defaults.filter((entry) => entry.id === 'filter.values'), ...defaults]
+};
+const withMenus: GridConfig = { layout, menus };
+gridInterface.updateConfig({ menus: { row: (defaults) => defaults.slice(1) } });
+gridInterface.updateConfig({ menus: undefined });
+const builtInRowIds: readonly string[] = MENU_IDS.row;
+console.log(withMenus, builtInRowIds, MENU_IDS.header[0], MENU_IDS.filter.includes('filter.values'));
+const pickEntries: MenuEntry[] = [mySection, { id: 'pick.a', label: 'A', action: () => {} }, mySeparator, myBlock];
+const position: MenuPosition = { x: 10, y: 20 };
+gridInterface.openMenu(new MouseEvent('click'), pickEntries);
+gridInterface.openMenu(position, pickEntries);
+gridInterface.openMenu(document.createElement('div'), [
+    { type: 'block', id: 'dropdown', element: document.createElement('simple-html-grid') }
+]);
+gridInterface.closeMenu();
+// @ts-expect-error an item needs an action
+const noAction: MenuItem = { id: 'a', label: 'a' };
+// @ts-expect-error a section has no action
+const sectionWithAction: MenuSection = { type: 'section', id: 'a', label: 'a', action: () => {} };
+// @ts-expect-error every entry has an id
+const noId: MenuEntry = { label: 'a', action: () => {} };
+console.log(noAction, sectionWithAction, noId);
+// @ts-expect-error contextMenuCustom is gone: openMenu()
+gridInterface.contextMenuCustom(new MouseEvent('click'), [], document.createElement('div'), () => {});
+// @ts-expect-error getContextMenuElement is gone: openMenu() with a block, closeMenu()
+gridInterface.getContextMenuElement();
+// @ts-expect-error setContextMenuElement is gone: openMenu() with a block
+gridInterface.setContextMenuElement(document.createElement('div'));
+// @ts-expect-error removeContextMenuElement is gone: closeMenu()
+gridInterface.removeContextMenuElement();
 // @ts-expect-error the v5 names: input and background
 const v5Classes: CellClass = { inputClass: 'a', dimmedClass: 'b' };
 // @ts-expect-error isReadonly returns a boolean, null or undefined
