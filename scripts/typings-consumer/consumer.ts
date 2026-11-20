@@ -7,6 +7,7 @@
  * Add to it when the public API grows.
  */
 import {
+    and,
     BooleanFormatter,
     DataContainer,
     Datasource,
@@ -21,7 +22,10 @@ import {
     type Field,
     type FieldConfig,
     type FieldType,
-    type FilterArgument,
+    type FilterCondition,
+    type FilterExpression,
+    type FilterGroup,
+    type FilterOperator,
     type Formatter,
     type GridCellEventData,
     type GridConfig,
@@ -33,8 +37,10 @@ import {
     isGroupRow,
     NumberFormatterComma,
     NumberFormatterDot,
+    or,
     TextFormatter,
-    TOOLTIPS
+    TOOLTIPS,
+    where
 } from '../../dist/index';
 
 // a formatter of your own: format (value -> text) and parse (typed text -> value)
@@ -88,10 +94,41 @@ datasource.setLocaleCompare('nb');
 datasource.deselectAll();
 datasource.resetSort('name');
 
-const filter: FilterArgument | null = datasource.getFilter();
+// filters: a condition or a group of them, built with where / and / or or written out
+const adult: FilterCondition = where('age', 'GREATER_THAN_OR_EQUAL_TO', 18);
+const blankEmail: FilterCondition = where('email', 'IS_BLANK');
+const nordic: FilterGroup = or(where('country', 'EQUAL', 'Norway'), where('country', 'EQUAL', 'Sweden'));
+const operator: FilterOperator = 'NOT_IN';
+const written: FilterExpression = {
+    group: 'AND',
+    children: [adult, { field: 'country', operator, value: ['Denmark'] }, { group: 'OR', children: [nordic, blankEmail] }]
+};
+datasource.filter(and(adult, nordic));
+datasource.filter(written);
+// a single condition at the root, and one that compares with another field of the row
+datasource.filter(adult);
+datasource.setFilter({ field: 'lastLogin', operator: 'GREATER_THAN', valueField: 'born' });
+datasource.filter();
+datasource.filter(null);
+const filter: FilterExpression | null = datasource.getFilter();
 if (filter) {
     datasource.filter(filter);
 }
+// @ts-expect-error the v5 FilterArgument shape is gone: field, not attribute
+datasource.filter({ attribute: 'age', operator: 'EQUAL', value: 1 });
+// @ts-expect-error no attributeType, the type comes from the datasource's fields
+datasource.filter({ field: 'age', operator: 'EQUAL', value: 1, attributeType: 'number' });
+// @ts-expect-error no valueType, compare with another field with valueField
+datasource.filter({ field: 'age', operator: 'EQUAL', value: 'born', valueType: 'ATTRIBUTE' });
+// @ts-expect-error a group is { group, children }, not logicalOperator / filterArguments
+datasource.filter({ logicalOperator: 'AND', filterArguments: [adult] });
+// @ts-expect-error the array form of filter() is gone, use and()
+datasource.filter([adult]);
+// @ts-expect-error a condition needs an operator
+const noOperator: FilterCondition = { field: 'age' };
+// @ts-expect-error not an operator
+where('age', 'GREATER', 18);
+console.log(noOperator);
 
 const config: GridConfig = {
     columnsCenter: [{ rows: ['name'], width: 100 }],
@@ -102,6 +139,10 @@ const config: GridConfig = {
 // @ts-expect-error the type is not on the column any more, it is in the datasource fields
 const typedColumn: GridConfig['attributes'][number] = { attribute: 'born', type: 'date' };
 console.log(typedColumn);
+// the saved filter is a FilterExpression too
+const withFilter: GridConfig = { ...config, filter: and(adult, where('name', 'BEGIN_WITH', 'a')) };
+const headerOperator: FilterOperator | undefined = withFilter.attributes[0].operator;
+console.log(headerOperator);
 // the filter as text, with your own labels
 const filterText: string = datasource.getFilterString((field) => field.toUpperCase());
 console.log(filterText, datasource.getFilterTree()?.children);

@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { or, where } from '../../datasource/filterExpression';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { headerFilterInput, menuItem, menuItemsExact, openRowMenu, typeInHeaderFilter } from './interactionTestHelpers';
 
@@ -43,14 +44,7 @@ describe('row menu - clear', () => {
 describe('row menu - add to filter', () => {
     it('expect an OR filter to be kept whole', async () => {
         const { element, datasource } = await mountGrid(simpleConfig(), data());
-        datasource.filter({
-            type: 'GROUP',
-            logicalOperator: 'OR',
-            filterArguments: [
-                { type: 'CONDITION', attribute: 'firstname', operator: 'EQUAL', value: 'a', attributeType: 'text' },
-                { type: 'CONDITION', attribute: 'firstname', operator: 'EQUAL', value: 'b', attributeType: 'text' }
-            ]
-        } as any);
+        datasource.filter(or(where('firstname', 'EQUAL', 'a'), where('firstname', 'EQUAL', 'b')));
 
         // lastname "x" of row a
         openRowMenu(element, 'lastname', 0);

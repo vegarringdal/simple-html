@@ -1,7 +1,7 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Entity, GroupRow } from '../../datasource/entity';
-import type { FilterArgument } from '../../datasource/filterArgument';
+import { and, type FilterExpression, isFilterGroup, where } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
@@ -355,52 +355,25 @@ export function contextmenuFilter(
         };
 
         /**
-         * set blank or not blank filter
+         * set blank or not blank filter: replaces the column's conditions, everything else is kept
          */
-        const setBlankOrNotBlank = (arg: 'IS_BLANK' | 'IS_NOT_BLANK') => {
+        const setBlankOrNotBlank = (operator: 'IS_BLANK' | 'IS_NOT_BLANK') => {
             const datasource = ctx.gridInterface.getDatasource();
-            const currentFilter = datasource.getFilter();
-
-            const loopFilter = (filter: FilterArgument | null) => {
-                if (filter && Array.isArray(filter.filterArguments)) {
-                    filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
-                        if (fi.attribute === attribute) {
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    });
-                    filter.filterArguments.forEach((fi: FilterArgument) => {
-                        if (fi.type === 'GROUP') {
-                            loopFilter(fi);
-                        }
-                    });
-                }
-            };
-            loopFilter(currentFilter);
+            const rest = withoutField(datasource.getFilter(), attribute);
+            const blankCondition = where(attribute, operator);
 
             const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-
             cellConfig.currentFilterValue = null;
 
-            const blankCondition: FilterArgument = {
-                type: 'CONDITION',
-                attribute: cellConfig.attribute,
-                operator: arg,
-                attributeType: type
-            };
-
-            if (currentFilter?.logicalOperator === 'AND' && Array.isArray(currentFilter.filterArguments)) {
-                currentFilter.filterArguments.push(blankCondition);
-                datasource.setFilter(currentFilter);
+            if (rest && isFilterGroup(rest) && rest.group !== 'OR') {
+                // an AND root (anything but OR is AND, as the filter runs it): one more condition in it
+                datasource.setFilter(and(...rest.children, blankCondition));
+            } else if (rest && (!isFilterGroup(rest) || rest.children.length)) {
+                // an OR root, or a single condition on another column. Pushed into an OR group the
+                // condition would widen the filter instead of narrowing it, so it is kept whole and ANDed
+                datasource.setFilter(and(blankCondition, rest));
             } else {
-                // no filter yet, or an OR root. Pushed into an OR group the condition would widen
-                // the filter instead of narrowing it, so the OR group is kept whole and ANDed with it
-                datasource.setFilter({
-                    type: 'GROUP',
-                    logicalOperator: 'AND',
-                    filterArguments: currentFilter?.filterArguments?.length ? [blankCondition, currentFilter] : [blankCondition]
-                });
+                datasource.setFilter(and(blankCondition));
             }
 
             // the header input still showed the text filter that was just replaced
@@ -413,31 +386,12 @@ export function contextmenuFilter(
          */
         const clearColumnFilter = () => {
             const datasource = ctx.gridInterface.getDatasource();
-            const currentFilter = datasource.getFilter();
-
-            const loopFilter = (filter: FilterArgument | null) => {
-                if (filter && Array.isArray(filter.filterArguments)) {
-                    filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
-                        if (fi.attribute === attribute) {
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    });
-                    filter.filterArguments.forEach((fi: FilterArgument) => {
-                        if (fi.type === 'GROUP') {
-                            loopFilter(fi);
-                        }
-                    });
-                }
-            };
             const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
             if (cellConfig) {
                 cellConfig.currentFilterValue = null;
             }
 
-            loopFilter(currentFilter);
-            datasource.setFilter(currentFilter);
+            datasource.setFilter(withoutField(datasource.getFilter(), attribute));
             rebuildHeaderColumns(ctx);
             datasource.filter();
         };
@@ -505,4 +459,26 @@ export function contextmenuFilter(
 
     document.body.appendChild(contextMenu);
     ctx.contextMenu = contextMenu;
+}
+
+/**
+ * A copy of the filter without any condition on `field`, in nested groups too. Groups are kept, also
+ * when that leaves them empty (the filter ignores those). null when the filter is null or a single
+ * condition on `field`.
+ */
+function withoutField(filter: FilterExpression | null, field: string): FilterExpression | null {
+    if (!filter) {
+        return null;
+    }
+    if (!isFilterGroup(filter)) {
+        return filter.field === field ? null : filter;
+    }
+    const children: FilterExpression[] = [];
+    for (const child of filter.children) {
+        const kept = withoutField(child, field);
+        if (kept) {
+            children.push(kept);
+        }
+    }
+    return { group: filter.group, children };
 }

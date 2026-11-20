@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 import { isGroupRow } from '../entity';
 import type { FieldType } from '../field';
-import type { FilterComparisonOperator } from '../filterComparisonOperator';
+import { and, type FilterOperator, where } from '../filterExpression';
 
 /**
  * A `date` field is about the day: it sorts, groups and filters on the calendar day, the time of
@@ -26,8 +26,8 @@ const datasource = (type: FieldType) => {
 
 const names = (ds: Datasource) => ds.getRows().map((row) => (isGroupRow(row) ? `G:${row.__groupID}` : row.n));
 
-const filterOn = (ds: Datasource, operator: FilterComparisonOperator, value: unknown) => {
-    ds.filter({ attribute: 'd', operator, value: value instanceof Date || typeof value === 'string' ? value : null });
+const filterOn = (ds: Datasource, operator: FilterOperator, value: unknown) => {
+    ds.filter(where('d', operator, value));
     return names(ds);
 };
 
@@ -147,41 +147,45 @@ describe('date vs datetime - filter on a datetime field compares with time', () 
         ]);
         expect(filterOn(ds, 'EQUAL', new Date(2020, 0, 1, 15, 0))).toEqual(['row']);
         expect(filterOn(ds, 'NOT_EQUAL_TO', new Date(2020, 0, 1, 15, 0))).toEqual(['blank']);
-        ds.filter({ attribute: 'd', operator: 'IS_BLANK' });
+        ds.filter(where('d', 'IS_BLANK'));
         expect(names(ds)).toEqual(['blank']);
     });
 });
 
-describe('date vs datetime - the schema decides, attributeType is the fallback', () => {
-    it('expect the field type to win over the condition attributeType', () => {
+describe('date vs datetime - the schema decides, the condition has no type', () => {
+    it('expect the field type to decide how a Date value compares', () => {
         const ds = datasource('datetime');
-        ds.filter({ attribute: 'd', attributeType: 'date', operator: 'EQUAL', value: new Date(2020, 0, 1) });
+        ds.filter(where('d', 'EQUAL', new Date(2020, 0, 1)));
         expect(names(ds)).toEqual([]);
 
         const dateDs = datasource('date');
-        dateDs.filter({ attribute: 'd', attributeType: 'datetime', operator: 'EQUAL', value: new Date(2020, 0, 1) });
+        dateDs.filter(where('d', 'EQUAL', new Date(2020, 0, 1)));
         expect(names(dateDs)).toEqual(['afternoon', 'morning']);
     });
 
-    it('expect attributeType to decide for a field that is not listed', () => {
+    // v5 took the type from the condition's attributeType for a field that was not listed
+    it('expect a field that is not listed to be text: a date as text only matches a date field', () => {
         const ds = new Datasource();
         ds.setData(rows());
-        ds.filter({ attribute: 'd', attributeType: 'datetime', operator: 'EQUAL', value: new Date(2020, 0, 1) });
+        // no Z: read as local time
+        ds.filter(where('d', 'EQUAL', '2020-01-01T12:00:00'));
         expect(names(ds)).toEqual([]);
-        ds.filter({ attribute: 'd', attributeType: 'date', operator: 'EQUAL', value: new Date(2020, 0, 1) });
-        expect(names(ds)).toEqual(['afternoon', 'morning']);
+
+        const dateDs = datasource('date');
+        dateDs.filter(where('d', 'EQUAL', '2020-01-01T12:00:00'));
+        expect(names(dateDs)).toEqual(['afternoon', 'morning']);
     });
 
     it('expect a Date value without a type to match on the day, as in v5', () => {
         const ds = new Datasource();
         ds.setData(rows());
-        ds.filter({ attribute: 'd', operator: 'EQUAL', value: new Date(2020, 0, 1) });
+        ds.filter(where('d', 'EQUAL', new Date(2020, 0, 1)));
         expect(names(ds)).toEqual(['afternoon', 'morning']);
     });
 
     it('expect a blank value on a listed date field to be an incomplete condition, ignored', () => {
         const ds = datasource('date');
-        ds.filter({ attribute: 'd', operator: 'EQUAL', value: null });
+        ds.filter(where('d', 'EQUAL', null));
         expect(names(ds)).toHaveLength(4);
         expect(ds.getFilterString()).toEqual('');
     });
@@ -191,25 +195,21 @@ describe('date vs datetime - IN and the filter string use the field formatter', 
     it('expect IN on a datetime field to compare the text with time', () => {
         const ds = datasource('datetime');
         // a list as text, one value per line
-        ds.filter({ attribute: 'd', operator: 'IN', value: '2020-01-01T09:00:00\n2019-12-31' });
+        ds.filter(where('d', 'IN', '2020-01-01T09:00:00\n2019-12-31'));
         expect(names(ds)).toEqual(['morning']);
     });
 
     it('expect IN on a date field to compare the day', () => {
         const ds = datasource('date');
-        ds.filter({ attribute: 'd', operator: 'IN', value: '2020-01-01' });
+        ds.filter(where('d', 'IN', '2020-01-01'));
         expect(names(ds)).toEqual(['afternoon', 'morning']);
     });
 
     it('expect the filter string to show the value with the field formatter', () => {
         const ds = new Datasource({ fields: { d: { type: 'date', label: 'Day' }, t: { type: 'datetime', label: 'Time' } } });
-        ds.filter({
-            logicalOperator: 'AND',
-            filterArguments: [
-                { attribute: 'd', operator: 'EQUAL', value: new Date(2020, 0, 1, 15, 30) },
-                { attribute: 't', operator: 'GREATER_THAN', value: new Date(2020, 0, 1, 15, 30) }
-            ]
-        });
+        ds.filter(
+            and(where('d', 'EQUAL', new Date(2020, 0, 1, 15, 30)), where('t', 'GREATER_THAN', new Date(2020, 0, 1, 15, 30)))
+        );
         expect(ds.getFilterString()).toEqual(
             "([DAY] <<EQUAL_TO>> '2020-01-01' AND [TIME] <<GREATER_THAN>> '2020-01-01T15:30:00')"
         );

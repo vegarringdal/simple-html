@@ -7,8 +7,8 @@ import type { DatasourceEvents } from './datasourceEvents';
 import type { DatasourceOptions } from './datasourceOptions';
 import { type Entity, type GroupRow, isGroupRow } from './entity';
 import { type Field, type FieldConfig, type FieldType, isFieldType } from './field';
-import { conditionType, Filter, isCompleteCondition, isFilterGroup } from './filter';
-import type { FilterArgument } from './filterArgument';
+import { Filter, isIgnoredCondition } from './filter';
+import { type FilterCondition, type FilterExpression, isFilterGroup } from './filterExpression';
 import type { Formatter } from './formatter';
 import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
@@ -243,8 +243,7 @@ export class Datasource<T = any> {
     /**
      * @internal
      * the field as it was given in `fields` (the shorthand written out), undefined when it is not
-     * listed. The filter uses it to tell a listed field from one that is not, and the grid for a label
-     * that was really given
+     * listed. The grid uses it for a label that was really given
      */
     public __getFieldConfig(name: string): FieldConfig | undefined {
         return this.__fields.get(name);
@@ -543,42 +542,39 @@ export class Datasource<T = any> {
     }
 
     /**
-     * filters using the connected data container, result is sorted also if this is set
-     * if you need to set sort then do this before calling filter
-     * @param ObjFilter
+     * Sets the filter and runs it. The rows it lets through are sorted and grouped the way the
+     * datasource is, and are what `getRows()` returns.
+     *
+     * - `filter(expression)` - filter on this, it replaces the filter there was
+     * - `filter(null)` - no filter, every row is shown
+     * - `filter()` - run the current filter again
+     *
+     * The root can be a group or a single condition. Conditions without a field or operator, date
+     * conditions without the value they need and empty groups are ignored. The datasource keeps the
+     * object it is given, `getFilter()` returns it.
+     *
+     * @param expression a condition or a group of them, see {@link FilterExpression}. Build it with
+     * {@link and}, {@link or} and {@link where}.
+     *
+     * @example
+     * ```ts
+     * import { and, or, where } from '@simple-html/grid';
+     *
+     * datasource.filter(where('balance', 'GREATER_THAN', 2500));
+     *
+     * // country = 'Norway' AND (age < 30 OR age > 60)
+     * datasource.filter(
+     *     and(where('country', 'EQUAL', 'Norway'), or(where('age', 'LESS_THAN', 30), where('age', 'GREATER_THAN', 60)))
+     * );
+     *
+     * datasource.filter(); // run it again
+     * datasource.filter(null); // every row
+     * ```
      */
-    public filter(ObjFilter?: FilterArgument | FilterArgument[]) {
-        if (ObjFilter) {
-            if (Array.isArray(ObjFilter)) {
-                // FilterArgumentSimple[]
-                this.__filter.setFilter({
-                    type: 'GROUP',
-                    logicalOperator: 'AND',
-                    filterArguments: ObjFilter as FilterArgument[]
-                });
-            } else {
-                if (!ObjFilter.filterArguments || ObjFilter?.filterArguments?.length === 0) {
-                    // FilterArgumentSimple
-                    this.__filter.setFilter({
-                        type: 'GROUP',
-                        logicalOperator: 'AND',
-                        filterArguments: [ObjFilter as FilterArgument]
-                    });
-                    // empty group, clear
-                    if (
-                        ObjFilter?.logicalOperator &&
-                        //ObjFilter?.type &&
-                        ObjFilter?.filterArguments?.length === 0
-                    ) {
-                        this.__filter.setFilter(null);
-                    }
-                } else {
-                    // FilterArgument
-                    // todo, check more and warn if missing options _
-                    this.__filter.setFilter(ObjFilter as FilterArgument);
-                }
-            }
-        } /*  */
+    public filter(expression?: FilterExpression | null) {
+        if (expression !== undefined) {
+            this.__filter.setFilter(expression);
+        }
         const eventTriggered = this.__internalUpdate(true);
         if (!eventTriggered) {
             this.__callSubscribers('collection-filtered', { info: 'filter' });
@@ -952,7 +948,29 @@ export class Datasource<T = any> {
         return this.__grouping.getExpanded();
     }
 
-    public getFilter() {
+    /**
+     * The filter that is set: the object given to `filter()` / `setFilter()`, the header filters and
+     * the filter editor's, or null when there is none. The root is a group or a single condition.
+     *
+     * It is the datasource's own object, not a copy.
+     *
+     * @example
+     * ```ts
+     * datasource.filter(where('age', 'GREATER_THAN', 18));
+     * datasource.getFilter(); // { field: 'age', operator: 'GREATER_THAN', value: 18 }
+     *
+     * // typing 'x' in the header filter of name adds to it
+     * datasource.getFilter();
+     * // { group: 'AND', children: [
+     * //     { field: 'age', operator: 'GREATER_THAN', value: 18 },
+     * //     { field: 'name', operator: 'EQUAL', value: 'x' }
+     * // ] }
+     *
+     * datasource.filter(null);
+     * datasource.getFilter(); // null
+     * ```
+     */
+    public getFilter(): FilterExpression | null {
         return this.__filter.getFilter();
     }
 
@@ -967,8 +985,19 @@ export class Datasource<T = any> {
         return this.__filter.getFilterFromType(type);
     }
 
-    public setFilter(filter: FilterArgument | null) {
-        return this.__filter.setFilter(filter);
+    /**
+     * Sets the filter without running it - `filter()` runs it. `setFilter(null)` removes it.
+     *
+     * @param expression a condition or a group, see {@link FilterExpression}, or null for no filter
+     *
+     * @example
+     * ```ts
+     * datasource.setFilter(where('age', 'GREATER_THAN', 18));
+     * datasource.filter(); // runs it
+     * ```
+     */
+    public setFilter(expression: FilterExpression | null) {
+        this.__filter.setFilter(expression);
     }
 
     public reloadDatasource() {
@@ -980,8 +1009,9 @@ export class Datasource<T = any> {
     }
 
     /**
-     * The filter as text, e.g. `([NAME] <<EQUAL_TO>> 'X')`. Values are shown with the field's
-     * formatter.
+     * The filter as text, e.g. `([NAME] <<EQUAL_TO>> 'X')`, upper case. Values are shown with the
+     * field's formatter, a `valueField` as `[LABEL]`. What the filter ignores - incomplete conditions,
+     * empty groups - is left out, and `''` is returned when nothing is left (or no filter is set).
      *
      * @param label the name to show for a field. Default the field's label (`FieldConfig.label`, else
      * the field name). The grid passes its column labels.
@@ -989,69 +1019,57 @@ export class Datasource<T = any> {
      * @example
      * ```ts
      * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
-     * datasource.filter({ attribute: 'born', operator: 'GREATER_THAN', value: new Date(1990, 0, 1) });
+     * datasource.filter(where('born', 'GREATER_THAN', new Date(1990, 0, 1)));
      *
      * datasource.getFilterString(); // "([BORN] <<GREATER_THAN>> '1990-01-01')"
      * datasource.getFilterString((field) => field.toUpperCase() + '!'); // "([BORN!] <<GREATER_THAN>> '1990-01-01')"
+     *
+     * datasource.filter(and(where('a', 'EQUAL', 'x'), or(where('b', 'EQUAL', 'y'), where('b', 'EQUAL', 'z'))));
+     * datasource.getFilterString(); // "([A] <<EQUAL_TO>> 'X' AND ([B] <<EQUAL_TO>> 'Y' OR [B] <<EQUAL_TO>> 'Z'))"
      * ```
      */
     public getFilterString(label: (field: string) => string = (field) => this.getField(field).label): string {
         const filter = this.__filter.getFilter();
-        if (!filter?.filterArguments?.length) {
+        if (!filter || !this.__isShown(filter)) {
             return '';
         }
 
-        // same rules as filter() and getFilterTree(): isFilterGroup decides group or condition,
-        // an incomplete condition is ignored, and so is a group with nothing to show in it
-        const shown = (arg: FilterArgument): boolean =>
-            isFilterGroup(arg) ? (arg.filterArguments || []).some(shown) : isCompleteCondition(arg, conditionType(arg, this));
-
-        const parser = (obj: FilterArgument, queryString = ''): string => {
-            if (isFilterGroup(obj)) {
-                const children = (obj.filterArguments || []).filter(shown);
+        const parser = (expression: FilterExpression): string => {
+            if (isFilterGroup(expression)) {
                 // the filter treats anything but OR as AND
-                const logicalOperator = obj.logicalOperator === 'OR' ? 'OR' : 'AND';
-                children.forEach((child, i) => {
-                    queryString = i > 0 ? `${queryString} ${logicalOperator} ` : `${queryString}(`;
-                    queryString = parser(child, queryString);
-                    if (i === children.length - 1) {
-                        queryString = `${queryString})`;
-                    }
-                });
-                return queryString;
+                const operator = expression.group === 'OR' ? 'OR' : 'AND';
+                const children = expression.children.filter((child) => this.__isShown(child));
+                return `(${children.map(parser).join(` ${operator} `)})`;
             }
 
-            const type = conditionType(obj, this);
-            if (!isCompleteCondition(obj, type)) {
-                return queryString;
+            const condition = `[${label(expression.field)}] <<${OPERATORS[expression.operator]}>>`;
+            if (expression.operator === 'IS_BLANK' || expression.operator === 'IS_NOT_BLANK') {
+                return condition;
             }
-
-            const attribute = obj.attribute;
-            if (obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK') {
-                return `${queryString}[${label(attribute)}] <<${OPERATORS[obj.operator]}>>`;
+            if (expression.operator === 'IN' || expression.operator === 'NOT_IN') {
+                // a list, or a string with one value per line
+                const values = Array.isArray(expression.value) ? expression.value : String(expression.value).split('\n');
+                return `${condition} [${values.map((value) => `'${value}'`).join(',')}]`;
             }
-
-            if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
-                const value =
-                    obj.valueType === 'ATTRIBUTE'
-                        ? `[${obj.value}]`
-                        : `'${this.getFormatter(attribute, type).format(obj.value)}'`;
-                return `${queryString}[${label(attribute)}] <<${OPERATORS[obj.operator]}>> ${value}`;
+            if (expression.valueField) {
+                return `${condition} [${label(expression.valueField)}]`;
             }
-
-            // a list, or a string with one value per line
-            const values = Array.isArray(obj.value) ? obj.value : String(obj.value).split('\n');
-            return `${queryString}[${label(attribute)}] <<${OPERATORS[obj.operator]}>> [${values.map((val) => `'${val}'`)}]`;
+            const type = this.getField(expression.field).type;
+            return `${condition} '${this.getFormatter(expression.field, type).format(expression.value)}'`;
         };
 
-        return shown(filter) ? parser(filter).toUpperCase() : '';
+        // a single condition is in parentheses too, like a group of one
+        const text = isFilterGroup(filter) ? parser(filter) : `(${parser(filter)})`;
+        return text.toUpperCase();
     }
 
     /**
      * Same information as {@link getFilterString}, but as a tree of {@link FilterNode}s that
      * keeps the group nesting, so the footer can render grouped conditions as clusters
-     * instead of a flat, ambiguous list. Returns `null` when no filter is active. The root is
-     * always a group, even for a single condition.
+     * instead of a flat, ambiguous list. The root is always a group, also when the filter is a
+     * single condition. What the filter ignores is left out: incomplete conditions are, an empty
+     * group is a group with no children. Returns `null` when no filter is set or nothing of it is
+     * shown - when {@link getFilterString} returns `''`.
      *
      * @param label the name to show for a field. Default the field's label (`FieldConfig.label`, else
      * the field name). The grid passes its column labels.
@@ -1059,7 +1077,7 @@ export class Datasource<T = any> {
      * @example
      * ```ts
      * const datasource = new Datasource({ fields: { age: { type: 'number', label: 'Age' } } });
-     * datasource.filter({ attribute: 'age', operator: 'GREATER_THAN', value: 18 });
+     * datasource.filter(where('age', 'GREATER_THAN', 18));
      *
      * datasource.getFilterTree();
      * // { kind: 'group', logicalOperator: 'AND', children: [
@@ -1069,56 +1087,71 @@ export class Datasource<T = any> {
      */
     public getFilterTree(label: (field: string) => string = (field) => this.getField(field).label): FilterGroupNode | null {
         const filter = this.__filter.getFilter();
-        if (!filter?.filterArguments?.length) {
+        if (!filter || !this.__isShown(filter)) {
             return null;
         }
 
-        const build = (obj: FilterArgument): FilterNode | null => {
-            if (!obj) {
-                return null;
-            }
-            // same group test as the filter itself, an empty group stays a group with no children.
-            // Checking for children turned an empty group into a condition without an operator
-            if (isFilterGroup(obj)) {
+        const build = (expression: FilterExpression): FilterNode | null => {
+            // an empty group stays a group with no children
+            if (isFilterGroup(expression)) {
                 return {
                     kind: 'group',
                     // the filter treats anything but OR as AND
-                    logicalOperator: obj.logicalOperator === 'OR' ? 'OR' : 'AND',
-                    children: (obj.filterArguments || []).map(build).filter((n): n is FilterNode => n !== null)
+                    logicalOperator: expression.group === 'OR' ? 'OR' : 'AND',
+                    children: expression.children.map(build).filter((node): node is FilterNode => node !== null)
                 };
             }
             // the filter ignores incomplete conditions, so they are not shown either
-            const type = conditionType(obj, this);
-            if (!isCompleteCondition(obj, type)) {
+            if (this.__isIgnored(expression)) {
                 return null;
             }
 
-            const blank = obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK';
+            const blank = expression.operator === 'IS_BLANK' || expression.operator === 'IS_NOT_BLANK';
             let value = '';
             if (!blank) {
-                if (obj.operator === 'IN' || obj.operator === 'NOT_IN') {
-                    const list = Array.isArray(obj.value) ? obj.value : String(obj.value ?? '').split('\n');
+                if (expression.operator === 'IN' || expression.operator === 'NOT_IN') {
+                    const list = Array.isArray(expression.value) ? expression.value : String(expression.value ?? '').split('\n');
                     value = list.join(', ');
-                } else if (obj.valueType === 'ATTRIBUTE') {
-                    value = `[${obj.value}]`;
+                } else if (expression.valueField) {
+                    value = `[${label(expression.valueField)}]`;
                 } else {
-                    value = this.getFormatter(obj.attribute, type).format(obj.value);
+                    const type = this.getField(expression.field).type;
+                    value = this.getFormatter(expression.field, type).format(expression.value);
                 }
             }
 
             return {
                 kind: 'condition',
-                label: label(obj.attribute),
-                operator: obj.operator,
+                label: label(expression.field),
+                operator: expression.operator,
                 value,
                 hasValue: !blank
             };
         };
 
         const root = build(filter);
-        if (root && root.kind === 'group') {
+        if (root?.kind === 'group') {
             return root;
         }
+        // __isShown(filter) is true, so a condition at the root is built
         return { kind: 'group', logicalOperator: 'AND', children: root ? [root] : [] };
+    }
+
+    /**
+     * true if the filter ignores the condition, see isIgnoredCondition. Its type is the field's type
+     */
+    private __isIgnored(condition: FilterCondition): boolean {
+        return isIgnoredCondition(condition, this.getField(condition.field).type);
+    }
+
+    /**
+     * true if getFilterString / getFilterTree show something of the expression: a condition the
+     * filter does not ignore, or a group with one somewhere in it
+     */
+    private __isShown(expression: FilterExpression): boolean {
+        if (isFilterGroup(expression)) {
+            return expression.children.some((child) => this.__isShown(child));
+        }
+        return !this.__isIgnored(expression);
     }
 }

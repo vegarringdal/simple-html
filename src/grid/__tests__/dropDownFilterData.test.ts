@@ -3,6 +3,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from '../gridFunctions/dropDownFilterData';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { gridOf } from './interactionTestHelpers';
 
 /**
  * data behind the excel style column filter in the filter context menu
@@ -118,5 +119,22 @@ describe('dropDownFilterData - search', () => {
         const data = dropDownFilterData((element as any).grid, 'firstname', false, '*ap*')!;
 
         expect(Array.from(data.dataFilterSetFull)).toEqual(['APPLE']);
+    });
+});
+
+describe('dropDownFilterData - 0 is blank', () => {
+    /**
+     * kept on purpose and documented on FilterOperator: 0 counts as blank, like IS_BLANK. A text
+     * field holding numbers (a field that is not listed) shows them in the list
+     */
+    it('expect a 0 to be listed under the blank entry', async () => {
+        const { element } = await mountGrid(config(), [
+            { firstname: 0, lastname: 'x', age: 1 },
+            { firstname: 'a', lastname: 'y', age: 2 }
+        ]);
+        const data = dropDownFilterData(gridOf(element), 'firstname', false, null);
+
+        expect(Array.from(data?.dataFilterSetFull ?? [])).toEqual(['NULL', 'A']);
+        expect(data?.counts.get('NULL')).toEqual(1);
     });
 });

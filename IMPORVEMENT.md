@@ -774,6 +774,21 @@ the grid, tests, samples and `MIGRATION.md`.
 * text fields show `0` and `false` (v5: blank). Without it 0 grouped with the blanks while sorting
   put it among the numbers.
 
+#### Step 4 - one filter format (items 8, 10)
+
+* `FilterExpression = FilterGroup | FilterCondition`, built with `and()` / `or()` / `where()`.
+  `valueField` compares to another field. `type`, `logicalOperator: 'NONE'`, `attributeType`,
+  `valueType` and `filterArguments` are gone - the type comes from `fields` only.
+* a single condition as the whole filter works everywhere now. In v5 the filter ran it, but
+  `getFilterString()`, `getFilterTree()`, the footer and "Is Blank" ignored or dropped it.
+* the filter editor works on drafts (`Partial<FilterCondition>`) and drops the incomplete ones
+  when it applies, with the same `isIgnoredCondition()` the filter uses at runtime - so
+  `getFilter()` and a saved config never hold half-built conditions. The open dialog keeps them.
+* `filter(null)` clears (v5 re-ran the current filter); "Clear Filter" and "Is Blank" build a new
+  filter instead of changing the current object in place; IN no longer rewrites its `value`
+* "0 is blank" for number fields kept as it is, documented on `FilterOperator`
+* a v5 saved filter is ignored without throwing; `MIGRATION.md` has a small `fromV5()` converter
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -813,6 +828,8 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
   * `autoResizeColumns`: the "label shorter than the date placeholder" measuring looks backwards
   * three `@example` blocks in `dataSource.ts` use an undeclared `datasource` - they fail once
     examples are typechecked (docs work)
+  * the display tree from `getFilterTree()` still says `logicalOperator` where the filter format
+    says `group`
 * **Low severity bugs left from the code review** (high and medium are fixed, see *Bug sweep*):
   * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
   * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the

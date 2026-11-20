@@ -11,14 +11,15 @@ export type { DatasourceOptions } from './datasource/datasourceOptions';
 export { type DataEntity, type Entity, type GroupRow, isGroupRow } from './datasource/entity';
 export type { EntityHandler } from './datasource/entityHandler';
 export type { Field, FieldConfig, FieldType } from './datasource/field';
-export type {
-    FilterArgument,
-    FilterAttributeSimple,
-    FilterExpressionType,
-    FilterLogicalOperator,
-    FilterValueType
-} from './datasource/filterArgument';
-export type { FilterComparisonOperator } from './datasource/filterComparisonOperator';
+export {
+    and,
+    type FilterCondition,
+    type FilterExpression,
+    type FilterGroup,
+    type FilterOperator,
+    or,
+    where
+} from './datasource/filterExpression';
 export type { Formatter } from './datasource/formatter';
 export type { GroupArgument } from './datasource/groupArgument';
 export { NumberFormatterComma } from './datasource/numberFormatterComma';

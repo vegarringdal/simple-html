@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 import { isGroupRow } from '../entity';
+import { and, where } from '../filterExpression';
 
 /**
  * The datasource keeps three collections: all data -> filtered -> displayed.
@@ -30,7 +31,7 @@ const dataRowNames = (ds: Datasource) => ds.getRows(true).map((r: any) => r.name
 describe('pipeline - filter then sort', () => {
     it('expect sorting to apply to the filtered rows only', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         ds.sort([{ attribute: 'name', ascending: true }]);
 
         expect(names(ds)).toEqual(['a', 'b', 'c']);
@@ -39,7 +40,7 @@ describe('pipeline - filter then sort', () => {
     it('expect the sort to survive a later filter change', () => {
         const ds = build();
         ds.sort([{ attribute: 'name', ascending: false }]);
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
         expect(names(ds)).toEqual(['c', 'b', 'a']);
     });
@@ -47,7 +48,7 @@ describe('pipeline - filter then sort', () => {
     it('expect clearing the filter to keep the sort applied to all rows', () => {
         const ds = build();
         ds.sort([{ attribute: 'name', ascending: true }]);
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         ds.setFilter(null);
         ds.filter();
 
@@ -56,7 +57,7 @@ describe('pipeline - filter then sort', () => {
 
     it('expect length() to report displayed rows and length(true) the filtered rows', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
         expect(ds.length()).toEqual(3);
         expect(ds.length(true)).toEqual(3);
@@ -66,7 +67,7 @@ describe('pipeline - filter then sort', () => {
 describe('pipeline - filter then group', () => {
     it('expect grouping to only contain filtered rows', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         ds.group([{ attribute: 'product' }] as any);
         ds.expandGroup();
 
@@ -78,7 +79,7 @@ describe('pipeline - filter then group', () => {
         ds.group([{ attribute: 'company' }] as any);
         expect(ds.getRows()).toHaveLength(2);
 
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
         expect(ds.getRows().filter(isGroupRow)).toHaveLength(1);
     });
@@ -86,7 +87,7 @@ describe('pipeline - filter then group', () => {
     it('expect a filter matching nothing to leave no groups', () => {
         const ds = build();
         ds.group([{ attribute: 'company' }] as any);
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'nope' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'nope')));
 
         expect(ds.getRows()).toHaveLength(0);
     });
@@ -174,7 +175,7 @@ describe('pipeline - setData with active filter/sort/grouping', () => {
 
     it('expect a rerun filter to apply to newly added data', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         expect(ds.length()).toEqual(3);
 
         ds.setData([{ company: 'comp1', product: 'group9', qty: 9, name: 'new' }], true, true);
@@ -184,7 +185,7 @@ describe('pipeline - setData with active filter/sort/grouping', () => {
 
     it('expect reloadDatasource to reapply the current filter', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         ds.reloadDatasource();
 
         expect(ds.length()).toEqual(3);
@@ -199,7 +200,7 @@ describe('pipeline - getFilterString', () => {
 
     it('expect a simple filter to be described', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
         const text = ds.getFilterString();
         expect(text).toContain('COMPANY');

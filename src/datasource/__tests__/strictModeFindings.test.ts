@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DataContainer } from '../dataContainer';
 import { Datasource } from '../dataSource';
-import type { FilterArgument } from '../filterArgument';
+import { and, type FilterCondition, type FilterExpression, type FilterGroup, or, where } from '../filterExpression';
 
 /**
  * Bugs found while turning on TypeScript strict mode.
@@ -16,39 +16,24 @@ describe('getFilterString - same rules as the filter itself', () => {
     it('expect incomplete conditions and empty groups to be left out', () => {
         const ds = new Datasource();
         ds.setData(rows());
-        ds.filter({
-            type: 'GROUP',
-            logicalOperator: 'AND',
-            filterArguments: [
-                { type: 'CONDITION' },
-                { type: 'CONDITION', attribute: 'a', operator: 'EQUAL', value: 'x', attributeType: 'text' },
-                { type: 'GROUP', logicalOperator: 'OR', filterArguments: [] }
-            ]
-        });
+        // an empty condition, as plain js or the filter editor's "add condition" can leave it
+        ds.filter(and({} as FilterCondition, where('a', 'EQUAL', 'x'), or()));
 
         // used to render the blank condition as "[UNDEFINED] <<UNDEFINED>> ''"
         expect(ds.getFilterString()).toEqual("([A] <<EQUAL_TO>> 'X')");
     });
 
-    it('expect a group without logicalOperator to show as AND, which is what the filter runs', () => {
+    it('expect a group without `group` to show as AND, which is what the filter runs', () => {
         const ds = new Datasource();
         ds.setData(rows());
-        ds.filter({
-            filterArguments: [
-                { attribute: 'a', operator: 'EQUAL', value: 'x', attributeType: 'text' },
-                { attribute: 'g', operator: 'EQUAL', value: 'one', attributeType: 'text' }
-            ]
-        });
+        // only plain js can leave `group` out
+        ds.filter({ children: [where('a', 'EQUAL', 'x'), where('g', 'EQUAL', 'one')] } as FilterGroup);
 
         expect(ds.getFilterString()).toEqual("([A] <<EQUAL_TO>> 'X' AND [G] <<EQUAL_TO>> 'ONE')");
     });
 
     it('expect a field without a label to show its own name, a label from fields, or what label() gives', () => {
-        const filter: FilterArgument = {
-            type: 'GROUP',
-            logicalOperator: 'AND',
-            filterArguments: [{ type: 'CONDITION', attribute: 'a', operator: 'EQUAL', value: 'x', attributeType: 'text' }]
-        };
+        const filter: FilterExpression = and(where('a', 'EQUAL', 'x'));
 
         const ds = new Datasource();
         ds.setData(rows());

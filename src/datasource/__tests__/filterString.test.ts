@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { and, or, where } from '../filterExpression';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
@@ -19,133 +20,52 @@ describe('datasource filterstring ', () => {
     });
 
     it('single', () => {
-        ds.filter({ attribute: 'name', operator: 'EQUAL', value: 'person1' });
+        ds.filter(where('name', 'EQUAL', 'person1'));
         expect(ds.getFilterString()).toEqual("([name] <<equal_to>> 'person1')".toUpperCase());
     });
 
     it('2 attributes, default to and', () => {
-        ds.filter([
-            { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-            { attribute: 'name', operator: 'EQUAL', value: 'person1' }
-        ]);
+        ds.filter(and(where('group', 'EQUAL', 'group1'), where('name', 'EQUAL', 'person1')));
         expect(ds.getFilterString()).toEqual("([group] <<equal_to>> 'group1' AND [name] <<equal_to>> 'person1')".toUpperCase());
     });
 
     it('or statement', () => {
-        ds.filter({
-            logicalOperator: 'OR',
-            filterArguments: [
-                { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                { attribute: 'name', operator: 'EQUAL', value: 'person1' }
-            ]
-        });
+        ds.filter(or(where('group', 'EQUAL', 'group1'), where('name', 'EQUAL', 'person1')));
         expect(ds.getFilterString()).toEqual("([group] <<equal_to>> 'group1' OR [name] <<equal_to>> 'person1')".toUpperCase());
     });
 
     it('or statement with sub and statements', () => {
-        ds.filter({
-            logicalOperator: 'OR',
-            filterArguments: [
-                {
-                    logicalOperator: 'AND',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
-                    ]
-                },
-                {
-                    logicalOperator: 'AND',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person4' }
-                    ]
-                }
-            ]
-        });
+        ds.filter(
+            or(
+                and(where('group', 'EQUAL', 'group2'), where('name', 'EQUAL', 'person2')),
+                and(where('group', 'EQUAL', 'group1'), where('name', 'EQUAL', 'person4'))
+            )
+        );
         expect(ds.getFilterString()).toEqual(
             "(([group] <<equal_to>> 'group2' AND [name] <<equal_to>> 'person2') OR ([group] <<equal_to>> 'group1' AND [name] <<equal_to>> 'person4'))".toUpperCase()
         );
     });
 
     it('and statement with sub or statements', () => {
-        ds.filter({
-            logicalOperator: 'AND',
-            filterArguments: [
-                {
-                    logicalOperator: 'OR',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
-                    ]
-                },
-                {
-                    logicalOperator: 'OR',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person4' }
-                    ]
-                }
-            ]
-        });
+        ds.filter(
+            and(
+                or(where('group', 'EQUAL', 'group1'), where('name', 'EQUAL', 'person2')),
+                or(where('group', 'EQUAL', 'group2'), where('name', 'EQUAL', 'person4'))
+            )
+        );
         expect(ds.getFilterString()).toEqual(
             "(([group] <<equal_to>> 'group1' OR [name] <<equal_to>> 'person2') AND ([group] <<equal_to>> 'group2' OR [name] <<equal_to>> 'person4'))".toUpperCase()
         );
     });
 
     it('or statement with sub and statements', () => {
-        ds.filter({
-            type: 'GROUP',
-            logicalOperator: 'AND',
-            filterArguments: [
-                {
-                    type: 'CONDITION',
-                    logicalOperator: 'NONE',
-                    valueType: 'VALUE',
-                    attribute: 'word5',
-                    attributeType: 'text',
-                    operator: 'BEGIN_WITH',
-                    value: 'c'
-                },
-                {
-                    type: 'CONDITION',
-                    logicalOperator: 'NONE',
-                    valueType: 'VALUE',
-                    attribute: 'word7',
-                    attributeType: 'text',
-                    operator: 'BEGIN_WITH',
-                    value: 'c'
-                },
-                {
-                    type: 'GROUP',
-                    logicalOperator: 'AND',
-                    attribute: 'select',
-                    operator: 'EQUAL',
-                    valueType: 'VALUE',
-                    attributeType: 'text',
-                    filterArguments: [
-                        {
-                            type: 'CONDITION',
-                            logicalOperator: 'NONE',
-                            attribute: 'word7',
-                            operator: 'CONTAINS',
-                            valueType: 'VALUE',
-                            filterArguments: [],
-                            value: 'c'
-                        },
-                        {
-                            type: 'CONDITION',
-                            logicalOperator: 'NONE',
-                            attribute: 'word7',
-                            operator: 'CONTAINS',
-                            valueType: 'VALUE',
-                            filterArguments: [],
-                            value: 'c'
-                        }
-                    ],
-                    value: ''
-                }
-            ]
-        });
+        ds.filter(
+            and(
+                where('word5', 'BEGIN_WITH', 'c'),
+                where('word7', 'BEGIN_WITH', 'c'),
+                and(where('word7', 'CONTAINS', 'c'), where('word7', 'CONTAINS', 'c'))
+            )
+        );
         expect(ds.getFilterString()).toEqual(
             "([word5] <<start_with>> 'c' AND [word7] <<start_with>> 'c' AND ([word7] <<contains>> 'c' AND [word7] <<contains>> 'c'))".toUpperCase()
         );
@@ -164,7 +84,7 @@ describe('datasource filter tree (footer chips)', () => {
     });
 
     it('single condition -> group with one condition child', () => {
-        ds2.filter({ attribute: 'name', operator: 'EQUAL', value: 'person1' });
+        ds2.filter(where('name', 'EQUAL', 'person1'));
         expect(ds2.getFilterTree()).toEqual({
             kind: 'group',
             logicalOperator: 'AND',
@@ -173,13 +93,7 @@ describe('datasource filter tree (footer chips)', () => {
     });
 
     it('group keeps its logical operator', () => {
-        ds2.filter({
-            logicalOperator: 'OR',
-            filterArguments: [
-                { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                { attribute: 'name', operator: 'CONTAINS', value: 'person' }
-            ]
-        });
+        ds2.filter(or(where('group', 'EQUAL', 'group1'), where('name', 'CONTAINS', 'person')));
         expect(ds2.getFilterTree()).toEqual({
             kind: 'group',
             logicalOperator: 'OR',
@@ -191,7 +105,7 @@ describe('datasource filter tree (footer chips)', () => {
     });
 
     it('blank operators carry no value', () => {
-        ds2.filter([{ attribute: 'name', operator: 'IS_BLANK' }]);
+        ds2.filter(and(where('name', 'IS_BLANK')));
         expect(ds2.getFilterTree()?.children[0]).toEqual({
             kind: 'condition',
             label: 'name',
@@ -202,19 +116,9 @@ describe('datasource filter tree (footer chips)', () => {
     });
 
     it('nested groups preserve their structure', () => {
-        ds2.filter({
-            logicalOperator: 'OR',
-            filterArguments: [
-                {
-                    logicalOperator: 'AND',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
-                    ]
-                },
-                { attribute: 'group', operator: 'EQUAL', value: 'group1' }
-            ]
-        });
+        ds2.filter(
+            or(and(where('group', 'EQUAL', 'group2'), where('name', 'EQUAL', 'person2')), where('group', 'EQUAL', 'group1'))
+        );
         const tree = ds2.getFilterTree();
         expect(tree?.logicalOperator).toEqual('OR');
         expect(tree?.children[0].kind).toEqual('group');

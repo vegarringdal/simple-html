@@ -1,13 +1,7 @@
-import { isFilterGroup } from '../../datasource/filter';
-import type { FilterArgument } from '../../datasource/filterArgument';
+import { and, type FilterExpression, type FilterGroup, isFilterGroup, where } from '../../datasource/filterExpression';
 import { parseFilterText } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import type { Attribute } from '../gridConfig';
-
-/**
- * a group filter, its filterArguments always set
- */
-type FilterGroup = FilterArgument & { filterArguments: FilterArgument[] };
 
 /**
  * filters columns
@@ -19,7 +13,7 @@ export function filterCallback(
     ctx: Grid,
     value: string | number | Date | boolean | null | undefined,
     col: Attribute,
-    filterArray?: any[] | null,
+    filterArray?: unknown[] | null,
     filterArrayAndValue?: string | null,
     notinArray?: boolean
 ) {
@@ -50,26 +44,16 @@ export function filterCallback(
      */
     const filter = filterWithoutColumn(datasource.getFilter(), col.attribute);
 
-    const condition = (operator: FilterArgument['operator'], conditionValue: any): FilterArgument => ({
-        type: 'CONDITION',
-        logicalOperator: 'NONE',
-        valueType: 'VALUE',
-        attribute: col.attribute,
-        // the datasource takes the type from its fields, this is for a filter saved and loaded elsewhere
-        attributeType: type,
-        operator,
-        value: conditionValue
-    });
-
+    // no type on the condition, the datasource reads it from its fields
     if (filterArrayAndValue) {
         // search text from the value list menu, always a contains
-        filter.filterArguments.push(condition('CONTAINS', filterArrayAndValue));
+        filter.children.push(where(col.attribute, 'CONTAINS', filterArrayAndValue));
     } else if (col.currentFilterValue !== null && col.currentFilterValue !== undefined && col.currentFilterValue !== '') {
-        filter.filterArguments.push(condition(col.operator || datasource.getFilterFromType(type), col.currentFilterValue));
+        filter.children.push(where(col.attribute, col.operator || datasource.getFilterFromType(type), col.currentFilterValue));
     }
 
     if (filterArray) {
-        filter.filterArguments.push(condition(notinArray ? 'NOT_IN' : 'IN', filterArray));
+        filter.children.push(where(col.attribute, notinArray ? 'NOT_IN' : 'IN', filterArray));
     }
 
     if (filterArray && !filterArrayAndValue) {
@@ -92,34 +76,24 @@ function asFilterValue(value: unknown): Attribute['currentFilterValue'] {
 
 /**
  * The filter a header condition is added to: an AND group without the column's own top level
- * conditions.
- * An OR root is kept whole inside a new AND group - AND(header condition, OR group) - so typing
- * in a header narrows a filter built in the filter editor instead of throwing it away.
+ * conditions, a copy - the old filter is still the one the datasource holds.
+ * An OR root is kept whole inside a new AND group - AND(OR group, header condition) - so typing
+ * in a header narrows a filter built in the filter editor instead of throwing it away. So is a
+ * single condition at the root, unless it is on this column: then it is the column's own.
  */
-function filterWithoutColumn(oldFilter: FilterArgument | null, attribute: string): FilterGroup {
-    // a group without logicalOperator is AND too (see Filter), only an OR root has to be kept whole
-    if (oldFilter && isFilterGroup(oldFilter) && oldFilter.logicalOperator !== 'OR') {
-        // copy, the old filter object is still the one the datasource holds
-        return {
-            ...oldFilter,
-            logicalOperator: 'AND',
-            filterArguments: (oldFilter.filterArguments || []).filter((arg: FilterArgument) => arg.attribute !== attribute)
-        };
+function filterWithoutColumn(oldFilter: FilterExpression | null, attribute: string): FilterGroup {
+    if (!oldFilter) {
+        return and();
     }
 
-    const filter: FilterGroup = {
-        type: 'GROUP',
-        logicalOperator: 'AND',
-        filterArguments: []
-    };
-
-    // an OR root, or a single condition set from code on another column, is kept whole
-    const keepWhole =
-        oldFilter &&
-        (isFilterGroup(oldFilter) ? (oldFilter.filterArguments?.length ?? 0) > 0 : oldFilter.attribute !== attribute);
-    if (keepWhole) {
-        filter.filterArguments.push(oldFilter);
+    if (isFilterGroup(oldFilter)) {
+        // anything but OR is AND, as the filter runs it
+        if (oldFilter.group !== 'OR') {
+            return and(...oldFilter.children.filter((child) => isFilterGroup(child) || child.field !== attribute));
+        }
+        // an empty OR group filters nothing, there is nothing to keep
+        return oldFilter.children.length ? and(oldFilter) : and();
     }
 
-    return filter;
+    return oldFilter.field === attribute ? and() : and(oldFilter);
 }

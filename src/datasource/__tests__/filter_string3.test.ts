@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { where } from '../filterExpression';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
@@ -19,11 +20,7 @@ describe('string filter', () => {
     });
 
     it('string with BEGIN_WITH', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'BEGIN_WITH',
-            value: 'per'
-        });
+        ds.filter(where('name', 'BEGIN_WITH', 'per'));
 
         expect(ds.getRows()).toEqual([
             /* { name: '4person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
@@ -35,11 +32,7 @@ describe('string filter', () => {
     });
 
     it('string with BEGIN_WITH', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'BEGIN_WITH',
-            value: 'p*er'
-        });
+        ds.filter(where('name', 'BEGIN_WITH', 'p*er'));
 
         expect(ds.getRows()).toEqual([
             /* { name: '4person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
@@ -51,11 +44,7 @@ describe('string filter', () => {
     });
 
     it('string with END_WITH', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'END_WITH',
-            value: 'son2'
-        });
+        ds.filter(where('name', 'END_WITH', 'son2'));
 
         expect(ds.getRows()).toEqual([
             { name: '4person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }
@@ -67,11 +56,7 @@ describe('string filter', () => {
     });
 
     it('string with END_WITH', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'END_WITH',
-            value: '*son2'
-        });
+        ds.filter(where('name', 'END_WITH', '*son2'));
 
         expect(ds.getRows()).toEqual([
             { name: '4person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }
@@ -83,11 +68,7 @@ describe('string filter', () => {
     });
 
     it('string with END_WITH', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'NOT_EQUAL_TO',
-            value: '*son2'
-        });
+        ds.filter(where('name', 'NOT_EQUAL_TO', '*son2'));
 
         expect(ds.getRows().length).toEqual(4);
         expect(ds.getRows()).toEqual([

@@ -1,5 +1,7 @@
 import { html, render, type TemplateResult } from 'lit-html';
-import type { FilterArgument } from '../../datasource/filterArgument';
+import type { Datasource } from '../../datasource/dataSource';
+import { isIgnoredCondition } from '../../datasource/filter';
+import { type FilterCondition, type FilterExpression, type FilterGroup, where } from '../../datasource/filterExpression';
 import { parseFilterText } from '../../datasource/formatter';
 import { TextFormatter } from '../../datasource/textFormatter';
 import type { Grid } from '../grid';
@@ -14,20 +16,57 @@ import { removeContextMenu } from './removeContextMenu';
 import { attachTooltips, hideTooltip, tooltip, tooltipsEnabled } from './tooltip';
 
 /**
- * what a formatter gave, as a value a condition can hold - anything else is no value
+ * A condition while the filter editor builds it, one pick at a time: any part can still be missing.
+ * `valueField` set means the value input is switched to "compare with another field" - it is `''`
+ * until that field is picked.
  */
-function conditionValue(value: unknown): FilterArgument['value'] {
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value instanceof Date) {
-        return value;
+export type ConditionDraft = Partial<FilterCondition>;
+
+/**
+ * A group in the filter editor. Its conditions can be drafts, a {@link FilterGroup} is one too.
+ */
+export interface GroupDraft {
+    group: 'AND' | 'OR';
+    children: (GroupDraft | ConditionDraft)[];
+}
+
+/**
+ * true for a group, the same test as isFilterGroup: a `children` array
+ */
+export function isGroupDraft(draft: GroupDraft | ConditionDraft): draft is GroupDraft {
+    return 'children' in draft && Array.isArray(draft.children);
+}
+
+/**
+ * The filter the editor applies: its groups and the conditions that are complete. A draft the filter
+ * would ignore is left out - no field or operator picked, "compare with field" without the field, a
+ * date without a value - so the datasource only gets conditions that filter. Groups are kept as they
+ * are, also empty ones (the filter ignores those).
+ */
+export function draftToFilter(draft: GroupDraft, datasource: Datasource): FilterGroup {
+    const children: FilterExpression[] = [];
+    for (const child of draft.children) {
+        if (isGroupDraft(child)) {
+            children.push(draftToFilter(child, datasource));
+            continue;
+        }
+        const { field, operator, value, valueField } = child;
+        if (!field || !operator || valueField === '') {
+            continue;
+        }
+        const condition: FilterCondition = valueField ? { field, operator, valueField } : where(field, operator, value);
+        if (!isIgnoredCondition(condition, datasource.getField(field).type)) {
+            children.push(condition);
+        }
     }
-    return null;
+    return { group: draft.group === 'OR' ? 'OR' : 'AND', children };
 }
 
 /**
  * internal method to generate html for filter editor
- * @param filterArg
+ * @param filterArg the root group, the editor's own copy: it is changed in place while editing
  */
-export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
+export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
     /**
      * the dialog is thrown away and rebuilt on every edit, so remember where the user put
      * it and how big they made it, otherwise it jumps back to the middle on every click
@@ -91,7 +130,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
      * @param callback
      * @returns
      */
-    const inputSwitchIcon = (arg: FilterArgument, callback: (e: any) => void) => {
+    const inputSwitchIcon = (arg: ConditionDraft, callback: (e: any) => void) => {
         return html`
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -101,11 +140,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 stroke="currentColor"
                 class="simple-html-grid-icon-group-svg"
                 @click=${(e: any) => {
-                    if (arg.valueType === 'ATTRIBUTE') {
-                        arg.valueType = 'VALUE';
-                    } else {
-                        arg.valueType = 'ATTRIBUTE';
-                    }
+                    // '' is "compare with a field" before the field is picked, undefined is a value
+                    arg.valueField = arg.valueField === undefined ? '' : undefined;
                     callback(e);
                 }}
             >
@@ -193,9 +229,9 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
      * @param context
      * @returns
      */
-    const condition = (arg: FilterArgument, context: FilterArgument[]) => {
-        // a new condition has no attribute yet, it is text until one is picked
-        const field = arg.attribute ? ctx.gridInterface.getDatasource().getField(arg.attribute) : null;
+    const condition = (arg: ConditionDraft, context: (GroupDraft | ConditionDraft)[]) => {
+        // a new condition has no field yet, it is text until one is picked
+        const field = arg.field ? ctx.gridInterface.getDatasource().getField(arg.field) : null;
         const formatter = field?.formatter ?? TextFormatter;
         const isDate = field?.type === 'date' || field?.type === 'datetime';
         const value = formatter.format(arg.value);
@@ -219,8 +255,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     }, 2);
                 }
             }}
-            @input=${(e: any) => (arg.value = conditionValue(parseFilterText(formatter, e.target.value)))}
-            @change=${(e: any) => (arg.value = conditionValue(parseFilterText(formatter, e.target.value)))}
+            @input=${(e: any) => (arg.value = parseFilterText(formatter, e.target.value))}
+            @change=${(e: any) => (arg.value = parseFilterText(formatter, e.target.value))}
             @click=${(e: any) => {
                 if (isDate) {
                     setTimeout(() => {
@@ -241,7 +277,11 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
         />`;
 
         if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
-            const value = Array.isArray(arg.value) ? arg.value.filter((e) => e !== '').join('\n') : arg.value?.toString();
+            const value = Array.isArray(arg.value)
+                ? arg.value.filter((e) => e !== '').join('\n')
+                : arg.value === null || arg.value === undefined
+                  ? ''
+                  : String(arg.value);
 
             filterElement = html`<textarea
                 .value=${value || ''}
@@ -249,9 +289,9 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
             ></textarea>`;
         }
 
-        if (arg.valueType === 'ATTRIBUTE') {
-            // the value is the name of the attribute to compare with
-            const label = arg.value ? getColumnLabel(ctx, String(arg.value)) : '';
+        if (arg.valueField !== undefined) {
+            // compare with another field of the row, '' until it is picked
+            const label = arg.valueField ? getColumnLabel(ctx, arg.valueField) : '';
 
             // same look as the other two pickers, it opens a menu the same way
             filterElement = html`<div
@@ -260,9 +300,9 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 @click=${(e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    contextMenuAttributes(ctx, e, e.target as any, (attribute) => {
+                    contextMenuAttributes(ctx, e, e.target as HTMLCellElement, (attribute) => {
                         removeContextMenu(ctx);
-                        arg.value = attribute;
+                        arg.valueField = attribute;
                         renderFilterEditor(ctx, structuredClone(filterArg));
                     });
                 }}
@@ -287,14 +327,13 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             e.stopPropagation();
                             contextMenuAttributes(ctx, e, e.target as HTMLCellElement, (attribute) => {
                                 removeContextMenu(ctx);
-                                arg.attribute = attribute;
-
-                                arg.attributeType = ctx.gridInterface.getDatasource().getField(attribute).type;
+                                // the type comes from the datasource's fields, the condition has none
+                                arg.field = attribute;
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             });
                         }}
                     >
-                        ${arg.attribute ? label(arg.attribute) : 'Click me to select field'}
+                        ${arg.field ? label(arg.field) : 'Click me to select field'}
                     </div>
 
                     <div
@@ -305,7 +344,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             e.stopPropagation();
                             contextMenuOperator(ctx, e, e.target as HTMLCellElement, (operator) => {
                                 removeContextMenu(ctx);
-                                arg.operator = operator.replaceAll(' ', '_').toUpperCase() as any;
+                                arg.operator = operator;
 
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             });
@@ -338,7 +377,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     </div>
                     <div
                         class="grid-m-4"
-                        data-tooltip=${tooltip(ctx, arg.valueType === 'ATTRIBUTE' ? 'filterEditor.useValue' : 'filterEditor.useAttribute')}
+                        data-tooltip=${tooltip(ctx, arg.valueField !== undefined ? 'filterEditor.useValue' : 'filterEditor.useAttribute')}
                     >
                         ${inputSwitchIcon(arg, () => {
                             renderFilterEditor(ctx, structuredClone(filterArg));
@@ -355,14 +394,19 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
      * @param context
      * @returns
      */
-    const group = (arg: FilterArgument, context: FilterArgument[] | null): TemplateResult<1> => {
-        // collect all conditions, and inject them into html
-        // (condition/group only change filterArguments from click handlers, so reading it once is the same)
-        const args = arg.filterArguments;
-        const conditions = args?.filter((e) => e.type !== 'GROUP').map((e) => condition(e, args)) || [];
-
-        // collect all groups, and inject them into html
-        const groupsArgs = args?.filter((e) => e.type === 'GROUP').map((e) => group(e, args)) || [];
+    const group = (arg: GroupDraft, context: (GroupDraft | ConditionDraft)[] | null): TemplateResult<1> => {
+        // the conditions first, then the sub groups
+        // (condition/group only change children from click handlers, so reading it once is the same)
+        const args = arg.children;
+        const conditions: TemplateResult<1>[] = [];
+        const groupsArgs: TemplateResult<1>[] = [];
+        for (const child of args) {
+            if (isGroupDraft(child)) {
+                groupsArgs.push(group(child, args));
+            } else {
+                conditions.push(condition(child, args));
+            }
+        }
 
         return html`<div>
             <div class="grid-flex-column grid-sub-group">
@@ -370,48 +414,32 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     <div class="grid-flex grid-m-4">
                         <div
                             class="grid-m-4 grid-button-small grid-text-center grid-text-label"
-                            data-tooltip=${tooltip(ctx, arg.logicalOperator === 'AND' ? 'filterEditor.operatorAnd' : 'filterEditor.operatorOr')}
+                            data-tooltip=${tooltip(ctx, arg.group === 'AND' ? 'filterEditor.operatorAnd' : 'filterEditor.operatorOr')}
                             @click=${() => {
-                                arg.logicalOperator = arg.logicalOperator === 'AND' ? 'OR' : 'AND';
+                                arg.group = arg.group === 'AND' ? 'OR' : 'AND';
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             }}
                         >
-                            <span> ${arg.logicalOperator}</span>
+                            <span> ${arg.group}</span>
                         </div>
                         <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.wrapGroup')}>
                             ${addFilterGroupIcon(false, () => {
-                                const oldFilters = arg.filterArguments;
-                                arg.filterArguments = [
-                                    {
-                                        type: 'GROUP',
-                                        logicalOperator: 'AND',
-                                        filterArguments: oldFilters
-                                    }
-                                ];
+                                arg.children = [{ group: 'AND', children: arg.children }];
 
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
                         <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.addSubGroup')}>
                             ${addFilterGroupIcon(true, () => {
-                                // a group set from code can come without filterArguments
-                                arg.filterArguments ??= [];
-                                arg.filterArguments.push({
-                                    type: 'GROUP',
-                                    logicalOperator: 'AND',
-                                    filterArguments: []
-                                });
+                                arg.children.push({ group: 'AND', children: [] });
 
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
                         <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.addCondition')}>
                             ${addFilterConditionIcon(() => {
-                                // a group set from code can come without filterArguments
-                                arg.filterArguments ??= [];
-                                arg.filterArguments.push({
-                                    type: 'CONDITION'
-                                });
+                                // a draft, filled in one pick at a time
+                                arg.children.push({});
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
@@ -431,7 +459,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                                     context.splice(x ?? 0, 1);
                                     renderFilterEditor(ctx, structuredClone(filterArg));
                                 } else {
-                                    arg.filterArguments = [];
+                                    arg.children = [];
                                     renderFilterEditor(ctx, structuredClone(filterArg));
                                 }
                             })}
@@ -471,6 +499,18 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
         });
     };
 
+    /**
+     * applies the conditions that are complete, see draftToFilter. A copy: the dialog can stay open
+     * and keep editing its own. Nothing left ("clear all") is no filter, like "Clear All Filters"
+     */
+    const applyFilter = () => {
+        const datasource = ctx.gridInterface.getDatasource();
+        const filter = draftToFilter(structuredClone(filterArg), datasource);
+        datasource.filter(filter.children.length ? filter : null);
+        clearOldValues();
+        rebuildHeaderColumns(ctx);
+    };
+
     const footerTemplate = () => {
         return html`<div class="grid-flex-reverse grid-m-4 filter-editor-footer">
             <div
@@ -479,10 +519,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 @click=${() => {
                     removeContextMenu(ctx);
                     closeEditor();
-
-                    ctx.gridInterface.getDatasource().filter(JSON.parse(JSON.stringify(filterArg)));
-                    clearOldValues();
-                    rebuildHeaderColumns(ctx);
+                    applyFilter();
                 }}
             >
                 Filter & Close
@@ -492,10 +529,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 data-tooltip=${tooltip(ctx, 'filterEditor.filterOnly')}
                 @click=${() => {
                     removeContextMenu(ctx);
-
-                    ctx.gridInterface.getDatasource().filter(JSON.parse(JSON.stringify(filterArg)));
-                    clearOldValues();
-                    rebuildHeaderColumns(ctx);
+                    applyFilter();
                 }}
             >
                 Filter Only

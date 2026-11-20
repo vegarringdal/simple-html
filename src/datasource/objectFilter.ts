@@ -1,22 +1,36 @@
-import type { FilterAttributeSimple } from './filterArgument';
-import type { FilterComparisonOperator } from './filterComparisonOperator';
+import type { Entity } from './entity';
+import type { FieldType } from './field';
+import type { FilterOperator } from './filterExpression';
 import { isBlank } from './isBlank';
 
 /**
+ * @internal
+ * one complete condition as objectFilter tests it: the value to compare with is resolved already
+ * (a `valueField` read from the row), and `type` is the field's type from the datasource
+ */
+export interface ResolvedCondition {
+    field: string;
+    operator: FilterOperator;
+    value: unknown;
+    type: FieldType;
+}
+
+/**
+ * @internal
  * tests one row against one condition.
  * `filter.type` is the field type: a `date` compares on the day (the time is ignored on both the row
  * value and the filter value), a `datetime` on the full timestamp (milliseconds ignored)
  */
-export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
+export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
     let result = true;
 
     // vars
     let rowValue: any;
     let filterValue: any;
-    type filterExtended = ('REGEX' | 'REGEX-NOT') | FilterComparisonOperator;
+    type filterExtended = ('REGEX' | 'REGEX-NOT') | FilterOperator;
     let filterOperator: filterExtended = filter.operator;
     let newFilterOperator: filterExtended;
-    let type: string = filter.type || 'text';
+    let type: FieldType = filter.type;
 
     if (filter.value instanceof Date && type !== 'datetime') {
         // little chance someone sends in date if they do not want to query for it
@@ -29,7 +43,7 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
 
     const isDate = type === 'date' || type === 'datetime';
 
-    rowValue = rowData[filter.attribute];
+    rowValue = rowData[filter.field];
 
     // if is blank or is not blank then just check right away
     if ('IS_BLANK' === filterOperator) {
@@ -191,29 +205,13 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
 
             // set the filteroperator from new if changed
             if (filterOperator !== newFilterOperator) {
-                filterOperator = newFilterOperator as any;
+                filterOperator = newFilterOperator;
             }
             break;
         }
         case 'boolean':
             filterValue = filter.value;
             filterOperator = 'EQUAL';
-            break;
-
-        default:
-            // todo: take the stuff under equal to and put in a function
-            // and also call i from here.. or just make it fail?
-            try {
-                rowValue = rowValue.toLowerCase();
-            } catch {
-                // conversion failed, keep rowValue as it was
-            }
-            try {
-                filterValue = filter.value.toLowerCase();
-            } catch {
-                filterValue = filter.value;
-            }
-            filterOperator = filterOperator || 'EQUAL';
             break;
     }
 

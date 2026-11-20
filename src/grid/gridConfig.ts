@@ -1,5 +1,4 @@
-import type { FilterArgument } from '../datasource/filterArgument';
-import type { FilterComparisonOperator } from '../datasource/filterComparisonOperator';
+import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { IDateConfig } from '../date/interfaces';
 
@@ -75,9 +74,10 @@ export type GridConfig = {
      */
     expandedGroups?: string[] | null;
     /**
-     * filter added when loading config
+     * filter added when loading config, see {@link FilterExpression}. `saveConfig()` puts the
+     * datasource's filter here
      */
-    filter?: FilterArgument | null;
+    filter?: FilterExpression | null;
 
     /**
      * @internal not exported in save config
@@ -169,7 +169,11 @@ export type Attribute = {
     label?: string;
     placeHolderRow?: string;
     placeHolderFilter?: string;
-    operator?: FilterComparisonOperator;
+    /**
+     * the operator of the column's header filter. Default `'GREATER_THAN_OR_EQUAL_TO'` for number and
+     * date fields, `'EQUAL'` for the rest. The user can change it in the header filter's menu
+     */
+    operator?: FilterOperator;
     /**
      * the name of another column whose value in the row is the type of this cell -
      * `'text' | 'number' | 'boolean' | 'date' | 'datetime'`. A number/text/date etc in the same

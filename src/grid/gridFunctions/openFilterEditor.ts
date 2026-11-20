@@ -1,7 +1,7 @@
-import type { FilterArgument } from '../../datasource/filterArgument';
+import { isFilterGroup } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 import { removeContextMenu } from './removeContextMenu';
-import { renderFilterEditor } from './renderFilterEditor';
+import { type GroupDraft, renderFilterEditor } from './renderFilterEditor';
 
 /**
  * opens filter editor with current filter
@@ -9,22 +9,16 @@ import { renderFilterEditor } from './renderFilterEditor';
 export function openFilterEditor(ctx: Grid) {
     removeContextMenu(ctx);
 
-    const defaultStartFilter: FilterArgument = {
-        type: 'GROUP',
-        logicalOperator: 'AND',
-        filterArguments: []
-    };
+    const filter = ctx.gridInterface.getDatasource().getFilter();
 
-    const dsFilter = ctx.gridInterface.getDatasource().getFilter();
-
-    const filterArg = dsFilter?.type === 'GROUP' ? dsFilter : defaultStartFilter;
-
-    if (dsFilter && dsFilter?.type !== 'GROUP' && !Array.isArray(dsFilter)) {
-        filterArg.filterArguments = [dsFilter];
-    }
-    if (Array.isArray(dsFilter) && dsFilter.length) {
-        filterArg.filterArguments = dsFilter;
+    // the editor edits a group: a single condition at the root is put in an AND group
+    let root: GroupDraft = { group: 'AND', children: [] };
+    if (filter && isFilterGroup(filter)) {
+        root = filter;
+    } else if (filter) {
+        root.children.push(filter);
     }
 
-    renderFilterEditor(ctx, structuredClone(filterArg));
+    // a copy, the editor changes it in place until the filter is applied
+    renderFilterEditor(ctx, structuredClone(root));
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 import type { DatasourceEvents } from '../datasourceEvents';
 import { isGroupRow } from '../entity';
+import { where } from '../filterExpression';
 
 /**
  * Changes to the data have to show up in the displayed rows, not only in the data container.
@@ -28,7 +29,7 @@ describe('displayed rows - clearMarkedForDeletion', () => {
     it('expect the filter to stay applied after clearing', () => {
         const ds = new Datasource();
         ds.setData([{ v: 'a' }, { v: 'b' }, { v: 'a' }]);
-        ds.filter({ attribute: 'v', operator: 'EQUAL', value: 'a', attributeType: 'text' });
+        ds.filter(where('v', 'EQUAL', 'a'));
         ds.markForDeletion(ds.getRows()[0]);
         ds.clearMarkedForDeletion();
         expect(ds.getRows().map((r) => r.v)).toEqual(['a']);

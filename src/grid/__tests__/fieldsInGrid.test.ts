@@ -2,6 +2,7 @@
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DateFormatterDDMMYYYY } from '../../datasource/DateFormatterDDMMYYYY';
+import { and, where } from '../../datasource/filterExpression';
 import type { Formatter } from '../../datasource/formatter';
 import { NumberFormatterComma } from '../../datasource/numberFormatterComma';
 import type { GridConfig } from '../gridConfig';
@@ -180,23 +181,22 @@ describe('fields in the grid - labels', () => {
 
     it('expect the footer filter to show the same labels, the name as it is', async () => {
         const { element, datasource } = await mountGrid(config(), [{ own: 'a', field: 'b', first_name: 'c' }], fields);
-        datasource.filter({
-            logicalOperator: 'AND',
-            filterArguments: [
-                { attribute: 'own', operator: 'EQUAL', value: 'a' },
-                { attribute: 'field', operator: 'EQUAL', value: 'b' },
-                { attribute: 'first_name', operator: 'EQUAL', value: 'c' },
+        datasource.filter(
+            and(
+                where('own', 'EQUAL', 'a'),
+                where('field', 'EQUAL', 'b'),
+                where('first_name', 'EQUAL', 'c'),
                 // a field that is not a column
-                { attribute: 'other', operator: 'IS_BLANK' }
-            ]
-        });
+                where('other', 'IS_BLANK')
+            )
+        );
         const chips = Array.from(element.querySelectorAll('.footer-filter-attr')).map((chip) => chip.textContent?.trim());
         expect(chips).toEqual(['Column label', 'Field label', 'first_name', 'other']);
     });
 
     it('expect the datasource on its own to use the field labels', async () => {
         const { datasource } = await mountGrid(config(), [{ own: 'a' }], fields);
-        datasource.filter({ attribute: 'own', operator: 'EQUAL', value: 'a' });
+        datasource.filter(where('own', 'EQUAL', 'a'));
         expect(datasource.getFilterString()).toEqual("([FIELD LABEL] <<EQUAL_TO>> 'A')");
     });
 });
@@ -253,11 +253,7 @@ describe('fields in the grid - filter editor', () => {
             ],
             { fields: { active: 'boolean' } }
         );
-        datasource.filter({
-            type: 'GROUP',
-            logicalOperator: 'AND',
-            filterArguments: [{ type: 'CONDITION', attribute: 'active', operator: 'EQUAL', valueType: 'VALUE', value: null }]
-        });
+        datasource.filter(and(where('active', 'EQUAL', null)));
         gridInterface.openFilterEditor();
 
         const input = document.querySelector('.filter-editor-container .grid-condition input') as HTMLInputElement;
@@ -277,11 +273,7 @@ describe('fields in the grid - filter editor', () => {
             ],
             { fields: { price: { type: 'number', formatter: NumberFormatterComma } } }
         );
-        datasource.filter({
-            type: 'GROUP',
-            logicalOperator: 'AND',
-            filterArguments: [{ type: 'CONDITION', attribute: 'price', operator: 'EQUAL', valueType: 'VALUE', value: 3 }]
-        });
+        datasource.filter(and(where('price', 'EQUAL', 3)));
         gridInterface.openFilterEditor();
 
         const input = document.querySelector('.filter-editor-container .grid-condition input') as HTMLInputElement;

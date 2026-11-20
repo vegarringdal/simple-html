@@ -2,7 +2,7 @@ import { html, render } from 'lit-html';
 import { DateFormatterYYYYMMDD } from '../../datasource/DateFormatterYYYYMMDD';
 import { DateFormatterYYYYMMDDTHHMMSS } from '../../datasource/DateFormatterYYYYMMDDTHHMMSS';
 import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
-import type { FilterArgument } from '../../datasource/filterArgument';
+import { and, type FilterExpression, type FilterGroup, isFilterGroup, where } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { ColType } from './colType';
@@ -405,19 +405,11 @@ export function contextmenuRow(
         const value = rowData?.[attribute];
         const isBlank = value === null || value === undefined || value === '';
 
-        const conditionForCell = (): FilterArgument =>
-            ({
-                type: 'CONDITION',
-                attribute,
-                attributeType: datasource.getField(attribute).type,
-                valueType: 'VALUE',
-                // filtering a blank cell on EQUAL '' would match nothing useful
-                operator: isBlank ? 'IS_BLANK' : 'EQUAL',
-                value: isBlank ? null : value
-            }) as FilterArgument;
+        // filtering a blank cell on EQUAL '' would match nothing useful
+        const conditionForCell = () => (isBlank ? where(attribute, 'IS_BLANK') : where(attribute, 'EQUAL', value));
 
-        const applyFilter = (filterArgument: FilterArgument, clearHeaderFilters: boolean) => {
-            datasource.filter(filterArgument);
+        const applyFilter = (filter: FilterGroup, clearHeaderFilters: boolean) => {
+            datasource.filter(filter);
             if (clearHeaderFilters) {
                 // the header filter conditions are gone, so their inputs must not keep showing the
                 // old text. __attributes, not attributes: a column only named in the column rows
@@ -432,39 +424,24 @@ export function contextmenuRow(
         };
 
         const replaceFilter = () => {
-            applyFilter(
-                {
-                    type: 'GROUP',
-                    logicalOperator: 'AND',
-                    filterArguments: [conditionForCell()]
-                } as FilterArgument,
-                true
-            );
+            applyFilter(and(conditionForCell()), true);
         };
 
         const addToFilter = () => {
             const current = datasource.getFilter();
-            let existing: FilterArgument[] = [];
-            if (current?.logicalOperator === 'OR' && current.filterArguments?.length) {
-                // kept whole - spreading its conditions into the AND would turn "a OR b" into "a AND b"
-                existing = [current];
-            } else if (current?.filterArguments?.length) {
-                existing = current.filterArguments;
+            let existing: FilterExpression[] = [];
+            if (current && isFilterGroup(current) && current.group !== 'OR') {
+                // an AND root (anything but OR is AND, as the filter runs it): its children go in the new AND
+                existing = current.children;
             } else if (current) {
-                // a single condition that was never wrapped in a group
+                // an OR root is kept whole - spreading its conditions into the AND would turn "a OR b"
+                // into "a AND b". So is a single condition at the root
                 existing = [current];
             }
 
             // the existing conditions are kept, header filters included, so the header inputs
             // keep their text
-            applyFilter(
-                {
-                    type: 'GROUP',
-                    logicalOperator: 'AND',
-                    filterArguments: [conditionForCell(), ...existing]
-                } as FilterArgument,
-                false
-            );
+            applyFilter(and(conditionForCell(), ...existing), false);
         };
 
         return html`<div class="simple-html-grid-menu-section">Filter:</div>

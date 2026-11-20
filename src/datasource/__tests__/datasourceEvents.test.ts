@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Datasource } from '../dataSource';
 import type { DatasourceEvents } from '../datasourceEvents';
+import { where } from '../filterExpression';
 
 /**
  * datasource.on(): the events the datasource sends and what they carry
@@ -26,7 +27,7 @@ describe('datasource events - subscribing', () => {
             received.push(data);
         });
 
-        datasource.filter({ attribute: 'name', operator: 'EQUAL', value: 'a', attributeType: 'text' });
+        datasource.filter(where('name', 'EQUAL', 'a'));
 
         expect(received).toEqual([{ info: 'filter' }]);
     });

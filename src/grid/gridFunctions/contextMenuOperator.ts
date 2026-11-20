@@ -1,4 +1,5 @@
 import { html, render } from 'lit-html';
+import type { FilterOperator } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { createElement } from './createElement';
@@ -6,11 +7,16 @@ import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
 
 /**
- * ctx is part of filter editor
+ * the operator picker of the filter editor
  * @param cell
- * @param callback
+ * @param callback gets the picked operator
  */
-export function contextMenuOperator(ctx: Grid, event: MouseEvent, cell: HTMLElement, callback: (operator: string) => void) {
+export function contextMenuOperator(
+    ctx: Grid,
+    event: MouseEvent,
+    cell: HTMLElement,
+    callback: (operator: FilterOperator) => void
+) {
     removeContextMenu(ctx);
 
     const contextMenu = createElement('div', 'simple-html-grid');
@@ -29,7 +35,7 @@ export function contextMenuOperator(ctx: Grid, event: MouseEvent, cell: HTMLElem
         contextMenu.style.left = asPx(5);
     }
 
-    const operators = [
+    const operators: FilterOperator[] = [
         'EQUAL',
         'LESS_THAN_OR_EQUAL_TO',
         'GREATER_THAN_OR_EQUAL_TO',
@@ -57,7 +63,7 @@ export function contextMenuOperator(ctx: Grid, event: MouseEvent, cell: HTMLElem
                     return html`<div
                         class="simple-html-grid-menu-item"
                         @click=${() => {
-                            callback(prettytext);
+                            callback(operator);
                         }}
                     >
                         ${prettytext}

@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, describe, expect, it } from 'vitest';
+import { and, where } from '../../datasource/filterExpression';
 import {
     footerText,
     mountGrid,
@@ -136,7 +137,7 @@ describe('grid rendering - filtering', () => {
     it('expect a filter to reduce the rendered rows', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'firstname', operator: 'EQUAL', value: 'first2' }] as any);
+        datasource.filter(and(where('firstname', 'EQUAL', 'first2')));
 
         expect(renderedColumn(element, 'firstname')).toEqual(['first2']);
     });
@@ -144,7 +145,7 @@ describe('grid rendering - filtering', () => {
     it('expect the footer to show filtered count against the total', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'firstname', operator: 'EQUAL', value: 'first2' }] as any);
+        datasource.filter(and(where('firstname', 'EQUAL', 'first2')));
 
         expect(footerText(element)).toContain('1/5');
     });
@@ -152,7 +153,7 @@ describe('grid rendering - filtering', () => {
     it('expect clearing the filter to bring every row back', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'firstname', operator: 'EQUAL', value: 'first2' }] as any);
+        datasource.filter(and(where('firstname', 'EQUAL', 'first2')));
         datasource.setFilter(null);
         datasource.filter();
 
@@ -162,7 +163,7 @@ describe('grid rendering - filtering', () => {
     it('expect a filter matching nothing to render no rows', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'firstname', operator: 'EQUAL', value: 'nope' }] as any);
+        datasource.filter(and(where('firstname', 'EQUAL', 'nope')));
 
         expect(renderedRows(element)).toHaveLength(0);
         expect(footerText(element)).toContain('0/5');
@@ -171,7 +172,7 @@ describe('grid rendering - filtering', () => {
     it('expect a wildcard filter to match by prefix', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'lastname', operator: 'EQUAL', value: 'last*' }] as any);
+        datasource.filter(and(where('lastname', 'EQUAL', 'last*')));
 
         expect(renderedRows(element)).toHaveLength(5);
     });

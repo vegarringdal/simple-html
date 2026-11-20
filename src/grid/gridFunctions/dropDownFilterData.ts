@@ -1,5 +1,5 @@
-import { Filter, isFilterGroup } from '../../datasource/filter';
-import type { FilterArgument } from '../../datasource/filterArgument';
+import { Filter } from '../../datasource/filter';
+import { and, type FilterExpression, isFilterGroup } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 
 export const DROPDOWN_FILTER_MAX_ROWS = 100;
@@ -33,9 +33,7 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
     const data = availableOnly ? availableRows : allData;
 
     // rows the column's own conditions let through, null when it has none (all checked)
-    const passingOwn = own.length
-        ? new Set(filter.filter(data, { type: 'GROUP', logicalOperator: 'AND', filterArguments: own }, datasource))
-        : null;
+    const passingOwn = own.length ? new Set(filter.filter(data, and(...own), datasource)) : null;
     const checkedValues = new Set();
 
     const length = data.length;
@@ -153,24 +151,20 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
  * Splits the current filter into the column's own top level conditions (what the value list,
  * header filter and "is blank" put there) and everything else.
  * Only an AND root can be split - under an OR root nothing belongs to the column alone.
- * A group without logicalOperator is AND too (see Filter), and a single condition set from code
- * is the column's own when it is on this column.
+ * A single condition at the root is the column's own when it is on this column.
  */
-function splitColumnFilter(filter: FilterArgument | null, attribute: string) {
-    if (filter && isFilterGroup(filter) && filter.logicalOperator !== 'OR') {
-        const args = filter.filterArguments || [];
+function splitColumnFilter(filter: FilterExpression | null, attribute: string) {
+    if (filter && isFilterGroup(filter) && filter.group !== 'OR') {
+        const isOwn = (child: FilterExpression) => !isFilterGroup(child) && child.field === attribute;
         return {
-            own: args.filter((arg) => arg.attribute === attribute),
-            others: {
-                ...filter,
-                filterArguments: args.filter((arg) => arg.attribute !== attribute)
-            }
+            own: filter.children.filter(isOwn),
+            others: and(...filter.children.filter((child) => !isOwn(child)))
         };
     }
 
-    if (filter && !isFilterGroup(filter) && filter.attribute === attribute) {
-        return { own: [filter], others: null as FilterArgument | null };
+    if (filter && !isFilterGroup(filter) && filter.field === attribute) {
+        return { own: [filter], others: null };
     }
 
-    return { own: [] as FilterArgument[], others: filter };
+    return { own: [], others: filter };
 }

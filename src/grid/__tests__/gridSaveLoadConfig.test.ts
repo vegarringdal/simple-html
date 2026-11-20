@@ -1,14 +1,15 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { GridConfig } from '../gridConfig';
+import type { Datasource } from '../../datasource/dataSource';
+import { and, type FilterCondition, isFilterGroup, where } from '../../datasource/filterExpression';
 import { footerText, mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
 /**
  * saveConfig/loadConfig/loadInitConfig must hand out and take in copies.
  *
  * The datasource keeps the sorting/filter objects it is given and changes them in place
- * (shift+click sort, the filter context menu adding IS_BLANK/removing a column), so any object
+ * (shift+click sort), and code holding `getFilter()` can change the filter in place, so any object
  * shared with it changes behind the user's back.
  */
 
@@ -21,39 +22,18 @@ beforeEach(() => {
     document.body.innerHTML = '';
 });
 
-const ageOver15 = () =>
-    ({
-        type: 'GROUP',
-        logicalOperator: 'AND',
-        filterArguments: [
-            {
-                type: 'CONDITION',
-                logicalOperator: 'NONE',
-                valueType: 'VALUE',
-                attribute: 'age',
-                attributeType: 'number',
-                operator: 'GREATER_THAN',
-                value: 15
-            }
-        ]
-    }) as GridConfig['filter'];
+const ageOver15 = () => and(where('age', 'GREATER_THAN', 15));
 
-const firstnameIsFirst3 = () => ({
-    type: 'CONDITION',
-    logicalOperator: 'NONE',
-    valueType: 'VALUE',
-    attribute: 'firstname',
-    attributeType: 'text',
-    operator: 'EQUAL',
-    value: 'first3'
-});
+const firstnameIsFirst3 = () => where('firstname', 'EQUAL', 'first3');
 
 /**
- * changes the datasource filter in place and re-runs it, the way the filter context menu does
- * (contextmenuFilter pushes into / filters the current filter object)
+ * changes the datasource filter in place and re-runs it, the way code holding getFilter() can
  */
-function addToFilterInPlace(datasource: any, condition: any) {
-    datasource.getFilter().filterArguments.push(condition);
+function addToFilterInPlace(datasource: Datasource, condition: FilterCondition) {
+    const filter = datasource.getFilter();
+    if (filter && isFilterGroup(filter)) {
+        filter.children.push(condition);
+    }
     datasource.filter();
 }
 

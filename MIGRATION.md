@@ -372,9 +372,8 @@ const datasource = new Datasource({ fields: { changed: 'datetime' } });
 
 The value stored is unchanged: a date typed into a cell still gets the current time of day.
 
-Filter conditions still have `attributeType` until the filter format changes. A field listed in
-`fields` always compares as its own type, `attributeType` is only used for a field that is not
-listed.
+Filters take the type from `fields` too, a condition has no `attributeType` any more - see
+[Filters](#filters).
 
 ### Formatters are per field
 
@@ -509,6 +508,203 @@ Other results that change:
   false for an empty one - now null), and a boolean typed into the filter editor matches the rows
 * copying a `datetime` cell from the row menu copies the time too
 
+## Filters
+
+`FilterArgument` is replaced by one small format, the same for a filter you pass in, the one
+`getFilter()` returns and the one `saveConfig()` saves. A filter is a `FilterExpression`: a
+condition, or a group of conditions and groups.
+
+```ts
+type FilterExpression = FilterGroup | FilterCondition;
+interface FilterGroup { group: 'AND' | 'OR'; children: FilterExpression[] }
+interface FilterCondition { field: string; operator: FilterOperator; value?: unknown; valueField?: string }
+```
+
+```ts
+// v5
+datasource.filter({
+    type: 'GROUP',
+    logicalOperator: 'AND',
+    filterArguments: [
+        { type: 'CONDITION', logicalOperator: 'NONE', attribute: 'age', attributeType: 'number', operator: 'GREATER_THAN', value: 18, valueType: 'VALUE' },
+        {
+            type: 'GROUP',
+            logicalOperator: 'OR',
+            filterArguments: [
+                { attribute: 'country', operator: 'EQUAL', value: 'Norway' },
+                { attribute: 'country', operator: 'EQUAL', value: 'Sweden' }
+            ]
+        }
+    ]
+});
+
+// v6
+import { and, or, where } from '@simple-html/grid';
+
+const datasource = new Datasource({ fields: { age: 'number' } }); // the type lives here now
+datasource.filter(and(where('age', 'GREATER_THAN', 18), or(where('country', 'EQUAL', 'Norway'), where('country', 'EQUAL', 'Sweden'))));
+
+// the same, written out
+datasource.filter({
+    group: 'AND',
+    children: [
+        { field: 'age', operator: 'GREATER_THAN', value: 18 },
+        {
+            group: 'OR',
+            children: [
+                { field: 'country', operator: 'EQUAL', value: 'Norway' },
+                { field: 'country', operator: 'EQUAL', value: 'Sweden' }
+            ]
+        }
+    ]
+});
+```
+
+| v5 | v6 |
+| --- | --- |
+| `FilterArgument` (type) | `FilterExpression` = `FilterGroup \| FilterCondition` |
+| `FilterComparisonOperator` (type) | `FilterOperator`, the operator names are the same |
+| `attribute` | `field` |
+| `operator`, `value` | unchanged |
+| `logicalOperator: 'AND' \| 'OR'` on a group | `group: 'AND' \| 'OR'` |
+| `filterArguments` | `children` |
+| `type: 'GROUP' \| 'CONDITION'` | removed - a group is what has `children` |
+| `logicalOperator: 'NONE'` on a condition | removed |
+| `valueType: 'VALUE'` | removed |
+| `valueType: 'ATTRIBUTE'`, the other field's name in `value` | `valueField: 'name'` |
+| `attributeType` | removed - the type comes from the datasource's `fields` |
+| `FilterAttributeSimple`, `FilterExpressionType`, `FilterLogicalOperator`, `FilterValueType` (types) | removed |
+| `datasource.filter([a, b])` | `datasource.filter(and(a, b))` |
+| `datasource.filter({ logicalOperator: 'AND', filterArguments: [] })` to clear | `datasource.filter(null)` |
+
+### Builders
+
+`where(field, operator, value?)` makes a condition, `and(...children)` and `or(...children)` make
+groups. They return the plain objects above, so a filter built with them can be stored, compared
+and changed like any other. `where` leaves `value` out when it is not given (`IS_BLANK`).
+
+```ts
+where('email', 'IS_BLANK'); // { field: 'email', operator: 'IS_BLANK' }
+and(where('a', 'EQUAL', 'x'), where('b', 'EQUAL', 'y')); // { group: 'AND', children: [...] }
+```
+
+### `filter()`, `setFilter()` and `getFilter()`
+
+* `filter(expression)` sets the filter and runs it, `filter()` runs the current one again, and
+  `filter(null)` removes it. In v5 `filter(null)` ran the current filter again, like `filter()`.
+* The array form, `filter([a, b])`, is removed. It meant AND: use `and(a, b)`.
+* An empty group is kept as it is and filters nothing out. v5 turned
+  `filter({ logicalOperator: 'AND', filterArguments: [] })` into no filter; use `filter(null)`.
+* `getFilter()` returns the object that was given. v5 wrapped a single condition passed to
+  `filter()` in an AND group, v6 keeps it as the root.
+
+### Compare with another field: `valueField`
+
+```ts
+// v5
+datasource.filter({ attribute: 'changed', operator: 'GREATER_THAN', value: 'approved', valueType: 'ATTRIBUTE' });
+
+// v6
+datasource.filter({ field: 'changed', operator: 'GREATER_THAN', valueField: 'approved' });
+```
+
+`valueField` wins when `value` is set too. `getFilterString()` and `getFilterTree()` show the other
+field by its label, v5 showed its name.
+
+### `attributeType` is gone, the type comes from `fields`
+
+A condition has no type. The datasource compares it as the type of its field in `fields`, and a
+field that is not listed is `'text'`. If you set `attributeType` on conditions for fields that are
+not in `fields`, list those fields instead:
+
+```ts
+// v5
+const datasource = new Datasource();
+datasource.filter({ attribute: 'planned', operator: 'GREATER_THAN', value: '10', attributeType: 'number' });
+
+// v6
+const datasource = new Datasource({ fields: { planned: 'number' } });
+datasource.filter(where('planned', 'GREATER_THAN', '10'));
+```
+
+Unchanged: a number value still compares as a number and a `Date` value as a date, also on a field
+that is not listed.
+
+### A single condition at the root works everywhere
+
+The root of a filter can be a group or one condition. In v5 a condition set with `setFilter()` was
+filtered on, but `getFilterString()` returned `''`, `getFilterTree()` returned `null` (so the
+footer showed nothing), and the header filter's "Is Blank" dropped it. Now it is shown and kept:
+`getFilterString()` puts it in parentheses like a group of one, `getFilterTree()` in an AND group,
+and a header filter on another column is ANDed with it.
+
+### Incomplete conditions are still ignored
+
+A condition without `field` or `operator`, a date condition without the value it needs and an
+empty group filter nothing out. That is how plain js can hand in a half built filter. Two changes:
+
+* `getFilterTree()` returns `null` when nothing of the filter is shown - the same case where
+  `getFilterString()` returns `''`. v5 returned an empty group when every condition was incomplete.
+* The filter editor applies only the conditions that are complete: a condition with no field or
+  operator picked, or set to compare with a field that is not picked yet, is left out. The open
+  dialog keeps it. A `Date` stays a `Date` (v5 applied a JSON copy, so it became text).
+
+### Other changes
+
+* The header filter menu ("Clear Filter", "Set Is Blank") sets a new filter instead of changing the
+  current filter object in place.
+* An `IN` / `NOT_IN` condition with the list as text (one value per line) is left as it is. v5
+  wrote it back as an upper case array while filtering.
+* The `operator` of a column in the grid config is a `FilterOperator`.
+
+### Saved configs
+
+A `GridConfig.filter` saved by v5 (`saveConfig()`) has the old shape. v6 reads it as an incomplete
+condition and ignores it, it does not throw. To keep saved filters, convert them when you load them:
+
+```ts
+import { type FilterExpression, type FilterOperator, where } from '@simple-html/grid';
+
+/** a filter as v5 saved it in GridConfig.filter */
+interface V5Filter {
+    type?: 'GROUP' | 'CONDITION';
+    logicalOperator?: 'AND' | 'OR' | 'NONE';
+    attribute?: string | null;
+    operator?: FilterOperator | null;
+    value?: unknown;
+    valueType?: 'VALUE' | 'ATTRIBUTE' | null;
+    filterArguments?: V5Filter[];
+}
+
+function fromV5(filter: V5Filter): FilterExpression | null {
+    if (filter.type === 'GROUP' || Array.isArray(filter.filterArguments)) {
+        const children = (filter.filterArguments ?? []).map(fromV5).filter((child): child is FilterExpression => child !== null);
+        return { group: filter.logicalOperator === 'OR' ? 'OR' : 'AND', children };
+    }
+    if (!filter.attribute || !filter.operator) {
+        return null; // incomplete, v5 ignored it too
+    }
+    if (filter.valueType === 'ATTRIBUTE') {
+        return { field: filter.attribute, operator: filter.operator, valueField: String(filter.value) };
+    }
+    return where(filter.attribute, filter.operator, filter.value);
+}
+
+const saved = JSON.parse(localStorage.getItem('my-grid-layout') ?? 'null');
+if (saved?.filter) {
+    saved.filter = fromV5(saved.filter);
+}
+```
+
+`attributeType` is dropped: list the field in `fields`.
+
+### 0 is blank - unchanged, on purpose
+
+A row value of 0 still counts as blank: for number fields `IS_BLANK` matches 0 and `IS_NOT_BLANK`
+leaves it out, and the header's value list (text fields) puts a 0 under "Blank". In ERP style data
+0 and empty mean the same, and changing it would silently change what existing filters match. It
+is documented on `FilterOperator`.
+
 ## Internals are no longer in the typings
 
 Members meant for the grid itself were public and showed up in autocomplete. They are tagged
@@ -528,8 +724,8 @@ on the datasource (`select`, `selectAll`, `getSelectedRows` ...) instead of `get
 The library is compiled with TypeScript `strict` now, and the types say what the code really
 does. With `strict` on in your project, you may have to handle these:
 
-* `datasource.getFilter()` returns `FilterArgument | null` - it is `null` when no filter is set.
-  `setFilter(null)` is allowed.
+* `datasource.getFilter()` returns `FilterExpression | null` - it is `null` when no filter is set.
+  `setFilter(null)` is allowed. See [Filters](#filters) for the new format.
 * the state fields of a `GridConfig` from `saveConfig()` can be `null`: `sorting`, `grouping`,
   `filter`, `expandedGroups`, and `Attribute.currentFilterValue`
 * `HTMLCellElement.$attribute` is `string | null` - group and selector cells have none

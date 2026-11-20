@@ -93,7 +93,7 @@ Tasks:
        (`format`, `parse`, maybe `placeholder`); the built-ins become configurable objects, not
        static classes. Its parameters should say what the grid passes: an optional type, and no
        attribute for a new filter editor condition - 5 `!` in the grid exist only for that. **M-L**
-8. [ ] **One filter format.** `FilterArgument` mixes groups and conditions (`type`,
+8. [x] **One filter format.** `FilterArgument` mixes groups and conditions (`type`,
        `logicalOperator: 'NONE'` on conditions, `valueType`, `attributeType`). Use the shape
        `getFilterTree()` already returns - `{ group: 'AND' | 'OR', children }` or
        `{ field, operator, value }` - as the input format too, with small builders
@@ -103,7 +103,7 @@ Tasks:
        of bugs: selecting headers, pasting onto them. Return display rows as
        `{ kind: 'group' | 'data' }`, keep the user's objects clean, and keep the edit tracking
        metadata (`__KEY`, `__rowState`, `__controller`) off them or namespaced in one place. **L**
-10. [ ] **Decide: is 0 blank?** Today it is for numbers: IS_BLANK matches 0, the value list puts 0
+10. [x] **Decide: is 0 blank?** Today it is for numbers: IS_BLANK matches 0, the value list puts 0
         under "Blank", `BLANK_TO_ZERO` exists. That is consistent, but surprising outside
         ERP style data. Keep it and document it, or separate 0 from blank. **decision, then S-M**
 11. [ ] **Change tracking**: `getChanges()` still lists fields edited back to their original value,

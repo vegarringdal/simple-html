@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { where } from '../filterExpression';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
@@ -19,11 +20,7 @@ describe('string filter', () => {
     });
 
     it('string with GREATER_THAN', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'GREATER_THAN',
-            value: 'b'
-        });
+        ds.filter(where('name', 'GREATER_THAN', 'b'));
 
         expect(ds.getRows()).toEqual([
             /* { name: 'a', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }, */
@@ -35,11 +32,7 @@ describe('string filter', () => {
     });
 
     it('string with GREATER_THAN_OR_EQUAL_TO', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'GREATER_THAN_OR_EQUAL_TO',
-            value: 'b'
-        });
+        ds.filter(where('name', 'GREATER_THAN_OR_EQUAL_TO', 'b'));
 
         expect(ds.getRows()).toEqual([
             /* { name: 'a', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }, */
@@ -51,11 +44,7 @@ describe('string filter', () => {
     });
 
     it('string with LESS_THAN', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'LESS_THAN',
-            value: 'b'
-        });
+        ds.filter(where('name', 'LESS_THAN', 'b'));
 
         expect(ds.getRows()).toEqual([
             { name: 'a', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 }
@@ -67,11 +56,7 @@ describe('string filter', () => {
     });
 
     it('string with LESS_THAN', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'LESS_THAN_OR_EQUAL_TO',
-            value: 'b'
-        });
+        ds.filter(where('name', 'LESS_THAN_OR_EQUAL_TO', 'b'));
 
         expect(ds.getRows()).toEqual([
             { name: 'a', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },

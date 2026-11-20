@@ -2,6 +2,7 @@
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Datasource } from '../../datasource/dataSource';
+import type { FilterGroup } from '../../datasource/filterExpression';
 import { GridInterface } from '../gridInterface';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
@@ -68,9 +69,10 @@ describe('header label cells', () => {
 });
 
 describe('filter editor', () => {
-    it('expect "add condition" to work on a group set from code without filterArguments', async () => {
+    it('expect "add condition" to work on a group set from code without children', async () => {
         const { gridInterface, datasource } = await mountGrid();
-        datasource.setFilter({ type: 'GROUP', logicalOperator: 'AND' });
+        // only plain js can leave children out
+        datasource.setFilter({ group: 'AND' } as FilterGroup);
         gridInterface.openFilterEditor();
 
         const addCondition = document.querySelector('[data-tooltip="Add a condition to this group"]') as HTMLElement;

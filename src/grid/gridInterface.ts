@@ -1,7 +1,6 @@
 import type { Datasource } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
-import type { FilterArgument } from '../datasource/filterArgument';
 import { Emitter, type EventHandler } from '../emitter';
 import type { Grid } from './grid';
 import type { GridConfig, ParsedGridConfig } from './gridConfig';
@@ -243,12 +242,8 @@ export class GridInterface<T> {
 
         this.__parseConfig();
 
-        if (filter) {
-            this.getDatasource().setFilter(filter as FilterArgument);
-        } else {
-            this.getDatasource().setFilter(null);
-        }
-        this.getDatasource().filter();
+        // null clears a filter that was set before
+        this.getDatasource().filter(filter ?? null);
 
         if (grouping?.length) {
             // setExpanded makes a Set of it, and new Set(undefined/null) is empty too

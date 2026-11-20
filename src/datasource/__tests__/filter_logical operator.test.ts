@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { and, or, where } from '../filterExpression';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
@@ -19,7 +20,7 @@ describe('datasource filter with ', () => {
     });
 
     it('single', () => {
-        ds.filter({ attribute: 'name', operator: 'EQUAL', value: 'person1' });
+        ds.filter(where('name', 'EQUAL', 'person1'));
         expect(ds.getRows()).toEqual([
             { name: 'person1', group: 'group2', age: 34, index: 2 },
             { name: 'person1', group: 'group1', age: 32, index: 3 },
@@ -28,10 +29,7 @@ describe('datasource filter with ', () => {
     });
 
     it('2 attributes, default to and', () => {
-        ds.filter([
-            { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-            { attribute: 'name', operator: 'EQUAL', value: 'person1' }
-        ]);
+        ds.filter(and(where('group', 'EQUAL', 'group1'), where('name', 'EQUAL', 'person1')));
         expect(ds.getRows()).toEqual([
             { name: 'person1', group: 'group1', age: 32, index: 3 },
             { name: 'person1', group: 'group1', age: 56, index: 4 }
@@ -39,10 +37,7 @@ describe('datasource filter with ', () => {
     });
 
     it('or statement mpty', () => {
-        ds.filter({
-            logicalOperator: 'OR',
-            filterArguments: []
-        });
+        ds.filter(or());
         expect(ds.getRows()).toEqual([
             { name: 'person2', group: 'group2', age: 23, index: 1 },
             { name: 'person1', group: 'group2', age: 34, index: 2 },
@@ -54,13 +49,7 @@ describe('datasource filter with ', () => {
     });
 
     it('or statement', () => {
-        ds.filter({
-            logicalOperator: 'OR',
-            filterArguments: [
-                { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                { attribute: 'name', operator: 'EQUAL', value: 'person1' }
-            ]
-        });
+        ds.filter(or(where('group', 'EQUAL', 'group1'), where('name', 'EQUAL', 'person1')));
         expect(ds.getRows()).toEqual([
             { name: 'person1', group: 'group2', age: 34, index: 2 },
             { name: 'person1', group: 'group1', age: 32, index: 3 },
@@ -71,25 +60,12 @@ describe('datasource filter with ', () => {
     });
 
     it('or statement with sub and statements', () => {
-        ds.filter({
-            logicalOperator: 'OR',
-            filterArguments: [
-                {
-                    logicalOperator: 'AND',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
-                    ]
-                },
-                {
-                    logicalOperator: 'AND',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person4' }
-                    ]
-                }
-            ]
-        });
+        ds.filter(
+            or(
+                and(where('group', 'EQUAL', 'group2'), where('name', 'EQUAL', 'person2')),
+                and(where('group', 'EQUAL', 'group1'), where('name', 'EQUAL', 'person4'))
+            )
+        );
         expect(ds.getRows()).toEqual([
             { name: 'person2', group: 'group2', age: 23, index: 1 },
             { name: 'person4', group: 'group1', age: 55, index: 5 }
@@ -97,25 +73,12 @@ describe('datasource filter with ', () => {
     });
 
     it('and statement with sub or statements', () => {
-        ds.filter({
-            logicalOperator: 'AND',
-            filterArguments: [
-                {
-                    logicalOperator: 'OR',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group1' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person2' }
-                    ]
-                },
-                {
-                    logicalOperator: 'OR',
-                    filterArguments: [
-                        { attribute: 'group', operator: 'EQUAL', value: 'group2' },
-                        { attribute: 'name', operator: 'EQUAL', value: 'person4' }
-                    ]
-                }
-            ]
-        });
+        ds.filter(
+            and(
+                or(where('group', 'EQUAL', 'group1'), where('name', 'EQUAL', 'person2')),
+                or(where('group', 'EQUAL', 'group2'), where('name', 'EQUAL', 'person4'))
+            )
+        );
         expect(ds.getRows()).toEqual([
             { name: 'person2', group: 'group2', age: 23, index: 1 },
             { name: 'person4', group: 'group1', age: 55, index: 5 }

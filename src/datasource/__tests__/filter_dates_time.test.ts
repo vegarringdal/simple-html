@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { type FilterCondition, where } from '../filterExpression';
 
 const simpleArray = [
     { name: 'person2', group: 'group2', age: 23, born: new Date(1980, 0, 1), index: 1 },
@@ -19,17 +20,12 @@ let ds: Datasource;
 
 describe('date filter equal, will use date and time', () => {
     beforeAll(() => {
-        ds = new Datasource();
+        ds = new Datasource({ fields: { born: 'date' } });
         ds.setData(simpleArray.slice());
     });
 
     it('date equal to', () => {
-        ds.filter({
-            attribute: 'born',
-            operator: 'EQUAL',
-            value: new Date(1990, 0, 1, 6, 12, 1, 200),
-            attributeType: 'date'
-        });
+        ds.filter(where('born', 'EQUAL', new Date(1990, 0, 1, 6, 12, 1, 200)));
 
         expect(ds.getRows()).toEqual([simpleArray[2]]);
     });
@@ -37,34 +33,24 @@ describe('date filter equal, will use date and time', () => {
 
 describe('date filter equal, use only date and and time', () => {
     beforeAll(() => {
-        ds = new Datasource();
+        ds = new Datasource({ fields: { born: 'date' } });
         ds.setData(simpleArray.slice());
     });
 
     it('date equal to', () => {
-        ds.filter({
-            attribute: 'born',
-            operator: 'NOT_EQUAL_TO',
-            value: new Date(1990, 0, 1, 6, 12, 1, 200),
-            attributeType: 'date'
-        });
+        ds.filter(where('born', 'NOT_EQUAL_TO', new Date(1990, 0, 1, 6, 12, 1, 200)));
         expect(ds.getRows()).toEqual([simpleArray[0], simpleArray[1], simpleArray[3], simpleArray[4]]);
     });
 });
 
 describe('date filter greater', () => {
     beforeAll(() => {
-        ds = new Datasource();
+        ds = new Datasource({ fields: { born: 'date' } });
         ds.setData(simpleArray.slice());
     });
 
     it('date equal to', () => {
-        ds.filter({
-            attribute: 'born',
-            operator: 'GREATER_THAN',
-            value: new Date(1990, 0, 1, 6, 12, 1, 200),
-            attributeType: 'date'
-        });
+        ds.filter(where('born', 'GREATER_THAN', new Date(1990, 0, 1, 6, 12, 1, 200)));
 
         expect(ds.getRows()).toEqual([simpleArray[3], simpleArray[4]]);
     });
@@ -72,17 +58,12 @@ describe('date filter greater', () => {
 
 describe('date filter greater or equal', () => {
     beforeAll(() => {
-        ds = new Datasource();
+        ds = new Datasource({ fields: { born: 'date' } });
         ds.setData(simpleArray.slice());
     });
 
     it('date equal to', () => {
-        ds.filter({
-            attribute: 'born',
-            operator: 'GREATER_THAN_OR_EQUAL_TO',
-            value: new Date(1990, 0, 1, 6, 12, 1, 200),
-            attributeType: 'date'
-        });
+        ds.filter(where('born', 'GREATER_THAN_OR_EQUAL_TO', new Date(1990, 0, 1, 6, 12, 1, 200)));
 
         expect(ds.getRows()).toEqual([simpleArray[2], simpleArray[3], simpleArray[4]]);
     });
@@ -90,17 +71,12 @@ describe('date filter greater or equal', () => {
 
 describe('date filter less', () => {
     beforeAll(() => {
-        ds = new Datasource();
+        ds = new Datasource({ fields: { born: 'date' } });
         ds.setData(simpleArray.slice());
     });
 
     it('date equal to', () => {
-        ds.filter({
-            attribute: 'born',
-            operator: 'LESS_THAN',
-            value: new Date(1990, 0, 1, 6, 12, 1, 200),
-            attributeType: 'date'
-        });
+        ds.filter(where('born', 'LESS_THAN', new Date(1990, 0, 1, 6, 12, 1, 200)));
 
         expect(ds.getRows()).toEqual([simpleArray[0], simpleArray[1]]);
     });
@@ -108,17 +84,12 @@ describe('date filter less', () => {
 
 describe('date filter less or equal', () => {
     beforeAll(() => {
-        ds = new Datasource();
+        ds = new Datasource({ fields: { born: 'date' } });
         ds.setData(simpleArray.slice());
     });
 
     it('date equal to', () => {
-        ds.filter({
-            attribute: 'born',
-            operator: 'LESS_THAN_OR_EQUAL_TO',
-            value: new Date(1990, 0, 1, 6, 12, 1, 200),
-            attributeType: 'date'
-        });
+        ds.filter(where('born', 'LESS_THAN_OR_EQUAL_TO', new Date(1990, 0, 1, 6, 12, 1, 200)));
 
         expect(ds.getRows()).toEqual([simpleArray[0], simpleArray[1], simpleArray[2]]);
     });
@@ -126,18 +97,14 @@ describe('date filter less or equal', () => {
 
 describe('date filter missing operator is ignored', () => {
     beforeAll(() => {
-        ds = new Datasource();
+        ds = new Datasource({ fields: { born: 'date' } });
         ds.setData(simpleArray.slice());
     });
 
-    // a condition without operator is incomplete, it does not restrict rows
+    // a condition without operator is incomplete, it does not restrict rows. Only plain js can leave
+    // the operator out, hence the cast
     it('date equal to', () => {
-        ds.filter({
-            attribute: 'born',
-            //            operator: 'GREATER_THAN',
-            value: new Date(1990, 0, 1, 6, 12, 1, 200),
-            attributeType: 'date'
-        });
+        ds.filter({ field: 'born', value: new Date(1990, 0, 1, 6, 12, 1, 200) } as FilterCondition);
 
         expect(ds.getRows()).toEqual(simpleArray);
     });

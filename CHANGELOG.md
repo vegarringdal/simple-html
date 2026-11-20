@@ -79,8 +79,7 @@ what to change in your code. Released in phases.
 - **`setDates()` is removed**: a `date` field sorts on the day.
 - **`date` and `datetime` replace `includesTime`**: a `date` field filters, sorts and groups on the
   day, a `datetime` field on the timestamp. `includesTime` on the date formatters and
-  `ValueFormatter.dateIncludesTime()` are removed. Filter conditions' `attributeType` is only used
-  for fields that are not listed.
+  `ValueFormatter.dateIncludesTime()` are removed.
 - **Formatters are per field**: `ValueFormatter`, `DefaultValueFormatter`, `DateAndNumberFormatter`,
   `setValueFormatter()` / `getValueFormatter()`, `setDateFormatter()` / `getDateFormatter()` and
   `setNumberFormatter()` / `getNumberFormatter()` are removed. A field takes a `formatter`, the
@@ -95,7 +94,28 @@ what to change in your code. Released in phases.
   is not listed groups on its value as text - a `Date` in it is no longer grouped by day.
 - **`dynamicCellTypeColumn` applies to any text field**, a field that is not listed included (v5
   needed `type: 'text'` on the column). It can name `'datetime'`.
-- **`FilterArgument.value` can be a boolean** in the type, as the boolean header filter already set it.
+- **One filter format**: `FilterArgument` is replaced by `FilterExpression`, a `FilterGroup`
+  (`{ group: 'AND' | 'OR', children }`) or a `FilterCondition` (`{ field, operator, value?,
+  valueField? }`). `attribute` is `field`, a group's `logicalOperator` is `group`, `filterArguments`
+  is `children`; `type`, `logicalOperator: 'NONE'`, `valueType` and `attributeType` are removed.
+  `filter()`, `setFilter()`, `getFilter()`, `GridConfig.filter` and `saveConfig()` all use it. A
+  filter saved by v5 is ignored, `MIGRATION.md` has a function that converts one.
+- **`FilterComparisonOperator` is renamed `FilterOperator`** (same operator names), and
+  `FilterAttributeSimple`, `FilterExpressionType`, `FilterLogicalOperator` and `FilterValueType` are
+  removed. `Attribute.operator` is a `FilterOperator`.
+- **A condition's type comes only from `fields`**: `attributeType` is gone, a field that is not
+  listed is `'text'`. A number or `Date` value still compares as a number or date.
+- **`valueField` replaces `valueType: 'ATTRIBUTE'`** (with the other field's name in `value`) to
+  compare with another field of the row.
+- **`filter()`**: the array form `filter([a, b])` is removed (use `and(a, b)`), `filter(null)` removes
+  the filter (v5 ran the current one again), an empty group is kept and filters nothing (v5 turned
+  it into no filter), and a single condition stays the root: `getFilter()` returns it as given, v5
+  wrapped it in an AND group.
+- **`getFilterTree()` returns `null` when nothing of the filter is shown**, the same case where
+  `getFilterString()` returns `''`. v5 returned an empty group when every condition was incomplete.
+  A `valueField` is shown by its label (v5 showed the name).
+- **The filter editor applies only complete conditions**: a condition without a field or operator,
+  or set to compare with a field that is not picked yet, is left out (the open dialog keeps it).
 
 #### Fixed
 - `NumberFormatterComma` `parse` (was `toSource`) threw on null, undefined and a number
@@ -107,6 +127,14 @@ what to change in your code. Released in phases.
 - a boolean typed into the filter editor was kept as text and never matched; pasted text into a
   boolean column was stored as text
 - the date formatters turned a value that is no date, text or number (`true`) into `1970-01-01`
+- a single condition at the root of the filter (set with `setFilter()`) was filtered on, but
+  `getFilterString()` / `getFilterTree()` ignored it, so the footer showed no filter, and the header
+  filter's "Set Is Blank" dropped it
+- the filter editor applied a JSON copy of the filter, so a `Date` value became text
+- an `IN` / `NOT_IN` condition with the list as text was rewritten into an upper case array while
+  filtering
+- the header filter's "Clear Filter" and "Set Is Blank" changed the filter object in place (also the
+  one the user passed in); they set a new filter now
 
 #### Added
 - event maps `DatasourceEvents`, `GridEvents`, `DateEvents`, with every event and its payload
@@ -119,6 +147,13 @@ what to change in your code. Released in phases.
 - the `Formatter` interface, and `TextFormatter` / `BooleanFormatter`, the defaults for `text` and
   `boolean` fields
 - `DataContainer.getKeyAttribute()`
+- filter builders `and(...children)`, `or(...children)` and `where(field, operator, value?)`, and the
+  types `FilterExpression`, `FilterGroup`, `FilterCondition`, `FilterOperator`, every operator
+  documented
+- **0 is blank** is decided: kept as it is, and documented on `FilterOperator` - `IS_BLANK` matches 0,
+  `IS_NOT_BLANK` leaves it out, the value list puts 0 under "Blank"
+- demo: the filtering sample uses the builders and logs `getFilter()`, the save & load sample loads a
+  config with a filter
 - demo: the formatters sample uses per field formatters and the `formatters` option, the value
   formatter override sample is replaced by a custom formatter sample
 
@@ -131,6 +166,11 @@ what to change in your code. Released in phases.
   formatters one parser
 - the grid reads a column's type, label and formatter in one place each: `getCellType()` (with
   `dynamicCellTypeColumn`), `getColumnLabel()` and `datasource.getFormatter()`
+- one rule for an ignored condition (`isIgnoredCondition`), used by the filter, `getFilterString()`,
+  `getFilterTree()` and the filter editor. The filter editor edits drafts (`Partial<FilterCondition>`)
+  and converts them when it applies
+- the filter editor's operator picker hands over a typed operator, no more round trip through the
+  display text
 
 ## 5.0.1
 

@@ -15,18 +15,13 @@ let ds: Datasource;
 
 describe('number filter on string as number', () => {
     beforeAll(() => {
-        ds = new Datasource();
+        // the values are text, the number type comes from the fields (v5: attributeType on the condition)
+        ds = new Datasource({ fields: { planned: 'number', installed: 'number' } });
         ds.setData(simpleArray.slice());
     });
 
     it('attribute vs attribute not equal', () => {
-        ds.filter({
-            attribute: 'planned',
-            operator: 'NOT_EQUAL_TO',
-            value: 'installed',
-            valueType: 'ATTRIBUTE',
-            attributeType: 'number'
-        });
+        ds.filter({ field: 'planned', operator: 'NOT_EQUAL_TO', valueField: 'installed' });
 
         expect(ds.getRows()).toEqual([
             { tag: 'tag2', planned: '2', installed: '1' },
@@ -36,13 +31,7 @@ describe('number filter on string as number', () => {
     });
 
     it('attribute vs attribute equal', () => {
-        ds.filter({
-            attribute: 'planned',
-            operator: 'EQUAL',
-            value: 'installed',
-            valueType: 'ATTRIBUTE',
-            attributeType: 'number'
-        });
+        ds.filter({ field: 'planned', operator: 'EQUAL', valueField: 'installed' });
 
         expect(ds.getRows()).toEqual([
             { tag: 'tag1', planned: '1', installed: '1' },

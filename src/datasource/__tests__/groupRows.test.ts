@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
 import { type Entity, type GroupRow, isGroupRow } from '../entity';
+import { where } from '../filterExpression';
 
 /**
  * Group rows are their own type (GroupRow), not entities. getRows() mixes them with the data rows
@@ -133,7 +134,7 @@ describe('group rows - getRows(true) has data rows only', () => {
 
     it('expect no group rows after a filter and a sort while grouped', () => {
         const ds = grouped();
-        ds.filter({ attribute: 'v', operator: 'GREATER_THAN', value: 1, valueType: 'VALUE', attributeType: 'number' });
+        ds.filter(where('v', 'GREATER_THAN', 1));
         ds.sort({ attribute: 'v', ascending: false });
         expect(ds.getRows().some(isGroupRow)).toBe(true);
         expect(ds.getRows(true).some(isGroupRow)).toBe(false);
