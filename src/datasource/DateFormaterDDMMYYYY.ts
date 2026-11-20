@@ -3,6 +3,11 @@
  */
 export class DateFormaterDDMMYYYY {
     /**
+     * date only, date filters match on the day, see `ValueFormater.dateIncludesTime`
+     */
+    static includesTime = false;
+
+    /**
      * Takes value and return string
      * @param value
      */

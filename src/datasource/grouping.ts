@@ -1,6 +1,7 @@
 import type { Datasource } from './dataSource';
 import type { Entity } from './entity';
 import type { GroupArgument } from './groupArgument';
+import { isBlank } from './isBlank';
 
 /**
  * This takes care the generating the flat array the grid can use for grouping
@@ -218,6 +219,55 @@ export class Grouping {
         return collection;
     }
 
+    /**
+     * expands every group on the path down to the entity and returns the new displayed rows.
+     * Used for a row added while grouped, so it shows up even if its group was collapsed.
+     * @param entity data row that is part of the current groups
+     */
+    public expandToEntity(entity: Entity) {
+        const findPath = (groups: Entity[]): string[] | null => {
+            for (const group of groups) {
+                if (group.__groupChildren.includes(entity)) {
+                    return [group.__groupID];
+                }
+                const path = findPath(group.__groupChildren.filter((child) => child.__group));
+                if (path) {
+                    return [group.__groupID, ...path];
+                }
+            }
+            return null;
+        };
+
+        findPath(this.currentGroups[0] || [])?.forEach((id) => {
+            this.expandedGroupIDs.add(id);
+        });
+
+        return this.expandOneOrAll(null, this.expandedGroupIDs);
+    }
+
+    /**
+     * the key a row is grouped on, the same at every grouping level.
+     * Groups are built from runs of equal keys in the sorted rows, so the key has to agree with
+     * what the sort treats as equal (see `Sort.compareAscending`): every blank (null, undefined,
+     * '', invalid Date) is the one ' blank' group, while 0 and false are real values.
+     */
+    private groupKey(value: any, attribute: string, ds: Datasource): any {
+        if (isBlank(value)) {
+            return ' blank';
+        }
+        if (typeof value === 'boolean') {
+            return value.toString();
+        }
+        let key = value;
+        if (typeof value?.toLocaleDateString === 'function') {
+            key = ds.getValueFormater().fromSourceGrouping(value, 'date', attribute, false);
+        } else if (typeof value?.toFixed === 'function') {
+            key = ds.getValueFormater().fromSourceGrouping(value, 'number', attribute, false);
+        }
+        // a formater can still format a value to nothing, NaN for example
+        return key === null || key === undefined || key === '' ? ' blank' : key;
+    }
+
     private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
         const tempGroupArray: Entity[] = [];
         let curGroup: Entity = {} as Entity;
@@ -225,15 +275,7 @@ export class Grouping {
 
         // first level, here we use array
         array.forEach((element) => {
-            let groupID = element[groupBy];
-            groupID = typeof groupID === 'boolean' ? groupID.toString() : groupID;
-            groupID =
-                typeof groupID?.toLocaleDateString === 'function'
-                    ? ds.getValueFormater().fromSourceGrouping(groupID, 'date', groupBy, false)
-                    : typeof groupID?.toFixed === 'function'
-                      ? ds.getValueFormater().fromSourceGrouping(groupID, 'number', groupBy, false)
-                      : groupID;
-            groupID = groupID || ' blank';
+            const groupID = this.groupKey(element[groupBy], groupBy, ds);
 
             if (groupID !== lastGroupID) {
                 curGroup = {
@@ -268,14 +310,7 @@ export class Grouping {
             // loop children
             const rebuiltChildrenArray: Entity[] = [];
             element.__groupChildren.forEach((child: Entity) => {
-                let groupID = child[groupBy];
-                groupID =
-                    typeof groupID?.toLocaleDateString === 'function'
-                        ? ds.getValueFormater().fromSourceGrouping(groupID, 'date', groupBy, false)
-                        : typeof groupID?.toFixed === 'function'
-                          ? ds.getValueFormater().fromSourceGrouping(groupID, 'number', groupBy, false)
-                          : groupID;
-                groupID = groupID || ' blank';
+                const groupID = this.groupKey(child[groupBy], groupBy, ds);
 
                 if (groupID !== tempValue) {
                     const gidc = element.__groupID;

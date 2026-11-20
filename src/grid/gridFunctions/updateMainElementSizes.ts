@@ -24,10 +24,12 @@ export function updateMainElementSizes(ctx: Grid) {
 
     let headerHeight = config.__rowHeaderHeight;
     if (config.hideLabels && !config.hideFilter) {
+        // only filter cells left, they are cellHeight tall
         headerHeight = config.__rowHeight * 1;
     }
     if (!config.hideLabels && config.hideFilter) {
-        headerHeight = config.__rowHeight * 1;
+        // only label cells left, they are cellHeaderLabelHeight tall (can be taller than cellHeight)
+        headerHeight = config.__columnCells * config.cellHeaderLabelHeight;
     }
     if (config.hideLabels && config.hideFilter) {
         headerHeight = 0;

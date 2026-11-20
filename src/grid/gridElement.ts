@@ -16,6 +16,10 @@ export class GridElement extends HTMLElement {
 
     public enableCleanup = false; // just so I can test
 
+    /**
+     * connecting a new interface keeps the dom that is already there, the grid just rebuilds it
+     * for the new interface
+     */
     connectInterface(value: GridInterface<any>) {
         /**
          * noticed hmr in react have given me issues, so will try out this
@@ -26,6 +30,8 @@ export class GridElement extends HTMLElement {
                     this.removeChild(this.firstChild);
                 }
             }
+            // the dom is gone, so the grid has to build it again
+            this.grid.domCreated = false;
         }
 
         this.gridInterface = value;

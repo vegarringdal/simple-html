@@ -192,10 +192,13 @@ export class GridInterface<T> {
         delete config.__scrollbarSize;
         delete config.__selectSizeWidth;
 
-        config.expandedGroups = this.getDatasource().getExpanded();
-        config.sorting = this.getDatasource().getLastSorting();
-        config.grouping = this.getDatasource().getGrouping();
-        config.filter = this.getDatasource().getFilter();
+        // these are the datasource's own objects, and it changes them in place (shift+click sort,
+        // filter context menu), so hand out copies or the saved config changes later on.
+        // structuredClone and not JSON, so Date values in the filter stay Dates
+        config.expandedGroups = structuredClone(this.getDatasource().getExpanded());
+        config.sorting = structuredClone(this.getDatasource().getLastSorting());
+        config.grouping = structuredClone(this.getDatasource().getGrouping());
+        config.filter = structuredClone(this.getDatasource().getFilter());
 
         return config;
     }
@@ -212,10 +215,13 @@ export class GridInterface<T> {
     public loadConfig(gridConfig: GridConfig, skipRebuild = false) {
         this.suppressEvents = true;
 
-        const sortOrder = gridConfig.sorting;
-        const grouping = gridConfig.grouping;
-        const filter = gridConfig.filter;
-        const exspandedGroups = gridConfig.expandedGroups;
+        // the datasource keeps what it is given and changes it in place later (shift+click sort,
+        // filter context menu), so give it copies - else the caller's config (or initConfig,
+        // used by loadInitConfig) changes too. structuredClone keeps Date values in the filter
+        const sortOrder = structuredClone(gridConfig.sorting);
+        const grouping = structuredClone(gridConfig.grouping);
+        const filter = structuredClone(gridConfig.filter);
+        const exspandedGroups = structuredClone(gridConfig.expandedGroups);
 
         this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
         this.gridConfig.sorting = null;
@@ -639,6 +645,11 @@ export class GridInterface<T> {
                 break;
             case e.type === 'select': {
                 this.__dataSourceUpdated();
+
+                // connected with connectInterface, but not put in the dom yet - nothing to scroll
+                if (!this.grid.domCreated) {
+                    break;
+                }
 
                 const scrollEl = getElementByClassName(this.grid.getElement(), 'simple-html-grid-body-scroller');
                 const scrollElHeight = scrollEl?.clientHeight;

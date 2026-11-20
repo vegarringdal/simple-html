@@ -211,8 +211,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     }, 2);
                 }
             }}
-            @input=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute, true))}
-            @change=${(e: any) => (arg.value = valueFormater.toSource(e.target.value, type, attribute, true))}
+            @input=${(e: any) => (arg.value = valueFormater.toFilter(e.target.value, type, attribute, true))}
+            @change=${(e: any) => (arg.value = valueFormater.toFilter(e.target.value, type, attribute, true))}
             @click=${(e: any) => {
                 if (type === 'date') {
                     setTimeout(() => {
@@ -457,9 +457,15 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
         <span class="filter-editor-close" data-tooltip=${tooltip(ctx, 'filterEditor.close')} @click=${() => closeEditor()}>&#10005;</span>
     </div>`;
 
+    /**
+     * header filter inputs would otherwise keep showing text the applied filter no longer has.
+     * __attributes, not attributes: a column only named in the column rows is not in the
+     * attributes array, its text survived and was put back by the next header filter edit
+     */
     const clearOldValues = () => {
-        ctx.gridInterface.__getGridConfig().attributes.forEach((e) => {
-            e.currentFilterValue = '';
+        const attributes = ctx.gridInterface.__getGridConfig().__attributes;
+        Object.keys(attributes).forEach((key) => {
+            attributes[key].currentFilterValue = '';
         });
     };
 

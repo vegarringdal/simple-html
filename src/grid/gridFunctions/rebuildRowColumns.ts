@@ -8,6 +8,36 @@ import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from 
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 
+/**
+ * How many column elements the middle (scrolling) section needs, so every column that can be
+ * on screen at the same time has one, whatever the scroll position.
+ * Used for both the rows and the header, they must have the same number.
+ *
+ * horizontalScrollHandler asks for every column that starts inside the viewport, plus the one
+ * before it. Columns starting inside the viewport are at most "how many of the narrowest columns
+ * fit in it" + 1, so that + 2 is always enough.
+ *
+ * Returns 0 when there are no center columns (addColumns treats 0 as "all", which is 0 then too).
+ */
+export function getMiddleColumnsNeeded(ctx: Grid) {
+    const columns = ctx.gridInterface.__getGridConfig().columnsCenter;
+    // same element/width horizontalScrollHandler uses to decide what is on screen
+    const viewportWidth = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').clientWidth;
+
+    const widths = columns.map((column) => column.width).sort((a, b) => a - b);
+    let fits = 0;
+    let total = 0;
+    for (const width of widths) {
+        total = total + width;
+        if (total >= viewportWidth) {
+            break;
+        }
+        fits++;
+    }
+
+    return Math.min(columns.length, fits + 2);
+}
+
 export function rebuildRowColumns(ctx: Grid) {
     const config = ctx.gridInterface.__getGridConfig();
 
@@ -80,12 +110,9 @@ export function rebuildRowColumns(ctx: Grid) {
         ctx.containerLeftColumnCache = addColumns(e.id, config.columnsPinnedLeft, 0, LEFT_PINNED_COLTYPE);
     });
 
-    // get params we will use to apply max columns
-    const bodyWidth = getElementByClassName(ctx.element, 'simple-html-grid-body').clientWidth;
-    const middleWidth = bodyWidth - (config.__leftWidth + config.__scrollbarSize + config.__rightWidth + config.selectSizeHeight);
-
+    const middleColumnsNeeded = getMiddleColumnsNeeded(ctx);
     ctx.containerMiddleRowCache.forEach((e) => {
-        ctx.containerMiddleColumnCache = addColumns(e.id, config.columnsCenter, middleWidth / 50, MIDDLE_PINNED_COLTYPE);
+        ctx.containerMiddleColumnCache = addColumns(e.id, config.columnsCenter, middleColumnsNeeded, MIDDLE_PINNED_COLTYPE);
     });
 
     ctx.containerRightRowCache.forEach((e) => {

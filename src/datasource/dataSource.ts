@@ -4,7 +4,7 @@ import { DataContainer } from './dataContainer';
 import type { DatasourceConfigOptions } from './datasourceConfigOptions';
 import { DefaultValueFormater } from './defaultValueFormater';
 import type { Entity } from './entity';
-import { Filter } from './filter';
+import { Filter, isFilterGroup, isIncompleteCondition } from './filter';
 import type { FilterArgument } from './filterArgument';
 import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
@@ -164,6 +164,10 @@ export class Datasource<T = any> {
 
     public clearMarkedForDeletion() {
         this.__dataContainer.clearMarkedForDeletion();
+        // the rows are gone from the container, rebuild the displayed rows or they stay on screen.
+        // Same event as removeData, it is a removal
+        this.__internalUpdate(true);
+        this.__callSubscribers('collection-changed', { removed: true, info: 'clearMarkedForDeletion' });
     }
 
     /**
@@ -284,10 +288,24 @@ export class Datasource<T = any> {
 
     public addNewEmpty(defaultData: EntityUnion<T> = {} as EntityUnion<T>, scrollto = true) {
         this.__dataContainer.setData([defaultData], true, true);
-        this.__internalUpdate(false);
-        // force add after internal update, doing before will mess up location
         const dataset = this.__dataContainer.getDataSet();
         const newRow = dataset[dataset.length - 1];
+
+        if (this.__grouping.getGrouping().length) {
+            // grouped: the row has to be grouped with the rest, appended at the end it sat outside
+            // every group and was lost on the next expand/collapse. Its group is expanded so it is seen
+            this.__collectionFiltered.push(newRow);
+            this.__internalUpdate(false);
+            this.__collectionDisplayed = this.__grouping.expandToEntity(newRow);
+            this.__callSubscribers('collection-changed', { added: true });
+            if (scrollto) {
+                this.select(this.__collectionDisplayed.indexOf(newRow) + 1, true);
+            }
+            return;
+        }
+
+        this.__internalUpdate(false);
+        // force add after internal update, doing before will mess up location
         this.__collectionFiltered.push(newRow);
         this.__collectionDisplayed.push(newRow);
         this.__callSubscribers('collection-changed', { added: true });
@@ -661,7 +679,11 @@ export class Datasource<T = any> {
      * @param triggerSelect also fire the select event, so the grid scrolls to the row
      */
     public select(row?: number, triggerSelect?: boolean): void {
-        const selectedRow = row ? row - 1 : 0;
+        // a group header can not be selected, take the first data row from there on
+        const selectedRow = this.__findDataRow(row ? row - 1 : 0, 1);
+        if (selectedRow === -1) {
+            return;
+        }
         this.__selection.highlightRow({} as any, selectedRow);
         if (triggerSelect) {
             this.__callSubscribers('select', { info: 'select-first', row: selectedRow });
@@ -672,42 +694,60 @@ export class Datasource<T = any> {
      * updates current entity to first
      */
     public selectFirst(): void {
-        this.__selection.highlightRow({} as any, 0);
-        this.__callSubscribers('select', { info: 'select-first', row: 0 });
+        this.__selectAndNotify(this.__findDataRow(0, 1), 'select-first');
     }
 
     /**
      * updates current entity, if first when running this it will select the last
      */
     public selectPrev(): void {
-        let row = this.__collectionDisplayed.indexOf(this.currentEntity) - 1;
-        if (row < 0) {
-            row = this.__collectionDisplayed.length - 1;
-            this.__selection.highlightRow({} as any, row);
+        let row = this.__findDataRow(this.__collectionDisplayed.indexOf(this.currentEntity) - 1, -1);
+        if (row === -1) {
+            row = this.__findDataRow(this.__collectionDisplayed.length - 1, -1);
         }
-        this.__selection.highlightRow({} as any, row);
-        this.__callSubscribers('select', { info: 'select-prev', row });
+        this.__selectAndNotify(row, 'select-prev');
     }
 
     /**
      * updates current entity, if on last it will end on up the first
      */
     public selectNext(): void {
-        let row = this.__collectionDisplayed.indexOf(this.currentEntity) + 1;
-        if (this.__collectionDisplayed.length - 1 < row) {
-            row = 0;
+        let row = this.__findDataRow(this.__collectionDisplayed.indexOf(this.currentEntity) + 1, 1);
+        if (row === -1) {
+            row = this.__findDataRow(0, 1);
         }
-        this.__selection.highlightRow({} as any, row);
-        this.__callSubscribers('select', { info: 'select-next', row });
+        this.__selectAndNotify(row, 'select-next');
     }
 
     /**
      * updates current entity to last entity
      */
     public selectLast(): void {
-        const row = this.__collectionDisplayed.length - 1;
+        this.__selectAndNotify(this.__findDataRow(this.__collectionDisplayed.length - 1, -1), 'select-last');
+    }
+
+    /**
+     * index of the first data row (not a group header) from `start`, walking in `step` direction
+     * @returns -1 if there is none
+     */
+    private __findDataRow(start: number, step: 1 | -1): number {
+        for (let i = start; i >= 0 && i < this.__collectionDisplayed.length; i += step) {
+            if (!this.__collectionDisplayed[i].__group) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * selects the row and fires the select event, does nothing if there is no row (-1)
+     */
+    private __selectAndNotify(row: number, info: string): void {
+        if (row === -1) {
+            return;
+        }
         this.__selection.highlightRow({} as any, row);
-        this.__callSubscribers('select', { info: 'select-last', row });
+        this.__callSubscribers('select', { info, row });
     }
 
     /**
@@ -911,12 +951,19 @@ export class Datasource<T = any> {
             if (!obj) {
                 return null;
             }
-            if (obj.filterArguments && obj.filterArguments.length > 0) {
+            // same group test as the filter itself, an empty group stays a group with no children.
+            // Checking for children turned an empty group into a condition without an operator
+            if (isFilterGroup(obj)) {
                 return {
                     kind: 'group',
-                    logicalOperator: (obj.logicalOperator as 'AND' | 'OR') || 'AND',
-                    children: obj.filterArguments.map(build).filter((n): n is FilterNode => n !== null)
+                    // the filter treats anything but OR as AND
+                    logicalOperator: obj.logicalOperator === 'OR' ? 'OR' : 'AND',
+                    children: (obj.filterArguments || []).map(build).filter((n): n is FilterNode => n !== null)
                 };
+            }
+            // the filter ignores incomplete conditions, so they are not shown either
+            if (isIncompleteCondition(obj)) {
+                return null;
             }
 
             const blank = obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK';

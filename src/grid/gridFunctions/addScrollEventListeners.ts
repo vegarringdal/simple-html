@@ -6,6 +6,15 @@ import { verticalScrollHandler } from './verticalScrollHandler';
 export function addScrollEventListeners(ctx: Grid) {
     const scroller = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
 
+    /**
+     * the wheel/touch listeners sit on the grid element itself, so they survive the dom being
+     * built again (gridElement enableCleanup). Drop the old ones first, or every wheel tick
+     * scrolls twice
+     */
+    ctx.scrollListenersAbort?.abort();
+    ctx.scrollListenersAbort = new AbortController();
+    const signal = ctx.scrollListenersAbort.signal;
+
     // helper
     function setScrollTop(element: HTMLElement, top: number) {
         element.scrollTop = top;
@@ -64,7 +73,7 @@ export function addScrollEventListeners(ctx: Grid) {
                 scroll();
             }
         },
-        { passive: false }
+        { passive: false, signal }
     );
 
     /**
@@ -85,7 +94,7 @@ export function addScrollEventListeners(ctx: Grid) {
 
             setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-scroller'), el.scrollTop);
         },
-        { passive: false }
+        { passive: false, signal }
     );
 
     /**
@@ -107,7 +116,7 @@ export function addScrollEventListeners(ctx: Grid) {
                 setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-scroller'), movement);
             }
         },
-        { passive: false }
+        { passive: false, signal }
     );
 
     let lastY = 0;
@@ -118,7 +127,7 @@ export function addScrollEventListeners(ctx: Grid) {
             lastY = event.touches[0].clientY;
             lastX = event.touches[0].clientX;
         },
-        { passive: false }
+        { passive: false, signal }
     );
 
     /**
@@ -160,6 +169,6 @@ export function addScrollEventListeners(ctx: Grid) {
                     setScrollLeft(getElementByClassName(ctx.element, ' simple-html-grid-middle-scroller'), movementX)
                 } */
         },
-        { passive: false }
+        { passive: false, signal }
     );
 }

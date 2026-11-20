@@ -81,7 +81,10 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
 
     // if less that first we need to count downwards
     if (day < 1) {
-        FirstDateOfMonth.setDate(FirstDateOfMonth.getDate() - Math.abs(day) - config.weekStart);
+        // setDate(0) is the last day of the previous month, -1 the one before and so on.
+        // (subtracting weekStart here was only right for a monday start, with sunday the cells
+        // before the 1st were off by one and the last one showed the 1st of the previous month)
+        FirstDateOfMonth.setDate(day);
         day = FirstDateOfMonth.getDate();
         dimmedCell = true;
         if (month === 0) {

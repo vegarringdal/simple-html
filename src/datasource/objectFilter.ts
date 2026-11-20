@@ -1,7 +1,13 @@
 import type { FilterAttributeSimple } from './filterArgument';
 import type { FilterComparisonOperator } from './filterComparisonOperator';
+import { isBlank } from './isBlank';
 
-export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
+/**
+ * tests one row against one condition
+ * @param dateOnly compare dates on the day only, time ignored on both sides. For date formats
+ * without time, see `ValueFormater.dateIncludesTime`
+ */
+export function objectFilter(rowData: any, filter: FilterAttributeSimple, dateOnly = false) {
     let result = true;
 
     // vars
@@ -54,37 +60,8 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     // lets set some defaults/corrections if its all wrong
     switch (type) {
         case 'date':
-            try {
-                // we need to reset date so they use same time/timezone
-                rowValue = new Date(
-                    new Date(rowValue).getFullYear(),
-                    new Date(rowValue).getMonth(),
-                    new Date(rowValue).getDate(),
-                    new Date(rowValue).getHours(),
-                    new Date(rowValue).getMinutes(),
-                    new Date(rowValue).getSeconds(),
-                    0
-                );
-                rowValue = rowValue.getTime();
-            } catch {
-                // conversion failed, keep rowValue as it was
-            }
-
-            try {
-                // we need to reset date so they use same time/timezone
-                filterValue = new Date(
-                    new Date(filter.value).getFullYear(),
-                    new Date(filter.value).getMonth(),
-                    new Date(filter.value).getDate(),
-                    new Date(filter.value).getHours(),
-                    new Date(filter.value).getMinutes(),
-                    new Date(filter.value).getSeconds(),
-                    0
-                );
-                filterValue = filterValue.getTime();
-            } catch {
-                filterValue = filter.value;
-            }
+            rowValue = toFilterTime(rowValue, dateOnly);
+            filterValue = toFilterTime(filter.value, dateOnly);
 
             if (filterOperator === 'END_WITH') {
                 filterOperator = 'LESS_THAN_OR_EQUAL_TO';
@@ -103,6 +80,12 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
                 filterOperator !== 'LESS_THAN_OR_EQUAL_TO'
             ) {
                 filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
+            }
+
+            // a blank row date is not on, before or after any date, it only matches NOT_EQUAL_TO.
+            // Checked after the remapping above, so END_WITH, DOES_NOT_CONTAIN etc. follow the same rule
+            if (Number.isNaN(rowValue)) {
+                return filterOperator === 'NOT_EQUAL_TO';
             }
 
             break;
@@ -302,4 +285,26 @@ export function objectFilter(rowData: any, filter: FilterAttributeSimple) {
     }
 
     return result;
+}
+
+/**
+ * the timestamp a date condition compares, milliseconds always dropped and the time too if dateOnly.
+ * NaN for a blank (null, undefined, '', invalid Date) or anything else that is not a date.
+ */
+function toFilterTime(value: any, dateOnly: boolean): number {
+    // checked first, new Date(null) would be the epoch
+    if (isBlank(value)) {
+        return Number.NaN;
+    }
+    const date = new Date(value);
+    // an unreadable value gives an invalid date, and every part of it below is NaN
+    return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        dateOnly ? 0 : date.getHours(),
+        dateOnly ? 0 : date.getMinutes(),
+        dateOnly ? 0 : date.getSeconds(),
+        0
+    ).getTime();
 }

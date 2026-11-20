@@ -26,7 +26,17 @@ const OPERATOR_LABELS: Record<string, string> = {
     IS_NOT_BLANK: 'is not blank'
 };
 
-function operatorLabel(operator: string) {
+/**
+ * The footer runs inside every rebuild, so it must never throw - if it does, the rows are not
+ * rendered either. A half built filter (a condition added in the filter editor but not filled in,
+ * an empty sub group) can reach us without operator/attribute, it is shown as "?".
+ */
+const UNKNOWN = '?';
+
+function operatorLabel(operator: string | undefined) {
+    if (!operator) {
+        return UNKNOWN;
+    }
     return OPERATOR_LABELS[operator] ?? operator.toLowerCase().replace(/_/g, ' ');
 }
 
@@ -35,7 +45,7 @@ function countConditions(node: FilterNode): number {
     if (node.kind === 'condition') {
         return 1;
     }
-    return node.children.reduce((sum, child) => sum + countConditions(child), 0);
+    return (node.children || []).reduce((sum, child) => sum + countConditions(child), 0);
 }
 
 // the filter editor caps a filter at 5 statements; past that the footer just summarises
@@ -45,7 +55,7 @@ function renderNode(node: FilterNode): unknown {
     if (node.kind === 'condition') {
         return html`
             <span class="footer-filter-chip">
-                <span class="footer-filter-attr">${node.label}</span>
+                <span class="footer-filter-attr">${node.label || UNKNOWN}</span>
                 <span class="footer-filter-op">${operatorLabel(node.operator)}</span>
                 ${node.hasValue ? html`<span class="footer-filter-value">${node.value}</span>` : null}
             </span>
@@ -56,7 +66,7 @@ function renderNode(node: FilterNode): unknown {
 }
 
 function renderChildren(group: FilterGroupNode) {
-    return group.children.map(
+    return (group.children || []).map(
         (child, i) => html`
             ${i > 0 ? html`<span class="footer-filter-connector">${group.logicalOperator}</span>` : null}
             ${renderNode(child)}

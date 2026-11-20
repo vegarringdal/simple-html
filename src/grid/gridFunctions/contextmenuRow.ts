@@ -166,11 +166,34 @@ export function contextmenuRow(
         document.removeEventListener('copy', listener);
     };
 
+    /**
+     * is this cell readonly for this row - same rule the cell rendering uses: the readonly
+     * setter decides, and when it gives no answer the column config does
+     */
+    const isCellReadOnly = (attribute: string, entity: Entity) => {
+        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, entity, cellConfig.readonly || false);
+        if (cellReadOnly === true || cellReadOnly === false) {
+            return cellReadOnly;
+        }
+        return cellConfig.readonly || false;
+    };
+
+    /**
+     * clear and paste work on every selected row, not just the one right clicked, so each row
+     * has to be checked on its own
+     */
     const clearRows = (attribute: string) => {
+        if (ctx.gridInterface.__getGridConfig().readonly) {
+            return;
+        }
+
         const datasource = ctx.gridInterface.getDatasource();
         const selectedRows = datasource.getSelectedRows();
         selectedRows.forEach((entity) => {
-            entity[attribute] = null;
+            if (!isCellReadOnly(attribute, entity)) {
+                entity[attribute] = null;
+            }
         });
     };
 
@@ -185,9 +208,7 @@ export function contextmenuRow(
         }
 
         datasource.getSelectedRows().forEach((entity) => {
-            const cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, entity, cellConfig.readonly || false);
-
-            if (cellReadOnly) {
+            if (isCellReadOnly(attribute, entity)) {
                 return;
             }
 
@@ -404,39 +425,55 @@ export function contextmenuRow(
                 value: isBlank ? null : value
             }) as FilterArgument;
 
-        const applyFilter = (filterArgument: FilterArgument) => {
+        const applyFilter = (filterArgument: FilterArgument, clearHeaderFilters: boolean) => {
             datasource.filter(filterArgument);
-            // the quick filter inputs in the header would otherwise still show the old text
-            ctx.gridInterface.__getGridConfig().attributes.forEach((e) => {
-                e.currentFilterValue = '';
-            });
+            if (clearHeaderFilters) {
+                // the header filter conditions are gone, so their inputs must not keep showing the
+                // old text. __attributes, not attributes: a column only named in the column rows
+                // is not in the attributes array
+                const attributes = ctx.gridInterface.__getGridConfig().__attributes;
+                Object.keys(attributes).forEach((key) => {
+                    attributes[key].currentFilterValue = '';
+                });
+            }
             rebuildHeaderColumns(ctx);
             removeContextMenu(ctx);
         };
 
         const replaceFilter = () => {
-            applyFilter({
-                type: 'GROUP',
-                logicalOperator: 'AND',
-                filterArguments: [conditionForCell()]
-            } as FilterArgument);
+            applyFilter(
+                {
+                    type: 'GROUP',
+                    logicalOperator: 'AND',
+                    filterArguments: [conditionForCell()]
+                } as FilterArgument,
+                true
+            );
         };
 
         const addToFilter = () => {
             const current = datasource.getFilter();
             let existing: FilterArgument[] = [];
-            if (current?.filterArguments?.length) {
+            if (current?.logicalOperator === 'OR' && current.filterArguments?.length) {
+                // kept whole - spreading its conditions into the AND would turn "a OR b" into "a AND b"
+                existing = [current];
+            } else if (current?.filterArguments?.length) {
                 existing = current.filterArguments;
             } else if (current) {
                 // a single condition that was never wrapped in a group
                 existing = [current];
             }
 
-            applyFilter({
-                type: 'GROUP',
-                logicalOperator: 'AND',
-                filterArguments: [conditionForCell(), ...existing]
-            } as FilterArgument);
+            // the existing conditions are kept, header filters included, so the header inputs
+            // keep their text
+            applyFilter(
+                {
+                    type: 'GROUP',
+                    logicalOperator: 'AND',
+                    filterArguments: [conditionForCell(), ...existing]
+                } as FilterArgument,
+                false
+            );
         };
 
         return html`<div class="simple-html-grid-menu-section">Filter:</div>

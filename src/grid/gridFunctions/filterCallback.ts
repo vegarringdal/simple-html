@@ -1,3 +1,4 @@
+import { isFilterGroup } from '../../datasource/filter';
 import type { FilterArgument } from '../../datasource/filterArgument';
 import type { Grid } from '../grid';
 import type { Attribute } from '../gridConfig';
@@ -44,80 +45,73 @@ export function filterCallback(
             col.currentFilterValue = filterArrayAndValue ? filterArrayAndValue : value;
     }
 
-    const oldFilter = ctx.gridInterface.getDatasource().getFilter();
-    let filter: FilterArgument = {
-        type: 'GROUP',
-        logicalOperator: 'AND',
-        filterArguments: []
-    };
+    const datasource = ctx.gridInterface.getDatasource();
 
-    if (oldFilter?.logicalOperator === 'AND') {
-        filter = oldFilter;
-        filter.filterArguments = filter.filterArguments.filter((arg: FilterArgument) => {
-            if (arg.attribute === col.attribute) {
-                return false;
-            } else {
-                return true;
-            }
-        });
-    }
+    /**
+     * A header filter only owns the top level conditions on its own column. Those are replaced,
+     * everything else in the filter - other columns, nested groups, ranges from the filter
+     * editor - is left exactly as it was.
+     */
+    const filter = filterWithoutColumn(datasource.getFilter(), col.attribute);
 
-    const keys = Object.keys(ctx.gridInterface.__getGridConfig().__attributes);
-    const columns = keys.map((e) => ctx.gridInterface.__getGridConfig().__attributes[e]);
-    columns.forEach((col) => {
-        if (col.currentFilterValue !== null && col.currentFilterValue !== undefined && col.currentFilterValue !== '') {
-            filter.filterArguments.push({
-                type: 'CONDITION',
-                logicalOperator: 'NONE',
-                valueType: 'VALUE',
-                attribute: col.attribute,
-                attributeType: (col.type as any) || 'text',
-                operator: col.operator || ctx.gridInterface.getDatasource().getFilterFromType(col.type),
-                value: col.currentFilterValue as any
-            });
-        }
+    const condition = (operator: FilterArgument['operator'], conditionValue: any): FilterArgument => ({
+        type: 'CONDITION',
+        logicalOperator: 'NONE',
+        valueType: 'VALUE',
+        attribute: col.attribute,
+        attributeType: (col.type as any) || 'text',
+        operator,
+        value: conditionValue
     });
+
+    if (filterArrayAndValue) {
+        // search text from the value list menu, always a contains
+        filter.filterArguments.push(condition('CONTAINS', filterArrayAndValue));
+    } else if (col.currentFilterValue !== null && col.currentFilterValue !== undefined && col.currentFilterValue !== '') {
+        filter.filterArguments.push(condition(col.operator || datasource.getFilterFromType(col.type), col.currentFilterValue));
+    }
 
     if (filterArray) {
-        filter.filterArguments.push({
-            type: 'CONDITION',
-            logicalOperator: 'NONE',
-            valueType: 'VALUE',
-            attribute: col.attribute,
-            attributeType: (col.type as any) || 'text',
-            operator: notinArray ? 'NOT_IN' : 'IN',
-            value: filterArray as any
-        });
+        filter.filterArguments.push(condition(notinArray ? 'NOT_IN' : 'IN', filterArray));
     }
-
-    // just add to beginning, duplicates get removed
-    if (filterArrayAndValue) {
-        filter.filterArguments.unshift({
-            type: 'CONDITION',
-            logicalOperator: 'NONE',
-            valueType: 'VALUE',
-            attribute: col.attribute,
-            attributeType: (col.type as any) || 'text',
-            operator: 'CONTAINS',
-            value: filterArrayAndValue
-        });
-    }
-
-    // remove duplicates
-    const attributes: string[] = [];
-    filter.filterArguments = filter.filterArguments.filter((arg: FilterArgument) => {
-        if (attributes.indexOf(arg.attribute) !== -1 && arg.operator !== 'IN' && arg.operator !== 'NOT_IN') {
-            return false;
-        } else {
-            attributes.push(arg.attribute);
-            return true;
-        }
-    });
 
     if (filterArray && !filterArrayAndValue) {
         // we need to clear the value so it does not show
         col.currentFilterValue = '';
     }
 
-    ctx.gridInterface.getDatasource().filter(filter);
+    datasource.filter(filter);
+}
+
+/**
+ * The filter a header condition is added to: an AND group without the column's own top level
+ * conditions.
+ * An OR root is kept whole inside a new AND group - AND(header condition, OR group) - so typing
+ * in a header narrows a filter built in the filter editor instead of throwing it away.
+ */
+function filterWithoutColumn(oldFilter: FilterArgument | null, attribute: string): FilterArgument {
+    // a group without logicalOperator is AND too (see Filter), only an OR root has to be kept whole
+    if (oldFilter && isFilterGroup(oldFilter) && oldFilter.logicalOperator !== 'OR') {
+        // copy, the old filter object is still the one the datasource holds
+        return {
+            ...oldFilter,
+            logicalOperator: 'AND',
+            filterArguments: (oldFilter.filterArguments || []).filter((arg: FilterArgument) => arg.attribute !== attribute)
+        };
+    }
+
+    const filter: FilterArgument = {
+        type: 'GROUP',
+        logicalOperator: 'AND',
+        filterArguments: []
+    };
+
+    // an OR root, or a single condition set from code on another column, is kept whole
+    const keepWhole =
+        oldFilter && (isFilterGroup(oldFilter) ? oldFilter.filterArguments?.length > 0 : oldFilter.attribute !== attribute);
+    if (keepWhole) {
+        filter.filterArguments.push(oldFilter);
+    }
+
+    return filter;
 }

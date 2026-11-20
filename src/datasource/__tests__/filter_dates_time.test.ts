@@ -124,12 +124,13 @@ describe('date filter less or equal', () => {
     });
 });
 
-describe('date filter missing filer to use greater than or equal to', () => {
+describe('date filter missing operator is ignored', () => {
     beforeAll(() => {
         ds = new Datasource();
         ds.setData(simpleArray.slice());
     });
 
+    // a condition without operator is incomplete, it does not restrict rows
     it('date equal to', () => {
         ds.filter({
             attribute: 'born',
@@ -138,6 +139,6 @@ describe('date filter missing filer to use greater than or equal to', () => {
             attributeType: 'date'
         });
 
-        expect(ds.getRows()).toEqual([simpleArray[2], simpleArray[3], simpleArray[4]]);
+        expect(ds.getRows()).toEqual(simpleArray);
     });
 });

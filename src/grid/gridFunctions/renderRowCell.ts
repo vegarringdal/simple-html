@@ -182,7 +182,13 @@ export function renderRowCell(
                                             ctx,
                                             e,
                                             cell,
-                                            valueFormater.toSource(entity[attribute], cellConfigType, attribute, false),
+                                            // a Date is passed as it is - toSource only parses strings, it
+                                            // turned a Date into null and the picker opened on today.
+                                            // Anything else (an iso string in the data) still goes
+                                            // through toSource, which is what parsed it before
+                                            entity[attribute] instanceof Date
+                                                ? entity[attribute]
+                                                : valueFormater.toSource(entity[attribute], cellConfigType, attribute, false),
                                             (value: Date | null) => {
                                                 rowData[attribute] = value;
                                                 ctx.gridInterface.triggerScrollEvent();

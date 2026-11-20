@@ -84,6 +84,14 @@ export class DefaultValueFormater implements ValueFormater {
         return this.fromSourceDisplay(value, type, attribute);
     }
 
+    /**
+     * answered from the current date formater. A date formater without `includesTime` counts as
+     * including time, so date filters keep comparing with time
+     */
+    dateIncludesTime(_attribute: string): boolean {
+        return this.datasource.getDateFormater().includesTime !== false;
+    }
+
     placeholder(type: DataTypes, _attribute: string) {
         if (type === 'date') {
             return this.datasource.getDateFormater().placeholder();

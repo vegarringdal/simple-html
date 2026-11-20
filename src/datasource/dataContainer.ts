@@ -1,5 +1,6 @@
 import type { Entity } from './entity';
 import { EntityHandler } from './entityHandler';
+import { isBlank } from './isBlank';
 
 let globalKeyCount = 0;
 
@@ -182,13 +183,11 @@ export class DataContainer {
      */
     public markForDeletion(data: Entity | Entity[], all = false) {
         if (all) {
+            // new rows are dropped, the rest flagged. Splicing inside forEach skipped the row
+            // after every new row, leaving it neither removed nor flagged
+            this.__collection = this.__collection.filter((e) => !e.__controller.__isNew);
             this.__collection.forEach((e) => {
-                if (e.__controller.__isNew) {
-                    const i = this.__collection.indexOf(e);
-                    this.__collection.splice(i, 1)[0];
-                } else {
-                    e.__controller.__isDeleted = true;
-                }
+                e.__controller.__isDeleted = true;
             });
         }
 
@@ -282,14 +281,16 @@ export class DataContainer {
         }
 
         const x = Array.from(data, (o: any | Entity) => {
+            // only a blank key gets a generated one. A falsy check also replaced a real key of 0,
+            // writing the generated key into the key attribute of the row
             if (o?.__controller) {
-                if (o && !(o as any).__KEY) {
+                if (isBlank((o as any).__KEY)) {
                     (o as any).__KEY = this.getKey();
                 }
                 return o;
             } else {
                 const entity = new Proxy(o, new this.EntityHandler(this.__keyAttribute, tagAsNew) as any);
-                if (entity && !(entity as any).__KEY) {
+                if (isBlank((entity as any).__KEY)) {
                     (entity as any).__KEY = this.getKey();
                 }
                 return entity;

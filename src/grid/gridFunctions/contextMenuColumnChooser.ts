@@ -82,7 +82,9 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                 <div
                     class="simple-html-label-button-menu-bottom"
                     @click=${() => {
-                        document.body.removeChild(contextMenu);
+                        contextMenu.remove();
+                        // or disconnectElement tries to remove it again
+                        ctx.columnChooserMenu = null;
                     }}
                 >
                     Close

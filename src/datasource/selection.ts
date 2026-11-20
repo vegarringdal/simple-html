@@ -11,11 +11,15 @@ export class Selection {
         this.dataSource = dataSource;
         this.selectedRows = 0;
         this.selection = new Set([]);
+        // start as after a plain click on nothing. Left undefined, the first ctrl or shift click
+        // matched no case in highlightRow and selected nothing
+        this.lastKeyKodeUsed = 'none';
+        this.lastRowSelected = -1;
     }
 
     public isSelected(row: number): boolean {
         let result = false;
-        if (this.selectedRows > 0) {
+        if (this.selectedRows > 0 && this.isDataRow(row)) {
             result = this.selection.has(this.getRowKey(row));
         }
 
@@ -56,6 +60,11 @@ export class Selection {
 
     public highlightRow(e: MouseEvent, currentRow: number, overrideSelectionMode?: 'none' | 'single' | 'multiple'): void {
         if (overrideSelectionMode === 'none') {
+            return;
+        }
+
+        // group header rows can never be selected or be the current entity
+        if (this.dataSource.getRow(currentRow)?.__group) {
             return;
         }
 
@@ -196,13 +205,22 @@ export class Selection {
         return this.dataSource.getRow(row)?.__KEY;
     }
 
-    private getRowKeys(): any[] {
-        const keys: any[] = [];
-        this.dataSource.getRows().forEach((data: any) => {
-            keys.push(data.__KEY);
-        });
+    /**
+     * true if the row exists and is not a group header
+     */
+    private isDataRow(row: number): boolean {
+        const entity = this.dataSource.getRow(row);
+        return !!entity && !entity.__group;
+    }
 
-        return keys;
+    /**
+     * adds the key of a row to the selection, skipping group headers and rows that do not exist.
+     * Those have no key, and an undefined key in the selection made every group header selected
+     */
+    private addRow(row: number): void {
+        if (this.isDataRow(row)) {
+            this.selection.add(this.getRowKey(row));
+        }
     }
 
     private deSelect(row: number): void {
@@ -218,16 +236,16 @@ export class Selection {
                 break;
             case 'single':
                 this.selection.clear();
-                this.selection.add(this.getRowKey(row));
+                this.addRow(row);
                 this.selectedRows = this.selection.size;
                 break;
             case 'multiple':
                 if (!add) {
                     this.selection.clear();
-                    this.selection.add(this.getRowKey(row));
+                    this.addRow(row);
                     this.selectedRows = this.selection.size;
                 } else {
-                    this.selection.add(this.getRowKey(row));
+                    this.addRow(row);
                     this.selectedRows = this.selection.size;
                 }
                 break;
@@ -246,7 +264,7 @@ export class Selection {
             this.selection.clear();
 
             for (let i = start; i < end + 1; i++) {
-                this.selection.add(this.getRowKey(i));
+                this.addRow(i);
             }
             this.selectedRows = this.selection.size;
         }
@@ -260,7 +278,7 @@ export class Selection {
             }
 
             for (let i = start; i < end + 1; i++) {
-                this.selection.add(this.getRowKey(i));
+                this.addRow(i);
             }
             this.selectedRows = this.selection.size;
         }
@@ -274,10 +292,10 @@ export class Selection {
      */
     public getSelectedRows(): number[] {
         const array: number[] = [];
-        const keys = this.getRowKeys();
         if (this.selectedRows > 0) {
-            keys.forEach((key, index) => {
-                if (this.selection.has(key) === true) {
+            this.dataSource.getRows().forEach((row, index) => {
+                // group headers have no key, never report them even if undefined got into the selection
+                if (!row.__group && this.selection.has(row.__KEY)) {
                     array.push(index);
                 }
             });
@@ -320,7 +338,7 @@ export class Selection {
             this.selection.clear();
         }
         for (let i = 0; i < newRows.length; i++) {
-            this.selection.add(this.getRowKey(newRows[i]));
+            this.addRow(newRows[i]);
         }
         this.selectedRows = this.selection.size;
     }

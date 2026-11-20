@@ -1,4 +1,6 @@
 import type { Grid } from '../grid';
+import type { GridConfig } from '../gridConfig';
+import { nextSection, sectionColumns } from './cellRowKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -51,6 +53,41 @@ function overrideGroupRow(ctx: Grid, currentKey: string, gotoRow: number) {
 }
 
 /**
+ * Moves the focus target out of its section in the filter row, see nextSection - it skips
+ * sections without columns, every column can be pinned.
+ * Wrapping forward goes down to the first data row. There is no row above the filter row, so
+ * wrapping backward returns null and focus stays where it is.
+ */
+function leaveFilterSection(
+    ctx: Grid,
+    config: GridConfig,
+    scrollerEl: HTMLElement,
+    colType: ColType,
+    forward: boolean,
+    gotoRow: number
+) {
+    const next = nextSection(config, colType, forward);
+    if (next.rowStep < 0) {
+        return null;
+    }
+
+    if (next.colType === 'middle-pinned') {
+        scrollerEl.scrollLeft = forward ? 0 : scrollerEl.scrollWidth;
+    }
+
+    if (next.rowStep > 0) {
+        return {
+            colType: next.colType,
+            column: next.column,
+            row: overrideGroupRow(ctx, ARROW_DOWN_KEY, gotoRow),
+            filterClass: ''
+        };
+    }
+
+    return { colType: next.colType, column: next.column, row: gotoRow, filterClass: 'filter-' };
+}
+
+/**
  * this handler tab, and arrow key navigation on rows
  */
 export const cellFilterKeyNavigationCellRowHandler = (
@@ -100,33 +137,31 @@ export const cellFilterKeyNavigationCellRowHandler = (
         let gotoCol = column;
         let filterClass = 'filter-';
 
+        /**
+         * leaves the section, or stays on the current cell when there is nowhere to go
+         */
+        const leave = (forward: boolean) => {
+            const target = leaveFilterSection(ctx, config, scrollerEl, colType, forward, gotoRow);
+            if (target) {
+                ({ colType: gotoColType, column: gotoCol, row: gotoRow, filterClass } = target);
+            } else {
+                gotoCol = column;
+                gotoCell = celno;
+            }
+        };
+
         switch (colType) {
             case 'left-pinned':
                 if (currentKey === ARROW_RIGHT_KEY) {
                     gotoCol = gotoCol + 1;
 
                     if (!config.columnsPinnedLeft[gotoCol]) {
-                        gotoColType = 'middle-pinned';
-                        scrollerEl.scrollLeft = 0;
-                        gotoCol = 0;
+                        leave(true);
                     }
                 } else if (currentKey === ARROW_LEFT_KEY) {
                     gotoCol = gotoCol - 1;
                     if (gotoCol < 0) {
-                        gotoCol = 0;
-                    } else {
-                        if (!config.columnsPinnedLeft[gotoCol]) {
-                            gotoColType = config.columnsPinnedRight.length ? 'right-pinned' : 'middle-pinned';
-                            if (gotoColType === 'right-pinned') {
-                            }
-                            if (gotoColType === 'middle-pinned') {
-                                scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                            }
-                        } else {
-                            if (gotoCol > column) {
-                                gotoCell = 0;
-                            }
-                        }
+                        leave(false);
                     }
                 }
 
@@ -163,26 +198,14 @@ export const cellFilterKeyNavigationCellRowHandler = (
                 } else if (currentKey === ARROW_LEFT_KEY) {
                     gotoCol = gotoCol - 1;
                     if (gotoCol < 0) {
-                        gotoCol = 0;
+                        // past the first center column, into the left pinned filters
+                        // (a clamp to 0 here made that branch unreachable)
+                        leave(false);
                     } else {
-                        if (!config.columnsCenter[gotoCol]) {
-                            if (config.columnsPinnedLeft.length) {
-                                gotoColType = 'left-pinned';
-                                gotoCol = config.columnsPinnedLeft.length - 1;
-                            } else if (config.columnsPinnedRight.length) {
-                                gotoColType = 'right-pinned';
-                                gotoCol = config.columnsPinnedRight.length - 1;
-                            } else {
-                                gotoColType = 'middle-pinned';
-
-                                scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                            }
-                        } else {
-                            const columnleft = column < 2 ? column : column - 1;
-                            const colLeftx = colLeft[columnleft] - widths[columnleft];
-                            if (scrollleft > colLeftx) {
-                                scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
-                            }
+                        const columnleft = column < 2 ? column : column - 1;
+                        const colLeftx = colLeft[columnleft] - widths[columnleft];
+                        if (scrollleft > colLeftx) {
+                            scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
                         }
                     }
                 }
@@ -193,21 +216,12 @@ export const cellFilterKeyNavigationCellRowHandler = (
                 if (currentKey === ARROW_RIGHT_KEY) {
                     gotoCol = gotoCol + 1;
                     if (!config.columnsPinnedRight[gotoCol]) {
-                        gotoColType = config.columnsPinnedLeft.length ? 'left-pinned' : 'middle-pinned';
-                        gotoCol = 0;
-
-                        filterClass = '';
-                        gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
-                        if (gotoColType === 'middle-pinned') {
-                            scrollerEl.scrollLeft = 0;
-                        }
+                        leave(true);
                     }
                 } else if (currentKey === ARROW_LEFT_KEY) {
                     gotoCol = gotoCol - 1;
                     if (!config.columnsPinnedRight[gotoCol]) {
-                        gotoColType = 'middle-pinned';
-                        scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                        gotoCol = config.columnsCenter.length - 1;
+                        leave(false);
                     }
                 }
                 break;
@@ -404,6 +418,21 @@ export const cellFilterKeyNavigationCellRowHandler = (
 
         let isLastCell: boolean;
 
+        /**
+         * leaves the section, landing on the first cell going forward and the last going
+         * backward. Stays on the current cell when there is nowhere to go.
+         */
+        const leave = (forward: boolean) => {
+            const target = leaveFilterSection(ctx, config, scrollerEl, colType, forward, gotoRow);
+            if (target) {
+                ({ colType: gotoColType, column: gotoCol, row: gotoRow, filterClass } = target);
+                gotoCell = forward ? 0 : sectionColumns(config, gotoColType)[gotoCol].rows.length - 1;
+            } else {
+                gotoCol = column;
+                gotoCell = celno;
+            }
+        };
+
         switch (colType) {
             case 'left-pinned':
                 if (currentKey === TAB_KEY && !reverse) {
@@ -416,40 +445,19 @@ export const cellFilterKeyNavigationCellRowHandler = (
                     }
 
                     if (!config.columnsPinnedLeft[gotoCol]) {
-                        gotoColType = 'middle-pinned';
-                        scrollerEl.scrollLeft = 0;
-                        gotoCell = 0;
-                        gotoCol = 0;
+                        leave(true);
                     }
                 } else if (currentKey === TAB_KEY && reverse) {
                     if (gotoCell !== 0) {
                         gotoCell = gotoCell - 1;
                     } else {
                         gotoCol = gotoCol - 1;
-                        gotoCell = 100;
                     }
                     if (gotoCol < 0) {
-                        gotoCol = 0;
-                    } else {
-                        if (!config.columnsPinnedLeft[gotoCol]) {
-                            gotoColType = config.columnsPinnedRight.length ? 'right-pinned' : 'middle-pinned';
-                            if (gotoColType === 'right-pinned') {
-                                gotoCol = config.columnsPinnedRight.length - 1;
-                                gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
-                            }
-                            if (gotoColType === 'middle-pinned') {
-                                gotoCol = config.columnsCenter.length - 1;
-                                gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
-                                scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                            }
-                        } else {
-                            if (gotoCol < column) {
-                                gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
-                            }
-                            if (gotoCol > column) {
-                                gotoCell = 0;
-                            }
-                        }
+                        leave(false);
+                    } else if (gotoCol < column) {
+                        // last cell of the previous left pinned column (was read from columnsPinnedRight)
+                        gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
                     }
                 }
 
@@ -502,30 +510,14 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         }
                     }
                     if (gotoCol < 0) {
-                        gotoCol = 0;
+                        // past the first center column, into the left pinned filters
+                        // (a clamp to 0 here made that branch unreachable)
+                        leave(false);
                     } else {
-                        if (!config.columnsCenter[gotoCol]) {
-                            if (config.columnsPinnedLeft.length) {
-                                gotoColType = 'left-pinned';
-                                gotoCol = config.columnsPinnedLeft.length - 1;
-                                gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
-                            } else if (config.columnsPinnedRight.length) {
-                                gotoColType = 'right-pinned';
-                                gotoCol = config.columnsPinnedRight.length - 1;
-                                gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
-                            } else {
-                                gotoColType = 'middle-pinned';
-                                gotoCol = config.columnsCenter.length - 1;
-                                gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
-
-                                scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                            }
-                        } else {
-                            const columnleft = column < 2 ? column : column - 1;
-                            const colLeftx = colLeft[columnleft] - widths[columnleft];
-                            if (scrollleft > colLeftx) {
-                                scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
-                            }
+                        const columnleft = column < 2 ? column : column - 1;
+                        const colLeftx = colLeft[columnleft] - widths[columnleft];
+                        if (scrollleft > colLeftx) {
+                            scrollerEl.scrollLeft = scrollerEl.scrollLeft - widths[columnleft];
                         }
                     }
                 }
@@ -543,14 +535,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                     }
 
                     if (!config.columnsPinnedRight[gotoCol]) {
-                        gotoColType = config.columnsPinnedLeft.length ? 'left-pinned' : 'middle-pinned';
-                        gotoCol = 0;
-                        gotoCell = 0;
-                        filterClass = '';
-                        gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
-                        if (gotoColType === 'middle-pinned') {
-                            scrollerEl.scrollLeft = 0;
-                        }
+                        leave(true);
                     }
                 } else if (currentKey === TAB_KEY && reverse) {
                     if (gotoCell !== 0) {
@@ -563,10 +548,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                     }
 
                     if (!config.columnsPinnedRight[gotoCol]) {
-                        gotoColType = 'middle-pinned';
-                        scrollerEl.scrollLeft = scrollerEl.scrollWidth;
-                        gotoCol = config.columnsCenter.length - 1;
-                        gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
+                        leave(false);
                     }
                 }
                 break;

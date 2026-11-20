@@ -28,7 +28,8 @@ export function week(_context: DateInterface, config: IDateConfig, year: number,
 
     // if less that first we need to count downwards
     if (day < 1) {
-        firstDayOfMonth.setDate(firstDayOfMonth.getDate() - Math.abs(day) - config.weekStart);
+        // setDate(0) is the last day of the previous month, -1 the one before - same fix as day.ts
+        firstDayOfMonth.setDate(day);
         day = firstDayOfMonth.getDate();
         if (month === 0) {
             month = 11;

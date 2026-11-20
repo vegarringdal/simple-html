@@ -1,3 +1,4 @@
+import { Filter, isFilterGroup } from '../../datasource/filter';
 import type { FilterArgument } from '../../datasource/filterArgument';
 import type { Grid } from '../grid';
 
@@ -19,7 +20,23 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
         return null;
     }
 
-    const data = availableOnly ? datasource.getRows(true) : datasource.getAllData();
+    /**
+     * Excel style: the list is built from the rows every *other* filter lets through, so values
+     * this column filtered away itself are still listed (unchecked) and can be checked again.
+     * Using the already filtered rows made a NOT_IN computed from the list bring back values the
+     * column had excluded before. The column's own conditions only decide what starts checked.
+     */
+    const { own, others } = splitColumnFilter(datasource.getFilter(), attribute);
+    const filter = new Filter();
+    const allData = datasource.getAllData();
+    const availableRows = others ? filter.filter(allData, others, datasource) : allData;
+    const data = availableOnly ? availableRows : allData;
+
+    // rows the column's own conditions let through, null when it has none (all checked)
+    const passingOwn = own.length
+        ? new Set(filter.filter(data, { type: 'GROUP', logicalOperator: 'AND', filterArguments: own }, datasource))
+        : null;
+    const checkedValues = new Set();
 
     const length = data.length;
     let haveNull = false;
@@ -39,12 +56,15 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
      */
     let truncated = false;
 
-    const addValue = (value: any) => {
+    const addValue = (value: any, row: any) => {
         counts.set(value, (counts.get(value) || 0) + 1);
         if (dataFilterSet.size < DROPDOWN_FILTER_MAX_ROWS || dataFilterSet.has(value)) {
             dataFilterSet.add(value);
         } else {
             truncated = true;
+        }
+        if (!passingOwn || passingOwn.has(row)) {
+            checkedValues.add(value);
         }
     };
 
@@ -53,43 +73,46 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
             if (typeof data[i][attribute] === 'string') {
                 if (search) {
                     if (data[i][attribute].toLocaleUpperCase().indexOf(search.toLocaleUpperCase()) !== -1) {
-                        addValue(data[i][attribute].toLocaleUpperCase());
+                        addValue(data[i][attribute].toLocaleUpperCase(), data[i]);
                     }
                 } else {
-                    addValue(data[i][attribute].toLocaleUpperCase());
+                    addValue(data[i][attribute].toLocaleUpperCase(), data[i]);
                 }
             }
             if (typeof data[i][attribute] === 'number') {
                 if (search) {
                     if (data[i][attribute].toString().indexOf(search) !== -1) {
-                        addValue(data[i][attribute]);
+                        addValue(data[i][attribute], data[i]);
                     }
                 } else {
-                    addValue(data[i][attribute]);
+                    addValue(data[i][attribute], data[i]);
                 }
             }
             if (typeof data[i][attribute] === 'boolean') {
                 if (search) {
                     if (data[i][attribute].toString().indexOf(search) !== -1) {
-                        addValue(data[i][attribute]);
+                        addValue(data[i][attribute], data[i]);
                     }
                 } else {
-                    addValue(data[i][attribute]);
+                    addValue(data[i][attribute], data[i]);
                 }
             }
 
             if (data[i][attribute] && typeof data[i][attribute] === 'object') {
                 if (search) {
                     if (data[i][attribute].toISOString().indexOf(search) !== -1) {
-                        addValue(data[i][attribute]);
+                        addValue(data[i][attribute], data[i]);
                     }
                 } else {
-                    addValue(data[i][attribute].toISOString());
+                    addValue(data[i][attribute].toISOString(), data[i]);
                 }
             }
         } else {
             haveNull = true;
             counts.set('NULL', (counts.get('NULL') || 0) + 1);
+            if (!passingOwn || passingOwn.has(data[i])) {
+                checkedValues.add('NULL');
+            }
         }
     }
 
@@ -104,32 +127,15 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
     }
 
     const dataFilterSetFull = new Set(tempArray);
-    let selectAll = true;
 
-    // check if top level filter have attribute, if so.. use it
-    const oldFilter = datasource.getFilter();
-    if (oldFilter?.filterArguments?.length) {
-        oldFilter?.filterArguments.forEach((f: FilterArgument) => {
-            if (f.attribute === attribute) {
-                if (Array.isArray(f.value as any)) {
-                    if (f.operator === 'IN') {
-                        dataFilterSet = new Set(f.value as any);
-                        selectAll = false;
-                    }
-                    if (f.operator === 'NOT_IN') {
-                        const tempSet = new Set(f.value as any);
-                        dataFilterSet = new Set(Array.from(dataFilterSetFull).filter((x) => !tempSet.has(x)));
-                        selectAll = false;
-                    }
-                }
-            }
-        });
+    // the column's current selection: the listed values its own conditions let through
+    const selectAll = !passingOwn;
+    if (passingOwn) {
+        dataFilterSet = new Set(tempArray.filter((value) => checkedValues.has(value)));
     }
 
-    const dataSize = datasource.getRows(true).length;
-    const totalSize = datasource.getAllData().length;
-    const filterSetsSameSize = dataFilterSet.size === dataFilterSetFull.size;
-    const enableAvailableOnlyOption = dataSize !== totalSize && filterSetsSameSize;
+    // "Filter Available" only changes the list when other columns hide rows
+    const enableAvailableOnlyOption = availableRows.length !== allData.length;
 
     return {
         enableAvailableOnlyOption,
@@ -141,4 +147,30 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
         /** rows per distinct value, only meaningful when nothing was truncated */
         counts
     };
+}
+
+/**
+ * Splits the current filter into the column's own top level conditions (what the value list,
+ * header filter and "is blank" put there) and everything else.
+ * Only an AND root can be split - under an OR root nothing belongs to the column alone.
+ * A group without logicalOperator is AND too (see Filter), and a single condition set from code
+ * is the column's own when it is on this column.
+ */
+function splitColumnFilter(filter: FilterArgument | null, attribute: string) {
+    if (filter && isFilterGroup(filter) && filter.logicalOperator !== 'OR') {
+        const args = filter.filterArguments || [];
+        return {
+            own: args.filter((arg) => arg.attribute === attribute),
+            others: {
+                ...filter,
+                filterArguments: args.filter((arg) => arg.attribute !== attribute)
+            }
+        };
+    }
+
+    if (filter && !isFilterGroup(filter) && filter.attribute === attribute) {
+        return { own: [filter], others: null as FilterArgument | null };
+    }
+
+    return { own: [] as FilterArgument[], others: filter };
 }

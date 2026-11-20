@@ -1,3 +1,4 @@
+import { addBodyClickListener } from './gridFunctions/addBodyClickListener';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
@@ -44,7 +45,9 @@ export class Grid {
     public oldHeight: number;
     public oldWidth: number;
     public resizeTimer: ReturnType<typeof setTimeout>;
-    public resizeInit = false;
+    public resizeObserver: ResizeObserver;
+    /** aborts the listeners addScrollEventListeners added, see there */
+    public scrollListenersAbort: AbortController;
     public columnsHeaders: Map<string, HTMLElement> = new Map();
     public skipInitResizeEvent: boolean = false;
     public contextMenu: HTMLElement;
@@ -57,17 +60,14 @@ export class Grid {
 
     /**
      * only to be used by grid interface
+     * called every time the element is added to the dom, also when it is just moved
      * @param element
      */
     public connectElement(element: HTMLElement) {
         this.element = element;
         this.element.classList.add('simple-html-grid');
         if (this.gridInterface) {
-            this.gridInterface.__parseConfig();
-            this.gridInterface.__dataSourceUpdated();
-            createDom(this);
-            this.domCreated = true;
-            initResizerEvent(this);
+            this.attach();
         }
     }
 
@@ -76,36 +76,78 @@ export class Grid {
      * @param gridInterface
      */
     public connectGridInterface(gridInterface: GridInterface<any>) {
+        // the old interface would keep listening to its datasource and rebuilding this grid
+        if (this.gridInterface && this.gridInterface !== gridInterface) {
+            this.gridInterface.__disconnectGrid();
+        }
+
         this.gridInterface = gridInterface;
         this.gridInterface.connectGrid(this);
 
-        if (this.element) {
+        // not in the dom yet (or removed from it), connectElement does the rest when it is added
+        if (this.element?.isConnected) {
+            this.attach();
+        }
+    }
+
+    /**
+     * Builds the dom the first time. After that - element moved in the dom, or a new interface
+     * connected - the dom is kept, and only the datasource/listeners are hooked back up.
+     */
+    private attach() {
+        // disconnectElement unsubscribed it from the datasource, a moved element needs it back
+        if (!this.gridInterface.__isConnected()) {
+            this.gridInterface.connectGrid(this);
+        }
+
+        if (this.domCreated) {
+            addBodyClickListener(this);
+            // catch up on data changed while detached, or the new interface/config
+            this.rebuild();
+            this.oldHeight = this.element.clientHeight;
+            this.oldWidth = this.element.clientWidth;
+        } else {
             this.gridInterface.__parseConfig();
             this.gridInterface.__dataSourceUpdated();
             createDom(this);
             this.domCreated = true;
-            initResizerEvent(this);
         }
+
+        initResizerEvent(this);
     }
 
+    /**
+     * called every time the element is removed from the dom, also when it is just moved
+     * everything that points from outside the element to the grid is undone here,
+     * else the grid (and its datasource) can never be garbage collected
+     */
     public disconnectElement() {
         removeContextMenu(this);
 
-        if (this.filterEditorContainer) {
-            document.body.removeChild(this.filterEditorContainer);
-            this.filterEditorContainer = null;
-        }
-
-        if (this.columnChooserMenu) {
-            document.body.removeChild(this.columnChooserMenu);
-            this.columnChooserMenu = null;
-        }
+        // remove() and not body.removeChild(), the user can already have closed these
+        this.filterEditorContainer?.remove();
+        this.filterEditorContainer = null;
+        this.columnChooserMenu?.remove();
+        this.columnChooserMenu = null;
 
         if (this.clickListner) {
             document.removeEventListener('click', this.clickListner);
+            this.clickListner = null;
         }
 
-        this.gridInterface.__disconnectGrid();
+        this.resizeObserver?.disconnect();
+        this.resizeObserver = null;
+
+        // nothing to render into anymore, attach() rebuilds if the element comes back
+        clearTimeout(this.resizeTimer);
+        clearTimeout(this.largeScrollTopTimer);
+        clearTimeout(this.largeScrollLeftTimer);
+        this.resizeTimer = null;
+        this.largeScrollTopTimer = null;
+        this.largeScrollLeftTimer = null;
+
+        // the element can be removed before an interface was ever connected
+        this.gridInterface?.__disconnectGrid();
     }
 
     public disableResizeEvent() {

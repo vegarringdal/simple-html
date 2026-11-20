@@ -43,15 +43,18 @@ export function contextmenuDate(
             'November',
             'December'
         ],
-        weekStart: config.weekStart || 1,
-        rowHeight: config.weekStart || 22,
-        monthWidth: config.weekStart || 230,
-        monthMargin: config.weekStart || 10,
+        // ?? and not ||, 0 (sunday) is a valid week start
+        weekStart: config.weekStart ?? 1,
+        rowHeight: config.rowHeight || 22,
+        monthWidth: config.monthWidth || 230,
+        monthMargin: config.monthMargin ?? 10,
         hideDimmedDates: config.hideDimmedDates !== undefined ? config.hideDimmedDates : false,
         showYearInMonth: config.showYearInMonth !== undefined ? config.showYearInMonth : false,
         headerTitle: '', // not shown datepicker is true
         datepicker: true,
-        datepickerDate: value
+        // a copy: the picker edits the date it is given in place (seconds, hours, minutes), and
+        // that can be the date object of the cell. Anything that is not a valid date opens on today
+        datepickerDate: value instanceof Date && !Number.isNaN(value.getTime()) ? new Date(value.getTime()) : null
     };
 
     const rect = cell.getBoundingClientRect();

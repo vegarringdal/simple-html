@@ -133,7 +133,15 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                         const newColumn = (parent as HTMLCellElement).$column;
                         const isPanel = classList?.contains('simple-html-grid-panel');
 
-                        if ((newAttribute && newAttribute !== attribute) || isPanel) {
+                        // a group chip from the top panel can only be moved within the panel. It has
+                        // no column of its own, so dropped on a column it would insert a duplicate
+                        // column or overwrite the one it landed on
+                        const chipOnColumn =
+                            cell.classList.contains('simple-html-grid-panel-label') &&
+                            !isPanel &&
+                            !classList.contains('simple-html-grid-drop-zone-left-panel');
+
+                        if (((newAttribute && newAttribute !== attribute) || isPanel) && !chipOnColumn) {
                             const columnCenter = ctx.gridInterface.__getGridConfig().columnsCenter;
                             const columnLeft = ctx.gridInterface.__getGridConfig().columnsPinnedLeft;
                             const columnRight = ctx.gridInterface.__getGridConfig().columnsPinnedRight;
@@ -145,8 +153,12 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                                 case classList?.contains('simple-html-grid-panel'): {
                                     const newGrouping = ctx.gridInterface.getDatasource().getGrouping();
 
-                                    newGrouping.push({ attribute: attribute, title: attributeLabel });
-                                    ctx.gridInterface.getDatasource().group(newGrouping);
+                                    // already grouped on this column - grouping on it twice only nests
+                                    // every group inside an identical one
+                                    if (!newGrouping.some((e) => e.attribute === attribute)) {
+                                        newGrouping.push({ attribute: attribute, title: attributeLabel });
+                                        ctx.gridInterface.getDatasource().group(newGrouping);
+                                    }
 
                                     break;
                                 }
@@ -204,53 +216,20 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
 
                                     break;
                                 case classList?.contains('simple-html-grid-drop-zone-top'):
-                                    /**
-                                     * new
-                                     */
-                                    if (newColtype === 'left-pinned') {
-                                        columnLeft[newColumn].rows.splice(newCellno, 0, attribute);
+                                case classList?.contains('simple-html-grid-drop-zone-bottom'): {
+                                    // above or below the cell it was dropped on
+                                    let insertAt = classList.contains('simple-html-grid-drop-zone-top')
+                                        ? newCellno
+                                        : newCellno + 1;
+
+                                    // the old cell is taken out first. Moving within the same column, a
+                                    // cell that sat above the drop point moves everything below it up one.
+                                    // (inserting first shifted the old cell, and the removal then hit the
+                                    // wrong row - one attribute lost, the dragged one duplicated)
+                                    if (coltype === newColtype && column === newColumn && cellno < insertAt) {
+                                        insertAt = insertAt - 1;
                                     }
 
-                                    if (newColtype === 'middle-pinned') {
-                                        columnCenter[newColumn].rows.splice(newCellno, 0, attribute);
-                                    }
-
-                                    if (newColtype === 'right-pinned') {
-                                        columnRight[newColumn].rows.splice(newCellno, 0, attribute);
-                                    }
-                                    /**
-                                     * old
-                                     */
-                                    if (coltype === 'left-pinned') {
-                                        columnLeft[column].rows.splice(cellno, 1);
-                                    }
-
-                                    if (coltype === 'middle-pinned') {
-                                        columnCenter[column].rows.splice(cellno, 1);
-                                    }
-
-                                    if (coltype === 'right-pinned') {
-                                        columnRight[column].rows.splice(cellno, 1);
-                                    }
-
-                                    ctx.rebuild();
-
-                                    break;
-                                case classList?.contains('simple-html-grid-drop-zone-bottom'):
-                                    /**
-                                     * new
-                                     */
-                                    if (newColtype === 'left-pinned') {
-                                        columnLeft[newColumn].rows.splice(newCellno + 1, 0, attribute);
-                                    }
-
-                                    if (newColtype === 'middle-pinned') {
-                                        columnCenter[newColumn].rows.splice(newCellno + 1, 0, attribute);
-                                    }
-
-                                    if (newColtype === 'right-pinned') {
-                                        columnRight[newColumn].rows.splice(newCellno + 1, 0, attribute);
-                                    }
                                     /**
                                      * old
                                      */
@@ -266,8 +245,24 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                                         columnRight[column].rows.splice(cellno, 1);
                                     }
 
+                                    /**
+                                     * new
+                                     */
+                                    if (newColtype === 'left-pinned') {
+                                        columnLeft[newColumn].rows.splice(insertAt, 0, attribute);
+                                    }
+
+                                    if (newColtype === 'middle-pinned') {
+                                        columnCenter[newColumn].rows.splice(insertAt, 0, attribute);
+                                    }
+
+                                    if (newColtype === 'right-pinned') {
+                                        columnRight[newColumn].rows.splice(insertAt, 0, attribute);
+                                    }
+
                                     ctx.rebuild();
                                     break;
+                                }
                                 case classList?.contains('simple-html-grid-drop-zone-right'):
                                     /**
                                      * old

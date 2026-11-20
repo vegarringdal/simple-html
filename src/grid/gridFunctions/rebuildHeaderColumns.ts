@@ -10,6 +10,7 @@ import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { getMiddleColumnsNeeded } from './rebuildRowColumns';
 import { renderCell } from './renderCell';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
@@ -237,6 +238,10 @@ export function rebuildHeaderColumns(ctx: Grid) {
                     const mouseup = () => {
                         document.removeEventListener('mousemove', mousemove);
                         document.removeEventListener('mouseup', mouseup);
+
+                        // narrower columns (or a narrower pinned side) can mean more columns on
+                        // screen than the middle section has elements for, rebuild recounts them
+                        ctx.rebuild();
                     };
 
                     // add events to when user moves/stops resizing
@@ -257,14 +262,10 @@ export function rebuildHeaderColumns(ctx: Grid) {
         LEFT_PINNED_COLTYPE
     );
 
-    // get params we will use to apply max columns
-    const bodyWidth = getElementByClassName(ctx.element, 'simple-html-grid-body').clientWidth;
-    const middleWidth = bodyWidth - (config.__leftWidth + config.__scrollbarSize + config.__rightWidth + config.selectSizeHeight);
-
     addColumns(
         getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-middle'),
         config.columnsCenter,
-        middleWidth / 50,
+        getMiddleColumnsNeeded(ctx),
         MIDDLE_PINNED_COLTYPE
     );
 

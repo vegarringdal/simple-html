@@ -3,6 +3,11 @@
  */
 export class DateFormaterDDMMYYYYTHHMMSS {
     /**
+     * includes time, date filters compare with time, see `ValueFormater.dateIncludesTime`
+     */
+    static includesTime = true;
+
+    /**
      * Takes value and return string
      * @param value
      */

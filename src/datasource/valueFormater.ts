@@ -36,9 +36,25 @@ export interface ValueFormater {
      * @param attribute
      */
     fromSourceGrouping(value: any, type: DataTypes, attribute: string, isFilter: boolean): any;
+
+    /**
+     * optional: does the date format of this attribute include time?
+     * Return false and date filters on the attribute match on the calendar day only, time ignored
+     * on both the row value and the filter value. Return true, or leave the method out, and
+     * date filters compare with time.
+     * The default value formater answers from its date formater's `includesTime`.
+     * @param attribute
+     */
+    dateIncludesTime?(attribute: string): boolean;
 }
 
 export interface DateAndNumberFormater {
+    /**
+     * optional, date formaters only: true if the format includes time.
+     * false makes date filters match on the calendar day only. Left out, filters compare with time.
+     * See `ValueFormater.dateIncludesTime`
+     */
+    includesTime?: boolean;
     /**
      * used by grid to insert in edit cells/filter
      * @param value

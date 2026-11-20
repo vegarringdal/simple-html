@@ -1,7 +1,7 @@
 # Improvements
 
 Log of code fixes/cleanups done outside of feature work.
-See `README.md` for the feature TODO list.
+Open items are at the bottom, under *Candidates / not started*.
 
 ## Done
 
@@ -199,9 +199,9 @@ Independent of the tooling, and worth keeping:
 
 * **columns are virtualised horizontally** - a column that is off screen does not exist in
   the dom at all
-* **the paste and clear row menu entries differ by one space** - `Cell (selected rows)` is
-  Paste, `Cell (selected rows)` is Clear. Easy to hit the wrong one, for a test *or* a user.
-  Worth renaming.
+* **the paste and clear row menu entries have the same text** - both read
+  `Cell (selected rows)`. They sit under separate `Paste:` / `Clear:` section headings, which
+  tells a user which is which, but a test has to pick by section rather than by text.
 * **the resize handle spans the full header height but the filter input covers its lower
   half** - only the top part of the handle is actually grabbable
 * **two `.simple-html-label` elements are stacked at the same coordinates** in the header,
@@ -437,9 +437,9 @@ reformatting the emitted `packages/grid/dist` - 101 files in one run.
 `!**/dist` added to `biome.json` `files.includes`, so the exclusion no longer depends on
 what happens to be gitignored. Back to 160 files checked.
 
-Anything already in `packages/grid/dist` should be regenerated with `npm run build:all`
-before committing, so what is published is what tsc emitted rather than what biome
-reformatted.
+**No longer applies:** the flatten (below) put `dist/` back in `.gitignore` and dropped it
+from git, and `build:all` is now `build`, so there is no committed build output to keep
+clean. The `!**/dist` exclusion is still in `biome.json`.
 
 ### Flattened the workspace into a single package
 
@@ -447,7 +447,11 @@ The repo was a one-package npm workspace (`packages/grid`). Since releases now h
 installing straight from a git branch rather than `npm publish`, the workspace layer was
 pure overhead and is gone.
 
-* `packages/grid/src` -> `src`, `packages/grid/dist` -> `dist` (both via `git mv`)
+* `packages/grid/src` -> `src` via `git mv`. `packages/grid/dist` was deleted from git rather
+  than moved, and `dist/` went into `.gitignore`.
+  **Note:** with `dist` not committed and no `prepare` script, installing straight from a
+  git branch now gets a package without `dist`, while `main` points at `dist/index.js`. The
+  tgz that `npm run build` writes to `./build` (see below) is what installs a working package.
 * the two `package.json` files merged into one root manifest named `@simple-html/grid` -
   it carries both the dev tooling and the package identity (`main`/`module`/`typings` ->
   `dist`, `lit-html` as a dependency, repo/bugs/homepage). `workspaces` removed.
@@ -522,6 +526,107 @@ browsers without them. The rule reads two variables, `--demo-scroll-thumb` and
 * `.sidebar` - always dark, uses the sidebar's own hover/border greys
 * `.code-panel` - always dark, uses the panel's summary/border colours
 
+### Bug sweep: every high and medium finding from a full code review
+
+A review of the whole of `src` (datasource, grid render/lifecycle, interaction + date picker)
+found about 35 real bugs. All high and medium ones are fixed here, each with a regression test
+that fails on the old code. Low ones are listed under *Candidates*.
+
+500 -> 634 tests. Statement coverage 44% -> 66% (`src/datasource` 89%, `src/grid` core 80%,
+`src/grid/gridFunctions` 55%, `src/date` 0% -> 56%).
+
+#### Behaviour changes - decided, worth knowing
+
+* **a filter group without `logicalOperator` is AND**, as `FilterArgument` documents. The code
+  ran it as OR.
+* **empty groups and incomplete conditions are ignored** - no attribute, no operator, or a date
+  condition without a value. They never restrict rows. Before, an empty OR group removed every
+  row ("Clear Filter" on a column could leave one behind), and a missing operator fell back to
+  `>=`.
+* **group or condition**: `type` decides when it is set, otherwise a `filterArguments` array
+  makes it a group - as documented. `logicalOperator` alone does not.
+* **blanks** (null, undefined, `''`, invalid Date) **sort first ascending, last descending**.
+  0 and false are real values. Grouping keys values the same way the sort compares them.
+* **date filters on a date only format match on the day**, a format with time (`*THHMMSS`)
+  still compares the time. Storage is unchanged: a date set in a cell keeps its time.
+  The date formatters declare it with a static `includesTime`, the `ValueFormater` with an
+  optional `dateIncludesTime(attribute)`. A custom formater without it keeps comparing with time.
+* **blank dates never match a date comparison** (=, <, >, <=, >= and the operators mapped onto
+  them), only NOT_EQUAL_TO and IS_BLANK. They used to count as 1970-01-01. Number filters are
+  unchanged - 0 and blank are deliberately the same thing there.
+* **group header rows can not be selected**, so Clear/Paste can no longer write onto them
+* **typing in a header filter only replaces that column's top level conditions** - ranges,
+  nested groups and other columns are kept. An OR root is kept whole: AND(header condition, OR
+  group). "Is Blank" and row menu "Add to filter" do the same.
+* **the value list (excel style) is built from what every *other* filter lets through**, so
+  values the column excluded itself stay listed, unchecked
+* a group chip dropped on a column does nothing; grouping on an already grouped column is a no-op
+* `Grid` public fields: `resizeInit` removed, `resizeObserver` and `scrollListenersAbort` added
+
+#### Datasource
+
+* **sort** - `obj[attr] || ''` made 0/null/false all `''`, and a `typeof v1 === 'string' &&
+  typeof v1 === 'string'` typo made the comparator disagree with itself. Numbers with 0/null and
+  negatives sorted wrong, and grouping then showed the same group twice. New `compareAscending`
+  and `isBlank.ts`.
+* `markForDeletion(null, true)` spliced inside `forEach`, skipping every other new row
+* a key of `0` was replaced with a generated key (falsy check)
+* `clearMarkedForDeletion` left the rows on screen
+* `addNewEmpty` while grouped put the row outside every group, it vanished on expand/collapse
+* `IN` - the AND path compared raw numbers to a stringified list (never matched), the OR path
+  gave up on the whole group at an `IN` without a list
+* the first ctrl/shift click on a fresh datasource selected nothing
+* `getFilterTree` turned an empty group into a condition without operator, which crashed the footer
+
+#### Grid lifecycle and layout
+
+* **the footer crashed on a half built filter** ("add condition" / "add sub group" in the
+  editor, then apply) and took the rest of `rebuild()` with it. Now shown as `?`.
+* **every grid stayed in memory**: the document click listener was never removed, the
+  ResizeObserver never disconnected, timers never cleared. The dropdown grid sample makes one
+  grid per click.
+* column chooser "Close" left `columnChooserMenu` set, so removing the grid threw and skipped
+  the rest of the cleanup
+* moving the element in the dom, or `connectInterface` twice, duplicated the dom and dropped the
+  datasource subscription
+* datasource events between `connectInterface` and the append crashed, and so did removing a
+  grid that never got an interface
+* a grid created hidden (0x0) got no center columns - the first ResizeObserver callback was
+  always skipped, and for a hidden grid that is the one fired when it is shown
+* center columns under 50px were left blank (slot count was `width / 50`). It now counts how
+  many of the narrowest columns fit, and releasing a column resize rebuilds.
+* header too short with `hideFilter` + `cellHeaderLabelHeight`
+* `saveConfig`/`loadConfig` passed the datasource's own sort/filter objects around, so a later
+  shift+click sort changed the saved config (and `initConfig`). `structuredClone` both ways,
+  which keeps Dates.
+
+#### Interaction and date picker
+
+* header filter typing dropped the upper bound of a range on another column, every nested
+  group after the first, and an OR root entirely
+* drag/drop: a stacked cell dropped above its partner lost the partner; a group chip dropped on
+  a column removed or duplicated a column; grouping twice on one column
+* value list: a second uncheck brought back the values excluded the first time
+* "Is Blank" on an OR root widened the filter, and left the header text showing
+* filter editor dates went through `toSource` (current time), so EQUAL never matched - now
+  `toFilter`, like the header
+* "Clear (selected rows)" ignored per-row readonly
+* "Add to filter" turned an OR root into AND, and blanked header inputs whose conditions it kept
+* header text survived for columns not listed in `attributes` (it cleared `attributes`, not
+  `__attributes`) and came back on the next header edit
+* key navigation crashed at section edges (`columnsCenter` read in the left pinned branch, an
+  empty center section), and the filter row could never move into left pinned. One
+  `nextSection` helper handles leaving a section now.
+* date picker: `rowHeight`/`monthWidth`/`monthMargin` all read `weekStart`; a sunday start was
+  impossible (`weekStart || 1`); it opened on today instead of the cell's date (`toSource` of a
+  Date is null - a Date is now passed as is, a string still goes through `toSource`); the
+  minute down arrow wrapped at 23; the days before the 1st were off by one with a sunday start
+
+#### Existing test changed
+
+`filter_dates_time.test.ts` "date filter missing filer to use greater than or equal to" is now
+"date filter missing operator is ignored" - it pinned the old `>=` fallback.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -533,25 +638,54 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
 
 ## Candidates / not started
 
-* **`NodeJS.Timeout` in a browser library** — `grid/grid.ts` types its scroll/resize timers as
-  `NodeJS.Timeout`, which is why the package needs `@types/node` at all. `ReturnType<typeof setTimeout>`
-  is correct here and drops the dependency.
+* **`@types/node` is no longer needed by any typecheck** — the `NodeJS.Timeout` annotations
+  that pulled it in are gone (see *`npm start` typecheck errors fixed*). `tsc` over the root
+  tsconfig with `"types": []` is clean across all 168 files it covers, tests included. Node
+  APIs are only used by `config_devserver.ts` (excluded, run through `tsx` without a
+  typecheck) and the plain js in `scripts/` and `typecheck.js`. Dropping it only loses editor
+  types for `process` in `config_devserver.ts`.
 * **Duplicated writes in the proxy set trap** — `datasource/entityHandler.ts` assigns
-  `this.__currentValues[prop] = value; obj[prop] = value;` twice in a row at the end of
-  `set()`. Harmless but almost certainly a bad merge.
-* **`src/date` (the date picker) has no tests at all** — 0% coverage. `src/grid/gridFunctions`
-  is at 23%; the context menus, drag/drop and key navigation are the largest untested parts.
+  `this.__currentValues[prop] = value; obj[prop] = value;` twice at the end of `set()`, once
+  on each side of the `__edited` update. Harmless but almost certainly a bad merge.
+* **Test coverage gaps** — 57 test files (39 datasource, 17 grid, 1 date), 634 tests, 66%
+  statement coverage: `src/datasource` 89%, `src/grid` core 80%, `src/grid/gridFunctions` 55%,
+  `src/date` 56%. Still thin: the label/operator/custom context menus and the column chooser.
+* **Low severity bugs left from the code review** (high and medium are fixed, see *Bug sweep*):
+  * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
+  * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the
+    html version, values not html escaped
+  * `Grid.disableResizeEvent()` / `enableResizeEvent()` do the opposite of their names
+  * dim repeated values compares `fromSource`, the cell shows `fromSourceDisplay`; ignores
+    `numberOverride`; the row below is not re-dimmed after an edit
+  * `getChanges().modifiedEntities` still lists props edited back to their original value
+  * a time-only change on a date is not tracked as an edit (`entityHandler` compares the day).
+    Matters now that a set date keeps its time on purpose.
+  * with a collator using `sensitivity: 'base'`, `'a'` vs `'A'` compares as 1 both ways.
+    Returning 0 would need grouping to use the collator too, or groups split.
+  * `setData(rows)` while filtered keeps the filter (header + `getFilterString`) but shows every row
+  * `removeData` leaves `currentEntity` and the selection pointing at the removed entity
+  * `waitForFocusTrigger` swallows every key in every grid for 100ms after Enter / alt+arrow
+  * the value list puts `false` under "Blank" (falsy check), the IN filter keys it as `FALSE`
+  * the filter editor still blanks header inputs whose conditions it keeps
+  * a column config without `rows` crashes `getCellHeight` (malformed config only)
+* **Packaging / dev tooling**:
+  * the tgz ships all `src/**/__tests__` files - `"files"` lists `src`; `"!src/**/__tests__"`
+    would leave them out
+  * `scripts/build.js` still has `skipTsErrors: [2307]` from the `@simple-html/*` imports, none
+    are left, so it now only hides real "module not found" errors
+  * `config_devserver.ts` clears `dist_client` / `dist_nodejs` (nothing writes there), and its
+    header says `npm start` opens grid01 - the default is demo
+  * demo copy button: `navigator.clipboard` with no catch, throws on plain http off localhost
 * **Duplication in hot paths** — `verticalScrollHandler.ts` has three near-identical ~30 line
   blocks for left/middle/right that differ only in cache + widths array. Same shape in
   `horizontalScrollHandler.ts`.
 * **Duplicated listener machinery** — `addEventListener` / `removeEventListener` /
-  `__callSubscribers` are identical in `Datasource` and `GridInterface`.
-* **Linear scans on every scroll event** — `getTopRow()` / `getLeftCol()` scan from index 0
-  each time. `scrollTops` / `colLeft` are sorted, so binary search applies. README already
-  flags wide reports (200 columns) as a past pain point.
-* **Repetitive defaulting** — `__parseConfig()` has ~15 repetitions of the
-  `x === null || x === undefined` idiom, plus three copy-pasted attribute-collection loops.
-* **Test coverage** — 18 test files, nearly all filter-focused. Grouping / selection / sorting
-  have one file each; nothing covers the grid/render layer.
-* **lit-html version drift** — `packages/grid/package.json` depends on `^2.6.1`, root
-  devDependency is `3.2.1`.
+  `__callSubscribers` are identical in `Datasource` and `GridInterface` apart from the field
+  name (`__listeners` vs `listeners`).
+* **Linear scans on every scroll event** — `getTopRow()` / `getLeftCol()`, local closures in
+  `verticalScrollHandler` / `horizontalScrollHandler`, scan from index 0 for the first visible
+  row/column on every event. `scrollTops` / `colLeft` are sorted, so binary search applies.
+  The old README flagged wide reports (200 columns) as a past pain point.
+* **Repetitive defaulting** — `__parseConfig()` has 9 repetitions of the
+  `x === null || x === undefined` idiom, plus three copy-pasted attribute-collection loops
+  (pinned left / pinned right / center).

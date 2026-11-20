@@ -105,11 +105,12 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                             e.preventDefault();
                             e.stopPropagation();
                             config.datepickerMinute = config.datepickerMinute - 1;
-                            if (config.datepickerMinute > 23) {
+                            // minutes wrap at 59, not 23 like the hours (40 -> 39 jumped to 0)
+                            if (config.datepickerMinute > 59) {
                                 config.datepickerMinute = 0;
                             }
                             if (config.datepickerMinute < 0) {
-                                config.datepickerMinute = 23;
+                                config.datepickerMinute = 59;
                             }
                             context.config.datepickerDate.setMinutes(config.datepickerMinute);
                             context.config = structuredClone(context.config);

@@ -384,29 +384,28 @@ export function contextmenuFilter(
 
             cellConfig.currentFilterValue = null;
 
-            if (currentFilter && Array.isArray(currentFilter.filterArguments)) {
-                currentFilter.filterArguments.push({
-                    type: 'CONDITION',
-                    attribute: cellConfig.attribute,
-                    operator: arg,
-                    attributeType: cellConfig.type
-                });
+            const blankCondition: FilterArgument = {
+                type: 'CONDITION',
+                attribute: cellConfig.attribute,
+                operator: arg,
+                attributeType: cellConfig.type
+            };
+
+            if (currentFilter?.logicalOperator === 'AND' && Array.isArray(currentFilter.filterArguments)) {
+                currentFilter.filterArguments.push(blankCondition);
                 datasource.setFilter(currentFilter);
             } else {
+                // no filter yet, or an OR root. Pushed into an OR group the condition would widen
+                // the filter instead of narrowing it, so the OR group is kept whole and ANDed with it
                 datasource.setFilter({
                     type: 'GROUP',
                     logicalOperator: 'AND',
-                    filterArguments: [
-                        {
-                            type: 'CONDITION',
-                            attribute: cellConfig.attribute,
-                            operator: arg,
-                            attributeType: cellConfig.type
-                        }
-                    ]
+                    filterArguments: currentFilter?.filterArguments?.length ? [blankCondition, currentFilter] : [blankCondition]
                 });
             }
 
+            // the header input still showed the text filter that was just replaced
+            rebuildHeaderColumns(ctx);
             datasource.filter();
         };
 

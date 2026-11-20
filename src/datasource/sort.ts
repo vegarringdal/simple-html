@@ -1,4 +1,5 @@
 import type { Entity } from './entity';
+import { isBlank } from './isBlank';
 import type { SortArgument } from './sortArgument';
 
 export class Sort {
@@ -77,148 +78,82 @@ export class Sort {
     }
 
     public runOrderBy(array: Entity[]): void {
-        // super simple for now.. atleast I have som form for sort
         const thisSort = this.getOrderBy();
 
-        // this is mix from different sources... from what I can tell it works now
         array.sort((obj1: any, obj2: any) => {
-            let result = 0;
-
-            for (let i = 0; i < thisSort.length && result === 0; ++i) {
-                // loop until all are sorted
-                const currentObj = thisSort[i];
-                const isDate = this.dates.indexOf(currentObj.attribute) !== -1;
-                const v1 = obj1[currentObj.attribute] || '';
-                const v2 = obj2[currentObj.attribute] || '';
-
-                // compares with locale if set so it handles æ ø etc if needed
-                const localCompare = (v1: string, v2: string): number => {
-                    let resultLocale = null;
-
-                    if (this.localeCompareCode) {
-                        // this just isnt behaving like expecte with norwegian..
-                        resultLocale = this.localeCompareCode.compare(v1, v2);
-                    } else {
-                        resultLocale = v1.localeCompare(v2);
-                    }
-
-                    return resultLocale;
-                };
-                result = 0;
-                if (v1 !== v2) {
-                    if (currentObj.ascending === true) {
-                        // ASC
-                        if (isDate) {
-                            let vv1 = -1;
-                            if (v1?.getTime) {
-                                vv1 =
-                                    new Date(
-                                        new Date(v1).getFullYear(),
-                                        new Date(v1).getMonth(),
-                                        new Date(v1).getDate(),
-                                        0,
-                                        0,
-                                        0,
-                                        0
-                                    ).getTime() || 0;
-                            }
-
-                            let vv2 = 0;
-                            if (v2?.getTime) {
-                                vv2 =
-                                    new Date(
-                                        new Date(v2).getFullYear(),
-                                        new Date(v2).getMonth(),
-                                        new Date(v2).getDate(),
-                                        0,
-                                        0,
-                                        0,
-                                        0
-                                    ).getTime() || 0;
-                            }
-
-                            if (vv1 < vv2) {
-                                result = -1;
-                            }
-                            if (vv1 > vv2) {
-                                result = 1;
-                            }
-                        } else {
-                            if (typeof v1 === 'string' && typeof v1 === 'string') {
-                                if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
-                                    result = -1;
-                                } else {
-                                    result = 1;
-                                }
-                            } else {
-                                if (v1 < v2) {
-                                    result = -1;
-                                }
-                                if (v1 > v2) {
-                                    result = 1;
-                                }
-                            }
-                        }
-                    } else {
-                        if (isDate) {
-                            let vv1 = -1;
-                            if (v1?.getTime) {
-                                vv1 =
-                                    new Date(
-                                        new Date(v1).getFullYear(),
-                                        new Date(v1).getMonth(),
-                                        new Date(v1).getDate(),
-                                        0,
-                                        0,
-                                        0,
-                                        0
-                                    ).getTime() || 0;
-                            }
-
-                            let vv2 = 0;
-                            if (v2?.getTime) {
-                                vv2 =
-                                    new Date(
-                                        new Date(v2).getFullYear(),
-                                        new Date(v2).getMonth(),
-                                        new Date(v2).getDate(),
-                                        0,
-                                        0,
-                                        0,
-                                        0
-                                    ).getTime() || 0;
-                            }
-
-                            if (vv1 < vv2) {
-                                result = 1;
-                            }
-                            if (vv1 > vv2) {
-                                result = -1;
-                            }
-                        } else {
-                            if (typeof v1 === 'string' && typeof v1 === 'string') {
-                                if (localCompare(v1, v2) < 0 && localCompare(v1, v2) !== 0) {
-                                    result = 1;
-                                } else {
-                                    result = -1;
-                                }
-                            } else {
-                                if (v1 < v2) {
-                                    result = 1;
-                                }
-                                if (v1 > v2) {
-                                    result = -1;
-                                }
-                            }
-                        }
-                    }
+            // first sort argument that tells the rows apart decides
+            for (const sortArg of thisSort) {
+                const isDate = this.dates.indexOf(sortArg.attribute) !== -1;
+                const result = this.compareAscending(obj1[sortArg.attribute], obj2[sortArg.attribute], isDate);
+                if (result !== 0) {
+                    // descending is the ascending result flipped, so blanks end up last
+                    return sortArg.ascending === true ? result : -result;
                 }
             }
-
-            return result;
+            return 0;
         });
 
         // set current sort as last sort that was used
         this.lastSorting = this.getOrderBy().slice(0);
+    }
+
+    /**
+     * compares two values for an ascending sort
+     * - blanks (null, undefined, '', invalid Date) are equal to each other and come before any value
+     * - 0 and false are real values, so 0 sorts between negative and positive numbers, false before true
+     * - strings use the collator when one is set
+     *
+     * Grouping relies on this: values this returns 0 for must end up next to each other
+     * and get the same group key.
+     */
+    private compareAscending(v1: any, v2: any, isDate: boolean): number {
+        const blank1 = isBlank(v1);
+        const blank2 = isBlank(v2);
+        if (blank1 || blank2) {
+            if (blank1 && blank2) {
+                return 0;
+            }
+            return blank1 ? -1 : 1;
+        }
+
+        if (isDate) {
+            // attributes registered with setDates() sort on the day only
+            v1 = this.toDay(v1);
+            v2 = this.toDay(v2);
+        }
+
+        if (v1 === v2) {
+            return 0;
+        }
+
+        // a string against anything compares as text both ways round. Mixing `localeCompare` one
+        // way and `<` the other way made the sort disagree with itself
+        if (typeof v1 === 'string' || typeof v2 === 'string') {
+            const s1 = String(v1);
+            const s2 = String(v2);
+            if (s1 === s2) {
+                return 0;
+            }
+            const result = this.localeCompareCode ? this.localeCompareCode.compare(s1, s2) : s1.localeCompare(s2);
+            return result < 0 ? -1 : 1;
+        }
+
+        if (v1 < v2) {
+            return -1;
+        }
+        if (v1 > v2) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * midnight timestamp of a Date, other values are returned as they are
+     */
+    private toDay(value: any) {
+        if (typeof value?.getTime !== 'function') {
+            return value;
+        }
+        return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
     }
 }
