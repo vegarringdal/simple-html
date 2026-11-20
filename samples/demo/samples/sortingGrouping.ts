@@ -6,10 +6,13 @@ export const sortingGrouping: DemoSample = {
     title: 'Sorting & grouping',
     group: 'Datasource',
     description:
-        'Sorting and grouping live on the datasource. Users can click headers to sort (shift-click for multi sort) and drag columns to the panel to group - the buttons below do the same from code. When grouped, getRows() has a group row in front of each group: isGroupRow() tells it from a data row, getRows(true) leaves the group rows out.',
+        'Sorting and grouping live on the datasource. Users can click headers to sort (shift-click for multi sort) and drag columns to the panel to group - the buttons below do the same from code. When grouped, getRows() has a group row in front of each group: isGroupRow() tells it from a data row, getDataRows() leaves the group rows out.',
     code: `
 // sort by a single column
 datasource.sort({ attribute: 'company', ascending: true });
+
+// add a column to the sort there is (what shift-click on a header does)
+datasource.sort({ attribute: 'age', ascending: false }, { add: true });
 
 // multi column sort
 datasource.sort([
@@ -35,7 +38,7 @@ datasource.getRows().forEach((row) => {
         console.log(row.__groupName, row.__groupTotal, 'rows');
     }
 });
-datasource.getRows(true); // the data rows only, never a group row
+datasource.getDataRows(); // the data rows only, never a group row
 
 datasource.removeGroup(); // remove all grouping
 `,
@@ -45,6 +48,16 @@ datasource.removeGroup(); // remove all grouping
 
         ui.button('Sort company (asc)', () => {
             datasource.sort({ attribute: 'company', ascending: true });
+        });
+        ui.button('Add age (desc) to the sort', () => {
+            datasource.sort({ attribute: 'age', ascending: false }, { add: true });
+            ui.log(
+                'sorted on ' +
+                    datasource
+                        .getOrderBy()
+                        .map((sort) => sort.attribute)
+                        .join(', ')
+            );
         });
         ui.button('Sort country + age (desc)', () => {
             datasource.sort([
@@ -74,7 +87,7 @@ datasource.removeGroup(); // remove all grouping
                     ui.log(`${row.__groupName}, ${row.__groupTotal} rows`);
                 }
             });
-            ui.log(`${datasource.getRows(true).length} data rows - getRows(true)`);
+            ui.log(`${datasource.getDataRows().length} data rows - getDataRows()`);
         });
         ui.button('Remove grouping', () => {
             datasource.removeGroup();

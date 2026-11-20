@@ -12,22 +12,22 @@ describe('dataContainer - setData', () => {
     it('expect setData to store the rows', () => {
         const container = new DataContainer();
         container.setData(people());
-        expect(container.lenght()).toEqual(3);
+        expect(container.length()).toEqual(3);
     });
 
     it('expect setData to replace by default', () => {
         const container = new DataContainer();
         container.setData(people());
         container.setData([{ name: 'other' }]);
-        expect(container.lenght()).toEqual(1);
+        expect(container.length()).toEqual(1);
         expect(container.getDataSet()[0].name).toEqual('other');
     });
 
     it('expect setData with add to append', () => {
         const container = new DataContainer();
         container.setData(people());
-        container.setData([{ name: 'person4' }], true);
-        expect(container.lenght()).toEqual(4);
+        container.setData([{ name: 'person4' }], { add: true });
+        expect(container.length()).toEqual(4);
     });
 
     it('expect setData to return the rows it wrapped', () => {
@@ -37,9 +37,9 @@ describe('dataContainer - setData', () => {
         expect(added?.[0].__controller).toBeDefined();
     });
 
-    it('expect setData with tagAsNew to mark rows as new', () => {
+    it('expect setData with isNew to mark rows as new', () => {
         const container = new DataContainer();
-        container.setData(people(), false, true);
+        container.setData(people(), { isNew: true });
         container.getDataSet().forEach((row) => {
             expect(row.__rowState).toEqual('N');
         });
@@ -50,7 +50,7 @@ describe('dataContainer - setData', () => {
         container.setData(people());
         const copy = container.getDataSet();
         copy.pop();
-        expect(container.lenght()).toEqual(3);
+        expect(container.length()).toEqual(3);
     });
 
     it('expect rows that are already entities to not be wrapped twice', () => {
@@ -71,7 +71,7 @@ describe('dataContainer - removeData', () => {
         const row = container.getDataSet()[1];
 
         const removed = container.removeData(row);
-        expect(container.lenght()).toEqual(2);
+        expect(container.length()).toEqual(2);
         expect(removed).toHaveLength(1);
     });
 
@@ -81,16 +81,16 @@ describe('dataContainer - removeData', () => {
         const rows = container.getDataSet().slice(0, 2);
 
         const removed = container.removeData(rows);
-        expect(container.lenght()).toEqual(1);
+        expect(container.length()).toEqual(1);
         expect(removed).toHaveLength(2);
     });
 
-    it('expect removeData with all to clear the collection', () => {
+    it('expect removeAllData to clear the collection', () => {
         const container = new DataContainer();
         container.setData(people());
 
-        const removed = container.removeData(null, true);
-        expect(container.lenght()).toEqual(0);
+        const removed = container.removeAllData();
+        expect(container.length()).toEqual(0);
         expect(removed).toHaveLength(3);
     });
 
@@ -99,7 +99,7 @@ describe('dataContainer - removeData', () => {
         container.setData(people());
 
         const removed = container.removeData({ name: 'stranger' } as any);
-        expect(container.lenght()).toEqual(3);
+        expect(container.length()).toEqual(3);
         expect(removed).toHaveLength(0);
     });
 });
@@ -111,7 +111,7 @@ describe('dataContainer - markForDeletion', () => {
         const row = container.getDataSet()[0];
 
         container.markForDeletion(row);
-        expect(container.lenght()).toEqual(3);
+        expect(container.length()).toEqual(3);
         expect(row.__rowState).toEqual('D');
     });
 
@@ -127,11 +127,11 @@ describe('dataContainer - markForDeletion', () => {
     it('expect a new row to be dropped outright instead of flagged', () => {
         const container = new DataContainer();
         container.setData(people());
-        container.setData([{ name: 'brand new' }], true, true);
+        container.setData([{ name: 'brand new' }], { add: true, isNew: true });
         const newRow = container.getDataSet()[3];
 
         container.markForDeletion(newRow);
-        expect(container.lenght()).toEqual(3);
+        expect(container.length()).toEqual(3);
         expect(container.getMarkedForDeletion()).toHaveLength(0);
     });
 
@@ -144,11 +144,11 @@ describe('dataContainer - markForDeletion', () => {
         expect(container.getMarkedForDeletion()).toHaveLength(2);
     });
 
-    it('expect markForDeletion with all to flag every existing row', () => {
+    it('expect markAllForDeletion to flag every existing row', () => {
         const container = new DataContainer();
         container.setData(people());
 
-        container.markForDeletion(null, true);
+        container.markAllForDeletion();
         expect(container.getMarkedForDeletion()).toHaveLength(3);
     });
 
@@ -158,7 +158,7 @@ describe('dataContainer - markForDeletion', () => {
         container.markForDeletion(container.getDataSet()[0]);
 
         container.clearMarkedForDeletion();
-        expect(container.lenght()).toEqual(2);
+        expect(container.length()).toEqual(2);
         expect(container.getMarkedForDeletion()).toHaveLength(0);
     });
 });
@@ -187,11 +187,11 @@ describe('dataContainer - resetData', () => {
     it('expect new rows to be removed', () => {
         const container = new DataContainer();
         container.setData(people());
-        container.setData([{ name: 'brand new' }], true, true);
-        expect(container.lenght()).toEqual(4);
+        container.setData([{ name: 'brand new' }], { add: true, isNew: true });
+        expect(container.length()).toEqual(4);
 
         container.resetData();
-        expect(container.lenght()).toEqual(3);
+        expect(container.length()).toEqual(3);
     });
 
     it('expect resetDataSelection to only reset the rows it is given', () => {
@@ -240,7 +240,7 @@ describe('dataContainer - getChanges', () => {
     it('expect a new row to be reported as new', () => {
         const container = new DataContainer();
         container.setData(people());
-        container.setData([{ name: 'brand new' }], true, true);
+        container.setData([{ name: 'brand new' }], { add: true, isNew: true });
 
         const changes = container.getChanges();
         expect(changes.newEntities).toHaveLength(1);
@@ -324,7 +324,7 @@ describe('dataContainer - replace', () => {
 
         container.replace([{ name: 'replaced' }], 1, 1);
 
-        expect(container.lenght()).toEqual(3);
+        expect(container.length()).toEqual(3);
         expect(container.getDataSet()[1].name).toEqual('replaced');
     });
 
@@ -343,7 +343,7 @@ describe('dataContainer - replace', () => {
 
         container.replace([{ name: 'inserted' }], 1, 0);
 
-        expect(container.lenght()).toEqual(4);
+        expect(container.length()).toEqual(4);
         expect(container.getDataSet()[1].name).toEqual('inserted');
     });
 });

@@ -10,12 +10,13 @@ export const selection: DemoSample = {
 datasource.setSelectionMode('multiple'); // 'none' | 'single' | 'multiple'
 
 datasource.selectAll();
-datasource.deselectAll();
+datasource.deselectAll({ notify: true }); // notify: send selection-change, the grid redraws
 datasource.selectFirst();
 datasource.selectNext();
 datasource.selectPrev();
 datasource.selectLast();
-datasource.select(5); // row index
+datasource.select(5); // the 5th displayed row, starts on 1
+datasource.select(5, { notify: true }); // and scroll the grid to it
 
 const rows = datasource.getSelectedRows();
 console.log(rows.length, 'rows selected');
@@ -29,7 +30,7 @@ console.log(rows.length, 'rows selected');
             datasource.selectAll();
         });
         ui.button('Deselect all', () => {
-            datasource.deselectAll(true);
+            datasource.deselectAll({ notify: true });
         });
         ui.button('First', () => {
             datasource.selectFirst();
@@ -44,7 +45,7 @@ console.log(rows.length, 'rows selected');
             datasource.selectLast();
         });
         ui.button('Select row 5', () => {
-            datasource.select(5);
+            datasource.select(5, { notify: true });
         });
         ui.button('getSelectedRows()', () => {
             const rows = datasource.getSelectedRows();

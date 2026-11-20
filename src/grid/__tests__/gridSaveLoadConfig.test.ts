@@ -43,7 +43,7 @@ describe('saveConfig', () => {
         datasource.sort({ attribute: 'firstname', ascending: true });
 
         const saved = gridInterface.saveConfig();
-        datasource.sort({ attribute: 'age', ascending: false }, true); // shift+click on a header
+        datasource.sort({ attribute: 'age', ascending: false }, { add: true }); // shift+click on a header
 
         expect(saved.sorting).toEqual([{ attribute: 'firstname', ascending: true }]);
     });
@@ -69,7 +69,7 @@ describe('loadConfig', () => {
         config.filter = ageOver15();
         gridInterface.loadConfig(config);
 
-        datasource.sort({ attribute: 'firstname', ascending: false }, true); // shift+click on a header
+        datasource.sort({ attribute: 'firstname', ascending: false }, { add: true }); // shift+click on a header
         addToFilterInPlace(datasource, firstnameIsFirst3());
 
         expect(config.sorting).toEqual([{ attribute: 'firstname', ascending: true }]);
@@ -84,7 +84,7 @@ describe('loadInitConfig', () => {
         const { datasource, gridInterface } = await mountGrid(config);
 
         gridInterface.loadInitConfig();
-        datasource.sort({ attribute: 'firstname', ascending: false }, true); // shift+click on the sorted header
+        datasource.sort({ attribute: 'firstname', ascending: false }, { add: true }); // shift+click on the sorted header
         gridInterface.loadInitConfig();
 
         expect(datasource.getLastSorting()).toEqual([{ attribute: 'firstname', ascending: true }]);

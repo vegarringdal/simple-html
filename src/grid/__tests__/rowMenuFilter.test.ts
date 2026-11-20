@@ -58,7 +58,7 @@ describe('row menu - replace filter', () => {
 
         menuItem('Replace filter').click();
 
-        expect(datasource.getRows(true)).toHaveLength(1);
+        expect(datasource.getDataRows()).toHaveLength(1);
         expect((datasource.getRow(0) as any).firstname).toEqual('first2');
     });
 
@@ -98,7 +98,7 @@ describe('row menu - add to filter', () => {
         menuItem('Add to filter').click();
 
         expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first3')));
-        expect(datasource.getRows(true)).toHaveLength(1);
+        expect(datasource.getDataRows()).toHaveLength(1);
     });
 
     it('expect a single condition at the root to be kept', async () => {
@@ -108,7 +108,7 @@ describe('row menu - add to filter', () => {
         menuItem('Add to filter').click();
 
         expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first1'), where('age', 'LESS_THAN', 30)));
-        expect(datasource.getRows(true)).toHaveLength(1);
+        expect(datasource.getDataRows()).toHaveLength(1);
     });
 
     it('expect an OR root to be kept whole, not spread into the AND', async () => {
@@ -119,7 +119,7 @@ describe('row menu - add to filter', () => {
         menuItem('Add to filter').click();
 
         expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first1'), either));
-        expect(datasource.getRows(true)).toHaveLength(1);
+        expect(datasource.getDataRows()).toHaveLength(1);
     });
 });
 
@@ -135,6 +135,6 @@ describe('row menu - blank cells', () => {
         menuItem('Replace filter').click();
 
         expect(mounted.datasource.getFilter()).toEqual(and(where('firstname', 'IS_BLANK')));
-        expect(mounted.datasource.getRows(true)).toHaveLength(1);
+        expect(mounted.datasource.getDataRows()).toHaveLength(1);
     });
 });

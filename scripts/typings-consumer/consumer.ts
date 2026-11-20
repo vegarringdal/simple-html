@@ -9,6 +9,7 @@
 import {
     and,
     BooleanFormatter,
+    type Changes,
     DataContainer,
     Datasource,
     type DatasourceEvents,
@@ -35,6 +36,7 @@ import {
     type GroupRow,
     type HTMLCellElement,
     isGroupRow,
+    type ModifiedEntity,
     NumberFormatterComma,
     NumberFormatterDot,
     or,
@@ -93,6 +95,54 @@ console.log(wrongType);
 datasource.setLocaleCompare('nb');
 datasource.deselectAll();
 datasource.resetSort('name');
+
+// options objects, no positional booleans
+datasource.setData([{ id: 2, name: 'b' }], { add: true });
+datasource.setData([{ id: 3, name: 'c' }], { add: true, refilter: true });
+datasource.sort({ attribute: 'name', ascending: true }, { add: true });
+datasource.setOrderBy({ attribute: 'name', ascending: true }, { add: false });
+datasource.group([{ attribute: 'name', title: 'Name' }], { add: true });
+datasource.select(1, { notify: true });
+datasource.deselectAll({ notify: true });
+datasource.addNewEmpty({ name: 'new' }, { scrollTo: false });
+datasource.addNewEmpty();
+datasource.markForDeletion(datasource.getSelectedRows());
+datasource.markAllForDeletion();
+const removedRows: Entity[] = datasource.removeData(datasource.getSelectedRows(), { refilter: false });
+const removedAll: Entity[] = datasource.removeAllData();
+console.log(removedRows, removedAll);
+const containerRows: Entity[] = container.setData([{ id: 4 }], { add: true, isNew: true });
+container.markForDeletion(containerRows);
+container.markAllForDeletion();
+console.log(container.removeData(containerRows), container.removeAllData());
+// @ts-expect-error v5 positional add: setData(rows, { add: true })
+datasource.setData([], true);
+// @ts-expect-error v5 positional add, reRunFilter: setData(rows, { add, refilter })
+datasource.setData([], false, true);
+// @ts-expect-error v5 positional add: sort(args, { add: true })
+datasource.sort({ attribute: 'name', ascending: true }, true);
+// @ts-expect-error v5 positional add: setOrderBy(args, { add: true })
+datasource.setOrderBy({ attribute: 'name', ascending: true }, true);
+// @ts-expect-error v5 positional add: group(groups, { add: true })
+datasource.group([], true);
+// @ts-expect-error v5 positional triggerSelect: select(row, { notify: true })
+datasource.select(1, true);
+// @ts-expect-error v5 positional triggerEvent: deselectAll({ notify: true })
+datasource.deselectAll(true);
+// @ts-expect-error v5 positional scrollto: addNewEmpty(row, { scrollTo: false })
+datasource.addNewEmpty({}, false);
+// @ts-expect-error v5 all flag: markAllForDeletion()
+datasource.markForDeletion(null, true);
+// @ts-expect-error v5 all flag: removeAllData()
+datasource.removeData(null, true);
+// @ts-expect-error v5 positional rerunFilters: removeData(rows, { refilter: false })
+datasource.removeData([], false, false);
+// @ts-expect-error v5 positional add, tagAsNew: setData(rows, { add, isNew })
+container.setData([], true, true);
+// @ts-expect-error v5 all flag: markAllForDeletion()
+container.markForDeletion(null, true);
+// @ts-expect-error v5 all flag: removeAllData()
+container.removeData(null, true);
 
 // filters: a condition or a group of them, built with where / and / or or written out
 const adult: FilterCondition = where('age', 'GREATER_THAN_OR_EQUAL_TO', 18);
@@ -184,7 +234,7 @@ gridInterface.on('cell-header-focus', (data) => {
     }
 });
 
-// group rows: getRows() mixes data rows and group rows, getRows(true) is data rows only
+// group rows: getRows() mixes data rows and group rows, getDataRows() is data rows only
 interface Person {
     id: number;
     name: string;
@@ -202,7 +252,7 @@ for (const row of people.getRows()) {
         console.log(name);
     }
 }
-const names: string[] = people.getRows(true).map((row) => row.name);
+const names: string[] = people.getDataRows().map((row) => row.name);
 // filtering the group rows out narrows the type too (TypeScript infers the predicate)
 const shownNames: string[] = people
     .getRows()
@@ -211,9 +261,29 @@ const shownNames: string[] = people
 const groupRows: GroupRow[] = people.getRows().filter(isGroupRow);
 console.log(shownNames, groupRows);
 const selectedPeople: Person[] = people.getSelectedRows();
+
+// getChanges() is typed with the row type: the key and the changed fields of an edited row
+const changes: Changes<Person> = people.getChanges();
+const addedPeople: Person[] = changes.newEntities;
+const deletedPeople: Person[] = changes.deletedEntities;
+const edited: ModifiedEntity<Person> | undefined = changes.modifiedEntities[0];
+const editedName: string | undefined = edited?.name;
+const generatedKey: string | number | undefined = edited?.__KEY;
+console.log(addedPeople, deletedPeople, editedName, generatedKey);
+// @ts-expect-error a modified entry has the changed fields only, a field can be missing
+const fullPerson: Person = changes.modifiedEntities[0];
+// @ts-expect-error not a field of Person
+console.log(fullPerson, edited?.age);
+const untyped: Changes = container.getChanges();
+console.log(untyped.modifiedEntities[0]?.anything);
 const flag = names.length > 0;
-const rowsByFlag: (Person | GroupRow)[] = people.getRows(flag);
-console.log(selectedPeople, rowsByFlag);
+const rowsByFlag: (Person | GroupRow)[] = flag ? people.getDataRows() : people.getRows();
+const dataRowCount: number = people.getDataRows().length + people.length();
+console.log(selectedPeople, rowsByFlag, dataRowCount);
+// @ts-expect-error v5 getRows(true) is getDataRows()
+people.getRows(true);
+// @ts-expect-error v5 length(true) is getDataRows().length
+people.length(true);
 // @ts-expect-error a displayed row can be a group row, narrow it with isGroupRow() first
 console.log(people.getRows()[0].name);
 // @ts-expect-error getRow() can return a group row

@@ -207,8 +207,7 @@ describe('fields in the grid - header filter on dates', () => {
         { name: 'b', d: new Date(2001, 4, 18, 9, 0), t: new Date(2001, 4, 18, 9, 0) },
         { name: 'c', d: new Date(2001, 4, 18, 15, 0), t: new Date(2001, 4, 18, 15, 0) }
     ];
-    const names = (datasource: { getRows(onlyDataRows: true): { name?: string }[] }) =>
-        datasource.getRows(true).map((row) => row.name);
+    const names = (datasource: { getDataRows(): { name?: string }[] }) => datasource.getDataRows().map((row) => row.name);
 
     it('expect a typed day to match the whole day on a date field', async () => {
         const { element, datasource } = await mountGrid(columns('name', 'd'), data(), { fields: { d: 'date' } });
@@ -261,7 +260,7 @@ describe('fields in the grid - filter editor', () => {
         input.dispatchEvent(new Event('input', { bubbles: true }));
         menuItem('Filter Only').click();
 
-        expect(datasource.getRows(true).map((row) => row.name)).toEqual(['a']);
+        expect(datasource.getDataRows().map((row) => row.name)).toEqual(['a']);
     });
 
     it('expect a typed number to be parsed by the field formatter', async () => {
@@ -283,6 +282,37 @@ describe('fields in the grid - filter editor', () => {
         input.dispatchEvent(new Event('input', { bubbles: true }));
         menuItem('Filter Only').click();
 
-        expect(datasource.getRows(true).map((row) => row.name)).toEqual(['a']);
+        expect(datasource.getDataRows().map((row) => row.name)).toEqual(['a']);
+    });
+});
+
+describe('fields in the grid - edit tracking follows the field type', () => {
+    const data = () => [{ name: 'a', d: new Date(2001, 4, 17, 8, 0), t: new Date(2001, 4, 17, 8, 0, 0) }];
+    const fields = { fields: { d: 'date', t: 'datetime' } } as const;
+
+    it('expect typing the same day into a date cell to be no edit - the formatter stamps the current time', async () => {
+        const { element, datasource } = await mountGrid(columns('name', 'd'), data(), fields);
+        typeInCell(element, 'd', '2001-05-17');
+
+        expect(datasource.getChanges().modifiedEntities).toEqual([]);
+        expect(datasource.getAllData()[0].__rowState).toBeUndefined();
+    });
+
+    it('expect typing the same time into a datetime cell to be no edit - the formatter stamps the current milliseconds', async () => {
+        const { element, datasource } = await mountGrid(columns('name', 't'), data(), fields);
+        typeInCell(element, 't', '2001-05-17T08:00:00');
+
+        expect(datasource.getChanges().modifiedEntities).toEqual([]);
+    });
+
+    it('expect typing another time into a datetime cell to be an edit', async () => {
+        const { element, datasource } = await mountGrid(columns('name', 't'), data(), fields);
+        typeInCell(element, 't', '2001-05-17T09:30:00');
+
+        const modified = datasource.getChanges().modifiedEntities;
+        expect(modified).toHaveLength(1);
+        expect(modified[0].t).toEqual(datasource.getAllData()[0].t);
+        expect(modified[0].t.getHours()).toEqual(9);
+        expect(datasource.getAllData()[0].__rowState).toEqual('M');
     });
 });

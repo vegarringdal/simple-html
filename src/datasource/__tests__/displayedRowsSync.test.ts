@@ -22,7 +22,7 @@ describe('displayed rows - clearMarkedForDeletion', () => {
 
         expect(ds.getAllData().map((r) => r.v)).toEqual([1, 3]);
         expect(ds.getRows().map((r) => r.v)).toEqual([1, 3]);
-        expect(ds.length(true)).toEqual(2);
+        expect(ds.getDataRows().length).toEqual(2);
         expect(changes).toEqual([{ removed: true, info: 'clearMarkedForDeletion' }]);
     });
 
@@ -50,14 +50,14 @@ describe('displayed rows - addNewEmpty while grouped', () => {
 
     it('expect the new row to be inside its group and its group expanded', () => {
         const ds = grouped();
-        ds.addNewEmpty({ g: 'a', v: 99 } as any, false);
+        ds.addNewEmpty({ g: 'a', v: 99 } as any, { scrollTo: false });
         expect(shown(ds)).toEqual(['G:a', 1, 99, 'G:b']);
     });
 
     it('expect the new row to survive collapsing and expanding other groups', () => {
         const ds = grouped();
         ds.expandGroup();
-        ds.addNewEmpty({ g: 'a', v: 99 } as any, false);
+        ds.addNewEmpty({ g: 'a', v: 99 } as any, { scrollTo: false });
         ds.collapseGroup('b');
         expect(shown(ds)).toEqual(['G:a', 1, 99, 'G:b']);
         ds.collapseGroup();

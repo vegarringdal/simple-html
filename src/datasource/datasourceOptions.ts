@@ -16,7 +16,10 @@ import type { SelectionMode } from './selectionMode';
  * - `selectionMode` - `'multiple'` (default), `'single'` or `'none'`.
  * - `container` - share the data with another datasource: both show the same rows, each with its
  *   own filter, sort, grouping and selection. Give the key to the container
- *   (`new DataContainer('id')`); a `key` that is not the container's throws.
+ *   (`new DataContainer('id')`); a `key` that is not the container's throws. The edits are tracked
+ *   by the container, with the field types of every datasource on it (a `date` field compares on
+ *   the day): a field listed by two of them must have the same type in both, the second datasource
+ *   throws if not. A field listed by one only has that one's type.
  *
  * @example
  * ```ts
@@ -66,6 +69,7 @@ export interface DatasourceOptions {
 
     /**
      * the data container to use, to share the rows with another datasource. Default a new one.
+     * A field in `fields` must have the same type as in the other datasources on the container.
      */
     container?: DataContainer;
 }

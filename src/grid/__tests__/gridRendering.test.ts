@@ -77,7 +77,7 @@ describe('grid rendering - reacting to data changes', () => {
     it('expect appended data to be rendered', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.setData([{ firstname: 'first6', lastname: 'last6', age: 60 }], true);
+        datasource.setData([{ firstname: 'first6', lastname: 'last6', age: 60 }], { add: true });
 
         expect(renderedRows(element)).toHaveLength(6);
         expect(renderedColumn(element, 'firstname')).toContain('first6');
@@ -246,7 +246,7 @@ describe('grid rendering - selection', () => {
         const { element, datasource } = await mountGrid();
 
         datasource.selectAll();
-        datasource.deselectAll(true);
+        datasource.deselectAll({ notify: true });
 
         renderedRows(element).forEach((row) => {
             expect(row.classes).not.toContain('selected-row');

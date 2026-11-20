@@ -68,7 +68,7 @@ describe('datasource sort', () => {
 
     it('test adding to sort', () => {
         datasource.sort({ attribute: 'group', ascending: false });
-        datasource.sort({ attribute: 'name', ascending: false }, true);
+        datasource.sort({ attribute: 'name', ascending: false }, { add: true });
 
         let obj: any = datasource.getRow(0);
         expect(obj.name).toEqual('person2');

@@ -147,7 +147,7 @@ createButton('add to 10 rows', () => {
             e.date2 = new Date(e.date2);
             return e;
         }),
-        true
+        { add: true }
     );
 });
 
@@ -159,7 +159,7 @@ createButton('add to 100 rows', () => {
             e.date2 = new Date(e.date2);
             return e;
         }),
-        true
+        { add: true }
     );
 });
 
@@ -196,7 +196,7 @@ createButton('add new with data', () => {
 });
 
 createButton('add new with data and do not scroll to it', () => {
-    datasource.addNewEmpty({ company: 'Who Im I' }, false);
+    datasource.addNewEmpty({ company: 'Who Im I' }, { scrollTo: false });
 });
 
 createButton('save config', () => {
@@ -486,7 +486,7 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
 
             // dummy data for sample
             for (let i = 0; i < 1000; i++) {
-                datasourceLocal.setData([{ WOW: `wow${i}` }], true);
+                datasourceLocal.setData([{ WOW: `wow${i}` }], { add: true });
             }
 
             const gridInterfaceLocal = new GridInterface(gridConfig, datasourceLocal);

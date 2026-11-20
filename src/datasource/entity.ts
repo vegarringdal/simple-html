@@ -36,7 +36,7 @@ export interface DataEntity extends Entity {
  * A group header row. When the datasource is grouped, the displayed rows
  * (`datasource.getRows()`) mix your data rows with these headers - one per group, in front of
  * its rows. A group row is made by the datasource, it is not one of your objects: it can not be
- * selected, edited or marked for deletion, and `getRows(true)`, `getSelectedRows()` and
+ * selected, edited or marked for deletion, and `getDataRows()`, `getSelectedRows()` and
  * `getAllData()` never contain one. Tell the two kinds apart with {@link isGroupRow}.
  *
  * Read the fields, do not change them - expand and collapse with `datasource.expandGroup(id)` /
@@ -89,7 +89,7 @@ export interface GroupRow {
  *     console.log(row.name);
  * }
  *
- * // only the data rows: getRows(true) does the same
+ * // only the data rows - getDataRows() is the same, plus the rows of collapsed groups
  * const dataRows = datasource.getRows().filter((row) => !isGroupRow(row));
  * ```
  */

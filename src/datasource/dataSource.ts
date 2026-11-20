@@ -1,5 +1,7 @@
 import { Emitter, type EventHandler } from '../emitter';
+import { assertOptions } from './assertOptions';
 import { BooleanFormatter } from './booleanFormatter';
+import type { Changes } from './changes';
 import { DateFormatterYYYYMMDD } from './DateFormatterYYYYMMDD';
 import { DateFormatterYYYYMMDDTHHMMSS } from './DateFormatterYYYYMMDDTHHMMSS';
 import { DataContainer } from './dataContainer';
@@ -133,8 +135,9 @@ export class Datasource<T = any> {
     /**
      * @param options the key, the fields and their formatters, the selection mode, or a data
      * container shared with another datasource - all optional, see {@link DatasourceOptions}
-     * @throws when `key` and `container` are both given and `key` is not the container's key, or a
-     * field has a type that does not exist
+     * @throws when `key` and `container` are both given and `key` is not the container's key, a
+     * field has a type that does not exist, or a field has another type than in a datasource made
+     * earlier on the same `container`
      *
      * @example
      * ```ts
@@ -171,6 +174,11 @@ export class Datasource<T = any> {
             }
             this.__fields.set(name, config);
         }
+        // the container tracks the edits, a date field compares on the day there.
+        // Throws when another datasource on the container gave a field another type
+        this.__dataContainer.__addFieldTypes(
+            new Map(Array.from(this.__fields, ([name, config]) => [name, config.type ?? 'text']))
+        );
 
         this.__selectionMode = options.selectionMode || 'multiple';
         this.__selection = new Selection(this);
@@ -284,20 +292,76 @@ export class Datasource<T = any> {
     }
 
     /**
-     * returns copy of all modified, new or marked for deletion
-     * changes to these do not edit anything in grid
+     * The rows added, edited and marked for deletion since the data was set, as copies - what to send
+     * to a server. See {@link Changes} for what is in it and when an edit counts: a field edited back
+     * to its original value is not listed, a `date` field compares on the day, a `datetime` field to
+     * the second.
+     *
+     * The changes are those of the data container, so of every datasource sharing it.
+     *
+     * @example
+     * ```ts
+     * const datasource = new Datasource<Person>({ key: 'id', fields: { born: 'date' } });
+     * datasource.setData([
+     *     { id: 1, name: 'Ann', born: new Date(1990, 4, 17) },
+     *     { id: 2, name: 'Bob', born: new Date(1985, 0, 2) }
+     * ]);
+     * const [ann, bob] = datasource.getDataRows();
+     * ann.name = 'Anna';
+     * bob.born = new Date(1985, 0, 2, 13, 30); // the same day: no edit
+     * datasource.addNewEmpty({ name: 'New' });
+     * datasource.markForDeletion(bob);
+     *
+     * const { newEntities, modifiedEntities, deletedEntities } = datasource.getChanges();
+     * // newEntities:      [{ name: 'New', id: -1 }] - a generated key
+     * // modifiedEntities: [{ id: 1, name: 'Anna' }]
+     * // deletedEntities:  [{ id: 2, name: 'Bob', born: ... }]
+     * ```
      */
-    public getChanges() {
-        return this.__dataContainer.getChanges();
+    public getChanges(): Changes<T> {
+        return this.__dataContainer.getChanges() as Changes<T>;
     }
 
     /**
-     * only mark for deletion, you can reset/bring it back with resetData()
-     * @param data
-     * @param all
+     * Marks rows for deletion: `getChanges()` lists them in `deletedEntities`, and `resetData()`
+     * unmarks them. They stay in the rows, with `__rowState` `'D'` - the grid marks them as deleted
+     * in the row selector. `clearMarkedForDeletion()` removes them. A new row (from `addNewEmpty()`)
+     * is removed instead, there is nothing to delete on a server.
+     *
+     * @param rows a row or a list of rows, e.g. `getSelectedRows()`
+     *
+     * @example
+     * ```ts
+     * datasource.markForDeletion(datasource.getSelectedRows());
+     * ```
      */
-    public markForDeletion(data: Entity | Entity[] | null, all = false) {
-        this.__dataContainer.markForDeletion(data, all);
+    public markForDeletion(rows: Entity | Entity[]) {
+        // v5 was markForDeletion(data, all)
+        assertOptions('markForDeletion', arguments[1], 'markForDeletion(rows), or markAllForDeletion()');
+        this.__dataContainer.markForDeletion(rows);
+        this.__afterMarkForDeletion();
+    }
+
+    /**
+     * Marks every row for deletion, see {@link markForDeletion}. Was `markForDeletion(null, true)`
+     * in v5.
+     *
+     * @example
+     * ```ts
+     * datasource.markAllForDeletion();
+     * datasource.getChanges().deletedEntities; // every row that is not new
+     * datasource.resetData(); // unmarked again
+     * ```
+     */
+    public markAllForDeletion() {
+        this.__dataContainer.markAllForDeletion();
+        this.__afterMarkForDeletion();
+    }
+
+    /**
+     * after rows were marked: rebuilds the displayed rows (a new row marked is gone) and tells the grid
+     */
+    private __afterMarkForDeletion() {
         const eventTriggered = this.__internalUpdate(true);
         if (!eventTriggered) {
             this.__callSubscribers('collection-filtered', { info: 'markForDeletion' });
@@ -305,18 +369,50 @@ export class Datasource<T = any> {
     }
 
     /**
-     * remove data
-     * @param data
-     * @param all
-     * @param rerunFilters if you plan to trigger many times in a loop then you want to set this to false until last one
-     * @returns
+     * Removes rows for good: they are not marked for deletion, `getChanges()` does not list them and
+     * `resetData()` does not bring them back. Use {@link markForDeletion} to delete rows on a server.
+     *
+     * @param rows a row or a list of rows
+     * @param options.refilter `false` to leave the displayed rows as they are, default `true`: they
+     * are rebuilt (filter, sort, group). When removing in a loop, pass `false` for every call but the
+     * last.
+     * @returns the rows removed
+     *
+     * @example
+     * ```ts
+     * datasource.removeData(datasource.getSelectedRows());
+     *
+     * // many calls: rebuild the displayed rows once, at the end
+     * rows.forEach((row, i) => datasource.removeData(row, { refilter: i === rows.length - 1 }));
+     * ```
      */
-    public removeData(data: Entity | Entity[] | null, all = false, rerunFilters = true) {
-        const removed = this.__dataContainer.removeData(data, all);
-        if (rerunFilters) {
+    public removeData(rows: Entity | Entity[], options: { refilter?: boolean } = {}): Entity[] {
+        assertOptions('removeData', options, 'removeData(rows, { refilter: false }), or removeAllData()');
+        const { refilter = true } = options;
+        const removed = this.__dataContainer.removeData(rows);
+        if (refilter) {
             this.__internalUpdate(true);
         }
-        this.__callSubscribers('collection-changed', { removed: true, info: 'removeData', data });
+        this.__callSubscribers('collection-changed', { removed: true, info: 'removeData', data: rows });
+        return removed;
+    }
+
+    /**
+     * Removes every row for good, see {@link removeData}. Was `removeData(null, true)` in v5. Sends
+     * the same `collection-changed` event, with `data: null`.
+     *
+     * @returns the rows removed
+     *
+     * @example
+     * ```ts
+     * datasource.removeAllData();
+     * datasource.getAllData(); // []
+     * ```
+     */
+    public removeAllData(): Entity[] {
+        const removed = this.__dataContainer.removeAllData();
+        this.__internalUpdate(true);
+        this.__callSubscribers('collection-changed', { removed: true, info: 'removeData', data: null });
         return removed;
     }
 
@@ -358,29 +454,54 @@ export class Datasource<T = any> {
     }
 
     /**
-     * for adding data to datasource, this will also be sendt to dataContainer
-     * so if you replace data the data in the datacontainer also gets replaced
-     * @param data js object
-     * @param add add to current, if false it replaces current collections
-     * @param reRunFilter rerun current filter, grouping/sorting will run automatically
+     * Sets the rows, in the data container - so every datasource sharing it gets them. The rows are
+     * sorted and grouped the way the datasource is.
+     *
+     * @param rows your objects
+     * @param options.add `true` to add the rows to the ones there are, default `false`: they replace them
+     * @param options.refilter `true` to run the current filter on the rows, default `false`: every row
+     * set is shown, also one the filter would leave out
+     *
+     * @example
+     * ```ts
+     * datasource.setData(rowsFromServer);
+     * datasource.setData(moreRows, { add: true });
+     * datasource.setData(moreRows, { add: true, refilter: true }); // keep the filter applied
+     * ```
      */
-    public setData(data: any[], add = false, reRunFilter = false) {
+    public setData(rows: any[], options: { add?: boolean; refilter?: boolean } = {}) {
+        assertOptions('setData', options, 'setData(rows, { add: true })');
+        const { add = false, refilter = false } = options;
         if (add) {
-            const x = this.__dataContainer.setData(data, add);
-            if (x) {
-                this.__collectionFiltered.push(...x);
-            }
+            this.__collectionFiltered.push(...this.__dataContainer.setData(rows, { add }));
         } else {
-            this.__dataContainer.setData(data, add);
+            this.__dataContainer.setData(rows);
             this.__collectionFiltered = this.getAllData().slice();
         }
 
-        this.__internalUpdate(reRunFilter);
-        this.__callSubscribers('collection-changed', { added: !!add });
+        this.__internalUpdate(refilter);
+        this.__callSubscribers('collection-changed', { added: add });
     }
 
-    public addNewEmpty(defaultData: EntityUnion<T> = {} as EntityUnion<T>, scrollto = true) {
-        this.__dataContainer.setData([defaultData], true, true);
+    /**
+     * Adds a new row at the end: `getChanges()` lists it in `newEntities`, its `__rowState` is `'N'`.
+     * When grouped it is put in its group, and the group is expanded.
+     *
+     * @param row the values of the new row, default none. The object itself becomes the row.
+     * @param options.scrollTo `false` to leave the selection as it is, default `true`: the new row is
+     * selected and made current, and the grid scrolls to it
+     *
+     * @example
+     * ```ts
+     * datasource.addNewEmpty();
+     * datasource.addNewEmpty({ company: 'NEW COMPANY' });
+     * datasource.addNewEmpty({ company: 'NEW COMPANY' }, { scrollTo: false });
+     * ```
+     */
+    public addNewEmpty(row: Partial<T> = {}, options: { scrollTo?: boolean } = {}) {
+        assertOptions('addNewEmpty', options, 'addNewEmpty(row, { scrollTo: false })');
+        const { scrollTo = true } = options;
+        this.__dataContainer.setData([row], { add: true, isNew: true });
         const dataset = this.__dataContainer.getDataSet();
         const newRow = dataset[dataset.length - 1];
 
@@ -391,8 +512,8 @@ export class Datasource<T = any> {
             this.__internalUpdate(false);
             this.__collectionDisplayed = this.__grouping.expandToEntity(newRow);
             this.__callSubscribers('collection-changed', { added: true });
-            if (scrollto) {
-                this.select(this.__collectionDisplayed.indexOf(newRow) + 1, true);
+            if (scrollTo) {
+                this.select(this.__collectionDisplayed.indexOf(newRow) + 1, { notify: true });
             }
             return;
         }
@@ -402,7 +523,7 @@ export class Datasource<T = any> {
         this.__collectionFiltered.push(newRow);
         this.__collectionDisplayed.push(newRow);
         this.__callSubscribers('collection-changed', { added: true });
-        if (scrollto) {
+        if (scrollTo) {
             this.selectLast();
         }
     }
@@ -457,11 +578,30 @@ export class Datasource<T = any> {
     }
 
     /**
-     * sorts current displayed selection
-     * @param args obj/obj array must have attribute and ascending
-     * @param add add to previous sort arguments
+     * Sorts the rows. When grouped, the grouped fields are sorted first.
+     *
+     * - `sort(arg)` - sort on one field, replacing the sort there was
+     * - `sort(arg, { add: true })` - add the field to the sort there is, after the fields there are.
+     *   A field that is sorted on already gets the new direction. The grid does this on shift+click.
+     * - `sort([a, b])` - sort on these fields, replacing the sort there was (`add` is ignored)
+     * - `sort()` - sort again with the current sort
+     *
+     * @param args the field and direction, or a list of them
+     * @param options.add `true` to add to the current sort, default `false`
+     *
+     * @example
+     * ```ts
+     * datasource.sort({ attribute: 'company', ascending: true });
+     * datasource.sort({ attribute: 'age', ascending: false }, { add: true }); // company, then age
+     * datasource.sort([
+     *     { attribute: 'country', ascending: true },
+     *     { attribute: 'company', ascending: false }
+     * ]);
+     * ```
      */
-    public sort(args?: SortArgument | SortArgument[], add?: boolean) {
+    public sort(args?: SortArgument | SortArgument[], options: { add?: boolean } = {}) {
+        assertOptions('sort', options, 'sort(args, { add: true })');
+        const { add = false } = options;
         // sort
         if (!this.__grouping.getGrouping().length) {
             if (args) {
@@ -582,17 +722,28 @@ export class Datasource<T = any> {
     }
 
     /**
-     * Groups filtered collection
-     * @param group
-     * @param add
+     * Groups the rows: a {@link GroupRow} in front of each group, in `getRows()`. The rows are sorted
+     * on the grouped fields, ascending. `group([])` removes the grouping.
+     *
+     * @param groups the fields to group on, the first is the outer group
+     * @param options.add `true` to add the groups after the current grouping, default `false`: they
+     * replace it
+     *
+     * @example
+     * ```ts
+     * datasource.group([{ attribute: 'country', title: 'Country' }]);
+     * datasource.group([{ attribute: 'company', title: 'Company' }], { add: true }); // country, then company
+     * datasource.group([]); // no grouping
+     * ```
      */
-    public group(group: GroupArgument[], add?: boolean) {
+    public group(groups: GroupArgument[], options: { add?: boolean } = {}) {
+        assertOptions('group', options, 'group(groups, { add: true })');
         let groupings: GroupArgument[];
-        if (add) {
+        if (options.add) {
             groupings = this.__grouping.getGrouping();
-            groupings = groupings.concat(group);
+            groupings = groupings.concat(groups);
         } else {
-            groupings = group;
+            groupings = groups;
         }
 
         this.__sorting.reset();
@@ -680,7 +831,7 @@ export class Datasource<T = any> {
      * @example
      * ```ts
      * const off = datasource.on('collection-filtered', (data) => {
-     *     console.log('filtered by', data.info, '-', datasource.length(true), 'rows');
+     *     console.log('filtered by', data.info, '-', datasource.getDataRows().length, 'rows');
      * });
      *
      * datasource.on('current-entity', () => {
@@ -695,15 +846,18 @@ export class Datasource<T = any> {
     }
 
     /**
-     *  returns lenght of sorted/filtered collection
-     * @param onlyDataRows use this to skip grouping rows
+     * The number of displayed rows, `getRows().length`: filtered, and when grouped the group rows
+     * included and the rows of collapsed groups left out. The number of data rows is
+     * `getDataRows().length` (was `length(true)` in v5).
+     *
+     * @example
+     * ```ts
+     * datasource.length(); // rows the grid shows
+     * datasource.getDataRows().length; // data rows that pass the filter
+     * ```
      */
-    public length(onlyDataRows?: boolean): number {
-        if (onlyDataRows) {
-            return this.__collectionFiltered.length;
-        } else {
-            return this.__collectionDisplayed.length;
-        }
+    public length(): number {
+        return this.__collectionDisplayed.length;
     }
 
     /**
@@ -721,10 +875,19 @@ export class Datasource<T = any> {
     }
 
     /**
-     * deselectAll all rows displayed
+     * Deselects every row.
+     *
+     * @param options.notify `true` to send the `selection-change` event, so the grid shows it.
+     * Default `false`: the grid shows it on its next redraw
+     *
+     * @example
+     * ```ts
+     * datasource.deselectAll({ notify: true });
+     * ```
      */
-    public deselectAll(triggerEvent = false) {
-        this.__selection.deselectAll(triggerEvent);
+    public deselectAll(options: { notify?: boolean } = {}) {
+        assertOptions('deselectAll', options, 'deselectAll({ notify: true })');
+        this.__selection.deselectAll(options.notify ?? false);
     }
 
     /**
@@ -748,10 +911,7 @@ export class Datasource<T = any> {
      * is your data rows with a {@link GroupRow} in front of each group, and the rows of a
      * collapsed group left out.
      *
-     * `getRows(true)` returns the data rows only - filtered and sorted, never a group row, and
-     * the rows of collapsed groups included. The return type follows the argument.
-     *
-     * @param onlyDataRows `true` to skip the group rows
+     * {@link getDataRows} returns the data rows only - never a group row (was `getRows(true)` in v5).
      *
      * @example
      * ```ts
@@ -767,33 +927,56 @@ export class Datasource<T = any> {
      * });
      *
      * // data rows only, no check needed
-     * const names = datasource.getRows(true).map((row) => row.name);
+     * const names = datasource.getDataRows().map((row) => row.name);
      * ```
      */
-    public getRows(onlyDataRows: true): EntityUnion<T>[];
-    public getRows(onlyDataRows?: false): (EntityUnion<T> | GroupRow)[];
-    public getRows(onlyDataRows?: boolean): (EntityUnion<T> | GroupRow)[];
-    public getRows(onlyDataRows?: boolean): (EntityUnion<T> | GroupRow)[] {
-        if (onlyDataRows) {
-            return this.__collectionFiltered as EntityUnion<T>[];
-        } else {
-            return this.__collectionDisplayed as (EntityUnion<T> | GroupRow)[];
-        }
+    public getRows(): (EntityUnion<T> | GroupRow)[] {
+        return this.__collectionDisplayed as (EntityUnion<T> | GroupRow)[];
     }
 
     /**
-     * sets current entity and selection, start on 1 not 0
-     * @param row if skipped we select the first
-     * @param triggerSelect also fire the select event, so the grid scrolls to the row
+     * Returns the data rows: filtered and sorted, never a {@link GroupRow}, and when grouped the rows
+     * of collapsed groups included. Was `getRows(true)` in v5.
+     *
+     * It is the datasource's own list, not a copy - do not change it.
+     *
+     * @example
+     * ```ts
+     * datasource.group([{ attribute: 'country', title: 'Country' }]);
+     * datasource.collapseGroup();
+     *
+     * datasource.getRows(); // the group rows only, every group is collapsed
+     * datasource.getDataRows().map((row) => row.name); // every row that passes the filter
+     * ```
      */
-    public select(row?: number, triggerSelect?: boolean): void {
+    public getDataRows(): EntityUnion<T>[] {
+        return this.__collectionFiltered as EntityUnion<T>[];
+    }
+
+    /**
+     * Selects a row and makes it the current entity. A group row can not be selected, the first
+     * data row after it is.
+     *
+     * @param row the row number in the displayed rows, starting on 1 (not 0 like `getRow()`).
+     * Default the first row
+     * @param options.notify `true` to send the `select` event, so the grid scrolls to the row.
+     * Default `false`
+     *
+     * @example
+     * ```ts
+     * datasource.select(5); // the fifth displayed row, getRow(4)
+     * datasource.select(5, { notify: true }); // and scroll the grid to it
+     * ```
+     */
+    public select(row?: number, options: { notify?: boolean } = {}): void {
+        assertOptions('select', options, 'select(row, { notify: true })');
         // a group header can not be selected, take the first data row from there on
         const selectedRow = this.__findDataRow(row ? row - 1 : 0, 1);
         if (selectedRow === -1) {
             return;
         }
         this.__selection.highlightRow({} as any, selectedRow);
-        if (triggerSelect) {
+        if (options.notify) {
             this.__callSubscribers('select', { info: 'select-first', row: selectedRow });
         }
     }
@@ -902,12 +1085,21 @@ export class Datasource<T = any> {
     }
 
     /**
-     * Sets order by, if you plan to filter with new sorting order you need to use this first
-     * @param param
-     * @param add
+     * Sets the sort without sorting, `sort()` sorts. Takes the same arguments as {@link sort}.
+     *
+     * @param param the field and direction, or a list of them
+     * @param options.add `true` to add to the current sort, default `false`
+     *
+     * @example
+     * ```ts
+     * datasource.setOrderBy({ attribute: 'company', ascending: true });
+     * datasource.setOrderBy({ attribute: 'age', ascending: false }, { add: true });
+     * datasource.sort(); // sorts on company, then age
+     * ```
      */
-    public setOrderBy(param: SortArgument | SortArgument[], add?: boolean) {
-        this.__sorting.setOrderBy(param, add);
+    public setOrderBy(param: SortArgument | SortArgument[], options: { add?: boolean } = {}) {
+        assertOptions('setOrderBy', options, 'setOrderBy(param, { add: true })');
+        this.__sorting.setOrderBy(param, options.add);
     }
 
     /**

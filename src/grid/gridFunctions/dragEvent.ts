@@ -352,9 +352,11 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                         .getLastSorting()
                         ?.filter((e) => e.attribute === attribute);
                     if (sortOrder.length) {
-                        ctx.gridInterface.getDatasource().sort({ ascending: !sortOrder[0].ascending, attribute }, event.shiftKey);
+                        ctx.gridInterface
+                            .getDatasource()
+                            .sort({ ascending: !sortOrder[0].ascending, attribute }, { add: event.shiftKey });
                     } else {
-                        ctx.gridInterface.getDatasource().sort({ ascending: true, attribute }, event.shiftKey);
+                        ctx.gridInterface.getDatasource().sort({ ascending: true, attribute }, { add: event.shiftKey });
                     }
                 }
             };

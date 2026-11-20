@@ -26,7 +26,7 @@ const build = () => {
 };
 
 const names = (ds: Datasource) => ds.getRows().map((r: any) => r.name);
-const dataRowNames = (ds: Datasource) => ds.getRows(true).map((r: any) => r.name);
+const dataRowNames = (ds: Datasource) => ds.getDataRows().map((r: any) => r.name);
 
 describe('pipeline - filter then sort', () => {
     it('expect sorting to apply to the filtered rows only', () => {
@@ -55,12 +55,12 @@ describe('pipeline - filter then sort', () => {
         expect(names(ds)).toEqual(['a', 'b', 'c', 'd', 'e']);
     });
 
-    it('expect length() to report displayed rows and length(true) the filtered rows', () => {
+    it('expect length() to report displayed rows and getDataRows().length the filtered rows', () => {
         const ds = build();
         ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
         expect(ds.length()).toEqual(3);
-        expect(ds.length(true)).toEqual(3);
+        expect(ds.getDataRows().length).toEqual(3);
     });
 });
 
@@ -168,7 +168,7 @@ describe('pipeline - setData with active filter/sort/grouping', () => {
         const ds = build();
         ds.sort([{ attribute: 'name', ascending: true }]);
 
-        ds.setData([{ company: 'comp3', product: 'group3', qty: 9, name: 'aa' }], false, true);
+        ds.setData([{ company: 'comp3', product: 'group3', qty: 9, name: 'aa' }], { refilter: true });
 
         expect(names(ds)).toEqual(['aa']);
     });
@@ -178,7 +178,7 @@ describe('pipeline - setData with active filter/sort/grouping', () => {
         ds.filter(and(where('company', 'EQUAL', 'comp1')));
         expect(ds.length()).toEqual(3);
 
-        ds.setData([{ company: 'comp1', product: 'group9', qty: 9, name: 'new' }], true, true);
+        ds.setData([{ company: 'comp1', product: 'group9', qty: 9, name: 'new' }], { add: true, refilter: true });
 
         expect(ds.length()).toEqual(4);
     });

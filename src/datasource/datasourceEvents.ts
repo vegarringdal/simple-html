@@ -10,7 +10,7 @@ import type { GroupArgument } from './groupArgument';
  * @example
  * ```ts
  * const off = datasource.on('collection-filtered', (data) => {
- *     console.log(data.info, datasource.length(true), 'rows left');
+ *     console.log(data.info, datasource.getDataRows().length, 'rows left');
  * });
  * datasource.on('selection-change', () => {
  *     console.log(datasource.getSelectedRows().length, 'rows selected');
@@ -25,6 +25,7 @@ export interface DatasourceEvents {
      * - `setData()`: `{ added }` - `true` when rows were added, `false` when they replaced the data
      * - `addNewEmpty()`: `{ added: true }`
      * - `removeData()`: `{ removed: true, info: 'removeData', data }` - `data` is what was passed in
+     * - `removeAllData()`: `{ removed: true, info: 'removeData', data: null }`
      * - `clearMarkedForDeletion()`: `{ removed: true, info: 'clearMarkedForDeletion' }`
      */
     'collection-changed': {
@@ -39,7 +40,7 @@ export interface DatasourceEvents {
      *
      * - `'filter'`: `filter()` or `reloadDatasource()`
      * - `'resetData'`: `resetData()` or `resetDataSelectionOnly()`
-     * - `'markForDeletion'`: `markForDeletion()`
+     * - `'markForDeletion'`: `markForDeletion()` or `markAllForDeletion()`
      * - `'__internalUpdate, forced'`: `setData()` or `addNewEmpty()` while there is no filter,
      *   sorting or grouping. Sent before their `collection-changed`.
      */
@@ -90,7 +91,7 @@ export interface DatasourceEvents {
      * A row was selected from code, the grid scrolls it into view.
      *
      * - `row`: index in the displayed rows (`datasource.getRows()`), 0 based
-     * - `info`: what selected it - `select(row, true)` sends `'select-first'`, `selectFirst()`
+     * - `info`: what selected it - `select(row, { notify: true })` sends `'select-first'`, `selectFirst()`
      *   `'select-first'`, `selectPrev()` `'select-prev'`, `selectNext()` `'select-next'`,
      *   `selectLast()` `'select-last'`
      */

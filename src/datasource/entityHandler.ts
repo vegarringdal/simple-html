@@ -1,4 +1,5 @@
 import type { Entity } from './entity';
+import type { FieldType } from './field';
 
 /**
  * Entity will keep track of edited properties of the row object.
@@ -7,7 +8,11 @@ import type { Entity } from './entity';
 
 export class EntityHandler {
     [key: string]: any | undefined;
-    __editedProps: Record<string, any> = {};
+    /**
+     * per property set on the row: `true` while its value differs from the original, `false` once
+     * it was set back to it. `getChanges()` reports the `true` ones
+     */
+    __editedProps: Record<string, boolean> = {};
     __originalValues: Record<string, any> = {};
     __currentValues: Record<string, any> = {};
     __newprops: Record<string, any> = {};
@@ -27,9 +32,21 @@ export class EntityHandler {
     __groupChildren?: Entity[];
     __groupExpanded?: boolean;
 
-    constructor(keyString?: string, tagAsNew = false) {
-        this.__KEYSTRING = keyString;
-        this.__isNew = tagAsNew;
+    /**
+     * the type of a field, from the datasources on the container. Decides how two dates compare
+     */
+    private __fieldType: (field: string) => FieldType | undefined;
+
+    /**
+     * @param options.key the key field of the container, `__KEY` reads and writes it
+     * @param options.isNew the row is new: `__rowState` is `'N'` and `getChanges()` lists it in `newEntities`
+     * @param options.fieldType the type of a field: a `date` field compares two dates on the day,
+     * every other field to the second. Without it every field compares to the second
+     */
+    constructor(options: { key?: string; isNew?: boolean; fieldType?: (field: string) => FieldType | undefined } = {}) {
+        this.__KEYSTRING = options.key;
+        this.__isNew = options.isNew ?? false;
+        this.__fieldType = options.fieldType ?? (() => undefined);
     }
 
     get(target: any, prop: string) {
@@ -114,57 +131,42 @@ export class EntityHandler {
                 this.__newprops[prop] = true;
             }
 
+            // the original is taken on the first edit only. A prop set back to its original keeps
+            // its entry (false), so a date set to another time on the same day keeps its real original
             if (!Object.hasOwn(this.__editedProps, prop) && !this.__isNew) {
                 this.__originalValues[prop] = obj[prop];
-                this.__editedProps[prop] = true;
-            } else {
-                this.__editedProps[prop] = true;
             }
-            // if user just set back to original value we want to remove the "edited" part
-            let _original = this.__originalValues[prop];
-            let _value = value;
-
-            // if date, clear the "timezone/time part"
-            // compared as a timestamp - two Date objects are never === even when equal
-            if (_original instanceof Date) {
-                try {
-                    _original = new Date(
-                        new Date(_original).getFullYear(),
-                        new Date(_original).getMonth(),
-                        new Date(_original).getDate(),
-                        0,
-                        0,
-                        0,
-                        0
-                    ).getTime();
-                } catch {
-                    _original = null;
-                }
-            }
-            if (_value instanceof Date) {
-                _value = new Date(
-                    new Date(_value).getFullYear(),
-                    new Date(_value).getMonth(),
-                    new Date(_value).getDate(),
-                    0,
-                    0,
-                    0,
-                    0
-                ).getTime();
-            }
-
-            if (_original === _value || ((_original === null || _original === undefined) && _value === '')) {
-                this.__editedProps[prop] = false;
-            }
+            this.__editedProps[prop] = !isSameValue(this.__originalValues[prop], value, this.__fieldType(prop));
 
             this.__currentValues[prop] = value;
             obj[prop] = value;
-
             this.__edited = Object.values(this.__editedProps).includes(true);
-            this.__currentValues[prop] = value;
-            obj[prop] = value;
         }
 
         return true;
     }
+}
+
+/**
+ * @internal
+ * true when a value set on a row is no edit of its original value:
+ * - the same value (`===`), or a blank (`null` / `undefined`) set to `''`
+ * - two dates: a `date` field compares the day, the time of day is ignored - a date typed into a
+ *   cell gets the current time, typing the same day again is no edit. Every other field (`datetime`,
+ *   and the fields that are not listed) compares to the second: a time only change is an edit, the
+ *   milliseconds are ignored, they are not shown and typing a time stamps the current ones.
+ *   Two Date objects are never `===`, even when they hold the same moment.
+ */
+export function isSameValue(original: unknown, value: unknown, type: FieldType | undefined): boolean {
+    if (original instanceof Date && value instanceof Date) {
+        if (type === 'date') {
+            return (
+                original.getFullYear() === value.getFullYear() &&
+                original.getMonth() === value.getMonth() &&
+                original.getDate() === value.getDate()
+            );
+        }
+        return Math.floor(original.getTime() / 1000) === Math.floor(value.getTime() / 1000);
+    }
+    return original === value || ((original === null || original === undefined) && value === '');
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DataContainer } from '../dataContainer';
+import { Datasource } from '../dataSource';
 import { type DataEntity, isGroupRow } from '../entity';
 
 /**
@@ -11,7 +12,7 @@ import { type DataEntity, isGroupRow } from '../entity';
 
 function makeRow(data: Record<string, any>, keyAttribute?: string, tagAsNew = false): DataEntity {
     const container = new DataContainer(keyAttribute);
-    container.setData([data], false, tagAsNew);
+    container.setData([data], { isNew: tagAsNew });
     return container.getDataSet()[0];
 }
 
@@ -144,13 +145,37 @@ describe('entityHandler - edit tracking', () => {
     });
 
     /**
-     * only the day matters - both sides are normalised to midnight before comparing,
-     * so a different time on the same day is not treated as a change
+     * the container has no field types here (no datasource), so `when` is not a date field: it
+     * compares to the second, a time change is an edit. v5 compared every date on the day - a
+     * `date` field still does, see changeTracking.test.ts
      */
-    it('expect a different time on the same day to not count as an edit', () => {
+    it('expect a different time on the same day to count as an edit when the field is not a date field', () => {
         const row = makeRow({ when: new Date(2020, 0, 1, 8, 30, 0) });
         row.when = new Date(2020, 0, 1, 17, 45, 0);
+        expect(row.__controller.__edited).toEqual(true);
+    });
+
+    it('expect only the milliseconds changed to not count as an edit', () => {
+        const row = makeRow({ when: new Date(2020, 0, 1, 8, 30, 0, 0) });
+        row.when = new Date(2020, 0, 1, 8, 30, 0, 999);
         expect(row.__controller.__edited).toEqual(false);
+    });
+
+    it('expect a different time on the same day to not count as an edit on a date field', () => {
+        const container = new DataContainer();
+        new Datasource({ container, fields: { when: 'date' } });
+        container.setData([{ when: new Date(2020, 0, 1, 8, 30, 0) }]);
+        const row = container.getDataSet()[0];
+
+        row.when = new Date(2020, 0, 1, 17, 45, 0);
+        expect(row.__controller.__edited).toEqual(false);
+    });
+
+    it('expect a prop set back to its original to stay in __editedProps as false', () => {
+        const row = makeRow({ name: 'person1' });
+        row.name = 'changed';
+        row.name = 'person1';
+        expect(row.__controller.__editedProps).toEqual({ name: false });
     });
 
     it('expect a non date value set back to its original to clear the flag, for contrast', () => {

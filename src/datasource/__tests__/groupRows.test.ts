@@ -5,7 +5,7 @@ import { where } from '../filterExpression';
 
 /**
  * Group rows are their own type (GroupRow), not entities. getRows() mixes them with the data rows
- * when grouped, getRows(true), the selection and editing never see one.
+ * when grouped, getDataRows(), the selection and editing never see one.
  */
 
 interface Row {
@@ -117,19 +117,19 @@ describe('group rows - the GroupRow fields', () => {
     });
 });
 
-describe('group rows - getRows(true) has data rows only', () => {
+describe('group rows - getDataRows() has data rows only', () => {
     it('expect no group rows when grouped and expanded', () => {
         const ds = groupedTwoLevels();
-        expect(ds.getRows(true).some(isGroupRow)).toBe(false);
-        expect(ds.getRows(true).map((row) => row.v)).toEqual([1, 2, 3, 4]);
+        expect(ds.getDataRows().some(isGroupRow)).toBe(false);
+        expect(ds.getDataRows().map((row) => row.v)).toEqual([1, 2, 3, 4]);
     });
 
     it('expect no group rows, and the rows of collapsed groups, when collapsed', () => {
         const ds = groupedTwoLevels();
         ds.collapseGroup();
         expect(ds.getRows().every(isGroupRow)).toBe(true);
-        expect(ds.getRows(true).some(isGroupRow)).toBe(false);
-        expect(ds.getRows(true).map((row) => row.v)).toEqual([1, 2, 3, 4]);
+        expect(ds.getDataRows().some(isGroupRow)).toBe(false);
+        expect(ds.getDataRows().map((row) => row.v)).toEqual([1, 2, 3, 4]);
     });
 
     it('expect no group rows after a filter and a sort while grouped', () => {
@@ -137,15 +137,15 @@ describe('group rows - getRows(true) has data rows only', () => {
         ds.filter(where('v', 'GREATER_THAN', 1));
         ds.sort({ attribute: 'v', ascending: false });
         expect(ds.getRows().some(isGroupRow)).toBe(true);
-        expect(ds.getRows(true).some(isGroupRow)).toBe(false);
-        expect(ds.getRows(true).map((row) => row.v)).toEqual([3, 2, 4]);
+        expect(ds.getDataRows().some(isGroupRow)).toBe(false);
+        expect(ds.getDataRows().map((row) => row.v)).toEqual([3, 2, 4]);
     });
 
     it('expect a row added while grouped to be a data row', () => {
         const ds = grouped();
         ds.addNewEmpty({ country: 'dk', fruit: 'kiwi', v: 5 });
-        expect(ds.getRows(true).some(isGroupRow)).toBe(false);
-        expect(ds.getRows(true).map((row) => row.v)).toContain(5);
+        expect(ds.getDataRows().some(isGroupRow)).toBe(false);
+        expect(ds.getDataRows().map((row) => row.v)).toContain(5);
     });
 });
 

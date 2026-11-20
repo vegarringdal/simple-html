@@ -23,7 +23,7 @@ const build = (filter?: FilterExpression | null) => {
     return ds;
 };
 
-const names = (ds: Datasource) => ds.getRows(true).map((row) => row.name);
+const names = (ds: Datasource) => ds.getDataRows().map((row) => row.name);
 
 describe('builders', () => {
     it('expect where to build a condition', () => {
@@ -169,7 +169,7 @@ describe('valueField - compare with another field of the row', () => {
             { n: 'reversed', start: new Date(2020, 0, 3), end: new Date(2020, 0, 2) }
         ]);
         ds.filter({ field: 'start', operator: 'LESS_THAN', valueField: 'end' });
-        expect(ds.getRows(true).map((row) => row.n)).toEqual(['in order']);
+        expect(ds.getDataRows().map((row) => row.n)).toEqual(['in order']);
     });
 });
 
@@ -179,7 +179,7 @@ describe('the type comes from the fields', () => {
         ds.setData([{ n: 9 }, { n: 20 }, { n: 100 }]);
         // a text value, as typed: only the field type can make it a number
         ds.filter(where('n', 'GREATER_THAN', '10'));
-        return ds.getRows(true).map((row) => row.n);
+        return ds.getDataRows().map((row) => row.n);
     };
 
     it('expect a number field to compare a text value as a number', () => {
@@ -196,7 +196,7 @@ describe('the type comes from the fields', () => {
             const ds = new Datasource({ fields: { d: type } });
             ds.setData([{ d: new Date(2020, 0, 1, 15, 0) }]);
             ds.filter(where('d', 'EQUAL', new Date(2020, 0, 1)));
-            return ds.getRows(true).length;
+            return ds.getDataRows().length;
         };
         expect(at('date')).toEqual(1);
         expect(at('datetime')).toEqual(0);
@@ -258,7 +258,7 @@ describe('0 is blank - kept on purpose, see FilterOperator', () => {
     };
     const filterNames = (ds: Datasource, filter: FilterExpression) => {
         ds.filter(filter);
-        return ds.getRows(true).map((row) => row.n);
+        return ds.getDataRows().map((row) => row.n);
     };
 
     it('expect IS_BLANK on a number field to match 0', () => {

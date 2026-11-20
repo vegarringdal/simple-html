@@ -789,6 +789,24 @@ the grid, tests, samples and `MIGRATION.md`.
 * "0 is blank" for number fields kept as it is, documented on `FilterOperator`
 * a v5 saved filter is ignored without throwing; `MIGRATION.md` has a small `fromV5()` converter
 
+#### Step 5 - change tracking and options objects (items 11, 12)
+
+* `getChanges()` is typed (`Changes<T>`), leaves out fields edited back to their original value,
+  and returns plain copies instead of a JSON round trip - a Date stays a Date
+* edit tracking compares with the field type: `date` on the day, everything else to the second
+  (not the millisecond - the datetime formatter's `parse` stamps the current milliseconds, so
+  re-typing the same value would count as an edit). A time-only change on a `datetime` is an edit.
+* the type reaches the row's `EntityHandler` through its container: every datasource adds its
+  field types to the container it uses, read at edit time. Two datasources on one container
+  that disagree about a field's type throw, like a key mismatch.
+* no positional booleans in the `Datasource` / `DataContainer` API: options objects, and
+  `markAllForDeletion()` / `removeAllData()` / `getDataRows()` for what used to be a flag
+* **an old call throws** (`assertOptions`). TypeScript catches `setData(rows, true)`, plain
+  JavaScript would have replaced the rows instead of adding them - a silent data change.
+* `DataContainer.lenght()` -> `length()`
+
+Phase 1 is complete with this step: 500 tests at the start of v6, 884 now.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -830,6 +848,7 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
     examples are typechecked (docs work)
   * the display tree from `getFilterTree()` still says `logicalOperator` where the filter format
     says `group`
+  * `deselectAll()` does not send `selection-change` by default, `selectAll()` always does
 * **Low severity bugs left from the code review** (high and medium are fixed, see *Bug sweep*):
   * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
   * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the

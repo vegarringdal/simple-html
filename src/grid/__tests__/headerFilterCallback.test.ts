@@ -20,7 +20,7 @@ const data = () => [
     { firstname: 'e', lastname: 'y', age: 30 }
 ];
 
-const names = (datasource: any) => datasource.getRows(true).map((row: any) => row.firstname);
+const names = (datasource: any) => datasource.getDataRows().map((row: any) => row.firstname);
 
 beforeAll(() => {
     stubCanvas();

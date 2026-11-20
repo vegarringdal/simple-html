@@ -60,7 +60,7 @@ describe('filter editor - typed values', () => {
         input.dispatchEvent(new Event('input', { bubbles: true }));
         menuItem('Filter Only').click();
 
-        expect(datasource.getRows(true).map((row: any) => row.name)).toEqual(['a']);
+        expect(datasource.getDataRows().map((row: any) => row.name)).toEqual(['a']);
         // a Date, v5 applied a JSON copy and the date became text
         expect(datasource.getFilter()).toEqual(and(where('born', 'EQUAL', new Date(2001, 4, 17))));
     });
@@ -73,7 +73,7 @@ describe('filter editor - header filter inputs', () => {
         config.attributes = [{ attribute: 'firstname' }, { attribute: 'age' }];
         const { element, datasource, gridInterface } = await mountGrid(config);
         typeInHeaderFilter(element, 'lastname', 'last1');
-        expect(datasource.getRows(true)).toHaveLength(1);
+        expect(datasource.getDataRows()).toHaveLength(1);
 
         gridInterface.openFilterEditor();
         // root group trash icon: clear all
@@ -81,7 +81,7 @@ describe('filter editor - header filter inputs', () => {
         toolbar.querySelectorAll('svg')[3].dispatchEvent(new MouseEvent('click', { bubbles: true }));
         menuItem('Filter & Close').click();
 
-        expect(datasource.getRows(true)).toHaveLength(5);
+        expect(datasource.getDataRows()).toHaveLength(5);
         expect(headerFilterInput(element, 'lastname').value).toEqual('');
         // nothing left is no filter, like "Clear All Filters"
         expect(datasource.getFilter()).toEqual(null);
@@ -100,7 +100,7 @@ describe('filter editor - a single condition at the root', () => {
         menuItem('Filter Only').click();
 
         expect(datasource.getFilter()).toEqual(and(where('age', 'GREATER_THAN', 15)));
-        expect(datasource.getRows(true)).toHaveLength(4);
+        expect(datasource.getDataRows()).toHaveLength(4);
     });
 });
 
@@ -117,7 +117,7 @@ describe('filter editor - drafts', () => {
 
         // the draft is gone, the empty sub group is kept (the filter ignores it)
         expect(datasource.getFilter()).toEqual(and(where('age', 'GREATER_THAN', 15), and()));
-        expect(datasource.getRows(true)).toHaveLength(4);
+        expect(datasource.getDataRows()).toHaveLength(4);
         // the open dialog keeps its draft
         expect(editorConditions()).toHaveLength(2);
     });
@@ -152,7 +152,7 @@ describe('filter editor - drafts', () => {
         menuItem('Filter Only').click();
 
         expect(datasource.getFilter()).toEqual(and({ field: 'firstname', operator: 'EQUAL', valueField: 'lastname' }));
-        expect(datasource.getRows(true)).toHaveLength(1);
+        expect(datasource.getDataRows()).toHaveLength(1);
     });
 });
 

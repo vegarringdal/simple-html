@@ -47,6 +47,7 @@ Search and replace is enough for all of them.
 | `DataTypes` (type) | `FieldType`, with `'datetime'` added |
 | `datasource.setLocalCompare()` | `setLocaleCompare()` |
 | `datasource.deSelectAll()` | `deselectAll()` |
+| `dataContainer.lenght()` | `length()` |
 | config `placeHolderRowCurrentEnityOnly` | `placeHolderRowCurrentEntityOnly` |
 
 ## Removed
@@ -213,7 +214,7 @@ if (isGroupRow(row)) {
 | | v5 | v6 |
 | --- | --- | --- |
 | `getRows()` | `EntityUnion<T>[]` | `(EntityUnion<T> \| GroupRow)[]` |
-| `getRows(true)` | `EntityUnion<T>[]` | `EntityUnion<T>[]` - the return type follows the argument |
+| `getRows(true)` | `EntityUnion<T>[]` | `getDataRows()`: `EntityUnion<T>[]`, see [Options objects](#options-objects-instead-of-boolean-flags) |
 | `getRow(n)` | `EntityUnion<T>` | `EntityUnion<T> \| GroupRow` |
 | `currentEntity` | `EntityUnion<T> \| null` | `EntityUnion<T> \| GroupRow \| null` |
 | `getSelectedRows()` | `Entity[]` | `EntityUnion<T>[]` - never a group row |
@@ -236,7 +237,7 @@ const names = datasource
     .map((row) => row.name);
 
 // or all data rows, without the group rows - the rows of collapsed groups included
-const allNames = datasource.getRows(true).map((row) => row.name);
+const allNames = datasource.getDataRows().map((row) => row.name);
 ```
 
 `currentEntity` is a group row when the keyboard moves from the first data row up into the header
@@ -704,6 +705,169 @@ A row value of 0 still counts as blank: for number fields `IS_BLANK` matches 0 a
 leaves it out, and the header's value list (text fields) puts a 0 under "Blank". In ERP style data
 0 and empty mean the same, and changing it would silently change what existing filters match. It
 is documented on `FilterOperator`.
+
+## Options objects instead of boolean flags
+
+No method of `Datasource` or `DataContainer` takes a positional boolean any more. A call like
+`setData(rows, true, true)` did not say what the `true`s meant; the options are named now, and a
+flag that changed what a method does is a method of its own. Every option is optional and keeps
+the default the boolean had.
+
+TypeScript flags an old call. Plain JavaScript would not, and `setData(rows, true)` would quietly
+replace the rows instead of adding them - so an old call **throws a `TypeError`** that shows the
+v6 way to write it, e.g. `setData() takes an options object in v6, not a boolean: setData(rows, { add: true })`.
+
+| v5 | v6 |
+| --- | --- |
+| `datasource.setData(rows, add, reRunFilter)` | `datasource.setData(rows, { add, refilter })` |
+| `datasource.sort(args, add)` | `datasource.sort(args, { add })` |
+| `datasource.setOrderBy(args, add)` | `datasource.setOrderBy(args, { add })` |
+| `datasource.group(groups, add)` | `datasource.group(groups, { add })` |
+| `datasource.select(row, triggerSelect)` | `datasource.select(row, { notify })` |
+| `datasource.deselectAll(triggerEvent)` | `datasource.deselectAll({ notify })` |
+| `datasource.addNewEmpty(row, scrollto)` | `datasource.addNewEmpty(row, { scrollTo })` |
+| `datasource.markForDeletion(rows)` | unchanged |
+| `datasource.markForDeletion(null, true)` | `datasource.markAllForDeletion()` |
+| `datasource.removeData(rows, false, rerunFilters)` | `datasource.removeData(rows, { refilter })` |
+| `datasource.removeData(null, true)` | `datasource.removeAllData()` |
+| `datasource.getRows(true)` | `datasource.getDataRows()` |
+| `datasource.length(true)` | `datasource.getDataRows().length` |
+| `container.setData(rows, add, tagAsNew)` | `container.setData(rows, { add, isNew })` |
+| `container.markForDeletion(null, true)` | `container.markAllForDeletion()` |
+| `container.removeData(null, true)` | `container.removeAllData()` |
+
+| option | default | what it does |
+| --- | --- | --- |
+| `setData` `add` | `false` | add the rows to the ones there are, instead of replacing them |
+| `setData` `refilter` | `false` | run the current filter on the rows. Without it every row set is shown |
+| `sort` / `setOrderBy` `add` | `false` | add to the current sort, as shift+click on a header does |
+| `group` `add` | `false` | add the groups after the current grouping |
+| `select` `notify` | `false` | send the `select` event, so the grid scrolls to the row |
+| `deselectAll` `notify` | `false` | send the `selection-change` event, so the grid shows it right away |
+| `addNewEmpty` `scrollTo` | `true` | select the new row and make it current, the grid scrolls to it |
+| `removeData` `refilter` | `true` | rebuild the displayed rows. Pass `false` for all but the last of many calls |
+| `container.setData` `isNew` | `false` | make the rows new rows, as `addNewEmpty()` does |
+
+```ts
+// v5
+datasource.setData(moreRows, true);
+datasource.sort({ attribute: 'age', ascending: false }, true);
+datasource.deselectAll(true);
+datasource.addNewEmpty({ company: 'NEW' }, false);
+datasource.markForDeletion(null, true);
+const count = datasource.length(true);
+
+// v6
+datasource.setData(moreRows, { add: true });
+datasource.sort({ attribute: 'age', ascending: false }, { add: true });
+datasource.deselectAll({ notify: true });
+datasource.addNewEmpty({ company: 'NEW' }, { scrollTo: false });
+datasource.markAllForDeletion();
+const count = datasource.getDataRows().length;
+```
+
+TypeScript reports every old call. **In plain js a boolean in place of the options is not an
+error: it is ignored, and the defaults apply** - `setData(rows, true)` replaces the rows instead of
+adding them, `markForDeletion(null, true)` marks nothing. Search your code for these methods.
+
+Also changed:
+
+* `getRows()` has no overloads any more: it returns `(EntityUnion<T> | GroupRow)[]`, and
+  `getDataRows()` returns `EntityUnion<T>[]`. Where you passed a variable,
+  `flag ? datasource.getDataRows() : datasource.getRows()` gives the same type as `getRows(flag)`.
+* `markForDeletion()` and `removeData()` take a row or a list of rows, not `null`.
+* `removeAllData()` sends the same `collection-changed` event as `removeData(null, true)` did, with
+  `data: null`. `markAllForDeletion()` sends `collection-filtered` with `info: 'markForDeletion'`.
+* `addNewEmpty(row)` takes `Partial<T>`: on a typed datasource, a new row with some of its fields
+  compiles now (v5 wanted every field of `T`).
+* `container.setData()` returns `Entity[]`, never `undefined`.
+* `EntityHandler`'s constructor takes `{ key, isNew, fieldType }` (was `(keyString, tagAsNew)`). It
+  only matters for a handler of your own given to `container.overrideEntityHandler()`.
+
+## Change tracking: `getChanges()`
+
+### The result is typed
+
+`getChanges()` returns `Changes<T>`, with `T` the row type of the datasource. The names are the
+v5 ones:
+
+```ts
+interface Changes<T> {
+    newEntities: T[];                     // rows added with addNewEmpty()
+    modifiedEntities: ModifiedEntity<T>[]; // per edited row: its key and the changed fields
+    deletedEntities: T[];                 // rows marked for deletion
+}
+type ModifiedEntity<T> = Partial<T> & { __KEY?: string | number };
+```
+
+```ts
+const datasource = new Datasource<Person>({ key: 'id', fields: { born: 'date' } });
+// ...
+const { newEntities, modifiedEntities, deletedEntities } = datasource.getChanges();
+modifiedEntities[0]; // { id: 1, name: 'Anna' } - the key, under the key field, and the changed fields
+```
+
+A modified entry has the key under the key field's name (`id` above), or `__KEY` when the
+datasource has no key - as in v5. `DataContainer.getChanges()` returns `Changes` (rows typed
+`Record<string, unknown>`).
+
+### The entries are copies, not JSON
+
+v5 returned a JSON copy: a `Date` was its ISO text, a field set to `undefined` was left out. v6
+returns plain shallow copies of the rows, so the values keep their type - a `Date` is a `Date`.
+Sending the result as JSON gives the same text as before. If you read the dates as text, convert
+the result yourself:
+
+```ts
+// v5: changes.modifiedEntities[0].born was '1990-05-17T06:30:00.000Z'
+const asV5 = JSON.parse(JSON.stringify(datasource.getChanges()));
+```
+
+The copies are shallow: an object in a field is the row's own object, not a copy of it.
+
+### A field edited back is not a change
+
+v5 put every field that was ever edited in a row's modified entry, also a field set back to its
+original value - when another field of the row was still edited. Now the entry has only the fields
+that differ from the original:
+
+```ts
+row.name = 'Anna';
+row.city = 'Bergen';
+row.name = 'Ann'; // the original
+
+datasource.getChanges().modifiedEntities;
+// v5: [{ id: 1, name: 'Ann', city: 'Bergen' }]
+// v6: [{ id: 1, city: 'Bergen' }]
+```
+
+### Dates are compared by the field's type
+
+v5 compared every `Date` on the day, so changing only the time was no edit. v6 takes the type from
+the datasource's `fields`:
+
+* `date` - on the day, as v5. A date typed into a cell gets the current time of day, typing the
+  same day again is no edit.
+* `datetime` - to the second: **a time only change is an edit now**. The milliseconds are ignored
+  (they are not shown, and typing a time stamps the current ones).
+* a field that is not listed (a text field) - to the second too. **v5 compared it on the day**:
+  list your date only fields as `date`.
+
+A `DataContainer` used without a datasource knows no types, every field compares to the second.
+
+### Datasources that share a container must agree on the field types
+
+The edits are tracked by the container, so it needs one type per field. It takes the types from
+the `fields` of every datasource made on it: a field listed by one datasource has that type, and a
+field two datasources list must have the same type in both, else the second throws.
+
+```ts
+const container = new DataContainer('id');
+const left = new Datasource({ container, fields: { born: 'date' } });
+const right = new Datasource({ container }); // fine: born is a date field for the edits made in right too
+const wrong = new Datasource({ container, fields: { born: 'datetime' } });
+// throws: field 'born' is 'datetime' here and 'date' in another datasource on the same container
+```
 
 ## Internals are no longer in the typings
 

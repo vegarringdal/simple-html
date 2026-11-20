@@ -9,7 +9,7 @@ import { headerFilterInput, menuItem, openFilterMenu, typeInHeaderFilter } from 
  * The right click menu on a header filter: "Is Blank" and the excel style value list.
  */
 
-const names = (datasource: any) => datasource.getRows(true).map((row: any) => row.firstname);
+const names = (datasource: any) => datasource.getDataRows().map((row: any) => row.firstname);
 
 beforeAll(() => {
     stubCanvas();

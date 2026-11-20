@@ -106,9 +106,9 @@ Tasks:
 10. [x] **Decide: is 0 blank?** Today it is for numbers: IS_BLANK matches 0, the value list puts 0
         under "Blank", `BLANK_TO_ZERO` exists. That is consistent, but surprising outside
         ERP style data. Keep it and document it, or separate 0 from blank. **decision, then S-M**
-11. [ ] **Change tracking**: `getChanges()` still lists fields edited back to their original value,
+11. [x] **Change tracking**: `getChanges()` still lists fields edited back to their original value,
         and a time only change on a date is not an edit. Give `getChanges()` a typed result. **S**
-12. [ ] **Options objects instead of boolean flags**: `setData(data, add, reRunFilter)`,
+12. [x] **Options objects instead of boolean flags**: `setData(data, add, reRunFilter)`,
         `removeData(data, all, rerunFilters)`, `markForDeletion(data, all)`,
         `deSelectAll(triggerEvent)`, `sort(args, add)`. Call sites then explain themselves. **S**
 13. [x] **Typed events**: today one listener receives every event and switches on a string name,
@@ -245,6 +245,70 @@ with `@example` on new public API, and `MIGRATION.md`.
         `triggerScrollEvent`, `getAttributeColumns(filterSelectedColumns)`,
         `getOptionalAttributes`, `openFilterEditor` - keep and document, rename, or make
         internal. **S**
+
+### Phase 2 design
+
+**Columns and layout (16)** - a column's options are declared once, keyed by field, and the
+layout only references the keys:
+
+```ts
+const config: GridConfig = {
+    columns: {
+        // options per field; a field in the layout without an entry gets the defaults
+        name: { label: 'Name', placeholderFilter: 'search', mandatory: true },
+        age: { readonly: true }
+    },
+    layout: {
+        left: [{ fields: ['name'], width: 150 }],     // pinned left
+        center: [{ fields: ['age', 'born'], width: 100 }], // two fields stacked in one column
+        right: []                                      // pinned right
+    },
+    cellHeight: 22,
+    ...
+};
+```
+
+- `Attribute` becomes `ColumnConfig` (no `attribute` field, the key is the field), `attributes`
+  and `columnsPinnedLeft` / `columnsCenter` / `columnsPinnedRight` are gone, so is `__attributes`
+- the type and default label come from the datasource `fields` (phase 1)
+
+**Config and state (15)** - the config is what you write; the state is what the user changes:
+
+```ts
+interface GridState {
+    layout: GridLayout;              // column order, pinning and widths
+    sorting: SortArgument[];
+    grouping: GroupArgument[];
+    expandedGroups: string[];
+    filter: FilterExpression | null;
+    headerFilters: Record<string, { value: unknown; operator?: FilterOperator }>;
+}
+
+grid.getState(); grid.setState(state); grid.resetState(); // back to the config's start state
+```
+
+- `saveConfig` / `loadConfig` / `loadInitConfig` / `updateInitConfig` are replaced
+- `GridConfig.initialState?: Partial<GridState>` for a grid that starts sorted, grouped or filtered
+- `currentFilterValue` moves out of the column config into `headerFilters`
+
+**Setup in one call (17)**: `createGrid(host, { config, datasource })` creates the element,
+sizes it, connects it and returns the grid interface. The `simple-html-grid` element stays for
+people who want to place it themselves. `enableCleanup` is dropped.
+
+**Callbacks in the config (18)**: `isReadonly(row, field, readonlyByConfig)` and
+`cellClass(row, field)` in `GridConfig` replace `readonlySetter` / `cellAppendClassSetter`.
+
+**Menus as data (19)**: `menus?: { row?, header?, filter? }`, each a function that gets the
+default entries and returns the entries to show - hide, reorder, or add
+`{ label, action(context), visible?(context) }`. `contextMenuCustom` / `setContextMenuElement`
+are replaced by `openMenu(event, entries)`.
+
+**Public methods (20)**: no positional booleans (as in phase 1). `triggerScrollEvent()` ->
+`refresh()` (re-render visible cells), `triggerRebuild()` -> `rebuild()`. Everything else is kept
+and documented, renamed, or made internal - each decision listed in `MIGRATION.md`.
+
+**Order of work**: columns + layout + state (15, 16), then setup + callbacks + methods (17, 18,
+20), then menus (19). Then the docs site.
 
 ## Phase 3 - UI
 

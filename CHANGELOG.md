@@ -46,6 +46,9 @@ what to change in your code. Released in phases.
 ### Phase 1 - datasource
 
 #### ⚠️ Breaking changes
+- **A v5 call with a positional boolean throws** a `TypeError` that shows the v6 form, so plain
+  JavaScript does not quietly do something else (e.g. replace rows that were meant to be added)
+- `DataContainer.lenght()` is spelled `length()`
 - **Events are subscribed with `on()`**: `addEventListener` / `removeEventListener` are removed
   from `Datasource`, `GridInterface` and `DateInterface`. `on(name, handler)` subscribes to one
   event and returns a function that unsubscribes. The handler gets the payload, not
@@ -57,8 +60,8 @@ what to change in your code. Released in phases.
 - **`Listener` is removed**, and `DateInterface.callSubscribers()` is internal
   (`__callSubscribers`).
 - **Group rows are not entities**: the group header rows in `getRows()` have their own type,
-  `GroupRow`. `getRows()` returns `(EntityUnion<T> | GroupRow)[]`, `getRows(true)`
-  `EntityUnion<T>[]` (the type follows the argument), `getRow()` `EntityUnion<T> | GroupRow`.
+  `GroupRow`. `getRows()` returns `(EntityUnion<T> | GroupRow)[]`, `getDataRows()` (was
+  `getRows(true)`) `EntityUnion<T>[]`, `getRow()` `EntityUnion<T> | GroupRow`.
   The `__group*` field names are unchanged.
 - **`Entity` lost `__groupID`, `__groupName`, `__groupTotal`, `__groupChildren` and
   `__groupExpanded`**, and `__group` is typed `never` on it: a group row can not be passed where
@@ -116,8 +119,33 @@ what to change in your code. Released in phases.
   A `valueField` is shown by its label (v5 showed the name).
 - **The filter editor applies only complete conditions**: a condition without a field or operator,
   or set to compare with a field that is not picked yet, is left out (the open dialog keeps it).
+- **Options objects instead of positional booleans** on `Datasource` and `DataContainer`:
+  `setData(rows, { add, refilter })`, `sort(args, { add })`, `setOrderBy(args, { add })`,
+  `group(groups, { add })`, `select(row, { notify })`, `deselectAll({ notify })`,
+  `addNewEmpty(row, { scrollTo })`, `removeData(rows, { refilter })` and the container's
+  `setData(rows, { add, isNew })`. The defaults are unchanged. In plain js a boolean passed the v5
+  way is ignored, the defaults apply.
+- **The `all` flags are methods**: `markForDeletion(null, true)` is `markAllForDeletion()`,
+  `removeData(null, true)` is `removeAllData()`, on the datasource and the container.
+  `markForDeletion()` / `removeData()` take a row or a list, not `null`.
+- **`getRows(true)` is `getDataRows()`, `length(true)` is `getDataRows().length`**: `getRows()` and
+  `length()` take no argument, `getRows()` has no overloads.
+- **`getChanges()` returns plain copies, not a JSON copy**: a `Date` stays a `Date`, a field set to
+  `undefined` is kept. `JSON.stringify()` of the result is the same as before.
+- **A time only change on a `datetime` field is an edit**, and so is one on a field that is not
+  listed in `fields` (v5 compared every date on the day). A `date` field still compares on the day.
+  Dates are compared to the second, the milliseconds are ignored.
+- **Datasources sharing a container must give a field the same type**: the container tracks the
+  edits with the types of every datasource on it, a field two of them list with different types
+  throws in the constructor of the second.
+- **`EntityHandler`'s constructor takes `{ key, isNew, fieldType }`** (was `(keyString, tagAsNew)`),
+  for a handler given to `overrideEntityHandler()`.
 
 #### Fixed
+- `getChanges()` listed a field edited back to its original value in the modified entry (when
+  another field of the row was still edited); it lists the fields that differ only
+- a time only change on a `datetime` field was not an edit, so it was missing from `getChanges()`
+  and the row was not marked modified
 - `NumberFormatterComma` `parse` (was `toSource`) threw on null, undefined and a number
 - the `*THHMMSS` formatters' `parseFilter` (was `toFilter`) put the current milliseconds on a filter
   boundary, they are 0 now
@@ -152,6 +180,14 @@ what to change in your code. Released in phases.
   documented
 - **0 is blank** is decided: kept as it is, and documented on `FilterOperator` - `IS_BLANK` matches 0,
   `IS_NOT_BLANK` leaves it out, the value list puts 0 under "Blank"
+- `getChanges()` is typed: `Changes<T>` (`newEntities`, `modifiedEntities`, `deletedEntities`) and
+  `ModifiedEntity<T>`, the key plus the changed fields of an edited row
+- `getDataRows()`, `markAllForDeletion()` and `removeAllData()` on the datasource;
+  `markAllForDeletion()` and `removeAllData()` on the container
+- `addNewEmpty(row)` takes `Partial<T>`, so a typed datasource can add a row with some fields
+- demo: the editing sample shows `markAllForDeletion()` and the typed `getChanges()`, the rows
+  sample `removeAllData()`, the sorting sample `sort(args, { add: true })`, the selection sample
+  `select(row, { notify: true })`
 - demo: the filtering sample uses the builders and logs `getFilter()`, the save & load sample loads a
   config with a filter
 - demo: the formatters sample uses per field formatters and the `formatters` option, the value
@@ -171,6 +207,9 @@ what to change in your code. Released in phases.
   and converts them when it applies
 - the filter editor's operator picker hands over a typed operator, no more round trip through the
   display text
+- edit tracking compares in one function, `isSameValue(original, value, type)`. The container
+  passes each row's `EntityHandler` a field type lookup, filled by the datasources made on it
+  (`__addFieldTypes`)
 
 ## 5.0.1
 

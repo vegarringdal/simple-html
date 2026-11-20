@@ -284,7 +284,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
     const selectorTopLeft = getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-selector');
     selectorTopLeft.onclick = (e: MouseEvent) => {
         if (e.ctrlKey) {
-            ctx.gridInterface.getDatasource().deselectAll(true);
+            ctx.gridInterface.getDatasource().deselectAll({ notify: true });
         } else {
             ctx.gridInterface.getDatasource().selectAll();
         }

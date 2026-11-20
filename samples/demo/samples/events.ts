@@ -10,7 +10,7 @@ export const events: DemoSample = {
     code: `
 // datasource: data, sorting, filtering, grouping and selection
 const off = datasource.on('collection-filtered', (data) => {
-    console.log('filtered by', data.info, '-', datasource.length(true), 'rows');
+    console.log('filtered by', data.info, '-', datasource.getDataRows().length, 'rows');
 });
 
 datasource.on('selection-change', () => {

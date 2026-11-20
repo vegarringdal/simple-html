@@ -106,7 +106,7 @@ describe('datasource events - renamed in v6', () => {
         datasource.deselectAll();
         expect(handler).not.toHaveBeenCalled();
 
-        datasource.deselectAll(true);
+        datasource.deselectAll({ notify: true });
         expect(handler).toHaveBeenCalledTimes(1);
     });
 
@@ -132,7 +132,7 @@ describe('datasource events - payloads', () => {
         });
 
         datasource.setData(rows());
-        datasource.setData([{ name: 'd', age: 4 }], true);
+        datasource.setData([{ name: 'd', age: 4 }], { add: true });
         datasource.addNewEmpty();
 
         expect(received).toEqual([{ added: false }, { added: true }, { added: true }]);
@@ -211,7 +211,7 @@ describe('datasource events - payloads', () => {
         datasource.selectNext();
         datasource.selectLast();
         datasource.selectPrev();
-        datasource.select(2, true);
+        datasource.select(2, { notify: true });
 
         expect(received).toEqual([
             { info: 'select-first', row: 0 },
