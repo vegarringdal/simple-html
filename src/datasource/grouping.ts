@@ -247,24 +247,50 @@ export class Grouping {
      * @param entity data row that is part of the current groups
      */
     public expandToEntity(entity: Entity) {
-        const findPath = (groups: GroupRow[]): string[] | null => {
-            for (const group of groups) {
-                if (group.__groupChildren.includes(entity)) {
-                    return [group.__groupID];
-                }
-                const path = findPath(group.__groupChildren.filter(isGroupRow));
-                if (path) {
-                    return [group.__groupID, ...path];
-                }
-            }
-            return null;
-        };
-
-        findPath(this.currentGroups[0] || [])?.forEach((id) => {
+        this.groupsAbove((row) => row === entity)?.forEach((id) => {
             this.expandedGroupIDs.add(id);
         });
 
         return this.expandOneOrAll(null, this.expandedGroupIDs);
+    }
+
+    /**
+     * expands the group with this id and every group above it, so it is shown, and returns the new
+     * displayed rows. An id that is no group changes nothing
+     * @param id the group's __groupID
+     */
+    public expandWithParents(id: string) {
+        const parents = this.groupsAbove((row) => isGroupRow(row) && row.__groupID === id);
+        if (parents) {
+            [...parents, id].forEach((groupId) => {
+                this.expandedGroupIDs.add(groupId);
+            });
+        }
+
+        return this.expandOneOrAll(null, this.expandedGroupIDs);
+    }
+
+    /**
+     * the ids of the groups a row is in, the top group first: the groups that have to be expanded for
+     * the row to be shown. [] for a top group, null when no row of the current groups is the one
+     * @param isRow picks the row, a data row or a group row
+     */
+    private groupsAbove(isRow: (row: Entity | GroupRow) => boolean): string[] | null {
+        const find = (rows: (Entity | GroupRow)[]): string[] | null => {
+            for (const row of rows) {
+                if (isRow(row)) {
+                    return [];
+                }
+                if (isGroupRow(row)) {
+                    const path = find(row.__groupChildren);
+                    if (path) {
+                        return [row.__groupID, ...path];
+                    }
+                }
+            }
+            return null;
+        };
+        return find(this.currentGroups[0] || []);
     }
 
     /**

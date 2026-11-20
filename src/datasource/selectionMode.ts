@@ -5,18 +5,19 @@
  * - `'single'` - one row at a time
  * - `'none'` - no selection. Clicking a row still makes it the current entity
  *
- * Set it in the grid config (`GridConfig.selectionMode`) when the datasource is shown in a grid: the
- * grid sets its own on the datasource, which replaces `DatasourceOptions.selectionMode`.
+ * `selectAll()` (and a click on the grid's top left corner) selects only in `'multiple'`.
+ *
+ * The datasource owns it: set it with `DatasourceOptions.selectionMode` or
+ * `datasource.setSelectionMode()`. A grid reads it from its datasource, it has no option of its own
+ * (v5's `GridConfig.selectionMode` is removed).
  *
  * @sample selection
  * @example
  * ```ts
- * import type { GridConfig } from '@simple-html/grid';
+ * import { Datasource } from '@simple-html/grid';
  *
- * const config: GridConfig = {
- *     selectionMode: 'single',
- *     layout: { center: [{ fields: ['name'], width: 150 }] }
- * };
+ * const datasource = new Datasource({ key: 'id', selectionMode: 'single' });
+ * datasource.setSelectionMode('none'); // later, also while it is shown in a grid
  * ```
  */
 export type SelectionMode = 'none' | 'single' | 'multiple';

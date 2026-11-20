@@ -16,7 +16,6 @@ export const editing: DemoSample = {
         config.columns = { __rowState: { label: 'RS', readonly: true } };
 
         const { datasource, gridInterface } = mountGrid(ui.gridHost, config);
-        datasource.setSelectionMode('multiple');
 
         // toggle it while the grid is shown: sorting, filter, column order ... stay as they are
         let readonly = config.readonly;

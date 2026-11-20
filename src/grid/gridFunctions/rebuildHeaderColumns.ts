@@ -31,9 +31,8 @@ export function rebuildHeaderColumns(ctx: Grid) {
             columnsNeeded = columns.length;
         }
 
-        if (!parent) {
-            console.log('err');
-        } else {
+        // always there: the row and header containers are made before the columns
+        if (parent) {
             let left = getGroupingWidth(ctx, coltype);
 
             while (parent.firstChild) {

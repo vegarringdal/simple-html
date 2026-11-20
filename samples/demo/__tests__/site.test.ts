@@ -101,6 +101,21 @@ describe('docs site', () => {
         }
     });
 
+    it('links a guide to a file of the repo (../MIGRATION.md) on github, the site has no page for it', async () => {
+        const hrefs = new Set<string>();
+        for (const route of routesOf('#guide/')) {
+            await open(route);
+            for (const link of document.querySelectorAll('.doc a[href]')) {
+                hrefs.add(link.getAttribute('href') || '');
+            }
+        }
+        const migration = [...hrefs].filter((href) => href.includes('MIGRATION.md'));
+
+        expect(migration).toContain('https://github.com/airemote/simple-html/blob/v6_maybe/MIGRATION.md#package');
+        // used to be ../MIGRATION.md#package, a 404 on the site
+        expect([...hrefs].filter((href) => href.startsWith('../') || href.startsWith('./'))).toEqual([]);
+    });
+
     it('renders a sample page: its source and the running grid', async () => {
         await open('#sample/basic-grid');
         expect(text('.main-header h1')).toBe('Basic grid');

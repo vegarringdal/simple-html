@@ -28,9 +28,13 @@ export class Selection {
     }
 
     /**
-     * sleect all of visible rows
+     * selects every displayed data row and sends selection-change - only in 'multiple' mode, in the
+     * other modes nothing is selected and nothing is sent
      */
     public selectAll() {
+        if (this.dataSource.getSelectionMode() !== 'multiple') {
+            return;
+        }
         this.selectRange(0, this.dataSource.length() - 1);
         // update selection on rows
         this.dataSource.__callSubscribers('selection-change', {});

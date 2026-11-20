@@ -235,7 +235,13 @@ const withColumnsCenter: GridConfig = { columnsCenter: [{ rows: ['name'], width:
 const withRows: LayoutColumn = { rows: ['name'], width: 100 };
 // @ts-expect-error sorting is state, it goes in initialState
 const withSorting: GridConfig = { layout, sorting: [] };
-console.log(withAttributes, withColumnsCenter, withRows, withSorting);
+// @ts-expect-error the datasource owns the selection mode: new Datasource({ selectionMode })
+const withSelectionMode: GridConfig = { layout, selectionMode: 'single' };
+// @ts-expect-error mandatoryOnlyIfEmpty is gone, mandatory marks the empty cells only
+const onlyIfEmpty: ColumnConfig = { mandatory: true, mandatoryOnlyIfEmpty: true };
+// the date picker takes only the fields to change, the rest are defaults
+const weeksFromSunday: GridConfig = { layout, datePickerConfig: { weekStart: 0, isoWeek: false } };
+console.log(withAttributes, withColumnsCenter, withRows, withSorting, withSelectionMode, onlyIfEmpty, weeksFromSunday);
 const headerOperator: FilterOperator | undefined = config.columns?.name?.operator;
 console.log(headerOperator);
 // the filter as text, with your own labels
@@ -521,6 +527,10 @@ const dateInterface = new DateInterface({
 });
 const onDate: EventHandler<DateEvents['date-select']> = (date) => console.log(date?.getTime());
 dateInterface.on('date-select', onDate);
+// the selected days are timestamps, set from dates
+dateInterface.setSelected([new Date(2026, 10, 20, 14, 30)]);
+const selectedDays: number[] = dateInterface.getSelected();
+console.log(selectedDays.map((time) => new Date(time)));
 
 // the element, placed by hand
 const element = document.createElement('simple-html-grid') as GridElement;

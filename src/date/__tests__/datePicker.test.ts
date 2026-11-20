@@ -172,3 +172,31 @@ describe('date picker - date-select event', () => {
         expect(received).toEqual([]);
     });
 });
+
+describe('calendar - setSelected', () => {
+    // a calendar of April 2026, the days are matched in the month shown (not the dimmed ones)
+    const calendar = () => config({ datepicker: false, datepickerDate: undefined, startMonth: 3, startYear: 2026 });
+    const selectedDays = (element: HTMLElement) =>
+        Array.from(element.querySelectorAll('.simple-html-date-day-selected')).map((day) => day.textContent?.trim());
+
+    it('expect the dates given to show as selected, whatever their time', () => {
+        const { dateInterface, element } = mount(calendar());
+
+        // used to store the Dates and match the days by timestamp: nothing showed as selected
+        dateInterface.setSelected([new Date(2026, 3, 10), new Date(2026, 3, 12, 15, 30)]);
+
+        expect(selectedDays(element)).toEqual(['10', '12']);
+        expect(dateInterface.getSelected()).toEqual([new Date(2026, 3, 10).getTime(), new Date(2026, 3, 12, 15, 30).getTime()]);
+    });
+
+    it('expect a click on a day selected with a time to unselect it', () => {
+        const { dateInterface, element } = mount(calendar());
+        dateInterface.setSelected([new Date(2026, 3, 12, 15, 30)]);
+
+        const day12 = Array.from(element.querySelectorAll('.simple-html-date-day-selected'))[0] as HTMLElement;
+        day12.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(selectedDays(element)).toEqual([]);
+        expect(dateInterface.getSelected()).toEqual([]);
+    });
+});

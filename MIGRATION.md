@@ -58,6 +58,8 @@ Search and replace is enough for all of them.
 | `import { html, render } from '@simple-html/grid'` | `import { html, render } from 'lit-html'` - it was only re-exported |
 | `import { Grid } from '@simple-html/grid'` | not exported, it is the grid's internal class. Use `GridInterface`. |
 | `import { EntityHandler } from '@simple-html/grid'` | type only: `import type { EntityHandler }` (it is the type of `Entity.__controller`) |
+| `GridConfig.selectionMode` | `new Datasource({ selectionMode })` or `datasource.setSelectionMode()`, see [below](#selectionmode-is-the-datasources) |
+| `ColumnConfig.mandatoryOnlyIfEmpty` | nothing - it had no effect, `mandatory` marks only the empty cells |
 
 ## Events
 
@@ -734,7 +736,8 @@ is documented on `FilterOperator`.
 No method of `Datasource` or `DataContainer` takes a positional boolean any more. A call like
 `setData(rows, true, true)` did not say what the `true`s meant; the options are named now, and a
 flag that changed what a method does is a method of its own. Every option is optional and keeps
-the default the boolean had.
+the default the boolean had - apart from `setData()`'s `refilter`, which is `true` now, see
+[below](#setdata-runs-the-filter-by-default).
 
 TypeScript flags an old call. Plain JavaScript would not, and `setData(rows, true)` would quietly
 replace the rows instead of adding them - so an old call **throws a `TypeError`** that shows the
@@ -762,7 +765,7 @@ v6 way to write it, e.g. `setData() takes an options object in v6, not a boolean
 | option | default | what it does |
 | --- | --- | --- |
 | `setData` `add` | `false` | add the rows to the ones there are, instead of replacing them |
-| `setData` `refilter` | `false` | run the current filter on the rows. Without it every row set is shown |
+| `setData` `refilter` | `true` (v5: `false`) | run the current filter on the rows. `false` shows every row set, also one the filter leaves out |
 | `sort` / `setOrderBy` `add` | `false` | add to the current sort, as shift+click on a header does |
 | `group` `add` | `false` | add the groups after the current grouping |
 | `select` `notify` | `false` | send the `select` event, so the grid scrolls to the row |
@@ -806,6 +809,30 @@ Also changed:
 * `container.setData()` returns `Entity[]`, never `undefined`.
 * `EntityHandler`'s constructor takes `{ key, isNew, fieldType }` (was `(keyString, tagAsNew)`). It
   only matters for a handler of your own given to `container.overrideEntityHandler()`.
+
+### `setData()` runs the filter by default
+
+In v5 `setData()` did not run the filter (`reRunFilter` was `false`): rows set while a filter was set
+- from code, a header filter or the filter editor - were all shown, also the ones the filter leaves
+out, while the header filters and the footer still showed the filter. In v6 the filter applies to
+them. Pass `refilter: false` for the v5 behaviour:
+
+```ts
+// v5: every new row shown, the filter not run on them
+datasource.setData(rows);
+datasource.setData(moreRows, true);
+
+// v6: the filter runs on them
+datasource.setData(rows);
+datasource.setData(moreRows, { add: true });
+
+// v6, as v5 did
+datasource.setData(rows, { refilter: false });
+```
+
+`setData(rows, { refilter: false })` while there is no filter, sort or grouping still sends
+`collection-filtered` with `info: '__internalUpdate, forced'` before `collection-changed`, as v5's
+`setData()` did. A `setData()` that runs the filter sends `collection-changed` only.
 
 ## Change tracking: `getChanges()`
 
@@ -977,11 +1004,39 @@ from the datasource's `fields` (see [Fields and formatters](#fields-and-formatte
 | `operator` | unchanged, the operator the header filter starts with. The one the user picks in the header filter's menu is state: `headerFilters[field].operator` |
 | `currentFilterValue` | removed - it is state: `headerFilters[field].value` |
 | `type` | removed (phase 1) - the type comes from the datasource's `fields` |
-| `dynamicCellTypeColumn`, `readonly`, `numberOverride`, `focusButton`, `mandatory`, `mandatoryOnlyIfEmpty`, `allowPasteClearOnly` | unchanged |
+| `mandatoryOnlyIfEmpty` | removed - it had no effect: `mandatory` marks only the empty cells |
+| `dynamicCellTypeColumn`, `readonly`, `numberOverride`, `focusButton`, `mandatory`, `allowPasteClearOnly` | unchanged |
 
 In v5 picking an operator in the header filter's menu wrote it into the column's `operator`, so the
 config changed under you (and opening the menu set it to the type's default). In v6 the column's
 `operator` is never changed by the grid.
+
+### `selectionMode` is the datasource's
+
+`GridConfig.selectionMode` is removed. v5 had the selection mode in both places, and the grid set its
+own (default `'multiple'`) on the datasource every time it was built: `new Datasource({ selectionMode:
+'single' })` shown in a grid became `'multiple'`. The datasource owns it now, the grid reads it from
+there:
+
+```ts
+// v5
+const datasource = new Datasource(new DataContainer('id'));
+const gridConfig: GridConfig = { selectionMode: 'single', columnsCenter: [{ rows: ['name'], width: 150 }] };
+
+// v6
+const datasource = new Datasource({ key: 'id', selectionMode: 'single' });
+const gridConfig: GridConfig = { layout: { center: [{ fields: ['name'], width: 150 }] } };
+datasource.setSelectionMode('none'); // later, also while a grid shows it
+```
+
+`updateConfig({ selectionMode })` is `datasource.setSelectionMode()`. The datasource also takes
+`'none'`, which the grid config did not.
+
+### `datePickerConfig` takes only the fields to change
+
+`GridConfig.datePickerConfig` is a `Partial<IDateConfig>` (v5: a whole `IDateConfig`, though the grid
+read only some fields and filled in the rest). `{ weekStart: 0, isoWeek: false }` is enough, every
+field the grid reads has a default. A whole `IDateConfig` still works.
 
 ### The state: `getState()`, `setState()` and `resetState()`
 
@@ -1525,6 +1580,39 @@ gridInterface.closeMenu();
   did. Every menu is moved left when it sticks out on the right of the window.
 * The entries carry their id in a `data-menu-id` attribute, for css and tests.
 * A disabled item gets the class `simple-html-grid-menu-item-disabled` and `aria-disabled="true"`.
+
+## Other behaviour changes
+
+Found while writing the v6 docs: each did not do what its name or its docs said.
+
+* **`setData()` clears `currentEntity`** (to `null`, and sends `current-entity`) when the current row
+  is no longer in the data. Replaced rows are new objects, so this is the case after every
+  `setData(rows)` - also when a row with the same key comes back. v5 kept pointing at the old row.
+  Rows added with `{ add: true }`, or the same row objects set again, keep it.
+* **`selectAll()` only works in the `'multiple'` selection mode.** In `'single'` and `'none'` it
+  selects nothing and sends no `selection-change` (v5 sent the event anyway). The same for a click on
+  the grid's top left corner.
+* **`removeGroup(group)` finds the level by its field**: a copy of the grouping, e.g. from a saved
+  state, removes it. v5 compared the object, so a copy removed nothing but still regrouped and sent
+  the events. A field that is not grouped on now changes nothing and sends no event.
+* **`expandGroup(id)` of a sub group expands the groups above it** too, so it is shown. In v5 it did
+  nothing while its parent was collapsed.
+* **The rows are always sorted on the grouped fields before they are grouped.** `setGrouping()`
+  followed by `filter()` (or `setData()` ...), and `setOrderBy()` or `resetSort()` while grouped,
+  grouped unsorted rows in v5: a group showed up once for each run of equal values. The grouped
+  fields now come first in the sort (`getLastSorting()` shows it), each keeping its direction.
+* **`DateInterface.setSelected(dates)` shows the dates selected.** v5 kept the `Date` objects, while a
+  day is matched by timestamp, so nothing showed. The dates are kept as timestamps now, and a day is
+  selected when a date falls on it, whatever its time. `getSelected()` returns `number[]` (v5:
+  `unknown[]`), and `selected` is a `Set<number>`.
+
+```ts
+// v5: a copy of the grouping removed nothing
+datasource.removeGroup(datasource.getGrouping()[0]); // the object itself was needed
+
+// v6: by field
+datasource.removeGroup({ attribute: 'country', title: 'Country' });
+```
 
 ## Internals are no longer in the typings
 

@@ -311,6 +311,33 @@ and documented, renamed, or made internal - each decision listed in `MIGRATION.m
 **Order of work**: columns + layout + state (15, 16), then setup + callbacks + methods (17, 18,
 20), then menus (19). Then the docs site.
 
+## Phase 2b - save workflow, validation, config as JSON (from review)
+
+Asked for after phase 2, done before phase 3: they change the API, so they go in before more is
+built on it.
+
+43. [ ] **Formatters registered by id**: `registerFormatter('dateNO', formatter)`, and a field
+        refers to it by id - `fields: { born: { type: 'date', formatter: 'dateNO' } }`, defaults per
+        type too (`formatters: { date: 'dateNO' }`). The built-ins are registered under ids. A
+        config with functions in it can not be stored in a backend; with ids it is plain JSON. **M**
+44. [ ] **The grid config is plain JSON**: the functions in `GridConfig` (`isReadonly`,
+        `cellClass`, `menus`) move to a separate `hooks` object -
+        `createGrid(host, { config, datasource, hooks })`, `updateHooks()`. The config and the state
+        can then be saved and loaded as JSON; a test checks the JSON round trip of both. **S-M**
+45. [ ] **Delete is a tag by default**: deleting rows marks them (`markForDeletion`), so it can be
+        undone - `restoreRows(rows)` takes the mark off again. The samples and the row menu delete
+        this way; `removeData()` stays for rows that never came from the server. **S**
+46. [ ] **Save workflow**: `getChanges()` already gives deleted, modified and new rows together -
+        one transaction on the server. After a successful save, `acceptChanges()` (all, or given
+        rows) drops the deleted rows, makes new rows ordinary rows and makes the edited values the
+        new originals. A guide shows the whole round trip, including new rows getting their key
+        from the server. **S-M**
+47. [ ] **Validation layer** (was item 31): validators registered by id like formatters
+        (`registerValidator`), built-ins `required`, `min`, `max`, `minLength`, `maxLength`,
+        `pattern`; rules on the field as JSON (`validate: ['required', { id: 'min', value: 0 }]`).
+        `datasource.validate()` returns the errors per row and field; the grid shows them on the
+        cell and the row; a save can check first. Replaces the grid's `mandatory` options. **M**
+
 ## Phase 3 - UI
 
 21. [ ] **Every text replaceable.** Menu labels and headings ("Filter:", "Paste:", "Select All",
@@ -350,7 +377,7 @@ and documented, renamed, or made internal - each decision listed in `MIGRATION.m
         The cell shows the first line with a marker when there is more; editing opens an overlay
         editor anchored at the cell - a bigger textarea, Esc cancels, Ctrl+Enter saves. Rows keep
         a fixed height, virtual scrolling depends on it. **M**
-31. [ ] **Validation in the schema**: `required`, `min`/`max`, `pattern`, a custom
+31. [ ] **(moved to item 47)** **Validation in the schema**: `required`, `min`/`max`, `pattern`, a custom
         `validate(value, row)`. The error shows on the cell and in the row status. Replaces the
         grid's `mandatory` options. **M**
 
@@ -390,6 +417,8 @@ Needs phase 4: a merge every second on a large grid has to stay cheap.
 Every feature gets a demo sample and a guide page.
 
 ## Order
+
+**Now:** phase 2b (43-47, asked for in review), then phase 3.
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies

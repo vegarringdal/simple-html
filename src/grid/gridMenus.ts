@@ -302,7 +302,7 @@ export interface GridMenus {
  * | `row.paste` | Paste: | the grid and the cell are editable |
  * | `row.paste.cell` | Cell (selected rows) | the grid and the cell are editable |
  * | `row.clear` | Clear: | the grid and the cell are editable |
- * | `row.clear.cell` | Cell (selected rows) | the grid and the cell are editable |
+ * | `row.clear.cell` | Cell (selected rows) - sets the field to `null`, also a number field (emptying the cell stores 0) | the grid and the cell are editable |
  * | `row.summary` | Summary: | a number field |
  * | `row.summary.count` | Count: 3 - of the selected rows, click to copy | a number field |
  * | `row.summary.sum` | Sum: 60 | a number field |

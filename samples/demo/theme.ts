@@ -52,15 +52,16 @@ const DARK_WIDGET_CSS = `
         filter: opacity(0.4);
     }
 
-    .simple-html-selector-text.row-is-modified {
+    /* the row state class is on the element around the row number */
+    .row-is-modified .simple-html-selector-text {
         color: #9595f1;
     }
 
-    .simple-html-selector-text.row-is-new {
+    .row-is-new .simple-html-selector-text {
         color: #5ff95f;
     }
 
-    .simple-html-selector-text.row-is-deleted {
+    .row-is-deleted .simple-html-selector-text {
         color: red;
     }
 

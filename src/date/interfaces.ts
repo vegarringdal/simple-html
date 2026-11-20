@@ -6,10 +6,10 @@
  * The type requires every field but `datepickerDate`, `datepickerHour`, `datepickerMinute` and
  * `datepickerHeight`.
  *
- * The grid's date picker (`GridConfig.datePickerConfig`) takes the same type, but reads only `showWeek`,
- * `isoWeek`, `weekHeader`, `monthHeader`, `weekStart`, `rowHeight`, `monthWidth`, `monthMargin`,
- * `hideDimmedDates`, `showYearInMonth` and `datepickerHeight`; the others it sets itself. It still has to
- * be a whole `IDateConfig` to compile.
+ * The grid's date picker (`GridConfig.datePickerConfig`) takes a `Partial<IDateConfig>`: the fields to
+ * change. It reads only `showWeek`, `isoWeek`, `weekHeader`, `monthHeader`, `weekStart`, `rowHeight`,
+ * `monthWidth`, `monthMargin`, `hideDimmedDates`, `showYearInMonth` and `datepickerHeight`, each with a
+ * default; the others it sets itself.
  *
  * @example
  * ```ts

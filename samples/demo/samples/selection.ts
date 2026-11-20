@@ -1,17 +1,30 @@
-import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
+import type { SelectionMode } from '@simple-html/grid';
+import { baseFields, baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 export const selection: DemoSample = {
     id: 'selection',
     title: 'Selection',
     group: 'Datasource',
     description:
-        'Click rows to select (ctrl/shift-click for multi select in multiple mode). The datasource exposes the same operations from code, plus getSelectedRows() to read the current selection.',
+        'Click rows to select (ctrl/shift-click for multi select in multiple mode). The selection mode belongs to the datasource: set it in its options or with setSelectionMode(), the grid uses it. The datasource exposes the same operations from code, plus getSelectedRows() to read the current selection.',
     run(stage) {
         const ui = createStage(stage);
-        const { datasource } = mountGrid(ui.gridHost, baseGridConfig());
-        datasource.setSelectionMode('multiple'); // 'none' | 'single' | 'multiple'
+        // the datasource owns the selection mode, the grid has no option for it
+        const { datasource } = mountGrid(ui.gridHost, baseGridConfig(), undefined, {
+            fields: baseFields(),
+            selectionMode: 'multiple' // the default. 'single' | 'none'
+        });
 
+        const modes: SelectionMode[] = ['multiple', 'single', 'none'];
+        for (const mode of modes) {
+            ui.button(`Mode: ${mode}`, () => {
+                // the grid uses it from the next click on
+                datasource.setSelectionMode(mode);
+                ui.log(`getSelectionMode() -> ${datasource.getSelectionMode()}`);
+            });
+        }
         ui.button('Select all', () => {
+            // 'multiple' only: in the other modes it selects nothing
             datasource.selectAll();
         });
         ui.button('Deselect all', () => {

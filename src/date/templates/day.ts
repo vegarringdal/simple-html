@@ -1,6 +1,7 @@
 import { html } from 'lit-html';
 import type { DateInterface } from '../dateInterface';
 import type { IDateConfig } from '../interfaces';
+import { isSameDay } from '../utils/isSameDay';
 
 function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
     event.preventDefault();
@@ -11,10 +12,14 @@ function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
         ctx.selected;
     }
 
+    // on the day: a date given to setSelected() can have another time than the clicked day
+    const onThisDay = [...ctx.selected].filter((time) => isSameDay(time, currentDate));
     let added = false;
-    if (ctx.selected.has(currentDate.getTime())) {
+    if (onThisDay.length) {
         added = false;
-        ctx.selected.delete(currentDate.getTime());
+        for (const time of onThisDay) {
+            ctx.selected.delete(time);
+        }
     } else {
         added = true;
         ctx.selected.add(currentDate.getTime());
@@ -106,7 +111,9 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
 
     const currentDate = new Date(year, month, day, hour, min, 0, 0);
 
-    if (context.selected.has(currentDate.getTime()) && !dimmedCell) {
+    // on the day, the time of a selected date does not matter
+    const selected = [...context.selected].some((time) => isSameDay(time, currentDate));
+    if (selected && !dimmedCell) {
         classList.push('simple-html-date-day-selected');
     }
 

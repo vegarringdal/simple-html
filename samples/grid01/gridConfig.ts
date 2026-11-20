@@ -62,8 +62,7 @@ export const gridConfig: GridConfig = {
         },
         country: {
             placeholderRow: 'country',
-            mandatory: true,
-            mandatoryOnlyIfEmpty: true
+            mandatory: true
         },
         favoriteFruit: {
             placeholderRow: 'favoriteFruit',

@@ -8,9 +8,9 @@ export function renderRowGroup(
     ctx: Grid,
     cell: HTMLCellElement,
     _row: number,
-    column: number,
+    _column: number,
     _celno: number,
-    colType: ColType,
+    _colType: ColType,
     _cellType: string | null,
     _attribute: string | null,
     rowData: Entity | GroupRow | undefined
@@ -31,9 +31,6 @@ export function renderRowGroup(
         html`<div
             class="simple-html-absolute-fill simple-html-label-group"
             style="padding-left:${(rowData?.__groupLvl ?? 0) * 15 || 0}px"
-            @click=${() => {
-                console.log('group selected, do I want something here ?:', column, colType);
-            }}
         >
             <div
                 class="${group?.__groupID ? 'simple-html-grid-grouping-row-group' : 'simple-html-grid-grouping-row'}"

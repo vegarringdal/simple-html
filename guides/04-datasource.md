@@ -20,7 +20,7 @@ const datasource = new Datasource({
         active: 'boolean'
     },
     formatters: { date: DateFormatterDDMMYYYY }, // the default formatter of every date field
-    selectionMode: 'multiple'
+    selectionMode: 'multiple' // the grid showing it uses this
 });
 ```
 
@@ -29,7 +29,7 @@ const datasource = new Datasource({
 | `key` | the field that identifies a row, see [Keys](#keys) |
 | `fields` | the type, label and formatter of each field that is not plain text, see [Fields and types](#fields-and-types) |
 | `formatters` | the default formatter per type, see [Formatting](08-formatting.md) |
-| `selectionMode` | `'multiple'` (default), `'single'` or `'none'`. A grid sets its own, see [Selection](#selection) |
+| `selectionMode` | `'multiple'` (default), `'single'` or `'none'`. A grid showing the datasource uses it, see [Selection](#selection) |
 | `container` | a `DataContainer` to share the rows with another datasource, see [Sharing the rows](#sharing-the-rows-between-two-datasources) |
 
 With TypeScript, give it the type of your rows. The rows it hands out are then typed:
@@ -55,12 +55,13 @@ declare const moreRows: object[];
 
 datasource.setData(rowsFromServer); // replaces the rows
 datasource.setData(moreRows, { add: true }); // adds them after the rows there are
-datasource.setData(rowsFromServer, { refilter: true }); // and runs the current filter on them
+datasource.setData(moreRows, { add: true, refilter: false }); // shown even if the filter leaves them out
 ```
 
-The new rows are sorted and grouped the way the datasource is. **They are not filtered unless you
-pass `refilter: true`**: every row set is shown, also one the current filter would leave out. The
-filter itself stays set.
+The new rows are filtered, sorted and grouped the way the datasource is: a filter that is set - from
+code, the header filters or the filter editor - applies to them too. `refilter: false` shows every row
+set, also one the filter would leave out, while the filter stays set (the header filters and the
+footer still show it) until it runs again. v5 did that by default.
 
 The datasource wraps each of your objects in a proxy that tracks its edits. The rows it hands out
 are those proxies, not your objects: set values on the rows you get from the datasource, a change
@@ -137,7 +138,10 @@ datasource.setRowAsCurrentEntity(0); // the first displayed row, 0 based
 
 When grouped it can be a group row: moving the focus with the keyboard from the first data row up
 into the header filters makes row 0 current, and that is a group row. Check with `isGroupRow()`.
-`setData()` does not change `currentEntity`, it can still be a row of the old data.
+
+`setData()` sets `currentEntity` to `null`, and sends `current-entity`, when the current row is no
+longer in the data: replaced rows are new objects, also when a row with the same key comes back. Rows
+added with `add: true`, or the same row objects set again, keep it.
 
 ## Keys
 
@@ -188,13 +192,14 @@ To sort text with the rules of a language, set a collator: `datasource.setLocale
 ## Selection
 
 The user selects rows by clicking them: ctrl+click adds a row, shift+click a range. A click on the
-top left corner of the grid selects every row, ctrl+click there deselects them. From code:
+top left corner of the grid selects every row, ctrl+click there deselects them. That is the default
+`'multiple'` mode, see [below](#the-selection-mode) for the others. From code:
 
 ```ts
 datasource.select(1); // the first displayed row: select() counts from 1, getRow() from 0
 datasource.select(5, { notify: true }); // and the grid scrolls to it
 datasource.selectNext(); // also selectFirst(), selectPrev(), selectLast()
-datasource.selectAll();
+datasource.selectAll(); // 'multiple' mode only
 datasource.deselectAll({ notify: true }); // notify: the grid shows it at once
 
 const selected = datasource.getSelectedRows();
@@ -203,19 +208,28 @@ const selected = datasource.getSelectedRows();
 `select()` and the `select*()` methods make the row current too. A group row can not be selected,
 `select()` takes the first data row after it.
 
-**The grid sets the selection mode.** A grid's `selectionMode` option (default `'multiple'`) is set
-on the datasource every time the grid is built, it replaces the one given to `new Datasource()`. For
-a grid with single selection, set it in the grid config:
+### The selection mode
+
+The datasource has the selection mode, the grid uses it - a grid has no option for it. Give it to
+`new Datasource()`, or change it later, also while a grid shows the datasource:
 
 ```ts
-import { createGrid, type GridConfig } from '@simple-html/grid';
+import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';
 
-const config: GridConfig = {
-    selectionMode: 'single',
-    layout: { center: [{ fields: ['name'], width: 150 }] }
-};
-createGrid(host, { config, datasource });
+const people = new Datasource({ key: 'id', selectionMode: 'single' });
+const config: GridConfig = { layout: { center: [{ fields: ['name'], width: 150 }] } };
+createGrid(host, { config, datasource: people });
+
+people.setSelectionMode('none'); // a click makes the row current, selects nothing
 ```
+
+| mode | a click | ctrl+click, shift+click | `selectAll()`, the top left corner |
+| --- | --- | --- | --- |
+| `'multiple'` (default) | selects the row | adds a row, selects a range | selects every displayed row |
+| `'single'` | selects the row | selects the row, as a click does | does nothing, sends no event |
+| `'none'` | selects nothing | selects nothing | does nothing, sends no event |
+
+In every mode a click makes the row current.
 
 ```sample selection
 ```

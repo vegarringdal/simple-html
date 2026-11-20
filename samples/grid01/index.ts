@@ -420,9 +420,11 @@ createButton('remove class background favoriteFruit based on cell isDumb', () =>
             const datasourceLocal = new Datasource();
 
             // dummy data for sample
+            const rows = [];
             for (let i = 0; i < 1000; i++) {
-                datasourceLocal.setData([{ WOW: `wow${i}` }], { add: true });
+                rows.push({ WOW: `wow${i}` });
             }
+            datasourceLocal.setData(rows);
 
             // placed by hand, openMenu() puts it on the page. The grid adds its css class itself
             const gridInterfaceLocal = new GridInterface(gridConfig, datasourceLocal);

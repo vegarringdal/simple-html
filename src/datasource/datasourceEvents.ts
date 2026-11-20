@@ -46,8 +46,9 @@ export interface DatasourceEvents {
      * - `'filter'`: `filter()` or `reloadDatasource()`
      * - `'resetData'`: `resetData()` or `resetDataSelectionOnly()`
      * - `'markForDeletion'`: `markForDeletion()` or `markAllForDeletion()`
-     * - `'__internalUpdate, forced'`: `setData()` or `addNewEmpty()` while there is no filter,
-     *   sorting or grouping. Sent before their `collection-changed`.
+     * - `'__internalUpdate, forced'`: `setData(rows, { refilter: false })` or `addNewEmpty()` while
+     *   there is no filter, sorting or grouping. Sent before their `collection-changed`. A `setData()`
+     *   that runs the filter (the default) sends only `collection-changed`.
      */
     'collection-filtered': {
         /** what rebuilt the displayed rows, see above */
@@ -84,7 +85,9 @@ export interface DatasourceEvents {
 
     /**
      * `datasource.currentEntity` was set: a row was clicked or selected, or
-     * `setRowAsCurrentEntity()` was called. Empty payload, read `datasource.currentEntity`.
+     * `setRowAsCurrentEntity()` was called. Also when `setData()` set it to `null` because the current
+     * row is no longer in the data (sent after its `collection-changed`). Empty payload, read
+     * `datasource.currentEntity`.
      * Was `currentEntity` in v5.
      */
     'current-entity': Record<string, never>;

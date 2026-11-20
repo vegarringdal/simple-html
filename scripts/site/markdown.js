@@ -1,4 +1,8 @@
+const path = require('node:path');
 const { Marked } = require('marked');
+
+// where a link to a file of the repo goes on the site: the file on github, on the docs' branch
+const REPO_FILE_URL = 'https://github.com/airemote/simple-html/blob/v6_maybe/';
 
 /**
  * Markdown -> html for the docs site: the guides, and the JSDoc text on the API pages.
@@ -51,17 +55,41 @@ function headingSlug(text, seen) {
 }
 
 /**
+ * The file of the repo a relative link in a guide goes to, when it is not a guide: the guides are in
+ * guides/, so `../MIGRATION.md#package` is `{ file: 'MIGRATION.md', anchor: 'package' }`.
+ * null for a guide file, a hash, an absolute path, a link to another site, and a path out of the repo.
+ */
+function repoFile(href) {
+    if (/^(?:\.\/)?\d+-[a-z0-9-]+\.md(?:#.*)?$/.test(href) || /^([a-z][a-z0-9+.-]*:|#|\/)/i.test(href)) {
+        return null;
+    }
+    const [target, anchor = ''] = href.split('#');
+    const file = path.posix.normalize(path.posix.join('guides', target));
+    if (!target || file.startsWith('../')) {
+        return null;
+    }
+    return { file, anchor };
+}
+
+/**
  * A link in a guide as the site has it. Links are written for github, and the site has one page
  * per guide and hash routing (samples/demo/index.ts):
  * - 02-datasource.md            -> #guide/datasource
  * - 02-datasource.md#selection  -> #guide/datasource/selection
  * - #selection, in the guide    -> #guide/<guideId>/selection
+ * - ../MIGRATION.md#package, a file of the repo that is no guide (MIGRATION.md, CHANGELOG.md,
+ *   README.md ...) -> the file on github: https://github.com/airemote/simple-html/blob/v6_maybe/MIGRATION.md#package.
+ *   The site has no page for it, the relative link would 404
  * - #guide/.., #sample/.., #api/.., and links to other sites stay as they are
  */
 function siteHref(href, guideId) {
     const file = /^(?:\.\/)?\d+-([a-z0-9-]+)\.md(?:#(.+))?$/.exec(href);
     if (file) {
         return `#guide/${file[1]}${file[2] ? `/${file[2]}` : ''}`;
+    }
+    const inRepo = repoFile(href);
+    if (inRepo) {
+        return `${REPO_FILE_URL}${inRepo.file}${inRepo.anchor ? `#${inRepo.anchor}` : ''}`;
     }
     if (guideId && href.startsWith('#') && !/^#(guide|sample|api)\//.test(href)) {
         return `#guide/${guideId}/${href.slice(1)}`;
@@ -127,4 +155,4 @@ function tsCodeBlocks(markdown) {
     return blocks;
 }
 
-module.exports = { escapeHtml, headingIds, renderMarkdown, siteHref, tsCodeBlocks };
+module.exports = { escapeHtml, headingIds, renderMarkdown, repoFile, siteHref, tsCodeBlocks };

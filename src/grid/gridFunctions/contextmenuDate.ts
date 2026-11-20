@@ -22,9 +22,9 @@ export function contextmenuDate(
 
     const contextMenu = createElement('div', 'simple-html-grid');
 
-    const config = ctx.gridInterface.__getGridConfig().datePickerConfig || ({} as IDateConfig);
+    // only the fields given, every field read below has a default
+    const config = ctx.gridInterface.__getGridConfig().datePickerConfig ?? {};
 
-    // todo - I should add these ass part of gridconfig
     const dateconfig: IDateConfig = {
         monthsToShow: 1, // set automatically when datepicker is true
         monthColumns: 1, // set automatically when datepicker is true

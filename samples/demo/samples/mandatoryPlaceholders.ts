@@ -21,7 +21,7 @@ export const mandatoryPlaceholders: DemoSample = {
                     placeholderRow: 'company is mandatory',
                     placeholderFilter: 'search company...'
                 },
-                country: { mandatory: true, mandatoryOnlyIfEmpty: true },
+                country: { mandatory: true },
                 phone: { placeholderRow: 'type a phone number' },
                 // a date field shows the formatter's placeholder (YYYY-MM-DD), this one wins over it
                 date1: { placeholderFilter: 'from date...' }

@@ -55,18 +55,18 @@ describe('options objects - setData', () => {
         expect(names(ds)).toEqual(['c', 'a', 'b', 'd']);
     });
 
-    it('expect the filter to not run on the rows by default', () => {
+    it('expect the filter to run on the rows by default', () => {
         const ds = datasource();
         ds.filter(where('country', 'EQUAL', 'no'));
         ds.setData([{ id: 4, name: 'd', country: 'dk' }], { add: true });
-        expect(names(ds)).toEqual(['c', 'b', 'd']);
+        expect(names(ds)).toEqual(['c', 'b']);
     });
 
-    it('expect { refilter: true } to run the filter', () => {
+    it('expect { refilter: false } to show every row set', () => {
         const ds = datasource();
         ds.filter(where('country', 'EQUAL', 'no'));
-        ds.setData([{ id: 4, name: 'd', country: 'dk' }], { add: true, refilter: true });
-        expect(names(ds)).toEqual(['c', 'b']);
+        ds.setData([{ id: 4, name: 'd', country: 'dk' }], { add: true, refilter: false });
+        expect(names(ds)).toEqual(['c', 'b', 'd']);
     });
 
     it('expect the collection-changed event to say whether rows were added', () => {

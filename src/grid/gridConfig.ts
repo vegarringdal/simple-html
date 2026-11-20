@@ -107,14 +107,6 @@ export type GridConfig = {
      */
     readonly?: boolean;
     /**
-     * how rows can be selected, default `'multiple'` (ctrl+click, shift+click). The grid sets it on the
-     * datasource every time it is built, so it replaces the datasource's own `selectionMode`
-     *
-     * @sample selection
-     */
-    selectionMode?: 'multiple' | 'single';
-
-    /**
      * closes the open menu (the right click menus, `openMenu()`, the date picker ...) when the grid is
      * scrolled, default false. Leave it off where scrolling happens by accident, on a small touch screen
      */
@@ -150,12 +142,23 @@ export type GridConfig = {
     tooltipText?: Record<string, string>;
 
     /**
-     * the date picker of date cells and date header filters. Of the {@link IDateConfig} the grid reads
-     * `showWeek`, `isoWeek`, `weekHeader`, `monthHeader`, `weekStart`, `rowHeight`, `monthWidth`,
-     * `monthMargin`, `hideDimmedDates`, `showYearInMonth` and `datepickerHeight`, and sets the rest
-     * itself. The type wants every field. Left out: English names, weeks from monday, week numbers shown
+     * the date picker of date cells and date header filters: only the fields to change. Of the
+     * {@link IDateConfig} the grid reads `showWeek` (default true), `isoWeek` (true), `weekHeader` and
+     * `monthHeader` (English), `weekStart` (1, monday), `rowHeight` (22), `monthWidth` (230), `monthMargin`
+     * (10), `hideDimmedDates` (false), `showYearInMonth` (false) and `datepickerHeight` (317), and sets the
+     * rest itself
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['born'], width: 120 }] },
+     *     datePickerConfig: { weekStart: 0, isoWeek: false } // weeks from sunday, the rest the defaults
+     * };
+     * ```
      */
-    datePickerConfig?: IDateConfig;
+    datePickerConfig?: Partial<IDateConfig>;
 
     /**
      * shows a column's `placeholderRow` on the current row (the current entity) only.
@@ -388,10 +391,21 @@ export type ColumnConfig = {
     placeholderFilter?: string;
     /**
      * the operator the column's header filter starts with. Default `'GREATER_THAN_OR_EQUAL_TO'` for
-     * number and date fields, `'EQUAL'` for the rest. The operator the user picks in the header
-     * filter's menu is state: `GridState.headerFilters[field].operator`
+     * number and date fields, `'EQUAL'` for the rest. For text `'EQUAL'` is the whole text, ignoring
+     * case: `ann` finds `Ann`, not `Anna`. Set `'CONTAINS'` for a search anywhere in the text,
+     * `'BEGIN_WITH'` for the start. The operator the user picks in the header filter's menu is state:
+     * `GridState.headerFilters[field].operator`
      *
      * @sample filter-operator-header
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: { name: { operator: 'CONTAINS' } }, // `ann` finds Ann, Anna and Joanna
+     *     layout: { center: [{ fields: ['name'], width: 150 }] }
+     * };
+     * ```
      */
     operator?: FilterOperator;
     /**
@@ -439,11 +453,6 @@ export type ColumnConfig = {
      * @sample mandatory-placeholders
      */
     mandatory?: boolean;
-
-    /**
-     * has no effect: `mandatory` marks only the empty cells already. Kept so v5 configs compile
-     */
-    mandatoryOnlyIfEmpty?: boolean;
 
     /**
      * the cells can not be typed in, only changed by the row menu's paste and clear (and by your own
@@ -541,7 +550,6 @@ export type ParsedGridOptions = GridOptions &
             | 'footerHeight'
             | 'selectSizeHeight'
             | 'readonly'
-            | 'selectionMode'
             | 'tooltips'
             | 'placeholderRowCurrentEntityOnly'
         >

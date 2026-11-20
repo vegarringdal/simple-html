@@ -16,13 +16,40 @@ Enter, or leaves the cell, and the grid filters on it:
 | date, datetime | an input, and a date picker on click | `GREATER_THAN_OR_EQUAL_TO` |
 | boolean | a checkbox: no filter, then checked (`true`), then unchecked (`false`), then no filter again | `EQUAL` |
 
-- A text filter matches the whole text: `ann` matches `Ann`, not `Anna`. `*` and `%` are
-  wildcards: `ann*` starts with ann, `*ann*` has ann in it.
+- **A text filter matches the whole text** (`EQUAL`, ignoring case): `ann` finds `Ann` and `ANN`, but
+  not `Anna`. `*` and `%` are wildcards: `ann*` starts with ann, `*ann*` has ann in it.
 - A number or date is typed as the field's formatter shows it (`12,5` works too, the date in the
   format of the placeholder) and parsed with the formatter.
-- The `operator` option of a column sets the operator its header filter starts with:
-  `columns: { name: { operator: 'CONTAINS' } }`.
+- The `operator` option of a column sets the operator its header filter starts with, see
+  [below](#a-contains-search).
 - Emptying the cell removes the column's condition.
+
+### A contains search
+
+For a search anywhere in the text, give the column `operator: 'CONTAINS'` in `columns`. Each column
+has its own, the text columns without one keep `EQUAL`:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        name: { operator: 'CONTAINS' }, // `ann` finds Ann, Anna and Joanna
+        city: { operator: 'BEGIN_WITH' } // `osl` finds Oslo
+        // company: EQUAL, the default
+    },
+    layout: {
+        center: [
+            { fields: ['name'], width: 150 },
+            { fields: ['city'], width: 120 },
+            { fields: ['company'], width: 150 }
+        ]
+    }
+};
+```
+
+The user can also pick the operator of a column in the header filter's menu (Set Operator, below),
+and type `*ann*` in any text header filter.
 
 A header filter only replaces the conditions on its own column, at the top of the filter. The rest
 of the filter is kept, and the column's condition is ANDed with it.
@@ -120,7 +147,8 @@ datasource.getFilter(); // the filter that is set, null when there is none
 - `filter(expression)` replaces the filter, also the header filters' conditions. The header cells
   keep showing their text: to change both, use `gridInterface.setState({ filter, headerFilters })`,
   see [State](03-state.md#header-filters-in-the-state).
-- `setData()` does not run the filter on the new rows, unless you pass `{ refilter: true }`.
+- `setData()` runs the filter on the new rows. `{ refilter: false }` shows them all, the filter stays
+  set, see [Datasource](04-datasource.md#data-in-setdata).
 - The grid shows the result by itself, it follows the datasource's events.
 
 ## The filter format

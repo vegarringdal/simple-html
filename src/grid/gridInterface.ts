@@ -713,8 +713,6 @@ export class GridInterface<T> {
         const config = this.gridConfig;
         const layout = config.layout;
 
-        this.dataSource.setSelectionMode(config.selectionMode);
-
         // a column without fields is left out (drag/drop and hiding can empty a column)
         layout.left = layout.left.filter((e) => e.fields?.length);
         layout.right = layout.right.filter((e) => e.fields?.length);
@@ -1035,7 +1033,6 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         footerHeight: options.footerHeight ?? 45,
         selectSizeHeight: options.selectSizeHeight ?? 18,
         readonly: options.readonly ?? true,
-        selectionMode: options.selectionMode ?? 'multiple',
         tooltips: options.tooltips ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true
     };

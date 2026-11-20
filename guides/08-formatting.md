@@ -42,7 +42,19 @@ Every formatter shows `null` and `undefined` as `''`.
 
 An emptied number cell stores `0`, not `null`: the number formatters parse `''` as 0. "Clear" in the
 row menu stores `null`. Both count as blank in a filter, see
-[0 is blank](06-filtering.md#0-is-blank).
+[0 is blank](06-filtering.md#0-is-blank). For `null` from an emptied cell, give the field a formatter
+that parses `''` as `null`:
+
+```ts
+import { Datasource, type Formatter, NumberFormatterDot } from '@simple-html/grid';
+
+const emptyIsNull: Formatter = {
+    ...NumberFormatterDot,
+    parse: (text) => (text.trim() === '' ? null : NumberFormatterDot.parse(text))
+};
+
+const datasource = new Datasource({ fields: { amount: { type: 'number', formatter: emptyIsNull } } });
+```
 
 ## The built-in formatters
 

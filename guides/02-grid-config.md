@@ -73,12 +73,11 @@ Every option of a `ColumnConfig` is optional.
 | `mandatory` | an empty editable cell is shown with stripes, until it has a value |
 | `placeholderRow` | text shown in an empty cell, by default on the current row only (`placeholderRowCurrentEntityOnly`) |
 | `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else a search icon |
-| `operator` | the operator the header filter starts with, see [Filtering](06-filtering.md#header-filters) |
+| `operator` | the operator the header filter starts with. Default `EQUAL` for text (the whole text: `ann` does not find `Anna`), see [Filtering](06-filtering.md#header-filters) |
 | `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed |
 | `allowPasteClearOnly` | typing in the cell does nothing, paste and clear from the row menu work. For a field you set from a dropdown of your own |
 | `focusButton` | shows a `...` button in the focused cell, see [Events](09-events.md#cell-events) |
 | `dynamicCellTypeColumn` | another field of the row holds the type of this cell, see [Formatting](08-formatting.md#the-type-from-another-field) |
-| `mandatoryOnlyIfEmpty` | has no effect: `mandatory` already marks empty cells only |
 
 `focusButton` takes `'ALWAYS'`, `'SHOW_IF_GRID_NOT_READONLY'` or
 `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`.
@@ -100,17 +99,19 @@ Every option is optional.
 | `selectSizeHeight` | `18` | height of the row of column numbers under the header filters (click one to select a column). `0` hides the row |
 | `hideLabels` | `false` | hides the row of header labels |
 | `hideFilter` | `false` | hides the row of header filters |
-| `selectionMode` | `'multiple'` | `'single'` or `'multiple'`. The grid sets it on the datasource, see [Datasource](04-datasource.md#selection) |
 | `dimRepeatedValues` | `false` | dims a cell that has the same value as the row above. The row menu can toggle it |
 | `placeholderRowCurrentEntityOnly` | `true` | shows `placeholderRow` on the current row only. `false` shows it on every row |
 | `autoRemoveContextMenuOnScrollEvent` | `false` | closes the open menu when the grid scrolls |
 | `tooltips` | `true` | the built-in tooltips on the buttons of the filter editor |
 | `tooltipText` | | your own tooltip texts, keyed by the ids in `TOOLTIPS` |
-| `datePickerConfig` | | names of months and days, week start and sizes of the date picker. The type wants every field of `IDateConfig`, the grid reads the names, the week options and the sizes |
+| `datePickerConfig` | | names of months and days, week start and sizes of the date picker: only the fields to change (`Partial<IDateConfig>`), e.g. `{ weekStart: 0, isoWeek: false }`. The rest are the defaults: English names, weeks from monday with their numbers |
 | `isReadonly` | | a callback that makes cells readonly from their row, [below](#readonly-and-css-classes-from-the-row) |
 | `cellClass` | | a callback that adds css classes to cells from their row, [below](#readonly-and-css-classes-from-the-row) |
 | `menus` | | changes the right click menus, see [Menus](10-menus.md) |
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |
+
+How rows are selected is not a grid option: the datasource has the selection mode, see
+[Datasource](04-datasource.md#the-selection-mode).
 
 ```sample misc-options
 ```

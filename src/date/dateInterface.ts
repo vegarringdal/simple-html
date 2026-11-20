@@ -34,10 +34,11 @@ import { month } from './templates/month';
  */
 export class DateInterface {
     /**
-     * The selected days, as timestamps (`date.getTime()` of the day at 00:00 in a calendar, at the
-     * picked time in a date picker). Read it with {@link getSelected}.
+     * The selected dates, as timestamps (`date.getTime()`: the day at 00:00 for a day clicked in a
+     * calendar, the picked time in a date picker). A day is shown selected when a timestamp falls on it,
+     * whatever its time. Read it with {@link getSelected}, set it with {@link setSelected}.
      */
-    public selected = new Set();
+    public selected = new Set<number>();
     /**
      * The day clicked last, the start of a shift+click range. `null` after a day was clicked off again.
      */
@@ -186,8 +187,9 @@ export class DateInterface {
     }
 
     /**
-     * The selected days, as timestamps (numbers): the days clicked in a calendar, the date picked in a
-     * date picker. In the order they were selected.
+     * The selected dates, as timestamps: the days clicked in a calendar (at 00:00), the date picked in a
+     * date picker, the dates given to {@link setSelected} (with their time). In the order they were
+     * selected.
      *
      * @example
      * ```ts
@@ -195,10 +197,10 @@ export class DateInterface {
      *
      * declare const dateInterface: DateInterface;
      *
-     * const dates = dateInterface.getSelected().map((time) => new Date(time as number));
+     * const dates = dateInterface.getSelected().map((time) => new Date(time));
      * ```
      */
-    getSelected() {
+    getSelected(): number[] {
         return Array.from(this.selected);
     }
 
@@ -246,10 +248,9 @@ export class DateInterface {
     }
 
     /**
-     * Replaces the selected days and renders the picker again.
-     *
-     * A day is shown selected when the selection has its timestamp (a number, the day at 00:00 in a
-     * calendar): `Date` objects are kept as given and are not matched, so pass `date.getTime()`.
+     * Replaces the selected days and renders the picker again. A day is shown selected when one of the
+     * dates falls on it - the time of a date does not matter. They are kept as timestamps, see
+     * {@link getSelected}.
      *
      * @param newSelectedDates the days to select
      *
@@ -259,13 +260,11 @@ export class DateInterface {
      *
      * declare const dateInterface: DateInterface;
      *
-     * const days = [new Date(2026, 10, 20), new Date(2026, 10, 21)];
-     * // the type says Date, the calendar matches the timestamps
-     * dateInterface.setSelected(days.map((day) => day.getTime()) as unknown as Date[]);
+     * dateInterface.setSelected([new Date(2026, 10, 20), new Date(2026, 10, 21, 9, 30)]);
      * ```
      */
     setSelected(newSelectedDates: Date[]) {
-        this.selected = new Set(newSelectedDates);
+        this.selected = new Set(newSelectedDates.map((date) => date.getTime()));
         this.render();
     }
 

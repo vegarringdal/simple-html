@@ -28,7 +28,7 @@ datasource.getLastSorting(); // [{ attribute: 'country', ascending: true }, { at
   place. A list (`sort([a, b])`) always replaces the sort.
 - `setOrderBy(args, { add })` sets the sort without sorting, `sort()` sorts.
 - `resetSort()` clears the sort, the rows keep their order. `filter()` after it gives them back the
-  order they were set in.
+  order they were set in - sorted on the grouped fields when grouped.
 - The sort stays when the data changes: `setData()` sorts the new rows.
 
 How values compare:
@@ -71,10 +71,15 @@ datasource.group([]); // no grouping. removeGroup() does the same
 - A row is grouped on its value as the field's formatter shows it: a `date` field groups by day, a
   number with its decimals as the formatter shows them. The rows with an empty value are one group
   at the top, its id is `' blank'`.
-- Use `group()` to group. `setGrouping()` only stores the grouping for the next `group()`, and the
-  rows are not sorted for it.
-- `removeGroup(group)` removes one level. It needs the object `getGrouping()` returned, a copy is
-  not found.
+- Use `group()` to group. `setGrouping()` only stores the grouping: the next call that builds the
+  displayed rows (`group()`, `sort()`, `filter()`, `setData()` ...) groups them.
+- **The rows are always grouped sorted on the grouped fields**, whatever led there: `group()`,
+  `sort()`, `filter()` after `setGrouping()`, `setOrderBy()` or `resetSort()`. The grouped fields come
+  first in the sort, each with the direction the sort gives it (ascending when it has none), the other
+  fields of the sort after them. A group is built from each run of equal values, so the rows of a
+  group have to be next to each other.
+- `removeGroup(group)` removes one level, found by its field: the object from `getGrouping()` or a
+  copy, e.g. from a saved state. A field that is not grouped on changes nothing.
 
 The grouping and the expanded groups are part of the grid's [state](03-state.md):
 `getState().grouping` and `expandedGroups`.
@@ -134,7 +139,7 @@ datasource.group([
 ]);
 
 datasource.expandGroup('Norway'); // the first level
-datasource.expandGroup('Norway-ACME'); // company ACME in Norway
+datasource.expandGroup('Norway-ACME'); // company ACME in Norway, and Norway if it was collapsed
 
 const ids = datasource
     .getRows()
@@ -142,7 +147,7 @@ const ids = datasource
     .map((row) => `${'  '.repeat(row.__groupLvl)}${row.__groupID}`);
 ```
 
-- A sub group can only be expanded while the group above it is expanded:
-  `expandGroup('Norway-ACME')` does nothing while `Norway` is collapsed.
+- Expanding a sub group expands the groups above it too, so it is shown:
+  `expandGroup('Norway-ACME')` while `Norway` is collapsed expands both.
 - A sub group stays expanded when the group above it is collapsed and expanded again.
 - `expandGroup()` and `collapseGroup()` without an id work on every level.

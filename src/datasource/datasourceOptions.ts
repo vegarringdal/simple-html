@@ -13,8 +13,8 @@ import type { SelectionMode } from './selectionMode';
  *   type from here. See {@link FieldConfig} and {@link FieldType}.
  * - `formatters` - the default formatter per type, for the fields without a formatter of their own.
  *   The types left out keep the built-in default (see {@link FieldType}).
- * - `selectionMode` - `'multiple'` (default), `'single'` or `'none'`. A grid replaces it with its own
- *   `GridConfig.selectionMode` (default `'multiple'`): with a grid, set it in the grid config.
+ * - `selectionMode` - `'multiple'` (default), `'single'` or `'none'`. A grid showing the datasource
+ *   uses it, change it later with `setSelectionMode()`.
  * - `container` - share the data with another datasource, each with its own filter, sort, grouping
  *   and selection. Rows added or removed through one show in the other after its
  *   `reloadDatasource()` (or a `filter()`) - they are not kept in sync on their own. Give the key to the container
@@ -68,8 +68,7 @@ export interface DatasourceOptions {
     formatters?: Partial<Record<FieldType, Formatter>>;
 
     /**
-     * how rows can be selected, default `'multiple'`. A grid sets its own `GridConfig.selectionMode` on
-     * the datasource, which replaces this one
+     * how rows can be selected, default `'multiple'`. A grid showing the datasource uses it
      */
     selectionMode?: SelectionMode;
 

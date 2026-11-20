@@ -46,7 +46,9 @@ export function formatNumber(value: unknown, separator: '.' | ','): string {
  * - `format` - a number as text, `12.5` -> `'12.5'`. Anything that does not read as a number
  *   (null, undefined, `'abc'`) gives `''`
  * - `parse` / `parseFilter` - `'12.5'` and `'12,5'` both give 12.5. A number passes through,
- *   null and undefined give null, text that is no number (`''` too) gives 0
+ *   null and undefined give null, text that is no number (`''` too) gives 0. So emptying a number
+ *   cell in the grid stores 0; the row menu's Clear stores null. A formatter whose `parse` gives null
+ *   for `''` stores null
  *
  * @sample formatters
  * @example

@@ -89,7 +89,8 @@ describe('filter(), setFilter() and getFilter()', () => {
 
     it('expect filter() to run the current filter again', () => {
         const ds = build(where('age', 'GREATER_THAN', 10));
-        ds.setData([...rows(), { name: 'd', age: 50, min: 0, born: null }]);
+        // refilter: false, so the filter has not run on these rows
+        ds.setData([...rows(), { name: 'd', age: 50, min: 0, born: null }], { refilter: false });
         expect(names(ds)).toEqual(['a', 'b', 'c', 'd']);
 
         ds.filter();

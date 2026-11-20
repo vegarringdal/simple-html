@@ -3,6 +3,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 // the picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
+import type { IDateConfig } from '../../date/interfaces';
 import type { GridConfig } from '../gridConfig';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { sleep } from './interactionTestHelpers';
@@ -11,17 +12,17 @@ import { sleep } from './interactionTestHelpers';
  * The date picker the grid opens when a date cell is clicked.
  */
 
-const config = (datePickerConfig: any = undefined): GridConfig =>
-    ({
-        readonly: false,
-        layout: {
-            center: [
-                { fields: ['name'], width: 100 },
-                { fields: ['born'], width: 100 }
-            ]
-        },
-        datePickerConfig
-    }) as GridConfig;
+// only the fields to change: datePickerConfig is a Partial<IDateConfig>, it used to need every field
+const config = (datePickerConfig?: Partial<IDateConfig>): GridConfig => ({
+    readonly: false,
+    layout: {
+        center: [
+            { fields: ['name'], width: 100 },
+            { fields: ['born'], width: 100 }
+        ]
+    },
+    datePickerConfig
+});
 
 const data = () => [{ name: 'a', born: new Date(2001, 4, 17) }];
 
@@ -81,5 +82,29 @@ describe('grid date picker', () => {
         const picker = await openPicker(element);
 
         expect(picker.querySelector('.simple-html-date-day-header')?.textContent?.trim()).toEqual('Su');
+    });
+
+    it('expect every field the grid reads to have a default', async () => {
+        const { element } = await mountGrid(config({}), data(), fields);
+
+        const picker = await openPicker(element);
+
+        // English names, weeks from monday with their numbers, 230px month with 10px margins
+        expect(picker.querySelector('.simple-html-date-day-header')?.textContent?.trim()).toEqual('Mo');
+        expect(picker.textContent).toContain('May');
+        expect(picker.querySelectorAll('.simple-html-date-week').length).toBeGreaterThan(0);
+        expect(picker.style.width).toEqual('250px');
+        // the dimmed days of the months around are shown
+        expect(picker.querySelectorAll('.simple-html-date-day-hidden').length).toEqual(0);
+    });
+
+    it('expect the fields given to change only themselves', async () => {
+        const { element } = await mountGrid(config({ showWeek: false, monthWidth: 300 }), data(), fields);
+
+        const picker = await openPicker(element);
+
+        expect(picker.querySelectorAll('.simple-html-date-week').length).toEqual(0);
+        expect(picker.style.width).toEqual('320px');
+        expect(picker.querySelector('.simple-html-date-day-header')?.textContent?.trim()).toEqual('Mo');
     });
 });

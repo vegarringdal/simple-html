@@ -98,14 +98,6 @@ describe('updateConfig - options', () => {
         expect(headerHeight(element)).toBe('18px');
     });
 
-    it('expect selectionMode to reach the datasource', async () => {
-        const { datasource, gridInterface } = await mountGrid();
-
-        gridInterface.updateConfig({ selectionMode: 'single' });
-
-        expect(datasource.getSelectionMode()).toBe('single');
-    });
-
     it('expect the state to be kept', async () => {
         const { gridInterface } = await mountGrid();
         gridInterface.setState({

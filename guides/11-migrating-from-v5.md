@@ -23,6 +23,8 @@ of the places to change.
 - [Setup, callbacks and methods of the grid](../MIGRATION.md#setup-callbacks-and-methods-of-the-grid):
   `createGrid()`, `isReadonly` / `cellClass`, `updateConfig()`, renamed methods
 - [Menus](../MIGRATION.md#menus): `GridConfig.menus`, `openMenu()`
+- [Other behaviour changes](../MIGRATION.md#other-behaviour-changes): `currentEntity` after
+  `setData()`, `selectAll()`, `removeGroup()`, `expandGroup()`, grouping always sorted
 - [Internals are no longer in the typings](../MIGRATION.md#internals-are-no-longer-in-the-typings)
   and [Types are stricter](../MIGRATION.md#types-are-stricter)
 
@@ -66,9 +68,10 @@ the fields move from the grid config's `attributes` and `setDates()` to `fields`
 
 ```ts nocheck
 // v5
-const datasource = new Datasource(new DataContainer('id'), { selectionMode: 'single' });
+const datasource = new Datasource(new DataContainer('id'));
 datasource.setDates(['born']);
-// and in the grid config: attributes: [{ attribute: 'age', type: 'number' }, { attribute: 'born', type: 'date' }]
+// and in the grid config: selectionMode: 'single',
+// attributes: [{ attribute: 'age', type: 'number' }, { attribute: 'born', type: 'date' }]
 ```
 
 ```ts
@@ -77,12 +80,14 @@ import { Datasource } from '@simple-html/grid';
 
 const people = new Datasource({
     key: 'id',
-    fields: { age: 'number', born: 'date' } // a field not listed is text
+    fields: { age: 'number', born: 'date' }, // a field not listed is text
+    selectionMode: 'single'
 });
 ```
 
-A grid sets the selection mode from its own config, so `selectionMode: 'single'` goes in the
-`GridConfig`. See [Datasource](04-datasource.md).
+The selection mode is the datasource's: `GridConfig.selectionMode` is removed. v5's grid set its own
+(default `'multiple'`) on the datasource, replacing the datasource's. See
+[Datasource](04-datasource.md#the-selection-mode).
 
 ## 3. `columns` and `layout` replace `attributes` and `columns*`
 
@@ -188,6 +193,10 @@ const dataRows = datasource.getDataRows();
 ```
 
 A boolean passed the v5 way throws a `TypeError` that shows the v6 way to write it.
+
+**`setData()` runs the filter that is set** on the new rows. v5 showed them all (`reRunFilter`
+defaulted to `false`), also the ones the filter leaves out. `setData(rows, { refilter: false })` does
+what v5 did. See [Datasource](04-datasource.md#data-in-setdata).
 
 ## 7. Formatters per field
 

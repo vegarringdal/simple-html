@@ -209,8 +209,9 @@ export class Datasource<T = any> {
      * `setRowAsCurrentEntity(row)` does the same for a group row's index. Clicking a group row,
      * `select()` and `selectNext()` ... never make one current. Check with {@link isGroupRow}.
      *
-     * `setData()` does not change it: after new rows are set it can still be a row of the old data,
-     * until a row is made current again. The `current-entity` event is sent when it changes.
+     * `setData()` sets it to `null` when the current row is no longer in the data - the rows were
+     * replaced by new objects, also ones with the same key - and keeps it when it still is (rows added,
+     * or the same row objects set again). The `current-entity` event is sent when it changes.
      *
      * @example
      * ```ts
@@ -655,15 +656,20 @@ export class Datasource<T = any> {
 
     /**
      * Sets the rows, in the data container - so every datasource sharing it gets them. The rows are
-     * sorted and grouped the way the datasource is.
+     * filtered, sorted and grouped the way the datasource is: a filter that is set applies to the new
+     * rows too.
      *
      * @param rows your objects
      * @param options.add `true` to add the rows to the ones there are, default `false`: they replace them
-     * @param options.refilter `true` to run the current filter on the rows, default `false`: every row
-     * set is shown, also one the filter would leave out
+     * @param options.refilter `false` to show every row that is set, also one the filter would leave out,
+     * default `true`: the filter runs on the rows. With `false` the filter stays set (the header filters
+     * and the footer still show it) while rows it leaves out are shown, until it runs again
      *
      * The selection follows the key (`DatasourceOptions.key`): rows that come back with the same key stay
-     * selected. {@link currentEntity} is not changed.
+     * selected. {@link currentEntity} is set to `null` when it is no longer in the data (replaced by new
+     * objects), and `current-entity` is sent; a row that is still in the data stays current.
+     *
+     * Sends `collection-changed`, `{ added }`.
      *
      * @sample rows-data
      * @example
@@ -671,14 +677,14 @@ export class Datasource<T = any> {
      * declare const rowsFromServer: object[];
      * declare const moreRows: object[];
      *
-     * datasource.setData(rowsFromServer);
+     * datasource.setData(rowsFromServer); // replaces the rows, the filter applies
      * datasource.setData(moreRows, { add: true });
-     * datasource.setData(moreRows, { add: true, refilter: true }); // keep the filter applied
+     * datasource.setData(moreRows, { add: true, refilter: false }); // shown even if the filter leaves them out
      * ```
      */
     public setData(rows: any[], options: { add?: boolean; refilter?: boolean } = {}) {
         assertOptions('setData', options, 'setData(rows, { add: true })');
-        const { add = false, refilter = false } = options;
+        const { add = false, refilter = true } = options;
         if (add) {
             this.__collectionFiltered.push(...this.__dataContainer.setData(rows, { add }));
         } else {
@@ -687,7 +693,20 @@ export class Datasource<T = any> {
         }
 
         this.__internalUpdate(refilter);
+
+        // the current row is gone when the rows were replaced by new objects. A group row is never
+        // in the data, the groups were built again. Cleared before the events, so every handler
+        // reads the new state
+        const current = this.currentEntity;
+        const currentGone = !!current && (isGroupRow(current) || !this.getAllData().includes(current));
+        if (currentGone) {
+            this.currentEntity = null;
+        }
+
         this.__callSubscribers('collection-changed', { added: add });
+        if (currentGone) {
+            this.__callSubscribers('current-entity', {});
+        }
     }
 
     /**
@@ -778,6 +797,12 @@ export class Datasource<T = any> {
             }
         }
 
+        if (this.__grouping.getGrouping().length) {
+            // also when the grouping was set with setGrouping(), or the sort changed with setOrderBy()
+            // or resetSort() since: unsorted rows give a group for each run of equal values
+            this.__sortGroupedFieldsFirst();
+        }
+
         if (this.__sorting.getLastSort().length) {
             this.__sorting.runOrderBy(this.__collectionFiltered);
         }
@@ -798,6 +823,27 @@ export class Datasource<T = any> {
             this.__callSubscribers('collection-filtered', { info: '__internalUpdate, forced' });
         }
         return forceUpdate;
+    }
+
+    /**
+     * Sets the sort (not run) to the grouped fields first, in the order of the grouping, then the other
+     * fields of the sort. Grouping builds a group from each run of equal values, so the rows have to be
+     * sorted on the grouped fields first, or a group shows up more than once. A grouped field keeps the
+     * direction the sort gives it, ascending when the sort does not have it.
+     */
+    private __sortGroupedFieldsFirst() {
+        const sorting = this.__sorting.getOrderBy();
+        const grouped = this.__grouping.getGrouping().map((group) => group.attribute);
+        this.__sorting.setOrderBy([
+            ...grouped.map((attribute) => ({
+                attribute,
+                ascending: sorting.find((arg) => arg.attribute === attribute)?.ascending ?? true
+            })),
+            // copies: setOrderBy({ add: true }) changes the direction of an argument in place
+            ...sorting
+                .filter((arg) => !grouped.includes(arg.attribute))
+                .map((arg) => ({ attribute: arg.attribute, ascending: arg.ascending }))
+        ]);
     }
 
     /**
@@ -850,43 +896,7 @@ export class Datasource<T = any> {
                 this.__sorting.setOrderBy(args, add);
             }
 
-            // get attributes/sort order
-            const sortingAttributes = this.__sorting.getOrderBy().map((col) => col.attribute);
-            const sortingAttributesOrder = this.__sorting.getOrderBy().map((col) => col.ascending);
-
-            // reset sort, we need to set it using grouping
-            this.__sorting.reset();
-
-            this.__grouping.getGrouping().forEach((group: GroupArgument) => {
-                const sortIndex = sortingAttributes.indexOf(group.attribute);
-                if (sortingAttributes.indexOf(group.attribute) === -1) {
-                    this.__sorting.setOrderBy({ attribute: group.attribute, ascending: true }, true);
-                } else {
-                    // if it already is in the new sorting, we need to use this sort order
-                    this.__sorting.setOrderBy(
-                        {
-                            attribute: group.attribute,
-                            ascending: sortingAttributesOrder[sortIndex]
-                        },
-                        true
-                    );
-                }
-            });
-
-            // last part is to get the column thats not in grouping and add them
-            const groupings = this.__grouping.getGrouping().map((col) => col.attribute);
-            sortingAttributes.forEach((attribute, i) => {
-                if (groupings.indexOf(attribute) === -1) {
-                    this.__sorting.setOrderBy(
-                        {
-                            attribute: sortingAttributes[i],
-                            ascending: sortingAttributesOrder[i]
-                        },
-                        true
-                    );
-                }
-            });
-
+            this.__sortGroupedFieldsFirst();
             this.__sorting.runOrderBy(this.__collectionFiltered);
 
             // if grouping is set
@@ -1001,8 +1011,9 @@ export class Datasource<T = any> {
      * (none: the rows keep the order they are in). Sends `collection-grouped` twice: `info: 'group'` with
      * the grouping left, then `info: 'removeGroup'`.
      *
-     * @param group the level to remove: the object from {@link getGrouping}, a copy with the same values
-     * is not found. Left out, all grouping is removed
+     * @param group the level to remove, found by its field (`attribute`): the object from
+     * {@link getGrouping} or a copy, the `title` does not matter. A field that is not grouped on changes
+     * nothing and sends no event. Left out, all grouping is removed
      *
      * @sample sorting-grouping
      * @example
@@ -1011,19 +1022,17 @@ export class Datasource<T = any> {
      *     { attribute: 'country', title: 'Country' },
      *     { attribute: 'company', title: 'Company' }
      * ]);
-     * datasource.removeGroup(datasource.getGrouping()[0]); // grouped on company only
+     * datasource.removeGroup({ attribute: 'country', title: 'Country' }); // grouped on company only
      * datasource.removeGroup(); // not grouped
      * ```
      */
     public removeGroup(group?: GroupArgument) {
         if (group) {
             const groupings = this.__grouping.getGrouping();
-
-            const oldGroupIndex = groupings.indexOf(group);
-            if (oldGroupIndex !== -1) {
-                groupings.splice(oldGroupIndex, 1);
+            if (!groupings.some((grouping) => grouping.attribute === group.attribute)) {
+                return;
             }
-            this.group(groupings);
+            this.group(groupings.filter((grouping) => grouping.attribute !== group.attribute));
         } else {
             this.group([]);
         }
@@ -1034,8 +1043,8 @@ export class Datasource<T = any> {
      * Expands a group, so its rows are displayed, or every group with their sub groups. Sends
      * `collection-expand`. Does nothing while the datasource is not grouped.
      *
-     * A sub group is only shown when the group above it is expanded: expanding it while its parent is
-     * collapsed does nothing.
+     * A sub group is only shown when the groups above it are expanded: expanding one expands the groups
+     * above it too, so it is shown. An id that is no group changes nothing.
      *
      * @param id the group's `__groupID` (see {@link GroupRow}), e.g. `'Norway'` or `'Norway-Apple'` for a
      * sub group. Left out, every group is expanded
@@ -1051,7 +1060,7 @@ export class Datasource<T = any> {
     public expandGroup(id?: string) {
         // setGrouping() alone does not build the groups, there is nothing to expand until it is applied
         if (this.__grouping.hasGroups()) {
-            this.__collectionDisplayed = this.__grouping.expandOneOrAll(id);
+            this.__collectionDisplayed = id ? this.__grouping.expandWithParents(id) : this.__grouping.expandOneOrAll();
             this.__callSubscribers('collection-expand', {});
         }
     }
@@ -1133,10 +1142,9 @@ export class Datasource<T = any> {
     }
 
     /**
-     * How rows can be selected: `'multiple'`, `'single'` or `'none'`, see {@link SelectionMode}.
-     *
-     * A grid sets its own `GridConfig.selectionMode` (default `'multiple'`) on the datasource every time
-     * it is built, so with a grid this is the grid's.
+     * How rows can be selected: `'multiple'`, `'single'` or `'none'`, see {@link SelectionMode}. Set
+     * with `DatasourceOptions.selectionMode` or {@link setSelectionMode}; a grid showing the datasource
+     * uses it.
      *
      * @example
      * ```ts
@@ -1151,7 +1159,8 @@ export class Datasource<T = any> {
 
     /**
      * Selects every displayed data row - not the rows of collapsed groups or the ones the filter leaves
-     * out - and sends `selection-change`. Selects nothing unless the selection mode is `'multiple'`.
+     * out - and sends `selection-change`. Only in the `'multiple'` selection mode: in `'single'` and
+     * `'none'` it does nothing, it selects nothing and sends no event.
      * Clicking the grid's top left corner does the same (ctrl+click there deselects every row).
      *
      * @sample selection
@@ -1186,17 +1195,16 @@ export class Datasource<T = any> {
      * Sets how rows can be selected: `'multiple'`, `'single'` or `'none'`. A blank value is `'none'`. The
      * rows selected before stay selected.
      *
-     * A grid sets its own `GridConfig.selectionMode` (default `'multiple'`) on the datasource every time
-     * it is built, which replaces this: with a grid, use `gridInterface.updateConfig({ selectionMode })`.
+     * The datasource owns the selection mode: a grid showing it uses this one from the next click on, it
+     * has no option of its own.
      *
      * @param mode the selection mode, see {@link SelectionMode}
      *
+     * @sample selection
      * @example
      * ```ts
-     * import { Datasource } from '@simple-html/grid';
-     *
-     * const datasource = new Datasource(); // not shown in a grid
-     * datasource.setSelectionMode('single');
+     * datasource.setSelectionMode('single'); // a click selects one row, ctrl/shift+click too
+     * datasource.setSelectionMode('none'); // a click makes the row current, selects nothing
      * ```
      */
     public setSelectionMode(mode: SelectionMode): void {
@@ -1454,7 +1462,8 @@ export class Datasource<T = any> {
 
     /**
      * Clears the sort, without sorting: the rows keep their order until the displayed rows are built
-     * again (`filter()`, `setData()` ...), then they are in the order they were set. No event is sent.
+     * again (`filter()`, `setData()` ...), then they are in the order they were set - sorted on the
+     * grouped fields when grouped, the groups need that. No event is sent.
      *
      * @param defaultSortAttribute a field to sort on ascending instead, set the same way (not run)
      *
@@ -1520,15 +1529,17 @@ export class Datasource<T = any> {
     }
 
     /**
-     * Sets the grouping without grouping: `group()` groups the rows. Until then `getRows()` is not
-     * grouped and `expandGroup()` / `collapseGroup()` do nothing.
+     * Sets the grouping without grouping the rows now. The next call that builds the displayed rows
+     * groups them - `group()`, `sort()`, `filter()`, `setData()`, `reloadDatasource()` ... - with the rows
+     * sorted on the grouped fields first. Until then `getRows()` is not grouped and `expandGroup()` /
+     * `collapseGroup()` do nothing.
      *
      * @param group the fields to group on, the outer group first
      *
      * @example
      * ```ts
      * datasource.setGrouping([{ attribute: 'country', title: 'Country' }]);
-     * datasource.group(datasource.getGrouping()); // grouped now
+     * datasource.filter(); // grouped now, the rows sorted on country first
      * ```
      */
     public setGrouping(group: GroupArgument[]) {
@@ -1606,8 +1617,9 @@ export class Datasource<T = any> {
 
     /**
      * The operator a header filter of this type starts with: `'GREATER_THAN_OR_EQUAL_TO'` for
-     * `'number'`, `'date'` and `'datetime'`, `'EQUAL'` for the rest. The grid uses it for a column
-     * without an `operator` in its config.
+     * `'number'`, `'date'` and `'datetime'`, `'EQUAL'` for the rest - for text the whole text, `ann`
+     * does not find `Anna`. The grid uses it for a column without an `operator` in its config
+     * (`columns: { name: { operator: 'CONTAINS' } }` for a contains search).
      *
      * @param type a field type, see {@link FieldType}
      *

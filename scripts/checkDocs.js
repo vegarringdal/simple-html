@@ -4,7 +4,7 @@ const path = require('node:path');
 const ts = require('typescript');
 const { buildApiModel, convertProject, exampleBlocks } = require('./site/api');
 const { readGuides } = require('./site/guides');
-const { headingIds, siteHref, tsCodeBlocks } = require('./site/markdown');
+const { headingIds, repoFile, siteHref, tsCodeBlocks } = require('./site/markdown');
 
 /**
  * `npm run check:docs` (it builds dist first): the docs can not rot.
@@ -17,7 +17,8 @@ const { headingIds, siteHref, tsCodeBlocks } = require('./site/markdown');
  *    A block may use `datasource`, `gridInterface` and `host` without declaring them (GLOBALS).
  * 3. the samples a guide (```sample <id>) or a JSDoc (@sample <id>) names exist, and so do the
  *    pages and headings the links in the guides go to (NN-slug.md, NN-slug.md#heading, #heading,
- *    #guide/<id>, #sample/<id>, #api/<name>, #api/<name>.<member>).
+ *    #guide/<id>, #sample/<id>, #api/<name>, #api/<name>.<member>), and the files of the repo they
+ *    link to (../MIGRATION.md, ../MIGRATION.md#heading - the site links those to github).
  *
  * Errors are reported with the guide file and line, or the symbol and file:line of the JSDoc.
  */
@@ -135,6 +136,16 @@ function checkReferences(guides, api) {
         if (guideFile && !guideFiles.has(guideFile)) {
             return true;
         }
+        // a file of the repo: the site links it to github, so it has to exist - and so does the heading
+        // of a markdown file
+        const inRepo = repoFile(target);
+        if (inRepo) {
+            const file = path.join(ROOT, inRepo.file);
+            if (!fs.existsSync(file)) {
+                return true;
+            }
+            return !!inRepo.anchor && file.endsWith('.md') && !headingIds(fs.readFileSync(file, 'utf8')).includes(inRepo.anchor);
+        }
         // the link as the site has it
         const href = siteHref(target, guide.id);
         if (!href.startsWith('#')) {
@@ -153,7 +164,7 @@ function checkReferences(guides, api) {
             }
             for (const [, target] of line.matchAll(/\]\(([^)\s]+)\)/g)) {
                 if (goesNowhere(target, guide)) {
-                    errors.push(`${where}: the link ${target} goes nowhere, there is no such page, guide file or heading`);
+                    errors.push(`${where}: the link ${target} goes nowhere, there is no such page, file or heading`);
                 }
             }
         });

@@ -888,6 +888,28 @@ Phase 2 is complete with this step: 1012 tests.
 
 Writing the guides against the real code found mismatches - fixed next, see the step after this.
 
+### v6 - fixes found while writing the docs
+
+Writing the guides against the real code (every example compiled) found these:
+
+* the grid set its own `selectionMode` (default 'multiple') on the datasource on every rebuild, so
+  the datasource's `selectionMode` was silently overridden. `GridConfig.selectionMode` is gone, the
+  datasource owns it.
+* `setData()` defaults to `refilter: true` - new rows no longer bypass a filter that is set
+* grouping: rows are always sorted by the group fields first (`setGrouping()` + `filter()` built
+  duplicate groups); `removeGroup()` matches by field (a copy removed nothing but still sent
+  events); `expandGroup(id)` expands the groups above it too
+* `currentEntity` is cleared when `setData()` replaces the row it pointed at
+* `selectAll()` does nothing outside 'multiple' mode
+* the date picker's `setSelected(dates)` showed nothing selected - days matched on the timestamp
+* `datePickerConfig` is `Partial<IDateConfig>`, `mandatoryOnlyIfEmpty` (read nowhere) is removed
+* leftover debug `console.log`s removed
+* site: links from a guide to `MIGRATION.md` etc. go to GitHub (they 404'd on the site), and
+  `check:docs` checks the file and the heading; the demo theme's row state colours never applied
+  (the `row-is-*` class is on the parent, the selector assumed the same element)
+* documented, not changed: the text header filter matches the whole text (EQUAL) - the filtering
+  guide shows a contains search per column; an emptied number cell stores 0
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -929,9 +951,9 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
     examples are typechecked (docs work)
   * the display tree from `getFilterTree()` still says `logicalOperator` where the filter format
     says `group`
-  * `deselectAll()` does not send `selection-change` by default, `selectAll()` always does
-  * `mandatoryOnlyIfEmpty` has no effect anywhere - phase 5 (validation) replaces the mandatory
-    options
+  * `deselectAll()` does not send `selection-change` by default (`selectAll()` does, in 'multiple'
+    mode); `selectRowRange()` (a group row's selector) sends it in 'single' mode with nothing selected
+  * a `selectionMode` left in a grid config (plain js) is silently ignored, no runtime error
   * a date picked in a header filter's date picker is stored as text, a typed one as a `Date`
   * the column chooser keeps listing fields that were once in the layout
   * some menu labels are built when the menu opens ("Count: 5", "✓ Use dimmed values") and the
@@ -948,7 +970,6 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
     Matters now that a set date keeps its time on purpose.
   * with a collator using `sensitivity: 'base'`, `'a'` vs `'A'` compares as 1 both ways.
     Returning 0 would need grouping to use the collator too, or groups split.
-  * `setData(rows)` while filtered keeps the filter (header + `getFilterString`) but shows every row
   * `removeData` leaves `currentEntity` and the selection pointing at the removed entity
   * `waitForFocusTrigger` swallows every key in every grid for 100ms after Enter / alt+arrow
   * the value list puts `false` under "Blank" (falsy check), the IN filter keys it as `FALSE`

@@ -348,6 +348,67 @@ what to change in your code. Released in phases.
 - tests: `gridMenus.test.ts` - the ids, hiding, reordering, custom entries and their context,
   `visible` / `disabled`, `openMenu()` / `closeMenu()`, a dropdown grid as a block
 
+### Fixes found while writing the docs
+
+Writing the guides against the code found these. Each fix has a test that fails on the old code: `datasource/__tests__/docsFindings.test.ts`,
+`grid/__tests__/docsFindings.test.ts`, the `setSelected` and `datePickerConfig` tests in
+`date/__tests__/datePicker.test.ts` and `grid/__tests__/datePickerCell.test.ts`, the docs site tests in
+`samples/demo/__tests__/` and the typings consumer.
+
+#### ⚠️ Breaking changes
+- **`GridConfig.selectionMode` is removed**: the datasource owns the selection mode
+  (`new Datasource({ selectionMode })`, `datasource.setSelectionMode()`) and the grid reads it from
+  there. The grid used to set its own (default `'multiple'`) on the datasource on every rebuild, so
+  `new Datasource({ selectionMode: 'single' })` became `'multiple'` once shown in a grid.
+- **`setData()` runs the filter that is set by default** (`refilter: true`). The new rows bypassed a
+  filter that was still set - and still shown by the header filters and the footer. `refilter: false`
+  keeps the old behaviour; it is then the only `setData()` that sends `collection-filtered`
+  (`'__internalUpdate, forced'`, with no filter, sort or grouping).
+- **`ColumnConfig.mandatoryOnlyIfEmpty` is removed**: it was read nowhere, `mandatory` marks only the
+  empty cells. Phase 5 (validation) replaces the mandatory options.
+- **`DateInterface.selected` is a `Set<number>`** of timestamps and `getSelected()` returns `number[]`
+  (was `unknown`); `setSelected(dates)` stores the timestamps of the dates.
+- **`removeGroup(group)` finds the level by its field**: a copy removes it. A field that is not grouped
+  on changes nothing and sends no event (it used to regroup and send `collection-grouped` twice).
+
+#### Fixed
+- `setGrouping()` followed by `filter()` (or `setData()`, `reloadDatasource()` ...) grouped rows that
+  were not sorted for the grouping, so a group showed up once per run of equal values. So did
+  `setOrderBy()` or `resetSort()` while grouped. The rows are now always sorted on the grouped fields
+  first, whatever path leads to the grouping; each grouped field keeps the direction the sort gives it
+- `removeGroup()` with a copy of a grouping (e.g. from a saved state) removed nothing, but still
+  regrouped and sent the events
+- `expandGroup(id)` of a sub group whose parent is collapsed did nothing: it expands the groups above it
+  too now, so the group is shown
+- `currentEntity` kept pointing at a row of the old data after `setData()` replaced the rows: it is set
+  to `null` (and `current-entity` sent) when the current row is no longer in the data
+- `selectAll()` sent `selection-change` in the `'single'` and `'none'` selection modes, where it selects
+  nothing: it does nothing there now. Also a click on the grid's top left corner
+- `DateInterface.setSelected(dates)` showed no day as selected: it stored the `Date`s, the days were
+  matched by timestamp. A day is selected when a selected date falls on it, whatever its time, and a
+  click on such a day unselects it
+- `GridConfig.datePickerConfig` demanded a whole `IDateConfig`, though the grid fills in a default for
+  every field it reads: it is a `Partial<IDateConfig>`
+- a click on a group row logged `group selected, do I want something here ?` to the console. Two
+  unreachable `console.log('err')` went too
+- docs site: the guides' links to `../MIGRATION.md` (and other files of the repo that are not guides)
+  were a 404 on the site; the site links them to the file on github. `npm run check:docs` checks that
+  the file exists, and the heading of a markdown file
+- docs site: the dark theme's colours for new, modified and deleted rows never applied - the
+  `row-is-*` class is on the element around the row number, not on `.simple-html-selector-text`. Same
+  fix in the dev sample's dark mode (`samples/grid01`)
+
+#### Docs
+- the text header filter starts with `EQUAL`, a whole-text match (`ann` does not find `Anna`). The
+  filtering guide and `ColumnConfig.operator` show `columns: { name: { operator: 'CONTAINS' } }` for a
+  contains search per column
+- emptying a number cell stores 0 (the number formatters' `parse('')` gives 0), the row menu's Clear
+  stores `null`: in the editing and formatting guides, on the number formatters and `MENU_IDS`, with a
+  formatter that stores `null` instead
+- the selection mode's guide section has a table of what each mode does; the samples set the mode on the
+  datasource, the selection sample switches it while the grid is shown, the rows sample has a
+  `refilter: false` button
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

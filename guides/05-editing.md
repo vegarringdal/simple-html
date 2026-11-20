@@ -39,6 +39,10 @@ for `isReadonly`. Readonly cells of an editable grid are shown with stripes.
 - **Text, number and date cells** are inputs. What the user types is parsed with the field's
   formatter (`parse`) and stored in the row as they type: a number field stores a number, a date
   field a `Date`. See [Formatting](08-formatting.md).
+- **Emptying a cell** stores what the formatter's `parse('')` gives: `''` for text, `null` for a
+  date, and **`0` for a number** - the number formatters parse text that is no number as 0. The row
+  menu's clear (below) stores `null` in any field. For an emptied number cell to store `null`, give
+  the field a formatter of your own, see [Formatting](08-formatting.md#the-defaults-per-type).
 - **Enter** in an editable cell moves to the cell below.
 - **Date cells** also open a date picker on click, when they are editable: "Use" stores the picked
   date and time, "Clear" stores `null`. The picker needs `@simple-html/grid/date.css`.
