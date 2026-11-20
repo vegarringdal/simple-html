@@ -15,7 +15,8 @@ import {
     GridInterface,
     type GridState,
     NumberFormatterComma,
-    NumberFormatterDot
+    NumberFormatterDot,
+    registerFormatter
 } from '@simple-html/grid';
 import '../../src/grid.css';
 import '../../src/date.css';
@@ -32,7 +33,7 @@ import { toggleDarkGrid } from './toggleDarkGrid';
 /**
  * the number and date formatters the buttons switch between. The datasource gets the two
  * formatters below once, they hand every call on to the one picked last - a formatter is just an
- * object with format and parse
+ * object with format and parse. The datasource options name them by id, so they are registered first
  */
 let numberFormatter: Formatter = NumberFormatterDot;
 let dateFormatter: Formatter = DateFormatterYYYYMMDD;
@@ -48,14 +49,23 @@ const switchable = (current: () => Formatter): Formatter => ({
     }
 });
 
+registerFormatter(
+    'grid01.number',
+    switchable(() => numberFormatter)
+);
+registerFormatter(
+    'grid01.date',
+    switchable(() => dateFormatter)
+);
+
 /**
  * create datasource
  */
 const datasource = new Datasource({
     fields: gridFields,
     formatters: {
-        number: switchable(() => numberFormatter),
-        date: switchable(() => dateFormatter)
+        number: 'grid01.number',
+        date: 'grid01.date'
     }
 });
 datasource.setData(
@@ -346,15 +356,15 @@ createButton('use default Dateformatter (YYYY-MM-DDTHH:MM:SS)', () => {
 });
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
-    gridInterface.updateConfig({
+    gridInterface.updateHooks({
         // null: the column config decides
         isReadonly: (row, field) => (row.isDumb === true && field === 'favoriteFruit' ? true : null)
     });
 });
 
 createButton('remove readonly favoriteFruit based on cell isDumb', () => {
-    // no callback: the column config decides
-    gridInterface.updateConfig({ isReadonly: undefined });
+    // no hook: the column config decides
+    gridInterface.updateHooks({ isReadonly: undefined });
 });
 
 createButton('cell focus custom menu 1 time', () => {
@@ -377,14 +387,14 @@ createButton('cell focus custom menu 1 time', () => {
 });
 
 createButton('append class background favoriteFruit based on cell isDumb', () => {
-    gridInterface.updateConfig({
+    gridInterface.updateHooks({
         cellClass: (row, field) => (row.isDumb === false && field === 'favoriteFruit' ? { background: 'yellow' } : null)
     });
 });
 
 createButton('remove class background favoriteFruit based on cell isDumb', () => {
     // no extra classes
-    gridInterface.updateConfig({ cellClass: undefined });
+    gridInterface.updateHooks({ cellClass: undefined });
 });
 
 {

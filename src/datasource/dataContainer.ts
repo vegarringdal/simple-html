@@ -203,7 +203,7 @@ export class DataContainer {
      * other row - so each call replaces the errors of the call before. For errors a server sent back
      * after saving.
      *
-     * The grid does not show `__rowError` itself: read it in `GridConfig.cellClass` (to color the row)
+     * The grid does not show `__rowError` itself: read it in the `cellClass` hook (to color the row)
      * or show it next to the grid, and call `gridInterface.refresh()` after this to render the cells
      * again.
      *

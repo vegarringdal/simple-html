@@ -8,7 +8,6 @@
  */
 import {
     and,
-    BooleanFormatter,
     type CellClass,
     type Changes,
     type ColumnConfig,
@@ -19,7 +18,6 @@ import {
     type DatasourceEvents,
     type DatasourceOptions,
     type DateEvents,
-    DateFormatterDDMMYYYY,
     DateFormatterYYYYMMDD,
     DateInterface,
     type Entity,
@@ -36,6 +34,7 @@ import {
     type GridConfig,
     type GridElement,
     type GridEvents,
+    type GridHooks,
     GridInterface,
     type GridLayout,
     type GridMenus,
@@ -58,6 +57,7 @@ import {
     NumberFormatterComma,
     NumberFormatterDot,
     or,
+    registerFormatter,
     type SortArgument,
     TextFormatter,
     TOOLTIPS,
@@ -72,6 +72,10 @@ const money: Formatter = {
 };
 // the built-ins are plain objects, a variant is a spread away
 const upperCase: Formatter = { ...TextFormatter, format: (value) => TextFormatter.format(value).toUpperCase() };
+// the options name a formatter by its id: register it, a built-in object too under an id of your own
+registerFormatter('money', money);
+registerFormatter('upperCase', upperCase);
+registerFormatter('comma', NumberFormatterComma);
 const ageConfig: FieldConfig = { type: 'number', label: 'Age' };
 const options: DatasourceOptions = {
     key: 'id',
@@ -79,15 +83,27 @@ const options: DatasourceOptions = {
         born: 'date',
         lastLogin: 'datetime',
         age: ageConfig,
-        price: { type: 'number', formatter: money },
-        name: { formatter: upperCase }
+        price: { type: 'number', formatter: 'money' },
+        name: { formatter: 'upperCase' },
+        amount: { type: 'number', formatter: 'comma' }
     },
-    formatters: { date: DateFormatterDDMMYYYY, number: NumberFormatterComma, boolean: BooleanFormatter },
+    // the built-ins are registered from the start
+    formatters: { date: 'dateDDMMYYYY', number: 'numberComma', boolean: 'boolean', datetime: 'datetimeDDMMYYYY' },
     selectionMode: 'multiple'
 };
+// @ts-expect-error a field names its formatter by id, register the object with registerFormatter()
+const formatterObject: FieldConfig = { type: 'number', formatter: NumberFormatterComma };
+// @ts-expect-error the default of a type is an id too
+const formatterObjects: DatasourceOptions = { formatters: { number: NumberFormatterComma } };
+// @ts-expect-error registerFormatter takes a formatter, format and parse
+registerFormatter('nothing', { format: () => '' });
+console.log(formatterObject, formatterObjects);
 const datasource = new Datasource(options);
 datasource.setData([{ id: 1, name: 'a', born: new Date() }]);
+// getField() and getFormatter() give the formatter object
 const born: Field = datasource.getField('born');
+const bornFormatter: Formatter = born.formatter;
+console.log(bornFormatter);
 const bornType: FieldType = born.type;
 const label: string = born.label;
 const text: string = datasource.getFormatter('price').format(12.5);
@@ -253,17 +269,27 @@ const gridInterface = new GridInterface(config, datasource);
 const host = document.createElement('div');
 const createOptions: CreateGridOptions<unknown> = { config, datasource };
 const created: GridInterface<unknown> = createGrid(host, createOptions);
-// the callbacks in the config, they only get data rows - never a group row
+// the functions are hooks, next to the config. They only get data rows - never a group row
 const negative: CellClass = { input: 'negative-text', background: 'negative-background' };
-const withCallbacks: GridConfig = {
-    layout,
+const hooks: GridHooks = {
     isReadonly: (row: Entity, field: string, readonlyByConfig: boolean) =>
         field === 'name' ? row.__rowState === 'D' : readonlyByConfig,
     cellClass: (row, field) => (field === 'price' && row.price < 0 ? negative : null)
 };
-const fromConfig: GridInterface<unknown> = createGrid(host, { config: withCallbacks, datasource });
-fromConfig.updateConfig({ isReadonly: () => null, cellClass: () => undefined });
-fromConfig.updateConfig({ isReadonly: undefined, cellClass: () => ({ input: 'only-input' }) });
+const withHooks: GridInterface<unknown> = createGrid(host, { config, datasource, hooks });
+const withHooksByHand = new GridInterface(config, datasource, hooks);
+withHooks.updateHooks({ isReadonly: () => null, cellClass: () => undefined });
+withHooks.updateHooks({ isReadonly: undefined, cellClass: () => ({ input: 'only-input' }) });
+withHooksByHand.updateHooks({});
+// @ts-expect-error isReadonly is a hook, not part of the config
+const readonlyInConfig: GridConfig = { layout, isReadonly: () => null };
+// @ts-expect-error cellClass is a hook, not part of the config
+const cellClassInConfig: GridConfig = { layout, cellClass: () => null };
+// @ts-expect-error menus is a hook, not part of the config
+const menusInConfig: GridConfig = { layout, menus: {} };
+// @ts-expect-error updateConfig() takes no hooks: updateHooks()
+withHooks.updateConfig({ cellClass: undefined });
+console.log(readonlyInConfig, cellClassInConfig, menusInConfig);
 // options while the grid is shown, the layout now, the initial state for a later resetState()
 created.updateConfig({ readonly: false, hideLabels: true, hideFilter: true, cellHeight: 30, tooltips: false });
 created.updateConfig({ columns: { name: nameColumn }, layout: { center: [stacked] }, initialState: { sorting: [] } });
@@ -276,10 +302,10 @@ const selectedFields: string[] = created.getLayoutFields({ selectedOnly: true })
 const hiddenFields: string[] = created.getHiddenFields();
 console.log(layoutFields, selectedFields, hiddenFields);
 created.destroy();
-fromConfig.destroy();
-// @ts-expect-error readonlySetter is gone: GridConfig.isReadonly
+withHooks.destroy();
+// @ts-expect-error readonlySetter is gone: the isReadonly hook
 gridInterface.readonlySetter(null);
-// @ts-expect-error cellAppendClassSetter is gone: GridConfig.cellClass
+// @ts-expect-error cellAppendClassSetter is gone: the cellClass hook
 gridInterface.cellAppendClassSetter(null);
 // @ts-expect-error triggerScrollEvent is refresh()
 gridInterface.triggerScrollEvent();
@@ -291,7 +317,7 @@ gridInterface.getAttributeColumns(false);
 gridInterface.getOptionalAttributes();
 // @ts-expect-error no positional boolean: getLayoutFields({ selectedOnly: true })
 gridInterface.getLayoutFields(true);
-// menus as data: GridConfig.menus changes the grid's own menus, openMenu() opens one of your own
+// menus as data: the menus hook changes the grid's own menus, openMenu() opens one of your own
 const logRow: MenuItem = {
     id: 'my.logRow',
     label: 'Log row',
@@ -327,9 +353,9 @@ const menus: GridMenus = {
         defaults.map((entry) => (entry.id === 'header.column.hide' ? { ...entry, label: 'Hide column' } : entry)),
     filter: (defaults) => [...defaults.filter((entry) => entry.id === 'filter.values'), ...defaults]
 };
-const withMenus: GridConfig = { layout, menus };
-gridInterface.updateConfig({ menus: { row: (defaults) => defaults.slice(1) } });
-gridInterface.updateConfig({ menus: undefined });
+const withMenus: GridHooks = { menus };
+gridInterface.updateHooks({ menus: { row: (defaults) => defaults.slice(1) } });
+gridInterface.updateHooks({ menus: undefined });
 const builtInRowIds: readonly string[] = MENU_IDS.row;
 console.log(withMenus, builtInRowIds, MENU_IDS.header[0], MENU_IDS.filter.includes('filter.values'));
 const pickEntries: MenuEntry[] = [mySection, { id: 'pick.a', label: 'A', action: () => {} }, mySeparator, myBlock];
@@ -358,7 +384,7 @@ gridInterface.removeContextMenuElement();
 // @ts-expect-error the v5 names: input and background
 const v5Classes: CellClass = { inputClass: 'a', dimmedClass: 'b' };
 // @ts-expect-error isReadonly returns a boolean, null or undefined
-const wrongReadonly: GridConfig = { layout, isReadonly: () => 'yes' };
+const wrongReadonly: GridHooks = { isReadonly: () => 'yes' };
 console.log(v5Classes, wrongReadonly);
 // events: on() types the payload from the event map, and returns the unsubscribe function
 const offCellClick: () => void = gridInterface.on('cell-click', (data) => {
@@ -445,10 +471,21 @@ for (const row of people.getRows()) {
     }
 }
 const names: string[] = people.getDataRows().map((row) => row.name);
-// createGrid takes the row type from the datasource
-const peopleGrid: GridInterface<Person> = createGrid(host, { config, datasource: people });
+// createGrid takes the row type from the datasource, the hooks get typed rows
+const peopleHooks: GridHooks<Person> = {
+    isReadonly: (row) => (row.name === '' ? true : null),
+    cellClass: (row) => (row.id < 0 ? { input: 'new-row' } : null)
+};
+const peopleGrid: GridInterface<Person> = createGrid(host, { config, datasource: people, hooks: peopleHooks });
+peopleGrid.updateHooks({ cellClass: (row) => (row.name.length > 10 ? { input: 'long' } : null) });
+// @ts-expect-error the row is a Person: name is a string
+peopleGrid.updateHooks({ isReadonly: (row) => row.name.toFixed() === '' });
+// hooks written without the row type fit any grid
+const untypedHooks: GridHooks = { isReadonly: (row) => (row.locked ? true : null) };
+peopleGrid.updateHooks(untypedHooks);
+const peopleByHand: GridInterface<Person> = new GridInterface(config, people, peopleHooks);
 const peopleRows: Person[] = peopleGrid.getDatasource().getDataRows();
-console.log(peopleRows);
+console.log(peopleRows, peopleByHand);
 // filtering the group rows out narrows the type too (TypeScript infers the predicate)
 const shownNames: string[] = people
     .getRows()
@@ -539,6 +576,27 @@ element.connectInterface(gridInterface);
 element.enableCleanup = true;
 
 console.log(TOOLTIPS);
+
+// the config, the state and the datasource's fields + formatters are plain data: no function
+// anywhere in them, nested types included (a Date is data). The hooks are where the functions are.
+// Depth: a filter group holds filters, the check stops after a few levels of them
+type HasFunction<T, Depth extends unknown[] = []> = Depth['length'] extends 12
+    ? false
+    : T extends (...args: never[]) => unknown
+      ? true
+      : T extends Date
+        ? false
+        : T extends readonly (infer Item)[]
+          ? HasFunction<Item, [...Depth, unknown]>
+          : T extends object
+            ? { [K in keyof T]-?: HasFunction<T[K], [...Depth, unknown]> }[keyof T]
+            : false;
+const configIsData: HasFunction<GridConfig> extends false ? true : never = true;
+const stateIsData: HasFunction<GridState> extends false ? true : never = true;
+const fieldsAreData: HasFunction<Pick<DatasourceOptions, 'fields' | 'formatters'>> extends false ? true : never = true;
+// boolean: true for the hooks, false for an optional hook left out (undefined)
+const hooksAreFunctions: HasFunction<GridHooks> extends false ? never : true = true;
+console.log(configIsData, stateIsData, fieldsAreData, hooksAreFunctions);
 
 // internals are not part of the typings any more
 // @ts-expect-error

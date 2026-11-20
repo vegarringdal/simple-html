@@ -2,7 +2,8 @@ import { formatDate, parseDate } from './dateFormatterParts';
 import type { Formatter } from './formatter';
 
 /**
- * Formatter for a date with time as `DD.MM.YYYYTHH:MM:SS`, e.g. `20.11.2026T13:45:12`.
+ * Formatter for a date with time as `DD.MM.YYYYTHH:MM:SS`, e.g. `20.11.2026T13:45:12`. Registered as
+ * `'datetimeDDMMYYYY'`, the options name it by that id (see {@link registerFormatter}).
  *
  * - `format` - a `Date` (or a date string/timestamp) as `20.11.2026T13:45:12`, `''` for a blank or
  *   invalid date
@@ -20,8 +21,9 @@ import type { Formatter } from './formatter';
  *
  * DateFormatterDDMMYYYYTHHMMSS.format(new Date(2026, 10, 20, 13, 45, 12)); // '20.11.2026T13:45:12'
  *
+ * // a field names it by its id
  * const datasource = new Datasource({
- *     fields: { lastLogin: { type: 'datetime', formatter: DateFormatterDDMMYYYYTHHMMSS } }
+ *     fields: { lastLogin: { type: 'datetime', formatter: 'datetimeDDMMYYYY' } }
  * });
  * ```
  */

@@ -229,41 +229,39 @@ export interface MenuPosition {
 }
 
 /**
- * Changes the grid's right click menus: `GridConfig.menus`. Each function gets the grid's own entries
- * for that menu (`defaults`, in the order shown in {@link MENU_IDS}) and what the menu was opened on,
- * and returns the entries to show - hide some, reorder them, change them, add your own. Called every
- * time the menu opens.
+ * Changes the grid's right click menus: the `menus` hook ({@link GridHooks}). Each function gets the
+ * grid's own entries for that menu (`defaults`, in the order shown in {@link MENU_IDS}) and what the
+ * menu was opened on, and returns the entries to show - hide some, reorder them, change them, add
+ * your own. Called every time the menu opens.
  *
  * - `row`: right click on a cell - copy, filter on the value, paste, clear, summary ...
  * - `header`: right click on a header label - pin, hide, column chooser, sizes, grouping
  * - `filter`: right click on a header filter - clear, is blank, operator, the value list
  *
  * The grid's own entries are new objects every time, change them as you like. Left out, a menu shows
- * its defaults.
+ * its defaults. Change the functions while the grid is shown with `gridInterface.updateHooks({ menus })`.
  *
  * @sample context-menu
  * @example
  * ```ts
- * import type { GridConfig } from '@simple-html/grid';
+ * import type { GridMenus } from '@simple-html/grid';
  *
- * const config: GridConfig = {
- *     layout: { center: [{ fields: ['name'], width: 150 }] },
- *     menus: {
- *         row: (defaults, context) => [
- *             // no summary
- *             ...defaults.filter((entry) => !entry.id.startsWith('row.summary')),
- *             { type: 'section', id: 'my.section', label: 'Mine:' },
- *             { id: 'my.logRow', label: 'Log row', action: () => console.log(context.field, context.row) }
- *         ],
- *         // the value list first, then the rest
- *         filter: (defaults) => [
- *             ...defaults.filter((entry) => entry.id === 'filter.values'),
- *             ...defaults.filter((entry) => entry.id !== 'filter.values')
- *         ],
- *         // a label of your own
- *         header: (defaults) =>
- *             defaults.map((entry) => (entry.id === 'header.column.hide' ? { ...entry, label: 'Hide column' } : entry))
- *     }
+ * // createGrid(host, { config, datasource, hooks: { menus } })
+ * const menus: GridMenus = {
+ *     row: (defaults, context) => [
+ *         // no summary
+ *         ...defaults.filter((entry) => !entry.id.startsWith('row.summary')),
+ *         { type: 'section', id: 'my.section', label: 'Mine:' },
+ *         { id: 'my.logRow', label: 'Log row', action: () => console.log(context.field, context.row) }
+ *     ],
+ *     // the value list first, then the rest
+ *     filter: (defaults) => [
+ *         ...defaults.filter((entry) => entry.id === 'filter.values'),
+ *         ...defaults.filter((entry) => entry.id !== 'filter.values')
+ *     ],
+ *     // a label of your own
+ *     header: (defaults) =>
+ *         defaults.map((entry) => (entry.id === 'header.column.hide' ? { ...entry, label: 'Hide column' } : entry))
  * };
  * ```
  */
@@ -355,13 +353,10 @@ export interface GridMenus {
  * @sample context-menu
  * @example
  * ```ts
- * import { type GridConfig, type GridLayout, MENU_IDS } from '@simple-html/grid';
- *
- * declare const layout: GridLayout;
+ * import { type GridHooks, MENU_IDS } from '@simple-html/grid';
  *
  * // a row menu without the copy entries
- * const config: GridConfig = {
- *     layout,
+ * const hooks: GridHooks = {
  *     menus: { row: (defaults) => defaults.filter((entry) => !entry.id.startsWith('row.copy')) }
  * };
  *

@@ -1,14 +1,13 @@
 // @vitest-environment happy-dom
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
-import { MENU_IDS, type MenuContext, type MenuEntry, type MenuItem } from '../gridMenus';
-import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { type GridMenus, MENU_IDS, type MenuContext, type MenuEntry, type MenuItem } from '../gridMenus';
+import { mountGrid, simpleConfig, simpleData, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { headerFilterInput, menuItem, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
 
 /**
- * Menus as data: GridConfig.menus changes the grid's own menus, openMenu() / closeMenu() open and
+ * Menus as data: the menus hook changes the grid's own menus, openMenu() / closeMenu() open and
  * close one of your own.
  */
 
@@ -42,22 +41,26 @@ function entry(id: string): HTMLElement {
 const menuOpen = () => document.querySelector('.simple-html-grid-menu') !== null;
 
 /**
- * a config whose menus hand the defaults and the context to `seen` and show the defaults
+ * the simple grid with the menus hook
  */
-function capturingConfig() {
+const mountMenus = (menus: GridMenus, config = simpleConfig()) => mountGrid(config, simpleData(), simpleFields(), { menus });
+
+/**
+ * an editable grid whose menus hand the defaults and the context to `seen` and show the defaults
+ */
+async function mountCapturing() {
     const seen: { defaults: MenuEntry[]; context: MenuContext }[] = [];
     const capture = (defaults: MenuEntry[], context: MenuContext) => {
         seen.push({ defaults, context });
         return defaults;
     };
-    const config: GridConfig = { ...simpleConfig(), readonly: false, menus: { row: capture, header: capture, filter: capture } };
-    return { config, seen };
+    const mounted = await mountMenus({ row: capture, header: capture, filter: capture }, { ...simpleConfig(), readonly: false });
+    return { ...mounted, seen };
 }
 
 describe('menus - the built-in ids', () => {
     it('expect the row menu defaults to be MENU_IDS.row, in order', async () => {
-        const { config, seen } = capturingConfig();
-        const { element } = await mountGrid(config);
+        const { element, seen } = await mountCapturing();
 
         openRowMenu(element, 'age', 0);
 
@@ -65,8 +68,7 @@ describe('menus - the built-in ids', () => {
     });
 
     it('expect the header menu defaults to be MENU_IDS.header, in order', async () => {
-        const { config, seen } = capturingConfig();
-        const { element } = await mountGrid(config);
+        const { element, seen } = await mountCapturing();
 
         openLabelMenu(element, 'age');
 
@@ -74,8 +76,7 @@ describe('menus - the built-in ids', () => {
     });
 
     it('expect the filter menu defaults to be MENU_IDS.filter, in order', async () => {
-        const { config, seen } = capturingConfig();
-        const { element } = await mountGrid(config);
+        const { element, seen } = await mountCapturing();
 
         openFilterMenu(element, 'firstname');
 
@@ -191,13 +192,10 @@ describe('menus - rendered as before', () => {
     });
 });
 
-describe('menus - GridConfig.menus', () => {
+describe('menus - the menus hook', () => {
     it('expect a built-in entry to be hidden', async () => {
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: { row: (defaults) => defaults.filter((e) => e.id !== 'row.copy.cell') }
-        };
-        const { element } = await mountGrid(config);
+        const menus: GridMenus = { row: (defaults) => defaults.filter((e) => e.id !== 'row.copy.cell') };
+        const { element } = await mountMenus(menus);
 
         openRowMenu(element, 'firstname', 0);
 
@@ -207,16 +205,13 @@ describe('menus - GridConfig.menus', () => {
     });
 
     it('expect the entries to be shown in the order returned', async () => {
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: {
-                filter: (defaults) => [
-                    ...defaults.filter((e) => e.id === 'filter.values'),
-                    ...defaults.filter((e) => e.id === 'filter.filter.clear' || e.id === 'filter.filter')
-                ]
-            }
+        const menus: GridMenus = {
+            filter: (defaults) => [
+                ...defaults.filter((e) => e.id === 'filter.values'),
+                ...defaults.filter((e) => e.id === 'filter.filter.clear' || e.id === 'filter.filter')
+            ]
         };
-        const { element } = await mountGrid(config);
+        const { element } = await mountMenus(menus);
 
         openFilterMenu(element, 'firstname');
 
@@ -226,13 +221,10 @@ describe('menus - GridConfig.menus', () => {
     });
 
     it('expect a label to be changed and the entry to keep its action', async () => {
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: {
-                header: (defaults) => defaults.map((e) => (e.id === 'header.column.hide' ? { ...e, label: 'Hide column' } : e))
-            }
+        const menus: GridMenus = {
+            header: (defaults) => defaults.map((e) => (e.id === 'header.column.hide' ? { ...e, label: 'Hide column' } : e))
         };
-        const { element, gridInterface } = await mountGrid(config);
+        const { element, gridInterface } = await mountMenus(menus);
 
         openLabelMenu(element, 'age');
         menuItem('Hide column').click();
@@ -242,11 +234,8 @@ describe('menus - GridConfig.menus', () => {
 
     it('expect a custom entry in the row menu to get the context of the cell', async () => {
         const action = vi.fn();
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: { row: (defaults) => [...defaults, { id: 'test.custom', label: 'Custom', action }] }
-        };
-        const { element, gridInterface, datasource } = await mountGrid(config);
+        const menus: GridMenus = { row: (defaults) => [...defaults, { id: 'test.custom', label: 'Custom', action }] };
+        const { element, gridInterface, datasource } = await mountMenus(menus);
         const input = element.querySelectorAll('input[data-attribute="age"]')[2] as HTMLElement;
 
         openRowMenu(element, 'age', 2);
@@ -268,16 +257,13 @@ describe('menus - GridConfig.menus', () => {
     it('expect the menus function to get the same context the entries get', async () => {
         let given: MenuContext | null = null;
         const action = vi.fn();
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: {
-                header: (defaults, context) => {
-                    given = context;
-                    return [{ id: 'test.custom', label: 'Custom', action }, ...defaults];
-                }
+        const menus: GridMenus = {
+            header: (defaults, context) => {
+                given = context;
+                return [{ id: 'test.custom', label: 'Custom', action }, ...defaults];
             }
         };
-        const { element, datasource } = await mountGrid(config);
+        const { element, datasource } = await mountMenus(menus);
 
         openLabelMenu(element, 'lastname');
         menuItem('Custom').click();
@@ -293,11 +279,8 @@ describe('menus - GridConfig.menus', () => {
 
     it('expect the filter menu context to name the column', async () => {
         const action = vi.fn();
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: { filter: (defaults) => [...defaults, { id: 'test.custom', label: 'Custom', action }] }
-        };
-        const { element } = await mountGrid(config);
+        const menus: GridMenus = { filter: (defaults) => [...defaults, { id: 'test.custom', label: 'Custom', action }] };
+        const { element } = await mountMenus(menus);
 
         openFilterMenu(element, 'firstname');
         menuItem('Custom').click();
@@ -311,8 +294,7 @@ describe('menus - GridConfig.menus', () => {
     it('expect visible: false to leave an entry out, called with the context', async () => {
         const visible = vi.fn((context: MenuContext) => context.field === 'age');
         const custom: MenuItem = { id: 'test.custom', label: 'Custom', action: () => {}, visible };
-        const config: GridConfig = { ...simpleConfig(), menus: { row: (defaults) => [...defaults, custom] } };
-        const { element } = await mountGrid(config);
+        const { element } = await mountMenus({ row: (defaults) => [...defaults, custom] });
 
         openRowMenu(element, 'firstname', 0);
         expect(shownIds()).not.toContain('test.custom');
@@ -324,11 +306,10 @@ describe('menus - GridConfig.menus', () => {
 
     it('expect a disabled entry to be shown greyed out, and clicking it to do nothing', async () => {
         const action = vi.fn();
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: { row: (defaults) => [...defaults, { id: 'test.custom', label: 'Custom', action, disabled: () => true }] }
+        const menus: GridMenus = {
+            row: (defaults) => [...defaults, { id: 'test.custom', label: 'Custom', action, disabled: () => true }]
         };
-        const { element } = await mountGrid(config);
+        const { element } = await mountMenus(menus);
 
         openRowMenu(element, 'firstname', 0);
         const custom = entry('test.custom');
@@ -342,13 +323,10 @@ describe('menus - GridConfig.menus', () => {
     });
 
     it('expect an entry that is not disabled to have no aria-disabled', async () => {
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: {
-                row: (defaults) => [...defaults, { id: 'test.custom', label: 'Custom', action: () => {}, disabled: () => false }]
-            }
+        const menus: GridMenus = {
+            row: (defaults) => [...defaults, { id: 'test.custom', label: 'Custom', action: () => {}, disabled: () => false }]
         };
-        const { element } = await mountGrid(config);
+        const { element } = await mountMenus(menus);
 
         openRowMenu(element, 'firstname', 0);
 
@@ -357,17 +335,14 @@ describe('menus - GridConfig.menus', () => {
     });
 
     it('expect a built-in entry to keep working when the list is rebuilt around it', async () => {
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: {
-                // the replace entry first, under a section of its own
-                row: (defaults) => [
-                    { type: 'section', id: 'test.section', label: 'First:' },
-                    ...defaults.filter((e) => e.id === 'row.filter.replace')
-                ]
-            }
+        const menus: GridMenus = {
+            // the replace entry first, under a section of its own
+            row: (defaults) => [
+                { type: 'section', id: 'test.section', label: 'First:' },
+                ...defaults.filter((e) => e.id === 'row.filter.replace')
+            ]
         };
-        const { element, datasource } = await mountGrid(config);
+        const { element, datasource } = await mountMenus(menus);
 
         openRowMenu(element, 'firstname', 1);
         expect(shownIds()).toEqual(['test.section', 'row.filter.replace']);
@@ -376,32 +351,29 @@ describe('menus - GridConfig.menus', () => {
         expect(datasource.getDataRows().map((row) => row.firstname)).toEqual(['first2']);
     });
 
-    it('expect updateConfig() to change the menus, undefined to give back the defaults', async () => {
+    it('expect updateHooks() to change the menus, undefined to give back the defaults', async () => {
         const { element, gridInterface } = await mountGrid();
 
-        gridInterface.updateConfig({ menus: { header: () => [{ id: 'test.only', label: 'Only', action: () => {} }] } });
+        gridInterface.updateHooks({ menus: { header: () => [{ id: 'test.only', label: 'Only', action: () => {} }] } });
         openLabelMenu(element, 'age');
         expect(shownIds()).toEqual(['test.only']);
 
-        gridInterface.updateConfig({ menus: undefined });
+        gridInterface.updateHooks({ menus: undefined });
         openLabelMenu(element, 'age');
         expect(shownIds()).toEqual(MENU_IDS.header.filter((id) => id !== 'header.column.unpin'));
     });
 
     it('expect an action that opens a menu to leave that menu open', async () => {
-        const { element, gridInterface } = await mountGrid({
-            ...simpleConfig(),
-            menus: {
-                row: (defaults) => [
-                    ...defaults,
-                    {
-                        id: 'test.submenu',
-                        label: 'More',
-                        action: () =>
-                            gridInterface.openMenu({ x: 10, y: 10 }, [{ id: 'test.inner', label: 'Inner', action: () => {} }])
-                    }
-                ]
-            }
+        const { element, gridInterface } = await mountMenus({
+            row: (defaults) => [
+                ...defaults,
+                {
+                    id: 'test.submenu',
+                    label: 'More',
+                    action: () =>
+                        gridInterface.openMenu({ x: 10, y: 10 }, [{ id: 'test.inner', label: 'Inner', action: () => {} }])
+                }
+            ]
         });
 
         openRowMenu(element, 'firstname', 0);
@@ -644,11 +616,8 @@ describe('menus - a block of your own (a dropdown grid)', () => {
 
 describe('menus - the value list block', () => {
     it('expect it to be hidden or moved as one entry', async () => {
-        const config: GridConfig = {
-            ...simpleConfig(),
-            menus: { filter: (defaults) => defaults.filter((e) => e.id !== 'filter.values') }
-        };
-        const { element } = await mountGrid(config);
+        const menus: GridMenus = { filter: (defaults) => defaults.filter((e) => e.id !== 'filter.values') };
+        const { element } = await mountMenus(menus);
 
         openFilterMenu(element, 'firstname');
 

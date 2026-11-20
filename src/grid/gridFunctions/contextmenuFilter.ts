@@ -17,7 +17,7 @@ import { placeUnderCell, showMenu } from './showMenu';
 
 /**
  * Opens the filter menu, the right click menu of a header filter: the default entries (see
- * MENU_IDS.filter), changed by `GridConfig.menus.filter`.
+ * MENU_IDS.filter), changed by the `menus.filter` hook.
  */
 export function contextmenuFilter(
     ctx: Grid,
@@ -43,7 +43,7 @@ export function contextmenuFilter(
     };
 
     const defaults = filterMenuEntries(ctx, attribute);
-    const entries = ctx.gridInterface.__getGridConfig().menus?.filter?.(defaults, context) ?? defaults;
+    const entries = ctx.gridInterface.__getHooks().menus?.filter?.(defaults, context) ?? defaults;
 
     showMenu(ctx, entries, context, placeUnderCell(event, cell));
 }

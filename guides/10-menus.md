@@ -7,20 +7,24 @@ The grid has three right click menus:
 - the **filter menu**, on a header filter: clear, is blank, the filter editor, the operator, the
   value list
 
-Each is a list of entries with ids. `menus` in the config changes them: hide entries, reorder them,
+Each is a list of entries with ids. The `menus` hook changes them: hide entries, reorder them,
 change their labels, add your own. `openMenu()` opens a menu of your own, in the same style.
 
 ## Changing the grid's menus
 
-`GridConfig.menus` has a function per menu: `row`, `header` and `filter`. It gets the grid's own
+The `menus` hook has a function per menu: `row`, `header` and `filter`. It gets the grid's own
 entries (`defaults`) and what the menu was opened on (`context`), and returns the entries to show.
-It is called every time the menu opens.
+It is called every time the menu opens. Like the other [hooks](02-grid-config.md#hooks) it is given
+next to the config, not in it: the config stays plain JSON.
 
 ```ts
-import { type GridConfig, isGroupRow } from '@simple-html/grid';
+import { createGrid, type GridConfig, type GridHooks, isGroupRow } from '@simple-html/grid';
 
 const config: GridConfig = {
-    layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['age'], width: 80 }] },
+    layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['age'], width: 80 }] }
+};
+
+const hooks: GridHooks = {
     menus: {
         row: (defaults, context) => [
             // hide built-in entries by id: here the summary
@@ -43,6 +47,8 @@ const config: GridConfig = {
         header: (defaults) => defaults.map((entry) => (entry.id === 'header.column.hide' ? { ...entry, label: 'Hide column' } : entry))
     }
 };
+
+const gridInterface = createGrid(host, { config, datasource, hooks });
 ```
 
 - `defaults` always has every entry of the menu. The ones that do not apply here have a `visible`
@@ -51,8 +57,8 @@ const config: GridConfig = {
 - A section header or a separator is shown as long as it is in the list: hide it together with the
   entries under it.
 - The entries in `defaults` are new objects every time, change them as you like.
-- `updateConfig({ menus })` changes the functions while the grid is shown,
-  `updateConfig({ menus: undefined })` gives back the defaults.
+- `updateHooks({ menus })` changes the functions while the grid is shown,
+  `updateHooks({ menus: undefined })` gives back the defaults.
 
 ```sample context-menu
 ```
@@ -165,11 +171,10 @@ versions, so a menu changed by id keeps working.
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 
 ```ts
-import { type GridConfig, MENU_IDS } from '@simple-html/grid';
+import { type GridHooks, MENU_IDS } from '@simple-html/grid';
 
 // a row menu with the copy entries only
-const config: GridConfig = {
-    layout: { center: [{ fields: ['name'], width: 150 }] },
+const hooks: GridHooks = {
     menus: { row: (defaults) => defaults.filter((entry) => entry.id.startsWith('row.copy')) }
 };
 

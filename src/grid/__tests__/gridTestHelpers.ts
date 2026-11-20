@@ -2,6 +2,7 @@ import { Datasource } from '../../datasource/dataSource';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
+import type { GridHooks } from '../gridHooks';
 import { GridInterface } from '../gridInterface';
 
 /**
@@ -89,11 +90,13 @@ export type MountedGrid = {
 /**
  * builds a datasource + interface + custom element and attaches it to the document
  * @param options the datasource's options, its fields: the types of the columns come from here
+ * @param hooks the grid's hooks: isReadonly, cellClass, menus
  */
 export async function mountGrid(
     config: GridConfig = simpleConfig(),
     data: any[] = simpleData(),
-    options: DatasourceOptions = simpleFields()
+    options: DatasourceOptions = simpleFields(),
+    hooks: GridHooks = {}
 ): Promise<MountedGrid> {
     // the custom element registers itself on import
     await import('../gridElement');
@@ -101,7 +104,7 @@ export async function mountGrid(
     const datasource = new Datasource(options);
     datasource.setData(data);
 
-    const gridInterface = new GridInterface(config, datasource);
+    const gridInterface = new GridInterface(config, datasource, hooks);
 
     // placed by hand, not with createGrid: the tests of createGrid are in createGrid.test.ts.
     // The grid adds its simple-html-grid class itself

@@ -409,6 +409,72 @@ Writing the guides against the code found these. Each fix has a test that fails 
   datasource, the selection sample switches it while the grid is shown, the rows sample has a
   `refilter: false` button
 
+### Phase 2b - save workflow, validation, config as JSON
+
+The grid config, the state and the datasource's `fields` + `formatters` are plain JSON, so they can be
+stored in a backend and given back as they are. What is code - formatters and the grid's functions -
+is registered or given next to the config.
+
+#### ⚠️ Breaking changes
+- **Formatters are named by id**: `FieldConfig.formatter` and the datasource option `formatters` take
+  the id of a registered formatter, not the formatter object -
+  `fields: { price: { type: 'number', formatter: 'numberComma' } }`, `formatters: { date: 'dateDDMMYYYY' }`.
+  Register your own with `registerFormatter('money', money)` before the datasource that names it is
+  made. An id that is not registered throws when the datasource is made, listing the registered ids;
+  a formatter object where an id goes (plain JS) throws a `TypeError` saying how to register it.
+- **`isReadonly`, `cellClass` and `menus` left `GridConfig`**: they are hooks (`GridHooks`), given next
+  to the config - `createGrid(host, { config, datasource, hooks })`, `new GridInterface(config,
+  datasource, hooks)` - and changed with `gridInterface.updateHooks()`. `updateConfig()` no longer
+  takes them. A config with one of them (plain JS, or a config written for a v6 pre-release) throws a
+  `TypeError` naming the hook, in the constructor, `createGrid()` and `updateConfig()`.
+- **`CellClass` moved to the hooks** (`src/grid/gridHooks.ts`); it is still exported from the package
+  root under the same name.
+
+#### Added
+- **`registerFormatter(id, formatter)`**: one registry for the page. The built-ins are registered from
+  the start: `'text'`, `'boolean'`, `'numberDot'`, `'numberComma'`, `'dateYYYYMMDD'`, `'dateDDMMYYYY'`,
+  `'datetimeYYYYMMDD'`, `'datetimeDDMMYYYY'`; the defaults per type are `'text'`, `'numberDot'`,
+  `'boolean'`, `'dateYYYYMMDD'` and `'datetimeYYYYMMDD'`. The datasource looks its ids up once, when it
+  is made: registering an id again replaces it for the datasources made after (a built-in id too). An
+  id that is not text, or a formatter without `format()` / `parse()`, throws a `TypeError`.
+  `getFormatter()` and `getField().formatter` still give the formatter object, and the exported
+  formatter objects stay.
+- **`GridHooks<T>`** - `isReadonly`, `cellClass` and `menus`, with the same behaviour as before. With a
+  `Datasource<Person>` the hooks get typed rows (`EntityUnion<Person>`). `CreateGridOptions.hooks`.
+- **`gridInterface.updateHooks(hooks)`**: only the keys given change, `undefined` removes a hook; the
+  visible cells are rendered again once (a menu uses its new function the next time it opens). The
+  grid keeps a copy of the hooks object.
+- JSDoc with examples on `registerFormatter`, `GridHooks` and `updateHooks`; every built-in formatter
+  says its id. `GridState` and `setState()` say what happens to a `Date` stored as JSON.
+- guides: "Hooks" and "Saving the config" in the grid config guide, "A formatter of your own" and the
+  ids in the formatting guide, "Dates in a saved state" in the state guide; the other guides, README
+  and `MIGRATION.md` (before/after for formatter ids and the hooks) use ids and hooks
+- samples: the formatter samples register their formatters and name them by id, the cell styling
+  sample uses `updateHooks()`, the menus sample gives `menus` as a hook, `samples/grid01` registers its
+  switchable formatters
+
+#### Docs
+- **A `Date` in a stored state**: JSON turns it into its ISO text, and `setState()` keeps the text (it
+  does not turn it back into a `Date`); `getState()` then gives the text. A `date` or `datetime` field
+  reads the text as the same moment - the same rows, the same date in the header filter and
+  `getFilterString()`. A field that is not listed as `date` / `datetime` filters on a `Date` as a date
+  only while it is a `Date`: after JSON it compares the text and filters other rows. The same goes for
+  a `Date` in `initialState`. Pinned by tests, written in the state guide.
+
+#### Internal
+- the grid reads the hooks from the interface (`__getHooks()`), not from the parsed config
+- tests: `configJson.test.ts` - a config with every option, a `getState()` result and the datasource
+  `fields` + `formatters` go through `JSON.parse(JSON.stringify())` unchanged, and a grid made from the
+  copy shows the same (state, rows, markup); the Date cases above. `formatterRegistry.test.ts` - the
+  built-in ids, registering, replacing, the errors. Hook tests moved to `GridHooks` / `updateHooks()`
+  (`cellCallbacks.test.ts`, `gridMenus.test.ts`), plus the `TypeError` for a hook in the config
+  (`createGrid.test.ts`, `updateConfig.test.ts`). Tests that register a formatter use an id of their
+  own, and the one that replaces a built-in id puts it back in `afterAll`
+- typings consumer: `registerFormatter`, formatter ids, hooks, `updateHooks`, typed hook rows,
+  `@ts-expect-error` checks that a formatter object in the options and `isReadonly` / `cellClass` /
+  `menus` in `GridConfig` no longer compile, and a type-level check that `GridConfig`, `GridState` and
+  the `fields` + `formatters` options hold no function anywhere
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

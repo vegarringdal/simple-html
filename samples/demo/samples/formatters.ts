@@ -1,6 +1,6 @@
-// built in: NumberFormatterDot 1234.56 (the default for number), NumberFormatterComma 1234,56,
-// DateFormatterYYYYMMDD 2026-12-31 (the default for date), DateFormatterDDMMYYYY 31.12.2026
-import { type DatasourceOptions, DateFormatterDDMMYYYY, type Formatter, NumberFormatterComma } from '@simple-html/grid';
+// built in, by id: 'numberDot' 1234.56 (the default for number), 'numberComma' 1234,56,
+// 'dateYYYYMMDD' 2026-12-31 (the default for date), 'dateDDMMYYYY' 31.12.2026
+import { type DatasourceOptions, type Formatter, NumberFormatterComma, registerFormatter } from '@simple-html/grid';
 import { baseFields, baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 /**
@@ -18,13 +18,15 @@ const money: Formatter = {
     // take the spaces out, then the built-in parser: '12 345,60' -> 12345.6
     parse: (text) => NumberFormatterComma.parse(text.replaceAll(' ', ''))
 };
+// the options name it by its id: register it before a datasource does
+registerFormatter('money', money);
 
 export const formatters: DemoSample = {
     id: 'formatters',
     title: 'Number & date formatters',
     group: 'Formatting',
     description:
-        'Every field of the datasource has a formatter: format turns a value into the text the grid shows, parse turns typed text back into a value. A field gets the default formatter of its type, unless it has its own. Change the default of a type with the formatters option. Formatters are set when the datasource is made, so the buttons build the grid again - watch the balance and date columns.',
+        'Every field of the datasource has a formatter: format turns a value into the text the grid shows, parse turns typed text back into a value. A field gets the default formatter of its type, unless it has its own. Change the default of a type with the formatters option. The options name a formatter by its id - the built-ins are registered, registerFormatter() adds your own - so they are plain JSON. Formatters are set when the datasource is made, so the buttons build the grid again - watch the balance and date columns.',
     run(stage) {
         const ui = createStage(stage);
 
@@ -41,14 +43,15 @@ export const formatters: DemoSample = {
         });
         ui.button('All numbers comma, all dates DD.MM.YYYY', () => {
             // the default formatter of a type, for every field of that type
-            show({ fields: baseFields(), formatters: { number: NumberFormatterComma, date: DateFormatterDDMMYYYY } });
+            show({ fields: baseFields(), formatters: { number: 'numberComma', date: 'dateDDMMYYYY' } });
         });
         ui.button('Only balance comma', () => {
             // or one field
-            show({ fields: { ...baseFields(), balance: { type: 'number', formatter: NumberFormatterComma } } });
+            show({ fields: { ...baseFields(), balance: { type: 'number', formatter: 'numberComma' } } });
         });
         ui.button('Balance custom (12 345,60)', () => {
-            show({ fields: { ...baseFields(), balance: { type: 'number', formatter: money } } });
+            // your own, registered above
+            show({ fields: { ...baseFields(), balance: { type: 'number', formatter: 'money' } } });
         });
     }
 };

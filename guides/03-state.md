@@ -62,8 +62,8 @@ An empty `sorting` gives the rows back the order they were set in.
 
 ## Saving it
 
-The state is plain data, so it can be stored as JSON. A `Date` in a filter becomes its ISO text,
-which a `date` or `datetime` field filters on the same way.
+The state is plain data, so it can be stored as JSON - with the config, see
+[Saving the config](02-grid-config.md#saving-the-config).
 
 ```ts
 import type { GridState } from '@simple-html/grid';
@@ -85,6 +85,21 @@ if (saved) {
 A saved layout is the layout the user had. When you add a column to the config later, a state saved
 before does not have it. Put a version in the key, and change it when the layout in the config
 changes.
+
+### Dates in a saved state
+
+JSON has no dates: a `Date` in the filter or in a header filter is stored as its ISO text,
+`'2026-11-20T08:15:00.000Z'`, and comes back as that text. `setState()` does not turn it back into a
+`Date`, it keeps what it is given. What that means:
+
+- A `date` or `datetime` field reads the text as the same moment. The same rows are filtered, and
+  the header filter and `getFilterString()` show the same date. `getState()` gives the text from
+  then on, not a `Date`.
+- A field that is not a `date` or `datetime` field in the datasource's `fields` filters on a `Date`
+  as a date only while it is a `Date`. After JSON it is compared as text, and other rows are
+  filtered. List the type of every date field in `fields`.
+
+The same goes for a `Date` in the config's `initialState`, when the config is stored as JSON.
 
 ```sample grid-state
 ```

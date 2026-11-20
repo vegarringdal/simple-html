@@ -1,6 +1,8 @@
 /**
  * Turns the values of a field into text and back. Every field has one: its own (`FieldConfig.formatter`),
- * or the datasource's default for the field's type (`DatasourceOptions.formatters`).
+ * or the datasource's default for the field's type (`DatasourceOptions.formatters`). The options name
+ * a formatter by its id: register yours with {@link registerFormatter}, the built-in ones are
+ * registered from the start.
  *
  * - `format` is used for everything shown as text: the cells, the edit and filter inputs, the group
  *   headers, the footer's filter and `getFilterString()`. Booleans are the exception, the grid's
@@ -18,7 +20,7 @@
  * @sample formatters
  * @example
  * ```ts
- * import { Datasource, type Formatter } from '@simple-html/grid';
+ * import { Datasource, type Formatter, registerFormatter } from '@simple-html/grid';
  *
  * // money with two decimals and a space between the thousands: 12345.6 -> '12 345.60'
  * const money: Formatter = {
@@ -26,10 +28,11 @@
  *     parse: (text) => (text.trim() === '' ? null : Number(text.replaceAll(' ', ''))),
  *     placeholder: '0.00'
  * };
+ * registerFormatter('money', money);
  *
  * const datasource = new Datasource({
  *     fields: {
- *         price: { type: 'number', formatter: money }
+ *         price: { type: 'number', formatter: 'money' }
  *     }
  * });
  * ```

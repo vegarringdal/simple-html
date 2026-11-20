@@ -269,6 +269,17 @@ describe('updateConfig - layout and initialState', () => {
         expect(visibleCenterAttributes(element)).toEqual(['lastname']);
     });
 
+    it('expect a hook given to it (plain js) to throw a TypeError and change nothing', async () => {
+        const { element, gridInterface } = await mountGrid();
+        const config: Partial<GridConfig> = { readonly: false };
+        Reflect.set(config, 'cellClass', () => ({ input: 'x' }));
+
+        expect(() => gridInterface.updateConfig(config)).toThrow(TypeError);
+        expect(() => gridInterface.updateConfig(config)).toThrow('updateHooks({ cellClass })');
+
+        expect(firstInput(element, 'firstname').readOnly).toBe(true);
+    });
+
     it('expect initialState undefined to make resetState() clear everything', async () => {
         const config = simpleConfig();
         config.initialState = { sorting: [{ attribute: 'age', ascending: false }] };

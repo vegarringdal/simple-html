@@ -4,7 +4,8 @@ import {
     type DatasourceOptions,
     type FieldConfig,
     type FieldType,
-    type GridConfig
+    type GridConfig,
+    type GridHooks
 } from '@simple-html/grid';
 
 /**
@@ -109,17 +110,19 @@ export function baseGridConfig(): GridConfig {
 /**
  * creates the datasource and puts a grid for it in host, with createGrid
  * @param options the datasource options, default the fields of generateRows()
+ * @param hooks the grid's functions: isReadonly, cellClass, menus
  */
 export function mountGrid(
     host: HTMLElement,
     config: GridConfig,
     rows?: any[],
-    options: DatasourceOptions = { fields: baseFields() }
+    options: DatasourceOptions = { fields: baseFields() },
+    hooks: GridHooks = {}
 ) {
     const datasource = new Datasource(options);
     datasource.setData(rows || generateRows());
 
-    const gridInterface = createGrid(host, { config, datasource });
+    const gridInterface = createGrid(host, { config, datasource, hooks });
 
     return { datasource, gridInterface };
 }

@@ -1,4 +1,4 @@
-import { type DatasourceOptions, type Formatter, TextFormatter } from '@simple-html/grid';
+import { type DatasourceOptions, type Formatter, registerFormatter, TextFormatter } from '@simple-html/grid';
 import { baseFields, baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 /**
@@ -18,12 +18,17 @@ const upperCase: Formatter = {
  */
 const compactPhone: Formatter = { ...TextFormatter, format: (value) => TextFormatter.format(value).replaceAll(' ', '') };
 
+// the datasource options name a formatter by its id, so they are plain JSON. Register the
+// formatters when the page loads, before a datasource names them
+registerFormatter('upperCase', upperCase);
+registerFormatter('compactPhone', compactPhone);
+
 export const customFormatter: DemoSample = {
     id: 'custom-formatter',
     title: 'Custom formatter',
     group: 'Formatting',
     description:
-        'A formatter is a plain object: format turns a value into the text the grid shows - in the cell, the edit input, the filter and the group header - and parse turns what the user typed back into the value to store. Set one per field in the datasource fields. Here country shows in upper case and what you type is stored capitalized, phone shows without spaces. Log a row to see the stored values.',
+        'A formatter is a plain object: format turns a value into the text the grid shows - in the cell, the edit input, the filter and the group header - and parse turns what the user typed back into the value to store. Register it under an id with registerFormatter(), and name it by that id on a field in the datasource fields - so the fields stay plain JSON. Here country shows in upper case and what you type is stored capitalized, phone shows without spaces. Log a row to see the stored values.',
     run(stage) {
         const ui = createStage(stage);
 
@@ -35,8 +40,8 @@ export const customFormatter: DemoSample = {
         };
 
         ui.button('Upper case country, compact phone', () => {
-            // a formatter per field. country and phone are text fields, text is the default type
-            show({ fields: { ...baseFields(), country: { formatter: upperCase }, phone: { formatter: compactPhone } } });
+            // a formatter per field, by its id. country and phone are text fields, text is the default type
+            show({ fields: { ...baseFields(), country: { formatter: 'upperCase' }, phone: { formatter: 'compactPhone' } } });
             ui.log('country shows upper case - type in a cell, it is stored capitalized');
         });
         ui.button('Default formatters', () => {

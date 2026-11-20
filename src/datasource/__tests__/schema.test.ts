@@ -5,6 +5,7 @@ import { DataContainer } from '../dataContainer';
 import { Datasource } from '../dataSource';
 import type { FieldConfig, FieldType } from '../field';
 import type { Formatter } from '../formatter';
+import { registerFormatter } from '../formatterRegistry';
 import { NumberFormatterComma } from '../numberFormatterComma';
 import { NumberFormatterDot } from '../numberFormatterDot';
 import { TextFormatter } from '../textFormatter';
@@ -27,7 +28,7 @@ describe('schema - getField', () => {
     });
 
     it('expect the label, type and formatter given to be used', () => {
-        const ds = new Datasource({ fields: { price: { type: 'number', label: 'Price', formatter: NumberFormatterComma } } });
+        const ds = new Datasource({ fields: { price: { type: 'number', label: 'Price', formatter: 'numberComma' } } });
         expect(ds.getField('price')).toEqual({ name: 'price', type: 'number', label: 'Price', formatter: NumberFormatterComma });
     });
 
@@ -66,7 +67,9 @@ describe('schema - getField', () => {
 
 describe('schema - getFormatter', () => {
     const own: Formatter = { format: () => 'own', parse: (text) => text };
-    const ds = new Datasource({ fields: { a: { type: 'text', formatter: own }, born: 'date', n: 'number' } });
+    // an id of this file's own: the registry is shared by the tests of this file
+    registerFormatter('schema.own', own);
+    const ds = new Datasource({ fields: { a: { type: 'text', formatter: 'schema.own' }, born: 'date', n: 'number' } });
 
     it("expect the field's own formatter, else the default for its type", () => {
         expect(ds.getFormatter('a')).toBe(own);
@@ -87,7 +90,7 @@ describe('schema - getFormatter', () => {
     });
 
     it('expect another type to follow the formatters option', () => {
-        const withDefaults = new Datasource({ formatters: { date: DateFormatterDDMMYYYY } });
+        const withDefaults = new Datasource({ formatters: { date: 'dateDDMMYYYY' } });
         expect(withDefaults.getFormatter('value', 'date')).toBe(DateFormatterDDMMYYYY);
     });
 });

@@ -1,10 +1,11 @@
 import type { Datasource } from '../datasource/dataSource';
 import type { GridConfig } from './gridConfig';
 import { GridElement } from './gridElement';
+import type { GridHooks } from './gridHooks';
 import { GridInterface } from './gridInterface';
 
 /**
- * What {@link createGrid} needs: the config and the datasource.
+ * What {@link createGrid} needs: the config and the datasource, and the hooks if any.
  *
  * @typeParam T the type of the rows
  *
@@ -12,18 +13,24 @@ import { GridInterface } from './gridInterface';
  * ```ts
  * import { type CreateGridOptions, createGrid, Datasource } from '@simple-html/grid';
  *
- * const options: CreateGridOptions<{ name: string }> = {
- *     config: { layout: { center: [{ fields: ['name'], width: 150 }] } },
- *     datasource: new Datasource<{ name: string }>()
+ * const options: CreateGridOptions<{ name: string; locked: boolean }> = {
+ *     config: { readonly: false, layout: { center: [{ fields: ['name'], width: 150 }] } },
+ *     datasource: new Datasource<{ name: string; locked: boolean }>(),
+ *     hooks: { isReadonly: (row) => (row.locked ? true : null) }
  * };
  * const gridInterface = createGrid(host, options);
  * ```
  */
 export interface CreateGridOptions<T> {
-    /** the columns, the layout and the options, see {@link GridConfig} */
+    /** the columns, the layout and the options, see {@link GridConfig}. Plain JSON */
     config: GridConfig;
     /** the rows, see {@link Datasource} */
     datasource: Datasource<T>;
+    /**
+     * optional: the functions - `isReadonly`, `cellClass` and `menus`, see {@link GridHooks}. Change
+     * them later with `gridInterface.updateHooks()`
+     */
+    hooks?: GridHooks<T>;
 }
 
 /**
@@ -37,8 +44,9 @@ export interface CreateGridOptions<T> {
  * see {@link GridElement}.
  *
  * @param host the container, the element is added as its last child
- * @param options the config and the datasource
+ * @param options the config, the datasource and the hooks
  * @returns the grid interface, to work with the grid
+ * @throws a `TypeError` when the config has `isReadonly`, `cellClass` or `menus`: those are hooks
  *
  * @sample basic-grid
  * @example
@@ -61,7 +69,7 @@ export interface CreateGridOptions<T> {
  * ```
  */
 export function createGrid<T>(host: HTMLElement, options: CreateGridOptions<T>): GridInterface<T> {
-    const gridInterface = new GridInterface(options.config, options.datasource);
+    const gridInterface = new GridInterface(options.config, options.datasource, options.hooks);
 
     const element = new GridElement();
     element.style.width = '100%';

@@ -2,7 +2,8 @@ import type { Formatter } from './formatter';
 import { formatNumber, parseNumber } from './numberFormatterDot';
 
 /**
- * Formatter for numbers with a comma as the decimal separator: `12,5`.
+ * Formatter for numbers with a comma as the decimal separator: `12,5`. Registered as `'numberComma'`,
+ * the options name it by that id (see {@link registerFormatter}).
  *
  * - `format` - a number as text with a comma, `12.5` -> `'12,5'`. Anything that does not read as a
  *   number (null, undefined, `'abc'`) gives `''`
@@ -19,15 +20,15 @@ import { formatNumber, parseNumber } from './numberFormatterDot';
  * NumberFormatterComma.format(1234.5); // '1234,5'
  * NumberFormatterComma.parse('12,5'); // 12.5
  *
- * // one field
+ * // one field, by its id
  * const datasource = new Datasource({
- *     fields: { price: { type: 'number', formatter: NumberFormatterComma } }
+ *     fields: { price: { type: 'number', formatter: 'numberComma' } }
  * });
  *
  * // or every number field
  * const datasource2 = new Datasource({
  *     fields: { price: 'number', amount: 'number' },
- *     formatters: { number: NumberFormatterComma }
+ *     formatters: { number: 'numberComma' }
  * });
  * ```
  */

@@ -22,6 +22,7 @@ export {
     where
 } from './datasource/filterExpression';
 export type { Formatter } from './datasource/formatter';
+export { registerFormatter } from './datasource/formatterRegistry';
 export type { GroupArgument } from './datasource/groupArgument';
 export { NumberFormatterComma } from './datasource/numberFormatterComma';
 export { NumberFormatterDot } from './datasource/numberFormatterDot';
@@ -38,12 +39,13 @@ export { DateInterface } from './date/dateInterface';
 export type { IDateConfig, IStyle } from './date/interfaces';
 export type { EventHandler } from './emitter';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
-export type { CellClass, ColumnConfig, GridConfig, GridLayout, GridState, HeaderFilter, LayoutColumn } from './grid/gridConfig';
+export type { ColumnConfig, GridConfig, GridLayout, GridState, HeaderFilter, LayoutColumn } from './grid/gridConfig';
 export { GridElement } from './grid/gridElement';
 export type { GridCellEventData, GridEvents } from './grid/gridEvents';
 export type { ColType } from './grid/gridFunctions/colType';
 export type { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
 export { TOOLTIPS } from './grid/gridFunctions/tooltip';
+export type { CellClass, GridHooks } from './grid/gridHooks';
 export { GridInterface } from './grid/gridInterface';
 export {
     type GridMenus,

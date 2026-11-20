@@ -2,7 +2,8 @@ import { formatDate, parseDate } from './dateFormatterParts';
 import type { Formatter } from './formatter';
 
 /**
- * Formatter for dates as `YYYY-MM-DD`, e.g. `2026-11-20`. The default for `date` fields.
+ * Formatter for dates as `YYYY-MM-DD`, e.g. `2026-11-20`. The default for `date` fields. Registered as
+ * `'dateYYYYMMDD'`, the options name it by that id (see {@link registerFormatter}).
  *
  * - `format` - a `Date` (or a date string/timestamp) as `2026-11-20`, `''` for a blank or invalid date
  * - `parse` - `'2026-11-20'` as a `Date`. A month or day left out is the current one
@@ -22,10 +23,10 @@ import type { Formatter } from './formatter';
  * DateFormatterYYYYMMDD.parse('2026-11-20'); // Date 2026-11-20, current time of day
  * DateFormatterYYYYMMDD.parseFilter('2026-11-20'); // Date 2026-11-20 00:00:00
  *
- * // the default for date fields, set it on one field or as the default to be explicit
+ * // the default for date fields, set it by its id on one field or as the default to be explicit
  * const datasource = new Datasource({
- *     fields: { born: { type: 'date', formatter: DateFormatterYYYYMMDD } },
- *     formatters: { date: DateFormatterYYYYMMDD }
+ *     fields: { born: { type: 'date', formatter: 'dateYYYYMMDD' } },
+ *     formatters: { date: 'dateYYYYMMDD' }
  * });
  * ```
  */

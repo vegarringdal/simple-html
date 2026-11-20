@@ -6,6 +6,10 @@ tracks the edits for a server. The grid shows it with virtual scrolling, pinned 
 header filters, a filter editor, grouping, editing and right click menus. Its only dependency is
 lit-html, which is installed with it.
 
+The grid's config and the datasource's fields are plain JSON, so they can be stored - in a backend,
+say. Formatters are named by id (`registerFormatter()`), and the functions of a grid - readonly
+cells and css classes from the row, changes to the menus - are hooks, given next to the config.
+
 Docs, guides and live samples: https://airemote.github.io/simple-html/. The guides are also in this
 repo, see [Guides](#guides) below.
 
@@ -61,6 +65,8 @@ const config: GridConfig = {
 const gridInterface = createGrid(document.getElementById('grid')!, { config, datasource });
 
 gridInterface.updateConfig({ readonly: false }); // the grid is readonly by default
+// a function is a hook, not part of the config: here a css class on the cells of the young
+gridInterface.updateHooks({ cellClass: (row, field) => (field === 'age' && row.age < 18 ? { input: 'young' } : null) });
 const state = gridInterface.getState(); // what the user changed: sorting, filters, column order ...
 gridInterface.destroy(); // done with it
 ```

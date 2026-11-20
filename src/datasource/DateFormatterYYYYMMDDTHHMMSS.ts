@@ -3,7 +3,8 @@ import type { Formatter } from './formatter';
 
 /**
  * Formatter for a date with time as `YYYY-MM-DDTHH:MM:SS`, e.g. `2026-11-20T13:45:12`. The default
- * for `datetime` fields.
+ * for `datetime` fields. Registered as `'datetimeYYYYMMDD'`, the options name it by that id (see
+ * {@link registerFormatter}).
  *
  * - `format` - a `Date` (or a date string/timestamp) as `2026-11-20T13:45:12`, `''` for a blank or
  *   invalid date

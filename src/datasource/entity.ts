@@ -38,7 +38,7 @@ export interface Entity {
     __rowState?: string;
     /**
      * an error message for the row, set with `datasource.getDataContainer().setErrors()`. `null` or
-     * `undefined` for no error. The grid does not show it: read it in `GridConfig.cellClass`
+     * `undefined` for no error. The grid does not show it: read it in the `cellClass` hook ({@link GridHooks})
      */
     __rowError?: string | null;
     /**

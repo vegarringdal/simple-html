@@ -2,7 +2,7 @@
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { or, where } from '../../datasource/filterExpression';
-import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { mountGrid, simpleConfig, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { headerFilterInput, menuItem, menuItemsExact, openRowMenu, typeInHeaderFilter } from './interactionTestHelpers';
 
 /**
@@ -28,11 +28,10 @@ beforeEach(() => {
 });
 
 describe('row menu - clear', () => {
-    it('expect clear to skip selected rows the isReadonly callback marks readonly', async () => {
-        const { element, datasource } = await mountGrid(
-            { ...simpleConfig(), readonly: false, isReadonly: (row) => (row.firstname === 'b' ? true : null) },
-            data()
-        );
+    it('expect clear to skip selected rows the isReadonly hook marks readonly', async () => {
+        const { element, datasource } = await mountGrid({ ...simpleConfig(), readonly: false }, data(), simpleFields(), {
+            isReadonly: (row) => (row.firstname === 'b' ? true : null)
+        });
         datasource.getSelection().selectRowRange(0, 2);
 
         openRowMenu(element, 'lastname', 0);

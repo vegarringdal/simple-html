@@ -6,11 +6,11 @@ import type { Formatter } from './formatter';
  *
  * | type | value | sorts / filters | default formatter |
  * | --- | --- | --- | --- |
- * | `'text'` | string | as text | {@link TextFormatter} |
- * | `'number'` | number | as numbers | {@link NumberFormatterDot} |
- * | `'boolean'` | boolean | true / false | {@link BooleanFormatter} |
- * | `'date'` | `Date` | on the day, the time of day is ignored | {@link DateFormatterYYYYMMDD} |
- * | `'datetime'` | `Date` | on the full timestamp | {@link DateFormatterYYYYMMDDTHHMMSS} |
+ * | `'text'` | string | as text | `'text'`, {@link TextFormatter} |
+ * | `'number'` | number | as numbers | `'numberDot'`, {@link NumberFormatterDot} |
+ * | `'boolean'` | boolean | true / false | `'boolean'`, {@link BooleanFormatter} |
+ * | `'date'` | `Date` | on the day, the time of day is ignored | `'dateYYYYMMDD'`, {@link DateFormatterYYYYMMDD} |
+ * | `'datetime'` | `Date` | on the full timestamp | `'datetimeYYYYMMDD'`, {@link DateFormatterYYYYMMDDTHHMMSS} |
  *
  * A field that is not listed in `fields` is `'text'`.
  *
@@ -49,16 +49,19 @@ export function isFieldType(value: unknown): value is FieldType {
  * How one field of the datasource is described in `DatasourceOptions.fields`. All of it is
  * optional, and writing just the type (`born: 'date'`) is the same as `born: { type: 'date' }`.
  *
+ * It is plain JSON: the formatter is named by its id (see {@link registerFormatter}), so the fields
+ * can be stored, e.g. in a backend.
+ *
  * @sample custom-formatter
  * @example
  * ```ts
- * import { Datasource, NumberFormatterComma } from '@simple-html/grid';
+ * import { Datasource } from '@simple-html/grid';
  *
  * const datasource = new Datasource({
  *     fields: {
  *         born: 'date',
  *         age: { type: 'number', label: 'Age (years)' },
- *         price: { type: 'number', formatter: NumberFormatterComma },
+ *         price: { type: 'number', formatter: 'numberComma' }, // a built-in formatter, by its id
  *         company: { label: 'Company name' } // a text field with a label
  *     }
  * });
@@ -77,10 +80,12 @@ export interface FieldConfig {
     label?: string;
 
     /**
-     * the formatter for this field, default the datasource's formatter for the field's type
-     * (see `DatasourceOptions.formatters`)
+     * the id of the field's formatter: a built-in one (`'numberComma'`, `'dateDDMMYYYY'` ...) or one
+     * registered with {@link registerFormatter}. Default the datasource's formatter for the field's
+     * type (see `DatasourceOptions.formatters`). An id that is not registered throws when the
+     * datasource is made
      */
-    formatter?: Formatter;
+    formatter?: string;
 }
 
 /**

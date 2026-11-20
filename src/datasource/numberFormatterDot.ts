@@ -42,6 +42,7 @@ export function formatNumber(value: unknown, separator: '.' | ','): string {
 
 /**
  * Formatter for numbers with a dot as the decimal separator: `12.5`. The default for `number` fields.
+ * Registered as `'numberDot'`, the options name it by that id (see {@link registerFormatter}).
  *
  * - `format` - a number as text, `12.5` -> `'12.5'`. Anything that does not read as a number
  *   (null, undefined, `'abc'`) gives `''`
@@ -53,18 +54,19 @@ export function formatNumber(value: unknown, separator: '.' | ','): string {
  * @sample formatters
  * @example
  * ```ts
- * import { Datasource, NumberFormatterDot } from '@simple-html/grid';
+ * import { Datasource, NumberFormatterDot, registerFormatter } from '@simple-html/grid';
  *
  * NumberFormatterDot.format(1234.5); // '1234.5'
  * NumberFormatterDot.parse('12,5'); // 12.5
  *
- * // the default, set it to be explicit
+ * // the default, set it by its id to be explicit
  * const datasource = new Datasource({
- *     fields: { price: { type: 'number', formatter: NumberFormatterDot } }
+ *     fields: { price: { type: 'number', formatter: 'numberDot' } }
  * });
  *
- * // a variant: spread it and replace what you need
+ * // a variant: spread it, replace what you need and register it under an id of your own
  * const twoDecimals = { ...NumberFormatterDot, format: (value: unknown) => (typeof value === 'number' ? value.toFixed(2) : '') };
+ * registerFormatter('twoDecimals', twoDecimals);
  * ```
  */
 export const NumberFormatterDot = {

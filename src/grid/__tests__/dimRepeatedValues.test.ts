@@ -2,6 +2,7 @@
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Formatter } from '../../datasource/formatter';
+import { registerFormatter } from '../../datasource/formatterRegistry';
 import type { GridConfig } from '../gridConfig';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
@@ -94,13 +95,14 @@ describe('dimRepeatedValues - field formatters', () => {
      */
     it('expect two different source values that display the same to count as repeated', async () => {
         const same: Formatter = { format: () => 'same for everything', parse: (text) => text };
+        registerFormatter('dimRepeatedValues.same', same);
         const mounted = await mountGrid(
             dimConfig(),
             [
                 { firstname: 'aaa', lastname: 'x', age: 1 },
                 { firstname: 'bbb', lastname: 'x', age: 2 }
             ],
-            { fields: { age: 'number', firstname: { formatter: same } } }
+            { fields: { age: 'number', firstname: { formatter: 'dimRepeatedValues.same' } } }
         );
 
         expect(repeatedFlags(mounted.element, 'firstname')).toEqual(['false', 'true']);

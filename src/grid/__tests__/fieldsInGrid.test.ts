@@ -1,10 +1,9 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DateFormatterDDMMYYYY } from '../../datasource/DateFormatterDDMMYYYY';
 import { and, where } from '../../datasource/filterExpression';
 import type { Formatter } from '../../datasource/formatter';
-import { NumberFormatterComma } from '../../datasource/numberFormatterComma';
+import { registerFormatter } from '../../datasource/formatterRegistry';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { mountGrid, renderedColumn, stubCanvas, stubElementSizes } from './gridTestHelpers';
@@ -47,7 +46,7 @@ const headerLabel = (element: GridElement, attribute: string) =>
 describe('fields in the grid - formatters', () => {
     it("expect a cell to show the field's own formatter, and typing to be parsed by it", async () => {
         const { element, datasource } = await mountGrid(columns('price'), [{ price: 12.5 }], {
-            fields: { price: { type: 'number', formatter: NumberFormatterComma } }
+            fields: { price: { type: 'number', formatter: 'numberComma' } }
         });
         expect(renderedColumn(element, 'price')).toEqual(['12,5']);
 
@@ -57,8 +56,10 @@ describe('fields in the grid - formatters', () => {
 
     it('expect a custom formatter to be used for a text field', async () => {
         const upper: Formatter = { format: (value) => String(value ?? '').toUpperCase(), parse: (text) => text.toLowerCase() };
+        // an id of this test's own: the registry is shared by the tests of this file
+        registerFormatter('fieldsInGrid.upper', upper);
         const { element, datasource } = await mountGrid(columns('name'), [{ name: 'ann' }], {
-            fields: { name: { formatter: upper } }
+            fields: { name: { formatter: 'fieldsInGrid.upper' } }
         });
         expect(renderedColumn(element, 'name')).toEqual(['ANN']);
 
@@ -72,7 +73,7 @@ describe('fields in the grid - formatters', () => {
             [{ born: new Date(2001, 4, 17), hired: new Date(2020, 0, 2) }],
             {
                 fields: { born: 'date', hired: 'date' },
-                formatters: { date: DateFormatterDDMMYYYY }
+                formatters: { date: 'dateDDMMYYYY' }
             }
         );
         expect(renderedColumn(element, 'born')).toEqual(['17.05.2001']);
@@ -94,7 +95,7 @@ describe('fields in the grid - formatters', () => {
 
     it("expect the header filter placeholder to come from the field's formatter", async () => {
         const { element } = await mountGrid(columns('d', 't', 'e', 'name'), [{}], {
-            fields: { d: 'date', t: 'datetime', e: { type: 'date', formatter: DateFormatterDDMMYYYY } }
+            fields: { d: 'date', t: 'datetime', e: { type: 'date', formatter: 'dateDDMMYYYY' } }
         });
         expect(headerFilterInput(element, 'd').placeholder).toEqual('YYYY-MM-DD');
         expect(headerFilterInput(element, 't').placeholder).toEqual('YYYY-MM-DDTHH:MM:SS');
@@ -105,9 +106,9 @@ describe('fields in the grid - formatters', () => {
 
 describe('fields in the grid - booleans', () => {
     it('expect the checkbox to show the raw value, not a formatted one', async () => {
-        const never: Formatter = { format: () => 'false', parse: () => false };
+        registerFormatter('fieldsInGrid.never', { format: () => 'false', parse: () => false });
         const { element } = await mountGrid(columns('active'), [{ active: true }, { active: 'yes' }, { active: null }], {
-            fields: { active: { type: 'boolean', formatter: never } }
+            fields: { active: { type: 'boolean', formatter: 'fieldsInGrid.never' } }
         });
         expect([0, 1, 2].map((row) => cellInput(element, 'active', row).checked)).toEqual([true, true, false]);
     });
@@ -143,7 +144,7 @@ describe('fields in the grid - dynamicCellTypeColumn', () => {
     ];
 
     it('expect each row to be formatted with the default formatter of its own type', async () => {
-        const { element } = await mountGrid(config(), rows(), { formatters: { number: NumberFormatterComma } });
+        const { element } = await mountGrid(config(), rows(), { formatters: { number: 'numberComma' } });
         const values = renderedColumn(element, 'value');
         expect(values.slice(0, 4)).toEqual(['hello', '1234,5', '2026-08-15', '2026-08-15T10:30:00']);
         // the boolean row is a checkbox, a value that is no type leaves the cell text
@@ -271,7 +272,7 @@ describe('fields in the grid - filter editor', () => {
                 { name: 'a', price: 12.5 },
                 { name: 'b', price: 3 }
             ],
-            { fields: { price: { type: 'number', formatter: NumberFormatterComma } } }
+            { fields: { price: { type: 'number', formatter: 'numberComma' } } }
         );
         datasource.filter(and(where('price', 'EQUAL', 3)));
         gridInterface.openFilterEditor();

@@ -112,6 +112,39 @@ describe('createGrid', () => {
         // stubCanvas measures 7px a character: every column got a width from its text
         expect(gridInterface.getState().layout.center.map((column) => column.width)).not.toEqual([100, 100, 100]);
     });
+
+    it('expect the hooks to reach the grid', () => {
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        const datasource = new Datasource(simpleFields());
+        datasource.setData(simpleData());
+
+        createGrid(host, {
+            config: { ...simpleConfig(), readonly: false },
+            datasource,
+            hooks: { isReadonly: (row) => row.age > 20, cellClass: () => ({ input: 'from-hook' }) }
+        });
+
+        const inputs = Array.from(host.querySelectorAll<HTMLInputElement>('input[data-attribute="age"]'));
+        expect(inputs.map((input) => input.readOnly)).toEqual([false, false, true, true, true]);
+        expect(inputs.every((input) => input.classList.contains('from-hook'))).toBe(true);
+    });
+
+    it('expect a hook in the config (plain js, or a v6 pre-release config) to throw, and nothing added', () => {
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        for (const hook of ['isReadonly', 'cellClass', 'menus']) {
+            const config = simpleConfig();
+            Reflect.set(config, hook, hook === 'menus' ? {} : () => null);
+
+            expect(() => createGrid(host, { config, datasource: new Datasource() })).toThrow(
+                new TypeError(
+                    `GridConfig: '${hook}' is a hook, not part of the config: createGrid(host, { config, datasource, hooks: { ${hook} } }), or gridInterface.updateHooks({ ${hook} })`
+                )
+            );
+        }
+        expect(host.children).toHaveLength(0);
+    });
 });
 
 describe('a grid element placed by hand', () => {

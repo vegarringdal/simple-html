@@ -26,7 +26,7 @@ const config: GridConfig = {
 
 Or turn it on and off while the grid is shown: `gridInterface.updateConfig({ readonly: false })`.
 
-In an editable grid, a cell is readonly when the config's `isReadonly(row, field)` returns `true`,
+In an editable grid, a cell is readonly when the `isReadonly(row, field)` hook returns `true`,
 and editable when it returns `false`. When it returns nothing (or there is none), the column's
 `readonly` option decides. See [Grid config](02-grid-config.md#readonly-and-css-classes-from-the-row)
 for `isReadonly`. Readonly cells of an editable grid are shown with stripes.
@@ -186,15 +186,17 @@ Or show `__rowState` in a column of its own: put `'__rowState'` in the layout, a
 the key as text to the message. Every row not in the map gets `null`:
 
 ```ts
-import { createGrid, type GridConfig } from '@simple-html/grid';
+import { createGrid, type GridConfig, type GridHooks } from '@simple-html/grid';
 
 const config: GridConfig = {
     readonly: false,
-    layout: { center: [{ fields: ['name'], width: 150 }] },
+    layout: { center: [{ fields: ['name'], width: 150 }] }
+};
+const hooks: GridHooks = {
     // .row-error { position: absolute; inset: 0; background: rgba(220, 38, 38, 0.2); }
     cellClass: (row) => (row.__rowError ? { background: 'row-error' } : null)
 };
-const grid = createGrid(host, { config, datasource });
+const grid = createGrid(host, { config, datasource, hooks });
 
 datasource.getDataContainer().setErrors(new Map([['2', 'The name is taken']]));
 grid.refresh();
@@ -203,8 +205,8 @@ const row = datasource.getDataRows()[0];
 console.log(row.__rowError); // the message, or null
 ```
 
-The grid does not show `__rowError` by itself: use `cellClass` as above, and read the message from
-the row for a tooltip or a list next to the grid. Call `refresh()` after `setErrors()`.
+The grid does not show `__rowError` by itself: use the `cellClass` hook as above, and read the
+message from the row for a tooltip or a list next to the grid. Call `refresh()` after `setErrors()`.
 
 ## Mandatory fields and placeholders
 

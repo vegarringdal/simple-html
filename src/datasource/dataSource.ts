@@ -1,9 +1,6 @@
 import { Emitter, type EventHandler } from '../emitter';
 import { assertOptions } from './assertOptions';
-import { BooleanFormatter } from './booleanFormatter';
 import type { Changes } from './changes';
-import { DateFormatterYYYYMMDD } from './DateFormatterYYYYMMDD';
-import { DateFormatterYYYYMMDDTHHMMSS } from './DateFormatterYYYYMMDDTHHMMSS';
 import { DataContainer } from './dataContainer';
 import type { DatasourceEvents } from './datasourceEvents';
 import type { DatasourceOptions } from './datasourceOptions';
@@ -12,15 +9,14 @@ import { type Field, type FieldConfig, type FieldType, isFieldType } from './fie
 import { Filter, isIgnoredCondition } from './filter';
 import { type FilterCondition, type FilterExpression, isFilterGroup } from './filterExpression';
 import type { Formatter } from './formatter';
+import { DEFAULT_FORMATTER_IDS, getRegisteredFormatter } from './formatterRegistry';
 import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
-import { NumberFormatterDot } from './numberFormatterDot';
 import { OPERATORS } from './OPERATORS';
 import { Selection } from './selection';
 import type { SelectionMode } from './selectionMode';
 import { Sort } from './sort';
 import type { SortArgument } from './sortArgument';
-import { TextFormatter } from './textFormatter';
 
 /**
  * A data row as the datasource hands it out: your object `T` and the fields of an {@link Entity} - the
@@ -196,9 +192,16 @@ export class Datasource<T = any> {
     private __fields = new Map<string, FieldConfig>();
 
     /**
-     * the default formatter per type, the built-in ones with the `formatters` option on top
+     * the default formatter per type, the built-in ones with the `formatters` option on top. Looked up
+     * in the registry when the datasource is made
      */
     private __formatters: Record<FieldType, Formatter>;
+
+    /**
+     * the formatters of the fields that have one of their own (`FieldConfig.formatter`), looked up in
+     * the registry when the datasource is made
+     */
+    private __fieldFormatters = new Map<string, Formatter>();
 
     /**
      * The current row: the one last clicked, selected or set with `setRowAsCurrentEntity()`. Use it
@@ -235,8 +238,9 @@ export class Datasource<T = any> {
      * @param options the key, the fields and their formatters, the selection mode, or a data
      * container shared with another datasource - all optional, see {@link DatasourceOptions}
      * @throws when `key` and `container` are both given and `key` is not the container's key, a
-     * field has a type that does not exist, or a field has another type than in a datasource made
-     * earlier on the same `container`
+     * field has a type that does not exist, a formatter id is not registered (see
+     * {@link registerFormatter}), or a field has another type than in a datasource made earlier on
+     * the same `container`
      *
      * @example
      * ```ts
@@ -258,13 +262,17 @@ export class Datasource<T = any> {
         }
         this.__dataContainer = container || new DataContainer(key);
 
+        // the formatters are ids in the options, looked up once, here: an id that is not registered
+        // throws now, not when a cell is rendered
         const formatters = options.formatters || {};
+        const defaultFor = (type: FieldType) =>
+            getRegisteredFormatter(formatters[type] ?? DEFAULT_FORMATTER_IDS[type], `formatters.${type}`);
         this.__formatters = {
-            text: formatters.text ?? TextFormatter,
-            number: formatters.number ?? NumberFormatterDot,
-            boolean: formatters.boolean ?? BooleanFormatter,
-            date: formatters.date ?? DateFormatterYYYYMMDD,
-            datetime: formatters.datetime ?? DateFormatterYYYYMMDDTHHMMSS
+            text: defaultFor('text'),
+            number: defaultFor('number'),
+            boolean: defaultFor('boolean'),
+            date: defaultFor('date'),
+            datetime: defaultFor('datetime')
         };
 
         for (const [name, field] of Object.entries(options.fields || {})) {
@@ -272,6 +280,9 @@ export class Datasource<T = any> {
             // a typo in plain js would otherwise show up much later, as a field without a formatter
             if (config.type !== undefined && !isFieldType(config.type)) {
                 throw new Error(`Datasource: field '${name}' has an unknown type '${config.type}'`);
+            }
+            if (config.formatter !== undefined) {
+                this.__fieldFormatters.set(name, getRegisteredFormatter(config.formatter, `field '${name}'`));
             }
             this.__fields.set(name, config);
         }
@@ -317,6 +328,7 @@ export class Datasource<T = any> {
      *
      * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD }
      * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter }
+     * // formatter: the formatter object, looked up by its id when the datasource was made
      * ```
      */
     public getField(name: string): Field {
@@ -331,7 +343,8 @@ export class Datasource<T = any> {
 
     /**
      * The formatter for a field: its own (`FieldConfig.formatter`), else the datasource's default for
-     * its type.
+     * its type. The formatter object, as registered under the id the options name (see
+     * {@link registerFormatter}) when the datasource was made.
      *
      * @param field the field name. A field that is not listed in `fields` is `'text'`
      * @param type use this type instead of the field's. When it is not the field's type, the default
@@ -340,10 +353,10 @@ export class Datasource<T = any> {
      *
      * @example
      * ```ts
-     * import { Datasource, NumberFormatterComma } from '@simple-html/grid';
+     * import { Datasource } from '@simple-html/grid';
      *
      * const datasource = new Datasource({
-     *     fields: { price: { type: 'number', formatter: NumberFormatterComma }, born: 'date' }
+     *     fields: { price: { type: 'number', formatter: 'numberComma' }, born: 'date' }
      * });
      *
      * datasource.getFormatter('price').format(12.5); // '12,5'
@@ -357,7 +370,7 @@ export class Datasource<T = any> {
         if (type && type !== fieldType) {
             return this.__formatters[type];
         }
-        return config?.formatter ?? this.__formatters[fieldType];
+        return this.__fieldFormatters.get(field) ?? this.__formatters[fieldType];
     }
 
     /**

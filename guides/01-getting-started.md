@@ -44,6 +44,10 @@ A grid needs two things:
 - a `Datasource`: your rows, and the type of each field that is not text
 - a `GridConfig`: the columns to show and the options of the grid
 
+Both take plain data, JSON, so they can be stored. What has to be code - a cell readonly from its
+row, css classes from the row, changes to the menus - are hooks, given next to them:
+`createGrid(host, { config, datasource, hooks })`, see [Grid config](02-grid-config.md#hooks).
+
 `createGrid()` puts the grid in a container and returns the grid interface, the object you work
 with the grid through. The grid fills the container, so the container needs a height:
 
@@ -157,7 +161,7 @@ element is put back.
 
 ## Where to go next
 
-- [Grid config](02-grid-config.md) - columns, layout and every option
+- [Grid config](02-grid-config.md) - columns, layout, every option, the hooks and saving the config
 - [State](03-state.md) - save and restore what the user changed: sorting, filters, column order
 - [Datasource](04-datasource.md) - data in and out, keys, fields, selection
 - [Editing](05-editing.md) - editing, change tracking, deleting rows

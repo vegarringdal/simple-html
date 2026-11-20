@@ -1,8 +1,9 @@
 # Migrating from v5
 
 v6 changes the API: the datasource knows its fields, the grid config is split from its state, events
-are subscribed one by one, and filters, menus and options are plain data. TypeScript points to most
-of the places to change.
+are subscribed one by one, and filters, menus and options are plain data. The config and the
+datasource's fields are plain JSON: formatters are named by id, and the functions of a grid are
+hooks next to the config. TypeScript points to most of the places to change.
 
 [MIGRATION.md](../MIGRATION.md) has every breaking change with code before and after:
 
@@ -13,7 +14,7 @@ of the places to change.
 - [Group rows are not entities](../MIGRATION.md#group-rows-are-not-entities): `GroupRow`,
   `isGroupRow()`
 - [Fields and formatters](../MIGRATION.md#fields-and-formatters): `new Datasource(options)`, types in
-  `fields`, `date` and `datetime`, formatters per field
+  `fields`, `date` and `datetime`, formatters per field by id, `registerFormatter()`
 - [Filters](../MIGRATION.md#filters): one filter format, `and()` / `or()` / `where()`, and
   [a converter for saved v5 filters](../MIGRATION.md#saved-configs)
 - [Options objects instead of boolean flags](../MIGRATION.md#options-objects-instead-of-boolean-flags)
@@ -21,8 +22,9 @@ of the places to change.
 - [Grid config](../MIGRATION.md#grid-config): `columns` and `layout`, the state, and
   [a converter for a v5 config](../MIGRATION.md#a-v5-config-converted)
 - [Setup, callbacks and methods of the grid](../MIGRATION.md#setup-callbacks-and-methods-of-the-grid):
-  `createGrid()`, `isReadonly` / `cellClass`, `updateConfig()`, renamed methods
-- [Menus](../MIGRATION.md#menus): `GridConfig.menus`, `openMenu()`
+  `createGrid()`, the `isReadonly` / `cellClass` hooks, `updateConfig()`, `updateHooks()`, renamed
+  methods
+- [Menus](../MIGRATION.md#menus): the `menus` hook, `openMenu()`
 - [Other behaviour changes](../MIGRATION.md#other-behaviour-changes): `currentEntity` after
   `setData()`, `selectAll()`, `removeGroup()`, `expandGroup()`, grouping always sorted
 - [Internals are no longer in the typings](../MIGRATION.md#internals-are-no-longer-in-the-typings)
@@ -208,15 +210,17 @@ datasource.setDateFormater(DateFormaterDDMMYYYY);
 
 ```ts
 // v6
-import { Datasource, DateFormatterDDMMYYYY, NumberFormatterComma } from '@simple-html/grid';
+import { Datasource } from '@simple-html/grid';
 
 const orders = new Datasource({
     fields: { price: 'number', ordered: 'date' },
-    formatters: { number: NumberFormatterComma, date: DateFormatterDDMMYYYY }
+    formatters: { number: 'numberComma', date: 'dateDDMMYYYY' }
 });
 ```
 
-`Formater` is spelled `Formatter`, and a formatter is an object with `format` and `parse`. See
+`Formater` is spelled `Formatter`, and a formatter is an object with `format` and `parse`. The
+options name it by its id: the built-in ones are registered from the start, register your own with
+`registerFormatter('myId', formatter)` and give `formatter: 'myId'` to the field. See
 [Formatting](08-formatting.md).
 
 ## 8. The state: `getState()` and `setState()`
@@ -239,7 +243,7 @@ The state has no options: change an option with `updateConfig()`. A grid that st
 grouped or filtered sets it in `initialState`, not as `sorting` / `grouping` / `filter` in the
 config. See [State](03-state.md).
 
-## 9. Callbacks in the config, renamed methods
+## 9. Callbacks are hooks, renamed methods
 
 ```ts nocheck
 // v5
@@ -253,20 +257,25 @@ gridInterface.triggerRebuild();
 
 ```ts
 // v6
-import type { GridConfig } from '@simple-html/grid';
+import { createGrid, type GridConfig, type GridHooks } from '@simple-html/grid';
 
 const gridConfig: GridConfig = {
-    layout: { center: [{ fields: ['company'], width: 150 }, { fields: ['balance'], width: 100 }] },
+    layout: { center: [{ fields: ['company'], width: 150 }, { fields: ['balance'], width: 100 }] }
+};
+const hooks: GridHooks = {
     isReadonly: (row, field) => (field === 'company' && !row.isActive ? true : null),
     cellClass: (row, field) => (field === 'balance' && row.balance < 0 ? { input: 'red' } : null)
 };
+const grid = createGrid(host, { config: gridConfig, datasource, hooks });
 
-gridInterface.refresh(); // was triggerScrollEvent()
-gridInterface.rebuild(); // was triggerRebuild()
+grid.updateHooks({ cellClass: undefined }); // was cellAppendClassSetter(null)
+grid.refresh(); // was triggerScrollEvent()
+grid.rebuild(); // was triggerRebuild()
 ```
 
-The row comes first. `getAttributeColumns()` is `getLayoutFields()`, `getOptionalAttributes()` is
-`getHiddenFields()`. See [Grid config](02-grid-config.md).
+The row comes first. The hooks are given next to the config, so the config stays plain JSON.
+`getAttributeColumns()` is `getLayoutFields()`, `getOptionalAttributes()` is `getHiddenFields()`.
+See [Grid config](02-grid-config.md#hooks).
 
 ## 10. Menus
 
@@ -295,7 +304,7 @@ gridInterface.on('cell-click', (data) => {
 ```
 
 `setContextMenuElement(element)` is a block of a menu: `openMenu(cell, [{ type: 'block', id, element }])`.
-The grid's own menus are changed with `GridConfig.menus`. See [Menus](10-menus.md).
+The grid's own menus are changed with the `menus` hook. See [Menus](10-menus.md).
 
 ## Group rows
 

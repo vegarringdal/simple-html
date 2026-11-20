@@ -269,8 +269,8 @@ filter row while grouped (row 0 becomes current, and that is a group row), or af
 
 The `cell-header-focus` event's `rowData` is not the header's own row: it is the first displayed
 row. When grouped that is a group row, and `undefined` when there were no rows. The other cell
-events (`cell-click`, `cell-row-focus`, ...) and the config's `isReadonly` / `cellClass` (were
-`readonlySetter()` / `cellAppendClassSetter()`, see [The callbacks are in the config](#the-callbacks-are-in-the-config-isreadonly-and-cellclass))
+events (`cell-click`, `cell-row-focus`, ...) and the `isReadonly` / `cellClass` hooks (were
+`readonlySetter()` / `cellAppendClassSetter()`, see [The callbacks are hooks](#the-callbacks-are-hooks-isreadonly-and-cellclass))
 only ever get data rows.
 
 ## Fields and formatters
@@ -287,9 +287,9 @@ const datasource = new Datasource({
         born: 'date', // the type only
         lastLogin: 'datetime',
         age: { type: 'number', label: 'Age' },
-        price: { type: 'number', formatter: NumberFormatterComma }
+        price: { type: 'number', formatter: 'numberComma' } // a formatter, by its id
     },
-    formatters: { date: DateFormatterDDMMYYYY } // the default for every date field
+    formatters: { date: 'dateDDMMYYYY' } // the default for every date field
 });
 
 datasource.getField('born'); // { name: 'born', type: 'date', label: 'born', formatter: DateFormatterDDMMYYYY }
@@ -298,6 +298,10 @@ datasource.getFormatter('price').format(12.5); // '12,5'
 ```
 
 A field that is not listed is `'text'`. List every field that is not text.
+
+The options are plain JSON: a formatter is named by its id, see
+[Formatters are named by id](#formatters-are-named-by-id-registerformatter). `getField()` and
+`getFormatter()` give the formatter object.
 
 ### The constructor takes one options object
 
@@ -404,8 +408,8 @@ Filters take the type from `fields` too, a condition has no `attributeType` any 
 
 `ValueFormatter`, `DefaultValueFormatter`, `DateAndNumberFormatter`, `setValueFormatter()` /
 `getValueFormatter()`, `setDateFormatter()` / `getDateFormatter()` and `setNumberFormatter()` /
-`getNumberFormatter()` are removed. A formatter is set when the datasource is made: one per field in
-`fields`, and the default per type in `formatters`.
+`getNumberFormatter()` are removed. A formatter is set when the datasource is made, by its id: one
+per field in `fields`, and the default per type in `formatters`.
 
 ```ts
 // v5
@@ -415,12 +419,12 @@ datasource.setDateFormatter(DateFormatterDDMMYYYY);
 // v6: every field of the type
 const datasource = new Datasource({
     fields: { price: 'number', born: 'date' },
-    formatters: { number: NumberFormatterComma, date: DateFormatterDDMMYYYY }
+    formatters: { number: 'numberComma', date: 'dateDDMMYYYY' }
 });
 
 // v6: one field
 const datasource = new Datasource({
-    fields: { price: { type: 'number', formatter: NumberFormatterComma } }
+    fields: { price: { type: 'number', formatter: 'numberComma' } }
 });
 ```
 
@@ -442,7 +446,8 @@ const upperCase: Formatter = {
     ...TextFormatter,
     format: (value) => TextFormatter.format(value).toUpperCase()
 };
-const datasource = new Datasource({ fields: { country: { formatter: upperCase } } });
+registerFormatter('upperCase', upperCase);
+const datasource = new Datasource({ fields: { country: { formatter: 'upperCase' } } });
 ```
 
 v5 had a different text for a readonly cell (`fromSourceDisplay`) and for the edit input
@@ -451,6 +456,41 @@ v5 had a different text for a readonly cell (`fromSourceDisplay`) and for the ed
 The formatters are fixed once the datasource is made. To switch, make a new datasource - or give
 it a formatter that hands every call on to the one picked last (the `samples/grid01` playground
 does that).
+
+### Formatters are named by id: `registerFormatter()`
+
+The datasource's options name a formatter by its id, so `fields` and `formatters` are plain JSON and
+can be stored, in a backend say. The built-in formatters are registered under ids from the start, a
+formatter of your own is registered with `registerFormatter(id, formatter)` before the datasource
+that names it is made.
+
+| formatter | id |
+| --- | --- |
+| `TextFormatter` | `'text'`, the default for `text` |
+| `BooleanFormatter` | `'boolean'`, the default for `boolean` |
+| `NumberFormatterDot` | `'numberDot'`, the default for `number` |
+| `NumberFormatterComma` | `'numberComma'` |
+| `DateFormatterYYYYMMDD` | `'dateYYYYMMDD'`, the default for `date` |
+| `DateFormatterDDMMYYYY` | `'dateDDMMYYYY'` |
+| `DateFormatterYYYYMMDDTHHMMSS` | `'datetimeYYYYMMDD'`, the default for `datetime` |
+| `DateFormatterDDMMYYYYTHHMMSS` | `'datetimeDDMMYYYY'` |
+
+```ts
+// v5
+datasource.setNumberFormatter(MyNumberFormatter);
+
+// v6: registered once, when the page loads, and named by its id
+registerFormatter('myNumber', myNumberFormatter);
+new Datasource({ fields: { price: { type: 'number', formatter: 'myNumber' } } });
+```
+
+* **An id that is not registered throws** when the datasource is made, and the message lists the
+  ids that are. So does a formatter object where an id goes.
+* **The datasource looks the ids up once**, when it is made. Registering an id again replaces the
+  formatter for the datasources made after, a built-in id too: replacing `'numberDot'` changes every
+  number field without a formatter of its own. Pick an id of your own unless that is what you want.
+* The exported objects stay: call them yourself (`NumberFormatterComma.format(12.5)`), spread them
+  into a variant, or register them under an id of your own.
 
 ### The formatter methods
 
@@ -490,7 +530,8 @@ const myNumberFormatter: Formatter = {
     format: (value) => (typeof value === 'number' ? value.toFixed(2) : ''),
     parse: (text) => (text.trim() === '' ? null : Number(text))
 };
-const datasource = new Datasource({ fields: { price: { type: 'number', formatter: myNumberFormatter } } });
+registerFormatter('myNumber', myNumberFormatter);
+const datasource = new Datasource({ fields: { price: { type: 'number', formatter: 'myNumber' } } });
 ```
 
 The grid calls `parse` and `parseFilter` with text only. The checkbox of a boolean field shows the
@@ -926,6 +967,10 @@ behaviour. The state is what the user changes while working with the grid: colum
 widths, sorting, grouping, expanded groups, the filter and what the header filters show. v5 mixed the
 two in one `GridConfig`; v6 keeps them apart.
 
+The config is plain JSON in v6: it has no functions, so it can be stored and loaded as it is. The
+functions - `isReadonly`, `cellClass`, `menus` - are hooks, given next to it, see
+[The callbacks are hooks](#the-callbacks-are-hooks-isreadonly-and-cellclass).
+
 ### `attributes` and `columns*` become `columns` and `layout`
 
 In v5 a column was named twice: in `columnsCenter[].rows` and in `attributes`. A field only named in
@@ -1077,6 +1122,10 @@ gridInterface.resetState();
 | config `sorting`, `grouping`, `expandedGroups`, `filter` | `GridConfig.initialState` |
 | attribute `currentFilterValue` | `headerFilters[field].value` |
 | the operator picked in the menu, in the attribute's `operator` | `headerFilters[field].operator` |
+
+A `Date` in a filter is stored in JSON as its ISO text, and `setState()` keeps it as text: a `date`
+or `datetime` field filters on it the same, a field not listed with one of those types does not.
+See [Dates in a saved state](guides/03-state.md#dates-in-a-saved-state).
 
 A grid that starts sorted, grouped or filtered gets an `initialState`. `resetState()` goes back to it,
 with the config's `layout` (or `initialState.layout`, when it has one):
@@ -1273,6 +1322,8 @@ container.appendChild(element);
 
 // v6
 const gridInterface = createGrid(container, { config: gridConfig, datasource });
+// with the functions of the grid, see the hooks below
+const gridInterface = createGrid(container, { config: gridConfig, datasource, hooks });
 ```
 
 The element fills the container (width and height 100%), so the container needs a height - as
@@ -1316,10 +1367,13 @@ gridInterface.destroy();
 Removing the element still works, and still disconnects the grid: an element you placed yourself
 does not need `destroy()`. `destroy()` removes it too, when it is called.
 
-### The callbacks are in the config: `isReadonly` and `cellClass`
+### The callbacks are hooks: `isReadonly` and `cellClass`
 
-`readonlySetter()` and `cellAppendClassSetter()` are removed. The callbacks are options of the
-config, so they are there from the first render, and `updateConfig()` sets or removes them later:
+`readonlySetter()` and `cellAppendClassSetter()` are removed. The callbacks are hooks, a
+`GridHooks` object given next to the config - `createGrid(host, { config, datasource, hooks })` or
+`new GridInterface(config, datasource, hooks)` - so they are there from the first render.
+`updateHooks()` sets or removes them later. They are not part of the config, so the config stays
+plain JSON and can be stored; a config that has them throws a `TypeError`.
 
 ```ts
 // v5
@@ -1338,20 +1392,20 @@ gridInterface.cellAppendClassSetter((attribute, rowData, cellReadOnly) => {
 gridInterface.readonlySetter(null); // removed again
 
 // v6
-const gridConfig: GridConfig = {
-    layout: { center: [ ... ] },
+const hooks: GridHooks = {
     isReadonly: (row, field, readonlyByConfig) => (field === 'company' && row.isActive === false ? true : null),
     cellClass: (row, field) =>
         field === 'balance' && row.balance < 0 ? { input: 'negative-text', background: 'negative-background' } : null
 };
-gridInterface.updateConfig({ isReadonly: undefined }); // removed again
+const gridInterface = createGrid(container, { config: gridConfig, datasource, hooks });
+gridInterface.updateHooks({ isReadonly: undefined }); // removed again
 ```
 
 | v5 | v6 |
 | --- | --- |
-| `readonlySetter(callback)` | `GridConfig.isReadonly`, or `updateConfig({ isReadonly })` |
-| `cellAppendClassSetter(callback)` | `GridConfig.cellClass`, or `updateConfig({ cellClass })` |
-| `readonlySetter(null)` / `cellAppendClassSetter(null)` | `updateConfig({ isReadonly: undefined })` / `updateConfig({ cellClass: undefined })` |
+| `readonlySetter(callback)` | `hooks.isReadonly`, or `updateHooks({ isReadonly })` |
+| `cellAppendClassSetter(callback)` | `hooks.cellClass`, or `updateHooks({ cellClass })` |
+| `readonlySetter(null)` / `cellAppendClassSetter(null)` | `updateHooks({ isReadonly: undefined })` / `updateHooks({ cellClass: undefined })` |
 | readonly callback `(attribute, rowData, cellReadOnlyConfig)` | `isReadonly(row, field, readonlyByConfig)` - the row first |
 | class callback `(attribute, rowData, cellReadOnly)` | `cellClass(row, field)` - the row first, no third argument |
 | `{ inputClass, dimmedClass }` | `{ input, background }` (`CellClass`), both optional. `null` / `undefined` for no classes |
@@ -1367,6 +1421,10 @@ gridInterface.updateConfig({ isReadonly: undefined }); // removed again
   (`null`, `undefined`) leaves it to the column's `readonly`, which is passed in as
   `readonlyByConfig`. The grid's `readonly: true` still wins, and the row menu's paste and clear ask
   it for every selected row.
+* **`updateHooks()` changes only the keys given**, `undefined` removes a hook. It renders the
+  visible cells again once; a menu uses its new function the next time it opens.
+* **Typed rows**: with a `Datasource<Person>` the hooks are a `GridHooks<Person>`, the row they get
+  has your fields typed.
 * **Fixed**: the background class is now separated from the grid's own `simple-html-readonly` /
   `simple-html-mandatory` class by a space. v5 joined them (`simple-html-readonlynegative-background`),
   so on a readonly or mandatory cell of an editable grid neither class applied.
@@ -1397,8 +1455,10 @@ gridInterface.updateConfig({ readonly: false, cellHeight: 30 });
   unless `initialState` has a layout.
 * **`initialState` changes nothing now**: it is the state the next `resetState()` goes back to. Call
   `resetState()` after `updateConfig({ initialState })` to apply it at once.
-* **The rest is kept**: the sorting, grouping, filter and header filters, and the handlers subscribed
-  with `on()`.
+* **The rest is kept**: the sorting, grouping, filter and header filters, the handlers subscribed
+  with `on()`, and the hooks.
+* **No functions**: `isReadonly`, `cellClass` and `menus` are hooks, `updateHooks()` changes them. A
+  config given to `updateConfig()` with one of them throws a `TypeError`.
 
 ### Renamed and removed methods
 
@@ -1412,15 +1472,15 @@ No method takes a positional boolean any more, as in the datasource (see
 | `gridInterface.getAttributeColumns()` / `getAttributeColumns(true)` | `getLayoutFields({ selectedOnly: true })` - `[]` when no column is selected, v5 gave every field then |
 | `gridInterface.getAttributeColumns(false)` | `getLayoutFields()` |
 | `gridInterface.getOptionalAttributes()` | `getHiddenFields()` |
-| `gridInterface.readonlySetter(callback)` | removed: `GridConfig.isReadonly`, see [above](#the-callbacks-are-in-the-config-isreadonly-and-cellclass) |
-| `gridInterface.cellAppendClassSetter(callback)` | removed: `GridConfig.cellClass`, see [above](#the-callbacks-are-in-the-config-isreadonly-and-cellclass) |
+| `gridInterface.readonlySetter(callback)` | removed: the `isReadonly` hook, see [above](#the-callbacks-are-hooks-isreadonly-and-cellclass) |
+| `gridInterface.cellAppendClassSetter(callback)` | removed: the `cellClass` hook, see [above](#the-callbacks-are-hooks-isreadonly-and-cellclass) |
 | `element.enableCleanup` | removed, see [`createGrid()`](#creategrid-a-grid-on-the-page-in-one-call) |
 | `element.connectedCallback()` / `disconnectedCallback()` | not in the typings: the browser calls them |
 | `gridInterface.contextMenuCustom(event, options, cell, callback)` | `openMenu(at, entries)`, see [Menus](#menus) |
 | `gridInterface.setContextMenuElement(element)` | `openMenu(at, [{ type: 'block', id, element }])`, see [Menus](#menus) |
 | `gridInterface.removeContextMenuElement()` | `closeMenu()` |
 | `gridInterface.getContextMenuElement()` | removed, see [Menus](#menus) |
-| - | new: `createGrid()`, `gridInterface.updateConfig()`, `gridInterface.destroy()`, `openMenu()`, `closeMenu()`, `GridConfig.menus` |
+| - | new: `createGrid()`, `gridInterface.updateConfig()`, `gridInterface.updateHooks()`, `gridInterface.destroy()`, `openMenu()`, `closeMenu()`, the `menus` hook |
 
 Kept, and documented now: `autoResizeColumns()`, `openFilterEditor()`, `getDatasource()`, `on()`,
 `getState()` / `setState()` / `resetState()` and `element.connectInterface()`. The context menu
@@ -1443,7 +1503,7 @@ datasource without its row type.
 ## Menus
 
 The right click menus are lists of entries now, each with an id: the grid's own menus can be changed
-from the config, and `openMenu()` opens one of your own with the same entries. `contextMenuCustom()`,
+with the `menus` hook, and `openMenu()` opens one of your own with the same entries. `contextMenuCustom()`,
 `getContextMenuElement()`, `setContextMenuElement()` and `removeContextMenuElement()` are removed.
 
 An entry (`MenuEntry`) is one of:
@@ -1458,15 +1518,15 @@ An entry (`MenuEntry`) is one of:
 `visible`, `disabled` and `selected` are called with the `MenuContext` when the menu opens: what it was
 opened on (`field`, `row`, `rowIndex`, `cell`), the `gridInterface` and the `datasource`.
 
-### The grid's own menus: `GridConfig.menus`
+### The grid's own menus: the `menus` hook
 
-v5 had no way to change the row, header or filter menu. In v6 `GridConfig.menus` has a function per
+v5 had no way to change the row, header or filter menu. In v6 the `menus` hook has a function per
 menu - `row` (a cell), `header` (a header label), `filter` (a header filter). It gets the grid's own
-entries and the context, and returns what to show:
+entries and the context, and returns what to show. It is a hook, given next to the config (see
+[The callbacks are hooks](#the-callbacks-are-hooks-isreadonly-and-cellclass)):
 
 ```ts
-const gridConfig: GridConfig = {
-    layout: { center: [ ... ] },
+const hooks: GridHooks = {
     menus: {
         row: (defaults, context) => [
             // hide built-in entries by id
@@ -1482,6 +1542,7 @@ const gridConfig: GridConfig = {
         ]
     }
 };
+const gridInterface = createGrid(container, { config: gridConfig, datasource, hooks });
 ```
 
 * **Every built-in entry has an id**, listed with its label in `MENU_IDS` (exported, in the order the
@@ -1493,7 +1554,7 @@ const gridConfig: GridConfig = {
   hide it with the entries under it.
 * **The header filter's value list** (the search box, a checkbox per value and "Run Search") is one
   entry, the block `filter.values`: hide or move it as a whole.
-* `updateConfig({ menus })` changes them while the grid is shown, `updateConfig({ menus: undefined })`
+* `updateHooks({ menus })` changes them while the grid is shown, `updateHooks({ menus: undefined })`
   gives back the defaults.
 
 ### A menu of your own: `openMenu()` and `closeMenu()`
@@ -1646,5 +1707,5 @@ Types that public signatures use are now exported, so you can name them: `ColTyp
 `DataEntity`, and the grid config's `ColumnConfig`, `GridLayout`, `LayoutColumn`, `GridState` and
 `HeaderFilter` (see [Grid config](#grid-config)).
 
-`readonlySetter()` and `cellAppendClassSetter()` are gone, the callbacks are in the config: see
-[The callbacks are in the config](#the-callbacks-are-in-the-config-isreadonly-and-cellclass).
+`readonlySetter()` and `cellAppendClassSetter()` are gone, the callbacks are hooks (`GridHooks`): see
+[The callbacks are hooks](#the-callbacks-are-hooks-isreadonly-and-cellclass).

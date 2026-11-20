@@ -910,6 +910,26 @@ Writing the guides against the real code (every example compiled) found these:
 * documented, not changed: the text header filter matches the whole text (EQUAL) - the filtering
   guide shows a contains search per column; an emptied number cell stores 0
 
+### v6 phase 2b - save workflow, validation, config as JSON
+
+Asked for in review after phase 2: the user stores grid and datasource configuration in a backend.
+
+#### Formatter ids and grid hooks (items 43, 44)
+
+* `registerFormatter(id, formatter)`; fields and the per-type defaults name formatters by id.
+  The built-ins are registered under ids (`'numberDot'`, `'dateYYYYMMDD'` ...). The datasource
+  looks the ids up once, when it is made.
+* `isReadonly` / `cellClass` / `menus` moved out of `GridConfig` into `GridHooks`, given next to
+  the config (`createGrid(host, { config, datasource, hooks })`), changed with `updateHooks()`
+* a hook left in a config throws, naming it - otherwise plain js would get a hook that silently
+  never runs. So does a formatter object where an id goes.
+* the config, a `getState()` result and the `fields` + `formatters` options survive a JSON round
+  trip - tested by building a grid from the copy and comparing state, rows and markup. A type
+  level check in `consumer.ts` fails if a function ever gets into `GridConfig` / `GridState`.
+* a Date in a saved filter comes back from JSON as text and stays text; a `date` / `datetime`
+  field reads it as the same moment, a field without that type compares text - written down in
+  the state guide
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

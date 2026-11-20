@@ -208,7 +208,8 @@ describe('grid lifecycle - before the element is in the dom', () => {
 
     it('expect interface calls that re-render not to throw', async () => {
         const { gridInterface } = await connectedButNotAppended();
-        expect(() => gridInterface.updateConfig({ isReadonly: () => null, cellClass: () => null })).not.toThrow();
+        expect(() => gridInterface.updateHooks({ isReadonly: () => null, cellClass: () => null })).not.toThrow();
+        expect(() => gridInterface.updateConfig({ readonly: false })).not.toThrow();
         expect(() => gridInterface.updateConfig({ layout: { center: [{ fields: ['age'], width: 50 }] } })).not.toThrow();
         expect(() => gridInterface.refresh()).not.toThrow();
         expect(() => gridInterface.rebuild()).not.toThrow();

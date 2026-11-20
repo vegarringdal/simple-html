@@ -1,4 +1,4 @@
-import type { GridConfig } from '@simple-html/grid';
+import type { GridHooks } from '@simple-html/grid';
 import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 export const cellStyling: DemoSample = {
@@ -6,7 +6,7 @@ export const cellStyling: DemoSample = {
     title: 'Cell styling & readonly',
     group: 'Formatting',
     description:
-        'cellClass in the config adds css classes to a cell from its row - here balance cells get a red/green tint by value. isReadonly does the same for readonly - here company becomes readonly on inactive rows. Both are called per cell when it is rendered; updateConfig() sets or removes them while the grid is shown.',
+        'The cellClass hook adds css classes to a cell from its row - here balance cells get a red/green tint by value. The isReadonly hook does the same for readonly - here company becomes readonly on inactive rows. Both are called per cell when it is rendered. Hooks are functions, so they are not part of the config (which stays plain JSON): give them to createGrid, and set or remove them with updateHooks() while the grid is shown.',
     run(stage) {
         const ui = createStage(stage);
         const { gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
@@ -14,7 +14,7 @@ export const cellStyling: DemoSample = {
         // called per cell when it is rendered. input is a class on the cell's input (the text),
         // background one on the element behind it - that one has no size of its own, the css gives
         // it one (.demo-cell-low in index.css). null: no classes
-        const balanceColors: GridConfig['cellClass'] = (row, field) => {
+        const balanceColors: GridHooks['cellClass'] = (row, field) => {
             if (field === 'balance') {
                 if (row.balance < 500) {
                     return { background: 'demo-cell-low' };
@@ -26,26 +26,26 @@ export const cellStyling: DemoSample = {
             return null;
         };
 
-        // set or remove the callbacks while the grid is shown, undefined removes one.
-        // When what a callback reads changes without the grid knowing, gridInterface.refresh()
-        // renders the cells again
+        // set or remove the hooks while the grid is shown, undefined removes one. The other hooks
+        // stay as they are. When what a hook reads changes without the grid knowing,
+        // gridInterface.refresh() renders the cells again
         ui.button('Color balance cells', () => {
-            gridInterface.updateConfig({ cellClass: balanceColors });
+            gridInterface.updateHooks({ cellClass: balanceColors });
         });
         ui.button('Remove coloring', () => {
-            // no extra classes, same as no callback
-            gridInterface.updateConfig({ cellClass: undefined });
+            // no extra classes, same as a hook that returns null
+            gridInterface.updateHooks({ cellClass: undefined });
         });
         ui.button('Readonly company when inactive', () => {
-            gridInterface.updateConfig({
+            gridInterface.updateHooks({
                 // readonly from the row. null: the column config decides
                 isReadonly: (row, field) => (field === 'company' && row.isActive === false ? true : null)
             });
             ui.log('company cells on rows with active=false are now readonly (dimmed)');
         });
         ui.button('Remove readonly rule', () => {
-            // the column config decides again, same as a callback that returns null
-            gridInterface.updateConfig({ isReadonly: undefined });
+            // the column config decides again, same as a hook that returns null
+            gridInterface.updateHooks({ isReadonly: undefined });
         });
     }
 };

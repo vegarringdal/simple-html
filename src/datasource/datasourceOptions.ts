@@ -1,6 +1,5 @@
 import type { DataContainer } from './dataContainer';
 import type { FieldConfig, FieldType } from './field';
-import type { Formatter } from './formatter';
 import type { SelectionMode } from './selectionMode';
 
 /**
@@ -13,6 +12,10 @@ import type { SelectionMode } from './selectionMode';
  *   type from here. See {@link FieldConfig} and {@link FieldType}.
  * - `formatters` - the default formatter per type, for the fields without a formatter of their own.
  *   The types left out keep the built-in default (see {@link FieldType}).
+ *
+ * A formatter is named by its id, a built-in one or one registered with {@link registerFormatter}:
+ * `fields` and `formatters` are plain JSON, they can be stored (in a backend, say) and given back
+ * as they are. An id that is not registered throws when the datasource is made.
  * - `selectionMode` - `'multiple'` (default), `'single'` or `'none'`. A grid showing the datasource
  *   uses it, change it later with `setSelectionMode()`.
  * - `container` - share the data with another datasource, each with its own filter, sort, grouping
@@ -26,7 +29,7 @@ import type { SelectionMode } from './selectionMode';
  * @sample formatters
  * @example
  * ```ts
- * import { DataContainer, Datasource, DateFormatterDDMMYYYY, NumberFormatterComma } from '@simple-html/grid';
+ * import { DataContainer, Datasource } from '@simple-html/grid';
  *
  * const datasource = new Datasource({
  *     key: 'id',
@@ -34,11 +37,11 @@ import type { SelectionMode } from './selectionMode';
  *         id: 'number',
  *         name: { label: 'Name' },
  *         born: { type: 'date', label: 'Born' },
- *         salary: { type: 'number', formatter: NumberFormatterComma },
+ *         salary: { type: 'number', formatter: 'numberComma' },
  *         active: 'boolean'
  *     },
  *     formatters: {
- *         date: DateFormatterDDMMYYYY // every date field without a formatter of its own
+ *         date: 'dateDDMMYYYY' // every date field without a formatter of its own
  *     },
  *     selectionMode: 'single'
  * });
@@ -61,11 +64,13 @@ export interface DatasourceOptions {
     fields?: Record<string, FieldType | FieldConfig>;
 
     /**
-     * the default formatter for each type, used by the fields that have no formatter of their own
+     * the id of the default formatter for each type, used by the fields that have no formatter of
+     * their own: `{ number: 'numberComma', date: 'dateDDMMYYYY' }`. See {@link registerFormatter} for
+     * the ids
      *
      * @sample formatters
      */
-    formatters?: Partial<Record<FieldType, Formatter>>;
+    formatters?: Partial<Record<FieldType, string>>;
 
     /**
      * how rows can be selected, default `'multiple'`. A grid showing the datasource uses it

@@ -1,12 +1,11 @@
 import { assertOptions } from '../datasource/assertOptions';
-import type { Datasource } from '../datasource/dataSource';
+import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import type { Grid } from './grid';
 import type {
-    CellClass,
     GridConfig,
     GridLayout,
     GridOptions,
@@ -28,6 +27,7 @@ import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
+import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
 
 /**
@@ -51,6 +51,7 @@ import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
  *
  * gridInterface.on('cell-click', (data) => console.log(data.attribute, data.rowData));
  * gridInterface.updateConfig({ readonly: false });
+ * gridInterface.updateHooks({ cellClass: (row, field) => (field === 'age' && row.age < 18 ? { input: 'minor' } : null) });
  * const state = gridInterface.getState();
  *
  * gridInterface.destroy(); // done with it
@@ -71,6 +72,8 @@ export class GridInterface<T> {
     // copies of the config's layout and initialState: the state resetState() goes back to
     private configLayout: Required<GridLayout>;
     private initialState: Partial<GridState>;
+    // the functions: isReadonly, cellClass, menus. A copy, updateHooks() changes it
+    private hooks: GridHooks<T>;
     private dataSource: Datasource<T>;
     private columnsSelected: Set<number>;
 
@@ -111,22 +114,28 @@ export class GridInterface<T> {
      * not changed, the grid copies the parts it changes
      * @param datasource the rows. The grid applies `gridConfig.initialState` to it: its sorting,
      * grouping and filter are replaced (left out, they are cleared)
+     * @param hooks optional: the functions - `isReadonly`, `cellClass`, `menus`, see {@link GridHooks}.
+     * The grid keeps a copy of the object, change them later with {@link updateHooks}
+     * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus`: those are hooks
      *
      * @example
      * ```ts
-     * import { type GridConfig, type GridElement, GridInterface } from '@simple-html/grid';
+     * import { type GridConfig, type GridElement, type GridHooks, GridInterface } from '@simple-html/grid';
      *
      * declare const config: GridConfig;
+     * declare const hooks: GridHooks;
      *
-     * const gridInterface = new GridInterface(config, datasource);
+     * const gridInterface = new GridInterface(config, datasource, hooks);
      * const element = document.createElement('simple-html-grid') as GridElement;
      * element.connectInterface(gridInterface);
      * host.appendChild(element);
      * ```
      */
-    constructor(gridConfig: GridConfig, datasource: Datasource<T>) {
+    constructor(gridConfig: GridConfig, datasource: Datasource<T>, hooks: GridHooks<T> = {}) {
+        assertNoHooks(gridConfig);
         this.columnsSelected = new Set();
         this.dataSource = datasource;
+        this.hooks = { ...hooks };
 
         const { columns, layout, initialState, ...options } = gridConfig;
         this.options = options;
@@ -185,7 +194,9 @@ export class GridInterface<T> {
      * part nothing is merged: `layout` replaces the whole layout, `headerFilters` every header filter.
      *
      * The grid keeps a copy, the object passed in is not changed later. It must be plain data (no
-     * functions, no rows from the datasource): it is copied with `structuredClone`.
+     * functions, no rows from the datasource): it is copied with `structuredClone`. A state stored as
+     * JSON can be given as it is; its `Date`s came back as ISO text, which is kept as text - see
+     * {@link GridState}.
      *
      * `filter` is what the rows are filtered by, `headerFilters` only what the header filter cells show.
      * Set both to have a header filter's condition and its cell agree, as `getState()` gives them.
@@ -258,7 +269,8 @@ export class GridInterface<T> {
 
     /**
      * Changes options of the config while the grid is shown: `readonly`, `hideLabels`, the sizes,
-     * `tooltips`, the `isReadonly` / `cellClass` callbacks, `columns` ... and rebuilds the grid once.
+     * `tooltips`, `columns` ... and rebuilds the grid once. The functions - `isReadonly`, `cellClass`,
+     * `menus` - are not part of the config, change them with {@link updateHooks}.
      *
      * - **Only the keys given change**, the rest stay as they are. A key given as `undefined` goes
      *   back to its default - `layout` excepted, a grid always has one.
@@ -275,20 +287,21 @@ export class GridInterface<T> {
      * `columns`, `layout` and `initialState`.
      *
      * @param config the parts of the config to change
+     * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus`: those are hooks
      *
      * @sample misc-options
      * @example
      * ```ts
      * gridInterface.updateConfig({ readonly: false }); // editing on
      * gridInterface.updateConfig({ hideFilter: true, cellHeight: 30 });
-     * gridInterface.updateConfig({ isReadonly: (row, field) => (field === 'name' ? row.locked : null) });
-     * gridInterface.updateConfig({ cellClass: undefined }); // the callback is removed
+     * gridInterface.updateConfig({ tooltips: undefined }); // back to the default, true
      *
      * // the columns the config starts with, shown now and what resetState() goes back to
      * gridInterface.updateConfig({ layout: { center: [{ fields: ['name'], width: 200 }] } });
      * ```
      */
     public updateConfig(config: Partial<GridConfig>) {
+        assertNoHooks(config);
         const { columns, layout, initialState, ...options } = config;
 
         this.options = { ...this.options, ...options };
@@ -311,6 +324,35 @@ export class GridInterface<T> {
             // rebuilds once, the state stays as it is
             this.applyState({});
         }
+    }
+
+    /**
+     * Changes the hooks while the grid is shown: `isReadonly`, `cellClass` and `menus`, see
+     * {@link GridHooks}. **Only the keys given change**, a key given as `undefined` removes that hook -
+     * the cells follow the config again, the menus show their defaults. The visible cells are rendered
+     * again once (as {@link refresh} does); a menu uses its new function the next time it opens.
+     *
+     * The object passed in is not kept: the grid copies its keys.
+     *
+     * @param hooks the hooks to set, or to remove with `undefined`
+     *
+     * @sample cell-styling
+     * @example
+     * ```ts
+     * // company can not be edited on an inactive row
+     * gridInterface.updateHooks({ isReadonly: (row, field) => (field === 'company' && !row.isActive ? true : null) });
+     *
+     * // color the balance cells, the readonly rule stays
+     * gridInterface.updateHooks({ cellClass: (row, field) => (field === 'balance' && row.balance < 0 ? { input: 'red' } : null) });
+     *
+     * gridInterface.updateHooks({ isReadonly: undefined }); // removed: the column config decides again
+     * gridInterface.updateHooks({ menus: undefined }); // the menus show their defaults
+     * ```
+     */
+    public updateHooks(hooks: GridHooks<T>) {
+        this.hooks = { ...this.hooks, ...hooks };
+        // isReadonly and cellClass are called when a cell is rendered, menus when a menu opens
+        this.refresh();
     }
 
     /**
@@ -386,7 +428,7 @@ export class GridInterface<T> {
     /**
      * Renders the visible cells again, with the values the rows have now. For when something the
      * cells show changed without the grid knowing: a value set on a row object outside of the grid's
-     * editing, or what the config's `isReadonly` / `cellClass` read. Cheap, the columns and the
+     * editing, or what the `isReadonly` / `cellClass` hooks read. Cheap, the columns and the
      * header are not built again - that is {@link rebuild}.
      *
      * Does nothing while the grid is not on the page.
@@ -420,7 +462,7 @@ export class GridInterface<T> {
      *
      * @example
      * ```ts
-     * import { Datasource, type Formatter } from '@simple-html/grid';
+     * import { Datasource, type Formatter, registerFormatter } from '@simple-html/grid';
      *
      * // a formatter that reads a setting of your own
      * let decimals = 2;
@@ -428,7 +470,8 @@ export class GridInterface<T> {
      *     format: (value) => (typeof value === 'number' ? value.toFixed(decimals) : ''),
      *     parse: (text) => (text.trim() === '' ? null : Number(text))
      * };
-     * const datasource = new Datasource({ fields: { price: { type: 'number', formatter: price } } });
+     * registerFormatter('price', price);
+     * const datasource = new Datasource({ fields: { price: { type: 'number', formatter: 'price' } } });
      * // ...
      * decimals = 0;
      * gridInterface.rebuild(); // the cells and the header filter show the prices without decimals
@@ -572,7 +615,7 @@ export class GridInterface<T> {
     /**
      * Opens a menu of your own, in the grid's menu style: a value picker for a cell, the actions of a
      * button, a second grid as a dropdown ({@link MenuBlock}). See {@link MenuEntry} for what it can
-     * show. To change the grid's own right click menus, use `GridConfig.menus`.
+     * show. To change the grid's own right click menus, use the `menus` hook ({@link GridHooks}).
      *
      * The menu open before is closed: there is one menu at a time. The grid closes this one, as its
      * own, on a click outside it, when another menu opens, on scroll (with
@@ -765,6 +808,14 @@ export class GridInterface<T> {
 
     /**
      * @internal
+     * the hooks as they are now, for the menus
+     */
+    public __getHooks(): GridHooks<T> {
+        return this.hooks;
+    }
+
+    /**
+     * @internal
      * the header filter of a column: what its cell shows and the operator picked in its menu
      */
     public __getHeaderFilter(field: string): HeaderFilter | undefined {
@@ -908,22 +959,24 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * Is the cell readonly: the config's `isReadonly()` decides, and when it gives no answer (anything
-     * but `true` / `false`) the column's `readonly` option. The grid's own `readonly` is not part of it,
+     * Is the cell readonly: the `isReadonly` hook decides, and when it gives no answer (anything but
+     * `true` / `false`) the column's `readonly` option. The grid's own `readonly` is not part of it,
      * the callers check that first
+     * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
     public __isCellReadonly(row: Entity, field: string): boolean {
         const readonlyByConfig = this.gridConfig.columns[field]?.readonly ?? false;
-        const readonly = this.gridConfig.isReadonly?.(row, field, readonlyByConfig);
+        const readonly = this.hooks.isReadonly?.(row as EntityUnion<T>, field, readonlyByConfig);
         return typeof readonly === 'boolean' ? readonly : readonlyByConfig;
     }
 
     /**
      * @internal
-     * The css classes the config's `cellClass()` gives the cell, '' for the ones it leaves out
+     * The css classes the `cellClass` hook gives the cell, '' for the ones it leaves out
+     * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
     public __getCellClass(row: Entity, field: string): Required<CellClass> {
-        const classes = this.gridConfig.cellClass?.(row, field);
+        const classes = this.hooks.cellClass?.(row as EntityUnion<T>, field);
         return { input: classes?.input ?? '', background: classes?.background ?? '' };
     }
 
@@ -1036,6 +1089,26 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         tooltips: options.tooltips ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true
     };
+}
+
+/**
+ * The keys of the hooks, which a config must not have
+ */
+const HOOK_KEYS = ['isReadonly', 'cellClass', 'menus'] as const satisfies readonly (keyof GridHooks)[];
+
+/**
+ * The functions of a grid are hooks, given next to the config. TypeScript catches one in the config,
+ * plain JavaScript does not - the grid would ignore it without a word.
+ * @throws a `TypeError` naming the hook and where it goes
+ */
+function assertNoHooks(config: Partial<GridConfig>) {
+    for (const key of HOOK_KEYS) {
+        if (key in config) {
+            throw new TypeError(
+                `GridConfig: '${key}' is a hook, not part of the config: createGrid(host, { config, datasource, hooks: { ${key} } }), or gridInterface.updateHooks({ ${key} })`
+            );
+        }
+    }
 }
 
 /**

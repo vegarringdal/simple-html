@@ -1,16 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { BooleanFormatter } from '../booleanFormatter';
 import { DateFormatterDDMMYYYY } from '../DateFormatterDDMMYYYY';
 import { DateFormatterYYYYMMDD } from '../DateFormatterYYYYMMDD';
 import { DateFormatterYYYYMMDDTHHMMSS } from '../DateFormatterYYYYMMDDTHHMMSS';
 import { Datasource } from '../dataSource';
+import { registerFormatter } from '../formatterRegistry';
 import { NumberFormatterComma } from '../numberFormatterComma';
 import { NumberFormatterDot } from '../numberFormatterDot';
 import { TextFormatter } from '../textFormatter';
 
 /**
  * Every type has a default formatter (the v5 DefaultValueFormatter switched on the type instead).
- * `formatters` replaces the default of a type, a field's own formatter wins over both.
+ * `formatters` replaces the default of a type, a field's own formatter wins over both. The options
+ * name the formatters by their registered id.
  */
 
 describe('default formatters - one per type', () => {
@@ -54,7 +56,7 @@ describe('default formatters - the formatters option', () => {
     it('expect a replaced default to be used by every field of the type', () => {
         const datasource = new Datasource({
             fields: { created: 'date', changed: 'date', amount: 'number' },
-            formatters: { date: DateFormatterDDMMYYYY }
+            formatters: { date: 'dateDDMMYYYY' }
         });
         expect(datasource.getFormatter('created')).toBe(DateFormatterDDMMYYYY);
         expect(datasource.getFormatter('changed').format(new Date(2019, 0, 5))).toEqual('05.01.2019');
@@ -64,16 +66,20 @@ describe('default formatters - the formatters option', () => {
 
     it('expect a field formatter to win over the default of its type', () => {
         const datasource = new Datasource({
-            fields: { price: { type: 'number', formatter: NumberFormatterComma }, amount: 'number' },
-            formatters: { number: NumberFormatterDot }
+            fields: { price: { type: 'number', formatter: 'numberComma' }, amount: 'number' },
+            formatters: { number: 'numberDot' }
         });
         expect(datasource.getFormatter('price').format(12.5)).toEqual('12,5');
         expect(datasource.getFormatter('amount').format(12.5)).toEqual('12.5');
     });
 
     it('expect a replaced text default to be used for fields not listed', () => {
-        const upper = { ...TextFormatter, format: (value: unknown) => TextFormatter.format(value).toUpperCase() };
-        const datasource = new Datasource({ formatters: { text: upper } });
+        // an id of this test's own: the registry is shared by the tests of this file
+        registerFormatter('defaultFormatters.upper', {
+            ...TextFormatter,
+            format: (value: unknown) => TextFormatter.format(value).toUpperCase()
+        });
+        const datasource = new Datasource({ formatters: { text: 'defaultFormatters.upper' } });
         expect(datasource.getFormatter('anything').format('abc')).toEqual('ABC');
     });
 
@@ -83,10 +89,27 @@ describe('default formatters - the formatters option', () => {
     });
 
     it('expect two datasources not to share a replaced default', () => {
-        const comma = new Datasource({ fields: { n: 'number' }, formatters: { number: NumberFormatterComma } });
+        const comma = new Datasource({ fields: { n: 'number' }, formatters: { number: 'numberComma' } });
         const dot = new Datasource({ fields: { n: 'number' } });
         expect(comma.getFormatter('n').format(1.5)).toEqual('1,5');
         expect(dot.getFormatter('n').format(1.5)).toEqual('1.5');
+    });
+});
+
+describe('default formatters - a built-in id registered again', () => {
+    afterAll(() => {
+        // back to the built-in, for the other tests of this file
+        registerFormatter('numberDot', NumberFormatterDot);
+    });
+
+    it('expect it to replace the default of its type for the datasources made after', () => {
+        const before = new Datasource({ fields: { n: 'number' } });
+        registerFormatter('numberDot', NumberFormatterComma);
+        const after = new Datasource({ fields: { n: 'number' } });
+
+        expect(after.getFormatter('n')).toBe(NumberFormatterComma);
+        // a datasource keeps the formatters it found when it was made
+        expect(before.getFormatter('n')).toBe(NumberFormatterDot);
     });
 });
 

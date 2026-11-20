@@ -51,7 +51,7 @@ export function renderRowCell(
 
         let dimmed = '';
 
-        // the config's isReadonly() decides, and when it gives no answer the column's readonly
+        // the isReadonly hook decides, and when it gives no answer the column's readonly
         const cellReadOnly = ctx.gridInterface.__isCellReadonly(entity, attribute);
 
         if (!config.readonly && cellReadOnly) {
@@ -81,7 +81,7 @@ export function renderRowCell(
             }
         }
 
-        // the classes of the config's cellClass(), '' without one
+        // the classes of the cellClass hook, '' without one
         const cellClass = ctx.gridInterface.__getCellClass(entity, attribute);
         const backgroundClass = `${dimmed} ${cellClass.background}`;
 

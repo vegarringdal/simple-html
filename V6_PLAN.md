@@ -316,11 +316,11 @@ and documented, renamed, or made internal - each decision listed in `MIGRATION.m
 Asked for after phase 2, done before phase 3: they change the API, so they go in before more is
 built on it.
 
-43. [ ] **Formatters registered by id**: `registerFormatter('dateNO', formatter)`, and a field
+43. [x] **Formatters registered by id**: `registerFormatter('dateNO', formatter)`, and a field
         refers to it by id - `fields: { born: { type: 'date', formatter: 'dateNO' } }`, defaults per
         type too (`formatters: { date: 'dateNO' }`). The built-ins are registered under ids. A
         config with functions in it can not be stored in a backend; with ids it is plain JSON. **M**
-44. [ ] **The grid config is plain JSON**: the functions in `GridConfig` (`isReadonly`,
+44. [x] **The grid config is plain JSON**: the functions in `GridConfig` (`isReadonly`,
         `cellClass`, `menus`) move to a separate `hooks` object -
         `createGrid(host, { config, datasource, hooks })`, `updateHooks()`. The config and the state
         can then be saved and loaded as JSON; a test checks the JSON round trip of both. **S-M**

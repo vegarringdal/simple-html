@@ -3,6 +3,10 @@
 A formatter turns the values of a field into text, and text back into values. Every field has one:
 its own, or the datasource's default for the field's type.
 
+The datasource's options name a formatter by its id: `formatter: 'numberComma'`. The built-in
+formatters are registered under ids from the start, your own you register with
+`registerFormatter()`. So the options are plain JSON and can be stored, the formatters stay code.
+
 ## What a formatter does
 
 A formatter is a plain object with two methods and two optional parts:
@@ -32,11 +36,11 @@ const percent: Formatter = {
 
 | type | default formatter | shows | parses |
 | --- | --- | --- | --- |
-| `text` | `TextFormatter` | the text, `0` and `false` as `0` and `false` | the text as it is |
-| `number` | `NumberFormatterDot` | `1234.5` | `'12.5'` and `'12,5'` as 12.5. Text that is no number, and `''`, as 0 |
-| `boolean` | `BooleanFormatter` | `true` / `false` | `'true'` (any case) as true, other text as false, `''` as null |
-| `date` | `DateFormatterYYYYMMDD` | `2026-11-20` | `'2026-11-20'` as a `Date` |
-| `datetime` | `DateFormatterYYYYMMDDTHHMMSS` | `2026-11-20T13:45:12` | `'2026-11-20T13:45:12'` as a `Date` |
+| `text` | `'text'`, `TextFormatter` | the text, `0` and `false` as `0` and `false` | the text as it is |
+| `number` | `'numberDot'`, `NumberFormatterDot` | `1234.5` | `'12.5'` and `'12,5'` as 12.5. Text that is no number, and `''`, as 0 |
+| `boolean` | `'boolean'`, `BooleanFormatter` | `true` / `false` | `'true'` (any case) as true, other text as false, `''` as null |
+| `date` | `'dateYYYYMMDD'`, `DateFormatterYYYYMMDD` | `2026-11-20` | `'2026-11-20'` as a `Date` |
+| `datetime` | `'datetimeYYYYMMDD'`, `DateFormatterYYYYMMDDTHHMMSS` | `2026-11-20T13:45:12` | `'2026-11-20T13:45:12'` as a `Date` |
 
 Every formatter shows `null` and `undefined` as `''`.
 
@@ -46,28 +50,32 @@ row menu stores `null`. Both count as blank in a filter, see
 that parses `''` as `null`:
 
 ```ts
-import { Datasource, type Formatter, NumberFormatterDot } from '@simple-html/grid';
+import { Datasource, type Formatter, NumberFormatterDot, registerFormatter } from '@simple-html/grid';
 
 const emptyIsNull: Formatter = {
     ...NumberFormatterDot,
     parse: (text) => (text.trim() === '' ? null : NumberFormatterDot.parse(text))
 };
+registerFormatter('numberEmptyIsNull', emptyIsNull);
 
-const datasource = new Datasource({ fields: { amount: { type: 'number', formatter: emptyIsNull } } });
+const datasource = new Datasource({ fields: { amount: { type: 'number', formatter: 'numberEmptyIsNull' } } });
 ```
 
 ## The built-in formatters
 
-| formatter | shows | placeholder |
-| --- | --- | --- |
-| `TextFormatter` | the text | |
-| `BooleanFormatter` | `true` / `false` | |
-| `NumberFormatterDot` | `1234.5` | |
-| `NumberFormatterComma` | `1234,5` | |
-| `DateFormatterYYYYMMDD` | `2026-11-20` | `YYYY-MM-DD` |
-| `DateFormatterDDMMYYYY` | `20.11.2026` | `DD.MM.YYYY` |
-| `DateFormatterYYYYMMDDTHHMMSS` | `2026-11-20T13:45:12` | `YYYY-MM-DDTHH:MM:SS` |
-| `DateFormatterDDMMYYYYTHHMMSS` | `20.11.2026T13:45:12` | `DD.MM.YYYYTHH:MM:SS` |
+Each is registered under an id, the options use the id. The object is exported too: call it
+yourself (`NumberFormatterComma.format(12.5)`), or build a variant of it.
+
+| id | formatter | shows | placeholder |
+| --- | --- | --- | --- |
+| `'text'` | `TextFormatter` | the text | |
+| `'boolean'` | `BooleanFormatter` | `true` / `false` | |
+| `'numberDot'` | `NumberFormatterDot` | `1234.5` | |
+| `'numberComma'` | `NumberFormatterComma` | `1234,5` | |
+| `'dateYYYYMMDD'` | `DateFormatterYYYYMMDD` | `2026-11-20` | `YYYY-MM-DD` |
+| `'dateDDMMYYYY'` | `DateFormatterDDMMYYYY` | `20.11.2026` | `DD.MM.YYYY` |
+| `'datetimeYYYYMMDD'` | `DateFormatterYYYYMMDDTHHMMSS` | `2026-11-20T13:45:12` | `YYYY-MM-DDTHH:MM:SS` |
+| `'datetimeDDMMYYYY'` | `DateFormatterDDMMYYYYTHHMMSS` | `20.11.2026T13:45:12` | `DD.MM.YYYYTHH:MM:SS` |
 
 The date formatters fill in what the typed text leaves out:
 
@@ -82,14 +90,14 @@ The number formatters read both `12.5` and `12,5`, whichever separator they show
 ## A different default for a type
 
 `formatters` in the datasource's options sets the formatter of every field of a type that has none
-of its own:
+of its own, by id:
 
 ```ts
-import { Datasource, DateFormatterDDMMYYYY, NumberFormatterComma } from '@simple-html/grid';
+import { Datasource } from '@simple-html/grid';
 
 const datasource = new Datasource({
     fields: { price: 'number', amount: 'number', born: 'date' },
-    formatters: { number: NumberFormatterComma, date: DateFormatterDDMMYYYY }
+    formatters: { number: 'numberComma', date: 'dateDDMMYYYY' }
 });
 ```
 
@@ -98,10 +106,31 @@ const datasource = new Datasource({
 
 ## A formatter for one field
 
-Give the field a `formatter`. A built-in formatter is a plain object, so a variant is a spread away:
+Give the field a `formatter`, the id of a registered formatter:
 
 ```ts
-import { Datasource, type Formatter, NumberFormatterDot, TextFormatter } from '@simple-html/grid';
+import { Datasource } from '@simple-html/grid';
+
+const datasource = new Datasource({
+    fields: {
+        price: { type: 'number', formatter: 'numberComma' },
+        born: { type: 'date', formatter: 'dateDDMMYYYY' }
+    }
+});
+
+datasource.getFormatter('price').format(12.5); // '12,5'
+```
+
+`datasource.getFormatter(field)` returns the formatter of a field - the object, not the id -
+`getField(field).formatter` too.
+
+## A formatter of your own
+
+Register it under an id with `registerFormatter(id, formatter)`, and name the id in the options. A
+built-in formatter is a plain object, so a variant is a spread away:
+
+```ts
+import { Datasource, type Formatter, NumberFormatterDot, registerFormatter, TextFormatter } from '@simple-html/grid';
 
 // shown in upper case, stored as typed
 const upperCase: Formatter = {
@@ -116,24 +145,39 @@ const money: Formatter = {
     parse: (text) => NumberFormatterDot.parse(text.replaceAll(' ', ''))
 };
 
+// when the page loads, before a datasource names them
+registerFormatter('upperCase', upperCase);
+registerFormatter('money', money);
+
 const datasource = new Datasource({
     fields: {
-        country: { formatter: upperCase }, // a text field: no type needed
-        price: { type: 'number', formatter: money }
-    }
+        country: { formatter: 'upperCase' }, // a text field: no type needed
+        price: { type: 'number', formatter: 'money' }
+    },
+    formatters: { date: 'dateDDMMYYYY' } // an id works for the default of a type too
 });
 
 datasource.getFormatter('price').format(12345.6); // '12 345.60'
 ```
 
-`datasource.getFormatter(field)` returns the formatter of a field, `getField(field).formatter` too.
+- **Register before the datasource is made.** The datasource looks its ids up once, when it is
+  made, and keeps the formatters it found. An id that is not registered throws there, and the
+  message lists the ids that are.
+- **Registering an id again replaces the formatter**, for the datasources made after; one made
+  before keeps the formatter it has. A built-in id can be replaced too, and replacing a default
+  (`'numberDot'` ...) changes every field of that type without a formatter of its own. Use an id of
+  your own unless that is what you want.
+- There is one registry for the page, every datasource uses it.
+- The id is any text. The options stay plain JSON, so `fields` and `formatters` can be stored - in a
+  backend, say - and the formatters registered in code. See
+  [Saving the config](02-grid-config.md#saving-the-config).
 
 ```sample custom-formatter
 ```
 
-The formatters are set when the datasource is made. A formatter that reads a setting of your own
-(the number of decimals, say) can change what it shows: call `gridInterface.rebuild()` after the
-setting changed, so the cells and the header filters show it.
+A formatter that reads a setting of your own (the number of decimals, say) can change what it
+shows: call `gridInterface.rebuild()` after the setting changed, so the cells and the header
+filters show it.
 
 ## The type from another field
 

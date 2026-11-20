@@ -15,7 +15,7 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
  * Opens the row menu, the right click menu of a cell: the default entries (see MENU_IDS.row), changed
- * by `GridConfig.menus.row`.
+ * by the `menus.row` hook.
  */
 export function contextmenuRow(
     ctx: Grid,
@@ -40,7 +40,7 @@ export function contextmenuRow(
     };
 
     const defaults = rowMenuEntries(ctx, cell, row, column, celno, colType, cellType, attribute, rowData);
-    const entries = ctx.gridInterface.__getGridConfig().menus?.row?.(defaults, context) ?? defaults;
+    const entries = ctx.gridInterface.__getHooks().menus?.row?.(defaults, context) ?? defaults;
 
     showMenu(ctx, entries, context, placeUnderCell(event, cell));
 }

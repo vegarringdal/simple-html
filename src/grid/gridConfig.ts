@@ -1,9 +1,7 @@
-import type { Entity } from '../datasource/entity';
 import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
-import type { GridMenus } from './gridMenus';
 
 /**
  * The grid's config: the options of each column (`columns`), where the columns go (`layout`), sizes
@@ -11,6 +9,12 @@ import type { GridMenus } from './gridMenus';
  * order and widths, sorting, grouping, filters - is the {@link GridState}: read it with
  * `gridInterface.getState()`, set it with `setState()`, and give the state the grid starts in as
  * `initialState`.
+ *
+ * **It is plain JSON**: no functions, so it can be stored - in a backend, say - and given back as it
+ * is. The functions of a grid (`isReadonly`, `cellClass`, `menus`) are {@link GridHooks}, given next
+ * to the config: `createGrid(host, { config, datasource, hooks })`. A `Date` in `initialState`'s
+ * filter is the one value that does not survive JSON as it was: it comes back as its ISO text, see
+ * {@link GridState}.
  *
  * To change an option while the grid is shown, use `gridInterface.updateConfig()`.
  *
@@ -102,8 +106,8 @@ export type GridConfig = {
     hideFilter?: boolean;
     /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
-     * or clear. Set `false` to edit; the column's `readonly` and `isReadonly` can still make cells
-     * readonly
+     * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
+     * ({@link GridHooks}) can still make cells readonly
      */
     readonly?: boolean;
     /**
@@ -167,133 +171,7 @@ export type GridConfig = {
      * @sample mandatory-placeholders
      */
     placeholderRowCurrentEntityOnly?: boolean;
-
-    /**
-     * Makes a cell readonly, or editable, from the values of its row. Called every time a cell is
-     * rendered, and by the row menu's paste and clear for each selected row.
-     *
-     * Return `true` (readonly) or `false` (editable). `null` or `undefined` leaves it to the config:
-     * the column's `readonly` option, which is passed in as `readonlyByConfig`. The grid's own
-     * `readonly: true` makes every cell readonly, whatever this returns.
-     *
-     * Called often: keep it fast. When what it reads changes, call `gridInterface.refresh()` to render
-     * the cells again.
-     *
-     * Replaces v5's `gridInterface.readonlySetter(callback)`; the row comes first now.
-     *
-     * @param row the cell's row. Always a data row: a group row has no cells
-     * @param field the cell's field
-     * @param readonlyByConfig the column's `readonly` option, `false` when it is not set
-     *
-     * @sample cell-styling
-     * @example
-     * ```ts
-     * import type { GridConfig } from '@simple-html/grid';
-     *
-     * const config: GridConfig = {
-     *     readonly: false,
-     *     layout: { center: [{ fields: ['company'], width: 150 }, { fields: ['isActive'], width: 80 }] },
-     *     // company can not be edited on an inactive row, every other cell follows the config
-     *     isReadonly: (row, field) => (field === 'company' && row.isActive === false ? true : null)
-     * };
-     * ```
-     */
-    isReadonly?: (row: Entity, field: string, readonlyByConfig: boolean) => boolean | null | undefined;
-
-    /**
-     * Adds css classes to a cell, from the values of its row: to color a cell by its value, say. Called
-     * every time a cell is rendered, keep it fast. See {@link CellClass} for where each class goes.
-     *
-     * Return `null` or `undefined` for no classes of your own.
-     *
-     * Replaces v5's `gridInterface.cellAppendClassSetter(callback)`: `inputClass` is `input`,
-     * `dimmedClass` is `background`, the row comes first and the third argument (readonly) is gone.
-     *
-     * @param row the cell's row. Always a data row: a group row has no cells
-     * @param field the cell's field
-     *
-     * @sample cell-styling
-     * @example
-     * ```ts
-     * import type { GridConfig } from '@simple-html/grid';
-     *
-     * // .low { position: absolute; inset: 0; background: rgba(239, 68, 68, 0.25); }
-     * const config: GridConfig = {
-     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['balance'], width: 100 }] },
-     *     cellClass: (row, field) => {
-     *         if (field === 'balance' && row.balance < 0) {
-     *             return { background: 'low', input: 'bold-text' };
-     *         }
-     *         return null;
-     *     }
-     * };
-     * ```
-     */
-    cellClass?: (row: Entity, field: string) => CellClass | null | undefined;
-
-    /**
-     * Changes the grid's right click menus: hide entries, reorder them, change their labels, add your
-     * own. One function per menu - `row` (a cell), `header` (a header label), `filter` (a header
-     * filter) - that gets the grid's own entries and what the menu was opened on, and returns the
-     * entries to show. Called every time the menu opens. A menu without a function shows its defaults.
-     *
-     * The ids of the grid's own entries are listed in `MENU_IDS`, see {@link GridMenus} and
-     * {@link MenuEntry}. Set or remove the functions later with `gridInterface.updateConfig({ menus })`.
-     *
-     * Replaces v5's `contextMenuCustom()` for the grid's own menus; a menu of your own is opened with
-     * `gridInterface.openMenu()`.
-     *
-     * @sample context-menu
-     * @example
-     * ```ts
-     * import { type GridConfig, isGroupRow } from '@simple-html/grid';
-     *
-     * const config: GridConfig = {
-     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['age'], width: 80 }] },
-     *     menus: {
-     *         // no "Clear:" in the row menu, and an entry of your own at the end
-     *         row: (defaults, context) => [
-     *             ...defaults.filter((entry) => entry.id !== 'row.clear' && entry.id !== 'row.clear.cell'),
-     *             { type: 'section', id: 'my.section', label: 'Row:' },
-     *             {
-     *                 id: 'my.logRow',
-     *                 label: 'Log row',
-     *                 visible: () => !isGroupRow(context.row),
-     *                 action: () => console.log(context.field, context.row)
-     *             }
-     *         ],
-     *         // the header menu without the grouping part
-     *         header: (defaults) => defaults.filter((entry) => !entry.id.startsWith('header.grouping'))
-     *     }
-     * };
-     * ```
-     */
-    menus?: GridMenus;
 };
-
-/**
- * The css classes `GridConfig.cellClass` adds to a cell. Each is one or more class names, separated
- * by spaces, the same as a `class` attribute.
- *
- * @sample cell-styling
- * @example
- * ```ts
- * import type { CellClass } from '@simple-html/grid';
- *
- * const negative: CellClass = { input: 'negative-text', background: 'negative-background' };
- * ```
- */
-export interface CellClass {
-    /** added to the cell's `<input>`: the text. Was `inputClass` in v5 */
-    input?: string;
-    /**
-     * added to the element behind the input, which fills the cell. The input is transparent, so this
-     * is the cell's background - the grid draws the readonly and mandatory stripes there. On an
-     * editable cell it has no size (the grid's readonly and mandatory classes give it one): give the
-     * class `position: absolute; inset: 0`. Was `dimmedClass` in v5
-     */
-    background?: string;
-}
 
 /**
  * Where the columns go. Each list is a list of columns from left to right; a column shows one field,
@@ -421,7 +299,8 @@ export type ColumnConfig = {
 
     /**
      * makes the column's cells readonly while the grid is editable (`GridConfig.readonly: false`). The
-     * grid draws red stripes behind them. `GridConfig.isReadonly` can decide per row instead
+     * grid draws red stripes behind them. The `isReadonly` hook ({@link GridHooks}) can decide per row
+     * instead
      */
     readonly?: boolean;
 
@@ -468,9 +347,11 @@ export type ColumnConfig = {
  * `setState()` sets it, `resetState()` goes back to the one the grid started with
  * (`GridConfig.initialState`, and the config's `layout`).
  *
- * It is plain data (`Date`s in the filter and header filters aside), so it can be stored, e.g. as
- * JSON. A `Date` then comes back as its ISO text, which a `date` or `datetime` field filters on the
- * same.
+ * It is plain data, so it can be stored, e.g. as JSON. The one value JSON changes is a `Date` in the
+ * filter or a header filter: it comes back as its ISO text, and `setState()` keeps it as text. A
+ * `date` or `datetime` field reads the text as the same moment - the same rows, the same date in the
+ * header filter. A field not listed as `date` / `datetime` in the datasource's `fields` filters on a
+ * `Date` as a date only while it is a `Date`, after JSON it compares the text: list its type.
  *
  * @sample grid-state
  * @example

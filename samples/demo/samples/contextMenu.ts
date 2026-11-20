@@ -1,4 +1,4 @@
-import { isGroupRow, type MenuEntry } from '@simple-html/grid';
+import { type GridMenus, isGroupRow, type MenuEntry } from '@simple-html/grid';
 import { baseGridConfig, createStage, type DemoSample, FRUITS, mountGrid } from '../demoUtils';
 
 export const contextMenu: DemoSample = {
@@ -6,11 +6,11 @@ export const contextMenu: DemoSample = {
     title: 'Menus',
     group: 'Editing',
     description:
-        'The right click menus are lists of entries with ids (MENU_IDS lists them): menus in the config hides, reorders or adds entries. Here the row menu drops "Row (selected rows/col)" and gets a "Fruit:" part of its own on the fruit column. openMenu() opens a menu of your own: click a cell in the fruit column to pick a value.',
+        'The right click menus are lists of entries with ids (MENU_IDS lists them): the menus hook hides, reorders or adds entries. Here the row menu drops "Row (selected rows/col)" and gets a "Fruit:" part of its own on the fruit column. Hooks are functions, given next to the config: createGrid(host, { config, datasource, hooks: { menus } }). openMenu() opens a menu of your own: click a cell in the fruit column to pick a value.',
     run(stage) {
         const ui = createStage(stage);
-        const config = baseGridConfig();
-        config.menus = {
+        // a hook, not part of the config: the config stays plain JSON
+        const menus: GridMenus = {
             // called every time the row menu opens: the grid's own entries in, the entries to show out
             row: (defaults, context) => {
                 // the row menu is opened on a cell, a data row. isGroupRow() tells TypeScript
@@ -37,7 +37,7 @@ export const contextMenu: DemoSample = {
                 ];
             }
         };
-        const { gridInterface } = mountGrid(ui.gridHost, config);
+        const { gridInterface } = mountGrid(ui.gridHost, baseGridConfig(), undefined, undefined, { menus });
 
         // a menu of your own: a value picker on the fruit column
         gridInterface.on('cell-click', (data) => {

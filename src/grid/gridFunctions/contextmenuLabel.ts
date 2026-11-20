@@ -10,7 +10,7 @@ import { placeUnderCell, showMenu } from './showMenu';
 
 /**
  * Opens the header menu, the right click menu of a header label: the default entries (see
- * MENU_IDS.header), changed by `GridConfig.menus.header`.
+ * MENU_IDS.header), changed by the `menus.header` hook.
  */
 export function contextmenuLabel(
     ctx: Grid,
@@ -36,7 +36,7 @@ export function contextmenuLabel(
     };
 
     const defaults = headerMenuEntries(ctx, event, cell, column, celno, colType, attribute);
-    const entries = ctx.gridInterface.__getGridConfig().menus?.header?.(defaults, context) ?? defaults;
+    const entries = ctx.gridInterface.__getHooks().menus?.header?.(defaults, context) ?? defaults;
 
     showMenu(ctx, entries, context, placeUnderCell(event, cell));
 }

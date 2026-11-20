@@ -9,7 +9,7 @@ do from code goes through the datasource.
 Every option is optional, `new Datasource()` works.
 
 ```ts
-import { Datasource, DateFormatterDDMMYYYY } from '@simple-html/grid';
+import { Datasource } from '@simple-html/grid';
 
 const datasource = new Datasource({
     key: 'id', // the field that identifies a row
@@ -19,7 +19,7 @@ const datasource = new Datasource({
         lastLogin: 'datetime',
         active: 'boolean'
     },
-    formatters: { date: DateFormatterDDMMYYYY }, // the default formatter of every date field
+    formatters: { date: 'dateDDMMYYYY' }, // the default formatter of every date field, by its id
     selectionMode: 'multiple' // the grid showing it uses this
 });
 ```
@@ -27,10 +27,14 @@ const datasource = new Datasource({
 | option | what it is |
 | --- | --- |
 | `key` | the field that identifies a row, see [Keys](#keys) |
-| `fields` | the type, label and formatter of each field that is not plain text, see [Fields and types](#fields-and-types) |
-| `formatters` | the default formatter per type, see [Formatting](08-formatting.md) |
+| `fields` | the type, label and formatter id of each field that is not plain text, see [Fields and types](#fields-and-types) |
+| `formatters` | the id of the default formatter per type, see [Formatting](08-formatting.md) |
 | `selectionMode` | `'multiple'` (default), `'single'` or `'none'`. A grid showing the datasource uses it, see [Selection](#selection) |
 | `container` | a `DataContainer` to share the rows with another datasource, see [Sharing the rows](#sharing-the-rows-between-two-datasources) |
+
+All but `container` are plain JSON: a formatter is named by its id (`'dateDDMMYYYY'`, or one of your
+own registered with `registerFormatter()`), so the options can be stored, see
+[Saving the config](02-grid-config.md#saving-the-config).
 
 With TypeScript, give it the type of your rows. The rows it hands out are then typed:
 
@@ -175,16 +179,20 @@ of the time only is not an edit. A `datetime` field keeps the time everywhere: f
 grouping, and a change of the time is an edit (to the second).
 
 A `FieldConfig` can also have a `label` (the grid's column label falls back to it, and so does
-`getFilterString()`) and a `formatter`, see [Formatting](08-formatting.md).
+`getFilterString()`) and a `formatter`: the id of a registered formatter, see
+[Formatting](08-formatting.md). `getField()` and `getFormatter()` give the formatter object.
 
 ```ts
 import { Datasource } from '@simple-html/grid';
 
-const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
+const datasource = new Datasource({
+    fields: { born: { type: 'date', label: 'Born' }, price: { type: 'number', formatter: 'numberComma' } }
+});
 
 datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD }
 datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter }
 datasource.getFormatter('born').format(new Date(2026, 10, 20)); // '2026-11-20'
+datasource.getFormatter('price').format(12.5); // '12,5'
 ```
 
 To sort text with the rules of a language, set a collator: `datasource.setLocaleCompare('nb')`.

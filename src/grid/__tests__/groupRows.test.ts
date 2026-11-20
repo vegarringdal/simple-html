@@ -4,7 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import type { GridElement } from '../gridElement';
 import type { GridEvents } from '../gridEvents';
-import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { mountGrid, simpleConfig, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { headerFilterInput, menuItemsExact, sleep } from './interactionTestHelpers';
 
 /**
@@ -105,23 +105,18 @@ describe('group rows - row selector', () => {
 });
 
 describe('group rows - callbacks and events', () => {
-    it('expect the isReadonly and cellClass callbacks to only get data rows', async () => {
+    it('expect the isReadonly and cellClass hooks to only get data rows', async () => {
         const seen: Entity[] = [];
-        const { datasource } = await mountGrid(
-            {
-                ...simpleConfig(),
-                readonly: false,
-                isReadonly: (row) => {
-                    seen.push(row);
-                    return null;
-                },
-                cellClass: (row) => {
-                    seen.push(row);
-                    return null;
-                }
+        const { datasource } = await mountGrid({ ...simpleConfig(), readonly: false }, data(), simpleFields(), {
+            isReadonly: (row) => {
+                seen.push(row);
+                return null;
             },
-            data()
-        );
+            cellClass: (row) => {
+                seen.push(row);
+                return null;
+            }
+        });
 
         datasource.group([{ attribute: 'lastname', title: 'lastname' }]);
         datasource.expandGroup();
