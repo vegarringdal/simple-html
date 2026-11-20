@@ -24,14 +24,14 @@ beforeAll(() => {
 describe('dropDownFilterData - distinct values', () => {
     it('expect one entry per distinct value', async () => {
         const { element } = await mountGrid(config(), rows(['a', 'b', 'a', 'c']));
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(Array.from(data.dataFilterSetFull).sort()).toEqual(['A', 'B', 'C']);
     });
 
     it('expect values to be uppercased', async () => {
         const { element } = await mountGrid(config(), rows(['abc']));
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(Array.from(data.dataFilterSetFull)).toContain('ABC');
     });
@@ -41,7 +41,7 @@ describe('dropDownFilterData - distinct values', () => {
             { firstname: 'a', lastname: 'x', age: 1 },
             { firstname: null, lastname: 'y', age: 2 }
         ]);
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(Array.from(data.dataFilterSetFull)).toContain('NULL');
     });
@@ -50,7 +50,7 @@ describe('dropDownFilterData - distinct values', () => {
 describe('dropDownFilterData - counts', () => {
     it('expect a count per distinct value', async () => {
         const { element } = await mountGrid(config(), rows(['a', 'b', 'a', 'a']));
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(data.counts.get('A')).toEqual(3);
         expect(data.counts.get('B')).toEqual(1);
@@ -62,14 +62,14 @@ describe('dropDownFilterData - counts', () => {
             { firstname: null, lastname: 'y', age: 2 },
             { firstname: '', lastname: 'z', age: 3 }
         ]);
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(data.counts.get('NULL')).toEqual(2);
     });
 
     it('expect nothing to be flagged as truncated for a small set', async () => {
         const { element } = await mountGrid(config(), rows(['a', 'b', 'c']));
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(data.truncated).toEqual(false);
     });
@@ -80,7 +80,7 @@ describe('dropDownFilterData - the row cap', () => {
 
     it('expect the list to stop at the cap', async () => {
         const { element } = await mountGrid(config(), tooMany());
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(data.dataFilterSetFull.size).toBeLessThanOrEqual(DROPDOWN_FILTER_MAX_ROWS + 1);
     });
@@ -92,14 +92,14 @@ describe('dropDownFilterData - the row cap', () => {
      */
     it('expect truncated to be set when values were dropped', async () => {
         const { element } = await mountGrid(config(), tooMany());
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(data.truncated).toEqual(true);
     });
 
     it('expect counts to still be complete for the values that made it in', async () => {
         const { element } = await mountGrid(config(), [...tooMany(), { firstname: 'value0', lastname: 'x', age: 1 }]);
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, null);
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, null)!;
 
         expect(data.counts.get('VALUE0')).toEqual(2);
     });
@@ -108,14 +108,14 @@ describe('dropDownFilterData - the row cap', () => {
 describe('dropDownFilterData - search', () => {
     it('expect the search to narrow the list', async () => {
         const { element } = await mountGrid(config(), rows(['apple', 'banana', 'avocado']));
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, 'ap');
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, 'ap')!;
 
         expect(Array.from(data.dataFilterSetFull)).toEqual(['APPLE']);
     });
 
     it('expect wildcards in the search to be ignored', async () => {
         const { element } = await mountGrid(config(), rows(['apple', 'banana']));
-        const data = dropDownFilterData((element as any).grid, 'firstname', false, '*ap*');
+        const data = dropDownFilterData((element as any).grid, 'firstname', false, '*ap*')!;
 
         expect(Array.from(data.dataFilterSetFull)).toEqual(['APPLE']);
     });

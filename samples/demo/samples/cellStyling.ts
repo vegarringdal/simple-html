@@ -62,6 +62,7 @@ gridInterface.readonlySetter(null);
             gridInterface.triggerRebuild();
         });
         ui.button('Remove coloring', () => {
+            // no extra classes, same as no setter
             gridInterface.cellAppendClassSetter(null);
             gridInterface.triggerRebuild();
         });
@@ -76,6 +77,7 @@ gridInterface.readonlySetter(null);
             ui.log('company cells on rows with active=false are now readonly (dimmed)');
         });
         ui.button('Remove readonly rule', () => {
+            // gives no answer, so the column config decides, same as no setter
             gridInterface.readonlySetter(null);
             gridInterface.triggerRebuild();
         });

@@ -1,7 +1,7 @@
 import type { Datasource } from './dataSource';
 import type { DataTypes } from './filterArgument';
 
-export interface ValueFormater {
+export interface ValueFormatter {
     datasource: Datasource;
     /**
      * used by grid to insert in edit cells/filter
@@ -42,17 +42,17 @@ export interface ValueFormater {
      * Return false and date filters on the attribute match on the calendar day only, time ignored
      * on both the row value and the filter value. Return true, or leave the method out, and
      * date filters compare with time.
-     * The default value formater answers from its date formater's `includesTime`.
+     * The default value formatter answers from its date formatter's `includesTime`.
      * @param attribute
      */
     dateIncludesTime?(attribute: string): boolean;
 }
 
-export interface DateAndNumberFormater {
+export interface DateAndNumberFormatter {
     /**
-     * optional, date formaters only: true if the format includes time.
+     * optional, date formatters only: true if the format includes time.
      * false makes date filters match on the calendar day only. Left out, filters compare with time.
-     * See `ValueFormater.dateIncludesTime`
+     * See `ValueFormatter.dateIncludesTime`
      */
     includesTime?: boolean;
     /**

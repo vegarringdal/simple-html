@@ -18,16 +18,17 @@ import type { GridInterface } from './gridInterface';
  * most of functionality is moved into function where we pass this context
  */
 export class Grid {
-    public element: HTMLElement;
-    public gridInterface: GridInterface<any>;
-    public body: HTMLElement;
+    // set by connectElement/connectGridInterface, and createDom, before anything reads them
+    public element!: HTMLElement;
+    public gridInterface!: GridInterface<any>;
+    public body!: HTMLElement;
 
-    // row cache
-    public containerGroupRowCache: RowCache[];
-    public containerSelectorRowCache: RowCache[];
-    public containerLeftRowCache: RowCache[];
-    public containerMiddleRowCache: RowCache[];
-    public containerRightRowCache: RowCache[];
+    // row cache, set by rebuildRows (createDom)
+    public containerGroupRowCache!: RowCache[];
+    public containerSelectorRowCache!: RowCache[];
+    public containerLeftRowCache!: RowCache[];
+    public containerMiddleRowCache!: RowCache[];
+    public containerRightRowCache!: RowCache[];
 
     // column cache
     public containerLeftColumnCache: ColumnCache[] = [];
@@ -37,24 +38,27 @@ export class Grid {
     // scroll helpers
     public lastScrollTop: number = 0;
     public lastScrollLeft: number = 0;
-    public largeScrollLeftTimer: ReturnType<typeof setTimeout>;
-    public largeScrollTopTimer: ReturnType<typeof setTimeout>;
+    public largeScrollLeftTimer?: ReturnType<typeof setTimeout> | null;
+    public largeScrollTopTimer?: ReturnType<typeof setTimeout> | null;
 
     public rows: Map<string, HTMLElement> = new Map();
     public columns: Map<string, HTMLElement> = new Map();
-    public oldHeight: number;
-    public oldWidth: number;
-    public resizeTimer: ReturnType<typeof setTimeout>;
-    public resizeObserver: ResizeObserver;
+    // set by createDom
+    public oldHeight!: number;
+    public oldWidth!: number;
+    public resizeTimer?: ReturnType<typeof setTimeout> | null;
+    public resizeObserver?: ResizeObserver | null;
     /** aborts the listeners addScrollEventListeners added, see there */
-    public scrollListenersAbort: AbortController;
+    public scrollListenersAbort?: AbortController;
     public columnsHeaders: Map<string, HTMLElement> = new Map();
     public skipInitResizeEvent: boolean = false;
-    public contextMenu: HTMLElement;
-    public filterEditorContainer: HTMLElement;
-    public columnChooserMenu: HTMLElement;
-    public clickListner: any;
-    public focusElement: HTMLInputElement;
+    // not there until a menu/editor is opened, null after it is closed
+    public contextMenu?: HTMLElement | null;
+    public filterEditorContainer?: HTMLElement | null;
+    public columnChooserMenu?: HTMLElement | null;
+    public clickListener: any;
+    // set by createDom
+    public focusElement!: HTMLInputElement;
 
     public domCreated = false;
 
@@ -130,18 +134,19 @@ export class Grid {
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
 
-        if (this.clickListner) {
-            document.removeEventListener('click', this.clickListner);
-            this.clickListner = null;
+        if (this.clickListener) {
+            document.removeEventListener('click', this.clickListener);
+            this.clickListener = null;
         }
 
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;
 
         // nothing to render into anymore, attach() rebuilds if the element comes back
-        clearTimeout(this.resizeTimer);
-        clearTimeout(this.largeScrollTopTimer);
-        clearTimeout(this.largeScrollLeftTimer);
+        // clearTimeout(null) and clearTimeout(undefined) both do nothing
+        clearTimeout(this.resizeTimer ?? undefined);
+        clearTimeout(this.largeScrollTopTimer ?? undefined);
+        clearTimeout(this.largeScrollLeftTimer ?? undefined);
         this.resizeTimer = null;
         this.largeScrollTopTimer = null;
         this.largeScrollLeftTimer = null;

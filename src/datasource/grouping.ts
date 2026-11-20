@@ -1,14 +1,22 @@
 import type { Datasource } from './dataSource';
-import type { Entity } from './entity';
+import type { Entity, GroupEntity } from './entity';
 import type { GroupArgument } from './groupArgument';
 import { isBlank } from './isBlank';
+
+/**
+ * true for a group row, only group rows have __groupChildren
+ */
+function isGroupRow(row: Entity): row is GroupEntity {
+    return !!row.__groupChildren;
+}
 
 /**
  * This takes care the generating the flat array the grid can use for grouping
  *
  */
 export class Grouping {
-    private currentGroups: Entity[][];
+    // built by group(), empty until then - and whenever it no longer matches groupingConfig
+    private currentGroups: GroupEntity[][] = [];
     private groupingConfig: GroupArgument[];
     private expandedGroupIDs: Set<string>;
 
@@ -23,7 +31,7 @@ export class Grouping {
         this.expandedGroupIDs = new Set([]);
     }
 
-    public group(arrayToGroup: Entity[], groupingConfig: GroupArgument[], keepExpanded: boolean, ds: Datasource) {
+    public group(arrayToGroup: Entity[], groupingConfig: GroupArgument[], keepExpanded: boolean, ds: Datasource): Entity[] {
         // if grouping
         if (groupingConfig.length > 0) {
             // temp holder for groups as we create them
@@ -32,7 +40,7 @@ export class Grouping {
             }
 
             // variable to hold our groups
-            const groups: Entity[][] = [];
+            const groups: GroupEntity[][] = [];
 
             groupingConfig.forEach((groupBy, groupNo) => {
                 if (groupNo === 0) {
@@ -67,6 +75,7 @@ export class Grouping {
 
             // clear prev grouping
             this.groupingConfig = [];
+            this.currentGroups = [];
 
             return arrayToGroup;
         }
@@ -88,6 +97,20 @@ export class Grouping {
         this.groupingConfig = groupingConfig;
     }
 
+    /**
+     * forget the built groups, when they no longer match the grouping config
+     */
+    public clearGroups() {
+        this.currentGroups = [];
+    }
+
+    /**
+     * true once group() has built groups for the current config - expand/collapse need them
+     */
+    public hasGroups() {
+        return this.currentGroups.length > 0;
+    }
+
     private toUppercase(text: string) {
         if (text) {
             return text[0].toUpperCase() + text.substring(1, text.length);
@@ -96,7 +119,7 @@ export class Grouping {
         }
     }
 
-    public expandOneOrAll(id: string, array?: Set<string>) {
+    public expandOneOrAll(id?: string | null, array?: Set<string>) {
         let all = !id; // if no id, then all
         if (!id) {
             if (array) {
@@ -112,15 +135,15 @@ export class Grouping {
         const mainGroups = this.currentGroups[0];
 
         // loop children
-        const traverseSubGroups = (group: Entity) => {
+        const traverseSubGroups = (group: GroupEntity) => {
             group.__groupChildren.forEach((subGroup: Entity) => {
                 collection.push(subGroup);
                 switch (true) {
                     case all:
                     case subGroup.__groupID === id:
-                    case array.has(subGroup.__groupID):
+                    case isGroupRow(subGroup) && array.has(subGroup.__groupID):
                     case subGroup.__groupID !== id && subGroup.__groupExpanded: //if already expanded
-                        if (subGroup.__groupChildren) {
+                        if (isGroupRow(subGroup)) {
                             subGroup.__groupExpanded = true;
                             this.expandedGroupIDs.add(subGroup.__groupID);
                             traverseSubGroups(subGroup);
@@ -134,7 +157,7 @@ export class Grouping {
         };
 
         // loop main groups
-        mainGroups.forEach((group: Entity) => {
+        mainGroups.forEach((group: GroupEntity) => {
             collection.push(group);
             switch (true) {
                 case all:
@@ -160,7 +183,7 @@ export class Grouping {
      * collapses the id given or all if ID is null/undefined
      * @param id string id
      */
-    public collapseOneOrAll(id?: string) {
+    public collapseOneOrAll(id?: string | null) {
         const all = !id; // if no id, then all
         id = id === undefined ? null : id;
 
@@ -168,11 +191,11 @@ export class Grouping {
         const mainGroups = this.currentGroups[0];
 
         // loop children
-        const traverseSubGroup = (group: Entity) => {
+        const traverseSubGroup = (group: GroupEntity) => {
             group.__groupChildren.forEach((subGroup: Entity) => {
                 switch (true) {
                     case all:
-                        if (subGroup.__groupChildren) {
+                        if (isGroupRow(subGroup)) {
                             subGroup.__groupExpanded = false;
                             this.expandedGroupIDs.delete(subGroup.__groupID);
                             traverseSubGroup(subGroup);
@@ -185,7 +208,7 @@ export class Grouping {
                         break;
                     default:
                         collection.push(subGroup);
-                        if (subGroup.__groupChildren && subGroup.__groupExpanded) {
+                        if (isGroupRow(subGroup) && subGroup.__groupExpanded) {
                             traverseSubGroup(subGroup);
                         }
                         break;
@@ -194,7 +217,7 @@ export class Grouping {
         };
 
         // loop main groups
-        mainGroups.forEach((group: Entity) => {
+        mainGroups.forEach((group: GroupEntity) => {
             collection.push(group);
             switch (true) {
                 case all:
@@ -225,12 +248,12 @@ export class Grouping {
      * @param entity data row that is part of the current groups
      */
     public expandToEntity(entity: Entity) {
-        const findPath = (groups: Entity[]): string[] | null => {
+        const findPath = (groups: GroupEntity[]): string[] | null => {
             for (const group of groups) {
                 if (group.__groupChildren.includes(entity)) {
                     return [group.__groupID];
                 }
-                const path = findPath(group.__groupChildren.filter((child) => child.__group));
+                const path = findPath(group.__groupChildren.filter((child): child is GroupEntity => !!child.__group));
                 if (path) {
                     return [group.__groupID, ...path];
                 }
@@ -260,18 +283,19 @@ export class Grouping {
         }
         let key = value;
         if (typeof value?.toLocaleDateString === 'function') {
-            key = ds.getValueFormater().fromSourceGrouping(value, 'date', attribute, false);
+            key = ds.getValueFormatter().fromSourceGrouping(value, 'date', attribute, false);
         } else if (typeof value?.toFixed === 'function') {
-            key = ds.getValueFormater().fromSourceGrouping(value, 'number', attribute, false);
+            key = ds.getValueFormatter().fromSourceGrouping(value, 'number', attribute, false);
         }
-        // a formater can still format a value to nothing, NaN for example
+        // a formatter can still format a value to nothing, NaN for example
         return key === null || key === undefined || key === '' ? ' blank' : key;
     }
 
     private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
-        const tempGroupArray: Entity[] = [];
-        let curGroup: Entity = {} as Entity;
-        let lastGroupID: string = null;
+        const tempGroupArray: GroupEntity[] = [];
+        // replaced by the first row, groupKey never returns null
+        let curGroup = {} as GroupEntity;
+        let lastGroupID: string | null = null;
 
         // first level, here we use array
         array.forEach((element) => {
@@ -299,14 +323,15 @@ export class Grouping {
         return tempGroupArray;
     }
 
-    private groupChildren(childGroupArray: Entity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
-        const tempGroupArray: Entity[] = [];
+    private groupChildren(childGroupArray: GroupEntity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
+        const tempGroupArray: GroupEntity[] = [];
 
-        let curGroup: Entity = {} as Entity;
+        // replaced by the first child, groupKey never returns null
+        let curGroup = {} as GroupEntity;
 
         // loop groups
-        childGroupArray.forEach((element: Entity) => {
-            let tempValue: string = null;
+        childGroupArray.forEach((element: GroupEntity) => {
+            let tempValue: string | null = null;
             // loop children
             const rebuiltChildrenArray: Entity[] = [];
             element.__groupChildren.forEach((child: Entity) => {

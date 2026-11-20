@@ -1,16 +1,16 @@
 import type { Entity } from './entity';
 
 /**
- * @internal
- * Entity will keep track of edited properties of the row object
+ * Entity will keep track of edited properties of the row object.
+ * Not exported from the package, but part of the typings: it is the type of `Entity.__controller`.
  */
 
 export class EntityHandler {
     [key: string]: any | undefined;
-    __editedProps?: Record<string, any> = {};
-    __originalValues?: Record<string, any> = {};
-    __currentValues?: Record<string, any> = {};
-    __newprops?: Record<string, any> = {};
+    __editedProps: Record<string, any> = {};
+    __originalValues: Record<string, any> = {};
+    __currentValues: Record<string, any> = {};
+    __newprops: Record<string, any> = {};
     __isNew? = false;
     __isDeleted? = false;
     __edited? = false; // change to isModified?
@@ -20,7 +20,7 @@ export class EntityHandler {
     __group?: boolean;
     __rowState?: string;
     __groupID?: string;
-    __rowError?: string;
+    __rowError?: string | null;
     __groupName?: string;
     __groupLvl?: number;
     __groupTotal?: number;

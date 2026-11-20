@@ -4,16 +4,16 @@ import { removeContextMenu } from './removeContextMenu';
 /**
  * ctx listen for click events and closes menus if open and not clicked on
  *
- * The listener is kept on ctx.clickListner so disconnectElement can remove it - a listener left on
+ * The listener is kept on ctx.clickListener so disconnectElement can remove it - a listener left on
  * the document keeps the whole grid (and its datasource) alive after the element is gone.
  */
 export function addBodyClickListener(ctx: Grid) {
     // called again when the grid is re-attached, never add it twice
-    if (ctx.clickListner) {
-        document.removeEventListener('click', ctx.clickListner);
+    if (ctx.clickListener) {
+        document.removeEventListener('click', ctx.clickListener);
     }
 
-    const clickListner = (e: any) => {
+    const clickListener = (e: any) => {
         let node = e.target;
         let keep = false;
         while (node) {
@@ -29,6 +29,6 @@ export function addBodyClickListener(ctx: Grid) {
         }
     };
 
-    ctx.clickListner = clickListner;
-    document.addEventListener('click', clickListner);
+    ctx.clickListener = clickListener;
+    document.addEventListener('click', clickListener);
 }

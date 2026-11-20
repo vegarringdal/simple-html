@@ -4,6 +4,11 @@ import type { Grid } from '../grid';
 import type { Attribute } from '../gridConfig';
 
 /**
+ * a group filter, its filterArguments always set
+ */
+type FilterGroup = FilterArgument & { filterArguments: FilterArgument[] };
+
+/**
  * filters columns
  * used by header filters
  */
@@ -11,17 +16,17 @@ export function filterCallback(
     ctx: Grid,
     value: string | number | null | undefined,
     col: Attribute,
-    filterArray?: any[],
-    filterArrayAndValue?: string,
+    filterArray?: any[] | null,
+    filterArrayAndValue?: string | null,
     notinArray?: boolean
 ) {
-    const valueConverter = ctx.gridInterface.getDatasource().getValueFormater();
+    const valueConverter = ctx.gridInterface.getDatasource().getValueFormatter();
 
     switch (col.type) {
         case 'date':
             col.currentFilterValue = ctx.gridInterface
                 .getDatasource()
-                .getValueFormater()
+                .getValueFormatter()
                 .toFilter(value, col.type, col.attribute, true);
 
             break;
@@ -68,7 +73,10 @@ export function filterCallback(
         // search text from the value list menu, always a contains
         filter.filterArguments.push(condition('CONTAINS', filterArrayAndValue));
     } else if (col.currentFilterValue !== null && col.currentFilterValue !== undefined && col.currentFilterValue !== '') {
-        filter.filterArguments.push(condition(col.operator || datasource.getFilterFromType(col.type), col.currentFilterValue));
+        // getFilterFromType gives the same for a missing type as for 'text'
+        filter.filterArguments.push(
+            condition(col.operator || datasource.getFilterFromType(col.type ?? 'text'), col.currentFilterValue)
+        );
     }
 
     if (filterArray) {
@@ -89,7 +97,7 @@ export function filterCallback(
  * An OR root is kept whole inside a new AND group - AND(header condition, OR group) - so typing
  * in a header narrows a filter built in the filter editor instead of throwing it away.
  */
-function filterWithoutColumn(oldFilter: FilterArgument | null, attribute: string): FilterArgument {
+function filterWithoutColumn(oldFilter: FilterArgument | null, attribute: string): FilterGroup {
     // a group without logicalOperator is AND too (see Filter), only an OR root has to be kept whole
     if (oldFilter && isFilterGroup(oldFilter) && oldFilter.logicalOperator !== 'OR') {
         // copy, the old filter object is still the one the datasource holds
@@ -100,7 +108,7 @@ function filterWithoutColumn(oldFilter: FilterArgument | null, attribute: string
         };
     }
 
-    const filter: FilterArgument = {
+    const filter: FilterGroup = {
         type: 'GROUP',
         logicalOperator: 'AND',
         filterArguments: []
@@ -108,7 +116,8 @@ function filterWithoutColumn(oldFilter: FilterArgument | null, attribute: string
 
     // an OR root, or a single condition set from code on another column, is kept whole
     const keepWhole =
-        oldFilter && (isFilterGroup(oldFilter) ? oldFilter.filterArguments?.length > 0 : oldFilter.attribute !== attribute);
+        oldFilter &&
+        (isFilterGroup(oldFilter) ? (oldFilter.filterArguments?.length ?? 0) > 0 : oldFilter.attribute !== attribute);
     if (keepWhole) {
         filter.filterArguments.push(oldFilter);
     }

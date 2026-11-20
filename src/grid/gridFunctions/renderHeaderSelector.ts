@@ -2,7 +2,7 @@ import { html, render } from 'lit-html';
 import type { Entity } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import type { ColType } from './colType';
-import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import type { HTMLCellElement } from './HTMLCellElement';
 
 export function renderHeaderSelector(
@@ -13,7 +13,7 @@ export function renderHeaderSelector(
     _celno: number,
     colType: ColType,
     _cellType: string,
-    _attribute: string,
+    _attribute: string | null,
     _rowData: Entity
 ) {
     let colNo = 0;
@@ -24,7 +24,7 @@ export function renderHeaderSelector(
         colNo = ctx.gridInterface.__getGridConfig().columnsPinnedLeft.length || 0;
         colNo = colNo + column + 1;
     }
-    if (colType === RIGH_PINNED_COLTYPE) {
+    if (colType === RIGHT_PINNED_COLTYPE) {
         colNo = ctx.gridInterface.__getGridConfig().columnsPinnedLeft.length || 0;
         colNo = colNo + ctx.gridInterface.__getGridConfig().columnsCenter.length || 0;
         colNo = colNo + column + 1;

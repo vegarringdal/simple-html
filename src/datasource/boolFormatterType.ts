@@ -1,4 +1,4 @@
-export interface BoolFormaterType {
+export interface BoolFormatterType {
     /**
      * used by grid to insert in edit cells/filter
      * @param value

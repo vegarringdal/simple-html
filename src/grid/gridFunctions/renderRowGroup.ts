@@ -11,8 +11,8 @@ export function renderRowGroup(
     column: number,
     _celno: number,
     colType: ColType,
-    _cellType: string,
-    _attribute: string,
+    _cellType: string | null,
+    _attribute: string | null,
     rowData: Entity
 ) {
     if (rowData?.__group) {
@@ -28,14 +28,14 @@ export function renderRowGroup(
     render(
         html`<div
             class="simple-html-absolute-fill simple-html-label-group"
-            style="padding-left:${rowData?.__groupLvl * 15 || 0}px"
+            style="padding-left:${(rowData?.__groupLvl ?? 0) * 15 || 0}px"
             @click=${() => {
                 console.log('group selected, do I want something here ?:', column, colType);
             }}
         >
             <div
                 class="${rowData?.__groupID ? 'simple-html-grid-grouping-row-group' : 'simple-html-grid-grouping-row'}"
-                style="width:${rowData?.__groupLvl * 15 || 0}px;display:${rowData?.__groupLvl || 0 ? 'block' : 'none'}"
+                style="width:${(rowData?.__groupLvl ?? 0) * 15 || 0}px;display:${rowData?.__groupLvl || 0 ? 'block' : 'none'}"
             ></div>
             <i
                 @click=${() => {

@@ -2,7 +2,7 @@ import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { dragEvent } from './dragEvent';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { prettyPrintString } from './prettyPrintString';
@@ -19,7 +19,7 @@ let currentColumnSearchvalue = '';
 export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTMLElement) {
     removeContextMenu(ctx);
 
-    const contextMenu = creatElement('div', 'simple-html-grid');
+    const contextMenu = createElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
     if (ctx.columnChooserMenu?.parentElement) {
         document.body.removeChild(ctx.columnChooserMenu);

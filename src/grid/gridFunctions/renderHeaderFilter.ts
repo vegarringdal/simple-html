@@ -17,18 +17,19 @@ export function renderHeaderFilter(
     celno: number,
     colType: ColType,
     cellType: string,
-    attribute: string,
+    attribute: string | null,
     rowData: Entity
 ) {
     if (attribute) {
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
 
         let placeHolderFilter = cellConfig.placeHolderFilter || '🔍';
-        const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
+        const valueFormatter = ctx.gridInterface.getDatasource().getValueFormatter();
 
-        // if user have not set placeholder, then use placeholde in formater if any
+        // if user have not set placeholder, then use placeholde in formatter if any
         if (!cellConfig.placeHolderFilter) {
-            const placeholderFormat = valueFormater.placeholder(cellConfig.type, attribute, true);
+            // type can be unset (the default formatter treats it as text), ValueFormatter's type is too strict
+            const placeholderFormat = valueFormatter.placeholder(cellConfig.type!, attribute, true);
             if (placeholderFormat) {
                 placeHolderFilter = placeholderFormat;
             }
@@ -92,7 +93,8 @@ export function renderHeaderFilter(
                     cell as any
                 );
             } else {
-                currentValue = valueFormater.fromSource(currentValue, cellConfig?.type, cellConfig?.attribute, true);
+                // type can be unset (the default formatter treats it as text), ValueFormatter's type is too strict
+                currentValue = valueFormatter.fromSource(currentValue, cellConfig.type!, cellConfig?.attribute, true);
 
                 let lastFilter = currentValue || '';
                 let skipFocus = false;
@@ -126,9 +128,9 @@ export function renderHeaderFilter(
                                         ctx,
                                         e,
                                         cell,
-                                        valueFormater.toFilter(currentValue, 'date', attribute, true),
+                                        valueFormatter.toFilter(currentValue, 'date', attribute, true),
                                         (value: Date | null) => {
-                                            const filterValue = valueFormater.fromSource(value, 'date', attribute, true);
+                                            const filterValue = valueFormatter.fromSource(value, 'date', attribute, true);
                                             if (lastFilter !== filterValue) {
                                                 lastFilter = filterValue;
                                                 filterCallback(ctx, filterValue as any, cellConfig);

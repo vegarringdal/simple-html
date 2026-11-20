@@ -86,7 +86,7 @@ export function applyTheme(dark: boolean) {
         document.head.appendChild(style);
     }
     if (!dark && existing) {
-        existing.parentElement.removeChild(existing);
+        existing.parentElement!.removeChild(existing);
     }
     localStorage.setItem(STORAGE_KEY, dark ? 'dark' : 'light');
 }

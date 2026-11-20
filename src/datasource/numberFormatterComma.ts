@@ -1,8 +1,7 @@
 /**
- * default number format, uses dot
- * this will convert comma to dot
+ * numberformatter, replaces dot with comma
  */
-export class NumberFormaterDot {
+export class NumberFormatterComma {
     /**
      *
      * @param value Takes string and returns date
@@ -18,8 +17,8 @@ export class NumberFormaterDot {
             return returnValue;
         }
 
-        if (returnValue.toString().includes(',')) {
-            returnValue = returnValue.toString().replace(',', '.');
+        if (returnValue.toString().includes('.')) {
+            returnValue = returnValue.toString().replace('.', ',');
         }
 
         return returnValue.toString();
@@ -32,12 +31,8 @@ export class NumberFormaterDot {
     static toSource(value: any): number | null | undefined {
         let returnValue: any = value;
 
-        if (returnValue === null || returnValue === 'undefined' || returnValue === undefined) {
-            return null;
-        }
-
-        if (typeof returnValue === 'number') {
-            return returnValue;
+        if (returnValue === null || returnValue === 'undefined') {
+            returnValue;
         }
 
         if (returnValue.includes(',') && !returnValue.includes('.')) {
@@ -56,15 +51,15 @@ export class NumberFormaterDot {
     }
 
     static toFilter(value: any): number | null | undefined {
-        return NumberFormaterDot.toSource(value);
+        return NumberFormatterComma.toSource(value);
     }
 
     static fromSourceDisplay(value: any): string | null | undefined {
-        return NumberFormaterDot.fromSource(value);
+        return NumberFormatterComma.fromSource(value);
     }
 
     static fromSourceGrouping(value: any): string | null | undefined {
-        return NumberFormaterDot.fromSourceDisplay(value);
+        return NumberFormatterComma.fromSourceDisplay(value);
     }
 
     static placeholder() {

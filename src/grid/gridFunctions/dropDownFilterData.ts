@@ -11,7 +11,7 @@ export const DROPDOWN_FILTER_MAX_ROWS = 100;
  * @param searchInput
  * @returns
  */
-export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: boolean, searchInput: string) {
+export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: boolean, searchInput: string | null) {
     const datasource = ctx.gridInterface.getDatasource();
     const type = ctx.gridInterface.__getGridConfig().__attributes[attribute].type || 'text';
     let dataFilterSet = new Set();

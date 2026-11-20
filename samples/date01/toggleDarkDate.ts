@@ -2,10 +2,10 @@
  * dark theme helper...
  */
 
-export function toggelDarkDate() {
+export function toggleDarkDate() {
     const x = document.getElementById('darkdate');
     if (x) {
-        x.parentElement.removeChild(x);
+        x.parentElement!.removeChild(x);
     } else {
         const style = document.createElement('style');
         style.id = 'darkdate';

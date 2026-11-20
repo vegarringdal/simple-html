@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const fs = require('node:fs');
-const { logInfo, spawner } = require('./utils');
+const { logInfo } = require('./utils');
 const { clearFolders, copy, TypeChecker } = require('esbuild-helpers');
 
 /**
  * Builds src -> dist for the single @simple-html/grid package.
- * Emits js + d.ts, copies the css alongside, then packs a tgz into ./build.
+ * Emits js + d.ts and copies the css alongside.
+ * Runs as `prepare` too, so installing straight from a git branch builds dist.
+ * `npm run build:tgz` packs a tgz into ./build.
  */
 async function run() {
     logInfo('\n\n Remove old dist folder');
@@ -37,15 +38,16 @@ async function run() {
                 noUnusedLocals: true,
                 allowUnreachableCode: false,
                 removeComments: false,
+                // members tagged @internal are left out of the published .d.ts files
+                stripInternal: true,
                 emitDecoratorMetadata: false,
                 importHelpers: false,
-                strictNullChecks: false,
+                strict: true,
                 experimentalDecorators: true
             },
             include: ['src'],
             exclude: ['dist', 'node_modules', '**/__tests__']
         },
-        skipTsErrors: [2307], // module @simple-html/xxxxx resolution, not relevant here
         basePath: './',
         name: 'build grid'
     });
@@ -59,14 +61,5 @@ async function run() {
 
     logInfo('copy css if any');
     await copy('src/**/*.css', 'dist');
-
-    // pack a tgz into ./build - wiped and recreated each run so it only holds the latest
-    logInfo('pack tgz into ./build');
-    fs.rmSync('./build', { recursive: true, force: true });
-    fs.mkdirSync('./build', { recursive: true });
-    const code = await spawner('npm', ['pack', '--pack-destination', './build'], process.cwd(), true);
-    if (code !== 0) {
-        throw new Error(`npm pack failed with exit code ${code}`);
-    }
 }
 run();

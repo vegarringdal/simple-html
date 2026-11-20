@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { DateFormaterYYYYMMDD } from '../DateFormaterYYYYMMDD';
-import { DateFormaterYYYYMMDDTHHMMSS } from '../DateFormaterYYYYMMDDTHHMMSS';
+import { DateFormatterYYYYMMDD } from '../DateFormatterYYYYMMDD';
+import { DateFormatterYYYYMMDDTHHMMSS } from '../DateFormatterYYYYMMDDTHHMMSS';
 import { Datasource } from '../dataSource';
-import { DefaultValueFormater } from '../defaultValueFormater';
-import type { ValueFormater } from '../valueFormater';
+import { DefaultValueFormatter } from '../defaultValueFormatter';
+import type { ValueFormatter } from '../valueFormatter';
 
 /**
  * Date filters on a date format without time (the default YYYY-MM-DD) match on the calendar day,
@@ -24,9 +24,9 @@ describe('date filter - date only format matches on the day', () => {
             const ds = new Datasource();
             ds.setData([{ d: null, n: 'row' }]);
             const row = ds.getAllData()[0];
-            row.d = ds.getValueFormater().toSource('2020-01-01', 'date', 'd', false);
+            row.d = ds.getValueFormatter().toSource('2020-01-01', 'date', 'd', false);
 
-            const value = ds.getValueFormater().toFilter('2020-01-01', 'date', 'd', true);
+            const value = ds.getValueFormatter().toFilter('2020-01-01', 'date', 'd', true);
             expect(filterOn(ds, operator, value)).toEqual(['row']);
         });
 
@@ -51,9 +51,9 @@ describe('date filter - date only format matches on the day', () => {
 });
 
 describe('date filter - formats with time keep comparing with time', () => {
-    it('expect the datetime formater to respect the time', () => {
+    it('expect the datetime formatter to respect the time', () => {
         const ds = new Datasource();
-        ds.setDateFormater(DateFormaterYYYYMMDDTHHMMSS);
+        ds.setDateFormatter(DateFormatterYYYYMMDDTHHMMSS);
         ds.setData([{ d: new Date(2020, 0, 1, 15, 30, 10), n: 'row' }]);
 
         expect(filterOn(ds, 'EQUAL', new Date(2020, 0, 1))).toEqual([]);
@@ -62,28 +62,28 @@ describe('date filter - formats with time keep comparing with time', () => {
         expect(filterOn(ds, 'GREATER_THAN', new Date(2020, 0, 1, 16, 0, 0))).toEqual([]);
     });
 
-    it('expect a date formater without includesTime to keep comparing with time', () => {
+    it('expect a date formatter without includesTime to keep comparing with time', () => {
         const ds = new Datasource();
-        // same formater, minus the flag, like a custom date formater written before the flag existed
+        // same formatter, minus the flag, like a custom date formatter written before the flag existed
         const custom = {
-            fromSource: DateFormaterYYYYMMDD.fromSource,
-            toSource: DateFormaterYYYYMMDD.toSource,
-            toFilter: DateFormaterYYYYMMDD.toFilter,
-            fromSourceDisplay: DateFormaterYYYYMMDD.fromSourceDisplay,
-            fromSourceGrouping: DateFormaterYYYYMMDD.fromSourceGrouping,
-            placeholder: DateFormaterYYYYMMDD.placeholder
+            fromSource: DateFormatterYYYYMMDD.fromSource,
+            toSource: DateFormatterYYYYMMDD.toSource,
+            toFilter: DateFormatterYYYYMMDD.toFilter,
+            fromSourceDisplay: DateFormatterYYYYMMDD.fromSourceDisplay,
+            fromSourceGrouping: DateFormatterYYYYMMDD.fromSourceGrouping,
+            placeholder: DateFormatterYYYYMMDD.placeholder
         };
-        ds.setDateFormater(custom);
+        ds.setDateFormatter(custom);
         ds.setData([{ d: new Date(2020, 0, 1, 15, 30, 10), n: 'row' }]);
 
         expect(filterOn(ds, 'EQUAL', new Date(2020, 0, 1))).toEqual([]);
     });
 
-    it('expect a custom ValueFormater without dateIncludesTime to keep comparing with time', () => {
+    it('expect a custom ValueFormatter without dateIncludesTime to keep comparing with time', () => {
         const ds = new Datasource();
-        const inner = new DefaultValueFormater(ds);
-        // a ValueFormater written before dateIncludesTime existed
-        const custom: ValueFormater = {
+        const inner = new DefaultValueFormatter(ds);
+        // a ValueFormatter written before dateIncludesTime existed
+        const custom: ValueFormatter = {
             datasource: ds,
             fromSource: (value, type, attribute) => inner.fromSource(value, type, attribute),
             toSource: (value, type, attribute) => inner.toSource(value, type, attribute),
@@ -92,17 +92,17 @@ describe('date filter - formats with time keep comparing with time', () => {
             fromSourceDisplay: (value, type, attribute) => inner.fromSourceDisplay(value, type, attribute),
             fromSourceGrouping: (value, type, attribute) => inner.fromSourceGrouping(value, type, attribute)
         };
-        ds.setValueFormater(custom);
+        ds.setValueFormatter(custom);
         ds.setData([{ d: new Date(2020, 0, 1, 15, 30, 10), n: 'row' }]);
 
         expect(filterOn(ds, 'EQUAL', new Date(2020, 0, 1))).toEqual([]);
         expect(filterOn(ds, 'LESS_THAN_OR_EQUAL_TO', new Date(2020, 0, 1))).toEqual([]);
     });
 
-    it('expect a custom ValueFormater to decide per attribute', () => {
+    it('expect a custom ValueFormatter to decide per attribute', () => {
         const ds = new Datasource();
-        const inner = new DefaultValueFormater(ds);
-        const custom: ValueFormater = {
+        const inner = new DefaultValueFormatter(ds);
+        const custom: ValueFormatter = {
             datasource: ds,
             fromSource: (value, type, attribute) => inner.fromSource(value, type, attribute),
             toSource: (value, type, attribute) => inner.toSource(value, type, attribute),
@@ -112,7 +112,7 @@ describe('date filter - formats with time keep comparing with time', () => {
             fromSourceGrouping: (value, type, attribute) => inner.fromSourceGrouping(value, type, attribute),
             dateIncludesTime: (attribute) => attribute === 'withTime'
         };
-        ds.setValueFormater(custom);
+        ds.setValueFormatter(custom);
         ds.setData([{ d: new Date(2020, 0, 1, 15, 30, 10), withTime: new Date(2020, 0, 1, 15, 30, 10), n: 'row' }]);
 
         expect(filterOn(ds, 'EQUAL', new Date(2020, 0, 1))).toEqual(['row']);

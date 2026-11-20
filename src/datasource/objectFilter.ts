@@ -5,7 +5,7 @@ import { isBlank } from './isBlank';
 /**
  * tests one row against one condition
  * @param dateOnly compare dates on the day only, time ignored on both sides. For date formats
- * without time, see `ValueFormater.dateIncludesTime`
+ * without time, see `ValueFormatter.dateIncludesTime`
  */
 export function objectFilter(rowData: any, filter: FilterAttributeSimple, dateOnly = false) {
     let result = true;

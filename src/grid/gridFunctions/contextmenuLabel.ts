@@ -5,7 +5,7 @@ import { asPx } from './asPx';
 import { autoResizeColumns } from './autoResizeColumns';
 import type { ColType } from './colType';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { removeContextMenu } from './removeContextMenu';
 
@@ -23,7 +23,7 @@ export function contextmenuLabel(
 ) {
     removeContextMenu(ctx);
 
-    const contextMenu = creatElement('div', 'simple-html-grid');
+    const contextMenu = createElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
     const rect = cell.getBoundingClientRect();
 

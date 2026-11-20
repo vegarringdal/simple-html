@@ -7,8 +7,8 @@ import { dropdownGrid } from './samples/dropdownGrid';
 import { dynamicCellTypes } from './samples/dynamicCellTypes';
 import { editing } from './samples/editing';
 import { events } from './samples/events';
-import { filterOperatorHeader } from './samples/filterOperatorHeader';
 import { filtering } from './samples/filtering';
+import { filterOperatorHeader } from './samples/filterOperatorHeader';
 import { formatters } from './samples/formatters';
 import { mandatoryPlaceholders } from './samples/mandatoryPlaceholders';
 import { miscConfig } from './samples/miscConfig';
@@ -17,7 +17,7 @@ import { saveLoadConfig } from './samples/saveLoadConfig';
 import { selection } from './samples/selection';
 import { sortingGrouping } from './samples/sortingGrouping';
 import { tooltips } from './samples/tooltips';
-import { valueFormaterOverride } from './samples/valueFormaterOverride';
+import { valueFormatterOverride } from './samples/valueFormatterOverride';
 
 /**
  * order here = order in the sidebar, samples with the same group are
@@ -42,7 +42,7 @@ export const SAMPLES: DemoSample[] = [
     // formatting
     formatters,
     cellStyling,
-    valueFormaterOverride,
+    valueFormatterOverride,
     // events
     events,
     filterOperatorHeader,

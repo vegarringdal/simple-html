@@ -75,6 +75,6 @@ export interface FilterAttributeSimple {
     operator: FilterComparisonOperator;
     value: any;
     attribute: string;
-    type: string;
+    type?: string; // objectFilter uses 'text' if not set
 }
 export type DataTypes = 'text' | 'number' | 'boolean' | 'date';

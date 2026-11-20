@@ -1,5 +1,4 @@
 /**
- * @internal
  * nicer string values
  */
 

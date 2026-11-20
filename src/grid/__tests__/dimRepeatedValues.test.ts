@@ -86,9 +86,9 @@ describe('dimRepeatedValues - on', () => {
     });
 });
 
-describe('dimRepeatedValues - value formaters', () => {
+describe('dimRepeatedValues - value formatters', () => {
     /**
-     * this is a visual feature - if a formater makes two different source values render as
+     * this is a visual feature - if a formatter makes two different source values render as
      * the same text, they look repeated and should dim
      */
     it('expect two different source values that display the same to count as repeated', async () => {
@@ -97,8 +97,8 @@ describe('dimRepeatedValues - value formaters', () => {
             { firstname: 'bbb', lastname: 'x', age: 2 }
         ]);
 
-        const formater = mounted.datasource.getValueFormater();
-        formater.fromSource = () => 'same for everything';
+        const formatter = mounted.datasource.getValueFormatter();
+        formatter.fromSource = () => 'same for everything';
         mounted.gridInterface.triggerScrollEvent();
 
         expect(repeatedFlags(mounted.element, 'firstname')).toEqual(['false', 'true']);

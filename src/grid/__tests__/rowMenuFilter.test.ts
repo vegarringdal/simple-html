@@ -67,9 +67,9 @@ describe('row menu - replace filter', () => {
 
         menuItem('Replace filter').click();
 
-        const filter = datasource.getFilter();
+        const filter = datasource.getFilter()!;
         expect(filter.filterArguments).toHaveLength(1);
-        expect(filter.filterArguments[0].attribute).toEqual('firstname');
+        expect(filter.filterArguments![0].attribute).toEqual('firstname');
     });
 });
 
@@ -80,10 +80,10 @@ describe('row menu - add to filter', () => {
 
         menuItem('Add to filter').click();
 
-        const filter = datasource.getFilter();
+        const filter = datasource.getFilter()!;
         expect(filter.filterArguments).toHaveLength(2);
-        expect(filter.filterArguments[0].attribute).toEqual('firstname');
-        expect(filter.filterArguments[1].attribute).toEqual('lastname');
+        expect(filter.filterArguments![0].attribute).toEqual('firstname');
+        expect(filter.filterArguments![1].attribute).toEqual('lastname');
     });
 
     it('expect the conditions to be joined with AND', async () => {
@@ -92,7 +92,7 @@ describe('row menu - add to filter', () => {
 
         menuItem('Add to filter').click();
 
-        expect(datasource.getFilter().logicalOperator).toEqual('AND');
+        expect(datasource.getFilter()!.logicalOperator).toEqual('AND');
     });
 
     it('expect add to work when there is no filter yet', async () => {
@@ -100,7 +100,7 @@ describe('row menu - add to filter', () => {
 
         menuItem('Add to filter').click();
 
-        expect(datasource.getFilter().filterArguments).toHaveLength(1);
+        expect(datasource.getFilter()!.filterArguments).toHaveLength(1);
         expect(datasource.getRows(true)).toHaveLength(1);
     });
 });
@@ -116,7 +116,7 @@ describe('row menu - blank cells', () => {
 
         menuItem('Replace filter').click();
 
-        expect(mounted.datasource.getFilter().filterArguments[0].operator).toEqual('IS_BLANK');
+        expect(mounted.datasource.getFilter()!.filterArguments![0].operator).toEqual('IS_BLANK');
         expect(mounted.datasource.getRows(true)).toHaveLength(1);
     });
 });

@@ -6,7 +6,7 @@ import type { Grid } from '../grid';
  * dimmed.
  *
  * The comparison is on the **displayed** value, not the raw one. This is a visual feature -
- * if a value formater makes two different source values render as the same text, they look
+ * if a value formatter makes two different source values render as the same text, they look
  * repeated to the user and should dim. Comparing the raw values would leave a column of
  * identical looking text undimmed.
  *
@@ -36,7 +36,7 @@ export function isRepeatedValue(ctx: Grid, row: number, attribute: string): bool
     }
 
     const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-    const valueFormater = datasource.getValueFormater();
+    const valueFormatter = datasource.getValueFormatter();
 
     /**
      * same type resolution the cell rendering uses, so a dynamic type column is honoured
@@ -46,7 +46,7 @@ export function isRepeatedValue(ctx: Grid, row: number, attribute: string): bool
         if (cellConfig?.dynamicCellTypeColumn) {
             type = entity[cellConfig.dynamicCellTypeColumn] || type;
         }
-        return valueFormater.fromSource(entity[attribute], type, attribute, false);
+        return valueFormatter.fromSource(entity[attribute], type, attribute, false);
     };
 
     const previousValue = displayed(previous);

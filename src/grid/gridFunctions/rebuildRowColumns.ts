@@ -2,9 +2,9 @@ import type { Grid } from '../grid';
 import type { Columns } from '../gridConfig';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { DIV } from './DIV';
-import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 
@@ -62,7 +62,7 @@ export function rebuildRowColumns(ctx: Grid) {
             }
 
             if (coltype === 'left-pinned') {
-                const columnElement = creatElement(DIV, 'simple-html-grid-grouping-row');
+                const columnElement = createElement(DIV, 'simple-html-grid-grouping-row');
                 columnElement.style.width = asPx(left);
                 if (left === 0) {
                     columnElement.style.display = 'none';
@@ -74,7 +74,7 @@ export function rebuildRowColumns(ctx: Grid) {
                 /**
                  * generate column
                  */
-                const columnElement = creatElement(DIV, 'simple-html-grid-col');
+                const columnElement = createElement(DIV, 'simple-html-grid-col');
 
                 const id = `${rowId}:${i.toString()}`;
                 ctx.columns.set(id, columnElement);
@@ -91,7 +91,7 @@ export function rebuildRowColumns(ctx: Grid) {
                  */
 
                 for (let y = 0; y < config.__columnCells; y++) {
-                    const cellElement = creatElement(DIV, 'simple-html-grid-col-cell');
+                    const cellElement = createElement(DIV, 'simple-html-grid-col-cell');
                     cellElement.style.top = asPx(config.cellHeight * y);
                     cellElement.style.height = asPx(config.cellHeight);
                     cellElement.setAttribute('type', 'row-cell');
@@ -116,6 +116,6 @@ export function rebuildRowColumns(ctx: Grid) {
     });
 
     ctx.containerRightRowCache.forEach((e) => {
-        ctx.containerRightColumnCache = addColumns(e.id, config.columnsPinnedRight, 0, RIGH_PINNED_COLTYPE);
+        ctx.containerRightColumnCache = addColumns(e.id, config.columnsPinnedRight, 0, RIGHT_PINNED_COLTYPE);
     });
 }

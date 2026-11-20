@@ -1,4 +1,4 @@
-import type { Entity } from './entity';
+import type { DataEntity, Entity } from './entity';
 import { EntityHandler } from './entityHandler';
 import { isBlank } from './isBlank';
 
@@ -14,8 +14,8 @@ export const getNextKey = () => {
  * Datacontainer, this can be used as input for multible datasources
  */
 export class DataContainer {
-    private __collection: Entity[] = [];
-    private __keyAttribute = '';
+    private __collection: DataEntity[] = [];
+    private __keyAttribute: string | undefined = '';
     private EntityHandler = EntityHandler;
     /**
      *
@@ -43,6 +43,15 @@ export class DataContainer {
 
     private getKey() {
         return getNextKey();
+    }
+
+    /**
+     * index of the entity in the collection, -1 if it is not there
+     * @param entity any entity, a group row or an unknown object is just not found
+     */
+    private indexOf(entity: Entity) {
+        const collection: Entity[] = this.__collection;
+        return collection.indexOf(entity);
     }
 
     /**
@@ -75,7 +84,8 @@ export class DataContainer {
      */
     public setErrors(errors: Map<string, string>) {
         this.__collection.forEach((e) => {
-            const err = errors.get(e.__KEY.toString());
+            // setData and replace give every row a key
+            const err = errors.get(e.__KEY!.toString());
             e.__rowError = err || null;
         });
     }
@@ -91,7 +101,7 @@ export class DataContainer {
         if (data) {
             if (Array.isArray(data)) {
                 data.forEach((d) => {
-                    const i = this.__collection.indexOf(d);
+                    const i = this.indexOf(d);
                     if (i !== -1 && this.__collection[i]) {
                         const row = this.__collection[i];
                         if (row.__controller.__isDeleted) {
@@ -181,7 +191,7 @@ export class DataContainer {
      * @param data set null if all
      * @param all remove all
      */
-    public markForDeletion(data: Entity | Entity[], all = false) {
+    public markForDeletion(data: Entity | Entity[] | null, all = false) {
         if (all) {
             // new rows are dropped, the rest flagged. Splicing inside forEach skipped the row
             // after every new row, leaving it neither removed nor flagged
@@ -194,7 +204,7 @@ export class DataContainer {
         if (data) {
             if (Array.isArray(data)) {
                 data.forEach((d) => {
-                    const i = this.__collection.indexOf(d);
+                    const i = this.indexOf(d);
                     if (i !== -1) {
                         if (this.__collection[i]?.__controller.__isNew) {
                             this.__collection.splice(i, 1)[0];
@@ -204,7 +214,7 @@ export class DataContainer {
                     }
                 });
             } else {
-                const i = this.__collection.indexOf(data);
+                const i = this.indexOf(data);
                 if (i !== -1) {
                     if (this.__collection[i]?.__controller.__isNew) {
                         this.__collection.splice(i, 1)[0];
@@ -220,7 +230,7 @@ export class DataContainer {
      *
      */
     public clearMarkedForDeletion() {
-        const tempArr: Entity[] = [];
+        const tempArr: DataEntity[] = [];
         this.__collection.forEach((e) => {
             if (e.__controller.__isDeleted) {
                 tempArr.push(e);
@@ -240,7 +250,7 @@ export class DataContainer {
      * @param all if set to true, you remove all
      * @returns returns removed
      */
-    public removeData(data: Entity | Entity[], all = false) {
+    public removeData(data: Entity | Entity[] | null, all = false) {
         if (all) {
             const removed = this.__collection.slice();
             this.__collection = [];
@@ -251,14 +261,14 @@ export class DataContainer {
             if (Array.isArray(data)) {
                 const removed: Entity[] = [];
                 data.forEach((d) => {
-                    const i = this.__collection.indexOf(d);
+                    const i = this.indexOf(d);
                     if (i !== -1) {
                         removed.push(this.__collection.splice(i, 1)[0]);
                     }
                 });
                 return removed;
             } else {
-                const i = this.__collection.indexOf(data);
+                const i = this.indexOf(data);
                 if (i !== -1) {
                     return this.__collection.splice(i, 1);
                 }
@@ -280,22 +290,7 @@ export class DataContainer {
             this.__collection = [];
         }
 
-        const x = Array.from(data, (o: any | Entity) => {
-            // only a blank key gets a generated one. A falsy check also replaced a real key of 0,
-            // writing the generated key into the key attribute of the row
-            if (o?.__controller) {
-                if (isBlank((o as any).__KEY)) {
-                    (o as any).__KEY = this.getKey();
-                }
-                return o;
-            } else {
-                const entity = new Proxy(o, new this.EntityHandler(this.__keyAttribute, tagAsNew) as any);
-                if (isBlank((entity as any).__KEY)) {
-                    (entity as any).__KEY = this.getKey();
-                }
-                return entity;
-            }
-        });
+        const x = Array.from(data, (o: any | Entity) => this.toEntity(o, tagAsNew));
         this.__collection = this.__collection.concat(x);
 
         return x;
@@ -308,15 +303,21 @@ export class DataContainer {
      * @param remove
      */
     public replace(data: any[], index: number, remove: number) {
-        // todo
-        const x = Array.from(data, (o: any | Entity) => {
-            if (o?.__controller) {
-                return o;
-            } else {
-                return new Proxy(o, new this.EntityHandler(this.__keyAttribute, false) as any);
-            }
-        });
+        const x = Array.from(data, (o: any | Entity) => this.toEntity(o, false));
 
         this.__collection.splice(index, remove, ...x);
+    }
+
+    /**
+     * a row as the container keeps it: wrapped in the EntityHandler proxy (if it is not already),
+     * with a key. Only a blank key gets a generated one - a falsy check also replaced a real key
+     * of 0, writing the generated key into the key attribute of the row
+     */
+    private toEntity(o: any, tagAsNew: boolean): DataEntity {
+        const entity = o?.__controller ? o : new Proxy(o, new this.EntityHandler(this.__keyAttribute, tagAsNew) as any);
+        if (isBlank(entity.__KEY)) {
+            entity.__KEY = this.getKey();
+        }
+        return entity;
     }
 }

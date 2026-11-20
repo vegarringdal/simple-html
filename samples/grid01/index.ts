@@ -1,24 +1,24 @@
 import './index.css';
 import {
     Datasource,
-    DateFormaterDDMMYYYY,
-    DateFormaterDDMMYYYYTHHMMSS,
-    DateFormaterYYYYMMDD,
-    DateFormaterYYYYMMDDTHHMMSS,
+    DateFormatterDDMMYYYY,
+    DateFormatterDDMMYYYYTHHMMSS,
+    DateFormatterYYYYMMDD,
+    DateFormatterYYYYMMDDTHHMMSS,
     type GridConfig,
     type GridElement,
     GridInterface,
     type HTMLCellElement,
-    NumberFormaterComma,
-    NumberFormaterDot
+    NumberFormatterComma,
+    NumberFormatterDot
 } from '@simple-html/grid';
 import '../../src/grid.css';
 import '../../src/date.css';
-import { DateFormaterCustom } from './dateFormaterCustom';
+import { DateFormatterCustom } from './dateFormatterCustom';
 import { dummydata } from './dummyData';
 import { gridConfig } from './gridConfig';
-import { NumberFormaterCustom } from './numberFormaterCustom';
-import { toggelDarkGrid } from './toggelDarkGrid';
+import { NumberFormatterCustom } from './numberFormatterCustom';
+import { toggleDarkGrid } from './toggleDarkGrid';
 
 /**
  * WARNING, this will be weird while I get main parts working
@@ -36,13 +36,13 @@ datasource.setData(
     })
 );
 
-const oldFormater = datasource.getValueFormater();
-const oldFormaterFromSource = oldFormater.fromSource;
-oldFormater.fromSource = (value: any, type: any, attribute: string, isFilter) => {
+const oldFormatter = datasource.getValueFormatter();
+const oldFormatterFromSource = oldFormatter.fromSource;
+oldFormatter.fromSource = (value: any, type: any, attribute: string, isFilter) => {
     if (attribute?.startsWith('country') && !isFilter) {
         return 'Open D';
     } else {
-        return oldFormaterFromSource.apply(oldFormater, [value, type, attribute, isFilter]);
+        return oldFormatterFromSource.apply(oldFormatter, [value, type, attribute, isFilter]);
     }
 };
 
@@ -109,9 +109,9 @@ function createButton(title: string, callback: () => void) {
         containerbuttons.appendChild(btn);
     }
 }
-toggelDarkGrid();
+toggleDarkGrid();
 createButton('toggle dark/light mode', () => {
-    toggelDarkGrid();
+    toggleDarkGrid();
 });
 
 createButton('set to 10 rows', () => {
@@ -279,43 +279,43 @@ createButton('gridInterface.removeEventListener\n (see console - F12)', () => {
     gridInterface.removeEventListener(gridInterfaceEvents);
 });
 
-createButton('overide default numberformater (comma)', () => {
-    datasource.setNumberFormater(NumberFormaterComma);
+createButton('overide default numberformatter (comma)', () => {
+    datasource.setNumberFormatter(NumberFormatterComma);
     gridInterface.triggerRebuild();
 });
 
-createButton('overide default numberformater (comma-custom)', () => {
-    datasource.setNumberFormater(NumberFormaterCustom);
+createButton('overide default numberformatter (comma-custom)', () => {
+    datasource.setNumberFormatter(NumberFormatterCustom);
     gridInterface.triggerRebuild();
 });
 
-createButton('use default numberformater (dot)', () => {
-    datasource.setNumberFormater(NumberFormaterDot);
+createButton('use default numberformatter (dot)', () => {
+    datasource.setNumberFormatter(NumberFormatterDot);
     gridInterface.triggerRebuild();
 });
 
-createButton('overide default Dateformater (DD.MM.YYYY)', () => {
-    datasource.setDateFormater(DateFormaterDDMMYYYY);
+createButton('overide default Dateformatter (DD.MM.YYYY)', () => {
+    datasource.setDateFormatter(DateFormatterDDMMYYYY);
     gridInterface.triggerRebuild();
 });
 
-createButton('overide default Dateformater (DD.MM.YYYYTHH:MM:SS)', () => {
-    datasource.setDateFormater(DateFormaterDDMMYYYYTHHMMSS);
+createButton('overide default Dateformatter (DD.MM.YYYYTHH:MM:SS)', () => {
+    datasource.setDateFormatter(DateFormatterDDMMYYYYTHHMMSS);
     gridInterface.triggerRebuild();
 });
 
-createButton('overide default Dateformater (DD.MM.YYYY/custom)', () => {
-    datasource.setDateFormater(DateFormaterCustom);
+createButton('overide default Dateformatter (DD.MM.YYYY/custom)', () => {
+    datasource.setDateFormatter(DateFormatterCustom);
     gridInterface.triggerRebuild();
 });
 
-createButton('use default Dateformater (YYYY-MM-DD)', () => {
-    datasource.setDateFormater(DateFormaterYYYYMMDD);
+createButton('use default Dateformatter (YYYY-MM-DD)', () => {
+    datasource.setDateFormatter(DateFormatterYYYYMMDD);
     gridInterface.triggerRebuild();
 });
 
-createButton('use default Dateformater (YYYY-MM-DDTHH:MM:SS)', () => {
-    datasource.setDateFormater(DateFormaterYYYYMMDDTHHMMSS);
+createButton('use default Dateformatter (YYYY-MM-DDTHH:MM:SS)', () => {
+    datasource.setDateFormatter(DateFormatterYYYYMMDDTHHMMSS);
     gridInterface.triggerRebuild();
 });
 
@@ -330,6 +330,7 @@ createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
 });
 
 createButton('remove readonly favoriteFruit based on cell isDumb', () => {
+    // gives no answer, so the column config decides, same as no setter
     gridInterface.readonlySetter(null);
 });
 
@@ -395,6 +396,7 @@ createButton('append class dimmed favoriteFruit based on cell isDumb', () => {
 });
 
 createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
+    // no extra classes, same as no setter
     gridInterface.cellAppendClassSetter(null);
 });
 

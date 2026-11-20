@@ -5,7 +5,7 @@ import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE,
+    RIGHT_PINNED_COLTYPE,
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
@@ -191,7 +191,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                             }
                         });
                     }
-                    if (colType === RIGH_PINNED_COLTYPE) {
+                    if (colType === RIGHT_PINNED_COLTYPE) {
                         ctx.containerRightColumnCache.forEach((x, i) => {
                             const id = `${e.id}:${i.toString()}`;
                             const colEl = ctx.columns.get(id);
@@ -258,7 +258,7 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
 
         ctx.containerRightRowCache.forEach((e, i) => {
             e.row = ctx.containerGroupRowCache[i].row;
-            updateRow(e, RIGH_PINNED_COLTYPE);
+            updateRow(e, RIGHT_PINNED_COLTYPE);
         });
 
         return true;

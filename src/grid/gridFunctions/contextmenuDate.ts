@@ -3,7 +3,7 @@ import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { removeContextMenu } from './removeContextMenu';
 
@@ -16,7 +16,7 @@ export function contextmenuDate(
 ) {
     removeContextMenu(ctx);
 
-    const contextMenu = creatElement('div', 'simple-html-grid');
+    const contextMenu = createElement('div', 'simple-html-grid');
 
     const config = ctx.gridInterface.__getGridConfig().datePickerConfig || ({} as IDateConfig);
 
@@ -73,7 +73,7 @@ export function contextmenuDate(
         }
     });
 
-    const dateElement = creatElement('simple-html-date', 'simple-html-date') as DateElement;
+    const dateElement = createElement('simple-html-date', 'simple-html-date') as DateElement;
     contextMenu.appendChild(dateElement);
     dateElement.connectInterface(dateInterface);
     dateInterface.render();

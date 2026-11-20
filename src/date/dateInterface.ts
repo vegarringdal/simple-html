@@ -1,19 +1,17 @@
 import { html, render } from 'lit-html';
+import type { Listener } from '../listener';
 import type { DateElement } from './dateElement';
 import type { IDateConfig, IStyle } from './interfaces';
 import { header } from './templates/header';
 import { month } from './templates/month';
 
-export type callF = (...args: any[]) => any;
-export type callO = { handleEvent: (...args: any[]) => any };
-export type callable = callF | callO;
-
 export class DateInterface {
     public selected = new Set();
-    public lastSelected: Date = null;
-    public element: DateElement;
+    public lastSelected: Date | null = null;
+    // undefined until connected, null after disconnectElement()
+    public element?: DateElement | null;
     public config: IDateConfig;
-    private listeners: Set<callable> = new Set();
+    private listeners: Set<Listener> = new Set();
 
     constructor(config: IDateConfig) {
         this.config = config;
@@ -54,10 +52,10 @@ export class DateInterface {
         this.listeners.clear();
     }
 
-    callSubscribers(event: string, data = {}): void {
+    callSubscribers(event: string, data: unknown = {}): void {
         const keeping: any = [];
         this.listeners.forEach((callable) => {
-            let keep: boolean;
+            let keep: boolean | undefined;
             if (typeof callable === 'function') {
                 keep = callable({ type: event, data: data });
             } else {
@@ -126,7 +124,7 @@ export class DateInterface {
         this.render();
     }
 
-    addEventListener(callable: callable): void {
+    addEventListener(callable: Listener): void {
         if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
             throw new Error('callable sent to datasource event listner is wrong type');
         }
@@ -136,7 +134,7 @@ export class DateInterface {
         }
     }
 
-    removeEventListener(callable: callable): void {
+    removeEventListener(callable: Listener): void {
         if (this.listeners.has(callable)) {
             this.listeners.delete(callable);
         }

@@ -1,5 +1,5 @@
 import type { Grid } from '../grid';
-import type { GridConfig } from '../gridConfig';
+import type { ParsedGridConfig } from '../gridConfig';
 import { nextSection, sectionColumns } from './cellRowKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
@@ -60,7 +60,7 @@ function overrideGroupRow(ctx: Grid, currentKey: string, gotoRow: number) {
  */
 function leaveFilterSection(
     ctx: Grid,
-    config: GridConfig,
+    config: ParsedGridConfig,
     scrollerEl: HTMLElement,
     colType: ColType,
     forward: boolean,

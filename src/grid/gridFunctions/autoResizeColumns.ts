@@ -8,7 +8,7 @@ import { getTextWidth } from './getTextWidth';
 export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
     const attributes = ctx.gridInterface.__getGridConfig().__attributes;
     const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
-    const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
+    const valueFormatter = ctx.gridInterface.getDatasource().getValueFormatter();
 
     let widths: number[] = attributeKeys.map((key) => {
         const attribute = attributes[key];
@@ -19,23 +19,25 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
     const text: string[] = attributeKeys.map((key) => {
         const currAtt = attributes[key];
         const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[currAtt.attribute];
-        const placeholderFormat = valueFormater.placeholder(cellConfig.type, currAtt.attribute, true);
+        // type can be unset (the default formatter treats it as text), ValueFormatter's type is too strict
+        const placeholderFormat = valueFormatter.placeholder(cellConfig.type!, currAtt.attribute, true);
 
+        // a missing label never counts as shorter, undefined < number is false
         if (currAtt.type === 'date' && currAtt?.placeHolderFilter) {
-            if (currAtt?.label?.length < currAtt.placeHolderFilter.length) {
-                return currAtt?.label;
+            if (currAtt.label != null && currAtt.label.length < currAtt.placeHolderFilter.length) {
+                return currAtt.label;
             }
             return currAtt?.placeHolderFilter;
         }
 
         if (currAtt.type === 'date' && !currAtt?.placeHolderFilter && placeholderFormat) {
-            if (currAtt?.label?.length < placeholderFormat.length) {
-                return currAtt?.label;
+            if (currAtt.label != null && currAtt.label.length < placeholderFormat.length) {
+                return currAtt.label;
             }
             return placeholderFormat;
         }
 
-        if (currAtt.type === 'date' && currAtt?.label?.length < 5) {
+        if (currAtt.type === 'date' && currAtt.label != null && currAtt.label.length < 5) {
             return '19.19.2000 A';
         }
         return `${currAtt?.label || currAtt.attribute}< > < <`;

@@ -29,18 +29,7 @@ export const COMPANIES = [
     'VANDELAY'
 ];
 
-export const COUNTRIES = [
-    'Norway',
-    'Sweden',
-    'Denmark',
-    'Finland',
-    'Iceland',
-    'Germany',
-    'France',
-    'Spain',
-    'Italy',
-    'Portugal'
-];
+export const COUNTRIES = ['Norway', 'Sweden', 'Denmark', 'Finland', 'Iceland', 'Germany', 'France', 'Spain', 'Italy', 'Portugal'];
 
 export const FRUITS = ['Apple', 'Banana', 'Cherry', 'Mango', 'Orange', 'Pear'];
 
@@ -133,7 +122,7 @@ export function createStage(stage: HTMLElement) {
     gridHost.className = 'demo-grid-host';
     stage.appendChild(gridHost);
 
-    let logEl: HTMLElement = null;
+    let logEl: HTMLElement | null = null;
 
     return {
         gridHost,
@@ -155,7 +144,7 @@ export function createStage(stage: HTMLElement) {
             row.textContent = line;
             logEl.appendChild(row);
             while (logEl.children.length > 200) {
-                logEl.removeChild(logEl.firstChild);
+                logEl.removeChild(logEl.firstChild!);
             }
             logEl.scrollTop = logEl.scrollHeight;
         }

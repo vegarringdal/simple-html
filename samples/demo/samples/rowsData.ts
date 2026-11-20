@@ -43,9 +43,7 @@ datasource.getRows(); // current view, sorted/filtered/grouped
             ui.log('removed ' + selected.length + ' rows -> ' + datasource.length() + ' left');
         });
         ui.button('Row count', () => {
-            ui.log(
-                'view: ' + datasource.length() + ' rows, container: ' + datasource.getAllData().length + ' rows'
-            );
+            ui.log('view: ' + datasource.length() + ' rows, container: ' + datasource.getAllData().length + ' rows');
         });
     }
 };

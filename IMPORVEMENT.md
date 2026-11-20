@@ -653,6 +653,74 @@ One time setup on github, not in code:
 * after the first run created the branch: Settings -> Pages -> Source "Deploy from a branch",
   `gh-pages`, `/ (root)`
 
+### v6 phase 0 - foundations
+
+`V6_PLAN.md` items 1-4. What users see is in `CHANGELOG.md`, what they change in `MIGRATION.md`.
+
+#### Strict mode
+
+`strict: true` everywhere a compiler config is declared (`tsconfig.json`, `samples/`,
+`tsconfig-typedoc.json`, `scripts/build.js`, `config_devserver.ts`). 558 errors to 0.
+
+* **Two root-cause types first** took it to 322: `ParsedGridConfig` (the config after
+  `__parseConfig()`, every default filled - `columnsPinnedLeft/Right` alone were 59 errors) and
+  `DataEntity` (a data row always has its `__controller`, 46 errors). Fixing those at every use
+  site instead would have been hundreds of `!`.
+* the rest was done per folder: datasource, grid, date + samples
+* about 50 `!` were added in source. Each one is either a field that is always set before use or
+  a use site with the reason next to it. biome's `noNonNullAssertion` warns on all of them, as
+  a warning - that is the list to come back to.
+* 5 of the `!` only work around `ValueFormatter`'s parameter types (`type: DataTypes`,
+  `attribute: string`, while the grid passes an optional type and, for a new filter editor
+  condition, no attribute). Left for `V6_PLAN.md` item 7, which replaces that interface.
+
+It found 12 real bugs, listed under *Fixes found by turning on strict mode* in the changelog.
+Each has a test that fails on the old code: `datasource/__tests__/strictModeFindings.test.ts`,
+`grid/__tests__/strictModeFindings.test.ts`, and the date picker ones in
+`date/__tests__/datePicker.test.ts`.
+
+Kept as found, not bugs worth a change:
+* `renderRowCell` had `if (value === null && value === undefined)`, never true. Removed as dead
+  code rather than "fixed" to `||` - that would change what null cells pass to the formatter.
+* `horizontalScrollHandler` runs `renderCell` on the header's resize handle too (with `celno`
+  NaN). Does nothing visible.
+
+#### Public vs internal
+
+* `stripInternal` in the build: `@internal` members are left out of the published `.d.ts`.
+  Most `__` methods already had the tag, it just never did anything.
+* **checked with a consumer**: a small file using the public API, compiled against `dist` with
+  `strict` and `skipLibCheck: false` (every emitted `.d.ts` is checked). It caught three types
+  that were stripped but still used by public signatures (`OPERATORS`, `EntityHandler`,
+  `DataEntity`). Kept as `npm run check:typings` (`scripts/typings-consumer/`) - run it after any
+  change to exports.
+* typedoc's "X is referenced by Y but not included in the documentation" warnings are the list
+  of types a public signature uses but the package did not export. With `./src/index.ts` as the
+  only entry (the internal files were listed as entry points to silence exactly those warnings)
+  there were 13; all fixed by exporting the type, narrowing the signature, or making the member
+  internal.
+* the three identical `callable` listener types are one exported `Listener`
+
+**Found on the way:** a listener is only kept if it *returns something truthy*. One that
+returns nothing - the obvious way to write it - is removed after the first event. Documented on
+`Listener` for now, `V6_PLAN.md` item 13 (typed events with an unsubscribe function) removes it.
+
+#### Package
+
+* `exports` map: `.`, `./grid.css`, `./date.css`, `./package.json`
+* `prepare` runs the build, so a git branch install gets a `dist`. The tgz moved out of
+  `npm run build` into `npm run build:tgz` - `npm pack` runs `prepare`, so building inside the
+  build would have packed recursively.
+* `src/**/__tests__` left out of the tarball
+* `skipTsErrors: [2307]` removed from the build - it hid "module not found" errors
+
+#### Renames
+
+`Formater` -> `Formatter` (and file names), and the public typos. Internal typos went in the
+same pass: `creatElement`, `RIGH_PINNED_COLTYPE`, `clickListner`, `exspandedGroups`,
+`lastKeyKodeUsed`, `deSelect`, `toggelDark*` in the samples. `selectSizeHeight` stayed - it
+really is a height.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -695,19 +763,13 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
   * the filter editor still blanks header inputs whose conditions it keeps
   * a column config without `rows` crashes `getCellHeight` (malformed config only)
 * **Packaging / dev tooling**:
-  * the tgz ships all `src/**/__tests__` files - `"files"` lists `src`; `"!src/**/__tests__"`
-    would leave them out
-  * `scripts/build.js` still has `skipTsErrors: [2307]` from the `@simple-html/*` imports, none
-    are left, so it now only hides real "module not found" errors
-  * `config_devserver.ts` clears `dist_client` / `dist_nodejs` (nothing writes there), and its
-    header says `npm start` opens grid01 - the default is demo
   * demo copy button: `navigator.clipboard` with no catch, throws on plain http off localhost
 * **Duplication in hot paths** — `verticalScrollHandler.ts` has three near-identical ~30 line
   blocks for left/middle/right that differ only in cache + widths array. Same shape in
   `horizontalScrollHandler.ts`.
 * **Duplicated listener machinery** — `addEventListener` / `removeEventListener` /
-  `__callSubscribers` are identical in `Datasource` and `GridInterface` apart from the field
-  name (`__listeners` vs `listeners`).
+  `__callSubscribers` are identical in `Datasource`, `GridInterface` and `DateInterface` apart
+  from the field name. They share the `Listener` type now; `V6_PLAN.md` item 13 replaces them.
 * **Linear scans on every scroll event** — `getTopRow()` / `getLeftCol()`, local closures in
   `verticalScrollHandler` / `horizontalScrollHandler`, scan from index 0 for the first visible
   row/column on every event. `scrollTops` / `colLeft` are sorted, so binary search applies.

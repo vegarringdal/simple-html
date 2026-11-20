@@ -1,7 +1,7 @@
 import { html, render } from 'lit-html';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
 
@@ -20,7 +20,7 @@ export function contextMenuCustom(
 ) {
     removeContextMenu(ctx);
 
-    const contextMenu = creatElement('div', 'simple-html-grid');
+    const contextMenu = createElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
     const rect = cell.getBoundingClientRect();
 

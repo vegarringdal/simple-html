@@ -1,7 +1,7 @@
 import './index.css';
 import '../../src/date.css';
 import { type DateElement, DateInterface, type IDateConfig } from '@simple-html/grid';
-import { toggelDarkDate } from './toggelDarkDate';
+import { toggleDarkDate } from './toggleDarkDate';
 
 const dateconfig: IDateConfig = {
     monthsToShow: 1,
@@ -57,5 +57,5 @@ function createButton(title: string, callback: () => void) {
 }
 
 createButton('toggle dark/light mode', () => {
-    toggelDarkDate();
+    toggleDarkDate();
 });

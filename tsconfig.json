@@ -23,7 +23,7 @@
         "removeComments": true,
         "emitDecoratorMetadata": false,
         "importHelpers": false,
-        "strictNullChecks": false,
+        "strict": true,
         "experimentalDecorators": true,
         "rootDir": ".",
         "paths": {

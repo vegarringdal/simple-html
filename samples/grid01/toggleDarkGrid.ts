@@ -2,10 +2,10 @@
  * dark theme helper...
  */
 
-export function toggelDarkGrid() {
+export function toggleDarkGrid() {
     const x = document.getElementById('darkgrid');
     if (x) {
-        x.parentElement.removeChild(x);
+        x.parentElement!.removeChild(x);
     } else {
         const style = document.createElement('style');
         style.id = 'darkgrid';

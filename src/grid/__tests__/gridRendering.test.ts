@@ -241,11 +241,11 @@ describe('grid rendering - selection', () => {
         });
     });
 
-    it('expect deSelectAll to clear the marks', async () => {
+    it('expect deselectAll to clear the marks', async () => {
         const { element, datasource } = await mountGrid();
 
         datasource.selectAll();
-        datasource.deSelectAll(true);
+        datasource.deselectAll(true);
 
         renderedRows(element).forEach((row) => {
             expect(row.classes).not.toContain('selected-row');

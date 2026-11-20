@@ -1,5 +1,48 @@
 # Changelog
 
+## 6.0.0 (in progress)
+
+v6 is allowed to break the API, see `V6_PLAN.md` for what is planned and `MIGRATION.md` for
+what to change in your code. Released in phases.
+
+### Phase 0 - foundations
+
+#### ⚠️ Breaking changes
+- **`Formater` is spelled `Formatter`** in every class, type and method name, plus a few other
+  typos in public names (`setLocaleCompare`, `deselectAll`, `placeHolderRowCurrentEntityOnly`).
+  `sortReset()` is removed, `resetSort()` did the same.
+- **Css is imported from the package root**: `@simple-html/grid/grid.css`, not `/dist/grid.css`.
+  The package has an `exports` map now, so deep imports into `dist` no longer resolve.
+- **Internal members are left out of the typings** - `GridInterface.__parseConfig` and the other
+  `__` methods, `connectGrid`, `handleEvent`, `Datasource.__select`, `getSelection`.
+- **`html`, `render`, `Grid` and `EntityHandler` are no longer exported** (`EntityHandler` still
+  is as a type).
+- **Types are stricter** - the library is compiled with TypeScript `strict`. `getFilter()` can
+  return `null`, saved config state can be `null`, `HTMLCellElement.$attribute` can be `null`.
+
+#### Fixes found by turning on strict mode
+- date picker: a calendar (`datepicker: false`) showed an hour/minute row whose arrows threw.
+  It is only shown in datepicker mode now.
+- date picker: clearing the hour or minute input made the date invalid; it keeps the old value
+- removing a `simple-html-date` element that never got an interface threw
+- `getFilterString()` showed incomplete conditions as `[UNDEFINED] <<UNDEFINED>>`, a group
+  without `logicalOperator` as `UNDEFINED`, and threw for an attribute not in the grid config
+- `setGrouping()` and then `expandGroup()`/`collapseGroup()` threw before the grouping was applied
+- `DataContainer.replace()` gave new rows no key, so `setErrors()` threw
+- `contextMenuCustom()`, `removeContextMenuElement()`, `getAttributeColumns()` and
+  `getOptionalAttributes()` threw when the grid was not in the dom yet
+- mousedown on an empty header label cell (a column with fewer rows than the tallest) threw
+- the filter editor threw on "add condition"/"add sub group" for a group set from code without
+  `filterArguments`
+
+#### Package and tooling
+- installing straight from a git branch works again: `prepare` builds `dist` on install
+  (`dist` is not committed). The tgz is `npm run build:tgz`.
+- tests are no longer shipped in the package
+- typedoc documents the public entry only, with 0 warnings: every type a public signature uses
+  is exported
+- `Listener` is the one type for event listeners (was three identical `callable` types)
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

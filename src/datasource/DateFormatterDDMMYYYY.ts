@@ -1,9 +1,9 @@
 /**
- * default dateformater - DD.MM.YYYY
+ * default dateformatter - DD.MM.YYYY
  */
-export class DateFormaterDDMMYYYY {
+export class DateFormatterDDMMYYYY {
     /**
-     * date only, date filters match on the day, see `ValueFormater.dateIncludesTime`
+     * date only, date filters match on the day, see `ValueFormatter.dateIncludesTime`
      */
     static includesTime = false;
 
@@ -14,7 +14,7 @@ export class DateFormaterDDMMYYYY {
     static fromSource(value: Date | string | null | undefined): string {
         let returnValue: any = value;
 
-        if (returnValue === null || returnValue === undefined || returnValue === '') {
+        if (value === null || value === undefined || value === '') {
             return '';
         }
 
@@ -131,11 +131,11 @@ export class DateFormaterDDMMYYYY {
     }
 
     static fromSourceDisplay(value: Date | string | null | undefined): string {
-        return DateFormaterDDMMYYYY.fromSource(value);
+        return DateFormatterDDMMYYYY.fromSource(value);
     }
 
     static fromSourceGrouping(value: Date | string | null | undefined): string {
-        return DateFormaterDDMMYYYY.fromSourceDisplay(value);
+        return DateFormatterDDMMYYYY.fromSourceDisplay(value);
     }
 
     static placeholder() {

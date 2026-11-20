@@ -6,7 +6,7 @@ import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -28,7 +28,7 @@ export function contextmenuFilter(
 ) {
     removeContextMenu(ctx);
 
-    const contextMenu = creatElement('div', 'simple-html-grid');
+    const contextMenu = createElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
     const rect = cell.getBoundingClientRect();
     contextMenu.style.position = 'absolute';
@@ -71,14 +71,18 @@ export function contextmenuFilter(
         }
 
         /**
+         * data is only null when the column is not a text column (see dropDownFilterData), so it
+         * stays set for everything below
+         */
+        const getData = () => getContext().data!;
+
+        /**
          * update grid with new result
          */
         const runFilterClick = () => {
-            const intersection = Array.from(getContext().data.dataFilterSetFull).filter(
-                (x) => !getContext().data.dataFilterSet.has(x)
-            );
+            const intersection = Array.from(getData().dataFilterSetFull).filter((x) => !getData().dataFilterSet.has(x));
 
-            if (intersection.length < getContext().data.dataFilterSet.size) {
+            if (intersection.length < getData().dataFilterSet.size) {
                 // if full we want to use NOT in
                 filterCallback(
                     ctx,
@@ -93,7 +97,7 @@ export function contextmenuFilter(
                     ctx,
                     null,
                     cellConfig,
-                    getContext().data.dataFilterSet.size ? Array.from(getContext().data.dataFilterSet) : null,
+                    getData().dataFilterSet.size ? Array.from(getData().dataFilterSet) : null,
                     getContext().searchInput ? getContext().searchInput : null,
                     false
                 );
@@ -109,14 +113,13 @@ export function contextmenuFilter(
         const filterValues = () => {
             const filterValueClick = (rowData: any) => {
                 getContext().selectAll = false;
-                if (getContext().data.dataFilterSet.has(rowData)) {
-                    getContext().data.dataFilterSet.delete(rowData);
+                if (getData().dataFilterSet.has(rowData)) {
+                    getData().dataFilterSet.delete(rowData);
                 } else {
-                    getContext().data.dataFilterSet.add(rowData);
+                    getData().dataFilterSet.add(rowData);
                 }
                 getContext().selectAll =
-                    getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
-                    !getContext().availableOnly;
+                    getData().dataFilterSetFull.size === getData().dataFilterSet.size && !getContext().availableOnly;
                 reRender();
             };
             /**
@@ -125,18 +128,18 @@ export function contextmenuFilter(
              * DROPDOWN_FILTER_MAX_ROWS cap the counts would be misleading.
              */
             const countFor = (rowData: any) => {
-                if (getContext().data.truncated) {
+                if (getData().truncated) {
                     return '';
                 }
-                const count = getContext().data.counts?.get(rowData);
+                const count = getData().counts?.get(rowData);
                 return count ? ` (${count})` : '';
             };
 
-            return Array.from(getContext().data.dataFilterSetFull).map((rowData: any) => {
+            return Array.from(getData().dataFilterSetFull).map((rowData: any) => {
                 return html`<div class="simple-html-grid-menu-checkbox">
                     <input
                         type="checkbox"
-                        .checked=${live(getContext().data.dataFilterSet.has(rowData))}
+                        .checked=${live(getData().dataFilterSet.has(rowData))}
                         @click=${() => {
                             filterValueClick(rowData);
                         }}
@@ -156,7 +159,7 @@ export function contextmenuFilter(
          * will show only column filtered
          */
         const availableCheckbox = () => {
-            if (!getContext().data.enableAvailableOnlyOption) {
+            if (!getData().enableAvailableOnlyOption) {
                 return null;
             }
 
@@ -165,8 +168,7 @@ export function contextmenuFilter(
                 e.stopPropagation();
                 getContext().availableOnly = !getContext().availableOnly;
                 getContext().selectAll =
-                    getContext().data.dataFilterSetFull.size === getContext().data.dataFilterSet.size &&
-                    !getContext().availableOnly;
+                    getData().dataFilterSetFull.size === getData().dataFilterSet.size && !getContext().availableOnly;
                 getContext().data = dropDownFilterData(ctx, attribute, getContext().availableOnly, getContext().searchInput);
                 reRender();
             };
@@ -188,9 +190,9 @@ export function contextmenuFilter(
             const clickHandler = () => {
                 getContext().selectAll = !getContext().selectAll;
                 if (getContext().selectAll) {
-                    getContext().data.dataFilterSet = new Set(getContext().data.dataFilterSetFull);
+                    getData().dataFilterSet = new Set(getData().dataFilterSetFull);
                 } else {
-                    getContext().data.dataFilterSet = new Set();
+                    getData().dataFilterSet = new Set();
                 }
                 reRender();
             };
@@ -199,9 +201,9 @@ export function contextmenuFilter(
             // since we only display first DROPDOWN_FILTER_MAX_ROWS row
             return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                 ${
-                    getContext().data.truncated
+                    getData().truncated
                         ? html`<div class="max-row-info-warning">Showing only first ${DROPDOWN_FILTER_MAX_ROWS}  !</div>`
-                        : html`<div class="max-row-info">${getContext().data.dataFilterSetFull.size} rows found</div>`
+                        : html`<div class="max-row-info">${getData().dataFilterSetFull.size} rows found</div>`
                 }
                 <div class="simple-html-grid-menu-checkbox">
                     <input type="checkbox" .checked=${live(getContext().selectAll)} @click=${() => clickHandler()} /><label
@@ -262,7 +264,8 @@ export function contextmenuFilter(
         const notSelected = 'simple-html-grid-menu-item';
 
         if (!cellConfig.operator) {
-            cellConfig.operator = ctx.gridInterface.getDatasource().getFilterFromType(cellConfig.type);
+            // getFilterFromType gives the same for a missing type as for 'text'
+            cellConfig.operator = ctx.gridInterface.getDatasource().getFilterFromType(cellConfig.type ?? 'text');
         }
 
         const filterTemplate = () => {
@@ -362,7 +365,7 @@ export function contextmenuFilter(
             const datasource = ctx.gridInterface.getDatasource();
             const currentFilter = datasource.getFilter();
 
-            const loopFilter = (filter: FilterArgument) => {
+            const loopFilter = (filter: FilterArgument | null) => {
                 if (filter && Array.isArray(filter.filterArguments)) {
                     filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
                         if (fi.attribute === attribute) {
@@ -416,7 +419,7 @@ export function contextmenuFilter(
             const datasource = ctx.gridInterface.getDatasource();
             const currentFilter = datasource.getFilter();
 
-            const loopFilter = (filter: FilterArgument) => {
+            const loopFilter = (filter: FilterArgument | null) => {
                 if (filter && Array.isArray(filter.filterArguments)) {
                     filter.filterArguments = filter.filterArguments.filter((fi: FilterArgument) => {
                         if (fi.attribute === attribute) {

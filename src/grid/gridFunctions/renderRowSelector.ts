@@ -11,8 +11,8 @@ export function renderRowSelector(
     _column: number,
     _celno: number,
     _colType: ColType,
-    _cellType: string,
-    _attribute: string,
+    _cellType: string | null,
+    _attribute: string | null,
     rowData: Entity
 ) {
     let currentEntitySelected = '';

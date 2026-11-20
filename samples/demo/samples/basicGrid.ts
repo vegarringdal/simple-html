@@ -8,7 +8,7 @@ export const basicGrid: DemoSample = {
         'Minimal setup: create a Datasource with your rows, wrap it in a GridInterface with a config, and connect it to a <simple-html-grid> element. Columns can be sorted (click label), filtered (input row), resized and reordered out of the box. Note: the grid defaults to readonly - set readonly: false in the config to allow editing.',
     code: `
 import { Datasource, GridInterface, type GridConfig, type GridElement } from '@simple-html/grid';
-import '@simple-html/grid/dist/grid.css';
+import '@simple-html/grid/grid.css';
 
 // columnsCenter controls the layout, attributes controls cell type/behavior
 const gridConfig: GridConfig = {

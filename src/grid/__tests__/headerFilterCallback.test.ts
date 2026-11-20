@@ -106,9 +106,9 @@ describe('header filter - keeps the rest of the filter', () => {
 
         typeInHeaderFilter(element, 'lastname', 'x');
 
-        const filter = datasource.getFilter();
+        const filter = datasource.getFilter()!;
         expect(filter.logicalOperator).toEqual('AND');
-        expect(filter.filterArguments.some((arg: any) => arg.logicalOperator === 'OR')).toEqual(true);
+        expect(filter.filterArguments!.some((arg: any) => arg.logicalOperator === 'OR')).toEqual(true);
         expect(names(datasource)).toEqual(['a']);
     });
 });

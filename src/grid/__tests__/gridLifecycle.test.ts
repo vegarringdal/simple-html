@@ -81,7 +81,7 @@ describe('grid lifecycle - moving the element in the dom', () => {
         host.appendChild(element);
 
         const grid = gridOf(element);
-        expect(add.mock.calls.some((call) => call[0] === 'click' && call[1] === grid.clickListner)).toBe(true);
+        expect(add.mock.calls.some((call) => call[0] === 'click' && call[1] === grid.clickListener)).toBe(true);
         expect(resizeObserver.current().disconnected).toBe(false);
         expect(resizeObserver.current().observed).toContain(element);
     });

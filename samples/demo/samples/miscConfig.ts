@@ -51,7 +51,12 @@ gridInterface.autoResizeColumns();
         const rows = generateRows(300);
         rows.forEach((row: any, i: number) => {
             row.bonus = i % 3 === 0 ? 0 : Math.round(row.balance) / 10;
-            row.website = 'https://' + String(row.company).toLowerCase().replace(/[^a-z]/g, '') + '.com';
+            row.website =
+                'https://' +
+                String(row.company)
+                    .toLowerCase()
+                    .replace(/[^a-z]/g, '') +
+                '.com';
             if (i % 4 === 0) {
                 row.age = null;
             }

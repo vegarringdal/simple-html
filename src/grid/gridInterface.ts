@@ -1,8 +1,9 @@
 import type { Datasource } from '../datasource/dataSource';
 import type { Entity } from '../datasource/entity';
 import type { FilterArgument } from '../datasource/filterArgument';
+import type { Listener } from '../listener';
 import type { Grid } from './grid';
-import type { GridConfig } from './gridConfig';
+import type { GridConfig, ParsedGridConfig } from './gridConfig';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
 import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
 import { getAttributeColumns } from './gridFunctions/getAttributeColumns';
@@ -15,52 +16,47 @@ import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 
-export type callF = (...args: any[]) => any;
-export type callO = { handleEvent: (...args: any[]) => any };
-export type callable = callF | callO;
-
 /* declare const DEVELOPMENT: boolean; */
 
 /**
  * grid interface is what user have access to controll grid behavior
  */
 export class GridInterface<T> {
-    private grid: Grid;
-    private gridConfig: GridConfig;
+    // not there until connectGrid, null after __disconnectGrid
+    private grid?: Grid | null;
+    // ParsedGridConfig: __parseConfig() fills in every default before the grid reads it
+    // set by loadConfig, called from the constructor
+    private gridConfig!: ParsedGridConfig;
     private dataSource: Datasource<T>;
     private columnsSelected: Set<number>;
 
-    // for variable scroll
-    private scrollTops: number[];
-    private scrollHeights: number[];
-    private scrollHeight: number;
+    // for variable scroll, set by __dataSourceUpdated, called from the constructor
+    private scrollTops!: number[];
+    private scrollHeights!: number[];
+    private scrollHeight!: number;
 
     /**
      * for skipping events during setting gridconfig
+     * set by loadConfig, called from the constructor
      */
-    private suppressEvents: boolean;
+    private suppressEvents!: boolean;
 
     /**
      * for setting readonly based on row values
      */
-    private readonlySetterFn: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null;
+    private readonlySetterFn?: ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) | null;
 
     /**
      * for adding classes on row lvl
      */
-    private cellAppendClassSetterFn: (
-        attribute: string,
-        rowData: Entity,
-        cellReadOnlyConfig: boolean
-    ) => {
-        inputClass: string;
-        dimmedClass: string;
-    };
+    private cellAppendClassSetterFn?:
+        | ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => { inputClass: string; dimmedClass: string })
+        | null;
 
     /**
      * subscribed listerners, gets called when collection changes/is sorted/filtered etc
      */
-    private listeners: Set<callable> = new Set();
+    private listeners: Set<Listener> = new Set();
     private initConfig: GridConfig;
 
     /**
@@ -104,6 +100,7 @@ export class GridInterface<T> {
     /**
      * do not use - used by grid to connect
      * @param grid
+     * @internal
      */
     public connectGrid(grid: Grid) {
         this.grid = grid;
@@ -139,7 +136,10 @@ export class GridInterface<T> {
         cell: HTMLElement,
         callback: (attribute: string) => void
     ) {
-        contextMenuCustom(this.grid, event, cell, callback, options);
+        // no grid connected (not in the dom yet, or removed): nothing to open the menu in
+        if (this.grid) {
+            contextMenuCustom(this.grid, event, cell, callback, options);
+        }
     }
 
     /**
@@ -158,7 +158,10 @@ export class GridInterface<T> {
      * practical since it will be removed if new is open/scroll happens
      */
     public removeContextMenuElement() {
-        removeContextMenu(this.grid);
+        // no grid connected: there is no menu to remove
+        if (this.grid) {
+            removeContextMenu(this.grid);
+        }
     }
 
     /**
@@ -177,11 +180,12 @@ export class GridInterface<T> {
     public saveConfig(): GridConfig {
         const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
 
-        // convert attributes
-        const keys = Object.keys(config.__attributes);
+        // convert attributes, a copy of the parsed config always has them
+        const attributes = config.__attributes!;
+        const keys = Object.keys(attributes);
         config.attributes = [];
         keys.forEach((key) => {
-            config.attributes.push(config.__attributes[key]);
+            config.attributes.push(attributes[key]);
         });
 
         delete config.__attributes;
@@ -221,7 +225,7 @@ export class GridInterface<T> {
         const sortOrder = structuredClone(gridConfig.sorting);
         const grouping = structuredClone(gridConfig.grouping);
         const filter = structuredClone(gridConfig.filter);
-        const exspandedGroups = structuredClone(gridConfig.expandedGroups);
+        const expandedGroups = structuredClone(gridConfig.expandedGroups);
 
         this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
         this.gridConfig.sorting = null;
@@ -239,7 +243,8 @@ export class GridInterface<T> {
         this.getDatasource().filter();
 
         if (grouping?.length) {
-            this.getDatasource().setExpanded(exspandedGroups);
+            // setExpanded makes a Set of it, and new Set(undefined/null) is empty too
+            this.getDatasource().setExpanded(expandedGroups ?? []);
             this.getDatasource().group(grouping);
             if (sortOrder?.length) {
                 // we asume they have control what they are sending in
@@ -271,7 +276,7 @@ export class GridInterface<T> {
      * @param filterSelectedColumns = true by default
      */
     public getAttributeColumns(filterSelectedColumns = true) {
-        return getAttributeColumns(this.grid, filterSelectedColumns);
+        return getAttributeColumns(this, filterSelectedColumns);
     }
 
     public getOptionalAttributes() {
@@ -293,7 +298,7 @@ export class GridInterface<T> {
      * adds event listener, useful when you need to do stuff based on
      * @param callable
      */
-    public addEventListener(callable: callable): void {
+    public addEventListener(callable: Listener): void {
         if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
             throw new Error('callable sent to datasource event listner is wrong type');
         }
@@ -307,7 +312,9 @@ export class GridInterface<T> {
      * this is for enabling readonly based on row data
      * @param callback
      */
-    public readonlySetter(callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) {
+    public readonlySetter(
+        callback: ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) | null
+    ) {
         this.readonlySetterFn = callback;
         if (this.grid) {
             triggerScrollEvent(this.grid);
@@ -320,7 +327,10 @@ export class GridInterface<T> {
      * @param callback
      */
     public cellAppendClassSetter(
-        callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => { inputClass: string; dimmedClass: string }
+        // null removes it again
+        callback:
+            | ((attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => { inputClass: string; dimmedClass: string })
+            | null
     ) {
         this.cellAppendClassSetterFn = callback;
         if (this.grid) {
@@ -332,7 +342,7 @@ export class GridInterface<T> {
      * removes listener from datasource
      * @param callable
      */
-    public removeEventListener(callable: callable): void {
+    public removeEventListener(callable: Listener): void {
         if (this.listeners.has(callable)) {
             this.listeners.delete(callable);
         }
@@ -400,10 +410,10 @@ export class GridInterface<T> {
         this.dataSource.setSelectionMode(this.gridConfig.selectionMode);
 
         if (
-            this.gridConfig.placeHolderRowCurrentEnityOnly === null ||
-            this.gridConfig.placeHolderRowCurrentEnityOnly === undefined
+            this.gridConfig.placeHolderRowCurrentEntityOnly === null ||
+            this.gridConfig.placeHolderRowCurrentEntityOnly === undefined
         ) {
-            this.gridConfig.placeHolderRowCurrentEnityOnly = true;
+            this.gridConfig.placeHolderRowCurrentEntityOnly = true;
         }
 
         /**
@@ -486,7 +496,7 @@ export class GridInterface<T> {
      * @internal
      * @private
      */
-    public __getGridConfig() {
+    public __getGridConfig(): ParsedGridConfig {
         return this.gridConfig;
     }
 
@@ -625,33 +635,35 @@ export class GridInterface<T> {
             return true;
         }
 
+        // the datasource only calls this while a grid is connected: connectGrid adds the
+        // listener, __disconnectGrid removes it before it clears this.grid
         switch (true) {
             case e.type === 'collection-filtered' &&
                 (e.data?.info === 'filter' || e.data?.info === 'markForDeletion' || e.data?.info === 'resetData'):
-                this.grid.rebuild(false);
+                this.grid!.rebuild(false);
                 break;
             case e.type === 'collection-sorted':
             case e.type === 'collection-grouped':
             case e.type === 'collection-expand':
             case e.type === 'collection-collapse':
             case e.type === 'collection-changed':
-                this.grid.rebuild();
+                this.grid!.rebuild();
 
                 break;
             case e.type === 'currentEntity':
             case e.type === 'selectionChange':
                 this.__dataSourceUpdated();
-                triggerScrollEvent(this.grid);
+                triggerScrollEvent(this.grid!);
                 break;
             case e.type === 'select': {
                 this.__dataSourceUpdated();
 
                 // connected with connectInterface, but not put in the dom yet - nothing to scroll
-                if (!this.grid.domCreated) {
+                if (!this.grid!.domCreated) {
                     break;
                 }
 
-                const scrollEl = getElementByClassName(this.grid.getElement(), 'simple-html-grid-body-scroller');
+                const scrollEl = getElementByClassName(this.grid!.getElement(), 'simple-html-grid-body-scroller');
                 const scrollElHeight = scrollEl?.clientHeight;
                 const scrollElScrollTop = scrollEl?.scrollTop;
 
@@ -686,7 +698,7 @@ export class GridInterface<T> {
     public __callSubscribers(event: string, data = {}): void {
         const keeping: any = [];
         this.listeners.forEach((callable) => {
-            let keep: boolean;
+            let keep: boolean | undefined;
             if (typeof callable === 'function') {
                 keep = callable({ type: event, data: data });
             } else {

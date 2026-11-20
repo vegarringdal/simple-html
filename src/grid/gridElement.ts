@@ -6,7 +6,7 @@ import type { GridInterface } from './gridInterface';
  * it connects gridinterface to grid class
  */
 export class GridElement extends HTMLElement {
-    private gridInterface: GridInterface<any>;
+    private gridInterface?: GridInterface<any>;
     private grid: Grid;
 
     constructor() {
@@ -25,10 +25,8 @@ export class GridElement extends HTMLElement {
          * noticed hmr in react have given me issues, so will try out this
          */
         if (this.enableCleanup) {
-            if (this.hasChildNodes) {
-                while (this.firstChild) {
-                    this.removeChild(this.firstChild);
-                }
+            while (this.firstChild) {
+                this.removeChild(this.firstChild);
             }
             // the dom is gone, so the grid has to build it again
             this.grid.domCreated = false;

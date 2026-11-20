@@ -14,7 +14,7 @@ export function renderHeaderLabel(
     celno: number,
     colType: ColType,
     cellType: string,
-    attribute: string,
+    attribute: string | null,
     rowData: Entity
 ) {
     /**

@@ -218,7 +218,7 @@ describe('datasource filter tree (footer chips)', () => {
         const tree = ds2.getFilterTree();
         expect(tree?.logicalOperator).toEqual('OR');
         expect(tree?.children[0].kind).toEqual('group');
-        expect((tree?.children[0] as { children: unknown[] }).children).toHaveLength(2);
+        expect((tree!.children[0] as { children: unknown[] }).children).toHaveLength(2);
         expect(tree?.children[1]).toEqual({
             kind: 'condition',
             label: 'group',

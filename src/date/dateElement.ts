@@ -5,7 +5,8 @@ import type { DateInterface } from './dateInterface';
  * it connects gridinterface to grid class
  */
 export class DateElement extends HTMLElement {
-    private dateInterface: DateInterface;
+    // undefined until connectInterface() is called
+    private dateInterface?: DateInterface;
 
     connectInterface(dateInterface: DateInterface) {
         this.dateInterface = dateInterface;
@@ -19,7 +20,8 @@ export class DateElement extends HTMLElement {
     }
 
     public disconnectedCallback() {
-        this.dateInterface.disconnectElement();
+        // the element can be removed before connectInterface() was ever called
+        this.dateInterface?.disconnectElement();
     }
 }
 

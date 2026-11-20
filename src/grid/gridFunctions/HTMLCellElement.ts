@@ -5,7 +5,8 @@ export interface HTMLCellElement extends HTMLElement {
     $column: number;
     $coltype: ColType;
     $celno: number;
-    $attribute: string;
+    // null on group and selector cells, they have no attribute
+    $attribute: string | null;
     /**
      * helper to know if cell is focused
      */

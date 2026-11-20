@@ -31,7 +31,10 @@ export interface IDateConfig {
     headerTitle: string;
 
     datepicker: boolean;
-    datepickerDate?: Date;
+    /**
+     * null or undefined: the datepicker opens on today
+     */
+    datepickerDate?: Date | null;
     datepickerHour?: number;
     datepickerMinute?: number;
     /**

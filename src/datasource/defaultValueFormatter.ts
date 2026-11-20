@@ -1,11 +1,11 @@
 import type { Datasource } from './dataSource';
 import type { DataTypes } from './filterArgument';
-import type { ValueFormater } from './valueFormater';
+import type { ValueFormatter } from './valueFormatter';
 
 /**
- * default dateformater - YYYY-MM-DD
+ * default dateformatter - YYYY-MM-DD
  */
-export class DefaultValueFormater implements ValueFormater {
+export class DefaultValueFormatter implements ValueFormatter {
     public datasource: Datasource;
 
     constructor(datasource: Datasource) {
@@ -18,10 +18,10 @@ export class DefaultValueFormater implements ValueFormater {
      */
     fromSource(value: any, type: DataTypes, _attribute: string): any {
         if (type === 'date') {
-            return this.datasource.getDateFormater().fromSource(value);
+            return this.datasource.getDateFormatter().fromSource(value);
         }
         if (type === 'number') {
-            return this.datasource.getNumberFormater().fromSource(value);
+            return this.datasource.getNumberFormatter().fromSource(value);
         }
         if (type === 'boolean') {
             return value || false;
@@ -36,10 +36,10 @@ export class DefaultValueFormater implements ValueFormater {
      */
     toSource(value: any, type: DataTypes, _attribute: string): any {
         if (type === 'date') {
-            return this.datasource.getDateFormater().toSource(value);
+            return this.datasource.getDateFormatter().toSource(value);
         }
         if (type === 'number') {
-            return this.datasource.getNumberFormater().toSource(value);
+            return this.datasource.getNumberFormatter().toSource(value);
         }
         if (type === 'boolean') {
             return value || false;
@@ -57,10 +57,10 @@ export class DefaultValueFormater implements ValueFormater {
      */
     toFilter(value: any, type: DataTypes, _attribute: string): any {
         if (type === 'date') {
-            return this.datasource.getDateFormater().toFilter(value);
+            return this.datasource.getDateFormatter().toFilter(value);
         }
         if (type === 'number') {
-            return this.datasource.getNumberFormater().toFilter(value);
+            return this.datasource.getNumberFormatter().toFilter(value);
         }
         if (type === 'boolean') {
             return value || false;
@@ -71,10 +71,10 @@ export class DefaultValueFormater implements ValueFormater {
 
     fromSourceDisplay(value: any, type: DataTypes, attribute: string): any {
         if (type === 'date') {
-            return this.datasource.getDateFormater().fromSourceDisplay(value);
+            return this.datasource.getDateFormatter().fromSourceDisplay(value);
         }
         if (type === 'number') {
-            return this.datasource.getNumberFormater().fromSourceDisplay(value);
+            return this.datasource.getNumberFormatter().fromSourceDisplay(value);
         }
 
         return this.fromSource(value, type, attribute);
@@ -85,19 +85,19 @@ export class DefaultValueFormater implements ValueFormater {
     }
 
     /**
-     * answered from the current date formater. A date formater without `includesTime` counts as
+     * answered from the current date formatter. A date formatter without `includesTime` counts as
      * including time, so date filters keep comparing with time
      */
     dateIncludesTime(_attribute: string): boolean {
-        return this.datasource.getDateFormater().includesTime !== false;
+        return this.datasource.getDateFormatter().includesTime !== false;
     }
 
     placeholder(type: DataTypes, _attribute: string) {
         if (type === 'date') {
-            return this.datasource.getDateFormater().placeholder();
+            return this.datasource.getDateFormatter().placeholder();
         }
         if (type === 'number') {
-            return this.datasource.getNumberFormater().placeholder();
+            return this.datasource.getNumberFormatter().placeholder();
         }
 
         return '';

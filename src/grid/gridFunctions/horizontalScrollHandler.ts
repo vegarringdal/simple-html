@@ -1,7 +1,7 @@
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { ColType } from './colType';
-import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 import { removeContextMenu } from './removeContextMenu';
@@ -32,11 +32,11 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
         sectionElement = 'simple-html-grid-body-view-pinned-left';
     }
 
-    if (type === RIGH_PINNED_COLTYPE) {
+    if (type === RIGHT_PINNED_COLTYPE) {
         columns = config.columnsPinnedRight;
         columnCache = ctx.containerRightColumnCache;
         rowCache = ctx.containerRightRowCache;
-        idPrefix = RIGH_PINNED_COLTYPE;
+        idPrefix = RIGHT_PINNED_COLTYPE;
         sectionElement = 'simple-html-grid-body-view-pinned-right';
     }
 
@@ -100,7 +100,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
     ctx.lastScrollLeft = scrollLeft;
     if (largeScroll) {
         // large scroll will break logic on moving one and one, why bother
-        clearTimeout(ctx.largeScrollLeftTimer);
+        clearTimeout(ctx.largeScrollLeftTimer ?? undefined);
 
         delayScrollRender();
     } else {
@@ -193,7 +193,8 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
                                 header.style.transform = transform;
 
                                 for (let c = 0; c < header.children.length; c++) {
-                                    const cellNo = parseInt(header.children[c].getAttribute('cellNo'), 10);
+                                    // the resize handle has no cellNo, parseInt('') is NaN like parseInt(null)
+                                    const cellNo = parseInt(header.children[c].getAttribute('cellNo') ?? '', 10);
                                     renderCell(ctx, header.children[c] as HTMLElement, 0, x.column, cellNo, idPrefix);
                                 }
                             }

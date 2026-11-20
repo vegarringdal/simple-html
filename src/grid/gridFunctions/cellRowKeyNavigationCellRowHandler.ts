@@ -1,5 +1,5 @@
 import type { Grid } from '../grid';
-import type { GridConfig } from '../gridConfig';
+import type { ParsedGridConfig } from '../gridConfig';
 import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -49,7 +49,7 @@ const SECTION_ORDER: ColType[] = ['left-pinned', 'middle-pinned', 'right-pinned'
 /**
  * columns of one section of the grid
  */
-export function sectionColumns(config: GridConfig, colType: ColType) {
+export function sectionColumns(config: ParsedGridConfig, colType: ColType) {
     switch (colType) {
         case 'left-pinned':
             return config.columnsPinnedLeft;
@@ -68,7 +68,7 @@ export function sectionColumns(config: GridConfig, colType: ColType) {
  * section empty, and landing in it crashed on `columnsCenter[0].rows`.
  * @returns the section, its first (forward) or last (backward) column, and -1/0/1 rows to move
  */
-export function nextSection(config: GridConfig, from: ColType, forward: boolean) {
+export function nextSection(config: ParsedGridConfig, from: ColType, forward: boolean) {
     let index = SECTION_ORDER.indexOf(from);
     let rowStep = 0;
     for (let i = 0; i < SECTION_ORDER.length; i++) {
@@ -99,7 +99,7 @@ export function nextSection(config: GridConfig, from: ColType, forward: boolean)
  */
 function leaveSection(
     ctx: Grid,
-    config: GridConfig,
+    config: ParsedGridConfig,
     scrollerEl: HTMLElement,
     colType: ColType,
     forward: boolean,

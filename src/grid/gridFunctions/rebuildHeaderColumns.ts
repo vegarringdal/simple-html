@@ -2,10 +2,10 @@ import type { Grid } from '../grid';
 import type { Columns } from '../gridConfig';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { dragEvent } from './dragEvent';
-import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -40,7 +40,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                 parent.removeChild(parent.firstChild);
             }
             if (coltype === 'left-pinned') {
-                const columnElement = creatElement(DIV, 'simple-html-grid-grouping-row-group');
+                const columnElement = createElement(DIV, 'simple-html-grid-grouping-row-group');
                 columnElement.style.width = asPx(left);
                 if (left === 0) {
                     columnElement.style.display = 'none';
@@ -52,7 +52,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  * generate column
                  */
 
-                const columnElement = creatElement(DIV, 'simple-html-grid-col');
+                const columnElement = createElement(DIV, 'simple-html-grid-col');
 
                 columnElement.style.transform = `translate3d(${left}px, 0px, 0px)`;
                 columnElement.style.width = asPx(columns[i].width);
@@ -75,7 +75,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  */
                 if (!config.hideLabels) {
                     for (let y = 0; y < config.__columnCells; y++) {
-                        const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                        const cell = createElement(DIV, 'simple-html-grid-col-cell');
                         cell.classList.add('simple-html-label');
                         cell.style.top = asPx(top);
                         cell.style.height = asPx(config.cellHeaderLabelHeight);
@@ -104,11 +104,11 @@ export function rebuildHeaderColumns(ctx: Grid) {
                             parent.appendChild(child);
                         };
 
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-left'), cell);
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-right'), cell);
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-top'), cell);
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-bottom'), cell);
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-center'), cell);
+                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-left'), cell);
+                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-right'), cell);
+                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-top'), cell);
+                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-bottom'), cell);
+                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-center'), cell);
 
                         /**
                          * logic for dragdrop and sort event
@@ -122,7 +122,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  */
                 if (!config.hideFilter) {
                     for (let y = 0; y < config.__columnCells; y++) {
-                        const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                        const cell = createElement(DIV, 'simple-html-grid-col-cell');
                         cell.style.top = asPx(top);
                         cell.style.height = asPx(config.cellHeight);
                         cell.setAttribute('type', 'filter');
@@ -137,7 +137,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  * column selector
                  */
                 if (config.selectSizeHeight) {
-                    const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                    const cell = createElement(DIV, 'simple-html-grid-col-cell');
                     cell.classList.add('simple-html-label');
                     cell.style.top = asPx(top);
                     cell.style.height = asPx(config.cellHeight);
@@ -154,10 +154,10 @@ export function rebuildHeaderColumns(ctx: Grid) {
 
                 // create element we use for resizing, right pinned needs own class
                 let resizeElement: HTMLElement;
-                if (coltype === RIGH_PINNED_COLTYPE) {
-                    resizeElement = creatElement(DIV, 'simple-html-grid-col-resize-right');
+                if (coltype === RIGHT_PINNED_COLTYPE) {
+                    resizeElement = createElement(DIV, 'simple-html-grid-col-resize-right');
                 } else {
-                    resizeElement = creatElement(DIV, 'simple-html-grid-col-resize');
+                    resizeElement = createElement(DIV, 'simple-html-grid-col-resize');
                 }
                 columnElement.appendChild(resizeElement);
 
@@ -166,13 +166,15 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  */
                 resizeElement.onmousedown = (event) => {
                     // resizing event started, we need to get refID (created column number)
-                    const refID = parseInt((event.target as HTMLElement).parentElement.getAttribute('refID'), 10);
+                    // the target is resizeElement, appended to columnElement above, which has refID set
+                    const refID = parseInt((event.target as HTMLElement).parentElement!.getAttribute('refID')!, 10);
 
                     // first section here is to collect data we need
                     const clientX = event.clientX;
                     let column: ColumnCache[];
                     let columnNumber: number;
-                    let col: Columns;
+                    // addColumns is only called with the 3 pinned types, so one of the ifs below sets it
+                    let col!: Columns;
 
                     const scrollLeft = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle').scrollLeft;
 
@@ -188,7 +190,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                         col = ctx.gridInterface.__getGridConfig().columnsCenter[columnNumber];
                     }
 
-                    if (coltype === RIGH_PINNED_COLTYPE) {
+                    if (coltype === RIGHT_PINNED_COLTYPE) {
                         column = ctx.containerRightColumnCache.filter((e) => e.refID === refID);
                         columnNumber = column[0].column;
                         col = ctx.gridInterface.__getGridConfig().columnsPinnedRight[columnNumber];
@@ -199,7 +201,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                     // when user move mouse, we update
                     const mousemove = (event: MouseEvent) => {
                         if (col) {
-                            if (coltype === RIGH_PINNED_COLTYPE) {
+                            if (coltype === RIGHT_PINNED_COLTYPE) {
                                 col.width = originalWidth - (event.clientX - clientX);
                             } else {
                                 col.width = originalWidth + (event.clientX - clientX);
@@ -216,7 +218,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                                 horizontalScrollHandler(ctx, scrollLeft, MIDDLE_PINNED_COLTYPE);
                             }
 
-                            if (coltype === RIGH_PINNED_COLTYPE) {
+                            if (coltype === RIGHT_PINNED_COLTYPE) {
                                 horizontalScrollHandler(ctx, 0, coltype);
                                 horizontalScrollHandler(ctx, scrollLeft, MIDDLE_PINNED_COLTYPE);
                             }
@@ -273,7 +275,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
         getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-right'),
         config.columnsPinnedRight,
         0,
-        RIGH_PINNED_COLTYPE
+        RIGHT_PINNED_COLTYPE
     );
 
     /**
@@ -282,7 +284,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
     const selectorTopLeft = getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-selector');
     selectorTopLeft.onclick = (e: MouseEvent) => {
         if (e.ctrlKey) {
-            ctx.gridInterface.getDatasource().deSelectAll(true);
+            ctx.gridInterface.getDatasource().deselectAll(true);
         } else {
             ctx.gridInterface.getDatasource().selectAll();
         }

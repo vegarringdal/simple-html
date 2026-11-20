@@ -10,7 +10,7 @@ export const selection: DemoSample = {
 datasource.setSelectionMode('multiple'); // 'none' | 'single' | 'multiple'
 
 datasource.selectAll();
-datasource.deSelectAll();
+datasource.deselectAll();
 datasource.selectFirst();
 datasource.selectNext();
 datasource.selectPrev();
@@ -29,7 +29,7 @@ console.log(rows.length, 'rows selected');
             datasource.selectAll();
         });
         ui.button('Deselect all', () => {
-            datasource.deSelectAll(true);
+            datasource.deselectAll(true);
         });
         ui.button('First', () => {
             datasource.selectFirst();

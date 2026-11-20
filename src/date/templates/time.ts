@@ -3,6 +3,11 @@ import { live } from 'lit-html/directives/live.js';
 import type { DateInterface } from '../dateInterface';
 import type { IDateConfig } from '../interfaces';
 
+/**
+ * hour/minute row of the datepicker
+ * the `!` below: in datepicker mode checkDatePicker() sets datepickerDate, datepickerHour and
+ * datepickerMinute when the element connects, before the first render
+ */
 export function time(context: DateInterface, config: IDateConfig, _year: number, _month: number) {
     const width = config.monthWidth;
 
@@ -22,14 +27,14 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         @click=${(e: any) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            config.datepickerHour = config.datepickerHour - 1;
+                            config.datepickerHour = config.datepickerHour! - 1;
                             if (config.datepickerHour > 23) {
                                 config.datepickerHour = 0;
                             }
                             if (config.datepickerHour < 0) {
                                 config.datepickerHour = 23;
                             }
-                            context.config.datepickerDate.setHours(config.datepickerHour);
+                            context.config.datepickerDate!.setHours(config.datepickerHour);
                             context.config = structuredClone(context.config);
                             context.checkDatePicker();
                             context.render();
@@ -46,17 +51,19 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        @change=${(e: any) => {
+                        @change=${(e: Event) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            config.datepickerHour = e.target.valueAsNumber;
+                            // a cleared input is NaN, keep the current value - the re-render below puts it back
+                            const value = (e.target as HTMLInputElement).valueAsNumber;
+                            config.datepickerHour = Number.isNaN(value) ? config.datepickerHour! : value;
                             if (config.datepickerHour > 23) {
                                 config.datepickerHour = 0;
                             }
                             if (config.datepickerHour < 0) {
                                 config.datepickerHour = 23;
                             }
-                            context.config.datepickerDate.setHours(config.datepickerHour);
+                            context.config.datepickerDate!.setHours(config.datepickerHour);
                             context.config = structuredClone(context.config);
                             context.checkDatePicker();
                             context.render();
@@ -72,14 +79,14 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         @click=${(e: any) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            config.datepickerHour = config.datepickerHour + 1;
+                            config.datepickerHour = config.datepickerHour! + 1;
                             if (config.datepickerHour > 23) {
                                 config.datepickerHour = 0;
                             }
                             if (config.datepickerHour < 0) {
                                 config.datepickerHour = 23;
                             }
-                            context.config.datepickerDate.setHours(config.datepickerHour);
+                            context.config.datepickerDate!.setHours(config.datepickerHour);
                             context.config = structuredClone(context.config);
                             context.checkDatePicker();
                             context.render();
@@ -104,7 +111,7 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         @click=${(e: any) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            config.datepickerMinute = config.datepickerMinute - 1;
+                            config.datepickerMinute = config.datepickerMinute! - 1;
                             // minutes wrap at 59, not 23 like the hours (40 -> 39 jumped to 0)
                             if (config.datepickerMinute > 59) {
                                 config.datepickerMinute = 0;
@@ -112,7 +119,7 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                             if (config.datepickerMinute < 0) {
                                 config.datepickerMinute = 59;
                             }
-                            context.config.datepickerDate.setMinutes(config.datepickerMinute);
+                            context.config.datepickerDate!.setMinutes(config.datepickerMinute);
                             context.config = structuredClone(context.config);
                             context.checkDatePicker();
                             context.render();
@@ -129,17 +136,19 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        @change=${(e: any) => {
+                        @change=${(e: Event) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            config.datepickerMinute = e.target.valueAsNumber;
+                            // a cleared input is NaN, keep the current value - the re-render below puts it back
+                            const value = (e.target as HTMLInputElement).valueAsNumber;
+                            config.datepickerMinute = Number.isNaN(value) ? config.datepickerMinute! : value;
                             if (config.datepickerMinute > 59) {
                                 config.datepickerMinute = 0;
                             }
                             if (config.datepickerMinute < 0) {
                                 config.datepickerMinute = 59;
                             }
-                            context.config.datepickerDate.setMinutes(config.datepickerMinute);
+                            context.config.datepickerDate!.setMinutes(config.datepickerMinute);
                             context.config = structuredClone(context.config);
                             context.checkDatePicker();
                             context.render();
@@ -156,14 +165,14 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                         @click=${(e: any) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            config.datepickerMinute = config.datepickerMinute + 1;
+                            config.datepickerMinute = config.datepickerMinute! + 1;
                             if (config.datepickerMinute > 59) {
                                 config.datepickerMinute = 0;
                             }
                             if (config.datepickerMinute < 0) {
                                 config.datepickerMinute = 59;
                             }
-                            context.config.datepickerDate.setMinutes(config.datepickerMinute);
+                            context.config.datepickerDate!.setMinutes(config.datepickerMinute);
                             context.config = structuredClone(context.config);
                             context.checkDatePicker();
                             context.render();

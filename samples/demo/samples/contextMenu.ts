@@ -42,17 +42,12 @@ gridInterface.addEventListener({
                             return { value: fruit, label: fruit, isHeader: false };
                         })
                     );
-                    gridInterface.contextMenuCustom(
-                        e.data.originalEvent,
-                        items,
-                        e.data.cell,
-                        (result: string) => {
-                            datasource.currentEntity[e.data.attribute] = result;
-                            gridInterface.triggerScrollEvent();
-                            ui.log('picked: ' + result);
-                            return true;
-                        }
-                    );
+                    gridInterface.contextMenuCustom(e.data.originalEvent, items, e.data.cell, (result: string) => {
+                        datasource.currentEntity[e.data.attribute] = result;
+                        gridInterface.triggerScrollEvent();
+                        ui.log('picked: ' + result);
+                        return true;
+                    });
                 }
                 return true;
             }

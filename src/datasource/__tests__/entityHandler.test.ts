@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DataContainer } from '../dataContainer';
-import type { Entity } from '../entity';
+import type { DataEntity } from '../entity';
 
 /**
  * EntityHandler is the proxy handler behind every row.
@@ -9,7 +9,7 @@ import type { Entity } from '../entity';
  * Rows are always created through DataContainer.setData, so that is how we build them here.
  */
 
-function makeRow(data: Record<string, any>, keyAttribute?: string, tagAsNew = false): Entity {
+function makeRow(data: Record<string, any>, keyAttribute?: string, tagAsNew = false): DataEntity {
     const container = new DataContainer(keyAttribute);
     container.setData([data], false, tagAsNew);
     return container.getDataSet()[0];
@@ -227,7 +227,8 @@ describe('entityHandler - __KEY', () => {
     it('expect setting __KEY to null to not throw', () => {
         const row = makeRow({ id: 'abc', name: 'person1' }, 'id');
         expect(() => {
-            row.__KEY = null;
+            // null! - null is not a valid key type, the proxy has to accept it anyway
+            row.__KEY = null!;
         }).not.toThrow();
     });
 

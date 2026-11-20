@@ -4,7 +4,7 @@ import type { Grid } from '../grid';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { contextmenuDate } from './contextmenuDate';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
@@ -38,13 +38,13 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
     /**
      * main container holding data/setting center
      */
-    const filterEditorContainer = creatElement('div', 'filter-editor-container');
+    const filterEditorContainer = createElement('div', 'filter-editor-container');
     if (tooltipsEnabled(ctx)) {
         // data-tooltip is always written, this is what renders the built in tooltip for it
         filterEditorContainer.classList.add('simple-html-grid-tooltips');
         attachTooltips(filterEditorContainer);
     }
-    const filterEditorGridCssContext = creatElement('div', 'simple-html-grid');
+    const filterEditorGridCssContext = createElement('div', 'simple-html-grid');
     filterEditorContainer.appendChild(filterEditorGridCssContext);
 
     function label(attribute: string) {
@@ -187,10 +187,13 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
      * @returns
      */
     const condition = (arg: FilterArgument, context: FilterArgument[]) => {
-        const type = ctx.gridInterface.__getGridConfig().__attributes[arg.attribute]?.type || 'text';
-        const attribute = arg.attribute;
-        const valueFormater = ctx.gridInterface.getDatasource().getValueFormater();
-        const value = valueFormater.fromSource(arg.value, type, attribute, true);
+        // attribute is unset on a new condition, a key of undefined/null reads "undefined"/"null"
+        const type = ctx.gridInterface.__getGridConfig().__attributes[`${arg.attribute}`]?.type || 'text';
+        // only passed on to the value formatter, which gets it unset too on a new condition.
+        // ValueFormatter's attribute type is too strict for that
+        const attribute = arg.attribute!;
+        const valueFormatter = ctx.gridInterface.getDatasource().getValueFormatter();
+        const value = valueFormatter.fromSource(arg.value, type, attribute, true);
 
         let filterElement = html`<input
             .value=${value || ''}
@@ -201,7 +204,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             ctx,
                             e,
                             e.target,
-                            valueFormater.toFilter(e.target.value, 'date', attribute, true),
+                            valueFormatter.toFilter(e.target.value, 'date', attribute, true),
 
                             (value: Date | null) => {
                                 arg.value = value;
@@ -211,8 +214,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                     }, 2);
                 }
             }}
-            @input=${(e: any) => (arg.value = valueFormater.toFilter(e.target.value, type, attribute, true))}
-            @change=${(e: any) => (arg.value = valueFormater.toFilter(e.target.value, type, attribute, true))}
+            @input=${(e: any) => (arg.value = valueFormatter.toFilter(e.target.value, type, attribute, true))}
+            @change=${(e: any) => (arg.value = valueFormatter.toFilter(e.target.value, type, attribute, true))}
             @click=${(e: any) => {
                 if (type === 'date') {
                     setTimeout(() => {
@@ -220,7 +223,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                             ctx,
                             e,
                             e.target,
-                            valueFormater.toFilter(e.target.value, 'date', attribute, true),
+                            valueFormatter.toFilter(e.target.value, 'date', attribute, true),
 
                             (value: Date | null) => {
                                 arg.value = value;
@@ -329,13 +332,14 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                 <div class="grid-flex-reverse grid-m-4">
                     <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.deleteCondition')}>
                         ${trashIcon(() => {
-                            let x: number = null;
+                            let x: number | null = null;
                             context.forEach((row, i) => {
                                 if (row === arg) {
                                     x = i;
                                 }
                             });
-                            context.splice(x, 1);
+                            // splice(null) starts at 0 too
+                            context.splice(x ?? 0, 1);
                             renderFilterEditor(ctx, structuredClone(filterArg));
                         })}
                     </div>
@@ -358,14 +362,14 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
      * @param context
      * @returns
      */
-    const group = (arg: FilterArgument, context: FilterArgument[]): TemplateResult<1> => {
+    const group = (arg: FilterArgument, context: FilterArgument[] | null): TemplateResult<1> => {
         // collect all conditions, and inject them into html
-
-        const conditions =
-            arg.filterArguments?.filter((e) => e.type !== 'GROUP').map((e) => condition(e, arg.filterArguments)) || [];
+        // (condition/group only change filterArguments from click handlers, so reading it once is the same)
+        const args = arg.filterArguments;
+        const conditions = args?.filter((e) => e.type !== 'GROUP').map((e) => condition(e, args)) || [];
 
         // collect all groups, and inject them into html
-        const groupsArgs = arg.filterArguments?.filter((e) => e.type === 'GROUP').map((e) => group(e, arg.filterArguments)) || [];
+        const groupsArgs = args?.filter((e) => e.type === 'GROUP').map((e) => group(e, args)) || [];
 
         return html`<div>
             <div class="grid-flex-column grid-sub-group">
@@ -397,6 +401,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                         </div>
                         <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.addSubGroup')}>
                             ${addFilterGroupIcon(true, () => {
+                                // a group set from code can come without filterArguments
+                                arg.filterArguments ??= [];
                                 arg.filterArguments.push({
                                     type: 'GROUP',
                                     logicalOperator: 'AND',
@@ -408,6 +414,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                         </div>
                         <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.addCondition')}>
                             ${addFilterConditionIcon(() => {
+                                // a group set from code can come without filterArguments
+                                arg.filterArguments ??= [];
                                 arg.filterArguments.push({
                                     type: 'CONDITION'
                                 });
@@ -420,13 +428,14 @@ export function renderFilterEditor(ctx: Grid, filterArg: FilterArgument) {
                         >
                             ${trashIcon(() => {
                                 if (context) {
-                                    let x: number = null;
+                                    let x: number | null = null;
                                     context.forEach((row, i) => {
                                         if (row === arg) {
                                             x = i;
                                         }
                                     });
-                                    context.splice(x, 1);
+                                    // splice(null) starts at 0 too
+                                    context.splice(x ?? 0, 1);
                                     renderFilterEditor(ctx, structuredClone(filterArg));
                                 } else {
                                     arg.filterArguments = [];

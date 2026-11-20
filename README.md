@@ -1,24 +1,37 @@
 # @simple-html/grid
 
-Only lit-html as dependency, you need to install this manually
+Vanilla js data grid. Its only dependency is lit-html, which is installed with it.
 
 # package
 
 > mostly just me using this, so making it very simple for me to try out new stuff/patch
 
-Just run `npm run build` and copy the tgz file under `build` to you project
+Install straight from a git branch - the `prepare` script builds `dist` on install:
+```json
+"dependencies": {
+  "@simple-html/grid": "github:<owner>/simple-html#<branch>"
+}
+```
+
+Or run `npm run build:tgz` and copy the tgz from `build` to your project:
 ```json
 "dependencies": {
   "@simple-html/grid": "file:./libs/simple-html-grid-X.X.X.tgz"
 }
 ```
 
+The css is imported from the package root:
+```ts
+import '@simple-html/grid/grid.css';
+import '@simple-html/grid/date.css'; // the date picker
+```
+
 # Dev / Sample
 
 * `git clone https://github.com/vegarringdal/simple-html`
 * `npm i`
-* `npm start` this is alias for `npm start grid01` third arg is sample subfolder
-' open `http://localhost:8080`
+* `npm start` serves the samples app (`samples/demo`), `npm start <folder>` another folder under `samples/`
+* open `http://localhost:8080`
 
 
 # API docs:
@@ -30,7 +43,7 @@ Just run `npm run build` and copy the tgz file under `build` to you project
 ```ts
 import './index.css';
 import { GridInterface, GridElement, GridConfig, Datasource } from '@simple-html/grid';
-import "@simple-html/grid/dist/grid.css";
+import '@simple-html/grid/grid.css';
 
 /**
  * create datasource

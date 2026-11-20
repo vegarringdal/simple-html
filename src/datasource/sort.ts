@@ -5,7 +5,7 @@ import type { SortArgument } from './sortArgument';
 export class Sort {
     private lastSorting: SortArgument[];
     private currentSorting: SortArgument[];
-    private localeCompareCode: Intl.Collator;
+    private localeCompareCode: Intl.Collator | null;
     dates: string[] = [];
 
     constructor() {

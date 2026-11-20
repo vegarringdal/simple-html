@@ -12,7 +12,8 @@ export function month(context: DateInterface, config: IDateConfig, year: number,
 
     const monthHeaderTemplate = monthHeader(context, config, year, month);
     const headerRowTemplate = headerRow(context, config, year, month);
-    const timeTemplate = time(context, config, year, month);
+    // the time row sets hours/minutes on the picked date, a calendar (datepicker false) has none
+    const timeTemplate = config.datepicker ? time(context, config, year, month) : null;
 
     const rows = new Array(6).fill('x');
     const rowTemplates = rows.map((_x, i) => {

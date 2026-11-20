@@ -1,16 +1,7 @@
-import type {
-    GROUP_COLTYPE,
-    LEFT_PINNED_COLTYPE,
-    MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE,
-    SELECTOR_COLTYPE
-} from './GROUP_COLTYPE';
-
 export type ColumnCache = { column: number; left: number; refID: number };
-export type ColType =
-    | typeof GROUP_COLTYPE
-    | typeof SELECTOR_COLTYPE
-    | typeof LEFT_PINNED_COLTYPE
-    | typeof MIDDLE_PINNED_COLTYPE
-    | typeof RIGH_PINNED_COLTYPE;
+/**
+ * which section of the grid a cell belongs to.
+ * The same strings as the constants in GROUP_COLTYPE.ts, written out so the type documents itself.
+ */
+export type ColType = 'group' | 'selector' | 'left-pinned' | 'middle-pinned' | 'right-pinned';
 export type RowCache = { id: string; row: number; top: number };

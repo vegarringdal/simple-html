@@ -3,7 +3,7 @@ import type { Grid } from '../grid';
 /**
  * helper for autoresize columns
  */
-export function getFont(ctx: Grid) {
+export function getFont(ctx: Grid | null | undefined) {
     const ele = ctx?.element;
     if (ele) {
         return (

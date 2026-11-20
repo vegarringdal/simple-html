@@ -104,7 +104,7 @@ describe('filter groups - getFilterTree', () => {
             logicalOperator: 'AND',
             filterArguments: [aIsX, { type: 'GROUP', logicalOperator: 'OR', filterArguments: [] }]
         });
-        const tree = ds.getFilterTree();
+        const tree = ds.getFilterTree()!;
         expect(tree.children[1]).toEqual({ kind: 'group', logicalOperator: 'OR', children: [] });
     });
 
@@ -114,7 +114,7 @@ describe('filter groups - getFilterTree', () => {
             logicalOperator: 'AND',
             filterArguments: [aIsX, { type: 'CONDITION' }]
         });
-        const tree = ds.getFilterTree();
+        const tree = ds.getFilterTree()!;
         expect(tree.children.length).toEqual(1);
         expect(tree.children[0]).toMatchObject({ kind: 'condition', label: 'a', operator: 'EQUAL' });
     });

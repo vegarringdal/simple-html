@@ -1,13 +1,13 @@
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { RowCache } from './colType';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { DIV } from './DIV';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE,
+    RIGHT_PINNED_COLTYPE,
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
@@ -34,7 +34,7 @@ export function rebuildRows(ctx: Grid) {
         }
 
         for (let i = 0; i < rowsNeeded; i++) {
-            const element = creatElement(DIV, 'simple-html-grid-row');
+            const element = createElement(DIV, 'simple-html-grid-row');
             const top = i * config.__rowHeight;
             const id = prefix + i.toString();
             element.setAttribute('row-id', id);
@@ -70,5 +70,5 @@ export function rebuildRows(ctx: Grid) {
     ctx.containerMiddleRowCache = addRows(containerMiddle, MIDDLE_PINNED_COLTYPE);
 
     const containerRight = getElementByClassName(ctx.element, 'simple-html-grid-body-row-container-pinned-right');
-    ctx.containerRightRowCache = addRows(containerRight, RIGH_PINNED_COLTYPE);
+    ctx.containerRightRowCache = addRows(containerRight, RIGHT_PINNED_COLTYPE);
 }

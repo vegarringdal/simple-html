@@ -56,7 +56,7 @@ describe('date picker - minutes', () => {
 
         clickMinuteDown(element);
 
-        expect(dateInterface.config.datepickerDate.getMinutes()).toEqual(39);
+        expect(dateInterface.config.datepickerDate?.getMinutes()).toEqual(39);
     });
 
     it('expect the minute down arrow to wrap from 0 to 59', () => {
@@ -64,7 +64,7 @@ describe('date picker - minutes', () => {
 
         clickMinuteDown(element);
 
-        expect(dateInterface.config.datepickerDate.getMinutes()).toEqual(59);
+        expect(dateInterface.config.datepickerDate?.getMinutes()).toEqual(59);
     });
 });
 
@@ -88,6 +88,33 @@ describe('date picker - week starting on sunday', () => {
         firstCell.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         const picked = dateInterface.config.datepickerDate;
-        expect([picked.getMonth(), picked.getDate()]).toEqual([2, 29]);
+        expect([picked?.getMonth(), picked?.getDate()]).toEqual([2, 29]);
+    });
+});
+
+describe('date picker - bugs found by strict mode', () => {
+    it('expect a calendar (datepicker false) to have no time row', () => {
+        // the time row sets hours/minutes on the picked date, its arrows threw without one
+        const { element } = mount(config({ datepicker: false, datepickerDate: undefined }));
+
+        expect(element.querySelectorAll('.simple-html-date-time').length).toEqual(0);
+    });
+
+    it('expect a cleared hour input to keep the hour', () => {
+        const { dateInterface, element } = mount(config({ datepickerDate: new Date(2026, 3, 15, 10, 40) }));
+        const hourInput = element.querySelectorAll('.simple-html-date-time input')[0] as HTMLInputElement;
+
+        // a cleared number input reads as NaN, setHours(NaN) made the date invalid
+        hourInput.value = '';
+        hourInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(dateInterface.config.datepickerDate?.getHours()).toEqual(10);
+    });
+
+    it('expect removing a date element that never got an interface not to throw', () => {
+        const element = document.createElement('simple-html-date');
+        document.body.appendChild(element);
+
+        expect(() => element.remove()).not.toThrow();
     });
 });

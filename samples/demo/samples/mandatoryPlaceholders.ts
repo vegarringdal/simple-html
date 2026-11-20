@@ -6,12 +6,12 @@ export const mandatoryPlaceholders: DemoSample = {
     title: 'Mandatory & placeholders',
     group: 'Cells',
     description:
-        'mandatory: true renders a striped marker on empty editable cells (it clears as soon as the cell has a value). placeHolderRow shows a placeholder in empty cells - by default only on the current row, controlled by placeHolderRowCurrentEnityOnly. placeHolderFilter overrides the placeholder in the filter row. Click around the empty rows to see the placeholders follow the current row.',
+        'mandatory: true renders a striped marker on empty editable cells (it clears as soon as the cell has a value). placeHolderRow shows a placeholder in empty cells - by default only on the current row, controlled by placeHolderRowCurrentEntityOnly. placeHolderFilter overrides the placeholder in the filter row. Click around the empty rows to see the placeholders follow the current row.',
     code: `
 const gridConfig: GridConfig = {
     readonly: false,
     // placeholders show on the current row only, set false for all rows
-    placeHolderRowCurrentEnityOnly: true, // default
+    placeHolderRowCurrentEntityOnly: true, // default
     columnsCenter: [ ... ],
     attributes: [
         {
@@ -79,12 +79,12 @@ const gridConfig: GridConfig = {
 
         ui.button('Placeholders on all rows', () => {
             const current = gridInterface.saveConfig();
-            current.placeHolderRowCurrentEnityOnly = false;
+            current.placeHolderRowCurrentEntityOnly = false;
             gridInterface.loadConfig(current);
         });
         ui.button('Placeholders on current row only (default)', () => {
             const current = gridInterface.saveConfig();
-            current.placeHolderRowCurrentEnityOnly = true;
+            current.placeHolderRowCurrentEntityOnly = true;
             gridInterface.loadConfig(current);
         });
     }

@@ -60,24 +60,24 @@ export type GridConfig = {
      * displays only placeholder on current focused cell row/current entity row
      * default = true, so you need to set this to false to display on all rows
      */
-    placeHolderRowCurrentEnityOnly?: boolean;
+    placeHolderRowCurrentEntityOnly?: boolean;
 
     /**
      * sorting added when loading config, unless grouping overrides it
      */
-    sorting?: Sort[];
+    sorting?: Sort[] | null;
     /**
      * grouping added when loading config
      */
-    grouping?: GroupArgument[];
+    grouping?: GroupArgument[] | null;
     /**
      * expandedGroups added when loading config
      */
-    expandedGroups?: string[];
+    expandedGroups?: string[] | null;
     /**
      * filter added when loading config
      */
-    filter?: FilterArgument;
+    filter?: FilterArgument | null;
 
     /**
      * @internal not exported in save config
@@ -112,6 +112,37 @@ export type GridConfig = {
      */
     __selectSizeWidth?: number;
 };
+
+/**
+ * @internal
+ * The config as the grid works with it, after `GridInterface.__parseConfig()`: every default
+ * is filled in and the internal sizes are computed, so these are never undefined.
+ */
+export type ParsedGridConfig = GridConfig &
+    Required<
+        Pick<
+            GridConfig,
+            | 'cellHeight'
+            | 'cellHeaderLabelHeight'
+            | 'panelHeight'
+            | 'footerHeight'
+            | 'selectSizeHeight'
+            | 'readonly'
+            | 'selectionMode'
+            | 'tooltips'
+            | 'placeHolderRowCurrentEntityOnly'
+            | 'columnsPinnedLeft'
+            | 'columnsPinnedRight'
+            | '__attributes'
+            | '__rowHeight'
+            | '__rowHeaderHeight'
+            | '__columnCells'
+            | '__leftWidth'
+            | '__rightWidth'
+            | '__scrollbarSize'
+            | '__selectSizeWidth'
+        >
+    >;
 
 export type Sort = {
     attribute: string;
@@ -148,7 +179,7 @@ export type Attribute = {
      * @internal
      * current filter value, this is really more of a internal state..
      */
-    currentFilterValue?: string | number | boolean | Date;
+    currentFilterValue?: string | number | boolean | Date | null;
 
     /**
      * like the name says, default it to display value it have recived, but you might have other needs

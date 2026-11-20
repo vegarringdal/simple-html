@@ -60,22 +60,22 @@ Tasks:
 
 ## Phase 0 - foundations, they make everything after this safer
 
-1. [ ] **`strict: true`** (today `strictNullChecks: false`). Most bugs the review found were
+1. [x] **`strict: true`** (today `strictNullChecks: false`). Most bugs the review found were
        null/undefined slips: an undefined operator in the footer, a column without `rows`,
        `!__KEY` throwing away a key of 0. Turn it on folder by folder. **L**
-2. [ ] **Separate public from internal.** Around 15 `__` methods are public on `GridInterface` and
+2. [x] **Separate public from internal.** Around 15 `__` methods are public on `GridInterface` and
        `Datasource` (`__parseConfig`, `__getGridConfig`, `__callSubscribers`, `__select` ...), and
        `Grid`, `HTMLCellElement`, `EntityHandler`, `DataContainer` and lit-html's `html`/`render`
        are exported. Mark internals `@internal` + `stripInternal` (or move them off the classes),
        export only what users need. Shrinks what has to be documented and kept stable. **M**
-3. [ ] **Package**: an `exports` map (esm, types, `./grid.css`, `./date.css`); stop shipping
+3. [x] **Package**: an `exports` map (esm, types, `./grid.css`, `./date.css`); stop shipping
        `src/**/__tests__`; decide git-branch install (needs `dist` committed or a `prepare`
        script) vs the tgz. **S**
-4. [ ] **One rename pass**, so users fix names once:
+4. [x] **One rename pass**, so users fix names once:
        `Formater` -> `Formatter`, `setLocalCompare` -> `setLocaleCompare`,
-       `placeHolderRowCurrentEnityOnly`, `deSelectAll` -> `deselectAll`, `selectSizeHeight`
-       (it is the selector column's *width*), the `resetSort`/`sortReset` pair,
-       `select`/`__select`/`setRowAsCurrentEntity`, mixed event names (see 13). **S-M**
+       `placeHolderRowCurrentEnityOnly`, `deSelectAll` -> `deselectAll`, the
+       `resetSort`/`sortReset` pair. Event names are renamed with the event redesign (13).
+       (`selectSizeHeight` turned out to be right: it is the height of the column selector row.) **S-M**
 
 ## Phase 1 - datasource
 
@@ -91,7 +91,8 @@ Tasks:
        six methods (`fromSource`, `toSource`, `toFilter`, `fromSourceDisplay`,
        `fromSourceGrouping`, `placeholder`). v6: a field takes a formatter object
        (`format`, `parse`, maybe `placeholder`); the built-ins become configurable objects, not
-       static classes. **M-L**
+       static classes. Its parameters should say what the grid passes: an optional type, and no
+       attribute for a new filter editor condition - 5 `!` in the grid exist only for that. **M-L**
 8. [ ] **One filter format.** `FilterArgument` mixes groups and conditions (`type`,
        `logicalOperator: 'NONE'` on conditions, `valueType`, `attributeType`). Use the shape
        `getFilterTree()` already returns - `{ group: 'AND' | 'OR', children }` or
@@ -114,7 +115,9 @@ Tasks:
         payloads are untyped, names mix `collection-filtered` with `selectionChange`, and
         `Datasource`/`GridInterface` each have their own copy of the listener code. v6: one event
         map type, `on('filter', fn)` returning an unsubscribe function, one naming style. The
-        events guide is generated from the map. **M**
+        events guide is generated from the map. Also removes a trap found in phase 0: a listener is
+        only kept if it returns something truthy, one that returns nothing is dropped after the
+        first event. **M**
 14. [ ] `getFilterString(ctx?: Grid)` / `getFilterTree(ctx?: Grid)` - the datasource should not
         know the grid. With the schema (5) the labels come from the fields. **S, after 5**
 
@@ -172,4 +175,7 @@ Tasks:
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies
 almost everything after it. Then config/state (15-16) and events (13), UI, performance.
-Documentation goes along with each item.
+
+Documentation goes along with each item: the migration guide and changelog in every phase, JSDoc
+for what the phase adds or changes. The docs *site* is built once the API stops moving, after
+phase 2 - building it around names and shapes that phase 1 and 2 replace would be wasted.

@@ -6,17 +6,17 @@ import { isBlank } from './isBlank';
 import { objectFilter } from './objectFilter';
 
 export class Filter {
-    private currentFilter: FilterArgument;
+    private currentFilter: FilterArgument | null;
 
     constructor() {
         this.currentFilter = null;
     }
 
-    public getFilter(): FilterArgument {
+    public getFilter(): FilterArgument | null {
         return this.currentFilter;
     }
 
-    public setFilter(filter: FilterArgument) {
+    public setFilter(filter: FilterArgument | null) {
         this.currentFilter = filter;
     }
 
@@ -32,7 +32,7 @@ export class Filter {
         }
     }
 
-    public filter(objArray: Entity[], ObjFilter: FilterArgument, ds: Datasource) {
+    public filter(objArray: Entity[], ObjFilter: FilterArgument | null, ds: Datasource) {
         this.currentFilter = ObjFilter;
 
         if (!ObjFilter) {
@@ -70,7 +70,7 @@ export class Filter {
             return result;
         }
 
-        if (isIncompleteCondition(arg)) {
+        if (!isCompleteCondition(arg)) {
             return null;
         }
 
@@ -87,8 +87,8 @@ export class Filter {
             }
         }
 
-        // a formater without dateIncludesTime keeps comparing dates with time
-        const dateOnly = ds.getValueFormater().dateIncludesTime?.(arg.attribute) === false;
+        // a formatter without dateIncludesTime keeps comparing dates with time
+        const dateOnly = ds.getValueFormatter().dateIncludesTime?.(arg.attribute) === false;
 
         return objectFilter(
             rowData,
@@ -107,7 +107,7 @@ export class Filter {
      * boolean in the row matches the same value in the list. A blank row value (or 0, same as
      * IS_BLANK) only matches the list value 'NULL'.
      */
-    private inStatement(rowData: Entity, filter: FilterArgument, ds: Datasource): boolean {
+    private inStatement(rowData: Entity, filter: CompleteCondition, ds: Datasource): boolean {
         if (typeof filter.value === 'string') {
             // stored back as an array, the filter dropdown only shows array values as checked
             filter.value = filter.value.toUpperCase().split('\n') as any;
@@ -123,7 +123,7 @@ export class Filter {
         let data: any = rowData?.[filter.attribute];
         if (filter.attributeType === 'date' || filter.attributeType === 'number') {
             // the formatted text, same as what is shown and typed into the list
-            data = ds.getValueFormater().fromSource(data, filter.attributeType, filter.attribute, false);
+            data = ds.getValueFormatter().fromSource(data, filter.attributeType, filter.attribute, false);
         }
 
         const key = data === null || data === undefined || data === '' || data === 0 ? 'NULL' : String(data).toUpperCase();
@@ -146,6 +146,20 @@ export function isIncompleteCondition(arg: FilterArgument): boolean {
     const isDate = arg.attributeType === 'date' || arg.value instanceof Date;
     const takesValue = arg.operator !== 'IS_BLANK' && arg.operator !== 'IS_NOT_BLANK' && arg.valueType !== 'ATTRIBUTE';
     return isDate && takesValue && isBlank(arg.value);
+}
+
+/**
+ * @internal
+ * a condition that is not incomplete, see isIncompleteCondition: attribute and operator are set
+ */
+export type CompleteCondition = FilterArgument & { attribute: string; operator: FilterComparisonOperator };
+
+/**
+ * @internal
+ * the opposite of isIncompleteCondition, as a type guard so TS knows attribute and operator are set
+ */
+export function isCompleteCondition(arg: FilterArgument): arg is CompleteCondition {
+    return !isIncompleteCondition(arg);
 }
 
 /**

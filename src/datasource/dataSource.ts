@@ -1,30 +1,27 @@
-import type { Grid } from '../grid/grid';
-import { DateFormaterYYYYMMDD } from './DateFormaterYYYYMMDD';
+import type { GridInterface } from '../grid/gridInterface';
+import type { Listener } from '../listener';
+import { DateFormatterYYYYMMDD } from './DateFormatterYYYYMMDD';
 import { DataContainer } from './dataContainer';
 import type { DatasourceConfigOptions } from './datasourceConfigOptions';
-import { DefaultValueFormater } from './defaultValueFormater';
+import { DefaultValueFormatter } from './defaultValueFormatter';
 import type { Entity } from './entity';
-import { Filter, isFilterGroup, isIncompleteCondition } from './filter';
+import { Filter, isCompleteCondition, isFilterGroup } from './filter';
 import type { FilterArgument } from './filterArgument';
 import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
-import { NumberFormaterDot } from './numberFormaterDot';
+import { NumberFormatterDot } from './numberFormatterDot';
 import { OPERATORS } from './OPERATORS';
 import { Selection } from './selection';
 import type { SelectionMode } from './selectionMode';
 import { Sort } from './sort';
 import type { SortArgument } from './sortArgument';
-import type { DateAndNumberFormater, ValueFormater } from './valueFormater';
-
-export type callF = (...args: any[]) => any;
-export type callO = { handleEvent: (...args: any[]) => any };
-export type callable = callF | callO;
+import type { DateAndNumberFormatter, ValueFormatter } from './valueFormatter';
 
 export type EntityUnion<T> = Entity & T;
 
 /**
  * A single filter condition, ready for display. `value` is already run through the value
- * formater; blank operators (`IS_BLANK` / `IS_NOT_BLANK`) have no value, flagged by `hasValue`.
+ * formatter; blank operators (`IS_BLANK` / `IS_NOT_BLANK`) have no value, flagged by `hasValue`.
  */
 export interface FilterConditionNode {
     kind: 'condition';
@@ -94,19 +91,19 @@ export class Datasource<T = any> {
     /**
      * subscribed listerners, gets called when collection changes/is sorted/filtered etc
      */
-    private __listeners: Set<callable> = new Set();
+    private __listeners: Set<Listener> = new Set();
 
     /**
-     * default date formater
+     * default date formatter
      */
-    private __dateFormater: DateAndNumberFormater = DateFormaterYYYYMMDD;
+    private __dateFormatter: DateAndNumberFormatter = DateFormatterYYYYMMDD;
 
     /**
-     * default number formater
+     * default number formatter
      */
-    private __numberFormater: DateAndNumberFormater = NumberFormaterDot;
+    private __numberFormatter: DateAndNumberFormatter = NumberFormatterDot;
 
-    private __valueFormater: ValueFormater;
+    private __valueFormatter: ValueFormatter;
 
     /**
      * current entity, use this with form etc if you have a grid with detail form
@@ -114,7 +111,7 @@ export class Datasource<T = any> {
     public currentEntity: EntityUnion<T> | null = null;
 
     constructor(dataContainer?: DataContainer, options?: DatasourceConfigOptions) {
-        this.__valueFormater = new DefaultValueFormater(this);
+        this.__valueFormatter = new DefaultValueFormatter(this);
         this.__dataContainer = dataContainer || new DataContainer();
         this.__selectionMode = options?.selectionMode || 'multiple';
         this.__selection = new Selection(this);
@@ -123,28 +120,28 @@ export class Datasource<T = any> {
         this.__grouping = new Grouping();
     }
 
-    public setNumberFormater(formater: DateAndNumberFormater) {
-        this.__numberFormater = formater;
+    public setNumberFormatter(formatter: DateAndNumberFormatter) {
+        this.__numberFormatter = formatter;
     }
 
-    public setDateFormater(formater: DateAndNumberFormater) {
-        this.__dateFormater = formater;
+    public setDateFormatter(formatter: DateAndNumberFormatter) {
+        this.__dateFormatter = formatter;
     }
 
-    public setValueFormater(formater: ValueFormater) {
-        this.__valueFormater = formater;
+    public setValueFormatter(formatter: ValueFormatter) {
+        this.__valueFormatter = formatter;
     }
 
-    public getNumberFormater() {
-        return this.__numberFormater;
+    public getNumberFormatter() {
+        return this.__numberFormatter;
     }
 
-    public getDateFormater() {
-        return this.__dateFormater;
+    public getDateFormatter() {
+        return this.__dateFormatter;
     }
 
-    public getValueFormater() {
-        return this.__valueFormater;
+    public getValueFormatter() {
+        return this.__valueFormatter;
     }
 
     /**
@@ -205,7 +202,7 @@ export class Datasource<T = any> {
      * @param data
      * @param all
      */
-    public markForDeletion(data: Entity | Entity[], all = false) {
+    public markForDeletion(data: Entity | Entity[] | null, all = false) {
         this.__dataContainer.markForDeletion(data, all);
         const eventTriggered = this.__internalUpdate(true);
         if (!eventTriggered) {
@@ -220,7 +217,7 @@ export class Datasource<T = any> {
      * @param rerunFilters if you plan to trigger many times in a loop then you want to set this to false until last one
      * @returns
      */
-    public removeData(data: Entity | Entity[], all = false, rerunFilters = true) {
+    public removeData(data: Entity | Entity[] | null, all = false, rerunFilters = true) {
         const removed = this.__dataContainer.removeData(data, all);
         if (rerunFilters) {
             this.__internalUpdate(true);
@@ -548,7 +545,8 @@ export class Datasource<T = any> {
      * @param id null/undefined = all
      */
     public expandGroup(id?: string) {
-        if (this.__grouping.getGrouping().length) {
+        // setGrouping() alone does not build the groups, there is nothing to expand until it is applied
+        if (this.__grouping.hasGroups()) {
             this.__collectionDisplayed = this.__grouping.expandOneOrAll(id);
             this.__callSubscribers('collection-expand');
         }
@@ -559,7 +557,8 @@ export class Datasource<T = any> {
      * @param id null/undefined = all
      */
     public collapseGroup(id?: string) {
-        if (this.__grouping.getGrouping().length) {
+        // setGrouping() alone does not build the groups, there is nothing to collapse until it is applied
+        if (this.__grouping.hasGroups()) {
             this.__collectionDisplayed = this.__grouping.collapseOneOrAll(id);
             this.__callSubscribers('collection-collapse');
         }
@@ -574,7 +573,7 @@ export class Datasource<T = any> {
     public __callSubscribers(event: string, data = {}): void {
         const keeping: any = [];
         this.__listeners.forEach((callable) => {
-            let keep: boolean;
+            let keep: boolean | undefined;
             if (typeof callable === 'function') {
                 keep = callable({ type: event, data: data });
             } else {
@@ -593,7 +592,7 @@ export class Datasource<T = any> {
      * adds event listener, this is called when collection is changed by sorting/grouping etc
      * @param callable
      */
-    public addEventListener(callable: callable): void {
+    public addEventListener(callable: Listener): void {
         if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
             throw new Error('callable sent to datasource event listner is wrong type');
         }
@@ -607,7 +606,7 @@ export class Datasource<T = any> {
      * removes listener from datasource
      * @param callable
      */
-    public removeEventListener(callable: callable): void {
+    public removeEventListener(callable: Listener): void {
         if (this.__listeners.has(callable)) {
             this.__listeners.delete(callable);
         }
@@ -640,10 +639,10 @@ export class Datasource<T = any> {
     }
 
     /**
-     * deSelectAll all rows displayed
+     * deselectAll all rows displayed
      */
-    public deSelectAll(triggerEvent = false) {
-        this.__selection.deSelectAll(triggerEvent);
+    public deselectAll(triggerEvent = false) {
+        this.__selection.deselectAll(triggerEvent);
     }
 
     /**
@@ -701,7 +700,7 @@ export class Datasource<T = any> {
      * updates current entity, if first when running this it will select the last
      */
     public selectPrev(): void {
-        let row = this.__findDataRow(this.__collectionDisplayed.indexOf(this.currentEntity) - 1, -1);
+        let row = this.__findDataRow(this.__currentEntityIndex() - 1, -1);
         if (row === -1) {
             row = this.__findDataRow(this.__collectionDisplayed.length - 1, -1);
         }
@@ -712,7 +711,7 @@ export class Datasource<T = any> {
      * updates current entity, if on last it will end on up the first
      */
     public selectNext(): void {
-        let row = this.__findDataRow(this.__collectionDisplayed.indexOf(this.currentEntity) + 1, 1);
+        let row = this.__findDataRow(this.__currentEntityIndex() + 1, 1);
         if (row === -1) {
             row = this.__findDataRow(0, 1);
         }
@@ -724,6 +723,13 @@ export class Datasource<T = any> {
      */
     public selectLast(): void {
         this.__selectAndNotify(this.__findDataRow(this.__collectionDisplayed.length - 1, -1), 'select-last');
+    }
+
+    /**
+     * index of the current entity in the displayed rows, -1 if there is none
+     */
+    private __currentEntityIndex(): number {
+        return this.currentEntity ? this.__collectionDisplayed.indexOf(this.currentEntity) : -1;
     }
 
     /**
@@ -769,7 +775,7 @@ export class Datasource<T = any> {
      * @param code
      * @param options
      */
-    public setLocalCompare(code: string, options?: any) {
+    public setLocaleCompare(code: string, options?: any) {
         // should we also use this for filter ?
         this.__sorting.setLocaleCompare(code, options);
     }
@@ -810,6 +816,9 @@ export class Datasource<T = any> {
      */
     public setGrouping(group: GroupArgument[]) {
         this.__grouping.setGrouping(group);
+        // the groups built for the old grouping no longer match it, expand/collapse wait until
+        // the new grouping is applied
+        this.__grouping.clearGroups();
     }
 
     /**
@@ -830,19 +839,18 @@ export class Datasource<T = any> {
         return this.__filter.getFilter();
     }
 
+    /**
+     * @internal the grid's click/keyboard selection handling
+     */
     public getSelection() {
         return this.__selection;
-    }
-
-    public sortReset() {
-        return this.__sorting.reset();
     }
 
     public getFilterFromType(type: string) {
         return this.__filter.getFilterFromType(type);
     }
 
-    public setFilter(filter: FilterArgument) {
+    public setFilter(filter: FilterArgument | null) {
         return this.__filter.setFilter(filter);
     }
 
@@ -854,76 +862,73 @@ export class Datasource<T = any> {
         }
     }
 
-    public getFilterString(ctx?: Grid) {
+    /**
+     * The filter as text, e.g. `([NAME] <<EQUAL_TO>> 'X')`.
+     * @param ctx pass the grid to show column labels instead of attribute names
+     */
+    public getFilterString(ctx?: { gridInterface: GridInterface<any> }) {
         const filter = this.__filter.getFilter();
         if (!filter?.filterArguments?.length) {
             return '';
         }
 
-        const valueFormater = this.getValueFormater();
+        const valueFormatter = this.getValueFormatter();
 
-        function convertValue(type: any, value: string | Date | number, attribute: string) {
-            return valueFormater.fromSource(value, type, attribute, true);
+        function convertValue(type: any, value: string | Date | number | null | undefined, attribute: string) {
+            return valueFormatter.fromSource(value, type, attribute, true);
         }
 
         function label(attribute: string) {
             if (!ctx) {
                 return attribute;
             }
-            const label = ctx.gridInterface.__getGridConfig().__attributes[attribute].label;
-            return label || attribute;
+            // an attribute the filter uses does not have to be in the grid config
+            return ctx.gridInterface.__getGridConfig().__attributes[attribute]?.label || attribute;
         }
 
-        const parser = (obj: FilterArgument, queryString = '') => {
-            if (obj) {
-                if (!obj.filterArguments || (obj.filterArguments && obj.filterArguments.length === 0)) {
-                    if (obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK') {
-                        queryString = `${queryString}[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>>`;
-                    } else {
-                        if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
-                            queryString =
-                                queryString +
-                                `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>> ${
-                                    obj.valueType === 'ATTRIBUTE'
-                                        ? `[${obj.value}]`
-                                        : `'${convertValue(obj.attributeType, obj.value, obj.attribute)}'`
-                                }`;
-                        } else {
-                            // split newline into array
-                            if (Array.isArray(obj.value)) {
-                                queryString =
-                                    queryString +
-                                    `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>> [${obj.value.map((val) => {
-                                        return `'${val}'`;
-                                    })}]`;
-                            } else {
-                                queryString =
-                                    queryString +
-                                    `[${label(obj.attribute)}] <<${OPERATORS[obj.operator]}>> [${(obj.value as string)
-                                        .split('\n')
-                                        .map((val) => {
-                                            return `'${val}'`;
-                                        })}]`;
-                            }
-                        }
+        // same rules as filter() and getFilterTree(): isFilterGroup decides group or condition,
+        // an incomplete condition is ignored, and so is a group with nothing to show in it
+        const shown = (arg: FilterArgument): boolean =>
+            isFilterGroup(arg) ? (arg.filterArguments || []).some(shown) : isCompleteCondition(arg);
+
+        const parser = (obj: FilterArgument, queryString = ''): string => {
+            if (isFilterGroup(obj)) {
+                const children = (obj.filterArguments || []).filter(shown);
+                // the filter treats anything but OR as AND
+                const logicalOperator = obj.logicalOperator === 'OR' ? 'OR' : 'AND';
+                children.forEach((child, i) => {
+                    queryString = i > 0 ? `${queryString} ${logicalOperator} ` : `${queryString}(`;
+                    queryString = parser(child, queryString);
+                    if (i === children.length - 1) {
+                        queryString = `${queryString})`;
                     }
-                } else {
-                    obj.filterArguments.forEach((y, i) => {
-                        if (i > 0) {
-                            queryString = `${queryString} ${obj.logicalOperator} `;
-                        } else {
-                            queryString = `${queryString}(`;
-                        }
-                        queryString = parser(y, queryString);
-                        if (obj.filterArguments.length - 1 === i) {
-                            queryString = `${queryString})`;
-                        }
-                    });
-                }
+                });
+                return queryString;
             }
-            return queryString;
+
+            if (!isCompleteCondition(obj)) {
+                return queryString;
+            }
+
+            const attribute = obj.attribute;
+            if (obj.operator === 'IS_BLANK' || obj.operator === 'IS_NOT_BLANK') {
+                return `${queryString}[${label(attribute)}] <<${OPERATORS[obj.operator]}>>`;
+            }
+
+            if (obj.operator !== 'IN' && obj.operator !== 'NOT_IN') {
+                const value =
+                    obj.valueType === 'ATTRIBUTE'
+                        ? `[${obj.value}]`
+                        : `'${convertValue(obj.attributeType, obj.value, attribute)}'`;
+                return `${queryString}[${label(attribute)}] <<${OPERATORS[obj.operator]}>> ${value}`;
+            }
+
+            // a list, or a string with one value per line
+            const values = Array.isArray(obj.value) ? obj.value : String(obj.value).split('\n');
+            return `${queryString}[${label(attribute)}] <<${OPERATORS[obj.operator]}>> [${values.map((val) => `'${val}'`)}]`;
         };
-        return parser(this.__filter.getFilter()).toUpperCase();
+
+        return shown(filter) ? parser(filter).toUpperCase() : '';
     }
 
     /**
@@ -932,13 +937,13 @@ export class Datasource<T = any> {
      * instead of a flat, ambiguous list. Returns `null` when no filter is active. The root is
      * always a group, even for a single condition.
      */
-    public getFilterTree(ctx?: Grid): FilterGroupNode | null {
+    public getFilterTree(ctx?: { gridInterface: GridInterface<any> }): FilterGroupNode | null {
         const filter = this.__filter.getFilter();
         if (!filter?.filterArguments?.length) {
             return null;
         }
 
-        const valueFormater = this.getValueFormater();
+        const valueFormatter = this.getValueFormatter();
 
         const label = (attribute: string) => {
             if (!ctx) {
@@ -962,7 +967,7 @@ export class Datasource<T = any> {
                 };
             }
             // the filter ignores incomplete conditions, so they are not shown either
-            if (isIncompleteCondition(obj)) {
+            if (!isCompleteCondition(obj)) {
                 return null;
             }
 
@@ -975,14 +980,14 @@ export class Datasource<T = any> {
                 } else if (obj.valueType === 'ATTRIBUTE') {
                     value = `[${obj.value}]`;
                 } else {
-                    value = String(valueFormater.fromSource(obj.value as any, obj.attributeType as any, obj.attribute, true));
+                    value = String(valueFormatter.fromSource(obj.value as any, obj.attributeType as any, obj.attribute, true));
                 }
             }
 
             return {
                 kind: 'condition',
-                label: label(obj.attribute as string),
-                operator: obj.operator as string,
+                label: label(obj.attribute),
+                operator: obj.operator,
                 value,
                 hasValue: !blank
             };

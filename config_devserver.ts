@@ -1,10 +1,10 @@
-import { addDefaultIndex, clearFolders, client, TypeChecker } from 'esbuild-helpers';
+import { addDefaultIndex, client, TypeChecker } from 'esbuild-helpers';
 
 /**
  * Local dev server: builds a sample, serves it on 8080 with hot reload, and runs a
  * background typechecker over src + samples.
  *
- * `npm start` -> grid01, `npm start <sample>` for another folder under samples/.
+ * `npm start` -> demo, `npm start <sample>` for another folder under samples/.
  * Output is throwaway and gitignored (dist_dev).
  *
  * PORT env overrides the dev server port (hot reload websocket uses PORT+1),
@@ -14,8 +14,6 @@ import { addDefaultIndex, clearFolders, client, TypeChecker } from 'esbuild-help
 const sample = process.argv[2] || 'demo';
 const OUTPUT_ROOT = 'dist_dev';
 const PORT = Number(process.env.PORT) || 8080;
-
-clearFolders('dist_client', 'dist_nodejs');
 
 client(
     { watch: [`./samples/${sample}/**/*.*`, './src/**/*.*'] },
@@ -87,7 +85,7 @@ const checker_client = TypeChecker({
             removeComments: true,
             emitDecoratorMetadata: false,
             importHelpers: false,
-            strictNullChecks: false,
+            strict: true,
             experimentalDecorators: true,
             rootDir: '',
             paths: {

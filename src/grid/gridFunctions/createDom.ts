@@ -1,7 +1,7 @@
 import type { Grid } from '../grid';
 import { addBodyClickListener } from './addBodyClickListener';
 import { addScrollEventListeners } from './addScrollEventListeners';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { rebuildFooter } from './rebuildFooter';
@@ -15,9 +15,9 @@ import { updateVerticalScrollHeight } from './updateVerticalScrollHeight';
 import { verticalScrollHandler } from './verticalScrollHandler';
 
 export function createDom(ctx: Grid) {
-    const panel = creatElement(DIV, 'simple-html-grid-panel');
-    const header = creatElement(DIV, 'simple-html-grid-header');
-    const body = creatElement(DIV, 'simple-html-grid-body');
+    const panel = createElement(DIV, 'simple-html-grid-panel');
+    const header = createElement(DIV, 'simple-html-grid-header');
+    const body = createElement(DIV, 'simple-html-grid-body');
 
     // focus helper
     const tmp = document.createElement('input');
@@ -28,16 +28,16 @@ export function createDom(ctx: Grid) {
     ctx.focusElement = tmp;
 
     // will be used for scrollbar on right
-    const bodyScroller = creatElement(DIV, 'simple-html-grid-body-scroller');
-    const bodyScrollerRows = creatElement(DIV, 'simple-html-grid-body-scroller-rows');
+    const bodyScroller = createElement(DIV, 'simple-html-grid-body-scroller');
+    const bodyScrollerRows = createElement(DIV, 'simple-html-grid-body-scroller-rows');
     bodyScroller.appendChild(bodyScrollerRows);
 
     // will be used for scrollbar on middle bottom
-    const middleScroller = creatElement(DIV, 'simple-html-grid-middle-scroller');
-    const middleScrollerBody = creatElement(DIV, 'simple-html-grid-middle-scroller-body');
+    const middleScroller = createElement(DIV, 'simple-html-grid-middle-scroller');
+    const middleScrollerBody = createElement(DIV, 'simple-html-grid-middle-scroller-body');
     middleScroller.appendChild(middleScrollerBody);
 
-    const footer = creatElement(DIV, 'simple-html-grid-footer');
+    const footer = createElement(DIV, 'simple-html-grid-footer');
 
     ctx.element.appendChild(panel);
     ctx.element.appendChild(header);
@@ -46,21 +46,21 @@ export function createDom(ctx: Grid) {
     ctx.element.appendChild(bodyScroller);
     ctx.element.appendChild(middleScroller);
 
-    const headerViewSelector = creatElement(DIV, 'simple-html-grid-header-view-selector');
-    const headerViewPinnedLeft = creatElement(DIV, 'simple-html-grid-header-view-pinned-left');
-    const headerViewPinnedMiddle = creatElement(DIV, 'simple-html-grid-header-view-pinned-middle');
-    const headerViewPinnedRight = creatElement(DIV, 'simple-html-grid-header-view-pinned-right');
+    const headerViewSelector = createElement(DIV, 'simple-html-grid-header-view-selector');
+    const headerViewPinnedLeft = createElement(DIV, 'simple-html-grid-header-view-pinned-left');
+    const headerViewPinnedMiddle = createElement(DIV, 'simple-html-grid-header-view-pinned-middle');
+    const headerViewPinnedRight = createElement(DIV, 'simple-html-grid-header-view-pinned-right');
 
     header.appendChild(headerViewSelector);
     header.appendChild(headerViewPinnedLeft);
     header.appendChild(headerViewPinnedMiddle);
     header.appendChild(headerViewPinnedRight);
 
-    const bodyViewGroup = creatElement(DIV, 'simple-html-grid-body-view-group');
-    const bodyViewSelector = creatElement(DIV, 'simple-html-grid-body-view-selector');
-    const bodyViewPinnedLeft = creatElement(DIV, 'simple-html-grid-body-view-pinned-left');
-    const bodyViewPinnedMiddle = creatElement(DIV, 'simple-html-grid-body-view-pinned-middle');
-    const bodyViewPinnedRight = creatElement(DIV, 'simple-html-grid-body-view-pinned-right');
+    const bodyViewGroup = createElement(DIV, 'simple-html-grid-body-view-group');
+    const bodyViewSelector = createElement(DIV, 'simple-html-grid-body-view-selector');
+    const bodyViewPinnedLeft = createElement(DIV, 'simple-html-grid-body-view-pinned-left');
+    const bodyViewPinnedMiddle = createElement(DIV, 'simple-html-grid-body-view-pinned-middle');
+    const bodyViewPinnedRight = createElement(DIV, 'simple-html-grid-body-view-pinned-right');
 
     body.appendChild(bodyViewGroup);
     body.appendChild(bodyViewSelector);
@@ -68,11 +68,11 @@ export function createDom(ctx: Grid) {
     body.appendChild(bodyViewPinnedMiddle);
     body.appendChild(bodyViewPinnedRight);
 
-    const bodyRowConainerGroup = creatElement(DIV, 'simple-html-grid-body-row-container-group');
-    const bodyRowConainerSelector = creatElement(DIV, 'simple-html-grid-body-row-container-selector');
-    const bodyRowConainerPinnedLeft = creatElement(DIV, 'simple-html-grid-body-row-container-pinned-left');
-    const bodyRowConainerPinnedMiddle = creatElement(DIV, 'simple-html-grid-body-row-container-pinned-middle');
-    const bodyRowConainerPinnedRight = creatElement(DIV, 'simple-html-grid-body-row-container-pinned-right');
+    const bodyRowConainerGroup = createElement(DIV, 'simple-html-grid-body-row-container-group');
+    const bodyRowConainerSelector = createElement(DIV, 'simple-html-grid-body-row-container-selector');
+    const bodyRowConainerPinnedLeft = createElement(DIV, 'simple-html-grid-body-row-container-pinned-left');
+    const bodyRowConainerPinnedMiddle = createElement(DIV, 'simple-html-grid-body-row-container-pinned-middle');
+    const bodyRowConainerPinnedRight = createElement(DIV, 'simple-html-grid-body-row-container-pinned-right');
 
     bodyViewGroup.appendChild(bodyRowConainerGroup);
     bodyViewSelector.appendChild(bodyRowConainerSelector);
@@ -80,10 +80,10 @@ export function createDom(ctx: Grid) {
     bodyViewPinnedMiddle.appendChild(bodyRowConainerPinnedMiddle);
     bodyViewPinnedRight.appendChild(bodyRowConainerPinnedRight);
 
-    const headerRowConainerSelector = creatElement(DIV, 'simple-html-grid-header-row-container-selector');
-    const headerRowConainerPinnedLeft = creatElement(DIV, 'simple-html-grid-header-row-container-pinned-left');
-    const headerRowConainerPinnedMiddle = creatElement(DIV, 'simple-html-grid-header-row-container-pinned-middle');
-    const headerRowConainerPinnedRight = creatElement(DIV, 'simple-html-grid-header-row-container-pinned-right');
+    const headerRowConainerSelector = createElement(DIV, 'simple-html-grid-header-row-container-selector');
+    const headerRowConainerPinnedLeft = createElement(DIV, 'simple-html-grid-header-row-container-pinned-left');
+    const headerRowConainerPinnedMiddle = createElement(DIV, 'simple-html-grid-header-row-container-pinned-middle');
+    const headerRowConainerPinnedRight = createElement(DIV, 'simple-html-grid-header-row-container-pinned-right');
 
     headerViewSelector.appendChild(headerRowConainerSelector);
     headerViewPinnedLeft.appendChild(headerRowConainerPinnedLeft);

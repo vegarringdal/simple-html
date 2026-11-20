@@ -1,7 +1,7 @@
 import { html, render } from 'lit-html';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { dragEvent } from './dragEvent';
 import { getElementByClassName } from './getElementByClassName';
@@ -34,7 +34,7 @@ export function rebuildTopPanel(ctx: Grid) {
     const grouping = ctx.gridInterface.getDatasource().getGrouping();
 
     grouping.forEach((group) => {
-        const label = creatElement('DIV', 'simple-html-grid-panel-label');
+        const label = createElement('DIV', 'simple-html-grid-panel-label');
         (label as HTMLCellElement).$attribute = group.attribute;
         label.style.width = asPx(getTextWidth(ctx, group.title) + 20);
 
@@ -54,7 +54,7 @@ export function rebuildTopPanel(ctx: Grid) {
             parent.appendChild(child);
         };
 
-        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-left-panel'), label);
+        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-left-panel'), label);
 
         render(
             html`<div>

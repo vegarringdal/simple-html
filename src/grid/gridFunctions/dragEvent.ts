@@ -1,13 +1,13 @@
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { getElementByClassName } from './getElementByClassName';
 import { getTextWidth } from './getTextWidth';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 
-export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, abortSignal: AbortSignal = undefined) {
+export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, abortSignal?: AbortSignal) {
     cell.addEventListener(
         'mousedown',
         (e) => {
@@ -16,8 +16,12 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
             }
 
             const attributes = ctx.gridInterface.__getGridConfig().__attributes;
+            // a column with fewer rows than the tallest one has empty label cells, nothing to drag
             const attribute = (cell as HTMLCellElement).$attribute;
-            const attributeLabel = attributes[attribute].label || attribute;
+            if (!attribute) {
+                return;
+            }
+            const attributeLabel = attributes[attribute]?.label || attribute;
             const cellno = (cell as HTMLCellElement).$celno;
             const coltype = (cell as HTMLCellElement).$coltype;
             const column = (cell as HTMLCellElement).$column;
@@ -31,11 +35,12 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
             const gridRect = ctx.element.getBoundingClientRect();
 
             // ctx is helpr to track if user is clicking or planing to use drag/drop
-            let isClickEvent = setTimeout(() => {
+            let isClickEvent: ReturnType<typeof setTimeout> | null = setTimeout(() => {
                 if (attribute && !mouseUp) {
                     isClickEvent = null;
 
-                    const rect = cell.parentElement.getBoundingClientRect();
+                    // the cell is always created inside its column/panel/menu element
+                    const rect = cell.parentElement!.getBoundingClientRect();
                     let width = getTextWidth(ctx, attributeLabel) + 10;
                     if (gridConfig.cellHeaderLabelHeight !== gridConfig.cellHeight) {
                         width = rect.width;
@@ -56,7 +61,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
 
                     const borderColor = getComputedStyle(ctx.element).getPropertyValue('--simple-html-grid-main-bg-border');
 
-                    dragElement = creatElement(DIV, 'simple-html-draggable-element');
+                    dragElement = createElement(DIV, 'simple-html-draggable-element');
                     dragElement.style.height = asPx(gridConfig.cellHeaderLabelHeight);
                     dragElement.style.minWidth = asPx(width);
                     dragElement.style.maxWidth = asPx(width);
@@ -71,7 +76,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                     dragElement.style.fontSize = fontSize;
                     dragElement.style.color = color;
 
-                    const label = creatElement('DIV', 'simple-html-draggable-element-label');
+                    const label = createElement('DIV', 'simple-html-draggable-element-label');
                     label.innerText = attributeLabel;
                     label.style.fontFamily = fontFamily;
                     label.style.fontWeight = fontWeight;
@@ -316,17 +321,18 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                                     }
                                     /**
                                      * old - just replace
+                                     * a drop zone is not the panel, so the if above made sure newAttribute is set
                                      */
                                     if (coltype === 'left-pinned') {
-                                        columnLeft[column].rows[cellno] = newAttribute;
+                                        columnLeft[column].rows[cellno] = newAttribute!;
                                     }
 
                                     if (coltype === 'middle-pinned') {
-                                        columnCenter[column].rows[cellno] = newAttribute;
+                                        columnCenter[column].rows[cellno] = newAttribute!;
                                     }
 
                                     if (coltype === 'right-pinned') {
-                                        columnRight[column].rows[cellno] = newAttribute;
+                                        columnRight[column].rows[cellno] = newAttribute!;
                                     }
 
                                     ctx.rebuild();

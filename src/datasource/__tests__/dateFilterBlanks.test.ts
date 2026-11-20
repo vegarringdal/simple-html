@@ -104,6 +104,6 @@ describe('date filter - blank filter value', () => {
                 { type: 'CONDITION', attribute: 'n', attributeType: 'text', operator: 'EQUAL', value: 'date' }
             ]
         });
-        expect(ds.getFilterTree().children).toHaveLength(1);
+        expect(ds.getFilterTree()!.children).toHaveLength(1);
     });
 });

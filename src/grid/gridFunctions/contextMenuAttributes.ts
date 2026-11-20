@@ -2,7 +2,7 @@ import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
 
@@ -17,7 +17,7 @@ let currentColumnSearchvalue = '';
 export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLElement, callback: (attribute: string) => void) {
     removeContextMenu(ctx);
 
-    const contextMenu = creatElement('div', 'simple-html-grid');
+    const contextMenu = createElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
 
     const reRender = () => {

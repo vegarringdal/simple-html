@@ -95,7 +95,7 @@ main.appendChild(stage);
 
 // ---------------------------------------------------------------- nav items + activation
 
-let currentSample: DemoSample = null;
+let currentSample: DemoSample | null = null;
 const navButtons = new Map<string, HTMLButtonElement>();
 
 function activate(sample: DemoSample) {

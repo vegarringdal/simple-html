@@ -1,7 +1,7 @@
 /**
- * numberformater, replaces dot with comma
+ * numberformatter, replaces dot with comma
  */
-export class NumberFormaterComma {
+export class NumberFormatterCustom {
     /**
      *
      * @param value Takes string and returns date
@@ -51,15 +51,15 @@ export class NumberFormaterComma {
     }
 
     static toFilter(value: any): number | null | undefined {
-        return NumberFormaterComma.toSource(value);
+        return NumberFormatterCustom.toSource(value);
     }
 
     static fromSourceDisplay(value: any): string | null | undefined {
-        return NumberFormaterComma.fromSource(value);
+        return parseInt(`${NumberFormatterCustom.fromSource(value)}`, 10).toFixed(2);
     }
 
     static fromSourceGrouping(value: any): string | null | undefined {
-        return NumberFormaterComma.fromSourceDisplay(value);
+        return parseInt(`${NumberFormatterCustom.fromSource(value)}`, 10).toFixed(2);
     }
 
     static placeholder() {

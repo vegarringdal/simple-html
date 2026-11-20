@@ -4,7 +4,7 @@ export class Selection {
     private selectedRows: number;
     private selection: Set<number | string>;
     private lastRowSelected: number;
-    private lastKeyKodeUsed: string;
+    private lastKeyCodeUsed: string;
     private dataSource: Datasource;
 
     constructor(dataSource: Datasource) {
@@ -13,7 +13,7 @@ export class Selection {
         this.selection = new Set([]);
         // start as after a plain click on nothing. Left undefined, the first ctrl or shift click
         // matched no case in highlightRow and selected nothing
-        this.lastKeyKodeUsed = 'none';
+        this.lastKeyCodeUsed = 'none';
         this.lastRowSelected = -1;
     }
 
@@ -50,7 +50,7 @@ export class Selection {
      *
      * @param truggerEvent
      */
-    public deSelectAll(truggerEvent = false): void {
+    public deselectAll(truggerEvent = false): void {
         this.selection.clear();
         this.selectedRows = this.selection.size;
         if (truggerEvent) {
@@ -72,7 +72,7 @@ export class Selection {
 
         let isSel: boolean;
         let currentselectedRows = this.getSelectedRows();
-        let currentKeyKode = '';
+        let currentKeyCode = '';
 
         this.dataSource.__select(currentRow);
 
@@ -84,37 +84,37 @@ export class Selection {
                     // if multiselect duh!
 
                     if (e.shiftKey) {
-                        currentKeyKode = 'shift';
+                        currentKeyCode = 'shift';
                         currentselectedRows = this.getSelectedRows();
-                        if (currentselectedRows.length > 0 && this.lastKeyKodeUsed === 'none') {
+                        if (currentselectedRows.length > 0 && this.lastKeyCodeUsed === 'none') {
                             this.lastRowSelected = currentselectedRows[0];
-                            this.lastKeyKodeUsed = 'shift';
+                            this.lastKeyCodeUsed = 'shift';
                         }
                     }
 
                     if (e.ctrlKey) {
-                        currentKeyKode = 'ctrl';
+                        currentKeyCode = 'ctrl';
                     }
 
                     if (!e.ctrlKey && !e.shiftKey) {
-                        currentKeyKode = 'none';
+                        currentKeyCode = 'none';
                     }
 
                     switch (true) {
-                        case currentKeyKode === 'none':
+                        case currentKeyCode === 'none':
                             this.select(currentRow, false);
                             break;
-                        case this.lastKeyKodeUsed === 'shift' && currentKeyKode === 'ctrl':
+                        case this.lastKeyCodeUsed === 'shift' && currentKeyCode === 'ctrl':
                             isSel = this.isSelected(currentRow);
                             if (isSel === true) {
-                                this.deSelect(currentRow);
+                                this.deselect(currentRow);
                             } else {
                                 this.select(currentRow, true);
                             }
                             this.lastRowSelected = currentRow;
                             break;
 
-                        case this.lastKeyKodeUsed === 'ctrl' && currentKeyKode === 'shift': {
+                        case this.lastKeyCodeUsed === 'ctrl' && currentKeyCode === 'shift': {
                             const oldSel = this.getSelectedRows();
                             this.selectRange(this.lastRowSelected, currentRow);
                             const newSel = this.getSelectedRows();
@@ -123,27 +123,27 @@ export class Selection {
                             break;
                         }
 
-                        case this.lastKeyKodeUsed === 'ctrl' && currentKeyKode === 'ctrl':
+                        case this.lastKeyCodeUsed === 'ctrl' && currentKeyCode === 'ctrl':
                             isSel = this.isSelected(currentRow);
                             if (isSel === true) {
-                                this.deSelect(currentRow);
+                                this.deselect(currentRow);
                             } else {
                                 this.select(currentRow, true);
                             }
                             this.lastRowSelected = currentRow;
                             break;
 
-                        case this.lastKeyKodeUsed === 'none' && currentKeyKode === 'ctrl':
+                        case this.lastKeyCodeUsed === 'none' && currentKeyCode === 'ctrl':
                             isSel = this.isSelected(currentRow);
                             if (isSel === true) {
-                                this.deSelect(currentRow);
+                                this.deselect(currentRow);
                             } else {
                                 this.select(currentRow, true);
                             }
                             this.lastRowSelected = currentRow;
                             break;
 
-                        case this.lastKeyKodeUsed === 'shift' && currentKeyKode === 'shift':
+                        case this.lastKeyCodeUsed === 'shift' && currentKeyCode === 'shift':
                             if (this.lastRowSelected > currentRow) {
                                 this.selectRange(currentRow, this.lastRowSelected);
                             } else {
@@ -152,7 +152,7 @@ export class Selection {
 
                             break;
 
-                        case this.lastKeyKodeUsed === 'none' && currentKeyKode === 'shift':
+                        case this.lastKeyCodeUsed === 'none' && currentKeyCode === 'shift':
                             if (this.lastRowSelected !== -1) {
                                 if (this.lastRowSelected > currentRow) {
                                     this.selectRange(currentRow, this.lastRowSelected);
@@ -170,7 +170,7 @@ export class Selection {
                 } else {
                     this.select(currentRow, false);
                 }
-                this.lastKeyKodeUsed = currentKeyKode;
+                this.lastKeyCodeUsed = currentKeyCode;
 
                 // update selection on rows
                 this.dataSource.__callSubscribers('selectionChange');
@@ -178,15 +178,15 @@ export class Selection {
         } else {
             // same row clicked again
             if (e.ctrlKey) {
-                currentKeyKode = 'ctrl';
+                currentKeyCode = 'ctrl';
             }
 
             // if ctrl button we want to remove selection
-            if (currentKeyKode === 'ctrl') {
-                this.lastKeyKodeUsed = currentKeyKode;
+            if (currentKeyCode === 'ctrl') {
+                this.lastKeyCodeUsed = currentKeyCode;
                 isSel = this.isSelected(currentRow);
                 if (isSel === true) {
-                    this.deSelect(currentRow);
+                    this.deselect(currentRow);
                 }
                 this.lastRowSelected = currentRow;
             } else {
@@ -223,7 +223,7 @@ export class Selection {
         }
     }
 
-    private deSelect(row: number): void {
+    private deselect(row: number): void {
         this.selection.delete(this.getRowKey(row));
         this.selectedRows = this.selection.size;
     }

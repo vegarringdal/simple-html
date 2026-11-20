@@ -80,7 +80,7 @@ describe('datasource sort', () => {
     });
 
     it('local compare on string', () => {
-        datasource.setLocalCompare('no'); // need node 14.xx.xx or new browser for this to work
+        datasource.setLocaleCompare('no'); // need node 14.xx.xx or new browser for this to work
 
         datasource.sort([{ attribute: 'localCompare', ascending: true }]);
         const arr: string[] = datasource.getRows().map((x: any) => x.localCompare);
@@ -88,7 +88,7 @@ describe('datasource sort', () => {
     });
 
     it('local compare on string2', () => {
-        datasource.setLocalCompare('no'); // need node 14.xx.xx or new browser for this to work
+        datasource.setLocaleCompare('no'); // need node 14.xx.xx or new browser for this to work
 
         datasource.sort([{ attribute: 'localCompare', ascending: false }]);
         const arr: string[] = datasource.getRows().map((x: any) => x.localCompare);

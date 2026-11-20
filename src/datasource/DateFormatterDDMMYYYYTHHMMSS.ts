@@ -1,9 +1,9 @@
 /**
- * default dateformater - YYYY-MM-DD
+ * default dateformatter - DD.MM.YYYYTHH:MM:SS
  */
-export class DateFormaterYYYYMMDDTHHMMSS {
+export class DateFormatterDDMMYYYYTHHMMSS {
     /**
-     * includes time, date filters compare with time, see `ValueFormater.dateIncludesTime`
+     * includes time, date filters compare with time, see `ValueFormatter.dateIncludesTime`
      */
     static includesTime = true;
 
@@ -14,7 +14,7 @@ export class DateFormaterYYYYMMDDTHHMMSS {
     static fromSource(value: Date | string | null | undefined): string {
         let returnValue: any = value;
 
-        if (returnValue === null || returnValue === undefined || returnValue === '') {
+        if (value === null || value === undefined || value === '') {
             return '';
         }
 
@@ -52,7 +52,8 @@ export class DateFormaterYYYYMMDDTHHMMSS {
             if (seconds.length === 1) {
                 seconds = `0${seconds}`;
             }
-            returnValue = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+
+            returnValue = `${day}.${month}.${year}T${hours}:${minutes}:${seconds}`;
         }
 
         return returnValue;
@@ -78,17 +79,17 @@ export class DateFormaterYYYYMMDDTHHMMSS {
         }
 
         const dateTime = returnValue.split('T');
-        const YYYYMMDD: any[] = dateTime[0].split('-');
+        const DDMMYYYY: any[] = dateTime[0].split('.');
         const HHMMSS: any[] = dateTime[1]?.split(':') || [];
 
         // 01.01.2019
-        if (!YYYYMMDD[1]) {
+        if (!DDMMYYYY[1]) {
             // by default, use current month
-            YYYYMMDD[1] = new Date().getMonth() + 1;
+            DDMMYYYY[1] = new Date().getMonth() + 1;
         }
-        if (!YYYYMMDD[2]) {
-            // by default, use current day
-            YYYYMMDD[2] = new Date().getDate();
+        if (!DDMMYYYY[2]) {
+            // by default, use current year
+            DDMMYYYY[2] = new Date().getFullYear();
         }
 
         if (!HHMMSS[0]) {
@@ -105,9 +106,9 @@ export class DateFormaterYYYYMMDDTHHMMSS {
         }
 
         returnValue = new Date(
-            YYYYMMDD[0],
-            parseInt(YYYYMMDD[1], 10) - 1,
-            parseInt(YYYYMMDD[2], 10),
+            DDMMYYYY[2],
+            parseInt(DDMMYYYY[1], 10) - 1,
+            parseInt(DDMMYYYY[0], 10),
             parseInt(HHMMSS[0], 10),
             parseInt(HHMMSS[1], 10),
             parseInt(HHMMSS[2], 10),
@@ -141,17 +142,17 @@ export class DateFormaterYYYYMMDDTHHMMSS {
         }
 
         const dateTime = returnValue.split('T');
-        const YYYYMMDD: any[] = dateTime[0].split('-');
+        const DDMMYYYY: any[] = dateTime[0].split('.');
         const HHMMSS: any[] = dateTime[1]?.split(':') || [];
 
         // 01.01.2019
-        if (!YYYYMMDD[1]) {
+        if (!DDMMYYYY[1]) {
             // by default, use current month
-            YYYYMMDD[1] = new Date().getMonth() + 1;
+            DDMMYYYY[1] = new Date().getMonth() + 1;
         }
-        if (!YYYYMMDD[2]) {
-            // by default, use current day
-            YYYYMMDD[2] = new Date().getDate();
+        if (!DDMMYYYY[2]) {
+            // by default, use current year
+            DDMMYYYY[2] = new Date().getFullYear();
         }
 
         if (!HHMMSS[0]) {
@@ -168,9 +169,9 @@ export class DateFormaterYYYYMMDDTHHMMSS {
         }
 
         returnValue = new Date(
-            YYYYMMDD[0],
-            parseInt(YYYYMMDD[1], 10) - 1,
-            parseInt(YYYYMMDD[2], 10),
+            DDMMYYYY[2],
+            parseInt(DDMMYYYY[1], 10) - 1,
+            parseInt(DDMMYYYY[0], 10),
             parseInt(HHMMSS[0], 10),
             parseInt(HHMMSS[1], 10),
             parseInt(HHMMSS[2], 10),
@@ -184,14 +185,14 @@ export class DateFormaterYYYYMMDDTHHMMSS {
     }
 
     static fromSourceDisplay(value: Date | string | null | undefined): string {
-        return DateFormaterYYYYMMDDTHHMMSS.fromSource(value);
+        return DateFormatterDDMMYYYYTHHMMSS.fromSource(value);
     }
 
     static fromSourceGrouping(value: Date | string | null | undefined): string {
-        return DateFormaterYYYYMMDDTHHMMSS.fromSourceDisplay(value);
+        return DateFormatterDDMMYYYYTHHMMSS.fromSourceDisplay(value);
     }
 
     static placeholder() {
-        return 'YYYY-MM-DDTHH:MM:SS';
+        return 'DD.MM.YYYYTHH:MM:SS';
     }
 }
