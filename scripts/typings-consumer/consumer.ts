@@ -434,7 +434,8 @@ gridInterface.setState({ layout: { center: [{ rows: ['name'], width: 100 }] } })
 gridInterface.on('grid-connected', () => gridInterface.autoResizeColumns());
 
 const onFiltered: EventHandler<DatasourceEvents['collection-filtered']> = (data) => {
-    const info: 'filter' | 'resetData' | 'markForDeletion' | '__internalUpdate, forced' = data.info;
+    const info: 'filter' | 'resetData' | 'markForDeletion' | 'unmarkForDeletion' | 'acceptChanges' | '__internalUpdate, forced' =
+        data.info;
     console.log(info);
 };
 datasource.on('collection-filtered', onFiltered)();
@@ -509,6 +510,33 @@ const fullPerson: Person = changes.modifiedEntities[0];
 console.log(fullPerson, edited?.age);
 const untyped: Changes = container.getChanges();
 console.log(untyped.modifiedEntities[0]?.anything);
+
+// delete is a tag: unmark undoes it. After a save, acceptChanges() - the server's keys for the new rows
+people.markForDeletion(people.getSelectedRows());
+people.unmarkForDeletion(people.getSelectedRows());
+people.unmarkForDeletion(selectedPeople[0]);
+people.markAllForDeletion();
+people.unmarkAllForDeletion();
+const unsaved: boolean = people.hasChanges() || container.hasChanges();
+// a new row's temporary key: in its key field, or __KEY without a key field
+const temporaryKey: string | number | undefined = changes.newEntities[0]?.__KEY ?? changes.newEntities[0]?.id;
+console.log(unsaved, temporaryKey);
+const serverIds: { temporaryId: number; id: number }[] = [{ temporaryId: -1, id: 7 }];
+people.acceptChanges();
+people.acceptChanges({ rows: people.getSelectedRows() });
+people.acceptChanges({ rows: selectedPeople[0], newKeys: new Map(serverIds.map((row) => [row.temporaryId, row.id])) });
+people.acceptChanges({ newKeys: new Map([['-1', 'a-uuid']]) });
+// keys from the keys of a JSON object
+people.acceptChanges({ newKeys: new Map(Object.entries({ '-1': 7 })) });
+container.acceptChanges({ newKeys: new Map([[-1, 7]]) });
+container.unmarkForDeletion(containerRows);
+container.unmarkAllForDeletion();
+// @ts-expect-error the rows go in the options: acceptChanges({ rows })
+people.acceptChanges(people.getSelectedRows());
+// @ts-expect-error newKeys is a Map
+people.acceptChanges({ newKeys: { '-1': 7 } });
+// @ts-expect-error a key is text or a number
+people.acceptChanges({ newKeys: new Map([[-1, null]]) });
 const flag = names.length > 0;
 const rowsByFlag: (Person | GroupRow)[] = flag ? people.getDataRows() : people.getRows();
 const dataRowCount: number = people.getDataRows().length + people.length();

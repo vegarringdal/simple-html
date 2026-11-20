@@ -2,7 +2,8 @@
 
 The grid has three right click menus:
 
-- the **row menu**, on a cell: copy, filter on the value, dimmed values, paste, clear, a summary
+- the **row menu**, on a cell: copy, filter on the value, dimmed values, paste, clear, delete, a
+  summary
 - the **header menu**, on a header label: pin, hide, the column chooser, sizes, grouping
 - the **filter menu**, on a header filter: clear, is blank, the filter editor, the operator, the
   value list
@@ -52,8 +53,8 @@ const gridInterface = createGrid(host, { config, datasource, hooks });
 ```
 
 - `defaults` always has every entry of the menu. The ones that do not apply here have a `visible`
-  callback that hides them: paste and clear on a readonly cell, the summary of a column that is not
-  a number, the operators of another type.
+  callback that hides them: paste and clear on a readonly cell, delete in a readonly grid, the
+  summary of a column that is not a number, the operators of another type.
 - A section header or a separator is shown as long as it is in the list: hide it together with the
   entries under it.
 - The entries in `defaults` are new objects every time, change them as you like.
@@ -119,6 +120,9 @@ versions, so a menu changed by id keeps working.
 | `row.paste.cell` | Cell (selected rows) | the grid and the cell are editable |
 | `row.clear` | Clear: | the grid and the cell are editable |
 | `row.clear.cell` | Cell (selected rows) | the grid and the cell are editable |
+| `row.delete` | Delete: | the grid is editable |
+| `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows). Greyed out when no selected row is left to mark | the grid is editable |
+| `row.delete.undo` | Undo (selected rows): takes the mark off | the grid is editable, and a selected row is marked for deletion |
 | `row.summary` | Summary: | a number field |
 | `row.summary.count` | Count: the number of selected rows. A click copies the value | a number field |
 | `row.summary.sum` | Sum: of the selected rows | a number field |

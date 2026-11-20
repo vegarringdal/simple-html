@@ -217,8 +217,13 @@ createButton('load state', () => {
     }
 });
 
+// deleting is a tag: the rows stay (RS column D) until the changes are accepted, and can be unmarked
 createButton('markForDeletion (selection)', () => {
     datasource.markForDeletion(datasource.getSelectedRows());
+});
+
+createButton('unmarkForDeletion (selection)', () => {
+    datasource.unmarkForDeletion(datasource.getSelectedRows());
 });
 
 createButton('get markForDeletion (see console)', () => {
@@ -234,12 +239,17 @@ createButton('reset data/changes -selection', () => {
 });
 
 createButton('get changes (ses console)', () => {
-    console.log(datasource.getChanges());
+    console.log(datasource.getChanges(), 'hasChanges:', datasource.hasChanges());
+});
+
+// what to call after a save: marked rows removed, new rows ordinary, edits the new originals.
+// No key field here: a server's keys would go in acceptChanges({ newKeys })
+createButton('accept changes (as after a save)', () => {
+    datasource.acceptChanges();
 });
 
 createButton('remove marked for deleted (no undo)', () => {
-    datasource.getDataContainer().clearMarkedForDeletion();
-    datasource.reloadDatasource();
+    datasource.clearMarkedForDeletion();
 });
 
 createButton('reset state (initialState)', () => {

@@ -18,7 +18,8 @@ hooks next to the config. TypeScript points to most of the places to change.
 - [Filters](../MIGRATION.md#filters): one filter format, `and()` / `or()` / `where()`, and
   [a converter for saved v5 filters](../MIGRATION.md#saved-configs)
 - [Options objects instead of boolean flags](../MIGRATION.md#options-objects-instead-of-boolean-flags)
-- [Change tracking](../MIGRATION.md#change-tracking-getchanges): the typed `getChanges()`
+- [Change tracking](../MIGRATION.md#change-tracking-getchanges): the typed `getChanges()`, a new
+  row marked for deletion stays (marked), `unmarkForDeletion()`, `acceptChanges()`
 - [Grid config](../MIGRATION.md#grid-config): `columns` and `layout`, the state, and
   [a converter for a v5 config](../MIGRATION.md#a-v5-config-converted)
 - [Setup, callbacks and methods of the grid](../MIGRATION.md#setup-callbacks-and-methods-of-the-grid):

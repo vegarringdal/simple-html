@@ -31,9 +31,9 @@ export interface Entity {
      */
     __KEY?: string | number;
     /**
-     * the row's state: `'N'` new (`addNewEmpty()`), `'D'` marked for deletion, `'M'` edited - a field
-     * differs from its original value. `undefined` for a row as it was set. Read only, setting it does
-     * nothing
+     * the row's state: `'N'` new (`addNewEmpty()`), `'D'` marked for deletion (a new row too), `'M'`
+     * edited - a field differs from its original value. `undefined` for a row as it was set, or as
+     * `acceptChanges()` left it. Read only, setting it does nothing
      */
     __rowState?: string;
     /**

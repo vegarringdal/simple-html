@@ -14,6 +14,16 @@ export const getNextKey = () => {
 };
 
 /**
+ * acceptChanges() takes an options object, `{ rows }`. Plain JavaScript can pass the rows themselves,
+ * which would read as no options at all and accept every row - so that throws.
+ */
+function assertAcceptChangesOptions(options: unknown) {
+    if (Array.isArray(options) || typeof options !== 'object' || options === null || (options as Entity).__controller) {
+        throw new TypeError('acceptChanges() takes an options object: acceptChanges({ rows, newKeys })');
+    }
+}
+
+/**
  * Holds the rows and tracks their edits (`getChanges()`). Every datasource has one: a new one by
  * default, or the one given as `DatasourceOptions.container` - several datasources can share it and
  * so show the same rows, each with its own filter, sort, grouping and selection. The field types for
@@ -145,6 +155,16 @@ export class DataContainer {
     }
 
     /**
+     * the rows given that are in the container, in the container's order, each once. Rows that are
+     * not in it (a group row, an unknown object) are left out
+     * @param rows a row or a list of rows
+     */
+    private rowsIn(rows: Entity | Entity[]): DataEntity[] {
+        const wanted = new Set(Array.isArray(rows) ? rows : [rows]);
+        return this.__collection.filter((row) => wanted.has(row));
+    }
+
+    /**
      * index of the entity in the collection, -1 if it is not there
      * @param entity any entity, a group row or an unknown object is just not found
      */
@@ -185,7 +205,8 @@ export class DataContainer {
 
     /**
      * The rows marked for deletion (`markForDeletion()` / `markAllForDeletion()`), still in the
-     * container until `clearMarkedForDeletion()`.
+     * container until `acceptChanges()` or `clearMarkedForDeletion()` removes them. New rows that are
+     * marked are in it too, they are not in `getChanges().deletedEntities`.
      *
      * @example
      * ```ts
@@ -331,11 +352,16 @@ export class DataContainer {
             const controller = row.__controller;
             // a spread reads the row's own fields through the proxy, the result is a plain object
             if (controller.__isDeleted) {
-                changes.deletedEntities.push({ ...row });
+                // a new row marked for deletion was never saved, there is nothing to send for it
+                if (!controller.__isNew) {
+                    changes.deletedEntities.push({ ...row });
+                }
                 continue;
             }
             if (controller.__isNew) {
-                changes.newEntities.push({ ...row });
+                // with a key field the generated key is in the row. Without one it is not a field of the
+                // row: the copy gets it as __KEY, so the server's key can be given back with acceptChanges()
+                changes.newEntities.push(controller.__KEYSTRING ? { ...row } : { ...row, __KEY: row.__KEY });
                 continue;
             }
             // __editedProps keeps a prop set back to its original value, as false: leave it out
@@ -352,10 +378,38 @@ export class DataContainer {
     }
 
     /**
+     * `true` when there is something to save: `getChanges()` would list a row. For an "unsaved
+     * changes" indicator. A new row marked for deletion is no change, and neither is a field edited
+     * back to its original value.
+     *
+     * @example
+     * ```ts
+     * import { DataContainer } from '@simple-html/grid';
+     *
+     * const container = new DataContainer('id');
+     * container.setData([{ id: 1, name: 'Ann' }]);
+     * container.hasChanges(); // false
+     *
+     * container.getDataSet()[0].name = 'Anna';
+     * container.hasChanges(); // true
+     * ```
+     */
+    public hasChanges(): boolean {
+        // the same rows getChanges() lists
+        return this.__collection.some((row) => {
+            const { __isDeleted, __isNew, __edited } = row.__controller;
+            return __isDeleted ? !__isNew : __isNew || __edited === true;
+        });
+    }
+
+    /**
      * Marks rows for deletion: `getChanges()` lists them in `deletedEntities`, `__rowState` is
-     * `'D'`, and `resetData()` unmarks them. They stay in the container until
-     * `clearMarkedForDeletion()`. A new row (from `addNewEmpty()`) is removed instead, there is
-     * nothing to delete on a server.
+     * `'D'`. They stay in the container: {@link unmarkForDeletion} (or `resetData()`) takes the mark
+     * off again, and {@link acceptChanges} (or `clearMarkedForDeletion()`) removes them once the
+     * deletes are saved.
+     *
+     * A new row (from `addNewEmpty()`) is marked too, so it can be brought back. While it is marked it
+     * is in none of the lists of `getChanges()`: it was never saved, there is nothing to send for it.
      *
      * @param rows a row or a list of rows. Rows that are not in the container are skipped.
      *
@@ -370,22 +424,14 @@ export class DataContainer {
     public markForDeletion(rows: Entity | Entity[]) {
         // v5 was markForDeletion(data, all)
         assertOptions('markForDeletion', arguments[1], 'markForDeletion(rows), or markAllForDeletion()');
-        for (const row of Array.isArray(rows) ? rows : [rows]) {
-            const i = this.indexOf(row);
-            if (i === -1) {
-                continue;
-            }
-            if (this.__collection[i].__controller.__isNew) {
-                this.__collection.splice(i, 1);
-            } else {
-                this.__collection[i].__controller.__isDeleted = true;
-            }
+        for (const row of this.rowsIn(rows)) {
+            row.__controller.__isDeleted = true;
         }
     }
 
     /**
-     * Marks every row for deletion, like {@link markForDeletion} with all of them: new rows are
-     * removed, the rest flagged. Was `markForDeletion(null, true)` in v5.
+     * Marks every row for deletion, like {@link markForDeletion} with all of them: the new rows are
+     * marked too, and left out of `getChanges()`. Was `markForDeletion(null, true)` in v5.
      *
      * @example
      * ```ts
@@ -395,18 +441,162 @@ export class DataContainer {
      * ```
      */
     public markAllForDeletion() {
-        // new rows are dropped, the rest flagged. Splicing inside forEach skipped the row
-        // after every new row, leaving it neither removed nor flagged
-        this.__collection = this.__collection.filter((e) => !e.__controller.__isNew);
-        this.__collection.forEach((e) => {
-            e.__controller.__isDeleted = true;
-        });
+        for (const row of this.__collection) {
+            row.__controller.__isDeleted = true;
+        }
+    }
+
+    /**
+     * Takes the mark of {@link markForDeletion} off rows again: undo a delete. A row is shown and
+     * listed in `getChanges()` as before it was marked - a new row as a new row, an edited row with its
+     * edits. Unlike `resetData()`, no edit is undone.
+     *
+     * @param rows a row or a list of rows. Rows that are not in the container, or not marked, are skipped.
+     *
+     * @example
+     * ```ts
+     * import { DataContainer } from '@simple-html/grid';
+     *
+     * const container = new DataContainer('id');
+     * container.setData([{ id: 1, name: 'Ann' }]);
+     * const [ann] = container.getDataSet();
+     *
+     * container.markForDeletion(ann);
+     * ann.__rowState; // 'D'
+     * container.unmarkForDeletion(ann);
+     * ann.__rowState; // undefined, as it was
+     * ```
+     */
+    public unmarkForDeletion(rows: Entity | Entity[]) {
+        for (const row of this.rowsIn(rows)) {
+            row.__controller.__isDeleted = false;
+        }
+    }
+
+    /**
+     * Takes the mark off every row marked for deletion, like {@link unmarkForDeletion} with all of them.
+     *
+     * @example
+     * ```ts
+     * const container = datasource.getDataContainer();
+     * container.markAllForDeletion();
+     * container.unmarkAllForDeletion();
+     * container.getMarkedForDeletion(); // []
+     * ```
+     */
+    public unmarkAllForDeletion() {
+        for (const row of this.__collection) {
+            row.__controller.__isDeleted = false;
+        }
+    }
+
+    /**
+     * Call it after a successful save: the changes are now on the server, so they are no changes any
+     * more. For every row (or the `rows` given):
+     *
+     * - a row marked for deletion is removed from the container, a new one too
+     * - a new row becomes an ordinary row (`__rowState` `undefined`)
+     * - the values a row has now become its original values: nothing counts as edited
+     * - the row's error (`setErrors()`) is cleared
+     *
+     * Then `getChanges()` lists none of them, `hasChanges()` is `false` when every row was accepted,
+     * and `resetData()` goes back to these values. `datasource.acceptChanges()` calls it and also
+     * rebuilds the displayed rows - use that one.
+     *
+     * **The keys of new rows.** A new row has a temporary key, a generated negative number: in its key
+     * field (`id: -1` with `new DataContainer('id')`), or without a key field as `__KEY` in
+     * `getChanges().newEntities`. `newKeys` maps each temporary key to the key the server gave the row.
+     * The row gets it in its key field, or as its `__KEY` without a key field - setting it is no edit.
+     *
+     * @param options.rows a row or a list of rows to accept, default every row. Rows that are not in
+     * the container are skipped. Pass the rows that were saved when only some of them were
+     * @param options.newKeys the server's key per temporary key. The keys are compared as text: `-1`
+     * and `'-1'` are the same key, so a map made from JSON works too. A new row that is not in it
+     * keeps its key
+     * @throws when a key in `newKeys` is not the key of a new row that is accepted (and not marked
+     * for deletion), or the server's key is blank (`null`, `undefined`, `''`) - a map the wrong way
+     * round, say. Checked first: nothing is accepted then
+     *
+     * @example
+     * ```ts
+     * import { DataContainer } from '@simple-html/grid';
+     *
+     * // saves the changes in one transaction, and answers with the id it gave each new row
+     * declare function save(changes: object): Promise<{ temporaryId: number; id: number }[]>;
+     *
+     * const container = new DataContainer('id');
+     * container.setData([{ id: 1, name: 'Ann' }]);
+     * container.setData([{ name: 'Cid' }], { add: true, isNew: true }); // a temporary id: -1, say
+     * container.getDataSet()[0].name = 'Anna';
+     *
+     * const saved = await save(container.getChanges()); // newEntities: [{ name: 'Cid', id: -1 }]
+     * container.acceptChanges({ newKeys: new Map(saved.map((row) => [row.temporaryId, row.id])) });
+     *
+     * container.getDataSet().map((row) => [row.id, row.name, row.__rowState]);
+     * // [[1, 'Anna', undefined], [7, 'Cid', undefined]] - if the server gave Cid the id 7
+     * container.hasChanges(); // false
+     * ```
+     */
+    public acceptChanges(options: { rows?: Entity | Entity[]; newKeys?: ReadonlyMap<string | number, string | number> } = {}) {
+        assertAcceptChangesOptions(options);
+        const { rows, newKeys } = options;
+        const accepted = rows === undefined ? this.__collection.slice() : this.rowsIn(rows);
+
+        // the server's key per temporary key, as text: -1 and '-1' are the same key
+        const serverKeys = new Map<string, string | number>();
+        for (const [temporary, key] of newKeys ?? []) {
+            serverKeys.set(String(temporary), key);
+        }
+
+        // checked before anything changes: a key that is not a new row's is a mistake (the map the
+        // wrong way round, or a row that was not saved), and a new row must not end up without a key
+        const newRowKeys = new Set(
+            accepted.filter((row) => row.__controller.__isNew && !row.__controller.__isDeleted).map((row) => String(row.__KEY))
+        );
+        for (const [temporary, key] of serverKeys) {
+            if (!newRowKeys.has(temporary)) {
+                throw new Error(
+                    `acceptChanges: newKeys has the key '${temporary}', but no new row accepted has it. The map goes from the temporary key (in getChanges().newEntities) to the server's key`
+                );
+            }
+            if (isBlank(key)) {
+                throw new Error(`acceptChanges: newKeys gives the new row '${temporary}' a blank key`);
+            }
+        }
+
+        const removed = new Set<DataEntity>();
+        for (const row of accepted) {
+            const controller = row.__controller;
+            if (controller.__isDeleted) {
+                removed.add(row);
+                continue;
+            }
+            if (controller.__isNew) {
+                const key = serverKeys.get(String(row.__KEY));
+                if (key !== undefined) {
+                    // the key field, or the row's own key without one: setting __KEY is no edit
+                    row.__KEY = key;
+                }
+                controller.__isNew = false;
+            }
+            // as a row that was just set: the next edit takes the value it has now as its original
+            controller.__editedProps = {};
+            controller.__originalValues = {};
+            controller.__currentValues = {};
+            controller.__newprops = {};
+            controller.__edited = false;
+            row.__rowError = null;
+        }
+        if (removed.size) {
+            this.__collection = this.__collection.filter((row) => !removed.has(row));
+        }
     }
 
     /**
      * Removes the rows marked for deletion from the container, for good: `getChanges()` no longer lists
      * them in `deletedEntities` and `resetData()` does not bring them back. Call it once the deletes
-     * are saved. `datasource.clearMarkedForDeletion()` calls it and rebuilds the displayed rows.
+     * are saved - or call {@link acceptChanges}, which also accepts the new and edited rows.
+     * `datasource.clearMarkedForDeletion()` calls it and rebuilds the displayed rows.
      *
      * @example
      * ```ts

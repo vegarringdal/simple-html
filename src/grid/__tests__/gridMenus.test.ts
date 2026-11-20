@@ -89,7 +89,10 @@ describe('menus - the built-in ids', () => {
     });
 
     it('expect the defaults of an editable number cell to show every row entry', async () => {
-        const { element } = await mountGrid({ ...simpleConfig(), readonly: false });
+        const { element, datasource } = await mountGrid({ ...simpleConfig(), readonly: false });
+        // undo is only shown when a selected row is marked for deletion
+        datasource.getSelection().selectRowRange(0, 1);
+        datasource.markForDeletion(datasource.getDataRows()[0]);
 
         openRowMenu(element, 'age', 0);
 
@@ -102,7 +105,7 @@ describe('menus - the built-in ids', () => {
 
         openRowMenu(element, 'firstname', 0);
 
-        expect(shownIds()).toEqual(MENU_IDS.row.filter((id) => !/^row\.(paste|clear|summary)/.test(id)));
+        expect(shownIds()).toEqual(MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|summary)/.test(id)));
     });
 
     it('expect the operators of a text column and the value list in the filter menu', async () => {

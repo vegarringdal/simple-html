@@ -6,7 +6,7 @@ export const editing: DemoSample = {
     title: 'Editing & row state',
     group: 'Editing',
     description:
-        'The grid defaults to readonly: true, so set readonly: false in the config to edit cells. The datasource tracks new/modified/deleted rows (see the RS column: N/M/D) so you can collect changes and send them to a server, or throw them away. Edit some cells and click "Show changes" - a cell edited back to its original value is not a change, and a date typed again on the same day is not either.',
+        'The grid defaults to readonly: true, so set readonly: false in the config to edit cells. The datasource tracks new/modified/deleted rows (see the RS column: N/M/D) so you can collect changes and send them to a server, or throw them away. Edit some cells and click "Show changes" - a cell edited back to its original value is not a change, and a date typed again on the same day is not either. Deleting marks the rows, so it can be undone: select rows and use the buttons, or right click a cell (Delete: Rows / Undo). The "Saving" sample sends the changes to a server.',
     run(stage) {
         const ui = createStage(stage);
         // the grid defaults to readonly: true, baseGridConfig() has readonly: false.
@@ -29,17 +29,26 @@ export const editing: DemoSample = {
             datasource.addNewEmpty({ company: 'NEW COMPANY' });
         });
         ui.button('Mark selected for deletion', () => {
-            // rendered with strike-through, getChanges() has them in deletedEntities
+            // they stay, struck through, and getChanges() has them in deletedEntities.
+            // A new row is marked too, but not sent: it was never saved
             datasource.markForDeletion(datasource.getSelectedRows());
+        });
+        ui.button('Undo delete (selected)', () => {
+            // takes the mark off, the rows are as they were - edits kept, a new row new again
+            datasource.unmarkForDeletion(datasource.getSelectedRows());
         });
         ui.button('Mark all for deletion', () => {
             datasource.markAllForDeletion();
+        });
+        ui.button('Undo delete (all)', () => {
+            datasource.unmarkAllForDeletion();
         });
         ui.button('Show changes', () => {
             // all local edits, new rows and deletions, e.g. to save them on a server.
             // modifiedEntities has the key and the changed fields of each edited row
             const { newEntities, modifiedEntities, deletedEntities } = datasource.getChanges();
             ui.log(`${newEntities.length} new, ${modifiedEntities.length} modified, ${deletedEntities.length} deleted`);
+            ui.log(`hasChanges(): ${datasource.hasChanges()}`);
             const changes = JSON.stringify(modifiedEntities);
             ui.log(`modified: ${changes.length > 400 ? `${changes.slice(0, 400)}...` : changes}`);
         });

@@ -52,11 +52,14 @@ import type { GridMenus } from './gridMenus';
 export interface GridHooks<T = unknown> {
     /**
      * Makes a cell readonly, or editable, from the values of its row. Called every time a cell is
-     * rendered, and by the row menu's paste and clear for each selected row.
+     * rendered, and by the row menu's paste, clear and delete for each selected row.
      *
      * Return `true` (readonly) or `false` (editable). `null` or `undefined` leaves it to the config:
      * the column's `readonly` option, which is passed in as `readonlyByConfig`. The grid's own
      * `readonly: true` makes every cell readonly, whatever this returns.
+     *
+     * A row it returns `true` for in every column of the layout is locked: the row menu's delete
+     * (`row.delete.rows`) skips it. The column's `readonly` option does not lock a row.
      *
      * Called often: keep it fast. When what it reads changes, call `gridInterface.refresh()` to render
      * the cells again.

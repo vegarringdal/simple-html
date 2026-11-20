@@ -2,7 +2,7 @@
 
 The grid is readonly by default. With editing on, the user changes values in the cells, and the
 datasource tracks every change: which rows are new, edited or marked for deletion, and what changed.
-`getChanges()` collects it for a server.
+`getChanges()` collects it for a server, and `acceptChanges()` takes it in once it is saved.
 
 ## Editing on
 
@@ -86,19 +86,33 @@ group is expanded.
 
 ## Deleting rows
 
+Deleting a row marks it, so the delete can be undone:
+
 ```ts
 datasource.markForDeletion(datasource.getSelectedRows()); // a row or a list of rows
+datasource.unmarkForDeletion(datasource.getSelectedRows()); // undo
 datasource.markAllForDeletion(); // every row
+datasource.unmarkAllForDeletion(); // undo for every row
 ```
 
-A row marked for deletion stays in the grid, with the state `'D'`, until you remove it. It is
-listed in `getChanges().deletedEntities`. A new row is removed at once instead: there is nothing to
-delete on a server.
+A row marked for deletion stays in the grid, with the state `'D'` - struck through with the css in
+[Showing the row state](#showing-the-row-state) - until the changes are saved. It is listed in
+`getChanges().deletedEntities`. Unmarked, it is as it was before: its edits are kept.
 
-- `datasource.clearMarkedForDeletion()` removes the marked rows. They are then gone from
-  `getChanges()` too: read the changes first.
-- `datasource.removeData(rows)` and `removeAllData()` remove rows without marking them. They are
-  not listed in `getChanges()`, use them for rows that are not on a server.
+A new row is marked too. While it is marked it is in none of the lists of `getChanges()`: it was
+never saved, there is nothing to send. Unmarked, it is a new row again.
+
+In an editable grid the row menu (right click a cell) has a **Delete:** section: *Rows (selected
+rows)* marks the selected rows, *Undo (selected rows)* takes the mark off - shown when a selected row
+is marked. A row the `isReadonly` hook returns `true` for in every column is locked: the menu does not
+mark it. The columns' `readonly` option does not lock a row, so a grid of readonly columns can still
+delete rows. The entries are `row.delete`, `row.delete.rows` and `row.delete.undo`, change or hide
+them with the [menus hook](10-menus.md).
+
+- `datasource.acceptChanges()` removes the marked rows once the deletes are saved, see
+  [Saving](#saving). `clearMarkedForDeletion()` removes them too, and leaves the other changes.
+- `datasource.removeData(rows)` and `removeAllData()` remove rows for good, without marking them:
+  no undo, and not listed in `getChanges()`. Use them for rows that never came from a server.
 
 ## Change tracking
 
@@ -149,16 +163,7 @@ const { newEntities, modifiedEntities, deletedEntities } = people.getChanges();
   typing the same day again is no change. A `datetime` field, and a field not listed in `fields`,
   compares to the second: a change of the time only is a change.
 
-There is no method that accepts the changes and keeps the rows. After a save, set the data again
-with the rows from the server: the state of every row starts over, and with a `key` the selection
-is kept.
-
-```ts
-declare function save(changes: object): Promise<object[]>;
-
-const freshRows = await save(datasource.getChanges());
-datasource.setData(freshRows);
-```
+After a save, `acceptChanges()` makes the changes the new starting point, see [Saving](#saving).
 
 ### Throwing changes away
 
@@ -166,6 +171,8 @@ datasource.setData(freshRows);
 datasource.resetData(); // every edit undone, marked rows unmarked, new rows removed
 datasource.resetDataSelectionOnly(); // the same, for the selected rows only
 ```
+
+To undo a delete and keep the edits, use `unmarkForDeletion(rows)`.
 
 ### Showing the row state
 
@@ -179,6 +186,96 @@ The row number cell on the left of each row gets the class `row-is-new`, `row-is
 ```
 
 Or show `__rowState` in a column of its own: put `'__rowState'` in the layout, as the samples do.
+
+## Saving
+
+A save usually sends everything in one transaction: the deleted, edited and new rows of
+`getChanges()`. After a successful save, `acceptChanges()` makes the grid show what was saved:
+
+- the rows marked for deletion are removed
+- the new rows become ordinary rows
+- the values the rows have now become their original values: nothing counts as edited
+- the row errors (`setErrors()`) are cleared
+
+The displayed rows are rebuilt once, and `hasChanges()` is `false` after.
+
+**Keys of new rows.** Until it is saved, a new row has a temporary key: a generated negative number,
+in the key field (`id: -1`), or as `__KEY` in `getChanges().newEntities` when the datasource has no
+`key`. The server gives the row its real key. `acceptChanges({ newKeys })` takes a `Map` from each
+temporary key to the server's key, and puts the server's key in the row - in the key field, or as the
+row's `__KEY`. Setting it is no edit, and a selected row stays selected.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+interface Person {
+    id: number;
+    name: string;
+}
+
+// what the server answers: the id it gave each new row
+interface SaveResult {
+    newIds: { temporaryId: number; id: number }[];
+}
+
+const people = new Datasource<Person>({ key: 'id' });
+people.setData([
+    { id: 1, name: 'Ann' },
+    { id: 2, name: 'Bob' }
+]);
+
+// the user edits, deletes and adds rows
+const [ann, bob] = people.getDataRows();
+ann.name = 'Anna';
+people.markForDeletion(bob);
+people.addNewEmpty({ name: 'Cid' }, { scrollTo: false }); // a temporary id: -1, say
+
+// one transaction
+const changes = people.getChanges();
+// newEntities:      [{ name: 'Cid', id: -1 }]
+// modifiedEntities: [{ id: 1, name: 'Anna' }]
+// deletedEntities:  [{ id: 2, name: 'Bob' }]
+const response = await fetch('/api/people/save', { method: 'POST', body: JSON.stringify(changes) });
+if (response.ok) {
+    const result: SaveResult = await response.json();
+    people.acceptChanges({ newKeys: new Map(result.newIds.map((row) => [row.temporaryId, row.id])) });
+}
+
+people.getDataRows().map((row) => [row.id, row.name]); // [[1, 'Anna'], [7, 'Cid']] - Cid has the server's id
+people.hasChanges(); // false
+```
+
+- `newKeys` compares the keys as text: `-1` and `'-1'` are the same key, so a map made from the keys
+  of a JSON object works too - `new Map(Object.entries(json))`.
+- A key in `newKeys` that is not the key of a new row throws, and so does a blank server key - before
+  anything changes. A map the wrong way round (server key to temporary key) is caught that way. A
+  new row that is not in `newKeys` keeps its key.
+- When only some rows were saved, pass them: `acceptChanges({ rows: savedRows, newKeys })`. The
+  other rows keep their changes.
+- Keep the grid readonly while the save runs - `gridInterface.updateConfig({ readonly: true })`, and
+  `false` after - or an edit made in between is accepted without being saved.
+- When the save fails, do not call `acceptChanges()`: the changes stay, to be saved again. Show the
+  server's errors on the rows with [`setErrors()`](#errors-from-a-server).
+- Without a `key`, the server's key becomes the row's `__KEY`: a later edit of the row is sent with
+  it, as `__KEY` in `modifiedEntities`.
+
+`hasChanges()` is `true` while there is something to save, for an "unsaved changes" indicator. The
+grid sends no event for an edit, so check it when it matters:
+
+```ts
+window.addEventListener('beforeunload', (event) => {
+    if (datasource.hasChanges()) {
+        event.preventDefault();
+    }
+});
+```
+
+Setting the data again with the rows from the server works too: `setData(freshRows)` starts the state
+of every row over, and with a `key` the selection is kept. `acceptChanges()` keeps the rows, so the
+current row, the scroll position and the expanded groups stay as they are.
+
+```sample saving
+```
 
 ## Errors from a server
 

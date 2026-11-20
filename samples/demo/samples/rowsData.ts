@@ -5,7 +5,7 @@ export const rowsData: DemoSample = {
     title: 'Add & remove rows',
     group: 'Datasource',
     description:
-        'setData() replaces the data, setData(rows, { add: true }) appends. A filter that is set applies to the new rows; { refilter: false } shows them all (type in a header filter, then append). removeData() removes entities for real (unlike markForDeletion, which only flags them), removeAllData() removes every row. getAllData() is everything in the container, getRows() is the current filtered/sorted view and getDataRows() the same without the group rows.',
+        'setData() replaces the data, setData(rows, { add: true }) appends. A filter that is set applies to the new rows; { refilter: false } shows them all (type in a header filter, then append). "Delete selected" marks the rows for deletion (markForDeletion): they stay, with a struck through row number, until the changes are saved - so "Undo delete" can take the mark off. removeData() and removeAllData() remove rows for good, without tracking: getChanges() does not list them. Use them for rows that never came from a server. getAllData() is everything in the container, getRows() is the current filtered/sorted view and getDataRows() the same without the group rows.',
     run(stage) {
         const ui = createStage(stage);
         const { datasource } = mountGrid(ui.gridHost, baseGridConfig(), generateRows(10));
@@ -29,13 +29,25 @@ export const rowsData: DemoSample = {
             datasource.setData(generateRows(10), { add: true, refilter: false });
             ui.log('setData(rows, { add: true, refilter: false }) -> ' + datasource.length() + ' rows');
         });
-        // removes entities for real (no undo, unlike markForDeletion)
-        ui.button('Remove selected rows', () => {
+        // deleting is a tag: the rows are marked, getChanges() lists them for the server, and the
+        // mark can be taken off again
+        ui.button('Delete selected', () => {
+            const selected = datasource.getSelectedRows();
+            datasource.markForDeletion(selected);
+            ui.log(`markForDeletion() -> ${datasource.getMarkedForDeletion().length} rows marked`);
+        });
+        ui.button('Undo delete', () => {
+            datasource.unmarkForDeletion(datasource.getSelectedRows());
+            ui.log(`unmarkForDeletion() -> ${datasource.getMarkedForDeletion().length} rows marked`);
+        });
+        // removes rows for good, without tracking: no undo, not in getChanges(). For rows that
+        // never came from a server
+        ui.button('Remove selected (untracked)', () => {
             const selected = datasource.getSelectedRows();
             datasource.removeData(selected);
-            ui.log('removed ' + selected.length + ' rows -> ' + datasource.length() + ' left');
+            ui.log(`removeData() -> removed ${selected.length} rows, ${datasource.length()} left`);
         });
-        ui.button('Remove all rows', () => {
+        ui.button('Remove all (untracked)', () => {
             const removed = datasource.removeAllData();
             ui.log(`removeAllData() -> removed ${removed.length} rows`);
         });

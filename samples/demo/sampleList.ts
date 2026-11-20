@@ -31,6 +31,8 @@ import { miscConfig } from './samples/miscConfig';
 import miscConfigSource from './samples/miscConfig.ts?raw';
 import { rowsData } from './samples/rowsData';
 import rowsDataSource from './samples/rowsData.ts?raw';
+import { saving } from './samples/saving';
+import savingSource from './samples/saving.ts?raw';
 import { selection } from './samples/selection';
 import selectionSource from './samples/selection.ts?raw';
 import { sortingGrouping } from './samples/sortingGrouping';
@@ -60,6 +62,7 @@ export const SAMPLES: Sample[] = [
     { ...rowsData, source: rowsDataSource },
     // editing
     { ...editing, source: editingSource },
+    { ...saving, source: savingSource },
     { ...contextMenu, source: contextMenuSource },
     { ...dropdownGrid, source: dropdownGridSource },
     // cells

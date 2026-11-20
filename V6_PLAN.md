@@ -324,10 +324,10 @@ built on it.
         `cellClass`, `menus`) move to a separate `hooks` object -
         `createGrid(host, { config, datasource, hooks })`, `updateHooks()`. The config and the state
         can then be saved and loaded as JSON; a test checks the JSON round trip of both. **S-M**
-45. [ ] **Delete is a tag by default**: deleting rows marks them (`markForDeletion`), so it can be
+45. [x] **Delete is a tag by default**: deleting rows marks them (`markForDeletion`), so it can be
         undone - `restoreRows(rows)` takes the mark off again. The samples and the row menu delete
         this way; `removeData()` stays for rows that never came from the server. **S**
-46. [ ] **Save workflow**: `getChanges()` already gives deleted, modified and new rows together -
+46. [x] **Save workflow**: `getChanges()` already gives deleted, modified and new rows together -
         one transaction on the server. After a successful save, `acceptChanges()` (all, or given
         rows) drops the deleted rows, makes new rows ordinary rows and makes the edited values the
         new originals. A guide shows the whole round trip, including new rows getting their key

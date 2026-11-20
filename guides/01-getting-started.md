@@ -164,7 +164,7 @@ element is put back.
 - [Grid config](02-grid-config.md) - columns, layout, every option, the hooks and saving the config
 - [State](03-state.md) - save and restore what the user changed: sorting, filters, column order
 - [Datasource](04-datasource.md) - data in and out, keys, fields, selection
-- [Editing](05-editing.md) - editing, change tracking, deleting rows
+- [Editing](05-editing.md) - editing, change tracking, deleting rows, saving
 - [Filtering](06-filtering.md) - the header filters, the filter editor, filters from code
 - [Sorting and grouping](07-sorting-grouping.md)
 - [Formatting](08-formatting.md) - how values are shown and parsed

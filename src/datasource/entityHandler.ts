@@ -29,11 +29,14 @@ export class EntityHandler {
     __originalValues: Record<string, any> = {};
     /** the value last set, per field that was set */
     __currentValues: Record<string, any> = {};
-    /** the fields set on the row since it was made, `true` each */
+    /** the fields set on the row since it was made (or its changes were accepted), `true` each */
     __newprops: Record<string, any> = {};
-    /** `true` for a new row: `addNewEmpty()`, or the container's `setData(rows, { isNew: true })` */
+    /**
+     * `true` for a new row: `addNewEmpty()`, or the container's `setData(rows, { isNew: true })`. Until
+     * `acceptChanges()` makes it an ordinary row. Stays `true` while a new row is marked for deletion
+     */
     __isNew? = false;
-    /** `true` while the row is marked for deletion */
+    /** `true` while the row is marked for deletion, see `markForDeletion()` / `unmarkForDeletion()` */
     __isDeleted? = false;
     /** `true` while a field differs from its original value */
     __edited? = false; // change to isModified?

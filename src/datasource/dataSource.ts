@@ -384,8 +384,9 @@ export class Datasource<T = any> {
 
     /**
      * The rows marked for deletion with {@link markForDeletion} / {@link markAllForDeletion}: still in
-     * the data until {@link clearMarkedForDeletion}. The same rows as `getChanges().deletedEntities`,
-     * but the rows themselves, not copies.
+     * the data until {@link acceptChanges} or {@link clearMarkedForDeletion} removes them. The rows
+     * themselves, not copies - the rows of `getChanges().deletedEntities`, plus the new rows that are
+     * marked (they are not sent to a server).
      *
      * @example
      * ```ts
@@ -401,6 +402,9 @@ export class Datasource<T = any> {
      * Removes the rows marked for deletion for good, once the deletes are saved: they leave the rows,
      * `getChanges()` no longer lists them in `deletedEntities`, and `resetData()` does not bring them
      * back. Sends `collection-changed` with `{ removed: true, info: 'clearMarkedForDeletion' }`.
+     *
+     * When the new and edited rows were saved in the same go, call {@link acceptChanges} instead: it
+     * removes the marked rows and accepts the rest.
      *
      * @sample editing
      * @example
@@ -503,10 +507,43 @@ export class Datasource<T = any> {
     }
 
     /**
-     * Marks rows for deletion: `getChanges()` lists them in `deletedEntities`, and `resetData()`
-     * unmarks them. They stay in the rows, with `__rowState` `'D'` - the grid marks them as deleted
-     * in the row selector. `clearMarkedForDeletion()` removes them. A new row (from `addNewEmpty()`)
-     * is removed instead, there is nothing to delete on a server.
+     * `true` when there is something to save: `getChanges()` would list a row. For an "unsaved
+     * changes" indicator, or to ask before the user leaves the page. A new row marked for deletion is
+     * no change, and neither is a field edited back to its original value.
+     *
+     * The changes are those of the data container, so of every datasource sharing it.
+     *
+     * @sample saving
+     * @example
+     * ```ts
+     * declare const saveButton: HTMLButtonElement;
+     *
+     * // the grid sends no event for an edit: check when the user is about to leave
+     * window.addEventListener('beforeunload', (event) => {
+     *     if (datasource.hasChanges()) {
+     *         event.preventDefault();
+     *     }
+     * });
+     * saveButton.disabled = !datasource.hasChanges();
+     * ```
+     */
+    public hasChanges(): boolean {
+        return this.__dataContainer.hasChanges();
+    }
+
+    /**
+     * Marks rows for deletion, so the delete can be undone: `getChanges()` lists them in
+     * `deletedEntities`, and {@link unmarkForDeletion} (or `resetData()`) takes the mark off again.
+     * They stay in the rows, with `__rowState` `'D'` - the grid marks them as deleted in the row
+     * selector. {@link acceptChanges} removes them once the deletes are saved.
+     *
+     * A new row (from `addNewEmpty()`) is marked too. While it is marked it is in none of the lists of
+     * `getChanges()` - it was never saved, there is nothing to send - and unmarked it is a new row again.
+     *
+     * In the grid, the row menu's "Delete:" entries mark and unmark the selected rows, see `MENU_IDS`.
+     * To remove rows that are not on a server, without tracking, use {@link removeData}.
+     *
+     * Sends `collection-filtered` with `info: 'markForDeletion'`.
      *
      * @param rows a row or a list of rows, e.g. `getSelectedRows()`
      *
@@ -520,33 +557,155 @@ export class Datasource<T = any> {
         // v5 was markForDeletion(data, all)
         assertOptions('markForDeletion', arguments[1], 'markForDeletion(rows), or markAllForDeletion()');
         this.__dataContainer.markForDeletion(rows);
-        this.__afterMarkForDeletion();
+        this.__afterRowStateChange('markForDeletion');
     }
 
     /**
-     * Marks every row for deletion, see {@link markForDeletion}. Was `markForDeletion(null, true)`
-     * in v5.
+     * Marks every row for deletion, see {@link markForDeletion}: the new rows too. Was
+     * `markForDeletion(null, true)` in v5.
      *
      * @sample editing
      * @example
      * ```ts
      * datasource.markAllForDeletion();
      * datasource.getChanges().deletedEntities; // every row that is not new
-     * datasource.resetData(); // unmarked again
+     * datasource.unmarkAllForDeletion(); // unmarked again
      * ```
      */
     public markAllForDeletion() {
         this.__dataContainer.markAllForDeletion();
-        this.__afterMarkForDeletion();
+        this.__afterRowStateChange('markForDeletion');
     }
 
     /**
-     * after rows were marked: rebuilds the displayed rows (a new row marked is gone) and tells the grid
+     * Undoes a delete: takes the mark of {@link markForDeletion} off rows again. A row is back as it
+     * was before it was marked - with its edits, and a new row as a new row. Unlike `resetData()`, no
+     * edit is undone.
+     *
+     * Sends `collection-filtered` with `info: 'unmarkForDeletion'`.
+     *
+     * @param rows a row or a list of rows, e.g. `getSelectedRows()`. Rows that are not marked are skipped
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * const rows = datasource.getSelectedRows();
+     * datasource.markForDeletion(rows);
+     * datasource.unmarkForDeletion(rows); // as they were
+     * ```
      */
-    private __afterMarkForDeletion() {
+    public unmarkForDeletion(rows: Entity | Entity[]) {
+        this.__dataContainer.unmarkForDeletion(rows);
+        this.__afterRowStateChange('unmarkForDeletion');
+    }
+
+    /**
+     * Takes the mark off every row marked for deletion, see {@link unmarkForDeletion}.
+     *
+     * @example
+     * ```ts
+     * datasource.markAllForDeletion();
+     * datasource.unmarkAllForDeletion();
+     * datasource.getMarkedForDeletion(); // []
+     * ```
+     */
+    public unmarkAllForDeletion() {
+        this.__dataContainer.unmarkAllForDeletion();
+        this.__afterRowStateChange('unmarkForDeletion');
+    }
+
+    /**
+     * Call it after a successful save, to show what was saved: the changes are on the server now, so
+     * they are no changes any more. For every row (or the `rows` given):
+     *
+     * - a row marked for deletion is removed, a new one too
+     * - a new row becomes an ordinary row (`__rowState` `undefined`)
+     * - the values a row has now become its original values: nothing counts as edited
+     * - the row's error (`setErrors()`) is cleared
+     *
+     * Then `getChanges()` lists none of them, `hasChanges()` is `false` when every row was accepted,
+     * and `resetData()` goes back to these values. The displayed rows are rebuilt and
+     * `collection-filtered` is sent once, with `info: 'acceptChanges'`.
+     *
+     * **The keys of new rows.** A new row has a temporary key, a generated negative number: in its key
+     * field (`id: -1` with `key: 'id'`), or without a key field as `__KEY` in
+     * `getChanges().newEntities`. `newKeys` maps each temporary key to the key the server gave the row.
+     * The row gets it in its key field, or as its `__KEY` without a key field - setting it is no edit,
+     * and a selected row stays selected.
+     *
+     * Keep the grid readonly while the save runs (`gridInterface.updateConfig({ readonly: true })`):
+     * an edit made in between is accepted too, without being saved.
+     *
+     * The changes are those of the data container, so of every datasource sharing it. Call
+     * `reloadDatasource()` on the others.
+     *
+     * @param options.rows a row or a list of rows to accept, default every row. Pass the rows that
+     * were saved when only some of them were
+     * @param options.newKeys the server's key per temporary key. The keys are compared as text: `-1`
+     * and `'-1'` are the same key, so a map made from JSON works too. A new row that is not in it
+     * keeps its key
+     * @throws when a key in `newKeys` is not the key of a new row that is accepted (and not marked
+     * for deletion), or the server's key is blank (`null`, `undefined`, `''`) - a map the wrong way
+     * round, say. Checked first: nothing is accepted then
+     *
+     * @sample saving
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * interface Person {
+     *     id: number;
+     *     name: string;
+     * }
+     * // saves the changes in one transaction, and answers with the id it gave each new row
+     * declare function save(changes: object): Promise<{ temporaryId: number; id: number }[]>;
+     *
+     * const people = new Datasource<Person>({ key: 'id' });
+     * people.setData([{ id: 1, name: 'Ann' }, { id: 2, name: 'Bob' }]);
+     * const [ann, bob] = people.getDataRows();
+     * ann.name = 'Anna';
+     * people.markForDeletion(bob);
+     * people.addNewEmpty({ name: 'Cid' }); // a temporary id: -1, say
+     *
+     * const saved = await save(people.getChanges());
+     * people.acceptChanges({ newKeys: new Map(saved.map((row) => [row.temporaryId, row.id])) });
+     *
+     * people.getDataRows().map((row) => [row.id, row.name, row.__rowState]);
+     * // [[1, 'Anna', undefined], [7, 'Cid', undefined]] - Bob is gone, Cid has the server's id
+     * people.hasChanges(); // false
+     *
+     * // only some rows were saved
+     * people.acceptChanges({ rows: people.getSelectedRows() });
+     * ```
+     */
+    public acceptChanges(options: { rows?: Entity | Entity[]; newKeys?: ReadonlyMap<string | number, string | number> } = {}) {
+        // the selection is kept by key: a selected new row that gets its key from the server stays
+        // selected under it. The container throws before it changes anything, so this is safe to read first
+        const selected = new Set<string | number | undefined>(this.__selection.getSelectedKeys());
+        const keysBefore = new Map(
+            this.getAllData()
+                .filter((row) => row.__rowState === 'N' && selected.has(row.__KEY))
+                .map((row) => [row, row.__KEY])
+        );
+
+        this.__dataContainer.acceptChanges(options);
+
+        for (const [row, before] of keysBefore) {
+            if (before !== undefined && row.__KEY !== undefined && row.__KEY !== before) {
+                this.__selection.replaceKey(before, row.__KEY);
+            }
+        }
+        this.__afterRowStateChange('acceptChanges');
+    }
+
+    /**
+     * after rows were marked, unmarked or accepted: rebuilds the displayed rows (accepting removes the
+     * marked rows, and a filter can be on `__rowState`) and tells the grid, once
+     */
+    private __afterRowStateChange(info: 'markForDeletion' | 'unmarkForDeletion' | 'acceptChanges') {
         const eventTriggered = this.__internalUpdate(true);
         if (!eventTriggered) {
-            this.__callSubscribers('collection-filtered', { info: 'markForDeletion' });
+            this.__callSubscribers('collection-filtered', { info });
         }
     }
 
@@ -727,7 +886,8 @@ export class Datasource<T = any> {
      * When grouped it is put in its group, and the group is expanded.
      *
      * The row gets a generated key, a negative number: with a key field it is written there
-     * (`{ company: 'NEW COMPANY', id: -1 }`), else it is the row's `__KEY`.
+     * (`{ company: 'NEW COMPANY', id: -1 }`), else it is the row's `__KEY`. After the save,
+     * `acceptChanges({ newKeys })` gives it the key from the server, see {@link acceptChanges}.
      *
      * @param row the values of the new row, default none. The object itself becomes the row.
      * @param options.scrollTo `false` to leave the selection as it is, default `true`: the new row is

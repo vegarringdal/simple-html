@@ -301,6 +301,9 @@ export interface GridMenus {
  * | `row.paste.cell` | Cell (selected rows) | the grid and the cell are editable |
  * | `row.clear` | Clear: | the grid and the cell are editable |
  * | `row.clear.cell` | Cell (selected rows) - sets the field to `null`, also a number field (emptying the cell stores 0) | the grid and the cell are editable |
+ * | `row.delete` | Delete: | the grid is editable |
+ * | `row.delete.rows` | Rows (selected rows) - marks them for deletion (`markForDeletion()`), they stay in the grid until the changes are accepted. Skips a row the `isReadonly` hook returns `true` for in every column of the layout. Greyed out when no selected row is left to mark | the grid is editable |
+ * | `row.delete.undo` | Undo (selected rows) - takes the mark off the selected rows marked for deletion (`unmarkForDeletion()`) | the grid is editable, and a selected row is marked for deletion |
  * | `row.summary` | Summary: | a number field |
  * | `row.summary.count` | Count: 3 - of the selected rows, click to copy | a number field |
  * | `row.summary.sum` | Sum: 60 | a number field |
@@ -380,6 +383,9 @@ export const MENU_IDS = {
         'row.paste.cell',
         'row.clear',
         'row.clear.cell',
+        'row.delete',
+        'row.delete.rows',
+        'row.delete.undo',
         'row.summary',
         'row.summary.count',
         'row.summary.sum',

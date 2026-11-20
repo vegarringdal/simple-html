@@ -287,7 +287,7 @@ describe('options objects - DataContainer', () => {
         expect(container.getDataSet().map((row) => [row.name, row.__rowState])).toEqual([['e', undefined]]);
     });
 
-    it('expect markAllForDeletion to drop the new rows and mark the rest', () => {
+    it('expect markAllForDeletion to mark every row, the new rows too', () => {
         const container = new DataContainer('id');
         container.setData(rows());
         container.setData([{ id: 4, name: 'd', country: 'dk' }], { add: true, isNew: true });
@@ -295,8 +295,10 @@ describe('options objects - DataContainer', () => {
         expect(container.getDataSet().map((row) => [row.name, row.__rowState])).toEqual([
             ['c', 'D'],
             ['a', 'D'],
-            ['b', 'D']
+            ['b', 'D'],
+            ['d', 'D']
         ]);
+        expect(container.getChanges().deletedEntities.map((row) => row.name)).toEqual(['c', 'a', 'b']);
     });
 
     it('expect removeData to take one row or a list, and removeAllData to remove every row', () => {

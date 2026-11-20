@@ -930,6 +930,23 @@ Asked for in review after phase 2: the user stores grid and datasource configura
   field reads it as the same moment, a field without that type compares text - written down in
   the state guide
 
+#### Delete is a tag, and the save workflow (items 45, 46)
+
+* `unmarkForDeletion()` / `unmarkAllForDeletion()` undo a delete. A new row marked for deletion
+  stays in the data (it used to be removed, so it could not be undone); while marked it is in none
+  of the `getChanges()` lists - there is nothing to send for it.
+* `acceptChanges({ rows?, newKeys? })` after a successful save: deleted rows go, new rows become
+  ordinary rows, edits become the originals, row errors clear. One rebuild.
+* `newKeys` maps the temporary key of a new row (as sent in `getChanges()`) to the server's key.
+  Keys compare as text, so a map built from JSON works; every key is checked before anything
+  changes - a map the wrong way round throws instead of quietly doing nothing.
+* `hasChanges()` for an "unsaved changes" indicator
+* row menu "Delete:" with `row.delete.rows` / `row.delete.undo`. A row the `isReadonly` hook makes
+  readonly for every field can not be deleted; an undo always works.
+* the samples delete by tagging; `removeData()` is shown as the untracked case. A "Saving" sample
+  does the whole round trip with a fake server that assigns ids.
+* the demo's light theme had no row state css at all - deleted rows were not struck through
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -990,7 +1007,8 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
     Matters now that a set date keeps its time on purpose.
   * with a collator using `sensitivity: 'base'`, `'a'` vs `'A'` compares as 1 both ways.
     Returning 0 would need grouping to use the collator too, or groups split.
-  * `removeData` leaves `currentEntity` and the selection pointing at the removed entity
+  * `removeData()`, `clearMarkedForDeletion()` and `acceptChanges()` leave `currentEntity` on a
+    removed row (and `removeData` the selection)
   * `waitForFocusTrigger` swallows every key in every grid for 100ms after Enter / alt+arrow
   * the value list puts `false` under "Blank" (falsy check), the IN filter keys it as `FALSE`
   * the filter editor still blanks header inputs whose conditions it keeps

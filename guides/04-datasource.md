@@ -84,8 +84,11 @@ declare const json: OrderJson[];
 datasource.setData(json.map((row) => ({ ...row, amount: Number(row.amount), ordered: new Date(row.ordered) })));
 ```
 
-To remove rows for good, use `removeData(rows)` or `removeAllData()`. To delete rows on a server,
-mark them instead, see [Editing](05-editing.md#deleting-rows).
+To delete rows, mark them: `markForDeletion(rows)` keeps them, struck through, so the delete can be
+undone (`unmarkForDeletion(rows)`), and `getChanges()` sends it to the server - see
+[Deleting rows](05-editing.md#deleting-rows) and [Saving](05-editing.md#saving).
+`removeData(rows)` and `removeAllData()` remove rows for good, without tracking: for rows that never
+came from a server.
 
 ```sample rows-data
 ```
@@ -154,7 +157,8 @@ added with `add: true`, or the same row objects set again, keep it.
 - the selection follows the key, so it survives `setData()` with fresh rows from the server
 - `getChanges()` gives each edited row by its key, see [Editing](05-editing.md#change-tracking)
 - a row without a value in the key field gets a generated one, a negative number, written into
-  that field. A new row from `addNewEmpty()` gets one too
+  that field. A new row from `addNewEmpty()` gets one too, until the server gives it its own:
+  `acceptChanges({ newKeys })`, see [Saving](05-editing.md#saving)
 
 Without a key every row gets a generated key that is not written into the row (`row.__KEY` reads
 it). It is new every time the data is set, so the selection is lost on `setData()`.
@@ -261,8 +265,10 @@ right.reloadDatasource(); // right shows the new rows once it rebuilds its own
 
 - The rows and their edits are the container's: an edit is the same edit in both, and
   `getChanges()` gives the same result on both.
-- Each datasource keeps its own list of displayed rows. After `setData()`, `removeData()` or
-  `clearMarkedForDeletion()` on one, call `reloadDatasource()` (or `filter()`) on the other.
+- Each datasource keeps its own list of displayed rows. After `setData()`, `removeData()`,
+  `acceptChanges()` or `clearMarkedForDeletion()` on one, call `reloadDatasource()` (or `filter()`)
+  on the other. Its selection is kept by key: a new row that `acceptChanges({ newKeys })` gave the
+  server's key is no longer selected there.
 - A field listed in both must have the same type in both, the second datasource throws if not.
 - A `key` given to a datasource with a `container` must be the container's key, or it throws.
 

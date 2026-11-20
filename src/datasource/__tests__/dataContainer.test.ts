@@ -124,15 +124,16 @@ describe('dataContainer - markForDeletion', () => {
         expect(container.getMarkedForDeletion()).toHaveLength(1);
     });
 
-    it('expect a new row to be dropped outright instead of flagged', () => {
+    it('expect a new row to be flagged too, so it can be unmarked (v6: it was dropped)', () => {
         const container = new DataContainer();
         container.setData(people());
         container.setData([{ name: 'brand new' }], { add: true, isNew: true });
         const newRow = container.getDataSet()[3];
 
         container.markForDeletion(newRow);
-        expect(container.length()).toEqual(3);
-        expect(container.getMarkedForDeletion()).toHaveLength(0);
+        expect(container.length()).toEqual(4);
+        expect(container.getMarkedForDeletion()).toEqual([newRow]);
+        expect(newRow.__rowState).toEqual('D');
     });
 
     it('expect markForDeletion to accept an array', () => {

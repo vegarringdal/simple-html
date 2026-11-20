@@ -317,6 +317,17 @@ export class Selection {
     }
 
     /**
+     * a row's key changed - acceptChanges() gave a new row the key from the server: when it was
+     * selected under the old key, it is selected under the new one
+     */
+    public replaceKey(oldKey: string | number, newKey: string | number) {
+        if (this.selection.delete(oldKey)) {
+            this.selection.add(newKey);
+        }
+        this.selectedRows = this.selection.size;
+    }
+
+    /**
      * sets selection keys (replaces old)
      */
     public setSelectedKeys(keys: any[]) {

@@ -960,6 +960,66 @@ const wrong = new Datasource({ container, fields: { born: 'datetime' } });
 // throws: field 'born' is 'datetime' here and 'date' in another datasource on the same container
 ```
 
+### Deleting a new row marks it
+
+v5 removed a new row (from `addNewEmpty()`) at once when it was marked for deletion - by
+`markForDeletion(rows)` and by `markForDeletion(null, true)` - so the delete could not be undone. v6
+marks it like any other row:
+
+* while it is marked it is in none of the lists of `getChanges()`, as in v5: it was never saved, there
+  is nothing to send
+* it stays in `getAllData()`, `getDataRows()` and the grid, with `__rowState` `'D'`, and
+  `getMarkedForDeletion()` lists it
+* `unmarkForDeletion(rows)` brings it back as a new row
+* `acceptChanges()`, `clearMarkedForDeletion()` and `resetData()` remove it
+
+```ts
+datasource.addNewEmpty({ name: 'New' }); // selected
+const [added] = datasource.getSelectedRows();
+datasource.markForDeletion(added);
+
+// v5: gone from the data
+// v6: still there, marked, and not sent
+datasource.getAllData().includes(added); // true
+datasource.getChanges().newEntities; // []
+datasource.unmarkForDeletion(added); // a new row again
+```
+
+Code that counted on the row being gone - `getAllData().length` after a delete, say - can call
+`removeData(rows)` for the new rows, or count the rows that are not marked.
+
+### `newEntities` have the temporary key without a key field
+
+A new row gets a generated key, a negative number. With a `key` it is in the key field, as before.
+Without one, v5 left it out of `getChanges().newEntities`; v6 puts it in as `__KEY` - as
+`modifiedEntities` always did - so the key the server gives the row can be handed back with
+`acceptChanges({ newKeys })`. A server that stores every field it gets should leave `__KEY` out.
+
+### New: undo a delete, accept the changes after a save
+
+| method | what it does |
+| --- | --- |
+| `unmarkForDeletion(rows)`, `unmarkAllForDeletion()` | undo a delete: the mark is taken off, the edits are kept |
+| `acceptChanges({ rows?, newKeys? })` | after a save: the marked rows are removed, new rows become ordinary rows, the edited values become the originals, the row errors are cleared. `newKeys` maps each temporary key to the server's key |
+| `hasChanges()` | `true` when `getChanges()` lists a row, for an "unsaved changes" indicator |
+
+They are on `Datasource` and `DataContainer`. v5 had no way to accept the changes and keep the rows,
+the data was set again - that still works:
+
+```ts
+// v5
+const freshRows = await save(datasource.getChanges());
+datasource.setData(freshRows);
+
+// v6: keeps the rows. The server answers with the id it gave each new row
+const saved = await save(datasource.getChanges());
+datasource.acceptChanges({ newKeys: new Map(saved.map((row) => [row.temporaryId, row.id])) });
+```
+
+`acceptChanges()` and the unmark methods send `collection-filtered` with the new `info` values
+`'acceptChanges'` and `'unmarkForDeletion'`: a `switch` that lists every value of `info` has to add
+them. See [the editing guide](guides/05-editing.md#saving) for the whole round trip.
+
 ## Grid config
 
 The config is what you write: the options of each column, where the columns go, sizes and
@@ -1641,6 +1701,11 @@ gridInterface.closeMenu();
   did. Every menu is moved left when it sticks out on the right of the window.
 * The entries carry their id in a `data-menu-id` attribute, for css and tests.
 * A disabled item gets the class `simple-html-grid-menu-item-disabled` and `aria-disabled="true"`.
+* **The row menu can delete rows**: an editable grid has a "Delete:" section - `row.delete`,
+  `row.delete.rows` marks the selected rows for deletion, `row.delete.undo` takes the mark off. A row
+  the `isReadonly` hook returns `true` for in every column is not marked. Where the user should not
+  delete rows, hide it with the `menus` hook:
+  `row: (defaults) => defaults.filter((entry) => !entry.id.startsWith('row.delete'))`.
 
 ## Other behaviour changes
 

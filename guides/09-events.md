@@ -84,6 +84,8 @@ gridInterface.on('paste', onPaste);
 | `'filter'` | `filter()`, `reloadDatasource()` |
 | `'resetData'` | `resetData()`, `resetDataSelectionOnly()` |
 | `'markForDeletion'` | `markForDeletion()`, `markAllForDeletion()` |
+| `'unmarkForDeletion'` | `unmarkForDeletion()`, `unmarkAllForDeletion()` |
+| `'acceptChanges'` | `acceptChanges()`. It sends no `collection-changed`, also when it removed the rows marked for deletion |
 | `'__internalUpdate, forced'` | `setData(rows, { refilter: false })` and `addNewEmpty()` while there is no filter, sort or grouping, before their `collection-changed`. A `setData()` that runs the filter (the default) sends only `collection-changed` |
 
 `select`: `row` is the index in the displayed rows (`getRows()`), 0 based. `info` is

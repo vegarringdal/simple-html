@@ -1002,7 +1002,7 @@ export class GridInterface<T> {
         this.datasourceSubscriptions = [
             follow('collection-filtered', (data, grid) => {
                 // '__internalUpdate, forced' comes before a collection-changed, that one rebuilds
-                if (data.info === 'filter' || data.info === 'markForDeletion' || data.info === 'resetData') {
+                if (data.info !== '__internalUpdate, forced') {
                     grid.rebuild(false);
                 }
             }),

@@ -46,13 +46,15 @@ export interface DatasourceEvents {
      * - `'filter'`: `filter()` or `reloadDatasource()`
      * - `'resetData'`: `resetData()` or `resetDataSelectionOnly()`
      * - `'markForDeletion'`: `markForDeletion()` or `markAllForDeletion()`
+     * - `'unmarkForDeletion'`: `unmarkForDeletion()` or `unmarkAllForDeletion()`
+     * - `'acceptChanges'`: `acceptChanges()` - also when it removed rows, it sends no `collection-changed`
      * - `'__internalUpdate, forced'`: `setData(rows, { refilter: false })` or `addNewEmpty()` while
      *   there is no filter, sorting or grouping. Sent before their `collection-changed`. A `setData()`
      *   that runs the filter (the default) sends only `collection-changed`.
      */
     'collection-filtered': {
         /** what rebuilt the displayed rows, see above */
-        info: 'filter' | 'resetData' | 'markForDeletion' | '__internalUpdate, forced';
+        info: 'filter' | 'resetData' | 'markForDeletion' | 'unmarkForDeletion' | 'acceptChanges' | '__internalUpdate, forced';
     };
 
     /**

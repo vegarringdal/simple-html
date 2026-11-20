@@ -413,9 +413,24 @@ Writing the guides against the code found these. Each fix has a test that fails 
 
 The grid config, the state and the datasource's `fields` + `formatters` are plain JSON, so they can be
 stored in a backend and given back as they are. What is code - formatters and the grid's functions -
-is registered or given next to the config.
+is registered or given next to the config. Deleting a row is a tag that can be undone, and
+`acceptChanges()` closes the save round trip: one transaction with the deleted, edited and new rows,
+then the grid shows what was saved, the new rows with the server's keys.
 
 #### ⚠️ Breaking changes
+- **Deleting a new row marks it**: `markForDeletion()` and `markAllForDeletion()` no longer remove a new
+  row (from `addNewEmpty()`), they mark it like any other row - so `unmarkForDeletion()` brings it back.
+  While it is marked it is in none of the lists of `getChanges()`, as before; it stays in `getAllData()`,
+  `getDataRows()`, `getMarkedForDeletion()` and the grid until `acceptChanges()`,
+  `clearMarkedForDeletion()` or `resetData()` removes it.
+- **`getChanges().newEntities` has `__KEY` without a key field**: the temporary key of the new row, as
+  `modifiedEntities` has it, so the server's key can be given back. Typed
+  `(T & { __KEY?: string | number })[]`. With a `key` nothing changed.
+- **The row menu of an editable grid can delete rows**: a "Delete:" section (`row.delete`,
+  `row.delete.rows`, `row.delete.undo`) between "Clear:" and "Summary:", see Added. Hide it with the
+  `menus` hook where the user should not delete rows.
+- **`collection-filtered` has two more `info` values**, `'unmarkForDeletion'` and `'acceptChanges'`. The
+  grid now rebuilds on every `collection-filtered` but `'__internalUpdate, forced'`.
 - **Formatters are named by id**: `FieldConfig.formatter` and the datasource option `formatters` take
   the id of a registered formatter, not the formatter object -
   `fields: { price: { type: 'number', formatter: 'numberComma' } }`, `formatters: { date: 'dateDDMMYYYY' }`.
@@ -431,6 +446,26 @@ is registered or given next to the config.
   root under the same name.
 
 #### Added
+- **`unmarkForDeletion(rows)` and `unmarkAllForDeletion()`** on `Datasource` and `DataContainer`: undo a
+  delete. The row is as it was before it was marked - its edits kept, a new row new again. Sends
+  `collection-filtered` with `info: 'unmarkForDeletion'`.
+- **`acceptChanges({ rows?, newKeys? })`** on `Datasource` and `DataContainer`, for after a successful
+  save. For every row, or the `rows` given: a row marked for deletion is removed (a new one too), a new
+  row becomes an ordinary row, the values it has now become its originals (nothing counts as edited),
+  and its error is cleared. `newKeys` is a `ReadonlyMap` from each temporary key (as in
+  `getChanges().newEntities`) to the server's key, compared as text (`-1` and `'-1'` are the same key):
+  the new row gets it in its key field, or as its `__KEY` without one - no edit, and a selected row stays
+  selected. A key in `newKeys` that is not the key of a new row accepted, or a blank server key, throws
+  before anything changes; a new row not in it keeps its key. The rows themselves in place of the
+  options (plain JS) throw a `TypeError`. The datasource rebuilds its displayed rows and sends one
+  `collection-filtered`, `info: 'acceptChanges'`.
+- **`hasChanges()`** on `Datasource` and `DataContainer`: `true` when `getChanges()` lists a row.
+- **Row menu "Delete:"**, in an editable grid: *Rows (selected rows)* marks the selected rows for
+  deletion - the rows stay in the grid until the changes are accepted - and is greyed out when no
+  selected row is left to mark; *Undo (selected rows)* takes the mark off, shown when a selected row is
+  marked. A row the `isReadonly` hook returns `true` for in every column of the layout is locked, delete
+  skips it; the columns' `readonly` option does not lock a row, and undo works on every marked row (a
+  hook that makes the marked rows readonly does not stop it). In `MENU_IDS.row` and the menus guide.
 - **`registerFormatter(id, formatter)`**: one registry for the page. The built-ins are registered from
   the start: `'text'`, `'boolean'`, `'numberDot'`, `'numberComma'`, `'dateYYYYMMDD'`, `'dateDDMMYYYY'`,
   `'datetimeYYYYMMDD'`, `'datetimeDDMMYYYY'`; the defaults per type are `'text'`, `'numberDot'`,
@@ -452,6 +487,15 @@ is registered or given next to the config.
 - samples: the formatter samples register their formatters and name them by id, the cell styling
   sample uses `updateHooks()`, the menus sample gives `menus` as a hook, `samples/grid01` registers its
   switchable formatters
+- samples, save workflow: a new "Saving" sample (edit, add, delete, then a fake server call that
+  gives the new rows ids, `acceptChanges({ newKeys })`, `hasChanges()`); "Add & remove rows" deletes
+  by marking, with an undo, and keeps `removeData()` / `removeAllData()` as the untracked removal;
+  "Editing & row state" has undo buttons and logs `hasChanges()`; `samples/grid01` unmarks and
+  accepts. The demo's light theme colours the row numbers by row state, a deleted row's struck through.
+- guides, save workflow: "Deleting rows" (tag, undo, the row menu, `removeData()` for the untracked
+  case) and "Saving" (the round trip in one transaction, the keys of new rows) in the editing guide,
+  linked from the datasource guide; the new `info` values in the events guide; the delete entries in
+  the menus guide
 
 #### Docs
 - **A `Date` in a stored state**: JSON turns it into its ISO text, and `setState()` keeps the text (it
@@ -462,6 +506,18 @@ is registered or given next to the config.
   a `Date` in `initialState`. Pinned by tests, written in the state guide.
 
 #### Internal
+- tests: `saveWorkflow.test.ts` - unmark (one row, a list, all, a new row, the events), a new row marked
+  (not in `getChanges()`, dropped by `acceptChanges()`, back on unmark), `acceptChanges()` for every row
+  and for the rows given (deleted removed, new ordinary, edits the originals, errors cleared,
+  `hasChanges()` false, one event), `newKeys` (key field and `__KEY`, no edit, without a key field, as
+  text, the errors, the selection), the options guard, a shared container, the whole round trip twice.
+  `rowMenuDelete.test.ts` - when the delete entries show, their actions, the `isReadonly` lock, one
+  rebuild, the grid after `acceptChanges()`. The tests that pinned the removal of a new row on
+  `markForDeletion()` / `markAllForDeletion()` pin the mark now
+- typings consumer: the new methods, `newEntities[0].__KEY`, the new `info` values, and
+  `@ts-expect-error` checks that the rows in place of the options and a plain object as `newKeys` do
+  not compile
+- `Selection.replaceKey()` keeps a row selected when `acceptChanges()` changes its key
 - the grid reads the hooks from the interface (`__getHooks()`), not from the parsed config
 - tests: `configJson.test.ts` - a config with every option, a `getState()` result and the datasource
   `fields` + `formatters` go through `JSON.parse(JSON.stringify())` unchanged, and a grid made from the

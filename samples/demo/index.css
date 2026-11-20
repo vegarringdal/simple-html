@@ -393,6 +393,21 @@ body {
     background: rgba(34, 197, 94, 0.25);
 }
 
+/* the row state, on the element around the row number (see the editing guide). theme.ts has the
+   dark colours. A row marked for deletion stays in the grid until it is saved: struck through */
+.row-is-modified .simple-html-selector-text {
+    color: #4f46e5;
+}
+
+.row-is-new .simple-html-selector-text {
+    color: #16a34a;
+}
+
+.row-is-deleted .simple-html-selector-text {
+    color: #dc2626;
+    text-decoration: line-through;
+}
+
 /* ------------------------------------------------- guides and API pages */
 
 .doc-scroll {

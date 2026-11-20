@@ -161,8 +161,62 @@ function rowMenuEntries(
                 triggerScrollEvent(ctx);
             }
         },
+        ...deleteEntries(ctx),
         ...summaryEntries(ctx, attribute)
     ];
+}
+
+/**
+ * Delete and undo, on the selected rows: they are marked for deletion, and unmarked - so a delete can
+ * be undone, the rows stay in the grid until the changes are accepted. Only in an editable grid.
+ *
+ * Delete skips a row the isReadonly hook locks (see isLockedByHook). Undo works on every selected
+ * row that is marked: a hook that makes the deleted rows readonly must not stop the undo
+ */
+function deleteEntries(ctx: Grid): MenuEntry[] {
+    const gridInterface = ctx.gridInterface;
+    const datasource = gridInterface.getDatasource();
+    const editable = () => !gridInterface.__getGridConfig().readonly;
+
+    const toMark = () =>
+        datasource.getSelectedRows().filter((row) => row.__rowState !== 'D' && !isLockedByHook(gridInterface, row));
+    const toUnmark = () => datasource.getSelectedRows().filter((row) => row.__rowState === 'D');
+
+    return [
+        { type: 'section', id: 'row.delete', label: 'Delete:', visible: editable },
+        {
+            id: 'row.delete.rows',
+            label: 'Rows',
+            hint: 'selected rows',
+            visible: editable,
+            // nothing selected, or every selected row marked or locked
+            disabled: () => toMark().length === 0,
+            action: () => datasource.markForDeletion(toMark())
+        },
+        {
+            id: 'row.delete.undo',
+            label: 'Undo',
+            hint: 'selected rows',
+            visible: () => editable() && toUnmark().length > 0,
+            action: () => datasource.unmarkForDeletion(toUnmark())
+        }
+    ];
+}
+
+/**
+ * true when the isReadonly hook returns true for every field in the layout: the row is locked, the row
+ * menu does not delete it. Only the hook counts - the columns' readonly option does not lock a row,
+ * so a grid of readonly columns can still delete rows. Without the hook no row is locked
+ */
+function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity): boolean {
+    const hooks = gridInterface.__getHooks();
+    const columns = gridInterface.__getGridConfig().columns;
+    const fields = getLayoutFields(gridInterface);
+    return (
+        hooks.isReadonly !== undefined &&
+        fields.length > 0 &&
+        fields.every((field) => hooks.isReadonly?.(row, field, columns[field]?.readonly ?? false) === true)
+    );
 }
 
 /**

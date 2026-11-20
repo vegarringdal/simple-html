@@ -35,11 +35,14 @@ export type ModifiedEntity<T> = Partial<T> & {
  * What `datasource.getChanges()` returns: the rows added, edited and marked for deletion since the
  * data was set - what to send to a server.
  *
- * - `newEntities` - rows added with `addNewEmpty()`, edits to them included
+ * - `newEntities` - rows added with `addNewEmpty()`, edits to them included. A new row has a
+ *   temporary key, a generated negative number: in its key field (`id: -1`), or as `__KEY` when the
+ *   datasource has no key field. After the save, `acceptChanges({ newKeys })` gives the rows the
+ *   server's keys
  * - `modifiedEntities` - one entry per edited row: its key and the changed fields, see
  *   {@link ModifiedEntity}
  * - `deletedEntities` - rows marked with `markForDeletion()` / `markAllForDeletion()`. A new row
- *   that is marked for deletion is dropped, it is in none of the lists.
+ *   that is marked for deletion is in none of the lists: it was never saved, there is nothing to send.
  *
  * Every entry is a copy, a plain object: changing it does not change the row. It is a shallow copy -
  * a `Date` stays a `Date`, an object in a field is the row's own object.
@@ -71,15 +74,25 @@ export type ModifiedEntity<T> = Partial<T> & {
  * // ... the user edits, adds and deletes rows in the grid
  *
  * const { newEntities, modifiedEntities, deletedEntities } = datasource.getChanges();
- * await fetch('/api/people', {
+ * const response = await fetch('/api/people', {
  *     method: 'POST',
  *     body: JSON.stringify({ newEntities, modifiedEntities, deletedEntities }) // a Date becomes its ISO text
  * });
+ *
+ * // saved in one transaction: the server answers with the id it gave each new row
+ * const saved: { temporaryId: number; id: number }[] = await response.json();
+ * datasource.acceptChanges({ newKeys: new Map(saved.map((row) => [row.temporaryId, row.id])) });
  * ```
  */
 export interface Changes<T = Record<string, unknown>> {
-    /** the rows added with `addNewEmpty()` (or the container's `setData(rows, { add: true, isNew: true })`), with the values they have now */
-    newEntities: T[];
+    /**
+     * the rows added with `addNewEmpty()` (or the container's `setData(rows, { add: true, isNew: true })`),
+     * with the values they have now. Without a key field the temporary key is in `__KEY`
+     */
+    newEntities: (T & {
+        /** the temporary key, a generated negative number - only when the datasource has no key field */
+        __KEY?: string | number;
+    })[];
     /** one entry per edited row: its key and the fields that changed */
     modifiedEntities: ModifiedEntity<T>[];
     /** the rows marked for deletion, with the values they have now */
