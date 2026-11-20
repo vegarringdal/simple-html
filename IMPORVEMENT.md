@@ -2,6 +2,7 @@
 
 Log of code fixes/cleanups done outside of feature work.
 Open items are at the bottom, under *Candidates / not started*.
+The v6 plan (breaking changes allowed, documentation included) is in `V6_PLAN.md`.
 
 ## Done
 
