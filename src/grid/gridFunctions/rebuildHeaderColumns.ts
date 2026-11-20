@@ -1,5 +1,5 @@
 import type { Grid } from '../grid';
-import type { Columns } from '../gridConfig';
+import type { LayoutColumn } from '../gridConfig';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
 import { createElement } from './createElement';
@@ -25,7 +25,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
     /**
      * helper to generate cols and rows elements
      */
-    const addColumns = (parent: HTMLElement, columns: Columns[], maxColumns: number, coltype: ColType) => {
+    const addColumns = (parent: HTMLElement, columns: LayoutColumn[], maxColumns: number, coltype: ColType) => {
         let columnsNeeded = maxColumns === 0 ? columns.length : maxColumns;
         if (columns.length < columnsNeeded) {
             columnsNeeded = columns.length;
@@ -174,26 +174,26 @@ export function rebuildHeaderColumns(ctx: Grid) {
                     let column: ColumnCache[];
                     let columnNumber: number;
                     // addColumns is only called with the 3 pinned types, so one of the ifs below sets it
-                    let col!: Columns;
+                    let col!: LayoutColumn;
 
                     const scrollLeft = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle').scrollLeft;
 
                     if (coltype === LEFT_PINNED_COLTYPE) {
                         column = ctx.containerLeftColumnCache.filter((e) => e.refID === refID);
                         columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[columnNumber];
+                        col = ctx.gridInterface.__getGridConfig().layout.left[columnNumber];
                     }
 
                     if (coltype === MIDDLE_PINNED_COLTYPE) {
                         column = ctx.containerMiddleColumnCache.filter((e) => e.refID === refID);
                         columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().columnsCenter[columnNumber];
+                        col = ctx.gridInterface.__getGridConfig().layout.center[columnNumber];
                     }
 
                     if (coltype === RIGHT_PINNED_COLTYPE) {
                         column = ctx.containerRightColumnCache.filter((e) => e.refID === refID);
                         columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().columnsPinnedRight[columnNumber];
+                        col = ctx.gridInterface.__getGridConfig().layout.right[columnNumber];
                     }
 
                     const originalWidth = col.width;
@@ -259,21 +259,21 @@ export function rebuildHeaderColumns(ctx: Grid) {
 
     addColumns(
         getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-left'),
-        config.columnsPinnedLeft,
+        config.layout.left,
         0,
         LEFT_PINNED_COLTYPE
     );
 
     addColumns(
         getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-middle'),
-        config.columnsCenter,
+        config.layout.center,
         getMiddleColumnsNeeded(ctx),
         MIDDLE_PINNED_COLTYPE
     );
 
     addColumns(
         getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-right'),
-        config.columnsPinnedRight,
+        config.layout.right,
         0,
         RIGHT_PINNED_COLTYPE
     );

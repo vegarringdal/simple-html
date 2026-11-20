@@ -238,14 +238,24 @@ describe('grid events - the grid follows its datasource', () => {
         expect(rebuild).toHaveBeenCalledTimes(1);
     });
 
-    it('expect loadConfig to rebuild once, not for every datasource event it causes', async () => {
+    it('expect setState to rebuild once, not for every datasource event it causes', async () => {
         const { element, gridInterface } = await mountGrid();
         const rebuild = vi.spyOn(gridOf(element), 'rebuild');
 
-        const config = gridInterface.saveConfig();
-        config.sorting = [{ attribute: 'age', ascending: false }];
-        config.grouping = [{ attribute: 'lastname', title: 'Last name' }];
-        gridInterface.loadConfig(config);
+        const state = gridInterface.getState();
+        state.sorting = [{ attribute: 'age', ascending: false }];
+        state.grouping = [{ attribute: 'lastname', title: 'Last name' }];
+        gridInterface.setState(state);
+
+        expect(rebuild).toHaveBeenCalledTimes(1);
+    });
+
+    it('expect resetState to rebuild once', async () => {
+        const { element, datasource, gridInterface } = await mountGrid();
+        datasource.group([{ attribute: 'lastname', title: 'Last name' }]);
+        const rebuild = vi.spyOn(gridOf(element), 'rebuild');
+
+        gridInterface.resetState();
 
         expect(rebuild).toHaveBeenCalledTimes(1);
     });

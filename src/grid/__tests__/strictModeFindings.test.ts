@@ -47,11 +47,12 @@ describe('header label cells', () => {
         // the second column has one row, the first two - so it has an empty label cell
         const { element } = await mountGrid(
             {
-                columnsCenter: [
-                    { rows: ['firstname', 'lastname'], width: 100 },
-                    { rows: ['age'], width: 100 }
-                ],
-                attributes: [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age' }]
+                layout: {
+                    center: [
+                        { fields: ['firstname', 'lastname'], width: 100 },
+                        { fields: ['age'], width: 100 }
+                    ]
+                }
             },
             [{ firstname: 'a', lastname: 'b', age: 1 }]
         );

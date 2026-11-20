@@ -211,6 +211,61 @@ what to change in your code. Released in phases.
   passes each row's `EntityHandler` a field type lookup, filled by the datasources made on it
   (`__addFieldTypes`)
 
+### Phase 2 - grid interface and config
+
+#### ⚠️ Breaking changes
+- **Columns are declared once**: `attributes` and `columnsPinnedLeft` / `columnsCenter` /
+  `columnsPinnedRight` are replaced by `columns` (the options of a column, keyed by field name) and
+  `layout: { left?, center, right? }`, whose columns name their `fields` (was `rows`). A field in the
+  layout without an entry in `columns` gets the defaults. The internal `__attributes` list is gone,
+  and with it the v5 bug where a header filter's text survived for a column not in `attributes`.
+- **`Attribute` is `ColumnConfig`**, without `attribute` (the key is the field) and without
+  `currentFilterValue` (state now). `Columns` is `LayoutColumn`, `Sort` is removed (use
+  `SortArgument`, the same shape).
+- **Casing fixed**: `placeHolderRow` -> `placeholderRow`, `placeHolderFilter` -> `placeholderFilter`,
+  `placeHolderRowCurrentEntityOnly` -> `placeholderRowCurrentEntityOnly`.
+- **Config and state apart**: `saveConfig()`, `loadConfig()`, `loadInitConfig()` and
+  `updateInitConfig()` are removed. `getState()` / `setState()` / `resetState()` read and set what the
+  user changes: column order, pinning and widths, sorting, grouping, expanded groups, the filter and
+  the header filters. `setState()` applies the parts it is given and keeps the rest (`loadConfig()`
+  replaced everything).
+- **`sorting`, `grouping`, `expandedGroups` and `filter` left `GridConfig`**: a grid that starts
+  sorted, grouped or filtered sets them in `initialState`, which `resetState()` goes back to (with
+  the config's `layout`). What `initialState` leaves out is cleared, in the datasource too.
+- **The header filter operator the user picks is state**, `getState().headerFilters[field].operator`.
+  `ColumnConfig.operator` is the operator a header filter starts with; v5 wrote the picked operator
+  into it.
+- **Options are not part of the state**: v5's `saveConfig()` / `loadConfig()` also carried every
+  option (`readonly`, `tooltips` ...). To change one while the grid is shown, connect a new
+  `GridInterface` with the changed config and `initialState: old.getState()`. `dimRepeatedValues`
+  toggled from the row menu is not in the state.
+- **`filter-operator-change` sends `{ field, operator, column, rebuildHeader }`** (was
+  `{ cellConfig, rebuildHeader }`, with the operator in `cellConfig.operator`).
+- The internal sizes (`__rowHeight` ...) are no longer on the `GridConfig` type.
+
+#### Fixed
+- a boolean header filter set to `false` showed as empty after the header was rebuilt, and a number
+  header filter of 0 showed nothing (the value was read with `||`)
+
+#### Added
+- `GridConfig.columns`, `GridConfig.layout`, `GridConfig.initialState`, and the types
+  `ColumnConfig`, `GridLayout`, `LayoutColumn`, `GridState`, `HeaderFilter`
+- `gridInterface.getState()`, `setState(state)`, `resetState()`, documented with examples
+- `MIGRATION.md`: a function that converts a v5 config
+- demo: the save & load sample is a state sample (`getState` / `setState` / `resetState`,
+  `initialState`), the column layout sample logs the layout, the samples that toggle an option
+  connect a new interface
+
+#### Internal
+- the grid reads `layout.left` / `layout.center` / `layout.right` and `columns` where it read
+  `columnsPinnedLeft` / `columnsCenter` / `columnsPinnedRight` and `__attributes`; the logic is
+  unchanged. A missing `left` / `right` / `columns` is filled in once, when the interface is made
+- the header filter values and picked operators live in the grid interface (`__getHeaderFilter`,
+  `__setHeaderFilterValue`, `__setHeaderFilterOperator`, `__clearHeaderFilterValues`), one
+  `getHeaderFilterOperator()` picks the operator a header filter uses
+- `filterCallback()` takes the field, not the column config
+- the state tests replace the save/load config tests (`gridState.test.ts`)
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

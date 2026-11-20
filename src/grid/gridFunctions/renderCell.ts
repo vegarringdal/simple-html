@@ -36,13 +36,13 @@ export function renderCell(ctx: Grid, cell: HTMLElement, row: number, column: nu
             attribute = null;
             break;
         case LEFT_PINNED_COLTYPE:
-            attribute = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column]?.rows[celno];
+            attribute = ctx.gridInterface.__getGridConfig().layout.left[column]?.fields[celno];
             break;
         case MIDDLE_PINNED_COLTYPE:
-            attribute = ctx.gridInterface.__getGridConfig().columnsCenter[column]?.rows[celno];
+            attribute = ctx.gridInterface.__getGridConfig().layout.center[column]?.fields[celno];
             break;
         case RIGHT_PINNED_COLTYPE:
-            attribute = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column]?.rows[celno];
+            attribute = ctx.gridInterface.__getGridConfig().layout.right[column]?.fields[celno];
             break;
     }
 

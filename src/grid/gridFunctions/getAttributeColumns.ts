@@ -7,9 +7,9 @@ import type { GridInterface } from '../gridInterface';
  * @returns
  */
 export function getAttributeColumns(gridInterface: GridInterface<any>, filterSelectedColumns = true) {
-    const colLeft = gridInterface.__getGridConfig().columnsPinnedLeft.map((e) => e.rows);
-    const colCenter = gridInterface.__getGridConfig().columnsCenter.map((e) => e.rows);
-    const colRight = gridInterface.__getGridConfig().columnsPinnedRight.map((e) => e.rows);
+    const colLeft = gridInterface.__getGridConfig().layout.left.map((e) => e.fields);
+    const colCenter = gridInterface.__getGridConfig().layout.center.map((e) => e.fields);
+    const colRight = gridInterface.__getGridConfig().layout.right.map((e) => e.fields);
     const allAttributes = colLeft.concat(colCenter).concat(colRight);
 
     const attributes: string[] = [];

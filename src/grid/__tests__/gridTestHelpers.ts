@@ -62,13 +62,17 @@ export const simpleData = () => [
     { firstname: 'first5', lastname: 'last5', age: 50 }
 ];
 
+/**
+ * three center columns. No `columns`: every field gets the default column options
+ */
 export const simpleConfig = (): GridConfig => ({
-    columnsCenter: [
-        { rows: ['firstname'], width: 100 },
-        { rows: ['lastname'], width: 100 },
-        { rows: ['age'], width: 100 }
-    ],
-    attributes: [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age' }]
+    layout: {
+        center: [
+            { fields: ['firstname'], width: 100 },
+            { fields: ['lastname'], width: 100 },
+            { fields: ['age'], width: 100 }
+        ]
+    }
 });
 
 /**

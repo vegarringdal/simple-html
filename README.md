@@ -62,35 +62,21 @@ datasource.setData([
 ]);
 
 /**
- * create gridConfig
+ * create gridConfig: where the columns go (layout), and the options of a column by field name
+ * (columns). The column type and label come from the datasource fields, a field without an entry in
+ * columns gets the default options
  */
 const gridConfig: GridConfig = {
-    columnsCenter: [
-        {
-            rows: ['firstname'],
-            width: 100
-        },
-        {
-            rows: ['lastname'],
-            width: 100
-        },
-        {
-            rows: ['born'],
-            width: 100
-        }
-    ],
-    // the column type and label come from the datasource fields
-    attributes: [
-        {
-            attribute: 'firstname'
-        },
-        {
-            attribute: 'lastname'
-        },
-        {
-            attribute: 'born'
-        }
-    ]
+    columns: {
+        firstname: { label: 'First name' }
+    },
+    layout: {
+        center: [
+            { fields: ['firstname'], width: 100 },
+            { fields: ['lastname'], width: 100 },
+            { fields: ['born'], width: 100 }
+        ]
+    }
 };
 
 
@@ -110,6 +96,13 @@ element.classList.add('simple-html-grid');
 element.connectInterface(gridInterface);
 
 document.body.appendChild(element);
+
+/**
+ * what the user changed - column order and widths, sorting, filters ... - is the state
+ */
+const state = gridInterface.getState();
+gridInterface.setState(state); // later: back to it
+gridInterface.resetState(); // back to the start
 ```
 
 

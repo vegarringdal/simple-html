@@ -9,11 +9,7 @@ import { gridOf } from './interactionTestHelpers';
  * data behind the excel style column filter in the filter context menu
  */
 
-const config = () => {
-    const base = simpleConfig();
-    base.attributes = [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age' }];
-    return base;
-};
+const config = simpleConfig;
 
 const rows = (values: string[]) => values.map((v, i) => ({ firstname: v, lastname: `last${i}`, age: i }));
 

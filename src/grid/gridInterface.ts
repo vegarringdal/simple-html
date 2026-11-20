@@ -1,9 +1,10 @@
 import type { Datasource } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
+import type { FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import type { Grid } from './grid';
-import type { GridConfig, ParsedGridConfig } from './gridConfig';
+import type { GridConfig, GridLayout, GridState, HeaderFilter, LayoutColumn, ParsedGridConfig } from './gridConfig';
 import type { GridEvents } from './gridEvents';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
 import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
@@ -25,9 +26,9 @@ import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScroll
 export class GridInterface<T> {
     // not there until connectGrid, null after __disconnectGrid
     private grid?: Grid | null;
-    // ParsedGridConfig: __parseConfig() fills in every default before the grid reads it
-    // set by loadConfig, called from the constructor
-    private gridConfig!: ParsedGridConfig;
+    // a copy of the config with every default filled in, __parseConfig() computes the sizes.
+    // Its layout is the state's: the user changes it
+    private gridConfig: ParsedGridConfig;
     private dataSource: Datasource<T>;
     private columnsSelected: Set<number>;
 
@@ -37,10 +38,10 @@ export class GridInterface<T> {
     private scrollHeight!: number;
 
     /**
-     * for skipping events during setting gridconfig
-     * set by loadConfig, called from the constructor
+     * for skipping the datasource events while applyState() changes the datasource, it rebuilds once
+     * when done
      */
-    private suppressEvents!: boolean;
+    private suppressEvents = false;
 
     /**
      * for setting readonly based on row values
@@ -64,43 +65,184 @@ export class GridInterface<T> {
      * set by connectGrid and called by __disconnectGrid
      */
     private datasourceSubscriptions: (() => void)[] = [];
-    private initConfig: GridConfig;
 
     /**
-     *
-     * @param gridConfig
-     * @param datasource
+     * what the header filter cells show, see GridState.headerFilters. Only the columns that have
+     * a value or a picked operator are in it
+     */
+    private headerFilters: Record<string, HeaderFilter> = {};
+
+    /**
+     * the state the grid starts in and resetState() goes back to: the config's initialState, with
+     * the config's layout and empty values for what it leaves out. A copy, applyState() copies it again
+     */
+    private startState: GridState;
+
+    /**
+     * @param gridConfig the columns, the layout and the options, see {@link GridConfig}. The object is
+     * not changed, the grid copies the parts it changes
+     * @param datasource the rows. The grid applies `gridConfig.initialState` to it: its sorting,
+     * grouping and filter are replaced (left out, they are cleared)
      */
     constructor(gridConfig: GridConfig, datasource: Datasource) {
         this.columnsSelected = new Set();
         this.dataSource = datasource;
-        this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
-        if (
-            this.initConfig.autoRemoveContextMenuOnScrollEvent === null ||
-            this.initConfig.autoRemoveContextMenuOnScrollEvent === undefined
-        ) {
-            this.initConfig.autoRemoveContextMenuOnScrollEvent = false;
+        this.gridConfig = withDefaults(gridConfig);
+
+        // structuredClone, not JSON: it keeps the Dates of a filter
+        const initialState = structuredClone(gridConfig.initialState ?? {});
+        this.startState = {
+            layout: initialState.layout ?? copyLayout(gridConfig.layout),
+            sorting: initialState.sorting ?? [],
+            grouping: initialState.grouping ?? [],
+            expandedGroups: initialState.expandedGroups ?? [],
+            filter: initialState.filter ?? null,
+            headerFilters: initialState.headerFilters ?? {}
+        };
+        this.applyState(structuredClone(this.startState));
+    }
+
+    /**
+     * The state of the grid now: what the user changed - column order, pinning and widths, sorting,
+     * grouping, expanded groups, the filter and what the header filters show. See {@link GridState}.
+     *
+     * It is a copy: changing it changes nothing in the grid, and what the user does later does not
+     * change it. Give it to {@link setState} to go back to it.
+     *
+     * @example
+     * ```ts
+     * const state = gridInterface.getState();
+     * state.layout.center.map((column) => column.fields); // [['name'], ['age', 'born']]
+     * state.sorting; // [{ attribute: 'name', ascending: true }]
+     *
+     * // later, e.g. after the user moved columns and changed the filter
+     * gridInterface.setState(state);
+     * ```
+     */
+    public getState(): GridState {
+        const datasource = this.getDatasource();
+        // copies: the datasource and the grid keep changing these objects in place (shift+click sort,
+        // drag/drop, resizing). structuredClone keeps Dates; it throws on a proxy, and none of these
+        // hold one - the rows are the only proxies, and only their values go into a filter
+        return {
+            layout: copyLayout(this.gridConfig.layout),
+            sorting: structuredClone(datasource.getLastSorting()),
+            grouping: structuredClone(datasource.getGrouping()),
+            expandedGroups: structuredClone(datasource.getExpanded()),
+            filter: structuredClone(datasource.getFilter()),
+            headerFilters: structuredClone(this.headerFilters)
+        };
+    }
+
+    /**
+     * Sets the state: column order, pinning and widths, sorting, grouping, expanded groups, the filter
+     * and what the header filters show. See {@link GridState}.
+     *
+     * **Applies what is given and keeps the rest**: `setState({ sorting })` changes the sort and
+     * nothing else. To set everything, pass a whole state, e.g. one from {@link getState}. Within a
+     * part nothing is merged: `layout` replaces the whole layout, `headerFilters` every header filter.
+     *
+     * The grid keeps a copy, the object passed in is not changed later. It must be plain data (no
+     * functions, no rows from the datasource): it is copied with `structuredClone`.
+     *
+     * `filter` is what the rows are filtered by, `headerFilters` only what the header filter cells show.
+     * Set both to have a header filter's condition and its cell agree, as `getState()` gives them.
+     *
+     * @param state the parts to set
+     *
+     * @example
+     * ```ts
+     * // a whole state, saved before
+     * gridInterface.setState(savedState);
+     *
+     * // only some parts, the rest stays as it is
+     * gridInterface.setState({ sorting: [{ attribute: 'age', ascending: false }] });
+     * gridInterface.setState({ grouping: [{ attribute: 'country', title: 'Country' }], expandedGroups: [] });
+     * gridInterface.setState({ filter: null, headerFilters: {} }); // no filter
+     * ```
+     */
+    public setState(state: Partial<GridState>) {
+        this.applyState(structuredClone(state));
+    }
+
+    /**
+     * Goes back to the state the grid started in: `GridConfig.initialState`, with the config's
+     * `layout` (unless `initialState` has one). What `initialState` leaves out is cleared - no sorting,
+     * no grouping, no filter, no header filters.
+     *
+     * @example
+     * ```ts
+     * const gridInterface = new GridInterface(
+     *     {
+     *         layout: { center: [{ fields: ['name'], width: 100 }, { fields: ['age'], width: 100 }] },
+     *         initialState: { sorting: [{ attribute: 'name', ascending: true }] }
+     *     },
+     *     datasource
+     * );
+     *
+     * // the user sorts, filters and moves columns around ...
+     * gridInterface.resetState(); // sorted on name again, no filter, the config's columns
+     * ```
+     */
+    public resetState() {
+        this.applyState(structuredClone(this.startState));
+    }
+
+    /**
+     * Applies the parts of the state that are given and rebuilds the grid once. The datasource parts
+     * (filter, sorting, grouping, expanded groups) are applied together: what is not given is applied
+     * again as it is now, the datasource needs them in this order.
+     * @param state a copy, the datasource and the grid keep what they are given and change it in place
+     * (shift+click sort, drag/drop, resizing)
+     */
+    private applyState(state: Partial<GridState>) {
+        this.suppressEvents = true;
+
+        if (state.layout) {
+            this.gridConfig.layout = copyLayout(state.layout);
         }
-        this.loadConfig(gridConfig, true);
-        this.__dataSourceUpdated();
-    }
 
-    /**
-     * loads init config, useful when saved/loaded many different configs
-     */
-    public loadInitConfig() {
-        this.loadConfig(this.initConfig, false);
-    }
+        if (state.headerFilters) {
+            this.headerFilters = {};
+            for (const [field, headerFilter] of Object.entries(state.headerFilters)) {
+                this.storeHeaderFilter(field, headerFilter.value, headerFilter.operator);
+            }
+        }
 
-    /**
-     * in case you need to set new init config, to be used with loadInitConfig()
-     * @param gridConfig
-     * @param load = false, but can be usedful if you want to update and load it
-     */
-    public updateInitConfig(gridConfig: GridConfig, load = false) {
-        this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
-        if (load) {
-            this.loadConfig(this.initConfig, false);
+        if (state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups) {
+            // what is not given: the datasource's own, it replaces these when it is given new ones
+            const datasource = this.getDatasource();
+            const filter = state.filter !== undefined ? state.filter : datasource.getFilter();
+            const sorting = state.sorting ?? datasource.getLastSorting();
+            const grouping = state.grouping ?? datasource.getGrouping();
+            const expandedGroups = state.expandedGroups ?? datasource.getExpanded();
+
+            if (!sorting.length) {
+                // or filter() below sorts again: without a sort the rows go back to their own order
+                datasource.resetSort();
+            }
+
+            // null clears a filter that was set before
+            datasource.filter(filter);
+
+            if (grouping.length) {
+                datasource.setExpanded(expandedGroups);
+                datasource.group(grouping);
+            } else {
+                datasource.removeGroup();
+            }
+            // grouping resets the sort to the grouped fields, so it is set after
+            if (sorting.length) {
+                datasource.sort(sorting);
+            }
+        }
+
+        this.suppressEvents = false;
+
+        if (this.grid) {
+            this.grid.rebuild();
+        } else {
+            this.__dataSourceUpdated();
         }
     }
 
@@ -181,95 +323,9 @@ export class GridInterface<T> {
         }
     }
 
-    /**
-     * when you need to save a copy
-     */
-    public saveConfig(): GridConfig {
-        const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
-
-        // convert attributes, a copy of the parsed config always has them
-        const attributes = config.__attributes!;
-        const keys = Object.keys(attributes);
-        config.attributes = [];
-        keys.forEach((key) => {
-            config.attributes.push(attributes[key]);
-        });
-
-        delete config.__attributes;
-        delete config.__rowHeight;
-        delete config.__columnCells;
-        delete config.__leftWidth;
-        delete config.__rightWidth;
-        delete config.__scrollbarSize;
-        delete config.__selectSizeWidth;
-
-        // these are the datasource's own objects, and it changes them in place (shift+click sort,
-        // filter context menu), so hand out copies or the saved config changes later on.
-        // structuredClone and not JSON, so Date values in the filter stay Dates
-        config.expandedGroups = structuredClone(this.getDatasource().getExpanded());
-        config.sorting = structuredClone(this.getDatasource().getLastSorting());
-        config.grouping = structuredClone(this.getDatasource().getGrouping());
-        config.filter = structuredClone(this.getDatasource().getFilter());
-
-        return config;
-    }
-
     public openFilterEditor() {
         if (this.grid) {
             openFilterEditor(this.grid);
-        }
-    }
-
-    /**
-     * when you need load grid config
-     */
-    public loadConfig(gridConfig: GridConfig, skipRebuild = false) {
-        this.suppressEvents = true;
-
-        // the datasource keeps what it is given and changes it in place later (shift+click sort,
-        // filter context menu), so give it copies - else the caller's config (or initConfig,
-        // used by loadInitConfig) changes too. structuredClone keeps Date values in the filter
-        const sortOrder = structuredClone(gridConfig.sorting);
-        const grouping = structuredClone(gridConfig.grouping);
-        const filter = structuredClone(gridConfig.filter);
-        const expandedGroups = structuredClone(gridConfig.expandedGroups);
-
-        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
-        this.gridConfig.sorting = null;
-        this.gridConfig.grouping = null;
-        this.gridConfig.filter = null;
-        this.gridConfig.expandedGroups = null;
-
-        this.__parseConfig();
-
-        // null clears a filter that was set before
-        this.getDatasource().filter(filter ?? null);
-
-        if (grouping?.length) {
-            // setExpanded makes a Set of it, and new Set(undefined/null) is empty too
-            this.getDatasource().setExpanded(expandedGroups ?? []);
-            this.getDatasource().group(grouping);
-            if (sortOrder?.length) {
-                // we asume they have control what they are sending in
-                this.getDatasource().sort(sortOrder);
-            }
-        } else {
-            this.getDatasource().removeGroup();
-            if (sortOrder?.length && !grouping?.length) {
-                this.getDatasource().sort(sortOrder);
-            }
-        }
-
-        this.suppressEvents = false;
-
-        if (!skipRebuild) {
-            if (this.grid) {
-                this.grid.rebuild();
-            } else {
-                this.__dataSourceUpdated();
-            }
-        } else {
-            this.__dataSourceUpdated();
         }
     }
 
@@ -282,8 +338,12 @@ export class GridInterface<T> {
         return getAttributeColumns(this, filterSelectedColumns);
     }
 
+    /**
+     * the fields the grid knows - the keys of `GridConfig.columns`, and every field that was in the
+     * layout - that are not in the layout now: the ones the column chooser can add back
+     */
     public getOptionalAttributes() {
-        const attributes = new Set(Object.keys(this.gridConfig.__attributes));
+        const attributes = new Set(Object.keys(this.gridConfig.columns));
         this.getAttributeColumns(false).forEach((e) => {
             attributes.delete(e);
         });
@@ -369,137 +429,55 @@ export class GridInterface<T> {
     /**
      * @internal
      * @private
+     * computes what depends on the layout and the rows: the sizes, and a `columns` entry for every
+     * field of the layout. Called on every rebuild, the user changes the layout
      */
     public __parseConfig() {
-        if (!this.gridConfig.__attributes) {
-            this.gridConfig.__attributes = {};
-        }
+        const config = this.gridConfig;
+        const layout = config.layout;
 
-        if (!Array.isArray(this.gridConfig.columnsPinnedLeft)) {
-            this.gridConfig.columnsPinnedLeft = [];
-        }
-        if (!Array.isArray(this.gridConfig.columnsPinnedRight)) {
-            this.gridConfig.columnsPinnedRight = [];
-        }
-        if (!Array.isArray(this.gridConfig.columnsCenter)) {
-            this.gridConfig.columnsCenter = [];
-        }
+        this.dataSource.setSelectionMode(config.selectionMode);
 
-        if (this.gridConfig.footerHeight === null || this.gridConfig.footerHeight === undefined) {
-            this.gridConfig.footerHeight = 45;
-        }
-
-        if (this.gridConfig.panelHeight === null || this.gridConfig.panelHeight === undefined) {
-            this.gridConfig.panelHeight = 25;
-        }
-        if (this.gridConfig.cellHeight === null || this.gridConfig.cellHeight === undefined) {
-            this.gridConfig.cellHeight = 22;
-        }
-
-        if (this.gridConfig.cellHeaderLabelHeight === null || this.gridConfig.cellHeaderLabelHeight === undefined) {
-            this.gridConfig.cellHeaderLabelHeight = this.gridConfig.cellHeight;
-        }
-
-        if (this.gridConfig.panelHeight === null || this.gridConfig.panelHeight === undefined) {
-            this.gridConfig.panelHeight = 0;
-        }
-        if (this.gridConfig.selectSizeHeight === null || this.gridConfig.selectSizeHeight === undefined) {
-            this.gridConfig.selectSizeHeight = 18;
-        }
-        if (this.gridConfig.readonly === null || this.gridConfig.readonly === undefined) {
-            this.gridConfig.readonly = true;
-        }
-        if (this.gridConfig.selectionMode === null || this.gridConfig.selectionMode === undefined) {
-            this.gridConfig.selectionMode = 'multiple';
-        }
-
-        if (this.gridConfig.tooltips === null || this.gridConfig.tooltips === undefined) {
-            this.gridConfig.tooltips = true;
-        }
-
-        this.dataSource.setSelectionMode(this.gridConfig.selectionMode);
-
-        if (
-            this.gridConfig.placeHolderRowCurrentEntityOnly === null ||
-            this.gridConfig.placeHolderRowCurrentEntityOnly === undefined
-        ) {
-            this.gridConfig.placeHolderRowCurrentEntityOnly = true;
-        }
+        // a column without fields is left out (drag/drop and hiding can empty a column)
+        layout.left = layout.left.filter((e) => e.fields?.length);
+        layout.right = layout.right.filter((e) => e.fields?.length);
+        layout.center = layout.center.filter((e) => e.fields?.length);
 
         /**
          * height
          */
-        let cells = getCellHeight(this.gridConfig.columnsPinnedLeft, 1);
-        cells = getCellHeight(this.gridConfig.columnsPinnedRight, cells);
-        cells = getCellHeight(this.gridConfig.columnsCenter, cells);
+        let cells = getCellHeight(layout.left, 1);
+        cells = getCellHeight(layout.right, cells);
+        cells = getCellHeight(layout.center, cells);
 
-        this.gridConfig.__rowHeight = cells * this.gridConfig.cellHeight;
-        this.gridConfig.__rowHeaderHeight = cells * this.gridConfig.cellHeight + cells * this.gridConfig.cellHeaderLabelHeight;
-        this.gridConfig.__columnCells = cells;
-
-        this.gridConfig.columnsPinnedLeft = this.gridConfig.columnsPinnedLeft.filter((e) => e.rows?.length);
-        this.gridConfig.columnsPinnedRight = this.gridConfig.columnsPinnedRight.filter((e) => e.rows?.length);
-        this.gridConfig.columnsCenter = this.gridConfig.columnsCenter.filter((e) => e.rows?.length);
+        config.__rowHeight = cells * config.cellHeight;
+        config.__rowHeaderHeight = cells * config.cellHeight + cells * config.cellHeaderLabelHeight;
+        config.__columnCells = cells;
 
         /**
          * widths pinned
          */
-        this.gridConfig.__leftWidth =
-            this.gridConfig.columnsPinnedLeft?.map((col) => col.width || 100).reduce((value, curvalue) => value + curvalue, 0) ||
-            0;
+        config.__leftWidth = layout.left.map((col) => col.width || 100).reduce((value, curvalue) => value + curvalue, 0) || 0;
+        config.__rightWidth = layout.right.map((col) => col.width || 100).reduce((value, curvalue) => value + curvalue, 0) || 0;
 
-        this.gridConfig.__rightWidth =
-            this.gridConfig.columnsPinnedRight?.map((col) => col.width || 100).reduce((value, curvalue) => value + curvalue, 0) ||
-            0;
+        config.__scrollbarSize = 10;
 
-        this.gridConfig.__scrollbarSize = 10;
-
-        if (this.gridConfig.selectSizeHeight === undefined) {
-            this.gridConfig.selectSizeHeight = this.gridConfig.cellHeight;
-        }
-
-        this.gridConfig.__selectSizeWidth = Math.floor(
-            getTextWidth(this.grid, this.dataSource.getRows().length.toString()) || 10
-        );
-        if (this.gridConfig.__selectSizeWidth < 25) {
-            this.gridConfig.__selectSizeWidth = 25;
+        config.__selectSizeWidth = Math.floor(getTextWidth(this.grid, this.dataSource.getRows().length.toString()) || 10);
+        if (config.__selectSizeWidth < 25) {
+            config.__selectSizeWidth = 25;
         }
 
         /**
-         * build up internal object with attributes
+         * a field in the layout without an entry in columns gets the defaults. The entry stays when the
+         * field leaves the layout, so the column chooser can add it back
          */
-
-        this.gridConfig.columnsPinnedLeft.forEach((e) => {
-            if (Array.isArray(e.rows)) {
-                e.rows.forEach((att) => {
-                    if (!this.gridConfig.__attributes[att]) {
-                        this.gridConfig.__attributes[att] = { attribute: att };
-                    }
-                });
+        for (const column of [...layout.left, ...layout.center, ...layout.right]) {
+            for (const field of column.fields) {
+                if (!config.columns[field]) {
+                    config.columns[field] = {};
+                }
             }
-        });
-        this.gridConfig.columnsPinnedRight.forEach((e) => {
-            if (Array.isArray(e.rows)) {
-                e.rows.forEach((att) => {
-                    if (!this.gridConfig.__attributes[att]) {
-                        this.gridConfig.__attributes[att] = { attribute: att };
-                    }
-                });
-            }
-        });
-        this.gridConfig.columnsCenter.forEach((e) => {
-            if (Array.isArray(e.rows)) {
-                e.rows.forEach((att) => {
-                    if (!this.gridConfig.__attributes[att]) {
-                        this.gridConfig.__attributes[att] = { attribute: att };
-                    }
-                });
-            }
-        });
-
-        this.gridConfig.attributes?.forEach((att) => {
-            this.gridConfig.__attributes[att.attribute] = att;
-        });
+        }
     }
 
     /**
@@ -508,6 +486,54 @@ export class GridInterface<T> {
      */
     public __getGridConfig(): ParsedGridConfig {
         return this.gridConfig;
+    }
+
+    /**
+     * @internal
+     * the header filter of a column: what its cell shows and the operator picked in its menu
+     */
+    public __getHeaderFilter(field: string): HeaderFilter | undefined {
+        return this.headerFilters[field];
+    }
+
+    /**
+     * @internal
+     * sets what a column's header filter cell shows, keeps the operator picked. null/'' is empty
+     */
+    public __setHeaderFilterValue(field: string, value: unknown) {
+        this.storeHeaderFilter(field, value, this.headerFilters[field]?.operator);
+    }
+
+    /**
+     * @internal
+     * sets the operator picked in a column's header filter menu, keeps the value
+     */
+    public __setHeaderFilterOperator(field: string, operator: FilterOperator) {
+        this.storeHeaderFilter(field, this.headerFilters[field]?.value, operator);
+    }
+
+    /**
+     * @internal
+     * empties every header filter cell, for when the filter is replaced as a whole. The operators
+     * picked are kept
+     */
+    public __clearHeaderFilterValues() {
+        for (const field of Object.keys(this.headerFilters)) {
+            this.__setHeaderFilterValue(field, null);
+        }
+    }
+
+    /**
+     * stores a column's header filter, or removes it when it has no value and no operator - so
+     * getState() lists only the header filters in use. An empty value ('' or undefined) is stored as null
+     */
+    private storeHeaderFilter(field: string, value: unknown, operator: FilterOperator | undefined) {
+        const empty = value === null || value === undefined || value === '';
+        if (empty && !operator) {
+            delete this.headerFilters[field];
+        } else {
+            this.headerFilters[field] = operator ? { value: empty ? null : value, operator } : { value };
+        }
     }
 
     /**
@@ -641,7 +667,7 @@ export class GridInterface<T> {
     private subscribeToDatasource() {
         this.unsubscribeFromDatasource();
 
-        // the handlers do nothing while loadConfig runs (suppressEvents), it rebuilds once when
+        // the handlers do nothing while applyState runs (suppressEvents), it rebuilds once when
         // done, or when no grid is connected
         const follow = <Type extends keyof DatasourceEvents>(
             type: Type,
@@ -723,4 +749,50 @@ export class GridInterface<T> {
     public __callSubscribers<Type extends keyof GridEvents>(type: Type, data: GridEvents[Type]): void {
         this.events.emit(type, data);
     }
+}
+
+/**
+ * A copy of the config with every default filled in, for the grid to work with. The sizes are
+ * computed by `__parseConfig()`. `layout` and `columns` are copied deep, the grid changes them (the
+ * user moves columns around, a `filter-operator-change` handler can change a column); the other
+ * options are only read. `initialState` is left out, the interface keeps it as its start state.
+ */
+function withDefaults(config: GridConfig): ParsedGridConfig {
+    const { columns, layout, initialState, ...options } = config;
+    const cellHeight = options.cellHeight ?? 22;
+    return {
+        ...options,
+        columns: structuredClone(columns ?? {}),
+        layout: copyLayout(layout),
+        cellHeight,
+        cellHeaderLabelHeight: options.cellHeaderLabelHeight ?? cellHeight,
+        panelHeight: options.panelHeight ?? 25,
+        footerHeight: options.footerHeight ?? 45,
+        selectSizeHeight: options.selectSizeHeight ?? 18,
+        readonly: options.readonly ?? true,
+        selectionMode: options.selectionMode ?? 'multiple',
+        tooltips: options.tooltips ?? true,
+        placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
+        __rowHeight: 0,
+        __rowHeaderHeight: 0,
+        __columnCells: 0,
+        __leftWidth: 0,
+        __rightWidth: 0,
+        __scrollbarSize: 0,
+        __selectSizeWidth: 0
+    };
+}
+
+/**
+ * A copy of a layout, with `left` and `right` always there. A list that is missing (plain js) is
+ * empty, and so is a column's `fields`.
+ */
+function copyLayout(layout: GridLayout | undefined): Required<GridLayout> {
+    const copyColumns = (columns: LayoutColumn[] | undefined): LayoutColumn[] =>
+        Array.isArray(columns) ? columns.map((column) => ({ fields: [...(column.fields ?? [])], width: column.width })) : [];
+    return {
+        left: copyColumns(layout?.left),
+        center: copyColumns(layout?.center),
+        right: copyColumns(layout?.right)
+    };
 }

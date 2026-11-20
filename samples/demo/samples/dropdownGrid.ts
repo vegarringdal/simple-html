@@ -6,14 +6,16 @@ export const dropdownGrid: DemoSample = {
     title: 'Grid as dropdown',
     group: 'Editing',
     description:
-        'A cell can show a focus button via the focusButton attribute option. Here clicking it (or hitting Space in the cell) opens a second, filterable grid as a dropdown and writes the picked value back. The company cell itself is readonly, so the dropdown is the only way to change the value.',
+        'A cell can show a focus button via the focusButton column option. Here clicking it (or hitting Space in the cell) opens a second, filterable grid as a dropdown and writes the picked value back. The company cell itself is readonly, so the dropdown is the only way to change the value.',
     code: `
-// in the main grid config, enable the focus button on the attribute.
+// in the main grid config, enable the focus button on the column.
 // NB: the grid defaults to readonly: true, so with this option the button
 // only shows when the config has readonly: false.
-// readonly on the attribute blocks manual typing, so the dropdown
+// readonly on the column blocks manual typing, so the dropdown
 // (button or Space in the cell) is the only way to set the value
-{ attribute: 'company', readonly: true, focusButton: 'SHOW_IF_GRID_NOT_READONLY' }
+columns: {
+    company: { readonly: true, focusButton: 'SHOW_IF_GRID_NOT_READONLY' }
+}
 
 gridInterface.on('cell-focus-button-click', (data) => {
     if (data.attribute === 'company') {
@@ -52,12 +54,7 @@ gridInterface.on('cell-focus-button-click', (data) => {
     run(stage) {
         const ui = createStage(stage);
         const config = baseGridConfig();
-        for (const attribute of config.attributes) {
-            if (attribute.attribute === 'company') {
-                attribute.readonly = true;
-                attribute.focusButton = 'SHOW_IF_GRID_NOT_READONLY';
-            }
-        }
+        config.columns = { company: { readonly: true, focusButton: 'SHOW_IF_GRID_NOT_READONLY' } };
         const { gridInterface } = mountGrid(ui.gridHost, config);
 
         // moving to another cell closes an open dropdown
@@ -96,8 +93,8 @@ gridInterface.on('cell-focus-button-click', (data) => {
                     panelHeight: 0,
                     selectSizeHeight: 1,
                     footerHeight: 10,
-                    columnsCenter: [{ rows: ['company'], width: width - 45 }],
-                    attributes: [{ attribute: 'company', label: 'pick company' }]
+                    columns: { company: { label: 'pick company' } },
+                    layout: { center: [{ fields: ['company'], width: width - 45 }] }
                 };
 
                 const localDatasource = new Datasource();

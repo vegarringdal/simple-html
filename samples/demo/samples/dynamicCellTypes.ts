@@ -13,19 +13,17 @@ const datasource = new Datasource({ fields: { rowNo: 'number' } });
 
 const gridConfig: GridConfig = {
     readonly: false,
-    columnsCenter: [
-        { rows: ['rowNo'], width: 60 },
-        { rows: ['valueType'], width: 110 },
-        { rows: ['value'], width: 220 }
-    ],
-    attributes: [
-        { attribute: 'rowNo', readonly: true },
-        { attribute: 'valueType' },
-        {
-            attribute: 'value',
-            dynamicCellTypeColumn: 'valueType' // this rows column decides the type
-        }
-    ]
+    columns: {
+        rowNo: { readonly: true },
+        value: { dynamicCellTypeColumn: 'valueType' } // this rows column decides the type
+    },
+    layout: {
+        center: [
+            { fields: ['rowNo'], width: 60 },
+            { fields: ['valueType'], width: 110 },
+            { fields: ['value'], width: 220 }
+        ]
+    }
 };
 
 const rows = [
@@ -45,16 +43,17 @@ const rows = [
         const config: GridConfig = {
             panelHeight: 25,
             readonly: false,
-            columnsCenter: [
-                { rows: ['rowNo'], width: 60 },
-                { rows: ['valueType'], width: 110 },
-                { rows: ['value'], width: 220 }
-            ],
-            attributes: [
-                { attribute: 'rowNo', readonly: true },
-                { attribute: 'valueType' },
-                { attribute: 'value', dynamicCellTypeColumn: 'valueType' }
-            ]
+            columns: {
+                rowNo: { readonly: true },
+                value: { dynamicCellTypeColumn: 'valueType' }
+            },
+            layout: {
+                center: [
+                    { fields: ['rowNo'], width: 60 },
+                    { fields: ['valueType'], width: 110 },
+                    { fields: ['value'], width: 220 }
+                ]
+            }
         };
 
         const types = ['text', 'number', 'date', 'datetime', 'boolean'];

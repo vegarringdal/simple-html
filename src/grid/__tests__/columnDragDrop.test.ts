@@ -2,6 +2,7 @@
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { GridConfig } from '../gridConfig';
+import type { GridInterface } from '../gridInterface';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { dragAndDrop, labelCell, sleep } from './interactionTestHelpers';
 
@@ -14,9 +15,9 @@ const data = () => [
     { firstname: 'b', lastname: 'y', age: 2 }
 ];
 
-const attributes = [{ attribute: 'firstname' }, { attribute: 'lastname' }, { attribute: 'age' }];
-
-const centerRows = (gridInterface: any) => gridInterface.__getGridConfig().columnsCenter.map((column: any) => column.rows);
+// the fields of each center column, as the state has them
+const centerRows = (gridInterface: GridInterface<unknown>) =>
+    gridInterface.getState().layout.center.map((column) => column.fields);
 
 beforeAll(() => {
     stubCanvas();
@@ -30,11 +31,12 @@ beforeEach(() => {
 describe('drag/drop - moving a cell within its own column', () => {
     it('expect dropping a lower cell on the top of the cell above to swap their order', async () => {
         const config: GridConfig = {
-            columnsCenter: [
-                { rows: ['firstname', 'lastname'], width: 100 },
-                { rows: ['age'], width: 100 }
-            ],
-            attributes
+            layout: {
+                center: [
+                    { fields: ['firstname', 'lastname'], width: 100 },
+                    { fields: ['age'], width: 100 }
+                ]
+            }
         };
         const { element, gridInterface } = await mountGrid(config, data());
 
@@ -46,8 +48,7 @@ describe('drag/drop - moving a cell within its own column', () => {
 
     it('expect dropping the bottom cell below the top cell to put it in the middle', async () => {
         const config: GridConfig = {
-            columnsCenter: [{ rows: ['firstname', 'lastname', 'age'], width: 100 }],
-            attributes
+            layout: { center: [{ fields: ['firstname', 'lastname', 'age'], width: 100 }] }
         };
         const { element, gridInterface } = await mountGrid(config, data());
 
@@ -60,12 +61,13 @@ describe('drag/drop - moving a cell within its own column', () => {
 
 describe('drag/drop - group chips', () => {
     const threeColumns = (): GridConfig => ({
-        columnsCenter: [
-            { rows: ['firstname'], width: 100 },
-            { rows: ['lastname'], width: 100 },
-            { rows: ['age'], width: 100 }
-        ],
-        attributes
+        layout: {
+            center: [
+                { fields: ['firstname'], width: 100 },
+                { fields: ['lastname'], width: 100 },
+                { fields: ['age'], width: 100 }
+            ]
+        }
     });
 
     it('expect a group chip dropped on a column to change no columns', async () => {

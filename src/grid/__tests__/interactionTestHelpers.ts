@@ -86,3 +86,23 @@ export async function dragAndDrop(source: HTMLElement, target: HTMLElement) {
     await sleep(260);
     target.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true, clientX: 50, clientY: 10 }));
 }
+
+/**
+ * drags the resize handle of the center header column in slot `slot` by `dx` pixels
+ */
+export function dragResizeHandle(element: HTMLElement, slot: number, dx: number) {
+    const handle = element.querySelector(
+        `.simple-html-grid-header-row-container-pinned-middle > .simple-html-grid-col[refID="${slot}"] > .simple-html-grid-col-resize`
+    ) as HTMLElement;
+    handle.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 100 + dx }));
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 100 + dx }));
+}
+
+/**
+ * opens the right click menu on a header label, the one with "Pin left", "Hide" ...
+ */
+export function openLabelMenu(element: GridElement, attribute: string) {
+    const label = element.querySelector(`[data-attribute-header="${attribute}"]`) as HTMLElement;
+    label.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 100 }));
+}

@@ -147,9 +147,9 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                             !classList.contains('simple-html-grid-drop-zone-left-panel');
 
                         if (((newAttribute && newAttribute !== attribute) || isPanel) && !chipOnColumn) {
-                            const columnCenter = ctx.gridInterface.__getGridConfig().columnsCenter;
-                            const columnLeft = ctx.gridInterface.__getGridConfig().columnsPinnedLeft;
-                            const columnRight = ctx.gridInterface.__getGridConfig().columnsPinnedRight;
+                            const columnCenter = ctx.gridInterface.__getGridConfig().layout.center;
+                            const columnLeft = ctx.gridInterface.__getGridConfig().layout.left;
+                            const columnRight = ctx.gridInterface.__getGridConfig().layout.right;
 
                             const attributeLabel = getColumnLabel(ctx, attribute);
 
@@ -190,30 +190,30 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                                      * old
                                      */
                                     if (coltype === 'left-pinned') {
-                                        columnLeft[column].rows.splice(cellno, 1);
+                                        columnLeft[column].fields.splice(cellno, 1);
                                     }
 
                                     if (coltype === 'middle-pinned') {
-                                        columnCenter[column].rows.splice(cellno, 1);
+                                        columnCenter[column].fields.splice(cellno, 1);
                                     }
 
                                     if (coltype === 'right-pinned') {
-                                        columnRight[column].rows.splice(cellno, 1);
+                                        columnRight[column].fields.splice(cellno, 1);
                                     }
 
                                     /**
                                      * new
                                      */
                                     if (newColtype === 'left-pinned') {
-                                        columnLeft.splice(newColumn, 0, { rows: [attribute], width: 100 });
+                                        columnLeft.splice(newColumn, 0, { fields: [attribute], width: 100 });
                                     }
 
                                     if (newColtype === 'middle-pinned') {
-                                        columnCenter.splice(newColumn, 0, { rows: [attribute], width: 100 });
+                                        columnCenter.splice(newColumn, 0, { fields: [attribute], width: 100 });
                                     }
 
                                     if (newColtype === 'right-pinned') {
-                                        columnRight.splice(newColumn, 0, { rows: [attribute], width: 100 });
+                                        columnRight.splice(newColumn, 0, { fields: [attribute], width: 100 });
                                     }
 
                                     ctx.rebuild();
@@ -238,30 +238,30 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                                      * old
                                      */
                                     if (coltype === 'left-pinned') {
-                                        columnLeft[column].rows.splice(cellno, 1);
+                                        columnLeft[column].fields.splice(cellno, 1);
                                     }
 
                                     if (coltype === 'middle-pinned') {
-                                        columnCenter[column].rows.splice(cellno, 1);
+                                        columnCenter[column].fields.splice(cellno, 1);
                                     }
 
                                     if (coltype === 'right-pinned') {
-                                        columnRight[column].rows.splice(cellno, 1);
+                                        columnRight[column].fields.splice(cellno, 1);
                                     }
 
                                     /**
                                      * new
                                      */
                                     if (newColtype === 'left-pinned') {
-                                        columnLeft[newColumn].rows.splice(insertAt, 0, attribute);
+                                        columnLeft[newColumn].fields.splice(insertAt, 0, attribute);
                                     }
 
                                     if (newColtype === 'middle-pinned') {
-                                        columnCenter[newColumn].rows.splice(insertAt, 0, attribute);
+                                        columnCenter[newColumn].fields.splice(insertAt, 0, attribute);
                                     }
 
                                     if (newColtype === 'right-pinned') {
-                                        columnRight[newColumn].rows.splice(insertAt, 0, attribute);
+                                        columnRight[newColumn].fields.splice(insertAt, 0, attribute);
                                     }
 
                                     ctx.rebuild();
@@ -272,32 +272,32 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                                      * old
                                      */
                                     if (coltype === 'left-pinned') {
-                                        columnLeft[column].rows.splice(cellno, 1);
+                                        columnLeft[column].fields.splice(cellno, 1);
                                     }
 
                                     if (coltype === 'middle-pinned') {
-                                        columnCenter[column].rows.splice(cellno, 1);
+                                        columnCenter[column].fields.splice(cellno, 1);
                                     }
 
                                     if (coltype === 'right-pinned') {
-                                        columnRight[column].rows.splice(cellno, 1);
+                                        columnRight[column].fields.splice(cellno, 1);
                                     }
                                     /**
                                      * new
                                      */
                                     if (newColtype === 'left-pinned') {
                                         const x = newColumn + 1;
-                                        columnLeft.splice(x, 0, { rows: [attribute], width: 100 });
+                                        columnLeft.splice(x, 0, { fields: [attribute], width: 100 });
                                     }
 
                                     if (newColtype === 'middle-pinned') {
                                         const x = newColumn + 1;
-                                        columnCenter.splice(x, 0, { rows: [attribute], width: 100 });
+                                        columnCenter.splice(x, 0, { fields: [attribute], width: 100 });
                                     }
 
                                     if (newColtype === 'right-pinned') {
                                         const x = newColumn + 1;
-                                        columnRight.splice(x, 0, { rows: [attribute], width: 100 });
+                                        columnRight.splice(x, 0, { fields: [attribute], width: 100 });
                                     }
 
                                     ctx.rebuild();
@@ -308,30 +308,30 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                                      * new
                                      */
                                     if (newColtype === 'left-pinned') {
-                                        columnLeft[newColumn].rows[newCellno] = attribute;
+                                        columnLeft[newColumn].fields[newCellno] = attribute;
                                     }
 
                                     if (newColtype === 'middle-pinned') {
-                                        columnCenter[newColumn].rows[newCellno] = attribute;
+                                        columnCenter[newColumn].fields[newCellno] = attribute;
                                     }
 
                                     if (newColtype === 'right-pinned') {
-                                        columnRight[newColumn].rows[newCellno] = attribute;
+                                        columnRight[newColumn].fields[newCellno] = attribute;
                                     }
                                     /**
                                      * old - just replace
                                      * a drop zone is not the panel, so the if above made sure newAttribute is set
                                      */
                                     if (coltype === 'left-pinned') {
-                                        columnLeft[column].rows[cellno] = newAttribute!;
+                                        columnLeft[column].fields[cellno] = newAttribute!;
                                     }
 
                                     if (coltype === 'middle-pinned') {
-                                        columnCenter[column].rows[cellno] = newAttribute!;
+                                        columnCenter[column].fields[cellno] = newAttribute!;
                                     }
 
                                     if (coltype === 'right-pinned') {
-                                        columnRight[column].rows[cellno] = newAttribute!;
+                                        columnRight[column].fields[cellno] = newAttribute!;
                                     }
 
                                     ctx.rebuild();

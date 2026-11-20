@@ -48,7 +48,7 @@ Search and replace is enough for all of them.
 | `datasource.setLocalCompare()` | `setLocaleCompare()` |
 | `datasource.deSelectAll()` | `deselectAll()` |
 | `dataContainer.lenght()` | `length()` |
-| config `placeHolderRowCurrentEnityOnly` | `placeHolderRowCurrentEntityOnly` |
+| config `placeHolderRowCurrentEnityOnly` | `placeholderRowCurrentEntityOnly`, see [Grid config](#grid-config) |
 
 ## Removed
 
@@ -146,15 +146,35 @@ Every event name is kebab case now. The others already were and keep their names
 
 ### `filter-operator-change` has a `rebuildHeader()` function
 
-It used to hand out the grid's internal object and a function to call with it:
+It used to hand out the grid's internal object and a function to call with it. It also sends the
+field, the operator picked and the column's options on their own now, the operator is state - see
+[Grid config](#grid-config):
 
 ```ts
 // v5
-data.rebuildHeaderColumns(data.ctx);
+gridInterface.addEventListener({
+    handleEvent: (e) => {
+        if (e.type === 'filter-operator-change') {
+            e.data.cellConfig.placeHolderFilter = e.data.cellConfig.operator;
+            e.data.rebuildHeaderColumns(e.data.ctx);
+        }
+        return true;
+    }
+});
 
 // v6
-data.rebuildHeader();
+gridInterface.on('filter-operator-change', (data) => {
+    data.column.placeholderFilter = data.operator; // data.field is the column's field
+    data.rebuildHeader();
+});
 ```
+
+| v5 | v6 |
+| --- | --- |
+| `cellConfig` | `column`, the column's `ColumnConfig` as the grid uses it |
+| `cellConfig.attribute` | `field` |
+| `cellConfig.operator` | `operator`, the operator picked (`getState().headerFilters[field].operator`) |
+| `rebuildHeaderColumns(ctx)` | `rebuildHeader()` |
 
 ### Also removed
 
@@ -327,12 +347,13 @@ const datasource = new Datasource({
     }
 });
 const gridConfig: GridConfig = {
-    columnsCenter: [ ... ],
-    attributes: [{ attribute: 'name' }, { attribute: 'age' }, { attribute: 'born' }]
+    layout: { center: [ ... ] } // no columns needed: name, age and born have no other options
 };
 ```
 
-A column's label is its own `label`, else the field's `label`, else the attribute name (the header
+`attributes` and `columnsCenter` are gone too, see [Grid config](#grid-config).
+
+A column's label is its own `label`, else the field's `label`, else the field name (the header
 shows that one prettified, as before).
 
 `dynamicCellTypeColumn` stays. It needs a text field, and a field that is not listed is text now -
@@ -512,7 +533,7 @@ Other results that change:
 ## Filters
 
 `FilterArgument` is replaced by one small format, the same for a filter you pass in, the one
-`getFilter()` returns and the one `saveConfig()` saves. A filter is a `FilterExpression`: a
+`getFilter()` returns and the one in the grid's state (`getState().filter`). A filter is a `FilterExpression`: a
 condition, or a group of conditions and groups.
 
 ```ts
@@ -656,12 +677,13 @@ empty group filter nothing out. That is how plain js can hand in a half built fi
   current filter object in place.
 * An `IN` / `NOT_IN` condition with the list as text (one value per line) is left as it is. v5
   wrote it back as an upper case array while filtering.
-* The `operator` of a column in the grid config is a `FilterOperator`.
+* The `operator` of a column in the grid config (`ColumnConfig.operator`) is a `FilterOperator`.
 
 ### Saved configs
 
 A `GridConfig.filter` saved by v5 (`saveConfig()`) has the old shape. v6 reads it as an incomplete
-condition and ignores it, it does not throw. To keep saved filters, convert them when you load them:
+condition and ignores it, it does not throw. To keep saved filters, convert them when you load them
+(the [whole v5 config](#a-v5-config-converted) has changed too, its converter uses this one):
 
 ```ts
 import { type FilterExpression, type FilterOperator, where } from '@simple-html/grid';
@@ -693,7 +715,7 @@ function fromV5(filter: V5Filter): FilterExpression | null {
 
 const saved = JSON.parse(localStorage.getItem('my-grid-layout') ?? 'null');
 if (saved?.filter) {
-    saved.filter = fromV5(saved.filter);
+    gridInterface.setState({ filter: fromV5(saved.filter) });
 }
 ```
 
@@ -869,6 +891,314 @@ const wrong = new Datasource({ container, fields: { born: 'datetime' } });
 // throws: field 'born' is 'datetime' here and 'date' in another datasource on the same container
 ```
 
+## Grid config
+
+The config is what you write: the options of each column, where the columns go, sizes and
+behaviour. The state is what the user changes while working with the grid: column order, pinning and
+widths, sorting, grouping, expanded groups, the filter and what the header filters show. v5 mixed the
+two in one `GridConfig`; v6 keeps them apart.
+
+### `attributes` and `columns*` become `columns` and `layout`
+
+In v5 a column was named twice: in `columnsCenter[].rows` and in `attributes`. A field only named in
+the rows got an entry of its own in an internal list, and that split is where the v5 bug came from
+where a header filter's text survived for columns not listed in `attributes`. In v6 the options of a
+column are in `columns`, keyed by the field name, and the `layout` only names the fields:
+
+```ts
+// v5
+const gridConfig: GridConfig = {
+    columnsPinnedLeft: [{ rows: ['name'], width: 150 }],
+    columnsCenter: [
+        { rows: ['age', 'born'], width: 100 }, // two fields stacked in one column
+        { rows: ['company'], width: 200 }
+    ],
+    columnsPinnedRight: [{ rows: ['balance'], width: 100 }],
+    attributes: [
+        { attribute: 'name', label: 'Name', placeHolderFilter: 'search', mandatory: true },
+        { attribute: 'age', readonly: true },
+        { attribute: 'born' },
+        { attribute: 'company' },
+        { attribute: 'balance' },
+        { attribute: 'phone' } // in no column: the user can add it from the column chooser
+    ],
+    placeHolderRowCurrentEntityOnly: false
+};
+
+// v6
+const gridConfig: GridConfig = {
+    columns: {
+        name: { label: 'Name', placeholderFilter: 'search', mandatory: true },
+        age: { readonly: true },
+        phone: {} // not in the layout: the user can add it from the column chooser
+        // born, company and balance have no options: a field in the layout without an entry
+        // gets the defaults
+    },
+    layout: {
+        left: [{ fields: ['name'], width: 150 }],
+        center: [
+            { fields: ['age', 'born'], width: 100 },
+            { fields: ['company'], width: 200 }
+        ],
+        right: [{ fields: ['balance'], width: 100 }]
+    },
+    placeholderRowCurrentEntityOnly: false
+};
+```
+
+| v5 | v6 |
+| --- | --- |
+| `columnsPinnedLeft` | `layout.left` |
+| `columnsCenter` | `layout.center` |
+| `columnsPinnedRight` | `layout.right` |
+| a column's `rows` | `fields` |
+| `attributes: [{ attribute: 'x', ... }]` | `columns: { x: { ... } }` |
+| `Columns` (type) | `LayoutColumn`, the lists are a `GridLayout` |
+| `Attribute` (type) | `ColumnConfig` |
+| `Sort` (type) | `SortArgument`, the same shape |
+| `placeHolderRowCurrentEntityOnly` | `placeholderRowCurrentEntityOnly` |
+| `sorting`, `grouping`, `expandedGroups`, `filter` | `initialState: { sorting, grouping, expandedGroups, filter }`, see [below](#the-state-getstate-setstate-and-resetstate) |
+| `__attributes`, `__rowHeight` ... | internal, gone from the type |
+
+An entry that only had `attribute` can be left out. The type and the default label of a column come
+from the datasource's `fields` (see [Fields and formatters](#fields-and-formatters)).
+
+### `ColumnConfig`
+
+`Attribute` is `ColumnConfig`. Three options get the casing fixed while the shape changes anyway:
+
+| v5 `Attribute` | v6 `ColumnConfig` |
+| --- | --- |
+| `attribute` | removed - the key in `columns` is the field |
+| `label` | unchanged |
+| `placeHolderRow` | `placeholderRow` |
+| `placeHolderFilter` | `placeholderFilter` |
+| `operator` | unchanged, the operator the header filter starts with. The one the user picks in the header filter's menu is state: `headerFilters[field].operator` |
+| `currentFilterValue` | removed - it is state: `headerFilters[field].value` |
+| `type` | removed (phase 1) - the type comes from the datasource's `fields` |
+| `dynamicCellTypeColumn`, `readonly`, `numberOverride`, `focusButton`, `mandatory`, `mandatoryOnlyIfEmpty`, `allowPasteClearOnly` | unchanged |
+
+In v5 picking an operator in the header filter's menu wrote it into the column's `operator`, so the
+config changed under you (and opening the menu set it to the type's default). In v6 the column's
+`operator` is never changed by the grid.
+
+### The state: `getState()`, `setState()` and `resetState()`
+
+`saveConfig()`, `loadConfig()`, `loadInitConfig()` and `updateInitConfig()` are removed. The state is
+read and set on its own:
+
+```ts
+interface GridState {
+    layout: GridLayout; // column order, pinning and widths
+    sorting: SortArgument[];
+    grouping: GroupArgument[];
+    expandedGroups: string[];
+    filter: FilterExpression | null;
+    headerFilters: Record<string, { value: unknown; operator?: FilterOperator }>;
+}
+```
+
+```ts
+// v5
+const saved = gridInterface.saveConfig();
+localStorage.setItem('my-grid-layout', JSON.stringify(saved));
+gridInterface.loadConfig(JSON.parse(localStorage.getItem('my-grid-layout')));
+gridInterface.loadInitConfig();
+
+// v6
+const state = gridInterface.getState();
+localStorage.setItem('my-grid-state', JSON.stringify(state));
+gridInterface.setState(JSON.parse(localStorage.getItem('my-grid-state')));
+gridInterface.resetState();
+```
+
+| v5 | v6 |
+| --- | --- |
+| `saveConfig()` | `getState()` - the state only, not the options |
+| `loadConfig(config)` | `setState(state)` - applies what it is given, keeps the rest |
+| `loadInitConfig()` | `resetState()` |
+| `updateInitConfig(config)` | `GridConfig.initialState` - or a new `GridInterface`, see below |
+| config `sorting`, `grouping`, `expandedGroups`, `filter` | `GridConfig.initialState` |
+| attribute `currentFilterValue` | `headerFilters[field].value` |
+| the operator picked in the menu, in the attribute's `operator` | `headerFilters[field].operator` |
+
+A grid that starts sorted, grouped or filtered gets an `initialState`. `resetState()` goes back to it,
+with the config's `layout` (or `initialState.layout`, when it has one):
+
+```ts
+// v5
+const gridConfig: GridConfig = {
+    columnsCenter: [ ... ],
+    attributes: [{ attribute: 'age', currentFilterValue: 18 }],
+    sorting: [{ attribute: 'name', ascending: true }],
+    filter: and(where('age', 'GREATER_THAN_OR_EQUAL_TO', 18))
+};
+
+// v6
+const gridConfig: GridConfig = {
+    layout: { center: [ ... ] },
+    initialState: {
+        sorting: [{ attribute: 'name', ascending: true }],
+        filter: and(where('age', 'GREATER_THAN_OR_EQUAL_TO', 18)),
+        headerFilters: { age: { value: 18 } } // what the header filter cell shows
+    }
+};
+```
+
+What changes:
+
+* **`setState()` keeps what it is not given.** `setState({ sorting })` changes the sort and nothing
+  else, where `loadConfig()` replaced everything (a config without `grouping` removed the grouping).
+  Pass a whole state, e.g. one from `getState()`, to set everything. Within a part nothing is merged:
+  `layout` replaces the layout, `headerFilters` every header filter.
+* **`resetState()` clears what `initialState` leaves out**: no sorting, grouping or filter. An empty
+  `sorting` gives the rows back their own order.
+* **The state is copied both ways.** `getState()` returns copies, changing them changes nothing in the
+  grid, and the grid never changes the object given to `setState()` or the config. `structuredClone`
+  copies it, so a `Date` stays a `Date`; the state must be plain data (no functions, no rows from the
+  datasource).
+* **`filter` is what the rows are filtered by, `headerFilters` only what the header cells show** - as
+  in v5, where the filter and `currentFilterValue` were saved apart. `getState()` gives both.
+* **Options are config, not state.** `saveConfig()` / `loadConfig()` also carried `readonly`,
+  `tooltips`, `cellHeight` and every other option, and a changed copy could be loaded. To change an
+  option while the grid is shown, make a new `GridInterface` with the changed config, started in the
+  old one's state, and connect it to the element:
+
+  ```ts
+  // v5
+  const config = gridInterface.saveConfig();
+  config.readonly = true;
+  gridInterface.loadConfig(config);
+
+  // v6
+  const next = new GridInterface({ ...gridConfig, readonly: true, initialState: gridInterface.getState() }, datasource);
+  element.connectInterface(next);
+  ```
+
+  Handlers subscribed with `on()` and `readonlySetter()` / `cellAppendClassSetter()` belong to the
+  old interface, set them on the new one. `dimRepeatedValues`, which the row menu can toggle, is an
+  option too: `getState()` does not have it.
+* **The constructor applies `initialState` to the datasource**: its sorting, grouping and filter are
+  replaced, and cleared when `initialState` leaves them out. v5 cleared the filter and the grouping
+  too (and so the sort), but left the rows in the order they were sorted in.
+
+### A v5 config converted
+
+This turns a v5 config - one you wrote, or one `saveConfig()` saved - into a v6 one: `attributes`
+become `columns`, the `columns*` the `layout`, and the state v5 kept in the config goes into
+`initialState`. It uses `fromV5()` from [Saved configs](#saved-configs) for the filter.
+
+```ts
+import {
+    type ColumnConfig,
+    type GridConfig,
+    type GridState,
+    type GroupArgument,
+    type LayoutColumn,
+    type SortArgument
+} from '@simple-html/grid';
+
+/** a column of columnsPinnedLeft / columnsCenter / columnsPinnedRight in v5 */
+interface V5Column {
+    rows: string[];
+    width: number;
+}
+
+/** an entry of attributes in v5: the v6 ColumnConfig with the old names, the field in `attribute` */
+type V5Attribute = Omit<ColumnConfig, 'placeholderRow' | 'placeholderFilter'> & {
+    attribute: string;
+    placeHolderRow?: string;
+    placeHolderFilter?: string;
+    currentFilterValue?: unknown;
+    type?: string; // removed in v6: list the field's type in the datasource's fields
+};
+
+/** a v5 GridConfig, as written or from saveConfig(). The options that did not change come from v6 */
+type V5GridConfig = Omit<GridConfig, 'columns' | 'layout' | 'initialState' | 'placeholderRowCurrentEntityOnly'> & {
+    attributes?: V5Attribute[];
+    columnsPinnedLeft?: V5Column[];
+    columnsCenter: V5Column[];
+    columnsPinnedRight?: V5Column[];
+    placeHolderRowCurrentEntityOnly?: boolean;
+    sorting?: SortArgument[] | null;
+    grouping?: GroupArgument[] | null;
+    expandedGroups?: string[] | null;
+    filter?: V5Filter | null; // see fromV5 under "Saved configs"
+};
+
+const toLayoutColumns = (columns: V5Column[] = []): LayoutColumn[] =>
+    columns.map((column) => ({ fields: [...column.rows], width: column.width }));
+
+/**
+ * a v5 config as a v6 one: attributes become columns, columns* the layout, and what the user had
+ * changed (sorting, grouping, expanded groups, filter, header filter values) the initialState
+ */
+function fromV5Config(v5: V5GridConfig): GridConfig {
+    const {
+        attributes = [],
+        columnsPinnedLeft,
+        columnsCenter,
+        columnsPinnedRight,
+        placeHolderRowCurrentEntityOnly,
+        sorting,
+        grouping,
+        expandedGroups,
+        filter,
+        ...options // cellHeight, readonly ... are unchanged
+    } = v5;
+
+    const columns: Record<string, ColumnConfig> = {};
+    const headerFilters: GridState['headerFilters'] = {};
+    for (const { attribute, placeHolderRow, placeHolderFilter, currentFilterValue, type, ...rest } of attributes) {
+        const column: ColumnConfig = rest; // label, operator, readonly ... are unchanged
+        columns[attribute] = column;
+        if (placeHolderRow !== undefined) {
+            column.placeholderRow = placeHolderRow;
+        }
+        if (placeHolderFilter !== undefined) {
+            column.placeholderFilter = placeHolderFilter;
+        }
+        if (currentFilterValue !== null && currentFilterValue !== undefined && currentFilterValue !== '') {
+            headerFilters[attribute] = { value: currentFilterValue };
+        }
+    }
+
+    return {
+        ...options,
+        columns,
+        layout: {
+            left: toLayoutColumns(columnsPinnedLeft),
+            center: toLayoutColumns(columnsCenter),
+            right: toLayoutColumns(columnsPinnedRight)
+        },
+        placeholderRowCurrentEntityOnly: placeHolderRowCurrentEntityOnly,
+        initialState: {
+            sorting: sorting ?? [],
+            grouping: grouping ?? [],
+            expandedGroups: expandedGroups ?? [],
+            filter: filter ? fromV5(filter) : null,
+            headerFilters
+        }
+    };
+}
+```
+
+```ts
+// a config written for v5
+const gridInterface = new GridInterface(fromV5Config(v5Config), datasource);
+
+// a state saved with v5's saveConfig(): the layout and the state parts of it
+const saved = JSON.parse(localStorage.getItem('my-grid-layout') ?? 'null');
+if (saved) {
+    const { layout, initialState } = fromV5Config(saved);
+    gridInterface.setState({ ...initialState, layout });
+}
+```
+
+A column's `type` is dropped, list the field's type in the datasource's `fields`. An `operator` the
+user had picked in v5 was saved in the attribute, it stays the column's `operator` - the header
+filter starts with it.
+
 ## Internals are no longer in the typings
 
 Members meant for the grid itself were public and showed up in autocomplete. They are tagged
@@ -890,15 +1220,16 @@ does. With `strict` on in your project, you may have to handle these:
 
 * `datasource.getFilter()` returns `FilterExpression | null` - it is `null` when no filter is set.
   `setFilter(null)` is allowed. See [Filters](#filters) for the new format.
-* the state fields of a `GridConfig` from `saveConfig()` can be `null`: `sorting`, `grouping`,
-  `filter`, `expandedGroups`, and `Attribute.currentFilterValue`
+* `getState().filter` is `null` when no filter is set (`saveConfig()` is gone, see
+  [Grid config](#grid-config))
 * `HTMLCellElement.$attribute` is `string | null` - group and selector cells have none
 * `IDateConfig.datepickerDate` is `Date | null | undefined` - empty opens on today
 * `getFilterString()` / `getFilterTree()` no longer take the grid, see
   [Fields and formatters](#getfilterstring-and-getfiltertree-take-a-label-function)
 
-Types that public signatures use are now exported, so you can name them: `Columns`, `Sort`,
-`ColType`, `EntityUnion`, `DataEntity`.
+Types that public signatures use are now exported, so you can name them: `ColType`, `EntityUnion`,
+`DataEntity`, and the grid config's `ColumnConfig`, `GridLayout`, `LayoutColumn`, `GridState` and
+`HeaderFilter` (see [Grid config](#grid-config)).
 
 `readonlySetter(null)` and `cellAppendClassSetter(null)` were always allowed at runtime (they
 remove the callback). The types say so now.

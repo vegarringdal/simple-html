@@ -15,7 +15,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
 
     const config = ctx.gridInterface.__getGridConfig();
 
-    let columns = config.columnsCenter;
+    let columns = config.layout.center;
     let columnCache = ctx.containerMiddleColumnCache;
     let rowCache = ctx.containerMiddleRowCache;
     let idPrefix: ColType = MIDDLE_PINNED_COLTYPE;
@@ -26,7 +26,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
     let sectionElement = 'simple-html-grid-middle-scroller';
 
     if (type === LEFT_PINNED_COLTYPE) {
-        columns = config.columnsPinnedLeft;
+        columns = config.layout.left;
         columnCache = ctx.containerLeftColumnCache;
         rowCache = ctx.containerLeftRowCache;
         idPrefix = LEFT_PINNED_COLTYPE;
@@ -34,7 +34,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
     }
 
     if (type === RIGHT_PINNED_COLTYPE) {
-        columns = config.columnsPinnedRight;
+        columns = config.layout.right;
         columnCache = ctx.containerRightColumnCache;
         rowCache = ctx.containerRightRowCache;
         idPrefix = RIGHT_PINNED_COLTYPE;

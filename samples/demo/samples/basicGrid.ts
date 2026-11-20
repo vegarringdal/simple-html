@@ -21,26 +21,24 @@ const datasource = new Datasource({
 });
 datasource.setData(rows); // any array of objects
 
-// columnsCenter controls the layout, attributes the columns (label, readonly, placeholders ...)
+// layout says where the columns go, columns has the options of a column (label, readonly,
+// placeholders ...) by field name. A field without an entry in columns gets the defaults
 const gridConfig: GridConfig = {
     panelHeight: 25,
     readonly: false, // NB: the grid defaults to readonly: true when not set
-    columnsCenter: [
-        { rows: ['company'], width: 170 },
-        { rows: ['country'], width: 120 },
-        { rows: ['age'], width: 70 },
-        { rows: ['balance'], width: 100 },
-        { rows: ['date1'], width: 110 },
-        { rows: ['isActive'], width: 80 }
-    ],
-    attributes: [
-        { attribute: 'company' },
-        { attribute: 'country' },
-        { attribute: 'age' },
-        { attribute: 'balance' },
-        { attribute: 'date1' },
-        { attribute: 'isActive' }
-    ]
+    columns: {
+        company: { label: 'Company' }
+    },
+    layout: {
+        center: [
+            { fields: ['company'], width: 170 },
+            { fields: ['country'], width: 120 },
+            { fields: ['age'], width: 70 },
+            { fields: ['balance'], width: 100 },
+            { fields: ['date1'], width: 110 },
+            { fields: ['isActive'], width: 80 }
+        ]
+    }
 };
 
 const gridInterface = new GridInterface(gridConfig, datasource);
@@ -54,6 +52,6 @@ document.body.appendChild(grid);
 `,
     run(stage) {
         const ui = createStage(stage);
-        mountGrid(ui.gridHost, baseGridConfig());
+        mountGrid(ui.gridHost, { ...baseGridConfig(), columns: { company: { label: 'Company' } } });
     }
 };

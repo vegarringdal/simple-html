@@ -90,26 +90,19 @@ export function baseGridConfig(): GridConfig {
         readonly: false, // grid defaults to readonly: true when not set
         hideLabels: false,
         hideFilter: false,
-        columnsCenter: [
-            { rows: ['company'], width: 170 },
-            { rows: ['country'], width: 120 },
-            { rows: ['age'], width: 70 },
-            { rows: ['balance'], width: 100 },
-            { rows: ['date1'], width: 110 },
-            { rows: ['isActive'], width: 80 },
-            { rows: ['favoriteFruit'], width: 120 },
-            { rows: ['phone'], width: 140 }
-        ],
-        attributes: [
-            { attribute: 'company' },
-            { attribute: 'country' },
-            { attribute: 'age' },
-            { attribute: 'balance' },
-            { attribute: 'date1' },
-            { attribute: 'isActive' },
-            { attribute: 'favoriteFruit' },
-            { attribute: 'phone' }
-        ]
+        // no columns: every field gets the default column options
+        layout: {
+            center: [
+                { fields: ['company'], width: 170 },
+                { fields: ['country'], width: 120 },
+                { fields: ['age'], width: 70 },
+                { fields: ['balance'], width: 100 },
+                { fields: ['date1'], width: 110 },
+                { fields: ['isActive'], width: 80 },
+                { fields: ['favoriteFruit'], width: 120 },
+                { fields: ['phone'], width: 140 }
+            ]
+        }
     };
 }
 
@@ -137,6 +130,16 @@ export function mountGrid(
     host.appendChild(element);
 
     return { datasource, gridInterface, element };
+}
+
+/**
+ * An option is config, not state: to change one, make a new grid interface with the changed config,
+ * started in the state the old one is in, and connect it to the element. Returns the new interface
+ */
+export function reconfigure(element: GridElement, current: GridInterface<unknown>, config: GridConfig): GridInterface<unknown> {
+    const next = new GridInterface({ ...config, initialState: current.getState() }, current.getDatasource());
+    element.connectInterface(next);
+    return next;
 }
 
 /**

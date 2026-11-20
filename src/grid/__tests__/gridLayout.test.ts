@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { GridInterface } from '../gridInterface';
 import { centerColumns, visibleCenterAttributes } from './gridLifecycleHelpers';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { dragResizeHandle } from './interactionTestHelpers';
 
 /**
  * column elements and header sizes
@@ -18,18 +20,6 @@ beforeEach(() => {
     stubElementSizes(600, 1000);
     document.body.innerHTML = '';
 });
-
-/**
- * drags the resize handle of the center header column in slot `slot` by `dx` pixels
- */
-function dragResizeHandle(element: HTMLElement, slot: number, dx: number) {
-    const handle = element.querySelector(
-        `.simple-html-grid-header-row-container-pinned-middle > .simple-html-grid-col[refID="${slot}"] > .simple-html-grid-col-resize`
-    ) as HTMLElement;
-    handle.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, bubbles: true }));
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 100 + dx }));
-    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 100 + dx }));
-}
 
 describe('grid layout - center column elements', () => {
     it('expect every column narrower than 50px to render when they all fit', async () => {
@@ -71,11 +61,10 @@ describe('grid layout - header height', () => {
         expect(header.style.height).toBe('62px');
         expect(body.style.top).toBe('87px');
 
-        // the other way around the header holds filter rows, which are cellHeight tall
-        const other = gridInterface.saveConfig();
-        other.hideFilter = false;
-        other.hideLabels = true;
-        gridInterface.loadConfig(other);
+        // the other way around the header holds filter rows, which are cellHeight tall. An option is
+        // config, not state: a new interface with the changed config, connected to the same element
+        const other = new GridInterface({ ...config, hideFilter: false, hideLabels: true }, gridInterface.getDatasource());
+        element.connectInterface(other);
         expect(header.style.height).toBe('40px');
     });
 });

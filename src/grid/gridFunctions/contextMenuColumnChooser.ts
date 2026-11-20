@@ -42,7 +42,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
     }
 
     const reRender = () => {
-        const attributes = Object.keys(ctx.gridInterface.__getGridConfig().__attributes) || [];
+        const attributes = Object.keys(ctx.gridInterface.__getGridConfig().columns) || [];
 
         const list = () => {
             return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">

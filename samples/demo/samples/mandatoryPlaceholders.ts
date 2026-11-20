@@ -1,42 +1,38 @@
 import type { GridConfig } from '@simple-html/grid';
-import { createStage, type DemoSample, generateRows, mountGrid } from '../demoUtils';
+import { createStage, type DemoSample, generateRows, mountGrid, reconfigure } from '../demoUtils';
 
 export const mandatoryPlaceholders: DemoSample = {
     id: 'mandatory-placeholders',
     title: 'Mandatory & placeholders',
     group: 'Cells',
     description:
-        'mandatory: true renders a striped marker on empty editable cells (it clears as soon as the cell has a value). placeHolderRow shows a placeholder in empty cells - by default only on the current row, controlled by placeHolderRowCurrentEntityOnly. placeHolderFilter overrides the placeholder in the filter row. Click around the empty rows to see the placeholders follow the current row.',
+        'mandatory: true renders a striped marker on empty editable cells (it clears as soon as the cell has a value). placeholderRow shows a placeholder in empty cells - by default only on the current row, controlled by placeholderRowCurrentEntityOnly. placeholderFilter overrides the placeholder in the filter row. Click around the empty rows to see the placeholders follow the current row.',
     code: `
 const datasource = new Datasource({ fields: { date1: { type: 'date', label: 'date' } } });
 
 const gridConfig: GridConfig = {
     readonly: false,
     // placeholders show on the current row only, set false for all rows
-    placeHolderRowCurrentEntityOnly: true, // default
-    columnsCenter: [ ... ],
-    attributes: [
-        {
-            attribute: 'company',
+    placeholderRowCurrentEntityOnly: true, // default
+    columns: {
+        company: {
             mandatory: true, // striped marker while the cell is empty
-            placeHolderRow: 'company is mandatory',
-            placeHolderFilter: 'search company...'
+            placeholderRow: 'company is mandatory',
+            placeholderFilter: 'search company...'
         },
-        {
-            attribute: 'country',
+        country: {
             mandatory: true,
             mandatoryOnlyIfEmpty: true
         },
-        {
-            attribute: 'phone',
-            placeHolderRow: 'type a phone number'
+        phone: {
+            placeholderRow: 'type a phone number'
         },
-        {
-            attribute: 'date1',
+        date1: {
             // a date field shows the formatter's placeholder (YYYY-MM-DD), this one wins over it
-            placeHolderFilter: 'from date...'
+            placeholderFilter: 'from date...'
         }
-    ]
+    },
+    layout: { center: [ ... ] }
 };
 `,
     run(stage) {
@@ -45,23 +41,24 @@ const gridConfig: GridConfig = {
         const config: GridConfig = {
             panelHeight: 25,
             readonly: false,
-            columnsCenter: [
-                { rows: ['company'], width: 180 },
-                { rows: ['country'], width: 130 },
-                { rows: ['phone'], width: 160 },
-                { rows: ['date1'], width: 110 }
-            ],
-            attributes: [
-                {
-                    attribute: 'company',
+            columns: {
+                company: {
                     mandatory: true,
-                    placeHolderRow: 'company is mandatory',
-                    placeHolderFilter: 'search company...'
+                    placeholderRow: 'company is mandatory',
+                    placeholderFilter: 'search company...'
                 },
-                { attribute: 'country', mandatory: true, mandatoryOnlyIfEmpty: true },
-                { attribute: 'phone', placeHolderRow: 'type a phone number' },
-                { attribute: 'date1', placeHolderFilter: 'from date...' }
-            ]
+                country: { mandatory: true, mandatoryOnlyIfEmpty: true },
+                phone: { placeholderRow: 'type a phone number' },
+                date1: { placeholderFilter: 'from date...' }
+            },
+            layout: {
+                center: [
+                    { fields: ['company'], width: 180 },
+                    { fields: ['country'], width: 130 },
+                    { fields: ['phone'], width: 160 },
+                    { fields: ['date1'], width: 110 }
+                ]
+            }
         };
 
         const rows = generateRows(100);
@@ -77,17 +74,17 @@ const gridConfig: GridConfig = {
             }
         });
 
-        const { gridInterface } = mountGrid(ui.gridHost, config, rows);
+        const { element, gridInterface: first } = mountGrid(ui.gridHost, config, rows);
+        let gridInterface = first;
 
+        // an option is config: a new interface with the changed config, in the state the old one is in
         ui.button('Placeholders on all rows', () => {
-            const current = gridInterface.saveConfig();
-            current.placeHolderRowCurrentEntityOnly = false;
-            gridInterface.loadConfig(current);
+            config.placeholderRowCurrentEntityOnly = false;
+            gridInterface = reconfigure(element, gridInterface, config);
         });
         ui.button('Placeholders on current row only (default)', () => {
-            const current = gridInterface.saveConfig();
-            current.placeHolderRowCurrentEntityOnly = true;
-            gridInterface.loadConfig(current);
+            config.placeholderRowCurrentEntityOnly = true;
+            gridInterface = reconfigure(element, gridInterface, config);
         });
     }
 };

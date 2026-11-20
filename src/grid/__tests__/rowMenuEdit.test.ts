@@ -67,16 +67,17 @@ describe('row menu - add to filter', () => {
 });
 
 describe('row menu - replace filter', () => {
-    it('expect the header text of a column not listed in attributes to be cleared', async () => {
+    it('expect the header text of a column without a columns entry to be cleared', async () => {
         const config = simpleConfig();
-        // lastname is only named in the column rows
-        config.attributes = [{ attribute: 'firstname' }, { attribute: 'age' }];
-        const { element } = await mountGrid(config, data());
+        // lastname is only named in the layout (v5: only in the column rows, not in attributes)
+        config.columns = { firstname: {}, age: {} };
+        const { element, gridInterface } = await mountGrid(config, data());
         typeInHeaderFilter(element, 'lastname', 'x');
 
         openRowMenu(element, 'firstname', 0);
         menuItem('Replace filter').click();
 
         expect(headerFilterInput(element, 'lastname').value).toEqual('');
+        expect(gridInterface.getState().headerFilters).toEqual({});
     });
 });

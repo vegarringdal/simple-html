@@ -35,7 +35,7 @@ export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLEl
             contextMenu.style.left = asPx(5);
         }
 
-        const attributes = Object.keys(ctx.gridInterface.__getGridConfig().__attributes) || [];
+        const attributes = Object.keys(ctx.gridInterface.__getGridConfig().columns) || [];
 
         const searchInput = () => {
             return html`

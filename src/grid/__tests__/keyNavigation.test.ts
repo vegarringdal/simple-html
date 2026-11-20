@@ -15,7 +15,7 @@ const data = () => [
     { a: 'a2', b: 'b2', c: 'c2', d: 'd2' }
 ];
 
-const attributes = [{ attribute: 'a' }, { attribute: 'b' }, { attribute: 'c' }, { attribute: 'd' }];
+const columns = { a: {}, b: {}, c: {}, d: {} };
 
 /**
  * presses a key on the input with the given class, then waits for the handler's delayed focus
@@ -46,13 +46,15 @@ beforeEach(() => {
 describe('key navigation - left pinned columns', () => {
     // more left pinned columns than center ones: a lookup in the wrong array went out of range
     const config = (): GridConfig => ({
-        columnsPinnedLeft: [
-            { rows: ['a'], width: 100 },
-            { rows: ['b'], width: 100 },
-            { rows: ['d'], width: 100 }
-        ],
-        columnsCenter: [{ rows: ['c'], width: 100 }],
-        attributes
+        columns,
+        layout: {
+            left: [
+                { fields: ['a'], width: 100 },
+                { fields: ['b'], width: 100 },
+                { fields: ['d'], width: 100 }
+            ],
+            center: [{ fields: ['c'], width: 100 }]
+        }
     });
 
     it('expect alt+left to move to the previous left pinned column', async () => {
@@ -74,12 +76,14 @@ describe('key navigation - left pinned columns', () => {
 
 describe('key navigation - every column pinned', () => {
     const config = (): GridConfig => ({
-        columnsPinnedLeft: [
-            { rows: ['a'], width: 100 },
-            { rows: ['b'], width: 100 }
-        ],
-        columnsCenter: [],
-        attributes
+        columns,
+        layout: {
+            left: [
+                { fields: ['a'], width: 100 },
+                { fields: ['b'], width: 100 }
+            ],
+            center: []
+        }
     });
 
     it('expect alt+right on the last column to wrap to the next row', async () => {
@@ -101,12 +105,14 @@ describe('key navigation - every column pinned', () => {
 
 describe('key navigation - header filter row', () => {
     const config = (): GridConfig => ({
-        columnsPinnedLeft: [
-            { rows: ['a'], width: 100 },
-            { rows: ['b'], width: 100 }
-        ],
-        columnsCenter: [{ rows: ['c'], width: 100 }],
-        attributes
+        columns,
+        layout: {
+            left: [
+                { fields: ['a'], width: 100 },
+                { fields: ['b'], width: 100 }
+            ],
+            center: [{ fields: ['c'], width: 100 }]
+        }
     });
 
     it('expect shift+tab to move to the previous left pinned filter', async () => {

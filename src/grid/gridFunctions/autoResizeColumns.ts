@@ -7,7 +7,7 @@ import { getTextWidth } from './getTextWidth';
  * @param onlyResizeAttribute null = all
  */
 export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
-    const attributes = ctx.gridInterface.__getGridConfig().__attributes;
+    const attributes = ctx.gridInterface.__getGridConfig().columns;
     const attributeKeys = onlyResizeAttribute ? [onlyResizeAttribute] : Object.keys(attributes);
     const datasource = ctx.gridInterface.getDatasource();
 
@@ -21,14 +21,14 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
         // a label that was given, on the column or the field. A missing one never counts as shorter
         const givenLabel = currAtt?.label || datasource.__getFieldConfig(key)?.label;
 
-        if (isDate && currAtt?.placeHolderFilter) {
-            if (givenLabel !== undefined && givenLabel.length < currAtt.placeHolderFilter.length) {
+        if (isDate && currAtt?.placeholderFilter) {
+            if (givenLabel !== undefined && givenLabel.length < currAtt.placeholderFilter.length) {
                 return givenLabel;
             }
-            return currAtt?.placeHolderFilter;
+            return currAtt?.placeholderFilter;
         }
 
-        if (isDate && !currAtt?.placeHolderFilter && placeholderFormat) {
+        if (isDate && !currAtt?.placeholderFilter && placeholderFormat) {
             if (givenLabel !== undefined && givenLabel.length < placeholderFormat.length) {
                 return givenLabel;
             }
@@ -44,18 +44,16 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
     const data = ctx.gridInterface.getDatasource().getAllData();
     data.forEach((row: any) => {
         attributeKeys.forEach((key, i) => {
-            const att = attributes[key];
-
-            if (row && typeof row[att.attribute] === 'string') {
-                if (widths[i] < row[att.attribute].length) {
-                    widths[i] = row[att.attribute].length;
-                    text[i] = row[att.attribute];
+            if (row && typeof row[key] === 'string') {
+                if (widths[i] < row[key].length) {
+                    widths[i] = row[key].length;
+                    text[i] = row[key];
                 }
             }
-            if (row && typeof row[att.attribute] === 'number') {
-                if (widths[i] < `${row[att.attribute]}`.length) {
-                    widths[i] = `${row[att.attribute]}`.length;
-                    text[i] = row[att.attribute];
+            if (row && typeof row[key] === 'number') {
+                if (widths[i] < `${row[key]}`.length) {
+                    widths[i] = `${row[key]}`.length;
+                    text[i] = String(row[key]); // measureText turned the number into text too
                 }
             }
         });
@@ -63,16 +61,16 @@ export function autoResizeColumns(ctx: Grid, onlyResizeAttribute?: string) {
 
     widths = widths.map((e: number) => (e ? e * 2 : 100));
 
-    const left = ctx.gridInterface.__getGridConfig().columnsPinnedLeft || [];
-    const right = ctx.gridInterface.__getGridConfig().columnsPinnedRight || [];
-    const center = ctx.gridInterface.__getGridConfig().columnsCenter || [];
+    const left = ctx.gridInterface.__getGridConfig().layout.left || [];
+    const right = ctx.gridInterface.__getGridConfig().layout.right || [];
+    const center = ctx.gridInterface.__getGridConfig().layout.center || [];
 
     center
         .concat(left)
         .concat(right)
         .forEach((g) => {
             let x = 0;
-            g?.rows.forEach((rowAttribute) => {
+            g?.fields.forEach((rowAttribute) => {
                 if (x < 750) {
                     if (attributeKeys.indexOf(rowAttribute) !== -1) {
                         const xx = widths[attributeKeys.indexOf(rowAttribute)];

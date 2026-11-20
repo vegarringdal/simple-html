@@ -11,10 +11,10 @@ import { events } from './samples/events';
 import { filtering } from './samples/filtering';
 import { filterOperatorHeader } from './samples/filterOperatorHeader';
 import { formatters } from './samples/formatters';
+import { gridState } from './samples/gridState';
 import { mandatoryPlaceholders } from './samples/mandatoryPlaceholders';
 import { miscConfig } from './samples/miscConfig';
 import { rowsData } from './samples/rowsData';
-import { saveLoadConfig } from './samples/saveLoadConfig';
 import { selection } from './samples/selection';
 import { sortingGrouping } from './samples/sortingGrouping';
 import { tooltips } from './samples/tooltips';
@@ -47,7 +47,7 @@ export const SAMPLES: DemoSample[] = [
     events,
     filterOperatorHeader,
     // config
-    saveLoadConfig,
+    gridState,
     tooltips,
     miscConfig
 ];

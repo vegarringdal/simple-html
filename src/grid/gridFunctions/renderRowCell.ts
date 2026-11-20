@@ -34,7 +34,7 @@ export function renderRowCell(
 
     if (attribute) {
         const config = ctx.gridInterface.__getGridConfig();
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
         const datasource = ctx.gridInterface.getDatasource();
 
         // the field's type, and the type of this cell - dynamicCellTypeColumn can change it per row
@@ -43,7 +43,7 @@ export function renderRowCell(
         const formatter = datasource.getFormatter(attribute, cellConfigType);
 
         let showPlaceHolder = true;
-        if (config.placeHolderRowCurrentEntityOnly) {
+        if (config.placeholderRowCurrentEntityOnly) {
             if (rowData !== ctx.gridInterface.getDatasource().currentEntity) {
                 showPlaceHolder = false;
             }
@@ -144,7 +144,7 @@ export function renderRowCell(
                         .value=${live(value)}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${inputClass}${repeatedClass}`}
                         .readOnly=${config.readonly ? config.readonly : cellReadOnly}
-                        placeholder=${showPlaceHolder ? cellConfig.placeHolderRow : ''}
+                        placeholder=${showPlaceHolder ? cellConfig.placeholderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);

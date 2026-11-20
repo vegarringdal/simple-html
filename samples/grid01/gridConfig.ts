@@ -38,182 +38,170 @@ export const gridConfig: GridConfig = {
     /*  selectSizeHeight: 0, */
     hideLabels: false,
     hideFilter: false,
-    /* columnsPinnedLeft: [
-        {
-            rows: ['company','country'],
-            width: 200
-        },
-        {
-            rows: ['phone', 'date1'],
-            width: 300
-        },
-    ],  */
-    /*  columnsPinnedRight: [
-        {
-            rows: ['company','country'],
-            width: 200
-        },
-        {
-            rows: ['phone', 'date1'],
-            width: 300
-        },
-    ],   */
-    columnsCenter: [
-        {
-            // you almost need to include this now
+    /**
+     * the options of a column, by field name. A field in the layout without an entry gets the
+     * defaults
+     */
+    columns: {
+        __rowState: {
             // N = new, D = deleted, M=modified
-            rows: ['__rowState'],
-            width: 20
-        },
-        {
-            rows: ['company', 'country'],
-            width: 200
-        },
-        {
-            rows: ['latitude'],
-            width: 100
-        },
-        {
-            rows: ['age'],
-            width: 100
-        },
-        {
-            rows: ['longitude'],
-            width: 100
-        },
-        {
-            rows: ['phone', 'date1'],
-            width: 300
-        },
-        {
-            rows: ['dynamicData'],
-            width: 80
-        },
-        {
-            rows: ['date1'],
-            width: 80
-        },
-
-        {
-            rows: ['isDumb'],
-            width: 80
-        },
-
-        {
-            rows: ['favoriteFruit'],
-            width: 100
-        },
-        {
-            rows: ['country'],
-            width: 100
-        },
-        {
-            rows: ['balance'],
-            width: 100
-        },
-
-        {
-            rows: ['tags'],
-            width: 250
-        },
-        {
-            rows: ['isActive'],
-            width: 80
-        },
-
-        {
-            rows: ['picture'],
-            width: 300
-        },
-        {
-            rows: ['company'],
-            width: 200
-        },
-        {
-            rows: ['phone'],
-            width: 300
-        },
-
-        {
-            rows: ['date2'],
-            width: 100
-        }
-    ],
-    attributes: [
-        {
-            attribute: '__rowState', // N = new, D = deleted, M=modified
             label: 'RS',
             readonly: true
         },
-        {
-            attribute: 'isActive'
-        },
-        {
-            attribute: 'dynamicData',
+        dynamicData: {
             dynamicCellTypeColumn: 'dynamicDataType'
         },
-        {
-            attribute: 'phone',
-            placeHolderRow: 'wow',
+        phone: {
+            placeholderRow: 'wow',
             focusButton: 'SHOW_IF_GRID_AND_CELL_NOT_READONLY'
         },
-        {
-            attribute: 'company',
-            placeHolderRow: 'company',
+        company: {
+            placeholderRow: 'company',
             label: 'my Company name',
             focusButton: 'SHOW_IF_GRID_NOT_READONLY'
         },
-        {
-            attribute: 'country',
-            placeHolderRow: 'country',
+        country: {
+            placeholderRow: 'country',
             mandatory: true,
             mandatoryOnlyIfEmpty: true
         },
-        {
-            attribute: 'favoriteFruit',
-            placeHolderRow: 'favoriteFruit',
+        favoriteFruit: {
+            placeholderRow: 'favoriteFruit',
             mandatory: true
         },
-        {
-            attribute: 'isDumb'
-        },
-        {
-            attribute: 'balance',
+        balance: {
             readonly: true
         },
-        {
-            attribute: 'picture',
-
+        picture: {
             readonly: false,
             allowPasteClearOnly: true
         },
-        {
-            attribute: 'longitude',
+        longitude: {
             numberOverride: 'ZERO_TO_BLANK'
         },
-        {
-            attribute: 'latitude',
+        latitude: {
             numberOverride: 'BLANK_TO_ZERO'
         },
-        {
-            attribute: 'age'
-        },
-        {
-            attribute: 'index',
+        // not in the layout: the column chooser can add it
+        index: {
             focusButton: 'ALWAYS'
         },
-        {
-            attribute: 'date1'
-        },
-        {
-            attribute: 'date2',
-            placeHolderFilter: 'YYYY-MM-DD' // if you want to force
+        date2: {
+            placeholderFilter: 'YYYY-MM-DD' // if you want to force
         }
-    ],
-    sorting: [
-        {
-            attribute: 'firstname',
-            ascending: true
-        }
-    ]
+    },
+    layout: {
+        /* left: [
+            {
+                fields: ['company','country'],
+                width: 200
+            },
+            {
+                fields: ['phone', 'date1'],
+                width: 300
+            },
+        ],  */
+        /*  right: [
+            {
+                fields: ['company','country'],
+                width: 200
+            },
+            {
+                fields: ['phone', 'date1'],
+                width: 300
+            },
+        ],   */
+        center: [
+            {
+                // you almost need to include this now
+                // N = new, D = deleted, M=modified
+                fields: ['__rowState'],
+                width: 20
+            },
+            {
+                fields: ['company', 'country'],
+                width: 200
+            },
+            {
+                fields: ['latitude'],
+                width: 100
+            },
+            {
+                fields: ['age'],
+                width: 100
+            },
+            {
+                fields: ['longitude'],
+                width: 100
+            },
+            {
+                fields: ['phone', 'date1'],
+                width: 300
+            },
+            {
+                fields: ['dynamicData'],
+                width: 80
+            },
+            {
+                fields: ['date1'],
+                width: 80
+            },
+
+            {
+                fields: ['isDumb'],
+                width: 80
+            },
+
+            {
+                fields: ['favoriteFruit'],
+                width: 100
+            },
+            {
+                fields: ['country'],
+                width: 100
+            },
+            {
+                fields: ['balance'],
+                width: 100
+            },
+
+            {
+                fields: ['tags'],
+                width: 250
+            },
+            {
+                fields: ['isActive'],
+                width: 80
+            },
+
+            {
+                fields: ['picture'],
+                width: 300
+            },
+            {
+                fields: ['company'],
+                width: 200
+            },
+            {
+                fields: ['phone'],
+                width: 300
+            },
+
+            {
+                fields: ['date2'],
+                width: 100
+            }
+        ]
+    },
+    /**
+     * the state the grid starts in, and resetState() goes back to
+     */
+    initialState: {
+        sorting: [
+            {
+                attribute: 'firstname',
+                ascending: true
+            }
+        ]
+    }
 };

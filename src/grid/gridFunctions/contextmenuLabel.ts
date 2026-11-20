@@ -49,16 +49,16 @@ export function contextmenuLabel(
             @click=${() => {
                 let width = 100;
                 if (colType === 'middle-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
+                    ctx.gridInterface.__getGridConfig().layout.center[column].fields.splice(celno, 1);
+                    width = ctx.gridInterface.__getGridConfig().layout.center[column].width;
                 }
                 if (colType === 'right-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
+                    ctx.gridInterface.__getGridConfig().layout.right[column].fields.splice(celno, 1);
+                    width = ctx.gridInterface.__getGridConfig().layout.right[column].width;
                 }
 
-                ctx.gridInterface.__getGridConfig().columnsPinnedLeft.push({
-                    rows: [attribute],
+                ctx.gridInterface.__getGridConfig().layout.left.push({
+                    fields: [attribute],
                     width
                 });
                 ctx.rebuild(true);
@@ -72,14 +72,14 @@ export function contextmenuLabel(
             @click=${() => {
                 let width = 100;
                 if (colType === 'middle-pinned') {
-                    width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
+                    width = ctx.gridInterface.__getGridConfig().layout.center[column].width;
                 }
                 if (colType === 'right-pinned') {
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
+                    width = ctx.gridInterface.__getGridConfig().layout.right[column].width;
                 }
 
-                ctx.gridInterface.__getGridConfig().columnsPinnedLeft.push({
-                    rows: [attribute],
+                ctx.gridInterface.__getGridConfig().layout.left.push({
+                    fields: [attribute],
                     width
                 });
                 ctx.rebuild(true);
@@ -103,16 +103,16 @@ export function contextmenuLabel(
             @click=${() => {
                 let width = 100;
                 if (colType === 'middle-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
+                    ctx.gridInterface.__getGridConfig().layout.center[column].fields.splice(celno, 1);
+                    width = ctx.gridInterface.__getGridConfig().layout.center[column].width;
                 }
                 if (colType === 'left-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
+                    ctx.gridInterface.__getGridConfig().layout.left[column].fields.splice(celno, 1);
+                    width = ctx.gridInterface.__getGridConfig().layout.left[column].width;
                 }
 
-                ctx.gridInterface.__getGridConfig().columnsPinnedRight.push({
-                    rows: [attribute],
+                ctx.gridInterface.__getGridConfig().layout.right.push({
+                    fields: [attribute],
                     width
                 });
                 ctx.rebuild(true);
@@ -126,14 +126,14 @@ export function contextmenuLabel(
             @click=${() => {
                 let width = 100;
                 if (colType === 'middle-pinned') {
-                    width = ctx.gridInterface.__getGridConfig().columnsCenter[column].width;
+                    width = ctx.gridInterface.__getGridConfig().layout.center[column].width;
                 }
                 if (colType === 'left-pinned') {
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
+                    width = ctx.gridInterface.__getGridConfig().layout.left[column].width;
                 }
 
-                ctx.gridInterface.__getGridConfig().columnsPinnedRight.push({
-                    rows: [attribute],
+                ctx.gridInterface.__getGridConfig().layout.right.push({
+                    fields: [attribute],
                     width
                 });
                 ctx.rebuild(true);
@@ -157,18 +157,18 @@ export function contextmenuLabel(
             @click=${() => {
                 let width = 100;
                 if (colType === 'right-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].width;
-                    ctx.gridInterface.__getGridConfig().columnsCenter.push({
-                        rows: [attribute],
+                    ctx.gridInterface.__getGridConfig().layout.right[column].fields.splice(celno, 1);
+                    width = ctx.gridInterface.__getGridConfig().layout.right[column].width;
+                    ctx.gridInterface.__getGridConfig().layout.center.push({
+                        fields: [attribute],
                         width
                     });
                 }
                 if (colType === 'left-pinned') {
-                    ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
-                    width = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].width;
-                    ctx.gridInterface.__getGridConfig().columnsCenter.unshift({
-                        rows: [attribute],
+                    ctx.gridInterface.__getGridConfig().layout.left[column].fields.splice(celno, 1);
+                    width = ctx.gridInterface.__getGridConfig().layout.left[column].width;
+                    ctx.gridInterface.__getGridConfig().layout.center.unshift({
+                        fields: [attribute],
                         width
                     });
                 }
@@ -195,13 +195,13 @@ export function contextmenuLabel(
                 class="simple-html-grid-menu-item"
                 @click=${() => {
                     if (colType === 'middle-pinned') {
-                        ctx.gridInterface.__getGridConfig().columnsCenter[column].rows.splice(celno, 1);
+                        ctx.gridInterface.__getGridConfig().layout.center[column].fields.splice(celno, 1);
                     }
                     if (colType === 'right-pinned') {
-                        ctx.gridInterface.__getGridConfig().columnsPinnedRight[column].rows.splice(celno, 1);
+                        ctx.gridInterface.__getGridConfig().layout.right[column].fields.splice(celno, 1);
                     }
                     if (colType === 'left-pinned') {
-                        ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column].rows.splice(celno, 1);
+                        ctx.gridInterface.__getGridConfig().layout.left[column].fields.splice(celno, 1);
                     }
                     ctx.rebuild(true);
                     removeContextMenu(ctx);

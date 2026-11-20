@@ -1,5 +1,5 @@
 import { TOOLTIPS } from '@simple-html/grid';
-import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
+import { baseGridConfig, createStage, type DemoSample, mountGrid, reconfigure } from '../demoUtils';
 
 export const tooltips: DemoSample = {
     id: 'tooltips',
@@ -27,16 +27,25 @@ const gridConfig: GridConfig = {
 
 // even with tooltips: false, data-tooltip is written to the elements,
 // so you can wire up your own tooltip library instead
+
+// the texts are config: to change them later, connect a new interface with the changed
+// config, started in the state the old one is in
+const next = new GridInterface(
+    { ...gridConfig, tooltipText: { 'filterEditor.close': 'Lukk' }, initialState: gridInterface.getState() },
+    datasource
+);
+element.connectInterface(next);
 `,
     run(stage) {
         const ui = createStage(stage);
-        const { gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
+        const config = baseGridConfig();
+        const { element, gridInterface: first } = mountGrid(ui.gridHost, config);
+        let gridInterface = first;
 
         ui.button('Open filter editor (hover the buttons)', () => {
             gridInterface.openFilterEditor();
         });
         ui.button('Norwegian texts', () => {
-            const config = gridInterface.saveConfig();
             config.tooltipText = {
                 'filterEditor.addCondition': 'Legg til betingelse',
                 'filterEditor.addSubGroup': 'Legg til undergruppe',
@@ -45,24 +54,21 @@ const gridConfig: GridConfig = {
                 'filterEditor.filterAndClose': 'Filtrer og lukk',
                 'filterEditor.deleteCondition': 'Slett betingelsen'
             };
-            gridInterface.loadConfig(config);
+            gridInterface = reconfigure(element, gridInterface, config);
             ui.log('open the filter editor and hover its buttons');
         });
         ui.button('Default texts', () => {
-            const config = gridInterface.saveConfig();
             config.tooltipText = {};
-            gridInterface.loadConfig(config);
+            gridInterface = reconfigure(element, gridInterface, config);
         });
         ui.button('Disable built-in tooltips', () => {
-            const config = gridInterface.saveConfig();
             config.tooltips = false;
-            gridInterface.loadConfig(config);
+            gridInterface = reconfigure(element, gridInterface, config);
             ui.log('tooltips off - data-tooltip attributes are still written for your own library');
         });
         ui.button('Enable built-in tooltips', () => {
-            const config = gridInterface.saveConfig();
             config.tooltips = true;
-            gridInterface.loadConfig(config);
+            gridInterface = reconfigure(element, gridInterface, config);
         });
         ui.button('Log TOOLTIPS ids', () => {
             console.log(TOOLTIPS);

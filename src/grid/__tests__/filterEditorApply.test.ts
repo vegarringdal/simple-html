@@ -39,11 +39,12 @@ describe('filter editor - typed values', () => {
     it('expect a typed date to match rows on that day', async () => {
         const { datasource, gridInterface } = await mountGrid(
             {
-                columnsCenter: [
-                    { rows: ['name'], width: 100 },
-                    { rows: ['born'], width: 100 }
-                ],
-                attributes: [{ attribute: 'name' }, { attribute: 'born' }]
+                layout: {
+                    center: [
+                        { fields: ['name'], width: 100 },
+                        { fields: ['born'], width: 100 }
+                    ]
+                }
             },
             [
                 { name: 'a', born: new Date(2001, 4, 17) },
@@ -67,10 +68,10 @@ describe('filter editor - typed values', () => {
 });
 
 describe('filter editor - header filter inputs', () => {
-    it('expect applying to clear the header text of a column not listed in attributes', async () => {
+    it('expect applying to clear the header text of a column without a columns entry', async () => {
         const config = simpleConfig();
-        // lastname is only named in the column rows
-        config.attributes = [{ attribute: 'firstname' }, { attribute: 'age' }];
+        // lastname is only named in the layout (v5: only in the column rows, not in attributes)
+        config.columns = { firstname: {}, age: {} };
         const { element, datasource, gridInterface } = await mountGrid(config);
         typeInHeaderFilter(element, 'lastname', 'last1');
         expect(datasource.getDataRows()).toHaveLength(1);
@@ -83,6 +84,7 @@ describe('filter editor - header filter inputs', () => {
 
         expect(datasource.getDataRows()).toHaveLength(5);
         expect(headerFilterInput(element, 'lastname').value).toEqual('');
+        expect(gridInterface.getState().headerFilters).toEqual({});
         // nothing left is no filter, like "Clear All Filters"
         expect(datasource.getFilter()).toEqual(null);
     });

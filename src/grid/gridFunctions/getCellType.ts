@@ -9,7 +9,7 @@ import type { Grid } from '../grid';
  */
 export function getCellType(ctx: Grid, attribute: string, rowData: Entity | null | undefined): FieldType {
     const type = ctx.gridInterface.getDatasource().getField(attribute).type;
-    const dynamicColumn = ctx.gridInterface.__getGridConfig().__attributes[attribute]?.dynamicCellTypeColumn;
+    const dynamicColumn = ctx.gridInterface.__getGridConfig().columns[attribute]?.dynamicCellTypeColumn;
     if (type !== 'text' || !dynamicColumn || !rowData) {
         return type;
     }

@@ -1,25 +1,94 @@
 import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
 import type { GroupArgument } from '../datasource/groupArgument';
+import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
 
+/**
+ * The grid's config: the options of each column (`columns`), where the columns go (`layout`), sizes
+ * and behaviour. It is what you write. What the user changes while working with the grid - column
+ * order and widths, sorting, grouping, filters - is the {@link GridState}: read it with
+ * `gridInterface.getState()`, set it with `setState()`, and give the state the grid starts in as
+ * `initialState`.
+ *
+ * The grid does not change the object you pass in: it keeps its own copy of `columns`, `layout` and
+ * `initialState`, the parts it changes while the user works.
+ *
+ * @example
+ * ```ts
+ * const datasource = new Datasource({ fields: { age: 'number', born: 'date' } });
+ *
+ * const config: GridConfig = {
+ *     columns: {
+ *         name: { label: 'Name', placeholderFilter: 'search', mandatory: true },
+ *         age: { readonly: true }
+ *         // born is in the layout without an entry here: it gets the defaults
+ *     },
+ *     layout: {
+ *         left: [{ fields: ['name'], width: 150 }], // pinned left
+ *         center: [{ fields: ['age', 'born'], width: 100 }] // two fields stacked in one column
+ *     },
+ *     cellHeight: 22,
+ *     readonly: false,
+ *     initialState: { sorting: [{ attribute: 'name', ascending: true }] }
+ * };
+ *
+ * const gridInterface = new GridInterface(config, datasource);
+ * ```
+ */
 export type GridConfig = {
+    /**
+     * The options of each column, keyed by the field name. A field in the `layout` without an entry
+     * here gets the defaults. A field with an entry that is not in the layout is not shown, but the
+     * user can add it from the column chooser.
+     */
+    columns?: Record<string, ColumnConfig>;
+    /**
+     * Where the columns go: pinned left, the scrolling center and pinned right. It is the layout the
+     * grid starts with (unless `initialState.layout` is given) and `resetState()` goes back to. The
+     * user changes it - drag/drop, pinning, the column chooser, resizing - those changes are in
+     * `getState().layout`.
+     */
+    layout: GridLayout;
+    /**
+     * The state the grid starts in, and `resetState()` goes back to: sorted, grouped, filtered ...
+     * What is left out starts empty (no sorting, no filter ...), the layout is `layout`.
+     *
+     * @example
+     * ```ts
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 100 }, { fields: ['age'], width: 100 }] },
+     *     initialState: {
+     *         sorting: [{ attribute: 'age', ascending: false }],
+     *         filter: where('age', 'GREATER_THAN', 18),
+     *         headerFilters: { age: { value: 18, operator: 'GREATER_THAN' } } // what the header shows
+     *     }
+     * };
+     * ```
+     */
+    initialState?: Partial<GridState>;
+
+    /** height of a cell in px, default 22 */
     cellHeight?: number;
+    /** height of the top panel (grouping) in px, default 25 */
     panelHeight?: number;
     /**
+     * height of a header label cell in px, default `cellHeight`.
      * useful for when you have long header text and need to wrap in in 2-3 height
      * this will not work well with auto resize
      */
     cellHeaderLabelHeight?: number;
+    /** height of the footer in px, default 45 */
     footerHeight?: number;
+    /** height of the column selector row under the header filters in px, default 18 */
     selectSizeHeight?: number;
+    /** hides the header labels */
     hideLabels?: boolean;
+    /** hides the header filter row */
     hideFilter?: boolean;
+    /** the whole grid is readonly, default true */
     readonly?: boolean;
-    attributes: Attribute[];
+    /** default `'multiple'`, set on the datasource */
     selectionMode?: 'multiple' | 'single';
-    columnsPinnedLeft?: Columns[];
-    columnsCenter: Columns[];
-    columnsPinnedRight?: Columns[];
 
     /**
      * if its a small screen you might not want this enabled
@@ -56,122 +125,93 @@ export type GridConfig = {
     datePickerConfig?: IDateConfig;
 
     /**
-     * displays only placeholder on current focused cell row/current entity row
+     * shows a column's `placeholderRow` on the current row (the current entity) only.
      * default = true, so you need to set this to false to display on all rows
      */
-    placeHolderRowCurrentEntityOnly?: boolean;
-
-    /**
-     * sorting added when loading config, unless grouping overrides it
-     */
-    sorting?: Sort[] | null;
-    /**
-     * grouping added when loading config
-     */
-    grouping?: GroupArgument[] | null;
-    /**
-     * expandedGroups added when loading config
-     */
-    expandedGroups?: string[] | null;
-    /**
-     * filter added when loading config, see {@link FilterExpression}. `saveConfig()` puts the
-     * datasource's filter here
-     */
-    filter?: FilterExpression | null;
-
-    /**
-     * @internal not exported in save config
-     */
-    __attributes?: Record<string, Attribute>;
-    /**
-     * @internal not exported in save config
-     */
-    __rowHeight?: number;
-    /**
-     * @internal not exported in save config
-     */
-    __rowHeaderHeight?: number;
-    /**
-     * @internal not exported in save config
-     */
-    __columnCells?: number;
-    /**
-     * @internal not exported in save config
-     */
-    __leftWidth?: number;
-    /**
-     * @internal not exported in save config
-     */
-    __rightWidth?: number;
-    /**
-     * @internal not exported in save config
-     */
-    __scrollbarSize?: number;
-    /**
-     * @internal not exported in save config
-     */
-    __selectSizeWidth?: number;
+    placeholderRowCurrentEntityOnly?: boolean;
 };
 
 /**
- * @internal
- * The config as the grid works with it, after `GridInterface.__parseConfig()`: every default
- * is filled in and the internal sizes are computed, so these are never undefined.
+ * Where the columns go. Each list is a list of columns from left to right; a column shows one field,
+ * or several stacked on top of each other.
+ *
+ * - `left` - pinned to the left, does not scroll sideways
+ * - `center` - scrolls sideways
+ * - `right` - pinned to the right
+ *
+ * @example
+ * ```ts
+ * const layout: GridLayout = {
+ *     left: [{ fields: ['name'], width: 150 }],
+ *     center: [
+ *         { fields: ['age', 'born'], width: 100 }, // two fields stacked in one column
+ *         { fields: ['company'], width: 200 }
+ *     ],
+ *     right: [] // the same as leaving it out
+ * };
+ * ```
  */
-export type ParsedGridConfig = GridConfig &
-    Required<
-        Pick<
-            GridConfig,
-            | 'cellHeight'
-            | 'cellHeaderLabelHeight'
-            | 'panelHeight'
-            | 'footerHeight'
-            | 'selectSizeHeight'
-            | 'readonly'
-            | 'selectionMode'
-            | 'tooltips'
-            | 'placeHolderRowCurrentEntityOnly'
-            | 'columnsPinnedLeft'
-            | 'columnsPinnedRight'
-            | '__attributes'
-            | '__rowHeight'
-            | '__rowHeaderHeight'
-            | '__columnCells'
-            | '__leftWidth'
-            | '__rightWidth'
-            | '__scrollbarSize'
-            | '__selectSizeWidth'
-        >
-    >;
+export interface GridLayout {
+    /** the columns pinned to the left, default none */
+    left?: LayoutColumn[];
+    /** the columns that scroll sideways */
+    center: LayoutColumn[];
+    /** the columns pinned to the right, default none */
+    right?: LayoutColumn[];
+}
 
-export type Sort = {
-    attribute: string;
-    ascending: boolean;
-};
-
-export type Grouping = keyof Attribute[];
-
-export type Columns = {
-    rows: string[];
+/**
+ * One column of the {@link GridLayout}: the fields it shows, stacked from top to bottom, and its
+ * width. The options of a field (label, placeholders, readonly ...) are in `GridConfig.columns`, its
+ * type and default label in the datasource's `fields`.
+ *
+ * Every column gets as many cells as the column with the most fields; a column with fewer fields
+ * leaves the rest empty. A column without fields is left out.
+ *
+ * @example
+ * ```ts
+ * const single: LayoutColumn = { fields: ['name'], width: 150 };
+ * const stacked: LayoutColumn = { fields: ['firstName', 'lastName'], width: 120 };
+ * ```
+ */
+export interface LayoutColumn {
+    /** the fields shown in this column, top to bottom */
+    fields: string[];
+    /** width in px */
     width: number;
-};
+}
 
 /**
- * A column of the grid. Its type comes from the datasource (`datasource.getField(attribute).type`),
- * set it in the datasource's `fields`, not here.
+ * The options of one column, in `GridConfig.columns` under the field's name. Every option is
+ * optional, a field without an entry gets the defaults.
+ *
+ * The type of the column comes from the datasource (`datasource.getField(field).type`), set it in the
+ * datasource's `fields`, not here.
+ *
+ * @example
+ * ```ts
+ * const columns: Record<string, ColumnConfig> = {
+ *     company: { label: 'Company', mandatory: true, placeholderRow: 'required' },
+ *     age: { operator: 'EQUAL', numberOverride: 'ZERO_TO_BLANK' },
+ *     born: { placeholderFilter: 'from date', readonly: true },
+ *     country: { focusButton: 'ALWAYS', allowPasteClearOnly: true }
+ * };
+ * ```
  */
-export type Attribute = {
-    attribute: string;
+export type ColumnConfig = {
     /**
      * the column's header text. Left out, the label of the datasource field (`FieldConfig.label`) is
-     * used, and without that the attribute name
+     * used, and without that the field name
      */
     label?: string;
-    placeHolderRow?: string;
-    placeHolderFilter?: string;
+    /** shown in an empty cell, see `GridConfig.placeholderRowCurrentEntityOnly` */
+    placeholderRow?: string;
+    /** shown in the empty header filter. Default: the formatter's placeholder (date fields), else a search icon */
+    placeholderFilter?: string;
     /**
-     * the operator of the column's header filter. Default `'GREATER_THAN_OR_EQUAL_TO'` for number and
-     * date fields, `'EQUAL'` for the rest. The user can change it in the header filter's menu
+     * the operator the column's header filter starts with. Default `'GREATER_THAN_OR_EQUAL_TO'` for
+     * number and date fields, `'EQUAL'` for the rest. The operator the user picks in the header
+     * filter's menu is state: `GridState.headerFilters[field].operator`
      */
     operator?: FilterOperator;
     /**
@@ -187,12 +227,6 @@ export type Attribute = {
      * sets cell to readonly, usefull if you need it to stay readonly if grid is not readonly
      */
     readonly?: boolean;
-
-    /**
-     * @internal
-     * current filter value, this is really more of a internal state..
-     */
-    currentFilterValue?: string | number | boolean | Date | null;
 
     /**
      * like the name says, default it to display value it have recived, but you might have other needs
@@ -220,3 +254,98 @@ export type Attribute = {
      */
     allowPasteClearOnly?: boolean;
 };
+
+/**
+ * What the user changes while working with the grid: `gridInterface.getState()` reads it,
+ * `setState()` sets it, `resetState()` goes back to the one the grid started with
+ * (`GridConfig.initialState`, and the config's `layout`).
+ *
+ * It is plain data (`Date`s in the filter and header filters aside), so it can be stored, e.g. as
+ * JSON. A `Date` then comes back as its ISO text, which a `date` or `datetime` field filters on the
+ * same.
+ *
+ * @example
+ * ```ts
+ * // keep what the user did, and give it back next time
+ * localStorage.setItem('my-grid', JSON.stringify(gridInterface.getState()));
+ *
+ * const saved: GridState | null = JSON.parse(localStorage.getItem('my-grid') ?? 'null');
+ * if (saved) {
+ *     gridInterface.setState(saved);
+ * }
+ * ```
+ */
+export interface GridState {
+    /** column order, pinning and widths */
+    layout: GridLayout;
+    /** the sort, `datasource.getLastSorting()`. When grouped, the grouped fields come first */
+    sorting: SortArgument[];
+    /** the grouping, `datasource.getGrouping()` */
+    grouping: GroupArgument[];
+    /** the ids of the expanded groups, `datasource.getExpanded()` */
+    expandedGroups: string[];
+    /** the filter, `datasource.getFilter()`: the header filters' conditions are part of it */
+    filter: FilterExpression | null;
+    /**
+     * what the header filter cells show, keyed by field: the value typed or picked, and the operator
+     * picked in the header filter's menu. Only the columns that have one are listed.
+     *
+     * The rows are filtered by `filter`: these are what the header shows, the conditions they made are
+     * in `filter` already. A state from `getState()` has both.
+     */
+    headerFilters: Record<string, HeaderFilter>;
+}
+
+/**
+ * The header filter of one column, see `GridState.headerFilters`.
+ *
+ * @example
+ * ```ts
+ * const headerFilters: Record<string, HeaderFilter> = {
+ *     name: { value: 'ann*' }, // typed in the name column, with the column's operator
+ *     age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' }, // the operator picked in the menu
+ *     active: { value: true } // a boolean column's checkbox
+ * };
+ * ```
+ */
+export interface HeaderFilter {
+    /** what the header filter cell shows: the text typed, the date picked, `true`/`false` for a checkbox. null is empty */
+    value: unknown;
+    /** the operator picked in the header filter's menu. Left out, the column's `operator` is used */
+    operator?: FilterOperator;
+}
+
+/**
+ * @internal
+ * The config as the grid works with it, after `GridInterface.__parseConfig()`: every default
+ * is filled in and the internal sizes are computed, so these are never undefined. `columns` has an
+ * entry for every field of the layout.
+ *
+ * `layout` is the grid's own copy, the user changes it (drag/drop, pinning, the column chooser,
+ * resizing) - it is the state's layout, `getState()` hands out a copy of it.
+ */
+export type ParsedGridConfig = Omit<GridConfig, 'columns' | 'layout' | 'initialState'> &
+    Required<
+        Pick<
+            GridConfig,
+            | 'cellHeight'
+            | 'cellHeaderLabelHeight'
+            | 'panelHeight'
+            | 'footerHeight'
+            | 'selectSizeHeight'
+            | 'readonly'
+            | 'selectionMode'
+            | 'tooltips'
+            | 'placeholderRowCurrentEntityOnly'
+        >
+    > & {
+        columns: Record<string, ColumnConfig>;
+        layout: Required<GridLayout>;
+        __rowHeight: number;
+        __rowHeaderHeight: number;
+        __columnCells: number;
+        __leftWidth: number;
+        __rightWidth: number;
+        __scrollbarSize: number;
+        __selectSizeWidth: number;
+    };

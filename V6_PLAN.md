@@ -223,13 +223,13 @@ with `@example` on new public API, and `MIGRATION.md`.
 
 ## Phase 2 - grid interface and config
 
-15. [ ] **Config and state apart.** `GridConfig` mixes layout (columns, sizes), column metadata,
+15. [x] **Config and state apart.** `GridConfig` mixes layout (columns, sizes), column metadata,
         runtime state (`sorting`, `grouping`, `filter`, `expandedGroups`, and `currentFilterValue`
         inside each attribute) and internals (`__attributes`, `__rowHeight` ...). v6: the config is
         what you write. `getState()`/`setState()` cover what the user changes - sort, group,
         filter, expanded groups, column order and widths, header filter text - and replace
         `saveConfig`/`loadConfig`/`loadInitConfig`/`updateInitConfig`. **M**
-16. [ ] **Columns declared once.** A column is named in `columnsCenter[].rows` *and* in
+16. [x] **Columns declared once.** A column is named in `columnsCenter[].rows` *and* in
         `attributes`. Any column missing from `attributes` is created implicitly in
         `__attributes`, and that split caused the v5 bug where header text survived for unlisted
         columns. One keyed list of columns, with the layout referencing the keys. **M**

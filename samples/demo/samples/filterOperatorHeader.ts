@@ -5,23 +5,35 @@ export const filterOperatorHeader: DemoSample = {
     title: 'Filter operator in header',
     group: 'Events',
     description:
-        'Right-click a filter cell (the row under the headers) and pick an operator under "Set Operator" (equal/contains for text, greater/less than for numbers and dates). The grid fires a filter-operator-change event with the cell config and a rebuildHeader() helper, so you can e.g. write the active operator into the filter placeholder as feedback.',
+        'Right-click a filter cell (the row under the headers) and pick an operator under "Set Operator" (equal/contains for text, greater/less than for numbers and dates). The grid fires a filter-operator-change event with the field, the operator, the column\'s options and a rebuildHeader() helper, so you can e.g. write the active operator into the filter placeholder as feedback. The operator picked is state: getState().headerFilters has it, columns[field].operator in the config is only the one a header filter starts with.',
     code: `
 gridInterface.on('filter-operator-change', (data) => {
     // show the active operator as the filter placeholder
-    data.cellConfig.placeHolderFilter = data.cellConfig.operator;
+    data.column.placeholderFilter = data.operator;
     // and rerender the header row
     data.rebuildHeader();
 });
+
+// the operator a header filter starts with is config
+const gridConfig: GridConfig = {
+    columns: { company: { operator: 'CONTAINS' } },
+    layout: { center: [ ... ] }
+};
+
+// the one picked is state
+gridInterface.getState().headerFilters; // { age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' } }
 `,
     run(stage) {
         const ui = createStage(stage);
-        const { gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
+        const config = baseGridConfig();
+        config.columns = { company: { operator: 'CONTAINS' } };
+        const { gridInterface } = mountGrid(ui.gridHost, config);
 
         gridInterface.on('filter-operator-change', (data) => {
-            data.cellConfig.placeHolderFilter = data.cellConfig.operator;
+            data.column.placeholderFilter = data.operator;
             data.rebuildHeader();
-            ui.log(data.cellConfig.attribute + ' operator -> ' + data.cellConfig.operator);
+            ui.log(data.field + ' operator -> ' + data.operator);
+            ui.log(`headerFilters: ${JSON.stringify(gridInterface.getState().headerFilters)}`);
         });
 
         ui.log('right-click a filter cell and pick an operator');

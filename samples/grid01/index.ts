@@ -12,6 +12,7 @@ import {
     type GridElement,
     type GridEvents,
     GridInterface,
+    type GridState,
     NumberFormatterComma,
     NumberFormatterDot
 } from '@simple-html/grid';
@@ -65,9 +66,9 @@ datasource.setData(
 );
 
 /**
- * create interface
+ * create interface. let: the readonly buttons connect a new one, readonly is config
  */
-const gridInterface = new GridInterface(gridConfig, datasource);
+let gridInterface = new GridInterface(gridConfig, datasource);
 
 gridInterface.on('grid-connected', () => {
     gridInterface.autoResizeColumns();
@@ -199,15 +200,18 @@ createButton('add new with data and do not scroll to it', () => {
     datasource.addNewEmpty({ company: 'Who Im I' }, { scrollTo: false });
 });
 
-createButton('save config', () => {
-    (globalThis as any).griconfig = gridInterface.saveConfig();
+// what the user changed: column order/widths, sorting, grouping, filter, header filters
+let savedState: GridState | null = null;
+
+createButton('save state', () => {
+    savedState = gridInterface.getState();
 });
 
-createButton('load config', () => {
-    if (!(globalThis as any)) {
-        alert('no config saved, save on first');
+createButton('load state', () => {
+    if (!savedState) {
+        alert('no state saved, save one first');
     } else {
-        gridInterface.loadConfig((globalThis as any).griconfig);
+        gridInterface.setState(savedState);
     }
 });
 
@@ -236,20 +240,25 @@ createButton('remove marked for deleted (no undo)', () => {
     datasource.reloadDatasource();
 });
 
-createButton('use init config', () => {
-    gridInterface.loadConfig(gridConfig);
+createButton('reset state (initialState)', () => {
+    gridInterface.resetState();
 });
 
+/**
+ * readonly is config, not state: a new interface with the changed config, started in the state the
+ * old one is in. Handlers subscribed with on() and the setters belong to the old interface
+ */
+const setReadonly = (readonly: boolean) => {
+    gridInterface = new GridInterface({ ...gridConfig, readonly, initialState: gridInterface.getState() }, datasource);
+    element.connectInterface(gridInterface);
+};
+
 createButton('set as readonly', () => {
-    const config = gridInterface.saveConfig();
-    config.readonly = true;
-    gridInterface.loadConfig(config);
+    setReadonly(true);
 });
 
 createButton('set as editmode', () => {
-    const config = gridInterface.saveConfig();
-    config.readonly = false;
-    gridInterface.loadConfig(config);
+    setReadonly(false);
 });
 
 createButton('Open Filter Editor', () => {
@@ -297,7 +306,7 @@ createButton('gridInterface.on\n (see console - F12)', () => {
     gridInterfaceEventsOff = [
         gridInterface.on('filter-operator-change', (data) => {
             // sample on how you  would edit config and rerender headers
-            data.cellConfig.placeHolderFilter = data.cellConfig.operator;
+            data.column.placeholderFilter = data.operator;
             data.rebuildHeader();
         })
     ];
@@ -473,13 +482,10 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
                 hideLabels: false,
                 hideFilter: false,
                 footerHeight: 10, // if you wan the scrollbar..
-                columnsCenter: [{ width: width - 45, rows: ['WOW'] }],
-                attributes: [
-                    {
-                        attribute: 'WOW',
-                        label: 'select cable'
-                    }
-                ]
+                columns: {
+                    WOW: { label: 'select cable' }
+                },
+                layout: { center: [{ width: width - 45, fields: ['WOW'] }] }
             };
 
             const datasourceLocal = new Datasource();

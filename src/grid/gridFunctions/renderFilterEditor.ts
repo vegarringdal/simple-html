@@ -488,15 +488,11 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
     </div>`;
 
     /**
-     * header filter inputs would otherwise keep showing text the applied filter no longer has.
-     * __attributes, not attributes: a column only named in the column rows is not in the
-     * attributes array, its text survived and was put back by the next header filter edit
+     * header filter inputs would otherwise keep showing text the applied filter no longer has
+     * (and the next header filter edit would put it back)
      */
     const clearOldValues = () => {
-        const attributes = ctx.gridInterface.__getGridConfig().__attributes;
-        Object.keys(attributes).forEach((key) => {
-            attributes[key].currentFilterValue = '';
-        });
+        ctx.gridInterface.__clearHeaderFilterValues();
     };
 
     /**

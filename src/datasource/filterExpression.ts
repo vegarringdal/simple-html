@@ -120,8 +120,8 @@ export interface FilterGroup {
 
 /**
  * A filter: one {@link FilterCondition}, or a {@link FilterGroup} of them. This is what
- * `datasource.filter()` takes, `datasource.getFilter()` returns and the grid saves in
- * `GridConfig.filter`. It is plain data, so it can be stored as JSON (a `Date` value comes back as
+ * `datasource.filter()` takes, `datasource.getFilter()` returns and the grid keeps in its state
+ * (`GridState.filter`). It is plain data, so it can be stored as JSON (a `Date` value comes back as
  * text, which a `date` / `datetime` field still reads).
  *
  * Build one with {@link and}, {@link or} and {@link where}, or write the objects out.

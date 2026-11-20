@@ -163,7 +163,7 @@ export function contextmenuRow(
      * setter decides, and when it gives no answer the column config does
      */
     const isCellReadOnly = (attribute: string, entity: Entity) => {
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
         const cellReadOnly = ctx.gridInterface.__callReadonlySetter(attribute, entity, cellConfig.readonly || false);
         if (cellReadOnly === true || cellReadOnly === false) {
             return cellReadOnly;
@@ -330,7 +330,7 @@ export function contextmenuRow(
      * @returns
      */
     const pasteAndClearTemplate = () => {
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
 
         if (ctx.gridInterface.__getGridConfig().readonly) {
             return null;
@@ -412,12 +412,8 @@ export function contextmenuRow(
             datasource.filter(filter);
             if (clearHeaderFilters) {
                 // the header filter conditions are gone, so their inputs must not keep showing the
-                // old text. __attributes, not attributes: a column only named in the column rows
-                // is not in the attributes array
-                const attributes = ctx.gridInterface.__getGridConfig().__attributes;
-                Object.keys(attributes).forEach((key) => {
-                    attributes[key].currentFilterValue = '';
-                });
+                // old text
+                ctx.gridInterface.__clearHeaderFilterValues();
             }
             rebuildHeaderColumns(ctx);
             removeContextMenu(ctx);

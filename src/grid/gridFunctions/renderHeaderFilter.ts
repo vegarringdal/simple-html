@@ -23,13 +23,14 @@ export function renderHeaderFilter(
     rowData: Entity | GroupRow | undefined
 ) {
     if (attribute) {
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
+        const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
         const { type, formatter } = ctx.gridInterface.getDatasource().getField(attribute);
 
         // the column's own placeholder, else the formatter's (YYYY-MM-DD), else the search icon
-        const placeHolderFilter = cellConfig.placeHolderFilter || formatter.placeholder || '🔍';
+        const placeholderFilter = cellConfig.placeholderFilter || formatter.placeholder || '🔍';
 
-        let currentValue = cellConfig.currentFilterValue || ('' as any);
+        // what the cell shows, from the state's header filters. ?? and not ||: false and 0 are filters too
+        let currentValue: unknown = ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? '';
 
         /**
          * internal function, so we can rerender
@@ -46,7 +47,7 @@ export function renderHeaderFilter(
                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
                         .checked=${live(currentValue)}
                         .indeterminate=${currentValue !== true && currentValue !== false}
-                        placeholder=${placeHolderFilter}
+                        placeholder=${placeholderFilter}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -62,19 +63,19 @@ export function renderHeaderFilter(
                                     case currentValue === '' &&
                                         (e.target as any).checked === true &&
                                         e.target.indeterminate === false:
-                                        filterCallback(ctx, (e.target as any).checked.toString(), cellConfig);
+                                        filterCallback(ctx, (e.target as any).checked.toString(), attribute);
                                         currentValue = (e.target as any).checked;
                                         break;
                                     case currentValue === true &&
                                         (e.target as any).checked === false &&
                                         e.target.indeterminate === false:
-                                        filterCallback(ctx, (e.target as any).checked.toString(), cellConfig);
+                                        filterCallback(ctx, (e.target as any).checked.toString(), attribute);
                                         currentValue = (e.target as any).checked;
                                         break;
                                     case currentValue === false &&
                                         (e.target as any).checked === true &&
                                         e.target.indeterminate === false:
-                                        filterCallback(ctx, '', cellConfig);
+                                        filterCallback(ctx, '', attribute);
                                         e.target.indeterminate = true;
                                         (e.target as any).checked = false;
                                         currentValue = '';
@@ -87,20 +88,20 @@ export function renderHeaderFilter(
                     cell as any
                 );
             } else {
-                currentValue = formatter.format(currentValue);
+                const currentText = formatter.format(currentValue);
 
-                let lastFilter = currentValue || '';
+                let lastFilter = currentText;
                 let skipFocus = false;
                 render(
                     html`<input
                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
                         style=${type === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'}
-                        .value=${live(currentValue)}
-                        placeholder=${placeHolderFilter}
+                        .value=${live(currentText)}
+                        placeholder=${placeholderFilter}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             if (lastFilter !== (e.target as any).value) {
-                                filterCallback(ctx, (e.target as any).value, cellConfig);
+                                filterCallback(ctx, (e.target as any).value, attribute);
                             }
                             lastFilter = (e.target as any).value;
                             contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -117,16 +118,16 @@ export function renderHeaderFilter(
                                         ctx,
                                         e,
                                         cell,
-                                        parseFilterText(formatter, currentValue),
+                                        parseFilterText(formatter, currentText),
                                         (value: Date | null) => {
                                             const filterValue = formatter.format(value);
                                             if (lastFilter !== filterValue) {
                                                 lastFilter = filterValue;
-                                                filterCallback(ctx, filterValue, cellConfig);
+                                                filterCallback(ctx, filterValue, attribute);
                                             }
                                             // TODO: need to check why date is inserted here and I need to reset
                                             // potential other issues I just dont see atm
-                                            cellConfig.currentFilterValue = filterValue;
+                                            ctx.gridInterface.__setHeaderFilterValue(attribute, filterValue);
 
                                             renderHeaderFilter(
                                                 ctx,
@@ -169,7 +170,7 @@ export function renderHeaderFilter(
                                 if (!filterRunning) {
                                     filterRunning = true;
 
-                                    filterCallback(ctx, (e.target as any).value, cellConfig);
+                                    filterCallback(ctx, (e.target as any).value, attribute);
 
                                     lastFilter = (e.target as any).value;
                                     filterRunning = false;
@@ -186,7 +187,7 @@ export function renderHeaderFilter(
                                     filterRunning = true;
 
                                     if (lastFilter !== (e.target as any).value) {
-                                        filterCallback(ctx, (e.target as any).value, cellConfig);
+                                        filterCallback(ctx, (e.target as any).value, attribute);
                                     }
                                     lastFilter = (e.target as any).value;
                                     filterRunning = false;
@@ -198,7 +199,7 @@ export function renderHeaderFilter(
                                 filterRunning = true;
 
                                 if (lastFilter !== (e.target as any).value) {
-                                    filterCallback(ctx, (e.target as any).value, cellConfig);
+                                    filterCallback(ctx, (e.target as any).value, attribute);
                                 }
                                 lastFilter = (e.target as any).value;
                                 filterRunning = false;

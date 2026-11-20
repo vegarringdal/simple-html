@@ -10,6 +10,7 @@ import {
     and,
     BooleanFormatter,
     type Changes,
+    type ColumnConfig,
     DataContainer,
     Datasource,
     type DatasourceEvents,
@@ -33,13 +34,19 @@ import {
     type GridElement,
     type GridEvents,
     GridInterface,
+    type GridLayout,
+    type GridState,
+    type GroupArgument,
     type GroupRow,
+    type HeaderFilter,
     type HTMLCellElement,
     isGroupRow,
+    type LayoutColumn,
     type ModifiedEntity,
     NumberFormatterComma,
     NumberFormatterDot,
     or,
+    type SortArgument,
     TextFormatter,
     TOOLTIPS,
     where
@@ -180,18 +187,44 @@ const noOperator: FilterCondition = { field: 'age' };
 where('age', 'GREATER', 18);
 console.log(noOperator);
 
+// the options of a column by field name, and the layout referencing the fields
+const nameColumn: ColumnConfig = { label: 'Name', operator: 'CONTAINS', placeholderFilter: 'search', placeholderRow: 'name' };
+const stacked: LayoutColumn = { fields: ['born', 'lastLogin'], width: 120 };
+const layout: GridLayout = { left: [{ fields: ['name'], width: 100 }], center: [stacked] };
 const config: GridConfig = {
-    columnsCenter: [{ rows: ['name'], width: 100 }],
-    // the type of a column comes from the datasource, the column label falls back to the field's
-    attributes: [{ attribute: 'name', label: 'Name' }, { attribute: 'born' }],
-    placeHolderRowCurrentEntityOnly: true
+    // the type of a column comes from the datasource, the column label falls back to the field's.
+    // born has no entry: a field in the layout without one gets the defaults
+    columns: { name: nameColumn },
+    layout,
+    placeholderRowCurrentEntityOnly: true,
+    // the state the grid starts in, and resetState() goes back to
+    initialState: {
+        sorting: [{ attribute: 'name', ascending: true }],
+        filter: and(adult, where('name', 'BEGIN_WITH', 'a')),
+        headerFilters: { name: { value: 'a', operator: 'BEGIN_WITH' } }
+    }
 };
+const onlyLayout: GridConfig = { layout: { center: [{ fields: ['name'], width: 100 }] } };
+console.log(onlyLayout);
 // @ts-expect-error the type is not on the column any more, it is in the datasource fields
-const typedColumn: GridConfig['attributes'][number] = { attribute: 'born', type: 'date' };
-console.log(typedColumn);
-// the saved filter is a FilterExpression too
-const withFilter: GridConfig = { ...config, filter: and(adult, where('name', 'BEGIN_WITH', 'a')) };
-const headerOperator: FilterOperator | undefined = withFilter.attributes[0].operator;
+const typedColumn: ColumnConfig = { type: 'date' };
+// @ts-expect-error a column has no attribute, the key in columns is the field
+const keyedColumn: ColumnConfig = { attribute: 'born' };
+// @ts-expect-error the header filter value is state: GridState.headerFilters
+const filterValueColumn: ColumnConfig = { currentFilterValue: 'a' };
+// @ts-expect-error v5 casing: placeholderFilter
+const v5Placeholder: ColumnConfig = { placeHolderFilter: 'search' };
+console.log(typedColumn, keyedColumn, filterValueColumn, v5Placeholder);
+// @ts-expect-error attributes is gone: columns, keyed by field
+const withAttributes: GridConfig = { layout, attributes: [{ attribute: 'name' }] };
+// @ts-expect-error columnsCenter is gone: layout.center
+const withColumnsCenter: GridConfig = { columnsCenter: [{ rows: ['name'], width: 100 }] };
+// @ts-expect-error a layout column has fields, not rows
+const withRows: LayoutColumn = { rows: ['name'], width: 100 };
+// @ts-expect-error sorting is state, it goes in initialState
+const withSorting: GridConfig = { layout, sorting: [] };
+console.log(withAttributes, withColumnsCenter, withRows, withSorting);
+const headerOperator: FilterOperator | undefined = config.columns?.name?.operator;
 console.log(headerOperator);
 // the filter as text, with your own labels
 const filterText: string = datasource.getFilterString((field) => field.toUpperCase());
@@ -210,9 +243,42 @@ const offCellClick: () => void = gridInterface.on('cell-click', (data) => {
 });
 offCellClick();
 gridInterface.on('filter-operator-change', (data) => {
-    data.cellConfig.placeHolderFilter = data.cellConfig.operator;
+    const field: string = data.field;
+    const picked: FilterOperator = data.operator;
+    data.column.placeholderFilter = `${field} ${picked}`;
     data.rebuildHeader();
 });
+// the state: what the user changed. getState() returns a copy
+const state: GridState = gridInterface.getState();
+const center: LayoutColumn[] = state.layout.center;
+const pinnedLeft: LayoutColumn[] | undefined = state.layout.left;
+const sorting: SortArgument[] = state.sorting;
+const grouping: GroupArgument[] = state.grouping;
+const expanded: string[] = state.expandedGroups;
+const stateFilter: FilterExpression | null = state.filter;
+const nameFilter: HeaderFilter | undefined = state.headerFilters.name;
+const nameFilterValue: unknown = nameFilter?.value;
+const nameFilterOperator: FilterOperator | undefined = nameFilter?.operator;
+console.log(center, pinnedLeft, sorting, grouping, expanded, stateFilter, nameFilterValue, nameFilterOperator);
+gridInterface.setState(state);
+// a partial state: the rest is kept
+gridInterface.setState({ sorting: [{ attribute: 'name', ascending: false }] });
+gridInterface.setState({ filter: null, headerFilters: {} });
+const savedState: Partial<GridState> = JSON.parse('{}');
+gridInterface.setState(savedState);
+gridInterface.resetState();
+// @ts-expect-error saveConfig is gone: getState()
+gridInterface.saveConfig();
+// @ts-expect-error loadConfig is gone: setState()
+gridInterface.loadConfig(config);
+// @ts-expect-error loadInitConfig is gone: resetState()
+gridInterface.loadInitConfig();
+// @ts-expect-error updateInitConfig is gone: GridConfig.initialState
+gridInterface.updateInitConfig(config);
+// @ts-expect-error the event has the column's options in column, the operator in operator
+console.log(gridInterface.on('filter-operator-change', (data) => data.cellConfig));
+// @ts-expect-error a layout column has fields, not rows
+gridInterface.setState({ layout: { center: [{ rows: ['name'], width: 100 }] } });
 gridInterface.on('grid-connected', () => gridInterface.autoResizeColumns());
 
 const onFiltered: EventHandler<DatasourceEvents['collection-filtered']> = (data) => {

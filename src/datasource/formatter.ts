@@ -53,7 +53,7 @@ export interface Formatter {
     parseFilter?(text: string): unknown;
 
     /**
-     * Optional: shown in an empty header filter input when the column has no `placeHolderFilter`,
+     * Optional: shown in an empty header filter input when the column has no `placeholderFilter`,
      * e.g. `'YYYY-MM-DD'`.
      */
     placeholder?: string;

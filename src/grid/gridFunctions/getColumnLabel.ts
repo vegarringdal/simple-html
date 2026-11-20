@@ -8,7 +8,7 @@ import { prettyPrintString } from './prettyPrintString';
  */
 export function getColumnLabel(ctx: Grid, attribute: string, pretty = false): string {
     // an attribute does not have to be in the grid config, a filter can use any field
-    const columnLabel = ctx.gridInterface.__getGridConfig().__attributes[attribute]?.label;
+    const columnLabel = ctx.gridInterface.__getGridConfig().columns[attribute]?.label;
     const fieldLabel = ctx.gridInterface.getDatasource().__getFieldConfig(attribute)?.label;
     return columnLabel || fieldLabel || (pretty ? prettyPrintString(attribute) : attribute);
 }

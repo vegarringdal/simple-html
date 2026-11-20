@@ -1,5 +1,5 @@
 import type { GridConfig } from '@simple-html/grid';
-import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
+import { baseGridConfig, createStage, type DemoSample, mountGrid, reconfigure } from '../demoUtils';
 
 export const editing: DemoSample = {
     id: 'editing',
@@ -9,13 +9,13 @@ export const editing: DemoSample = {
         'The grid defaults to readonly: true, so set readonly: false in the config to edit cells. The datasource tracks new/modified/deleted rows (see the RS column: N/M/D) so you can collect changes and send them to a server, or throw them away. Edit some cells and click "Show changes" - a cell edited back to its original value is not a change, and a date typed again on the same day is not either.',
     code: `
 // the grid defaults to readonly: true - enable editing in the config,
-// or per attribute with { attribute: 'x', readonly: true/false }
+// or per column with columns: { x: { readonly: true/false } }
 const gridConfig: GridConfig = { readonly: false, ... };
 
-// toggle it later via config
-const config = gridInterface.saveConfig();
-config.readonly = true;
-gridInterface.loadConfig(config);
+// readonly is config: to toggle it, connect a new interface with the changed config,
+// started in the state the old one is in (sorting, filter, column order ...)
+const next = new GridInterface({ ...gridConfig, readonly: true, initialState: gridInterface.getState() }, datasource);
+element.connectInterface(next);
 
 // add a new row (scrolls to it), optionally with data
 datasource.addNewEmpty({ company: 'NEW COMPANY' });
@@ -35,17 +35,17 @@ datasource.resetData();
     run(stage) {
         const ui = createStage(stage);
         const config: GridConfig = baseGridConfig();
-        config.columnsCenter.unshift({ rows: ['__rowState'], width: 20 });
-        config.attributes.push({ attribute: '__rowState', label: 'RS', readonly: true });
+        config.layout.center.unshift({ fields: ['__rowState'], width: 20 });
+        config.columns = { __rowState: { label: 'RS', readonly: true } };
 
-        const { datasource, gridInterface } = mountGrid(ui.gridHost, config);
+        const { datasource, element, gridInterface: first } = mountGrid(ui.gridHost, config);
+        let gridInterface = first;
         datasource.setSelectionMode('multiple');
 
         ui.button('Toggle readonly', () => {
-            const current = gridInterface.saveConfig();
-            current.readonly = !current.readonly;
-            gridInterface.loadConfig(current);
-            ui.log('grid readonly: ' + current.readonly);
+            config.readonly = !config.readonly;
+            gridInterface = reconfigure(element, gridInterface, config);
+            ui.log('grid readonly: ' + config.readonly);
         });
         ui.button('Add new row', () => {
             datasource.addNewEmpty({ company: 'NEW COMPANY' });

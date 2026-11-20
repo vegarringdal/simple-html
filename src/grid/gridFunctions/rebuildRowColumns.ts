@@ -1,5 +1,5 @@
 import type { Grid } from '../grid';
-import type { Columns } from '../gridConfig';
+import type { LayoutColumn } from '../gridConfig';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
 import { createElement } from './createElement';
@@ -20,7 +20,7 @@ import { getGroupingWidth } from './getGroupingWidth';
  * Returns 0 when there are no center columns (addColumns treats 0 as "all", which is 0 then too).
  */
 export function getMiddleColumnsNeeded(ctx: Grid) {
-    const columns = ctx.gridInterface.__getGridConfig().columnsCenter;
+    const columns = ctx.gridInterface.__getGridConfig().layout.center;
     // same element/width horizontalScrollHandler uses to decide what is on screen
     const viewportWidth = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').clientWidth;
 
@@ -44,7 +44,7 @@ export function rebuildRowColumns(ctx: Grid) {
     /**
      * helper to generate cols and rows elements
      */
-    const addColumns = (rowId: string, columns: Columns[], maxColumns: number, coltype: ColType) => {
+    const addColumns = (rowId: string, columns: LayoutColumn[], maxColumns: number, coltype: ColType) => {
         const parent = ctx.rows.get(rowId);
 
         const columnCache: ColumnCache[] = [];
@@ -107,15 +107,15 @@ export function rebuildRowColumns(ctx: Grid) {
     ctx.columns.clear();
 
     ctx.containerLeftRowCache.forEach((e) => {
-        ctx.containerLeftColumnCache = addColumns(e.id, config.columnsPinnedLeft, 0, LEFT_PINNED_COLTYPE);
+        ctx.containerLeftColumnCache = addColumns(e.id, config.layout.left, 0, LEFT_PINNED_COLTYPE);
     });
 
     const middleColumnsNeeded = getMiddleColumnsNeeded(ctx);
     ctx.containerMiddleRowCache.forEach((e) => {
-        ctx.containerMiddleColumnCache = addColumns(e.id, config.columnsCenter, middleColumnsNeeded, MIDDLE_PINNED_COLTYPE);
+        ctx.containerMiddleColumnCache = addColumns(e.id, config.layout.center, middleColumnsNeeded, MIDDLE_PINNED_COLTYPE);
     });
 
     ctx.containerRightRowCache.forEach((e) => {
-        ctx.containerRightColumnCache = addColumns(e.id, config.columnsPinnedRight, 0, RIGHT_PINNED_COLTYPE);
+        ctx.containerRightColumnCache = addColumns(e.id, config.layout.right, 0, RIGHT_PINNED_COLTYPE);
     });
 }

@@ -92,9 +92,9 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
         });
 
         const config = ctx.gridInterface.__getGridConfig();
-        const widths = config.columnsCenter.map((c) => c.width);
-        const widthsLeft = config.columnsPinnedLeft.map((c) => c.width);
-        const widthsRight = config.columnsPinnedRight.map((c) => c.width);
+        const widths = config.layout.center.map((c) => c.width);
+        const widthsLeft = config.layout.left.map((c) => c.width);
+        const widthsRight = config.layout.right.map((c) => c.width);
 
         const updateRow = (e: RowCache, colType: ColType) => {
             if (e.row !== -1) {

@@ -14,11 +14,12 @@ import { sleep } from './interactionTestHelpers';
 const config = (datePickerConfig: any = undefined): GridConfig =>
     ({
         readonly: false,
-        columnsCenter: [
-            { rows: ['name'], width: 100 },
-            { rows: ['born'], width: 100 }
-        ],
-        attributes: [{ attribute: 'name' }, { attribute: 'born' }],
+        layout: {
+            center: [
+                { fields: ['name'], width: 100 },
+                { fields: ['born'], width: 100 }
+            ]
+        },
         datePickerConfig
     }) as GridConfig;
 

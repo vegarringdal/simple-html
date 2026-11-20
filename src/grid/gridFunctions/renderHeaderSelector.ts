@@ -22,12 +22,12 @@ export function renderHeaderSelector(
         colNo = column + 1;
     }
     if (colType === MIDDLE_PINNED_COLTYPE) {
-        colNo = ctx.gridInterface.__getGridConfig().columnsPinnedLeft.length || 0;
+        colNo = ctx.gridInterface.__getGridConfig().layout.left.length || 0;
         colNo = colNo + column + 1;
     }
     if (colType === RIGHT_PINNED_COLTYPE) {
-        colNo = ctx.gridInterface.__getGridConfig().columnsPinnedLeft.length || 0;
-        colNo = colNo + ctx.gridInterface.__getGridConfig().columnsCenter.length || 0;
+        colNo = ctx.gridInterface.__getGridConfig().layout.left.length || 0;
+        colNo = colNo + ctx.gridInterface.__getGridConfig().layout.center.length || 0;
         colNo = colNo + column + 1;
     }
 

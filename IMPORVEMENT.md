@@ -807,6 +807,28 @@ the grid, tests, samples and `MIGRATION.md`.
 
 Phase 1 is complete with this step: 500 tests at the start of v6, 884 now.
 
+### v6 phase 2 - grid interface and config
+
+`V6_PLAN.md` items 15-20, design in its *Phase 2 design* section.
+
+#### Step 1 - columns, layout and state (items 15, 16)
+
+* `columns` (options per field, keyed) + `layout` (`left` / `center` / `right`, each column a
+  `{ fields, width }`) replace `attributes` + `columnsPinnedLeft/Center/Right`. A field in the
+  layout without a `columns` entry gets the defaults - no more `__attributes` split, which is
+  where the v5 "header text survives for unlisted columns" bug came from.
+* `placeHolder*` -> `placeholder*`, `Attribute` -> `ColumnConfig`, `Columns` -> `LayoutColumn`
+* `getState()` / `setState(partial)` / `resetState()` + `initialState` replace the four
+  save/load methods. The state is what the user changes: layout, sort, group, expanded groups,
+  filter, header filters (value and picked operator). `getState()` hands out copies.
+* the operator picked in a header filter menu is state now, and no longer overwrites the
+  column's `operator` (that is the operator a header filter starts with)
+* fixed: a header filter of `false` (boolean) or `0` (number) showed as empty - read with `||`
+* clearing the sort (empty sort in `setState` / `resetState`) puts the rows back in their own
+  order; v5 left them sorted
+* options are not state, so changing one at runtime needs a new interface for now - `updateConfig`
+  comes in step 2
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -849,6 +871,10 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
   * the display tree from `getFilterTree()` still says `logicalOperator` where the filter format
     says `group`
   * `deselectAll()` does not send `selection-change` by default, `selectAll()` always does
+  * `mandatoryOnlyIfEmpty` has no effect anywhere - phase 5 (validation) replaces the mandatory
+    options
+  * a date picked in a header filter's date picker is stored as text, a typed one as a `Date`
+  * the column chooser keeps listing fields that were once in the layout
 * **Low severity bugs left from the code review** (high and medium are fixed, see *Bug sweep*):
   * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
   * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the

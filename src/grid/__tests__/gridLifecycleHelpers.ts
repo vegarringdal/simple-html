@@ -91,8 +91,7 @@ export function centerColumns(widths: number[]) {
     return {
         attributes,
         config: {
-            columnsCenter: attributes.map((attribute, i) => ({ rows: [attribute], width: widths[i] })),
-            attributes: attributes.map((attribute) => ({ attribute }))
+            layout: { center: attributes.map((attribute, i) => ({ fields: [attribute], width: widths[i] })) }
         },
         data: [Object.fromEntries(attributes.map((attribute) => [attribute, `${attribute}v`]))]
     };

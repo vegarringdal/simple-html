@@ -53,11 +53,11 @@ const SECTION_ORDER: ColType[] = ['left-pinned', 'middle-pinned', 'right-pinned'
 export function sectionColumns(config: ParsedGridConfig, colType: ColType) {
     switch (colType) {
         case 'left-pinned':
-            return config.columnsPinnedLeft;
+            return config.layout.left;
         case 'right-pinned':
-            return config.columnsPinnedRight;
+            return config.layout.right;
         default:
-            return config.columnsCenter;
+            return config.layout.center;
     }
 }
 
@@ -66,7 +66,7 @@ export function sectionColumns(config: ParsedGridConfig, colType: ColType) {
  * first (backward). Sections are visited left -> middle -> right, past the right one it wraps to
  * the next row (the previous row going backward).
  * Sections without columns are skipped - every column can be pinned, which leaves the middle
- * section empty, and landing in it crashed on `columnsCenter[0].rows`.
+ * section empty, and landing in it crashed on `layout.center[0].fields`.
  * @returns the section, its first (forward) or last (backward) column, and -1/0/1 rows to move
  */
 export function nextSection(config: ParsedGridConfig, from: ColType, forward: boolean) {
@@ -163,7 +163,7 @@ export const cellRowKeyNavigationCellRowHandler = (
         const colLeft: number[] = [];
         const widths: number[] = [];
         let lastLeft = 0;
-        const columnsCenter = ctx.gridInterface.__getGridConfig().columnsCenter;
+        const columnsCenter = ctx.gridInterface.__getGridConfig().layout.center;
         columnsCenter.forEach((c) => {
             colLeft.push(lastLeft);
             widths.push(c.width);
@@ -180,12 +180,12 @@ export const cellRowKeyNavigationCellRowHandler = (
         switch (colType) {
             case 'left-pinned':
                 // the cell number is kept, like in the other sections, and clamped below.
-                // (moving left used to jump to the last cell, read from columnsCenter[gotoCol] -
+                // (moving left used to jump to the last cell, read from layout.center[gotoCol] -
                 // a crash when there were more left pinned than center columns)
                 if (currentKey === ARROW_RIGHT_KEY) {
                     gotoCol = gotoCol + 1;
 
-                    if (!config.columnsPinnedLeft[gotoCol]) {
+                    if (!config.layout.left[gotoCol]) {
                         ({
                             colType: gotoColType,
                             column: gotoCol,
@@ -196,7 +196,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                 } else if (currentKey === ARROW_LEFT_KEY) {
                     gotoCol = gotoCol - 1;
 
-                    if (!config.columnsPinnedLeft[gotoCol]) {
+                    if (!config.layout.left[gotoCol]) {
                         ({
                             colType: gotoColType,
                             column: gotoCol,
@@ -212,11 +212,11 @@ export const cellRowKeyNavigationCellRowHandler = (
                 if (currentKey === ARROW_RIGHT_KEY) {
                     gotoCol = gotoCol + 1;
 
-                    if (!config.columnsCenter[gotoCol]) {
-                        if (config.columnsPinnedRight.length) {
+                    if (!config.layout.center[gotoCol]) {
+                        if (config.layout.right.length) {
                             gotoColType = 'right-pinned';
                             gotoCol = 0;
-                        } else if (config.columnsPinnedLeft.length) {
+                        } else if (config.layout.left.length) {
                             gotoColType = 'left-pinned';
                             gotoCol = 0;
                             gotoRow = gotoRow + 1;
@@ -238,13 +238,13 @@ export const cellRowKeyNavigationCellRowHandler = (
                 } else if (currentKey === ARROW_LEFT_KEY) {
                     gotoCol = gotoCol - 1;
 
-                    if (!config.columnsCenter[gotoCol]) {
-                        if (config.columnsPinnedLeft.length) {
+                    if (!config.layout.center[gotoCol]) {
+                        if (config.layout.left.length) {
                             gotoColType = 'left-pinned';
-                            gotoCol = config.columnsPinnedLeft.length - 1;
-                        } else if (config.columnsPinnedRight.length) {
+                            gotoCol = config.layout.left.length - 1;
+                        } else if (config.layout.right.length) {
                             gotoColType = 'right-pinned';
-                            gotoCol = config.columnsPinnedRight.length - 1;
+                            gotoCol = config.layout.right.length - 1;
 
                             gotoRow = gotoRow - 1;
                             gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
@@ -254,7 +254,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                             }
                         } else {
                             gotoColType = 'middle-pinned';
-                            gotoCol = config.columnsCenter.length - 1;
+                            gotoCol = config.layout.center.length - 1;
                             gotoRow = gotoRow - 1;
                             gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                             if (gotoRow < 0) {
@@ -277,7 +277,7 @@ export const cellRowKeyNavigationCellRowHandler = (
             case 'right-pinned':
                 if (currentKey === ARROW_RIGHT_KEY) {
                     gotoCol = gotoCol + 1;
-                    if (!config.columnsPinnedRight[gotoCol]) {
+                    if (!config.layout.right[gotoCol]) {
                         ({
                             colType: gotoColType,
                             column: gotoCol,
@@ -287,7 +287,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                     }
                 } else if (currentKey === ARROW_LEFT_KEY) {
                     gotoCol = gotoCol - 1;
-                    if (!config.columnsPinnedRight[gotoCol]) {
+                    if (!config.layout.right[gotoCol]) {
                         ({
                             colType: gotoColType,
                             column: gotoCol,
@@ -301,18 +301,18 @@ export const cellRowKeyNavigationCellRowHandler = (
 
         switch (gotoColType) {
             case 'left-pinned':
-                if (gotoCell > config.columnsPinnedLeft[gotoCol].rows.length - 1) {
-                    gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
+                if (gotoCell > config.layout.left[gotoCol].fields.length - 1) {
+                    gotoCell = config.layout.left[gotoCol].fields.length - 1;
                 }
                 break;
             case 'middle-pinned':
-                if (gotoCell > config.columnsCenter[gotoCol].rows.length - 1) {
-                    gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
+                if (gotoCell > config.layout.center[gotoCol].fields.length - 1) {
+                    gotoCell = config.layout.center[gotoCol].fields.length - 1;
                 }
                 break;
             case 'right-pinned':
-                if (gotoCell > config.columnsPinnedRight[gotoCol].rows.length - 1) {
-                    gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
+                if (gotoCell > config.layout.right[gotoCol].fields.length - 1) {
+                    gotoCell = config.layout.right[gotoCol].fields.length - 1;
                 }
                 break;
         }
@@ -358,7 +358,7 @@ export const cellRowKeyNavigationCellRowHandler = (
         const colLeft: number[] = [];
         const widths: number[] = [];
         let lastLeft = 0;
-        const columnsCenter = ctx.gridInterface.__getGridConfig().columnsCenter;
+        const columnsCenter = ctx.gridInterface.__getGridConfig().layout.center;
         columnsCenter.forEach((c) => {
             colLeft.push(lastLeft);
             widths.push(c.width);
@@ -377,7 +377,7 @@ export const cellRowKeyNavigationCellRowHandler = (
         switch (colType) {
             case 'left-pinned':
                 if (currentKey === ARROW_DOWN_KEY) {
-                    isLastCell = gotoCell === config.columnsPinnedLeft[column].rows.length - 1;
+                    isLastCell = gotoCell === config.layout.left[column].fields.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
                     } else {
@@ -395,7 +395,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                             gotoRow = 0;
                             filterClass = 'filter-';
                         }
-                        gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
+                        gotoCell = config.layout.left[gotoCol].fields.length - 1;
                     }
                 }
 
@@ -403,7 +403,7 @@ export const cellRowKeyNavigationCellRowHandler = (
 
             case 'middle-pinned':
                 if (currentKey === ARROW_DOWN_KEY) {
-                    isLastCell = gotoCell === config.columnsCenter[column].rows.length - 1;
+                    isLastCell = gotoCell === config.layout.center[column].fields.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
                     } else {
@@ -421,7 +421,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                             gotoRow = 0;
                             filterClass = 'filter-';
                         }
-                        gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
+                        gotoCell = config.layout.center[gotoCol].fields.length - 1;
                     }
                 }
 
@@ -429,7 +429,7 @@ export const cellRowKeyNavigationCellRowHandler = (
 
             case 'right-pinned':
                 if (currentKey === ARROW_DOWN_KEY) {
-                    isLastCell = gotoCell === config.columnsPinnedRight[column].rows.length - 1;
+                    isLastCell = gotoCell === config.layout.right[column].fields.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
                     } else {
@@ -447,7 +447,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                             gotoRow = 0;
                             filterClass = 'filter-';
                         }
-                        gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
+                        gotoCell = config.layout.right[gotoCol].fields.length - 1;
                     }
                 }
                 break;
@@ -493,7 +493,7 @@ export const cellRowKeyNavigationCellRowHandler = (
         const colLeft: number[] = [];
         const widths: number[] = [];
         let lastLeft = 0;
-        const columnsCenter = ctx.gridInterface.__getGridConfig().columnsCenter;
+        const columnsCenter = ctx.gridInterface.__getGridConfig().layout.center;
         columnsCenter.forEach((c) => {
             colLeft.push(lastLeft);
             widths.push(c.width);
@@ -513,7 +513,7 @@ export const cellRowKeyNavigationCellRowHandler = (
         switch (colType) {
             case 'left-pinned':
                 if (currentKey === TAB_KEY && !reverse) {
-                    isLastCell = gotoCell === config.columnsPinnedLeft[column].rows.length - 1;
+                    isLastCell = gotoCell === config.layout.left[column].fields.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
                     } else {
@@ -521,7 +521,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                         gotoCell = 0;
                     }
 
-                    if (!config.columnsPinnedLeft[gotoCol]) {
+                    if (!config.layout.left[gotoCol]) {
                         ({
                             colType: gotoColType,
                             column: gotoCol,
@@ -537,17 +537,17 @@ export const cellRowKeyNavigationCellRowHandler = (
                         gotoCol = gotoCol - 1;
                     }
 
-                    if (!config.columnsPinnedLeft[gotoCol]) {
+                    if (!config.layout.left[gotoCol]) {
                         ({
                             colType: gotoColType,
                             column: gotoCol,
                             row: gotoRow,
                             filterClass
                         } = leaveSection(ctx, config, scrollerEl, colType, false, gotoRow));
-                        gotoCell = sectionColumns(config, gotoColType)[gotoCol].rows.length - 1;
+                        gotoCell = sectionColumns(config, gotoColType)[gotoCol].fields.length - 1;
                     } else if (gotoCol < column) {
-                        // last cell of the previous left pinned column (was read from columnsCenter)
-                        gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
+                        // last cell of the previous left pinned column (was read from layout.center)
+                        gotoCell = config.layout.left[gotoCol].fields.length - 1;
                     }
                 }
 
@@ -555,7 +555,7 @@ export const cellRowKeyNavigationCellRowHandler = (
 
             case 'middle-pinned':
                 if (currentKey === TAB_KEY && !reverse) {
-                    isLastCell = gotoCell === config.columnsCenter[column].rows.length - 1;
+                    isLastCell = gotoCell === config.layout.center[column].fields.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
                     } else {
@@ -563,12 +563,12 @@ export const cellRowKeyNavigationCellRowHandler = (
                         gotoCell = 0;
                     }
 
-                    if (!config.columnsCenter[gotoCol]) {
-                        if (config.columnsPinnedRight.length) {
+                    if (!config.layout.center[gotoCol]) {
+                        if (config.layout.right.length) {
                             gotoColType = 'right-pinned';
                             gotoCol = 0;
                             gotoCell = 0;
-                        } else if (config.columnsPinnedLeft.length) {
+                        } else if (config.layout.left.length) {
                             gotoColType = 'left-pinned';
                             gotoCol = 0;
                             gotoCell = 0;
@@ -594,20 +594,20 @@ export const cellRowKeyNavigationCellRowHandler = (
                     } else {
                         gotoCol = gotoCol - 1;
 
-                        if (config.columnsCenter[gotoCol]) {
-                            gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
+                        if (config.layout.center[gotoCol]) {
+                            gotoCell = config.layout.center[gotoCol].fields.length - 1;
                         }
                     }
 
-                    if (!config.columnsCenter[gotoCol]) {
-                        if (config.columnsPinnedLeft.length) {
+                    if (!config.layout.center[gotoCol]) {
+                        if (config.layout.left.length) {
                             gotoColType = 'left-pinned';
-                            gotoCol = config.columnsPinnedLeft.length - 1;
-                            gotoCell = config.columnsPinnedLeft[gotoCol].rows.length - 1;
-                        } else if (config.columnsPinnedRight.length) {
+                            gotoCol = config.layout.left.length - 1;
+                            gotoCell = config.layout.left[gotoCol].fields.length - 1;
+                        } else if (config.layout.right.length) {
                             gotoColType = 'right-pinned';
-                            gotoCol = config.columnsPinnedRight.length - 1;
-                            gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
+                            gotoCol = config.layout.right.length - 1;
+                            gotoCell = config.layout.right[gotoCol].fields.length - 1;
                             gotoRow = gotoRow - 1;
                             gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                             if (gotoRow < 0) {
@@ -616,8 +616,8 @@ export const cellRowKeyNavigationCellRowHandler = (
                             }
                         } else {
                             gotoColType = 'middle-pinned';
-                            gotoCol = config.columnsCenter.length - 1;
-                            gotoCell = config.columnsCenter[gotoCol].rows.length - 1;
+                            gotoCol = config.layout.center.length - 1;
+                            gotoCell = config.layout.center[gotoCol].fields.length - 1;
                             gotoRow = gotoRow - 1;
                             gotoRow = overrideGroupRow(ctx, currentKey, gotoRow);
                             if (gotoRow < 0) {
@@ -639,7 +639,7 @@ export const cellRowKeyNavigationCellRowHandler = (
 
             case 'right-pinned':
                 if (currentKey === TAB_KEY && !reverse) {
-                    isLastCell = gotoCell === config.columnsPinnedRight[column].rows.length - 1;
+                    isLastCell = gotoCell === config.layout.right[column].fields.length - 1;
                     if (!isLastCell) {
                         gotoCell = gotoCell + 1;
                     } else {
@@ -647,7 +647,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                         gotoCell = 0;
                     }
 
-                    if (!config.columnsPinnedRight[gotoCol]) {
+                    if (!config.layout.right[gotoCol]) {
                         ({
                             colType: gotoColType,
                             column: gotoCol,
@@ -661,19 +661,19 @@ export const cellRowKeyNavigationCellRowHandler = (
                         gotoCell = gotoCell - 1;
                     } else {
                         gotoCol = gotoCol - 1;
-                        if (config.columnsPinnedRight[gotoCol]) {
-                            gotoCell = config.columnsPinnedRight[gotoCol].rows.length - 1;
+                        if (config.layout.right[gotoCol]) {
+                            gotoCell = config.layout.right[gotoCol].fields.length - 1;
                         }
                     }
 
-                    if (!config.columnsPinnedRight[gotoCol]) {
+                    if (!config.layout.right[gotoCol]) {
                         ({
                             colType: gotoColType,
                             column: gotoCol,
                             row: gotoRow,
                             filterClass
                         } = leaveSection(ctx, config, scrollerEl, colType, false, gotoRow));
-                        gotoCell = sectionColumns(config, gotoColType)[gotoCol].rows.length - 1;
+                        gotoCell = sectionColumns(config, gotoColType)[gotoCol].fields.length - 1;
                     }
                 }
                 break;

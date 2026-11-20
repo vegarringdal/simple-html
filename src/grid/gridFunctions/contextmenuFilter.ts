@@ -1,7 +1,7 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Entity, GroupRow } from '../../datasource/entity';
-import { and, type FilterExpression, isFilterGroup, where } from '../../datasource/filterExpression';
+import { and, type FilterExpression, type FilterOperator, isFilterGroup, where } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
@@ -9,6 +9,7 @@ import type { ColType } from './colType';
 import { createElement } from './createElement';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
+import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
@@ -65,8 +66,6 @@ export function contextmenuFilter(
      * @returns
      */
     const searchTemplate = (reRender: () => void) => {
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-
         if (!getContext().data) {
             return null;
         }
@@ -88,7 +87,7 @@ export function contextmenuFilter(
                 filterCallback(
                     ctx,
                     null,
-                    cellConfig,
+                    attribute,
                     intersection.length ? intersection : null,
                     getContext().searchInput ? getContext().searchInput : null,
                     !!intersection.length
@@ -97,7 +96,7 @@ export function contextmenuFilter(
                 filterCallback(
                     ctx,
                     null,
-                    cellConfig,
+                    attribute,
                     getData().dataFilterSet.size ? Array.from(getData().dataFilterSet) : null,
                     getContext().searchInput ? getContext().searchInput : null,
                     false
@@ -259,15 +258,13 @@ export function contextmenuFilter(
      * inner render so its easier to rerender when excel filter changes
      */
     const innerRender = () => {
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
         const type = ctx.gridInterface.getDatasource().getField(attribute).type;
 
         const selected = 'simple-html-grid-menu-item simple-html-grid-menu-item-selected';
         const notSelected = 'simple-html-grid-menu-item';
 
-        if (!cellConfig.operator) {
-            cellConfig.operator = ctx.gridInterface.getDatasource().getFilterFromType(type);
-        }
+        // the operator picked before (state), else the column's, else the type's default
+        const operator = getHeaderFilterOperator(ctx, attribute);
 
         const filterTemplate = () => {
             // a boolean column has no operators to choose from
@@ -275,10 +272,16 @@ export function contextmenuFilter(
                 return null;
             }
 
-            const updateFilter = () => {
-                filterCallback(ctx, cellConfig.currentFilterValue, cellConfig);
+            /**
+             * the operator picked is state, the filter runs again with the value the cell has
+             */
+            const setOperator = (picked: FilterOperator) => {
+                ctx.gridInterface.__setHeaderFilterOperator(attribute, picked);
+                filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
                 ctx.gridInterface.__callSubscribers('filter-operator-change', {
-                    cellConfig,
+                    field: attribute,
+                    operator: picked,
+                    column: ctx.gridInterface.__getGridConfig().columns[attribute],
                     rebuildHeader: () => rebuildHeaderColumns(ctx)
                 });
             };
@@ -287,30 +290,27 @@ export function contextmenuFilter(
                 return html` <div class="simple-html-grid-menu-section">Set Operator:</div>
                     <hr class="hr-solid" />
                     <div
-                        class=${cellConfig.operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                        class=${operator === 'GREATER_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
-                            cellConfig.operator = 'GREATER_THAN_OR_EQUAL_TO';
-                            updateFilter();
+                            setOperator('GREATER_THAN_OR_EQUAL_TO');
                             removeContextMenu(ctx);
                         }}
                     >
                         Greater than or equal
                     </div>
                     <div
-                        class=${cellConfig.operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
+                        class=${operator === 'LESS_THAN_OR_EQUAL_TO' ? selected : notSelected}
                         @click=${() => {
-                            cellConfig.operator = 'LESS_THAN_OR_EQUAL_TO';
-                            updateFilter();
+                            setOperator('LESS_THAN_OR_EQUAL_TO');
                             removeContextMenu(ctx);
                         }}
                     >
                         Less than or equal
                     </div>
                     <div
-                        class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
+                        class=${operator === 'EQUAL' ? selected : notSelected}
                         @click=${() => {
-                            cellConfig.operator = 'EQUAL';
-                            updateFilter();
+                            setOperator('EQUAL');
                             removeContextMenu(ctx);
                         }}
                     >
@@ -322,30 +322,27 @@ export function contextmenuFilter(
                 <div class="simple-html-grid-menu-section">Set Operator:</div>
                 <hr class="hr-solid" />
                 <div
-                    class=${cellConfig.operator === 'EQUAL' ? selected : notSelected}
+                    class=${operator === 'EQUAL' ? selected : notSelected}
                     @click=${() => {
-                        cellConfig.operator = 'EQUAL';
-                        updateFilter();
+                        setOperator('EQUAL');
                         removeContextMenu(ctx);
                     }}
                 >
                     Equal
                 </div>
                 <div
-                    class=${cellConfig.operator === 'NOT_EQUAL_TO' ? selected : notSelected}
+                    class=${operator === 'NOT_EQUAL_TO' ? selected : notSelected}
                     @click=${() => {
-                        cellConfig.operator = 'NOT_EQUAL_TO';
-                        updateFilter();
+                        setOperator('NOT_EQUAL_TO');
                         removeContextMenu(ctx);
                     }}
                 >
                     Not Equal
                 </div>
                 <div
-                    class=${cellConfig.operator === 'CONTAINS' ? selected : notSelected}
+                    class=${operator === 'CONTAINS' ? selected : notSelected}
                     @click=${() => {
-                        cellConfig.operator = 'CONTAINS';
-                        updateFilter();
+                        setOperator('CONTAINS');
                         removeContextMenu(ctx);
                     }}
                 >
@@ -362,8 +359,7 @@ export function contextmenuFilter(
             const rest = withoutField(datasource.getFilter(), attribute);
             const blankCondition = where(attribute, operator);
 
-            const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-            cellConfig.currentFilterValue = null;
+            ctx.gridInterface.__setHeaderFilterValue(attribute, null);
 
             if (rest && isFilterGroup(rest) && rest.group !== 'OR') {
                 // an AND root (anything but OR is AND, as the filter runs it): one more condition in it
@@ -386,10 +382,7 @@ export function contextmenuFilter(
          */
         const clearColumnFilter = () => {
             const datasource = ctx.gridInterface.getDatasource();
-            const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-            if (cellConfig) {
-                cellConfig.currentFilterValue = null;
-            }
+            ctx.gridInterface.__setHeaderFilterValue(attribute, null);
 
             datasource.setFilter(withoutField(datasource.getFilter(), attribute));
             rebuildHeaderColumns(ctx);

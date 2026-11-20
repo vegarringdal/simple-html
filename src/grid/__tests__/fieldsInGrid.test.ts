@@ -26,8 +26,7 @@ beforeEach(() => {
 
 const columns = (...names: string[]): GridConfig => ({
     readonly: false,
-    columnsCenter: names.map((name) => ({ rows: [name], width: 100 })),
-    attributes: names.map((attribute) => ({ attribute }))
+    layout: { center: names.map((name) => ({ fields: [name], width: 100 })) }
 });
 
 /**
@@ -125,11 +124,13 @@ describe('fields in the grid - booleans', () => {
 describe('fields in the grid - dynamicCellTypeColumn', () => {
     const config = (): GridConfig => ({
         readonly: false,
-        columnsCenter: [
-            { rows: ['valueType'], width: 100 },
-            { rows: ['value'], width: 200 }
-        ],
-        attributes: [{ attribute: 'valueType' }, { attribute: 'value', dynamicCellTypeColumn: 'valueType' }]
+        columns: { value: { dynamicCellTypeColumn: 'valueType' } },
+        layout: {
+            center: [
+                { fields: ['valueType'], width: 100 },
+                { fields: ['value'], width: 200 }
+            ]
+        }
     });
 
     const rows = () => [
@@ -167,8 +168,8 @@ describe('fields in the grid - dynamicCellTypeColumn', () => {
 
 describe('fields in the grid - labels', () => {
     const config = (): GridConfig => ({
-        columnsCenter: ['own', 'field', 'first_name'].map((name) => ({ rows: [name], width: 100 })),
-        attributes: [{ attribute: 'own', label: 'Column label' }, { attribute: 'field' }, { attribute: 'first_name' }]
+        columns: { own: { label: 'Column label' } },
+        layout: { center: ['own', 'field', 'first_name'].map((name) => ({ fields: [name], width: 100 })) }
     });
     const fields = { fields: { own: { label: 'Field label' }, field: { label: 'Field label' } } };
 

@@ -272,7 +272,7 @@ describe('grid rendering - config', () => {
 
     it('expect only configured columns to be rendered', async () => {
         const config = simpleConfig();
-        config.columnsCenter = [{ rows: ['firstname'], width: 100 }];
+        config.layout = { center: [{ fields: ['firstname'], width: 100 }] };
         const { element } = await mountGrid(config);
 
         expect(Object.keys(renderedRows(element)[0].values)).toEqual(['firstname']);

@@ -1,5 +1,6 @@
 import type { Entity, GroupRow } from '../datasource/entity';
-import type { Attribute } from './gridConfig';
+import type { FilterOperator } from '../datasource/filterExpression';
+import type { ColumnConfig } from './gridConfig';
 import type { ColType } from './gridFunctions/colType';
 import type { HTMLCellElement } from './gridFunctions/HTMLCellElement';
 
@@ -64,7 +65,7 @@ export interface GridEvents {
 
     /**
      * The focus button of a cell was clicked, or Space pressed in the cell. The button is shown
-     * by `focusButton` on the attribute.
+     * by `focusButton` on the column (`ColumnConfig.focusButton`).
      *
      * - `target`: the cell's input, focus it to give the focus back to the cell
      * - `originalEvent`: the focus event of the cell (button clicked) or the keydown (Space)
@@ -86,14 +87,28 @@ export interface GridEvents {
 
     /**
      * An operator was picked in the "Set Operator" part of the filter cell menu, and the filter
-     * ran with it.
+     * ran with it. The operator is state, `getState().headerFilters[field].operator`.
      *
-     * - `cellConfig`: the attribute config of the column, `cellConfig.operator` is the new operator.
-     *   Change it to change what the header shows, e.g. `placeHolderFilter`
-     * - `rebuildHeader()`: renders the header again, call it after changing `cellConfig`
+     * - `field`: the column's field
+     * - `operator`: the operator picked
+     * - `column`: the options of the column as the grid uses them (from `GridConfig.columns`). Change
+     *   them to change what the header shows, e.g. `placeholderFilter`
+     * - `rebuildHeader()`: renders the header again, call it after changing `column`
+     *
+     * Was `{ cellConfig, rebuildHeader }` in v5, with the operator in `cellConfig.operator`.
+     *
+     * @example
+     * ```ts
+     * gridInterface.on('filter-operator-change', (data) => {
+     *     data.column.placeholderFilter = data.operator; // show the operator in the empty filter cell
+     *     data.rebuildHeader();
+     * });
+     * ```
      */
     'filter-operator-change': {
-        cellConfig: Attribute;
+        field: string;
+        operator: FilterOperator;
+        column: ColumnConfig;
         rebuildHeader: () => void;
     };
 
