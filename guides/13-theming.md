@@ -119,11 +119,15 @@ variables:
 - `--simple-html-grid-new-color` - the plus of a new row
 - `--simple-html-grid-edited-color` - the pencil of an edited row, the marker of an edited cell
 - `--simple-html-grid-deleted-color` - the trash can of a row marked for deletion
+- `--simple-html-grid-conflict-color` - a conflict with the server: the arrows of the row number, the
+  marker of a field in conflict, see [Live data](16-live-data.md#how-the-grid-shows-them)
+- `--simple-html-grid-merged-color` - the flash of a cell a merge changed (`mergeHighlight`), it fades
+  out: a see-through colour
 - `--simple-html-grid-error-color` and `--simple-html-grid-error-bg-color` - a cell and a row with an
   error: the border of the cell, the bar and the exclamation mark of the row number, the tint, see
   [How the grid shows the errors](05-editing.md#how-the-grid-shows-the-errors)
 
-The icons and the marker are graphics: the new, edited and deleted colours have a contrast of at least
+The icons and the marker are graphics: the new, edited, deleted and conflict colours have a contrast of at least
 3:1 to the rows, the row numbers and the selected rows, in light and in dark, also under an error's
 tint (WCAG 1.4.11). Keep that when you change them. Each state has a shape of its own too, the colour is
 not the only thing that tells them apart.
@@ -226,6 +230,8 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-edited-color` | the marker of an edited cell, the pencil of an edited row (`editedMarker`, `rowStatus`) | `#9a3412` | `#fdba74` |
 | `--simple-html-grid-new-color` | the plus of a new row (`rowStatus`) | `#166534` | `#86efac` |
 | `--simple-html-grid-deleted-color` | the trash can of a row marked for deletion (`rowStatus`) | `#57534e` | `#d1d5db` |
+| `--simple-html-grid-conflict-color` | a conflict with the server: the arrows of the row number, the marker of a field in conflict | `#6d28d9` | `#ddd6fe` |
+| `--simple-html-grid-merged-color` | the flash of a cell a merge changed (`mergeHighlight`), fading out | `rgba(250, 204, 21, 0.45)` | `rgba(250, 204, 21, 0.35)` |
 | `--simple-html-grid-multiline-color` | the marker of a cell with more lines than it shows (`FieldConfig.multiline`) | `#475569` | `#e2e8f0` |
 | `--simple-html-grid-totals-bg-color` | the totals row under the rows (`totalsRow`), see [Aggregates](18-aggregates.md) | `#e8edf3` | `#2a3441` |
 | `--simple-html-grid-totals-font-color` | the text of the totals row | `#1f2328` | `#f9fafb` |

@@ -454,10 +454,14 @@ tooltip's first line and the text a screen reader reads with the row number.
 | `rowStatus.new` | `New row` | a new row: the tooltip of its row number, and for a screen reader |
 | `rowStatus.edited` | `Edited` | an edited row |
 | `rowStatus.deleted` | `Marked for deletion` | a row marked for deletion |
+| `rowStatus.conflict` | `Changed on the server too: {fields}` | a row with fields in conflict (`datasource.getConflicts()`): the tooltip of its row number, and for a screen reader. `{fields}`: their column labels, joined with `, ` |
+| `rowStatus.removedOnServer` | `Removed on the server, it has changes here` | a row the server removed (`upsert(rows, { removeMissing: true })`) that has changes here |
 | `rowStatus.error` | `Error: {errors}` | a row with an error, for a screen reader (the tooltip has the errors, a line each). `{errors}`: the server's error and the fields' errors, `Age: Must be at least 18`, joined with `, ` |
 | `cell.editedMarker.tooltip` | `Original value: {value}` | the tooltip of the marker of an edited cell. `{value}`: the value before the edit, shown with the field's formatter |
 | `cell.editedMarker.blank` | `(blank)` | the `{value}` of an original value that is blank |
 | `cell.editedMarker.revert` | `Click to revert` | the tooltip's last line, in an editable grid: a click on the marker puts the original value back |
+| `cell.conflictMarker.tooltip` | `Changed on the server to {value} while you edited it` | the tooltip of the marker of a field in conflict. `{value}`: the server's value, shown with the field's formatter |
+| `cell.conflictMarker.take` | `Click to take the server's value` | its last line, in an editable grid: a click on the marker takes the server's value |
 
 ### Multiline cells
 

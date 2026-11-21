@@ -1426,6 +1426,31 @@ in the console. All passed. Found and fixed:
   container). Browser: group-look.js / group-look2.js screenshots at 3x, light and dark: two levels, a
   group's end, a collapsed group, a row with aggregates
 
+### Live data: the flash of a merge, the look of a conflict (item 38)
+
+* `GridConfig.mergeHighlight` (default on, harmless without upsert: no merge times): showCellMerged.ts
+  puts `simple-html-cell-merged` on the cell element when it is rendered in the second after the merge
+  (`getMergedAt`), the css fades a `::before` tint out over 1s (`::after` is the range's). A new merge
+  of a cell that still has the class flips `data-merged-again`: an animation of another name starts it
+  again, no forced reflow (a merge of many cells would force one per cell)
+* the conflict marker is the edited marker with a class (showCellEdited.ts): shown with or without
+  `editedMarker`, the user has to choose; in a conflict the field's original is the server's value, so
+  the marker's click (`resetField`) is `resolveConflict(row, field, 'remote')`. No new subscription:
+  a conflict that comes or goes already puts its row in `rows-changed`
+* the row number: `rowStatusIcon(state, hasError, hasConflict)`, the arrows icon, the conflict lines in
+  the tooltip and the screen reader's text (renderRowSelector.ts)
+* the conflict colour is violet: at least 3:1 to the rows, the row numbers and the selected rows, under
+  an error's tint too (light `#6d28d9`, dark `#ddd6fe` - the first picks `#7c3aed` / `#c4b5fd` were
+  2.8:1 under the tint)
+* tests: mergeLook.test.ts (the flash: which cells, not for a value sent unchanged or set from code,
+  gone after the second, started again, off; the conflict: marker, tooltip, classes, the row number
+  and its screen reader text, a row removed on the server, without editedMarker, the click, keep mine,
+  readonly; the icon order); texts.test.ts shows the four new texts on a keyed grid of its own.
+  Browser: live-check.js (26/26: the flash's class and animation, the conflict look, keep mine, the
+  marker's click, the button) and screenshots light and dark
+* not done: "Keep mine" / "Take server's" in the row menu - the menus are being reorganized into
+  submenus, they go in after that
+
 ## Considered, not done
 
 ## Candidates / not started

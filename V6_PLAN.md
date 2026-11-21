@@ -399,10 +399,10 @@ built on it.
 37. [x] **Merge by key**: `datasource.upsert(rows, { removeMissing })` updates rows by key, adds new
         ones, keeps selection, scroll position and expanded groups, and runs filter/sort/group
         once. For polling or push updates from a server. **M**
-38. [ ] **Show what changed**: a short highlight on cells a merge changed. A merge that hits a cell
+38. [x] **Show what changed**: a short highlight on cells a merge changed. A merge that hits a cell
         the user is editing, or has edited and not saved, is marked as a conflict instead of
-        overwriting it. **M** - the data part is done (conflicts, `getMergedAt`); the highlight and
-        the conflict look in the cell are next
+        overwriting it. **M** - the data part (conflicts, `getMergedAt`), the flash
+        (`GridConfig.mergeHighlight`) and the conflict look (the marker, the arrows on the row number)
 
 Needs phase 4: a merge every second on a large grid has to stay cheap.
 
@@ -421,7 +421,7 @@ Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** items 34, 35 (fill down, selection summary), 38 UI, 39, 42 - the rest is done.
+**Now:** items 34, 35 (fill down, selection summary), 39, 42 - the rest is done.
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies

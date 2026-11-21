@@ -275,10 +275,15 @@ default:
 | edited | a pencil | an edited cell: a small triangle in its top left corner |
 | marked for deletion | a trash can, the number struck through | the text struck through |
 | with an error | an exclamation mark, and a red bar | a cell with an error: a red border and a tint |
+| in conflict with the server | two arrows | a field in conflict: a larger triangle in the conflict colour |
 
 - **One icon**: a row marked for deletion shows the trash can (it is not saved, its errors do not
-  stop a save), else a row with an error the exclamation mark, else the plus or the pencil.
-- **The tooltip of the row number** has the state, then the errors, a line each: `Edited` and
+  stop a save), else a row with an error the exclamation mark, else a row in conflict the arrows,
+  else the plus or the pencil.
+- **A conflict** is a value the server changed while the user had it edited, see
+  [Live data](16-live-data.md#how-the-grid-shows-them): the marker's tooltip has the server's value, a
+  click takes it.
+- **The tooltip of the row number** has the state, the conflicts, then the errors, a line each: `Edited` and
   `Age: Must be at least 18`. A screen reader reads them with the row number, see
   [Accessibility](14-accessibility.md#what-a-screen-reader-gets).
 - **An edited cell** is a cell whose value differs from its original value, as `getChanges()` compares

@@ -1747,6 +1747,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         multilineTooltipLines: options.multilineTooltipLines ?? TOOLTIP_LINES,
         rowStatus: options.rowStatus ?? true,
         editedMarker: options.editedMarker ?? true,
+        mergeHighlight: options.mergeHighlight ?? true,
         copyHeaders: options.copyHeaders ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,

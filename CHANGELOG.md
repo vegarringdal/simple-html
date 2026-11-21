@@ -1300,6 +1300,25 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   rows, greyed out with none selected), in every grid. Texts `row.export*`.
 - Guide "Export" and sample "Export to CSV".
 
+#### Live data: the flash of a merge, the look of a conflict (item 38)
+
+##### Added
+- **`GridConfig.mergeHighlight`** (default `true`): a cell whose value `datasource.upsert()` changed
+  flashes once - a tint that fades out over a second (`--simple-html-grid-merged-color`); the cell
+  element has the class `simple-html-cell-merged` meanwhile. The hook in the "Live data" guide is for a
+  look of your own now.
+- **The look of a conflict**: a field the server changed while the user had it edited has a larger
+  marker in the conflict colour (`--simple-html-grid-conflict-color`), with or without `editedMarker`;
+  its tooltip has the server's value and a click takes it (as `resolveConflict(row, field, 'remote')`,
+  undoable). The cell element has the class `simple-html-cell-conflict`, the marker
+  `simple-html-cell-conflict-marker`.
+- **The row number of a row in conflict** shows two arrows (`rowStatus`), its tooltip and the screen
+  reader's text say which fields (`Changed on the server too: Price`) or that the server removed the row.
+  An error wins the icon, then a conflict, then new / edited; a deleted row keeps its trash can.
+- Texts `rowStatus.conflict`, `rowStatus.removedOnServer`, `cell.conflictMarker.tooltip`,
+  `cell.conflictMarker.take`.
+- The "Live data" sample uses the grid's flash, no hook.
+
 #### Group rows: a +/- box and the lines of the levels, like a tree (user request)
 
 ##### Changed

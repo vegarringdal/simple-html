@@ -51,6 +51,11 @@
     --simple-html-grid-edited-color: light-dark(#9a3412, #fdba74);
     --simple-html-grid-new-color: light-dark(#166534, #86efac);
     --simple-html-grid-deleted-color: light-dark(#57534e, #d1d5db);
+    /* a conflict with the server (datasource.getConflicts()): the marker of a field in conflict and the
+       arrows on the row number. At least 3:1 like the row state */
+    --simple-html-grid-conflict-color: light-dark(#6d28d9, #ddd6fe);
+    /* the flash of a cell a merge changed (GridConfig.mergeHighlight), it fades out */
+    --simple-html-grid-merged-color: light-dark(rgba(250, 204, 21, 0.45), rgba(250, 204, 21, 0.35));
     /* the marker of a cell of several lines (FieldConfig.multiline): there are more lines than it
        shows. At least 3:1 against the rows and a selected row, like the row state */
     --simple-html-grid-multiline-color: light-dark(#475569, #e2e8f0);
@@ -824,6 +829,10 @@
     color: var(--simple-html-grid-error-color);
 }
 
+.simple-html-grid .simple-html-row-status-conflict {
+    color: var(--simple-html-grid-conflict-color);
+}
+
 /* a row marked for deletion: its number and the text of its cells struck through */
 .simple-html-grid .row-is-deleted.simple-html-row-status .simple-html-selector-text,
 .simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted input,
@@ -849,6 +858,52 @@
 
 .simple-html-grid .simple-html-grid-col-cell .simple-html-cell-edited-marker-revert {
     cursor: pointer;
+}
+
+/* a field in conflict: the marker in the conflict colour, larger - the user has to choose */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-cell-conflict-marker {
+    width: 10px;
+    height: 10px;
+    background-color: var(--simple-html-grid-conflict-color);
+}
+
+/**
+ * the flash of a cell a merge changed (GridConfig.mergeHighlight, showCellMerged.ts): a tint over the
+ * cell that fades out, once - when the class is added. data-merged-again is flipped for a new merge
+ * while the cell has the class: an animation of another name starts again. A layer the pointer goes
+ * through, under the input (1000)
+ */
+@keyframes simple-html-grid-merged {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes simple-html-grid-merged-again {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-merged::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-color: var(--simple-html-grid-merged-color);
+    opacity: 0;
+    animation: simple-html-grid-merged 1s ease-out;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-merged[data-merged-again]::before {
+    animation-name: simple-html-grid-merged-again;
 }
 
 /**

@@ -38,16 +38,19 @@ export function renderRowSelector(
 
     // the server's error and the validation errors of the row, a line each
     const errors = rowErrorLines(ctx, rowData);
+    // its conflicts with the server (an upsert), a line each
+    const conflicts = rowConflictLines(ctx, rowData);
 
     // the row's state: an icon, the tooltip's first line, the text for a screen reader
     const rowStatus = ctx.gridInterface.__getGridConfig().rowStatus;
     const state = rowStatus ? rowStateOf(rowData) : null;
-    const icon = rowStatus ? rowStatusIcon(state, errors.length > 0) : null;
+    const icon = rowStatus ? rowStatusIcon(state, errors.length > 0, conflicts.length > 0) : null;
     const stateText = state ? gridText(ctx, ROW_STATE_TEXT[state]) : '';
-    const tooltip = [stateText, ...errors].filter((line) => line !== '').join('\n');
-    // the tooltip is not read out: the state and the errors are text in the cell, hidden on screen
+    const tooltip = [stateText, ...conflicts, ...errors].filter((line) => line !== '').join('\n');
+    // the tooltip is not read out: the state, the conflicts and the errors are text in the cell, hidden
+    // on screen
     const screenReaderText = rowStatus
-        ? [stateText, errors.length ? gridText(ctx, 'rowStatus.error', { errors: errors.join(', ') }) : '']
+        ? [stateText, ...conflicts, errors.length ? gridText(ctx, 'rowStatus.error', { errors: errors.join(', ') }) : '']
               .filter((text) => text !== '')
               .join(', ')
         : '';
@@ -123,6 +126,27 @@ function rowErrorLines(ctx: Grid, rowData: Entity | GroupRow | undefined): strin
     }
     for (const [field, messages] of ctx.gridInterface.getDatasource().__getRowErrors(rowData) ?? []) {
         lines.push(`${getColumnLabel(ctx, field)}: ${messages.join(', ')}`);
+    }
+    return lines;
+}
+
+/**
+ * The conflicts of a row (`datasource.getConflicts()`), for the row selector's tooltip: a line for the
+ * fields the server changed while they were edited, their column labels, and one when the server
+ * removed the row and it has changes here. [] when it has none
+ */
+function rowConflictLines(ctx: Grid, rowData: Entity | GroupRow | undefined): string[] {
+    const conflicts = rowData && !isGroupRow(rowData) ? ctx.gridInterface.getDatasource().__getRowConflicts(rowData) : undefined;
+    if (!conflicts) {
+        return [];
+    }
+    const lines: string[] = [];
+    const fields = Array.from(conflicts.keys()).filter((field): field is string => field !== null);
+    if (fields.length) {
+        lines.push(gridText(ctx, 'rowStatus.conflict', { fields: fields.map((field) => getColumnLabel(ctx, field)).join(', ') }));
+    }
+    if (conflicts.has(null)) {
+        lines.push(gridText(ctx, 'rowStatus.removedOnServer'));
     }
     return lines;
 }
