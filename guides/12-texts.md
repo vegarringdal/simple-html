@@ -172,8 +172,8 @@ gridInterface.rebuild(); // every grid of the page
 - The placeholders of the date formatters, `YYYY-MM-DD` and `DD.MM.YYYY` in an empty date header
   filter: give the column a `placeholderFilter`, or use a formatter of your own with another
   `placeholder` (see [Formatting](08-formatting.md#a-formatter-of-your-own)).
-- Symbols and numbers: `✕` closes the filter editor, `✓` marks the dimmed values on, `🔍` is an empty
-  header filter, `?` a footer chip without a field or operator, `(12)` the count of a value in the
+- Symbols and numbers: `✕` closes the filter editor, `✓` marks the dimmed values on, `?` a footer
+  chip without a field or operator, `(12)` the count of a value in the
   value list.
 - `headerTitle` of a `DateInterface` calendar: your own text.
 
@@ -385,6 +385,16 @@ The short names of the operators, on a chip:
 | `footer.operator.NOT_IN` | `not in` |
 | `footer.operator.IS_BLANK` | `is blank` |
 | `footer.operator.IS_NOT_BLANK` | `is not blank` |
+
+### Header filters
+
+What an empty header filter shows, when its column has no `placeholderFilter` of its own. A date
+filter shows its formatter's format (`YYYY-MM-DD`), a boolean filter is a checkbox.
+
+| id | English | shown |
+| --- | --- | --- |
+| `filter.placeholder.text` | `Text` | an empty header filter of a text field |
+| `filter.placeholder.number` | `Number` | an empty header filter of a number field |
 
 ### Screen readers
 

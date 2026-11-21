@@ -176,6 +176,8 @@ const norwegian: Record<TextId, string> = {
     // for screen readers
     'grid.label': 'Tabell',
     'grid.rowSelector': 'radvelger',
+    'filter.placeholder.text': 'Tekst',
+    'filter.placeholder.number': 'Tall',
     'grid.filter': 'Filtrer {label}',
     'grid.groupToggle': '{name} ({total})',
     'grid.removeGroup': 'Fjern grupperingen på {title}',

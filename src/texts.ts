@@ -175,6 +175,11 @@ const DEFAULTS = {
     'footer.operator.IS_BLANK': 'is blank',
     'footer.operator.IS_NOT_BLANK': 'is not blank',
 
+    // the placeholder of an empty header filter, by the field's type - a date filter shows its
+    // formatter's format (YYYY-MM-DD), a boolean filter is a checkbox
+    'filter.placeholder.text': 'Text',
+    'filter.placeholder.number': 'Number',
+
     // labels for screen readers (aria-label)
     'grid.label': 'Grid',
     'grid.rowSelector': 'row selector',

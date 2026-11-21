@@ -321,7 +321,7 @@ export type ColumnConfig = {
      */
     placeholderRow?: string;
     /**
-     * shown in the empty header filter. Default: the formatter's placeholder (date fields), else a search icon
+     * shown in the empty header filter. Default: the formatter's placeholder (date fields), else the field's type: `Text` or `Number` (texts `filter.placeholder.*`)
      *
      * @sample required-placeholders
      */

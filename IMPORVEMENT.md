@@ -1238,6 +1238,13 @@ in the console. All passed. Found and fixed:
 * checked in Chromium at 480x611, 1280x400 and 1280x800 (`menu-place-check.js`): the whole menu inside
   the window in every case; tests for each placement rule
 
+### Header filter placeholders by type (user request)
+
+* an empty text / number header filter showed 🔍; a date one shows its format (YYYY-MM-DD). Now text
+  shows `Text`, number `Number` (texts `filter.placeholder.*`, translated in the Norwegian sample);
+  the column's `placeholderFilter` and the formatter's `placeholder` come first, boolean stays a
+  checkbox. Checked in Chromium light and dark
+
 ## Considered, not done
 
 ## Candidates / not started

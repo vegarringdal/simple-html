@@ -2060,7 +2060,11 @@ New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can cha
 
 ## Other behaviour changes
 
-Found while writing the v6 docs: each did not do what its name or its docs said.
+* **An empty text or number header filter shows `Text` / `Number`**, not 🔍 - the texts
+  `filter.placeholder.text` / `filter.placeholder.number`. A test that looked for the 🔍 placeholder
+  has to look for those; `placeholderFilter` on a column still wins.
+
+Also found while writing the v6 docs: each did not do what its name or its docs said.
 
 * **`setData()` clears `currentEntity`** (to `null`, and sends `current-entity`) when the current row
   is no longer in the data. Replaced rows are new objects, so this is the case after every

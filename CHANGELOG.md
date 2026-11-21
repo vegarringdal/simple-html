@@ -969,6 +969,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The `row-is-*` states had no built-in look.
 - A row's errors were in its tooltip only; a screen reader now gets them with the row number.
 
+#### Header filters say what to type
+
+##### ⚠️ Breaking changes
+- An empty text or number header filter shows its type, `Text` / `Number` (text ids
+  `filter.placeholder.text` / `filter.placeholder.number`), where it showed a 🔍 - like a date filter
+  shows its format. A column's `placeholderFilter` still wins; a boolean filter is a checkbox as before.
+
 #### Menus stay in the window
 
 ##### Fixed
