@@ -969,6 +969,17 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The `row-is-*` states had no built-in look.
 - A row's errors were in its tooltip only; a screen reader now gets them with the row number.
 
+#### Row menu: undo a cell edit, a row's edits
+
+##### ⚠️ Breaking changes
+- The row menu's "Edit:" section is first in the menu (it was after Delete). Default texts:
+  `row.edit.undo` "Undo last change", `row.edit.revertCell` "Undo cell edit", `row.edit.revertRows`
+  "Undo row edits" (with the hint "selected rows").
+
+##### Added
+- `row.edit.revertRow` "Undo row edits": the row right clicked back to its original values and
+  unmarked for deletion, without selecting it first - one undo step.
+
 #### Undo and redo (item 28)
 
 ##### ⚠️ Breaking changes

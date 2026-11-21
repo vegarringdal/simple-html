@@ -47,7 +47,7 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   row status (`rowStatus: false`) the row number is the number only: show the state another way, a
   column of `__rowState` say.
 - **An edited cell**: its marker is hidden from a screen reader and is no stop of Tab; the row's state
-  says the row is edited. Ctrl+Z takes an edit back, the row menu's *Revert cell* and a click on the
+  says the row is edited. Ctrl+Z takes an edit back, the row menu's *Undo cell edit* and a click on the
   marker are for the mouse.
 - **A cell of several lines** (`FieldConfig.multiline`, or a value with a line break) is a readonly
   textbox with its first line as the value. When it has more lines, its description

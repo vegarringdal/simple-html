@@ -547,7 +547,7 @@ export class Datasource<T = any> {
      * `getChanges()` would not list) is left as it is.
      *
      * It is an edit like any other: validated, and one step of the undo history - {@link undo} brings
-     * the edited value back. The grid's row menu has it as "Revert cell" (`row.edit.revertCell`). The
+     * the edited value back. The grid's row menu has it as "Undo cell edit" (`row.edit.revertCell`). The
      * grid shows it on its own, as any value set on a row (the `rows-changed` event). A conflict of the
      * field goes with the edit, see {@link getConflicts}.
      *
@@ -579,7 +579,7 @@ export class Datasource<T = any> {
      * - The fields are validated as for an edit: an error of an edit goes away with it, an original
      *   value that breaks a rule shows its error.
      * - The displayed rows are not rebuilt, the rows stay where they are. The grid's row menu has it
-     *   as "Revert rows" (`row.edit.revertRows`, the selected rows). The grid shows it on its own, as
+     *   as "Undo row edits" (`row.edit.revertRow`, the row right clicked, and `row.edit.revertRows`, the selected rows). The grid shows it on its own, as
      *   any value set on a row (the `rows-changed` event).
      * - The conflicts of the rows go with their changes, see {@link getConflicts}.
      *

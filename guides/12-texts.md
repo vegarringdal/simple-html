@@ -213,12 +213,13 @@ Right click on a cell.
 | `row.delete.undo` | `Undo` | takes the mark off the selected rows |
 | `row.delete.undo.hint` | `selected rows` | its hint |
 | `row.edit` | `Edit:` | section header, an editable grid |
-| `row.edit.undo` | `Undo` | undoes the last step of the undo history |
+| `row.edit.undo` | `Undo last change` | undoes the last step of the undo history |
 | `row.edit.undo.hint` | `Ctrl+Z` | its hint, the key |
 | `row.edit.redo` | `Redo` | redoes the last step undone |
 | `row.edit.redo.hint` | `Ctrl+Y` | its hint, the key |
-| `row.edit.revertCell` | `Revert cell` | puts the original value of the cell back |
-| `row.edit.revertRows` | `Revert rows` | puts the original values of the selected rows back |
+| `row.edit.revertCell` | `Undo cell edit` | puts the original value of the cell back |
+| `row.edit.revertRow` | `Undo row edits` | puts the original values of the row right clicked back |
+| `row.edit.revertRows` | `Undo row edits` | puts the original values of the selected rows back |
 | `row.edit.revertRows.hint` | `selected rows` | its hint |
 | `row.summary` | `Summary:` | section header, a number column |
 | `row.summary.count` | `Count: {count}` | `{count}`: the number of selected rows |

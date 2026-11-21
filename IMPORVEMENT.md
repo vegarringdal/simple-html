@@ -1216,6 +1216,18 @@ in the console. All passed. Found and fixed:
   scrollbar shadow and two translucent sample backgrounds), every token light-dark(), body.dark only
   the color-scheme, the OS default and the stored choice. Screenshots light/dark in Chromium
 
+### Row menu: undo a cell edit and a row's edits (user request)
+
+* the user missed "undo a cell edit / undo row edit" in the row menu: the entries existed (Revert cell,
+  Revert rows) but only for an editable grid (the screenshot was a readonly grid - paste, clear and
+  delete were missing too), at the bottom of the menu, and "Revert rows" works on the *selected* rows
+  only - a click in a cell does not select its row, so the row right clicked could not be reverted
+* now: the Edit: section is first in the menu; *Undo last change* (Ctrl+Z), *Redo* (Ctrl+Y), *Undo
+  cell edit*, *Undo row edits* (new `row.edit.revertRow`: the row right clicked, no selection needed,
+  one undo step, takes a deletion mark off), *Undo row edits (selected rows)*
+* tests: the order, the row entry (values, mark, one undo step, greyed out on an unchanged row), no
+  section in a readonly grid
+
 ## Considered, not done
 
 ## Candidates / not started

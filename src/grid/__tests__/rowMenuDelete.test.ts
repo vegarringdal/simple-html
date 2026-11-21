@@ -43,12 +43,12 @@ const states = (datasource: { getAllData(): { firstname?: string; __rowState?: s
     datasource.getAllData().map((row) => [row.firstname, row.__rowState]);
 
 describe('row menu - delete: the ids', () => {
-    it('expect the delete ids in MENU_IDS.row, after clear and before the edit section', () => {
+    it('expect the delete ids in MENU_IDS.row, after clear and before the summary', () => {
         const ids: readonly string[] = MENU_IDS.row;
         const at = ids.indexOf('row.delete');
         expect(ids.slice(at, at + 3)).toEqual(DELETE_IDS);
         expect(ids[at - 1]).toEqual('row.clear.cell');
-        expect(ids[at + 3]).toEqual('row.edit');
+        expect(ids[at + 3]).toEqual('row.summary');
     });
 });
 
