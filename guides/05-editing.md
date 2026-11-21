@@ -122,12 +122,12 @@ Opening a menu or another editor saves and closes it too - one is open at a time
 
 ## Edits from code
 
-Set the value on a row you got from the datasource, then render the cells again:
+Set the value on a row you got from the datasource. The grid shows it on its own, in the next
+animation frame (see [Live data](16-live-data.md)) - no `refresh()`:
 
 ```ts
 const row = datasource.getDataRows()[0];
 row.name = 'Anna';
-gridInterface.refresh();
 ```
 
 The datasource wraps your objects in proxies that track the edits. A value set on the object you
@@ -267,8 +267,8 @@ default:
   [Reverting a cell or a row](#reverting-a-cell-or-a-row). In an editable grid only: a readonly grid
   shows the markers of the rows it is given, a click does nothing. The marker is not a stop of Tab
   and a screen reader does not see it; Ctrl+Z takes an edit back from the keyboard.
-- **They follow the edits**: as the user types, after undo and redo, a paste, a delete. After an
-  edit from code call `gridInterface.refresh()`, as for the value.
+- **They follow the edits**: as the user types, after undo and redo, a paste, a delete, and an edit
+  from code.
 
 The [editing sample](#sample/editing) shows them. Both can be turned off:
 
@@ -429,7 +429,6 @@ rows, and takes their deletion marks off:
 const row = datasource.getDataRows()[0];
 datasource.resetField(row, 'name');
 datasource.resetRows(datasource.getSelectedRows());
-gridInterface.refresh(); // as after any edit from code
 ```
 
 - A revert is a step of the history: `undo()` brings the edits back.
@@ -611,8 +610,8 @@ check what the save sends only.
 - The tooltips are the grid's own, as on the filter editor's buttons: `tooltips: false` in the
   config turns them off. The `data-tooltip` attribute is written either way, for a tooltip library
   of your own.
-- An edit in the grid shows its errors at once, and so does `validate()`. After an edit from code,
-  call `gridInterface.refresh()`, as for its value.
+- An edit in the grid shows its errors at once, and so does `validate()`. An edit from code shows
+  them in the next animation frame, with its value.
 - A field with the `required` rule shows stripes on its empty editable cells, see
   [Required fields and placeholders](#required-fields-and-placeholders).
 
@@ -727,15 +726,14 @@ const hooks: GridHooks = {
 const grid = createGrid(host, { config, datasource, hooks });
 
 datasource.getDataContainer().setErrors(new Map([['2', 'The name is taken']]));
-grid.refresh();
 
 const row = datasource.getDataRows()[0];
 console.log(row.__rowError); // the message, or null
 ```
 
 The grid shows `__rowError` on the row number, with the row's validation errors: the class
-`simple-html-row-error`, and the message as the first line of its tooltip. Call `refresh()` after
-`setErrors()`. To mark the cells of the row too, use the `cellClass` hook as above.
+`simple-html-row-error`, and the message as the first line of its tooltip, in the next animation
+frame after `setErrors()`. To mark the cells of the row too, use the `cellClass` hook as above.
 
 **Server errors and validation errors are kept apart.** A server error is the row's `__rowError`,
 set with `setErrors()`; a validation error is a field's, from the rules (`getErrors()`). `setErrors()`
@@ -777,3 +775,12 @@ createGrid(host, { config, datasource: companies });
 
 ```sample required-placeholders
 ```
+
+## Edits and live data
+
+A value set from code shows in the grid on its own, in the next animation frame: the datasource sends
+`rows-changed` with the rows changed, and the grid renders the ones on screen - `refresh()` is not
+needed after an edit from code, an undo or a revert. The cell the user is typing in is never rendered
+over. When rows from a server are merged with `upsert()`, an edit the user has not saved stays: a
+field the server changed too is a conflict, resolved with `resolveConflict()`. See
+[Live data](16-live-data.md).

@@ -304,3 +304,23 @@ describe('entityHandler - group properties', () => {
         expect(row.__controller.__edited).toEqual(false);
     });
 });
+
+describe('entityHandler - names that look like the proxy fields', () => {
+    it('expect a field with one underscore, or an empty name, read off the target', () => {
+        const row = makeRow({ _id: 7, _: 'x', '': 'empty', __own: 'not a proxy field' });
+        expect(row._id).toBe(7);
+        expect(row._).toBe('x');
+        expect(row['']).toBe('empty');
+        // a __ name the proxy does not know is the target's too
+        expect(row.__own).toBe('not a proxy field');
+    });
+
+    it('expect a symbol property read off the target', () => {
+        const tag = Symbol('tag');
+        const data: Record<string | symbol, unknown> = { name: 'a' };
+        data[tag] = 'tagged';
+        const row = makeRow(data as Record<string, any>) as unknown as Record<symbol, unknown>;
+        expect(row[tag]).toBe('tagged');
+        expect(row[Symbol.iterator]).toBeUndefined();
+    });
+});

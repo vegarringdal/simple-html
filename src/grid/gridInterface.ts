@@ -25,11 +25,14 @@ import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
+import { rebuildFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { requestRowsRender } from './gridFunctions/renderChangedRows';
 import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
+import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
@@ -442,9 +445,14 @@ export class GridInterface<T> {
 
     /**
      * Renders the visible cells again, with the values the rows have now. For when something the
-     * cells show changed without the grid knowing: a value set on a row object outside of the grid's
-     * editing, or what the `isReadonly` / `cellClass` hooks read. Cheap, the columns and the
-     * header are not built again - that is {@link rebuild}.
+     * cells show changed without a row changing: what the `isReadonly` / `cellClass` hooks read, a
+     * value written to an object of your own instead of the row. A value set on a row shows on its
+     * own (the datasource's `rows-changed`, rendered in the next animation frame), and a scroll only
+     * renders the rows that scroll in. Cheap, the columns and the header are not built again - that
+     * is {@link rebuild}.
+     *
+     * The cell input the user has typed in since it got the focus is not rendered, so its text is
+     * kept: it is rendered once the focus leaves it.
      *
      * Does nothing while the grid is not on the page.
      *
@@ -452,10 +460,11 @@ export class GridInterface<T> {
      *
      * @example
      * ```ts
-     * gridInterface.on('cell-click', (data) => {
-     *     data.rowData.lastClicked = new Date().toISOString();
-     *     gridInterface.refresh();
-     * });
+     * let highlighted = 'ACME CORP';
+     * gridInterface.updateHooks({ cellClass: (row) => (row.company === highlighted ? { input: 'highlight' } : null) });
+     *
+     * highlighted = 'GLOBEX'; // the hook reads it, the grid does not know
+     * gridInterface.refresh();
      * ```
      */
     public refresh() {
@@ -1106,7 +1115,8 @@ export class GridInterface<T> {
             follow('collection-grouped', (_data, grid) => grid.rebuild()),
             follow('collection-expand', (_data, grid) => grid.rebuild()),
             follow('collection-collapse', (_data, grid) => grid.rebuild()),
-            follow('collection-changed', (_data, grid) => grid.rebuild()),
+            // an upsert keeps the row elements: the input the user types in stays, with its focus
+            follow('collection-changed', (data, grid) => (data.info === 'upsert' ? this.updateAfterMerge(grid) : grid.rebuild())),
             follow('current-entity', (_data, grid) => this.updateRows(grid)),
             follow('selection-change', (_data, grid) => this.updateRows(grid)),
             follow('select', (data, grid) => this.scrollToRow(grid, data.row)),
@@ -1119,7 +1129,9 @@ export class GridInterface<T> {
                 if (data.info === 'undo' || data.info === 'redo') {
                     this.updateRows(grid);
                 }
-            })
+            }),
+            // values set from code, by undo, by an upsert ...: the rows on screen, in the next frame
+            follow('rows-changed', (data, grid) => requestRowsRender(grid, data.rows))
         ];
     }
 
@@ -1138,6 +1150,22 @@ export class GridInterface<T> {
      */
     private updateRows(grid: Grid) {
         this.__dataSourceUpdated();
+        triggerScrollEvent(grid);
+    }
+
+    /**
+     * after an upsert added or removed rows, or moved them: the sizes, the footer's counts and every
+     * row on screen - not a rebuild, the row and column elements stay. They do not depend on the rows,
+     * and rebuilding them would take the input the user types in away, with its focus
+     */
+    private updateAfterMerge(grid: Grid) {
+        // connected with connectInterface, but not put in the dom yet: it is built when it is
+        if (!grid.domCreated) {
+            return;
+        }
+        this.__dataSourceUpdated();
+        updateMainElementSizes(grid);
+        rebuildFooter(grid);
         triggerScrollEvent(grid);
     }
 

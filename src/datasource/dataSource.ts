@@ -13,6 +13,7 @@ import type { Formatter } from './formatter';
 import { DEFAULT_FORMATTER_IDS, getRegisteredFormatter } from './formatterRegistry';
 import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
+import type { Conflict, UpsertOptions, UpsertResult } from './liveData';
 import { Selection } from './selection';
 import type { SelectionMode } from './selectionMode';
 import { Sort } from './sort';
@@ -546,8 +547,9 @@ export class Datasource<T = any> {
      * `getChanges()` would not list) is left as it is.
      *
      * It is an edit like any other: validated, and one step of the undo history - {@link undo} brings
-     * the edited value back. The grid's row menu has it as "Revert cell" (`row.edit.revertCell`). From
-     * code, call `gridInterface.refresh()` after, as for any edit from code.
+     * the edited value back. The grid's row menu has it as "Revert cell" (`row.edit.revertCell`). The
+     * grid shows it on its own, as any value set on a row (the `rows-changed` event). A conflict of the
+     * field goes with the edit, see {@link getConflicts}.
      *
      * @param row the row, one the datasource handed out. A row that is not in the data is skipped
      * @param field the field
@@ -577,8 +579,9 @@ export class Datasource<T = any> {
      * - The fields are validated as for an edit: an error of an edit goes away with it, an original
      *   value that breaks a rule shows its error.
      * - The displayed rows are not rebuilt, the rows stay where they are. The grid's row menu has it
-     *   as "Revert rows" (`row.edit.revertRows`, the selected rows). From code, call
-     *   `gridInterface.refresh()` after, as for any edit from code.
+     *   as "Revert rows" (`row.edit.revertRows`, the selected rows). The grid shows it on its own, as
+     *   any value set on a row (the `rows-changed` event).
+     * - The conflicts of the rows go with their changes, see {@link getConflicts}.
      *
      * @param rows a row or a list of rows, e.g. `getSelectedRows()`. Rows that are not in the data are
      * skipped
@@ -587,7 +590,6 @@ export class Datasource<T = any> {
      * @example
      * ```ts
      * datasource.resetRows(datasource.getSelectedRows());
-     * gridInterface.refresh();
      * ```
      */
     public resetRows(rows: Entity | Entity[]): void {
@@ -1061,7 +1063,14 @@ export class Datasource<T = any> {
      */
     private __forgetRemovedRows(before: readonly Entity[]): () => void {
         const kept = new Set<Entity>(this.getAllData());
-        const removed = before.filter((row) => !kept.has(row));
+        return this.__forgetRows(before.filter((row) => !kept.has(row)));
+    }
+
+    /**
+     * {@link __forgetRemovedRows} for a method that knows the rows it removed
+     * @param removed the rows removed from the data
+     */
+    private __forgetRows(removed: readonly Entity[]): () => void {
         const current = this.currentEntity;
         const currentGone = removed.some((row) => row === current);
         if (currentGone) {
@@ -1251,7 +1260,8 @@ export class Datasource<T = any> {
         assertOptions('setData', options, 'setData(rows, { add: true })');
         const { add = false, refilter = true } = options;
         if (add) {
-            this.__collectionFiltered.push(...this.__dataContainer.setData(rows, { add }));
+            // concat, not push(...rows): a spread of very many rows is more arguments than a call takes
+            this.__collectionFiltered = this.__collectionFiltered.concat(this.__dataContainer.setData(rows, { add }));
         } else {
             this.__dataContainer.setData(rows);
             this.__collectionFiltered = this.getAllData().slice();
@@ -1272,6 +1282,235 @@ export class Datasource<T = any> {
         if (currentGone) {
             this.__callSubscribers('current-entity', {});
         }
+    }
+
+    /**
+     * Merges rows from a server into the data by their key: for polling, or for changes a server
+     * pushes. Needs a key (`new Datasource({ key: 'id' })`).
+     *
+     * - **A row whose key is in the data** gets the values of the fields the incoming row has, as the
+     *   server's values: the value and its original - the row is not edited by them. A field the
+     *   incoming row does not have stays as it is. Not a step of the undo history; the fields are
+     *   validated as for an edit.
+     * - **A field the user has edited** keeps the user's value. The server's value becomes its original,
+     *   so `getChanges()` sends the user's value as an edit of what the server has now. When the server
+     *   changed the field too, it is a conflict (see {@link getConflicts}); when the server has the
+     *   user's value, the edit is done - not edited any more. A cell the user is typing in counts as
+     *   edited: it is never overwritten.
+     * - **A row marked for deletion** gets the values too, and keeps its mark.
+     * - **A key that is not in the data**: the row is added, a loaded row (not new, not edited) - the
+     *   object itself, as `setData()` adds it.
+     * - **A new row** (`addNewEmpty()`) is not on the server: its key is a generated one, it never matches.
+     * - **`removeMissing`**: the rows whose key is not among the rows are removed for good (their changes
+     *   leave the undo history) - not a new row, and not a row with changes of the user's (edits, a
+     *   deletion mark, a cell being typed in): that one stays, in conflict (`field: null`).
+     *
+     * The keys are compared as text: `7` and `'7'` are the same key. The key field is never written. A
+     * key given twice: the second row updates what the first one added or updated.
+     *
+     * Then the displayed rows are rebuilt once - filtered (see `refilter`, and `filterChangedOnly()`),
+     * sorted, grouped. The selection (it follows the key), the expanded groups and the grid's scroll
+     * position stay; a removed row leaves the selection, and {@link currentEntity} is set to `null`
+     * when it is removed. `collection-changed` (`info: 'upsert'`) is sent once when rows were added or
+     * removed or the displayed rows changed - not when only values changed: the grid renders those
+     * from `rows-changed`, which follows in a microtask with the rows changed, then `conflicts-changed`
+     * when the conflicts changed.
+     *
+     * Cheap on many rows: one look up per row, by its key. The rows of the other datasources on the same
+     * container are merged too, call `reloadDatasource()` on them to show it.
+     *
+     * @param rows the server's rows, plain objects: each with its key, and the fields sent
+     * @param options `removeMissing` and `refilter`, see {@link UpsertOptions}
+     * @returns the rows added, updated and removed, and the conflicts it made, see {@link UpsertResult}
+     * @throws a `TypeError` when the datasource has no key, `rows` is no array, or a row has no key
+     * (blank) - checked first, nothing is merged then
+     *
+     * @sample live-data
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * interface Stock {
+     *     id: number;
+     *     name: string;
+     *     price: number;
+     * }
+     * declare function fetchStocks(): Promise<Stock[]>;
+     *
+     * const stocks = new Datasource<Stock>({ key: 'id', fields: { price: 'number' } });
+     * stocks.setData(await fetchStocks());
+     *
+     * // every second the rows the server has: gone there is gone here, unless it has changes here
+     * setInterval(async () => {
+     *     stocks.upsert(await fetchStocks(), { removeMissing: true });
+     * }, 1000);
+     *
+     * // one value pushed by the server: only the fields sent change
+     * stocks.upsert([{ id: 7, price: 12.5 }]);
+     * ```
+     */
+    public upsert(rows: Partial<T>[], options: UpsertOptions = {}): UpsertResult<T> {
+        assertOptions('upsert', options, 'upsert(rows, { removeMissing: true })');
+        const { removeMissing = false, refilter = true } = options;
+        // a copy: without grouping the displayed rows can be the filtered ones, which change in place
+        const displayedBefore = this.__collectionDisplayed.slice();
+        const result = this.__dataContainer.__upsert(rows, removeMissing) as UpsertResult<T>;
+        const notify = this.__forgetRows(result.removed);
+
+        if (!refilter) {
+            // the rows shown stay shown, the new ones are shown too
+            if (result.removed.length) {
+                const gone = new Set<Entity>(result.removed);
+                this.__collectionFiltered = this.__collectionFiltered.filter((row) => !gone.has(row));
+            }
+            // concat, not push(...added): a spread of very many rows is more arguments than a call takes
+            this.__collectionFiltered = this.__collectionFiltered.concat(result.added);
+        }
+        this.__internalUpdate(refilter, false);
+
+        // only values changed: rows-changed renders them, a rebuild of the grid is not needed
+        const added = result.added.length > 0;
+        const removed = result.removed.length > 0;
+        if (added || removed || !isSameDisplay(displayedBefore, this.__collectionDisplayed)) {
+            this.__callSubscribers(
+                'collection-changed',
+                removed ? { info: 'upsert', added, removed } : { info: 'upsert', added }
+            );
+        }
+        notify();
+        return result;
+    }
+
+    /**
+     * The conflicts {@link upsert} found: a field the server changed that the user has edited (the
+     * user's value is kept), or a row the server no longer has that has changes here (the row is kept) -
+     * see {@link Conflict}. Every row's, or the rows given, in the order of the rows. New objects every
+     * call: `local` is the value the row has now.
+     *
+     * A conflict stays until it is resolved ({@link resolveConflict}) or what it is about is gone: the
+     * field is not edited any more (reverted with `resetField()` or `resetRows()`, undone, typed back
+     * to the server's value, saved with `acceptChanges()`), the row has no changes any more, or the row
+     * leaves the data (`removeData()`, `setData()` without `add` ...). `resetData()` clears every one.
+     * `conflicts-changed` is sent when they change.
+     *
+     * The conflicts are those of the data container, so of every datasource sharing it.
+     *
+     * @param rows a row or a list of rows, default every row
+     *
+     * @sample live-data
+     * @example
+     * ```ts
+     * declare const conflictCount: HTMLElement;
+     *
+     * datasource.on('conflicts-changed', () => {
+     *     conflictCount.textContent = String(datasource.getConflicts().length);
+     * });
+     *
+     * for (const conflict of datasource.getConflicts()) {
+     *     if (conflict.field === null) {
+     *         console.log(`row ${conflict.row.__KEY} was removed on the server`);
+     *     } else {
+     *         console.log(`${conflict.field}: yours ${conflict.local}, the server's ${conflict.remote}`);
+     *     }
+     * }
+     * ```
+     */
+    public getConflicts(rows?: Entity | Entity[]): Conflict<T>[] {
+        return this.__dataContainer.__getConflicts(rows) as Conflict<T>[];
+    }
+
+    /**
+     * `true` when a row is in conflict, see {@link getConflicts}. Before a save, say: the user's values
+     * of a field in conflict overwrite the server's newer ones.
+     *
+     * @sample live-data
+     * @example
+     * ```ts
+     * declare const saveButton: HTMLButtonElement;
+     *
+     * datasource.on('conflicts-changed', () => {
+     *     saveButton.title = datasource.hasConflicts() ? 'Some of your changes were also changed on the server' : '';
+     * });
+     * ```
+     */
+    public hasConflicts(): boolean {
+        return this.__dataContainer.__hasConflicts();
+    }
+
+    /**
+     * Resolves a conflict, see {@link getConflicts}:
+     *
+     * - `'local'`: the user's value stays, still edited - `getChanges()` sends it, as an edit of the
+     *   server's value. For a row the server removed: the row stays with its changes, and a later
+     *   `upsert(rows, { removeMissing: true })` gives it no conflict again (it removes it once it has no
+     *   changes)
+     * - `'remote'`: the field gets the server's value - its original - as {@link resetField} does: an
+     *   edit, validated, a step of the undo history ({@link undo} brings the user's value back). For a
+     *   row the server removed: the row is removed, as {@link removeData} does, with its events
+     *
+     * The grid shows it on its own (`rows-changed`). Nothing happens when there is no such conflict.
+     *
+     * @param row the row
+     * @param field the field, `null` for a row the server removed
+     * @param take `'local'` for the user's value, `'remote'` for the server's
+     * @throws a `TypeError` when `take` is neither
+     *
+     * @sample live-data
+     * @example
+     * ```ts
+     * // the server wins every conflict
+     * for (const conflict of datasource.getConflicts()) {
+     *     datasource.resolveConflict(conflict.row, conflict.field, 'remote');
+     * }
+     * ```
+     */
+    public resolveConflict(row: Entity, field: string | null, take: 'local' | 'remote'): void {
+        if (take !== 'local' && take !== 'remote') {
+            throw new TypeError(`resolveConflict(row, field, take): take is 'local' or 'remote', not '${take}'`);
+        }
+        if (field === null && take === 'remote') {
+            if (this.__dataContainer.__rowConflicts(row)?.has(null)) {
+                this.removeData(row);
+            }
+            return;
+        }
+        this.__dataContainer.__resolveConflict(row, field, take);
+    }
+
+    /**
+     * When the last {@link upsert} changed the value of a field of a row: the `Date.now()` of that upsert.
+     * `undefined` when no upsert changed it. A value set by the user or by code does not count, nor
+     * does a conflict (the value stays the user's). For a short highlight on the cells a merge changed:
+     * the grid renders the rows an upsert changed, a `cellClass` hook can read it.
+     *
+     * @param row the row
+     * @param field the field
+     *
+     * @sample live-data
+     * @example
+     * ```ts
+     * // the cells an upsert changed in the last second get a class, with a css animation that runs once
+     * gridInterface.updateHooks({
+     *     cellClass: (row, field) => {
+     *         const at = datasource.getMergedAt(row, field);
+     *         return at !== undefined && Date.now() - at < 1000 ? { input: 'just-changed' } : null;
+     *     }
+     * });
+     * ```
+     */
+    public getMergedAt(row: Entity, field: string): number | undefined {
+        return this.__dataContainer.__mergedAt(row, field);
+    }
+
+    /**
+     * @internal
+     * the conflicts of a row, by field (`null` for the row as a whole): undefined when it has none. The
+     * grid reads it for every cell it renders, getConflicts() searches the rows and copies
+     */
+    public __getRowConflicts(
+        row: Entity
+    ): ReadonlyMap<string | null, { readonly remote: unknown; readonly original: unknown }> | undefined {
+        return this.__dataContainer.__rowConflicts(row);
     }
 
     /**
@@ -1346,10 +1585,13 @@ export class Datasource<T = any> {
     /**
      * runs sorting/grouping, used by setdata/and filter, so we dont rerun sort/grouping many times
      * this also does not call any events
+     * @param notifyForced `false` to leave out the `'__internalUpdate, forced'` event: upsert() sends
+     * its own event, when the displayed rows changed
      */
-    private __internalUpdate(reRunFilter: boolean) {
+    private __internalUpdate(reRunFilter: boolean, notifyForced = true) {
         let forceUpdate = false;
         if (
+            notifyForced &&
             !reRunFilter &&
             !this.__filter.getFilter() &&
             !this.__sorting.getLastSort().length &&
@@ -1699,6 +1941,13 @@ export class Datasource<T = any> {
         if (type === 'history-changed') {
             // the history is the container's, shared by the datasources on it - and so is its event
             return this.__dataContainer.__history.on(handler as EventHandler<DatasourceEvents['history-changed']>);
+        }
+        if (type === 'rows-changed' || type === 'conflicts-changed') {
+            // the rows and their conflicts are the container's too
+            return this.__dataContainer.__on(
+                type,
+                handler as EventHandler<DatasourceEvents['rows-changed' | 'conflicts-changed']>
+            );
         }
         return this.__events.on(type, handler);
     }
@@ -2462,4 +2711,34 @@ export class Datasource<T = any> {
  */
 function isChangedRow(row: Entity): boolean {
     return row.__rowState !== undefined;
+}
+
+/**
+ * true when two lists of displayed rows show the same: the same data rows at the same places, and
+ * group rows that show the same group the same way. Grouping makes new group rows every time, so
+ * those are compared by what the grid shows of them
+ */
+function isSameDisplay(before: readonly (Entity | GroupRow)[], after: readonly (Entity | GroupRow)[]): boolean {
+    if (before.length !== after.length) {
+        return false;
+    }
+    for (let i = 0; i < before.length; i++) {
+        const a = before[i];
+        const b = after[i];
+        if (a === b) {
+            continue;
+        }
+        if (
+            !isGroupRow(a) ||
+            !isGroupRow(b) ||
+            a.__groupID !== b.__groupID ||
+            a.__groupName !== b.__groupName ||
+            a.__groupLvl !== b.__groupLvl ||
+            a.__groupTotal !== b.__groupTotal ||
+            a.__groupExpanded !== b.__groupExpanded
+        ) {
+            return false;
+        }
+    }
+    return true;
 }

@@ -86,6 +86,9 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
     const { cell, row, field, formatter, readonly } = target;
     // the cell input, it gets the focus back
     const returnFocus = document.activeElement;
+    // the cell counts as being edited while the editor is open: a merge (datasource.upsert) does not
+    // overwrite it, a server value for it is a conflict - see History.startEditing
+    const history = ctx.gridInterface.getDatasource().getDataContainer().__history;
 
     const element = createElement(DIV, 'simple-html-grid');
     element.classList.add('simple-html-grid-reset', 'simple-html-grid-popover', 'simple-html-grid-text-editor');
@@ -142,6 +145,9 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
                 row[field] = formatter.parse(normalizeLineBreaks(text));
                 triggerScrollEvent(ctx);
             }
+            if (!readonly) {
+                history.endTyping();
+            }
             if (focusCell && hadFocus && returnFocus instanceof HTMLElement && returnFocus.isConnected) {
                 returnFocus.focus({ preventScroll: true });
             }
@@ -193,6 +199,10 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
     ctx.element.addEventListener('wheel', () => editor.close(true, false), { passive: true, signal });
 
     textarea.focus({ preventScroll: true });
+    // after the focus: the cell input's blur ended the editing of the cell (endTyping)
+    if (!readonly) {
+        history.startEditing(row, field);
+    }
     // setting the value put the caret at the end, set it there anyway: the focus does not move it
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     textarea.scrollTop = textarea.scrollHeight;

@@ -6,7 +6,7 @@ import type { SelectionMode } from './selectionMode';
  * Options for `new Datasource(options)`. All of them are optional, `new Datasource()` works.
  *
  * - `key` - the field that identifies a row. Selection follows the key, so it survives replacing
- *   the data with fresh rows from the server.
+ *   the data with fresh rows from the server, and `upsert()` merges rows from a server by it.
  * - `fields` - the schema: the type, label and formatter of each field. A field that is not listed
  *   is `'text'`, labelled with its name. Sorting, grouping, filtering and the grid all read the
  *   type from here. See {@link FieldConfig} and {@link FieldType}.
@@ -54,7 +54,8 @@ import type { SelectionMode } from './selectionMode';
  */
 export interface DatasourceOptions {
     /**
-     * the field that identifies a row, e.g. `'id'`. Rows without it get a generated key.
+     * the field that identifies a row, e.g. `'id'`. Rows without it get a generated key. `upsert()`
+     * needs it
      */
     key?: string;
 

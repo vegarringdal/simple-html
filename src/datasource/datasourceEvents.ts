@@ -29,14 +29,20 @@ export interface DatasourceEvents {
      * - `removeData()`: `{ removed: true, info: 'removeData', data }` - `data` is what was passed in
      * - `removeAllData()`: `{ removed: true, info: 'removeData', data: null }`
      * - `clearMarkedForDeletion()`: `{ removed: true, info: 'clearMarkedForDeletion' }`
+     * - `upsert()`: `{ info: 'upsert', added }`, with `removed: true` when it removed rows. Only when it
+     *   added or removed rows, or the displayed rows changed (the filter, the sort order or the groups).
+     *   An upsert that only changed values sends none: `rows-changed` has the rows
      */
     'collection-changed': {
-        /** `setData()` / `addNewEmpty()`: `true` when rows were added, `false` when the data was replaced */
+        /**
+         * `setData()` / `addNewEmpty()`: `true` when rows were added, `false` when the data was replaced.
+         * `upsert()`: `true` when it added rows
+         */
         added?: boolean;
         /** `true` when rows were removed */
         removed?: true;
-        /** which method removed rows */
-        info?: 'removeData' | 'clearMarkedForDeletion';
+        /** which method removed rows, or `'upsert'` */
+        info?: 'removeData' | 'clearMarkedForDeletion' | 'upsert';
         /** `removeData()`: the rows passed in. `removeAllData()`: `null` */
         data?: Entity | Entity[] | null;
     };
@@ -142,7 +148,9 @@ export interface DatasourceEvents {
      * - `'clear'`: the history was emptied - `clearHistory()`, `setData()` without `add`,
      *   `removeAllData()`, `resetData()`, `acceptChanges()`. Only when there was something in it
      * - `'remove'`: rows were removed for good (`removeData()`, `clearMarkedForDeletion()`, a new row
-     *   removed by `resetDataSelectionOnly()`) and their changes left the history
+     *   removed by `resetDataSelectionOnly()`, `upsert(rows, { removeMissing: true })`) and their changes
+     *   left the history. Or `upsert()` gave fields the server's value as their original, and a change
+     *   that does nothing now was dropped (see `upsert()`)
      *
      * The history is the data container's: every datasource on the same container sends it, for a
      * change made through any of them.
@@ -151,4 +159,42 @@ export interface DatasourceEvents {
         /** what changed the history, see above */
         info: 'edit' | 'undo' | 'redo' | 'clear' | 'remove';
     };
+
+    /**
+     * Values of rows changed, or what the grid shows of them: sent once the code that changed them is
+     * done (in a microtask) - one event however many rows and fields it set. The grid renders the rows
+     * of it that are on screen, in the next animation frame: a value set from code shows without
+     * `gridInterface.refresh()`.
+     *
+     * A row is in it when:
+     * - a field was set on it: from code (`row.price = 10`), by the user in the grid, by `undo()` /
+     *   `redo()`, `resetField()`, `resetRows()`, `resetData()`, `resolveConflict()`, or by `upsert()`
+     * - its deletion mark changed (`markForDeletion()`, undo ...) or its server error (`setErrors()`)
+     * - one of its conflicts came or went
+     *
+     * The rows `upsert()` or `setData()` added and the rows removed are not in it: `collection-changed`
+     * tells those. A row in it can have left the data since it changed.
+     *
+     * The rows are the data container's: every datasource on the same `DataContainer` sends it, for a
+     * change made through any of them.
+     */
+    'rows-changed': {
+        /** the rows, each once, in the order they first changed */
+        rows: Entity[];
+        /**
+         * the fields set on each row: `fields.get(row)`. Empty for a row whose deletion mark or server
+         * error changed, or whose conflict about the whole row came or went
+         */
+        fields: ReadonlyMap<Entity, ReadonlySet<string>>;
+    };
+
+    /**
+     * The conflicts changed: `upsert()` made one, or one went - resolved with `resolveConflict()`, the
+     * field is not edited any more, the row was saved (`acceptChanges()`), reset, or left the data.
+     * Sent once the code that changed them is done (in a microtask), after `rows-changed`. Empty
+     * payload, read `datasource.getConflicts()`.
+     *
+     * The conflicts are the data container's: every datasource on the same `DataContainer` sends it.
+     */
+    'conflicts-changed': Record<string, never>;
 }

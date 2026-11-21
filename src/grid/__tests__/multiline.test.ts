@@ -398,6 +398,37 @@ describe('multiline - closing the editor', () => {
         expect(document.activeElement).toBe(input);
     });
 
+    it('expect a merge while the editor is open to keep the cell: a conflict, and the saved text kept over it', async () => {
+        const { element, datasource } = await mountGrid(config(), data(), { key: 'name', ...multilineFields() });
+        openWithEnter(element, 'notes', 1);
+
+        datasource.upsert([{ name: 'b', notes: 'from the server' }]);
+
+        // the cell being edited is not overwritten: the server's value is a conflict
+        expect(notes(datasource)[1]).toEqual('one line');
+        expect(datasource.getConflicts()).toMatchObject([{ field: 'notes', remote: 'from the server' }]);
+
+        typeInEditor('mine');
+        press(textarea(), 'Enter', { ctrlKey: true });
+
+        expect(notes(datasource)[1]).toEqual('mine');
+        expect(datasource.getDataContainer().__history.editingCell()).toBeNull();
+        expect(datasource.getConflicts()).toMatchObject([{ field: 'notes', local: 'mine', remote: 'from the server' }]);
+    });
+
+    it('expect a merge while a read-only editor is open to update the cell', async () => {
+        const { element, datasource } = await mountGrid(config({ readonly: true }), data(), {
+            key: 'name',
+            ...multilineFields()
+        });
+        openWithEnter(element, 'notes', 1);
+
+        datasource.upsert([{ name: 'b', notes: 'from the server' }]);
+
+        expect(notes(datasource)[1]).toEqual('from the server');
+        expect(datasource.hasConflicts()).toBe(false);
+    });
+
     it('expect Ctrl+Enter to save once: one undo step, the cell shows it, Ctrl+Z in the cell takes it back', async () => {
         const { element, datasource } = await mountGrid(config(), data(), multilineFields());
         const input = openWithEnter(element, 'notes', 1);

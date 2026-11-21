@@ -394,14 +394,15 @@ built on it.
 
 ## Phase 7 - live data
 
-36. [ ] **Reactive cells**: setting a property from code (`row.price = 10`) re-renders the visible
+36. [x] **Reactive cells**: setting a property from code (`row.price = 10`) re-renders the visible
         cells on its own, batched per frame - no `triggerScrollEvent()` after edits from code. **S-M**
-37. [ ] **Merge by key**: `datasource.upsert(rows, { removeMissing })` updates rows by key, adds new
+37. [x] **Merge by key**: `datasource.upsert(rows, { removeMissing })` updates rows by key, adds new
         ones, keeps selection, scroll position and expanded groups, and runs filter/sort/group
         once. For polling or push updates from a server. **M**
 38. [ ] **Show what changed**: a short highlight on cells a merge changed. A merge that hits a cell
         the user is editing, or has edited and not saved, is marked as a conflict instead of
-        overwriting it. **M**
+        overwriting it. **M** - the data part is done (conflicts, `getMergedAt`); the highlight and
+        the conflict look in the cell are next
 
 Needs phase 4: a merge every second on a large grid has to stay cheap.
 

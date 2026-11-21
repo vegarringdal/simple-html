@@ -1023,6 +1023,49 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   stripped value was written back).
 - The edited-cell marker's tooltip cuts a long original value.
 
+### Phase 7 - live data
+
+#### Reactive cells, merge by key, conflicts (items 36, 37, 38 data)
+
+##### ⚠️ Breaking changes
+- A vertical scroll renders only the rows that scroll in. Something the cells show that changed
+  outside the datasource (what the `isReadonly` / `cellClass` hooks read, a value on an object of your
+  own) needs `gridInterface.refresh()`; before, the next scroll showed it by accident.
+- No render, `refresh()` included, renders the cell input the user has typed in since it got the
+  focus; it is rendered once the focus leaves it.
+- `collection-changed` `info` can be `'upsert'`; `history-changed` `'remove'` is also sent by `upsert()`
+  (removed rows, and history changes that became no-ops after a merge).
+
+##### Added
+- **Reactive cells**: a value set on a row (from code, undo/redo, `resetField()` / `resetRows()`,
+  `upsert()`), a deletion mark or a `setErrors()` error shows without `refresh()`: the grid renders the
+  changed rows on screen once per animation frame. Event `rows-changed` `{ rows, fields }`, once per
+  run of code.
+- **`datasource.upsert(rows, { removeMissing, refilter })`**: merges rows by key as server values
+  (value and original, not edited, no undo step, validated), adds new keys, and with `removeMissing`
+  removes the rows the server did not send (rows with local changes stay, in conflict). Keeps the
+  selection, scroll position and expanded groups, runs filter/sort/group once, returns
+  `{ added, updated, removed, conflicts }`. Keys compare as text (`7` matches `'7'`).
+- **Conflicts**: an edit the user has not saved, or a cell being typed in (or open in the multiline
+  editor), is never overwritten by a merge - the server's value becomes a conflict. `getConflicts()`,
+  `hasConflicts()`, `resolveConflict(row, field, 'local' | 'remote')`, event `conflicts-changed`, types
+  `Conflict`, `ValueConflict`, `RemovedConflict`, `UpsertOptions`, `UpsertResult`.
+- `datasource.getMergedAt(row, field)`: when the last merge changed a field, for a highlight.
+- Undoing an edit after the server changed the field goes back to the server's value, not the stale
+  original (the history is rebased on a merge).
+- Guide "Live data", sample "Live data".
+
+##### Fixed
+- `setData(rows, { add: true })` with very many rows (300 000) threw `RangeError: Maximum call stack
+  size exceeded` (`push(...rows)`).
+
+##### Performance
+- Vertical scroll, one row per step: 6.4 -> 2.3 ms on a 100 000 x 305 grid, 5.2 -> 2.2 ms grouped.
+- Reading a field through the row proxy has a fast path: sorting 100 000 rows 52 -> 44 ms, grouping
+  122 -> 112 ms.
+- `upsert()` of 100 000 rows with 1% changed: 56 ms (1000 rows into 100 000: 17 ms), plus the
+  filter/sort/group run when they are set.
+
 ### Phase 8 - more
 
 #### CSV export (item 41)

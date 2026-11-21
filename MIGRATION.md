@@ -2000,6 +2000,22 @@ change:
 * **Tab leaves the grid at its ends**: Tab on the last cell of the last row and Shift+Tab on the first
   header filter used to keep the focus in the grid.
 
+## Reactive cells and live data
+
+New in v6, see [Live data](guides/16-live-data.md). What changes for existing code:
+
+* **`refresh()` is not needed after an edit from code.** A value set on a row, an undo, a revert, a
+  deletion mark or `setErrors()` shows in the next animation frame (the datasource's `rows-changed`).
+  The calls do no harm.
+* **A vertical scroll renders only the rows that scroll in.** Something the cells show that changed
+  outside the datasource - what the `isReadonly` / `cellClass` hooks read, a value on an object of your
+  own - needs `gridInterface.refresh()`, as documented; in v5 the next scroll showed it by accident.
+* **No render, `refresh()` included, renders the cell input the user has typed in** while it has the
+  focus: its text is kept, it is rendered once the focus leaves it.
+* `collection-changed` can have `info: 'upsert'`; `history-changed` `'remove'` is also sent by
+  `upsert()`.
+* `setData(rows, { add: true })` works with any number of rows (it threw for ~300 000).
+
 ## Text of several lines
 
 See [Multiline text](guides/05-editing.md#multiline-text).

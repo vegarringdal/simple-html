@@ -71,6 +71,12 @@ export class History {
     /** true while the grid writes a keystroke, see typing() */
     private joining = false;
 
+    /**
+     * the cell the user is editing: written in by typing() since it got the focus, or given to
+     * startEditing(). Until endTyping(). See editingCell()
+     */
+    private editing: { row: Entity; field: string } | null = null;
+
     /** true while the history writes itself (undo, redo) or the container writes what it does not record */
     private paused = false;
 
@@ -83,8 +89,13 @@ export class History {
     /**
      * @param isSameValue true when setting `field` from `before` to `after` is no change: the edit
      * tracking's comparison, a `date` field compares on the day
+     * @param markWritten called after undo or redo wrote a row's deletion mark, which does not go
+     * through the row's proxy - the container tells the grid the row changed
      */
-    constructor(private isSameValue: (field: string, before: unknown, after: unknown) => boolean) {}
+    constructor(
+        private isSameValue: (field: string, before: unknown, after: unknown) => boolean,
+        private markWritten: (row: DataEntity) => void = () => undefined
+    ) {}
 
     /**
      * subscribes to `history-changed`, see DatasourceEvents
@@ -108,6 +119,10 @@ export class History {
      * Not while paused, and not when it changes nothing.
      */
     public record(change: HistoryChange): void {
+        // a keystroke of the grid: the cell is being edited, also when the key changed nothing
+        if (this.joining && change.field !== null) {
+            this.editing = { row: change.row, field: change.field };
+        }
         if (this.paused) {
             return;
         }
@@ -151,6 +166,27 @@ export class History {
      */
     public endTyping(): void {
         this.typingStep = null;
+        this.editing = null;
+    }
+
+    /**
+     * An editor of its own (an overlay over the cell, say) edits this cell and writes it when it
+     * closes: until `endTyping()` the cell counts as being edited, as for typing() - see editingCell().
+     * Call it once the editor has the focus: the cell's input calls endTyping() when it loses it
+     */
+    public startEditing(row: Entity, field: string): void {
+        this.editing = { row, field };
+    }
+
+    /**
+     * The cell the user is editing: the grid wrote a keystroke into it with typing() since it got the
+     * focus (also one that changed nothing), or an editor gave it to startEditing(). `null` once
+     * endTyping() was called - the focus left the cell. `upsert()` does not overwrite it (a server value
+     * for it is a conflict), and the grid does not render its input while it has the focus: rendering
+     * it would put the formatted value into what the user is typing (`12,` -> `12`)
+     */
+    public editingCell(): { row: Entity; field: string } | null {
+        return this.editing;
     }
 
     /**
@@ -188,7 +224,7 @@ export class History {
         this.closeOpen();
         this.withoutRecording(() => {
             for (const change of step.changes.slice().reverse()) {
-                write(change, change.before);
+                this.write(change, change.before);
             }
         });
         this.redoSteps.push(step);
@@ -208,7 +244,7 @@ export class History {
         this.closeOpen();
         this.withoutRecording(() => {
             for (const change of step.changes) {
-                write(change, change.after);
+                this.write(change, change.after);
             }
         });
         this.undoSteps.push(step);
@@ -251,6 +287,55 @@ export class History {
             });
         this.undoSteps = keep(this.undoSteps);
         this.redoSteps = keep(this.redoSteps);
+        if (this.open?.changes.length === 0) {
+            this.open = null;
+        }
+        if (this.typingStep?.changes.length === 0) {
+            this.typingStep = null;
+        }
+        if (this.editing && gone.has(this.editing.row)) {
+            this.editing = null;
+        }
+        if (dropped) {
+            this.emit('remove');
+        }
+    }
+
+    /**
+     * A merge (`upsert()`) gave fields a new original, the server's value. In the changes of those
+     * fields the old original is replaced by the new one: undoing the user's edits of a field goes
+     * back to what the server has now - writing the old original back would be an edit of the server's
+     * value, and a save would send that old value. A change that does nothing after it is dropped, and
+     * a step left without changes: then `'remove'` is sent, as for forget().
+     * @param originals per row, per field: the old original (`from`) and the new one (`to`)
+     */
+    public rebase(originals: ReadonlyMap<Entity, ReadonlyMap<string, { from: unknown; to: unknown }>>): void {
+        if (!originals.size) {
+            return;
+        }
+        let dropped = false;
+        const rebaseSteps = (steps: Step[]) =>
+            steps.filter((step) => {
+                step.changes = step.changes.filter((change) => {
+                    const original = change.field === null ? undefined : originals.get(change.row)?.get(change.field);
+                    if (!original) {
+                        return true;
+                    }
+                    const field = change.field as string;
+                    if (this.isSameValue(field, original.from, change.before)) {
+                        change.before = original.to;
+                    }
+                    if (this.isSameValue(field, original.from, change.after)) {
+                        change.after = original.to;
+                    }
+                    const keep = !this.isSameValue(field, change.before, change.after);
+                    dropped = dropped || !keep;
+                    return keep;
+                });
+                return step.changes.length > 0;
+            });
+        this.undoSteps = rebaseSteps(this.undoSteps);
+        this.redoSteps = rebaseSteps(this.redoSteps);
         if (this.open?.changes.length === 0) {
             this.open = null;
         }
@@ -321,16 +406,17 @@ export class History {
     private emit(info: DatasourceEvents['history-changed']['info']) {
         this.events.emit('history-changed', { info });
     }
-}
 
-/**
- * writes one value of a change: through the row's proxy, so the edit tracking and the validation
- * follow - or the deletion mark
- */
-function write(change: HistoryChange, value: unknown) {
-    if (change.field === null) {
-        change.row.__controller.__isDeleted = value as boolean;
-    } else {
-        change.row[change.field] = value;
+    /**
+     * writes one value of a change: through the row's proxy, so the edit tracking and the validation
+     * follow - or the deletion mark, then markWritten
+     */
+    private write(change: HistoryChange, value: unknown) {
+        if (change.field === null) {
+            change.row.__controller.__isDeleted = value as boolean;
+            this.markWritten(change.row);
+        } else {
+            change.row[change.field] = value;
+        }
     }
 }

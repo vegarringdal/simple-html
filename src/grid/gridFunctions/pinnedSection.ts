@@ -2,6 +2,7 @@ import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import type { ColType, RowCache } from './colType';
+import { editedInput, renderWhenEditEnds } from './editedInput';
 import { LEFT_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { renderCell } from './renderCell';
@@ -88,10 +89,13 @@ function showsColumn(columnElement: HTMLElement, row: number, column: number) {
  * The others are placed at their column (see placeColumn) and their cells rendered.
  *
  * Used by both scroll handlers. verticalScrollHandler gave the row element another row, or was asked
- * to render: every cell is rendered. horizontalScrollHandler gave the column elements other columns:
- * only the cells that do not show their column of the row yet are. Not decided by whether the column
- * element moved: one that was hidden while its row changed, or a new one, can be at the left of its
- * column without showing it
+ * to render: every cell is rendered - so does renderChangedRows, for a row whose values changed.
+ * horizontalScrollHandler gave the column elements other columns: only the cells that do not show
+ * their column of the row yet are. Not decided by whether the column element moved: one that was
+ * hidden while its row changed, or a new one, can be at the left of its column without showing it
+ *
+ * The cell the user is typing in is never rendered (see editedInput): it is rendered once the focus
+ * leaves it.
  *
  * @param entry the row element, in the row cache of its section
  * @param colType the section: left pinned, middle or right pinned
@@ -100,6 +104,7 @@ function showsColumn(columnElement: HTMLElement, row: number, column: number) {
 export function renderRowColumns(ctx: Grid, entry: RowCache, colType: ColType, renderAll: boolean) {
     const { columns, columnCache } = pinnedSection(ctx, colType);
     const groupRow = isGroupRow(ctx.gridInterface.getDatasource().getRow(entry.row));
+    const edited = editedInput(ctx);
 
     columnCache.forEach((cached, i) => {
         const columnElement = ctx.columns.get(`${entry.id}:${i}`);
@@ -117,7 +122,12 @@ export function renderRowColumns(ctx: Grid, entry: RowCache, colType: ColType, r
         placeColumn(columnElement, cached.left, columns[cached.column].width);
         if (renderAll || !showsColumn(columnElement, entry.row, cached.column)) {
             for (let cellNo = 0; cellNo < columnElement.children.length; cellNo++) {
-                renderCell(ctx, columnElement.children[cellNo] as HTMLElement, entry.row, cached.column, cellNo, colType);
+                const cell = columnElement.children[cellNo] as HTMLElement;
+                if (edited && cell.contains(edited)) {
+                    renderWhenEditEnds(ctx);
+                    continue;
+                }
+                renderCell(ctx, cell, entry.row, cached.column, cellNo, colType);
             }
         }
     });

@@ -1,12 +1,31 @@
+import { Emitter, type EventHandler } from '../emitter';
 import { assertOptions } from './assertOptions';
 import type { Changes, ModifiedEntity } from './changes';
+import type { DatasourceEvents } from './datasourceEvents';
 import type { DataEntity, Entity } from './entity';
 import { EntityHandler, isSameValue } from './entityHandler';
 import type { FieldType } from './field';
 import { History } from './history';
 import { isBlank } from './isBlank';
+import type { Conflict, UpsertResult } from './liveData';
 import type { ValidationError } from './validator';
 import { type ResolvedRule, runRules } from './validatorRegistry';
+
+/**
+ * a conflict as the container keeps it, see DataContainer.__conflicts. `getConflicts()` makes a
+ * {@link Conflict} of it, with the value the row has then
+ */
+interface ConflictRecord {
+    /** the server's value, `'removed'` for the row as a whole */
+    remote: unknown;
+    /** the value the user's edit started from, `undefined` for the row as a whole */
+    original: unknown;
+}
+
+/**
+ * the events of the container itself, see DataContainer.__on
+ */
+type ContainerEvents = Pick<DatasourceEvents, 'rows-changed' | 'conflicts-changed'>;
 
 let globalKeyCount = 0;
 
@@ -79,7 +98,39 @@ export class DataContainer {
      * so the datasources sharing it share it. `datasource.undo()` ... call it, the grid writes what
      * the user types through `__history.typing()`. A field compares as the edit tracking does
      */
-    public readonly __history = new History((field, before, after) => isSameValue(before, after, this.__fieldTypes.get(field)));
+    public readonly __history = new History(
+        (field, before, after) => isSameValue(before, after, this.__fieldTypes.get(field)),
+        (row) => this.afterMarkChange(row)
+    );
+
+    /**
+     * the conflicts of upsert(), per row: field -> the server's value and the original the user's
+     * edit started from, `null` for the row as a whole (removed on the server). Only the rows that
+     * have one: a field in conflict is edited, a row in conflict has local changes - see
+     * settleConflicts
+     */
+    private __conflicts = new Map<DataEntity, Map<string | null, ConflictRecord>>();
+
+    /**
+     * the rows the user kept with `resolveConflict(row, null, 'local')` after the server removed them:
+     * a later `upsert(rows, { removeMissing: true })` gives them no conflict again
+     */
+    private __kept = new WeakSet<Entity>();
+
+    /** per row, the time (`Date.now()`) the last upsert changed each field it changed, see __mergedAt */
+    private __merged = new WeakMap<Entity, Map<string, number>>();
+
+    /** the rows (and their fields) changed in this run of code, sent as `rows-changed`, see changed() */
+    private __changed = new Map<Entity, Set<string>>();
+
+    /** true when the conflicts changed in this run of code, sent as `conflicts-changed` */
+    private __conflictsChanged = false;
+
+    /** true while the microtask that sends the events of this run of code is queued */
+    private __flushQueued = false;
+
+    /** the handlers of `rows-changed` and `conflicts-changed`, see __on */
+    private __events = new Emitter<ContainerEvents>();
 
     /**
      * @param UniqueKeyAttribute the field that identifies a row, e.g. `'id'`. The selection follows it,
@@ -251,6 +302,448 @@ export class DataContainer {
     }
 
     /**
+     * @internal
+     * Subscribes to the container's own events, `rows-changed` and `conflicts-changed`, see
+     * DatasourceEvents: the rows are the container's, so every datasource on it sends them -
+     * `datasource.on()` subscribes here
+     */
+    public __on<Type extends keyof ContainerEvents>(type: Type, handler: EventHandler<ContainerEvents[Type]>): () => void {
+        return this.__events.on(type, handler);
+    }
+
+    /**
+     * A row changed, for `rows-changed`: a field was set on it (`field`), or its deletion mark, its
+     * server error or a conflict about the whole row changed (`null`). Collected for this run of code
+     */
+    private changed(row: Entity, field: string | null) {
+        let fields = this.__changed.get(row);
+        if (!fields) {
+            fields = new Set();
+            this.__changed.set(row, fields);
+        }
+        if (field !== null) {
+            fields.add(field);
+        }
+        this.flushLater();
+    }
+
+    /**
+     * sends `rows-changed` and `conflicts-changed` once this run of code is done: one of each, however
+     * many rows changed. A handler that changes rows again gets the next ones
+     */
+    private flushLater() {
+        if (this.__flushQueued) {
+            return;
+        }
+        this.__flushQueued = true;
+        queueMicrotask(() => {
+            this.__flushQueued = false;
+            const changed = this.__changed;
+            const conflictsChanged = this.__conflictsChanged;
+            this.__changed = new Map();
+            this.__conflictsChanged = false;
+            if (changed.size) {
+                this.__events.emit('rows-changed', { rows: Array.from(changed.keys()), fields: changed });
+            }
+            if (conflictsChanged) {
+                this.__events.emit('conflicts-changed', {});
+            }
+        });
+    }
+
+    /**
+     * a row's deletion mark changed: setDeleted(), or undo / redo of one. Not through the proxy, so
+     * the conflicts and the grid are told here
+     */
+    private afterMarkChange(row: DataEntity) {
+        this.settleConflicts(row);
+        this.changed(row, null);
+    }
+
+    /**
+     * true when the row has changes of the user's that are not saved: an edit, a deletion mark, or a
+     * cell of it being edited right now (History.editingCell). `upsert(rows, { removeMissing })` does
+     * not remove such a row
+     */
+    private hasLocalChanges(row: DataEntity): boolean {
+        const controller = row.__controller;
+        return controller.__edited === true || controller.__isDeleted === true || this.__history.editingCell()?.row === row;
+    }
+
+    /**
+     * After an edit or a change of the deletion mark: a conflict of the row whose cause is gone goes
+     * too - one about a field that is not edited any more (reverted, undone, typed back to the
+     * server's value), one about the whole row once it has no local changes
+     */
+    private settleConflicts(row: DataEntity) {
+        const conflicts = this.__conflicts.get(row);
+        if (!conflicts) {
+            return;
+        }
+        // deleting the entry the loop is at is fine, a Map's iterator goes on with the next one
+        for (const field of conflicts.keys()) {
+            const settled = field === null ? !this.hasLocalChanges(row) : row.__controller.__editedProps[field] !== true;
+            if (settled) {
+                this.deleteConflict(row, field);
+            }
+        }
+    }
+
+    /** sets a conflict of a row, `field` `null` for the row as a whole */
+    private setConflict(row: DataEntity, field: string | null, record: ConflictRecord) {
+        let conflicts = this.__conflicts.get(row);
+        if (!conflicts) {
+            conflicts = new Map();
+            this.__conflicts.set(row, conflicts);
+        }
+        conflicts.set(field, record);
+        this.__conflictsChanged = true;
+        this.changed(row, field);
+    }
+
+    /** removes a conflict of a row, when it has it */
+    private deleteConflict(row: DataEntity, field: string | null) {
+        const conflicts = this.__conflicts.get(row);
+        if (conflicts?.delete(field)) {
+            if (!conflicts.size) {
+                this.__conflicts.delete(row);
+            }
+            this.__conflictsChanged = true;
+            this.changed(row, field);
+        }
+    }
+
+    /**
+     * the rows lost their conflicts and their "kept" mark: they left the data, or their changes were
+     * saved. Not in `rows-changed`: the methods that do this rebuild the displayed rows
+     */
+    private dropConflicts(rows: Iterable<Entity>) {
+        for (const row of rows) {
+            this.__kept.delete(row);
+            if (this.__conflicts.delete(row as DataEntity)) {
+                this.__conflictsChanged = true;
+                this.flushLater();
+            }
+        }
+    }
+
+    /**
+     * Rows left the container: their changes leave the undo history (it never writes into a row that
+     * is not there) and their conflicts go
+     */
+    private rowsLeft(rows: readonly Entity[]) {
+        this.__history.forget(rows);
+        this.dropConflicts(rows);
+    }
+
+    /**
+     * Every row left the container (setData() without add, removeAllData()): the undo history is
+     * cleared and every conflict goes
+     */
+    private allRowsLeft() {
+        this.__history.clear();
+        this.clearConflicts();
+    }
+
+    /** every conflict goes, and every "kept" mark */
+    private clearConflicts() {
+        this.__kept = new WeakSet();
+        if (this.__conflicts.size) {
+            this.__conflicts.clear();
+            this.__conflictsChanged = true;
+            this.flushLater();
+        }
+    }
+
+    /**
+     * @internal
+     * `datasource.upsert()`: merges rows from a server into the rows by their key - the container's
+     * part, the rows and their values and conflicts. The datasource rebuilds the displayed rows and
+     * sends the events. See there for the rules.
+     * @param rows plain objects from the server, each with its key
+     * @param removeMissing remove the rows whose key is not among them, see UpsertOptions
+     * @throws a `TypeError` without a key field, when `rows` is no array, or for a row without its key -
+     * checked first, nothing is merged then
+     */
+    public __upsert(rows: readonly any[], removeMissing: boolean): UpsertResult {
+        const keyField = this.__keyAttribute;
+        if (!keyField) {
+            throw new TypeError(
+                "upsert() merges the rows by their key, the datasource has none: new Datasource({ key: 'id' }) or new DataContainer('id')"
+            );
+        }
+        if (!Array.isArray(rows)) {
+            throw new TypeError('upsert() takes a list of rows: upsert([row]), upsert(rows, { removeMissing: true })');
+        }
+        rows.forEach((row, i) => {
+            if (isBlank(row?.[keyField])) {
+                throw new TypeError(`upsert(): the row at index ${i} has no key, its '${keyField}' is blank`);
+            }
+        });
+
+        // the rows by key. A new row is not on the server, its key is a generated one: it never
+        // matches. A key that is in the data twice matches its first row
+        const byKey = new Map<unknown, DataEntity>();
+        for (const row of this.__collection) {
+            if (!row.__controller.__isNew) {
+                const key = row.__KEY;
+                if (!byKey.has(key)) {
+                    byKey.set(key, row);
+                }
+            }
+        }
+
+        const added: DataEntity[] = [];
+        const updated = new Set<DataEntity>();
+        const removed: DataEntity[] = [];
+        const conflicts: Conflict[] = [];
+        // the keys the server sent, for removeMissing
+        const sent = new Map<unknown, true>();
+        // one time for every field this upsert changes, see __mergedAt
+        const time = Date.now();
+        const editing = this.__history.editingCell();
+        // the fields whose original changed, for the history
+        const originals = new Map<Entity, Map<string, { from: unknown; to: unknown }>>();
+
+        // what mergeRow() shares between the rows, made once
+        const merge = { time, editing, conflicts, originals };
+
+        // the server's values are no edits: nothing of this is a step of the undo history
+        this.__history.withoutRecording(() => {
+            for (const source of rows) {
+                const key = source[keyField];
+                if (removeMissing) {
+                    sent.set(key, true);
+                }
+                const row = findKey(byKey, key);
+                if (row) {
+                    if (this.mergeRow(row, source, keyField, merge)) {
+                        updated.add(row);
+                    }
+                } else {
+                    // a key given twice: the second one updates the row the first one added
+                    const entity = this.toEntity(source, false);
+                    this.__collection.push(entity);
+                    byKey.set(key, entity);
+                    added.push(entity);
+                }
+            }
+        });
+        // undoing the user's edits goes back to the server's values, not to the old originals
+        this.__history.rebase(originals);
+
+        if (removeMissing) {
+            for (const row of this.__collection) {
+                if (row.__controller.__isNew || findKey(sent, row.__KEY)) {
+                    continue;
+                }
+                if (!this.hasLocalChanges(row)) {
+                    removed.push(row);
+                } else if (!this.__kept.has(row) && !this.__conflicts.get(row)?.has(null)) {
+                    // the user's changes are not thrown away: the row stays, in conflict
+                    this.setConflict(row, null, { remote: 'removed', original: undefined });
+                    conflicts.push({ row, field: null, remote: 'removed' });
+                }
+            }
+            if (removed.length) {
+                const gone = new Set<Entity>(removed);
+                this.__collection = this.__collection.filter((row) => !gone.has(row));
+                this.rowsLeft(removed);
+            }
+        }
+
+        return { added, updated: Array.from(updated), removed, conflicts };
+    }
+
+    /**
+     * Merges one row from the server into the row with its key, see `datasource.upsert()`: per field
+     * it has (the key and the `__` fields left out)
+     *
+     * - a field that is not edited gets the server's value as its value and its original: through the
+     *   proxy, so it is validated and in `rows-changed` - the history is not recording - then the edit
+     *   tracking is set back to "not edited"
+     * - a field the user has edited, or is editing (`editing`), keeps the user's value. The server's value
+     *   becomes its original, and it is a conflict unless the server has the user's value (the edit is
+     *   resolved) or the value the user's edit started from (nothing to choose)
+     *
+     * @param merge what the upsert shares between the rows: its time, the cell being edited, and the
+     * lists it fills - the conflicts, and the fields whose original changed (for History.rebase)
+     * @returns true when a value or a conflict changed
+     */
+    private mergeRow(
+        row: DataEntity,
+        source: Record<string, unknown>,
+        keyField: string,
+        merge: {
+            time: number;
+            editing: { row: Entity; field: string } | null;
+            conflicts: Conflict[];
+            originals: Map<Entity, Map<string, { from: unknown; to: unknown }>>;
+        }
+    ): boolean {
+        const { time, editing, conflicts, originals } = merge;
+        const controller = row.__controller;
+        let changed = false;
+
+        // the server has the row again: not removed there after all
+        this.__kept.delete(row);
+        if (this.__conflicts.get(row)?.has(null)) {
+            this.deleteConflict(row, null);
+            changed = true;
+        }
+
+        for (const field of Object.keys(source)) {
+            // the key is what the row is, the __ fields are not the row's own
+            if (field === keyField || field.startsWith('__')) {
+                continue;
+            }
+            const remote = source[field];
+            const type = this.__fieldTypes.get(field);
+            const local = controller.__editedProps[field] === true || (editing?.row === row && editing.field === field);
+
+            if (!local) {
+                if (isSameValue(row[field], remote, type)) {
+                    continue;
+                }
+                // a field set before (edited and set back, say) can be in the history
+                if (Object.hasOwn(controller.__originalValues, field)) {
+                    rebaseLater(originals, row, field, controller.__originalValues[field], remote);
+                }
+                row[field] = remote;
+                // a value of the server, no edit: it is the original too
+                controller.__originalValues[field] = remote;
+                controller.__editedProps[field] = false;
+                controller.__edited = Object.values(controller.__editedProps).includes(true);
+                let times = this.__merged.get(row);
+                if (!times) {
+                    times = new Map();
+                    this.__merged.set(row, times);
+                }
+                times.set(field, time);
+                changed = true;
+                continue;
+            }
+
+            // an edited field has its original (the proxy took it on the first edit)
+            const original = Object.hasOwn(controller.__originalValues, field) ? controller.__originalValues[field] : row[field];
+            if (isSameValue(original, remote, type)) {
+                // the server did not change it: the user's edit stays as it is
+                continue;
+            }
+            const value = row[field];
+            const existing = this.__conflicts.get(row)?.get(field);
+            // where the user's edit started from: a conflict from an earlier upsert keeps it
+            const base = existing ? existing.original : original;
+
+            // the user's value stays, the server's is the original now: getChanges() sends the user's
+            // value as an edit of what the server has. __newprops: the next edit keeps this original
+            controller.__newprops[field] = true;
+            controller.__originalValues[field] = remote;
+            rebaseLater(originals, row, field, original, remote);
+            if (isSameValue(remote, value, type) || isSameValue(base, remote, type)) {
+                // the server has the user's value (no edit any more), or is back where the edit started
+                // (the edit stays): nothing to choose between
+                controller.__editedProps[field] = !isSameValue(remote, value, type);
+                if (existing) {
+                    this.deleteConflict(row, field);
+                } else {
+                    this.changed(row, field);
+                }
+            } else {
+                controller.__editedProps[field] = true;
+                this.setConflict(row, field, { remote, original: base });
+                conflicts.push({ row, field, local: value, remote, original: base });
+            }
+            controller.__edited = Object.values(controller.__editedProps).includes(true);
+            changed = true;
+        }
+        return changed;
+    }
+
+    /**
+     * @internal
+     * `datasource.getConflicts()`: the conflicts, in the order of the rows in the container. `local` is
+     * the value the row has now
+     * @param rows a row or a list of rows, default every row. Rows not in the container are skipped
+     */
+    public __getConflicts(rows?: Entity | Entity[]): Conflict[] {
+        if (!this.__conflicts.size) {
+            return [];
+        }
+        const result: Conflict[] = [];
+        for (const row of rows === undefined ? this.__collection : this.rowsIn(rows)) {
+            for (const [field, record] of this.__conflicts.get(row) ?? []) {
+                result.push(
+                    field === null
+                        ? { row, field: null, remote: 'removed' }
+                        : { row, field, local: row[field], remote: record.remote, original: record.original }
+                );
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @internal
+     * `datasource.hasConflicts()`: true when a row has a conflict
+     */
+    public __hasConflicts(): boolean {
+        return this.__conflicts.size > 0;
+    }
+
+    /**
+     * @internal
+     * the conflicts of one row: the server's value per field, `null` for the row as a whole. The
+     * container's own map, do not change it. `undefined` when the row has none. For the grid, which
+     * asks for every cell it renders: no search, no copy
+     */
+    public __rowConflicts(
+        row: Entity
+    ): ReadonlyMap<string | null, { readonly remote: unknown; readonly original: unknown }> | undefined {
+        return this.__conflicts.get(row as DataEntity);
+    }
+
+    /**
+     * @internal
+     * `datasource.resolveConflict()`, but for a row removed on the server taken as `'remote'` - the
+     * datasource removes that row. Nothing happens when the field has no conflict
+     *
+     * - `'local'`: the conflict goes, the user's value (or the row) stays as it is. A row kept so gets
+     *   no conflict from a later `upsert(rows, { removeMissing: true })`
+     * - `'remote'`: the field gets the server's value, which is its original - an edit like
+     *   `resetField()`: a step of the undo history, validated. Not edited any more, so the conflict goes
+     */
+    public __resolveConflict(row: Entity, field: string | null, take: 'local' | 'remote') {
+        const record = this.__conflicts.get(row as DataEntity)?.get(field);
+        if (!record) {
+            return;
+        }
+        if (field === null) {
+            // 'remote' is the datasource's, it removes the row
+            if (take === 'local') {
+                this.__kept.add(row);
+                this.deleteConflict(row as DataEntity, null);
+            }
+            return;
+        }
+        if (take === 'local') {
+            this.deleteConflict(row as DataEntity, field);
+            return;
+        }
+        // settleConflicts() takes the conflict away: the value is the original now
+        row[field] = record.remote;
+    }
+
+    /**
+     * @internal
+     * `datasource.getMergedAt()`: when the last `upsert()` changed the value of this field of the row,
+     * as `Date.now()` gave it. `undefined` when no upsert changed it
+     */
+    public __mergedAt(row: Entity, field: string): number | undefined {
+        return this.__merged.get(row)?.get(field);
+    }
+
+    /**
      * Replaces the class that wraps every row in a `Proxy` and tracks its edits, for the rows set from
      * now on. An advanced hook: the class gets the {@link EntityHandler} constructor options
      * (`{ key, isNew, fieldType, onEdit }`) and must implement the proxy traps and the fields the grid
@@ -366,15 +859,15 @@ export class DataContainer {
      *
      * It is apart from the validation errors (`datasource.validate()`, `getErrors()`): this does not
      * change them, and `validate()` / `hasErrors()` do not read `__rowError`. The grid shows both on
-     * the row selector - the error class, and the message as its tooltip. Call
-     * `gridInterface.refresh()` after this to render the rows again. `acceptChanges()` clears it.
+     * the row selector - the error class, and the message as its tooltip. The rows whose error changed
+     * are in the `rows-changed` event, so the grid shows it without `gridInterface.refresh()`.
+     * `acceptChanges()` clears it.
      *
      * @param errors the error message per row, keyed by the row's key as text (`'7'` for `id: 7`)
      *
      * @example
      * ```ts
      * datasource.getDataContainer().setErrors(new Map([['7', 'Name is already taken']]));
-     * gridInterface.refresh();
      *
      * datasource.getAllData().filter((row) => row.__rowError); // the rows with an error
      * ```
@@ -382,8 +875,12 @@ export class DataContainer {
     public setErrors(errors: Map<string, string>) {
         this.__collection.forEach((e) => {
             // setData and replace give every row a key
-            const err = errors.get(e.__KEY!.toString());
-            e.__rowError = err || null;
+            const err = errors.get(e.__KEY!.toString()) || null;
+            // undefined until a first call, the same as null
+            if ((e.__rowError ?? null) !== err) {
+                this.changed(e, null);
+            }
+            e.__rowError = err;
         });
     }
 
@@ -458,6 +955,7 @@ export class DataContainer {
         if (Boolean(row.__controller.__isDeleted) !== deleted) {
             this.__history.record({ row, field: null, before: !deleted, after: deleted });
             row.__controller.__isDeleted = deleted;
+            this.afterMarkChange(row);
         }
     }
 
@@ -482,6 +980,7 @@ export class DataContainer {
             this.__collection.forEach((row) => {
                 if (row.__controller.__isDeleted) {
                     row.__controller.__isDeleted = false;
+                    this.changed(row, null);
                 }
                 if (row.__controller.__isNew) {
                     newEntities.push(row);
@@ -497,6 +996,8 @@ export class DataContainer {
         });
         // after the values are back: setting them validated them again
         this.__errors = new WeakMap();
+        // the user's changes are gone, and with them what was in conflict
+        this.clearConflicts();
         // before the new rows go: their changes leave with the rest, one 'clear' event
         this.__history.clear();
         this.removeData(newEntities);
@@ -771,6 +1272,8 @@ export class DataContainer {
         if (removed.size) {
             this.__collection = this.__collection.filter((row) => !removed.has(row));
         }
+        // saved: the user's values are the server's now, nothing left to choose between
+        this.dropConflicts(accepted);
         // the originals are new: undoing past them would make edits of what was saved
         this.__history.clear();
     }
@@ -802,7 +1305,7 @@ export class DataContainer {
                 this.__collection.splice(i, 1)[0];
             }
         });
-        this.__history.forget(tempArr);
+        this.rowsLeft(tempArr);
     }
 
     /**
@@ -830,7 +1333,7 @@ export class DataContainer {
                 removed.push(this.__collection.splice(i, 1)[0]);
             }
         }
-        this.__history.forget(removed);
+        this.rowsLeft(removed);
         return removed;
     }
 
@@ -850,7 +1353,7 @@ export class DataContainer {
     public removeAllData(): Entity[] {
         const removed = this.__collection;
         this.__collection = [];
-        this.__history.clear();
+        this.allRowsLeft();
         return removed;
     }
 
@@ -880,7 +1383,7 @@ export class DataContainer {
         const { add = false, isNew = false } = options;
         if (!add) {
             this.__collection = [];
-            this.__history.clear();
+            this.allRowsLeft();
         }
 
         const x = Array.from(rows, (o: any | Entity) => this.toEntity(o, isNew));
@@ -909,7 +1412,7 @@ export class DataContainer {
     public replace(data: any[], index: number, remove: number) {
         const x = Array.from(data, (o: any | Entity) => this.toEntity(o, false));
 
-        this.__history.forget(this.__collection.splice(index, remove, ...x));
+        this.rowsLeft(this.__collection.splice(index, remove, ...x));
     }
 
     /**
@@ -930,6 +1433,11 @@ export class DataContainer {
                       onEdit: (row, field, oldValue) => {
                           this.__history.record({ row: row as DataEntity, field, before: oldValue, after: row[field] });
                           this.validateEdit(row, field);
+                          this.settleConflicts(row as DataEntity);
+                          // the same value set again shows nothing new
+                          if (!Object.is(oldValue, row[field])) {
+                              this.changed(row, field);
+                          }
                       }
                   }) as any
               );
@@ -938,6 +1446,48 @@ export class DataContainer {
         }
         return entity;
     }
+}
+
+/**
+ * A field's original is the server's value now: noted for History.rebase(), which upsert() calls once
+ * the rows are merged - the history's changes of the field follow
+ */
+function rebaseLater(
+    originals: Map<Entity, Map<string, { from: unknown; to: unknown }>>,
+    row: Entity,
+    field: string,
+    from: unknown,
+    to: unknown
+) {
+    let fields = originals.get(row);
+    if (!fields) {
+        fields = new Map();
+        originals.set(row, fields);
+    }
+    fields.set(field, { from, to });
+}
+
+/**
+ * Looks a key up in a Map keyed by keys as they are, as text: 7 and '7' are the same key, as in
+ * acceptChanges(). The key as it is first - the common case, a number found as a number - then the
+ * other spelling of the same text: a number's text, or the number a text is the text of (`'7'` is 7,
+ * `'07'` and `'7.0'` are no number's text). Faster than keying by `String(key)`: no text is made for
+ * the keys of 100 000 rows
+ * @returns what the Map has for the key, `undefined` when it is not there
+ */
+function findKey<V>(keys: Map<unknown, V>, key: unknown): V | undefined {
+    const found = keys.get(key);
+    if (found !== undefined) {
+        return found;
+    }
+    if (typeof key === 'number') {
+        return keys.get(String(key));
+    }
+    if (typeof key === 'string' && key !== '') {
+        const number = Number(key);
+        return String(number) === key ? keys.get(number) : undefined;
+    }
+    return undefined;
 }
 
 /**

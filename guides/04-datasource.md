@@ -321,3 +321,17 @@ right.reloadDatasource(); // right shows the new rows once it rebuilds its own
 
 The datasource sends events when its rows change, are sorted, filtered or grouped, and when the
 selection or the current row changes. Subscribe with `datasource.on()`, see [Events](09-events.md).
+
+## Rows from a server: `upsert()`
+
+`setData()` replaces the rows. To merge what a server sends into the rows the grid shows - a poll
+every second, changes pushed to the page - use `upsert()`: it updates the rows by their key, adds the
+new keys and, with `removeMissing`, removes the rows the server no longer has. The selection, the
+expanded groups and the scroll position stay, and an edit the user has not saved is not overwritten.
+See [Live data](16-live-data.md).
+
+```ts
+declare const rowsFromServer: object[];
+
+datasource.upsert(rowsFromServer, { removeMissing: true });
+```

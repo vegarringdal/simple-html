@@ -2,6 +2,22 @@ import type { Entity } from './entity';
 import type { FieldType } from './field';
 
 /**
+ * the `__` fields the proxy answers itself, from the handler (`__controller` apart): not the row's own
+ */
+const PROXY_FIELDS: ReadonlySet<string> = new Set([
+    '__KEY',
+    '__rowState',
+    '__rowError',
+    '__group',
+    '__groupID',
+    '__groupName',
+    '__groupLvl',
+    '__groupTotal',
+    '__groupChildren',
+    '__groupExpanded'
+]);
+
+/**
  * The `Proxy` handler every row is wrapped in: it keeps the row's original values and tracks which
  * fields were edited, whether the row is new or marked for deletion, and answers the row's `__` fields
  * (`__KEY`, `__rowState` ...). The data container makes one per row.
@@ -104,23 +120,15 @@ export class EntityHandler {
      * yourself.
      */
     get(target: any, prop: string) {
+        // the row's own fields, most of the reads: only a name that starts with __ is the proxy's. A
+        // symbol is no string, its [0] is undefined
+        if (prop[0] !== '_' || prop[1] !== '_') {
+            return target[prop];
+        }
         if (prop === '__controller') {
             return this;
         }
-        if (
-            [
-                '__KEY',
-                '__rowState',
-                '__rowError',
-                '__group',
-                '__groupID',
-                '__groupName',
-                '__groupLvl',
-                '__groupTotal',
-                '__groupChildren',
-                '__groupExpanded'
-            ].indexOf(prop) > -1
-        ) {
+        if (PROXY_FIELDS.has(prop)) {
             if (prop === '__KEY') {
                 if (this.__KEYSTRING) {
                     return target[this.__KEYSTRING];
@@ -153,20 +161,7 @@ export class EntityHandler {
 
         if (prop[0] === '_' && prop[1] === '_') {
             update = false;
-            if (
-                [
-                    '__KEY',
-                    '__rowState',
-                    '__rowError',
-                    '__group',
-                    '__groupID',
-                    '__groupName',
-                    '__groupLvl',
-                    '__groupTotal',
-                    '__groupChildren',
-                    '__groupExpanded'
-                ].indexOf(prop) > -1
-            ) {
+            if (PROXY_FIELDS.has(prop)) {
                 if (prop === '__KEY') {
                     if (this.__KEYSTRING) {
                         obj[this.__KEYSTRING] = value;

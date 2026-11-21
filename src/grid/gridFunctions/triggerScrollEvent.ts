@@ -4,7 +4,9 @@ import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { verticalScrollHandler } from './verticalScrollHandler';
 
 /**
- * ctx just rerenders row values, usefull for selection etc
+ * Renders every row and column on screen again, with what the rows show now: `gridInterface.refresh()`,
+ * and after the selection, the current row or the displayed rows changed. The cell the user is typing
+ * in is left as it is, see renderRowColumns
  */
 export function triggerScrollEvent(ctx: Grid) {
     // connectInterface can come before the element is in the dom, nothing to render yet
@@ -31,5 +33,7 @@ export function triggerScrollEvent(ctx: Grid) {
     // "large scroll" path, which only hides the rows - the scroll listener renders them after a
     // delay, but there is no scroll event here (position clamped after a filter, element moved)
     ctx.lastScrollTop = elMiddle.scrollTop;
-    verticalScrollHandler(ctx, elMiddle.scrollTop);
+    // every row on screen: what it shows can have changed without its row changing (the selection,
+    // the hooks, what the user did not type)
+    verticalScrollHandler(ctx, elMiddle.scrollTop, true);
 }

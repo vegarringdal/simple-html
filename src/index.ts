@@ -24,6 +24,7 @@ export {
 export type { Formatter } from './datasource/formatter';
 export { registerFormatter } from './datasource/formatterRegistry';
 export type { GroupArgument } from './datasource/groupArgument';
+export type { Conflict, RemovedConflict, UpsertOptions, UpsertResult, ValueConflict } from './datasource/liveData';
 export { NumberFormatterComma } from './datasource/numberFormatterComma';
 export { NumberFormatterDot } from './datasource/numberFormatterDot';
 export type { SelectionMode } from './datasource/selectionMode';

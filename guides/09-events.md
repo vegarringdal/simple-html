@@ -68,6 +68,8 @@ gridInterface.on('paste', onPaste);
 | `select` | a row was selected from code, the grid scrolls to it | `{ info, row }` |
 | `validate` | `validate()` ran, the grid shows the errors. An edit is validated without an event | `{ errors }`, what `validate()` returned |
 | `history-changed` | the undo history changed: read `canUndo()` and `canRedo()`. Sent by every datasource on the same `DataContainer`, the history is the container's | `{ info }`, see below |
+| `rows-changed` | values of rows changed - set from code, by the user, by undo/redo, a revert, `upsert()` - or a row's deletion mark, server error or conflict. Once the code that changed them is done (a microtask), one event for all of them. The grid renders the rows on screen, see [Live data](16-live-data.md#values-show-on-their-own). Sent by every datasource on the same `DataContainer` | `{ rows, fields }`: the rows, and `fields.get(row)` the fields set on each |
+| `conflicts-changed` | the conflicts of `upsert()` changed: one came or went. Once per run of code, after `rows-changed`. Sent by every datasource on the same `DataContainer` | `{}`, read `datasource.getConflicts()` |
 
 `collection-changed`:
 
@@ -78,6 +80,7 @@ gridInterface.on('paste', onPaste);
 | `removeData(rows)` | `{ removed: true, info: 'removeData', data: rows }` |
 | `removeAllData()` | `{ removed: true, info: 'removeData', data: null }` |
 | `clearMarkedForDeletion()` | `{ removed: true, info: 'clearMarkedForDeletion' }` |
+| `upsert(rows)` | `{ info: 'upsert', added }`, and `removed: true` when it removed rows. Only when it added or removed rows or the displayed rows changed (filter, sort order, groups): an upsert that only changed values sends `rows-changed` only |
 
 `collection-filtered`, by `info`:
 
@@ -98,7 +101,7 @@ gridInterface.on('paste', onPaste);
 | `'undo'` | `undo()`. The grid renders its cells again |
 | `'redo'` | `redo()`. The grid renders its cells again |
 | `'clear'` | the history was emptied: `clearHistory()`, `setData()` without `add`, `removeAllData()`, `resetData()`, `acceptChanges()`. Only when there was something in it |
-| `'remove'` | rows were removed for good (`removeData()`, `clearMarkedForDeletion()`, a new row `resetDataSelectionOnly()` removed) and their changes left the history |
+| `'remove'` | rows were removed for good (`removeData()`, `clearMarkedForDeletion()`, a new row `resetDataSelectionOnly()` removed, `upsert(rows, { removeMissing: true })`) and their changes left the history. Or `upsert()` gave an edited field the server's value as its original, and a change of the history that does nothing now was dropped |
 
 `select`: `row` is the index in the displayed rows (`getRows()`), 0 based. `info` is
 `'select-first'` (from `select(row, { notify: true })` and `selectFirst()`), `'select-prev'`,
@@ -117,8 +120,9 @@ datasource.on('collection-grouped', (data) => {
 });
 ```
 
-There is no event with the edit of a cell, see [Editing](05-editing.md#how-the-user-edits):
-`history-changed` says a step was recorded, not what it is.
+`rows-changed` has the rows an edit changed, and the fields: an edit of a cell, by the user or from
+code, is in it - see [Live data](16-live-data.md). `history-changed` says a step was recorded, not
+what it is.
 
 ## Grid events
 

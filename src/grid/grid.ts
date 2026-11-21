@@ -1,3 +1,4 @@
+import type { Entity } from '../datasource/entity';
 import { addMenuListeners } from './gridFunctions/addMenuListeners';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
@@ -8,6 +9,7 @@ import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
 import { rebuildRows } from './gridFunctions/rebuildRows';
 import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { cancelRowsRender } from './gridFunctions/renderChangedRows';
 import { closeFilterEditor } from './gridFunctions/renderFilterEditor';
 import { closeTextEditor, type TextEditor } from './gridFunctions/textEditor';
 import { hideTooltip } from './gridFunctions/tooltip';
@@ -49,6 +51,14 @@ export class Grid {
     public lastScrollLeft: number = 0;
     // the render of the rows after a large jump, when the scrolling stops: see addScrollEventListeners
     public largeScrollTopTimer?: ReturnType<typeof setTimeout> | null;
+
+    // reactive cells, see renderChangedRows.ts: the rows whose values changed, rendered in the next
+    // animation frame (its id, null when none is requested). And a render of every row on screen in
+    // that frame, or once the focus leaves the cell a render had to leave out while it was typed in
+    public changedRows: Set<Entity> = new Set();
+    public rowsFrame: number | null = null;
+    public renderAllInFrame = false;
+    public renderAllOnFocusOut = false;
 
     public rows: Map<string, HTMLElement> = new Map();
     public columns: Map<string, HTMLElement> = new Map();
@@ -189,6 +199,7 @@ export class Grid {
         // clearTimeout(null) and clearTimeout(undefined) both do nothing
         clearTimeout(this.resizeTimer ?? undefined);
         clearTimeout(this.largeScrollTopTimer ?? undefined);
+        cancelRowsRender(this);
         this.resizeTimer = null;
         this.largeScrollTopTimer = null;
 

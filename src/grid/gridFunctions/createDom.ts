@@ -10,6 +10,7 @@ import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { rebuildRowColumns } from './rebuildRowColumns';
 import { rebuildRows } from './rebuildRows';
 import { rebuildTopPanel } from './rebuildTopPanel';
+import { onGridFocusOut } from './renderChangedRows';
 import { createTabExits } from './tabExit';
 import { attachTooltips, tooltipsEnabled } from './tooltip';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
@@ -113,6 +114,8 @@ export function createDom(ctx: Grid) {
     rebuildTopPanel(ctx);
     rebuildFooter(ctx);
     addScrollEventListeners(ctx);
+    // a cell left out of a render while it was typed in is rendered once the focus leaves it
+    ctx.element.addEventListener('focusout', () => onGridFocusOut(ctx), { signal: ctx.scrollListenersAbort?.signal });
     addMenuListeners(ctx);
     // the validation messages of the cells and the row selectors. The body is made once, the
     // `tooltips` option is read on every hover: updateConfig() can change it
@@ -125,7 +128,7 @@ export function createDom(ctx: Grid) {
     ctx.lastScrollTop = 0;
     ctx.lastScrollLeft = 0;
     horizontalScrollHandler(ctx, 0);
-    verticalScrollHandler(ctx, 0);
+    verticalScrollHandler(ctx, 0, true);
     ctx.element.appendChild(body);
     // and Tab from the last cell from here, after the cells in the dom
     ctx.element.appendChild(ctx.tabExitEnd);

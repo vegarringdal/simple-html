@@ -27,6 +27,8 @@ import { formatters } from './samples/formatters';
 import formattersSource from './samples/formatters.ts?raw';
 import { gridState } from './samples/gridState';
 import gridStateSource from './samples/gridState.ts?raw';
+import { liveData } from './samples/liveData';
+import liveDataSource from './samples/liveData.ts?raw';
 import { miscConfig } from './samples/miscConfig';
 import miscConfigSource from './samples/miscConfig.ts?raw';
 import { multiline } from './samples/multiline';
@@ -94,5 +96,7 @@ export const SAMPLES: Sample[] = [
     { ...theming, source: themingSource },
     { ...miscConfig, source: miscConfigSource },
     // export
-    { ...exportCsv, source: exportCsvSource }
+    { ...exportCsv, source: exportCsvSource },
+    // live data
+    { ...liveData, source: liveDataSource }
 ];

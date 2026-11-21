@@ -1156,6 +1156,33 @@ in the console. All passed. Found and fixed:
 * left: scrolling a container around the grid (not the page) does not close the editor; the row menu's
   tab-separated copy does not quote a value with line breaks (as before)
 
+### v6 phase 7 - live data (items 36, 37, 38 data)
+
+* reactive cells: the container sends `rows-changed` once per run of code (microtask) with the rows a
+  field, a deletion mark, a server error or a conflict changed on; the grid renders those on screen in
+  one animation frame (`renderChangedRows.ts`). So the vertical scroll renders only the rows that got
+  another row: 6.4 -> 2.3 ms per one-row step on the wide bench (the cost left from phase 4)
+* the cell input the user typed in is never rendered while focused (element based, survives rows
+  moving under it); `History.editingCell()` is that cell, and `startEditing()` lets an editor of its own
+  claim it - the multiline editor does now (without it, a merge while the editor was open wrote the
+  server value and the save overwrote it silently; test fails without the fix)
+* upsert: one Map by key, values written through the proxy with recording off then made the original
+  (not edited, validated, in rows-changed); an edited field keeps the user's value and gets the server's
+  as its original - a conflict when it differs from both the user's value and where the edit started;
+  the undo history is rebased so undoing goes to the server's value, not the stale original
+* removeMissing keeps rows with local changes in a `{ field: null, remote: 'removed' }` conflict;
+  'local' remembers the choice so the next poll does not raise it again
+* a values-only upsert sends no collection-changed and causes no rebuild; with rows added/removed the
+  grid does a light update (sizes, footer, rows on screen) that keeps the focused input
+* proxy get fast path (names not starting with `__` go straight to the row): sort 52 -> 44 ms
+* fixed: `setData(rows, { add: true })` with 300 000 rows overflowed the stack (`push(...rows)`)
+* checks: 121 tests; Chromium live-check 19/19 and the other eight scripts
+* the guides no longer say to `refresh()` after edits from code or `setErrors()`; `refresh()`'s JSDoc
+  says what it is for now (hooks reading outside state)
+* left: skip filter/sort/group in upsert when no field they use changed (sorted 102 ms, grouped
+  171 ms on 100 000 rows); a change from code (not upsert) to the cell being typed in is not a
+  conflict - the typed text is written back on blur; the 38 UI (highlight, conflict look)
+
 ### v6 phase 8 - more
 
 #### CSV export (item 41)

@@ -30,6 +30,10 @@ const LARGE_SCROLL_TOP = 500;
  * The rows on screen are every row that starts inside the viewport, and the one before the first of
  * them (partly on screen).
  *
+ * Only the row elements that got another row (or were hidden) are rendered, unless `renderAll`: the
+ * others show their row already, and a change of its values renders itself (the datasource's
+ * `rows-changed` event, see renderChangedRows). A row element that keeps its row is not touched at all.
+ *
  * A jump of more than {@link LARGE_SCROLL_TOP} from where the rows were last rendered - the
  * scrollbar dragged, a click in its track - is not rendered: every row element would get another
  * row and render all its cells, on every scroll event of a drag. The rows are hidden instead, and
@@ -38,9 +42,11 @@ const LARGE_SCROLL_TOP = 500;
  * position first, see triggerScrollEvent.
  *
  * @param scrollTop the scroll position of the rows
+ * @param renderAll render every row element on screen, also one that keeps its row: for
+ * `gridInterface.refresh()` (triggerScrollEvent) and the first render. Default `false`, a scroll
  * @returns true when the rows were rendered, false when they were hidden for a large jump
  */
-export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
+export function verticalScrollHandler(ctx: Grid, scrollTop: number, renderAll = false) {
     if (ctx.gridInterface.__getGridConfig().autoRemoveContextMenuOnScrollEvent) {
         removeContextMenu(ctx);
     }
@@ -76,8 +82,9 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
     ];
     for (const [rowCache, colType] of sections) {
         rowCache.forEach((entry, i) => {
+            const moved = entry.row !== rows[i];
             entry.row = rows[i];
-            renderRow(ctx, entry, colType);
+            renderRow(ctx, entry, colType, renderAll || moved);
         });
     }
 
@@ -91,8 +98,10 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
  * Renders a row element of a section for the row it shows (`entry.row`), hidden when it shows none:
  * its place, height and classes (even/odd, selected), and its cells - the cell of the group row or of
  * the row selector, or the column elements of a pinned section
+ * @param render false when the row element kept its row: a shown one is left as it is, it is up to
+ * date. A hidden one (a large jump hid it) is rendered
  */
-function renderRow(ctx: Grid, entry: RowCache, colType: ColType) {
+function renderRow(ctx: Grid, entry: RowCache, colType: ColType, render: boolean) {
     const rowElement = ctx.rows.get(entry.id);
 
     if (entry.row === -1) {
@@ -104,7 +113,7 @@ function renderRow(ctx: Grid, entry: RowCache, colType: ColType) {
 
     const { scrollTops, scrollHeights } = ctx.gridInterface.__getScrollState();
     entry.top = scrollTops[entry.row];
-    if (!rowElement) {
+    if (!rowElement || (!render && rowElement.style.display === 'block')) {
         return;
     }
 

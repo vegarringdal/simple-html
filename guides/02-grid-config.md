@@ -313,10 +313,12 @@ await fetch('/api/grids/accounts', { method: 'PUT', body: JSON.stringify(body) }
 ## Rendering again
 
 The grid renders again by itself when the datasource changes: new data, sorting, filtering,
-selection. When something changes that it can not see, tell it:
+selection - and a value set on a row from code, in the next animation frame (see
+[Live data](16-live-data.md#values-show-on-their-own)). When something changes that it can not see,
+tell it:
 
-- `gridInterface.refresh()` renders the visible cells again. Call it after you set a value on a row
-  from code, or when what the `isReadonly` / `cellClass` hooks read has changed. It is cheap.
+- `gridInterface.refresh()` renders the visible cells again. Call it when what the `isReadonly` /
+  `cellClass` hooks read has changed. It is cheap.
 - `gridInterface.rebuild()` builds the whole grid again: sizes, header, rows, footer. Call it when a
   formatter shows values differently now, after `setTexts()` (see [Texts](12-texts.md#when-a-changed-text-shows)),
   or after you changed the size of the grid's container without a resize event.
@@ -324,8 +326,10 @@ selection. When something changes that it can not see, tell it:
   rebuilds. It measures with the grid's font, so call it once the grid is on the page.
 
 ```ts
-const row = datasource.getDataRows()[0];
-row.company = 'NEW NAME';
+let highlighted = 'ACME CORP';
+gridInterface.updateHooks({ cellClass: (row) => (row.company === highlighted ? { input: 'highlight' } : null) });
+
+highlighted = 'GLOBEX'; // the hook reads it, the grid does not know
 gridInterface.refresh();
 ```
 

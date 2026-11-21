@@ -238,5 +238,5 @@ setTexts({
   selected column is not read out.
 - **The two scrollbars** are elements of their own, Chrome makes them stops of Tab (an element that
   scrolls and has nothing focusable in it); they have no name.
-- `setSelectionMode()` shows (`aria-multiselectable`, `aria-selected`) on the grid's next render, a
-  click or `refresh()`.
+- `setSelectionMode()` shows (`aria-multiselectable`, `aria-selected`) on the next render of the rows:
+  a click or `refresh()` (a scroll only renders the rows that scroll in).
