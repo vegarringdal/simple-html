@@ -115,7 +115,7 @@ caret in them; Alt with an arrow moves between the cells.
 | F2 | in a multiline cell: opens its editor |
 | a character | in a multiline cell that can be edited: opens its editor, the character at the end of the text |
 | Space | in a cell with a `focusButton`: sends `cell-focus-button-click`, as a click on the button does. In a checkbox: checks it |
-| Shift+F10, the menu key | the row menu (the browser sends `contextmenu`) |
+| Shift+F10, the menu key | the row menu (the browser sends `contextmenu`), the focus on its first item |
 | Alt+Shift+arrows | a range of cells: from this cell, the end one cell further each time - a row up or down, a field left or right (the fields of a column of two are two). The focus stays in the cell. See [Selection and clipboard](17-selection-and-clipboard.md#the-keyboard) |
 | Esc | clears the ranges of cells (when there are some, and no menu is open) |
 | Ctrl+C, Cmd+C | with no text selected in the cell: the range of cells as tab separated text, or the cell's value |
@@ -134,7 +134,7 @@ the ranges of cells, and so does typing in a cell.
 | Alt+ArrowLeft / Alt+ArrowRight | the filter to the left / right |
 | Alt+ArrowUp | the filter above in a column of two fields, else the column header (label) above it |
 | Alt+ArrowDown | the filter below in a column of two fields, else the first row |
-| Shift+F10, the menu key | the filter menu |
+| Shift+F10, the menu key | the filter menu, the focus on its first item |
 
 ### A column header
 
@@ -146,7 +146,7 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | Enter / Space | sorts on the column, again for the other direction - as a click. The focus stays on it |
 | Shift+Enter / Shift+Space | adds the column to the sort - as shift+click |
 | Alt+ArrowUp / Alt+ArrowDown | the label above / below in a column of two fields; down from the last one, the column's filter |
-| Shift+F10, the menu key | the header menu |
+| Shift+F10, the menu key | the header menu, the focus on its first item |
 
 ### The rest
 
@@ -155,7 +155,10 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | the button of a group row | Enter / Space | expands or collapses the group. The focus stays on the button |
 | the x of a group chip in the panel | Enter / Space | removes the grouping. It is in the tab order, before the grid |
 | the filter chips in the footer | Enter / Space | opens the filter editor |
-| a menu | Esc | closes it, the focus goes back where it was |
+| a menu | ArrowDown / ArrowUp, Home / End, a letter | the next / previous / first / last item, the next one starting with the letter. A menu opened with the mouse leaves the focus on the cell: ArrowDown / ArrowUp get into it |
+| a menu | Enter, Space | uses the item: the menu closes, the focus goes back where it was. On an item with a submenu (`›`): opens it, as ArrowRight does |
+| a submenu | ArrowLeft, Esc | closes it, the focus back on its item |
+| a menu | Esc, Tab | closes it, the focus goes back where it was. Tab in the filter menu goes on into its value list: the search field, the checkboxes, Run Search |
 | the editor of a multiline cell | Esc / Ctrl+Enter / Tab | see [below](#the-editor-of-a-multiline-cell) |
 | the filter editor | Esc | closes it without filtering (a modal dialog) |
 
@@ -180,7 +183,8 @@ A readonly editor (a readonly grid or cell) shows the text, nothing can be typed
 ## Focus
 
 What can have the focus: the cell inputs and checkboxes, the header filters, the column headers, the
-buttons of the group rows, the x of the group chips and the filter chips in the footer. Each gets a
+buttons of the group rows, the x of the group chips and the filter chips in the footer, and the items
+of a menu (see [Menus](10-menus.md#the-keyboard): the WAI-ARIA menu pattern). Each gets a
 visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md#the-keyboard-focus)).
 
 - Sorting from the keyboard and expanding a group rebuild the header or the rows: the focus is put
@@ -257,8 +261,11 @@ setTexts({
 - **Group rows by keyboard**: Tab and Alt+arrows skip the group rows, so the expand/collapse button
   is no stop of Tab. A screen reader reaches it (and presses it) in its browse mode, a keyboard alone
   does not.
-- **The menus** open from the keyboard (Shift+F10), but their entries can not be reached with it.
-  The date picker of a date cell or filter is for the mouse too - a date can be typed.
+- **The menus**: the right click menus and `openMenu()` follow the WAI-ARIA menu pattern (roles,
+  `aria-checked`, `aria-expanded`, the keys above), checked in Chrome's accessibility tree but not with
+  a screen reader yet. A menu has no name of its own (`aria-label`), a submenu is labelled by its item.
+  The field and operator pickers of the filter editor and the column chooser are for the mouse, and
+  so is the date picker of a date cell or filter - a date can be typed.
 - **The footer** (the Clear button, the filter chips) is not on the way of Tab from the cells. A
   screen reader reaches it.
 - **Only the first sort column** has `aria-sort`; the number of a column in a sort on several

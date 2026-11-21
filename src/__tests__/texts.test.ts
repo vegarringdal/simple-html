@@ -23,23 +23,23 @@ afterEach(() => {
 
 describe('texts - the lookup', () => {
     it('expect the default when no texts are set', () => {
-        expect(getText('row.copy')).toEqual('Copy:');
-        expect(findText('row.copy')).toEqual('Copy:');
+        expect(getText('row.copy')).toEqual('Copy');
+        expect(findText('row.copy')).toEqual('Copy');
     });
 
     it("expect the page's texts to win over the defaults", () => {
-        setTexts({ 'row.copy': 'Kopier:' });
-        expect(getText('row.copy')).toEqual('Kopier:');
+        setTexts({ 'row.copy': 'Kopier' });
+        expect(getText('row.copy')).toEqual('Kopier');
         // the ids left out keep their default
-        expect(getText('row.paste')).toEqual('Paste:');
+        expect(getText('row.paste')).toEqual('Paste');
     });
 
     it("expect a grid's texts to win over the page's", () => {
-        setTexts({ 'row.copy': 'Kopier:', 'row.paste': 'Lim inn:' });
-        const grid: Texts = { 'row.copy': 'Copy (grid):' };
-        expect(getText('row.copy', grid)).toEqual('Copy (grid):');
-        expect(getText('row.paste', grid)).toEqual('Lim inn:');
-        expect(getText('row.clear', grid)).toEqual('Clear:');
+        setTexts({ 'row.copy': 'Kopier', 'row.paste': 'Lim inn' });
+        const grid: Texts = { 'row.copy': 'Copy (grid)' };
+        expect(getText('row.copy', grid)).toEqual('Copy (grid)');
+        expect(getText('row.paste', grid)).toEqual('Lim inn');
+        expect(getText('row.clear', grid)).toEqual('Clear');
     });
 
     it('expect an empty text to be a text', () => {
@@ -48,20 +48,20 @@ describe('texts - the lookup', () => {
     });
 
     it('expect setTexts() to replace the texts set before, not to add to them', () => {
-        setTexts({ 'row.copy': 'Kopier:' });
-        setTexts({ 'row.paste': 'Lim inn:' });
-        expect(getText('row.copy')).toEqual('Copy:');
-        expect(getText('row.paste')).toEqual('Lim inn:');
+        setTexts({ 'row.copy': 'Kopier' });
+        setTexts({ 'row.paste': 'Lim inn' });
+        expect(getText('row.copy')).toEqual('Copy');
+        expect(getText('row.paste')).toEqual('Lim inn');
 
         setTexts({});
-        expect(getText('row.paste')).toEqual('Paste:');
+        expect(getText('row.paste')).toEqual('Paste');
     });
 
     it('expect setTexts() to copy the object', () => {
-        const texts: Texts = { 'row.copy': 'Kopier:' };
+        const texts: Texts = { 'row.copy': 'Kopier' };
         setTexts(texts);
         texts['row.copy'] = 'changed later';
-        expect(getText('row.copy')).toEqual('Kopier:');
+        expect(getText('row.copy')).toEqual('Kopier');
     });
 
     it('expect an id of your own to be found once it has a text, undefined before', () => {
@@ -105,9 +105,9 @@ describe('texts - what setTexts() takes', () => {
     });
 
     it('expect the texts to stay as they were when setTexts() throws', () => {
-        setTexts({ 'row.copy': 'Kopier:' });
+        setTexts({ 'row.copy': 'Kopier' });
         expect(() => setTexts(JSON.parse('{ "row.paste": false }'))).toThrow(TypeError);
-        expect(getText('row.copy')).toEqual('Kopier:');
+        expect(getText('row.copy')).toEqual('Kopier');
     });
 });
 

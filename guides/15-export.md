@@ -52,29 +52,36 @@ await fetch('/api/reports', { method: 'POST', body: blob });
 
 ### From the row menu
 
-The row menu (right click a cell) has an **Export:** section with *Excel, all rows* and *Excel,
+The row menu (right click a cell) has an **Export ›** submenu with *Excel, all rows* and *Excel,
 selected rows* (greyed out when no row is selected): `downloadExcel()` with the default options, as
-`export.xlsx`. It is there in every grid, readonly ones too. The ids are `row.export`,
+`export.xlsx`. It is there in every grid, readonly ones too. The ids are `row.export` (the submenu),
 `row.export.excel` and `row.export.excelSelected`. To give them other options - a sheet name, a
-file name - replace their actions with the [menus hook](10-menus.md):
+file name - replace their actions in the submenu with the [menus hook](10-menus.md):
 
 ```ts
-import type { GridHooks } from '@simple-html/grid';
+import type { GridHooks, MenuEntry } from '@simple-html/grid';
 
 const hooks: GridHooks = {
     menus: {
         row: (defaults, context) =>
-            defaults.map((entry) =>
-                entry.id === 'row.export.excel'
-                    ? { ...entry, action: () => context.gridInterface.downloadExcel('orders.xlsx', { sheetName: 'Orders' }) }
-                    : entry
-            )
+            defaults.map((entry): MenuEntry => {
+                if (entry.type !== 'submenu' || entry.id !== 'row.export') {
+                    return entry;
+                }
+                const entries = entry.entries.map((inner) =>
+                    inner.id === 'row.export.excel'
+                        ? { ...inner, action: () => context.gridInterface.downloadExcel('orders.xlsx', { sheetName: 'Orders' }) }
+                        : inner
+                );
+                return { ...entry, entries };
+            })
     }
 };
 gridInterface.updateHooks(hooks);
 ```
 
-CSV is not in the row menu. To have it there, add an entry of your own after the Excel ones:
+CSV is not in the row menu. To have it there, add an entry of your own to the export submenu, after
+the Excel ones:
 
 ```ts
 import type { GridHooks, MenuEntry } from '@simple-html/grid';
@@ -87,8 +94,9 @@ const hooks: GridHooks = {
                 label: 'CSV, all rows',
                 action: () => context.gridInterface.downloadCsv('export.csv', { separator: ';' })
             };
-            const after = defaults.findIndex((entry) => entry.id === 'row.export.excelSelected');
-            return [...defaults.slice(0, after + 1), csv, ...defaults.slice(after + 1)];
+            return defaults.map((entry) =>
+                entry.type === 'submenu' && entry.id === 'row.export' ? { ...entry, entries: [...entry.entries, csv] } : entry
+            );
         }
     }
 };

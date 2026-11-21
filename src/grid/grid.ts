@@ -12,6 +12,7 @@ import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { cancelRowsRender } from './gridFunctions/renderChangedRows';
 import { closeFilterEditor } from './gridFunctions/renderFilterEditor';
+import type { MenuTree } from './gridFunctions/showMenu';
 import { closeTextEditor, type TextEditor } from './gridFunctions/textEditor';
 import { hideTooltip } from './gridFunctions/tooltip';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
@@ -78,6 +79,11 @@ export class Grid {
     public menuReturnFocus: Element | null = null;
     // true from a menu opening until the task that opened it ends, see openMenuElement
     public menuJustOpened = false;
+    // the open menu of entries with its open submenus, see showMenu. Null when none is open
+    public menuTree: MenuTree | null = null;
+    // true when the last input was a key, false after a pointer press: a menu opened from the
+    // keyboard takes the focus, see showMenu and addMenuListeners
+    public keyboardUsed = false;
     // the filter editor, a modal dialog: see renderFilterEditor. Null when it is closed
     public filterEditor?: HTMLDialogElement | null;
     // the column chooser, a popover that stays open while columns are dragged from it

@@ -3,7 +3,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GridConfig } from '../gridConfig';
 import { mountGrid, simpleConfig, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { headerFilterInput, menuItemsExact, openRowMenu, sleep } from './interactionTestHelpers';
+import { headerFilterInput, menuEntry, openRowMenu, sleep } from './interactionTestHelpers';
 
 /**
  * Undo and redo in the grid: Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z in a body cell, the browser's own undo
@@ -239,7 +239,7 @@ describe('undo and redo - the keys in a cell', () => {
         datasource.selectAll();
 
         openRowMenu(element, 'firstname', 0);
-        menuItemsExact('Paste cell (selected rows)')[0].click();
+        menuEntry('row.paste.cell').click();
         await sleep(0); // the clipboard is read async
         expect(firstnames(datasource)).toEqual(['pasted', 'pasted', 'pasted']);
 
@@ -254,7 +254,7 @@ describe('undo and redo - the keys in a cell', () => {
         datasource.selectAll();
 
         openRowMenu(element, 'firstname', 0);
-        menuItemsExact('Clear cell (selected rows)')[0].click();
+        menuEntry('row.clear.cell').click();
         expect(firstnames(datasource)).toEqual([null, null, null]);
 
         press(cellInput(element, 'lastname'), 'z');
@@ -266,7 +266,7 @@ describe('undo and redo - the keys in a cell', () => {
         datasource.getSelection().selectRowRange(0, 1);
 
         openRowMenu(element, 'firstname', 0);
-        (document.querySelector('[data-menu-id="row.delete.rows"]') as HTMLElement).click();
+        menuEntry('row.delete.rows').click();
         expect(datasource.getAllData().map((row) => row.__rowState)).toEqual(['D', 'D', undefined]);
         await sleep(0);
 
@@ -276,13 +276,14 @@ describe('undo and redo - the keys in a cell', () => {
 });
 
 describe('undo and redo - the row menu', () => {
+    // the items, not in a submenu, and the line under them
     const EDIT_IDS = [
-        'row.edit',
         'row.edit.undo',
         'row.edit.redo',
         'row.edit.revertCell',
         'row.edit.revertRow',
-        'row.edit.revertRows'
+        'row.edit.revertRows',
+        'row.edit.separator'
     ];
 
     const entry = (id: string) => document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`) as HTMLElement;
@@ -293,23 +294,23 @@ describe('undo and redo - the row menu', () => {
             .map((el) => el.getAttribute('data-menu-id') ?? '')
             .filter((id) => id.startsWith('row.edit'));
 
-    it('expect the edit section in an editable grid, greyed out with nothing to do', async () => {
+    it('expect the edit entries in an editable grid, greyed out with nothing to do', async () => {
         const { element } = await mountGrid(editable(), data(), simpleFields());
 
         openRowMenu(element, 'firstname', 0);
 
         expect(shownEditIds()).toEqual(EDIT_IDS);
-        expect(EDIT_IDS.slice(1).map(label)).toEqual([
+        expect(EDIT_IDS.slice(0, -1).map(label)).toEqual([
             'Undo last change (Ctrl+Z)',
             'Redo (Ctrl+Y)',
             'Undo cell edit',
             'Undo row edits',
             'Undo row edits (selected rows)'
         ]);
-        expect(EDIT_IDS.slice(1).map(isDisabled)).toEqual([true, true, true, true, true]);
+        expect(EDIT_IDS.slice(0, -1).map(isDisabled)).toEqual([true, true, true, true, true]);
     });
 
-    it('expect no edit section in a readonly grid', async () => {
+    it('expect no edit entries in a readonly grid', async () => {
         const { element } = await mountGrid(simpleConfig(), data(), simpleFields());
         openRowMenu(element, 'firstname', 0);
         expect(shownEditIds()).toEqual([]);
@@ -378,7 +379,7 @@ describe('undo and redo - the row menu', () => {
         expect(second.__rowState).toEqual('D');
     });
 
-    it('expect the edit section first in the menu', async () => {
+    it('expect the edit entries first in the menu, not in a submenu', async () => {
         const { element } = await mountGrid(editable(), data(), simpleFields());
 
         openRowMenu(element, 'firstname', 0);
@@ -434,7 +435,7 @@ describe('undo and redo - the row menu', () => {
         expect(isDisabled('row.edit.revertRow')).toBe(true);
     });
 
-    it('expect no edit section in a readonly grid', async () => {
+    it('expect no edit entries in a readonly grid', async () => {
         const { element } = await mountGrid({ ...editable(), readonly: true }, data(), simpleFields());
 
         openRowMenu(element, 'firstname', 0);

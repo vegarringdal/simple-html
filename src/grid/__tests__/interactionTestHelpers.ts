@@ -16,23 +16,114 @@ export function gridOf(element: GridElement) {
 }
 
 /**
- * first menu entry (context menus, the menu bottom button, filter editor buttons) whose text
- * starts with `text`
+ * The open menu and its open submenus, in order: their `role="menu"` elements. A submenu's popover is
+ * put in the menu's popover after the menu, so the dom order is the order they opened in
  */
-export function menuItem(text: string): HTMLElement {
-    const items = Array.from(
-        document.querySelectorAll('.simple-html-grid-menu-item, .simple-html-label-button-menu-bottom, .grid-button')
-    );
-    return items.find((el) => el.textContent?.trim().startsWith(text)) as HTMLElement;
+export function openMenus(): HTMLElement[] {
+    return Array.from(document.querySelectorAll<HTMLElement>('.simple-html-grid-menu[role="menu"]'));
 }
 
 /**
- * every row menu entry whose text is exactly `text`, in dom order
+ * the items of a menu or submenu that open a submenu
+ */
+function submenuItems(menu: Element): HTMLElement[] {
+    return Array.from(menu.children).filter((child) => child.getAttribute('aria-haspopup') === 'menu') as HTMLElement[];
+}
+
+/**
+ * The elements of the open menu that match `selector` and `matches`, looked for as a user does: in the
+ * menu, then in its submenus, each opened with a click on its item - one at a time, opening one closes
+ * the one open in its menu - and in theirs.
+ *
+ * `all` false: stops at the first menu or submenu that has one, which stays open - its elements can be
+ * clicked. `all` true: from every submenu, for counting - the ones in a submenu closed again are
+ * not in the document anymore
+ */
+function searchMenus(selector: string, matches: (element: HTMLElement) => boolean, all: boolean): HTMLElement[] {
+    const found: HTMLElement[] = [];
+    const visit = (depth: number) => {
+        const menu = openMenus()[depth];
+        if (!menu) {
+            return;
+        }
+        found.push(...Array.from(menu.querySelectorAll<HTMLElement>(selector)).filter(matches));
+        for (const opener of submenuItems(menu)) {
+            if (found.length && !all) {
+                return;
+            }
+            opener.click();
+            visit(depth + 1);
+        }
+    };
+    visit(0);
+    return found;
+}
+
+/**
+ * The entry of the open menu with this `data-menu-id`, in the menu or in a submenu: the submenus on the
+ * way to it are opened, as a user does (see searchMenus), so it can be clicked. null when no submenu
+ * has it
+ */
+export function menuEntry(id: string): HTMLElement {
+    return (searchMenus('[data-menu-id]', (element) => element.getAttribute('data-menu-id') === id, false)[0] ??
+        null) as HTMLElement;
+}
+
+/**
+ * Every entry of the open menu (the elements with a data-menu-id), its submenus opened one by one as
+ * a user does: in the order of the tree - a submenu, then what is in it - as MENU_IDS lists them. An
+ * entry of a submenu closed again is not in the document anymore, its text and attributes are there.
+ * @param opened called each time a submenu has opened, to check what is shown then
+ */
+export function menuTreeEntries(opened: () => void = () => {}): HTMLElement[] {
+    const entries: HTMLElement[] = [];
+    const visit = (depth: number) => {
+        const menu = openMenus()[depth];
+        if (!menu) {
+            return;
+        }
+        for (const element of Array.from(menu.querySelectorAll<HTMLElement>('[data-menu-id]'))) {
+            entries.push(element);
+            if (element.getAttribute('aria-haspopup') === 'menu') {
+                element.click();
+                opened();
+                visit(depth + 1);
+            }
+        }
+    };
+    visit(0);
+    return entries;
+}
+
+/**
+ * the ids of every entry of the open menu and its submenus, see menuTreeEntries
+ */
+export function menuTreeIds(): string[] {
+    return menuTreeEntries().map((element) => element.getAttribute('data-menu-id') ?? '');
+}
+
+/**
+ * first menu entry (context menus, the menu bottom button, filter editor buttons) whose text
+ * starts with `text`. Not shown: looked for in the submenus of the open menu, which are opened on the
+ * way to it (see searchMenus)
+ */
+export function menuItem(text: string): HTMLElement {
+    const selector = '.simple-html-grid-menu-item, .simple-html-label-button-menu-bottom, .grid-button';
+    const matches = (element: HTMLElement) => element.textContent?.trim().startsWith(text) === true;
+    const shown = Array.from(document.querySelectorAll<HTMLElement>(selector)).find(matches);
+    return (shown ?? searchMenus(selector, matches, false)[0]) as HTMLElement;
+}
+
+/**
+ * every menu entry whose text is exactly `text`, in the open menu and all its submenus, for counting
+ * them. To click one use menuEntry(): an entry in a submenu closed again is not in the document
  */
 export function menuItemsExact(text: string): HTMLElement[] {
-    return Array.from(document.querySelectorAll('.simple-html-grid-menu-item')).filter(
-        (el) => el.textContent?.replace(/\s+/g, ' ').trim() === text
-    ) as HTMLElement[];
+    return searchMenus(
+        '.simple-html-grid-menu-item',
+        (element) => element.textContent?.replace(/\s+/g, ' ').trim() === text,
+        true
+    );
 }
 
 /**

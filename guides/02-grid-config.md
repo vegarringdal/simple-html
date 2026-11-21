@@ -105,9 +105,9 @@ gridInterface.resetRowHeights(); // every row one line again
 
 The user does the same with the mouse:
 
-- **The header menu** (right click a label), "Size:": Fit column width, Fit all columns, Reset column
+- **The header menu** (right click a label), "Size ›": Fit column width, Fit all columns, Reset column
   width, Reset all column widths.
-- **The row menu** (right click a cell), "Size:": Fit column to this cell, Fit row height, Fit row
+- **The row menu** (right click a cell), "Size ›": Fit column to this cell, Fit row height, Fit row
   height (selected rows) - the selected rows and the rows of the [ranges of cells](17-selection-and-clipboard.md) -
   Fit all rows, Reset row height, Reset all row heights.
 - **A double click on the edge** of a column's header fits that column.
@@ -189,7 +189,7 @@ Every option is optional.
 | `autoRemoveContextMenuOnScrollEvent` | `false` | closes the open menu when the grid scrolls |
 | `tooltips` | `true` | the built-in tooltips: on the buttons of the filter editor, and the validation messages on a cell and its row number |
 | `multilineTooltipLines` | `5` | the lines of a multiline cell's text its tooltip shows, then `… 7 more lines`. A whole number of 1 or more, see [Multiline text](05-editing.md#multiline-text) |
-| `texts` | | the texts of this grid by id, e.g. `{ 'row.copy': 'Kopier:' }`: they win over the page's (`setTexts()`). The tooltips are texts too, their ids end with `.tooltip`. See [Texts](12-texts.md) |
+| `texts` | | the texts of this grid by id, e.g. `{ 'row.copy': 'Kopier' }`: they win over the page's (`setTexts()`). The tooltips are texts too, their ids end with `.tooltip`. See [Texts](12-texts.md) |
 | `datePickerConfig` | | week start and sizes of the date picker: only the fields to change (`Partial<IDateConfig>`), e.g. `{ weekStart: 0, isoWeek: false }`. The rest are the defaults: weeks from monday with their numbers. The names of the months and days are texts |
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |
 | `groupAggregates` | `true` | the group rows show the columns' `aggregate`s. `false`: the name of the group only. See [Aggregates](18-aggregates.md) |

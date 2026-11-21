@@ -188,7 +188,7 @@ It is listed in `getChanges().deletedEntities`. Unmarked, it is as it was before
 A new row is marked too. While it is marked it is in none of the lists of `getChanges()`: it was
 never saved, there is nothing to send. Unmarked, it is a new row again.
 
-In an editable grid the row menu (right click a cell) has a **Delete:** section: *Rows (selected
+In an editable grid the row menu (right click a cell) has a **Delete ›** submenu: *Rows (selected
 rows)* marks the selected rows, *Undo (selected rows)* takes the mark off - shown when a selected row
 is marked. Ctrl+Z takes a delete back too, see [Undo and redo](#undo-and-redo). A row the `isReadonly` hook returns `true` for in every column is locked: the menu does not
 mark it. The columns' `readonly` option does not lock a row, so a grid of readonly columns can still
@@ -344,7 +344,7 @@ datasource.isChangedOnly(); // true
 datasource.filterChangedOnly(false); // every row in Norway
 ```
 
-- **In the grid**: the row menu's *View: Changed rows only* turns it on and off (a ✓ while it is
+- **In the grid**: the row menu's *View › Changed rows only* turns it on and off (a ✓ while it is
   on), and the footer shows a chip *Changed rows only* in front of the filter's. The footer's *Clear*
   and the filter menu's *Clear All Filters* turn it off with the filter.
 - **It is not part of the filter**, it is ANDed with it: `getFilter()`, `getFilterString()`, the filter
@@ -375,10 +375,11 @@ again. In the grid the user has them too:
   every key to the row as it is typed, so what was typed in the cell is the last step of the history;
   once the typing is undone back to the value the cell started with, or the focus left the cell,
   Ctrl+Z undoes the history.
-- The row menu (right click a cell) has an **Edit:** section: *Undo (Ctrl+Z)* and *Redo (Ctrl+Y)*,
-  greyed out when there is nothing to undo or redo, and the reverts, see
-  [Reverting a cell or a row](#reverting-a-cell-or-a-row). The ids are `row.edit`, `row.edit.undo`,
-  `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow` and `row.edit.revertRows`, change or hide them with the
+- The row menu (right click a cell) starts with *Undo (Ctrl+Z)* and *Redo (Ctrl+Y)*, greyed out
+  when there is nothing to undo or redo, and the reverts, see
+  [Reverting a cell or a row](#reverting-a-cell-or-a-row): not in a submenu, a line under them. The ids
+  are `row.edit.undo`, `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow`,
+  `row.edit.revertRows` and the line `row.edit.separator`, change or hide them with the
   [menus hook](10-menus.md).
 
 ```ts
@@ -463,7 +464,7 @@ datasource.resetRows(datasource.getSelectedRows());
 - The fields are validated as for an edit.
 - A field that is not edited (`getChanges()` would not list it) is left as it is.
 
-In an editable grid the row menu (right click a cell) starts with an **Edit:** section:
+In an editable grid the row menu (right click a cell) starts with the edit entries, not in a submenu:
 *Undo last change* (Ctrl+Z) and *Redo* (Ctrl+Y) go through the undo history; *Undo cell edit* puts
 the original value of the cell right clicked back, greyed out while it is not edited - a click on the
 marker of an edited cell does the same, see [Showing the row state](#showing-the-row-state);

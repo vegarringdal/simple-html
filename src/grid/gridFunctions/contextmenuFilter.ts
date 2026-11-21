@@ -51,7 +51,9 @@ export function contextmenuFilter(
 }
 
 /**
- * The filter menu's default entries, new objects every call. The ids are documented in MENU_IDS.filter
+ * The filter menu's default entries, new objects every call: clear, the submenus blank and operator,
+ * the filter editor, then the value list - the main tool, not in a submenu. The ids are documented in
+ * MENU_IDS.filter
  */
 function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     const type = ctx.gridInterface.getDatasource().getField(attribute).type;
@@ -91,28 +93,42 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     });
 
     return [
-        { type: 'section', id: 'filter.filter', label: text('filter.filter') },
         { id: 'filter.filter.clear', label: text('filter.filter.clear'), action: () => clearColumnFilter(ctx, attribute) },
         { id: 'filter.filter.clearAll', label: text('filter.filter.clearAll'), action: () => clearAllColumnFilters(ctx) },
         { type: 'separator', id: 'filter.filter.blankSeparator' },
         {
-            id: 'filter.filter.isBlank',
-            label: text('filter.filter.isBlank'),
-            action: () => setBlankOrNotBlank(ctx, attribute, 'IS_BLANK')
+            type: 'submenu',
+            id: 'filter.filter.blank',
+            label: text('filter.filter.blank'),
+            entries: [
+                {
+                    id: 'filter.filter.isBlank',
+                    label: text('filter.filter.isBlank'),
+                    action: () => setBlankOrNotBlank(ctx, attribute, 'IS_BLANK')
+                },
+                {
+                    id: 'filter.filter.isNotBlank',
+                    label: text('filter.filter.isNotBlank'),
+                    action: () => setBlankOrNotBlank(ctx, attribute, 'IS_NOT_BLANK')
+                }
+            ]
         },
         {
-            id: 'filter.filter.isNotBlank',
-            label: text('filter.filter.isNotBlank'),
-            action: () => setBlankOrNotBlank(ctx, attribute, 'IS_NOT_BLANK')
+            type: 'submenu',
+            id: 'filter.operator',
+            label: text('filter.operator'),
+            visible: hasOperators,
+            // the operator in use has a check mark
+            entries: [
+                operatorItem('filter.operator.greaterThanOrEqualTo', 'GREATER_THAN_OR_EQUAL_TO', isRange),
+                operatorItem('filter.operator.lessThanOrEqualTo', 'LESS_THAN_OR_EQUAL_TO', isRange),
+                operatorItem('filter.operator.equal', 'EQUAL', hasOperators),
+                operatorItem('filter.operator.notEqualTo', 'NOT_EQUAL_TO', isText),
+                operatorItem('filter.operator.contains', 'CONTAINS', isText)
+            ]
         },
         { type: 'separator', id: 'filter.filter.advancedSeparator' },
         { id: 'filter.filter.advanced', label: text('filter.filter.advanced'), action: () => openFilterEditor(ctx) },
-        { type: 'section', id: 'filter.operator', label: text('filter.operator'), visible: hasOperators },
-        operatorItem('filter.operator.greaterThanOrEqualTo', 'GREATER_THAN_OR_EQUAL_TO', isRange),
-        operatorItem('filter.operator.lessThanOrEqualTo', 'LESS_THAN_OR_EQUAL_TO', isRange),
-        operatorItem('filter.operator.equal', 'EQUAL', hasOperators),
-        operatorItem('filter.operator.notEqualTo', 'NOT_EQUAL_TO', isText),
-        operatorItem('filter.operator.contains', 'CONTAINS', isText),
         valueListBlock(ctx, attribute)
     ];
 }
@@ -318,8 +334,17 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
                 ${availableCheckbox()} ${inputTemplate()} ${listContainerTemplate()}
                 <div
                     class="simple-html-label-button-menu-bottom"
+                    role="button"
+                    tabindex="0"
                     @click=${() => {
                         runFilterClick();
+                    }}
+                    @keydown=${(event: KeyboardEvent) => {
+                        // a button for the keyboard too: Tab gets to it from the checkboxes
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            runFilterClick();
+                        }
                     }}
                 >
                     ${gridText(ctx, 'filter.values.run')}

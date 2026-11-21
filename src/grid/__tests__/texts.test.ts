@@ -11,7 +11,7 @@ import { setTexts, TEXTS, type Texts } from '../../texts';
 import type { GridConfig } from '../gridConfig';
 import { GridInterface } from '../gridInterface';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { headerFilterInput, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
+import { headerFilterInput, menuTreeEntries, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
 
 /**
  * Every text the grid shows comes from the texts. With every text replaced by its id in «» - the
@@ -207,18 +207,23 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     datasource.markForDeletion(datasource.getSelectedRows());
     // a range of cells: the range entries (marking rows clears the ranges, so after it)
     gridInterface.setRanges([{ fromRow: 0, fromField: 'name', toRow: 1, toField: 'age' }]);
+    // the menu, then each submenu as it opens
+    const checkMenu = () => {
+        check();
+        menuTreeEntries(check);
+    };
     openRowMenu(element, 'age', 0);
-    check();
+    checkMenu();
     gridInterface.clearRanges();
 
     // the header menus: pinned left (unpin) and in the center (pin), then the column chooser
     openLabelMenu(element, 'name');
-    check();
+    checkMenu();
     openLabelMenu(element, 'country');
-    check();
-    // a number column: its Aggregate: section has sum, average, min and max too
+    checkMenu();
+    // a number column: its Aggregate submenu has sum, average, min and max too
     openLabelMenu(element, 'age');
-    check();
+    checkMenu();
     (document.querySelector('[data-menu-id="header.column.chooser"]') as HTMLElement).click();
     check();
 
@@ -226,7 +231,7 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     // that is cut off
     for (const field of ['age', 'name', 'country']) {
         openFilterMenu(element, field);
-        check();
+        checkMenu();
     }
 
     // the filter editor: AND with an OR group, a condition compared with a field not picked yet
@@ -357,8 +362,8 @@ describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
 });
 
 describe('texts in the grid - where a text comes from', () => {
-    const menuLabels = () =>
-        Array.from(document.querySelectorAll('[data-menu-id]'), (entry) => entry.textContent?.replace(/\s+/g, ' ').trim());
+    // the labels of the menu and its submenus
+    const menuLabels = () => menuTreeEntries().map((entry) => entry.textContent?.replace(/\s+/g, ' ').trim());
 
     it("expect the grid's texts, then the page's, then the defaults", async () => {
         setTexts({ 'row.copy': 'page copy', 'row.paste': 'page paste' });
@@ -375,7 +380,7 @@ describe('texts in the grid - where a text comes from', () => {
         gridInterface.updateConfig({ texts: { 'footer.clear': 'Tøm' } });
         expect(footerClear()).toEqual('Tøm');
         openRowMenu(element, 'age', 0);
-        expect(menuLabels()).toContain('Copy:');
+        expect(menuLabels()).toContain('Copy');
 
         gridInterface.updateConfig({ texts: undefined });
         expect(footerClear()).toEqual('✕ Clear');

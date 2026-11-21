@@ -8,7 +8,7 @@ import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { GridInterface } from '../gridInterface';
 import { mountGrid, shownRowElements, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { menuItemsExact, openLabelMenu, openRowMenu } from './interactionTestHelpers';
+import { menuEntry, openLabelMenu, openRowMenu } from './interactionTestHelpers';
 
 /**
  * Aggregates in the grid (ColumnConfig.aggregate): a cell per aggregate in the place of its field in
@@ -574,7 +574,8 @@ describe('aggregates - the state', () => {
 });
 
 describe('aggregates - the header menu', () => {
-    const entry = (id: string) => document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`) as HTMLElement | null;
+    // in the aggregate submenu, opened on the way
+    const entry = (id: string) => menuEntry(id) as HTMLElement | null;
     const isChecked = (id: string) => !!entry(id)?.classList.contains('simple-html-grid-menu-item-selected');
 
     it('expect a toggle for each function on a number column, the ones on checked', async () => {
@@ -645,7 +646,8 @@ describe('aggregates - the row menu summary', () => {
         );
         datasource.selectAll();
         openRowMenu(element, 'value', 0);
-        const label = (id: string) => textOf(document.querySelector(`[data-menu-id="row.summary.${id}"]`));
+        // in the summary submenu, opened on the way
+        const label = (id: string) => textOf(menuEntry(`row.summary.${id}`));
         return { count: label('count'), sum: label('sum'), max: label('max'), min: label('min'), avg: label('avg') };
     }
 
@@ -682,7 +684,9 @@ describe('aggregates - the row menu summary', () => {
         const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
         await summary([-5, -3]);
 
-        menuItemsExact('Max: -3')[0].click();
+        const max = menuEntry('row.summary.max');
+        expect(textOf(max)).toEqual('Max: -3');
+        max.click();
         expect(writeText).toHaveBeenCalledWith('-3');
     });
 });

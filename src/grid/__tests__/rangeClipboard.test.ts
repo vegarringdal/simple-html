@@ -8,7 +8,7 @@ import type { GridElement } from '../gridElement';
 import type { HTMLCellElement } from '../gridFunctions/HTMLCellElement';
 import type { GridHooks } from '../gridHooks';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { menuItem, openRowMenu, sleep } from './interactionTestHelpers';
+import { menuEntry, menuItem, menuTreeIds, openRowMenu, sleep } from './interactionTestHelpers';
 
 /**
  * The clipboard of the cell ranges (V6 item 33): copy as tab separated text (and an html table),
@@ -717,17 +717,23 @@ describe('clipboard - the row menu', () => {
         const readonlyGrid = await mount({ readonly: true });
         readonlyGrid.gridInterface.setRanges([range(0, 'name', 1, 'name')]);
         openRowMenu(readonlyGrid.element, 'name', 0);
-        expect(document.querySelector('[data-menu-id="row.copy.range"]')).not.toBeNull();
-        expect(document.querySelector('[data-menu-id="row.paste.range"]')).toBeNull();
-        expect(document.querySelector('[data-menu-id="row.clear.range"]')).toBeNull();
+        expect(menuEntry('row.copy.range')).not.toBeNull();
+        // every submenu opened: no paste or clear in any
+        const readonlyIds = menuTreeIds();
+        expect(readonlyIds).toContain('row.copy.range');
+        expect(readonlyIds.filter((id) => /^row\.(paste|clear)/.test(id))).toEqual([]);
         readonlyGrid.element.remove();
 
         const { element, gridInterface } = await mount({ columns: { city: { readonly: true } } });
         gridInterface.setRanges([range(0, 'name', 1, 'name')]);
         openRowMenu(element, 'city', 0);
-        // the cell is readonly: no Paste cell, but the sections show for the range entries
-        expect(document.querySelector('[data-menu-id="row.paste.cell"]')).toBeNull();
-        expect(document.querySelector('[data-menu-id="row.paste.range"]')).not.toBeNull();
-        expect(document.querySelector('[data-menu-id="row.clear.range"]')).not.toBeNull();
+        // the cell is readonly: no Paste cell, but the submenus show for the range entries
+        const ids = menuTreeIds();
+        expect(ids.filter((id) => /^row\.(paste|clear)/.test(id))).toEqual([
+            'row.paste',
+            'row.paste.range',
+            'row.clear',
+            'row.clear.range'
+        ]);
     });
 });

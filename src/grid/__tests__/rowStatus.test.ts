@@ -8,7 +8,7 @@ import type { GridElement } from '../gridElement';
 import { dropDownFilterData } from '../gridFunctions/dropDownFilterData';
 import { ROW_STATUS_WIDTH } from '../gridFunctions/rowStatus';
 import { footerText, type MountedGrid, mountGrid, selectorRowOf, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { gridOf, menuItem, openFilterMenu, openRowMenu, sleep, typeInHeaderFilter } from './interactionTestHelpers';
+import { gridOf, menuEntry, menuItem, openFilterMenu, openRowMenu, sleep, typeInHeaderFilter } from './interactionTestHelpers';
 
 /**
  * The row's state on its row number (GridConfig.rowStatus): an icon, the state as the tooltip's
@@ -520,8 +520,8 @@ function isGroupRowShown(row: unknown) {
 }
 
 describe('changed rows only in the grid', () => {
-    /** the menu entry's label */
-    const changedOnlyEntry = () => document.querySelector('[data-menu-id="row.view.changedOnly"]') as HTMLElement;
+    /** the menu entry, in the view submenu */
+    const changedOnlyEntry = () => menuEntry('row.view.changedOnly');
 
     it('expect the row menu entry to turn it on and off, with a ✓ while on', async () => {
         const { element, datasource } = await mount();
@@ -529,12 +529,15 @@ describe('changed rows only in the grid', () => {
 
         openRowMenu(element, 'name', 0);
         expect(changedOnlyEntry().textContent?.trim()).toEqual('Changed rows only');
+        // the ✓ is the css of a checked item
+        expect(changedOnlyEntry().getAttribute('aria-checked')).toEqual('false');
         changedOnlyEntry().click();
         expect(datasource.isChangedOnly()).toBe(true);
         expect(datasource.getRows()).toHaveLength(1);
 
         openRowMenu(element, 'name', 0);
-        expect(changedOnlyEntry().textContent?.trim()).toEqual('✓ Changed rows only');
+        expect(changedOnlyEntry().getAttribute('aria-checked')).toEqual('true');
+        expect(changedOnlyEntry().classList).toContain('simple-html-grid-menu-item-selected');
         changedOnlyEntry().click();
         expect(datasource.isChangedOnly()).toBe(false);
         expect(datasource.getRows()).toHaveLength(4);

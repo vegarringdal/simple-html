@@ -3,9 +3,23 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isPopoverShown } from '../../__tests__/popoverStub';
 import type { GridElement } from '../gridElement';
+import { SUBMENU_DELAY } from '../gridFunctions/showMenu';
 import { type GridMenus, MENU_IDS, type MenuContext, type MenuEntry, type MenuItem } from '../gridMenus';
 import { mountGrid, simpleConfig, simpleData, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { gridOf, headerFilterInput, menuItem, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
+import {
+    gridOf,
+    headerFilterInput,
+    labelCell,
+    menuEntry,
+    menuItem,
+    menuTreeIds,
+    openFilterMenu,
+    openLabelMenu,
+    openMenus,
+    openRowMenu,
+    pointerEvent,
+    sleep
+} from './interactionTestHelpers';
 
 /**
  * Menus as data: the menus hook changes the grid's own menus, openMenu() / closeMenu() open and
@@ -26,8 +40,8 @@ afterEach(() => {
 });
 
 /**
- * the ids of what the open menu shows, in order: items, sections and separators carry data-menu-id,
- * and so does the value list block
+ * the ids of what the open menu shows, in order - and its open submenus: items, submenus, sections
+ * and separators carry data-menu-id, and so does the value list block
  */
 function shownIds(): string[] {
     return Array.from(document.querySelectorAll('.simple-html-grid-menu [data-menu-id]')).map(
@@ -40,6 +54,12 @@ function entry(id: string): HTMLElement {
 }
 
 const menuOpen = () => document.querySelector('.simple-html-grid-menu') !== null;
+
+/**
+ * the ids of a tree of entries, a submenu before what is in it: the order of MENU_IDS
+ */
+const flatIds = (entries: MenuEntry[]): string[] =>
+    entries.flatMap((entry) => [entry.id, ...(entry.type === 'submenu' ? flatIds(entry.entries) : [])]);
 
 /**
  * the simple grid with the menus hook
@@ -65,7 +85,7 @@ describe('menus - the built-in ids', () => {
 
         openRowMenu(element, 'age', 0);
 
-        expect(seen[0].defaults.map((e) => e.id)).toEqual(MENU_IDS.row);
+        expect(flatIds(seen[0].defaults)).toEqual(MENU_IDS.row);
     });
 
     it('expect the header menu defaults to be MENU_IDS.header, in order', async () => {
@@ -73,7 +93,7 @@ describe('menus - the built-in ids', () => {
 
         openLabelMenu(element, 'age');
 
-        expect(seen[0].defaults.map((e) => e.id)).toEqual(MENU_IDS.header);
+        expect(flatIds(seen[0].defaults)).toEqual(MENU_IDS.header);
     });
 
     it('expect the filter menu defaults to be MENU_IDS.filter, in order', async () => {
@@ -81,7 +101,7 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'firstname');
 
-        expect(seen[0].defaults.map((e) => e.id)).toEqual(MENU_IDS.filter);
+        expect(flatIds(seen[0].defaults)).toEqual(MENU_IDS.filter);
     });
 
     it('expect every id to be unique', () => {
@@ -99,7 +119,8 @@ describe('menus - the built-in ids', () => {
 
         openRowMenu(element, 'age', 0);
 
-        expect(shownIds()).toEqual(MENU_IDS.row);
+        // every submenu opened in turn
+        expect(menuTreeIds()).toEqual(MENU_IDS.row);
     });
 
     it('expect the entries that do not apply to be left out by their visible callback', async () => {
@@ -109,7 +130,7 @@ describe('menus - the built-in ids', () => {
         openRowMenu(element, 'firstname', 0);
 
         // and no range of cells: no range entries. No selected rows: no fit of the selected rows
-        expect(shownIds()).toEqual(
+        expect(menuTreeIds()).toEqual(
             MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|edit|summary)|\.range$|^row\.size\.fitRows$/.test(id))
         );
     });
@@ -119,7 +140,7 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'firstname');
 
-        expect(shownIds()).toEqual(
+        expect(menuTreeIds()).toEqual(
             MENU_IDS.filter.filter(
                 (id) => id !== 'filter.operator.greaterThanOrEqualTo' && id !== 'filter.operator.lessThanOrEqualTo'
             )
@@ -131,7 +152,7 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'age');
 
-        expect(shownIds()).toEqual(
+        expect(menuTreeIds()).toEqual(
             MENU_IDS.filter.filter(
                 (id) => id !== 'filter.operator.notEqualTo' && id !== 'filter.operator.contains' && id !== 'filter.values'
             )
@@ -145,25 +166,30 @@ describe('menus - the built-in ids', () => {
         const { element } = await mountGrid(config);
 
         openLabelMenu(element, 'firstname');
-        expect(shownIds()).not.toContain('header.column.pinLeft');
-        expect(shownIds()).toContain('header.column.unpin');
+        expect(menuTreeIds()).not.toContain('header.column.pinLeft');
+        expect(menuTreeIds()).toContain('header.column.unpin');
 
         openLabelMenu(element, 'age');
-        expect(shownIds()).toContain('header.column.pinLeft');
-        expect(shownIds()).not.toContain('header.column.unpin');
+        expect(menuTreeIds()).toContain('header.column.pinLeft');
+        expect(menuTreeIds()).not.toContain('header.column.unpin');
     });
 });
 
 describe('menus - rendered as before', () => {
     it('expect a section header with a solid line, a separator as a dashed line', async () => {
-        const { element } = await mountGrid();
+        const { element, gridInterface } = await mountGrid();
+
+        gridInterface.openMenu({ x: 0, y: 0 }, [
+            { type: 'section', id: 'test.section', label: 'Pick:' },
+            { id: 'test.a', label: 'A', action: () => {} }
+        ]);
+
+        const section = entry('test.section');
+        expect(section.className).toEqual('simple-html-grid-menu-section');
+        expect(section.textContent?.trim()).toEqual('Pick:');
+        expect((section.nextElementSibling as HTMLElement).className).toEqual('hr-solid');
 
         openLabelMenu(element, 'age');
-
-        const section = entry('header.column');
-        expect(section.className).toEqual('simple-html-grid-menu-section');
-        expect(section.textContent?.trim()).toEqual('Column:');
-        expect((section.nextElementSibling as HTMLElement).className).toEqual('hr-solid');
         expect(entry('header.column.chooserSeparator').className).toEqual('hr-dashed');
     });
 
@@ -172,7 +198,7 @@ describe('menus - rendered as before', () => {
 
         openRowMenu(element, 'age', 0);
 
-        const paste = entry('row.paste.cell');
+        const paste = menuEntry('row.paste.cell');
         expect(paste.className).toEqual('simple-html-grid-menu-item');
         expect(paste.textContent?.replace(/\s+/g, ' ').trim()).toEqual('Paste cell (selected rows)');
         expect(paste.querySelector('i')?.textContent).toEqual('(selected rows)');
@@ -183,9 +209,12 @@ describe('menus - rendered as before', () => {
 
         openFilterMenu(element, 'age');
 
-        // the default of a number column
-        expect(entry('filter.operator.greaterThanOrEqualTo').classList).toContain('simple-html-grid-menu-item-selected');
+        // the default of a number column, in the operator submenu: a ✓ (css), aria-checked
+        const current = menuEntry('filter.operator.greaterThanOrEqualTo');
+        expect(current.classList).toContain('simple-html-grid-menu-item-selected');
+        expect(current.getAttribute('aria-checked')).toEqual('true');
         expect(entry('filter.operator.equal').classList).not.toContain('simple-html-grid-menu-item-selected');
+        expect(entry('filter.operator.equal').getAttribute('aria-checked')).toEqual('false');
     });
 
     it('expect the menu on the body, in the grid style, shown as a manual popover', async () => {
@@ -209,7 +238,7 @@ describe('menus - rendered as before', () => {
         openRowMenu(element, 'age', 0);
 
         const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
-        entry('row.copy.cell').dispatchEvent(down);
+        menuEntry('row.copy.cell').dispatchEvent(down);
 
         // the focus stays on the cell, and goes back there from a dialog an item opens
         expect(down.defaultPrevented).toBe(true);
@@ -217,41 +246,85 @@ describe('menus - rendered as before', () => {
 });
 
 describe('menus - the menus hook', () => {
-    it('expect a built-in entry to be hidden', async () => {
-        const menus: GridMenus = { row: (defaults) => defaults.filter((e) => e.id !== 'row.copy.cell') };
+    it('expect a built-in entry in a submenu to be hidden, the submenu changed with map', async () => {
+        const menus: GridMenus = {
+            row: (defaults) =>
+                defaults.map((e) =>
+                    e.type === 'submenu' && e.id === 'row.copy'
+                        ? { ...e, entries: e.entries.filter((inner) => inner.id !== 'row.copy.cell') }
+                        : e
+                )
+        };
         const { element } = await mountMenus(menus);
 
         openRowMenu(element, 'firstname', 0);
 
-        expect(shownIds()).not.toContain('row.copy.cell');
-        expect(shownIds()).toContain('row.copy.column');
+        expect(menuTreeIds()).not.toContain('row.copy.cell');
+        expect(menuTreeIds()).toContain('row.copy.column');
         expect(menuItem('Cell Value')).toBeUndefined();
+    });
+
+    it('expect a filter on the id prefix to hide a submenu with what is in it', async () => {
+        const menus: GridMenus = { row: (defaults) => defaults.filter((e) => !e.id.startsWith('row.copy')) };
+        const { element } = await mountMenus(menus);
+
+        openRowMenu(element, 'firstname', 0);
+
+        expect(menuTreeIds().filter((id) => id.startsWith('row.copy'))).toEqual([]);
+        expect(menuTreeIds()).toContain('row.filter.replace');
+    });
+
+    it('expect an entry of your own in a submenu to get the context', async () => {
+        const action = vi.fn();
+        const menus: GridMenus = {
+            header: (defaults) =>
+                defaults.map((e) =>
+                    e.type === 'submenu' && e.id === 'header.size'
+                        ? { ...e, entries: [...e.entries, { id: 'test.wide', label: 'Wide', action }] }
+                        : e
+                )
+        };
+        const { element } = await mountMenus(menus);
+
+        openLabelMenu(element, 'age');
+        expect(menuTreeIds().filter((id) => id.startsWith('header.size') || id.startsWith('test'))).toEqual([
+            'header.size',
+            'header.size.column',
+            'header.size.all',
+            'header.size.resetColumn',
+            'header.size.resetAll',
+            'test.wide'
+        ]);
+        menuEntry('test.wide').click();
+
+        expect(action.mock.calls[0][0].field).toEqual('age');
+        expect(menuOpen()).toBe(false);
     });
 
     it('expect the entries to be shown in the order returned', async () => {
         const menus: GridMenus = {
             filter: (defaults) => [
                 ...defaults.filter((e) => e.id === 'filter.values'),
-                ...defaults.filter((e) => e.id === 'filter.filter.clear' || e.id === 'filter.filter')
+                ...defaults.filter((e) => e.id === 'filter.operator' || e.id === 'filter.filter.clear')
             ]
         };
         const { element } = await mountMenus(menus);
 
         openFilterMenu(element, 'firstname');
 
-        expect(shownIds()).toEqual(['filter.values', 'filter.filter', 'filter.filter.clear']);
+        expect(shownIds()).toEqual(['filter.values', 'filter.filter.clear', 'filter.operator']);
         // the value list still works where it was moved to
         expect(menuItem('Run Search')).toBeDefined();
     });
 
     it('expect a label to be changed and the entry to keep its action', async () => {
         const menus: GridMenus = {
-            header: (defaults) => defaults.map((e) => (e.id === 'header.column.hide' ? { ...e, label: 'Hide column' } : e))
+            header: (defaults) => defaults.map((e) => (e.id === 'header.column.hide' ? { ...e, label: 'Take away' } : e))
         };
         const { element, gridInterface } = await mountMenus(menus);
 
         openLabelMenu(element, 'age');
-        menuItem('Hide column').click();
+        menuItem('Take away').click();
 
         expect(gridInterface.getLayoutFields()).toEqual(['firstname', 'lastname']);
     });
@@ -360,10 +433,10 @@ describe('menus - the menus hook', () => {
 
     it('expect a built-in entry to keep working when the list is rebuilt around it', async () => {
         const menus: GridMenus = {
-            // the replace entry first, under a section of its own
+            // the replace entry out of its submenu, under a section of its own
             row: (defaults) => [
                 { type: 'section', id: 'test.section', label: 'First:' },
-                ...defaults.filter((e) => e.id === 'row.filter.replace')
+                ...defaults.flatMap((e) => (e.type === 'submenu' ? e.entries : [e])).filter((e) => e.id === 'row.filter.replace')
             ]
         };
         const { element, datasource } = await mountMenus(menus);
@@ -384,7 +457,7 @@ describe('menus - the menus hook', () => {
 
         gridInterface.updateHooks({ menus: undefined });
         openLabelMenu(element, 'age');
-        expect(shownIds()).toEqual(MENU_IDS.header.filter((id) => id !== 'header.column.unpin'));
+        expect(menuTreeIds()).toEqual(MENU_IDS.header.filter((id) => id !== 'header.column.unpin'));
     });
 
     it('expect an action that opens a menu to leave that menu open', async () => {
@@ -851,7 +924,7 @@ describe('menus - a block of your own (a dropdown grid)', () => {
         openRowMenu(main.element, 'firstname', 0);
 
         expect(dropdown.isConnected).toBe(false);
-        expect(shownIds()).toContain('row.copy.cell');
+        expect(shownIds()).toContain('row.copy');
     });
 });
 
@@ -958,5 +1031,762 @@ describe('menus - the column chooser', () => {
 
         element.remove();
         expect(second.isConnected).toBe(false);
+    });
+});
+
+describe('menus - the default menus, short', () => {
+    it('expect the row menu: the edit entries and a line, then a submenu per part', async () => {
+        const { element, datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false });
+        datasource.getSelection().selectRowRange(0, 1);
+        datasource.markForDeletion(datasource.getDataRows()[0]);
+        gridInterface.setRanges([{ fromRow: 0, fromField: 'firstname', toRow: 1, toField: 'age' }]);
+
+        openRowMenu(element, 'age', 0);
+
+        // no submenu open: what the menu itself shows, 15 rows - 35 before the submenus
+        expect(shownIds()).toEqual([
+            'row.edit.undo',
+            'row.edit.redo',
+            'row.edit.revertCell',
+            'row.edit.revertRow',
+            'row.edit.revertRows',
+            'row.edit.separator',
+            'row.copy',
+            'row.paste',
+            'row.clear',
+            'row.delete',
+            'row.filter',
+            'row.view',
+            'row.size',
+            'row.summary',
+            'row.export'
+        ]);
+    });
+
+    it('expect the row menu of a readonly text cell to be its submenus only', async () => {
+        const { element } = await mountGrid();
+
+        openRowMenu(element, 'firstname', 0);
+
+        expect(shownIds()).toEqual(['row.copy', 'row.filter', 'row.view', 'row.size', 'row.export']);
+    });
+
+    it('expect the header menu: pin, hide, remove sorting, the column chooser, then the submenus', async () => {
+        const { element } = await mountGrid();
+
+        openLabelMenu(element, 'age');
+
+        expect(shownIds()).toEqual([
+            'header.column.pin',
+            'header.column.hide',
+            'header.column.removeSorting',
+            'header.column.chooserSeparator',
+            'header.column.chooser',
+            'header.size',
+            'header.aggregate',
+            'header.grouping'
+        ]);
+    });
+
+    it('expect the filter menu: clear, the blank and operator submenus, the filter editor, the value list', async () => {
+        const { element } = await mountGrid();
+
+        openFilterMenu(element, 'firstname');
+
+        expect(shownIds()).toEqual([
+            'filter.filter.clear',
+            'filter.filter.clearAll',
+            'filter.filter.blankSeparator',
+            'filter.filter.blank',
+            'filter.operator',
+            'filter.filter.advancedSeparator',
+            'filter.filter.advanced',
+            'filter.values'
+        ]);
+    });
+
+    it('expect no operator submenu on a boolean column: it has none of its entries', async () => {
+        const { element } = await mountGrid(
+            { layout: { center: [{ fields: ['active'], width: 100 }] } },
+            [{ active: true }, { active: false }],
+            { fields: { active: 'boolean' } }
+        );
+
+        openFilterMenu(element, 'active');
+
+        expect(menuTreeIds()).not.toContain('filter.operator');
+        expect(menuTreeIds()).toContain('filter.filter.isBlank');
+    });
+
+    it('expect the entries of a submenu to start with its id, the pin and blank submenus aside', async () => {
+        const { element, seen } = await mountCapturing();
+        openRowMenu(element, 'age', 0);
+        openLabelMenu(element, 'age');
+        openFilterMenu(element, 'firstname');
+
+        const outOfPlace: string[] = [];
+        const check = (entries: MenuEntry[]) => {
+            for (const entry of entries) {
+                if (entry.type !== 'submenu') {
+                    continue;
+                }
+                const start =
+                    entry.id === 'header.column.pin'
+                        ? 'header.column.'
+                        : entry.id === 'filter.filter.blank'
+                          ? 'filter.filter.'
+                          : `${entry.id}.`;
+                outOfPlace.push(...entry.entries.map((inner) => inner.id).filter((id) => !id.startsWith(start)));
+                check(entry.entries);
+            }
+        };
+        for (const { defaults } of seen) {
+            check(defaults);
+        }
+        expect(outOfPlace).toEqual([]);
+    });
+
+    it('expect a filter on the start of the old section ids to hide that part as before', async () => {
+        const menus: GridMenus = {
+            header: (defaults) => defaults.filter((e) => !e.id.startsWith('header.column')),
+            filter: (defaults) => defaults.filter((e) => !e.id.startsWith('filter.filter'))
+        };
+        const { element } = await mountMenus(menus);
+
+        openLabelMenu(element, 'age');
+        expect(menuTreeIds().filter((id) => id.startsWith('header.column'))).toEqual([]);
+
+        openFilterMenu(element, 'firstname');
+        expect(menuTreeIds().filter((id) => id.startsWith('filter.filter'))).toEqual([]);
+        expect(menuTreeIds()).toContain('filter.operator.equal');
+    });
+});
+
+/**
+ * a menu of your own with submenus: one in the middle with a submenu in it, one more, lines
+ */
+const tree = (action = vi.fn()): MenuEntry[] => [
+    { id: 'test.apple', label: 'Apple', action },
+    { type: 'separator', id: 'test.line' },
+    {
+        type: 'submenu',
+        id: 'test.more',
+        label: 'More',
+        entries: [
+            { id: 'test.kiwi', label: 'Kiwi', action },
+            { id: 'test.mango', label: 'Mango', action, disabled: () => true },
+            { type: 'submenu', id: 'test.deeper', label: 'Deeper', entries: [{ id: 'test.fig', label: 'Fig', action }] }
+        ]
+    },
+    { type: 'submenu', id: 'test.other', label: 'Other', entries: [{ id: 'test.lime', label: 'Lime', action }] },
+    { id: 'test.banana', label: 'Banana', action }
+];
+
+/** a mousemove over an element, as the pointer moving onto it */
+const pointerOn = (element: Element) => element.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+
+describe('menus - submenus', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('expect an item with a submenu to say so, and the submenu not to be made until it opens', async () => {
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree());
+
+        const more = entry('test.more');
+        expect(more.className).toEqual('simple-html-grid-menu-item');
+        expect(more.getAttribute('role')).toEqual('menuitem');
+        expect(more.getAttribute('aria-haspopup')).toEqual('menu');
+        expect(more.getAttribute('aria-expanded')).toEqual('false');
+        expect(more.id).not.toEqual('');
+        expect(more.textContent?.trim()).toEqual('More');
+        expect(openMenus()).toHaveLength(1);
+        expect(entry('test.kiwi')).toBeNull();
+    });
+
+    it('expect a click to open it: a popover of its own in the menu, labelled by its item', async () => {
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree());
+        const more = entry('test.more');
+
+        more.click();
+
+        expect(openMenus()).toHaveLength(2);
+        const submenu = openMenus()[1];
+        expect(submenu.getAttribute('aria-labelledby')).toEqual(more.id);
+        const popover = submenu.parentElement as HTMLElement;
+        expect(popover.className).toEqual('simple-html-grid simple-html-grid-reset simple-html-grid-popover');
+        expect(popover.getAttribute('popover')).toEqual('manual');
+        expect(isPopoverShown(popover)).toBe(true);
+        // in the menu's popover: it closes with it, a click in it is a click in the menu
+        expect(popover.parentElement).toBe(openMenus()[0].parentElement);
+        expect(more.getAttribute('aria-expanded')).toEqual('true');
+        expect(shownIds()).toEqual([
+            'test.apple',
+            'test.line',
+            'test.more',
+            'test.other',
+            'test.banana',
+            'test.kiwi',
+            'test.mango',
+            'test.deeper'
+        ]);
+
+        // a second click leaves it open
+        more.click();
+        expect(openMenus()).toHaveLength(2);
+        expect(openMenus()[1]).toBe(submenu);
+    });
+
+    it(`expect the pointer resting on it to open it after ${SUBMENU_DELAY}ms, on another item to close it`, async () => {
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree());
+        vi.useFakeTimers();
+
+        pointerOn(entry('test.more'));
+        vi.advanceTimersByTime(SUBMENU_DELAY - 1);
+        expect(openMenus()).toHaveLength(1);
+        vi.advanceTimersByTime(1);
+        expect(openMenus()).toHaveLength(2);
+        expect(entry('test.kiwi')).not.toBeNull();
+
+        pointerOn(entry('test.banana'));
+        expect(openMenus()).toHaveLength(2);
+        vi.advanceTimersByTime(SUBMENU_DELAY);
+        expect(openMenus()).toHaveLength(1);
+        expect(entry('test.more').getAttribute('aria-expanded')).toEqual('false');
+    });
+
+    it('expect the pointer crossing another item on its way into the open submenu not to swap it', async () => {
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree());
+        entry('test.more').click();
+        vi.useFakeTimers();
+
+        // across Other, into the submenu of More before the delay is over
+        pointerOn(entry('test.other'));
+        vi.advanceTimersByTime(SUBMENU_DELAY - 50);
+        openMenus()[1].parentElement?.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(SUBMENU_DELAY);
+
+        expect(entry('test.kiwi')).not.toBeNull();
+        expect(entry('test.lime')).toBeNull();
+    });
+
+    it('expect one submenu open per menu: opening another closes the first', async () => {
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree());
+
+        entry('test.more').click();
+        entry('test.other').click();
+
+        expect(openMenus()).toHaveLength(2);
+        expect(entry('test.kiwi')).toBeNull();
+        expect(entry('test.lime')).not.toBeNull();
+        expect(entry('test.more').getAttribute('aria-expanded')).toEqual('false');
+        expect(entry('test.other').getAttribute('aria-expanded')).toEqual('true');
+    });
+
+    it('expect submenus in submenus, the deeper ones closed with the one they are in', async () => {
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree());
+
+        entry('test.more').click();
+        entry('test.deeper').click();
+        expect(openMenus()).toHaveLength(3);
+        expect(entry('test.fig')).not.toBeNull();
+
+        entry('test.other').click();
+        expect(openMenus()).toHaveLength(2);
+        expect(entry('test.fig')).toBeNull();
+    });
+
+    it('expect a click on an item in a submenu to close the whole menu, then run its action with the context', async () => {
+        const action = vi.fn();
+        const { gridInterface, datasource } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree(action));
+        entry('test.more').click();
+        entry('test.deeper').click();
+        const popovers = Array.from(document.querySelectorAll('.simple-html-grid-popover'));
+
+        entry('test.fig').click();
+
+        expect(menuOpen()).toBe(false);
+        expect(popovers.every((popover) => !popover.isConnected)).toBe(true);
+        expect(action).toHaveBeenCalledTimes(1);
+        expect(action.mock.calls[0][0]).toMatchObject({ menu: 'custom', gridInterface, datasource });
+    });
+
+    it('expect a click on a disabled item in a submenu to leave it open, a click outside to close all', async () => {
+        const action = vi.fn();
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree(action));
+        await sleep(0);
+        entry('test.more').click();
+
+        entry('test.mango').click();
+        expect(action).not.toHaveBeenCalled();
+        expect(openMenus()).toHaveLength(2);
+
+        document.body.click();
+        expect(menuOpen()).toBe(false);
+    });
+
+    it('expect a submenu with nothing to show to be left out', async () => {
+        const { gridInterface } = await mountGrid();
+
+        gridInterface.openMenu({ x: 0, y: 0 }, [
+            {
+                type: 'submenu',
+                id: 'test.hidden',
+                label: 'Hidden',
+                entries: [{ id: 'test.x', label: 'X', action: () => {} }],
+                visible: () => false
+            },
+            {
+                type: 'submenu',
+                id: 'test.empty',
+                label: 'Empty',
+                entries: [{ id: 'test.y', label: 'Y', action: () => {}, visible: () => false }]
+            },
+            {
+                type: 'submenu',
+                id: 'test.lines',
+                label: 'Lines',
+                entries: [
+                    { type: 'section', id: 'test.section', label: 'Only a header' },
+                    { type: 'separator', id: 'test.separator' }
+                ]
+            },
+            { type: 'submenu', id: 'test.none', label: 'None', entries: [] },
+            {
+                type: 'submenu',
+                id: 'test.shown',
+                label: 'Shown',
+                entries: [
+                    { id: 'test.z', label: 'Z', action: () => {}, visible: () => false },
+                    {
+                        type: 'submenu',
+                        id: 'test.inner',
+                        label: 'Inner',
+                        entries: [{ id: 'test.w', label: 'W', action: () => {} }]
+                    }
+                ]
+            }
+        ]);
+
+        expect(shownIds()).toEqual(['test.shown']);
+        entry('test.shown').click();
+        expect(shownIds()).toEqual(['test.shown', 'test.inner']);
+    });
+
+    it('expect closing the menu to stop a submenu about to open', async () => {
+        const { element: grid, gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree());
+        vi.useFakeTimers();
+
+        pointerOn(entry('test.more'));
+        gridInterface.closeMenu();
+        vi.advanceTimersByTime(SUBMENU_DELAY * 2);
+
+        expect(menuOpen()).toBe(false);
+        expect(gridOf(grid).menuTree).toBeNull();
+    });
+
+    describe('where it opens', () => {
+        /**
+         * The menu is 150 x 100 where its style puts it, a submenu `submenuWidth` x `submenuHeight` (or
+         * its max-height), and an item is 20 high at `itemTop`
+         */
+        const layout = (itemTop: number, submenuHeight = 60, submenuWidth = 120) =>
+            vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+                if (this.getAttribute('role') === 'menuitem') {
+                    return new DOMRect(0, itemTop, 150, 20);
+                }
+                const left = parseFloat(this.style.left) || 0;
+                const top = parseFloat(this.style.top) || 0;
+                if (this.parentElement?.classList.contains('simple-html-grid-popover')) {
+                    const max = parseFloat(this.style.maxHeight);
+                    return new DOMRect(left, top, submenuWidth, Number.isNaN(max) ? submenuHeight : Math.min(submenuHeight, max));
+                }
+                return new DOMRect(left, top, 150, 100);
+            });
+        const submenuPopover = () => openMenus()[1].parentElement as HTMLElement;
+
+        it('expect it on the right of the menu, its first item level with its item', async () => {
+            const { gridInterface } = await mountGrid();
+            layout(130);
+            gridInterface.openMenu({ x: 100, y: 100 }, tree());
+
+            entry('test.more').click();
+
+            expect(submenuPopover().style.left).toEqual('250px');
+            // its frame is 1px
+            expect(submenuPopover().style.top).toEqual('129px');
+            expect(submenuPopover().style.minWidth).toEqual('130px');
+        });
+
+        it('expect it on the left of the menu when there is no room on the right', async () => {
+            const { gridInterface } = await mountGrid();
+            layout(130);
+            gridInterface.openMenu({ x: window.innerWidth - 200, y: 100 }, tree());
+
+            entry('test.more').click();
+
+            expect(submenuPopover().style.left).toEqual(`${window.innerWidth - 200 - 120}px`);
+        });
+
+        it('expect it over the menu, in from the right edge, when there is room on neither side', async () => {
+            const { gridInterface } = await mountGrid();
+            // the menu 150 wide at 50: 50px on its left, the window's width minus 200 on its right
+            const width = window.innerWidth - 100;
+            layout(130, 60, width);
+            gridInterface.openMenu({ x: 50, y: 100 }, tree());
+
+            entry('test.more').click();
+
+            expect(submenuPopover().style.left).toEqual(`${window.innerWidth - 4 - width}px`);
+        });
+
+        it('expect it moved up as far as it has to near the bottom of the window', async () => {
+            const { gridInterface } = await mountGrid();
+            layout(window.innerHeight - 30);
+            gridInterface.openMenu({ x: 100, y: 100 }, tree());
+
+            entry('test.more').click();
+
+            expect(submenuPopover().style.top).toEqual(`${window.innerHeight - 4 - 60}px`);
+        });
+
+        it('expect one taller than the window to be as tall as the window, and scroll', async () => {
+            const { gridInterface } = await mountGrid();
+            layout(130, window.innerHeight * 2);
+            gridInterface.openMenu({ x: 100, y: 100 }, tree());
+
+            entry('test.more').click();
+
+            expect(submenuPopover().style.maxHeight).toEqual(`${window.innerHeight - 8}px`);
+            expect(submenuPopover().style.overflowY).toEqual('auto');
+            expect(submenuPopover().style.top).toEqual('4px');
+        });
+    });
+});
+
+/** a key on `target`, as the browser sends it. @returns the event: was it canceled? */
+const press = (target: Element, key: string, init: KeyboardEventInit = {}) => {
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init });
+    target.dispatchEvent(event);
+    return event;
+};
+
+/** the data-menu-id of the element with the focus */
+const focusedId = () => document.activeElement?.getAttribute('data-menu-id');
+
+describe('menus - the keyboard', () => {
+    /**
+     * openMenu() from the keyboard: a key first, as Enter on a button. The focus on a header filter,
+     * where it goes back to
+     */
+    async function openByKey(entries: MenuEntry[]) {
+        const mounted = await mountGrid();
+        const cell = headerFilterInput(mounted.element, 'firstname');
+        cell.focus();
+        press(cell, 'Enter');
+        mounted.gridInterface.openMenu({ x: 0, y: 0 }, entries);
+        return { ...mounted, cell };
+    }
+
+    it('expect a row menu opened with Shift+F10 to take the focus, on its first item: disabled or not', async () => {
+        const { element: grid } = await mountGrid({ ...simpleConfig(), readonly: false });
+        const cell = grid.querySelectorAll('input[data-attribute="age"]')[0] as HTMLInputElement;
+        cell.focus();
+
+        // the browser sends contextmenu after the keydown
+        press(cell, 'F10', { shiftKey: true });
+        openRowMenu(grid, 'age', 0);
+
+        // nothing to undo: greyed out, but the keyboard gets to it (the ARIA menu pattern)
+        expect(focusedId()).toEqual('row.edit.undo');
+        expect(document.activeElement?.getAttribute('aria-disabled')).toEqual('true');
+        expect((document.activeElement as HTMLElement).tabIndex).toEqual(0);
+
+        press(document.activeElement as HTMLElement, 'Escape');
+        expect(menuOpen()).toBe(false);
+        expect(document.activeElement).toBe(cell);
+    });
+
+    it('expect Shift+F10 on a column header to open the header menu: the browser sends contextmenu to the header', async () => {
+        const { element: grid } = await mountGrid();
+        const header = labelCell(grid, 'age');
+        header.focus();
+
+        press(header, 'F10', { shiftKey: true });
+        const contextmenu = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        header.dispatchEvent(contextmenu);
+
+        // not the browser's menu: the grid's, on the label in the header
+        expect(contextmenu.defaultPrevented).toBe(true);
+        expect(focusedId()).toEqual('header.column.pin');
+        press(document.activeElement as HTMLElement, 'Escape');
+        expect(document.activeElement).toBe(header);
+    });
+
+    it('expect a menu opened with the mouse to leave the focus on the cell, the arrows to get into it', async () => {
+        const { element: grid } = await mountGrid();
+        const cell = grid.querySelectorAll('input[data-attribute="age"]')[0] as HTMLInputElement;
+        cell.focus();
+        press(cell, 'a');
+
+        // a right click: the pointer press comes before contextmenu
+        cell.dispatchEvent(pointerEvent('pointerdown', { button: 2, buttons: 2 }));
+        openRowMenu(grid, 'age', 0);
+        expect(document.activeElement).toBe(cell);
+
+        const down = press(cell, 'ArrowDown');
+        expect(down.defaultPrevented).toBe(true);
+        expect(focusedId()).toEqual('row.copy');
+
+        press(document.activeElement as HTMLElement, 'Escape');
+        expect(document.activeElement).toBe(cell);
+
+        cell.dispatchEvent(pointerEvent('pointerdown', { button: 2, buttons: 2 }));
+        openRowMenu(grid, 'age', 0);
+        press(cell, 'ArrowUp');
+        expect(focusedId()).toEqual('row.export');
+    });
+
+    it('expect ArrowDown and ArrowUp round the items past lines and sections, Home and End, one stop of Tab', async () => {
+        await openByKey([
+            { type: 'section', id: 'test.section', label: 'Pick:' },
+            { id: 'test.a', label: 'A', action: () => {} },
+            { type: 'separator', id: 'test.line' },
+            { id: 'test.b', label: 'B', action: () => {}, disabled: () => true },
+            { type: 'submenu', id: 'test.more', label: 'More', entries: [{ id: 'test.c', label: 'C', action: () => {} }] },
+            { id: 'test.d', label: 'D', action: () => {} }
+        ]);
+        expect(focusedId()).toEqual('test.a');
+
+        const moves = ['ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowUp', 'Home', 'End'].map((key) => {
+            press(document.activeElement as HTMLElement, key);
+            return focusedId();
+        });
+
+        expect(moves).toEqual(['test.b', 'test.more', 'test.d', 'test.a', 'test.d', 'test.a', 'test.d']);
+        // a roving tabindex: the item the keyboard is on is the stop of Tab
+        const tabIndexes = Array.from(
+            openMenus()[0].querySelectorAll<HTMLElement>('[role^="menuitem"]'),
+            (item) => item.tabIndex
+        );
+        expect(tabIndexes).toEqual([-1, -1, -1, 0]);
+    });
+
+    it('expect Enter and Space on an item to close the menu, give the focus back and run the action', async () => {
+        for (const key of ['Enter', ' ']) {
+            document.body.innerHTML = '';
+            const action = vi.fn();
+            const { cell } = await openByKey(tree(action));
+
+            const event = press(document.activeElement as HTMLElement, key);
+
+            expect(event.defaultPrevented).toBe(true);
+            expect(menuOpen()).toBe(false);
+            expect(action).toHaveBeenCalledTimes(1);
+            expect(document.activeElement).toBe(cell);
+        }
+    });
+
+    it('expect Enter on a disabled item to do nothing', async () => {
+        const action = vi.fn();
+        await openByKey([{ id: 'test.off', label: 'Off', action, disabled: () => true }]);
+
+        press(document.activeElement as HTMLElement, 'Enter');
+
+        expect(action).not.toHaveBeenCalled();
+        expect(menuOpen()).toBe(true);
+    });
+
+    it('expect ArrowRight, Enter and Space to open a submenu on its first item, ArrowLeft and Esc to close it', async () => {
+        for (const open of ['ArrowRight', 'Enter', ' ']) {
+            for (const close of ['ArrowLeft', 'Escape']) {
+                document.body.innerHTML = '';
+                await openByKey(tree());
+                press(document.activeElement as HTMLElement, 'End');
+                press(document.activeElement as HTMLElement, 'ArrowUp');
+                press(document.activeElement as HTMLElement, 'ArrowUp');
+                expect(focusedId()).toEqual('test.more');
+
+                press(document.activeElement as HTMLElement, open);
+                expect(openMenus()).toHaveLength(2);
+                expect(focusedId()).toEqual('test.kiwi');
+
+                const event = press(document.activeElement as HTMLElement, close);
+                // Esc closes the submenu only: canceled, the document's Esc leaves the menu open
+                expect(event.defaultPrevented).toBe(true);
+                expect(openMenus()).toHaveLength(1);
+                expect(focusedId()).toEqual('test.more');
+                expect(entry('test.more').getAttribute('aria-expanded')).toEqual('false');
+            }
+        }
+    });
+
+    it('expect Esc in the menu itself to close it, ArrowLeft and ArrowRight on an item without a submenu to do nothing', async () => {
+        const { cell } = await openByKey(tree());
+
+        expect(press(document.activeElement as HTMLElement, 'ArrowLeft').defaultPrevented).toBe(false);
+        expect(press(document.activeElement as HTMLElement, 'ArrowRight').defaultPrevented).toBe(false);
+        expect(menuOpen()).toBe(true);
+
+        press(document.activeElement as HTMLElement, 'Escape');
+        expect(menuOpen()).toBe(false);
+        expect(document.activeElement).toBe(cell);
+    });
+
+    it('expect a submenu in a submenu from the keyboard', async () => {
+        await openByKey(tree());
+        press(document.activeElement as HTMLElement, 'm');
+        press(document.activeElement as HTMLElement, 'ArrowRight');
+        press(document.activeElement as HTMLElement, 'End');
+        expect(focusedId()).toEqual('test.deeper');
+
+        press(document.activeElement as HTMLElement, 'ArrowRight');
+        expect(openMenus()).toHaveLength(3);
+        expect(focusedId()).toEqual('test.fig');
+
+        press(document.activeElement as HTMLElement, 'ArrowLeft');
+        press(document.activeElement as HTMLElement, 'ArrowLeft');
+        expect(openMenus()).toHaveLength(1);
+        expect(focusedId()).toEqual('test.more');
+    });
+
+    it('expect moving to another item to close the submenu open in the menu', async () => {
+        await openByKey(tree());
+        press(document.activeElement as HTMLElement, 'm');
+        // opened with the mouse, the focus stays on its item
+        entry('test.more').click();
+        expect(openMenus()).toHaveLength(2);
+
+        press(document.activeElement as HTMLElement, 'ArrowDown');
+
+        expect(openMenus()).toHaveLength(1);
+        expect(focusedId()).toEqual('test.other');
+    });
+
+    it('expect the focus on an item to follow the pointer, not into a menu the mouse opened', async () => {
+        await openByKey(tree());
+        pointerOn(entry('test.banana'));
+        expect(focusedId()).toEqual('test.banana');
+
+        document.body.innerHTML = '';
+        const { element: grid, gridInterface } = await mountGrid();
+        const cell = headerFilterInput(grid, 'firstname');
+        cell.focus();
+        gridInterface.openMenu({ x: 0, y: 0 }, tree());
+        pointerOn(entry('test.banana'));
+        expect(document.activeElement).toBe(cell);
+    });
+
+    it('expect a letter to go to the next item that starts with it, round', async () => {
+        await openByKey([
+            { id: 'test.apple', label: 'Apple', action: () => {} },
+            { id: 'test.banana', label: 'Banana', action: () => {} },
+            { id: 'test.blueberry', label: 'blueberry', action: () => {} }
+        ]);
+
+        const moves = ['b', 'B', 'b', 'a', 'x'].map((key) => {
+            press(document.activeElement as HTMLElement, key);
+            return focusedId();
+        });
+
+        expect(moves).toEqual(['test.banana', 'test.blueberry', 'test.banana', 'test.apple', 'test.apple']);
+    });
+
+    it('expect Tab to close the menu and give the focus back', async () => {
+        const { cell } = await openByKey(tree());
+        press(document.activeElement as HTMLElement, 'm');
+        press(document.activeElement as HTMLElement, 'ArrowRight');
+
+        const event = press(document.activeElement as HTMLElement, 'Tab');
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(menuOpen()).toBe(false);
+        expect(document.activeElement).toBe(cell);
+    });
+
+    it("expect Tab to be the browser's in a menu with a block: the filter menu's value list, Run Search a button", async () => {
+        const { element: grid, datasource } = await mountGrid();
+        const cell = headerFilterInput(grid, 'firstname');
+        cell.focus();
+        press(cell, 'F10', { shiftKey: true });
+        openFilterMenu(grid, 'firstname');
+        expect(focusedId()).toEqual('filter.filter.clear');
+
+        expect(press(document.activeElement as HTMLElement, 'Tab').defaultPrevented).toBe(false);
+        expect(menuOpen()).toBe(true);
+
+        // uncheck a value, then Enter on Run Search
+        const first = Array.from(document.querySelectorAll('.simple-html-grid-menu-checkbox label')).find((label) =>
+            label.textContent?.trim().startsWith('FIRST1')
+        ) as HTMLElement;
+        first.click();
+        const run = document.querySelector('.simple-html-label-button-menu-bottom') as HTMLElement;
+        expect(run.getAttribute('role')).toEqual('button');
+        expect(run.tabIndex).toEqual(0);
+        press(run, 'Enter');
+
+        expect(menuOpen()).toBe(false);
+        expect(datasource.getRows().map((row) => (row as { firstname?: string }).firstname)).not.toContain('first1');
+    });
+});
+
+describe('menus - roles', () => {
+    it('expect a menu, items, checkbox items, disabled items, separators and sections', async () => {
+        const { gridInterface } = await mountGrid();
+
+        gridInterface.openMenu({ x: 0, y: 0 }, [
+            { type: 'section', id: 'test.section', label: 'Pick:' },
+            { id: 'test.item', label: 'Item', action: () => {} },
+            { id: 'test.on', label: 'On', action: () => {}, selected: () => true },
+            { id: 'test.off', label: 'Off', action: () => {}, selected: () => false },
+            { id: 'test.disabled', label: 'Disabled', action: () => {}, disabled: () => true },
+            { type: 'separator', id: 'test.line' },
+            { type: 'submenu', id: 'test.more', label: 'More', entries: [{ id: 'test.inner', label: 'Inner', action: () => {} }] }
+        ]);
+
+        expect(openMenus()[0].getAttribute('role')).toEqual('menu');
+        const roles = Array.from(openMenus()[0].children, (child) => [
+            child.getAttribute('data-menu-id'),
+            child.tagName,
+            child.getAttribute('role'),
+            child.getAttribute('aria-checked'),
+            child.getAttribute('aria-disabled')
+        ]);
+        expect(roles).toEqual([
+            // a heading for the eye, its line too
+            ['test.section', 'DIV', 'none', null, null],
+            [null, 'HR', 'none', null, null],
+            ['test.item', 'DIV', 'menuitem', null, null],
+            ['test.on', 'DIV', 'menuitemcheckbox', 'true', null],
+            ['test.off', 'DIV', 'menuitemcheckbox', 'false', null],
+            ['test.disabled', 'DIV', 'menuitem', null, 'true'],
+            // an hr is a separator
+            ['test.line', 'HR', null, null, null],
+            ['test.more', 'DIV', 'menuitem', null, null]
+        ]);
+        expect(entry('test.on').classList).toContain('simple-html-grid-menu-item-selected');
+        expect(entry('test.off').classList).not.toContain('simple-html-grid-menu-item-selected');
+    });
+
+    it('expect the toggles of the default menus to be checkbox items: the view, the aggregates', async () => {
+        const { element: grid } = await mountGrid({ ...simpleConfig(), dimRepeatedValues: true });
+
+        openRowMenu(grid, 'age', 0);
+        expect(menuEntry('row.view.dimRepeatedValues').getAttribute('aria-checked')).toEqual('true');
+        expect(menuEntry('row.view.changedOnly').getAttribute('aria-checked')).toEqual('false');
+        expect(menuEntry('row.view.changedOnly').getAttribute('role')).toEqual('menuitemcheckbox');
+
+        openLabelMenu(grid, 'age');
+        expect(menuEntry('header.aggregate.totalsRow').getAttribute('role')).toEqual('menuitemcheckbox');
+        expect(menuEntry('header.aggregate.sum').getAttribute('aria-checked')).toEqual('false');
     });
 });

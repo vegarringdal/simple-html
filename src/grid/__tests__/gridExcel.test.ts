@@ -10,7 +10,7 @@ import { GridInterface } from '../gridInterface';
 import { MENU_IDS } from '../gridMenus';
 import { excelColumnWidth, XLSX_MIME } from '../xlsx';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { openRowMenu } from './interactionTestHelpers';
+import { menuEntry, openRowMenu } from './interactionTestHelpers';
 import { parseXml, readParts } from './zipTestHelpers';
 
 /**
@@ -668,7 +668,8 @@ describe('the row menu - Export', () => {
         vi.restoreAllMocks();
     });
 
-    const entry = (id: string) => document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`) as HTMLElement;
+    // in the export submenu, opened on the way
+    const entry = (id: string) => menuEntry(id);
     const isDisabled = (id: string) => entry(id).classList.contains('simple-html-grid-menu-item-disabled');
     const config = (readonly: boolean): GridConfig => ({
         readonly,
@@ -676,12 +677,13 @@ describe('the row menu - Export', () => {
     });
     const rows = () => [{ name: 'Ann' }, { name: 'Bob' }, { name: 'Cid' }];
 
-    it('expect Excel in the export section, in a readonly grid too, the selected rows greyed out with none selected', async () => {
+    it('expect Excel in the export submenu, in a readonly grid too, the selected rows greyed out with none selected', async () => {
         const { element } = await mountGrid(config(true), rows());
 
         openRowMenu(element, 'name', 0);
 
-        expect(entry('row.export').textContent?.trim()).toBe('Export:');
+        expect(entry('row.export').textContent?.trim()).toBe('Export');
+        expect(entry('row.export').getAttribute('aria-haspopup')).toBe('menu');
         expect(entry('row.export.excel').textContent?.replace(/\s+/g, ' ').trim()).toBe('Excel, all rows');
         expect(entry('row.export.excelSelected').textContent?.replace(/\s+/g, ' ').trim()).toBe('Excel, selected rows');
         expect(isDisabled('row.export.excel')).toBe(false);

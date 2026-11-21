@@ -48,7 +48,7 @@ const config: GridConfig = {
 };
 ```
 
-The user can also pick the operator of a column in the header filter's menu (Set Operator, below),
+The user can also pick the operator of a column in the header filter's menu (Operator ›, below),
 and type `*ann*` in any text header filter.
 
 A header filter only replaces the conditions on its own column, at the top of the filter. The rest
@@ -65,13 +65,13 @@ What each header cell shows is part of the [state](03-state.md#header-filters-in
 Right click a header filter for its menu:
 
 - **Clear Filter** removes the conditions on this column, **Clear All Filters** the whole filter
-- **Set "Is Blank"** / **Set "Is Not Blank"** replace the column's conditions with `IS_BLANK` /
+- **Blank ›** **Is blank** / **Is not blank** replace the column's conditions with `IS_BLANK` /
   `IS_NOT_BLANK`
-- **Advanced Filter** opens the [filter editor](#the-filter-editor)
-- **Set Operator** picks the operator the column's header filter uses: Equal, Not Equal and
-  Contains for text, Greater than or equal, Less than or equal and Equal for numbers and dates. The
-  filter runs again with it, and the grid sends a `filter-operator-change` event. The operator
-  picked is state (`headerFilters[field].operator`).
+- **Operator ›** picks the operator the column's header filter uses, the one in use has a ✓: Equal,
+  Not Equal and Contains for text, Greater than or equal, Less than or equal and Equal for numbers
+  and dates. The filter runs again with it, and the grid sends a `filter-operator-change` event. The
+  operator picked is state (`headerFilters[field].operator`).
+- **Advanced Filter…** opens the [filter editor](#the-filter-editor)
 - the **value list**, for text fields
 
 ```sample filter-operator-header

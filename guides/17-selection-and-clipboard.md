@@ -137,7 +137,7 @@ Ctrl+C (Cmd+C) in a cell, with no text selected in it:
   double quote is put in double quotes, a quote in it doubled. Every value is the text the cell shows,
   through the field's formatter: `12,5` with a decimal comma, a date as its formatter writes it.
 - **else**: the value of the cell with the focus, as the cell shows it, without a line end - as the
-  row menu's *Copy: Cell Value*. Before v6 this copied nothing.
+  row menu's *Copy › Cell Value*. Before v6 this copied nothing.
 
 An html table of the same cells goes on the clipboard too, with the labels as its header row (`<th>`)
 and thin borders - Word, Google Docs and Excel paste the html, so the table has its headers there. A
@@ -145,8 +145,8 @@ line break in a cell is a `<br>` with the style Excel reads as a line break in t
 (`mso-data-placement:same-cell`).
 
 **The header line** is there for every copy of more than one cell: Ctrl+C on ranges and the row
-menu's *Copy: Column*, *Row*, *Row (selected rows/col)* and *Range*. Not for one cell (Ctrl+C on a
-cell, *Copy: Cell Value*): that is a value. `copyHeaders: false` in the config copies the values only:
+menu's *Copy › Column*, *Row*, *Row (selected rows/col)* and *Range*. Not for one cell (Ctrl+C on a
+cell, *Copy › Cell Value*): that is a value. `copyHeaders: false` in the config copies the values only:
 
 ```ts
 gridInterface.updateConfig({ copyHeaders: false });
@@ -166,8 +166,8 @@ Text that looks like a formula (`=SUM(A1:A2)`) is copied as it is: what is copie
 cells, and a paste back into the grid gives the same values. A spreadsheet may take it as a formula
 when it is pasted there - the CSV export escapes it (`escapeFormulas`), the clipboard does not.
 
-The row menu (right click a cell) has *Copy: Range* while there are ranges: every range, as Ctrl+C.
-*Copy: Column* and *Row* copy the selected rows, with the header line, values as the cells show them.
+The row menu (right click a cell) has *Copy › Range* while there are ranges: every range, as Ctrl+C.
+*Copy › Column* and *Row* copy the selected rows, with the header line, values as the cells show them.
 That also works when the focus is not in a cell, after the wheel scrolled the grid.
 
 ## Paste
@@ -243,7 +243,7 @@ while it grows, the focus stays in the active cell.
 - **No ranges by touch**, see [The mouse](#the-mouse).
 - **Copy and paste listen while the focus is in a cell of the grid.** The wheel takes the focus from
   the cell (its row element is reused for other rows), then Ctrl+C goes to the page: use the row
-  menu's *Copy: Range*, or Shift+click the cell at the end of the range again - the range stays as it
+  menu's *Copy › Range*, or Shift+click the cell at the end of the range again - the range stays as it
   is and the cell gets the focus.
 - **Cut** (Ctrl+X) is the input's own: it cuts the text selected in the cell, not a range. Copy, then
   Delete.
