@@ -1205,6 +1205,66 @@ in the console. All passed. Found and fixed:
   gridCsv.ts and renderRowCell.ts - one helper later; `rows: 'selected'` leaves out selected rows
   hidden by the filter or a collapsed group, like every row-menu action on selected rows
 
+### Docs site: light mode is light everywhere
+
+* the sidebar and the code panels (the sample source, the guides' code blocks, the API signatures)
+  were dark in both themes: their colours were written for dark only. Every colour of
+  `samples/demo/index.css` is now a `light-dark()` token on `:root` (like grid.css), and `body.dark`
+  only sets `color-scheme: dark`. Light code uses GitHub's light colours, dark keeps One Dark
+* without a choice made with the button, the site starts in the OS theme (`prefers-color-scheme`)
+* `samples/demo/__tests__/theme.test.ts` guards it: no colour outside the :root tokens (but the
+  scrollbar shadow and two translucent sample backgrounds), every token light-dark(), body.dark only
+  the color-scheme, the OS default and the stored choice. Screenshots light/dark in Chromium
+
+### Row menu: undo a cell edit and a row's edits (user request)
+
+* the user missed "undo a cell edit / undo row edit" in the row menu: the entries existed (Revert cell,
+  Revert rows) but only for an editable grid (the screenshot was a readonly grid - paste, clear and
+  delete were missing too), at the bottom of the menu, and "Revert rows" works on the *selected* rows
+  only - a click in a cell does not select its row, so the row right clicked could not be reverted
+* now: the Edit: section is first in the menu; *Undo last change* (Ctrl+Z), *Redo* (Ctrl+Y), *Undo
+  cell edit*, *Undo row edits* (new `row.edit.revertRow`: the row right clicked, no selection needed,
+  one undo step, takes a deletion mark off), *Undo row edits (selected rows)*
+* tests: the order, the row entry (values, mark, one undo step, greyed out on an unchanged row), no
+  section in a readonly grid
+
+### Menus stay in the window (user report: the row menu is too tall)
+
+* `placeMenu` (showMenu.ts): below the point, else above, else beside the point (right, else left),
+  moved up as little as the window allows; taller than the window: max-height and scroll (only then -
+  the scroll box would clip the shadow); 4px from every edge. The menu is measured at the window's top
+  left: placed near the right edge first, an absolutely placed popover shrinks to the room left and
+  wraps, then grew past the edge when moved left
+* checked in Chromium at 480x611, 1280x400 and 1280x800 (`menu-place-check.js`): the whole menu inside
+  the window in every case; tests for each placement rule
+
+### Header filter placeholders by type (user request)
+
+* an empty text / number header filter showed 🔍; a date one shows its format (YYYY-MM-DD). Now text
+  shows `Text`, number `Number` (texts `filter.placeholder.*`, translated in the Norwegian sample);
+  the column's `placeholderFilter` and the formatter's `placeholder` come first, boolean stays a
+  checkbox. Checked in Chromium light and dark
+
+### Aggregates (item 40)
+
+* `datasource.aggregate()` (src/datasource/aggregate.ts): sum/avg/min/max over finite numbers only,
+  count of non-blanks; Neumaier-compensated sum; cached per group row (WeakMap) and per filtered list,
+  keyed by a per-field change count the container bumps on every set - an edit of a field nobody
+  aggregates recomputes nothing. 100 000 rows / 1000 groups x 3 functions: 42 ms cold, 0.3 ms kept
+* the group row draws its aggregates in its own element, with three section containers that copy the
+  body's geometry (pinned borders, stacked lines), the middle one following the horizontal scroll via
+  `--simple-html-grid-scroll-left` - so renderRowCell / pinnedSection stay untouched. The name stays at
+  the left over the first columns (an aggregate there is covered on screen, read by screen readers)
+* totals row: under the horizontal scrollbar, over the footer; the grid owns it as its last aria row
+* fixed in passing: the row menu summary (max of negatives 0, min skipped 0, avg rounded and counting
+  blanks); totals not updated by the frame that renders every row after the typed-in cell is left
+* merged with the v6_maybe work done meanwhile (texts and the texts guide: both sides kept). The
+  texts-in-the-grid test opens every part of the grid; it timed out at vitest's 5s on a loaded machine
+  (2.6s idle): its describe has 30s now
+* checks: 64 tests; Chromium aggregate-check 27/27 and the other ten scripts on the merged build
+* left: a value too wide for its column ends in an ellipsis with the label first - drop the label
+  before cutting the value; min/max of dates; totals cells not on the Tab path
+
 ## Considered, not done
 
 ## Candidates / not started

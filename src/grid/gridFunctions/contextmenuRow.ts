@@ -79,6 +79,8 @@ function rowMenuEntries(
     const text = (id: TextId) => gridText(ctx, id);
 
     return [
+        // first: in an editable grid, taking an edit back is what the menu is opened for most
+        ...editEntries(ctx, attribute, rowData),
         { type: 'section', id: 'row.copy', label: text('row.copy') },
         {
             id: 'row.copy.cell',
@@ -176,7 +178,6 @@ function rowMenuEntries(
             }
         },
         ...deleteEntries(ctx),
-        ...editEntries(ctx, attribute, rowData),
         ...summaryEntries(ctx, attribute),
         ...exportEntries(ctx)
     ];
@@ -184,7 +185,8 @@ function rowMenuEntries(
 
 /**
  * Undo, redo and revert: the undo history of the datasource, and putting the original values back -
- * of the clicked cell, or of the selected rows. Only in an editable grid.
+ * of the clicked cell, the clicked row (no selection needed: a click in a cell does not select its
+ * row), or the selected rows. Only in an editable grid, at the top of the menu.
  *
  * A revert puts values back, so like the delete's undo it is not stopped by readonly cells or rows:
  * readonly is about typing new values. The values are set from code, the grid renders the cells again
@@ -224,6 +226,16 @@ function editEntries(ctx: Grid, attribute: string, rowData: Entity): MenuEntry[]
             disabled: () => !rowData.__controller?.__editedProps[attribute],
             action: () => {
                 datasource.resetField(rowData, attribute);
+                triggerScrollEvent(ctx);
+            }
+        },
+        {
+            id: 'row.edit.revertRow',
+            label: gridText(ctx, 'row.edit.revertRow'),
+            visible: editable,
+            disabled: () => !rowData.__controller?.__edited && !rowData.__controller?.__isDeleted,
+            action: () => {
+                datasource.resetRows(rowData);
                 triggerScrollEvent(ctx);
             }
         },

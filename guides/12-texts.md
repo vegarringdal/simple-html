@@ -172,8 +172,8 @@ gridInterface.rebuild(); // every grid of the page
 - The placeholders of the date formatters, `YYYY-MM-DD` and `DD.MM.YYYY` in an empty date header
   filter: give the column a `placeholderFilter`, or use a formatter of your own with another
   `placeholder` (see [Formatting](08-formatting.md#a-formatter-of-your-own)).
-- Symbols and numbers: `✕` closes the filter editor, `✓` marks the dimmed values on, `🔍` is an empty
-  header filter, `?` a footer chip without a field or operator, `(12)` the count of a value in the
+- Symbols and numbers: `✕` closes the filter editor, `✓` marks the dimmed values on, `?` a footer
+  chip without a field or operator, `(12)` the count of a value in the
   value list.
 - `headerTitle` of a `DateInterface` calendar: your own text.
 
@@ -213,12 +213,13 @@ Right click on a cell.
 | `row.delete.undo` | `Undo` | takes the mark off the selected rows |
 | `row.delete.undo.hint` | `selected rows` | its hint |
 | `row.edit` | `Edit:` | section header, an editable grid |
-| `row.edit.undo` | `Undo` | undoes the last step of the undo history |
+| `row.edit.undo` | `Undo last change` | undoes the last step of the undo history |
 | `row.edit.undo.hint` | `Ctrl+Z` | its hint, the key |
 | `row.edit.redo` | `Redo` | redoes the last step undone |
 | `row.edit.redo.hint` | `Ctrl+Y` | its hint, the key |
-| `row.edit.revertCell` | `Revert cell` | puts the original value of the cell back |
-| `row.edit.revertRows` | `Revert rows` | puts the original values of the selected rows back |
+| `row.edit.revertCell` | `Undo cell edit` | puts the original value of the cell back |
+| `row.edit.revertRow` | `Undo row edits` | puts the original values of the row right clicked back |
+| `row.edit.revertRows` | `Undo row edits` | puts the original values of the selected rows back |
 | `row.edit.revertRows.hint` | `selected rows` | its hint |
 | `row.summary` | `Summary:` | section header, a number column |
 | `row.summary.count` | `Count: {count}` | `{count}`: the number of selected rows |
@@ -398,6 +399,16 @@ screen reader reads the label with the value, the column's header with them.
 | `aggregate.max` | `Max` | in front of the largest value |
 | `aggregate.count` | `Count` | in front of a count |
 | `aggregate.total` | `Total` | the label of the totals row, at its left under the row numbers |
+
+### Header filters
+
+What an empty header filter shows, when its column has no `placeholderFilter` of its own. A date
+filter shows its formatter's format (`YYYY-MM-DD`), a boolean filter is a checkbox.
+
+| id | English | shown |
+| --- | --- | --- |
+| `filter.placeholder.text` | `Text` | an empty header filter of a text field |
+| `filter.placeholder.number` | `Number` | an empty header filter of a number field |
 
 ### Screen readers
 

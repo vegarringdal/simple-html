@@ -410,7 +410,7 @@ Needs phase 4: a merge every second on a large grid has to stay cheap.
 
 39. [ ] **Custom cell rendering** per column (a lit-html template: badges, links, progress bars,
         icons) and conditional formatting (cell/row classes from a function or simple rules). **M**
-40. [ ] **Aggregates**: sum/count/average in each group row, and a totals row in the footer. **M**
+40. [x] **Aggregates**: sum/count/average in each group row, and a totals row in the footer. **M**
 41. [x] **Export** the filtered and sorted rows, or the selected range, as CSV. xlsx later if
         needed. **S** - done for all / selected rows and in the row menu; `rows: 'range'` comes with
         item 32

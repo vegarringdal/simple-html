@@ -325,7 +325,9 @@ afterEach(() => {
     setTexts({});
 });
 
-describe('texts in the grid - every text replaced', () => {
+// showEverything opens every part of the grid one by one (every menu, the editors, the date picker
+// ...): seconds, more on a loaded machine than the 5s vitest gives a test
+describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
     it('expect every text from setTexts(), none left in English, and every id shown', async () => {
         setTexts(fakeTexts(() => true));
         const { seen, check } = checker();

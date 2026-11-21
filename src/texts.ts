@@ -35,12 +35,13 @@ const DEFAULTS = {
     'row.delete.undo': 'Undo',
     'row.delete.undo.hint': 'selected rows',
     'row.edit': 'Edit:',
-    'row.edit.undo': 'Undo',
+    'row.edit.undo': 'Undo last change',
     'row.edit.undo.hint': 'Ctrl+Z',
     'row.edit.redo': 'Redo',
     'row.edit.redo.hint': 'Ctrl+Y',
-    'row.edit.revertCell': 'Revert cell',
-    'row.edit.revertRows': 'Revert rows',
+    'row.edit.revertCell': 'Undo cell edit',
+    'row.edit.revertRow': 'Undo row edits',
+    'row.edit.revertRows': 'Undo row edits',
     'row.edit.revertRows.hint': 'selected rows',
     'row.summary': 'Summary:',
     'row.summary.count': 'Count: {count}',
@@ -182,6 +183,11 @@ const DEFAULTS = {
     'aggregate.max': 'Max',
     'aggregate.count': 'Count',
     'aggregate.total': 'Total',
+
+    // the placeholder of an empty header filter, by the field's type - a date filter shows its
+    // formatter's format (YYYY-MM-DD), a boolean filter is a checkbox
+    'filter.placeholder.text': 'Text',
+    'filter.placeholder.number': 'Number',
 
     // labels for screen readers (aria-label)
     'grid.label': 'Grid',

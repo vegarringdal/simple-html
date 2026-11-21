@@ -4,39 +4,62 @@
     box-sizing: border-box;
 }
 
-:root,
-body {
-    --demo-bg: #f3f4f6;
-    --demo-panel: #ffffff;
-    --demo-text: #111827;
-    --demo-muted: #6b7280;
-    --demo-border: #d1d5db;
-    --demo-accent: #3b82f6;
+/* Every colour of the site is light-dark(<light>, <dark>), like grid.css: the whole page - the
+   sidebar, the code panels, the grid - follows color-scheme. Light is the default, the dark class on
+   the body (theme.ts) turns it dark. On the body: the grid's menus, tooltips and filter editor are on
+   the body too. A custom property keeps light-dark() as it is, it is resolved where it is used */
+:root {
+    /* the page */
+    --demo-bg: light-dark(#f3f4f6, #1f2937);
+    --demo-panel: light-dark(#ffffff, #374151);
+    --demo-text: light-dark(#111827, #f3f4f6);
+    --demo-muted: light-dark(#6b7280, #9ca3af);
+    --demo-border: light-dark(#d1d5db, #4b5563);
+    --demo-accent: light-dark(#2563eb, #60a5fa);
+    --demo-error: light-dark(#dc2626, #f87171);
+
+    /* the sidebar */
+    --demo-side-bg: light-dark(#ffffff, #111827);
+    --demo-side-text: light-dark(#374151, #d1d5db);
+    --demo-side-strong: light-dark(#111827, #ffffff);
+    --demo-side-muted: light-dark(#6b7280, #9ca3af);
+    --demo-side-hover: light-dark(#eef2f7, #1f2937);
+    --demo-side-border: light-dark(#e5e7eb, #1f2937);
+    --demo-side-button: light-dark(#f3f4f6, #1f2937);
+    --demo-side-button-border: light-dark(#d1d5db, #374151);
+    --demo-side-button-hover: light-dark(#9ca3af, #6b7280);
+    --demo-side-scroll-thumb: light-dark(#d1d5db, #374151);
+    --demo-side-scroll-track: light-dark(#f9fafb, #1f2937);
+
+    /* the code panels: the sample source, the code blocks of the guides and the API pages.
+       Light: GitHub's light colours, dark: One Dark */
+    --demo-code-bg: light-dark(#f6f8fa, #0d1424);
+    --demo-code-bar: light-dark(#eef1f5, #101a30);
+    --demo-code-border: light-dark(#d0d7de, #1e293b);
+    --demo-code-text: light-dark(#24292f, #abb2bf);
+    --demo-code-muted: light-dark(#57606a, #94a3b8);
+    --demo-code-button-border: light-dark(#d0d7de, #334155);
+    --demo-code-button-hover: light-dark(#8c959f, #64748b);
+    --demo-code-scroll-thumb: light-dark(#d0d7de, #334155);
+    --demo-code-scroll-track: light-dark(#f6f8fa, #101a30);
+    --demo-tok-comment: light-dark(#6e7781, #7f848e);
+    --demo-tok-string: light-dark(#0a3069, #98c379);
+    --demo-tok-number: light-dark(#0550ae, #d19a66);
+    --demo-tok-keyword: light-dark(#cf222e, #c678dd);
+    --demo-tok-type: light-dark(#953800, #e5c07b);
+    --demo-tok-fn: light-dark(#8250df, #61afef);
 }
 
-/* the grid and the date picker follow color-scheme on their own (light-dark() in grid.css and
-   date.css). On the body: the grid's menus, tooltips and filter editor are on the body too */
 body.dark {
     color-scheme: dark;
-    --demo-bg: #1f2937;
-    --demo-panel: #374151;
-    --demo-text: #f3f4f6;
-    --demo-muted: #9ca3af;
-    --demo-border: #4b5563;
 }
 
 /* scrollbars - same look as the grid's own scrollers (thin, flat, themed thumb + track).
    the shared rule reads two variables, each scrolling area sets the pair that fits its background */
 
-:root,
-body {
-    --demo-scroll-thumb: #bdd4e7;
-    --demo-scroll-track: #ffffff;
-}
-
-body.dark {
-    --demo-scroll-thumb: #234882;
-    --demo-scroll-track: #4b5563;
+:root {
+    --demo-scroll-thumb: light-dark(#bdd4e7, #234882);
+    --demo-scroll-track: light-dark(#ffffff, #4b5563);
 }
 
 .sidebar-nav,
@@ -94,27 +117,28 @@ body {
     flex: none;
     display: flex;
     flex-direction: column;
-    background: #111827;
-    color: #d1d5db;
-    --demo-scroll-thumb: #374151;
-    --demo-scroll-track: #1f2937;
+    background: var(--demo-side-bg);
+    color: var(--demo-side-text);
+    border-right: 1px solid var(--demo-side-border);
+    --demo-scroll-thumb: var(--demo-side-scroll-thumb);
+    --demo-scroll-track: var(--demo-side-scroll-track);
 }
 
 .sidebar-header {
     padding: 16px 16px 12px;
-    border-bottom: 1px solid #1f2937;
+    border-bottom: 1px solid var(--demo-side-border);
 }
 
 .sidebar-title {
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--demo-side-strong);
 }
 
 .sidebar-sub {
     margin-top: 2px;
     font-size: 11px;
-    color: #6b7280;
+    color: var(--demo-side-muted);
 }
 
 .sidebar-nav {
@@ -128,7 +152,7 @@ body {
     padding: 14px 16px 2px;
     font-size: 12px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--demo-side-strong);
     cursor: pointer;
     user-select: none;
     list-style: none;
@@ -136,7 +160,7 @@ body {
 
 .nav-section-title::before {
     content: '▸ ';
-    color: #6b7280;
+    color: var(--demo-side-muted);
 }
 
 .nav-section[open] > .nav-section-title::before {
@@ -149,7 +173,7 @@ body {
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #6b7280;
+    color: var(--demo-side-muted);
 }
 
 .nav-item {
@@ -160,7 +184,7 @@ body {
     text-align: left;
     text-decoration: none;
     overflow-wrap: anywhere;
-    color: #d1d5db;
+    color: var(--demo-side-text);
     background: none;
     border: none;
     border-left: 3px solid transparent;
@@ -169,36 +193,36 @@ body {
 }
 
 .nav-item:hover {
-    background: #1f2937;
-    color: #ffffff;
+    background: var(--demo-side-hover);
+    color: var(--demo-side-strong);
 }
 
 .nav-item.active {
-    background: #1f2937;
-    color: #ffffff;
+    background: var(--demo-side-hover);
+    color: var(--demo-side-strong);
     border-left-color: var(--demo-accent);
 }
 
 .sidebar-footer {
     padding: 10px 16px;
-    border-top: 1px solid #1f2937;
+    border-top: 1px solid var(--demo-side-border);
 }
 
 .theme-btn {
     width: 100%;
     padding: 6px 10px;
     font-size: 12px;
-    color: #d1d5db;
-    background: #1f2937;
-    border: 1px solid #374151;
+    color: var(--demo-side-text);
+    background: var(--demo-side-button);
+    border: 1px solid var(--demo-side-button-border);
     border-radius: 5px;
     cursor: pointer;
     font-family: inherit;
 }
 
 .theme-btn:hover {
-    color: #ffffff;
-    border-color: #6b7280;
+    color: var(--demo-side-strong);
+    border-color: var(--demo-side-button-hover);
 }
 
 /* ------------------------------------------------------------------- main */
@@ -234,12 +258,12 @@ body {
 
 .code-panel {
     margin: 12px 22px 0;
-    background: #0d1424;
-    border: 1px solid #1e293b;
+    background: var(--demo-code-bg);
+    border: 1px solid var(--demo-code-border);
     border-radius: 8px;
     overflow: hidden;
-    --demo-scroll-thumb: #334155;
-    --demo-scroll-track: #101a30;
+    --demo-scroll-thumb: var(--demo-code-scroll-thumb);
+    --demo-scroll-track: var(--demo-code-scroll-track);
 }
 
 .code-summary {
@@ -248,8 +272,8 @@ body {
     justify-content: space-between;
     padding: 7px 12px;
     font-size: 12px;
-    color: #94a3b8;
-    background: #101a30;
+    color: var(--demo-code-muted);
+    background: var(--demo-code-bar);
     cursor: pointer;
     user-select: none;
     list-style: none;
@@ -257,7 +281,7 @@ body {
 
 .code-summary::before {
     content: '▸ ';
-    color: #64748b;
+    color: var(--demo-code-muted);
 }
 
 .code-panel[open] .code-summary::before {
@@ -272,17 +296,17 @@ body {
 .copy-btn {
     padding: 2px 10px;
     font-size: 11px;
-    color: #94a3b8;
+    color: var(--demo-code-muted);
     background: transparent;
-    border: 1px solid #334155;
+    border: 1px solid var(--demo-code-button-border);
     border-radius: 4px;
     cursor: pointer;
     font-family: inherit;
 }
 
 .copy-btn:hover {
-    color: #e2e8f0;
-    border-color: #64748b;
+    color: var(--demo-code-text);
+    border-color: var(--demo-code-button-hover);
 }
 
 .code-scroll {
@@ -296,28 +320,28 @@ body {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
     font-size: 12.5px;
     line-height: 1.55;
-    color: #abb2bf;
+    color: var(--demo-code-text);
 }
 
-/* one dark palette for the code, in both themes */
+/* the code colours, light and dark: see the tokens at the top */
 .tok-comment {
-    color: #7f848e;
+    color: var(--demo-tok-comment);
     font-style: italic;
 }
 .tok-string {
-    color: #98c379;
+    color: var(--demo-tok-string);
 }
 .tok-number {
-    color: #d19a66;
+    color: var(--demo-tok-number);
 }
 .tok-keyword {
-    color: #c678dd;
+    color: var(--demo-tok-keyword);
 }
 .tok-type {
-    color: #e5c07b;
+    color: var(--demo-tok-type);
 }
 .tok-fn {
-    color: #61afef;
+    color: var(--demo-tok-fn);
 }
 
 /* ------------------------------------------------------------- demo stage */
@@ -476,11 +500,11 @@ body {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
     font-size: 12.5px;
     line-height: 1.55;
-    color: #abb2bf;
-    background: #0d1424;
-    border: 1px solid #1e293b;
+    color: var(--demo-code-text);
+    background: var(--demo-code-bg);
+    border: 1px solid var(--demo-code-border);
     border-radius: 8px;
-    scrollbar-color: #334155 #101a30;
+    scrollbar-color: var(--demo-code-scroll-thumb) var(--demo-code-scroll-track);
     scrollbar-width: thin;
 }
 
@@ -505,7 +529,7 @@ body {
 }
 
 .doc-missing {
-    color: #ef4444;
+    color: var(--demo-error);
 }
 
 /* a live sample in a guide: the source and the running sample, in a frame */

@@ -97,7 +97,7 @@ Every option of a `ColumnConfig` is optional.
 | `label` | the header text |
 | `readonly` | the cell can not be edited, also when the grid can. Shown with stripes |
 | `placeholderRow` | text shown in an empty cell, by default on the current row only (`placeholderRowCurrentEntityOnly`) |
-| `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else a search icon |
+| `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else the field's type - `Text` or `Number` (texts `filter.placeholder.*`) |
 | `operator` | the operator the header filter starts with. Default `EQUAL` for text (the whole text: `ann` does not find `Anna`), see [Filtering](06-filtering.md#header-filters) |
 | `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed |
 | `allowPasteClearOnly` | typing in the cell does nothing, paste and clear from the row menu work. For a field you set from a dropdown of your own |

@@ -276,7 +276,14 @@ describe('undo and redo - the keys in a cell', () => {
 });
 
 describe('undo and redo - the row menu', () => {
-    const EDIT_IDS = ['row.edit', 'row.edit.undo', 'row.edit.redo', 'row.edit.revertCell', 'row.edit.revertRows'];
+    const EDIT_IDS = [
+        'row.edit',
+        'row.edit.undo',
+        'row.edit.redo',
+        'row.edit.revertCell',
+        'row.edit.revertRow',
+        'row.edit.revertRows'
+    ];
 
     const entry = (id: string) => document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`) as HTMLElement;
     const isDisabled = (id: string) => entry(id).classList.contains('simple-html-grid-menu-item-disabled');
@@ -293,12 +300,13 @@ describe('undo and redo - the row menu', () => {
 
         expect(shownEditIds()).toEqual(EDIT_IDS);
         expect(EDIT_IDS.slice(1).map(label)).toEqual([
-            'Undo (Ctrl+Z)',
+            'Undo last change (Ctrl+Z)',
             'Redo (Ctrl+Y)',
-            'Revert cell',
-            'Revert rows (selected rows)'
+            'Undo cell edit',
+            'Undo row edits',
+            'Undo row edits (selected rows)'
         ]);
-        expect(EDIT_IDS.slice(1).map(isDisabled)).toEqual([true, true, true, true]);
+        expect(EDIT_IDS.slice(1).map(isDisabled)).toEqual([true, true, true, true, true]);
     });
 
     it('expect no edit section in a readonly grid', async () => {
@@ -368,6 +376,69 @@ describe('undo and redo - the row menu', () => {
         press(cellInput(element, 'age'), 'z');
         expect(firstnames(datasource)).toEqual(['changed', 'b', 'not selected']);
         expect(second.__rowState).toEqual('D');
+    });
+
+    it('expect the edit section first in the menu', async () => {
+        const { element } = await mountGrid(editable(), data(), simpleFields());
+
+        openRowMenu(element, 'firstname', 0);
+
+        const ids = Array.from(document.querySelectorAll('.simple-html-grid-menu [data-menu-id]')).map((el) =>
+            el.getAttribute('data-menu-id')
+        );
+        expect(ids.slice(0, EDIT_IDS.length)).toEqual(EDIT_IDS);
+    });
+
+    it('expect undo row edits to revert the row right clicked, without selecting it, as one step', async () => {
+        const { element, datasource } = await mountGrid(editable(), data(), simpleFields());
+        const [first, second] = datasource.getAllData();
+        first.firstname = 'changed';
+        first.lastname = 'changed too';
+        second.firstname = 'other row';
+        await sleep(0);
+        expect(datasource.getSelectedRows()).toEqual([]);
+
+        openRowMenu(element, 'age', 0);
+        expect(isDisabled('row.edit.revertRow')).toBe(false);
+        // nothing selected: the selected rows' entry has nothing to do
+        expect(isDisabled('row.edit.revertRows')).toBe(true);
+        entry('row.edit.revertRow').click();
+
+        expect([first.firstname, first.lastname]).toEqual(['a', 'x']);
+        expect(second.firstname).toEqual('other row');
+        expect(first.__rowState).toBeUndefined();
+        expect(cellInput(element, 'firstname').value).toEqual('a');
+
+        // one undo step: Ctrl+Z brings both fields back
+        await sleep(0);
+        press(cellInput(element, 'age'), 'z');
+        expect([first.firstname, first.lastname]).toEqual(['changed', 'changed too']);
+    });
+
+    it('expect undo row edits to take the deletion mark off the row right clicked', async () => {
+        const { element, datasource } = await mountGrid(editable(), data(), simpleFields());
+        const first = datasource.getAllData()[0];
+        datasource.markForDeletion(first);
+
+        openRowMenu(element, 'firstname', 0);
+        entry('row.edit.revertRow').click();
+
+        expect(first.__rowState).toBeUndefined();
+    });
+
+    it('expect undo row edits greyed out on a row that is not changed', async () => {
+        const { element, datasource } = await mountGrid(editable(), data(), simpleFields());
+        datasource.getAllData()[1].firstname = 'changed';
+
+        openRowMenu(element, 'firstname', 0);
+        expect(isDisabled('row.edit.revertRow')).toBe(true);
+    });
+
+    it('expect no edit section in a readonly grid', async () => {
+        const { element } = await mountGrid({ ...editable(), readonly: true }, data(), simpleFields());
+
+        openRowMenu(element, 'firstname', 0);
+        expect(shownEditIds()).toEqual([]);
     });
 
     it('expect revert rows greyed out when no selected row is changed', async () => {
