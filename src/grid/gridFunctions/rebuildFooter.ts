@@ -59,7 +59,7 @@ function renderNode(ctx: Grid, node: FilterNode): unknown {
 }
 
 function renderChildren(ctx: Grid, group: FilterGroupNode) {
-    const connector = gridText(ctx, group.logicalOperator === 'OR' ? 'footer.or' : 'footer.and');
+    const connector = gridText(ctx, group.group === 'OR' ? 'footer.or' : 'footer.and');
     return (group.children || []).map(
         (child, i) => html`
             ${i > 0 ? html`<span class="footer-filter-connector">${connector}</span>` : null}

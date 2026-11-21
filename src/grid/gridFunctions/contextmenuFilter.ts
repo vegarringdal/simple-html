@@ -1,6 +1,5 @@
 import { html, nothing, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import type { Entity, GroupRow } from '../../datasource/entity';
 import { and, type FilterExpression, type FilterOperator, isFilterGroup, where } from '../../datasource/filterExpression';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
@@ -30,14 +29,13 @@ export function contextmenuFilter(
     _celno: number,
     _colType: ColType,
     _cellType: string,
-    attribute: string,
-    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
-    rowData: Entity | GroupRow | undefined
+    attribute: string
 ) {
     const context: MenuContext = {
         menu: 'filter',
         field: attribute,
-        row: rowData,
+        // the first displayed row as it is now, see contextmenuLabel
+        row: ctx.gridInterface.getDatasource().getRow(0),
         rowIndex: row,
         cell,
         gridInterface: ctx.gridInterface,

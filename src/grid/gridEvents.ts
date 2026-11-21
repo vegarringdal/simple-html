@@ -103,8 +103,8 @@ export interface GridEvents {
      * A header filter cell got focus. `cellType` is `'filter'`, `row` is 0.
      *
      * `rowData` is not the header's own: it is the first displayed row (`datasource.getRow(0)`)
-     * from when the header cell was last rendered. That is a {@link GroupRow} when the datasource
-     * is grouped, and `undefined` when no rows were displayed - check with `isGroupRow()` before
+     * when the header filter got the focus. That is a {@link GroupRow} when the datasource is
+     * grouped, and `undefined` when no rows are displayed - check with `isGroupRow()` before
      * reading it as a data row.
      */
     'cell-header-focus': Omit<GridCellEventData, 'rowData'> & {

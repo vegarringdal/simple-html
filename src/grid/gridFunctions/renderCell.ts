@@ -58,11 +58,11 @@ export function renderCell(ctx: Grid, cell: HTMLElement, row: number, column: nu
     }
 
     if (type === 'label') {
-        renderHeaderLabel(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+        renderHeaderLabel(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute);
     }
 
     if (type === 'filter') {
-        renderHeaderFilter(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+        renderHeaderFilter(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute);
     }
 
     if (type === SELECTOR_COLTYPE) {

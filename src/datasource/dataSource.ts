@@ -89,7 +89,7 @@ export interface FilterConditionNode {
  * // the filter as text: (age GREATER_THAN 18 AND (country EQUAL Norway OR country EQUAL Sweden))
  * const toText = (node: FilterNode): string =>
  *     node.kind === 'group'
- *         ? `(${node.children.map(toText).join(` ${node.logicalOperator} `)})`
+ *         ? `(${node.children.map(toText).join(` ${node.group} `)})`
  *         : `${node.label} ${node.operator} ${node.value}`;
  *
  * const tree = datasource.getFilterTree();
@@ -99,8 +99,8 @@ export interface FilterConditionNode {
 export interface FilterGroupNode {
     /** always `'group'` */
     kind: 'group';
-    /** how the children are joined: `'AND'`, or `'OR'` */
-    logicalOperator: 'AND' | 'OR';
+    /** how the children are joined: `'AND'`, or `'OR'` - named as in the filter (`FilterGroup.group`) */
+    group: 'AND' | 'OR';
     /** the conditions and groups in it. The conditions the filter ignores are left out */
     children: FilterNode[];
 }
@@ -1659,6 +1659,7 @@ export class Datasource<T = any> {
             );
         } else {
             //set sorted collection to display
+            this.__grouping.resetLevels(this.getAllData());
             this.__collectionDisplayed = this.__collectionFiltered.slice();
         }
 
@@ -1751,6 +1752,7 @@ export class Datasource<T = any> {
             );
         } else {
             //set sorted collection to display
+            this.__grouping.resetLevels(this.getAllData());
             this.__collectionDisplayed = this.__collectionFiltered.slice();
         }
 
@@ -1840,6 +1842,7 @@ export class Datasource<T = any> {
             const result = this.__grouping.group(this.__collectionFiltered, groupings, true, this);
             this.__collectionDisplayed = result;
         } else {
+            this.__grouping.resetLevels(this.getAllData());
             this.__collectionDisplayed = this.__collectionFiltered;
         }
 
@@ -2067,7 +2070,8 @@ export class Datasource<T = any> {
 
     /**
      * One row of the displayed rows, `getRows()[rowNo]`. When grouped it can be a {@link GroupRow}, check
-     * with {@link isGroupRow}. Out of range gives `undefined`, though the type does not say so.
+     * with {@link isGroupRow}. `undefined` out of range: no row at that index (no rows, a filter
+     * that shows fewer).
      *
      * @param rowNo the index in the displayed rows, 0 based
      *
@@ -2081,8 +2085,8 @@ export class Datasource<T = any> {
      * }
      * ```
      */
-    public getRow(rowNo: number): EntityUnion<T> | GroupRow {
-        return this.__collectionDisplayed[rowNo] as EntityUnion<T> | GroupRow;
+    public getRow(rowNo: number): EntityUnion<T> | GroupRow | undefined {
+        return this.__collectionDisplayed[rowNo] as EntityUnion<T> | GroupRow | undefined;
     }
 
     /**
@@ -2772,7 +2776,7 @@ export class Datasource<T = any> {
      * datasource.filter(where('age', 'GREATER_THAN', 18));
      *
      * datasource.getFilterTree();
-     * // { kind: 'group', logicalOperator: 'AND', children: [
+     * // { kind: 'group', group: 'AND', children: [
      * //     { kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true }
      * // ] }
      * ```
@@ -2789,7 +2793,7 @@ export class Datasource<T = any> {
                 return {
                     kind: 'group',
                     // the filter treats anything but OR as AND
-                    logicalOperator: expression.group === 'OR' ? 'OR' : 'AND',
+                    group: expression.group === 'OR' ? 'OR' : 'AND',
                     children: expression.children.map(build).filter((node): node is FilterNode => node !== null)
                 };
             }
@@ -2826,7 +2830,7 @@ export class Datasource<T = any> {
             return root;
         }
         // __isShown(filter) is true, so a condition at the root is built
-        return { kind: 'group', logicalOperator: 'AND', children: root ? [root] : [] };
+        return { kind: 'group', group: 'AND', children: root ? [root] : [] };
     }
 
     /**

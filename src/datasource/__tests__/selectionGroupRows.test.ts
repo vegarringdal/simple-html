@@ -108,3 +108,31 @@ describe('selection - group header rows', () => {
         expect(ds.getSelection().getSelectedKeys()).toEqual([]);
     });
 });
+
+describe('selection - the rows of a group (selectRowRange, a click on a group row selector)', () => {
+    it('expect the data rows to be selected and selection-change sent in the multiple mode', () => {
+        const ds = grouped();
+        let sent = 0;
+        ds.on('selection-change', () => sent++);
+
+        ds.getSelection().selectRowRange(1, 2);
+
+        expect(selectedValues(ds)).toEqual([1, 2]);
+        expect(sent).toEqual(1);
+    });
+
+    it('expect nothing to be selected and nothing sent in the single and none modes', () => {
+        for (const mode of ['single', 'none'] as const) {
+            const ds = grouped();
+            ds.setSelectionMode(mode);
+            let sent = 0;
+            ds.on('selection-change', () => sent++);
+
+            ds.getSelection().selectRowRange(1, 2);
+
+            // it sent selection-change with nothing selected
+            expect(selectedValues(ds)).toEqual([]);
+            expect(sent).toEqual(0);
+        }
+    });
+});

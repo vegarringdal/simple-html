@@ -311,9 +311,9 @@ people.getFilterString((field) => (field === 'country' ? 'Land' : field));
 // ([LAND] <<EQUAL_TO>> 'NORWAY' AND ([AGE] <<LESS_THAN>> '20' OR [AGE] <<GREATER_THAN>> '60'))
 
 people.getFilterTree();
-// { kind: 'group', logicalOperator: 'AND', children: [
+// { kind: 'group', group: 'AND', children: [
 //     { kind: 'condition', label: 'country', operator: 'EQUAL', value: 'Norway', hasValue: true },
-//     { kind: 'group', logicalOperator: 'OR', children: [ ...the two age conditions ] }
+//     { kind: 'group', group: 'OR', children: [ ...the two age conditions ] }
 // ] }
 ```
 

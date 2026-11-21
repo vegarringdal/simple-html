@@ -84,7 +84,7 @@ describe('filter groups - getFilterTree', () => {
     it('expect an empty group to be a group with no children', () => {
         const ds = filtered(and(aIsX, or()));
         const tree = ds.getFilterTree()!;
-        expect(tree.children[1]).toEqual({ kind: 'group', logicalOperator: 'OR', children: [] });
+        expect(tree.children[1]).toEqual({ kind: 'group', group: 'OR', children: [] });
     });
 
     it('expect incomplete conditions to be left out, like the filter ignores them', () => {

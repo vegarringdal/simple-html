@@ -1,5 +1,4 @@
 import { html, render, svg } from 'lit-html';
-import type { Entity, GroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import type { ColType } from './colType';
@@ -15,9 +14,7 @@ export function renderHeaderLabel(
     celno: number,
     colType: ColType,
     cellType: string,
-    attribute: string | null,
-    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
-    rowData: Entity | GroupRow | undefined
+    attribute: string | null
 ) {
     /**
      * first get sort logic
@@ -66,7 +63,7 @@ export function renderHeaderLabel(
                 data-attribute-header=${attribute}
                 @contextmenu=${(e: MouseEvent) => {
                     e.preventDefault();
-                    contextmenuLabel(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                    contextmenuLabel(ctx, e, cell, row, column, celno, colType, cellType, attribute);
                 }}
             >
                 ${label} ${iconAsc}

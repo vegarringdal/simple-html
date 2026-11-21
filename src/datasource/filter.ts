@@ -109,11 +109,22 @@ export class Filter {
             data = ds.getFormatter(condition.field, type).format(data);
         }
 
-        const key = data === null || data === undefined || data === '' || data === 0 ? 'NULL' : String(data).toUpperCase();
+        const key = isInListBlank(data) ? 'NULL' : String(data).toUpperCase();
         const found = values.indexOf(key) !== -1;
 
         return condition.operator === 'IN' ? found : !found;
     }
+}
+
+/**
+ * @internal
+ * true for a row value `IN` / `NOT_IN` take as blank, the list value `'NULL'`: null, undefined, `''` and
+ * 0 (see "0 is blank" on FilterOperator). `false` is a value, as for `IS_BLANK`. The value list of the
+ * header filter menu (dropDownFilterData) puts the same values under its "Blank" entry, so the list
+ * and the `IN` it applies agree
+ */
+export function isInListBlank(value: unknown): boolean {
+    return value === null || value === undefined || value === '' || value === 0;
 }
 
 /**

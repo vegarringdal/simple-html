@@ -1,6 +1,5 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
-import type { Entity, GroupRow } from '../../datasource/entity';
 import type { FieldType } from '../../datasource/field';
 import { type Formatter, parseFilterText } from '../../datasource/formatter';
 import { TextFormatter } from '../../datasource/textFormatter';
@@ -23,9 +22,7 @@ export function renderHeaderFilter(
     celno: number,
     colType: ColType,
     cellType: string,
-    attribute: string | null,
-    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
-    rowData: Entity | GroupRow | undefined
+    attribute: string | null
 ) {
     // the cell element is a gridcell of the filter row, the input in it the widget (see ariaGrid.ts). A
     // column with fewer fields than the tallest one has empty cells, they are no cells
@@ -70,7 +67,7 @@ export function renderHeaderFilter(
                         placeholder=${placeholderFilter}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
-                            contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                            contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute);
                         }}
                         @keydown=${(e: KeyboardEvent) => {
                             return cellFilterKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
@@ -125,7 +122,7 @@ export function renderHeaderFilter(
                                 filterCallback(ctx, (e.target as any).value, attribute);
                             }
                             lastFilter = (e.target as any).value;
-                            contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                            contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute);
                         }}
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {
@@ -139,28 +136,19 @@ export function renderHeaderFilter(
                                         ctx,
                                         e,
                                         cell,
-                                        parseFilterText(formatter, currentText),
+                                        // on the date in the input: typed since the cell was rendered too
+                                        parseFilterText(formatter, (e.target as HTMLInputElement).value),
                                         (value: Date | null) => {
+                                            // as if the date was typed: filterCallback parses the text and
+                                            // stores the Date it filters on as the header filter's value
+                                            // (it stored the text over it here, a typed date was a Date)
                                             const filterValue = formatter.format(value);
                                             if (lastFilter !== filterValue) {
                                                 lastFilter = filterValue;
                                                 filterCallback(ctx, filterValue, attribute);
                                             }
-                                            // TODO: need to check why date is inserted here and I need to reset
-                                            // potential other issues I just dont see atm
-                                            ctx.gridInterface.__setHeaderFilterValue(attribute, filterValue);
 
-                                            renderHeaderFilter(
-                                                ctx,
-                                                cell,
-                                                row,
-                                                column,
-                                                celno,
-                                                colType,
-                                                cellType,
-                                                attribute,
-                                                rowData
-                                            );
+                                            renderHeaderFilter(ctx, cell, row, column, celno, colType, cellType, attribute);
                                         }
                                     );
                                 }, 2);
@@ -180,7 +168,9 @@ export function renderHeaderFilter(
                                 colType,
                                 cellType,
                                 attribute,
-                                rowData
+                                // the first displayed row as it is now: it was the one when the cell was
+                                // rendered, a filter since left it stale
+                                rowData: ctx.gridInterface.getDatasource().getRow(0)
                             });
                         }}
                         @keydown=${(e: KeyboardEvent) => {

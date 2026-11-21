@@ -4,10 +4,12 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isPopoverShown } from '../../__tests__/popoverStub';
 // the picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
+import { and, where } from '../../datasource/filterExpression';
 import type { IDateConfig } from '../../date/interfaces';
 import type { GridConfig } from '../gridConfig';
+import type { GridElement } from '../gridElement';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { sleep } from './interactionTestHelpers';
+import { headerFilterInput, sleep, typeInHeaderFilter } from './interactionTestHelpers';
 
 /**
  * The date picker the grid opens when a date cell is clicked.
@@ -148,5 +150,75 @@ describe('grid date picker', () => {
         expect(picker.querySelectorAll('.simple-html-date-week').length).toEqual(0);
         expect(picker.style.width).toEqual('320px');
         expect(picker.querySelector('.simple-html-date-day-header')?.textContent?.trim()).toEqual('Mo');
+    });
+});
+
+describe('grid date picker - a header filter', () => {
+    /**
+     * clicks the header filter of born and waits for its picker, see openPicker
+     */
+    async function openFilterPicker(element: GridElement) {
+        headerFilterInput(element, 'born').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const picker = await vi.waitFor(() => {
+            const found = document.querySelector('simple-html-date');
+            if (!found) {
+                throw new Error('the picker is not open yet');
+            }
+            return found as HTMLElement;
+        });
+        await sleep(0);
+        return picker;
+    }
+
+    /**
+     * picks a day of the month shown, then Use
+     */
+    function pick(picker: HTMLElement, day: string) {
+        const days = Array.from(picker.querySelectorAll<HTMLElement>('.simple-html-date-day'));
+        days.find((element) => element.textContent?.trim() === day)?.click();
+        (picker.querySelector('.simple-html-date-button-primary') as HTMLElement).click();
+    }
+
+    it('expect a picked date to be stored as a Date, as a typed one is', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(config(), data(), fields);
+
+        // an empty filter opens on today
+        pick(await openFilterPicker(element), '18');
+
+        // it was the date as text, 'YYYY-MM-18'
+        const today = new Date();
+        const picked = new Date(today.getFullYear(), today.getMonth(), 18);
+        expect(gridInterface.getState().headerFilters.born.value).toEqual(picked);
+        expect(datasource.getFilter()).toEqual(and(where('born', 'GREATER_THAN_OR_EQUAL_TO', picked)));
+    });
+
+    it('expect the picker to open on the date typed, and the date picked to be shown', async () => {
+        const { element, gridInterface } = await mountGrid(config(), data(), fields);
+        typeInHeaderFilter(element, 'born', '2001-05-17');
+        expect(gridInterface.getState().headerFilters.born.value).toEqual(new Date(2001, 4, 17));
+
+        // it opened on the text the cell had when it was rendered: empty here, today
+        const picker = await openFilterPicker(element);
+        expect(picker.querySelector('.simple-html-date-year')?.textContent?.trim()).toEqual('2001');
+        expect(picker.querySelector('.simple-html-date-day-selected')?.textContent?.trim()).toEqual('17');
+        pick(picker, '18');
+
+        expect(gridInterface.getState().headerFilters.born.value).toEqual(new Date(2001, 4, 18));
+        expect(headerFilterInput(element, 'born').value).toEqual('2001-05-18');
+    });
+
+    it('expect Clear in the picker to clear the header filter', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(config(), data(), fields);
+        typeInHeaderFilter(element, 'born', '2001-05-17');
+
+        const picker = await openFilterPicker(element);
+        const clear = Array.from(picker.querySelectorAll<HTMLElement>('.simple-html-date-button')).find(
+            (button) => button.textContent?.trim() === 'Clear'
+        );
+        clear?.click();
+
+        expect(gridInterface.getState().headerFilters).toEqual({});
+        expect(datasource.getFilter()).toEqual(and());
+        expect(headerFilterInput(element, 'born').value).toEqual('');
     });
 });

@@ -12,6 +12,21 @@ import { SAMPLES, type Sample } from './sampleList';
 // ------------------------------------------------------------------ samples
 
 /**
+ * Puts text on the clipboard, resolves `false` when it could not: `navigator.clipboard` is only there in
+ * a secure context (https, localhost - not the dev server opened on plain http from another machine),
+ * and the browser can refuse the write. Both used to end in an uncaught error
+ */
+function copySource(text: string): Promise<boolean> {
+    if (!navigator.clipboard) {
+        return Promise.resolve(false);
+    }
+    return navigator.clipboard.writeText(text).then(
+        () => true,
+        () => false
+    );
+}
+
+/**
  * The source of a sample in a dark panel that folds, with a copy button
  */
 function sourcePanel(sample: Sample) {
@@ -34,8 +49,8 @@ function sourcePanel(sample: Sample) {
         // do not fold the panel
         e.preventDefault();
         e.stopPropagation();
-        navigator.clipboard.writeText(sample.source).then(() => {
-            copyBtn.textContent = 'copied!';
+        copySource(sample.source).then((copied) => {
+            copyBtn.textContent = copied ? 'copied!' : 'copy failed';
         });
     };
     summary.appendChild(copyBtn);

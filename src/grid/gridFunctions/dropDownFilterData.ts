@@ -1,4 +1,4 @@
-import { Filter } from '../../datasource/filter';
+import { Filter, isInListBlank } from '../../datasource/filter';
 import { and, type FilterExpression, isFilterGroup } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 
@@ -71,7 +71,9 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
     };
 
     for (let i = 0; i < length; i++) {
-        if (data[i]?.[attribute]) {
+        // blank as IN takes it: a false is a value, listed as one (it was under "Blank", and the IN
+        // of the list then left its rows out)
+        if (data[i] && !isInListBlank(data[i][attribute])) {
             if (typeof data[i][attribute] === 'string') {
                 if (search) {
                     if (data[i][attribute].toLocaleUpperCase().indexOf(search.toLocaleUpperCase()) !== -1) {

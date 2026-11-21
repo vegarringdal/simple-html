@@ -241,7 +241,7 @@ if (isGroupRow(row)) {
 | --- | --- | --- |
 | `getRows()` | `EntityUnion<T>[]` | `(EntityUnion<T> \| GroupRow)[]` |
 | `getRows(true)` | `EntityUnion<T>[]` | `getDataRows()`: `EntityUnion<T>[]`, see [Options objects](#options-objects-instead-of-boolean-flags) |
-| `getRow(n)` | `EntityUnion<T>` | `EntityUnion<T> \| GroupRow` |
+| `getRow(n)` | `EntityUnion<T>` | `EntityUnion<T> \| GroupRow \| undefined` - `undefined` out of range, as v5 returned too |
 | `currentEntity` | `EntityUnion<T> \| null` | `EntityUnion<T> \| GroupRow \| null` |
 | `getSelectedRows()` | `Entity[]` | `EntityUnion<T>[]` - never a group row |
 | `cell-header-focus` event, `rowData` | `Entity` | `Entity \| GroupRow \| undefined` |

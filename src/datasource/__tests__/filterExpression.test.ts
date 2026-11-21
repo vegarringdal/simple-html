@@ -134,7 +134,7 @@ describe('a single condition at the root', () => {
         ds.filter();
         expect(ds.getFilterTree()).toEqual({
             kind: 'group',
-            logicalOperator: 'AND',
+            group: 'AND',
             children: [{ kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '10', hasValue: true }]
         });
     });

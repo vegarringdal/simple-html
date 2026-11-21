@@ -276,16 +276,22 @@ export class Selection {
         this.selectedRows = this.selection.size;
     }
 
+    /**
+     * selects the displayed rows from start to end (the data rows of a group, a click on its row selector)
+     * and sends selection-change. Only in 'multiple' mode: in the others nothing changes and nothing is
+     * sent - it sent selection-change with nothing selected
+     * @param add keep the rows selected already
+     */
     public selectRowRange(start: number, end: number, add = false): void {
-        if (this.dataSource.getSelectionMode() === 'multiple') {
-            if (!add) {
-                this.selection.clear();
-            }
+        if (this.dataSource.getSelectionMode() !== 'multiple') {
+            return;
+        }
+        if (!add) {
+            this.selection.clear();
+        }
 
-            for (let i = start; i < end + 1; i++) {
-                this.addRow(i);
-            }
-            this.selectedRows = this.selection.size;
+        for (let i = start; i < end + 1; i++) {
+            this.addRow(i);
         }
         this.selectedRows = this.selection.size;
         this.dataSource.__callSubscribers('selection-change', {});

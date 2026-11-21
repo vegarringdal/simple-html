@@ -2,6 +2,7 @@
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isPopoverShown } from '../../__tests__/popoverStub';
+import { where } from '../../datasource/filterExpression';
 import type { GridElement } from '../gridElement';
 import { SUBMENU_DELAY } from '../gridFunctions/showMenu';
 import { type GridMenus, MENU_IDS, type MenuContext, type MenuEntry, type MenuItem } from '../gridMenus';
@@ -388,6 +389,29 @@ describe('menus - the menus hook', () => {
         expect(context.menu).toEqual('filter');
         expect(context.field).toEqual('firstname');
         expect(context.cell?.contains(headerFilterInput(element, 'firstname'))).toBe(true);
+    });
+
+    it('expect the header and filter menu contexts to have the first row displayed when they open, after a filter too', async () => {
+        const rows: unknown[] = [];
+        const menus: GridMenus = {
+            header: (defaults, context) => {
+                rows.push(context.row);
+                return defaults;
+            },
+            filter: (defaults, context) => {
+                rows.push(context.row);
+                return defaults;
+            }
+        };
+        const { element, datasource } = await mountMenus(menus);
+
+        // the header is not rendered again for a filter: the menus got the row it was rendered with
+        datasource.filter(where('firstname', 'EQUAL', 'first3'));
+        openLabelMenu(element, 'lastname');
+        openFilterMenu(element, 'lastname');
+
+        expect(rows).toEqual([datasource.getRow(0), datasource.getRow(0)]);
+        expect((datasource.getRow(0) as { firstname: string }).firstname).toEqual('first3');
     });
 
     it('expect visible: false to leave an entry out, called with the context', async () => {

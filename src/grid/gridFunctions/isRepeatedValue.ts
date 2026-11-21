@@ -1,6 +1,6 @@
-import { type Entity, isGroupRow } from '../../datasource/entity';
+import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
-import { getCellType } from './getCellType';
+import { cellTextOf } from './cellText';
 
 /**
  * True when this cell shows the same thing as the row directly above it, and should be
@@ -36,18 +36,16 @@ export function isRepeatedValue(ctx: Grid, row: number, attribute: string): bool
         return false;
     }
 
-    /**
-     * same type resolution the cell rendering uses, so a dynamic type column is honoured
-     */
-    const displayed = (entity: Entity) =>
-        datasource.getFormatter(attribute, getCellType(ctx, attribute, entity)).format(entity[attribute]);
+    // the text the cell shows, as renderRowCell shows it: the type of a dynamic type column, the
+    // column's numberOverride, a lookup column's label (the formatter's text alone missed the last two)
+    const displayed = cellTextOf(ctx, attribute);
 
-    const previousValue = displayed(previous);
+    const previousValue = displayed(previous).text;
 
     // a run of blanks is not something worth collapsing, it just looks broken
     if (previousValue === '') {
         return false;
     }
 
-    return previousValue === displayed(current);
+    return previousValue === displayed(current).text;
 }

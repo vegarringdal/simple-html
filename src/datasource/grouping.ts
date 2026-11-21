@@ -18,6 +18,8 @@ export class Grouping {
     // built by group(), empty until then - and whenever it no longer matches groupingConfig
     private currentGroups: GroupRow[][] = [];
     private groupingConfig: GroupArgument[];
+    /** true while data rows have the `__groupLvl` a grouping gave them, see resetLevels */
+    private levelsSet = false;
     private expandedGroupIDs: Set<string>;
 
     constructor() {
@@ -46,6 +48,7 @@ export class Grouping {
 
             // variable to hold our groups
             const groups: GroupRow[][] = [];
+            this.levelsSet = true;
 
             groupingConfig.forEach((groupBy, groupNo) => {
                 if (groupNo === 0) {
@@ -88,6 +91,22 @@ export class Grouping {
 
     public getExpanded() {
         return Array.from(this.expandedGroupIDs);
+    }
+
+    /**
+     * Sets `__groupLvl` of the data rows back to 0 when they are shown without a grouping after one:
+     * the grouping gave every row it grouped its level. Once, not on every update of rows that are not
+     * grouped
+     * @param rows every row of the datasource, the ones the filter hides now were grouped too
+     */
+    public resetLevels(rows: Entity[]) {
+        if (!this.levelsSet) {
+            return;
+        }
+        for (const row of rows) {
+            row.__groupLvl = 0;
+        }
+        this.levelsSet = false;
     }
 
     public setExpanded(x: string[]) {
@@ -336,6 +355,9 @@ export class Grouping {
         // first level, here we use array
         array.forEach((element) => {
             const groupID = this.groupKey(element[groupBy], formatter);
+            // every row of the group, it was only the first one: a grouping of one level left the
+            // others with the level of a grouping before
+            element.__groupLvl = groupNo + 1;
 
             if (groupID !== lastGroupID) {
                 curGroup = {
@@ -347,7 +369,6 @@ export class Grouping {
                     __groupTotal: 1,
                     __groupExpanded: false
                 };
-                element.__groupLvl = groupNo + 1;
                 lastGroupID = groupID;
                 tempGroupArray.push(curGroup);
             } else {

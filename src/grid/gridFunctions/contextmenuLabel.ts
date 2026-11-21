@@ -1,5 +1,4 @@
 import { AGGREGATE_FUNCTIONS, type AggregateFunction } from '../../datasource/aggregate';
-import type { Entity, GroupRow } from '../../datasource/entity';
 import type { SortArgument } from '../../datasource/sortArgument';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
@@ -24,14 +23,14 @@ export function contextmenuLabel(
     celno: number,
     colType: ColType,
     _cellType: string,
-    attribute: string,
-    // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
-    rowData: Entity | GroupRow | undefined
+    attribute: string
 ) {
     const context: MenuContext = {
         menu: 'header',
         field: attribute,
-        row: rowData,
+        // the first displayed row as it is now, not the header's: a group row when grouped, undefined
+        // without rows. It was the one when the header was rendered, a filter since left it stale
+        row: ctx.gridInterface.getDatasource().getRow(0),
         rowIndex: row,
         cell,
         gridInterface: ctx.gridInterface,

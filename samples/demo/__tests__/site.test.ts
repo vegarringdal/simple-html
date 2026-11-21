@@ -143,6 +143,39 @@ describe('docs site', { timeout: 30_000 }, () => {
         expect(document.querySelectorAll('.stage .simple-html-grid-row').length).toBeGreaterThan(0);
     });
 
+    it("copies a sample's source, and says so when the browser has no clipboard or refuses it", async () => {
+        await open('#sample/basic-grid');
+        const button = document.querySelector('.code-panel .copy-btn') as HTMLButtonElement;
+        const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+        const click = async (writeText: ((text: string) => Promise<void>) | null) => {
+            Object.defineProperty(navigator, 'clipboard', { configurable: true, value: writeText ? { writeText } : undefined });
+            button.textContent = 'copy';
+            button.click();
+            // the promise of the copy, then its then()
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            return button.textContent;
+        };
+        try {
+            let copied = '';
+            expect(
+                await click(async (text) => {
+                    copied = text;
+                })
+            ).toBe('copied!');
+            expect(copied).toContain('export const basicGrid');
+            // on plain http off localhost there is no navigator.clipboard: it threw
+            expect(await click(null)).toBe('copy failed');
+            // refused (no permission): an unhandled rejection
+            expect(await click(() => Promise.reject(new Error('NotAllowedError')))).toBe('copy failed');
+        } finally {
+            if (clipboard) {
+                Object.defineProperty(navigator, 'clipboard', clipboard);
+            } else {
+                delete (navigator as { clipboard?: unknown }).clipboard;
+            }
+        }
+    });
+
     it('takes the old #<sample id> links to the sample page', async () => {
         await open('#filtering');
         expect(location.hash).toBe('#sample/filtering');

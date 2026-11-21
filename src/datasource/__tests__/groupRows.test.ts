@@ -210,3 +210,58 @@ describe('group rows - currentEntity', () => {
         expect(ds.getSelectedRows()).toEqual([]);
     });
 });
+
+describe('group rows - __groupLvl of the data rows', () => {
+    const levels = (ds: Datasource<Row>) => ds.getDataRows().map((row) => row.__groupLvl);
+
+    it('expect every data row to have the number of levels it sits under, 0 before a grouping', () => {
+        const ds = new Datasource<Row>();
+        ds.setData(rows());
+        expect(levels(ds)).toEqual([0, 0, 0, 0]);
+
+        // one level: only the first row of each group had it, [1, undefined, undefined, 1]
+        ds.group([{ attribute: 'country', title: 'country' }]);
+        expect(levels(ds)).toEqual([1, 1, 1, 1]);
+
+        ds.group([
+            { attribute: 'country', title: 'country' },
+            { attribute: 'fruit', title: 'fruit' }
+        ]);
+        expect(levels(ds)).toEqual([2, 2, 2, 2]);
+
+        // back to one level: the rows that are not first in their group kept 2
+        ds.removeGroup({ attribute: 'fruit', title: 'fruit' });
+        expect(levels(ds)).toEqual([1, 1, 1, 1]);
+    });
+
+    it('expect the levels to go back to 0 when the grouping is removed, also of the rows a filter hides', () => {
+        const ds = groupedTwoLevels();
+        ds.filter(where('country', 'EQUAL', 'no'));
+
+        // they kept 2
+        ds.removeGroup();
+        expect(levels(ds)).toEqual([0, 0, 0]);
+        ds.filter(null);
+        expect(levels(ds)).toEqual([0, 0, 0, 0]);
+    });
+
+    it('expect setGrouping([]) and the next update to set them back to 0 too', () => {
+        const ds = groupedTwoLevels();
+
+        ds.setGrouping([]);
+        ds.filter(null);
+
+        expect(levels(ds)).toEqual([0, 0, 0, 0]);
+        expect(ds.getAllData().map((row) => row.__groupLvl)).toEqual([0, 0, 0, 0]);
+    });
+
+    it('expect a row added while grouped to get its level, and one added after to have 0', () => {
+        const ds = grouped();
+        ds.setData([{ country: 'dk', fruit: 'plum', v: 5 }], { add: true });
+        expect(ds.getAllData().map((row) => row.__groupLvl)).toEqual([1, 1, 1, 1, 1]);
+
+        ds.removeGroup();
+        ds.setData([{ country: 'fi', fruit: 'fig', v: 6 }], { add: true });
+        expect(ds.getAllData().map((row) => row.__groupLvl)).toEqual([0, 0, 0, 0, 0, 0]);
+    });
+});

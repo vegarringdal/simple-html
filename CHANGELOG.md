@@ -1332,6 +1332,28 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The candidates list checked, small bugs fixed
+
+##### ⚠️ Breaking changes
+- `getRow(n)` is typed `EntityUnion<T> | GroupRow | undefined`: out of range it was always `undefined`, now
+  the type says so.
+- `getFilterTree()`: a group node's `logicalOperator` is `group`, the name the filter uses.
+
+##### Fixed
+- The filter menu's value list put a `false` (a text field holding booleans) under "Blank", and the IN it
+  applied then left those rows out. A false is a value of its own now.
+- A date picked in a header filter's date picker was stored as text (`getState().headerFilters`), a typed
+  one as a `Date`: both are a `Date` now. The picker opens on the date typed in the filter.
+- `cell-header-focus` (`rowData`) and the header / filter menus' `context.row` had the first displayed row
+  from when the header was rendered, stale after a filter: they are read when the focus or the menu
+  happens.
+- `__groupLvl` of the data rows: with one grouping level only the first row of each group had it, and
+  removing the grouping left it. Every grouped row has the number of levels now, 0 when not grouped.
+- A click on a group row's row selector in the 'single' or 'none' selection mode sent `selection-change`
+  with nothing selected.
+- Dim repeated values compared the formatter's text, not what the cell shows (`numberOverride`).
+- Docs site: the copy button threw without `navigator.clipboard` (plain http); it says "copy failed".
+
 #### Row classes: the `rowClass` hook
 
 ##### Added

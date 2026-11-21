@@ -44,9 +44,9 @@ export interface Entity {
      */
     __rowError?: string | null;
     /**
-     * Written by grouping: how many group levels the row sits under. Do not rely on it - it is not
-     * set on every row (with one grouping level only the first row of each group gets it) and not
-     * cleared when the grouping is removed. The grid shows nothing from it on a data row.
+     * Written by grouping: how many group levels the row sits under, the number of fields grouped on -
+     * 0 when the rows are not grouped. A row in the container of two datasources (`container`) has the
+     * level of the one that grouped or ungrouped it last. The grid shows nothing from it on a data row.
      */
     __groupLvl?: number;
     /**

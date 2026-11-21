@@ -714,6 +714,13 @@ people.length(true);
 console.log(people.getRows()[0].name);
 // @ts-expect-error getRow() can return a group row
 const firstPerson: Person = people.getRow(0);
+// @ts-expect-error getRow() is undefined out of range, rule that out first
+const shownRow: Person | GroupRow = people.getRow(0);
+console.log(shownRow);
+const firstShown = people.getRow(0);
+if (firstShown && !isGroupRow(firstShown)) {
+    console.log(firstShown.name);
+}
 // @ts-expect-error currentEntity can be a group row
 console.log(firstPerson, people.currentEntity?.name);
 const current = people.currentEntity;

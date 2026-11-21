@@ -2,6 +2,7 @@
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
+import { where } from '../../datasource/filterExpression';
 import type { GridElement } from '../gridElement';
 import type { GridEvents } from '../gridEvents';
 import { mountGrid, selectorRowOf, simpleConfig, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
@@ -162,6 +163,24 @@ describe('group rows - callbacks and events', () => {
 
         expect(received).toHaveLength(1);
         expect(received[0].rowData).toBeUndefined();
+    });
+
+    it('expect cell-header-focus to send the first row displayed when it got the focus, also after a filter', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(simpleConfig(), data());
+        const received: GridEvents['cell-header-focus'][] = [];
+        gridInterface.on('cell-header-focus', (event) => {
+            received.push(event);
+        });
+
+        // the header is not rendered again for a filter: it sent the row it was rendered with, 'a'
+        datasource.filter(where('firstname', 'EQUAL', 'c'));
+        headerFilterInput(element, 'lastname').dispatchEvent(new FocusEvent('focus'));
+        datasource.filter(null);
+        datasource.group([{ attribute: 'lastname', title: 'lastname' }]);
+        headerFilterInput(element, 'lastname').dispatchEvent(new FocusEvent('focus'));
+
+        expect(received.map((event) => event.rowData)).toEqual([datasource.getAllData()[2], datasource.getRow(0)]);
+        expect(isGroupRow(received[1].rowData)).toBe(true);
     });
 });
 

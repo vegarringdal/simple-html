@@ -1859,109 +1859,147 @@ in the console. All passed. Found and fixed:
   .claude/browser-checks/scripts/row-class-check.js 7/7 (the cell-styling sample: marked rows in every
   section, tint and italics, an edit, removal, light and dark)
 
+### Candidates checked (2026-11-21)
+
+* "Candidates / not started" was written over months, and much of v6 fixed its entries without saying so
+  there. Every entry checked against the code (read, a vitest probe for the ones that run); the list is
+  rewritten below, grouped, with what is still open
+* fixed already, removed:
+  - ee9dabf (phase 1 step 5): the duplicated writes in the set trap of `entityHandler.ts`;
+    `getChanges()` listing props edited back; a time only change (a `datetime` compares to the second, a
+    `date` the day on purpose); `selectAll()` sends `selection-change` only where it selects ('multiple'),
+    `deselectAll({ notify: true })` sends it, documented
+  - fb04b08: the duplicated listener machinery (the shared `Emitter`, plan item 13); dim repeated values
+    compared `fromSource` (the formatter's text now). f477943: it dims the row below again after an edit
+  - f804378: the repetitive defaulting of `__parseConfig()` and its three attribute loops (`withDefaults()`,
+    `columns` + `layout`); a layout column without `fields` is left out, no crash (was: without `rows`)
+  - 2a2bf39 (phase 4): the linear scans on every scroll event and the three copied blocks of each scroll
+    handler (`firstIndexAtOrAfter`, `assignPool`, `pinnedSection`)
+  - 2409775 (the date picker's redesign): its generic class names (`.main`, `.year` ...), its week numbers
+    under AA (5.3:1 now)
+  - 2f98d20, 3047150: menus mouse only (the keyboard of the menus); the row menu summary's min / max / avg
+    (it is gone, the footer summary 6ab6019 replaced it - its numbers are right)
+  - 1fcc41d (phase 6): the row menu copy's `null` / `undefined`, blank 0 and unescaped html
+  - 4453919 (texts by id): menu labels built when the menu opens, the value list's texts without ids
+  - 9ca89f9: the wheel's `wheelDeltaY` (standard deltas; the touch part is still open)
+  - 6316517: the `@example` blocks with an undeclared `datasource` (check:docs declares it)
+  - 26a60a0: `autoResizeColumns`' date placeholder measuring (`fitColumns()` measures what cells show)
+  - c4ba65b: `guides/05-editing.md` "Showing the row state" uses `light-dark()`
+  - done separately: row classes from a function (the `rowClass` hook). Gone: live-check.js, which raced
+    the live sample's timer (lost with the other early scripts, see the browser checks below)
+* not bugs, documented, removed: the column chooser lists every field ever in the layout - on purpose, a
+  column taken out can be put back (`__parseConfig`, guides/02); an `openMenu()` menu's context has no
+  field, row or cell (`menu: 'custom'`, `MenuContext`); `cell-header-focus` sends the first displayed
+  row, not a row of the header (gridEvents, guides/09, MIGRATION) - only its staleness was a bug
+* `@types/node` kept: happy-dom (the tests' dom) depends on it, and the typecheck loads it through
+  vitest's types even with `"types": []` (82 of its files). Dropping our devDependency would leave the
+  same package installed, unpinned
+* fixed now, each with a test that fails before:
+  - the value list put a `false` (a text field with booleans) under "Blank" - a truthy check - and the
+    `IN` it applied keys it as `FALSE`, so "Blank" left those rows out. `isInListBlank()` (filter.ts) is
+    the one test of both: null, undefined, `''` and 0, as `IS_BLANK`; a false is a value of its own
+  - a date picked in a header filter's date picker was stored as text (its TODO wrote the text over the
+    `Date` filterCallback stored), a typed one as a `Date`: `getState().headerFilters` differed. The picker
+    also opened on the text the cell had when rendered (empty: today), not the date typed since
+  - `cell-header-focus` and the header / filter menus' `context.row` had the first displayed row of when
+    the header was rendered: stale after a filter (the header is not rendered again). Read when it
+    happens; the `rowData` parameter of renderHeaderLabel / renderHeaderFilter / contextmenuLabel /
+    contextmenuFilter is gone
+  - `__groupLvl` of the data rows: one grouping level gave it to the first row of each group only, and
+    removing the grouping left it. Every row grouped gets the number of levels, 0 again once the rows are
+    shown ungrouped (`Grouping.resetLevels()`, once, every row of the datasource), a new row has 0. One
+    value per row still: a container shared by two datasources has the last one's
+  - `getRow(n)` is typed `EntityUnion<T> | GroupRow | undefined`: nothing in src, the samples or the docs
+    needed a change (every caller checks or casts); the typings consumer checks it
+  - `getFilterTree()`: a group node's `logicalOperator` is `group`, the filter's name (`FilterGroupNode`,
+    new in v6)
+  - a click on a group row's row selector in the 'single' or 'none' selection mode sent `selection-change`
+    with nothing selected (`selectRowRange`)
+  - dim repeated values compared the formatter's text, not what the cell shows: a blank shown as 0
+    (`numberOverride`) was not dimmed under another. `cellTextOf()` now, as renderRowCell (a lookup's
+    label too)
+  - the docs site's copy button: without `navigator.clipboard` (plain http off localhost) it threw, a
+    refusal was an unhandled rejection - it says "copy failed"
+* left for the keyboard work (cellRowKeyNavigationCellRowHandler.ts): moving into the header filter row
+  makes row 0 current, see the candidate
+* tests: dropDownFilterData (+2), datePickerCell (+3), groupRows grid (+1) and datasource (+4), gridMenus
+  (+1), selectionGroupRows (+2), dimRepeatedValues (+2), the docs site (+1); the tree tests use `group`;
+  the typings consumer. vitest 2534 -> 2550 (126 files). Browser: .claude/browser-checks/scripts/
+  candidates-check.js 9/9 (the basic grid's date filter picker, the copy button allowed and refused),
+  filter-ui-check 117/117, find-check 68/68, lookup-check 55/55, menus-regression-check 25/25
+
 ## Considered, not done
 
 ## Candidates / not started
 
-* **Row classes from a function** (the other half of plan item 39's conditional formatting): the
-  `cellClass` hook gives cells classes, nothing gives a whole row one (a late or blocked order). A
-  `rowClass(row)` hook on the row elements of every section would.
-* **Custom cells, the plan's "later"**: `focusButton` and `placeholderRow` on a custom cell, a
-  `measure()` for fit column widths, renderers for group rows, the totals row and header labels.
-* **live-check.js races the live sample's timer** under load (2 of 19 failed once, passed on reruns):
-  wait for the timer's tick instead of a fixed delay.
-* **Real-browser checks in the repo**: the Chromium checks live in `.claude/browser-checks/` (git-excluded,
-  local only) since a reboot wiped the scratch folder with the first ones (check.js, undo, a11y, live,
-  range, aggregate ... are gone; menus, fill, footer summary, find, lookups and the filter UI are there). Moving them to `scripts/browser/` with
-  playwright as a dev dependency would make them a CI job. Chromium download hangs on this dev machine.
-* **Undo**: the menu hints say Ctrl+Z / Ctrl+Y also on a Mac; after an undo the focus stays in the
-  current cell rather than moving to the changed one.
-* **From phase 3 (theming, accessibility):**
-  - light colours under WCAG AA kept for pixel-identical light mode: secondary text 3.0:1, date week
-    numbers 3.4:1, row numbers at 50% opacity 2.9:1, row-state colours under that opacity
-  - the date picker's generic class names (`.main`, `.side`, `.year`, `.month`, `.icon`) pick up page
-    css (the demo's `.main` colours the month name)
-  - the label cell and its inner text div share the class `simple-html-label` (and the column-selector
-    cell's inner div too): rename the inner ones (`simple-html-label-text`) to make selectors exact
-  - `samples/grid01/toggleDarkGrid.ts`, `samples/date01/toggleDarkDate.ts` still inject v5-style dark
-    overrides; `guides/05-editing.md` "Showing the row state" could use `light-dark()`
-  - keyboard: menus and the date picker are mouse-only; no Home/End/PageUp/PageDown; group buttons and
-    footer chips are not on the Tab path; the date picker opened from a cell is at the end of the body,
-    out of Tab reach; the two scrollbar elements are unnamed Tab stops in Chrome
-  - `grid.label` default `Grid` reads as "Grid grid"; a better default needs the app's context
-  - only tried in Chrome's accessibility tree: Firefox, Safari (weaker aria-owns) and real screen
-    readers not tried
+Checked against the code on 2026-11-21: what was fixed is in *Candidates checked (2026-11-21)* above.
 
-* **`@types/node` is no longer needed by any typecheck** — the `NodeJS.Timeout` annotations
-  that pulled it in are gone (see *`npm start` typecheck errors fixed*). `tsc` over the root
-  tsconfig with `"types": []` is clean across all 168 files it covers, tests included. Node
-  APIs are only used by `config_devserver.ts` (excluded, run through `tsx` without a
-  typecheck) and the plain js in `scripts/` and `typecheck.js`. Dropping it only loses editor
-  types for `process` in `config_devserver.ts`.
-* **Duplicated writes in the proxy set trap** — `datasource/entityHandler.ts` assigns
-  `this.__currentValues[prop] = value; obj[prop] = value;` twice at the end of `set()`, once
-  on each side of the `__edited` update. Harmless but almost certainly a bad merge.
-* **Test coverage gaps** — 57 test files (39 datasource, 17 grid, 1 date), 634 tests, 66%
-  statement coverage: `src/datasource` 89%, `src/grid` core 80%, `src/grid/gridFunctions` 55%,
-  `src/date` 56%. Still thin: the label/operator/custom context menus and the column chooser.
-* **Found in v6 phase 1 (not fixed yet)**:
-  * moving the focus into the header filter row makes row 0 the current row, also when the grid
-    is not grouped
-  * `cell-header-focus` sends `getRow(0)` as `rowData` - unrelated to the header, and stale after
-    a filter
-  * `__groupLvl` on data rows: set by grouping but not used for indentation (that is
-    `getGroupingWidth`), only set on the first row of each group with one grouping level, and
-    never reset
-  * `getRow(n)` out of range returns `undefined`, its type does not say so
-  * one `format` for both the cell and its edit input - v5 could differ (`fromSourceDisplay`).
-    No built-in used it; an optional `formatForEdit` would bring it back if needed.
-  * formatters are fixed when the datasource is made, there is no setter to switch them
-  * the value list lists raw values for text fields, and IN on a text field compares raw text
-  * `autoResizeColumns`: the "label shorter than the date placeholder" measuring looks backwards
-  * three `@example` blocks in `dataSource.ts` use an undeclared `datasource` - they fail once
-    examples are typechecked (docs work)
-  * the display tree from `getFilterTree()` still says `logicalOperator` where the filter format
-    says `group`
-  * `deselectAll()` does not send `selection-change` by default (`selectAll()` does, in 'multiple'
-    mode); `selectRowRange()` (a group row's selector) sends it in 'single' mode with nothing selected
-  * a date picked in a header filter's date picker is stored as text, a typed one as a `Date`
-  * the column chooser keeps listing fields that were once in the layout
-  * some menu labels are built when the menu opens ("Count: 5", "✓ Use dimmed values") and the
-    value list's own texts have no ids yet - phase 3's texts map needs both
-  * in an `openMenu` menu the context fields are placeholders (`field: ''`, `rowIndex: -1`)
-  * the column-drag ghost lives on the body, so it draws under the top-layer column chooser
-  * `touch-action: none` on column chooser items: a finger can not scroll a long chooser by its items
-  * touch scrolling: reads `scrollTop` from the synced view (may lag a move), never prevents the page
-    from scrolling along, the wheel uses non-standard `wheelDeltaY`
-  * key navigation cancels every key briefly after moving, so an Esc in that window does not close
-    a menu (the `waitForFocusTrigger` item above)
-* **Low severity bugs left from the code review** (high and medium are fixed, see *Bug sweep*):
-  * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
-  * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the
-    html version, values not html escaped
-  * dim repeated values compares `fromSource`, the cell shows `fromSourceDisplay`; ignores
-    `numberOverride`; the row below is not re-dimmed after an edit
-  * `getChanges().modifiedEntities` still lists props edited back to their original value
-  * a time-only change on a date is not tracked as an edit (`entityHandler` compares the day).
-    Matters now that a set date keeps its time on purpose.
-  * with a collator using `sensitivity: 'base'`, `'a'` vs `'A'` compares as 1 both ways.
-    Returning 0 would need grouping to use the collator too, or groups split.
-  * `waitForFocusTrigger` swallows every key in every grid for 100ms after Enter / alt+arrow
-  * the value list puts `false` under "Blank" (falsy check), the IN filter keys it as `FALSE`
-  * the filter editor still blanks header inputs whose conditions it keeps
-  * a column config without `rows` crashes `getCellHeight` (malformed config only)
-* **Packaging / dev tooling**:
-  * demo copy button: `navigator.clipboard` with no catch, throws on plain http off localhost
-* **Duplication in hot paths** — `verticalScrollHandler.ts` has three near-identical ~30 line
-  blocks for left/middle/right that differ only in cache + widths array. Same shape in
-  `horizontalScrollHandler.ts`.
-* **Duplicated listener machinery** — `addEventListener` / `removeEventListener` /
-  `__callSubscribers` are identical in `Datasource`, `GridInterface` and `DateInterface` apart
-  from the field name. They share the `Listener` type now; `V6_PLAN.md` item 13 replaces them.
-* **Linear scans on every scroll event** — `getTopRow()` / `getLeftCol()`, local closures in
-  `verticalScrollHandler` / `horizontalScrollHandler`, scan from index 0 for the first visible
-  row/column on every event. `scrollTops` / `colLeft` are sorted, so binary search applies.
-  The old README flagged wide reports (200 columns) as a past pain point.
-* **Repetitive defaulting** — `__parseConfig()` has 9 repetitions of the
-  `x === null || x === undefined` idiom, plus three copy-pasted attribute-collection loops
-  (pinned left / pinned right / center).
+### Bugs
+
+* **The header filter row makes row 0 current**: Alt+ArrowUp (Shift+Tab, Alt+ArrowLeft) from the first
+  data row into the header filter row calls `setRowAsCurrentEntity(0)` - the group row above when grouped.
+  Not grouped row 0 is the row left, nothing changes. Documented (MIGRATION, CHANGELOG) and pinned by
+  groupRows.test.ts; the fix is in the timer of cellRowKeyNavigationCellRowHandler.ts: no current row for
+  a filter cell (`filterClass`) - for the keyboard work
+* **Keys swallowed after a move**: `waitForFocusTrigger` is a module variable of the two key handlers: for
+  100ms after a move (Tab, an Alt+arrow) every key of every grid on the page is cancelled, an Esc in that
+  window does not close a menu
+* **Undo**: after an undo the focus stays in its cell rather than moving to the changed one; the menu
+  hints say Ctrl+Z / Ctrl+Y on a Mac too (texts `row.edit.undo.hint` / `row.edit.redo.hint`)
+* **A collator with `sensitivity: 'base'`**: `'a'` vs `'A'` compares as 1 both ways (sort.ts turns a 0
+  into 1), so their order is the order they came in. Returning 0 needs grouping to use the collator too,
+  or the groups split
+* **The filter editor blanks the header filters** when it applies, also of the columns whose conditions
+  it keeps (`__clearHeaderFilterValues`): the rows stay filtered, the header shows nothing
+* **The value list shows raw values**: a text field's list has its values upper cased, not what a
+  formatter of the field shows - nor a lookup column's labels (dropDownFilterData reads the row values) -
+  and `IN` on a text field compares the raw text
+* **The column chooser and a finger or a drag**: its items have `touch-action: none` (for the drag), so a
+  finger can not scroll a long chooser by them; the ghost of a dragged column is on the body, under the
+  chooser (top layer)
+* **Touch scrolling** reads `scrollTop` from the synced view (it may lag a move) and never stops the page
+  from scrolling along
+
+### Accessibility
+
+* **Contrast in light mode** under WCAG AA, kept for a pixel-identical light mode: the secondary text
+  (placeholders, `#979494`) 3.0:1 on white and 2.8:1 on the panel; the row numbers at 50% opacity 2.9:1,
+  and the row-state colours under that opacity
+* **Keyboard**: no Home / End / PageUp / PageDown / Ctrl+Home in the grid (the keyboard work); the buttons
+  of the group rows are not on the way of Tab (Tab and Alt+arrows skip group rows), nor are the footer's
+  chips and Clear; the days of the date picker and the column chooser are for the mouse (the picker's
+  buttons and hour / minute fields can be reached, a date can be typed); the picker opened from a cell is
+  put at the end of the body and does not take the focus; the two scrollbar elements are unnamed stops of
+  Tab in Chrome
+* **`grid.label`** defaults to `Grid`, read as "Grid grid"; a better default needs the app's context
+* **Only Chrome's accessibility tree** was tried: Firefox, Safari (weaker `aria-owns`) and real screen
+  readers (NVDA, JAWS, VoiceOver) not
+
+### Code quality
+
+* **Class names**: the label cell and its inner text div share the class `simple-html-label` (so does the
+  inner div of a column-selector cell): `simple-html-label-text` for the inner ones would make selectors
+  exact - a css change for apps that style them
+* **The dev samples** `samples/grid01/toggleDarkGrid.ts` and `samples/date01/toggleDarkDate.ts` still
+  inject v5 style dark overrides; the grid follows `color-scheme` now (`light-dark()`)
+
+### Tooling
+
+* **Real-browser checks in the repo**: the Chromium checks live in `.claude/browser-checks/` (git
+  excluded, local only): custom cells, fill, the filter UI, find, the footer summary, lookups, menus,
+  submenus, row classes, the candidates. The first ones (check.js, undo, a11y, live, range, aggregate ...)
+  were lost with a reboot; a new live check should wait for the sample's timer instead of a fixed delay
+  (live-check.js raced it under load). Moving them to `scripts/browser/` with playwright as a dev
+  dependency would make them a CI job; the Chromium download hangs on this dev machine
+* **Test coverage**: 126 test files, 2550 tests, 91% of the statements: `src/datasource` 96%, `src/grid`
+  98%, `src/grid/gridFunctions` 88%, `src/date` 85% (its templates 89%). Thinnest: the key handlers of the
+  header filter row (40%) and of the rows (59%), renderHeaderFilter (62%), fillDown (60%, the fill handle's
+  drag is in fill-check.js), contextmenuLabel (67%), the date picker's day.ts (78%)
+
+### Features
+
+* **Custom cells, the plan's "later"**: `focusButton` and `placeholderRow` on a custom cell, a `measure()`
+  for `fitColumns()`, renderers for group rows, the totals row and header labels
+* **One `format` for a cell and its edit input**: v5 could differ (`fromSourceDisplay`); no built-in used
+  it, an optional `formatForEdit` would bring it back if needed
+* **Formatters are fixed when the datasource is made**: there is no setter to switch a field's formatter

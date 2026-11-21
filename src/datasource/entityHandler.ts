@@ -72,8 +72,8 @@ export class EntityHandler {
     __rowError?: string | null;
     /** not used on a data row */
     __groupName?: string;
-    /** the grouping level the row sits under, read as `row.__groupLvl` */
-    __groupLvl?: number;
+    /** how many grouping levels the row sits under, 0 when not grouped. Read as `row.__groupLvl` */
+    __groupLvl?: number = 0;
     /** not used on a data row */
     __groupTotal?: number;
     /** not used on a data row */

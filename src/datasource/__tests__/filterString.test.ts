@@ -87,7 +87,7 @@ describe('datasource filter tree (footer chips)', () => {
         ds2.filter(where('name', 'EQUAL', 'person1'));
         expect(ds2.getFilterTree()).toEqual({
             kind: 'group',
-            logicalOperator: 'AND',
+            group: 'AND',
             children: [{ kind: 'condition', label: 'name', operator: 'EQUAL', value: 'person1', hasValue: true }]
         });
     });
@@ -96,7 +96,7 @@ describe('datasource filter tree (footer chips)', () => {
         ds2.filter(or(where('group', 'EQUAL', 'group1'), where('name', 'CONTAINS', 'person')));
         expect(ds2.getFilterTree()).toEqual({
             kind: 'group',
-            logicalOperator: 'OR',
+            group: 'OR',
             children: [
                 { kind: 'condition', label: 'group', operator: 'EQUAL', value: 'group1', hasValue: true },
                 { kind: 'condition', label: 'name', operator: 'CONTAINS', value: 'person', hasValue: true }
@@ -120,7 +120,7 @@ describe('datasource filter tree (footer chips)', () => {
             or(and(where('group', 'EQUAL', 'group2'), where('name', 'EQUAL', 'person2')), where('group', 'EQUAL', 'group1'))
         );
         const tree = ds2.getFilterTree();
-        expect(tree?.logicalOperator).toEqual('OR');
+        expect(tree?.group).toEqual('OR');
         expect(tree?.children[0].kind).toEqual('group');
         expect((tree!.children[0] as { children: unknown[] }).children).toHaveLength(2);
         expect(tree?.children[1]).toEqual({

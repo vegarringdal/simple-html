@@ -148,3 +148,32 @@ describe('dimRepeatedValues - grouping', () => {
         expect(flags).toContain('true');
     });
 });
+
+describe('dimRepeatedValues - numberOverride', () => {
+    /**
+     * the cells compare the text they show: with numberOverride a blank can show 0 and a 0 nothing. The
+     * formatter's text alone was compared, '' and '0'
+     */
+    const ages = () => [
+        { firstname: 'a', lastname: 'a', age: null },
+        { firstname: 'b', lastname: 'b', age: null },
+        { firstname: 'c', lastname: 'c', age: 0 },
+        { firstname: 'd', lastname: 'd', age: 0 }
+    ];
+
+    it('expect BLANK_TO_ZERO to dim a blank or a 0 under a blank shown as 0', async () => {
+        const config = dimConfig();
+        config.columns = { age: { numberOverride: 'BLANK_TO_ZERO' } };
+        const { element } = await mountGrid(config, ages());
+
+        expect(repeatedFlags(element, 'age')).toEqual(['false', 'true', 'true', 'true']);
+    });
+
+    it('expect ZERO_TO_BLANK not to dim a 0 under a 0: both show nothing, a run of blanks is not dimmed', async () => {
+        const config = dimConfig();
+        config.columns = { age: { numberOverride: 'ZERO_TO_BLANK' } };
+        const { element } = await mountGrid(config, ages());
+
+        expect(repeatedFlags(element, 'age')).toEqual(['false', 'false', 'false', 'false']);
+    });
+});

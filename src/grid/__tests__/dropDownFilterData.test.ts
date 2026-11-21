@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, describe, expect, it } from 'vitest';
+import { where } from '../../datasource/filterExpression';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from '../gridFunctions/dropDownFilterData';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { gridOf } from './interactionTestHelpers';
@@ -132,5 +133,42 @@ describe('dropDownFilterData - 0 is blank', () => {
 
         expect(Array.from(data?.dataFilterSetFull ?? [])).toEqual(['NULL', 'A']);
         expect(data?.counts.get('NULL')).toEqual(1);
+    });
+});
+
+describe('dropDownFilterData - false is a value', () => {
+    /**
+     * A boolean in a text field (data typed loosely). IN takes `false` as the text 'FALSE' and IS_BLANK
+     * as no blank: the list put it under "Blank" (a truthy check), and the IN it applied then left the
+     * rows with false out
+     */
+    const loose = () => [
+        { firstname: false, lastname: 'x', age: 1 },
+        { firstname: 'a', lastname: 'y', age: 2 },
+        { firstname: null, lastname: 'z', age: 3 },
+        { firstname: true, lastname: 'w', age: 4 }
+    ];
+
+    it('expect false to be listed as a value of its own, not under the blank entry', async () => {
+        const { element } = await mountGrid(config(), loose());
+        const data = dropDownFilterData(gridOf(element), 'firstname', false, null);
+
+        expect(Array.from(data?.dataFilterSetFull ?? [])).toEqual(['NULL', 'A', false, true]);
+        expect(data?.counts.get('NULL')).toEqual(1);
+        expect(data?.counts.get(false)).toEqual(1);
+    });
+
+    it('expect the IN of the listed values to find the rows they were listed for', async () => {
+        const { element, datasource } = await mountGrid(config(), loose());
+        const data = dropDownFilterData(gridOf(element), 'firstname', false, null);
+
+        const lastnames = (values: unknown[]) => {
+            datasource.filter(where('firstname', 'IN', values));
+            return datasource.getDataRows().map((row) => row.lastname);
+        };
+        expect(lastnames(['NULL'])).toEqual(['z']);
+        expect(lastnames([false])).toEqual(['x']);
+        // every listed value: every row
+        expect(lastnames(Array.from(data?.dataFilterSetFull ?? []))).toHaveLength(4);
     });
 });

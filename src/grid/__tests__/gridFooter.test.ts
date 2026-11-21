@@ -31,7 +31,7 @@ describe('grid footer - incomplete filter nodes', () => {
         // independent of how the datasource builds the tree: the footer gets a node it can not label
         vi.spyOn(datasource, 'getFilterTree').mockReturnValue({
             kind: 'group',
-            logicalOperator: 'AND',
+            group: 'AND',
             children: [{ kind: 'condition', label: undefined, operator: undefined, value: '', hasValue: false } as any]
         });
 
