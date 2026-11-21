@@ -1286,6 +1286,17 @@ in the console. All passed. Found and fixed:
 * left: Cut (Ctrl+X) of a range; real Excel / Sheets interop untested (format checked only); after the
   wheel takes the focus from a cell, Ctrl+C/V go to the page
 
+### The wheel over the grid kept scrolling the page (user report)
+
+* the wheel listener set the body scroller's scrollTop but did not cancel the event, so the browser
+  scrolled the page too (the rows' views are overflow hidden, the page was the next thing to scroll);
+  it read the non-standard `wheelDeltaY` (none in Firefox) and ignored a trackpad's deltaX
+* now: cancelled (but Ctrl+wheel - zoom, pinch - is left to the browser), `deltaX`/`deltaY` with
+  line/page modes turned into px, left/right scrolls the middle columns. happy-dom's WheelEvent is a
+  UIEvent without modifier keys: the tests set them on the event
+* Chromium `wheel-check.js` on a guide page with a live grid: the grid scrolls, the page does not -
+  also at the grid's last row - and the page scrolls outside the grid
+
 ## Considered, not done
 
 ## Candidates / not started

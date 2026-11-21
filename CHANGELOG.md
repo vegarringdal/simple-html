@@ -969,6 +969,16 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The `row-is-*` states had no built-in look.
 - A row's errors were in its tooltip only; a screen reader now gets them with the row number.
 
+#### The wheel scrolls the grid, not the page
+
+##### Fixed
+- The wheel over the grid also scrolled the page under it (the event was not cancelled): it is now,
+  so a grid in a scrolling page keeps the wheel, also at its first and last row. Ctrl+wheel (the
+  browser's zoom, a trackpad's pinch) is left alone.
+- The wheel used the non-standard `wheelDeltaY` (Firefox has none): it uses `deltaX` / `deltaY`, a
+  wheel that counts lines or pages moves as many px, and left/right (a trackpad, Shift+wheel) scrolls
+  the middle columns.
+
 #### Header filters say what to type
 
 ##### ⚠️ Breaking changes
