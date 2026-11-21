@@ -1072,6 +1072,26 @@ in the console. All passed. Found and fixed:
   (every input is a Tab stop, Alt+arrows between cells, no Home/End/PageUp/PageDown); only rendered
   rows are in the dom; menus and the date picker are mouse-only; aria-sort on the first sort only
 
+### v6 phase 4 - scroll handlers (item 26)
+
+* measured first (Chromium, 100 000 rows x 305 columns, JS time in the scroll listeners): the linear
+  scan was not the cost (0.17 ms per event at the end of 100 000 rows). Vertical: re-rendering every
+  cell of every row on screen on every event (~3.7 of ~6 ms) and the forced layout of setting
+  scrollTop on the sections. Horizontal: the rows x columns loop, header columns placed once per row
+* binary search (`firstIndexAtOrAfter`), one pool assignment (`assignPool`), one path for left /
+  middle / right (`pinnedSection`): the vertical handler went from ~270 to ~130 lines. Horizontal
+  -20-30%, vertical about the same
+* the horizontal `largeScroll` was dead code (hardcoded false): removed. The vertical one is live and
+  useful (a scrollbar drag would render all rows on every event): kept, and fixed - it compared with
+  the first jump's position and hid the rows again, so they came back after ~330 ms instead of 150
+* fixed: a viewport shorter than the last row / a middle section narrower than its last column showed
+  nothing at the end (the scan returned 0 for "not found", the binary search returns the length)
+* checks: 30 new tests; Chromium scroll check (50: pinned sections in sync, rows touch and fill,
+  columns line up with the header, values right, aria indexes consecutive) on the demo samples and a
+  bench grid; accessibility tree after scrolling (12)
+* left for item 36: render only the rows that got a new row on a vertical scroll (about half the
+  vertical time) - today any scroll also shows values changed from code without refresh()
+
 ### v6 phase 5 - editing
 
 #### Undo and redo (item 28)
@@ -1100,13 +1120,6 @@ in the console. All passed. Found and fixed:
   dependency) - see candidates
 
 ## Considered, not done
-
-### `largeScroll` dead branch in horizontal scroll handler
-`gridFunctions/horizontalScrollHandler.ts`
-
-`largeScroll` is hardcoded to `false` (`// lets disable ctx for now`), which makes the
-whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left in place
-— it looks parked rather than abandoned. Decide whether to revive or remove it.
 
 ## Candidates / not started
 

@@ -4,7 +4,26 @@ import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { verticalScrollHandler } from './verticalScrollHandler';
 
 export function addScrollEventListeners(ctx: Grid) {
-    const scroller = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
+    /**
+     * The scrollbars are two elements of their own: the body scroller (on the right) scrolls the rows,
+     * the middle scroller (at the bottom) the middle columns - and the rows too, it is as high as the
+     * rows. The views of the sections are overflow hidden and follow them. All made once by createDom
+     * and kept, so looked up once here: looked up on every scroll event, the lookups took a measurable
+     * part of it (getElementsByClassName, after the rows changed the dom)
+     */
+    const bodyScroller = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
+    const middleScroller = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
+    const bodyViewMiddle = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle');
+    const headerViewMiddle = getElementByClassName(ctx.element, 'simple-html-grid-header-view-pinned-middle');
+    // what follows the scroll position of the rows
+    const rowViews = [
+        middleScroller,
+        getElementByClassName(ctx.element, 'simple-html-grid-body-view-group'),
+        getElementByClassName(ctx.element, 'simple-html-grid-body-view-selector'),
+        getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-left'),
+        bodyViewMiddle,
+        getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-right')
+    ];
 
     /**
      * the wheel/touch listeners sit on the grid element itself, Grid.destroy() removes them with this
@@ -14,62 +33,42 @@ export function addScrollEventListeners(ctx: Grid) {
     ctx.scrollListenersAbort = new AbortController();
     const signal = ctx.scrollListenersAbort.signal;
 
-    // helper
-    function setScrollTop(element: HTMLElement, top: number) {
-        element.scrollTop = top;
-    }
+    /**
+     * the views to the scroll position of the rows, and the rows rendered for it. False when it was a
+     * large jump, the rows are hidden then: see verticalScrollHandler
+     */
+    const scrollRows = () => {
+        for (const view of rowViews) {
+            view.scrollTop = bodyScroller.scrollTop;
+        }
+        return verticalScrollHandler(ctx, bodyScroller.scrollTop);
+    };
 
-    // helper
-    function setScrollLeft(element: HTMLElement, left: number) {
-        element.scrollLeft = left;
-    }
+    /**
+     * renders the rows once there has been no scroll event for 150ms, after a large jump. Every scroll
+     * event until then starts the wait again: a scrollbar drag renders once, when it stops
+     */
+    const scrollRowsWhenStopped = () => {
+        clearTimeout(ctx.largeScrollTopTimer ?? undefined);
+        ctx.largeScrollTopTimer = setTimeout(() => {
+            ctx.largeScrollTopTimer = null;
+            // render now, also when it is far from the position of the large jump
+            ctx.lastScrollTop = bodyScroller.scrollTop;
+            scrollRows();
+        }, 150);
+    };
 
     /**
      * right scrollbar
      */
-    scroller.addEventListener(
+    bodyScroller.addEventListener(
         'scroll',
-        (event) => {
-            /**
-             * updates scrolltop on all sections and rows
-             */
-            function scroll() {
-                const x = scroller;
-
-                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), x.scrollTop);
-                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-group'), x.scrollTop);
-                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-selector'), x.scrollTop);
-                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-left'), x.scrollTop);
-                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle'), x.scrollTop);
-                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-right'), x.scrollTop);
-
-                // get scrolltop
-                const el = event.target as HTMLElement;
-                const scrollTop = el.scrollTop;
-                const result = verticalScrollHandler(ctx, scrollTop);
-                if (result === false) {
-                    delayScrollRender();
-                }
-            }
-
-            /**
-             * create timer and call scroll after
-             */
-            const delayScrollRender = () => {
-                ctx.largeScrollTopTimer = setTimeout(() => {
-                    ctx.largeScrollTopTimer = null;
-                    scroll();
-                }, 150);
-            };
-
-            /**
-             * check if we allready have time set, if we do we reset it
-             */
+        () => {
             if (ctx.largeScrollTopTimer) {
-                clearTimeout(ctx.largeScrollTopTimer);
-                delayScrollRender();
-            } else {
-                scroll();
+                // still scrolling after a large jump
+                scrollRowsWhenStopped();
+            } else if (!scrollRows()) {
+                scrollRowsWhenStopped();
             }
         },
         { passive: false, signal }
@@ -78,20 +77,16 @@ export function addScrollEventListeners(ctx: Grid) {
     /**
      * middle scrollbar
      */
-    const middle = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-    middle.addEventListener(
+    middleScroller.addEventListener(
         'scroll',
-        (event) => {
-            const el = event.currentTarget as HTMLElement;
-
-            setScrollLeft(getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle'), el.scrollLeft);
-            setScrollLeft(getElementByClassName(ctx.element, 'simple-html-grid-header-view-pinned-middle'), el.scrollLeft);
-            const scrollLeft = el.scrollLeft;
-            if (ctx.lastScrollLeft !== el.scrollLeft) {
-                horizontalScrollHandler(ctx, scrollLeft);
+        () => {
+            bodyViewMiddle.scrollLeft = middleScroller.scrollLeft;
+            headerViewMiddle.scrollLeft = middleScroller.scrollLeft;
+            if (ctx.lastScrollLeft !== middleScroller.scrollLeft) {
+                horizontalScrollHandler(ctx, middleScroller.scrollLeft);
             }
 
-            setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-scroller'), el.scrollTop);
+            bodyScroller.scrollTop = middleScroller.scrollTop;
         },
         { passive: false, signal }
     );
@@ -104,15 +99,11 @@ export function addScrollEventListeners(ctx: Grid) {
         (event) => {
             if (event.shiftKey && event.ctrlKey) {
                 event.preventDefault();
-                const el = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-                const movement = el.scrollLeft - (event as any).wheelDeltaY;
-                setScrollLeft(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), movement);
+                middleScroller.scrollLeft = middleScroller.scrollLeft - (event as any).wheelDeltaY;
             } else {
-                const el = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
                 ctx.focusElement.focus();
                 ctx.focusElement.blur();
-                const movement = el.scrollTop - (event as any).wheelDeltaY;
-                setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-scroller'), movement);
+                bodyScroller.scrollTop = bodyScroller.scrollTop - (event as any).wheelDeltaY;
             }
         },
         { passive: false, signal }
@@ -144,21 +135,18 @@ export function addScrollEventListeners(ctx: Grid) {
     ctx.element.addEventListener(
         'touchmove',
         (event) => {
-            const x = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle');
             ctx.focusElement.focus();
             ctx.focusElement.blur();
 
             const currentY = event.touches[0].clientY;
             const deltaY = currentY - lastY;
             lastY = currentY;
-            const movementY = x.scrollTop - deltaY;
-            setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-scroller'), movementY);
+            bodyScroller.scrollTop = bodyViewMiddle.scrollTop - deltaY;
 
             const currentX = event.touches[0].clientX;
             const deltaX = currentX - lastX;
             lastX = currentX;
-            const movementX = x.scrollLeft - deltaX;
-            setScrollLeft(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), movementX);
+            middleScroller.scrollLeft = bodyViewMiddle.scrollLeft - deltaX;
 
             /* 
                 an idea...

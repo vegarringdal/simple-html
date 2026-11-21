@@ -43,10 +43,10 @@ export class Grid {
     public containerMiddleColumnCache: ColumnCache[] = [];
     public containerRightColumnCache: ColumnCache[] = [];
 
-    // scroll helpers
+    // scroll helpers: where the rows / middle columns were last rendered, see the scroll handlers
     public lastScrollTop: number = 0;
     public lastScrollLeft: number = 0;
-    public largeScrollLeftTimer?: ReturnType<typeof setTimeout> | null;
+    // the render of the rows after a large jump, when the scrolling stops: see addScrollEventListeners
     public largeScrollTopTimer?: ReturnType<typeof setTimeout> | null;
 
     public rows: Map<string, HTMLElement> = new Map();
@@ -183,10 +183,8 @@ export class Grid {
         // clearTimeout(null) and clearTimeout(undefined) both do nothing
         clearTimeout(this.resizeTimer ?? undefined);
         clearTimeout(this.largeScrollTopTimer ?? undefined);
-        clearTimeout(this.largeScrollLeftTimer ?? undefined);
         this.resizeTimer = null;
         this.largeScrollTopTimer = null;
-        this.largeScrollLeftTimer = null;
 
         // the element can be removed before an interface was ever connected
         this.gridInterface?.__disconnectGrid();

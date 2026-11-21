@@ -358,7 +358,7 @@ built on it.
 
 ## Phase 4 - performance
 
-26. [ ] **Scroll handlers**: binary search instead of scanning from row/column 0 on every scroll
+26. [x] **Scroll handlers**: binary search instead of scanning from row/column 0 on every scroll
         event, one shared code path instead of three near identical left/middle/right blocks,
         remove the dead `largeScroll` branch. Matters for wide grids. **M**
 
@@ -418,7 +418,7 @@ Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** phase 4 (phase 3 is done).
+**Now:** phase 5 (phase 4 and item 28 are done).
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies

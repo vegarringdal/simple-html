@@ -898,6 +898,45 @@ sorting in the header work with a mouse, a pen and a finger.
 - The filter inputs were named "🔍"; they are "Filter <column label>".
 - Paste and clear in the row menu had the same text.
 
+### Phase 4 - performance
+
+#### Scroll handlers (item 26)
+
+Measured in Chromium on a grid of 100 000 rows and 305 columns (3 pinned left, 2 right), JS time in
+the scroll listeners per scroll step, one machine:
+
+| step | before | after |
+| --- | --- | --- |
+| vertical, 22px | 6.4 ms | 6.2 ms |
+| vertical, 450px | 14.7 ms | 13.5 ms |
+| horizontal, 20px | 2.5 ms | 1.8 ms |
+| horizontal, 400px | 6.4 ms | 5.4 ms |
+
+The linear scan for the first row/column was a small part (0.17 ms per event at the end of 100 000
+rows); the vertical time is rendering every cell of every row on screen, which stays (see item 36).
+
+##### Performance
+- The first row and column on screen are found with a binary search instead of a scan from 0 on every
+  scroll event.
+- Horizontal scrolling of a wide grid costs 20-30% less JS per event: the header columns are placed
+  once per event instead of once per row, the partly visible left column keeps its element, styles
+  are only written when they change, and the scroll listeners look their elements up once.
+
+##### Fixed
+- A middle section narrower than its last column showed no columns when scrolled to the end.
+- A viewport shorter than the last row showed no rows when scrolled to the end.
+- After a long scrollbar drag the rows came back 300 ms after it stopped, now 150 ms (the delayed
+  render compared with the position of the first jump, and hid the rows again).
+
+##### Internal
+- One code path for the left, middle and right sections (`pinnedSection.ts`); `assignPool.ts` decides
+  which row/column each pooled element shows; `firstIndexAtOrAfter.ts` is the binary search.
+- The dead horizontal `largeScroll` / `largeScrollLeftTimer` / `delayScrollRender` code is removed. The
+  vertical one is kept and documented: a jump of more than 500px hides the rows and renders them once
+  the scrolling stops, instead of rendering every row on every event of a scrollbar drag.
+- Tests: the binary search, the pool assignment, and the rendered rows and columns checked against
+  what the sizes say after small and large scrolls both ways, with pinned columns and grouping.
+
 ### Phase 5 - editing
 
 #### Undo and redo (item 28)
