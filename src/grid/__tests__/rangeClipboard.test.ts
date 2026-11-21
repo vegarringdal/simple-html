@@ -713,7 +713,7 @@ describe('clipboard - the row menu', () => {
         expect(values(datasource, 'name', [2, 3])).toEqual([null, null]);
     });
 
-    it('expect Paste and Clear range in an editable grid only, and shown on a readonly cell when there are ranges', async () => {
+    it('expect Paste and Clear in an editable grid only, every entry listed, greyed out without what it needs', async () => {
         const readonlyGrid = await mount({ readonly: true });
         readonlyGrid.gridInterface.setRanges([range(0, 'name', 1, 'name')]);
         openRowMenu(readonlyGrid.element, 'name', 0);
@@ -725,15 +725,31 @@ describe('clipboard - the row menu', () => {
         readonlyGrid.element.remove();
 
         const { element, gridInterface } = await mount({ columns: { city: { readonly: true } } });
-        gridInterface.setRanges([range(0, 'name', 1, 'name')]);
         openRowMenu(element, 'city', 0);
-        // the cell is readonly: no Paste cell, but the submenus show for the range entries
+        // every entry is listed in an editable grid: greyed out when it has nothing to work on - the
+        // cell is readonly, no row is selected, there is no range
         const ids = menuTreeIds();
         expect(ids.filter((id) => /^row\.(paste|clear)/.test(id))).toEqual([
             'row.paste',
+            'row.paste.current',
+            'row.paste.cell',
             'row.paste.range',
             'row.clear',
+            'row.clear.current',
+            'row.clear.cell',
             'row.clear.range'
         ]);
+        const disabled = (id: string) => menuEntry(id)?.getAttribute('aria-disabled') === 'true';
+        expect(['row.paste.current', 'row.paste.cell', 'row.paste.range', 'row.clear.range'].map(disabled)).toEqual([
+            true,
+            true,
+            true,
+            true
+        ]);
+
+        // with a range: its entries can be used
+        gridInterface.setRanges([range(0, 'name', 1, 'name')]);
+        openRowMenu(element, 'city', 0);
+        expect(['row.paste.range', 'row.clear.range'].map(disabled)).toEqual([false, false]);
     });
 });

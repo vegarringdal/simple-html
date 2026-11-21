@@ -1332,6 +1332,19 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The row menu keeps its shape: entries of a selection greyed out without one (user request)
+
+##### Changed
+- The row menu's entries that work on a selection - the selected rows, the ranges of cells - are always
+  listed and greyed out while there is none, instead of being left out: Copy › Column / Row / Row
+  (selected rows/col) / Range, Paste › and Clear › (selected rows) / range, Delete › Rows / Undo, Size ›
+  Fit row height (selected rows). Paste › and Clear › are in every editable grid.
+
+##### Added
+- Paste › and Clear › "Paste cell" / "Clear cell": the cell right clicked (`row.paste.current`,
+  `row.clear.current`), next to the ones for the selected rows; greyed out when the cell is readonly.
+- Delete › "Row": marks the row right clicked (`row.delete.row`), greyed out when it is marked or locked.
+
 #### Delete on a row number (user request)
 
 ##### Added

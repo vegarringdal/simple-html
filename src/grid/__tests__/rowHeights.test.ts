@@ -440,15 +440,17 @@ describe('fitRows - the row menu', () => {
         const { element, gridInterface } = await mountGrid(config(), data(), fields());
 
         openRowMenu(element, 'company', 0);
-        // nothing selected, no ranges: no fit of the selected rows
+        // nothing selected, no ranges: the fit of the selected rows listed, greyed out
         expect(shownIds()).toEqual([
             'row.size',
             'row.size.fitColumn',
             'row.size.fitRow',
+            'row.size.fitRows',
             'row.size.fitAllRows',
             'row.size.resetRow',
             'row.size.resetAllRows'
         ]);
+        expect(disabled('row.size.fitRows')).toBe(true);
         expect(disabled('row.size.resetRow')).toBe(true);
         expect(disabled('row.size.resetAllRows')).toBe(true);
         menuEntry('row.size.fitRow').click();

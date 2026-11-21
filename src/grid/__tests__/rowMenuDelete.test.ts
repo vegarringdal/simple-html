@@ -21,7 +21,7 @@ beforeEach(() => {
     document.body.innerHTML = '';
 });
 
-const DELETE_IDS = ['row.delete', 'row.delete.rows', 'row.delete.undo'];
+const DELETE_IDS = ['row.delete', 'row.delete.row', 'row.delete.rows', 'row.delete.undo'];
 
 /** the delete entries the open menu shows: the submenu and what is in it */
 function shownDeleteIds(): string[] {
@@ -43,9 +43,9 @@ describe('row menu - delete: the ids', () => {
     it('expect the delete ids in MENU_IDS.row, after clear and before filter', () => {
         const ids: readonly string[] = MENU_IDS.row;
         const at = ids.indexOf('row.delete');
-        expect(ids.slice(at, at + 3)).toEqual(DELETE_IDS);
+        expect(ids.slice(at, at + DELETE_IDS.length)).toEqual(DELETE_IDS);
         expect(ids[at - 1]).toEqual('row.clear.range');
-        expect(ids[at + 3]).toEqual('row.filter');
+        expect(ids[at + DELETE_IDS.length]).toEqual('row.filter');
     });
 });
 
@@ -60,32 +60,47 @@ describe('row menu - delete: when it is shown', () => {
         expect(shownDeleteIds()).toEqual([]);
     });
 
-    it('expect delete, greyed out, and no undo when nothing is selected', async () => {
+    it('expect every entry listed when nothing is selected: the row right clicked usable, the rest greyed out', async () => {
         const { element } = await mountGrid(editable());
 
         openRowMenu(element, 'firstname', 0);
 
-        expect(shownDeleteIds()).toEqual(['row.delete', 'row.delete.rows']);
+        expect(shownDeleteIds()).toEqual(DELETE_IDS);
         expect(entry('row.delete.rows').textContent?.replace(/\s+/g, ' ').trim()).toEqual('Rows (selected rows)');
-        expect(isDisabled('row.delete.rows')).toBe(true);
+        expect([isDisabled('row.delete.row'), isDisabled('row.delete.rows'), isDisabled('row.delete.undo')]).toEqual([
+            false,
+            true,
+            true
+        ]);
     });
 
-    it('expect undo only when a selected row is marked', async () => {
+    it('expect Row to mark the row right clicked, greyed out once it is marked', async () => {
+        const { element, datasource } = await mountGrid(editable());
+
+        openRowMenu(element, 'firstname', 2);
+        entry('row.delete.row').click();
+        expect(datasource.getAllData().map((row) => row.__rowState ?? null)).toEqual([null, null, 'D', null, null]);
+
+        openRowMenu(element, 'firstname', 2);
+        expect(isDisabled('row.delete.row')).toBe(true);
+    });
+
+    it('expect undo usable only when a selected row is marked', async () => {
         const { element, datasource } = await mountGrid(editable());
         datasource.getSelection().selectRowRange(0, 1);
 
         openRowMenu(element, 'firstname', 0);
-        expect(shownDeleteIds()).toEqual(['row.delete', 'row.delete.rows']);
         expect(isDisabled('row.delete.rows')).toBe(false);
+        expect(isDisabled('row.delete.undo')).toBe(true);
 
         // a marked row that is not selected does not count
         datasource.markForDeletion(datasource.getDataRows()[3]);
         openRowMenu(element, 'firstname', 0);
-        expect(shownDeleteIds()).toEqual(['row.delete', 'row.delete.rows']);
+        expect(isDisabled('row.delete.undo')).toBe(true);
 
         datasource.markForDeletion(datasource.getDataRows()[1]);
         openRowMenu(element, 'firstname', 0);
-        expect(shownDeleteIds()).toEqual(DELETE_IDS);
+        expect(isDisabled('row.delete.undo')).toBe(false);
         expect(entry('row.delete.undo').textContent?.replace(/\s+/g, ' ').trim()).toEqual('Undo (selected rows)');
     });
 

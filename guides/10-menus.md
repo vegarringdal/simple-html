@@ -229,19 +229,22 @@ Export ›                                                          ----
 | `row.edit.revertRows` | Undo row edits (selected rows): the selected rows back, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |
 | `row.copy` | Copy › - a submenu | |
 | `row.copy.cell` | Cell Value | |
-| `row.copy.column` | Column (selected rows) | |
-| `row.copy.row` | Row (selected rows) | |
-| `row.copy.selectedColumns` | Row (selected rows/col): the selected columns, every column when none is selected | |
-| `row.copy.range` | Range: the last range of cells, as Ctrl+C copies it - see [Selection and clipboard](17-selection-and-clipboard.md#copy) | there are ranges of cells |
-| `row.paste` | Paste › - a submenu | the grid and the cell are editable, or the grid is and there are ranges of cells |
-| `row.paste.cell` | Paste cell (selected rows) | the grid and the cell are editable |
-| `row.paste.range` | Paste range: the clipboard as Ctrl+V pastes it with ranges - one value into every cell of them, a block from the top left of the last one. Reads the clipboard with `navigator.clipboard.readText()`, the browser may ask the user first | the grid is editable, there are ranges of cells |
-| `row.clear` | Clear › - a submenu | the grid and the cell are editable, or the grid is and there are ranges of cells |
-| `row.clear.cell` | Clear cell (selected rows) | the grid and the cell are editable |
-| `row.clear.range` | Clear range: every cell of the ranges, as Delete | the grid is editable, there are ranges of cells |
+| `row.copy.column` | Column (selected rows). Greyed out with no row selected | |
+| `row.copy.row` | Row (selected rows). Greyed out with no row selected | |
+| `row.copy.selectedColumns` | Row (selected rows/col): the selected columns, every column when none is selected. Greyed out with no row selected | |
+| `row.copy.range` | Range: the ranges of cells, as Ctrl+C copies them - see [Selection and clipboard](17-selection-and-clipboard.md#copy). Greyed out without a range | |
+| `row.paste` | Paste › - a submenu | the grid is editable |
+| `row.paste.current` | Paste cell: the cell right clicked. Greyed out when it is readonly | the grid is editable |
+| `row.paste.cell` | Paste cell (selected rows): the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable |
+| `row.paste.range` | Paste range: the clipboard as Ctrl+V pastes it with ranges - one value into every cell of them, a block from the top left of the last one. Reads the clipboard with `navigator.clipboard.readText()`, the browser may ask the user first. Greyed out without a range | the grid is editable |
+| `row.clear` | Clear › - a submenu | the grid is editable |
+| `row.clear.current` | Clear cell: empties the cell right clicked. Greyed out when it is readonly | the grid is editable |
+| `row.clear.cell` | Clear cell (selected rows): empties the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable |
+| `row.clear.range` | Clear range: every cell of the ranges, as Delete. Greyed out without a range | the grid is editable |
 | `row.delete` | Delete › - a submenu | the grid is editable |
+| `row.delete.row` | Row: marks the row right clicked for deletion. Greyed out when it is marked, or locked by the `isReadonly` hook | the grid is editable |
 | `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows). Greyed out when no selected row is left to mark | the grid is editable |
-| `row.delete.undo` | Undo (selected rows): takes the mark off | the grid is editable, and a selected row is marked for deletion |
+| `row.delete.undo` | Undo (selected rows): takes the mark off. Greyed out when no selected row is marked | the grid is editable |
 | `row.filter` | Filter › - a submenu | |
 | `row.filter.replace` | Replace filter (all) | |
 | `row.filter.add` | Add to filter (and) | |
@@ -251,7 +254,7 @@ Export ›                                                          ----
 | `row.size` | Size › - a submenu | |
 | `row.size.fitColumn` | Fit column to this cell: the column as wide as the cell's text, `gridInterface.fitColumns([field], { rows: [row] })`. See [Column widths and row heights](02-grid-config.md#column-widths-and-row-heights) | |
 | `row.size.fitRow` | Fit row height: the row right clicked as high as its multiline cells need, `fitRows(row)` | |
-| `row.size.fitRows` | Fit row height (selected rows): the selected rows and the rows of the ranges of cells | rows are selected, or there are ranges of cells |
+| `row.size.fitRows` | Fit row height (selected rows): the selected rows and the rows of the ranges of cells. Greyed out without either | |
 | `row.size.fitAllRows` | Fit all rows: every row the filter lets through, `fitRows()` | |
 | `row.size.resetRow` | Reset row height: the row right clicked, `resetRowHeights(row)`. Greyed out when it has the height of the layout | |
 | `row.size.resetAllRows` | Reset all row heights: `resetRowHeights()`. Greyed out when no row has a height of its own | |

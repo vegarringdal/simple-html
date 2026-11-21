@@ -2162,6 +2162,22 @@ in the console. All passed. Found and fixed:
   Backspace on an unselected row, a locked row, readonly and modifiers, Delete in a cell, a group row).
   Browser: row-delete-check.js
 
+### The row menu: entries of a selection greyed out, the cell right clicked too (user request)
+
+* the user: "clear row cell menu, we could have current cell, clear cell selected rows, but to be disabled
+  if no row is selected, should be like that with all options needing selected rows/columns etc"
+* contextmenuRow.ts: the entries of a selection are `disabled` instead of `visible` - Copy's Column, Row,
+  Row (selected rows/col) with no row selected, Range without a range; Paste and Clear (selected rows)
+  and range; Delete's Rows (nothing to mark) and Undo (no selected row marked); Size's Fit row height
+  (selected rows). Paste › and Clear › show in every editable grid (`visible: editable`) and got an entry
+  for the cell right clicked (`row.paste.current`, `row.clear.current` - `pasteIntoCells` / `clearRows`
+  take the rows), greyed out when that cell is readonly; Delete › got "Row" (`row.delete.row`). The
+  labels stay "Paste cell" / "Clear cell": in the two submenus a bare "Cell (selected rows)" read the same
+  for a screen reader (accessibility.test.ts pins it)
+* tests updated on purpose (the old "left out" rules): gridMenus.test.ts (+1: every selection entry greyed
+  without one, usable with one), rangeClipboard.test.ts, rowMenuDelete.test.ts (+1 Row), rowHeights.test.ts.
+  Browser: menus-regression 25/25, submenu 40/40, row-delete 6/6, a screenshot of Clear ›
+
 ## Considered, not done
 
 ## Candidates / not started

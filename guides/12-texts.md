@@ -210,15 +210,18 @@ Right click on a cell.
 | `row.view` | `View` | the view submenu |
 | `row.view.dimRepeatedValues` | `Use dimmed values` | turns `dimRepeatedValues` on and off, with a ✓ in front while it is on |
 | `row.view.changedOnly` | `Changed rows only` | turns `datasource.filterChangedOnly()` on and off: the new, edited and deleted rows only. A ✓ in front while it is on |
-| `row.paste` | `Paste` | the paste submenu, an editable cell or ranges of cells |
+| `row.paste` | `Paste` | the paste submenu, an editable grid |
+| `row.paste.current` | `Paste cell` | pastes into the cell right clicked |
 | `row.paste.cell` | `Paste cell` | pastes into the column of the selected rows |
 | `row.paste.cell.hint` | `selected rows` | its hint |
 | `row.paste.range` | `Paste range` | pastes the clipboard into the ranges of cells, as Ctrl+V |
-| `row.clear` | `Clear` | the clear submenu, an editable cell or ranges of cells |
+| `row.clear` | `Clear` | the clear submenu, an editable grid |
+| `row.clear.current` | `Clear cell` | empties the cell right clicked |
 | `row.clear.cell` | `Clear cell` | empties the column of the selected rows |
 | `row.clear.cell.hint` | `selected rows` | its hint |
 | `row.clear.range` | `Clear range` | empties the cells of the ranges, as Delete |
 | `row.delete` | `Delete` | the delete submenu, an editable grid |
+| `row.delete.row` | `Row` | marks the row right clicked for deletion |
 | `row.delete.rows` | `Rows` | marks the selected rows for deletion |
 | `row.delete.rows.hint` | `selected rows` | its hint |
 | `row.delete.undo` | `Undo` | takes the mark off the selected rows |

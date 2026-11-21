@@ -4,7 +4,7 @@ import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
 import type { ColType } from './colType';
-import { rowsToMark, rowsToUnmark } from './deleteRows';
+import { isLockedByHook, rowsToMark, rowsToUnmark } from './deleteRows';
 import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
 import { gridText } from './gridText';
@@ -83,17 +83,17 @@ function rowMenuEntries(
     // what the cell events send
     const eventData: RowMenuEventData = { cell, row, column, celno, colType, cellType, attribute, rowData };
 
-    // paste and clear: an editable grid, and the clicked cell editable. The other selected rows are
-    // checked one by one when pasting/clearing
-    const pasteAndClear = () => !gridInterface.__getGridConfig().readonly && !gridInterface.__isCellReadonly(rowData, attribute);
+    // paste and clear: in an editable grid. The entries that work on a selection - the selected rows, the
+    // ranges of cells - are always listed and greyed out while there is none, so the menu does not change
+    // its shape; the clicked cell's greyed out when it is readonly. The selected rows and the cells of the
+    // ranges are checked one by one when pasting / clearing
+    const editable = () => !gridInterface.__getGridConfig().readonly;
+    const cellReadonly = () => gridInterface.__isCellReadonly(rowData, attribute);
+    const noSelectedRows = () => gridInterface.getDatasource().getSelectedRows().length === 0;
+    const noRanges = () => gridInterface.getRanges().length === 0;
 
     // a group row has no value of its own to filter on
     const filterOnValue = () => !isGroupRow(rowData);
-
-    // the entries of the ranges of cells: when there are ranges. Paste and clear in an editable grid,
-    // the cells of the ranges are checked one by one
-    const hasRanges = () => gridInterface.getRanges().length > 0;
-    const pasteAndClearRanges = () => !gridInterface.__getGridConfig().readonly && hasRanges();
 
     const dimRepeated = gridInterface.__getGridConfig().dimRepeatedValues === true;
     const changedOnly = gridInterface.getDatasource().isChangedOnly();
@@ -108,24 +108,35 @@ function rowMenuEntries(
             type: 'submenu',
             id: 'row.paste',
             label: text('row.paste'),
-            visible: () => pasteAndClear() || pasteAndClearRanges(),
+            visible: editable,
             entries: [
+                {
+                    id: 'row.paste.current',
+                    label: text('row.paste.current'),
+                    disabled: cellReadonly,
+                    action: async () => {
+                        if (navigator.clipboard.readText) {
+                            const data = await navigator.clipboard.readText();
+                            pasteIntoCells(ctx, attribute, data, eventData, [rowData]);
+                        }
+                    }
+                },
                 {
                     id: 'row.paste.cell',
                     label: text('row.paste.cell'),
                     hint: text('row.paste.cell.hint'),
-                    visible: pasteAndClear,
+                    disabled: noSelectedRows,
                     action: async () => {
                         if (navigator.clipboard.readText) {
                             const data = await navigator.clipboard.readText();
-                            pasteIntoCells(ctx, attribute, data, eventData);
+                            pasteIntoCells(ctx, attribute, data, eventData, gridInterface.getDatasource().getSelectedRows());
                         }
                     }
                 },
                 {
                     id: 'row.paste.range',
                     label: text('row.paste.range'),
-                    visible: pasteAndClearRanges,
+                    disabled: noRanges,
                     // as Ctrl+V with ranges: one value into every cell of them, a block from the top left
                     // of the last one (rangeClipboard.ts)
                     action: async () => {
@@ -140,15 +151,25 @@ function rowMenuEntries(
             type: 'submenu',
             id: 'row.clear',
             label: text('row.clear'),
-            visible: () => pasteAndClear() || pasteAndClearRanges(),
+            visible: editable,
             entries: [
+                {
+                    id: 'row.clear.current',
+                    label: text('row.clear.current'),
+                    disabled: cellReadonly,
+                    action: () => {
+                        clearRows(ctx, attribute, [rowData]);
+                        gridInterface.__callSubscribers('clear', eventData);
+                        triggerScrollEvent(ctx);
+                    }
+                },
                 {
                     id: 'row.clear.cell',
                     label: text('row.clear.cell'),
                     hint: text('row.clear.cell.hint'),
-                    visible: pasteAndClear,
+                    disabled: noSelectedRows,
                     action: () => {
-                        clearRows(ctx, attribute);
+                        clearRows(ctx, attribute, gridInterface.getDatasource().getSelectedRows());
                         gridInterface.__callSubscribers('clear', eventData);
                         triggerScrollEvent(ctx);
                     }
@@ -156,13 +177,13 @@ function rowMenuEntries(
                 {
                     id: 'row.clear.range',
                     label: text('row.clear.range'),
-                    visible: pasteAndClearRanges,
+                    disabled: noRanges,
                     // as Delete with ranges: every cell of them
                     action: () => clearRangeCells(ctx)
                 }
             ]
         },
-        deleteSubmenu(ctx),
+        deleteSubmenu(ctx, rowData),
         {
             type: 'submenu',
             id: 'row.filter',
@@ -224,6 +245,8 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
     const gridInterface = ctx.gridInterface;
     const { attribute, rowData } = eventData;
     const hasRanges = () => gridInterface.getRanges().length > 0;
+    // the entries of the selected rows are listed without them too, greyed out
+    const noSelectedRows = () => gridInterface.getDatasource().getSelectedRows().length === 0;
     const text = (id: TextId) => gridText(ctx, id);
     return [
         {
@@ -239,6 +262,7 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
             id: 'row.copy.column',
             label: text('row.copy.column'),
             hint: text('row.copy.column.hint'),
+            disabled: noSelectedRows,
             action: () => {
                 copyRows(ctx, [attribute]);
                 gridInterface.__callSubscribers('copy-column', eventData);
@@ -248,6 +272,7 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
             id: 'row.copy.row',
             label: text('row.copy.row'),
             hint: text('row.copy.row.hint'),
+            disabled: noSelectedRows,
             action: () => {
                 copyRows(ctx, getLayoutFields(gridInterface));
                 gridInterface.__callSubscribers('copy-row', eventData);
@@ -257,6 +282,7 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
             id: 'row.copy.selectedColumns',
             label: text('row.copy.selectedColumns'),
             hint: text('row.copy.selectedColumns.hint'),
+            disabled: noSelectedRows,
             action: () => {
                 // no column selected: every column
                 const selected = getLayoutFields(gridInterface, { selectedOnly: true });
@@ -267,7 +293,7 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
         {
             id: 'row.copy.range',
             label: text('row.copy.range'),
-            visible: hasRanges,
+            disabled: () => !hasRanges(),
             // every range as one table, as Ctrl+C copies them (rangeClipboard.ts)
             action: () => {
                 const { text: tsv, html } = rangesClipboard(ctx, gridInterface.getRanges());
@@ -355,13 +381,16 @@ function editSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
 }
 
 /**
- * Delete and undo, on the selected rows: they are marked for deletion, and unmarked - so a delete can
- * be undone, the rows stay in the grid until the changes are accepted. Only in an editable grid.
+ * Delete and undo: the row right clicked, or the selected rows, are marked for deletion, and the
+ * selected rows unmarked - so a delete can be undone, the rows stay in the grid until the changes are
+ * accepted. Only in an editable grid. Every entry is listed, greyed out when there is nothing to do
+ * (nothing selected, the row marked already): the menu keeps its shape.
  *
  * Delete skips a row the isReadonly hook locks (see isLockedByHook). Undo works on every selected
- * row that is marked: a hook that makes the deleted rows readonly must not stop the undo
+ * row that is marked: a hook that makes the deleted rows readonly must not stop the undo. The row
+ * right clicked is unmarked by the Undo / Redo submenu's "Undo row edits" too
  */
-function deleteSubmenu(ctx: Grid): MenuSubmenu {
+function deleteSubmenu(ctx: Grid, rowData: Entity): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
     const datasource = gridInterface.getDatasource();
     const editable = () => !gridInterface.__getGridConfig().readonly;
@@ -376,6 +405,13 @@ function deleteSubmenu(ctx: Grid): MenuSubmenu {
         visible: editable,
         entries: [
             {
+                id: 'row.delete.row',
+                label: gridText(ctx, 'row.delete.row'),
+                visible: editable,
+                disabled: () => rowData.__rowState === 'D' || isLockedByHook(gridInterface, rowData),
+                action: () => datasource.markForDeletion(rowData)
+            },
+            {
                 id: 'row.delete.rows',
                 label: gridText(ctx, 'row.delete.rows'),
                 hint: gridText(ctx, 'row.delete.rows.hint'),
@@ -388,7 +424,8 @@ function deleteSubmenu(ctx: Grid): MenuSubmenu {
                 id: 'row.delete.undo',
                 label: gridText(ctx, 'row.delete.undo'),
                 hint: gridText(ctx, 'row.delete.undo.hint'),
-                visible: () => editable() && toUnmark().length > 0,
+                visible: editable,
+                disabled: () => toUnmark().length === 0,
                 action: () => datasource.unmarkForDeletion(toUnmark())
             }
         ]
@@ -421,7 +458,7 @@ function sizeSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
                 id: 'row.size.fitRows',
                 label: gridText(ctx, 'row.size.fitRows'),
                 hint: gridText(ctx, 'row.size.fitRows.hint'),
-                visible: () => selectedAndRangeRows(ctx).length > 0,
+                disabled: () => selectedAndRangeRows(ctx).length === 0,
                 action: () => gridInterface.fitRows(selectedAndRangeRows(ctx))
             },
             {
@@ -501,16 +538,15 @@ function copyRows(ctx: Grid, fields: string[]) {
 }
 
 /**
- * clear and paste work on every selected row, not just the one right clicked, so each row
- * has to be checked on its own
+ * empties the column of the rows given - the one right clicked, or the selected rows - each row checked on
+ * its own: a cell can be readonly in one row and not in another
  */
-function clearRows(ctx: Grid, attribute: string) {
+function clearRows(ctx: Grid, attribute: string, rows: Entity[]) {
     if (ctx.gridInterface.__getGridConfig().readonly) {
         return;
     }
 
-    const selectedRows = ctx.gridInterface.getDatasource().getSelectedRows();
-    selectedRows.forEach((entity) => {
+    rows.forEach((entity) => {
         if (!ctx.gridInterface.__isCellReadonly(entity, attribute)) {
             // a lookup column empties the fields of its `set` too
             writeCellValue(ctx.gridInterface, entity, attribute, null);
@@ -519,10 +555,11 @@ function clearRows(ctx: Grid, attribute: string) {
 }
 
 /**
- * pastes the text into the column of every selected row that is editable, a `paste` event per row
+ * pastes the text into the column of every row given that is editable, a `paste` event per row
  * @param eventData the right clicked cell, what the paste event sends
+ * @param rows the right clicked row, or the selected rows
  */
-function pasteIntoCells(ctx: Grid, attribute: string, data: string, eventData: RowMenuEventData) {
+function pasteIntoCells(ctx: Grid, attribute: string, data: string, eventData: RowMenuEventData, rows: Entity[]) {
     const datasource = ctx.gridInterface.getDatasource();
     // a lookup column (ColumnConfig.editor) takes a label, copied from it, as the value of its row
     const formatter = ctx.gridInterface.__getLookupColumn(attribute)?.formatter ?? datasource.getFormatter(attribute);
@@ -531,7 +568,7 @@ function pasteIntoCells(ctx: Grid, attribute: string, data: string, eventData: R
         return;
     }
 
-    datasource.getSelectedRows().forEach((entity) => {
+    rows.forEach((entity) => {
         if (ctx.gridInterface.__isCellReadonly(entity, attribute)) {
             return;
         }

@@ -132,10 +132,41 @@ describe('menus - the built-in ids', () => {
 
         openRowMenu(element, 'firstname', 0);
 
-        // and no range of cells: no range entries. No selected rows: no fit of the selected rows
-        expect(menuTreeIds()).toEqual(
-            MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|edit)|\.range$|^row\.size\.fitRows$/.test(id))
-        );
+        // no editing in a readonly grid. The entries of a selection - the selected rows, the ranges of
+        // cells - are listed without one, greyed out (see the next test)
+        expect(menuTreeIds()).toEqual(MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|edit)/.test(id)));
+    });
+
+    it('expect the entries of a selection greyed out without one, usable with one', async () => {
+        const { element, datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false });
+        const disabled = (id: string) => menuEntry(id)?.getAttribute('aria-disabled') === 'true';
+        const selectionEntries = [
+            'row.copy.column',
+            'row.copy.row',
+            'row.copy.selectedColumns',
+            'row.copy.range',
+            'row.paste.cell',
+            'row.paste.range',
+            'row.clear.cell',
+            'row.clear.range',
+            'row.delete.rows',
+            'row.size.fitRows'
+        ];
+
+        openRowMenu(element, 'firstname', 0);
+        expect(selectionEntries.map(disabled)).toEqual(selectionEntries.map(() => true));
+        // the cell right clicked: usable
+        expect(['row.copy.cell', 'row.paste.current', 'row.clear.current', 'row.delete.row'].map(disabled)).toEqual([
+            false,
+            false,
+            false,
+            false
+        ]);
+
+        datasource.getSelection().selectRowRange(0, 1);
+        gridInterface.setRanges([{ fromRow: 0, fromField: 'firstname', toRow: 1, toField: 'age' }]);
+        openRowMenu(element, 'firstname', 0);
+        expect(selectionEntries.map(disabled)).toEqual(selectionEntries.map(() => false));
     });
 
     it('expect the operators of a text column and the value list in the filter menu', async () => {
@@ -201,8 +232,9 @@ describe('menus - rendered as before', () => {
 
         openRowMenu(element, 'age', 0);
 
+        // greyed out without selected rows: the class of a disabled item too
         const paste = menuEntry('row.paste.cell');
-        expect(paste.className).toEqual('simple-html-grid-menu-item');
+        expect(paste.className).toEqual('simple-html-grid-menu-item simple-html-grid-menu-item-disabled');
         expect(paste.textContent?.replace(/\s+/g, ' ').trim()).toEqual('Paste cell (selected rows)');
         expect(paste.querySelector('i')?.textContent).toEqual('(selected rows)');
     });
