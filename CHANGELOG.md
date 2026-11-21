@@ -969,6 +969,16 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The `row-is-*` states had no built-in look.
 - A row's errors were in its tooltip only; a screen reader now gets them with the row number.
 
+#### The wheel scrolls the grid, not the page
+
+##### Fixed
+- The wheel over the grid also scrolled the page under it (the event was not cancelled): it is now,
+  so a grid in a scrolling page keeps the wheel, also at its first and last row. Ctrl+wheel (the
+  browser's zoom, a trackpad's pinch) is left alone.
+- The wheel used the non-standard `wheelDeltaY` (Firefox has none): it uses `deltaX` / `deltaY`, a
+  wheel that counts lines or pages moves as many px, and left/right (a trackpad, Shift+wheel) scrolls
+  the middle columns.
+
 #### Header filters say what to type
 
 ##### ⚠️ Breaking changes
@@ -1150,6 +1160,25 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 ##### Fixed
 - Row menu "Summary:": the max of negative numbers was 0, min skipped 0, the average was rounded to a
   whole number and counted blank cells. A text value (`'12'`) is no longer read as a number.
+
+#### Excel export (user request)
+
+##### ⚠️ Breaking changes
+- The row menu's **Export:** offers Excel instead of CSV: `row.export.excel` ("Excel, all rows") and
+  `row.export.excelSelected` ("Excel, selected rows"); `row.export.csv` / `row.export.csvSelected` and
+  their texts are gone. `getCsv()` / `downloadCsv()` stay.
+
+##### Added
+- `gridInterface.getExcel(options?)` (a `Promise<Blob>`) and `downloadExcel(filename = 'export.xlsx',
+  options?)`: a real .xlsx with no dependency - the grid writes the ZIP and the SpreadsheetML, deflated
+  with `CompressionStream` where there is one. Typed cells: numbers, dates and datetimes (the local
+  day, Excel date formats), booleans, text (line breaks wrapped). The header row is always there, bold
+  and frozen, with an autofilter over every row; the widths follow the grid's. **Always a flat list**:
+  grouped, every data row in the grouped order, collapsed groups included - no group rows, no outline,
+  no totals.
+- `ExcelOptions`: `rows: 'all' | 'selected' | 'range'`, `fields`, `sheetName` (Excel's rules, a
+  `TypeError` otherwise). More rows or columns than Excel takes reject with a `RangeError`.
+- The export guide covers Excel first; the export sample has Excel buttons.
 
 #### CSV export (item 41)
 

@@ -2075,6 +2075,14 @@ New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can cha
 
 ## Other behaviour changes
 
+* **The row menu exports Excel**: `row.export.csv` / `row.export.csvSelected` are now
+  `row.export.excel` / `row.export.excelSelected` (texts too). CSV is still `getCsv()` /
+  `downloadCsv()`; a `menus` hook can add a CSV entry back.
+
+* **The wheel over the grid no longer scrolls the page**: the grid cancels it. Ctrl+wheel (zoom) is
+  the browser's as before. A test that sent a `wheel` event with `wheelDeltaY` has to send
+  `deltaY` (`new WheelEvent('wheel', { deltaY: 40 })` scrolls the rows down 40px).
+
 * **An empty text or number header filter shows `Text` / `Number`**, not 🔍 - the texts
   `filter.placeholder.text` / `filter.placeholder.number`. A test that looked for the 🔍 placeholder
   has to look for those; `placeholderFilter` on a column still wins.

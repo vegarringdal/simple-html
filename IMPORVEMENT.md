@@ -1286,10 +1286,40 @@ in the console. All passed. Found and fixed:
 * left: Cut (Ctrl+X) of a range; real Excel / Sheets interop untested (format checked only); after the
   wheel takes the focus from a cell, Ctrl+C/V go to the page
 
+### The wheel over the grid kept scrolling the page (user report)
+
+* the wheel listener set the body scroller's scrollTop but did not cancel the event, so the browser
+  scrolled the page too (the rows' views are overflow hidden, the page was the next thing to scroll);
+  it read the non-standard `wheelDeltaY` (none in Firefox) and ignored a trackpad's deltaX
+* now: cancelled (but Ctrl+wheel - zoom, pinch - is left to the browser), `deltaX`/`deltaY` with
+  line/page modes turned into px, left/right scrolls the middle columns. happy-dom's WheelEvent is a
+  UIEvent without modifier keys: the tests set them on the event
+* Chromium `wheel-check.js` on a guide page with a live grid: the grid scrolls, the page does not -
+  also at the grid's last row - and the page scrolls outside the grid
+
+### Excel export (user request: "Excel, not CSV"; frozen header, autofilter, flat list)
+
+* no dependency: `zip.ts` (APPNOTE local headers, central directory, CRC-32, deflate-raw through
+  CompressionStream - stored when it is missing), `xlsx.ts` (the six SpreadsheetML parts from plain
+  inputs), `gridExcel.ts` (rows and fields as the CSV export picks them). 10 000 rows x 8 columns:
+  441 KB deflated (4.6 MB stored)
+* typed cells: numbers as numbers (General - the formatters show full precision), dates as serials
+  from the local day (1900 system, its leap-year bug), `dd\.mm\.yyyy` for the DDMMYYYY formatters,
+  booleans, inline strings; widths from the grid's px by ECMA-376's Calibri 11 rule
+* always: the header bold and frozen, an autofilter over every row, a flat list (no group rows,
+  outline or totals) - the user's rules
+* checked: 2115 tests; Chromium downloads (buttons and row menu, grouped, aggregates sample) read
+  with python zipfile (CRCs), xml.etree and openpyxl - types, frozen pane, autofilter, widths, values
+  equal to the CSV of the same rows. Real Excel / LibreOffice not available to try
+* live-check.js failed 2 of 19 once on a loaded machine and passed twice after: its conflict steps
+  race the sample's timer - candidate below
+
 ## Considered, not done
 
 ## Candidates / not started
 
+* **live-check.js races the live sample's timer** under load (2 of 19 failed once, passed on reruns):
+  wait for the timer's tick instead of a fixed delay.
 * **A flaky test under load**: one full run in ten or so fails one test while other test runs or
   builds load the machine (agents saw `datePickerCell.test.ts`); it passes on rerun. Find it and make it
   not depend on timing.
