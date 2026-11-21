@@ -947,6 +947,27 @@ Asked for in review after phase 2: the user stores grid and datasource configura
   does the whole round trip with a fake server that assigns ids.
 * the demo's light theme had no row state css at all - deleted rows were not struck through
 
+#### Validation (item 47)
+
+* `registerValidator(id, validator)`; rules live on the field as JSON
+  (`validate: ['required', { id: 'min', value: 0 }]`), checked when the datasource is made like
+  formatter ids. Built-ins `required`, `min`, `max`, `minLength`, `maxLength`, `pattern`; default
+  messages have ids (`VALIDATION_MESSAGES`) for phase 3's texts map.
+* `required` fails on 0 - an emptied number cell stores 0, so otherwise `required` could never
+  fail from the grid, and it is the "0 is blank" rule again. The guide shows a validator for a
+  number where 0 is a real value.
+* a field is validated when edited (also re-checking the row's other fields that have an error,
+  so a rule across fields clears); `validate(rows?)` checks everything before a save. Loaded and
+  new rows are not validated on their own - a new row would be all errors before anyone typed.
+* errors show on the cell (`simple-html-cell-error`, tooltip) and the row selector; server errors
+  (`setErrors()`) stay apart but show there too - v5 never showed them at all
+* `ColumnConfig.mandatory` -> the `required` rule, same stripes; a config that still has
+  `mandatory` throws (a stored config would otherwise silently stop enforcing it)
+* fixed with it: six methods that remove rows left `currentEntity` and/or the selection on the
+  removed rows; all go through one helper now
+
+Phase 2b is complete with this step: 1211 tests.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -1007,8 +1028,6 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
     Matters now that a set date keeps its time on purpose.
   * with a collator using `sensitivity: 'base'`, `'a'` vs `'A'` compares as 1 both ways.
     Returning 0 would need grouping to use the collator too, or groups split.
-  * `removeData()`, `clearMarkedForDeletion()` and `acceptChanges()` leave `currentEntity` on a
-    removed row (and `removeData` the selection)
   * `waitForFocusTrigger` swallows every key in every grid for 100ms after Enter / alt+arrow
   * the value list puts `false` under "Blank" (falsy check), the IN filter keys it as `FALSE`
   * the filter editor still blanks header inputs whose conditions it keeps

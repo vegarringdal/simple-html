@@ -46,7 +46,8 @@ export interface CreateGridOptions<T> {
  * @param host the container, the element is added as its last child
  * @param options the config, the datasource and the hooks
  * @returns the grid interface, to work with the grid
- * @throws a `TypeError` when the config has `isReadonly`, `cellClass` or `menus`: those are hooks
+ * @throws a `TypeError` when the config has `isReadonly`, `cellClass` or `menus` (those are hooks), or
+ * a column has v5's `mandatory` (it is the field's `required` rule)
  *
  * @sample basic-grid
  * @example

@@ -25,10 +25,10 @@ import { formatters } from './samples/formatters';
 import formattersSource from './samples/formatters.ts?raw';
 import { gridState } from './samples/gridState';
 import gridStateSource from './samples/gridState.ts?raw';
-import { mandatoryPlaceholders } from './samples/mandatoryPlaceholders';
-import mandatoryPlaceholdersSource from './samples/mandatoryPlaceholders.ts?raw';
 import { miscConfig } from './samples/miscConfig';
 import miscConfigSource from './samples/miscConfig.ts?raw';
+import { requiredPlaceholders } from './samples/requiredPlaceholders';
+import requiredPlaceholdersSource from './samples/requiredPlaceholders.ts?raw';
 import { rowsData } from './samples/rowsData';
 import rowsDataSource from './samples/rowsData.ts?raw';
 import { saving } from './samples/saving';
@@ -39,6 +39,8 @@ import { sortingGrouping } from './samples/sortingGrouping';
 import sortingGroupingSource from './samples/sortingGrouping.ts?raw';
 import { tooltips } from './samples/tooltips';
 import tooltipsSource from './samples/tooltips.ts?raw';
+import { validation } from './samples/validation';
+import validationSource from './samples/validation.ts?raw';
 
 /**
  * a sample and the text of its file: the source the site shows with the running sample
@@ -63,11 +65,12 @@ export const SAMPLES: Sample[] = [
     // editing
     { ...editing, source: editingSource },
     { ...saving, source: savingSource },
+    { ...validation, source: validationSource },
     { ...contextMenu, source: contextMenuSource },
     { ...dropdownGrid, source: dropdownGridSource },
     // cells
     { ...dynamicCellTypes, source: dynamicCellTypesSource },
-    { ...mandatoryPlaceholders, source: mandatoryPlaceholdersSource },
+    { ...requiredPlaceholders, source: requiredPlaceholdersSource },
     // formatting
     { ...formatters, source: formattersSource },
     { ...customFormatter, source: customFormatterSource },

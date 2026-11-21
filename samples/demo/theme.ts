@@ -26,6 +26,9 @@ const DARK_WIDGET_CSS = `
         --simple-html-grid-dropzone-color: rgb(151, 148, 148, 0.4);
         --simple-html-grid-boxshadow: #4b5563;
         --simple-html-grid-main-hr-border: #4b5563;
+        /* the validation errors: a lighter red reads on the dark rows */
+        --simple-html-grid-error-color: #f87171;
+        --simple-html-grid-error-bg-color: rgba(248, 113, 113, 0.22);
     }
 
     .simple-html-grid ul.dialog-row {

@@ -9,6 +9,7 @@ import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { rebuildRowColumns } from './rebuildRowColumns';
 import { rebuildRows } from './rebuildRows';
 import { rebuildTopPanel } from './rebuildTopPanel';
+import { attachTooltips, tooltipsEnabled } from './tooltip';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
 import { updateVerticalScrollHeight } from './updateVerticalScrollHeight';
@@ -99,6 +100,9 @@ export function createDom(ctx: Grid) {
     rebuildFooter(ctx);
     addScrollEventListeners(ctx);
     addBodyClickListener(ctx);
+    // the validation messages of the cells and the row selectors. The body is made once, the
+    // `tooltips` option is read on every hover: updateConfig() can change it
+    attachTooltips(body, () => tooltipsEnabled(ctx));
 
     updateVerticalScrollHeight(ctx, ctx.gridInterface.__getScrollState().scrollHeight);
     updateHorizontalScrollWidth(ctx);

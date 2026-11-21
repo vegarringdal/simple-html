@@ -4,6 +4,8 @@ import type { DataEntity, Entity } from './entity';
 import { EntityHandler } from './entityHandler';
 import type { FieldType } from './field';
 import { isBlank } from './isBlank';
+import type { ValidationError } from './validator';
+import { type ResolvedRule, runRules } from './validatorRegistry';
 
 let globalKeyCount = 0;
 
@@ -53,9 +55,22 @@ export class DataContainer {
 
     /**
      * the type of every field the datasources on this container list in their `fields`, see
-     * __addFieldTypes. The rows' edit tracking reads it
+     * __addFields. The rows' edit tracking reads it
      */
     private __fieldTypes = new Map<string, FieldType>();
+
+    /**
+     * the validation rules of the fields that have them (`FieldConfig.validate`), from the datasources
+     * on this container, see __addFields. An edit of a row validates its field with them
+     */
+    private __rules = new Map<string, ResolvedRule[]>();
+
+    /**
+     * the validation errors per row: the messages per field, only the fields that have one, and only
+     * the rows that have one. Keyed by the row, so a row that leaves the container takes its errors
+     * with it
+     */
+    private __errors = new WeakMap<Entity, Map<string, string[]>>();
     /**
      * @param UniqueKeyAttribute the field that identifies a row, e.g. `'id'`. The selection follows it,
      * so it survives replacing the rows with fresh ones from a server. Left out, every row gets a
@@ -93,14 +108,16 @@ export class DataContainer {
     /**
      * @internal
      * Called by every datasource made on this container, with the type of each field in its
-     * `fields`. Edit tracking is the container's - the rows are shared, an edit is one edit whichever
-     * datasource shows it - so it needs one type per field: a field listed by one datasource has that
-     * type, and datasources that both list a field must give it the same type.
+     * `fields` and the validation rules of the fields that have them. Edit tracking and validation
+     * are the container's - the rows are shared, an edit is one edit whichever datasource shows it -
+     * so it needs one type and one list of rules per field: a field listed by one datasource has its
+     * type and rules, and datasources that both list a field must give it the same type, and the
+     * same rules when both give it rules.
      *
-     * @throws when a field already has another type from a datasource made earlier on this container.
-     * Nothing is added then.
+     * @throws when a field already has another type, or other rules, from a datasource made earlier
+     * on this container. Nothing is added then.
      */
-    public __addFieldTypes(types: Map<string, FieldType>): void {
+    public __addFields(types: Map<string, FieldType>, rules: Map<string, ResolvedRule[]>): void {
         for (const [field, type] of types) {
             const known = this.__fieldTypes.get(field);
             if (known !== undefined && known !== type) {
@@ -109,17 +126,127 @@ export class DataContainer {
                 );
             }
         }
+        for (const [field, fieldRules] of rules) {
+            const known = this.__rules.get(field);
+            if (known !== undefined && rulesText(known) !== rulesText(fieldRules)) {
+                throw new Error(
+                    `Datasource: field '${field}' has other validation rules here than in another datasource on the same container, give it the same rules in both (or rules in one of them only)`
+                );
+            }
+        }
         for (const [field, type] of types) {
             this.__fieldTypes.set(field, type);
         }
+        for (const [field, fieldRules] of rules) {
+            this.__rules.set(field, fieldRules);
+        }
+    }
+
+    /**
+     * A field of a row was set: the proxy (EntityHandler) calls this after the value is in. The field
+     * is validated, and so are the row's other fields that have an error - an error that depends on
+     * the edited value (a validator that reads the row) clears once it is fixed. A field without an
+     * error is not checked: an edit never adds an error to another field.
+     */
+    private validateEdit(row: Entity, field: string) {
+        const errors = this.__errors.get(row);
+        if (!errors && !this.__rules.has(field)) {
+            return; // the common case: nothing to check
+        }
+        const fields = new Set([field, ...(errors?.keys() ?? [])]);
+        this.validateRow(row, fields);
+    }
+
+    /**
+     * validates the fields of a row with their rules, and keeps the errors: a field that passes loses
+     * its error, the other fields keep theirs. A field without rules has no error
+     */
+    private validateRow(row: Entity, fields: Iterable<string>) {
+        const checked = new Map<string, string[]>();
+        for (const field of fields) {
+            const rules = this.__rules.get(field);
+            checked.set(field, rules ? runRules(rules, row[field], row) : []);
+        }
+        const before = this.__errors.get(row);
+        // in the order of the rules, so the errors are listed the same way every time
+        const errors = new Map<string, string[]>();
+        for (const field of this.__rules.keys()) {
+            const messages = checked.get(field) ?? before?.get(field);
+            if (messages?.length) {
+                errors.set(field, messages);
+            }
+        }
+        if (errors.size) {
+            this.__errors.set(row, errors);
+        } else {
+            this.__errors.delete(row);
+        }
+    }
+
+    /**
+     * @internal
+     * `datasource.validate()`: validates every field that has rules, of every row or the rows given -
+     * the rows marked for deletion are skipped, they are not saved. Keeps the errors (a field that
+     * passes loses its error) and returns them, see __getErrors
+     * @param rows a row or a list of rows, default every row. Rows not in the container are skipped
+     */
+    public __validate(rows?: Entity | Entity[]): ValidationError[] {
+        const checked = (rows === undefined ? this.__collection : this.rowsIn(rows)).filter(
+            (row) => !row.__controller.__isDeleted
+        );
+        if (this.__rules.size) {
+            for (const row of checked) {
+                this.validateRow(row, this.__rules.keys());
+            }
+        }
+        return this.__getErrors(checked);
+    }
+
+    /**
+     * @internal
+     * `datasource.getErrors()`: the validation errors the rows have now, one entry per field with an
+     * error: in the order of the rows in the container, the fields in the order of the rules (as the
+     * datasources listed them in `fields`). A row
+     * marked for deletion has none, it is not saved - its errors are back when it is unmarked
+     * @param rows a row or a list of rows, default every row. Rows not in the container are skipped
+     */
+    public __getErrors(rows?: Entity | Entity[]): ValidationError[] {
+        const result: ValidationError[] = [];
+        for (const row of rows === undefined ? this.__collection : this.rowsIn(rows)) {
+            for (const [field, messages] of this.__rowErrors(row) ?? []) {
+                // a copy: the list is the container's
+                result.push({ row, field, messages: [...messages] });
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @internal
+     * The validation errors of one row, the messages by field in the order of the rules: the container's
+     * own map, do not change it. `undefined` when the row has none, or is marked for deletion (see
+     * __getErrors). For the grid, which asks for every cell it renders: no search, no copy
+     */
+    public __rowErrors(row: Entity): ReadonlyMap<string, readonly string[]> | undefined {
+        return row.__controller?.__isDeleted ? undefined : this.__errors.get(row);
+    }
+
+    /**
+     * @internal
+     * `datasource.hasErrors()`: true when a row has a validation error. The rows marked for deletion
+     * do not count, see __getErrors
+     */
+    public __hasErrors(): boolean {
+        return this.__collection.some((row) => !row.__controller.__isDeleted && this.__errors.has(row));
     }
 
     /**
      * Replaces the class that wraps every row in a `Proxy` and tracks its edits, for the rows set from
      * now on. An advanced hook: the class gets the {@link EntityHandler} constructor options
-     * (`{ key, isNew, fieldType }`) and must implement the proxy traps and the fields the grid reads
-     * (`__isNew`, `__isDeleted`, `__edited` ...). `EntityHandler` is exported as a type only, so it can
-     * not be extended - you write the whole handler.
+     * (`{ key, isNew, fieldType, onEdit }`) and must implement the proxy traps and the fields the grid
+     * reads (`__isNew`, `__isDeleted`, `__edited` ...). Its set trap calls `onEdit(row, field)` after a
+     * field is set, or the fields are not validated on edit. `EntityHandler` is exported as a type
+     * only, so it can not be extended - you write the whole handler.
      *
      * @param entityHandler the class to use instead of `EntityHandler`
      *
@@ -132,6 +259,7 @@ export class DataContainer {
      *     key?: string;
      *     isNew?: boolean;
      *     fieldType?: (field: string) => FieldType | undefined;
+     *     onEdit?: (row: object, field: string) => void;
      * }) => ProxyHandler<object>;
      *
      * const container = new DataContainer('id');
@@ -224,9 +352,10 @@ export class DataContainer {
      * other row - so each call replaces the errors of the call before. For errors a server sent back
      * after saving.
      *
-     * The grid does not show `__rowError` itself: read it in the `cellClass` hook (to color the row)
-     * or show it next to the grid, and call `gridInterface.refresh()` after this to render the cells
-     * again.
+     * It is apart from the validation errors (`datasource.validate()`, `getErrors()`): this does not
+     * change them, and `validate()` / `hasErrors()` do not read `__rowError`. The grid shows both on
+     * the row selector - the error class, and the message as its tooltip. Call
+     * `gridInterface.refresh()` after this to render the rows again. `acceptChanges()` clears it.
      *
      * @param errors the error message per row, keyed by the row's key as text (`'7'` for `id: 7`)
      *
@@ -248,8 +377,9 @@ export class DataContainer {
 
     /**
      * {@link resetData} for the given rows only: their edits are undone, a row marked for deletion is
-     * unmarked, and a new row is removed. `datasource.resetDataSelectionOnly()` calls it with the
-     * selected rows. Does not rebuild a datasource's displayed rows.
+     * unmarked, a new row is removed, and their validation errors are cleared.
+     * `datasource.resetDataSelectionOnly()` calls it with the selected rows. Does not rebuild a
+     * datasource's displayed rows.
      *
      * @param data the rows to reset. Rows that are not in the container are skipped
      *
@@ -282,6 +412,8 @@ export class DataContainer {
                             row.__controller.__editedProps = {};
                             row.__controller.__edited = false;
                         }
+                        // after the values are back: setting them validated them again
+                        this.__errors.delete(row);
                     }
                 });
             }
@@ -292,9 +424,10 @@ export class DataContainer {
 
     /**
      * Throws away every change since the data was set: edited rows get their original values back,
-     * rows marked for deletion are unmarked, and new rows (from `addNewEmpty()`) are removed. Rows
-     * removed for good (`removeData()`, `clearMarkedForDeletion()`) do not come back.
-     * `datasource.resetData()` calls it and also rebuilds the displayed rows - use that one.
+     * rows marked for deletion are unmarked, new rows (from `addNewEmpty()`) are removed, and the
+     * validation errors are cleared - the original values are not validated. Rows removed for good
+     * (`removeData()`, `clearMarkedForDeletion()`) do not come back. `datasource.resetData()` calls it
+     * and also rebuilds the displayed rows - use that one.
      *
      * @example
      * ```ts
@@ -320,6 +453,8 @@ export class DataContainer {
                 row.__controller.__edited = false;
             }
         });
+        // after the values are back: setting them validated them again
+        this.__errors = new WeakMap();
         this.removeData(newEntities);
     }
 
@@ -497,7 +632,7 @@ export class DataContainer {
      * - a row marked for deletion is removed from the container, a new one too
      * - a new row becomes an ordinary row (`__rowState` `undefined`)
      * - the values a row has now become its original values: nothing counts as edited
-     * - the row's error (`setErrors()`) is cleared
+     * - the row's error (`setErrors()`) and its validation errors are cleared
      *
      * Then `getChanges()` lists none of them, `hasChanges()` is `false` when every row was accepted,
      * and `resetData()` goes back to these values. `datasource.acceptChanges()` calls it and also
@@ -586,6 +721,7 @@ export class DataContainer {
             controller.__newprops = {};
             controller.__edited = false;
             row.__rowError = null;
+            this.__errors.delete(row);
         }
         if (removed.size) {
             this.__collection = this.__collection.filter((row) => !removed.has(row));
@@ -734,7 +870,8 @@ export class DataContainer {
                       key: this.__keyAttribute,
                       isNew,
                       // read when an edit is made, so a datasource made after the rows were set counts too
-                      fieldType: (field) => this.__fieldTypes.get(field)
+                      fieldType: (field) => this.__fieldTypes.get(field),
+                      onEdit: (row, field) => this.validateEdit(row, field)
                   }) as any
               );
         if (isBlank(entity.__KEY)) {
@@ -742,4 +879,18 @@ export class DataContainer {
         }
         return entity;
     }
+}
+
+/**
+ * the rules of a field as text, to tell whether two datasources gave a field the same rules: the
+ * options of each rule in the order of their names, so `{ id, value }` and `{ value, id }` are the same
+ */
+function rulesText(rules: readonly ResolvedRule[]): string {
+    return JSON.stringify(
+        rules.map(({ rule }) =>
+            Object.keys(rule)
+                .sort()
+                .map((key) => [key, rule[key]])
+        )
+    );
 }

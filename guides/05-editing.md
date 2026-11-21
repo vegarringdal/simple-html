@@ -2,7 +2,9 @@
 
 The grid is readonly by default. With editing on, the user changes values in the cells, and the
 datasource tracks every change: which rows are new, edited or marked for deletion, and what changed.
-`getChanges()` collects it for a server, and `acceptChanges()` takes it in once it is saved.
+The rules of the fields validate the edits, `validate()` checks every row before a save.
+`getChanges()` collects the changes for a server, and `acceptChanges()` takes them in once they are
+saved.
 
 ## Editing on
 
@@ -164,6 +166,7 @@ const { newEntities, modifiedEntities, deletedEntities } = people.getChanges();
   compares to the second: a change of the time only is a change.
 
 After a save, `acceptChanges()` makes the changes the new starting point, see [Saving](#saving).
+Before it, `validate()` checks the rows, see [Validation](#validation).
 
 ### Throwing changes away
 
@@ -187,6 +190,167 @@ The row number cell on the left of each row gets the class `row-is-new`, `row-is
 
 Or show `__rowState` in a column of its own: put `'__rowState'` in the layout, as the samples do.
 
+A row with an error gets `simple-html-row-error` on its row number cell, which `grid.css` does
+style, see [How the grid shows the errors](#how-the-grid-shows-the-errors).
+
+## Validation
+
+The rules are part of the datasource's fields, plain JSON like the rest of them - they can be
+stored in a backend with the fields. A field lists its rules in `validate`: the id of a validator as
+text, or an object with the id, its options and a message of its own.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const people = new Datasource({
+    key: 'id',
+    fields: {
+        name: { validate: ['required', { id: 'maxLength', value: 50 }] },
+        age: { type: 'number', validate: ['required', { id: 'min', value: 0 }, { id: 'max', value: 150, message: 'too old' }] },
+        email: { validate: [{ id: 'pattern', value: '^[^@\\s]+@[^@\\s]+$', message: 'Not an email address' }] }
+    }
+});
+```
+
+The validators are named by id, like the formatters: the built-in ones below, and your own with
+`registerValidator()`. An id that is not registered throws when the datasource is made, and so does
+a built-in rule with a wrong option (`min` without a number, a `pattern` that is no regular
+expression). `getField(name).validate` gives the rules of a field, written out as objects.
+
+```sample validation
+```
+
+### The built-in rules
+
+They take their option as `value`:
+
+| rule | the value fails when | message |
+| --- | --- | --- |
+| `'required'` | it is `null`, `undefined`, `''`, an invalid Date, or 0 | `Required` |
+| `{ id: 'min', value: 0 }` | it is a number below `value` | `Must be at least {value}` |
+| `{ id: 'max', value: 150 }` | it is a number above `value` | `Must be at most {value}` |
+| `{ id: 'minLength', value: 2 }` | it is text shorter than `value` | `Must be at least {value} characters` |
+| `{ id: 'maxLength', value: 50 }` | it is text longer than `value` | `Must be at most {value} characters` |
+| `{ id: 'pattern', value: '^[A-Z]{2}$' }` | it is text the regular expression does not find | `Not in the expected format` |
+
+- **0 fails `required`.** The filter takes 0 as blank too (see [0 is blank](06-filtering.md#0-is-blank)),
+  and an emptied number cell stores 0 - the number formatters parse `''` as 0 - so with 0 as a value
+  a required number would never fail in the grid. `false` passes: it is a value, and a checkbox has
+  no empty state. For a number where 0 is a real value, use a rule of your own (`present` below).
+- **The other rules pass an empty value** (`null`, `undefined`, `''`): an optional field can be
+  empty, add `'required'` to make it fail. They check the values of their kind only - `min` and
+  `max` numbers, the others text - and pass the rest.
+- **`pattern` is not anchored**: `'[0-9]'` finds a digit anywhere in the text, `'^[0-9]+$'` is
+  digits only. Written as text, so it stays JSON. In TypeScript a `\` is written twice.
+- Every rule runs: a value can fail more than one, and gets a message for each.
+
+### Messages
+
+A rule's `message` replaces the default, and `{name}` in it is replaced by the rule's option `name`:
+`{ id: 'max', value: 150, message: 'at most {value}' }` gives `at most 150`.
+
+The default messages have ids, `VALIDATION_MESSAGES` lists them: `'validation.required'`,
+`'validation.min'`, `'validation.max'`, `'validation.minLength'`, `'validation.maxLength'` and
+`'validation.pattern'`. The texts of the grid will be replaceable by id (planned for phase 3), these
+included; until then give the rule a `message`.
+
+### Rules of your own
+
+A validator is a function `(value, row, rule) => message | null`: `null` when the value is valid,
+else the message - or a message id, the way the built-ins return `'validation.required'`. `rule` is
+the rule written out, so a rule can carry options of its own. Register it before the datasource that
+names it is made:
+
+```ts
+import { Datasource, registerValidator } from '@simple-html/grid';
+
+// a number that must be there, 0 included
+registerValidator('present', (value) => (value === null || value === undefined ? 'validation.required' : null));
+
+// { id: 'oneOf', values: [...] }: the options come from the rule
+registerValidator('oneOf', (value, _row, rule) => {
+    if (value === null || value === undefined || value === '') {
+        return null; // an empty value is the required rule's job
+    }
+    return Array.isArray(rule.values) && rule.values.includes(String(value)) ? null : 'Must be one of {values}';
+});
+
+// another field of the row: the end can not be before the start
+registerValidator('afterStart', (value, row) =>
+    value instanceof Date && row.start instanceof Date && value < row.start ? 'Before the start' : null
+);
+
+const datasource = new Datasource({
+    fields: {
+        discount: { type: 'number', validate: ['present'] },
+        country: { validate: [{ id: 'oneOf', values: ['Norway', 'Sweden'] }] },
+        start: 'date',
+        end: { type: 'date', validate: ['afterStart'] }
+    }
+});
+```
+
+Keep a validator fast, it runs on every key the user types. Registering an id again replaces it, for
+the datasources made after.
+
+### When it runs
+
+- **An edit is validated**, from the grid as the user types and from code (`row.age = -1`): the
+  field's rules run, and so do the rules of the row's fields that have an error - an error that
+  depends on the edited value (`afterStart` above) clears once it is fixed. An edit that makes the
+  field valid clears its error.
+- **The rows set with `setData()` are not validated, and neither are the fields of a new row from
+  `addNewEmpty()`** until they are edited: an empty new row would be all errors before the user
+  typed anything. The stripes of the required fields show what to fill in, and `validate()` before
+  the save checks the fields never edited.
+- **`validate()` checks every row**, or the rows given: every field with rules. It keeps the errors,
+  the grid shows them, and returns them - one `{ row, field, messages }` per field with an error.
+- `getErrors(rows?)` and `hasErrors()` read the errors there are now, without validating.
+- `acceptChanges()` and `resetData()` clear the errors, `resetDataSelectionOnly()` those of the
+  selected rows.
+- A row marked for deletion is not saved, so it has no errors: `validate()` skips it, `getErrors()`
+  and `hasErrors()` leave it out. Its errors are back when it is unmarked.
+
+Validate before a save:
+
+```ts
+declare function showErrors(lines: string[]): void;
+
+const errors = datasource.validate();
+if (errors.length) {
+    showErrors(errors.map(({ row, field, messages }) => `${row.name}, ${datasource.getField(field).label}: ${messages.join(', ')}`));
+} else {
+    const response = await fetch('/api/save', { method: 'POST', body: JSON.stringify(datasource.getChanges()) });
+    if (response.ok) {
+        datasource.acceptChanges();
+    }
+}
+
+// only what a save sends: the new and edited rows
+datasource.validate(datasource.getAllData().filter((row) => row.__rowState === 'N' || row.__rowState === 'M'));
+```
+
+`validate()` checks every row, also the rows the filter leaves out and the rows that were not
+edited: data from a server that breaks a rule blocks the save too. Pass the new and edited rows to
+check what the save sends only.
+
+### How the grid shows the errors
+
+- **A cell with an error** gets the class `simple-html-cell-error` - a red border inside the cell
+  and a tint - and its messages as the tooltip, one per line.
+- **The row number** of a row with an error gets `simple-html-row-error` - a red bar on its left and
+  a tint - and the tooltip lists the server's error first, then a line per field:
+  `Age: Must be at least 0`.
+- The colors are css variables: `--simple-html-grid-error-color` and
+  `--simple-html-grid-error-bg-color`.
+- The tooltips are the grid's own, as on the filter editor's buttons: `tooltips: false` in the
+  config turns them off. The `data-tooltip` attribute is written either way, for a tooltip library
+  of your own.
+- An edit in the grid shows its errors at once, and so does `validate()`. After an edit from code,
+  call `gridInterface.refresh()`, as for its value.
+- A field with the `required` rule shows stripes on its empty editable cells, see
+  [Required fields and placeholders](#required-fields-and-placeholders).
+
 ## Saving
 
 A save usually sends everything in one transaction: the deleted, edited and new rows of
@@ -195,7 +359,7 @@ A save usually sends everything in one transaction: the deleted, edited and new 
 - the rows marked for deletion are removed
 - the new rows become ordinary rows
 - the values the rows have now become their original values: nothing counts as edited
-- the row errors (`setErrors()`) are cleared
+- the row errors (`setErrors()`) and the validation errors are cleared
 
 The displayed rows are rebuilt once, and `hasChanges()` is `false` after.
 
@@ -254,6 +418,7 @@ people.hasChanges(); // false
   other rows keep their changes.
 - Keep the grid readonly while the save runs - `gridInterface.updateConfig({ readonly: true })`, and
   `false` after - or an edit made in between is accepted without being saved.
+- Validate first: `validate()` returns the errors, see [Validation](#validation).
 - When the save fails, do not call `acceptChanges()`: the changes stay, to be saved again. Show the
   server's errors on the rows with [`setErrors()`](#errors-from-a-server).
 - Without a `key`, the server's key becomes the row's `__KEY`: a later edit of the row is sent with
@@ -279,8 +444,9 @@ current row, the scroll position and the expanded groups stay as they are.
 
 ## Errors from a server
 
-`setErrors()` on the datasource's container puts an error text on rows, by key. It is a `Map` from
-the key as text to the message. Every row not in the map gets `null`:
+`setErrors()` on the datasource's container puts an error text on rows, by key - what a server said
+about a save it refused. It is a `Map` from the key as text to the message. Every row not in the map
+gets `null`:
 
 ```ts
 import { createGrid, type GridConfig, type GridHooks } from '@simple-html/grid';
@@ -290,7 +456,7 @@ const config: GridConfig = {
     layout: { center: [{ fields: ['name'], width: 150 }] }
 };
 const hooks: GridHooks = {
-    // .row-error { position: absolute; inset: 0; background: rgba(220, 38, 38, 0.2); }
+    // the cells of the row too: .row-error { position: absolute; inset: 0; background: rgba(220, 38, 38, 0.2); }
     cellClass: (row) => (row.__rowError ? { background: 'row-error' } : null)
 };
 const grid = createGrid(host, { config, datasource, hooks });
@@ -302,25 +468,36 @@ const row = datasource.getDataRows()[0];
 console.log(row.__rowError); // the message, or null
 ```
 
-The grid does not show `__rowError` by itself: use the `cellClass` hook as above, and read the
-message from the row for a tooltip or a list next to the grid. Call `refresh()` after `setErrors()`.
+The grid shows `__rowError` on the row number, with the row's validation errors: the class
+`simple-html-row-error`, and the message as the first line of its tooltip. Call `refresh()` after
+`setErrors()`. To mark the cells of the row too, use the `cellClass` hook as above.
 
-## Mandatory fields and placeholders
+**Server errors and validation errors are kept apart.** A server error is the row's `__rowError`,
+set with `setErrors()`; a validation error is a field's, from the rules (`getErrors()`). `setErrors()`
+does not change the validation errors, and `validate()`, `getErrors()` and `hasErrors()` do not read
+`__rowError` - a row the server refused is not invalid by the rules, and the next save may well work.
+`acceptChanges()` clears both.
 
-- `mandatory: true` on a column shows its empty cells with stripes, until they have a value. Only
-  in an editable grid, and only on editable cells.
+## Required fields and placeholders
+
+- A field with the `required` rule (`validate: ['required']` in the datasource's `fields`, see
+  [Validation](#validation)) shows its empty cells with stripes, until they have a value - empty as
+  the rule sees it, so 0 too. Only in an editable grid, and only on editable cells. Restyle the
+  stripes with the `simple-html-mandatory` class. It replaces the `mandatory` column option of v5.
 - `placeholderRow` is text shown in an empty cell. By default only on the current row, set
   `placeholderRowCurrentEntityOnly: false` in the config to show it on every row.
 - `placeholderFilter` is text shown in the empty header filter.
 
 ```ts
-import type { GridConfig } from '@simple-html/grid';
+import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';
+
+const companies = new Datasource({ fields: { company: { validate: ['required'] } } });
 
 const config: GridConfig = {
     readonly: false,
     placeholderRowCurrentEntityOnly: false,
     columns: {
-        company: { mandatory: true, placeholderRow: 'required' },
+        company: { placeholderRow: 'required' },
         phone: { placeholderRow: '+47 ...', placeholderFilter: 'search phone' }
     },
     layout: {
@@ -330,7 +507,8 @@ const config: GridConfig = {
         ]
     }
 };
+createGrid(host, { config, datasource: companies });
 ```
 
-```sample mandatory-placeholders
+```sample required-placeholders
 ```

@@ -71,15 +71,30 @@ export class EntityHandler {
     private __fieldType: (field: string) => FieldType | undefined;
 
     /**
+     * called after a field of the row was set, the container validates the field there
+     */
+    private __onEdit: (row: Entity, field: string) => void;
+
+    /**
      * @param options.key the key field of the container, `__KEY` reads and writes it
      * @param options.isNew the row is new: `__rowState` is `'N'` and `getChanges()` lists it in `newEntities`
      * @param options.fieldType the type of a field: a `date` field compares two dates on the day,
      * every other field to the second. Without it every field compares to the second
+     * @param options.onEdit called after a field of the row was set (not the `__` fields), with the
+     * row and the field: the container validates the field there. Without it nothing is called
      */
-    constructor(options: { key?: string; isNew?: boolean; fieldType?: (field: string) => FieldType | undefined } = {}) {
+    constructor(
+        options: {
+            key?: string;
+            isNew?: boolean;
+            fieldType?: (field: string) => FieldType | undefined;
+            onEdit?: (row: Entity, field: string) => void;
+        } = {}
+    ) {
         this.__KEYSTRING = options.key;
         this.__isNew = options.isNew ?? false;
         this.__fieldType = options.fieldType ?? (() => undefined);
+        this.__onEdit = options.onEdit ?? (() => undefined);
     }
 
     /**
@@ -128,10 +143,10 @@ export class EntityHandler {
     }
 
     /**
-     * The proxy's set trap, called by the `Proxy` when a field of the row is set: it records the edit.
-     * Not for calling yourself.
+     * The proxy's set trap, called by the `Proxy` when a field of the row is set: it records the edit,
+     * and the container validates the field. Not for calling yourself.
      */
-    set(obj: any, prop: string, value: any) {
+    set(obj: any, prop: string, value: any, receiver: Entity) {
         let update = true;
 
         if (prop[0] === '_' && prop[1] === '_') {
@@ -182,6 +197,9 @@ export class EntityHandler {
             this.__currentValues[prop] = value;
             obj[prop] = value;
             this.__edited = Object.values(this.__editedProps).includes(true);
+            // after the value is in: the error is about the value the row has now. The receiver is
+            // the row, the proxy - what the validators and the errors are keyed on
+            this.__onEdit(receiver, prop);
         }
 
         return true;

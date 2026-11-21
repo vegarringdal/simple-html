@@ -1,12 +1,12 @@
 import type { GridConfig } from '@simple-html/grid';
-import { createStage, type DemoSample, generateRows, mountGrid } from '../demoUtils';
+import { baseFields, createStage, type DemoSample, generateRows, mountGrid } from '../demoUtils';
 
-export const mandatoryPlaceholders: DemoSample = {
-    id: 'mandatory-placeholders',
-    title: 'Mandatory & placeholders',
+export const requiredPlaceholders: DemoSample = {
+    id: 'required-placeholders',
+    title: 'Required fields & placeholders',
     group: 'Cells',
     description:
-        'mandatory: true renders a striped marker on empty editable cells (it clears as soon as the cell has a value). placeholderRow shows a placeholder in empty cells - by default only on the current row, controlled by placeholderRowCurrentEntityOnly. placeholderFilter overrides the placeholder in the filter row. Click around the empty rows to see the placeholders follow the current row.',
+        "A field with the required rule (validate: ['required'] in the datasource's fields) shows a striped marker on its empty editable cells, it clears as soon as the cell has a value. Empty a cell and it is validated: it gets the error border, and the message as its tooltip. placeholderRow shows a placeholder in empty cells - by default only on the current row, controlled by placeholderRowCurrentEntityOnly. placeholderFilter overrides the placeholder in the filter row. Click around the empty rows to see the placeholders follow the current row.",
     run(stage) {
         const ui = createStage(stage);
 
@@ -17,11 +17,9 @@ export const mandatoryPlaceholders: DemoSample = {
             placeholderRowCurrentEntityOnly: true, // default
             columns: {
                 company: {
-                    mandatory: true, // striped marker while the cell is empty
-                    placeholderRow: 'company is mandatory',
+                    placeholderRow: 'company is required',
                     placeholderFilter: 'search company...'
                 },
-                country: { mandatory: true },
                 phone: { placeholderRow: 'type a phone number' },
                 // a date field shows the formatter's placeholder (YYYY-MM-DD), this one wins over it
                 date1: { placeholderFilter: 'from date...' }
@@ -49,7 +47,14 @@ export const mandatoryPlaceholders: DemoSample = {
             }
         });
 
-        const { gridInterface } = mountGrid(ui.gridHost, config, rows);
+        // required is a rule of the datasource's field: striped while it is empty
+        const { datasource, gridInterface } = mountGrid(ui.gridHost, config, rows, {
+            fields: {
+                ...baseFields(),
+                company: { validate: ['required'] },
+                country: { validate: ['required'] }
+            }
+        });
 
         // change it while the grid is shown
         ui.button('Placeholders on all rows', () => {
@@ -57,6 +62,11 @@ export const mandatoryPlaceholders: DemoSample = {
         });
         ui.button('Placeholders on current row only (default)', () => {
             gridInterface.updateConfig({ placeholderRowCurrentEntityOnly: true });
+        });
+        ui.button('Validate', () => {
+            // the empty cells were never edited: validate() checks them, and the grid shows the errors
+            const errors = datasource.validate();
+            ui.log(`${errors.length} empty required cells`);
         });
     }
 };

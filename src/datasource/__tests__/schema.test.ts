@@ -18,18 +18,42 @@ import { TextFormatter } from '../textFormatter';
 describe('schema - getField', () => {
     it('expect a field that is not listed to be text, labelled with its name', () => {
         const ds = new Datasource();
-        expect(ds.getField('name')).toEqual({ name: 'name', type: 'text', label: 'name', formatter: TextFormatter });
+        expect(ds.getField('name')).toEqual({
+            name: 'name',
+            type: 'text',
+            label: 'name',
+            formatter: TextFormatter,
+            validate: []
+        });
     });
 
     it('expect the type shorthand to be the same as { type }', () => {
         const ds = new Datasource({ fields: { born: 'date', died: { type: 'date' } } });
-        expect(ds.getField('born')).toEqual({ name: 'born', type: 'date', label: 'born', formatter: DateFormatterYYYYMMDD });
-        expect(ds.getField('died')).toEqual({ name: 'died', type: 'date', label: 'died', formatter: DateFormatterYYYYMMDD });
+        expect(ds.getField('born')).toEqual({
+            name: 'born',
+            type: 'date',
+            label: 'born',
+            formatter: DateFormatterYYYYMMDD,
+            validate: []
+        });
+        expect(ds.getField('died')).toEqual({
+            name: 'died',
+            type: 'date',
+            label: 'died',
+            formatter: DateFormatterYYYYMMDD,
+            validate: []
+        });
     });
 
     it('expect the label, type and formatter given to be used', () => {
         const ds = new Datasource({ fields: { price: { type: 'number', label: 'Price', formatter: 'numberComma' } } });
-        expect(ds.getField('price')).toEqual({ name: 'price', type: 'number', label: 'Price', formatter: NumberFormatterComma });
+        expect(ds.getField('price')).toEqual({
+            name: 'price',
+            type: 'number',
+            label: 'Price',
+            formatter: NumberFormatterComma,
+            validate: []
+        });
     });
 
     it('expect a field with only a label to be text', () => {

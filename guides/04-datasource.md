@@ -183,21 +183,57 @@ of the time only is not an edit. A `datetime` field keeps the time everywhere: f
 grouping, and a change of the time is an edit (to the second).
 
 A `FieldConfig` can also have a `label` (the grid's column label falls back to it, and so does
-`getFilterString()`) and a `formatter`: the id of a registered formatter, see
-[Formatting](08-formatting.md). `getField()` and `getFormatter()` give the formatter object.
+`getFilterString()`), a `formatter`: the id of a registered formatter, see
+[Formatting](08-formatting.md), and `validate`: the field's validation rules, see below.
+`getField()` and `getFormatter()` give the formatter object.
 
 ```ts
 import { Datasource } from '@simple-html/grid';
 
 const datasource = new Datasource({
-    fields: { born: { type: 'date', label: 'Born' }, price: { type: 'number', formatter: 'numberComma' } }
+    fields: {
+        born: { type: 'date', label: 'Born' },
+        price: { type: 'number', formatter: 'numberComma', validate: ['required', { id: 'min', value: 0 }] }
+    }
 });
 
-datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD }
-datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter }
+datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [] }
+datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [] }
+datasource.getField('price').validate; // [{ id: 'required' }, { id: 'min', value: 0 }]
 datasource.getFormatter('born').format(new Date(2026, 10, 20)); // '2026-11-20'
 datasource.getFormatter('price').format(12.5); // '12,5'
 ```
+
+### Validation rules
+
+`validate` lists the field's rules: the id of a validator as text (`'required'`), or an object with
+the id, its options and a message of its own (`{ id: 'max', value: 150, message: 'too old' }`). The
+built-ins are `required`, `min`, `max`, `minLength`, `maxLength` and `pattern`; your own are
+registered by id with `registerValidator()`, like the formatters, so the fields stay plain JSON. An
+id that is not registered throws when the datasource is made.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const people = new Datasource({
+    key: 'id',
+    fields: {
+        name: { validate: ['required'] },
+        age: { type: 'number', validate: ['required', { id: 'min', value: 0 }, { id: 'max', value: 150, message: 'too old' }] },
+        zip: { validate: [{ id: 'pattern', value: '^[0-9]{4}$', message: 'Four digits' }] }
+    }
+});
+
+people.setData([{ id: 1, name: 'Ann', age: 36, zip: '0150' }]);
+people.getDataRows()[0].age = -1; // an edit is validated
+people.getErrors(); // [{ row: <Ann>, field: 'age', messages: ['Must be at least 0'] }]
+people.validate(); // every row, before a save
+people.hasErrors(); // true
+```
+
+An edit is validated as it is made, `validate()` checks every row, and the grid shows the errors on
+the cells and the row numbers. See [Validation](05-editing.md#validation) for the rules, the
+messages, when they run and rules of your own.
 
 To sort text with the rules of a language, set a collator: `datasource.setLocaleCompare('nb')`.
 
@@ -270,6 +306,10 @@ right.reloadDatasource(); // right shows the new rows once it rebuilds its own
   on the other. Its selection is kept by key: a new row that `acceptChanges({ newKeys })` gave the
   server's key is no longer selected there.
 - A field listed in both must have the same type in both, the second datasource throws if not.
+  The validation rules are the container's too: a field with rules in one datasource is validated
+  on every edit of the rows, and two datasources that both give a field rules must give it the same.
+  The errors are the container's, like the changes - `validate()` on one sends its event on that one
+  only: `refresh()` the other grid.
 - A `key` given to a datasource with a `container` must be the container's key, or it throws.
 
 ## Events

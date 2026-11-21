@@ -1,4 +1,5 @@
 import type { Formatter } from './formatter';
+import type { ValidationRule, ValidationRuleObject } from './validator';
 
 /**
  * The type of a field. It decides how the datasource sorts, groups and filters the field, which
@@ -49,10 +50,12 @@ export function isFieldType(value: unknown): value is FieldType {
  * How one field of the datasource is described in `DatasourceOptions.fields`. All of it is
  * optional, and writing just the type (`born: 'date'`) is the same as `born: { type: 'date' }`.
  *
- * It is plain JSON: the formatter is named by its id (see {@link registerFormatter}), so the fields
- * can be stored, e.g. in a backend.
+ * It is plain JSON: the formatter and the validators are named by their ids (see
+ * {@link registerFormatter} and {@link registerValidator}), so the fields can be stored, e.g. in a
+ * backend.
  *
  * @sample custom-formatter
+ * @sample validation
  * @example
  * ```ts
  * import { Datasource } from '@simple-html/grid';
@@ -60,9 +63,9 @@ export function isFieldType(value: unknown): value is FieldType {
  * const datasource = new Datasource({
  *     fields: {
  *         born: 'date',
- *         age: { type: 'number', label: 'Age (years)' },
+ *         age: { type: 'number', label: 'Age (years)', validate: ['required', { id: 'min', value: 0 }] },
  *         price: { type: 'number', formatter: 'numberComma' }, // a built-in formatter, by its id
- *         company: { label: 'Company name' } // a text field with a label
+ *         company: { label: 'Company name', validate: ['required'] } // a text field with a label
  *     }
  * });
  * ```
@@ -86,6 +89,18 @@ export interface FieldConfig {
      * datasource is made
      */
     formatter?: string;
+
+    /**
+     * the field's validation rules, checked when the field is edited and by `datasource.validate()`:
+     * the id of a validator (`'required'`), or the id with options and a message
+     * (`{ id: 'min', value: 0, message: 'at least {value}' }`), see {@link ValidationRule}. The
+     * built-ins are `required`, `min`, `max`, `minLength`, `maxLength` and `pattern`, register your
+     * own with {@link registerValidator}. An id that is not registered throws when the datasource is
+     * made. A field with `'required'` gets the grid's required stripes while it is empty.
+     *
+     * @sample validation
+     */
+    validate?: ValidationRule[];
 }
 
 /**
@@ -93,8 +108,9 @@ export interface FieldConfig {
  *
  * @example
  * ```ts
- * const { type, label, formatter } = datasource.getField('born');
+ * const { type, label, formatter, validate } = datasource.getField('born');
  * formatter.format(new Date(2026, 10, 20)); // '2026-11-20' for a date field with the default formatter
+ * const required = validate.some((rule) => rule.id === 'required');
  * ```
  */
 export interface Field {
@@ -106,4 +122,9 @@ export interface Field {
     label: string;
     /** the field's own formatter, else the datasource's default for its type */
     formatter: Formatter;
+    /**
+     * the field's validation rules, each written out as an object: `'required'` is `{ id: 'required' }`.
+     * `[]` when the field has none. The datasource's own list, do not change it
+     */
+    validate: readonly ValidationRuleObject[];
 }

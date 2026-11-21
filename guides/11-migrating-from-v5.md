@@ -20,6 +20,8 @@ hooks next to the config. TypeScript points to most of the places to change.
 - [Options objects instead of boolean flags](../MIGRATION.md#options-objects-instead-of-boolean-flags)
 - [Change tracking](../MIGRATION.md#change-tracking-getchanges): the typed `getChanges()`, a new
   row marked for deletion stays (marked), `unmarkForDeletion()`, `acceptChanges()`
+- [Validation](../MIGRATION.md#validation-mandatory-is-the-required-rule): `mandatory` is the
+  field's `required` rule, `registerValidator()`, `validate()`
 - [Grid config](../MIGRATION.md#grid-config): `columns` and `layout`, the state, and
   [a converter for a v5 config](../MIGRATION.md#a-v5-config-converted)
 - [Setup, callbacks and methods of the grid](../MIGRATION.md#setup-callbacks-and-methods-of-the-grid):
@@ -124,6 +126,25 @@ const gridConfig: GridConfig = {
 
 `placeHolderRow` and `placeHolderFilter` are `placeholderRow` and `placeholderFilter`. See
 [Grid config](02-grid-config.md).
+
+**`mandatory` is a validation rule of the datasource field.** v5's `mandatory: true` only drew
+stripes; v6 validates the field - the edits, and `validate()` before a save - and draws the same
+stripes. A config with `mandatory` throws, naming the field:
+
+```ts nocheck
+// v5
+attributes: [{ attribute: 'company', mandatory: true }]
+```
+
+```ts
+// v6
+import { Datasource } from '@simple-html/grid';
+
+const companies = new Datasource({ fields: { company: { validate: ['required'] } } });
+```
+
+`required` takes 0 as missing, like the filter's `IS_BLANK`: a number field of 0 is striped now,
+and a checkbox that is unchecked (`false`) is not. See [Validation](05-editing.md#validation).
 
 ## 4. Events: `on()`
 

@@ -1,5 +1,6 @@
 import type { Entity } from './entity';
 import type { GroupArgument } from './groupArgument';
+import type { ValidationError } from './validator';
 
 /**
  * The events of a {@link Datasource}: event name -> the payload its handler gets.
@@ -88,17 +89,30 @@ export interface DatasourceEvents {
     /**
      * `datasource.currentEntity` was set: a row was clicked or selected, or
      * `setRowAsCurrentEntity()` was called. Also when `setData()` set it to `null` because the current
-     * row is no longer in the data (sent after its `collection-changed`). Empty payload, read
+     * row is no longer in the data, and when a method that removes rows removed it (`removeData()`,
+     * `removeAllData()`, `clearMarkedForDeletion()`, `acceptChanges()`, `resetData()`,
+     * `resetDataSelectionOnly()`) - sent after their own event. Empty payload, read
      * `datasource.currentEntity`.
      * Was `currentEntity` in v5.
      */
     'current-entity': Record<string, never>;
 
     /**
-     * The selected rows changed. Empty payload, read `datasource.getSelectedRows()`.
+     * The selected rows changed. Also when a method that removes rows removed a selected one (see
+     * `current-entity`), sent after its own event. Empty payload, read `datasource.getSelectedRows()`.
      * Was `selectionChange` in v5.
      */
     'selection-change': Record<string, never>;
+
+    /**
+     * `datasource.validate()` ran: `errors` is what it returned. The grid renders its rows again, to
+     * show the errors. An edit sends no event, though it is validated: read `getErrors()` when you
+     * need them.
+     */
+    validate: {
+        /** the errors `validate()` found, `[]` when the rows it checked are valid */
+        errors: ValidationError[];
+    };
 
     /**
      * A row was selected from code, the grid scrolls it into view.

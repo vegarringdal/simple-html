@@ -8,6 +8,7 @@ import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
 import { rebuildRows } from './gridFunctions/rebuildRows';
 import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { hideTooltip } from './gridFunctions/tooltip';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateHorizontalScrollWidth } from './gridFunctions/updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
@@ -136,6 +137,8 @@ export class Grid {
      */
     public disconnectElement() {
         removeContextMenu(this);
+        // shown for a cell of this grid maybe: it is on document.body, it would stay
+        hideTooltip();
 
         // remove() and not body.removeChild(), the user can already have closed these
         this.filterEditorContainer?.remove();

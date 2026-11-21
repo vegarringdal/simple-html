@@ -332,7 +332,7 @@ built on it.
         rows) drops the deleted rows, makes new rows ordinary rows and makes the edited values the
         new originals. A guide shows the whole round trip, including new rows getting their key
         from the server. **S-M**
-47. [ ] **Validation layer** (was item 31): validators registered by id like formatters
+47. [x] **Validation layer** (was item 31): validators registered by id like formatters
         (`registerValidator`), built-ins `required`, `min`, `max`, `minLength`, `maxLength`,
         `pattern`; rules on the field as JSON (`validate: ['required', { id: 'min', value: 0 }]`).
         `datasource.validate()` returns the errors per row and field; the grid shows them on the
@@ -418,7 +418,7 @@ Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** phase 2b (43-47, asked for in review), then phase 3.
+**Now:** phase 3 (phase 2b is done).
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies

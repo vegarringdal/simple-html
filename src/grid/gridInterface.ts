@@ -116,7 +116,8 @@ export class GridInterface<T> {
      * grouping and filter are replaced (left out, they are cleared)
      * @param hooks optional: the functions - `isReadonly`, `cellClass`, `menus`, see {@link GridHooks}.
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
-     * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus`: those are hooks
+     * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
+     * hooks), or a column has v5's `mandatory` (it is the field's `required` rule)
      *
      * @example
      * ```ts
@@ -133,6 +134,7 @@ export class GridInterface<T> {
      */
     constructor(gridConfig: GridConfig, datasource: Datasource<T>, hooks: GridHooks<T> = {}) {
         assertNoHooks(gridConfig);
+        assertNoMandatory(gridConfig);
         this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.hooks = { ...hooks };
@@ -287,7 +289,8 @@ export class GridInterface<T> {
      * `columns`, `layout` and `initialState`.
      *
      * @param config the parts of the config to change
-     * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus`: those are hooks
+     * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
+     * or a column has v5's `mandatory` (it is the field's `required` rule)
      *
      * @sample misc-options
      * @example
@@ -302,6 +305,7 @@ export class GridInterface<T> {
      */
     public updateConfig(config: Partial<GridConfig>) {
         assertNoHooks(config);
+        assertNoMandatory(config);
         const { columns, layout, initialState, ...options } = config;
 
         this.options = { ...this.options, ...options };
@@ -1013,7 +1017,9 @@ export class GridInterface<T> {
             follow('collection-changed', (_data, grid) => grid.rebuild()),
             follow('current-entity', (_data, grid) => this.updateRows(grid)),
             follow('selection-change', (_data, grid) => this.updateRows(grid)),
-            follow('select', (data, grid) => this.scrollToRow(grid, data.row))
+            follow('select', (data, grid) => this.scrollToRow(grid, data.row)),
+            // the errors are shown on the cells and the row selectors
+            follow('validate', (_data, grid) => this.updateRows(grid))
         ];
     }
 
@@ -1106,6 +1112,22 @@ function assertNoHooks(config: Partial<GridConfig>) {
         if (key in config) {
             throw new TypeError(
                 `GridConfig: '${key}' is a hook, not part of the config: createGrid(host, { config, datasource, hooks: { ${key} } }), or gridInterface.updateHooks({ ${key} })`
+            );
+        }
+    }
+}
+
+/**
+ * v5's `mandatory` column option is the `required` rule of the datasource field in v6, which also
+ * draws the stripes. TypeScript catches it, a config from plain JavaScript or a backend does not - the
+ * grid would drop it without a word, and the field would no longer be checked.
+ * @throws a `TypeError` naming the column and the rule
+ */
+function assertNoMandatory(config: Partial<GridConfig>) {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (column && typeof column === 'object' && 'mandatory' in column) {
+            throw new TypeError(
+                `GridConfig: columns.${field}.mandatory is gone in v6, it is the required rule of the datasource field: new Datasource({ fields: { ${field}: { validate: ['required'] } } })`
             );
         }
     }

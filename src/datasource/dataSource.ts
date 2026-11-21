@@ -17,6 +17,8 @@ import { Selection } from './selection';
 import type { SelectionMode } from './selectionMode';
 import { Sort } from './sort';
 import type { SortArgument } from './sortArgument';
+import type { ValidationError, ValidationRuleObject } from './validator';
+import { type ResolvedRule, resolveRules } from './validatorRegistry';
 
 /**
  * A data row as the datasource hands it out: your object `T` and the fields of an {@link Entity} - the
@@ -106,6 +108,11 @@ export interface FilterGroupNode {
  * {@link FilterConditionNode}. Tell them apart by `kind`.
  */
 export type FilterNode = FilterConditionNode | FilterGroupNode;
+
+/**
+ * the rules of a field without any, what getField() gives for it
+ */
+const NO_RULES: readonly ValidationRuleObject[] = Object.freeze([]);
 
 /**
  * The rows of a grid, and what is done with them: the data, the fields (type, label and formatter of
@@ -204,6 +211,12 @@ export class Datasource<T = any> {
     private __fieldFormatters = new Map<string, Formatter>();
 
     /**
+     * the validation rules of the fields that have them (`FieldConfig.validate`), written out as
+     * objects, for getField(). The validators are the container's, it validates the edits
+     */
+    private __fieldRules = new Map<string, ValidationRuleObject[]>();
+
+    /**
      * The current row: the one last clicked, selected or set with `setRowAsCurrentEntity()`. Use it
      * for a detail form next to the grid. `null` until a row is made current.
      *
@@ -214,7 +227,10 @@ export class Datasource<T = any> {
      *
      * `setData()` sets it to `null` when the current row is no longer in the data - the rows were
      * replaced by new objects, also ones with the same key - and keeps it when it still is (rows added,
-     * or the same row objects set again). The `current-entity` event is sent when it changes.
+     * or the same row objects set again). The methods that remove rows set it to `null` when they
+     * remove it: `removeData()`, `removeAllData()`, `clearMarkedForDeletion()`, `acceptChanges()` (a
+     * row marked for deletion), `resetData()` and `resetDataSelectionOnly()` (a new row). The
+     * `current-entity` event is sent when it changes.
      *
      * @example
      * ```ts
@@ -238,9 +254,9 @@ export class Datasource<T = any> {
      * @param options the key, the fields and their formatters, the selection mode, or a data
      * container shared with another datasource - all optional, see {@link DatasourceOptions}
      * @throws when `key` and `container` are both given and `key` is not the container's key, a
-     * field has a type that does not exist, a formatter id is not registered (see
-     * {@link registerFormatter}), or a field has another type than in a datasource made earlier on
-     * the same `container`
+     * field has a type that does not exist, a formatter id or a validator id is not registered (see
+     * {@link registerFormatter} and {@link registerValidator}), a rule's options are wrong, or a field
+     * has another type or other rules than in a datasource made earlier on the same `container`
      *
      * @example
      * ```ts
@@ -275,6 +291,8 @@ export class Datasource<T = any> {
             datetime: defaultFor('datetime')
         };
 
+        // the validators are looked up here too, like the formatters
+        const rules = new Map<string, ResolvedRule[]>();
         for (const [name, field] of Object.entries(options.fields || {})) {
             const config: FieldConfig = typeof field === 'string' ? { type: field } : { ...field };
             // a typo in plain js would otherwise show up much later, as a field without a formatter
@@ -284,12 +302,24 @@ export class Datasource<T = any> {
             if (config.formatter !== undefined) {
                 this.__fieldFormatters.set(name, getRegisteredFormatter(config.formatter, `field '${name}'`));
             }
+            if (config.validate !== undefined) {
+                const resolved = resolveRules(config.validate, name);
+                if (resolved.length) {
+                    rules.set(name, resolved);
+                    this.__fieldRules.set(
+                        name,
+                        resolved.map(({ rule }) => rule)
+                    );
+                }
+            }
             this.__fields.set(name, config);
         }
-        // the container tracks the edits, a date field compares on the day there.
-        // Throws when another datasource on the container gave a field another type
-        this.__dataContainer.__addFieldTypes(
-            new Map(Array.from(this.__fields, ([name, config]) => [name, config.type ?? 'text']))
+        // the container tracks the edits, a date field compares on the day there, and it validates
+        // the edits. Throws when another datasource on the container gave a field another type, or
+        // other rules
+        this.__dataContainer.__addFields(
+            new Map(Array.from(this.__fields, ([name, config]) => [name, config.type ?? 'text'])),
+            rules
         );
 
         this.__selectionMode = options.selectionMode || 'multiple';
@@ -315,8 +345,9 @@ export class Datasource<T = any> {
     }
 
     /**
-     * A field as the datasource sees it: its type, label and formatter, with every default filled in.
-     * A field that is not listed in `fields` is a `'text'` field labelled with its name.
+     * A field as the datasource sees it: its type, label, formatter and validation rules, with every
+     * default filled in. A field that is not listed in `fields` is a `'text'` field labelled with its
+     * name, without rules.
      *
      * @param name the field name, the property on the row
      *
@@ -326,8 +357,8 @@ export class Datasource<T = any> {
      *
      * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
      *
-     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD }
-     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter }
+     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [] }
+     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [] }
      * // formatter: the formatter object, looked up by its id when the datasource was made
      * ```
      */
@@ -337,7 +368,8 @@ export class Datasource<T = any> {
             name,
             type: config?.type ?? 'text',
             label: config?.label || name,
-            formatter: this.getFormatter(name)
+            formatter: this.getFormatter(name),
+            validate: this.__fieldRules.get(name) ?? NO_RULES
         };
     }
 
@@ -375,6 +407,15 @@ export class Datasource<T = any> {
 
     /**
      * @internal
+     * the validation errors of a row, the messages by field: undefined when it has none. The grid reads
+     * it for every cell it renders, getErrors() searches the rows and copies
+     */
+    public __getRowErrors(row: Entity): ReadonlyMap<string, readonly string[]> | undefined {
+        return this.__dataContainer.__rowErrors(row);
+    }
+
+    /**
+     * @internal
      * the field as it was given in `fields` (the shorthand written out), undefined when it is not
      * listed. The grid uses it for a label that was really given
      */
@@ -401,7 +442,9 @@ export class Datasource<T = any> {
     /**
      * Removes the rows marked for deletion for good, once the deletes are saved: they leave the rows,
      * `getChanges()` no longer lists them in `deletedEntities`, and `resetData()` does not bring them
-     * back. Sends `collection-changed` with `{ removed: true, info: 'clearMarkedForDeletion' }`.
+     * back. Sends `collection-changed` with `{ removed: true, info: 'clearMarkedForDeletion' }`. When
+     * the current row is removed, {@link currentEntity} is set to `null` and `current-entity` is sent
+     * after; a removed row leaves the selection (`selection-change`).
      *
      * When the new and edited rows were saved in the same go, call {@link acceptChanges} instead: it
      * removes the marked rows and accepts the rest.
@@ -415,18 +458,23 @@ export class Datasource<T = any> {
      * ```
      */
     public clearMarkedForDeletion() {
+        const before = this.getAllData();
         this.__dataContainer.clearMarkedForDeletion();
+        const notify = this.__forgetRemovedRows(before);
         // the rows are gone from the container, rebuild the displayed rows or they stay on screen.
         // Same event as removeData, it is a removal
         this.__internalUpdate(true);
         this.__callSubscribers('collection-changed', { removed: true, info: 'clearMarkedForDeletion' });
+        notify();
     }
 
     /**
      * Throws away every change since the data was set: edited rows get their original values back,
-     * rows marked for deletion are unmarked, and new rows (from `addNewEmpty()`) are removed. Then the
-     * displayed rows are rebuilt. Rows removed for good (`removeData()`, `clearMarkedForDeletion()`) do
-     * not come back.
+     * rows marked for deletion are unmarked, new rows (from `addNewEmpty()`) are removed, and the
+     * validation errors are cleared. Then the displayed rows are rebuilt. Rows removed for good
+     * (`removeData()`, `clearMarkedForDeletion()`) do not come back. A new row that was the current
+     * row sets {@link currentEntity} to `null` (`current-entity` is sent after), and leaves the
+     * selection (`selection-change`).
      *
      * The changes are those of the data container, so of every datasource sharing it.
      *
@@ -441,16 +489,20 @@ export class Datasource<T = any> {
      * ```
      */
     public resetData() {
+        const before = this.getAllData();
         this.__dataContainer.resetData();
+        const notify = this.__forgetRemovedRows(before);
         const eventTriggered = this.__internalUpdate(true);
         if (!eventTriggered) {
             this.__callSubscribers('collection-filtered', { info: 'resetData' });
         }
+        notify();
     }
 
     /**
      * {@link resetData} for the selected rows only: their edits are undone, the ones marked for deletion
-     * are unmarked, and the new ones are removed. The other rows keep their changes.
+     * are unmarked, the new ones are removed, and their validation errors are cleared. The other rows
+     * keep their changes.
      *
      * @example
      * ```ts
@@ -459,11 +511,14 @@ export class Datasource<T = any> {
      * ```
      */
     public resetDataSelectionOnly() {
+        const before = this.getAllData();
         this.__dataContainer.resetDataSelection(this.getSelectedRows());
+        const notify = this.__forgetRemovedRows(before);
         const eventTriggered = this.__internalUpdate(true);
         if (!eventTriggered) {
             this.__callSubscribers('collection-filtered', { info: 'resetData' });
         }
+        notify();
     }
 
     /**
@@ -529,6 +584,101 @@ export class Datasource<T = any> {
      */
     public hasChanges(): boolean {
         return this.__dataContainer.hasChanges();
+    }
+
+    /**
+     * Validates the rows: every field that has rules (`FieldConfig.validate`), of every row or of the
+     * rows given. Call it before a save - the edits are validated as they are made, but a field that
+     * was never edited (an empty field of a new row, say) only here.
+     *
+     * - **The rows marked for deletion are skipped**: they are not saved, they have no errors.
+     * - **Every row is checked**, also a row the filter leaves out and a row that was not edited. To
+     *   check only what a save sends, pass the new and edited rows (see the example).
+     * - **The errors are kept**: `getErrors()` and `hasErrors()` read them, and the grid shows them on
+     *   the cells and the row selectors - this sends `validate`, the grid renders its rows again. A
+     *   field that passes loses its error. `acceptChanges()` and `resetData()` clear them.
+     * - The server's errors (`setErrors()`, `__rowError`) are apart: not checked, not returned.
+     *
+     * The errors are those of the data container, so of every datasource sharing it.
+     *
+     * @param rows a row or a list of rows, default every row
+     * @returns the errors, one entry per field with an error: the rows in the order of the data, the
+     * fields in the order they are listed in `fields`. `[]` when every row is valid
+     *
+     * @sample validation
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * const people = new Datasource({
+     *     key: 'id',
+     *     fields: { name: { validate: ['required'] }, age: { type: 'number', validate: [{ id: 'min', value: 0 }] } }
+     * });
+     * people.setData([{ id: 1, name: 'Ann', age: 36 }]);
+     * people.addNewEmpty({ age: -1 }); // not validated yet
+     *
+     * const errors = people.validate();
+     * // [{ row: <the new row>, field: 'name', messages: ['Required'] },
+     * //  { row: <the new row>, field: 'age', messages: ['Must be at least 0'] }]
+     * if (errors.length === 0) {
+     *     await fetch('/api/people/save', { method: 'POST', body: JSON.stringify(people.getChanges()) });
+     * }
+     *
+     * // only what a save sends: the new and edited rows
+     * people.validate(people.getAllData().filter((row) => row.__rowState === 'N' || row.__rowState === 'M'));
+     * ```
+     */
+    public validate(rows?: Entity | Entity[]): ValidationError<T>[] {
+        const errors = this.__dataContainer.__validate(rows) as ValidationError<T>[];
+        this.__callSubscribers('validate', { errors });
+        return errors;
+    }
+
+    /**
+     * The validation errors the rows have now, without validating: from the edits, and the last
+     * {@link validate}. Every row's, or the rows given. Same entries as `validate()` returns. A row
+     * marked for deletion has none (its errors are back when it is unmarked).
+     *
+     * The server's error of a row (`setErrors()`) is not in it, read it as `row.__rowError`.
+     *
+     * @param rows a row or a list of rows, default every row
+     *
+     * @sample validation
+     * @example
+     * ```ts
+     * import { isGroupRow } from '@simple-html/grid';
+     *
+     * // the errors of the current row, for a form next to the grid
+     * const row = datasource.currentEntity;
+     * if (row && !isGroupRow(row)) {
+     *     for (const { field, messages } of datasource.getErrors(row)) {
+     *         console.log(datasource.getField(field).label, messages.join(', '));
+     *     }
+     * }
+     * ```
+     */
+    public getErrors(rows?: Entity | Entity[]): ValidationError<T>[] {
+        return this.__dataContainer.__getErrors(rows) as ValidationError<T>[];
+    }
+
+    /**
+     * `true` when a row has a validation error now: from an edit, or the last {@link validate}. It does
+     * not validate - before a save, call `validate()`, which also checks the fields never edited. The
+     * rows marked for deletion and the server's errors (`__rowError`) do not count.
+     *
+     * The errors are those of the data container, so of every datasource sharing it.
+     *
+     * @sample validation
+     * @example
+     * ```ts
+     * declare const saveButton: HTMLButtonElement;
+     *
+     * // the grid sends no event for an edit: check when it matters
+     * saveButton.disabled = datasource.hasErrors();
+     * ```
+     */
+    public hasErrors(): boolean {
+        return this.__dataContainer.__hasErrors();
     }
 
     /**
@@ -621,11 +771,13 @@ export class Datasource<T = any> {
      * - a row marked for deletion is removed, a new one too
      * - a new row becomes an ordinary row (`__rowState` `undefined`)
      * - the values a row has now become its original values: nothing counts as edited
-     * - the row's error (`setErrors()`) is cleared
+     * - the row's error (`setErrors()`) and its validation errors are cleared
      *
      * Then `getChanges()` lists none of them, `hasChanges()` is `false` when every row was accepted,
      * and `resetData()` goes back to these values. The displayed rows are rebuilt and
-     * `collection-filtered` is sent once, with `info: 'acceptChanges'`.
+     * `collection-filtered` is sent once, with `info: 'acceptChanges'`. When the current row was
+     * removed, {@link currentEntity} is set to `null` and `current-entity` is sent after; a removed
+     * row leaves the selection (`selection-change`).
      *
      * **The keys of new rows.** A new row has a temporary key, a generated negative number: in its key
      * field (`id: -1` with `key: 'id'`), or without a key field as `__KEY` in
@@ -688,6 +840,7 @@ export class Datasource<T = any> {
                 .map((row) => [row, row.__KEY])
         );
 
+        const rowsBefore = this.getAllData();
         this.__dataContainer.acceptChanges(options);
 
         for (const [row, before] of keysBefore) {
@@ -695,7 +848,10 @@ export class Datasource<T = any> {
                 this.__selection.replaceKey(before, row.__KEY);
             }
         }
+        // the rows marked for deletion are gone
+        const notify = this.__forgetRemovedRows(rowsBefore);
         this.__afterRowStateChange('acceptChanges');
+        notify();
     }
 
     /**
@@ -710,8 +866,47 @@ export class Datasource<T = any> {
     }
 
     /**
+     * Lets go of the rows a method just removed from the data: the current row is set to null when it
+     * is one of them (as setData() does), and their keys leave the selection. Done before the method
+     * sends its own event, so every handler reads the new state.
+     * @param before the rows before the removal, from getAllData()
+     * @returns sends `current-entity` and `selection-change` when they changed: call it after the
+     * method's own event
+     */
+    private __forgetRemovedRows(before: readonly Entity[]): () => void {
+        const kept = new Set<Entity>(this.getAllData());
+        const removed = before.filter((row) => !kept.has(row));
+        const current = this.currentEntity;
+        const currentGone = removed.some((row) => row === current);
+        if (currentGone) {
+            this.currentEntity = null;
+        }
+
+        const removedKeys = new Set(removed.map((row) => row.__KEY));
+        const selected = this.__selection.getSelectedKeys();
+        const stillSelected = selected.filter((key) => !removedKeys.has(key));
+        const selectionChanged = stillSelected.length !== selected.length;
+        if (selectionChanged) {
+            this.__selection.setSelectedKeys(stillSelected);
+        }
+
+        return () => {
+            if (currentGone) {
+                this.__callSubscribers('current-entity', {});
+            }
+            if (selectionChanged) {
+                this.__callSubscribers('selection-change', {});
+            }
+        };
+    }
+
+    /**
      * Removes rows for good: they are not marked for deletion, `getChanges()` does not list them and
      * `resetData()` does not bring them back. Use {@link markForDeletion} to delete rows on a server.
+     *
+     * Sends `collection-changed`. A removed row leaves the selection (`selection-change` is sent
+     * after), and when it was the current row {@link currentEntity} is set to `null`
+     * (`current-entity` is sent after).
      *
      * @param rows a row or a list of rows
      * @param options.refilter `false` to leave the displayed rows as they are, default `true`: they
@@ -732,17 +927,21 @@ export class Datasource<T = any> {
     public removeData(rows: Entity | Entity[], options: { refilter?: boolean } = {}): Entity[] {
         assertOptions('removeData', options, 'removeData(rows, { refilter: false }), or removeAllData()');
         const { refilter = true } = options;
+        const before = this.getAllData();
         const removed = this.__dataContainer.removeData(rows);
+        const notify = this.__forgetRemovedRows(before);
         if (refilter) {
             this.__internalUpdate(true);
         }
         this.__callSubscribers('collection-changed', { removed: true, info: 'removeData', data: rows });
+        notify();
         return removed;
     }
 
     /**
      * Removes every row for good, see {@link removeData}. Was `removeData(null, true)` in v5. Sends
-     * the same `collection-changed` event, with `data: null`.
+     * the same `collection-changed` event, with `data: null`. The rows leave the selection and
+     * {@link currentEntity} is set to `null`, with their events after it.
      *
      * @returns the rows removed
      *
@@ -754,9 +953,12 @@ export class Datasource<T = any> {
      * ```
      */
     public removeAllData(): Entity[] {
+        const before = this.getAllData();
         const removed = this.__dataContainer.removeAllData();
+        const notify = this.__forgetRemovedRows(before);
         this.__internalUpdate(true);
         this.__callSubscribers('collection-changed', { removed: true, info: 'removeData', data: null });
+        notify();
         return removed;
     }
 

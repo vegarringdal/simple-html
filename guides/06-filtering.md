@@ -226,7 +226,8 @@ The field's type decides how a condition compares the row's value with its value
 A row value of `0` counts as blank, on purpose: in ERP style data 0 and empty mean the same.
 `IS_BLANK` matches 0 and `IS_NOT_BLANK` leaves it out, in every field that holds the number 0, and
 the value list puts 0 under "Blank". The text `'0'` is not blank. `IN` on a number field compares
-the formatted text, so there 0 is `'0'`, not `'NULL'`.
+the formatted text, so there 0 is `'0'`, not `'NULL'`. The `required` validation rule takes 0 as
+missing too, see [Validation](05-editing.md#the-built-in-rules).
 
 ## The filter as text
 

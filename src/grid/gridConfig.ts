@@ -27,11 +27,11 @@ import type { IDateConfig } from '../date/interfaces';
  * ```ts
  * import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';
  *
- * const datasource = new Datasource({ fields: { age: 'number', born: 'date' } });
+ * const datasource = new Datasource({ fields: { name: { validate: ['required'] }, age: 'number', born: 'date' } });
  *
  * const config: GridConfig = {
  *     columns: {
- *         name: { label: 'Name', placeholderFilter: 'search', mandatory: true },
+ *         name: { label: 'Name', placeholderFilter: 'search' },
  *         age: { readonly: true }
  *         // born is in the layout without an entry here: it gets the defaults
  *     },
@@ -128,12 +128,14 @@ export type GridConfig = {
     dimRepeatedValues?: boolean;
 
     /**
-     * renders the built in tooltip on buttons/icons, default = true
+     * renders the built in tooltip, default = true: on the buttons and icons of the filter editor,
+     * and the validation messages on a cell with an error and on its row selector
      *
      * the `data-tooltip` attribute is always written to the elements, also when this is
      * false, so you can hook up your own tooltip library instead
      *
      * @sample tooltips
+     * @sample validation
      */
     tooltips?: boolean;
 
@@ -168,7 +170,7 @@ export type GridConfig = {
      * shows a column's `placeholderRow` on the current row (the current entity) only.
      * default = true, so you need to set this to false to display on all rows
      *
-     * @sample mandatory-placeholders
+     * @sample required-placeholders
      */
     placeholderRowCurrentEntityOnly?: boolean;
 };
@@ -234,7 +236,10 @@ export interface LayoutColumn {
  * optional, a field without an entry gets the defaults.
  *
  * The type of the column comes from the datasource (`datasource.getField(field).type`), set it in the
- * datasource's `fields`, not here.
+ * datasource's `fields`, not here. So do the validation rules: a value the user has to fill in is the
+ * field's `required` rule (`fields: { company: { validate: ['required'] } }`), which also gives its
+ * empty editable cells the grid's blue stripes (`simple-html-mandatory`). It replaces v5's
+ * `mandatory` column option.
  *
  * @sample basic-grid
  * @example
@@ -242,7 +247,7 @@ export interface LayoutColumn {
  * import type { ColumnConfig } from '@simple-html/grid';
  *
  * const columns: Record<string, ColumnConfig> = {
- *     company: { label: 'Company', mandatory: true, placeholderRow: 'required' },
+ *     company: { label: 'Company', placeholderRow: 'required' },
  *     age: { operator: 'EQUAL', numberOverride: 'ZERO_TO_BLANK' },
  *     born: { placeholderFilter: 'from date', readonly: true },
  *     country: { focusButton: 'ALWAYS', allowPasteClearOnly: true }
@@ -258,13 +263,13 @@ export type ColumnConfig = {
     /**
      * shown in an empty cell, see `GridConfig.placeholderRowCurrentEntityOnly`
      *
-     * @sample mandatory-placeholders
+     * @sample required-placeholders
      */
     placeholderRow?: string;
     /**
      * shown in the empty header filter. Default: the formatter's placeholder (date fields), else a search icon
      *
-     * @sample mandatory-placeholders
+     * @sample required-placeholders
      */
     placeholderFilter?: string;
     /**
@@ -322,16 +327,6 @@ export type ColumnConfig = {
      * @sample dropdown-grid
      */
     focusButton?: 'SHOW_IF_GRID_NOT_READONLY' | 'SHOW_IF_GRID_AND_CELL_NOT_READONLY' | 'ALWAYS';
-
-    /**
-     * marks the empty cells of the column with blue stripes while the grid and the cell are editable: a
-     * value the user has to fill in. The mark is gone once the cell has a value (a checked checkbox for
-     * a boolean). Restyle it with the `simple-html-mandatory` class. It does not stop a save, check the
-     * values yourself
-     *
-     * @sample mandatory-placeholders
-     */
-    mandatory?: boolean;
 
     /**
      * the cells can not be typed in, only changed by the row menu's paste and clear (and by your own

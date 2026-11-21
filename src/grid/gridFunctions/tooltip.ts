@@ -1,7 +1,8 @@
 import type { Grid } from '../grid';
 
 /**
- * Default tooltip texts, keyed by id: the tooltips of the filter editor's buttons and icons.
+ * Default tooltip texts, keyed by id: the tooltips of the filter editor's buttons and icons. The
+ * validation messages the grid shows as tooltips are in {@link VALIDATION_MESSAGES}.
  *
  * The id is what you override with `tooltipText` in the grid config. `data-tooltip` is written to the
  * elements no matter what `tooltips` is set to, so you can hook up your own tooltip library and just
@@ -124,12 +125,14 @@ function showTooltip(target: HTMLElement, text: string) {
 
 /**
  * delegated hover handling for every [data-tooltip] inside root
+ * @param enabled asked on every hover, for a root that lives longer than the `tooltips` option it
+ * was attached with (the grid's body). Left out, the tooltips are always shown
  */
-export function attachTooltips(root: HTMLElement) {
+export function attachTooltips(root: HTMLElement, enabled: () => boolean = () => true) {
     root.addEventListener('mouseover', (event: MouseEvent) => {
         const target = (event.target as HTMLElement)?.closest?.('[data-tooltip]') as HTMLElement;
         const text = target?.getAttribute('data-tooltip');
-        if (text) {
+        if (text && enabled()) {
             showTooltip(target, text);
         }
     });
@@ -140,6 +143,8 @@ export function attachTooltips(root: HTMLElement) {
         }
     });
 
-    // a tooltip left hanging over a dialog that just changed is worse than no tooltip
+    // a tooltip left hanging over a dialog that just changed is worse than no tooltip. Scrolling the
+    // grid puts other rows under the pointer, in the same cell elements
     root.addEventListener('mousedown', () => hideTooltip());
+    root.addEventListener('wheel', () => hideTooltip(), { passive: true });
 }

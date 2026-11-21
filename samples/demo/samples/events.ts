@@ -25,7 +25,8 @@ export const events: DemoSample = {
             'collection-collapse',
             'current-entity',
             'selection-change',
-            'select'
+            'select',
+            'validate'
         ];
         for (const type of datasourceEvents) {
             datasource.on(type, () => {

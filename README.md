@@ -1,14 +1,15 @@
 # @simple-html/grid
 
 A data grid for plain TypeScript or JavaScript apps, no framework needed. A `Datasource` holds your
-rows and knows the type of each field: it sorts, filters and groups them, keeps the selection and
-tracks the edits for a server. The grid shows it with virtual scrolling, pinned and stacked columns,
+rows and knows the type of each field: it sorts, filters and groups them, keeps the selection, and
+tracks and validates the edits for a server. The grid shows it with virtual scrolling, pinned and stacked columns,
 header filters, a filter editor, grouping, editing and right click menus. Its only dependency is
 lit-html, which is installed with it.
 
 The grid's config and the datasource's fields are plain JSON, so they can be stored - in a backend,
-say. Formatters are named by id (`registerFormatter()`), and the functions of a grid - readonly
-cells and css classes from the row, changes to the menus - are hooks, given next to the config.
+say. Formatters and validators are named by id (`registerFormatter()`, `registerValidator()`), and
+the functions of a grid - readonly cells and css classes from the row, changes to the menus - are
+hooks, given next to the config.
 
 Docs, guides and live samples: https://airemote.github.io/simple-html/. The guides are also in this
 repo, see [Guides](#guides) below.

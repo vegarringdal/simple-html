@@ -46,7 +46,13 @@ describe('formatter registry - registerFormatter()', () => {
         const datasource = new Datasource({ fields: { price: { type: 'number', formatter: 'registry.money' } } });
 
         expect(datasource.getFormatter('price')).toBe(money);
-        expect(datasource.getField('price')).toEqual({ name: 'price', type: 'number', label: 'price', formatter: money });
+        expect(datasource.getField('price')).toEqual({
+            name: 'price',
+            type: 'number',
+            label: 'price',
+            formatter: money,
+            validate: []
+        });
     });
 
     it('expect the formatters option to take a registered id as the default of a type', () => {

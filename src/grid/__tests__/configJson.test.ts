@@ -6,6 +6,7 @@ import { isGroupRow } from '../../datasource/entity';
 import { and, where } from '../../datasource/filterExpression';
 import { registerFormatter } from '../../datasource/formatterRegistry';
 import { NumberFormatterDot } from '../../datasource/numberFormatterDot';
+import { registerValidator } from '../../datasource/validatorRegistry';
 import type { GridConfig, GridState } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { type MountedGrid, mountGrid, renderedColumn, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
@@ -45,7 +46,8 @@ const rows = () => [
     { name: 'Dan', age: 0, born: null, valueType: 'boolean', value: true, country: 'Sweden', phone: '4' }
 ];
 
-const fields = (): DatasourceOptions => ({ fields: { age: 'number', born: 'date' } });
+// name is required: the stripes of an empty name are part of the markup compared
+const fields = (): DatasourceOptions => ({ fields: { name: { validate: ['required'] }, age: 'number', born: 'date' } });
 
 /**
  * a config with every option set
@@ -57,7 +59,6 @@ const fullConfig = (): GridConfig => ({
             placeholderRow: 'required',
             placeholderFilter: 'search',
             operator: 'CONTAINS',
-            mandatory: true,
             focusButton: 'SHOW_IF_GRID_NOT_READONLY'
         },
         age: { label: 'Age', readonly: true, numberOverride: 'ZERO_TO_BLANK' },
@@ -276,16 +277,31 @@ describe('config as JSON - the datasource fields and formatters', () => {
         format: (value) => (typeof value === 'number' ? value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : ''),
         parse: (text) => NumberFormatterDot.parse(text.replaceAll(' ', ''))
     });
+    // and so is a validator of your own, its options are in the JSON
+    registerValidator('configJson.below', (value, _row, rule) =>
+        typeof value === 'number' && typeof rule.limit === 'number' && value >= rule.limit ? 'at least {limit}' : null
+    );
 
     const options = (): Pick<DatasourceOptions, 'fields' | 'formatters'> => ({
         fields: {
             id: 'number',
-            name: { label: 'Name' },
-            price: { type: 'number', label: 'Price', formatter: 'configJson.money' },
+            name: { label: 'Name', validate: ['required', { id: 'maxLength', value: 2, message: 'at most {value}' }] },
+            price: {
+                type: 'number',
+                label: 'Price',
+                formatter: 'configJson.money',
+                validate: [{ id: 'configJson.below', limit: 100 }]
+            },
             born: { type: 'date', formatter: 'dateDDMMYYYY' },
             lastLogin: 'datetime',
             active: 'boolean',
-            amount: 'number'
+            amount: {
+                type: 'number',
+                validate: [
+                    { id: 'min', value: 0 },
+                    { id: 'pattern', value: '^x$' }
+                ]
+            }
         },
         formatters: { number: 'numberComma', datetime: 'datetimeDDMMYYYY' }
     });
@@ -321,5 +337,19 @@ describe('config as JSON - the datasource fields and formatters', () => {
             ['price', 'born', 'lastLogin', 'amount'].map((field) => renderedColumn(element, field)[0]);
         expect(cells(fromJson.element)).toEqual(cells(original.element));
         expect(cells(fromJson.element)).toEqual(['12 345.60', '17.05.1990', '20.11.2026T08:15:00', '1,5']);
+    });
+
+    it('expect a datasource made from the JSON copy to validate the same', async () => {
+        const original = await mountGrid(gridConfig(), data(), { key: 'id', ...options() });
+        const fromJson = await mountGrid(gridConfig(), data(), { key: 'id', ...viaJson(options()) });
+
+        const errors = (mounted: MountedGrid) =>
+            mounted.datasource.validate().map(({ field, messages }) => ({ field, messages }));
+        expect(errors(fromJson)).toEqual(errors(original));
+        // a sanity check that the rules ran: a built-in with a message of its own, one of your own
+        expect(errors(fromJson)).toEqual([
+            { field: 'name', messages: ['at most 2'] },
+            { field: 'price', messages: ['at least 100'] }
+        ]);
     });
 });

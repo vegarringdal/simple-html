@@ -412,10 +412,11 @@ Writing the guides against the code found these. Each fix has a test that fails 
 ### Phase 2b - save workflow, validation, config as JSON
 
 The grid config, the state and the datasource's `fields` + `formatters` are plain JSON, so they can be
-stored in a backend and given back as they are. What is code - formatters and the grid's functions -
-is registered or given next to the config. Deleting a row is a tag that can be undone, and
-`acceptChanges()` closes the save round trip: one transaction with the deleted, edited and new rows,
-then the grid shows what was saved, the new rows with the server's keys.
+stored in a backend and given back as they are. What is code - formatters, validators and the grid's
+functions - is registered or given next to the config. Deleting a row is a tag that can be undone, the
+fields' rules validate the edits and `validate()` checks the rows before a save, and `acceptChanges()`
+closes the save round trip: one transaction with the deleted, edited and new rows, then the grid shows
+what was saved, the new rows with the server's keys.
 
 #### ⚠️ Breaking changes
 - **Deleting a new row marks it**: `markForDeletion()` and `markAllForDeletion()` no longer remove a new
@@ -444,8 +445,63 @@ then the grid shows what was saved, the new rows with the server's keys.
   `TypeError` naming the hook, in the constructor, `createGrid()` and `updateConfig()`.
 - **`CellClass` moved to the hooks** (`src/grid/gridHooks.ts`); it is still exported from the package
   root under the same name.
+- **`ColumnConfig.mandatory` is removed**: it is the `required` validation rule of the datasource field,
+  `fields: { name: { validate: ['required'] } }`, which draws the same stripes (`simple-html-mandatory`)
+  and also validates. A config with `mandatory` (plain JS, a stored config) throws a `TypeError` naming
+  the field, in the `GridInterface` constructor, `createGrid()` and `updateConfig()`. The stripes now
+  show where `required` fails: a number field of 0 is striped (0 is missing, as for `IS_BLANK`), an
+  unchecked checkbox is not (`false` is a value).
+- **`Field` (from `getField()`) has `validate`**: the field's rules written out, `[]` without. A
+  `toEqual()` on a whole `getField()` result has to add it.
+- **The grid shows `__rowError`** (`setErrors()`) on the row number: the class `simple-html-row-error`
+  and the message as its tooltip. It showed nothing before.
+- **`DatasourceEvents` has a `validate` event**, and the methods that remove rows can send
+  `current-entity` and `selection-change` (see Fixed): a `switch` over every event name has to add it.
+- **`EntityHandler` takes `onEdit`** in its options and its set trap calls it: a handler of your own
+  (`overrideEntityHandler()`) has to call it, or the edits are not validated.
 
 #### Added
+- **Validation**, for item 47 of the plan:
+  - **rules in the fields, as JSON**: `fields: { age: { type: 'number', validate: ['required', { id: 'min',
+    value: 0 }, { id: 'max', value: 150, message: 'too old' }] } }`. A rule is the id of a validator, or
+    `{ id, ...options, message? }`. Types `ValidationRule`, `ValidationRuleObject`, `ValidationOption`.
+  - **`registerValidator(id, validator)`**, one registry for the page like the formatters. A `Validator`
+    is `(value, row, rule) => string | null`: the message, a message id, or `null` when valid. The
+    datasource looks its ids up when it is made: an unknown id throws listing the registered ones, and so
+    do rules that are no list, a rule without an id, a `message` that is not text, and a built-in rule
+    with a wrong option (`min` without a number, a `pattern` that is no regular expression). A validator
+    that returns something else than text or `null` throws a `TypeError`.
+  - **built-ins**: `required` (fails on `null`, `undefined`, `''`, an invalid Date and 0 - like
+    `IS_BLANK`, because an emptied number cell stores 0; `false` passes), `min`, `max` (numbers),
+    `minLength`, `maxLength`, `pattern` (text; a regular expression as text, not anchored). All but
+    `required` pass a blank value, and the values not of their kind.
+  - **messages by id**, `VALIDATION_MESSAGES`: `'validation.required'` `Required`, `'validation.min'`
+    `Must be at least {value}`, `'validation.max'` `Must be at most {value}`, `'validation.minLength'`
+    `Must be at least {value} characters`, `'validation.maxLength'` `Must be at most {value} characters`,
+    `'validation.pattern'` `Not in the expected format`. A rule's `message` replaces the default, and
+    `{name}` is replaced by the rule's option `name`. The ids are for the texts map of phase 3.
+  - **when it runs**: an edit, from the grid or from code - the field, and the row's fields that have an
+    error, so an error that reads another field clears once that is fixed. The rows from `setData()` and
+    the new rows from `addNewEmpty()` are not validated until they are edited or `validate()` runs.
+  - **`datasource.validate(rows?)`** checks every field with rules of every row (or the rows given),
+    keeps the errors and returns them as `ValidationError<T>[]` - `{ row, field, messages }`, in the
+    order of the rows and the rules - and sends `validate` (`{ errors }`). **`getErrors(rows?)`** and
+    **`hasErrors()`** read the errors there are now. A row marked for deletion is skipped and has none
+    (they are back when it is unmarked). `acceptChanges()` and `resetData()` clear them,
+    `resetDataSelectionOnly()` those of the selected rows.
+  - **kept apart from the server's errors**: `setErrors()` / `__rowError` does not change them, and
+    `validate()` / `getErrors()` / `hasErrors()` do not read it. The grid shows both on the row number.
+  - **shared containers**: the rules are the container's, like the field types - an edit through any
+    datasource on it is validated; two datasources that both give a field rules must give the same
+    ones (the order of a rule's options does not matter), or the second throws.
+  - **in the grid**: a cell with an error gets `simple-html-cell-error` (a red border inside, a tint)
+    and its messages as the tooltip, one per line; the row number `simple-html-row-error` (a red bar, a
+    tint) with the server's error and a `Label: messages` line per field. An edit in the grid shows them
+    as the user types, without rendering the input again; `validate()` shows them through its event.
+    The grid's own tooltip shows them (`tooltips: false` turns it off, `data-tooltip` is written
+    either way); it is on the grid's body now, hidden on wheel and when the grid leaves the page, and
+    keeps the line breaks (`white-space: pre-line`). New css variables `--simple-html-grid-error-color`
+    and `--simple-html-grid-error-bg-color`, a lighter red in the demo's dark theme.
 - **`unmarkForDeletion(rows)` and `unmarkAllForDeletion()`** on `Datasource` and `DataContainer`: undo a
   delete. The row is as it was before it was marked - its edits kept, a new row new again. Sends
   `collection-filtered` with `info: 'unmarkForDeletion'`.
@@ -497,7 +553,28 @@ then the grid shows what was saved, the new rows with the server's keys.
   linked from the datasource guide; the new `info` values in the events guide; the delete entries in
   the menus guide
 
+#### Fixed
+- **The methods that remove rows let go of them**: `removeData()`, `removeAllData()`,
+  `clearMarkedForDeletion()`, `acceptChanges()` (rows marked for deletion), `resetData()` and
+  `resetDataSelectionOnly()` (new rows) left `currentEntity` on a row they removed, and its key in the
+  selection - a row added later with the same key came back selected. They now set `currentEntity` to
+  `null` the way `setData()` does, take the removed rows out of the selection, and send
+  `current-entity` / `selection-change` after their own event when that changed something.
+
 #### Docs
+- **Validation**: a "Validation" section in the editing guide (the rules, the built-ins and why 0 fails
+  `required`, messages, rules of your own, when it runs, validating before a save, how the grid shows
+  the errors) and "Errors from a server" says how they relate; "Validation rules" in the datasource
+  guide; `mandatory` gone from the grid config guide, the `validate` event in the events guide, a line
+  in "0 is blank"; the migrating guide and `MIGRATION.md` (mandatory -> required, the new API, the
+  grid showing `__rowError`, the v5 config converter keeps the mandatory fields). JSDoc with examples on
+  `registerValidator`, `VALIDATION_MESSAGES`, the rule types, `Validator`, `ValidationError`,
+  `validate()`, `getErrors()`, `hasErrors()`, `FieldConfig.validate`.
+- samples: a new "Validation" sample (required, min/max, maxLength, pattern and a validator of its own
+  with options, a save that validates first, a server error next to the validation errors); "Mandatory &
+  placeholders" is "Required fields & placeholders" (`required-placeholders`), with the rule in the
+  fields and a validate button; `samples/grid01` has its mandatory columns as required fields and a
+  validate button; the events samples log `validate`.
 - **A `Date` in a stored state**: JSON turns it into its ISO text, and `setState()` keeps the text (it
   does not turn it back into a `Date`); `getState()` then gives the text. A `date` or `datetime` field
   reads the text as the same moment - the same rows, the same date in the header filter and
@@ -526,6 +603,22 @@ then the grid shows what was saved, the new rows with the server's keys.
   (`cellCallbacks.test.ts`, `gridMenus.test.ts`), plus the `TypeError` for a hook in the config
   (`createGrid.test.ts`, `updateConfig.test.ts`). Tests that register a formatter use an id of their
   own, and the one that replaces a built-in id puts it back in `afterAll`
+- tests: `validation.test.ts` - the built-ins (what `required` takes as missing, 0 included, and that
+  the stripes use the same test), messages and their options, `registerValidator` (replacing, a built-in
+  put back in `afterAll`, the errors), the rules in the fields and their errors, when it runs (edits from
+  code, the fields with an error checked again, new rows, `validate()` of all rows / the rows given, the
+  event, copies), rows marked for deletion, clearing, server errors apart, shared containers.
+  `removedRows.test.ts` - `currentEntity`, the selection and the events after each removing method.
+  `validationInGrid.test.ts` - the required stripes (0, readonly), the `mandatory` guard, the error class
+  and tooltip of a cell and a row number while typing and after `change`, `validate()` without a
+  refresh, `acceptChanges()`, a row marked for deletion, server errors alone and with validation errors,
+  the tooltip on hover and `tooltips: false`. `configJson.test.ts` - the rules (a built-in with a message,
+  one of your own with options) survive JSON and validate the same. Tests that register a validator use
+  an id of their own
+- typings consumer: `registerValidator`, rules, `validate()`, `getErrors()`, `hasErrors()`,
+  `ValidationError<T>`, `getField().validate`, the `validate` event, `@ts-expect-error` checks that
+  `ColumnConfig.mandatory` and a validator that is no function do not compile, and the JSON check of
+  the fields with `validate` in them
 - typings consumer: `registerFormatter`, formatter ids, hooks, `updateHooks`, typed hook rows,
   `@ts-expect-error` checks that a formatter object in the options and `isReadonly` / `cellClass` /
   `menus` in `GridConfig` no longer compile, and a type-level check that `GridConfig`, `GridState` and

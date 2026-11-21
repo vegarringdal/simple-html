@@ -252,6 +252,11 @@ createButton('remove marked for deleted (no undo)', () => {
     datasource.clearMarkedForDeletion();
 });
 
+// country and favoriteFruit are required (gridFields): the errors show on the cells and row numbers
+createButton('validate (see console)', () => {
+    console.log(datasource.validate(), 'hasErrors:', datasource.hasErrors());
+});
+
 createButton('reset state (initialState)', () => {
     gridInterface.resetState();
 });
@@ -284,7 +289,8 @@ const datasourceEventNames: (keyof DatasourceEvents)[] = [
     'collection-collapse',
     'current-entity',
     'selection-change',
-    'select'
+    'select',
+    'validate'
 ];
 
 createButton('datasource.on\n (see console - F12)', () => {

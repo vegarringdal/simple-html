@@ -30,6 +30,14 @@ export { OPERATORS } from './datasource/OPERATORS';
 export type { SelectionMode } from './datasource/selectionMode';
 export type { SortArgument } from './datasource/sortArgument';
 export { TextFormatter } from './datasource/textFormatter';
+export type {
+    ValidationError,
+    ValidationOption,
+    ValidationRule,
+    ValidationRuleObject,
+    Validator
+} from './datasource/validator';
+export { registerValidator, VALIDATION_MESSAGES } from './datasource/validatorRegistry';
 export { DateElement } from './date/dateElement';
 export type { DateEvents } from './date/dateEvents';
 export { DateInterface } from './date/dateInterface';

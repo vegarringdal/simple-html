@@ -59,7 +59,8 @@ Search and replace is enough for all of them.
 | `import { Grid } from '@simple-html/grid'` | not exported, it is the grid's internal class. Use `GridInterface`. |
 | `import { EntityHandler } from '@simple-html/grid'` | type only: `import type { EntityHandler }` (it is the type of `Entity.__controller`) |
 | `GridConfig.selectionMode` | `new Datasource({ selectionMode })` or `datasource.setSelectionMode()`, see [below](#selectionmode-is-the-datasources) |
-| `ColumnConfig.mandatoryOnlyIfEmpty` | nothing - it had no effect, `mandatory` marks only the empty cells |
+| `ColumnConfig.mandatory` | the field's `required` rule, `fields: { name: { validate: ['required'] } }` - see [Validation](#validation-mandatory-is-the-required-rule) |
+| `ColumnConfig.mandatoryOnlyIfEmpty` | nothing - it had no effect, `mandatory` marked only the empty cells |
 
 ## Events
 
@@ -1020,6 +1021,73 @@ datasource.acceptChanges({ newKeys: new Map(saved.map((row) => [row.temporaryId,
 `'acceptChanges'` and `'unmarkForDeletion'`: a `switch` that lists every value of `info` has to add
 them. See [the editing guide](guides/05-editing.md#saving) for the whole round trip.
 
+## Validation: `mandatory` is the `required` rule
+
+v5 had `mandatory` on a column: it drew stripes on the empty cells, nothing more - a save went
+through with the field empty. v6 validates: the rules are in the datasource's `fields`, as JSON, and
+the validators are registered by id, like the formatters. The `required` rule draws the same stripes.
+
+```ts
+// v5
+const gridConfig: GridConfig = {
+    attributes: [{ attribute: 'name', mandatory: true }, { attribute: 'age' }]
+    // ...
+};
+// check the values yourself before a save
+
+// v6
+const datasource = new Datasource({
+    key: 'id',
+    fields: {
+        name: { validate: ['required'] },
+        age: { type: 'number', validate: ['required', { id: 'min', value: 0 }, { id: 'max', value: 150, message: 'too old' }] }
+    }
+});
+const errors = datasource.validate(); // before a save: [] when every row is valid
+```
+
+* **`ColumnConfig.mandatory` is removed.** A config with it throws a `TypeError` that names the
+  field and the rule - it would otherwise be dropped without a word, and the field no longer checked.
+  That includes a config stored as JSON.
+* **What is striped changed a little**: the stripes show where `required` fails, which is where the
+  filter's `IS_BLANK` matches - `null`, `undefined`, `''`, an invalid Date, and **0**. A number field
+  of 0 is striped now (v5 showed `'0'` as a value). An unchecked checkbox (`false`) is not striped any
+  more: `false` is a value. For a checkbox that must be checked, write a rule:
+  `registerValidator('checked', (value) => (value === true ? null : 'Must be checked'))`.
+* The class of the stripes is still `simple-html-mandatory`, a restyle of it keeps working.
+
+### New: the validation API
+
+| | what it does |
+| --- | --- |
+| `FieldConfig.validate` | the field's rules: `['required', { id: 'min', value: 0, message: 'at least {value}' }]` |
+| `registerValidator(id, validator)` | a validator of your own, `(value, row, rule) => message \| null` |
+| built-in validators | `required`, `min`, `max`, `minLength`, `maxLength`, `pattern` (a regular expression as text) |
+| `VALIDATION_MESSAGES` | the default messages by id: `'validation.required'`, `'validation.min'`, `'validation.max'`, `'validation.minLength'`, `'validation.maxLength'`, `'validation.pattern'` |
+| `datasource.validate(rows?)` | validates every row, or the rows given, keeps and returns the errors: `{ row, field, messages }[]` |
+| `datasource.getErrors(rows?)`, `hasErrors()` | the errors there are now, without validating |
+| `getField(name).validate` | the field's rules, written out as objects |
+| the `validate` event | sent by `validate()`, the grid shows the errors |
+
+* An edit is validated as it is made, from the grid and from code. The rows from `setData()` and the
+  new rows of `addNewEmpty()` are not, until they are edited or `validate()` runs.
+* `acceptChanges()` and `resetData()` clear the errors. A row marked for deletion has none.
+* An unknown validator id, or a built-in rule with a wrong option, throws when the datasource is
+  made. Datasources that share a container must give a field the same rules (or only one of them
+  rules), like the types.
+* The grid shows a cell with an error with the class `simple-html-cell-error` and the messages as its
+  tooltip, and the row number with `simple-html-row-error`. New css variables:
+  `--simple-html-grid-error-color`, `--simple-html-grid-error-bg-color`.
+
+### The grid shows the errors of a server
+
+`setErrors()` (`__rowError`) is unchanged and kept apart from the validation errors: it does not
+change them, and `validate()` / `hasErrors()` do not read it. But the grid shows it now: the row
+number gets `simple-html-row-error`, and the message is the first line of its tooltip. v5 showed
+nothing; a `cellClass` hook that colored the row's cells keeps working.
+
+See [the editing guide](guides/05-editing.md#validation).
+
 ## Grid config
 
 The config is what you write: the options of each column, where the columns go, sizes and
@@ -1058,10 +1126,11 @@ const gridConfig: GridConfig = {
     placeHolderRowCurrentEntityOnly: false
 };
 
-// v6
+// v6 - mandatory is the required rule of the datasource field, see "Validation" below:
+// new Datasource({ fields: { name: { validate: ['required'] } } })
 const gridConfig: GridConfig = {
     columns: {
-        name: { label: 'Name', placeholderFilter: 'search', mandatory: true },
+        name: { label: 'Name', placeholderFilter: 'search' },
         age: { readonly: true },
         phone: {} // not in the layout: the user can add it from the column chooser
         // born, company and balance have no options: a field in the layout without an entry
@@ -1109,8 +1178,9 @@ from the datasource's `fields` (see [Fields and formatters](#fields-and-formatte
 | `operator` | unchanged, the operator the header filter starts with. The one the user picks in the header filter's menu is state: `headerFilters[field].operator` |
 | `currentFilterValue` | removed - it is state: `headerFilters[field].value` |
 | `type` | removed (phase 1) - the type comes from the datasource's `fields` |
-| `mandatoryOnlyIfEmpty` | removed - it had no effect: `mandatory` marks only the empty cells |
-| `dynamicCellTypeColumn`, `readonly`, `numberOverride`, `focusButton`, `mandatory`, `allowPasteClearOnly` | unchanged |
+| `mandatory` | removed - the field's `required` rule: `fields: { name: { validate: ['required'] } }`, see [Validation](#validation-mandatory-is-the-required-rule). A config with it throws |
+| `mandatoryOnlyIfEmpty` | removed - it had no effect: `mandatory` marked only the empty cells |
+| `dynamicCellTypeColumn`, `readonly`, `numberOverride`, `focusButton`, `allowPasteClearOnly` | unchanged |
 
 In v5 picking an operator in the header filter's menu wrote it into the column's `operator`, so the
 config changed under you (and opening the menu set it to the type's default). In v6 the column's
@@ -1254,6 +1324,7 @@ become `columns`, the `columns*` the `layout`, and the state v5 kept in the conf
 ```ts
 import {
     type ColumnConfig,
+    type FieldConfig,
     type GridConfig,
     type GridState,
     type GroupArgument,
@@ -1274,6 +1345,7 @@ type V5Attribute = Omit<ColumnConfig, 'placeholderRow' | 'placeholderFilter'> & 
     placeHolderFilter?: string;
     currentFilterValue?: unknown;
     type?: string; // removed in v6: list the field's type in the datasource's fields
+    mandatory?: boolean; // removed in v6: the field's required rule, see requiredFieldsOfV5()
 };
 
 /** a v5 GridConfig, as written or from saveConfig(). The options that did not change come from v6 */
@@ -1312,7 +1384,7 @@ function fromV5Config(v5: V5GridConfig): GridConfig {
 
     const columns: Record<string, ColumnConfig> = {};
     const headerFilters: GridState['headerFilters'] = {};
-    for (const { attribute, placeHolderRow, placeHolderFilter, currentFilterValue, type, ...rest } of attributes) {
+    for (const { attribute, placeHolderRow, placeHolderFilter, currentFilterValue, type, mandatory, ...rest } of attributes) {
         const column: ColumnConfig = rest; // label, operator, readonly ... are unchanged
         columns[attribute] = column;
         if (placeHolderRow !== undefined) {
@@ -1344,10 +1416,25 @@ function fromV5Config(v5: V5GridConfig): GridConfig {
         }
     };
 }
+
+/**
+ * the fields a v5 config made mandatory, as the datasource fields with the required rule - merge
+ * them into the fields you give the datasource
+ */
+function requiredFieldsOfV5(v5: V5GridConfig): Record<string, FieldConfig> {
+    const fields: Record<string, FieldConfig> = {};
+    for (const { attribute, mandatory } of v5.attributes ?? []) {
+        if (mandatory) {
+            fields[attribute] = { validate: ['required'] };
+        }
+    }
+    return fields;
+}
 ```
 
 ```ts
 // a config written for v5
+const datasource = new Datasource({ key: 'id', fields: { age: 'number', ...requiredFieldsOfV5(v5Config) } });
 const gridInterface = new GridInterface(fromV5Config(v5Config), datasource);
 
 // a state saved with v5's saveConfig(): the layout and the state parts of it
@@ -1358,9 +1445,10 @@ if (saved) {
 }
 ```
 
-A column's `type` is dropped, list the field's type in the datasource's `fields`. An `operator` the
-user had picked in v5 was saved in the attribute, it stays the column's `operator` - the header
-filter starts with it.
+A column's `type` is dropped, list the field's type in the datasource's `fields`. So is
+`mandatory`: it is the field's `required` rule, `requiredFieldsOfV5()` lists the fields that need it.
+An `operator` the user had picked in v5 was saved in the attribute, it stays the column's `operator`
+- the header filter starts with it.
 
 ## Setup, callbacks and methods of the grid
 
@@ -1472,8 +1560,8 @@ gridInterface.updateHooks({ isReadonly: undefined }); // removed again
 
 * **`inputClass` is `input`**: the class goes on the cell's `<input>`, the text.
 * **`dimmedClass` is `background`**: the class goes on the element behind the input. The input is
-  transparent, so it is the cell's background; the grid draws the readonly and mandatory stripes
-  there. As in v5 the element has no size on an editable cell (the grid's readonly and mandatory
+  transparent, so it is the cell's background; the grid draws the readonly and required stripes
+  there. As in v5 the element has no size on an editable cell (the grid's readonly and required
   classes give it one): give your class `position: absolute; inset: 0`.
 * **`cellClass` has no third argument.** v5 passed whether the cell is readonly. Both callbacks are
   yours: call the same check from `cellClass` if you need it.
@@ -1715,6 +1803,12 @@ Found while writing the v6 docs: each did not do what its name or its docs said.
   is no longer in the data. Replaced rows are new objects, so this is the case after every
   `setData(rows)` - also when a row with the same key comes back. v5 kept pointing at the old row.
   Rows added with `{ add: true }`, or the same row objects set again, keep it.
+* **The methods that remove rows let go of them**: `removeData()`, `removeAllData()`,
+  `clearMarkedForDeletion()`, `acceptChanges()` (the rows marked for deletion) and `resetData()` /
+  `resetDataSelectionOnly()` (the new rows). When the current row is removed, `currentEntity` is set
+  to `null`; a removed row leaves the selection. `current-entity` and `selection-change` are sent
+  after the method's own event. v5 kept both pointing at the removed row - a row added later with the
+  same key came back selected.
 * **`selectAll()` only works in the `'multiple'` selection mode.** In `'single'` and `'none'` it
   selects nothing and sends no `selection-change` (v5 sent the event anyway). The same for a click on
   the grid's top left corner.

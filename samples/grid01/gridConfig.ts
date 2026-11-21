@@ -13,7 +13,10 @@ export const gridFields: Record<string, FieldType | FieldConfig> = {
     age: 'number',
     index: 'number',
     date1: 'date',
-    date2: { type: 'date', label: 'date 2' }
+    date2: { type: 'date', label: 'date 2' },
+    // required: striped while empty, and validated when edited or by datasource.validate()
+    country: { validate: ['required'] },
+    favoriteFruit: { validate: ['required'] }
 };
 
 /**
@@ -61,12 +64,10 @@ export const gridConfig: GridConfig = {
             focusButton: 'SHOW_IF_GRID_NOT_READONLY'
         },
         country: {
-            placeholderRow: 'country',
-            mandatory: true
+            placeholderRow: 'country'
         },
         favoriteFruit: {
-            placeholderRow: 'favoriteFruit',
-            mandatory: true
+            placeholderRow: 'favoriteFruit'
         },
         balance: {
             readonly: true

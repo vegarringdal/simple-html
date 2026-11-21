@@ -169,8 +169,8 @@ export interface CellClass {
     input?: string;
     /**
      * added to the element behind the input, which fills the cell. The input is transparent, so this
-     * is the cell's background - the grid draws the readonly and mandatory stripes there. On an
-     * editable cell it has no size (the grid's readonly and mandatory classes give it one): give the
+     * is the cell's background - the grid draws the readonly and required stripes there. On an
+     * editable cell it has no size (the grid's readonly and required classes give it one): give the
      * class `position: absolute; inset: 0`. Was `dimmedClass` in v5
      */
     background?: string;

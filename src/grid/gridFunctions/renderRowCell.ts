@@ -1,6 +1,7 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
+import { isMissingValue } from '../../datasource/validatorRegistry';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
@@ -12,6 +13,8 @@ import { DIV } from './DIV';
 import { getCellType } from './getCellType';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
+import { renderRowSelectorOf } from './renderRowSelector';
+import { showCellErrors } from './showCellErrors';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 export function renderRowCell(
@@ -29,8 +32,12 @@ export function renderRowCell(
 
     // a group row has no cells, the grid hides them
     if (isGroupRow(entity)) {
+        showCellErrors(ctx, cell, null, null);
         return;
     }
+
+    // the validation errors: a class and a tooltip on the cell element
+    showCellErrors(ctx, cell, entity, attribute || null);
 
     if (attribute) {
         const config = ctx.gridInterface.__getGridConfig();
@@ -38,9 +45,17 @@ export function renderRowCell(
         const datasource = ctx.gridInterface.getDatasource();
 
         // the field's type, and the type of this cell - dynamicCellTypeColumn can change it per row
-        const fieldType = datasource.getField(attribute).type;
+        const field = datasource.getField(attribute);
+        const fieldType = field.type;
         const cellConfigType = getCellType(ctx, attribute, entity);
         const formatter = datasource.getFormatter(attribute, cellConfigType);
+
+        // after an edit: the field was validated, show its errors and the row's. Not by rendering the
+        // cell again, that would put the formatted value back into the input while the user types
+        const showEdit = () => {
+            showCellErrors(ctx, cell, entity, attribute);
+            renderRowSelectorOf(ctx, row);
+        };
 
         let showPlaceHolder = true;
         if (config.placeholderRowCurrentEntityOnly) {
@@ -58,19 +73,16 @@ export function renderRowCell(
             dimmed = 'simple-html-readonly';
         }
 
-        if (!config.readonly && !cellReadOnly && cellConfig.mandatory) {
+        // the stripes of a required field while its value is missing - what the required rule fails
+        // on, 0 included. Only where the user can fill it in
+        const required = field.validate.some((rule) => rule.id === 'required');
+        if (!config.readonly && !cellReadOnly && required && isMissingValue(entity?.[attribute])) {
             dimmed = 'simple-html-mandatory';
         }
 
         // a checkbox shows the raw value, every other cell the text from the field's formatter
         const checked = Boolean(entity?.[attribute]);
         let value = formatter.format(entity?.[attribute]);
-
-        if (cellConfigType === 'boolean' ? checked : value) {
-            if (dimmed === 'simple-html-mandatory') {
-                dimmed = '';
-            }
-        }
 
         if (fieldType === 'number') {
             if (cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') {
@@ -121,6 +133,7 @@ export function renderRowCell(
                                     // booleans are not parsed, the checkbox gives the value
                                     entity[attribute] = !e.target.checked;
                                     e.target.checked = Boolean(entity[attribute]);
+                                    showEdit();
                                 }
                             }
                         }}
@@ -348,6 +361,7 @@ export function renderRowCell(
 
                             if (!config.readonly && !cellReadOnly) {
                                 entity[attribute] = formatter.parse(e.target.value);
+                                showEdit();
                             }
                         }}
                         @change=${(e: any) => {
@@ -358,6 +372,7 @@ export function renderRowCell(
 
                             if (!config.readonly && !cellReadOnly) {
                                 entity[attribute] = formatter.parse(e.target.value);
+                                showEdit();
                             }
                         }}
                     />

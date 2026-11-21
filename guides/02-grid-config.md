@@ -20,11 +20,12 @@ A config has two parts for the columns:
 ```ts
 import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';
 
-const datasource = new Datasource({ fields: { age: 'number', born: 'date', balance: 'number' } });
+// a value the user has to fill in is a rule of the field: required
+const datasource = new Datasource({ fields: { name: { validate: ['required'] }, age: 'number', born: 'date', balance: 'number' } });
 
 const config: GridConfig = {
     columns: {
-        name: { label: 'Name', mandatory: true },
+        name: { label: 'Name' },
         age: { readonly: true },
         phone: { label: 'Phone' } // not in the layout: the user can add it from the column chooser
     },
@@ -55,7 +56,9 @@ const gridInterface = createGrid(host, { config, datasource });
   `gridInterface.getHiddenFields()` returns these fields (`['phone']` above).
 
 The type of a column comes from the datasource's `fields`, not from the config, see
-[Datasource](04-datasource.md#fields-and-types).
+[Datasource](04-datasource.md#fields-and-types). So do the validation rules: a field the user has to
+fill in has the `required` rule, which also shows its empty cells with stripes - see
+[Validation](05-editing.md#validation). The `mandatory` column option of v5 is gone.
 
 ### The column label
 
@@ -74,7 +77,6 @@ Every option of a `ColumnConfig` is optional.
 | --- | --- |
 | `label` | the header text |
 | `readonly` | the cell can not be edited, also when the grid can. Shown with stripes |
-| `mandatory` | an empty editable cell is shown with stripes, until it has a value |
 | `placeholderRow` | text shown in an empty cell, by default on the current row only (`placeholderRowCurrentEntityOnly`) |
 | `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else a search icon |
 | `operator` | the operator the header filter starts with. Default `EQUAL` for text (the whole text: `ann` does not find `Anna`), see [Filtering](06-filtering.md#header-filters) |
@@ -86,7 +88,7 @@ Every option of a `ColumnConfig` is optional.
 `focusButton` takes `'ALWAYS'`, `'SHOW_IF_GRID_NOT_READONLY'` or
 `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`.
 
-```sample mandatory-placeholders
+```sample required-placeholders
 ```
 
 ## Grid options
@@ -106,7 +108,7 @@ Every option is optional.
 | `dimRepeatedValues` | `false` | dims a cell that has the same value as the row above. The row menu can toggle it |
 | `placeholderRowCurrentEntityOnly` | `true` | shows `placeholderRow` on the current row only. `false` shows it on every row |
 | `autoRemoveContextMenuOnScrollEvent` | `false` | closes the open menu when the grid scrolls |
-| `tooltips` | `true` | the built-in tooltips on the buttons of the filter editor |
+| `tooltips` | `true` | the built-in tooltips: on the buttons of the filter editor, and the validation messages on a cell and its row number |
 | `tooltipText` | | your own tooltip texts, keyed by the ids in `TOOLTIPS` |
 | `datePickerConfig` | | names of months and days, week start and sizes of the date picker: only the fields to change (`Partial<IDateConfig>`), e.g. `{ weekStart: 0, isoWeek: false }`. The rest are the defaults: English names, weeks from monday with their numbers |
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |

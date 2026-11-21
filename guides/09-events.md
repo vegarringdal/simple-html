@@ -63,9 +63,10 @@ gridInterface.on('paste', onPaste);
 | `collection-grouped` | the grouping changed: `group()`, `removeGroup()` | `{ info: 'group', groupings }` or `{ info: 'removeGroup' }` |
 | `collection-expand` | `expandGroup()` expanded one or every group | `{}` |
 | `collection-collapse` | `collapseGroup()` collapsed one or every group | `{}` |
-| `current-entity` | `currentEntity` was set: a row was clicked or selected, or `setRowAsCurrentEntity()`. Also when `setData()` set it to `null`, the current row no longer in the data (after `collection-changed`) | `{}`, read `datasource.currentEntity` |
-| `selection-change` | the selected rows changed. `deselectAll()` sends it only with `{ notify: true }`, `selectAll()` only in the `'multiple'` selection mode | `{}`, read `datasource.getSelectedRows()` |
+| `current-entity` | `currentEntity` was set: a row was clicked or selected, or `setRowAsCurrentEntity()`. Also when `setData()` set it to `null`, the current row no longer in the data, and when a method that removes rows removed it (`removeData()`, `acceptChanges()`, `resetData()` ...) - after their own event | `{}`, read `datasource.currentEntity` |
+| `selection-change` | the selected rows changed. `deselectAll()` sends it only with `{ notify: true }`, `selectAll()` only in the `'multiple'` selection mode. Also when a method that removes rows removed a selected one, after its own event | `{}`, read `datasource.getSelectedRows()` |
 | `select` | a row was selected from code, the grid scrolls to it | `{ info, row }` |
+| `validate` | `validate()` ran, the grid shows the errors. An edit is validated without an event | `{ errors }`, what `validate()` returned |
 
 `collection-changed`:
 

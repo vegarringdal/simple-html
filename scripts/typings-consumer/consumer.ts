@@ -58,9 +58,16 @@ import {
     NumberFormatterDot,
     or,
     registerFormatter,
+    registerValidator,
     type SortArgument,
     TextFormatter,
     TOOLTIPS,
+    VALIDATION_MESSAGES,
+    type ValidationError,
+    type ValidationOption,
+    type ValidationRule,
+    type ValidationRuleObject,
+    type Validator,
     where
 } from '../../dist/index';
 
@@ -253,8 +260,11 @@ const withRows: LayoutColumn = { rows: ['name'], width: 100 };
 const withSorting: GridConfig = { layout, sorting: [] };
 // @ts-expect-error the datasource owns the selection mode: new Datasource({ selectionMode })
 const withSelectionMode: GridConfig = { layout, selectionMode: 'single' };
-// @ts-expect-error mandatoryOnlyIfEmpty is gone, mandatory marks the empty cells only
-const onlyIfEmpty: ColumnConfig = { mandatory: true, mandatoryOnlyIfEmpty: true };
+// @ts-expect-error mandatoryOnlyIfEmpty is gone
+const onlyIfEmpty: ColumnConfig = { mandatoryOnlyIfEmpty: true };
+// @ts-expect-error mandatory is gone: the required rule of the datasource field, validate: ['required']
+const mandatoryColumn: ColumnConfig = { mandatory: true };
+console.log(mandatoryColumn);
 // the date picker takes only the fields to change, the rest are defaults
 const weeksFromSunday: GridConfig = { layout, datePickerConfig: { weekStart: 0, isoWeek: false } };
 console.log(withAttributes, withColumnsCenter, withRows, withSorting, withSelectionMode, onlyIfEmpty, weeksFromSunday);
@@ -442,6 +452,68 @@ datasource.on('collection-filtered', onFiltered)();
 datasource.on('select', (data) => console.log(data.row.toFixed(), data.info));
 datasource.on('selection-change', () => datasource.getSelectedRows());
 datasource.on('current-entity', () => datasource.currentEntity);
+datasource.on('validate', (data) => {
+    const sent: ValidationError[] = data.errors;
+    console.log(sent.map((error) => error.messages.join(', ')));
+});
+
+// validation: the rules are in the fields, as JSON; the validators are registered by id
+const oneOf: Validator = (value, row, rule) => {
+    const values: ValidationOption | undefined = rule.values;
+    const other: unknown = row.anything; // the row's other fields
+    console.log(other);
+    return Array.isArray(values) && !values.includes(String(value)) ? 'Must be one of {values}' : null;
+};
+registerValidator('oneOf', oneOf);
+registerValidator('present', (value) => (value === null || value === undefined ? 'validation.required' : null));
+// @ts-expect-error a validator is a function, not an object
+registerValidator('object', { validate: () => null });
+// @ts-expect-error a validator returns a message or null
+registerValidator('boolean', (value) => value === 1);
+const minRule: ValidationRuleObject = { id: 'min', value: 0, message: 'at least {value}' };
+// @ts-expect-error a rule needs its id
+const ruleWithoutId: ValidationRuleObject = { value: 0 };
+// @ts-expect-error an option is JSON: no function
+const withFunction: ValidationRuleObject = { id: 'min', value: () => 0 };
+const ageRules: ValidationRule[] = [
+    'required',
+    minRule,
+    { id: 'oneOf', values: ['a', 'b'] },
+    { id: 'pattern', value: '^[0-9]+$' }
+];
+const validated = new Datasource<Person>({
+    key: 'id',
+    fields: { name: { validate: ['required', { id: 'maxLength', value: 50 }] }, age: { type: 'number', validate: ageRules } }
+});
+const validationErrors: ValidationError<Person>[] = validated.validate();
+const someErrors: ValidationError<Person>[] = validated.validate(validated.getSelectedRows());
+const firstError = validationErrors[0];
+const errorName: string | undefined = firstError?.row.name;
+const errorField: string | undefined = firstError?.field;
+const errorMessages: string[] | undefined = firstError?.messages;
+const currentErrors: ValidationError<Person>[] = validated.getErrors();
+const ofRow: ValidationError<Person>[] = validated.getErrors(validated.getDataRows()[0]);
+const invalid: boolean = validated.hasErrors();
+const rulesOfName: readonly ValidationRuleObject[] = validated.getField('name').validate;
+const requiredText: string | undefined = VALIDATION_MESSAGES['validation.required'];
+console.log(
+    ruleWithoutId,
+    withFunction,
+    someErrors,
+    errorName,
+    errorField,
+    errorMessages,
+    currentErrors,
+    ofRow,
+    invalid,
+    rulesOfName,
+    requiredText
+);
+// @ts-expect-error the rules are a list
+const notAList: FieldConfig = { validate: 'required' };
+// @ts-expect-error getField().validate is the datasource's own list
+validated.getField('name').validate.push({ id: 'required' });
+console.log(notAList);
 
 // the header focus event sends the first displayed row: a group row when grouped, or undefined
 gridInterface.on('cell-header-focus', (data) => {

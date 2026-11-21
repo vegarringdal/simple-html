@@ -37,8 +37,10 @@ export interface Entity {
      */
     __rowState?: string;
     /**
-     * an error message for the row, set with `datasource.getDataContainer().setErrors()`. `null` or
-     * `undefined` for no error. The grid does not show it: read it in the `cellClass` hook ({@link GridHooks})
+     * an error message for the row from a server, set with `datasource.getDataContainer().setErrors()`.
+     * `null` or `undefined` for no error. Apart from the validation errors (`datasource.getErrors()`).
+     * The grid shows it on the row selector, with the validation errors: the error class, and the
+     * message as the tooltip
      */
     __rowError?: string | null;
     /**
