@@ -174,7 +174,7 @@ export function renderFooter(ctx: Grid) {
                                     ><span class="footer-filter-find-text">${findChip}</span></span
                                 >`
                               : null
-                      }
+}
                       ${findChip !== null && filterTree ? and : null}
                       ${
                           filterTree

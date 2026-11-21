@@ -388,6 +388,7 @@ The names of the operators, in the operator menu and on a condition:
 | `footer.and` | `AND` | between the chips of an AND group |
 | `footer.or` | `OR` | between the chips of an OR group |
 | `footer.changedOnly` | `Changed rows only` | the chip in front of the filter's while only the changed rows are shown (`datasource.filterChangedOnly()`) |
+| `footer.findFilter` | `Find: {text}` | the chip while Find's *Filter rows* hides rows. `{text}`: the text the rows are filtered with |
 | `footer.summary` | `Selected cells` | the name of the summary of the selected cells at the footer's right, for a screen reader |
 | `footer.summary.count` | `Count: {count}` | the cells of the ranges with a value, any type |
 | `footer.summary.sum` | `Sum: {sum}` | the sum of the numbers of the number fields in the ranges |
@@ -448,6 +449,8 @@ The find bar of Ctrl+F in the grid, see [Find](19-find.md).
 | `find.placeholder` | `Find` | the placeholder of its input, and the input's name for a screen reader |
 | `find.count` | `{current} of {count}` | the count of the matches. `{current}`: the number of the current match, `{count}`: how many cells match |
 | `find.none` | `No matches` | the count when no cell matches the text |
+| `find.filterRows` | `Filter rows` | the funnel button, a toggle: its name for a screen reader |
+| `find.filterRows.tooltip` | `Show only the rows with a match` | its tooltip |
 | `find.previous` | `Previous match` | the `↑` button: its name for a screen reader |
 | `find.previous.tooltip` | `Previous match (Shift+Enter)` | its tooltip |
 | `find.next` | `Next match` | the `↓` button |

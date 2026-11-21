@@ -1,6 +1,8 @@
 // @vitest-environment happy-dom
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Datasource } from '../../datasource/dataSource';
+import { isGroupRow } from '../../datasource/entity';
 import { where } from '../../datasource/filterExpression';
 import type { FindResult } from '../findResult';
 import type { GridConfig } from '../gridConfig';
@@ -8,6 +10,8 @@ import type { GridElement } from '../gridElement';
 import { FIND_DELAY_MS } from '../gridFunctions/findBar';
 import { findMatches, matchAtOrAfter } from '../gridFunctions/findMatches';
 import type { HTMLCellElement } from '../gridFunctions/HTMLCellElement';
+import { GridInterface } from '../gridInterface';
+import { registerLookup } from '../lookup';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { headerFilterInput, sleep } from './interactionTestHelpers';
 
@@ -338,7 +342,14 @@ describe('find - the API', () => {
         expect(bar(element).hidden).toBe(true);
         expect(matchesOnScreen(element)).toEqual([]);
         expect(currentOnScreen(element)).toEqual([]);
-        expect(gridInterface.getFind()).toEqual({ open: false, text: 'acme', filterRows: false, count: 0, position: 0, current: null });
+        expect(gridInterface.getFind()).toEqual({
+            open: false,
+            text: 'acme',
+            filterRows: false,
+            count: 0,
+            position: 0,
+            current: null
+        });
         expect(gridInterface.findNext()).toBeNull();
     });
 
@@ -835,5 +846,431 @@ describe('find - the wheel', () => {
 
         expect(scroller(element).scrollTop).toBe(100);
         expect(document.activeElement).toBe(findInput(element));
+    });
+});
+
+/** the ids of the data rows shown */
+const shownIds = ({ datasource }: MountedGrid) => datasource.getDataRows().map((row) => row.id);
+
+/** the ids of the rows with a match among the rows displayed now, in their order */
+const matchedIds = (mounted: MountedGrid, text: string) => [
+    ...new Set(findMatches({ gridInterface: mounted.gridInterface }, text).map((match) => match.entity.id))
+];
+
+const footerCount = (element: GridElement) => element.querySelector('.footer-count')?.textContent?.trim();
+const findChip = (element: GridElement) => element.querySelector('.footer-filter-find') as HTMLElement | null;
+
+/** the parts of the footer's filter row as text: the Clear button, the chips, the connectors */
+const footerParts = (element: GridElement) =>
+    Array.from(element.querySelectorAll('.footer-filter > *')).map((part) => part.textContent?.replace(/\s+/g, ' ').trim());
+
+describe('find - filter rows', () => {
+    it('expect the toggle to show only the rows with a match, and every row again when it is turned off', async () => {
+        const mounted = await mount();
+        const { element, gridInterface } = mounted;
+        gridInterface.find('acme');
+
+        // a press keeps the focus where it is, as the other buttons
+        const press = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        filterButton(element).dispatchEvent(press);
+        expect(press.defaultPrevented).toBe(true);
+        filterButton(element).click();
+
+        expect(filterButton(element).getAttribute('aria-pressed')).toBe('true');
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+        expect(footerCount(element)).toBe('3/60');
+        // the same matches, in fewer rows: Acme 5 is row 1 now
+        expect(gridInterface.getFind()).toEqual({
+            open: true,
+            text: 'acme',
+            filterRows: true,
+            count: 4,
+            position: 1,
+            current: { row: 0, field: 'name' }
+        });
+        expect(matchesOnScreen(element)).toEqual(['0:name', '1:city', '1:name', '2:name']);
+
+        filterButton(element).click();
+
+        expect(filterButton(element).getAttribute('aria-pressed')).toBe('false');
+        expect(shownIds(mounted)).toHaveLength(60);
+        expect(footerCount(element)).toBe('60/60');
+        expect(gridInterface.getFind()).toMatchObject({ filterRows: false, count: 4, current: { row: 2, field: 'name' } });
+    });
+
+    it('expect the rows shown to be the rows of the marked cells: the text as the cells show it', async () => {
+        const mounted = await mount();
+        const cases: [string, number[]][] = [
+            // a date as its formatter writes it
+            ['2026-01-15', [14, 42]],
+            // a number with its decimal comma, not as the value is
+            ['12,5', [12]],
+            ['12.5', []],
+            // the second line of a cell of several lines
+            ['banana', [7]],
+            // a checkbox shows no text
+            ['true', []],
+            ['acme', [2, 5, 50]]
+        ];
+        for (const [text, ids] of cases) {
+            mounted.gridInterface.find(text, { filterRows: true });
+            expect(shownIds(mounted), text).toEqual(ids);
+            expect(matchedIds(mounted, text), text).toEqual(ids);
+        }
+        // and the rows of the matches among every row: the same
+        for (const [text, ids] of cases) {
+            mounted.gridInterface.find(text, { filterRows: false });
+            expect(matchedIds(mounted, text), text).toEqual(ids);
+        }
+    });
+
+    it("expect the column's numberOverride and the labels of a lookup, as the cells show them", async () => {
+        const offices = new Datasource();
+        offices.setData([
+            { code: 'k0', name: 'Oslo office' },
+            { code: 'k1', name: 'Bergen office' }
+        ]);
+        registerLookup('find-offices', { datasource: offices, valueField: 'code', labelField: 'name' });
+        const rows = Array.from({ length: 6 }, (_, i) => ({ id: i, age: i * 10, office: `k${i % 2}` }));
+        const mounted = await mountGrid(
+            {
+                readonly: false,
+                layout: {
+                    left: [],
+                    center: [
+                        { fields: ['age'], width: 100 },
+                        { fields: ['office'], width: 100 }
+                    ],
+                    right: []
+                },
+                columns: {
+                    age: { numberOverride: 'ZERO_TO_BLANK' },
+                    office: { editor: { type: 'select', lookup: 'find-offices' } }
+                }
+            },
+            rows,
+            { key: 'id', fields: { id: 'number', age: 'number' } }
+        );
+
+        // the age 0 of row 0 is shown blank, 10 to 50 have a 0
+        mounted.gridInterface.find('0', { filterRows: true });
+        expect(shownIds(mounted)).toEqual([1, 2, 3, 4, 5]);
+        // the label, not the value
+        mounted.gridInterface.find('bergen', { filterRows: true });
+        expect(shownIds(mounted)).toEqual([1, 3, 5]);
+        mounted.gridInterface.find('k1', { filterRows: true });
+        expect(shownIds(mounted)).toEqual([]);
+    });
+
+    it('expect it on top of the filter and of changed rows only - not part of getFilter(), getFilterString() or the state', async () => {
+        const mounted = await mount();
+        const { gridInterface, datasource } = mounted;
+        const young = where('age', 'LESS_THAN', 10);
+        datasource.filter(young);
+        const filterString = datasource.getFilterString();
+        const state = gridInterface.getState();
+
+        gridInterface.find('acme', { filterRows: true });
+
+        expect(shownIds(mounted)).toEqual([2, 5]);
+        expect(datasource.getFilter()).toBe(young);
+        expect(datasource.getFilterString()).toBe(filterString);
+        expect(gridInterface.getState()).toEqual(state);
+        expect(JSON.stringify(gridInterface.getState())).not.toContain('acme');
+
+        // a new filter: it is applied to the rows it lets through
+        datasource.filter(null);
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+
+        datasource.getAllData()[50].age = 51;
+        datasource.filterChangedOnly(true);
+        expect(shownIds(mounted)).toEqual([50]);
+        datasource.filterChangedOnly(false);
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+    });
+
+    it('expect it applied whenever the datasource filters - setData, upsert - and a sort to keep the rows', async () => {
+        const mounted = await mount();
+        const { element, gridInterface, datasource } = mounted;
+        gridInterface.find('acme', { filterRows: true });
+
+        datasource.setData(data().map((row) => (row.id === 7 ? { ...row, name: 'Acme 7' } : row)));
+        expect(shownIds(mounted)).toEqual([2, 5, 7, 50]);
+
+        datasource.upsert([
+            { id: 8, city: 'Acme city' },
+            { id: 50, name: 'Globex' }
+        ]);
+        expect(shownIds(mounted)).toEqual([2, 5, 7, 8]);
+
+        datasource.sort([{ attribute: 'age', ascending: false }]);
+        expect(shownIds(mounted)).toEqual([8, 7, 5, 2]);
+
+        await afterDelay();
+        // Acme 2, Acme 5 twice, Acme 7, Acme city
+        expect(gridInterface.getFind()).toMatchObject({ filterRows: true, count: 5 });
+        expect(findChip(element)?.textContent?.trim()).toBe('Find: acme');
+    });
+
+    it('expect an edit not to filter the rows again: the row edited away stays, unmarked, until they are filtered next', async () => {
+        const mounted = await mount();
+        const { element, gridInterface, datasource } = mounted;
+        gridInterface.find('acme', { filterRows: true });
+
+        // Acme 2, the first row shown
+        datasource.getRow(0).name = 'Globex';
+        await afterDelay();
+
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+        expect(gridInterface.getFind().count).toBe(3);
+        expect(matchesOnScreen(element)).toEqual(['1:city', '1:name', '2:name']);
+
+        datasource.filter();
+        expect(shownIds(mounted)).toEqual([5, 50]);
+    });
+
+    it('expect the typing to filter the rows when it stops, and an empty text to show every row at once', async () => {
+        const mounted = await mount();
+        const { element } = mounted;
+        ctrlF(inputAt(element, 0, 'city'));
+
+        // no text yet: every row, no chip
+        filterButton(element).click();
+        expect(shownIds(mounted)).toHaveLength(60);
+        expect(findChip(element)).toBeNull();
+
+        typeFind(element, 'acm');
+        expect(shownIds(mounted)).toHaveLength(60);
+        await afterDelay();
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+        expect(findChip(element)?.textContent?.trim()).toBe('Find: acm');
+
+        // while typing: the rows and the chip of the text before
+        typeFind(element, 'acme 5');
+        expect(findChip(element)?.textContent?.trim()).toBe('Find: acm');
+        await afterDelay();
+        expect(shownIds(mounted)).toEqual([5, 50]);
+        expect(findChip(element)?.textContent?.trim()).toBe('Find: acme 5');
+
+        typeFind(element, '');
+        expect(shownIds(mounted)).toHaveLength(60);
+        expect(findChip(element)).toBeNull();
+        expect(filterButton(element).getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('expect a change of the columns to filter the rows again: a hidden column has no matches', async () => {
+        const mounted = await mount();
+        mounted.gridInterface.find('acme', { filterRows: true });
+
+        mounted.gridInterface.setState({ layout: { left: [], center: [{ fields: ['city'], width: 100 }], right: [] } });
+        await afterDelay();
+
+        expect(shownIds(mounted)).toEqual([5]);
+        expect(mounted.gridInterface.getFind()).toMatchObject({ count: 1, current: { row: 0, field: 'city' } });
+    });
+
+    it('expect the groups to keep the rows with a match, with their counts', async () => {
+        const mounted = await mount();
+        const { gridInterface, datasource } = mounted;
+        datasource.group([{ attribute: 'active', title: 'Active' }]);
+        datasource.expandGroup();
+
+        gridInterface.find('acme', { filterRows: true });
+
+        // Acme 2 and Acme 50 are active, Acme 5 is not
+        const totals = datasource
+            .getRows()
+            .filter(isGroupRow)
+            .map((row) => row.__groupTotal);
+        expect(totals.sort()).toEqual([1, 2]);
+        expect(shownIds(mounted).sort((a, b) => a - b)).toEqual([2, 5, 50]);
+        expect(gridInterface.getFind().count).toBe(4);
+    });
+
+    it('expect the ranges cleared, and the current row and the selection as a filter that keeps the same rows leaves them', async () => {
+        const byFind = await mount();
+        const byFilter = await mount();
+        for (const mounted of [byFind, byFilter]) {
+            mounted.datasource.select(4);
+            mounted.datasource.setRowAsCurrentEntity(3);
+            mounted.gridInterface.setRanges([{ fromRow: 0, fromField: 'name', toRow: 3, toField: 'city' }]);
+        }
+
+        byFind.gridInterface.find('acme', { filterRows: true });
+        byFilter.gridInterface.find('acme');
+        // a find alone leaves the ranges
+        expect(byFilter.gridInterface.getRanges()).toHaveLength(1);
+        byFilter.datasource.filter(where('name', 'CONTAINS', 'acme'));
+
+        const state = ({ datasource, gridInterface }: MountedGrid) => ({
+            shown: datasource.getDataRows().map((row) => row.id),
+            selected: datasource.getSelectedRows().map((row) => row.id),
+            current: datasource.currentEntity?.id ?? null,
+            ranges: gridInterface.getRanges()
+        });
+        expect(state(byFind)).toMatchObject({ shown: [2, 5, 50], ranges: [] });
+        expect(state(byFind)).toEqual(state(byFilter));
+    });
+});
+
+describe('find - filter rows: closing turns it off', () => {
+    it('expect Esc to show every row again, the focus in the cell of the current match among them', async () => {
+        const mounted = await mount();
+        const { element, gridInterface, datasource } = mounted;
+        const events = findEvents(mounted);
+        ctrlF(inputAt(element, 0, 'city'));
+        typeFind(element, 'acme');
+        await afterDelay();
+        filterButton(element).click();
+        // Acme 5's name, the second row shown
+        key(findInput(element), 'Enter');
+        expect(gridInterface.getFind().current).toEqual({ row: 1, field: 'name' });
+
+        key(findInput(element), 'Escape');
+
+        expect(shownIds(mounted)).toHaveLength(60);
+        expect(document.activeElement).toBe(inputAt(element, 5, 'name'));
+        expect(datasource.currentEntity).toBe(datasource.getRow(5));
+        expect(events.at(-1)).toEqual({ open: false, text: 'acme', filterRows: false, count: 0, position: 0, current: null });
+        expect(findChip(element)).toBeNull();
+
+        // open again: off
+        ctrlF(inputAt(element, 3, 'city'));
+        expect(filterButton(element).getAttribute('aria-pressed')).toBe('false');
+        expect(shownIds(mounted)).toHaveLength(60);
+    });
+
+    it('expect the close button, closeFind() and the grid leaving the page to show every row again', async () => {
+        const mounted = await mount();
+        const { element, gridInterface, datasource } = mounted;
+
+        gridInterface.find('acme', { filterRows: true });
+        findButtons(element)[3].click();
+        expect(shownIds(mounted)).toHaveLength(60);
+
+        gridInterface.find('acme', { filterRows: true });
+        gridInterface.closeFind();
+        expect(shownIds(mounted)).toHaveLength(60);
+        expect(gridInterface.getFind().filterRows).toBe(false);
+
+        gridInterface.find('acme', { filterRows: true });
+        element.remove();
+        expect(datasource.getDataRows()).toHaveLength(60);
+        // back on the page: every row, no chip
+        document.body.appendChild(element);
+        expect(footerCount(element)).toBe('60/60');
+        expect(findChip(element)).toBeNull();
+    });
+
+    it('expect another interface connected to the grid element to take it off the datasource of the first', async () => {
+        const mounted = await mount();
+        mounted.gridInterface.find('acme', { filterRows: true });
+
+        mounted.element.connectInterface(new GridInterface(config(), new Datasource(options())));
+
+        expect(mounted.datasource.getDataRows()).toHaveLength(60);
+    });
+});
+
+describe('find - filter rows: the footer', () => {
+    it("expect a chip while it hides rows, and the footer's Clear to turn it off - the bar stays open", async () => {
+        const mounted = await mount();
+        const { element, gridInterface, datasource } = mounted;
+        const events = findEvents(mounted);
+        datasource.filter(where('age', 'LESS_THAN', 10));
+        gridInterface.find('acme', { filterRows: true });
+
+        const chip = findChip(element) as HTMLElement;
+        expect(chip.textContent?.trim()).toBe('Find: acme');
+        expect(chip.title).toBe('Find: acme');
+        // after the Clear button, ANDed with the filter's chips
+        expect(footerParts(element).slice(1, 3)).toEqual(['Find: acme', 'AND']);
+        expect(footerCount(element)).toBe('2/60');
+
+        (element.querySelector('.footer-filter-clear') as HTMLButtonElement).click();
+
+        expect(shownIds(mounted)).toHaveLength(60);
+        expect(datasource.getFilter()).toBeNull();
+        expect(findChip(element)).toBeNull();
+        expect(filterButton(element).getAttribute('aria-pressed')).toBe('false');
+        expect(gridInterface.getFind()).toMatchObject({ open: true, filterRows: false });
+        expect(events.at(-1)?.filterRows).toBe(false);
+        // the matches follow the rows, as for any filter
+        await afterDelay();
+        expect(gridInterface.getFind().count).toBe(4);
+    });
+
+    it('expect the chip after the one of changed rows only, and Clear to turn both off', async () => {
+        const mounted = await mount();
+        const { element, gridInterface, datasource } = mounted;
+        datasource.getAllData()[5].age = 6;
+        datasource.filterChangedOnly(true);
+
+        gridInterface.find('acme', { filterRows: true });
+
+        expect(shownIds(mounted)).toEqual([5]);
+        expect(footerParts(element).slice(1)).toEqual(['Changed rows only', 'AND', 'Find: acme']);
+
+        (element.querySelector('.footer-filter-clear') as HTMLButtonElement).click();
+        expect(datasource.isChangedOnly()).toBe(false);
+        expect(shownIds(mounted)).toHaveLength(60);
+        expect(element.querySelector('.footer-filter')).toBeNull();
+    });
+});
+
+describe('find - filter rows: the API, the texts', () => {
+    it('expect find(text, { filterRows }) to turn it on and off, find(text) to leave it, and find-change to send it', async () => {
+        const mounted = await mount();
+        const { gridInterface } = mounted;
+        const events = findEvents(mounted);
+
+        expect(gridInterface.find('acme', { filterRows: true })).toBe(4);
+        expect(gridInterface.getFind().filterRows).toBe(true);
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+        // the text only: it stays on
+        expect(gridInterface.find('acme 5')).toBe(2);
+        expect(shownIds(mounted)).toEqual([5, 50]);
+        gridInterface.find('acme 5', { filterRows: false });
+        expect(shownIds(mounted)).toHaveLength(60);
+        expect(events.map(({ text, filterRows, count }) => `${text}:${filterRows}:${count}`)).toEqual([
+            'acme:true:4',
+            'acme 5:true:2',
+            'acme 5:false:2'
+        ]);
+
+        // an empty text: on, and every row
+        gridInterface.find('', { filterRows: true });
+        expect(gridInterface.getFind()).toMatchObject({ filterRows: true, count: 0 });
+        expect(shownIds(mounted)).toHaveLength(60);
+
+        // a boolean where the options go, from plain JavaScript
+        expect(() => gridInterface.find('acme', true as unknown as { filterRows: boolean })).toThrow(TypeError);
+    });
+
+    it('expect nothing while the grid is not on the page', async () => {
+        const mounted = await mount();
+        mounted.element.remove();
+
+        expect(mounted.gridInterface.find('acme', { filterRows: true })).toBe(0);
+        expect(mounted.gridInterface.getFind().filterRows).toBe(false);
+        expect(mounted.datasource.getDataRows()).toHaveLength(60);
+    });
+
+    it("expect the texts of the toggle and the chip from the grid's texts", async () => {
+        const { element, gridInterface } = await mount(
+            config({
+                texts: {
+                    'find.filterRows': 'Filtrer rader',
+                    'find.filterRows.tooltip': 'Vis bare radene med treff',
+                    'footer.findFilter': 'Søk: {text}'
+                }
+            })
+        );
+
+        gridInterface.find('acme', { filterRows: true });
+
+        expect(filterButton(element).getAttribute('aria-label')).toBe('Filtrer rader');
+        expect(filterButton(element).title).toBe('Vis bare radene med treff');
+        expect(findChip(element)?.textContent?.trim()).toBe('Søk: acme');
     });
 });

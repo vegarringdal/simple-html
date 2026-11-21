@@ -199,10 +199,13 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     // the grid, its footer with the filter. The notes have a marker for a screen reader
     check();
 
-    // the find bar (Ctrl+F): its name, the input, the buttons - the count with matches, and without
+    // the find bar (Ctrl+F): its name, the input, the buttons - the count with matches, and without.
+    // "Filter rows" on: the chip of its text in the footer
     gridInterface.find('«bob»');
     check();
     gridInterface.find('«nobody»');
+    check();
+    gridInterface.find('«bob»', { filterRows: true });
     check();
     gridInterface.closeFind();
 

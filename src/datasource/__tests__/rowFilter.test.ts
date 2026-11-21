@@ -238,7 +238,8 @@ describe('the row filter - the datasource', () => {
         const state = (datasource: Datasource<Person>) => ({
             shown: shown(datasource),
             selected: datasource.getSelectedRows().map((row) => row.id),
-            current: datasource.currentEntity?.id ?? null
+            // a group row is never current here: nothing is grouped
+            current: (datasource.currentEntity as Person | null)?.id ?? null
         });
         const byRowFilter = prepare();
         const byFilter = prepare();

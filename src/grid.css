@@ -929,14 +929,16 @@
     border-color: var(--simple-html-grid-pinned-border);
 }
 
-/* "Filter rows" while it is on (aria-pressed): the tint of a selected row, the line of a range */
+/* "Filter rows" while it is on (aria-pressed): filled with the accent colour, as the AND / OR in use in
+ * the filter editor - the funnel in the accent's text colour */
 .simple-html-grid .simple-html-grid-find-button[aria-pressed='true'] {
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
-    border-color: var(--simple-html-grid-range-border-color);
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
 }
 
 .simple-html-grid .simple-html-grid-find-button[aria-pressed='true']:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
+    filter: brightness(1.1);
 }
 
 /* the funnel of "Filter rows", in the colour of the button's text */

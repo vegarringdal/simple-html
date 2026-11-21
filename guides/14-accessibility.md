@@ -86,8 +86,10 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
 - **The find bar** (Ctrl+F, see [Find](19-find.md#what-a-screen-reader-gets)): a search region named
   "Find in the grid" before the grid, with an input named "Find", the count of the matches as a status
-  (`3 of 17`, read out when it changes) and the buttons "Previous match", "Next match" and "Close". The
-  cells of the matches have no state of their own for a screen reader, the count says where you are.
+  (`3 of 17`, read out when it changes), the toggle button "Filter rows" (`aria-pressed`) and the
+  buttons "Previous match", "Next match" and "Close". The cells of the matches have no state of their
+  own for a screen reader, the count says where you are; with "Filter rows" on the footer's row count
+  (a status) says how many rows are left.
 
 The rows and the columns are virtual: only the rows on screen (and a few more) are in the dom, and
 of the middle section only the columns on screen. That is what `aria-rowindex` and `aria-colindex`
@@ -207,9 +209,14 @@ input - see [Find](19-find.md). Outside the grid Ctrl+F is the browser's.
 | typing | finds the text when the typing stops: the cells are marked, the grid scrolls to the current match |
 | Enter, F3 | the next match, wrapping to the first. The focus stays in the input |
 | Shift+Enter, Shift+F3 | the previous match, wrapping to the last |
-| Esc | closes it: the focus goes to the cell of the current match (its row is the current row), else back to where Ctrl+F was pressed. In a modal dialog of your own, the dialog stays open |
+| Esc | closes it: the focus goes to the cell of the current match (its row is the current row), else back to where Ctrl+F was pressed. "Filter rows" is turned off, every row is shown again. In a modal dialog of your own, the dialog stays open |
 | Ctrl+F, Cmd+F | the focus back in the input, its text selected |
-| Tab / Shift+Tab | the input, previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid |
+| Tab / Shift+Tab | the input, "Filter rows" (the funnel), previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid |
+| Space, Enter | on "Filter rows": turns it on or off - only the rows with a match, or every row |
+
+"Filter rows" has no key of its own: Tab from the input gets to it, Space turns it on or off, Shift+Tab
+goes back to the input. Alt+R was considered: on a Mac Option+R types `®` in the input, and find bars
+(VS Code's) use Alt+R for regular expressions.
 
 ### The editor of a multiline cell
 

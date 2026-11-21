@@ -1223,7 +1223,9 @@ export class GridInterface<T> {
      * ```
      */
     public getFind(): FindResult {
-        return this.grid ? getFindResult(this.grid) : { open: false, text: '', filterRows: false, count: 0, position: 0, current: null };
+        return this.grid
+            ? getFindResult(this.grid)
+            : { open: false, text: '', filterRows: false, count: 0, position: 0, current: null };
     }
 
     /**

@@ -158,7 +158,22 @@ whole filter, a click on the chips opens the filter editor. The labels are the c
 rest are texts (`footer.*`, the operators `footer.operator.*`), see [Texts](12-texts.md#footer).
 
 While only the changed rows are shown (below), a chip *Changed rows only* comes first, ANDed with the
-filter's chips. "✕ Clear" turns it off too.
+filter's chips. "✕ Clear" turns it off too. While Find's *Filter rows* hides rows (below), a chip
+*Find: denma* with its text comes next; "✕ Clear" turns it off and leaves the find bar open.
+
+## Find: Filter rows
+
+Find (Ctrl+F in the grid) has a toggle *Filter rows* in its bar: only the rows with a cell that shows
+the text are shown - the text as the cells show it, formatted, so the rows shown are the rows of the
+marked cells. Like *Changed rows only* it is on top of the filter (AND) and not part of it:
+`getFilter()`, the filter editor and the state do not have it. It filters the rows again when the
+text changes and whenever the rows are filtered; closing the find bar turns it off. See
+[Find](19-find.md#filter-rows).
+
+```ts
+gridInterface.find('denma', { filterRows: true }); // only the rows with a cell that shows "denma"
+gridInterface.closeFind(); // every row again
+```
 
 ## Changed rows only
 
