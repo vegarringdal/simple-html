@@ -54,6 +54,12 @@
     /* the marker of a cell of several lines (FieldConfig.multiline): there are more lines than it
        shows. At least 3:1 against the rows and a selected row, like the row state */
     --simple-html-grid-multiline-color: light-dark(#475569, #e2e8f0);
+    /* the totals row under the rows (GridConfig.totalsRow): its background and its text */
+    --simple-html-grid-totals-bg-color: light-dark(#e8edf3, #2a3441);
+    --simple-html-grid-totals-font-color: light-dark(#1f2328, #f9fafb);
+    /* the label in front of an aggregate ("Sum") in a group row and the totals row. At least 4.5:1
+       against both */
+    --simple-html-grid-aggregate-label-color: light-dark(#57606a, #c9d1d9);
     /* the "too many values" warning of the filter menu's value list */
     --simple-html-grid-warning-font-color: light-dark(red, #fca5a5);
     /* the footer's clear filter button under the pointer: text, border */
@@ -1092,6 +1098,115 @@
     background-color: var(--simple-html-grid-main-bg-color);
     border-right: 1px solid var(--simple-html-grid-sec-bg-border);
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+/*
+ * aggregates (ColumnConfig.aggregate, aggregates.ts): a cell per aggregate in the place of its field,
+ * in a group row and in the totals row. The three sections have the places of the body's: the right
+ * and left pinned borders are there, transparent in a group row
+ */
+
+/* the name of a group row with aggregates: at the left, over the aggregates of the first columns */
+.simple-html-grid-group-name {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+    white-space: nowrap;
+    /* the look of the group row it is over, the inset shadow too: no seam where it ends */
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid-aggregates-left,
+.simple-html-grid-aggregates-middle,
+.simple-html-grid-aggregates-right {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
+.simple-html-grid-aggregates-left {
+    left: 0;
+    border-right: 2px solid transparent;
+}
+
+.simple-html-grid-aggregates-right {
+    right: 0;
+    border-left: 2px solid transparent;
+}
+
+.simple-html-grid-aggregate {
+    box-sizing: border-box;
+    position: absolute;
+    padding: 0 4px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: right;
+}
+
+/* "Sum" in front of the value */
+.simple-html-grid-aggregate-label {
+    font-size: 0.9em;
+    font-weight: var(--simple-html-grid-font-weight);
+    color: var(--simple-html-grid-aggregate-label-color);
+}
+
+/* the totals row: over the footer, the horizontal scrollbar is painted over its top */
+.simple-html-grid-totals {
+    box-sizing: border-box;
+    position: absolute;
+    left: 0;
+    overflow: hidden;
+    pointer-events: all;
+    font-weight: var(--simple-html-grid-font-weight-header);
+    color: var(--simple-html-grid-totals-font-color);
+    background-color: var(--simple-html-grid-totals-bg-color);
+}
+
+.simple-html-grid-totals-row {
+    box-sizing: border-box;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* "Total", under the row numbers */
+.simple-html-grid-totals-label {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0 2px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
+    border-right: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid-totals-cells {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.simple-html-grid-totals .simple-html-grid-aggregates-left {
+    border-right-color: var(--simple-html-grid-pinned-border);
+}
+
+.simple-html-grid-totals .simple-html-grid-aggregates-right {
+    border-left-color: var(--simple-html-grid-pinned-border);
 }
 
 .simple-html-grid .simple-html-grid-icon {

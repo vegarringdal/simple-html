@@ -172,6 +172,14 @@ const norwegian: Record<TextId, string> = {
     'footer.operator.IS_BLANK': 'er tom',
     'footer.operator.IS_NOT_BLANK': 'er ikke tom',
 
+    // the aggregates of the columns, in the group rows and the totals row
+    'aggregate.sum': 'Sum',
+    'aggregate.avg': 'Snitt',
+    'aggregate.min': 'Min',
+    'aggregate.max': 'Maks',
+    'aggregate.count': 'Antall',
+    'aggregate.total': 'Totalt',
+
     // for screen readers
     'grid.label': 'Tabell',
     'grid.rowSelector': 'radvelger',

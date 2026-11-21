@@ -64,6 +64,9 @@ gridInterface.updateHooks(hooks);
   the group rows are not.
 - **Marked for deletion**: those rows are still rows of the grid (struck through) until they are
   saved, they are exported.
+- **No totals**: the totals row (`totalsRow`) and the aggregates of the group rows are not exported, a
+  spreadsheet sums the rows up itself - and a line of totals would be read back as a row. See
+  [Aggregates](18-aggregates.md).
 
 `rows: 'selected'` is the selected rows, in the same order - what `datasource.getSelectedRows()`
 gives. That is the selected rows that are displayed: a selected row in a collapsed group, or one the

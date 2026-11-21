@@ -174,6 +174,15 @@ const DEFAULTS = {
     'footer.operator.IS_BLANK': 'is blank',
     'footer.operator.IS_NOT_BLANK': 'is not blank',
 
+    // the aggregates of the columns (ColumnConfig.aggregate): the label in front of the value in a group
+    // row and in the totals row, and the label of the totals row
+    'aggregate.sum': 'Sum',
+    'aggregate.avg': 'Avg',
+    'aggregate.min': 'Min',
+    'aggregate.max': 'Max',
+    'aggregate.count': 'Count',
+    'aggregate.total': 'Total',
+
     // labels for screen readers (aria-label)
     'grid.label': 'Grid',
     'grid.rowSelector': 'row selector',
@@ -305,6 +314,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
+ * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `grid.*` | labels for screen readers |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |

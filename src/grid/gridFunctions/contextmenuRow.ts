@@ -319,7 +319,12 @@ function exportEntries(ctx: Grid): MenuEntry[] {
 
 /**
  * The summary of a number column over the selected rows: count, sum, max, min and average. Clicking
- * one copies its value. Only shown for a number field, the values are only computed for one
+ * one copies its value. Only shown for a number field, the values are only computed for one.
+ *
+ * The values are the datasource's aggregates of the selected rows (`datasource.aggregate()`): the
+ * numbers only, a blank is left out - also of the average, and 0 is a value. Shown with two decimals
+ * at most. Count is the number of selected rows. (Before v6 the largest of negative numbers was 0, a 0
+ * was skipped by min, and the average was rounded to a whole number and counted the blanks.)
  */
 function summaryEntries(ctx: Grid, attribute: string): MenuEntry[] {
     const datasource = ctx.gridInterface.getDatasource();
@@ -328,37 +333,15 @@ function summaryEntries(ctx: Grid, attribute: string): MenuEntry[] {
 
     const summary = { count: 0, sum: '', max: '', min: '', avg: '' };
     if (type === 'number') {
-        const add = (prev: number, cur: unknown) => {
-            let x = parseFloat(String(cur));
-            if (Number.isNaN(x)) {
-                x = 0;
-            }
-            return parseFloat((prev + x).toFixed(5));
-        };
+        const selectedRows = datasource.getSelectedRows();
+        // two decimals at most; null (min, max and avg of no numbers) is shown blank
+        const shown = (value: number | null) => formatter.format(value === null ? null : Math.round(value * 100) / 100);
 
-        const selectedRows = datasource.getSelection().getSelectedRows();
-        const allrows = datasource.getRows();
-
-        let curValue = 0;
-        let maxValue = 0;
-        let minValue: number | null = null;
-        selectedRows.forEach((index: number) => {
-            const x = allrows[index];
-            // a group row has no value of the field, x[attribute] is undefined
-            const value = x && !isGroupRow(x) ? x[attribute] : undefined;
-            if (value) {
-                curValue = add(curValue, value);
-                maxValue = value > maxValue ? value : maxValue;
-                minValue = minValue === null || value < minValue ? value : minValue;
-            }
-        });
-
-        // null * 100 is 0
         summary.count = selectedRows.length;
-        summary.sum = formatter.format(Math.round(curValue * 100) / 100);
-        summary.max = formatter.format(Math.round(maxValue * 100) / 100);
-        summary.min = formatter.format(Math.round((minValue ?? 0) * 100) / 100);
-        summary.avg = formatter.format(Math.round(Math.round(curValue / selectedRows.length) * 100) / 100);
+        summary.sum = shown(datasource.aggregate(attribute, 'sum', selectedRows));
+        summary.max = shown(datasource.aggregate(attribute, 'max', selectedRows));
+        summary.min = shown(datasource.aggregate(attribute, 'min', selectedRows));
+        summary.avg = shown(datasource.aggregate(attribute, 'avg', selectedRows));
     }
 
     const copy = (text: string) => navigator.clipboard.writeText(text);

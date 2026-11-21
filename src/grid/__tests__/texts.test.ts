@@ -281,6 +281,17 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
             .slice(0, 3)
             .map((row) => ('__groupName' in row ? String(row.__groupName) : ''))
     );
+
+    // the aggregates: the label of each function in the group rows and the totals row, and "Total"
+    const columns = config().columns ?? {};
+    for (const fn of ['sum', 'avg', 'min', 'max'] as const) {
+        gridInterface.updateConfig({
+            columns: { ...columns, age: { ...columns.age, aggregate: fn }, name: { ...columns.name, aggregate: 'count' } },
+            totalsRow: true
+        });
+        check();
+    }
+    gridInterface.updateConfig({ columns, totalsRow: false });
     datasource.removeGroup();
 
     // getFilterString(), every operator

@@ -164,10 +164,10 @@ The "shown as" below is the English text.
 | `row.edit.revertRows` | Revert rows (selected rows): their original values, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |
 | `row.summary` | Summary: | a number field |
 | `row.summary.count` | Count: the number of selected rows. A click copies the value | a number field |
-| `row.summary.sum` | Sum: of the selected rows | a number field |
-| `row.summary.max` | Max: | a number field |
-| `row.summary.min` | Min: | a number field |
-| `row.summary.avg` | Avg: | a number field |
+| `row.summary.sum` | Sum: of the selected rows' numbers, `datasource.aggregate(field, 'sum', rows)`. With two decimals at most, as max, min and avg | a number field |
+| `row.summary.max` | Max: the largest number | a number field |
+| `row.summary.min` | Min: the smallest number, 0 included | a number field |
+| `row.summary.avg` | Avg: the average of the numbers, a blank is not counted | a number field |
 | `row.export` | Export: | |
 | `row.export.csv` | CSV, all rows: `gridInterface.downloadCsv()`, see [Export](15-export.md) | |
 | `row.export.csvSelected` | CSV, selected rows: `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |

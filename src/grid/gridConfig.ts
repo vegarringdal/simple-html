@@ -1,3 +1,4 @@
+import type { AggregateFunction } from '../datasource/aggregate';
 import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
@@ -226,6 +227,30 @@ export type GridConfig = {
      * @sample required-placeholders
      */
     placeholderRowCurrentEntityOnly?: boolean;
+
+    /**
+     * shows the aggregate of each column that has one (`ColumnConfig.aggregate`) in the group rows,
+     * default `true`: in the column's place, over the group's rows - the rows of its sub groups and
+     * of collapsed groups included. The group's name stays at the left, over the first columns.
+     *
+     * A group row is one line high; when an aggregated field is not the first of a column with
+     * stacked fields, the group rows get as many lines as it takes to show it on its own line.
+     * `false` shows the name only, as without aggregates
+     *
+     * @sample aggregates
+     */
+    groupAggregates?: boolean;
+
+    /**
+     * shows the totals row under the rows, default `false`: the aggregate of each column that has one
+     * (`ColumnConfig.aggregate`), over the rows the filter lets through - when grouped, the rows of
+     * collapsed groups too. "Total" at the left (the text `aggregate.total`). It follows the columns
+     * when they scroll sideways, and the values follow the filter and every change of a row: an edit,
+     * undo, `upsert()`. The horizontal scrollbar is between the rows and the totals row
+     *
+     * @sample aggregates
+     */
+    totalsRow?: boolean;
 };
 
 /**
@@ -389,6 +414,37 @@ export type ColumnConfig = {
      * @sample misc-options
      */
     allowPasteClearOnly?: boolean;
+
+    /**
+     * sums the column up: `'sum'`, `'avg'`, `'min'`, `'max'` or `'count'`, see
+     * {@link AggregateFunction}. The grid shows it in the column's place in each group row
+     * (`GridConfig.groupAggregates`, on by default) and in the totals row (`GridConfig.totalsRow`), with
+     * a short label in front: `Sum 1234.5` (the texts `aggregate.*`). The datasource computes it:
+     * `datasource.aggregate(field, fn)`.
+     *
+     * - `sum`, `avg`, `min` and `max` are for a `number` field (the datasource's `fields`), anything
+     *   else throws a `TypeError` when the grid is made or `updateConfig()` is given the column. They
+     *   take the numbers, blanks and what is no number are left out. The value is shown with the
+     *   field's formatter, not rounded: give the field a formatter with the decimals you want.
+     * - `count` counts the values that are not blank, in a field of any type. Shown as a whole number.
+     *
+     * @sample aggregates
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: {
+     *         balance: { aggregate: 'sum' },
+     *         age: { aggregate: 'avg' },
+     *         email: { aggregate: 'count' }
+     *     },
+     *     layout: { center: [{ fields: ['email'], width: 200 }, { fields: ['age'], width: 80 }, { fields: ['balance'], width: 120 }] },
+     *     totalsRow: true
+     * };
+     * ```
+     */
+    aggregate?: AggregateFunction;
 };
 
 /**
@@ -484,6 +540,8 @@ export type ParsedGridOptions = GridOptions &
             | 'rowStatus'
             | 'editedMarker'
             | 'placeholderRowCurrentEntityOnly'
+            | 'groupAggregates'
+            | 'totalsRow'
         >
     >;
 
@@ -505,4 +563,8 @@ export type ParsedGridConfig = ParsedGridOptions & {
     __rightWidth: number;
     __scrollbarSize: number;
     __selectSizeWidth: number;
+    /** the height of a group row: one line, more for the aggregates of stacked fields (see aggregates.ts) */
+    __groupRowHeight: number;
+    /** the height of the cells of the totals row, 0 when it is not shown (see aggregates.ts) */
+    __totalsRowHeight: number;
 };

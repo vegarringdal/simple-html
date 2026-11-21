@@ -1,7 +1,14 @@
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
+import { renderTotalsRow, showsGroupAggregates } from './aggregates';
 import type { ColType, RowCache } from './colType';
-import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
+import {
+    GROUP_COLTYPE,
+    LEFT_PINNED_COLTYPE,
+    MIDDLE_PINNED_COLTYPE,
+    RIGHT_PINNED_COLTYPE,
+    SELECTOR_COLTYPE
+} from './GROUP_COLTYPE';
 import { renderRowColumns } from './pinnedSection';
 import { renderCell } from './renderCell';
 import { triggerScrollEvent } from './triggerScrollEvent';
@@ -69,8 +76,13 @@ export function cancelRowsRender(ctx: Grid) {
 function renderInFrame(ctx: Grid) {
     if (ctx.renderAllInFrame) {
         ctx.renderAllInFrame = false;
+        // the group rows on screen are rendered with the rest, the totals row is not part of the rows
+        const valuesChanged = ctx.changedRows.size > 0;
         ctx.changedRows.clear();
         triggerScrollEvent(ctx);
+        if (valuesChanged) {
+            renderTotalsRow(ctx);
+        }
         return;
     }
     renderChangedRows(ctx);
@@ -82,9 +94,11 @@ function renderInFrame(ctx: Grid) {
  * (renderRowColumns leaves it). With `dimRepeatedValues` also the row after a changed row: whether its
  * value is dimmed depends on the row above it.
  *
- * Group rows are not rendered: an edit does not group the rows again. What moves rows - filter, sort,
- * group, rows added or removed - renders every row on screen: a rebuild, or after an upsert
- * GridInterface.updateAfterMerge.
+ * An edit does not group the rows again, a group row stays as it is - but the aggregates it shows
+ * (`ColumnConfig.aggregate`) can change with any row: every group row on screen is rendered, and the
+ * totals row. Cheap, the datasource computes the aggregates of a group again only when a row changed.
+ * What moves rows - filter, sort, group, rows added or removed - renders every row on screen: a
+ * rebuild, or after an upsert GridInterface.updateAfterMerge.
  */
 export function renderChangedRows(ctx: Grid) {
     const changed = ctx.changedRows;
@@ -123,5 +137,20 @@ export function renderChangedRows(ctx: Grid) {
                 renderRowColumns(ctx, entry, colType, true);
             }
         }
+    }
+
+    // the aggregates, of whatever rows changed: the group rows on screen (the shown row elements of
+    // the group section are the group rows) and the totals row
+    const config = ctx.gridInterface.__getGridConfig();
+    if (showsGroupAggregates(config)) {
+        for (const entry of ctx.containerGroupRowCache) {
+            const rowElement = ctx.rows.get(entry.id);
+            if (entry.row !== -1 && rowElement?.style.display === 'block') {
+                renderCell(ctx, rowElement, entry.row, 0, 0, GROUP_COLTYPE);
+            }
+        }
+    }
+    if (config.__totalsRowHeight) {
+        renderTotalsRow(ctx);
     }
 }

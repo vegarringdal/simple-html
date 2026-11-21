@@ -385,6 +385,20 @@ The short names of the operators, on a chip:
 | `footer.operator.IS_BLANK` | `is blank` |
 | `footer.operator.IS_NOT_BLANK` | `is not blank` |
 
+### Aggregates
+
+The aggregates of the columns (`ColumnConfig.aggregate`), see [Aggregates](18-aggregates.md). A
+screen reader reads the label with the value, the column's header with them.
+
+| id | English | shown |
+| --- | --- | --- |
+| `aggregate.sum` | `Sum` | in front of a sum, in a group row and the totals row: `Sum 1234.5` |
+| `aggregate.avg` | `Avg` | in front of an average |
+| `aggregate.min` | `Min` | in front of the smallest value |
+| `aggregate.max` | `Max` | in front of the largest value |
+| `aggregate.count` | `Count` | in front of a count |
+| `aggregate.total` | `Total` | the label of the totals row, at its left under the row numbers |
+
 ### Screen readers
 
 Labels (`aria-label`) that are read out, not shown. The [keyboard and accessibility
