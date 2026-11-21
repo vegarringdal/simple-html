@@ -29,6 +29,30 @@ gridInterface.downloadCsv('selected.csv', { rows: 'selected', separator: ';' });
 ```sample export
 ```
 
+## From the row menu
+
+The row menu (right click a cell) has an **Export:** section with *CSV, all rows* and *CSV, selected
+rows* (greyed out when no row is selected): `downloadCsv()` with the default options, as `export.csv`.
+The ids are `row.export`, `row.export.csv` and `row.export.csvSelected`. To give them other options -
+the `;` separator for Excel in Norway, say - replace their actions with the
+[menus hook](10-menus.md):
+
+```ts
+import type { GridHooks } from '@simple-html/grid';
+
+const hooks: GridHooks = {
+    menus: {
+        row: (defaults, context) =>
+            defaults.map((entry) =>
+                entry.id === 'row.export.csv'
+                    ? { ...entry, action: () => context.gridInterface.downloadCsv('export.csv', { separator: ';' }) }
+                    : entry
+            )
+    }
+};
+gridInterface.updateHooks(hooks);
+```
+
 ## The rows
 
 `rows: 'all'`, the default, is every row the filter lets through, in the sort order - what

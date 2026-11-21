@@ -411,8 +411,8 @@ Needs phase 4: a merge every second on a large grid has to stay cheap.
         icons) and conditional formatting (cell/row classes from a function or simple rules). **M**
 40. [ ] **Aggregates**: sum/count/average in each group row, and a totals row in the footer. **M**
 41. [x] **Export** the filtered and sorted rows, or the selected range, as CSV. xlsx later if
-        needed. **S** - done for all / selected rows; `rows: 'range'` comes with item 32, the row
-        menu entry after item 30
+        needed. **S** - done for all / selected rows and in the row menu; `rows: 'range'` comes with
+        item 32
 42. [ ] **Find** (Ctrl+F) in the grid: highlight matches, next/previous. **M**
 
 Every feature gets a demo sample and a guide page.

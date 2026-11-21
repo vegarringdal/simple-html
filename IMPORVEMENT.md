@@ -1172,7 +1172,9 @@ in the console. All passed. Found and fixed:
   the object url revoked after 40s (revoking at once can stop the download)
 * tests 35 + 42; Chromium export check 18/18 (the downloaded file: BOM, CRLF, labels, escaping, `;`,
   selected rows, raw values, follows a sort)
-* left: the row menu entry (after item 30, it shares texts.ts); the formatted-value code is in
+* row menu: an **Export:** section at the end (CSV, all rows / CSV, selected rows), in readonly grids
+  too; the guide shows how to give it `;` through the menus hook
+* left: the formatted-value code is in
   gridCsv.ts and renderRowCell.ts - one helper later; `rows: 'selected'` leaves out selected rows
   hidden by the filter or a collapsed group, like every row-menu action on selected rows
 
@@ -1180,6 +1182,9 @@ in the console. All passed. Found and fixed:
 
 ## Candidates / not started
 
+* **A flaky test under load**: one full run in ten or so fails one test while other test runs or
+  builds load the machine (agents saw `datePickerCell.test.ts`); it passes on rerun. Find it and make it
+  not depend on timing.
 * **Real-browser checks in the repo**: the Chromium checks (menus/dialog/drag, the accessibility
   tree, undo) live in a scratch folder that a restart can wipe. Moving them to `scripts/browser/` with
   playwright as a dev dependency would make them a CI job. Chromium download hangs on this dev machine.

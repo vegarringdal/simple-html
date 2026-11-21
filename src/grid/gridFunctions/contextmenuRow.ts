@@ -177,7 +177,8 @@ function rowMenuEntries(
         },
         ...deleteEntries(ctx),
         ...editEntries(ctx, attribute, rowData),
-        ...summaryEntries(ctx, attribute)
+        ...summaryEntries(ctx, attribute),
+        ...exportEntries(ctx)
     ];
 }
 
@@ -291,6 +292,29 @@ function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity): bool
         fields.length > 0 &&
         fields.every((field) => hooks.isReadonly?.(row, field, columns[field]?.readonly ?? false) === true)
     );
+}
+
+/**
+ * Export as a CSV file (gridInterface.downloadCsv): every row the filter lets through, or the selected
+ * ones - the columns and values as the grid shows them, see guides/15-export.md. In every grid,
+ * readonly ones too: an export changes nothing
+ */
+function exportEntries(ctx: Grid): MenuEntry[] {
+    const gridInterface = ctx.gridInterface;
+    return [
+        { type: 'section', id: 'row.export', label: gridText(ctx, 'row.export') },
+        {
+            id: 'row.export.csv',
+            label: gridText(ctx, 'row.export.csv'),
+            action: () => gridInterface.downloadCsv()
+        },
+        {
+            id: 'row.export.csvSelected',
+            label: gridText(ctx, 'row.export.csvSelected'),
+            disabled: () => gridInterface.getDatasource().getSelectedRows().length === 0,
+            action: () => gridInterface.downloadCsv('export.csv', { rows: 'selected' })
+        }
+    ];
 }
 
 /**

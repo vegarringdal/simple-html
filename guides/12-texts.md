@@ -226,6 +226,9 @@ Right click on a cell.
 | `row.summary.max` | `Max: {max}` | `{max}`: the largest value, formatted |
 | `row.summary.min` | `Min: {min}` | `{min}`: the smallest value, formatted |
 | `row.summary.avg` | `Avg: {avg}` | `{avg}`: the average, formatted |
+| `row.export` | `Export:` | section header |
+| `row.export.csv` | `CSV, all rows` | downloads the rows the filter lets through |
+| `row.export.csvSelected` | `CSV, selected rows` | downloads the selected rows |
 
 ### Header menu
 

@@ -168,6 +168,9 @@ The "shown as" below is the English text.
 | `row.summary.max` | Max: | a number field |
 | `row.summary.min` | Min: | a number field |
 | `row.summary.avg` | Avg: | a number field |
+| `row.export` | Export: | |
+| `row.export.csv` | CSV, all rows: `gridInterface.downloadCsv()`, see [Export](15-export.md) | |
+| `row.export.csvSelected` | CSV, selected rows: `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
 
 ### Header menu (`MENU_IDS.header`)
 

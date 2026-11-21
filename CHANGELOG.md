@@ -1040,6 +1040,8 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   starting with `=`, `+`, `-`, `@`, tab, CR, LF or their full-width forms gets a `'` in front - OWASP
   CSV injection; numbers, dates and booleans are never escaped, a phone number `+47 ...` is). An
   unknown option or value throws a `TypeError`.
+- Row menu **Export:** section: `row.export.csv` (CSV, all rows) and `row.export.csvSelected` (CSV, selected
+  rows, greyed out with none selected), in every grid. Texts `row.export*`.
 - Guide "Export" and sample "Export to CSV".
 
 ## 5.0.1

@@ -48,6 +48,9 @@ const DEFAULTS = {
     'row.summary.max': 'Max: {max}',
     'row.summary.min': 'Min: {min}',
     'row.summary.avg': 'Avg: {avg}',
+    'row.export': 'Export:',
+    'row.export.csv': 'CSV, all rows',
+    'row.export.csvSelected': 'CSV, selected rows',
 
     // the header menu, right click on a header label: MENU_IDS.header
     'header.column': 'Column:',
