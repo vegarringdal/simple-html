@@ -1731,17 +1731,24 @@ in the console. All passed. Found and fixed:
   in it too. Counts: vitest 2455, filter-ui-check 117/117, menus-regression-check 25/25,
   submenu-check 40/40, lookup-check 55/55, find-check 41/41
 
+### The flaky date picker test (a candidate)
+
+* `datePickerCell.test.ts` "a click in the picker not to close it, a click outside to close it" failed
+  about once in ten full runs on a loaded machine. The cell opens its picker in a timer after the click
+  (renderRowCell), and opening sets the timer that ends `menuJustOpened` (showMenu.ts) - a click outside
+  before it is taken for the click that opened the menu. The test's fixed `sleep(20)` could run before
+  that second timer when the first ran late. `openPicker()` now waits for the picker (`vi.waitFor`), then
+  one task more: a timer set after the reset timer runs after it. Same 0ms delay, insertion order
+
 ## Considered, not done
 
 ## Candidates / not started
 
 * **live-check.js races the live sample's timer** under load (2 of 19 failed once, passed on reruns):
   wait for the timer's tick instead of a fixed delay.
-* **A flaky test under load**: one full run in ten or so fails one test while other test runs or
-  builds load the machine (agents saw `datePickerCell.test.ts`); it passes on rerun. Find it and make it
-  not depend on timing.
-* **Real-browser checks in the repo**: the Chromium checks (menus/dialog/drag, the accessibility
-  tree, undo) live in a scratch folder that a restart can wipe. Moving them to `scripts/browser/` with
+* **Real-browser checks in the repo**: the Chromium checks live in `.claude/browser-checks/` (git-excluded,
+  local only) since a reboot wiped the scratch folder with the first ones (check.js, undo, a11y, live,
+  range, aggregate ... are gone; menus, fill, footer summary, find, lookups and the filter UI are there). Moving them to `scripts/browser/` with
   playwright as a dev dependency would make them a CI job. Chromium download hangs on this dev machine.
 * **Undo**: the menu hints say Ctrl+Z / Ctrl+Y also on a Mac; after an undo the focus stays in the
   current cell rather than moving to the changed one.
