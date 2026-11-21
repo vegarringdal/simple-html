@@ -169,7 +169,7 @@ describe('menus - rendered as before', () => {
 
         const paste = entry('row.paste.cell');
         expect(paste.className).toEqual('simple-html-grid-menu-item');
-        expect(paste.textContent?.replace(/\s+/g, ' ').trim()).toEqual('Cell (selected rows)');
+        expect(paste.textContent?.replace(/\s+/g, ' ').trim()).toEqual('Paste cell (selected rows)');
         expect(paste.querySelector('i')?.textContent).toEqual('(selected rows)');
     });
 

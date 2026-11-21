@@ -3,6 +3,7 @@ import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import { isMissingValue } from '../../datasource/validatorRegistry';
 import type { Grid } from '../grid';
+import { ariaColIndex, setAria } from './ariaGrid';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
@@ -11,6 +12,7 @@ import { contextmenuRow } from './contextmenuRow';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { getCellType } from './getCellType';
+import { getColumnLabel } from './getColumnLabel';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
 import { renderRowSelectorOf } from './renderRowSelector';
@@ -39,8 +41,13 @@ export function renderRowCell(
     // the validation errors: a class and a tooltip on the cell element
     showCellErrors(ctx, cell, entity, attribute || null);
 
+    // the cell element is the gridcell, the input in it the widget. A column with fewer fields than
+    // the tallest one has empty cells under its last field: those are no cells for a screen reader
+    const config = ctx.gridInterface.__getGridConfig();
+    setAria(cell, 'role', attribute ? 'gridcell' : 'none');
+    setAria(cell, 'aria-colindex', attribute ? String(ariaColIndex(config, colType, column, celno)) : null);
+
     if (attribute) {
-        const config = ctx.gridInterface.__getGridConfig();
         const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
         const datasource = ctx.gridInterface.getDatasource();
 
@@ -93,6 +100,9 @@ export function renderRowCell(
             }
         }
 
+        // the name of the input for a screen reader: the column's label, as in the header
+        const label = getColumnLabel(ctx, attribute);
+
         // the classes of the cellClass hook, '' without one
         const cellClass = ctx.gridInterface.__getCellClass(entity, attribute);
         const backgroundClass = `${dimmed} ${cellClass.background}`;
@@ -107,10 +117,9 @@ export function renderRowCell(
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
                     <input
                         style="width:100%;"
-                        role="cell"
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
-                        aria-label=${attribute}
+                        aria-label=${label}
                         .checked=${live(checked)}
                         type="checkbox"
                         class=${`cellpos-${colType}-${row}-${column}-${celno} ${cellClass.input}${repeatedClass}`}
@@ -147,8 +156,7 @@ export function renderRowCell(
                 html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
                     <input
-                        role="cell"
-                        aria-label=${attribute}
+                        aria-label=${label}
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
                         style=${

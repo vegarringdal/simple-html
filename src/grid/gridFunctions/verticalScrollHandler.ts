@@ -1,5 +1,6 @@
 import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
+import { updateAriaGrid, updateAriaRow } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType, RowCache } from './colType';
 import {
@@ -107,8 +108,10 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
                     rowEl.classList.remove('simple-html-grid-row-even');
                     rowEl.classList.remove('simple-html-grid-row-odd');
 
-                    rowEl.setAttribute('role', 'row');
-                    rowEl.setAttribute('aria-rowindex', (e.row + 1).toString());
+                    // the row selector's row element is the row for a screen reader, see ariaGrid.ts
+                    if (colType === SELECTOR_COLTYPE) {
+                        updateAriaRow(ctx, rowEl, e.row);
+                    }
 
                     rowEl.classList.remove('simple-html-grid-selected-row-odd');
                     rowEl.classList.remove('simple-html-grid-selected-row-even');
@@ -261,6 +264,9 @@ export function verticalScrollHandler(ctx: Grid, scrollTop: number) {
             e.row = ctx.containerGroupRowCache[i].row;
             updateRow(e, RIGHT_PINNED_COLTYPE);
         });
+
+        // the rows in the order of the rows, the counts: see ariaGrid.ts
+        updateAriaGrid(ctx);
 
         return true;
     }

@@ -1,15 +1,16 @@
 import type { Grid } from '../grid';
 import { addMenuListeners } from './addMenuListeners';
 import { addScrollEventListeners } from './addScrollEventListeners';
+import { ariaId, createAriaGrid } from './ariaGrid';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
-import { gridText } from './gridText';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { rebuildFooter } from './rebuildFooter';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { rebuildRowColumns } from './rebuildRowColumns';
 import { rebuildRows } from './rebuildRows';
 import { rebuildTopPanel } from './rebuildTopPanel';
+import { createTabExits } from './tabExit';
 import { attachTooltips, tooltipsEnabled } from './tooltip';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
@@ -21,11 +22,13 @@ export function createDom(ctx: Grid) {
     const header = createElement(DIV, 'simple-html-grid-header');
     const body = createElement(DIV, 'simple-html-grid-body');
 
-    // focus helper
+    // focus helper: the wheel and a swipe focus it and blur it again, to take the focus from the cell
+    // being edited (its row element is reused for another row while scrolling). Not a cell, so not in
+    // the tab order and hidden from a screen reader
     const tmp = document.createElement('input');
     tmp.style.opacity = '0';
-    // a text, rebuild() sets it again
-    tmp.setAttribute('aria-label', gridText(ctx, 'grid.focusHelper'));
+    tmp.tabIndex = -1;
+    tmp.setAttribute('aria-hidden', 'true');
 
     body.appendChild(tmp);
     ctx.focusElement = tmp;
@@ -43,6 +46,11 @@ export function createDom(ctx: Grid) {
     const footer = createElement(DIV, 'simple-html-grid-footer');
 
     ctx.element.appendChild(panel);
+    // the grid a screen reader gets, see ariaGrid.ts
+    ctx.element.appendChild(createAriaGrid(ctx));
+    // Shift+Tab from the first header filter leaves the grid from here, see tabExit.ts
+    createTabExits(ctx);
+    ctx.element.appendChild(ctx.tabExitStart);
     ctx.element.appendChild(header);
     ctx.element.appendChild(body);
     ctx.element.appendChild(footer);
@@ -84,6 +92,10 @@ export function createDom(ctx: Grid) {
     bodyViewPinnedRight.appendChild(bodyRowConainerPinnedRight);
 
     const headerRowConainerSelector = createElement(DIV, 'simple-html-grid-header-row-container-selector');
+    // the top left corner, above the row numbers: their column header (click selects all rows)
+    headerRowConainerSelector.id = ariaId(ctx, 'corner');
+    headerRowConainerSelector.setAttribute('role', 'columnheader');
+    headerRowConainerSelector.setAttribute('aria-colindex', '1');
     const headerRowConainerPinnedLeft = createElement(DIV, 'simple-html-grid-header-row-container-pinned-left');
     const headerRowConainerPinnedMiddle = createElement(DIV, 'simple-html-grid-header-row-container-pinned-middle');
     const headerRowConainerPinnedRight = createElement(DIV, 'simple-html-grid-header-row-container-pinned-right');
@@ -115,6 +127,8 @@ export function createDom(ctx: Grid) {
     horizontalScrollHandler(ctx, 0);
     verticalScrollHandler(ctx, 0);
     ctx.element.appendChild(body);
+    // and Tab from the last cell from here, after the cells in the dom
+    ctx.element.appendChild(ctx.tabExitEnd);
 
     ctx.oldHeight = ctx.element.clientHeight;
     ctx.oldWidth = ctx.element.clientWidth;

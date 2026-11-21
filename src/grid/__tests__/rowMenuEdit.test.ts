@@ -36,7 +36,7 @@ describe('row menu - clear', () => {
 
         openRowMenu(element, 'lastname', 0);
         // paste and clear share the label, clear is the second one
-        menuItemsExact('Cell (selected rows)')[1].click();
+        menuItemsExact('Clear cell (selected rows)')[0].click();
 
         expect(datasource.getAllData().map((row: any) => row.lastname)).toEqual([null, 'y', null, 'x']);
     });

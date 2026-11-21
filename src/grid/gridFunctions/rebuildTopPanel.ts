@@ -6,6 +6,7 @@ import { DIV } from './DIV';
 import { dragEvent } from './dragEvent';
 import { getElementByClassName } from './getElementByClassName';
 import { getTextWidth } from './getTextWidth';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 
 /**
@@ -35,24 +36,36 @@ export function rebuildTopPanel(ctx: Grid) {
         // while a column is dragged
         label.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-left-panel'));
 
+        const removeGroup = () => {
+            // TODO: look into group logic
+            const updateGrouping = ctx.gridInterface
+                .getDatasource()
+                .getGrouping()
+                .filter((e) => e.attribute !== group.attribute);
+            if (updateGrouping.length === 0) {
+                ctx.gridInterface.getDatasource().group([]);
+            } else {
+                ctx.gridInterface.getDatasource().group(updateGrouping);
+            }
+
+            ctx.rebuild();
+        };
+
+        // the x is a button, in the tab order: Enter and Space remove the grouping like a click
         render(
             html`<div>
                 <span class="simple-html-grid-panel-label-text">${group.title}</span>
                 <i
                     class="simple-html-grid-icon-group"
-                    @click=${() => {
-                        // TODO: look into group logic
-                        const updateGrouping = ctx.gridInterface
-                            .getDatasource()
-                            .getGrouping()
-                            .filter((e) => e.attribute !== group.attribute);
-                        if (updateGrouping.length === 0) {
-                            ctx.gridInterface.getDatasource().group([]);
-                        } else {
-                            ctx.gridInterface.getDatasource().group(updateGrouping);
+                    role="button"
+                    tabindex="0"
+                    aria-label=${gridText(ctx, 'grid.removeGroup', { title: group.title })}
+                    @click=${removeGroup}
+                    @keydown=${(e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            removeGroup();
                         }
-
-                        ctx.rebuild();
                     }}
                 >
                     <svg

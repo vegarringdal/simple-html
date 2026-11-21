@@ -24,10 +24,10 @@ const norwegian: Record<TextId, string> = {
     'row.view': 'Visning:',
     'row.view.dimRepeatedValues': 'Demp gjentatte verdier',
     'row.paste': 'Lim inn:',
-    'row.paste.cell': 'Celle',
+    'row.paste.cell': 'Lim inn celle',
     'row.paste.cell.hint': 'valgte rader',
     'row.clear': 'Tøm:',
-    'row.clear.cell': 'Celle',
+    'row.clear.cell': 'Tøm celle',
     'row.clear.cell.hint': 'valgte rader',
     'row.delete': 'Slett:',
     'row.delete.rows': 'Rader',
@@ -160,8 +160,11 @@ const norwegian: Record<TextId, string> = {
     'footer.operator.IS_NOT_BLANK': 'er ikke tom',
 
     // for screen readers
+    'grid.label': 'Tabell',
     'grid.rowSelector': 'radvelger',
-    'grid.focusHelper': 'hjelpefelt for fokus',
+    'grid.filter': 'Filtrer {label}',
+    'grid.groupToggle': '{name} ({total})',
+    'grid.removeGroup': 'Fjern grupperingen på {title}',
 
     // the date picker
     'datePicker.hours': 'TT',

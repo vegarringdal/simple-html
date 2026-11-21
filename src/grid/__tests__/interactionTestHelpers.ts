@@ -28,7 +28,6 @@ export function menuItem(text: string): HTMLElement {
 
 /**
  * every row menu entry whose text is exactly `text`, in dom order
- * (paste and clear in the row menu are both called "Cell (selected rows)")
  */
 export function menuItemsExact(text: string): HTMLElement[] {
     return Array.from(document.querySelectorAll('.simple-html-grid-menu-item')).filter(

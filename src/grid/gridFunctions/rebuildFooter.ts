@@ -92,8 +92,17 @@ export function rebuildFooter(ctx: Grid) {
                       </button>
                       <div
                           class="footer-filter-chips"
+                          role="button"
+                          tabindex="0"
                           title=${gridText(ctx, 'footer.filter.tooltip')}
                           @click=${() => openFilterEditor(ctx)}
+                          @keydown=${(e: KeyboardEvent) => {
+                              // a button: Enter and Space open the filter editor too
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  openFilterEditor(ctx);
+                              }
+                          }}
                       >
                           ${
                               collapse
@@ -112,6 +121,8 @@ export function rebuildFooter(ctx: Grid) {
         // with a filter the count floats in the scrollbar band at the very top (painted in
         // front of the scrollbar via z-index), so it costs no vertical space and the chips
         // only have to clear the scrollbar. without a filter it just centers.
+        // The count is a status (a polite live region): a screen reader reads it out when it
+        // changes, after a filter or when a group is expanded or collapsed
         render(
             html`
                 <div
@@ -120,6 +131,7 @@ export function rebuildFooter(ctx: Grid) {
                 >
                     <span
                         class="footer-count"
+                        role="status"
                         style=${filterTree ? `height:${scrollbarHeight}px;line-height:${scrollbarHeight}px;` : ''}
                         >${gridText(ctx, 'footer.rowCount', { shown: filteredRows, total: totalRows })}</span
                     >

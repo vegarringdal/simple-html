@@ -118,7 +118,8 @@ function shown({ element, datasource, gridInterface }: MountedGrid) {
         state: gridInterface.getState(),
         rows: datasource.getRows().map((row) => (isGroupRow(row) ? row.__groupID : row.name)),
         hidden: gridInterface.getHiddenFields(),
-        html: element.innerHTML
+        // the ids aria-owns points to start with the grid's own prefix, simple-html-grid-<n>
+        html: element.innerHTML.replace(/simple-html-grid-\d+-/g, 'simple-html-grid-<n>-')
     };
 }
 

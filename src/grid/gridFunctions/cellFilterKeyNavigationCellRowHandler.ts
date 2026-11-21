@@ -5,6 +5,8 @@ import { nextSection, sectionColumns } from './cellRowKeyNavigationCellRowHandle
 import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { focusHeaderLabel } from './headerLabelKeydown';
+import { leaveGrid, tabLeavesFilters } from './tabExit';
 
 const TAB_KEY = 'Tab';
 const ARROW_UP_KEY = 'ArrowUp';
@@ -280,6 +282,14 @@ export const cellFilterKeyNavigationCellRowHandler = (
             return true;
         }
         event.preventDefault();
+
+        // up from the first field of the column: its label above, the label of the last field
+        const labelsShown = !ctx.gridInterface.__getGridConfig().hideLabels;
+        if (currentKey === ARROW_UP_KEY && celno === 0 && labelsShown) {
+            const fields = sectionColumns(ctx.gridInterface.__getGridConfig(), colType)[column].fields.length;
+            focusHeaderLabel(ctx, colType, column, fields - 1);
+            return false;
+        }
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
         const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
         const cellRect = cell.getBoundingClientRect();
@@ -390,6 +400,11 @@ export const cellFilterKeyNavigationCellRowHandler = (
      * all logic if using tab
      */
     if (currentKey === TAB_KEY) {
+        // no cell to go to: the browser's Tab takes the focus out of the grid, see tabExit.ts
+        if (tabLeavesFilters(ctx, column, celno, colType, event.shiftKey)) {
+            leaveGrid(ctx, !event.shiftKey);
+            return true;
+        }
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
         const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();

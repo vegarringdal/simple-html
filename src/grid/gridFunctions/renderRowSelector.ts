@@ -4,7 +4,6 @@ import type { Grid } from '../grid';
 import type { ColType } from './colType';
 import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getColumnLabel } from './getColumnLabel';
-import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 
 export function renderRowSelector(
@@ -28,8 +27,12 @@ export function renderRowSelector(
     // the server's error and the validation errors of the row, one per line: shown as the tooltip
     const errors = rowErrorText(ctx, rowData);
 
+    // the first cell of the row for a screen reader, the row number: the row element is the row, see
+    // ariaGrid.ts
     render(
         html`<div
+            role="gridcell"
+            aria-colindex="1"
             class=${`${currentEntitySelected} simple-html-absolute-fill${errors ? ' simple-html-row-error' : ''}`}
             data-tooltip=${errors || nothing}
             @click=${(e: MouseEvent) => {
@@ -56,9 +59,7 @@ export function renderRowSelector(
             }}
         >
             <div class="${isModified(rowData)}">
-                <span role="cell" aria-label=${gridText(ctx, 'grid.rowSelector')} class="simple-html-selector-text"
-                    >${row + 1}</span
-                >
+                <span class="simple-html-selector-text">${row + 1}</span>
             </div>
         </div>`,
         cell as any

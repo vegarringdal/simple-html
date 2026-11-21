@@ -866,6 +866,38 @@ sorting in the header work with a mouse, a pen and a finger.
   title): it is `--simple-html-grid-font-weight`.
 - The date picker's hour and minute inputs had no focus outline.
 
+#### Accessibility (item 22)
+
+##### ⚠️ Breaking changes
+- The grid's accessibility structure is new: `role="grid"` / `"treegrid"` is on a new
+  `.simple-html-grid-aria` element, `<simple-html-grid>` no longer has `role="table"`.
+- Only the row element of the row selector is `role="row"` and has `aria-rowindex`; `aria-rowindex`
+  counts the header rows (the first data row is 3 with labels and filters).
+- Cell inputs no longer have `role="cell"`; their `aria-label` is the column label, not the field name.
+- Text id `grid.focusHelper` is removed. `row.paste.cell` / `row.clear.cell` default to `Paste cell` /
+  `Clear cell` (both were `Cell`).
+- Grid elements get ids `simple-html-grid-<n>-...`.
+
+##### Added
+- Grid / treegrid semantics that stay right with virtual rows and columns: `aria-rowcount`,
+  `aria-colcount`, `aria-rowindex`, `aria-colindex`, rows and cells put in order with `aria-owns`.
+  Checked in Chrome's accessibility tree.
+- `aria-sort` on the first sort column, `aria-selected` on the rows (selection modes single and
+  multiple), `aria-multiselectable`, `aria-level` and `aria-expanded` while grouped.
+- Keyboard: column headers sort with Enter/Space (Shift adds), reached with Alt+ArrowUp from the
+  filter; the group expand/collapse is a labelled button (Enter/Space); the group chip's remove and
+  the footer filter chips are buttons. The footer row count is a live status.
+- Text ids `grid.label`, `grid.filter`, `grid.groupToggle`, `grid.removeGroup`.
+- Guide `guides/14-accessibility.md`: what a screen reader gets, every key, focus, the labels, the
+  known limits.
+
+##### Fixed
+- Keyboard trap (WCAG 2.1.2): Tab on the last cell and Shift+Tab on the first header filter kept the
+  focus in the grid. They leave it now.
+- The focus helper input was a Tab stop announced as "dummy cell".
+- The filter inputs were named "🔍"; they are "Filter <column label>".
+- Paste and clear in the row menu had the same text.
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

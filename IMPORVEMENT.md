@@ -1046,6 +1046,32 @@ in the console. All passed. Found and fixed:
   numbers 3.4:1, row numbers at 50% opacity); the date picker's generic class names (`.main`, `.side`
   ...) clash with page css (the demo's `.main`)
 
+#### Step 4 - accessibility (item 22)
+
+* a new element `.simple-html-grid-aria` is the grid (role grid, treegrid while grouped - aria-level /
+  aria-expanded are not allowed on rows of a plain grid). Not the host element: the panel and footer
+  buttons would be inside the grid, which may only own rows. Its children are the two header rows; it
+  `aria-owns` the body rows in row order
+* a row of the grid is five row elements (group, selector, left, middle, right) from a pool reused on
+  scroll, so dom order is not row order. The selector's row element is the row and owns the group
+  cell and the column elements of the three sections in column order; the others are role none.
+  aria-owns re-parents without moving dom nodes (moving them would blur a focused input). Chrome's
+  real tree (CDP getFullAXTree) honours it; playwright's ariaSnapshot does not reorder by aria-owns
+* aria-rowindex / aria-colindex / counts include the rows and columns not in the dom; a stacked
+  column is one column per field. `updateAriaGrid` runs after the scroll handlers re-render, and only
+  writes attributes that changed
+* fixed a keyboard trap: Tab on the last cell / Shift+Tab on the first filter never left the grid. At
+  those ends the focus goes to an empty tabindex=-1 element at the grid's end/start and the browser's
+  Tab (not cancelled) goes on from there (`tabExit.ts`)
+* column headers: tabindex -1, Enter/Space sorts, Alt+ArrowUp from a filter reaches them. Group
+  toggle, chip remove and footer chips are buttons. Footer count is role status
+* tests: `accessibility.test.ts` (43); `a11y-check.js` in Chromium, 32 checks (structure and order
+  after scrolling both ways, sort, grouping, selection, Tab out). Tests that found rows by
+  aria-rowindex use new helpers
+* limits (in the guide): Chrome only, no screen reader tried; not the APG roving-tabindex keyboard
+  (every input is a Tab stop, Alt+arrows between cells, no Home/End/PageUp/PageDown); only rendered
+  rows are in the dom; menus and the date picker are mouse-only; aria-sort on the first sort only
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -1056,6 +1082,22 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
 — it looks parked rather than abandoned. Decide whether to revive or remove it.
 
 ## Candidates / not started
+
+* **From phase 3 (theming, accessibility):**
+  - light colours under WCAG AA kept for pixel-identical light mode: secondary text 3.0:1, date week
+    numbers 3.4:1, row numbers at 50% opacity 2.9:1, row-state colours under that opacity
+  - the date picker's generic class names (`.main`, `.side`, `.year`, `.month`, `.icon`) pick up page
+    css (the demo's `.main` colours the month name)
+  - the label cell and its inner text div share the class `simple-html-label` (and the column-selector
+    cell's inner div too): rename the inner ones (`simple-html-label-text`) to make selectors exact
+  - `samples/grid01/toggleDarkGrid.ts`, `samples/date01/toggleDarkDate.ts` still inject v5-style dark
+    overrides; `guides/05-editing.md` "Showing the row state" could use `light-dark()`
+  - keyboard: menus and the date picker are mouse-only; no Home/End/PageUp/PageDown; group buttons and
+    footer chips are not on the Tab path; the date picker opened from a cell is at the end of the body,
+    out of Tab reach; the two scrollbar elements are unnamed Tab stops in Chrome
+  - `grid.label` default `Grid` reads as "Grid grid"; a better default needs the app's context
+  - only tried in Chrome's accessibility tree: Firefox, Safari (weaker aria-owns) and real screen
+    readers not tried
 
 * **`@types/node` is no longer needed by any typecheck** — the `NodeJS.Timeout` annotations
   that pulled it in are gone (see *`npm start` typecheck errors fixed*). `tsc` over the root

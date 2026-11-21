@@ -1,5 +1,6 @@
 import type { Grid } from '../grid';
 import type { LayoutColumn } from '../gridConfig';
+import { ariaId } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
 import { createElement } from './createElement';
@@ -77,6 +78,9 @@ export function rebuildRowColumns(ctx: Grid) {
 
                 const id = `${rowId}:${i.toString()}`;
                 ctx.columns.set(id, columnElement);
+                // owned by the row, its cells are the gridcells of the row (see ariaGrid.ts)
+                columnElement.id = ariaId(ctx, `${rowId}-${i}`);
+                columnElement.setAttribute('role', 'none');
                 columnElement.style.transform = `translate3d(${left}px, 0px, 0px)`;
                 columnElement.style.width = asPx(columns[i].width);
                 columnElement.setAttribute('refID', i.toString());
@@ -94,6 +98,8 @@ export function rebuildRowColumns(ctx: Grid) {
                     cellElement.style.top = asPx(config.cellHeight * y);
                     cellElement.style.height = asPx(config.cellHeight);
                     cellElement.setAttribute('type', 'row-cell');
+                    // a gridcell when it shows a field, renderRowCell sets it
+                    cellElement.setAttribute('role', 'none');
                     columnElement.appendChild(cellElement);
                 }
             }

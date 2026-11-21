@@ -3,11 +3,14 @@ import { live } from 'lit-html/directives/live.js';
 import type { Entity, GroupRow } from '../../datasource/entity';
 import { parseFilterText } from '../../datasource/formatter';
 import type { Grid } from '../grid';
+import { ariaColIndex, setAria } from './ariaGrid';
 import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
 import { contextmenuFilter } from './contextmenuFilter';
 import { filterCallback } from './filterCallback';
+import { getColumnLabel } from './getColumnLabel';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 
 export function renderHeaderFilter(
@@ -22,8 +25,16 @@ export function renderHeaderFilter(
     // the first displayed row, not the header's: a group row when grouped, undefined when there are no rows
     rowData: Entity | GroupRow | undefined
 ) {
+    // the cell element is a gridcell of the filter row, the input in it the widget (see ariaGrid.ts). A
+    // column with fewer fields than the tallest one has empty cells, they are no cells
+    const config = ctx.gridInterface.__getGridConfig();
+    setAria(cell, 'role', attribute ? 'gridcell' : 'none');
+    setAria(cell, 'aria-colindex', attribute ? String(ariaColIndex(config, colType, column, celno)) : null);
+
     if (attribute) {
-        const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
+        const cellConfig = config.columns[attribute];
+        // the name of the input for a screen reader, the placeholder is a 🔍 or a date format
+        const label = gridText(ctx, 'grid.filter', { label: getColumnLabel(ctx, attribute) });
         const { type, formatter } = ctx.gridInterface.getDatasource().getField(attribute);
 
         // the column's own placeholder, else the formatter's (YYYY-MM-DD), else the search icon
@@ -43,6 +54,7 @@ export function renderHeaderFilter(
                 render(
                     html`<input
                         style="width:100%"
+                        aria-label=${label}
                         type="checkbox"
                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
                         .checked=${live(currentValue)}
@@ -94,6 +106,7 @@ export function renderHeaderFilter(
                 let skipFocus = false;
                 render(
                     html`<input
+                        aria-label=${label}
                         class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
                         style=${type === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'}
                         .value=${live(currentText)}

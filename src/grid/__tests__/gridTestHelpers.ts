@@ -122,11 +122,44 @@ export function unmountGrid(mounted: MountedGrid) {
 }
 
 export type RenderedRow = {
-    /** 1 based, as the grid puts it in aria-rowindex */
+    /** 1 based, the index in the displayed rows + 1 */
     rowIndex: number;
     values: Record<string, string>;
     classes: string;
 };
+
+/**
+ * The row a row element of any section shows: its index in the displayed rows, 0 based. The row
+ * elements are a pool reused while scrolling, and the n-th row element of every section shows the
+ * same row. The row selector's row element knows which (renderCell sets `$row` on it).
+ */
+export function displayedRowOf(rowElement: Element): number {
+    const index = Array.prototype.indexOf.call(rowElement.parentElement?.children ?? [], rowElement);
+    const selector = rowElement.closest('simple-html-grid')?.querySelector('.simple-html-grid-body-row-container-selector')
+        ?.children[index];
+    return (selector as any)?.$row ?? -1;
+}
+
+/**
+ * the row elements of a section that are on screen, in the order the user sees them
+ * @param section the end of the container's class: 'pinned-middle', 'selector', 'group' ...
+ */
+export function shownRowElements(element: GridElement, section = 'pinned-middle'): HTMLElement[] {
+    const container = element.querySelector(`.simple-html-grid-body-row-container-${section}`);
+    return (Array.from(container?.children ?? []) as HTMLElement[])
+        .filter((row) => row.style.display !== 'none')
+        .sort((a, b) => displayedRowOf(a) - displayedRowOf(b));
+}
+
+/**
+ * The row element of the row selector that shows a displayed row: the element that is the row for
+ * a screen reader, its first child is the cell with the row number. undefined when the row is not on
+ * screen
+ * @param row index in the displayed rows, 0 based
+ */
+export function selectorRowOf(element: GridElement, row: number): HTMLElement | undefined {
+    return shownRowElements(element, 'selector').find((rowElement) => displayedRowOf(rowElement) === row);
+}
 
 /**
  * The grid recycles a fixed pool of row elements and hides the unused ones, so the dom
@@ -134,28 +167,20 @@ export type RenderedRow = {
  * puts them in the order the user sees them.
  */
 export function renderedRows(element: GridElement): RenderedRow[] {
-    const container = element.querySelector('.simple-html-grid-body-row-container-pinned-middle');
-    if (!container) {
-        return [];
-    }
-
-    return Array.from(container.children)
-        .filter((row) => (row as HTMLElement).style.display !== 'none')
-        .map((row) => {
-            const values: Record<string, string> = {};
-            row.querySelectorAll('input[data-attribute]').forEach((input) => {
-                const attribute = input.getAttribute('data-attribute');
-                if (attribute) {
-                    values[attribute] = (input as HTMLInputElement).value;
-                }
-            });
-            return {
-                rowIndex: Number(row.getAttribute('aria-rowindex')),
-                values,
-                classes: (row as HTMLElement).className
-            };
-        })
-        .sort((a, b) => a.rowIndex - b.rowIndex);
+    return shownRowElements(element).map((row) => {
+        const values: Record<string, string> = {};
+        row.querySelectorAll('input[data-attribute]').forEach((input) => {
+            const attribute = input.getAttribute('data-attribute');
+            if (attribute) {
+                values[attribute] = (input as HTMLInputElement).value;
+            }
+        });
+        return {
+            rowIndex: displayedRowOf(row) + 1,
+            values,
+            classes: row.className
+        };
+    });
 }
 
 /**

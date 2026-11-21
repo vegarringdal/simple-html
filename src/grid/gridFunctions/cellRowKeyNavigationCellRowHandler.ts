@@ -4,6 +4,7 @@ import type { ParsedGridConfig } from '../gridConfig';
 import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { leaveGrid, tabLeavesRows } from './tabExit';
 
 const TAB_KEY = 'Tab';
 const ARROW_UP_KEY = 'ArrowUp';
@@ -481,6 +482,11 @@ export const cellRowKeyNavigationCellRowHandler = (
      * all logic if using tab
      */
     if (currentKey === TAB_KEY) {
+        // no cell to go to: the browser's Tab takes the focus out of the grid, see tabExit.ts
+        if (tabLeavesRows(ctx, row, column, celno, colType, event.shiftKey)) {
+            leaveGrid(ctx, !event.shiftKey);
+            return true;
+        }
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
         const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();

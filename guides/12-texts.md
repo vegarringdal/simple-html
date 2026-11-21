@@ -1,10 +1,10 @@
 # Texts
 
 Every text the grid shows has an id: the menus, the filter editor, the column chooser, the footer,
-the tooltips and the date picker - and so do the texts the datasource makes, the validation messages
-and `getFilterString()`. `TEXTS` has them all, with their English text. Change them with `setTexts()`
-for the page, and with `texts` in the config for one grid. A translation is a JSON object of texts by
-id: it can be stored with the config, in a backend.
+the tooltips, the date picker and the labels a screen reader reads - and so do the texts the
+datasource makes, the validation messages and `getFilterString()`. `TEXTS` has them all, with their
+English text. Change them with `setTexts()` for the page, and with `texts` in the config for one
+grid. A translation is a JSON object of texts by id: it can be stored with the config, in a backend.
 
 ```sample translation
 ```
@@ -201,10 +201,10 @@ Right click on a cell.
 | `row.view` | `View:` | section header |
 | `row.view.dimRepeatedValues` | `Use dimmed values` | turns `dimRepeatedValues` on and off. A `✓ ` is put in front while it is on |
 | `row.paste` | `Paste:` | section header, an editable cell |
-| `row.paste.cell` | `Cell` | pastes into the column of the selected rows |
+| `row.paste.cell` | `Paste cell` | pastes into the column of the selected rows |
 | `row.paste.cell.hint` | `selected rows` | its hint |
 | `row.clear` | `Clear:` | section header, an editable cell |
-| `row.clear.cell` | `Cell` | empties the column of the selected rows |
+| `row.clear.cell` | `Clear cell` | empties the column of the selected rows |
 | `row.clear.cell.hint` | `selected rows` | its hint |
 | `row.delete` | `Delete:` | section header, an editable grid |
 | `row.delete.rows` | `Rows` | marks the selected rows for deletion |
@@ -374,12 +374,16 @@ The short names of the operators, on a chip:
 
 ### Screen readers
 
-Labels (`aria-label`) that are read out, not shown.
+Labels (`aria-label`) that are read out, not shown. The [keyboard and accessibility
+guide](14-accessibility.md) has what a screen reader gets.
 
 | id | English | shown |
 | --- | --- | --- |
-| `grid.rowSelector` | `row selector` | the row number of a row |
-| `grid.focusHelper` | `dummy cell, helper to set focus` | the hidden input the grid keeps focus in |
+| `grid.label` | `Grid` | the name of the grid. Give each grid its own in its config: `texts: { 'grid.label': 'Orders' }` |
+| `grid.rowSelector` | `row selector` | the column header of the row numbers, the top left corner |
+| `grid.filter` | `Filter {label}` | a header filter. `{label}`: the column's label |
+| `grid.groupToggle` | `{name} ({total})` | the expand/collapse button of a group row, which also says whether it is expanded. `{name}`: the group's name, `Country: Norway`; `{total}`: its number of rows. The row shows `{name} ({total})` |
+| `grid.removeGroup` | `Remove the grouping on {title}` | the x on a group chip in the panel above the grid. `{title}`: the title of the grouping |
 
 ### Date picker
 

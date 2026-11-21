@@ -4,7 +4,8 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Formatter } from '../../datasource/formatter';
 import { registerFormatter } from '../../datasource/formatterRegistry';
 import type { GridConfig } from '../gridConfig';
-import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import type { GridElement } from '../gridElement';
+import { mountGrid, shownRowElements, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
 /**
  * dimRepeatedValues dims a cell when it repeats the row above, and starts over at the top
@@ -28,10 +29,7 @@ const dimConfig = (): GridConfig => {
  * data-repeated-value per rendered row, in the order the user sees them
  */
 function repeatedFlags(element: HTMLElement, attribute: string): string[] {
-    const container = element.querySelector('.simple-html-grid-body-row-container-pinned-middle');
-    return Array.from(container?.children || [])
-        .filter((row) => (row as HTMLElement).style.display !== 'none')
-        .sort((a, b) => Number(a.getAttribute('aria-rowindex')) - Number(b.getAttribute('aria-rowindex')))
+    return shownRowElements(element as GridElement)
         .map((row) => row.querySelector(`input[data-attribute="${attribute}"]`)?.getAttribute('data-repeated-value') || '')
         .filter((v) => v !== '');
 }

@@ -1,7 +1,6 @@
 import { addMenuListeners } from './gridFunctions/addMenuListeners';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
-import { gridText } from './gridFunctions/gridText';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
@@ -15,6 +14,11 @@ import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateHorizontalScrollWidth } from './gridFunctions/updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import type { GridInterface } from './gridInterface';
+
+/**
+ * how many grids were made, for the id prefix of each (Grid.ariaIdPrefix)
+ */
+let gridCount = 0;
 
 /**
  * Grid class, this has logic for all scrolling/events
@@ -70,6 +74,24 @@ export class Grid {
     public menuListenersAbort?: AbortController;
     // set by createDom
     public focusElement!: HTMLInputElement;
+
+    /**
+     * The grid for a screen reader, and its header rows: see ariaGrid.ts. Made by createDom
+     */
+    public ariaGrid!: HTMLElement;
+    public ariaLabelRow!: HTMLElement;
+    public ariaFilterRow!: HTMLElement;
+    /**
+     * the start of the ids of the elements aria-owns points to: an id is unique in the page, and a
+     * page can have several grids
+     */
+    public readonly ariaIdPrefix = `simple-html-grid-${++gridCount}`;
+    /**
+     * Tab and Shift+Tab leave the grid from these, at its start and its end: see tabExit.ts. Made by
+     * createDom
+     */
+    public tabExitStart!: HTMLElement;
+    public tabExitEnd!: HTMLElement;
 
     public domCreated = false;
 
@@ -232,8 +254,6 @@ export class Grid {
         }
         rebuildTopPanel(this);
         rebuildFooter(this);
-        // createDom made it, its label is a text that can have changed
-        this.focusElement.setAttribute('aria-label', gridText(this, 'grid.focusHelper'));
         triggerScrollEvent(this);
     }
 }

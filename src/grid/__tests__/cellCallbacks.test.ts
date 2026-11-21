@@ -5,7 +5,15 @@ import type { Entity } from '../../datasource/entity';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import type { GridHooks } from '../gridHooks';
-import { mountGrid, simpleConfig, simpleData, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import {
+    mountGrid,
+    shownRowElements,
+    simpleConfig,
+    simpleData,
+    simpleFields,
+    stubCanvas,
+    stubElementSizes
+} from './gridTestHelpers';
 
 /**
  * the hooks of a cell: isReadonly(row, field, readonlyByConfig) and cellClass(row, field)
@@ -29,14 +37,10 @@ afterEach(() => {
  * that gets the background classes
  */
 function cellsOf(element: GridElement, field: string) {
-    const container = element.querySelector('.simple-html-grid-body-row-container-pinned-middle');
-    return Array.from(container?.children ?? [])
-        .filter((row) => (row as HTMLElement).style.display !== 'none')
-        .sort((a, b) => Number(a.getAttribute('aria-rowindex')) - Number(b.getAttribute('aria-rowindex')))
-        .map((row) => {
-            const input = row.querySelector(`input[data-attribute="${field}"]`) as HTMLInputElement;
-            return { input, background: input.previousElementSibling as HTMLElement };
-        });
+    return shownRowElements(element).map((row) => {
+        const input = row.querySelector(`input[data-attribute="${field}"]`) as HTMLInputElement;
+        return { input, background: input.previousElementSibling as HTMLElement };
+    });
 }
 
 const readonlyOf = (element: GridElement, field: string) => cellsOf(element, field).map((cell) => cell.input.readOnly);

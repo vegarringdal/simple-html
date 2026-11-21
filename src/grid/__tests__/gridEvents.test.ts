@@ -165,7 +165,7 @@ describe('grid events - cell events', () => {
 
         openRowMenu(element, 'age', 2);
         // paste and clear share the label, clear is the second one
-        menuItemsExact('Cell (selected rows)')[1].click();
+        menuItemsExact('Clear cell (selected rows)')[0].click();
 
         expect(received).toHaveLength(1);
         expect(received[0].attribute).toEqual('age');

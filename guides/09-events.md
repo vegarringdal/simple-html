@@ -161,8 +161,8 @@ The row menu (right click a cell) sends these when the user picks an entry:
 | `copy-column` | Copy: Column (selected rows) | the cell |
 | `copy-row` | Copy: Row (selected rows) | the cell |
 | `copy-row-col` | Copy: Row (selected rows/col) | the cell |
-| `paste` | Paste: Cell (selected rows) | the cell, without `rowData`. `entity`: the row pasted into. Sent once per row |
-| `clear` | Clear: Cell (selected rows) | the cell |
+| `paste` | Paste: Paste cell (selected rows) | the cell, without `rowData`. `entity`: the row pasted into. Sent once per row |
+| `clear` | Clear: Clear cell (selected rows) | the cell |
 
 `filter-operator-change` is sent when the user picks an operator in a header filter's menu, after
 the filter ran with it. It sends `{ field, operator, column, rebuildHeader }`: `column` is the

@@ -104,7 +104,7 @@ A `MenuEntry` is one of:
 | `{ type: 'block', id, element, visible? }` - a `MenuBlock` | your element, as it is |
 
 - Clicking an item closes the menu, then calls `action(context)`.
-- `hint` is shown after the label, in italics and in parentheses: `Cell (selected rows)`.
+- `hint` is shown after the label, in italics and in parentheses: `Paste cell (selected rows)`.
 - `visible(context)`: `false` leaves the entry out. `disabled(context)`: `true` shows the item greyed
   out, a click does nothing. `selected(context)`: `true` marks it as the one picked now. They are
   called when the menu opens.
@@ -150,9 +150,9 @@ The "shown as" below is the English text.
 | `row.view` | View: | |
 | `row.view.dimRepeatedValues` | Use dimmed values, with a ✓ when it is on | |
 | `row.paste` | Paste: | the grid and the cell are editable |
-| `row.paste.cell` | Cell (selected rows) | the grid and the cell are editable |
+| `row.paste.cell` | Paste cell (selected rows) | the grid and the cell are editable |
 | `row.clear` | Clear: | the grid and the cell are editable |
-| `row.clear.cell` | Cell (selected rows) | the grid and the cell are editable |
+| `row.clear.cell` | Clear cell (selected rows) | the grid and the cell are editable |
 | `row.delete` | Delete: | the grid is editable |
 | `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows). Greyed out when no selected row is left to mark | the grid is editable |
 | `row.delete.undo` | Undo (selected rows): takes the mark off | the grid is editable, and a selected row is marked for deletion |

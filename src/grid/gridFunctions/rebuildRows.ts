@@ -1,4 +1,5 @@
 import type { Grid } from '../grid';
+import { ariaId } from './ariaGrid';
 import { asPx } from './asPx';
 import type { RowCache } from './colType';
 import { createElement } from './createElement';
@@ -38,6 +39,10 @@ export function rebuildRows(ctx: Grid) {
             const top = i * config.__rowHeight;
             const id = prefix + i.toString();
             element.setAttribute('row-id', id);
+            // the row element of the row selector is the row for a screen reader, it owns the cells of
+            // the row elements of the other sections (see ariaGrid.ts): those are not rows themselves
+            element.id = ariaId(ctx, id);
+            element.setAttribute('role', prefix === SELECTOR_COLTYPE ? 'row' : 'none');
             element.style.transform = `translate3d(0px, ${top}px, 0px)`;
             element.style.height = asPx(ctx.gridInterface.__getScrollState().scrollHeights[i]);
 

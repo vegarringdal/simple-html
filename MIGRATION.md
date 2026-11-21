@@ -1976,6 +1976,30 @@ changes, see [Theming](guides/13-theming.md):
 * The colours that were written in the css (17: stripes, shadows, the backdrop, the warning and danger
   reds) are variables now, see the tables in the guide.
 
+## Accessibility
+
+The grid is a WAI-ARIA `grid` now (a `treegrid` while grouped), see
+[Keyboard and accessibility](guides/14-accessibility.md). Code and tests that read the old attributes
+change:
+
+* **`role="table"` is gone from `<simple-html-grid>`.** The grid role is on a new element,
+  `.simple-html-grid-aria`, that owns the rows with `aria-owns` (the rows and columns are a pool that is
+  reused while scrolling, so the dom order is not the order of the rows).
+* **Only the row element of the row selector is `role="row"`**, with `aria-rowindex`, `aria-selected`
+  and (grouped) `aria-level` / `aria-expanded`. The row elements of the other sections are
+  `role="none"`. `aria-rowindex` counts the header rows: with labels and filters shown, the first data
+  row is 3 (it was 1). A test that found a row by `[aria-rowindex]` on any section has to find it
+  another way.
+* **A cell input has no `role="cell"`**: the cell element around it is the `gridcell`, with
+  `aria-colindex`. The input's `aria-label` is the column label (`First Name`), not the field name.
+* **Elements get ids** `simple-html-grid-<n>-...` for `aria-owns`, one `<n>` per grid.
+* **Texts**: `grid.focusHelper` is removed (the focus helper is hidden from screen readers). New:
+  `grid.label` (the grid's name, `Grid` - give each grid its own in `GridConfig.texts`),
+  `grid.filter`, `grid.groupToggle`, `grid.removeGroup`. `row.paste.cell` / `row.clear.cell` are
+  `Paste cell` / `Clear cell` (both were `Cell`).
+* **Tab leaves the grid at its ends**: Tab on the last cell of the last row and Shift+Tab on the first
+  header filter used to keep the focus in the grid.
+
 ## Other behaviour changes
 
 Found while writing the v6 docs: each did not do what its name or its docs said.

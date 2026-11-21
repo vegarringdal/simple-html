@@ -284,7 +284,7 @@ function autoScroll(ctx: Grid, gridRect: DOMRect, x: number) {
  * a click on a label: sort on its field, a second click turns the direction. `add` (shift) adds the
  * field to the sort instead of replacing it
  */
-function sortOn(ctx: Grid, attribute: string, add: boolean) {
+export function sortOn(ctx: Grid, attribute: string, add: boolean) {
     const datasource = ctx.gridInterface.getDatasource();
     const sortOrder = datasource.getLastSorting()?.filter((e) => e.attribute === attribute);
     if (sortOrder.length) {

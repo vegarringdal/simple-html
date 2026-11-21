@@ -1,5 +1,6 @@
 import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
+import { updateAriaGrid } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
@@ -207,5 +208,8 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
                 });
             }
         });
+
+        // the cells of the rows in the order of the columns, see ariaGrid.ts
+        updateAriaGrid(ctx);
     }
 }

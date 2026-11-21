@@ -44,8 +44,8 @@ Tasks:
     leaving a wrong example behind.
 
   **S-M**
-- [ ] **Guides**, written as each area lands: **M in total** - 11 written after phase 2; theming,
-      keyboard, texts and accessibility come with phase 3
+- [x] **Guides**, written as each area lands: **M in total** - 11 written after phase 2; texts,
+      theming and keyboard/accessibility (12-14) with phase 3. Later phases add to them
   - getting started - install, css, first grid
   - config reference - every option, its default, and a sample showing it
   - datasource - data, editing, change tracking, keys
@@ -343,7 +343,7 @@ built on it.
 21. [x] **Every text replaceable.** Menu labels and headings ("Filter:", "Paste:", "Select All",
         "Run Search" ...) are hardcoded English. Only tooltips can be overridden today
         (`tooltipText`). One `texts` map for all of it, with the tooltips folded in. **M**
-22. [ ] **Accessibility.** There are 7 aria/role attributes in the whole grid today. Needed:
+22. [x] **Accessibility.** There are 7 aria/role attributes in the whole grid today. Needed:
         `role` grid/row/gridcell/columnheader, `aria-sort`, `aria-selected`,
         `aria-rowcount`/`aria-rowindex` (rows are virtual), visible focus. **M-L**
 23. [x] **Menus and the filter editor on the platform**: `<dialog>` / the popover API give the
@@ -418,7 +418,7 @@ Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** phase 3 (phase 2b is done).
+**Now:** phase 4 (phase 3 is done).
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies

@@ -61,7 +61,7 @@ export interface MenuItem {
     id: string;
     /** the text shown */
     label: string;
-    /** shown after the label, in italics and in parentheses: `Cell (selected rows)` */
+    /** shown after the label, in italics and in parentheses: `Paste cell (selected rows)` */
     hint?: string;
     /** called when the item is clicked, after the menu is closed */
     action: (context: MenuContext) => void;
@@ -300,9 +300,9 @@ export interface GridMenus {
  * | `row.view` | View: | |
  * | `row.view.dimRepeatedValues` | Use dimmed values, with a ✓ when on | |
  * | `row.paste` | Paste: | the grid and the cell are editable |
- * | `row.paste.cell` | Cell (selected rows) | the grid and the cell are editable |
+ * | `row.paste.cell` | Paste cell (selected rows) | the grid and the cell are editable |
  * | `row.clear` | Clear: | the grid and the cell are editable |
- * | `row.clear.cell` | Cell (selected rows) - sets the field to `null`, also a number field (emptying the cell stores 0) | the grid and the cell are editable |
+ * | `row.clear.cell` | Clear cell (selected rows) - sets the field to `null`, also a number field (emptying the cell stores 0) | the grid and the cell are editable |
  * | `row.delete` | Delete: | the grid is editable |
  * | `row.delete.rows` | Rows (selected rows) - marks them for deletion (`markForDeletion()`), they stay in the grid until the changes are accepted. Skips a row the `isReadonly` hook returns `true` for in every column of the layout. Greyed out when no selected row is left to mark | the grid is editable |
  * | `row.delete.undo` | Undo (selected rows) - takes the mark off the selected rows marked for deletion (`unmarkForDeletion()`) | the grid is editable, and a selected row is marked for deletion |

@@ -1,5 +1,6 @@
 import type { Grid } from '../grid';
 import type { LayoutColumn } from '../gridConfig';
+import { headerCellId, headerRowCount } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
 import { createElement } from './createElement';
@@ -9,7 +10,9 @@ import { followPointer, isPrimaryPress } from './followPointer';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { headerLabelKeydown } from './headerLabelKeydown';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { getMiddleColumnsNeeded } from './rebuildRowColumns';
 import { renderCell } from './renderCell';
@@ -53,6 +56,8 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  */
 
                 const columnElement = createElement(DIV, 'simple-html-grid-col');
+                // its label and filter cells are owned by the header rows, see ariaGrid.ts
+                columnElement.setAttribute('role', 'none');
 
                 columnElement.style.transform = `translate3d(${left}px, 0px, 0px)`;
                 columnElement.style.width = asPx(columns[i].width);
@@ -81,6 +86,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                         cell.style.height = asPx(config.cellHeaderLabelHeight);
                         cell.setAttribute('type', 'label');
                         cell.setAttribute('cellNo', y.toString());
+                        cell.id = headerCellId(ctx, coltype, i, 'label', y);
 
                         columnElement.appendChild(cell);
 
@@ -98,9 +104,10 @@ export function rebuildHeaderColumns(ctx: Grid) {
                         cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-center'));
 
                         /**
-                         * logic for dragdrop and sort event
+                         * logic for dragdrop and sort event, and the keys of a label (Enter sorts)
                          */
                         dragEvent(ctx, cell as HTMLCellElement, true);
+                        cell.addEventListener('keydown', (event) => headerLabelKeydown(ctx, cell as HTMLCellElement, event));
                     }
                 }
 
@@ -114,6 +121,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                         cell.style.height = asPx(config.cellHeight);
                         cell.setAttribute('type', 'filter');
                         cell.setAttribute('cellNo', y.toString());
+                        cell.id = headerCellId(ctx, coltype, i, 'filter', y);
                         columnElement.appendChild(cell);
                         renderCell(ctx, cell, 0, i, y, coltype);
                         top = top + config.cellHeight;
@@ -130,6 +138,9 @@ export function rebuildHeaderColumns(ctx: Grid) {
                     cell.style.height = asPx(config.cellHeight);
                     cell.setAttribute('type', SELECTOR_COLTYPE);
                     cell.setAttribute('cellNo', '0');
+                    // the column numbers are for the mouse (a click selects the column), a keyboard can
+                    // not reach them: a screen reader would only hear a row of numbers
+                    cell.setAttribute('aria-hidden', 'true');
 
                     columnElement.appendChild(cell);
                     renderCell(ctx, cell, 0, i, 0, coltype);
@@ -146,6 +157,8 @@ export function rebuildHeaderColumns(ctx: Grid) {
                 } else {
                     resizeElement = createElement(DIV, 'simple-html-grid-col-resize');
                 }
+                // for the mouse, nothing for a screen reader
+                resizeElement.setAttribute('aria-hidden', 'true');
                 columnElement.appendChild(resizeElement);
 
                 /**
@@ -273,6 +286,15 @@ export function rebuildHeaderColumns(ctx: Grid) {
      * for slection in top left cornor
      */
     const selectorTopLeft = getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-selector');
+    // the column header of the row numbers, see createDom. A text, it can have changed. In the first
+    // header row (ariaGrid.ts): with the labels and the filters hidden there is none, and a column
+    // header outside a row is not allowed
+    selectorTopLeft.setAttribute('aria-label', gridText(ctx, 'grid.rowSelector'));
+    if (headerRowCount(config)) {
+        selectorTopLeft.removeAttribute('aria-hidden');
+    } else {
+        selectorTopLeft.setAttribute('aria-hidden', 'true');
+    }
     selectorTopLeft.onclick = (e: MouseEvent) => {
         if (e.ctrlKey) {
             ctx.gridInterface.getDatasource().deselectAll({ notify: true });

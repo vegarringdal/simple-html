@@ -2,7 +2,15 @@
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GridElement } from '../gridElement';
-import { mountGrid, simpleConfig, simpleData, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import {
+    mountGrid,
+    selectorRowOf,
+    simpleConfig,
+    simpleData,
+    simpleFields,
+    stubCanvas,
+    stubElementSizes
+} from './gridTestHelpers';
 import { typeInHeaderFilter } from './interactionTestHelpers';
 
 /**
@@ -26,10 +34,7 @@ afterEach(() => {
  * the row selector cell (the row number on the left) of a displayed row
  */
 function selectorCell(element: GridElement, row: number) {
-    const rowEl = element.querySelector(
-        `.simple-html-grid-body-row-container-selector .simple-html-grid-row[aria-rowindex="${row + 1}"]`
-    );
-    return rowEl?.firstElementChild as HTMLElement;
+    return selectorRowOf(element, row)?.firstElementChild as HTMLElement;
 }
 
 const ctrlClick = (cell: HTMLElement) => cell.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true }));

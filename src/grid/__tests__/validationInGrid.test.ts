@@ -5,7 +5,7 @@ import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import type { ColumnConfig, GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { GridInterface } from '../gridInterface';
-import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { mountGrid, selectorRowOf, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
 /**
  * The grid shows the validation errors: a cell with an error gets `simple-html-cell-error` and its
@@ -65,10 +65,7 @@ const backgroundOf = (element: GridElement, field: string, row: number) =>
 
 /** the row selector of a displayed row: the element with the row number */
 function selectorOf(element: GridElement, row: number): HTMLElement {
-    const rowElement = Array.from(
-        element.querySelectorAll('.simple-html-grid-body-row-container-selector .simple-html-grid-row')
-    ).find((candidate) => candidate.getAttribute('aria-rowindex') === String(row + 1));
-    return rowElement?.firstElementChild as HTMLElement;
+    return selectorRowOf(element, row)?.firstElementChild as HTMLElement;
 }
 
 /** types into a cell the way a user does: the input event per key */

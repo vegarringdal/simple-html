@@ -23,10 +23,10 @@ const DEFAULTS = {
     'row.view': 'View:',
     'row.view.dimRepeatedValues': 'Use dimmed values',
     'row.paste': 'Paste:',
-    'row.paste.cell': 'Cell',
+    'row.paste.cell': 'Paste cell',
     'row.paste.cell.hint': 'selected rows',
     'row.clear': 'Clear:',
-    'row.clear.cell': 'Cell',
+    'row.clear.cell': 'Clear cell',
     'row.clear.cell.hint': 'selected rows',
     'row.delete': 'Delete:',
     'row.delete.rows': 'Rows',
@@ -162,8 +162,11 @@ const DEFAULTS = {
     'footer.operator.IS_NOT_BLANK': 'is not blank',
 
     // labels for screen readers (aria-label)
+    'grid.label': 'Grid',
     'grid.rowSelector': 'row selector',
-    'grid.focusHelper': 'dummy cell, helper to set focus',
+    'grid.filter': 'Filter {label}',
+    'grid.groupToggle': '{name} ({total})',
+    'grid.removeGroup': 'Remove the grouping on {title}',
 
     // the date picker: of date cells and date header filters, and a DateInterface of your own
     'datePicker.hours': 'HH',

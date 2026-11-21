@@ -4,7 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import type { GridElement } from '../gridElement';
 import type { GridEvents } from '../gridEvents';
-import { mountGrid, simpleConfig, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { mountGrid, selectorRowOf, simpleConfig, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { headerFilterInput, menuItemsExact, sleep } from './interactionTestHelpers';
 
 /**
@@ -40,10 +40,7 @@ function cellInput(element: GridElement, row: number, column: number) {
  * the row selector cell (the row number on the left) of a displayed row
  */
 function selectorCell(element: GridElement, row: number) {
-    const rowEl = element.querySelector(
-        `.simple-html-grid-body-row-container-selector .simple-html-grid-row[aria-rowindex="${row + 1}"]`
-    );
-    return rowEl?.firstElementChild as HTMLElement;
+    return selectorRowOf(element, row)?.firstElementChild as HTMLElement;
 }
 
 const groupRowsOf = (rows: (Entity | GroupRow)[]) => rows.filter(isGroupRow);
@@ -68,7 +65,7 @@ describe('group rows - row menu', () => {
 
         cellInput(element, 1, 2).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
         // paste and clear share the label, clear is the second one
-        menuItemsExact('Cell (selected rows)')[1].click();
+        menuItemsExact('Clear cell (selected rows)')[0].click();
 
         expect(datasource.getAllData().map((row) => row.age)).toEqual([null, null, null]);
         expect(groupRowsOf(datasource.getRows()).some((row) => 'age' in row)).toBe(false);
@@ -84,7 +81,7 @@ describe('group rows - row menu', () => {
         datasource.selectAll();
 
         cellInput(element, 1, 2).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
-        menuItemsExact('Cell (selected rows)')[0].click();
+        menuItemsExact('Paste cell (selected rows)')[0].click();
         await sleep(0); // the clipboard is read async
 
         expect(datasource.getAllData().map((row) => row.age)).toEqual([9, 9, 9]);
