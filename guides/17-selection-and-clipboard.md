@@ -81,6 +81,25 @@ and `-right`.
 
 The cells are reused while the grid scrolls: the classes follow the rows and fields they show.
 
+### The summary in the footer
+
+With ranges of more than one cell the footer shows a summary of them at its right, like the status bar
+of a spreadsheet: `Count: 20   Sum: 201   Average: 40.2   Min: 26   Max: 53`.
+
+- **Count** is the cells with a value, of any type: a blank (`null`, `''`) is left out, `0` and
+  `false` count.
+- **Sum, Average, Min, Max** are of the numbers of the number fields (`type: 'number'`) - a text of
+  digits is no number. Without numbers only the count shows.
+- Every cell once: ranges that overlap count their common cells once; group rows have no cells.
+- The numbers are shown with the formatter of the number field furthest left in the ranges, two decimals
+  at most.
+- It follows the ranges and the values in them: an edit, a paste, an upsert. One cell, or no range,
+  shows none.
+
+It is a group named "Selected cells" for a screen reader, its tooltip has all of it when a narrow grid
+cuts it. The texts are `footer.summary.*`, see [Texts](12-texts.md). The filter chips collapse to one box
+when they would reach under it.
+
 ### When the ranges are cleared
 
 The rows of a range are indexes of the displayed rows, and its fields are good for the layout it was
@@ -247,7 +266,7 @@ while it grows, the focus stays in the active cell.
   is and the cell gets the focus.
 - **Cut** (Ctrl+X) is the input's own: it cuts the text selected in the cell, not a range. Copy, then
   Delete.
-- **Several ranges** copy the last one; a block is pasted into the last one.
+- **Several ranges** copy as one table (see [Copy](#copy)); a block is pasted into the last one.
 - **No fill**: a block is not repeated to fill a larger range, only one value fills it.
 - **Checked in Chrome**: the drag over the cells, the text selection it ends, the clipboard. Firefox
   and Safari have not been tried.

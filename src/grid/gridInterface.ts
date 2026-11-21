@@ -33,7 +33,7 @@ import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
 import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { renderRangeClasses } from './gridFunctions/rangeSelection';
-import { rebuildFooter } from './gridFunctions/rebuildFooter';
+import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
@@ -1027,6 +1027,10 @@ export class GridInterface<T> {
         this.rangeState = rangeState(this.gridConfig, copies);
         if (this.grid) {
             renderRangeClasses(this.grid);
+            // the summary of the selected cells
+            if (this.grid.domCreated) {
+                renderFooter(this.grid);
+            }
         }
         this.__callSubscribers('range-change', { ranges: this.getRanges() });
     }

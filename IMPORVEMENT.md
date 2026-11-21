@@ -1451,6 +1451,32 @@ in the console. All passed. Found and fixed:
 * not done: "Keep mine" / "Take server's" in the row menu - the menus are being reorganized into
   submenus, they go in after that
 
+### The summary of the selected cells in the footer (item 35)
+
+* selectionSummary.ts: the rectangle around the ranges cell by cell, a cell counted when it is in a
+  range (overlaps once), data rows only; count = not blank (isBlank: null, undefined, '', an invalid
+  date), numbers = finite numbers of `type: 'number'` fields. A million cells (Ctrl+A on 100 000 rows of
+  10 fields) is some ms
+* rebuildFooter.ts: `renderFooter()` split from `rebuildFooter()` (which also renders the totals row),
+  called on `__setRanges` and after values changed (renderChangedRows, both paths) when there are ranges.
+  The summary is absolute at the right: on the count's line, or with a filter on the chips' line; the
+  chips collapse to one box when their rectangle reaches under it (left of it and right edge past its
+  left - false in happy-dom, where every rect is the same)
+* formatted with the formatter of the first number field in layout order, rounded to 2 decimals like the
+  row menu summary was; mixed number fields with different formatters show the first one's format
+* not a live region: a drag changes it at every cell, a screen reader would talk all the time. A group
+  named "Selected cells"
+* tests: selectionSummary.test.ts (none / one cell, the count of every type, numbers of number fields
+  only, 0 and false, overlapping ranges, the formatter's field, group rows, the footer's items, title and
+  name, clearRanges, an edit, the config's texts). Browser:
+  .claude/browser-checks/scripts/footer-summary-check.js 11/11 (the numbers against the datasource, a
+  drag, an edit, two ranges, one cell, clear of the filter chips), screenshots light and dark
+* left: the row menu's Summary goes when the menus' submenus are merged (that work is in another
+  worktree)
+* the browser checks moved: the machine rebooted and /tmp went with the scratchpad's scripts, playwright
+  and Chromium. They are in `.claude/browser-checks/` now (git-excluded, not committed): new scripts
+  are written there
+
 ## Considered, not done
 
 ## Candidates / not started

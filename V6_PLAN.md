@@ -390,7 +390,8 @@ built on it.
         validation, one undo step), Delete clears a range. **M**
 34. [ ] **Fill down** (Ctrl+D) and a drag-fill handle. **M**
 35. [ ] **Summary of the selection** in the footer: count, sum, average, min, max. Replaces the row
-        menu summary, which has known bugs. **S**
+        menu summary, which has known bugs. **S** - the footer's summary of the cell ranges is done;
+        the row menu's summary is removed after the menus' submenus are merged
 
 ## Phase 7 - live data
 

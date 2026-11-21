@@ -386,6 +386,12 @@ The names of the operators, in the operator menu and on a condition:
 | `footer.and` | `AND` | between the chips of an AND group |
 | `footer.or` | `OR` | between the chips of an OR group |
 | `footer.changedOnly` | `Changed rows only` | the chip in front of the filter's while only the changed rows are shown (`datasource.filterChangedOnly()`) |
+| `footer.summary` | `Selected cells` | the name of the summary of the selected cells at the footer's right, for a screen reader |
+| `footer.summary.count` | `Count: {count}` | the cells of the ranges with a value, any type |
+| `footer.summary.sum` | `Sum: {sum}` | the sum of the numbers of the number fields in the ranges |
+| `footer.summary.avg` | `Average: {avg}` | their average |
+| `footer.summary.min` | `Min: {min}` | the smallest |
+| `footer.summary.max` | `Max: {max}` | the largest |
 
 The short names of the operators, on a chip:
 

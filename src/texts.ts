@@ -180,6 +180,14 @@ const DEFAULTS = {
     'footer.and': 'AND',
     'footer.or': 'OR',
     'footer.changedOnly': 'Changed rows only',
+    // the summary of the selected cells, at the footer's right (ranges of more than one cell): its name
+    // for a screen reader, the cells with a value, and of the numbers the sum, average, smallest, largest
+    'footer.summary': 'Selected cells',
+    'footer.summary.count': 'Count: {count}',
+    'footer.summary.sum': 'Sum: {sum}',
+    'footer.summary.avg': 'Average: {avg}',
+    'footer.summary.min': 'Min: {min}',
+    'footer.summary.max': 'Max: {max}',
     'footer.operator.EQUAL': '=',
     'footer.operator.LESS_THAN_OR_EQUAL_TO': '≤',
     'footer.operator.GREATER_THAN_OR_EQUAL_TO': '≥',

@@ -1709,6 +1709,27 @@
     z-index: 20;
 }
 
+/* the summary of the selected cells (ranges of more than one cell, selectionSummary.ts): at the right,
+ * like the status bar of a spreadsheet - on the line of the row count, or with a filter on the line of
+ * its chips (its top is set to the horizontal scrollbar's band). The filter chips collapse to one box when they would reach under it. Cut on a narrow
+ * grid, its tooltip has all of it */
+.simple-html-grid .footer-summary {
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    max-width: 45%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid .footer-summary-item {
+    flex: 0 0 auto;
+}
+
 /* "changed rows only" (datasource.filterChangedOnly()): a chip of its own in front of the filter's,
  * not part of it - not a button, it keeps its size */
 .simple-html-grid .footer-filter-changed-only {

@@ -1300,6 +1300,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   rows, greyed out with none selected), in every grid. Texts `row.export*`.
 - Guide "Export" and sample "Export to CSV".
 
+#### The summary of the selected cells in the footer (item 35)
+
+##### Added
+- With cell ranges of more than one cell the footer shows **Count, Sum, Average, Min, Max** at its right,
+  like a spreadsheet's status bar: the cells with a value (any type, `0` and `false` count), and the
+  numbers of the number fields, every cell once, group rows skipped, shown with the formatter of the
+  number field furthest left. It follows the ranges and edits of their values. Texts `footer.summary`
+  (its name for a screen reader), `footer.summary.count` / `.sum` / `.avg` / `.min` / `.max`; the class
+  `.footer-summary`. The filter chips collapse to one box when they would reach under it.
+
+##### Docs
+- Guide "Selection and clipboard": The summary in the footer; its known limits said several ranges copy
+  the last one - they copy as one table since the clipboard change.
+
 #### Live data: the flash of a merge, the look of a conflict (item 38)
 
 ##### Added
