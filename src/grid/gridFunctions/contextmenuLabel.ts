@@ -3,7 +3,6 @@ import type { SortArgument } from '../../datasource/sortArgument';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry } from '../gridMenus';
-import { autoResizeColumns } from './autoResizeColumns';
 import type { ColType } from './colType';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';
 import { gridText } from './gridText';
@@ -181,8 +180,15 @@ function headerMenuEntries(
             action: () => contextMenuColumnChooser(ctx, event, cell)
         },
         { type: 'section', id: 'header.size', label: text('header.size') },
-        { id: 'header.size.column', label: text('header.size.column'), action: () => autoResizeColumns(ctx, attribute) },
-        { id: 'header.size.all', label: text('header.size.all'), action: () => autoResizeColumns(ctx) },
+        // fitted to the content, like Excel's AutoFit, and back to the widths of the config
+        { id: 'header.size.column', label: text('header.size.column'), action: () => ctx.gridInterface.fitColumns([attribute]) },
+        { id: 'header.size.all', label: text('header.size.all'), action: () => ctx.gridInterface.fitColumns() },
+        {
+            id: 'header.size.resetColumn',
+            label: text('header.size.resetColumn'),
+            action: () => ctx.gridInterface.resetColumnWidths([attribute])
+        },
+        { id: 'header.size.resetAll', label: text('header.size.resetAll'), action: () => ctx.gridInterface.resetColumnWidths() },
         { type: 'section', id: 'header.grouping', label: text('header.grouping') },
         {
             id: 'header.grouping.expandAll',

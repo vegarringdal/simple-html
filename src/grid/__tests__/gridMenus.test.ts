@@ -108,8 +108,10 @@ describe('menus - the built-in ids', () => {
 
         openRowMenu(element, 'firstname', 0);
 
-        // and no range of cells: no range entries
-        expect(shownIds()).toEqual(MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|edit|summary)|\.range$/.test(id)));
+        // and no range of cells: no range entries. No selected rows: no fit of the selected rows
+        expect(shownIds()).toEqual(
+            MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|edit|summary)|\.range$|^row\.size\.fitRows$/.test(id))
+        );
     });
 
     it('expect the operators of a text column and the value list in the filter menu', async () => {

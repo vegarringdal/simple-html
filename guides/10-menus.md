@@ -172,6 +172,13 @@ The "shown as" below is the English text.
 | `row.summary.max` | Max: the largest number | a number field |
 | `row.summary.min` | Min: the smallest number, 0 included | a number field |
 | `row.summary.avg` | Avg: the average of the numbers, a blank is not counted | a number field |
+| `row.size` | Size: | |
+| `row.size.fitColumn` | Fit column to this cell: the column as wide as the cell's text, `gridInterface.fitColumns([field], { rows: [row] })`. See [Column widths and row heights](02-grid-config.md#column-widths-and-row-heights) | |
+| `row.size.fitRow` | Fit row height: the row right clicked as high as its multiline cells need, `fitRows(row)` | |
+| `row.size.fitRows` | Fit row height (selected rows): the selected rows and the rows of the ranges of cells | rows are selected, or there are ranges of cells |
+| `row.size.fitAllRows` | Fit all rows: every row the filter lets through, `fitRows()` | |
+| `row.size.resetRow` | Reset row height: the row right clicked, `resetRowHeights(row)`. Greyed out when it has the height of the layout | |
+| `row.size.resetAllRows` | Reset all row heights: `resetRowHeights()`. Greyed out when no row has a height of its own | |
 | `row.export` | Export: | |
 | `row.export.csv` | CSV, all rows: `gridInterface.downloadCsv()`, see [Export](15-export.md) | |
 | `row.export.csvSelected` | CSV, selected rows: `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
@@ -191,8 +198,10 @@ The "shown as" below is the English text.
 | `header.column.chooserSeparator` | a line | |
 | `header.column.chooser` | Column chooser: every field, drag one into the header | |
 | `header.size` | Size: | |
-| `header.size.column` | Resize Column: to its content | |
-| `header.size.all` | Resize all columns | |
+| `header.size.column` | Fit column width: to its content and its label, `gridInterface.fitColumns([field])` | |
+| `header.size.all` | Fit all columns: `fitColumns()` | |
+| `header.size.resetColumn` | Reset column width: the width of the config, `resetColumnWidths([field])` | |
+| `header.size.resetAll` | Reset all column widths: `resetColumnWidths()` | |
 | `header.grouping` | Grouping: | |
 | `header.grouping.expandAll` | Expand all | |
 | `header.grouping.collapseAll` | Collapse all | |

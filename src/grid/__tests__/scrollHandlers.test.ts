@@ -398,6 +398,64 @@ describe('scrolling - rows and columns on screen, grouped', () => {
     });
 });
 
+describe('scrolling - rows made taller with fitRows', () => {
+    // every 7th row has a name of 3 lines, every 11th (that is not a 7th) a total of 2 lines: fitRows()
+    // makes them 3 and 2 lines high. A multiline cell's input shows its first line
+    const ROWS = 500;
+    const data: Record<string, any>[] = wideData(ROWS).map((row, i) => ({
+        ...row,
+        name: i % 7 === 0 ? `n${i}\nsecond\nthird` : row.name,
+        total: i % 11 === 0 ? `t${i}\nsecond` : row.total
+    }));
+    const lines = (row: number) => (row % 7 === 0 ? 3 : row % 11 === 0 ? 2 : 1);
+    const heights = data.map((_, row) => lines(row) * CELL_HEIGHT);
+    const valuesOf = (row: number, field: string) => {
+        if (/^\d+$/.test(field)) {
+            return [data[row][`f${field}`]];
+        }
+        return [String(data[row][field]).split('\n')[0]];
+    };
+    const expected = (top: number, left: number, rowHeights = heights) =>
+        expectedScreen(rowHeights, top, left, valuesOf, () => false);
+
+    let mounted: MountedGrid;
+    beforeEach(async () => {
+        mounted = await mountGrid(wideConfig(), data, fields);
+        mounted.gridInterface.fitRows();
+    });
+
+    it('expect the rows of every section at their own tops and heights, scrolling down and up', () => {
+        expect(mounted.gridInterface.__getScrollState().scrollHeights).toEqual(heights);
+        expect(screen(mounted.element)).toEqual(expected(0, 0));
+        for (const top of [5, 22, 66, 67, 88, 300, 750, 1200, 1100, 1099, 600, 150, 0]) {
+            scrollTo(mounted.element, { top });
+            expect(screen(mounted.element), `scrollTop ${top}`).toEqual(expected(top, 0));
+        }
+    });
+
+    it('expect the rows after large jumps with the middle columns scrolled, and the rows of a line again after a reset', () => {
+        const end = heights.reduce((a, b) => a + b, 0) - VIEWPORT_HEIGHT;
+        for (const step of [
+            { top: 5000, left: 900 },
+            { top: end, left: 900 },
+            { top: 2000, left: 2400 }
+        ]) {
+            scrollTo(mounted.element, step);
+            vi.advanceTimersByTime(150);
+            expect(screen(mounted.element), JSON.stringify(step)).toEqual(expected(step.top, step.left));
+        }
+
+        mounted.gridInterface.resetRowHeights();
+        expect(screen(mounted.element)).toEqual(
+            expected(
+                2000,
+                2400,
+                heights.map(() => CELL_HEIGHT)
+            )
+        );
+    });
+});
+
 describe('scrolling - edge cases', () => {
     it('expect the last middle column when the viewport is narrower than it and scrolled to its end', async () => {
         // 20 columns of 100px and one of 1200px, wider than the 1000px viewport: scrolled to the end

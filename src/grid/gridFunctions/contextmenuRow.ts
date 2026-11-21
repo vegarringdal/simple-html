@@ -215,6 +215,7 @@ function rowMenuEntries(
         },
         ...deleteEntries(ctx),
         ...summaryEntries(ctx, attribute),
+        ...sizeEntries(ctx, attribute, rowData),
         ...exportEntries(ctx)
     ];
 }
@@ -340,6 +341,70 @@ function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity): bool
         fields.length > 0 &&
         fields.every((field) => hooks.isReadonly?.(row, field, columns[field]?.readonly ?? false) === true)
     );
+}
+
+/**
+ * The sizes, like Excel's AutoFit: the column as wide as the right clicked cell's text, rows as high as
+ * their multiline cells need (gridInterface.fitRows), and back to the height of the layout. In every
+ * grid, readonly ones too: a size changes no data
+ */
+function sizeEntries(ctx: Grid, attribute: string, rowData: Entity): MenuEntry[] {
+    const gridInterface = ctx.gridInterface;
+    return [
+        { type: 'section', id: 'row.size', label: gridText(ctx, 'row.size') },
+        {
+            id: 'row.size.fitColumn',
+            label: gridText(ctx, 'row.size.fitColumn'),
+            action: () => gridInterface.fitColumns([attribute], { rows: [rowData] })
+        },
+        {
+            id: 'row.size.fitRow',
+            label: gridText(ctx, 'row.size.fitRow'),
+            action: () => gridInterface.fitRows(rowData)
+        },
+        {
+            id: 'row.size.fitRows',
+            label: gridText(ctx, 'row.size.fitRows'),
+            hint: gridText(ctx, 'row.size.fitRows.hint'),
+            visible: () => selectedAndRangeRows(ctx).length > 0,
+            action: () => gridInterface.fitRows(selectedAndRangeRows(ctx))
+        },
+        {
+            id: 'row.size.fitAllRows',
+            label: gridText(ctx, 'row.size.fitAllRows'),
+            action: () => gridInterface.fitRows()
+        },
+        {
+            id: 'row.size.resetRow',
+            label: gridText(ctx, 'row.size.resetRow'),
+            disabled: () => !gridInterface.__hasRowHeight(rowData),
+            action: () => gridInterface.resetRowHeights(rowData)
+        },
+        {
+            id: 'row.size.resetAllRows',
+            label: gridText(ctx, 'row.size.resetAllRows'),
+            disabled: () => !gridInterface.__hasRowHeight(),
+            action: () => gridInterface.resetRowHeights()
+        }
+    ];
+}
+
+/**
+ * The selected rows and the data rows of the ranges of cells, each once: what "Fit row height
+ * (selected rows)" fits
+ */
+function selectedAndRangeRows(ctx: Grid): Entity[] {
+    const datasource = ctx.gridInterface.getDatasource();
+    const rows = new Set<Entity>(datasource.getSelectedRows());
+    for (const range of ctx.gridInterface.getRanges()) {
+        for (let i = Math.min(range.fromRow, range.toRow); i <= Math.max(range.fromRow, range.toRow); i++) {
+            const row = datasource.getRow(i);
+            if (row && !isGroupRow(row)) {
+                rows.add(row);
+            }
+        }
+    }
+    return Array.from(rows);
 }
 
 /**

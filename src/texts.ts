@@ -52,6 +52,14 @@ const DEFAULTS = {
     'row.summary.max': 'Max: {max}',
     'row.summary.min': 'Min: {min}',
     'row.summary.avg': 'Avg: {avg}',
+    'row.size': 'Size:',
+    'row.size.fitColumn': 'Fit column to this cell',
+    'row.size.fitRow': 'Fit row height',
+    'row.size.fitRows': 'Fit row height',
+    'row.size.fitRows.hint': 'selected rows',
+    'row.size.fitAllRows': 'Fit all rows',
+    'row.size.resetRow': 'Reset row height',
+    'row.size.resetAllRows': 'Reset all row heights',
     'row.export': 'Export:',
     'row.export.csv': 'CSV, all rows',
     'row.export.csvSelected': 'CSV, selected rows',
@@ -67,8 +75,10 @@ const DEFAULTS = {
     'header.column.removeSorting': 'Remove sorting',
     'header.column.chooser': 'Column chooser',
     'header.size': 'Size:',
-    'header.size.column': 'Resize Column',
-    'header.size.all': 'Resize all columns',
+    'header.size.column': 'Fit column width',
+    'header.size.all': 'Fit all columns',
+    'header.size.resetColumn': 'Reset column width',
+    'header.size.resetAll': 'Reset all column widths',
     'header.grouping': 'Grouping:',
     'header.grouping.expandAll': 'Expand all',
     'header.grouping.collapseAll': 'Collapse all',
@@ -210,8 +220,10 @@ const DEFAULTS = {
     'cell.editedMarker.blank': '(blank)',
     'cell.editedMarker.revert': 'Click to revert',
     // a cell of several lines (FieldConfig.multiline, or a value with a line break): the marker that
-    // there is more, for a screen reader, and the hint of the editor over the cell
+    // there is more, for a screen reader, the last line of its tooltip when it has more lines than it
+    // shows (GridConfig.multilineTooltipLines), and the hint of the editor over the cell
     'cell.multiline.more': 'More lines, Enter shows all',
+    'cell.multiline.moreLines': '… {count} more lines',
     'cell.multiline.hint': 'Ctrl+Enter to save, Esc to cancel',
     'cell.multiline.hintReadonly': 'Esc to close',
 

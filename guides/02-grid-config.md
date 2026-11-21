@@ -70,7 +70,8 @@ The user changes the layout in the header, with a mouse, a pen or a finger:
   are grouped on it, see [Grouping](07-sorting-grouping.md#grouping). Dragged past the left or right
   side of the grid, the columns scroll.
 - **Resize**: drag the edge of a column's header - the right edge, the left one for a column pinned
-  right. A column is at least 25px wide.
+  right. A column is at least 25px wide. A double click on the edge fits the column to its content,
+  as in Excel: see [Column widths and row heights](#column-widths-and-row-heights).
 - **Sort**: click a label, see [Sorting](07-sorting-grouping.md#sorting).
 
 A press on a label is a click until it is a drag: with a mouse or a pen once it has moved 5px, with a
@@ -78,6 +79,61 @@ finger once it has been held still for 200ms. A finger that moves sooner scrolls
 on the rows does. Only the left mouse button, the first finger or the pen's tip drag and resize.
 
 What the user makes of the layout is part of the grid's [state](03-state.md): `getState().layout`.
+
+### Column widths and row heights
+
+Like Excel's AutoFit, a column can be made as wide as its content, and a row as high as its
+[multiline](05-editing.md#multiline-text) cells need - and both go back to their size:
+
+```ts
+gridInterface.fitColumns(); // every column
+gridInterface.fitColumns(['company', 'notes']); // the columns of these fields
+gridInterface.resetColumnWidths(); // the widths of the config again
+
+gridInterface.fitRows(); // every row as high as its multiline cells need
+gridInterface.fitRows(datasource.getSelectedRows());
+gridInterface.resetRowHeights(); // every row one line again
+```
+
+| method | what it does |
+| --- | --- |
+| `fitColumns(fields?, { rows? })` | each column as wide as the widest text of its fields - every line of a multiline text, the widest field of a column with stacked fields - and its header label. 25px to 750px. Without fields: every column |
+| `fitColumns([field], { rows: [row] })` | the column as wide as the text of these rows' cells, the label left out: a column fitted to a cell |
+| `resetColumnWidths(fields?)` | the width the column has in the layout `resetState()` goes back to (`initialState.layout`, else the config's `layout`). A column added from the column chooser: 100px |
+| `fitRows(rows?)` | each row as many lines (of `cellHeight`) high as its tallest column needs: a multiline cell the lines of its text, every other cell a line, stacked fields added up. At most 20 lines. Without rows: every row the filter lets through |
+| `resetRowHeights(rows?)` | the rows back to the height of the layout. Without rows: every row |
+
+The user does the same with the mouse:
+
+- **The header menu** (right click a label), "Size:": Fit column width, Fit all columns, Reset column
+  width, Reset all column widths.
+- **The row menu** (right click a cell), "Size:": Fit column to this cell, Fit row height, Fit row
+  height (selected rows) - the selected rows and the rows of the [ranges of cells](17-selection-and-clipboard.md) -
+  Fit all rows, Reset row height, Reset all row heights.
+- **A double click on the edge** of a column's header fits that column.
+
+What to know:
+
+- **The text measured** is what the cells show: formatted, with `numberOverride`. It is measured
+  with the grid's font on a canvas - for each field the 20 longest texts by their number of
+  characters, as measuring every text of 100 000 rows takes the browser half a second per field.
+  Fitting every column of a grid of 100 000 rows and 10 columns takes about 0.2s, the rebuild
+  included. A column with nothing to measure keeps its width.
+- **The widths** are part of the [state](03-state.md), `getState().layout`, as a resize with the mouse.
+- **A row's height** is a number of lines. Fitting counts the line breaks of the cells' text, nothing
+  is measured: about 0.1s for every row of 100 000. A long line is not wrapped, it is cut at the
+  edge of the cell as in a row of one line.
+- **In a taller row** a multiline cell shows as many lines as it has room for, under its first line,
+  and its marker when some are not shown. Every other cell has its text on the first line. Editing
+  is the same: Enter, F2 or a double click opens the editor over the cell.
+- **The heights are kept by the row's key** (`DatasourceOptions.key`, or the key the datasource
+  generates without one), so they follow a row through a sort, a filter, grouping and new data with
+  the same keys. A row keeps its height when its text changes: fit it again. A full `fitRows()` drops
+  the heights of rows that are no longer in the data.
+- **The heights are not part of the state**: they belong to the rows loaded now, and a saved state is
+  given to other rows. `resetState()` does not change them.
+
+The [Multiline text](#sample/multiline) sample has buttons for each, and the menus.
 
 ### The column label
 
@@ -131,6 +187,7 @@ Every option is optional.
 | `placeholderRowCurrentEntityOnly` | `true` | shows `placeholderRow` on the current row only. `false` shows it on every row |
 | `autoRemoveContextMenuOnScrollEvent` | `false` | closes the open menu when the grid scrolls |
 | `tooltips` | `true` | the built-in tooltips: on the buttons of the filter editor, and the validation messages on a cell and its row number |
+| `multilineTooltipLines` | `5` | the lines of a multiline cell's text its tooltip shows, then `… 7 more lines`. A whole number of 1 or more, see [Multiline text](05-editing.md#multiline-text) |
 | `texts` | | the texts of this grid by id, e.g. `{ 'row.copy': 'Kopier:' }`: they win over the page's (`setTexts()`). The tooltips are texts too, their ids end with `.tooltip`. See [Texts](12-texts.md) |
 | `datePickerConfig` | | week start and sizes of the date picker: only the fields to change (`Partial<IDateConfig>`), e.g. `{ weekStart: 0, isoWeek: false }`. The rest are the defaults: weeks from monday with their numbers. The names of the months and days are texts |
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |
@@ -325,8 +382,9 @@ tell it:
 - `gridInterface.rebuild()` builds the whole grid again: sizes, header, rows, footer. Call it when a
   formatter shows values differently now, after `setTexts()` (see [Texts](12-texts.md#when-a-changed-text-shows)),
   or after you changed the size of the grid's container without a resize event.
-- `gridInterface.autoResizeColumns()` sizes every column to its content (at most 750px) and
-  rebuilds. It measures with the grid's font, so call it once the grid is on the page.
+- `gridInterface.fitColumns()` fits every column to its content (at most 750px) and rebuilds, see
+  [Column widths and row heights](#column-widths-and-row-heights). It measures with the grid's font,
+  so call it once the grid is on the page. `autoResizeColumns()` is the same, and deprecated.
 
 ```ts
 let highlighted = 'ACME CORP';

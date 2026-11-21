@@ -230,6 +230,14 @@ Right click on a cell.
 | `row.summary.max` | `Max: {max}` | `{max}`: the largest value, formatted |
 | `row.summary.min` | `Min: {min}` | `{min}`: the smallest value, formatted |
 | `row.summary.avg` | `Avg: {avg}` | `{avg}`: the average, formatted |
+| `row.size` | `Size:` | section header |
+| `row.size.fitColumn` | `Fit column to this cell` | the column as wide as the text of the cell right clicked |
+| `row.size.fitRow` | `Fit row height` | the row right clicked as high as its multiline cells need |
+| `row.size.fitRows` | `Fit row height` | the selected rows and the rows of the ranges of cells, the same |
+| `row.size.fitRows.hint` | `selected rows` | its hint |
+| `row.size.fitAllRows` | `Fit all rows` | every row the filter lets through, the same |
+| `row.size.resetRow` | `Reset row height` | the row right clicked back to the height of the layout |
+| `row.size.resetAllRows` | `Reset all row heights` | every row back to the height of the layout |
 | `row.export` | `Export:` | section header |
 | `row.export.csv` | `CSV, all rows` | downloads the rows the filter lets through |
 | `row.export.csvSelected` | `CSV, selected rows` | downloads the selected rows |
@@ -250,8 +258,10 @@ Right click on a header label.
 | `header.column.removeSorting` | `Remove sorting` | keeps the sort of the grouped fields |
 | `header.column.chooser` | `Column chooser` | opens the column chooser |
 | `header.size` | `Size:` | section header |
-| `header.size.column` | `Resize Column` | sizes the column to its content |
-| `header.size.all` | `Resize all columns` | sizes every column to its content |
+| `header.size.column` | `Fit column width` | fits the column to its content and its label |
+| `header.size.all` | `Fit all columns` | fits every column |
+| `header.size.resetColumn` | `Reset column width` | the column back to the width of the config |
+| `header.size.resetAll` | `Reset all column widths` | every column back to the width of the config |
 | `header.grouping` | `Grouping:` | section header |
 | `header.grouping.expandAll` | `Expand all` | expands every group |
 | `header.grouping.collapseAll` | `Collapse all` | collapses every group |
@@ -450,6 +460,7 @@ opens over it, see [Editing](05-editing.md#multiline-text).
 | id | English | shown |
 | --- | --- | --- |
 | `cell.multiline.more` | `More lines, Enter shows all` | for a screen reader: the description of a cell that shows the first of its lines. Hidden on screen, the cell has a marker |
+| `cell.multiline.moreLines` | `… {count} more lines` | the last line of the cell's tooltip when its text has more lines than the tooltip shows (`multilineTooltipLines`). `{count}`: how many are not shown, 2 or more - one line more is shown instead |
 | `cell.multiline.hint` | `Ctrl+Enter to save, Esc to cancel` | under the textarea of the editor. Cmd+Enter saves too |
 | `cell.multiline.hintReadonly` | `Esc to close` | under the textarea of the editor of a readonly cell |
 

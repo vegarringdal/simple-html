@@ -132,7 +132,10 @@ not the only thing that tells them apart.
 
 A cell of several lines (see [Multiline text](05-editing.md#multiline-text)) has a marker at its
 right, lines of text, in `--simple-html-grid-multiline-color` - at least 3:1 to the rows and the
-selected rows too. The editor that opens over the cell uses the colours of the rest: the textarea is
+selected rows too. In a row made taller (`fitRows()`) the cell shows its other lines under the first
+one, in the cell's text colour (`--simple-html-grid-main-font-color`): an element of their own,
+`simple-html-grid-cell-lines`, with the classes the `cellClass` hook gives the input. The editor that
+opens over the cell uses the colours of the rest: the textarea is
 `--simple-html-grid-sec-bg-color` with `--simple-html-grid-main-font-color`, its hint
 `--simple-html-grid-main-bg-color`, its frame `--simple-html-grid-pinned-border` and its shadow
 `--simple-html-grid-dialog-shadow-color`. The editor is on the body (or in the dialog the grid is in),

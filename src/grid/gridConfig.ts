@@ -89,13 +89,17 @@ export type GridConfig = {
      */
     initialState?: Partial<GridState>;
 
-    /** height of a cell in px, default 22 */
+    /**
+     * height of a cell in px, default 22. A row is a line of cells this high, or one per field of a
+     * column with stacked fields. `gridInterface.fitRows()` makes a row as many lines high as its
+     * multiline cells need
+     */
     cellHeight?: number;
     /** height of the top panel (grouping) in px, default 25 */
     panelHeight?: number;
     /**
      * height of a header label cell in px, default `cellHeight`. Make it 2-3 times `cellHeight` for long
-     * labels that wrap. `autoResizeColumns()` measures the label on one line
+     * labels that wrap. `fitColumns()` measures the label on one line
      */
     cellHeaderLabelHeight?: number;
     /** height of the footer in px, default 45 */
@@ -171,6 +175,29 @@ export type GridConfig = {
      * @sample validation
      */
     tooltips?: boolean;
+
+    /**
+     * the lines of a multiline cell's text its tooltip shows, default `5`: the first lines, then a
+     * line that says how many more there are (`… 7 more lines`, the text `cell.multiline.moreLines`).
+     * When only one line is left over, it is shown instead. The empty lines at the end of the text
+     * are left out, a line of more than 100 characters is cut with `…`. The tooltip of the marker of
+     * an edited cell shows the original value the same way.
+     *
+     * A whole number of 1 or more, anything else throws a `TypeError` when the grid is made or
+     * `updateConfig()` is given it.
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['notes'], width: 200 }] },
+     *     multilineTooltipLines: 10 // longer notes in the tooltip
+     * };
+     * ```
+     */
+    multilineTooltipLines?: number;
 
     /**
      * The texts of this grid, by id: the ones to change. They win over the texts of the page
@@ -537,6 +564,7 @@ export type ParsedGridOptions = GridOptions &
             | 'selectSizeHeight'
             | 'readonly'
             | 'tooltips'
+            | 'multilineTooltipLines'
             | 'rowStatus'
             | 'editedMarker'
             | 'placeholderRowCurrentEntityOnly'

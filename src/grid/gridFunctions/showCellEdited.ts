@@ -3,7 +3,7 @@ import type { Formatter } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { tooltipText } from './multilineText';
+import { gridTooltipText } from './multilineText';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
@@ -69,7 +69,8 @@ export function showCellEdited(
     const datasource = ctx.gridInterface.getDatasource();
     const errors = datasource.__getRowErrors(entity)?.get(attribute) ?? [];
     // a text of several lines is cut, as in the tooltip of its cell
-    const original = tooltipText(
+    const original = gridTooltipText(
+        ctx,
         (formatter ?? datasource.getFormatter(attribute)).format(controller.__originalValues[attribute])
     );
     const lines = [

@@ -234,7 +234,7 @@ export interface MenuPosition {
  * menu was opened on, and returns the entries to show - hide some, reorder them, change them, add
  * your own. Called every time the menu opens.
  *
- * - `row`: right click on a cell - copy, filter on the value, paste, clear, summary ...
+ * - `row`: right click on a cell - copy, filter on the value, paste, clear, summary, sizes ...
  * - `header`: right click on a header label - pin, hide, column chooser, sizes, grouping
  * - `filter`: right click on a header filter - clear, is blank, operator, the value list
  *
@@ -322,6 +322,13 @@ export interface GridMenus {
  * | `row.summary.max` | Max: 30 | a number field |
  * | `row.summary.min` | Min: 10 | a number field |
  * | `row.summary.avg` | Avg: 20 | a number field |
+ * | `row.size` | Size: | |
+ * | `row.size.fitColumn` | Fit column to this cell - the column as wide as the cell's text (`gridInterface.fitColumns([field], { rows: [row] })`) | |
+ * | `row.size.fitRow` | Fit row height - the row right clicked as high as its multiline cells need (`gridInterface.fitRows(row)`) | |
+ * | `row.size.fitRows` | Fit row height (selected rows) - the selected rows and the rows of the ranges of cells | rows are selected, or there are ranges of cells |
+ * | `row.size.fitAllRows` | Fit all rows - every row the filter lets through (`fitRows()`) | |
+ * | `row.size.resetRow` | Reset row height - the row right clicked (`resetRowHeights(row)`). Greyed out when it has the height of the layout | |
+ * | `row.size.resetAllRows` | Reset all row heights (`resetRowHeights()`). Greyed out when no row has a height of its own | |
  * | `row.export` | Export: | |
  * | `row.export.csv` | CSV, all rows - `gridInterface.downloadCsv()`: the rows the filter lets through, as the grid shows them | |
  * | `row.export.csvSelected` | CSV, selected rows - `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
@@ -341,8 +348,10 @@ export interface GridMenus {
  * | `header.column.chooserSeparator` | a line | |
  * | `header.column.chooser` | Column chooser | |
  * | `header.size` | Size: | |
- * | `header.size.column` | Resize Column | |
- * | `header.size.all` | Resize all columns | |
+ * | `header.size.column` | Fit column width - to its content and label (`gridInterface.fitColumns([field])`) | |
+ * | `header.size.all` | Fit all columns (`fitColumns()`) | |
+ * | `header.size.resetColumn` | Reset column width - the width of the config (`resetColumnWidths([field])`) | |
+ * | `header.size.resetAll` | Reset all column widths (`resetColumnWidths()`) | |
  * | `header.grouping` | Grouping: | |
  * | `header.grouping.expandAll` | Expand all | |
  * | `header.grouping.collapseAll` | Collapse all | |
@@ -417,6 +426,13 @@ export const MENU_IDS = {
         'row.summary.max',
         'row.summary.min',
         'row.summary.avg',
+        'row.size',
+        'row.size.fitColumn',
+        'row.size.fitRow',
+        'row.size.fitRows',
+        'row.size.fitAllRows',
+        'row.size.resetRow',
+        'row.size.resetAllRows',
         'row.export',
         'row.export.csv',
         'row.export.csvSelected'
@@ -436,6 +452,8 @@ export const MENU_IDS = {
         'header.size',
         'header.size.column',
         'header.size.all',
+        'header.size.resetColumn',
+        'header.size.resetAll',
         'header.grouping',
         'header.grouping.expandAll',
         'header.grouping.collapseAll',

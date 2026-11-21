@@ -77,14 +77,37 @@ const datasource = new Datasource({
 });
 ```
 
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    layout: { center: [{ fields: ['notes'], width: 220 }] },
+    multilineTooltipLines: 10 // the tooltip shows 10 lines, then how many more there are
+};
+
+// every row as high as its notes need, after the data is loaded
+gridInterface.fitRows();
+```
+
 - **The option**: `multiline: true` in the field's `FieldConfig`, for a text field only - on another
   type it throws when the datasource is made. `getField('notes').multiline` says it.
 - **Automatic**: a text cell whose value has a line break is multiline for that value, without the
   option. CR LF, CR and LF are line breaks. The option is for a field whose values have no line break
   yet: its cells are edited in the editor from the start.
 - **The cell** shows the first line, readonly (no typing in it), with a marker at its right when there
-  are more lines. The whole text is its tooltip, after the validation errors when it has any (an empty
-  line between them), cut after 15 lines or 600 characters. The rows keep their height.
+  are more lines. The rows keep their height, unless they are made taller (below).
+- **The tooltip** of the cell shows the first 5 lines of the text, then how many more there are -
+  `… 7 more lines` (the text `cell.multiline.moreLines`), one line more is shown instead. The empty
+  lines count, the ones at the end are left out; a line longer than 100 characters is cut with `…`.
+  The validation errors come first when the cell has any, an empty line between them. More or fewer
+  lines: `multilineTooltipLines` in the config, a whole number of 1 or more (anything else throws a
+  `TypeError`). The tooltip of the [edited marker](#showing-the-row-state) shows the original value
+  the same way.
+- **Taller rows**: `gridInterface.fitRows()`, or "Fit row height" / "Fit all rows" in the row menu,
+  makes a row as many lines high as its multiline cells have (at most 20); `resetRowHeights()` and
+  "Reset row height" take it back. In a taller row the cell shows its lines under the first one, as
+  many as there is room for, and the marker only when some are not shown. See
+  [Column widths and row heights](02-grid-config.md#column-widths-and-row-heights).
 - **Opening the editor**: Enter, F2, a double click - or typing a character, in a cell that can be
   edited: the editor opens with the text and the character at its end (nothing is replaced). A click
   only focuses the cell; Tab, Alt+arrows and the row menu (Shift+F10) work as in any cell.

@@ -57,6 +57,10 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   (`aria-describedby`) says so: `textbox "Notes" readonly: "Call back on Monday"`, described "More
   lines, Enter shows all" (the text `cell.multiline.more`). The marker on screen is hidden from a
   screen reader. Enter opens the editor, see [The editor of a multiline cell](#the-editor-of-a-multiline-cell).
+  In a row made taller (`fitRows()`, the row menu's "Fit row height") the cell shows its other lines
+  under the first one: they are for the eye and hidden from a screen reader, which reads the cell as
+  in a row of one line - its first line and the description - and Enter shows all of the text. A
+  taller row changes nothing else: the same cells, the same keys.
 - **The state is not colour only** (WCAG 1.4.1): each state has a shape of its own - a plus, a pencil,
   a trash can, an exclamation mark - and a row marked for deletion is struck through.
 - **A group row**, grouped, is a row with `aria-level` (1 for the first grouping) and

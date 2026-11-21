@@ -2,9 +2,11 @@
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isPopoverShown } from '../../__tests__/popoverStub';
+import { Datasource } from '../../datasource/dataSource';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import type { GridConfig } from '../gridConfig';
-import { firstLine, hasLineBreak, normalizeLineBreaks, tooltipText } from '../gridFunctions/multilineText';
+import { firstLine, hasLineBreak, normalizeLineBreaks, textLines, tooltipText } from '../gridFunctions/multilineText';
+import { GridInterface } from '../gridInterface';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { menuItemsExact, openRowMenu, sleep } from './interactionTestHelpers';
 
@@ -107,13 +109,32 @@ describe('multiline - the text', () => {
         expect(normalizeLineBreaks('a\r\nb\rc\nd')).toEqual('a\nb\nc\nd');
     });
 
-    it('expect the tooltip text to be cut after 15 lines and 600 characters, … where it is cut', () => {
-        const lines = Array.from({ length: 20 }, (_, i) => `line ${i + 1}`);
-        expect(tooltipText(lines.join('\r\n'))).toEqual(`${lines.slice(0, 15).join('\n')}…`);
-        expect(tooltipText('x'.repeat(601))).toEqual(`${'x'.repeat(600)}…`);
-        expect(tooltipText('x'.repeat(600))).toEqual('x'.repeat(600));
+    it('expect the lines of a text without the empty lines at its end, the empty lines between kept', () => {
+        expect(textLines('a\r\n\nb\rc\n\n\r\n')).toEqual(['a', '', 'b', 'c']);
+        expect(textLines('')).toEqual(['']);
+        expect(textLines('\n\n')).toEqual(['']);
+        expect(textLines('one')).toEqual(['one']);
+    });
+
+    it('expect the tooltip text to be the first lines, then how many more there are', () => {
+        const more = (count: number) => `… ${count} more lines`;
+        const lines = Array.from({ length: 12 }, (_, i) => `line ${i + 1}`);
+        expect(tooltipText(lines.join('\r\n'), 5, more)).toEqual(`${lines.slice(0, 5).join('\n')}\n… 7 more lines`);
+        expect(tooltipText(lines.join('\n'), 10, more)).toEqual(`${lines.slice(0, 10).join('\n')}\n… 2 more lines`);
+        // one line more: the line itself, it takes no more room than the line that would count it
+        expect(tooltipText(lines.slice(0, 6).join('\n'), 5, more)).toEqual(lines.slice(0, 6).join('\n'));
+        expect(tooltipText(lines.slice(0, 5).join('\n'), 5, more)).toEqual(lines.slice(0, 5).join('\n'));
+        // the empty lines count as lines, the ones at the end are left out
+        expect(tooltipText('a\n\nb\n\nc\n\nd\n\n\n', 5, more)).toEqual('a\n\nb\n\nc\n… 2 more lines');
+        expect(tooltipText('a\n\n\n', 5, more)).toEqual('a');
+    });
+
+    it('expect a line of the tooltip cut after 100 characters, … where it is cut', () => {
+        const more = (count: number) => `… ${count} more lines`;
+        expect(tooltipText(`${'x'.repeat(101)}\nshort`, 5, more)).toEqual(`${'x'.repeat(100)}…\nshort`);
+        expect(tooltipText('x'.repeat(100), 5, more)).toEqual('x'.repeat(100));
         // an emoji is one character, never cut in two
-        expect(tooltipText('😀'.repeat(601))).toEqual(`${'😀'.repeat(600)}…`);
+        expect(tooltipText('😀'.repeat(101), 5, more)).toEqual(`${'😀'.repeat(100)}…`);
     });
 
     it('expect the value of a text input to hold no line break: the browser strips them', () => {
@@ -194,6 +215,47 @@ describe('multiline - the cell', () => {
         expect(cellOf(element, 'notes', 1).getAttribute('data-tooltip')).toEqual('Too long');
     });
 
+    it('expect the tooltip to show the first 5 lines and how many more, multilineTooltipLines more or fewer', async () => {
+        const lines = Array.from({ length: 9 }, (_, i) => `line ${i + 1}`);
+        const rows = [{ name: 'a', notes: lines.join('\n'), age: 1 }];
+        const { element, datasource, gridInterface } = await mountGrid(config(), rows, multilineFields());
+        const tooltip = () => cellOf(element, 'notes', 0).getAttribute('data-tooltip');
+
+        expect(tooltip()).toEqual(`${lines.slice(0, 5).join('\n')}\n… 4 more lines`);
+
+        gridInterface.updateConfig({ multilineTooltipLines: 2 });
+        expect(tooltip()).toEqual('line 1\nline 2\n… 7 more lines');
+        // the original value of the edited marker is cut the same way
+        datasource.getAllData()[0].notes = 'short';
+        gridInterface.refresh();
+        const marker = cellOf(element, 'notes', 0).querySelector('.simple-html-cell-edited-marker');
+        expect(marker?.getAttribute('data-tooltip')).toEqual('Original value: line 1\nline 2\n… 7 more lines\nClick to revert');
+        datasource.undo();
+        gridInterface.refresh();
+
+        gridInterface.updateConfig({ multilineTooltipLines: 20 });
+        expect(tooltip()).toEqual(lines.join('\n'));
+
+        // undefined: back to the default
+        gridInterface.updateConfig({ multilineTooltipLines: undefined });
+        expect(tooltip()).toEqual(`${lines.slice(0, 5).join('\n')}\n… 4 more lines`);
+    });
+
+    it('expect a TypeError for multilineTooltipLines that is not a whole number of 1 or more', async () => {
+        const { gridInterface } = await mountGrid(config(), data(), multilineFields());
+        for (const lines of [0, -1, 2.5, Number.NaN, Number.POSITIVE_INFINITY, '5', null]) {
+            expect(() => gridInterface.updateConfig({ multilineTooltipLines: lines as any }), String(lines)).toThrow(
+                /multilineTooltipLines is .*, it is a whole number of 1 or more/
+            );
+            expect(
+                () => new GridInterface(config({ multilineTooltipLines: lines as any }), new Datasource()),
+                String(lines)
+            ).toThrow(TypeError);
+        }
+        // the grid kept the default
+        expect(gridInterface.__getGridConfig().multilineTooltipLines).toEqual(5);
+    });
+
     it('expect a value with line breaks never to be written back from the input: focus, input, change, blur', async () => {
         const { element, datasource } = await mountGrid(config(), data(), plainFields());
         const input = cellInput(element, 'notes', 0);
@@ -221,7 +283,7 @@ describe('multiline - the cell', () => {
 
         const marker = cellOf(element, 'notes', 0).querySelector('.simple-html-cell-edited-marker');
         expect(marker?.getAttribute('data-tooltip')).toEqual(
-            `Original value: ${lines.slice(0, 15).join('\n')}…\nClick to revert`
+            `Original value: ${lines.slice(0, 5).join('\n')}\n… 15 more lines\nClick to revert`
         );
     });
 

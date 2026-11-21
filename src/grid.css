@@ -827,7 +827,8 @@
 
 /* a row marked for deletion: its number and the text of its cells struck through */
 .simple-html-grid .row-is-deleted.simple-html-row-status .simple-html-selector-text,
-.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted input {
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted input,
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted .simple-html-grid-cell-lines {
     text-decoration: line-through;
 }
 
@@ -882,6 +883,28 @@
 
 .simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-multiline {
     padding-right: 16px;
+}
+
+/**
+ * the other lines of a multiline cell in a row made taller (gridInterface.fitRows): under the input,
+ * which has the first line. A line is cellHeight high, the element gets its top and line-height from
+ * renderRowCell. The input is transparent and over it, the pointer finds the input. The text starts
+ * and stops where the input's does: its padding, the room for the marker at the right
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-lines {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    padding: 0 16px 0 3px;
+    overflow: hidden;
+    white-space: pre;
+    pointer-events: none;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
 }
 
 /**

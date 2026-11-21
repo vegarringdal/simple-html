@@ -57,8 +57,9 @@ function fakeTexts(only: (id: string) => boolean): Texts {
 // 102 countries, 101 of them let through by the filter on age: the value list is cut off at 100
 const COUNTRIES = Array.from({ length: 102 }, (_, i) => `«c${i}»`);
 
-// notes of two lines: the marker of a multiline cell, and its editor
-const NOTES = '«line 1»\n«line 2»';
+// notes of seven lines: the marker of a multiline cell, its editor, and its tooltip - the first five
+// lines and how many more there are
+const NOTES = Array.from({ length: 7 }, (_, i) => `«line ${i + 1}»`).join('\n');
 
 const rows = () => [
     { name: '«ann»', country: COUNTRIES[0], age: 10, born: new Date(2026, 0, 5), active: true, notes: NOTES },

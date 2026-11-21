@@ -51,7 +51,7 @@ export interface GridCellEventData {
  *     console.log('clicked', data.attribute, 'in row', data.row, data.rowData);
  * });
  * gridInterface.on('grid-connected', () => {
- *     gridInterface.autoResizeColumns();
+ *     gridInterface.fitColumns();
  * });
  * off(); // unsubscribe
  * ```

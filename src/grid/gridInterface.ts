@@ -21,19 +21,21 @@ import type {
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
 import { aggregateLines } from './gridFunctions/aggregates';
-import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
+import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
+import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
+import { fitRowLinesOf, layoutColumns } from './gridFunctions/rowHeights';
 import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
@@ -118,6 +120,12 @@ export class GridInterface<T> {
     private headerFilters: Record<string, HeaderFilter> = {};
 
     /**
+     * the lines of the rows made taller by fitRows(), by the row's key (`String(row.__KEY)`). A row
+     * that is not in it is as high as the layout makes a row. See rowHeights.ts
+     */
+    private rowLines = new Map<string, number>();
+
+    /**
      * the ranges of cells, see getRanges(): copies of what was set
      */
     private ranges: CellRange[] = [];
@@ -141,7 +149,8 @@ export class GridInterface<T> {
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
      * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
-     * object of strings, or a column's `aggregate` is no aggregate function or needs a number field
+     * object of strings, `multilineTooltipLines` is not a whole number of 1 or more, or a column's
+     * `aggregate` is no aggregate function or needs a number field
      *
      * @example
      * ```ts
@@ -160,6 +169,7 @@ export class GridInterface<T> {
         assertNoHooks(gridConfig);
         assertNoV5Options(gridConfig);
         assertConfigTexts(gridConfig);
+        assertTooltipLines(gridConfig);
         assertAggregates(gridConfig, datasource);
         this.columnsSelected = new Set();
         this.dataSource = datasource;
@@ -320,7 +330,8 @@ export class GridInterface<T> {
      * @param config the parts of the config to change
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
      * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
-     * strings, or a column's `aggregate` is no aggregate function or needs a number field
+     * strings, `multilineTooltipLines` is not a whole number of 1 or more, or a column's `aggregate` is
+     * no aggregate function or needs a number field
      *
      * @sample misc-options
      * @example
@@ -337,6 +348,7 @@ export class GridInterface<T> {
         assertNoHooks(config);
         assertNoV5Options(config);
         assertConfigTexts(config);
+        assertTooltipLines(config);
         assertAggregates(config, this.dataSource);
         const { columns, layout, initialState, ...options } = config;
 
@@ -568,28 +580,248 @@ export class GridInterface<T> {
     }
 
     /**
-     * Sizes the columns to their content: the label, the header filter's placeholder, and the longest
-     * value of the fields in each column (every row, not only the filtered ones). A column is at most
-     * 750px. Rebuilds the grid.
+     * Fits the width of columns to their content, like Excel's AutoFit: each column as wide as the
+     * widest text of its fields - for a column with stacked fields the widest of them, every line of a
+     * multiline text - and its header label. At least 25px, at most 750px. Then rebuilds the grid. A
+     * column with nothing to measure keeps its width. The user does the same from the header menu
+     * ("Fit column width", "Fit all columns") and with a double click on a column's resize handle.
      *
-     * Measures the text with the grid's font, so call it once the grid is on the page: right after
+     * - **The text** is what the cells show: formatted, with `numberOverride`. A checkbox cell needs
+     *   the room of its checkbox. By default the rows the filter lets through (the rows of collapsed
+     *   groups too), and the header label.
+     * - **Measured** with the grid's font (the labels with theirs) on a canvas: the 20 longest texts of
+     *   each field, by their number of characters - every text of 100 000 rows would take the browser
+     *   half a second per field. The widest text is one of the longest, unless a short text of wide
+     *   letters is wider than 20 longer ones of narrow letters.
+     * - **`options.rows`**: only the text of these rows, and not the header label - a column fitted to
+     *   cells, as the row menu's "Fit column to this cell" does.
+     * - The widths are part of the state (`getState().layout`). {@link resetColumnWidths} goes back to
+     *   the widths of the config.
+     *
+     * Measures with the grid's font, so call it once the grid is on the page: right after
      * {@link createGrid}, or from a `grid-connected` handler for an element you connect yourself. It
      * does nothing before the interface is connected to an element.
      *
+     * @param fields the columns that show one of these fields, every column when left out. A field
+     * that is not in the layout is skipped
+     * @param options.rows fit to the cells of these rows only, see above
+     * @throws a `TypeError` when `fields` is not an array of field names, or `options.rows` not an array
+     *
+     * @sample multiline
      * @sample misc-options
      * @example
      * ```ts
-     * import { createGrid, type GridConfig } from '@simple-html/grid';
+     * import { createGrid, type GridConfig, isGroupRow } from '@simple-html/grid';
      *
      * declare const config: GridConfig;
      *
      * const gridInterface = createGrid(host, { config, datasource });
-     * gridInterface.autoResizeColumns();
+     * gridInterface.fitColumns(); // every column
+     * gridInterface.fitColumns(['name', 'notes']); // the columns of these fields
+     *
+     * // the name column as wide as the name of the current row
+     * const row = datasource.currentEntity;
+     * if (row && !isGroupRow(row)) {
+     *     gridInterface.fitColumns(['name'], { rows: [row] });
+     * }
      * ```
      */
-    public autoResizeColumns() {
+    public fitColumns(fields?: string[], options: { rows?: EntityUnion<T>[] } = {}) {
+        assertFields('fitColumns', fields);
+        assertOptions('fitColumns', options, "fitColumns(['name'], { rows: [row] })");
+        if (options.rows !== undefined && !Array.isArray(options.rows)) {
+            throw new TypeError("fitColumns(): options.rows is an array of rows: fitColumns(['name'], { rows: [row] })");
+        }
         if (this.grid) {
-            autoResizeColumns(this.grid);
+            fitColumns(this.grid, fields, options.rows);
+        }
+    }
+
+    /**
+     * Fits every column to its content: the same as {@link fitColumns} without arguments.
+     *
+     * @deprecated use `fitColumns()`. Before v6 it measured the values as they are stored, not as the
+     * cells show them, of every row - also the rows the filter hides
+     */
+    public autoResizeColumns() {
+        this.fitColumns();
+    }
+
+    /**
+     * Gives columns back the width they start with: the width of the field's column in the layout
+     * `resetState()` goes back to - `initialState.layout` when the config has one, else the config's
+     * `layout`. A field that is not in it (added from the column chooser) gets 100px, as when it is
+     * added. For a column with stacked fields, the width of its first field that is in it. Then
+     * rebuilds the grid. The header menu has it too: "Reset column width", "Reset all column widths".
+     *
+     * Only the widths change: the columns stay where the user put them.
+     *
+     * @param fields the columns that show one of these fields, every column when left out
+     * @throws a `TypeError` when `fields` is not an array of field names
+     *
+     * @example
+     * ```ts
+     * gridInterface.fitColumns();
+     * gridInterface.resetColumnWidths(['notes']); // the notes column as wide as in the config again
+     * gridInterface.resetColumnWidths(); // every column
+     * ```
+     */
+    public resetColumnWidths(fields?: string[]) {
+        assertFields('resetColumnWidths', fields);
+        const start = layoutColumns({ layout: copyLayout(this.getStartState().layout) });
+        for (const column of layoutColumns(this.gridConfig)) {
+            if (fields && !column.fields.some((field) => fields.includes(field))) {
+                continue;
+            }
+            const startColumn = column.fields
+                .map((field) => start.find((candidate) => candidate.fields.includes(field)))
+                .find((candidate) => candidate !== undefined);
+            column.width = startColumn?.width ?? DEFAULT_COLUMN_WIDTH;
+        }
+        if (this.grid) {
+            this.grid.rebuild();
+        } else {
+            this.__dataSourceUpdated();
+        }
+    }
+
+    /**
+     * Makes rows as high as their multiline cells need to show every line, like Excel's AutoFit of a
+     * row: each row as many lines (of `cellHeight` px) as its tallest column needs - a multiline cell
+     * the lines of its text (the empty lines at its end left out), every other cell one line, the
+     * fields of a column with stacked fields added up. At most 20 lines. A row that needs no more lines
+     * than the layout gives a row goes back to that height. The user does the same from the row menu:
+     * "Fit row height", "Fit all rows".
+     *
+     * - **Cheap**: it counts the line breaks of the cells' text, nothing is measured. A long line is
+     *   not wrapped, it is cut at the cell's edge as in a row of one line.
+     * - **In a taller row** a multiline cell shows as many of its lines as it has room for, the marker
+     *   when there are more. Every other cell has its text on the first line. The editor of a
+     *   multiline cell is the same.
+     * - **Kept by the row's key** (`__KEY`: the datasource's `key` field, or the key it generated), so
+     *   a row keeps its height through a sort, a filter, grouping and new data with the same keys
+     *   (`setData()`, `upsert()`). A row whose text changes keeps its height: fit it again.
+     * - **Not part of the state** (`getState()`): the heights belong to the rows loaded now.
+     *   {@link resetRowHeights} takes them back.
+     *
+     * Works before the grid is on the page too.
+     *
+     * @param rows the rows to fit, a row or a list. Left out: the rows the filter lets through (the
+     * rows of collapsed groups too) - and the heights of rows that are no longer in the data are
+     * dropped. Group rows are skipped
+     * @throws a `TypeError` when `rows` is not a row or an array of rows
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * import { isGroupRow } from '@simple-html/grid';
+     *
+     * gridInterface.fitRows(); // every row the filter lets through
+     * gridInterface.fitRows(datasource.getSelectedRows());
+     *
+     * const row = datasource.currentEntity;
+     * if (row && !isGroupRow(row)) {
+     *     gridInterface.fitRows(row);
+     * }
+     * ```
+     */
+    public fitRows(rows?: EntityUnion<T> | EntityUnion<T>[]) {
+        const list = this.rowList('fitRows', rows);
+        if (rows === undefined) {
+            // a full fit: the heights of rows that are gone are dropped, they would never be used again
+            const kept = new Map<string, number>();
+            for (const row of this.dataSource.getAllData()) {
+                const key = String(row.__KEY);
+                const lines = this.rowLines.get(key);
+                if (lines !== undefined) {
+                    kept.set(key, lines);
+                }
+            }
+            this.rowLines = kept;
+        }
+
+        const fitLines = fitRowLinesOf({ gridInterface: this });
+        const cells = this.gridConfig.__columnCells;
+        for (const row of list) {
+            const key = rowKey(row);
+            if (key === undefined) {
+                continue;
+            }
+            const lines = fitLines(row);
+            if (lines > cells) {
+                this.rowLines.set(key, lines);
+            } else {
+                this.rowLines.delete(key);
+            }
+        }
+        this.updateRowHeights();
+    }
+
+    /**
+     * Gives rows back the height the layout gives a row, after {@link fitRows}. The row menu has it
+     * too: "Reset row height", "Reset all row heights".
+     *
+     * @param rows a row or a list of rows. Left out: every row
+     * @throws a `TypeError` when `rows` is not a row or an array of rows
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * gridInterface.resetRowHeights(); // every row back to the height of the layout
+     * gridInterface.resetRowHeights(datasource.getSelectedRows());
+     * ```
+     */
+    public resetRowHeights(rows?: EntityUnion<T> | EntityUnion<T>[]) {
+        if (rows === undefined) {
+            this.rowLines.clear();
+        } else {
+            for (const row of this.rowList('resetRowHeights', rows)) {
+                const key = rowKey(row);
+                if (key !== undefined) {
+                    this.rowLines.delete(key);
+                }
+            }
+        }
+        this.updateRowHeights();
+    }
+
+    /**
+     * @internal
+     * true when the row has a height of its own (fitRows), for the row menu. Left out: any row
+     */
+    public __hasRowHeight(row?: Entity): boolean {
+        if (row === undefined) {
+            return this.rowLines.size > 0;
+        }
+        const key = rowKey(row);
+        return key !== undefined && this.rowLines.has(key);
+    }
+
+    /**
+     * the rows given to fitRows() / resetRowHeights() as a list: the rows the filter lets through when
+     * none are given
+     * @throws a `TypeError` when it is not a row or an array of rows
+     */
+    private rowList(method: string, rows: EntityUnion<T> | EntityUnion<T>[] | undefined): readonly Entity[] {
+        if (rows === undefined) {
+            return this.dataSource.getDataRows();
+        }
+        if (Array.isArray(rows)) {
+            return rows;
+        }
+        if (rows && typeof rows === 'object') {
+            return [rows];
+        }
+        throw new TypeError(`${method}(): rows is a row or an array of rows, not ${JSON.stringify(rows)}`);
+    }
+
+    /**
+     * the rows have other heights: the tops of the rows again, and the rows on screen rendered
+     */
+    private updateRowHeights() {
+        this.__dataSourceUpdated();
+        if (this.grid) {
+            triggerScrollEvent(this.grid);
         }
     }
 
@@ -1182,10 +1414,22 @@ export class GridInterface<T> {
 
         const groupRow = this.gridConfig.__groupRowHeight;
         const row = this.gridConfig.__rowHeight;
+        // the rows made taller by fitRows(): their lines, a row is at least as high as the layout makes it
+        const rowLines = this.rowLines;
+        const cells = this.gridConfig.__columnCells;
+        const cellHeight = this.gridConfig.cellHeight;
         let count = 0;
 
         this.dataSource.getRows().forEach((ent) => {
-            const height = isGroupRow(ent) ? groupRow : row;
+            let height = row;
+            if (isGroupRow(ent)) {
+                height = groupRow;
+            } else if (rowLines.size) {
+                const lines = rowLines.get(String(ent.__KEY));
+                if (lines !== undefined && lines > cells) {
+                    height = lines * cellHeight;
+                }
+            }
             this.scrollTops.push(count);
             this.scrollHeights.push(height);
             count = count + height;
@@ -1358,12 +1602,14 @@ export class GridInterface<T> {
         const scrollElScrollTop = scrollEl?.scrollTop;
 
         const newTop = this.__getScrollState().scrollTops[row];
+        // the row's own height: a row can be taller than the layout makes a row (fitRows)
+        const rowHeight = this.__getScrollState().scrollHeights[row] ?? this.__getGridConfig().__rowHeight;
 
-        if (newTop - this.__getGridConfig().__rowHeight < scrollElScrollTop) {
+        if (newTop - rowHeight < scrollElScrollTop) {
             scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
         }
 
-        if (newTop + this.__getGridConfig().__rowHeight > scrollElHeight + scrollElScrollTop) {
+        if (newTop + rowHeight > scrollElHeight + scrollElScrollTop) {
             scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
         }
     }
@@ -1393,6 +1639,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         selectSizeHeight: options.selectSizeHeight ?? 18,
         readonly: options.readonly ?? true,
         tooltips: options.tooltips ?? true,
+        multilineTooltipLines: options.multilineTooltipLines ?? TOOLTIP_LINES,
         rowStatus: options.rowStatus ?? true,
         editedMarker: options.editedMarker ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
@@ -1487,6 +1734,19 @@ function assertConfigTexts(config: Partial<GridConfig>) {
 }
 
 /**
+ * `multilineTooltipLines` is a whole number of 1 or more: TypeScript does not catch `0`, `-1` or `2.5`,
+ * nor a text from plain JavaScript or JSON - the tooltip would show no line, or all of them. Left out or
+ * undefined is the default
+ * @throws a `TypeError` naming the option and what it takes
+ */
+function assertTooltipLines(config: Partial<GridConfig>) {
+    const lines: unknown = config.multilineTooltipLines;
+    if (lines !== undefined && !(Number.isInteger(lines) && (lines as number) >= 1)) {
+        throw new TypeError(`GridConfig: multilineTooltipLines is ${JSON.stringify(lines)}, it is a whole number of 1 or more`);
+    }
+}
+
+/**
  * A column's `aggregate` is one of the functions, and `sum`, `avg`, `min` and `max` are for a number
  * field: TypeScript catches neither in a config from plain JavaScript or JSON, and the grid would show
  * nothing (a text field has no numbers to sum) without a word
@@ -1510,6 +1770,28 @@ function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<an
             );
         }
     }
+}
+
+/**
+ * The fields of fitColumns() / resetColumnWidths(): left out, or an array of field names. A field
+ * name on its own, from plain JavaScript, would be read as a list of its letters
+ * @throws a `TypeError` naming the method
+ */
+function assertFields(method: string, fields: unknown) {
+    if (fields !== undefined && !(Array.isArray(fields) && fields.every((field) => typeof field === 'string'))) {
+        throw new TypeError(`${method}(): fields is an array of field names, not ${JSON.stringify(fields)}: ${method}(['name'])`);
+    }
+}
+
+/**
+ * The key fitRows() keeps a row's height by, as text: `7` and `'7'` are the same key, as the datasource
+ * compares them. undefined for what is no data row of a datasource: a group row, an object of your own
+ */
+function rowKey(row: Entity | null | undefined): string | undefined {
+    if (!row || typeof row !== 'object' || isGroupRow(row) || !row.__controller) {
+        return undefined;
+    }
+    return String(row.__KEY);
 }
 
 /**

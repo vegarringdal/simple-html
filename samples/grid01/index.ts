@@ -92,7 +92,7 @@ document.body.appendChild(containerGrid);
  * create the grid in its container, and size the columns to their content
  */
 const gridInterface = createGrid(containerGrid, { config: gridConfig, datasource });
-gridInterface.autoResizeColumns();
+gridInterface.fitColumns();
 
 const containerbuttons = document.createElement('div');
 containerbuttons.style.position = 'absolute';

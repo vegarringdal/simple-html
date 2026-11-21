@@ -6,6 +6,7 @@ import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
+import { overrideNumberText } from './cellText';
 import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
@@ -16,10 +17,11 @@ import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
-import { firstLine, hasLineBreak, isMultilineCell } from './multilineText';
+import { firstLine, hasLineBreak, isMultilineCell, textLines } from './multilineText';
 import { rangeDeleteKey } from './rangeClipboard';
 import { rangeCellFocused, rangeKeydown, showCellRange } from './rangeSelection';
 import { renderRowSelectorOf } from './renderRowSelector';
+import { placeRowCell } from './rowHeights';
 import { showCellEdited } from './showCellEdited';
 import { showCellErrors } from './showCellErrors';
 import { openTextEditor } from './textEditor';
@@ -66,9 +68,16 @@ export function renderRowCell(
         return;
     }
 
+    // its top and height in the row: more than a line in a row made taller (fitRows, rowHeights.ts)
+    const lines = placeRowCell(ctx, cell, row, entity, colType, column, celno);
+    // a cell taller than a line keeps its text on the first line: the input fills the cell (the pointer
+    // finds it anywhere in it), its padding pushes the text up - the text of an input is in the middle
+    // of its content box
+    const config = ctx.gridInterface.__getGridConfig();
+    const firstLinePadding = lines > 1 ? `padding-bottom:${asPx((lines - 1) * config.cellHeight)};` : '';
+
     // the cell element is the gridcell, the input in it the widget. A column with fewer fields than
     // the tallest one has empty cells under its last field: those are no cells for a screen reader
-    const config = ctx.gridInterface.__getGridConfig();
     setAria(cell, 'role', attribute ? 'gridcell' : 'none');
     setAria(cell, 'aria-colindex', attribute ? String(ariaColIndex(config, colType, column, celno)) : null);
 
@@ -127,16 +136,8 @@ export function renderRowCell(
 
         // a checkbox shows the raw value, every other cell the text from the field's formatter
         const checked = Boolean(entity?.[attribute]);
-        let value = formatter.format(entity?.[attribute]);
-
-        if (fieldType === 'number') {
-            if (cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') {
-                value = '0';
-            }
-            if (cellConfig.numberOverride === 'ZERO_TO_BLANK' && value === '0') {
-                value = '';
-            }
-        }
+        const formatted = formatter.format(entity?.[attribute]);
+        const value = fieldType === 'number' ? overrideNumberText(formatted, cellConfig.numberOverride) : formatted;
 
         // the name of the input for a screen reader: the column's label, as in the header
         const label = getColumnLabel(ctx, attribute);
@@ -146,6 +147,11 @@ export function renderRowCell(
         // and the whole text in its tooltip
         const multiline = isMultilineCell(field, cellConfigType, value);
         const more = multiline && hasLineBreak(value);
+        // in a cell of more than a line (fitRows): the lines after the first that it has room for are
+        // shown under the input. The marker only when some lines are not shown, on the last line
+        const textLineList = more ? textLines(value) : [];
+        const linesUnder = textLineList.slice(1, lines);
+        const showMarker = more && textLineList.length > lines;
 
         // the validation errors: a class and a tooltip on the cell element
         showCellErrors(ctx, cell, entity, attribute, more ? value : undefined);
@@ -163,7 +169,7 @@ export function renderRowCell(
                 html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
                     <input
-                        style="width:100%;"
+                        style=${lines > 1 ? `width:100%;height:${asPx(config.cellHeight)};bottom:auto;` : 'width:100%;'}
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
                         aria-label=${label}
@@ -253,13 +259,22 @@ export function renderRowCell(
             render(
                 html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
+                    ${
+                        // the other lines of a multiline cell in a taller row: under the input, which is
+                        // transparent and gets the pointer. A screen reader has the marker's description
+                        linesUnder.length
+                            ? html`<div
+                                  class=${`simple-html-grid-cell-lines ${cellClass.input}${repeatedClass}`}
+                                  aria-hidden="true"
+                                  style=${`top:${asPx(config.cellHeight)};line-height:${asPx(config.cellHeight)};`}
+                              >${linesUnder.join('\n')}</div>`
+                            : nothing
+                    }
                     <input
                         aria-label=${label}
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
-                        style=${
-                            cellConfigType === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'
-                        }
+                        style=${`${cellConfigType === 'number' ? 'text-align: right;' : ''}width:100%;height:100%;${firstLinePadding}`}
                         .value=${live(multiline ? firstLine(value) : value)}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}`}
                         .readOnly=${multiline || !!config.readonly || cellReadOnly}
@@ -352,7 +367,12 @@ export function renderRowCell(
                                 const el = createElement(DIV, 'simple-html-grid-focus-button');
                                 el.style.position = 'absolute';
                                 el.style.top = asPx(0);
-                                el.style.bottom = asPx(0);
+                                // on the first line of a cell taller than a line, with the text
+                                if (lines > 1) {
+                                    el.style.height = asPx(config.cellHeight);
+                                } else {
+                                    el.style.bottom = asPx(0);
+                                }
                                 el.style.right = asPx(0);
                                 el.style.width = asPx(30);
                                 el.onmousedown = (event: MouseEvent) => {
@@ -486,9 +506,15 @@ export function renderRowCell(
                         }}
                     />
                     ${
+                        // the marker describes the input for a screen reader also when every line is
+                        // shown: the input has the first line. In a taller cell it is on the last line
                         more
-                            ? html`<span class="simple-html-grid-cell-more" id=${moreId} aria-hidden="true"
-                                  >${MORE_ICON}<span class="simple-html-visually-hidden"
+                            ? html`<span
+                                  class="simple-html-grid-cell-more"
+                                  id=${moreId}
+                                  aria-hidden="true"
+                                  style=${lines > 1 ? `top:${asPx((lines - 0.5) * config.cellHeight - 5)};` : nothing}
+                                  >${showMarker ? MORE_ICON : nothing}<span class="simple-html-visually-hidden"
                                       >${gridText(ctx, 'cell.multiline.more')}</span
                                   ></span
                               >`

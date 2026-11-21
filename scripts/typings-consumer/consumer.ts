@@ -312,6 +312,18 @@ created.updateConfig({ columns: { name: nameColumn }, layout: { center: [stacked
 created.refresh();
 created.rebuild();
 created.autoResizeColumns();
+// the sizes: columns fitted to their content or to cells, rows to their multiline cells, and back
+created.fitColumns();
+created.fitColumns(['name'], { rows: created.getDatasource().getDataRows().slice(0, 1) });
+created.resetColumnWidths(['name']);
+created.resetColumnWidths();
+created.fitRows();
+created.fitRows(created.getDatasource().getDataRows());
+created.resetRowHeights(created.getDatasource().getDataRows()[0]);
+created.resetRowHeights();
+// @ts-expect-error the fields are a list
+created.fitColumns('name');
+created.updateConfig({ multilineTooltipLines: 10 });
 created.openFilterEditor();
 const layoutFields: string[] = created.getLayoutFields();
 const selectedFields: string[] = created.getLayoutFields({ selectedOnly: true });
@@ -482,7 +494,7 @@ gridInterface.updateInitConfig(config);
 console.log(gridInterface.on('filter-operator-change', (data) => data.cellConfig));
 // @ts-expect-error a layout column has fields, not rows
 gridInterface.setState({ layout: { center: [{ rows: ['name'], width: 100 }] } });
-gridInterface.on('grid-connected', () => gridInterface.autoResizeColumns());
+gridInterface.on('grid-connected', () => gridInterface.fitColumns());
 
 const onFiltered: EventHandler<DatasourceEvents['collection-filtered']> = (data) => {
     const info: 'filter' | 'resetData' | 'markForDeletion' | 'unmarkForDeletion' | 'acceptChanges' | '__internalUpdate, forced' =

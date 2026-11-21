@@ -6,7 +6,7 @@ export const miscConfig: DemoSample = {
     title: 'Misc options',
     group: 'Config',
     description:
-        'Grab bag: dimRepeatedValues dims cells repeating the value of the row above (sort by country and toggle it - also available in the row right-click menu). numberOverride maps between blank and 0 per column (bonus hides zeros, age shows blanks as 0). website only accepts paste/clear, no typing. autoResizeColumns() sizes columns to content. updateConfig() changes an option while the grid is shown, the sorting, filter and column order stay.',
+        'Grab bag: dimRepeatedValues dims cells repeating the value of the row above (sort by country and toggle it - also available in the row right-click menu). numberOverride maps between blank and 0 per column (bonus hides zeros, age shows blanks as 0). website only accepts paste/clear, no typing. fitColumns() fits the columns to their content, resetColumnWidths() takes them back - the header menu and a double click on the resize handle of a column do the same. updateConfig() changes an option while the grid is shown, the sorting, filter and column order stay.',
     run(stage) {
         const ui = createStage(stage);
 
@@ -62,9 +62,12 @@ export const miscConfig: DemoSample = {
         ui.button('dimRepeatedValues: off', () => {
             gridInterface.updateConfig({ dimRepeatedValues: false });
         });
-        // size columns to their content
-        ui.button('autoResizeColumns()', () => {
-            gridInterface.autoResizeColumns();
+        // fit the columns to their content, and back to the widths of the config
+        ui.button('fitColumns()', () => {
+            gridInterface.fitColumns();
+        });
+        ui.button('resetColumnWidths()', () => {
+            gridInterface.resetColumnWidths();
         });
         ui.button('Try typing in website (paste/clear only)', () => {
             ui.log('typing in website cells is blocked - paste (ctrl+v) or clear with delete/backspace');
