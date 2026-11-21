@@ -257,8 +257,10 @@ gridInterface.on('cell-click', (data) => {
 - a `MenuPosition`, `{ x, y }` in px from the window's left and top edges: its top left corner there
 - an element: under the element, lined up with its left edge
 
-The menu is kept in the window: it opens above when there is no room below, and moves left when it
-sticks out on the right.
+The menu is kept in the window, 4px from its edges - every menu of the grid, the long row menu too:
+it opens below the point, above it when there is no room below, and next to it (on its right, or on
+its left when there is no room on the right) when there is room neither below nor above. A menu taller
+than the window gets the window's height and scrolls.
 
 - There is one menu at a time: opening one closes the one before, the grid's own too.
 - The grid closes it as its own menus: on a click outside it, on Esc, when another menu opens, on

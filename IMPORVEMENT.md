@@ -1228,6 +1228,16 @@ in the console. All passed. Found and fixed:
 * tests: the order, the row entry (values, mark, one undo step, greyed out on an unchanged row), no
   section in a readonly grid
 
+### Menus stay in the window (user report: the row menu is too tall)
+
+* `placeMenu` (showMenu.ts): below the point, else above, else beside the point (right, else left),
+  moved up as little as the window allows; taller than the window: max-height and scroll (only then -
+  the scroll box would clip the shadow); 4px from every edge. The menu is measured at the window's top
+  left: placed near the right edge first, an absolutely placed popover shrinks to the room left and
+  wraps, then grew past the edge when moved left
+* checked in Chromium at 480x611, 1280x400 and 1280x800 (`menu-place-check.js`): the whole menu inside
+  the window in every case; tests for each placement rule
+
 ## Considered, not done
 
 ## Candidates / not started

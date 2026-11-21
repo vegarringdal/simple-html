@@ -7,15 +7,23 @@ import { removeContextMenu } from './removeContextMenu';
 
 /**
  * Where a menu goes, in px from the window's left and top edges. `flipTop`: when the menu does not
- * fit below `top`, it is moved up so its bottom edge is at `flipTop`. `anchor`: the element it opens
- * from, null for a position - the menu is put in its dialog or popover, see {@link popoverParent}.
+ * fit below `top`, it is moved up so its bottom edge is at `flipTop`. `pointX`: where it was opened
+ * (the mouse, the element's left edge) - a menu that fits neither below nor above goes next to it,
+ * see {@link placeMenu}. `anchor`: the element it opens from, null for a position - the menu is put in
+ * its dialog or popover, see {@link popoverParent}.
  */
 export interface MenuPlace {
     left: number;
     top: number;
     flipTop: number;
+    pointX: number;
     anchor: Element | null;
 }
+
+/**
+ * px kept free between a menu and the edges of the window
+ */
+export const WINDOW_MARGIN = 4;
 
 /**
  * The place of the grid's own menus: under the cell, around the mouse (130px wide, the mouse in the
@@ -30,7 +38,7 @@ export function placeUnderCell(event: MouseEvent, cell: HTMLElement): MenuPlace 
     if (event.clientX - 65 < 0) {
         left = 5;
     }
-    return { left, top: rect.bottom + 2, flipTop: rect.top, anchor: cell };
+    return { left, top: rect.bottom + 2, flipTop: rect.top, pointX: event.clientX, anchor: cell };
 }
 
 /**
@@ -40,14 +48,14 @@ export function placeUnderCell(event: MouseEvent, cell: HTMLElement): MenuPlace 
 export function placeAt(at: MouseEvent | MenuPosition | HTMLElement): MenuPlace {
     if (at instanceof Element) {
         const rect = at.getBoundingClientRect();
-        return { left: rect.left, top: rect.bottom + 2, flipTop: rect.top, anchor: at };
+        return { left: rect.left, top: rect.bottom + 2, flipTop: rect.top, pointX: rect.left, anchor: at };
     }
     if ('clientX' in at) {
         // a mouse event that was not dispatched (made in code) has no target
         const anchor = at.target instanceof Element ? at.target : null;
-        return { left: at.clientX, top: at.clientY, flipTop: at.clientY, anchor };
+        return { left: at.clientX, top: at.clientY, flipTop: at.clientY, pointX: at.clientX, anchor };
     }
-    return { left: at.x, top: at.y, flipTop: at.y, anchor: null };
+    return { left: at.x, top: at.y, flipTop: at.y, pointX: at.x, anchor: null };
 }
 
 /**
@@ -117,14 +125,51 @@ export function openMenuElement(ctx: Grid, menu: HTMLElement, anchor: Element | 
 }
 
 /**
- * Places a menu that is shown, and keeps it in the window: above the cell/point when there is no room
- * below, moved left when it sticks out on the right
+ * Places a menu that is shown, and keeps all of it in the window ({@link WINDOW_MARGIN} from its
+ * edges) - the row menu is long:
+ * - under the cell / point, or above it when there is no room below
+ * - when there is room neither below nor above: next to the point, on its right - on its left when
+ *   there is no room on the right - so it does not cover the cell, moved up as far as it has to
+ * - moved in from the right edge, never past the left one
+ * - taller than the window: as tall as the window, and it scrolls. Only then: the scroll box would
+ *   cut off the menu's shadow
  */
 export function placeMenu(menu: HTMLElement, place: MenuPlace) {
-    moveMenu(menu, place.left, place.top);
-    const rect = menu.getBoundingClientRect();
-    const top = rect.bottom > window.innerHeight ? place.flipTop - rect.height : place.top;
-    const left = rect.right > window.innerWidth ? Math.max(0, window.innerWidth - rect.width) : place.left;
+    // the window, as the filter editor is placed in it (a page scrollbar can cover its last px)
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    menu.style.maxHeight = '';
+    menu.style.overflowY = '';
+    // measured in the window's top left corner: near the right edge an absolutely placed element
+    // shrinks to the room that is left (its text wraps), and would grow again once moved left
+    moveMenu(menu, 0, 0);
+    let rect = menu.getBoundingClientRect();
+    const maxHeight = height - 2 * WINDOW_MARGIN;
+    if (rect.height > maxHeight) {
+        menu.style.maxHeight = asPx(maxHeight);
+        menu.style.overflowY = 'auto';
+        rect = menu.getBoundingClientRect();
+    }
+
+    let top = place.top;
+    let left = place.left;
+    if (place.top + rect.height > height - WINDOW_MARGIN) {
+        if (place.flipTop - rect.height >= WINDOW_MARGIN) {
+            top = place.flipTop - rect.height;
+        } else {
+            // neither below nor above: beside the point, as near it as the window lets it be
+            top = Math.max(WINDOW_MARGIN, Math.min(place.top, height - WINDOW_MARGIN - rect.height));
+            const right = place.pointX + 2;
+            const leftOf = place.pointX - 2 - rect.width;
+            if (right + rect.width <= width - WINDOW_MARGIN) {
+                left = right;
+            } else if (leftOf >= WINDOW_MARGIN) {
+                left = leftOf;
+            }
+        }
+    }
+    left = Math.max(WINDOW_MARGIN, Math.min(left, width - WINDOW_MARGIN - rect.width));
     moveMenu(menu, left, top);
 }
 

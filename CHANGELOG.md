@@ -969,6 +969,14 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The `row-is-*` states had no built-in look.
 - A row's errors were in its tooltip only; a screen reader now gets them with the row number.
 
+#### Menus stay in the window
+
+##### Fixed
+- A menu taller than the room below and above the cell (the row menu in a small window) was cut off.
+  It now goes next to the point (right, else left), as near it as the window allows; a menu taller
+  than the window scrolls. Every menu keeps 4px from the window's edges; a menu near the right edge
+  is measured at its natural width (it was squeezed by the edge, then grew past it once moved).
+
 #### Row menu: undo a cell edit, a row's edits
 
 ##### ⚠️ Breaking changes

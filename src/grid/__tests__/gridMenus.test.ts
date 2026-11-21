@@ -412,6 +412,10 @@ describe('menus - openMenu() and closeMenu()', () => {
 
     it('expect the entries to be shown at the mouse', async () => {
         const { gridInterface } = await mountGrid();
+        // a menu of 150 x 100 where its style puts it (the size stub makes every element 1000 wide)
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+            return new DOMRect(parseFloat(this.style.left) || 0, parseFloat(this.style.top) || 0, 150, 100);
+        });
 
         gridInterface.openMenu(new MouseEvent('click', { clientX: 40, clientY: 30 }), entries());
 
@@ -458,7 +462,74 @@ describe('menus - openMenu() and closeMenu()', () => {
 
         const menu = document.querySelector('.simple-html-grid-menu')?.parentElement as HTMLElement;
         expect(menu.style.top).toEqual(`${window.innerHeight - 20 - 100}px`);
-        expect(menu.style.left).toEqual(`${window.innerWidth - 150}px`);
+        // 4px from the window's edge
+        expect(menu.style.left).toEqual(`${window.innerWidth - 150 - 4}px`);
+    });
+
+    describe('a menu taller than the room below and above the point', () => {
+        /** the menu is 150 wide and `height` tall - or its max-height, which makes it scroll */
+        const menuSize = (height: number) =>
+            vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+                const left = parseFloat(this.style.left) || 0;
+                const top = parseFloat(this.style.top) || 0;
+                const max = parseFloat(this.style.maxHeight);
+                return new DOMRect(left, top, 150, Number.isNaN(max) ? height : Math.min(height, max));
+            });
+        const shownMenu = () => document.querySelector('.simple-html-grid-menu')?.parentElement as HTMLElement;
+
+        it('expect it next to the point, on its right, moved up just as far as it has to', async () => {
+            const { gridInterface } = await mountGrid();
+            const height = window.innerHeight - 100;
+            menuSize(height);
+
+            // at the middle of the window: no room for it below, none above
+            gridInterface.openMenu({ x: 200, y: window.innerHeight / 2 }, entries());
+
+            expect(shownMenu().style.left).toEqual('202px');
+            expect(shownMenu().style.top).toEqual(`${window.innerHeight - 4 - height}px`);
+            expect(shownMenu().style.overflowY).toEqual('');
+        });
+
+        it('expect it on the left of the point when there is no room on its right', async () => {
+            const { gridInterface } = await mountGrid();
+            menuSize(window.innerHeight - 100);
+
+            gridInterface.openMenu({ x: window.innerWidth - 60, y: window.innerHeight / 2 }, entries());
+
+            expect(shownMenu().style.left).toEqual(`${window.innerWidth - 60 - 2 - 150}px`);
+        });
+
+        it('expect one taller than the window to be as tall as the window, and scroll', async () => {
+            const { gridInterface } = await mountGrid();
+            menuSize(window.innerHeight * 2);
+
+            gridInterface.openMenu({ x: 200, y: 300 }, entries());
+
+            expect(shownMenu().style.maxHeight).toEqual(`${window.innerHeight - 8}px`);
+            expect(shownMenu().style.overflowY).toEqual('auto');
+            expect(shownMenu().style.top).toEqual('4px');
+        });
+
+        it('expect a menu that fits to have no max-height: the scroll box would cut its shadow', async () => {
+            const { gridInterface } = await mountGrid();
+            menuSize(window.innerHeight * 2);
+            gridInterface.openMenu({ x: 200, y: 300 }, entries());
+            menuSize(100);
+
+            gridInterface.openMenu({ x: 200, y: 300 }, entries());
+
+            expect(shownMenu().style.maxHeight).toEqual('');
+            expect(shownMenu().style.top).toEqual('300px');
+        });
+
+        it('expect it never past the left edge of the window', async () => {
+            const { gridInterface } = await mountGrid();
+            menuSize(100);
+
+            gridInterface.openMenu({ x: -50, y: 300 }, entries());
+
+            expect(shownMenu().style.left).toEqual('4px');
+        });
     });
 
     it('expect an item click to close the menu and call the action with a custom context', async () => {
