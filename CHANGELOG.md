@@ -1332,6 +1332,17 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Docs site: a full grid to try everything, the sidebar and the sources folded (user request)
+
+##### Docs
+- Sample "Full grid: try everything" (Getting started): 50 columns of every kind - text, money numbers
+  edited as the plain number, dates, a date and time, checkboxes, a lookup, a badge renderer, notes of
+  several lines, monthly sales with aggregates - pinned left and right, 5 000 rows to start and buttons to
+  add 5 000 / 50 000, editing on and off, grouping, the totals row, undo / redo, the changes. The grid is
+  most of the window (`fullPage`).
+- The sidebar's groups (the samples' "Getting started", "Datasource" ... and the API's) fold too, and every
+  part starts folded: the way to the page shown unfolds. The source of every sample starts folded.
+
 #### Formatters: a text for editing (user request)
 
 ##### Added

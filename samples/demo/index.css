@@ -193,13 +193,34 @@ body {
     content: '▾ ';
 }
 
+/* a group in a section (the samples' "Getting started" ...): folds too */
 .nav-group {
-    padding: 14px 16px 4px;
+    padding: 10px 16px 4px;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--demo-side-muted);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.nav-group::-webkit-details-marker,
+.nav-section-title::-webkit-details-marker {
+    display: none;
+}
+
+.nav-group::before {
+    content: '▸ ';
+}
+
+.nav-subsection[open] > .nav-group::before {
+    content: '▾ ';
+}
+
+.nav-group:hover {
+    color: var(--demo-side-strong);
 }
 
 .nav-item {
@@ -424,6 +445,11 @@ body {
     flex: 1;
     position: relative;
     min-height: 140px;
+}
+
+/* a full page sample (fullPage): the grid is most of the window high, also when the page scrolls */
+.stage-full .demo-grid-host {
+    min-height: calc(100vh - 190px);
 }
 
 /* cell background classes for the cellClass sample -
