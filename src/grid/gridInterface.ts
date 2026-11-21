@@ -453,7 +453,8 @@ export class GridInterface<T> {
      */
     public updateHooks(hooks: GridHooks<T>) {
         this.hooks = { ...this.hooks, ...hooks };
-        // isReadonly and cellClass are called when a cell is rendered, menus when a menu opens
+        // isReadonly, cellClass and rowClass are called when a row or cell is rendered, menus when a menu
+        // opens
         this.refresh();
     }
 
@@ -1815,6 +1816,18 @@ export class GridInterface<T> {
     }
 
     /**
+     * @internal
+     * The css classes the `rowClass` hook gives a data row, one name each: [] without the hook or when
+     * it gives none
+     * @param row a data row of the datasource
+     * @param rowIndex its index in the displayed rows
+     */
+    public __getRowClass(row: Entity, rowIndex: number): string[] {
+        const classes = this.hooks.rowClass?.(row as EntityUnion<T>, rowIndex);
+        return classes ? classes.split(/\s+/).filter((name) => name !== '') : [];
+    }
+
+    /**
      * Subscribes the connected grid to the datasource events it has to follow.
      * Unsubscribes first, so a second connectGrid does not subscribe twice.
      */
@@ -2010,7 +2023,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
 /**
  * The keys of the hooks, which a config must not have
  */
-const HOOK_KEYS = ['isReadonly', 'cellClass', 'menus'] as const satisfies readonly (keyof GridHooks)[];
+const HOOK_KEYS = ['isReadonly', 'cellClass', 'rowClass', 'menus'] as const satisfies readonly (keyof GridHooks)[];
 
 /**
  * The functions of a grid are hooks, given next to the config. TypeScript catches one in the config,

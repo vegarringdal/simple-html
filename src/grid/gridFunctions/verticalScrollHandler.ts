@@ -16,6 +16,7 @@ import { hideAllRows } from './hideAllRows';
 import { renderRowColumns } from './pinnedSection';
 import { removeContextMenu } from './removeContextMenu';
 import { renderCell } from './renderCell';
+import { showRowClass } from './rowClass';
 
 /**
  * How far, in px, the rows can scroll from where they were last rendered and still be rendered on
@@ -131,6 +132,11 @@ function renderRow(ctx: Grid, entry: RowCache, colType: ColType, render: boolean
         rowElement.classList.add(even ? 'simple-html-grid-selected-row-even' : 'simple-html-grid-selected-row-odd');
     } else {
         rowElement.classList.add(even ? 'simple-html-grid-row-even' : 'simple-html-grid-row-odd');
+    }
+
+    // the classes of the rowClass hook, on the row element of every section but the group rows'
+    if (colType !== GROUP_COLTYPE) {
+        showRowClass(ctx, rowElement, entry.row);
     }
 
     rowElement.style.display = 'block';

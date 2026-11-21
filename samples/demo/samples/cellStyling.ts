@@ -6,7 +6,7 @@ export const cellStyling: DemoSample = {
     title: 'Cell styling & readonly',
     group: 'Formatting',
     description:
-        'The cellClass hook adds css classes to a cell from its row - here balance cells get a red/green tint by value. The isReadonly hook does the same for readonly - here company becomes readonly on inactive rows. Both are called per cell when it is rendered. Hooks are functions, so they are not part of the config (which stays plain JSON): give them to createGrid, and set or remove them with updateHooks() while the grid is shown.',
+        'The cellClass hook adds css classes to a cell from its row - here balance cells get a red/green tint by value. The rowClass hook adds classes to a whole row, on its element in every section - here the inactive rows get a tint and italic text; edit active in a row and its look follows in the next frame. The isReadonly hook does the same for readonly - here company becomes readonly on inactive rows. Both are called per cell when it is rendered. Hooks are functions, so they are not part of the config (which stays plain JSON): give them to createGrid, and set or remove them with updateHooks() while the grid is shown.',
     run(stage) {
         const ui = createStage(stage);
         const { gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
@@ -35,6 +35,14 @@ export const cellStyling: DemoSample = {
         ui.button('Remove coloring', () => {
             // no extra classes, same as a hook that returns null
             gridInterface.updateHooks({ cellClass: undefined });
+        });
+        // classes on a whole row, from its values: on the row element of every section (the row
+        // number, pinned and middle columns). .demo-row-inactive in index.css
+        ui.button('Mark inactive rows', () => {
+            gridInterface.updateHooks({ rowClass: (row) => (row.isActive === false ? 'demo-row-inactive' : null) });
+        });
+        ui.button('Remove row marks', () => {
+            gridInterface.updateHooks({ rowClass: undefined });
         });
         ui.button('Readonly company when inactive', () => {
             gridInterface.updateHooks({

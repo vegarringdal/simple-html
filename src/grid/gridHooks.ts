@@ -8,6 +8,7 @@ import type { GridMenus } from './gridMenus';
  *
  * - `isReadonly` - makes a cell readonly, or editable, from the values of its row
  * - `cellClass` - adds css classes to a cell, from the values of its row
+ * - `rowClass` - adds css classes to a row, from its values: a late order, a blocked customer
  * - `menus` - changes the grid's right click menus, see {@link GridMenus}
  *
  * Give them to `createGrid(host, { config, datasource, hooks })` (or `new GridInterface(config,
@@ -112,6 +113,38 @@ export interface GridHooks<T = unknown> {
      * ```
      */
     cellClass?(row: EntityUnion<T>, field: string): CellClass | null | undefined;
+
+    /**
+     * Adds css classes to a whole row, from its values: a late order, a blocked customer, a row to look
+     * at. Return one or more class names separated by spaces, or `null` / `undefined` / `''` for none.
+     *
+     * The classes go on the row's element in every section - the row number, the pinned left, middle
+     * and pinned right columns - so a selector like `.late .simple-html-grid-col-cell` reaches every
+     * cell of the row, and `.late` alone the row (it is behind its cells: the cells' inputs are
+     * transparent, so a background on the row shows). They follow the row: called every time the row
+     * is rendered - scrolled in, `refresh()`, and after its values changed (an edit, an upsert, an undo),
+     * in the next frame. Not called for a group row.
+     *
+     * @param row the row. Always a data row
+     * @param rowIndex its index in the displayed rows, as in the grid's events
+     *
+     * @sample cell-styling
+     * @example
+     * ```ts
+     * import type { GridHooks } from '@simple-html/grid';
+     *
+     * interface Order {
+     *     due: Date;
+     *     shipped: boolean;
+     * }
+     *
+     * // .late .simple-html-grid-col-cell { box-shadow: inset 0 -2px 0 #dc2626; }
+     * const hooks: GridHooks<Order> = {
+     *     rowClass: (row) => (!row.shipped && row.due < new Date() ? 'late' : null)
+     * };
+     * ```
+     */
+    rowClass?(row: EntityUnion<T>, rowIndex: number): string | null | undefined;
 
     /**
      * Changes the grid's right click menus: hide entries, reorder them, change their labels, add your

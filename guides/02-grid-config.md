@@ -216,6 +216,7 @@ The hooks are the functions of a grid, the parts of it that can not be written a
 | --- | --- |
 | `isReadonly` | makes cells readonly, or editable, from their row, [below](#readonly-and-css-classes-from-the-row) |
 | `cellClass` | adds css classes to cells from their row, [below](#readonly-and-css-classes-from-the-row) |
+| `rowClass` | adds css classes to whole rows from their values, [below](#css-classes-for-a-whole-row-rowclass) |
 | `menus` | changes the right click menus, see [Menus](10-menus.md) |
 
 ```ts
@@ -231,8 +232,8 @@ const gridInterface = createGrid(host, { config, datasource, hooks });
 ```
 
 Every hook is optional. `new GridInterface(config, datasource, hooks)` takes them too, for an
-element you place yourself. A config that has `isReadonly`, `cellClass` or `menus` throws: they are
-hooks.
+element you place yourself. A config that has `isReadonly`, `cellClass`, `rowClass` or `menus` throws:
+they are hooks.
 
 With a typed datasource the hooks get typed rows: `GridHooks<Person>` for a `Datasource<Person>`.
 
@@ -279,6 +280,36 @@ The row is always a data row, a group row has no cells. When what the hooks read
 
 ```sample cell-styling
 ```
+
+### CSS classes for a whole row: `rowClass`
+
+`rowClass(row, rowIndex)` returns class names for the whole row - one or more, separated by spaces -
+or `null` for none: a late order, a blocked customer, a row to look at. The classes go on the row's
+element in every section (the row number, the pinned left, middle and pinned right columns), so one
+selector reaches the whole row:
+
+```ts
+import type { GridHooks } from '@simple-html/grid';
+
+interface Order {
+    due: Date;
+    shipped: boolean;
+}
+
+// .simple-html-grid-row-even.late, .simple-html-grid-row-odd.late { background-color: #fdecec; }
+// .late .simple-html-grid-col-cell input { font-style: italic; }
+const hooks: GridHooks<Order> = {
+    rowClass: (row) => (!row.shipped && row.due < new Date() ? 'late' : null)
+};
+```
+
+- The row element is behind the cells - their inputs are transparent - so a background on it shows.
+  Give it with the even/odd class (`.simple-html-grid-row-even.late`), as above: that leaves a selected
+  row its own colour, and it is more specific than the grid's row colours.
+- The classes follow the row: it is called when the row is rendered - scrolled in, `refresh()` - and
+  after its values changed (an edit, a paste, an upsert, an undo), in the next frame. A group row gets
+  none, it is not called for one.
+- The grid's own classes of the row element stay.
 
 ### Changing the hooks: `updateHooks()`
 

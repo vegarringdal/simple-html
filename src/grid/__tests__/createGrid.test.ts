@@ -133,7 +133,7 @@ describe('createGrid', () => {
     it('expect a hook in the config (plain js, or a v6 pre-release config) to throw, and nothing added', () => {
         const host = document.createElement('div');
         document.body.appendChild(host);
-        for (const hook of ['isReadonly', 'cellClass', 'menus']) {
+        for (const hook of ['isReadonly', 'cellClass', 'rowClass', 'menus']) {
             const config = simpleConfig();
             Reflect.set(config, hook, hook === 'menus' ? {} : () => null);
 

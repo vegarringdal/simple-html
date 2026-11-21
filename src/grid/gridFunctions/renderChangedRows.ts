@@ -12,6 +12,7 @@ import {
 import { renderRowColumns } from './pinnedSection';
 import { renderFooter } from './rebuildFooter';
 import { renderCell } from './renderCell';
+import { showRowClass } from './rowClass';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
@@ -133,6 +134,8 @@ export function renderChangedRows(ctx: Grid) {
             if (entry.row === -1 || !rowElement || rowElement.style.display !== 'block' || !isChanged(entry.row)) {
                 continue;
             }
+            // the rowClass hook's classes follow the row's values
+            showRowClass(ctx, rowElement, entry.row);
             if (colType === SELECTOR_COLTYPE) {
                 renderCell(ctx, rowElement, entry.row, 0, 0, colType);
             } else {

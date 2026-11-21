@@ -1843,6 +1843,22 @@ in the console. All passed. Found and fixed:
 * known: the bar needs about 148px now (four buttons): in a grid of 144px the ✕ is cut by a few px. A
   datasource in two grids: both show the filtered rows, the chip is in one footer
 
+### Row classes: the rowClass hook (a candidate; the rest of plan item 39's conditional formatting)
+
+* `GridHooks.rowClass(row, rowIndex)` returns class names (space separated) or null. rowClass.ts
+  `showRowClass()` puts them on a row element and takes off the ones it had (a WeakMap per element: the
+  elements are reused), called from renderRow (verticalScrollHandler.ts: a row scrolled in, refresh())
+  for the selector and pinned sections - not the group section's row elements - and from
+  renderChangedRows for the rows whose values changed, so the classes follow edits, pastes, upserts and
+  undo in the next frame. A group row gets none and the hook is not called for it
+* the row element is behind the cells (their inputs are transparent): a background on it shows. The guide
+  and the sample give it with the even/odd class (`.simple-html-grid-row-even.late`), which leaves a
+  selected row its colour and beats the grid's row colours
+* tests: rowClass.test.ts (every section, an edit, a sort reusing the elements, group rows, updateHooks
+  on/change/off, the grid's classes kept), createGrid.test.ts (a config with rowClass throws). Browser:
+  .claude/browser-checks/scripts/row-class-check.js 7/7 (the cell-styling sample: marked rows in every
+  section, tint and italics, an edit, removal, light and dark)
+
 ## Considered, not done
 
 ## Candidates / not started

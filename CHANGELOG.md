@@ -1332,6 +1332,16 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Row classes: the `rowClass` hook
+
+##### Added
+- `GridHooks.rowClass(row, rowIndex)`: css classes for a whole row from its values (a late order, a
+  blocked customer), on the row's element in every section - the row number, pinned left, middle,
+  pinned right. They follow the row: when it is rendered (scroll, `refresh()`) and after its values
+  change (an edit, a paste, an upsert, an undo), in the next frame. Not for group rows. In
+  `updateHooks()`; a config with `rowClass` throws, it is a hook. The "Cell styling" sample marks the
+  inactive rows.
+
 #### Find: filter the rows (user request)
 
 ##### Added
