@@ -1005,10 +1005,12 @@
     color: var(--simple-html-grid-conflict-color);
 }
 
-/* a row marked for deletion: its number and the text of its cells struck through */
+/* a row marked for deletion: its number and the text of its cells struck through - a custom cell's
+ * text too, the line goes on to the inline content of the host */
 .simple-html-grid .row-is-deleted.simple-html-row-status .simple-html-selector-text,
 .simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted input,
-.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted .simple-html-grid-cell-lines {
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted .simple-html-grid-cell-lines,
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted .simple-html-grid-cell-custom {
     text-decoration: line-through;
 }
 
@@ -1134,6 +1136,30 @@
 }
 
 /**
+ * a custom cell (ColumnConfig.renderer, customCell.ts): the host the renderer renders into fills the
+ * cell, over its stripes and under its markers - where the input of a default cell is (1000). Its
+ * content is in the middle of the line, at the left with the input's padding, in the grid's font; what
+ * does not fit is cut off. It is the focus target: the outline of the keyboard's focus is the one of
+ * every control (:focus-visible, below). Transparent: an error, a range, a match of Find show through
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-custom {
+    box-sizing: border-box;
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 3px;
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/**
  * the editor of a multiline cell: a popover over the cell (see textEditor.ts), the textarea and a
  * hint under it. The textarea can be resized, the popover follows its size
  */
@@ -1162,6 +1188,12 @@
     background-color: var(--simple-html-grid-sec-bg-color);
     /* .simple-html-grid turns selecting text off */
     user-select: text;
+}
+
+/* the editor of one line of a custom cell: an input, as high as its line */
+.simple-html-grid .simple-html-grid-text-editor-input.simple-html-grid-text-editor-line {
+    min-height: 0;
+    resize: none;
 }
 
 .simple-html-grid .simple-html-grid-text-editor-hint {

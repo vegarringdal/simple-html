@@ -113,7 +113,8 @@ have ids of the grid's own, `simple-html-grid-<n>-...`, one `<n>` per grid on th
 ## The keyboard
 
 Every key the grid handles, by where the focus is. The cells are inputs, the arrow keys move the
-caret in them; Alt with an arrow moves between the cells.
+caret in them; Alt with an arrow moves between the cells. A custom cell (`ColumnConfig.renderer`) has
+no caret: there the plain arrows move between the cells too, see [Custom cells](21-custom-cells.md#the-keys-and-the-focus).
 
 ### A cell
 
@@ -128,6 +129,8 @@ caret in them; Alt with an arrow moves between the cells.
 | Space | in a cell with a `focusButton`: sends `cell-focus-button-click`, as a click on the button does. In a lookup cell that can be edited: opens its list. In a checkbox: checks it |
 | Alt+ArrowDown, F4, F2 | in a lookup cell (`ColumnConfig.editor`) that can be edited: opens its list - not the cell below. See [below](#the-list-of-a-lookup-column) |
 | a character | in a lookup cell that can be edited: opens its list, the character as its search. The cell is not typed in |
+| Enter, F2, a character | in a custom cell that can be edited: opens the grid's editor of one line over it (the renderer's own `edit()` when it has one) - Enter saves it, Esc cancels. See [Custom cells](21-custom-cells.md#editing) |
+| ArrowUp / ArrowDown / ArrowLeft / ArrowRight | on a custom cell itself: as with Alt. On a control the renderer put in the cell, the control's |
 | Shift+F10, the menu key | the row menu (the browser sends `contextmenu`), the focus on its first item |
 | Alt+Shift+arrows | a range of cells: from this cell, the end one cell further each time - a row up or down, a field left or right (the fields of a column of two are two). The focus stays in the cell. See [Selection and clipboard](17-selection-and-clipboard.md#the-keyboard) |
 | Esc | clears the ranges of cells (when there are some, and no menu is open) |
@@ -238,7 +241,8 @@ A readonly editor (a readonly grid or cell) shows the text, nothing can be typed
 
 ## Focus
 
-What can have the focus: the cell inputs and checkboxes, the header filters, the column headers, the
+What can have the focus: the cell inputs and checkboxes, the host of a custom cell (and what its renderer
+makes focusable), the header filters, the column headers, the
 buttons of the group rows, the x of the group chips, the filter chips in the footer, the input and
 buttons of the find bar, and the items of a menu (see [Menus](10-menus.md#the-keyboard): the WAI-ARIA
 menu pattern). Each gets a

@@ -272,6 +272,8 @@ const DEFAULTS = {
     'lookup.search': 'Search',
     'lookup.noMatch': 'No matches',
     'lookup.more': '{shown} of {count} shown, type to search',
+    // the hint of the editor of one line over a custom cell (ColumnConfig.renderer)
+    'cell.editor.hint': 'Enter to save, Esc to cancel',
 
     // the date picker: of date cells and date header filters, and a DateInterface of your own
     'datePicker.hours': 'HH',

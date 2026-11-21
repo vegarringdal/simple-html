@@ -158,14 +158,22 @@ export function bodyCellOf(ctx: Grid, target: EventTarget | null): HTMLCellEleme
 }
 
 /**
- * The input of a body cell that has the focus, and its cell: null when the focus is elsewhere. The
- * document's focus, or the shadow root's the grid is in
+ * The body cell that has the focus, and its input: null when the focus is elsewhere. The document's
+ * focus, or the shadow root's the grid is in. A custom cell (customCell.ts) has the focus on its host or
+ * on what its renderer put in it: `input` is null then, unless that is an input
  */
-export function focusedCell(ctx: Grid): { cell: HTMLCellElement; input: HTMLInputElement } | null {
+export function focusedCell(ctx: Grid): { cell: HTMLCellElement; input: HTMLInputElement | null } | null {
     const root = ctx.element.getRootNode() as Partial<DocumentOrShadowRoot>;
-    const input = root.activeElement;
-    const cell = bodyCellOf(ctx, input ?? null);
-    return cell && input instanceof HTMLInputElement ? { cell, input } : null;
+    const active = root.activeElement;
+    const cell = bodyCellOf(ctx, active ?? null);
+    if (!cell || !active) {
+        return null;
+    }
+    if (active instanceof HTMLInputElement) {
+        return { cell, input: active };
+    }
+    // the host of a custom cell, CUSTOM_CELL_CLASS in customCell.ts
+    return active.closest('.simple-html-grid-cell-custom') ? { cell, input: null } : null;
 }
 
 /**
@@ -302,9 +310,9 @@ function rangePointerDown(ctx: Grid, down: PointerEvent) {
 
         // the browser extends the text selection the press started in the input after this event, up
         // to the input's edge: collapsed in the frame of this move, before it is painted
-        const focused = focusedCell(ctx);
-        if (focused) {
-            requestAnimationFrame(() => collapseTextSelection(focused.input));
+        const input = focusedCell(ctx)?.input;
+        if (input) {
+            requestAnimationFrame(() => collapseTextSelection(input));
         }
     };
 
@@ -335,7 +343,9 @@ function rangePointerDown(ctx: Grid, down: PointerEvent) {
         if (moved) {
             const focused = focusedCell(ctx);
             if (focused) {
-                collapseTextSelection(focused.input);
+                if (focused.input) {
+                    collapseTextSelection(focused.input);
+                }
             } else if (current) {
                 // the wheel took the focus while dragging: back to a cell of the range, the keys (copy,
                 // Delete, Alt+Shift+arrows) work from there
@@ -366,8 +376,8 @@ function rangePointerDown(ctx: Grid, down: PointerEvent) {
 }
 
 /**
- * Focuses the input of a cell on screen, without scrolling: the views scroll with the grid's own
- * scrollbars, the browser must not scroll them
+ * Focuses the input of a cell on screen - the host of a custom cell (customCell.ts) - without scrolling:
+ * the views scroll with the grid's own scrollbars, the browser must not scroll them
  * @returns false when the cell is not on screen
  */
 export function focusCellInput(ctx: Grid, point: CellPoint): boolean {
@@ -377,7 +387,8 @@ export function focusCellInput(ctx: Grid, point: CellPoint): boolean {
         for (const cell of columnElement.children) {
             const shows = cell as HTMLCellElement;
             if (shown && shows.$row === point.row && shows.$attribute === point.field) {
-                const input = cell.querySelector('input');
+                // the host comes before what its renderer put in it: an input of its own
+                const input = cell.querySelector<HTMLElement>('input, .simple-html-grid-cell-custom');
                 if (input) {
                     input.focus({ preventScroll: true });
                     return true;
@@ -452,9 +463,9 @@ function extendRangeByKey(ctx: Grid, here: CellPoint, key: string) {
     }
 
     gridInterface.__setRanges([...ranges.slice(0, -1), { ...last, toRow: row, toField: fields[index] }]);
-    const focused = focusedCell(ctx);
-    if (focused) {
-        collapseTextSelection(focused.input);
+    const input = focusedCell(ctx)?.input;
+    if (input) {
+        collapseTextSelection(input);
     }
     scrollCellIntoView(ctx, row, fields[index]);
 }

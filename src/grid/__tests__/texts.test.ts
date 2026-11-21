@@ -9,6 +9,7 @@ import { and, type FilterCondition, type FilterOperator, or, where } from '../..
 import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
 import { setTexts, TEXTS, type Texts } from '../../texts';
+import { registerCellRenderer } from '../cellRendererRegistry';
 import type { GridConfig } from '../gridConfig';
 import { MAX_OPTIONS } from '../gridFunctions/lookupEditor';
 import { GridInterface } from '../gridInterface';
@@ -85,6 +86,13 @@ const rows = () => [
     }))
 ];
 
+// country is a custom cell: the editor of one line opens over it
+registerCellRenderer('texts-test', (host) => ({
+    update: ({ text }) => {
+        host.textContent = text;
+    }
+}));
+
 const config = (texts?: Texts): GridConfig => ({
     readonly: false,
     layout: {
@@ -101,7 +109,7 @@ const config = (texts?: Texts): GridConfig => ({
     },
     columns: {
         name: { label: '«Name»' },
-        country: { label: '«Country»' },
+        country: { label: '«Country»', renderer: 'texts-test' },
         age: { label: '«Age»' },
         // the placeholder of a date filter is the formatter's (YYYY-MM-DD), not a text
         born: { label: '«Born»', placeholderFilter: '«born»' },
@@ -233,6 +241,11 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     lookupSearch.dispatchEvent(new Event('input', { bubbles: true }));
     check();
     pressKey(lookupSearch, 'Escape');
+
+    // the editor of one line over a custom cell
+    pressKey(element.querySelector('.simple-html-grid-cell-custom[data-attribute="country"]') as HTMLElement, 'Enter');
+    check();
+    pressKey(document.querySelector('.simple-html-grid-text-editor input') as HTMLElement, 'Escape');
 
     // the row menu: an editable number cell, a selected row marked for deletion (undo). Not the row
     // with the blank name, a row marked for deletion is not validated

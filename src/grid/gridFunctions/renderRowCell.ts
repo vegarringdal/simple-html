@@ -11,6 +11,7 @@ import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
 import { createElement } from './createElement';
+import { releaseRenderer, renderCustomCell } from './customCell';
 import { DIV } from './DIV';
 import { fillDownKey } from './fillDown';
 import { showCellFind } from './findBar';
@@ -55,7 +56,7 @@ const LOOKUP_ICON = svg`<svg class="simple-html-grid-lookup-icon" viewBox="0 0 8
  * is AltGr+2). Alt alone is a shortcut on Windows and Linux; a character typed with Option on a Mac
  * is left out with it
  */
-function isTypedCharacter(event: KeyboardEvent): boolean {
+export function isTypedCharacter(event: KeyboardEvent): boolean {
     return Array.from(event.key).length === 1 && !event.metaKey && event.ctrlKey === event.altKey;
 }
 
@@ -184,7 +185,32 @@ export function renderRowCell(
         const repeated = isRepeatedValue(ctx, row, attribute);
         const repeatedClass = repeated ? ' simple-html-grid-repeated-value' : '';
 
-        if (cellConfigType === 'boolean') {
+        if (cellConfig.renderer) {
+            // a renderer of your own draws the cell (ColumnConfig.renderer, customCell.ts)
+            renderCustomCell(ctx, {
+                cell,
+                row,
+                column,
+                celno,
+                colType,
+                cellType,
+                field: attribute,
+                entity,
+                renderer: cellConfig.renderer,
+                type: cellConfigType,
+                text: value,
+                formatter,
+                readonly: !!config.readonly || cellReadOnly,
+                editable: !config.readonly && !cellReadOnly && !cellConfig.allowPasteClearOnly,
+                multiline,
+                backgroundClass,
+                hostClass: `${cellClass.input}${repeatedClass}`,
+                repeated,
+                hostStyle: firstLinePadding
+            });
+        } else if (cellConfigType === 'boolean') {
+            // the renderer the cell had is done: lit-html replaces its host
+            releaseRenderer(cell);
             render(
                 html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
@@ -244,6 +270,7 @@ export function renderRowCell(
                 cell as any
             );
         } else {
+            releaseRenderer(cell);
             let skipFocus = false;
 
             // the column's focus button is shown in this cell (ColumnConfig.focusButton)
@@ -640,6 +667,7 @@ export function renderRowCell(
         showCellMerged(ctx, cell, entity, attribute);
     } else {
         showCellErrors(ctx, cell, entity, null);
+        releaseRenderer(cell);
         render(html`<div data-dimmed-emtpy class="simple-html-dimmed"></div>`, cell as any);
         showCellEdited(ctx, cell, null, null);
         showCellMerged(ctx, cell, null, null);

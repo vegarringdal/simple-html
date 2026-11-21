@@ -7,6 +7,7 @@ import type { FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
 import type { CellRange } from './cellRange';
+import { getCellRenderer } from './cellRendererRegistry';
 import type { CsvOptions } from './csv';
 import type { FindResult } from './findResult';
 import type { Grid } from './grid';
@@ -171,8 +172,9 @@ export class GridInterface<T> {
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
      * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
      * object of strings, `multilineTooltipLines` is not a whole number of 1 or more, a column's
-     * `aggregate` is no aggregate function or needs a number field, or a column's `editor` is wrong -
-     * its lookup not registered, see {@link ColumnEditor}
+     * `aggregate` is no aggregate function or needs a number field, a column's `editor` is wrong - its
+     * lookup not registered, see {@link ColumnEditor} - or a column's `renderer` is not the id of a
+     * registered cell renderer, or is given with an `editor`
      *
      * @example
      * ```ts
@@ -193,6 +195,7 @@ export class GridInterface<T> {
         assertConfigTexts(gridConfig);
         assertTooltipLines(gridConfig);
         assertAggregates(gridConfig, datasource);
+        assertRenderers(gridConfig);
         this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
         this.columnsSelected = new Set();
         this.dataSource = datasource;
@@ -361,8 +364,9 @@ export class GridInterface<T> {
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
      * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
      * strings, `multilineTooltipLines` is not a whole number of 1 or more, a column's `aggregate` is no
-     * aggregate function or needs a number field, or a column's `editor` is wrong - its lookup not
-     * registered, see {@link ColumnEditor}
+     * aggregate function or needs a number field, a column's `editor` is wrong - its lookup not
+     * registered, see {@link ColumnEditor} - or a column's `renderer` is not the id of a registered cell
+     * renderer, or is given with an `editor`
      *
      * @sample misc-options
      * @example
@@ -381,6 +385,7 @@ export class GridInterface<T> {
         assertConfigTexts(config);
         assertTooltipLines(config);
         assertAggregates(config, this.dataSource);
+        assertRenderers(config);
         // checked before anything changes, like the rest
         const lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
         const { columns, layout, initialState, ...options } = config;
@@ -2127,6 +2132,26 @@ function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<an
                     `${name} '${fn}' is for a number field, '${field}' is ${type}: new Datasource({ fields: { ${field}: 'number' } }), or 'count'`
                 );
             }
+        }
+    }
+}
+
+/**
+ * A column's `renderer` is the id of a registered cell renderer: a typo, or a renderer registered after
+ * the grid is made, would else show the default cell without a word. And not next to an `editor`: a
+ * lookup column draws its cell itself, its label and its button
+ * @throws a `TypeError` naming the column, see getCellRenderer
+ */
+function assertRenderers(config: Partial<GridConfig>) {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (column?.renderer === undefined) {
+            continue;
+        }
+        getCellRenderer(column.renderer, `GridConfig: columns.${field}.renderer`);
+        if (column.editor !== undefined) {
+            throw new TypeError(
+                `GridConfig: columns.${field} has a renderer and an editor: a lookup column draws its own cell (the label and its button), leave one of them out`
+            );
         }
     }
 }

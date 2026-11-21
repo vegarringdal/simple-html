@@ -408,10 +408,11 @@ Needs phase 4: a merge every second on a large grid has to stay cheap.
 
 ## Phase 8 - more
 
-39. [ ] **Custom cell rendering** per column (a lit-html template: badges, links, progress bars,
+39. [x] **Custom cell rendering** per column (a lit-html template: badges, links, progress bars,
         icons) and conditional formatting (cell/row classes from a function or simple rules). **M** -
         planned in `custom_render.md`: a renderer registered by id (mount/update/destroy), for any
-        tool - plain DOM, lit-html, React, Solid. The `cellClass` hook covers cell classes
+        tool - plain DOM, lit-html, React, Solid. The `cellClass` hook covers cell classes - done: `registerCellRenderer()`, `ColumnConfig.renderer`, guide 21; row classes from
+        a function are not (a candidate)
 40. [x] **Aggregates**: sum/count/average in each group row, and a totals row in the footer. **M**
 41. [x] **Export** the filtered and sorted rows, or the selected range, as CSV. xlsx later if
         needed. **S** - and Excel (.xlsx, the row menu's export) on the user's request - done for all / selected rows, `rows: 'range'`, and in the row menu
@@ -421,7 +422,7 @@ Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** item 39 (custom cell rendering, planned in `custom_render.md`) - the rest is done.
+**Now:** every item of the plan is done - see IMPORVEMENT.md "Candidates / not started" for what could come next.
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies

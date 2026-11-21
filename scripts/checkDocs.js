@@ -14,7 +14,8 @@ const { headingIds, repoFile, siteHref, tsCodeBlocks } = require('./site/markdow
  * 2. every ```ts block in guides/*.md (not ```ts nocheck) and every ```ts block of an @example in
  *    the JSDoc is written to a module of its own in a temp folder, and typechecked against the
  *    published typings: '@simple-html/grid' is dist/index.d.ts, as for `npm run check:typings`.
- *    A block may use `datasource`, `gridInterface` and `host` without declaring them (GLOBALS).
+ *    A block may use `datasource`, `gridInterface` and `host` without declaring them (GLOBALS), and
+ *    import 'lit-html' (the grid's dependency).
  * 3. the samples a guide (```sample <id>) or a JSDoc (@sample <id>) names exist, and so do the
  *    pages and headings the links in the guides go to (NN-slug.md, NN-slug.md#heading, #heading,
  *    #guide/<id>, #sample/<id>, #api/<name>, #api/<name>.<member>), and the files of the repo they
@@ -45,7 +46,11 @@ const COMPILER_OPTIONS = {
     skipLibCheck: true,
     noEmit: true,
     types: [],
-    paths: { '@simple-html/grid': [path.join(ROOT, 'dist/index.d.ts')] }
+    // lit-html is the grid's dependency, a user has it: the custom cells guide renders with it
+    paths: {
+        '@simple-html/grid': [path.join(ROOT, 'dist/index.d.ts')],
+        'lit-html': [path.join(ROOT, 'node_modules/lit-html/lit-html.d.ts')]
+    }
 };
 
 // ------------------------------------------------------------------ 2. code blocks

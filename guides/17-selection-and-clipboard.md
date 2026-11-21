@@ -208,8 +208,10 @@ the last row is not a row.
   is not repeated to fill the range; a larger one is pasted whole.
 - **One value, no range**: the input's own paste, at the caret. Unless the input can not take it: a
   value with a line break (an input has none, the browser would make it a space), a checkbox, a
-  multiline cell (its input is readonly, see [Multiline text](05-editing.md#multiline-text)) or a
-  column with `allowPasteClearOnly` - the grid writes the value into the cell then.
+  multiline cell (its input is readonly, see [Multiline text](05-editing.md#multiline-text)), a
+  column with `allowPasteClearOnly` or a custom cell with the focus on it (it has no input, see
+  [Custom cells](21-custom-cells.md#the-keys-and-the-focus)) - the grid writes the value into the cell
+  then.
 
 Every cell is written as typing it does: the text through the field's formatter (`parse`) - `12,5`
 is 12.5 in a number field, `2026-11-20` a `Date` in a date field, `true` in a boolean field. An

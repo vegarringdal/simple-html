@@ -516,6 +516,14 @@ its config's.
 | `lookup.noMatch` | `No matches` | under the search of the select when no label has the text |
 | `lookup.more` | `{shown} of {count} shown, type to search` | under the list of the select when it has more options than it shows. `{shown}`: the options shown (500), `{count}`: the options the search finds |
 
+### Custom cells
+
+A cell drawn by a renderer of your own (`ColumnConfig.renderer`), see [Custom cells](21-custom-cells.md#editing).
+
+| id | English | shown |
+| --- | --- | --- |
+| `cell.editor.hint` | `Enter to save, Esc to cancel` | under the input of the editor of one line that opens over the cell. A cell of several lines gets the multiline editor and its texts |
+
 ### Date picker
 
 Of a date cell and a date header filter, and a `DateInterface` of your own.

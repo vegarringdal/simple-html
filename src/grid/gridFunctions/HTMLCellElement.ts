@@ -1,3 +1,4 @@
+import type { CellRendererInstance } from '../cellRendererRegistry';
 import type { ColType } from './colType';
 
 /**
@@ -27,4 +28,10 @@ export interface HTMLCellElement extends HTMLElement {
      * helper to know if cell is focused
      */
     $focused: boolean;
+    /**
+     * @internal
+     * the cell renderer mounted in the cell (`ColumnConfig.renderer`): its id, the instance it returned
+     * and the host it was given. Undefined while the cell shows no custom cell, see customCell.ts
+     */
+    $renderer?: { id: string; instance: CellRendererInstance<any>; host: HTMLElement };
 }

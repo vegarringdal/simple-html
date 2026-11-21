@@ -540,6 +540,33 @@ export type ColumnConfig = {
      * ```
      */
     aggregate?: AggregateFunction | AggregateFunction[];
+
+    /**
+     * draws the column's cells with a renderer of your own - a badge, a progress bar, a link, a select:
+     * the id it was registered under with {@link registerCellRenderer}, so the config stays plain JSON.
+     * An id that is not registered throws a `TypeError` when the grid is made or `updateConfig()` is
+     * given the column: register the renderer when the page loads, before the grid. So does a column
+     * with an `editor` too: a lookup column draws its own cell.
+     *
+     * The cell keeps what the grid does on a cell: the keys, the focus ring, copy and paste, errors, the
+     * edited marker, ranges, Find, the stripes and the `cellClass` hook. In a cell that can be edited,
+     * Enter, F2, typing and a double click open the grid's text editor (a date cell's click the date
+     * picker), unless the renderer edits the value itself. Not the default cell's `placeholderRow`,
+     * `focusButton` and the lines of a multiline cell; `fitColumns()` measures the text of the field's
+     * formatter, not what the renderer draws. See the guide "Custom cells"
+     *
+     * @sample custom-cells
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: { status: { renderer: 'badge' }, progress: { renderer: 'progress', readonly: true } },
+     *     layout: { center: [{ fields: ['status'], width: 100 }, { fields: ['progress'], width: 120 }] }
+     * };
+     * ```
+     */
+    renderer?: string;
 };
 
 /**

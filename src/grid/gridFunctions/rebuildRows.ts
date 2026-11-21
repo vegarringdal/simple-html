@@ -3,6 +3,7 @@ import { ariaId } from './ariaGrid';
 import { asPx } from './asPx';
 import type { RowCache } from './colType';
 import { createElement } from './createElement';
+import { releaseAllRenderers } from './customCell';
 import { DIV } from './DIV';
 import {
     GROUP_COLTYPE,
@@ -60,6 +61,8 @@ export function rebuildRows(ctx: Grid) {
         return rowCache;
     };
 
+    // the cells of the old row elements are thrown away with them: their renderers are done
+    releaseAllRenderers(ctx);
     ctx.rows.clear();
 
     const containerGroup = getElementByClassName(ctx.element, 'simple-html-grid-body-row-container-group');

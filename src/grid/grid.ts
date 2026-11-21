@@ -2,6 +2,7 @@ import type { Entity } from '../datasource/entity';
 import { addMenuListeners } from './gridFunctions/addMenuListeners';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
+import { releaseAllRenderers } from './gridFunctions/customCell';
 import { closeFind, type FindBar, findDataChanged } from './gridFunctions/findBar';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
 import { closeLookupEditor, type LookupEditor } from './gridFunctions/lookupEditor';
@@ -213,6 +214,9 @@ export class Grid {
         this.columnChooserMenu = null;
         // shown for a cell of this grid maybe: it is not in the element either
         hideTooltip();
+        // the renderers of the custom cells: a React root or a subscription in a cell would keep the grid
+        // alive. attach() rebuilds the cells if the element comes back
+        releaseAllRenderers(this);
 
         this.menuListenersAbort?.abort();
         this.clipboardListenersAbort?.abort();

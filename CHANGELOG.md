@@ -1332,6 +1332,25 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Custom cell rendering (item 39)
+
+##### Added
+- `registerCellRenderer(id, renderer)` and `ColumnConfig.renderer`: draw a column's cells with code of
+  your own - plain DOM, lit-html, React, Solid. The renderer is called once per cell element (not per
+  row), `update(context)` on every render of the cell, `destroy()` when the cell is done with it. Types
+  `CellRenderer`, `CellRendererInstance`, `CellRenderContext` (row, field, value, text, type, readonly,
+  rowIndex, gridInterface).
+- Custom cells keep the grid's keys, focus ring, copy and paste, ranges, Find, fill down, errors, the
+  edited marker and undo. A renderer can write `context.row[field]`: tracked, validated, one undo step.
+- Editing a custom cell: Enter, F2, typing and a double click open the grid's one-line editor over the
+  cell (Enter saves, Esc cancels), a click on a date cell opens the date picker, and
+  `CellRendererInstance.edit()` lets a renderer edit the value itself (a select). New text
+  `cell.editor.hint`.
+- An unknown renderer id, or a column with both `renderer` and `editor`, throws a `TypeError` when the grid
+  is made or in `updateConfig()`.
+- Guide "Custom cells" (21) and sample "Custom cells" (a badge, a progress bar, a link, a select, a date
+  with its weekday, 10 000 rows).
+
 #### The filter menu and the filter editor redone (user request)
 
 ##### Changed

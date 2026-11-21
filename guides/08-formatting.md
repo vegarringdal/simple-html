@@ -7,6 +7,9 @@ The datasource's options name a formatter by its id: `formatter: 'numberComma'`.
 formatters are registered under ids from the start, your own you register with
 `registerFormatter()`. So the options are plain JSON and can be stored, the formatters stay code.
 
+A formatter gives text. To draw a cell another way - a badge, a bar, a link - give the column a cell
+renderer, see [Custom cells](21-custom-cells.md): it gets the formatter's text too.
+
 ## What a formatter does
 
 A formatter is a plain object with two methods and two optional parts:
