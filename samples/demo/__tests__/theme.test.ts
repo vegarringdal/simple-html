@@ -4,22 +4,16 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { beforeAll, describe, expect, it } from 'vitest';
-import { mountGrid, stubCanvas, stubElementSizes } from '../../../src/grid/__tests__/gridTestHelpers';
+import { describe, expect, it } from 'vitest';
 import { applyTheme } from '../theme';
 
 /**
  * The dark theme of the docs site: the dark class on the body, index.css sets color-scheme: dark for
- * it, and the grid follows (light-dark() in grid.css). The row state colours are the site's own: they
- * have to match the elements the grid renders, in both themes.
+ * it, and the grid follows (light-dark() in grid.css). The row state is the grid's own (rowStatus),
+ * the site does not style it.
  */
 
 const INDEX_CSS = fs.readFileSync(path.resolve(__dirname, '../index.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-
-beforeAll(() => {
-    stubCanvas();
-    stubElementSizes();
-});
 
 describe('dark theme', () => {
     it('expect the dark theme to be the dark class on the body, and nothing else', () => {
@@ -38,24 +32,7 @@ describe('dark theme', () => {
         expect(rule?.[2]).toMatch(/color-scheme:\s*dark;/);
     });
 
-    it('expect the row state colours to find the row numbers of new, modified and deleted rows, light and dark', async () => {
-        const { datasource, gridInterface } = await mountGrid();
-        const [modified, deleted] = datasource.getDataRows();
-        modified.firstname = 'edited';
-        datasource.markForDeletion(deleted);
-        datasource.addNewEmpty({ firstname: 'new' });
-        gridInterface.rebuild();
-
-        const rules = [...INDEX_CSS.matchAll(/([^{}]*row-is-[^{}]*)\{([^}]*)\}/g)].map((match) => ({
-            selector: match[1].trim(),
-            body: match[2]
-        }));
-
-        expect(rules).toHaveLength(3);
-        for (const { selector, body } of rules) {
-            // the grid puts row-is-* on the element around the row number
-            expect(document.querySelector(selector), selector).not.toBeNull();
-            expect(body, selector).toMatch(/color:\s*light-dark\(/);
-        }
+    it("expect index.css not to style the row state: the grid shows it, in its theme's colours", () => {
+        expect(INDEX_CSS).not.toMatch(/row-is-/);
     });
 });

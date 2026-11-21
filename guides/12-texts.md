@@ -200,6 +200,7 @@ Right click on a cell.
 | `row.filter.add.hint` | `and` | its hint |
 | `row.view` | `View:` | section header |
 | `row.view.dimRepeatedValues` | `Use dimmed values` | turns `dimRepeatedValues` on and off. A `✓ ` is put in front while it is on |
+| `row.view.changedOnly` | `Changed rows only` | turns `datasource.filterChangedOnly()` on and off: the new, edited and deleted rows only. A `✓ ` is put in front while it is on |
 | `row.paste` | `Paste:` | section header, an editable cell |
 | `row.paste.cell` | `Paste cell` | pastes into the column of the selected rows |
 | `row.paste.cell.hint` | `selected rows` | its hint |
@@ -360,6 +361,7 @@ The names of the operators, in the operator menu and on a condition:
 | `footer.collapsed.other` | `{count} filters — click to edit` | `{count}`: the chips do not fit, or there are more than 5 conditions |
 | `footer.and` | `AND` | between the chips of an AND group |
 | `footer.or` | `OR` | between the chips of an OR group |
+| `footer.changedOnly` | `Changed rows only` | the chip in front of the filter's while only the changed rows are shown (`datasource.filterChangedOnly()`) |
 
 The short names of the operators, on a chip:
 
@@ -392,6 +394,22 @@ guide](14-accessibility.md) has what a screen reader gets.
 | `grid.filter` | `Filter {label}` | a header filter. `{label}`: the column's label |
 | `grid.groupToggle` | `{name} ({total})` | the expand/collapse button of a group row, which also says whether it is expanded. `{name}`: the group's name, `Country: Norway`; `{total}`: its number of rows. The row shows `{name} ({total})` |
 | `grid.removeGroup` | `Remove the grouping on {title}` | the x on a group chip in the panel above the grid. `{title}`: the title of the grouping |
+
+### Row state and edited cells
+
+The state of a row on its row number (`GridConfig.rowStatus`) and the marker of an edited cell
+(`GridConfig.editedMarker`), see [Editing](05-editing.md#showing-the-row-state). The state is the
+tooltip's first line and the text a screen reader reads with the row number.
+
+| id | English | shown |
+| --- | --- | --- |
+| `rowStatus.new` | `New row` | a new row: the tooltip of its row number, and for a screen reader |
+| `rowStatus.edited` | `Edited` | an edited row |
+| `rowStatus.deleted` | `Marked for deletion` | a row marked for deletion |
+| `rowStatus.error` | `Error: {errors}` | a row with an error, for a screen reader (the tooltip has the errors, a line each). `{errors}`: the server's error and the fields' errors, `Age: Must be at least 18`, joined with `, ` |
+| `cell.editedMarker.tooltip` | `Original value: {value}` | the tooltip of the marker of an edited cell. `{value}`: the value before the edit, shown with the field's formatter |
+| `cell.editedMarker.blank` | `(blank)` | the `{value}` of an original value that is blank |
+| `cell.editedMarker.revert` | `Click to revert` | the tooltip's last line, in an editable grid: a click on the marker puts the original value back |
 
 ### Date picker
 

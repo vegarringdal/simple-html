@@ -16,6 +16,7 @@ import { getColumnLabel } from './getColumnLabel';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
 import { renderRowSelectorOf } from './renderRowSelector';
+import { showCellEdited } from './showCellEdited';
 import { showCellErrors } from './showCellErrors';
 import { triggerScrollEvent } from './triggerScrollEvent';
 import { undoRedoKey } from './undoRedoKey';
@@ -36,6 +37,8 @@ export function renderRowCell(
     // a group row has no cells, the grid hides them
     if (isGroupRow(entity)) {
         showCellErrors(ctx, cell, null, null);
+        showCellEdited(ctx, cell, null, null);
+        cell.classList.remove('simple-html-cell-deleted');
         return;
     }
 
@@ -48,6 +51,9 @@ export function renderRowCell(
     setAria(cell, 'role', attribute ? 'gridcell' : 'none');
     setAria(cell, 'aria-colindex', attribute ? String(ariaColIndex(config, colType, column, celno)) : null);
 
+    // a row marked for deletion: its text struck through, with the row status (GridConfig.rowStatus)
+    cell.classList.toggle('simple-html-cell-deleted', config.rowStatus && entity?.__rowState === 'D');
+
     if (attribute) {
         const cellConfig = ctx.gridInterface.__getGridConfig().columns[attribute];
         const datasource = ctx.gridInterface.getDatasource();
@@ -58,10 +64,12 @@ export function renderRowCell(
         const cellConfigType = getCellType(ctx, attribute, entity);
         const formatter = datasource.getFormatter(attribute, cellConfigType);
 
-        // after an edit: the field was validated, show its errors and the row's. Not by rendering the
-        // cell again, that would put the formatted value back into the input while the user types
+        // after an edit: the field was validated, show its errors and the row's, and whether it is
+        // edited now. Not by rendering the cell again, that would put the formatted value back into
+        // the input while the user types
         const showEdit = () => {
             showCellErrors(ctx, cell, entity, attribute);
+            showCellEdited(ctx, cell, entity, attribute, formatter);
             renderRowSelectorOf(ctx, row);
         };
 
@@ -407,7 +415,11 @@ export function renderRowCell(
                 cell as any
             );
         }
+
+        // after the template: a template of another kind removes what is after it, the marker too
+        showCellEdited(ctx, cell, entity, attribute, formatter);
     } else {
         render(html`<div data-dimmed-emtpy class="simple-html-dimmed"></div>`, cell as any);
+        showCellEdited(ctx, cell, null, null);
     }
 }

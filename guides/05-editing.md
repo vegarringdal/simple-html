@@ -98,9 +98,9 @@ datasource.markAllForDeletion(); // every row
 datasource.unmarkAllForDeletion(); // undo for every row
 ```
 
-A row marked for deletion stays in the grid, with the state `'D'` - struck through with the css in
-[Showing the row state](#showing-the-row-state) - until the changes are saved. It is listed in
-`getChanges().deletedEntities`. Unmarked, it is as it was before: its edits are kept.
+A row marked for deletion stays in the grid, with the state `'D'` - struck through, with a trash can
+on its row number, see [Showing the row state](#showing-the-row-state) - until the changes are saved.
+It is listed in `getChanges().deletedEntities`. Unmarked, it is as it was before: its edits are kept.
 
 A new row is marked too. While it is marked it is in none of the lists of `getChanges()`: it was
 never saved, there is nothing to send. Unmarked, it is a new row again.
@@ -183,19 +183,102 @@ without removing the new ones, see [Reverting a cell or a row](#reverting-a-cell
 
 ### Showing the row state
 
-The row number cell on the left of each row gets the class `row-is-new`, `row-is-modified` or
-`row-is-deleted`. `grid.css` does not style them, add your own:
+The grid shows the state of each row on its row number, and marks the edited cells. Both are on by
+default:
 
-```css
-.row-is-modified .simple-html-selector-text { color: #4f46e5; }
-.row-is-new .simple-html-selector-text { color: #16a34a; }
-.row-is-deleted .simple-html-selector-text { color: #dc2626; text-decoration: line-through; }
+| the row | its row number | its cells |
+| --- | --- | --- |
+| new | a plus | |
+| edited | a pencil | an edited cell: a small triangle in its top left corner |
+| marked for deletion | a trash can, the number struck through | the text struck through |
+| with an error | an exclamation mark, and a red bar | a cell with an error: a red border and a tint |
+
+- **One icon**: a row marked for deletion shows the trash can (it is not saved, its errors do not
+  stop a save), else a row with an error the exclamation mark, else the plus or the pencil.
+- **The tooltip of the row number** has the state, then the errors, a line each: `Edited` and
+  `Age: Must be at least 18`. A screen reader reads them with the row number, see
+  [Accessibility](14-accessibility.md#what-a-screen-reader-gets).
+- **An edited cell** is a cell whose value differs from its original value, as `getChanges()` compares
+  them: a cell edited back is not edited. A new row has no markers, all of it is new.
+- **The marker's tooltip** has the original value, shown with the field's formatter (a boolean as
+  `true` / `false`: give the field a formatter of your own for other words, see
+  [Formatting](08-formatting.md)), after the cell's errors. A blank value is `(blank)`.
+- **A click on the marker** puts the original value back - the row menu's *Revert cell*, see
+  [Reverting a cell or a row](#reverting-a-cell-or-a-row). In an editable grid only: a readonly grid
+  shows the markers of the rows it is given, a click does nothing. The marker is not a stop of Tab
+  and a screen reader does not see it; Ctrl+Z takes an edit back from the keyboard.
+- **They follow the edits**: as the user types, after undo and redo, a paste, a delete. After an
+  edit from code call `gridInterface.refresh()`, as for the value.
+
+The [editing sample](#sample/editing) shows them. Both can be turned off:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false,
+    rowStatus: false, // the plain row number: no icon, no state in its tooltip
+    editedMarker: false, // no markers
+    layout: { center: [{ fields: ['name'], width: 150 }] }
+};
 ```
 
-Or show `__rowState` in a column of its own: put `'__rowState'` in the layout, as the samples do.
+- `rowStatus` makes the row numbers 14px wider, for the icon. `rowStatus: false` gives them the width
+  they had.
+- **The classes are there either way**, for a look of your own: `row-is-new`, `row-is-modified` and
+  `row-is-deleted` on the element around the row number, `simple-html-row-error` on the row number of
+  a row with an error, `simple-html-cell-edited` on an edited cell. With `rowStatus` the cells of a row
+  marked for deletion get `simple-html-cell-deleted`.
+- **The colours are variables of the theme**: `--simple-html-grid-new-color`,
+  `--simple-html-grid-edited-color` (the pencil and the markers), `--simple-html-grid-deleted-color`
+  and `--simple-html-grid-error-color`, each with a light and a dark colour - see
+  [Theming](13-theming.md#the-row-state-and-errors).
 
-A row with an error gets `simple-html-row-error` on its row number cell, which `grid.css` does
-style, see [How the grid shows the errors](#how-the-grid-shows-the-errors).
+A look of your own, with `rowStatus: false`:
+
+```css
+.row-is-modified .simple-html-selector-text {
+    color: light-dark(#4f46e5, #a5b4fc);
+}
+.row-is-deleted .simple-html-selector-text {
+    text-decoration: line-through;
+}
+```
+
+Or show `__rowState` in a column of its own: put `'__rowState'` in the layout.
+
+### Changed rows only
+
+`filterChangedOnly(true)` shows only the changed rows - new, edited and marked for deletion - of the
+rows the filter lets through: the changes made before a save, to check them.
+
+```ts
+import { where } from '@simple-html/grid';
+
+datasource.filter(where('country', 'EQUAL', 'Norway'));
+datasource.filterChangedOnly(true); // the changed rows in Norway
+datasource.isChangedOnly(); // true
+datasource.filterChangedOnly(false); // every row in Norway
+```
+
+- **In the grid**: the row menu's *View: Changed rows only* turns it on and off (a ✓ while it is
+  on), and the footer shows a chip *Changed rows only* in front of the filter's. The footer's *Clear*
+  and the filter menu's *Clear All Filters* turn it off with the filter.
+- **It is not part of the filter**, it is ANDed with it: `getFilter()`, `getFilterString()`, the filter
+  editor and the grid's state (`GridState`) do not have it, and a header filter, the filter editor
+  and `filter()` leave it on. It is not saved with the state: the changes are not either.
+- **It is applied when the rows are filtered**, as the filter is: `filter()`, a header filter,
+  `setData()`, `reloadDatasource()`, `markForDeletion()`, `acceptChanges()` ... An edit, undo and a
+  revert do not filter the rows: **a row edited back to its original values stays shown until the
+  rows are filtered next**, it does not disappear while the user types in it. A row changed from code
+  while it is not shown comes in on the next filter run too.
+- After `setData()` with the rows from the server, or `acceptChanges()`, no row is changed: nothing
+  is shown until it is turned off. The footer's chip says why.
+- It is the datasource's, as the filter is: other datasources on the same container are not filtered.
+- The filter menu's value list, with *Filter Available*, lists the values of the changed rows.
+
+For one state only, filter on `__rowState`: `where('__rowState', 'IN', ['N'])` is the new rows. That
+is a condition of the filter, in `getFilter()` and the state.
 
 ## Undo and redo
 
@@ -296,7 +379,8 @@ gridInterface.refresh(); // as after any edit from code
 - The fields are validated as for an edit.
 - A field that is not edited (`getChanges()` would not list it) is left as it is.
 
-The row menu's *Revert cell* reverts the cell right clicked, greyed out while it is not edited, and
+The row menu's *Revert cell* reverts the cell right clicked, greyed out while it is not edited - a
+click on the marker of an edited cell does the same, see [Showing the row state](#showing-the-row-state) - and
 *Revert rows (selected rows)* the selected rows, greyed out while none of them is edited or marked
 for deletion. Like the delete's undo they also work on readonly cells: they put values back,
 readonly is about typing new ones.
@@ -459,7 +543,8 @@ check what the save sends only.
 - **A cell with an error** gets the class `simple-html-cell-error` - a red border inside the cell
   and a tint - and its messages as the tooltip, one per line.
 - **The row number** of a row with an error gets `simple-html-row-error` - a red bar on its left and
-  a tint - and the tooltip lists the server's error first, then a line per field:
+  a tint - and an exclamation mark (`rowStatus`, see [Showing the row state](#showing-the-row-state)).
+  Its tooltip lists the row's state, then the server's error, then a line per field:
   `Age: Must be at least 0`.
 - The colors are css variables: `--simple-html-grid-error-color` and
   `--simple-html-grid-error-bg-color`.

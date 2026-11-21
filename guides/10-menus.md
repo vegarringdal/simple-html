@@ -149,6 +149,7 @@ The "shown as" below is the English text.
 | `row.filter.add` | Add to filter (and) | |
 | `row.view` | View: | |
 | `row.view.dimRepeatedValues` | Use dimmed values, with a ✓ when it is on | |
+| `row.view.changedOnly` | Changed rows only, with a ✓ when it is on: the new, edited and deleted rows of the filter, see [Changed rows only](05-editing.md#changed-rows-only) | |
 | `row.paste` | Paste: | the grid and the cell are editable |
 | `row.paste.cell` | Paste cell (selected rows) | the grid and the cell are editable |
 | `row.clear` | Clear: | the grid and the cell are editable |

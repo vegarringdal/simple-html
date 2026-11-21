@@ -299,6 +299,7 @@ export interface GridMenus {
  * | `row.filter.add` | Add to filter (and) | |
  * | `row.view` | View: | |
  * | `row.view.dimRepeatedValues` | Use dimmed values, with a ✓ when on | |
+ * | `row.view.changedOnly` | Changed rows only, with a ✓ when on - the new, edited and deleted rows of the filter (`datasource.filterChangedOnly()`) | |
  * | `row.paste` | Paste: | the grid and the cell are editable |
  * | `row.paste.cell` | Paste cell (selected rows) | the grid and the cell are editable |
  * | `row.clear` | Clear: | the grid and the cell are editable |
@@ -386,6 +387,7 @@ export const MENU_IDS = {
         'row.filter.add',
         'row.view',
         'row.view.dimRepeatedValues',
+        'row.view.changedOnly',
         'row.paste',
         'row.paste.cell',
         'row.clear',

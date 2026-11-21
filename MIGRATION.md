@@ -2000,6 +2000,21 @@ change:
 * **Tab leaves the grid at its ends**: Tab on the last cell of the last row and Shift+Tab on the first
   header filter used to keep the focus in the grid.
 
+## Row state and edited cells are built in
+
+See [Showing the row state](guides/05-editing.md#showing-the-row-state).
+
+* **The row number shows the row's state** (`GridConfig.rowStatus`, default `true`): an icon for new,
+  edited, marked for deletion and error, and the state as the first line of its tooltip. The row
+  number column is 14px wider. `rowStatus: false` gives the plain number and the old width.
+* **A row marked for deletion has its cells struck through** (with `rowStatus`).
+* **An edited cell has a corner marker** (`GridConfig.editedMarker`, default `true`): its tooltip shows
+  the original value, a click reverts the cell.
+* The classes `row-is-new`, `row-is-modified`, `row-is-deleted` and `simple-html-cell-edited` are still
+  there: css of your own that styled them keeps working, and can take the place of the built-in look
+  with the options off. A `__rowState` column of your own is not needed any more.
+* Tests that read the row number's tooltip: it starts with the state ("Edited") before the errors.
+
 ## Undo and redo
 
 New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can change for existing code:

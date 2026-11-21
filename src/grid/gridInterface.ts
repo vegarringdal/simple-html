@@ -25,6 +25,7 @@ import { getTextWidth } from './gridFunctions/getTextWidth';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
@@ -808,6 +809,10 @@ export class GridInterface<T> {
         if (config.__selectSizeWidth < 25) {
             config.__selectSizeWidth = 25;
         }
+        // room for the icon of the row's state in front of the number, see renderRowSelector
+        if (config.rowStatus) {
+            config.__selectSizeWidth += ROW_STATUS_WIDTH;
+        }
 
         /**
          * a field in the layout without an entry in columns gets the defaults. The entry stays when the
@@ -1121,6 +1126,8 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         selectSizeHeight: options.selectSizeHeight ?? 18,
         readonly: options.readonly ?? true,
         tooltips: options.tooltips ?? true,
+        rowStatus: options.rowStatus ?? true,
+        editedMarker: options.editedMarker ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true
     };
 }

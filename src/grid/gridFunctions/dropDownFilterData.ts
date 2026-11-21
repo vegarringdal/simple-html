@@ -29,7 +29,11 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
     const { own, others } = splitColumnFilter(datasource.getFilter(), attribute);
     const filter = new Filter();
     const allData = datasource.getAllData();
-    const availableRows = others ? filter.filter(allData, others, datasource) : allData;
+    let availableRows = others ? filter.filter(allData, others, datasource) : allData;
+    // "changed rows only" is one of the other filters (datasource.filterChangedOnly())
+    if (datasource.isChangedOnly()) {
+        availableRows = availableRows.filter((row) => row.__rowState !== undefined);
+    }
     const data = availableOnly ? availableRows : allData;
 
     // rows the column's own conditions let through, null when it has none (all checked)

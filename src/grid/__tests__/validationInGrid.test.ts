@@ -128,7 +128,8 @@ describe('validation in the grid - an edit', () => {
 
         const selector = selectorOf(element, 0);
         expect(selector.classList.contains('simple-html-row-error')).toBe(true);
-        expect(selector.getAttribute('data-tooltip')).toEqual('Name: Must be at most 5 characters');
+        // the row's state first (rowStatus), then the errors
+        expect(selector.getAttribute('data-tooltip')).toEqual('Edited\nName: Must be at most 5 characters');
     });
 
     it('expect typing a valid value again to clear both', async () => {
@@ -139,7 +140,8 @@ describe('validation in the grid - an edit', () => {
         expect(cellOf(element, 'name', 0).classList.contains('simple-html-cell-error')).toBe(false);
         expect(cellOf(element, 'name', 0).hasAttribute('data-tooltip')).toBe(false);
         expect(selectorOf(element, 0).classList.contains('simple-html-row-error')).toBe(false);
-        expect(selectorOf(element, 0).hasAttribute('data-tooltip')).toBe(false);
+        // the row is still edited: its state is the tooltip
+        expect(selectorOf(element, 0).getAttribute('data-tooltip')).toEqual('Edited');
     });
 
     it('expect the change event (blur, enter) to validate too', async () => {

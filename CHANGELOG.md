@@ -939,6 +939,36 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 
 ### Phase 5 - editing
 
+#### Edited cells and the row state (items 27, 29)
+
+##### ⚠️ Breaking changes
+- The row number shows the row's state with an icon (`GridConfig.rowStatus`, default on) and is 14px
+  wider; `rowStatus: false` gives the old look and width.
+- The row number's tooltip starts with the state ("Edited", "New row", "Marked for deletion") before
+  the errors.
+- The cells of a row marked for deletion are struck through (with `rowStatus`).
+
+##### Added
+- **Row status**: icons for new, edited, deleted and error rows (one icon: deleted, then error, then
+  new/edited), the state in the tooltip, and as text for screen readers in the row number cell.
+- **Edited cell marker** (`GridConfig.editedMarker`, default on): a corner triangle on an edited cell
+  (not on new rows); its tooltip shows the original value (formatted, `(blank)` for a blank), a click
+  reverts the cell - one undo step. The marker shows in a readonly grid but does nothing there.
+- **Changed rows only**: `datasource.filterChangedOnly(on)` and `isChangedOnly()` show only new, edited
+  and deleted rows, ANDed with the filter (the filter itself, `getFilter()` and the state are not
+  changed). Row menu `row.view.changedOnly` (a toggle), a footer chip; the footer's Clear and Clear All
+  Filters turn it off. A row edited back to its original drops out on the next filter run, not while
+  the user types.
+- Theme variables `--simple-html-grid-edited-color`, `--simple-html-grid-new-color`,
+  `--simple-html-grid-deleted-color` (light and dark, 3:1 against the rows).
+- Text ids `rowStatus.*`, `cell.editedMarker.*`, `row.view.changedOnly`, `footer.changedOnly`.
+- The editing sample shows the status, the markers, a validation rule and a "Changed rows only"
+  button, without its own RS column.
+
+##### Fixed
+- The `row-is-*` states had no built-in look.
+- A row's errors were in its tooltip only; a screen reader now gets them with the row number.
+
 #### Undo and redo (item 28)
 
 ##### ⚠️ Breaking changes

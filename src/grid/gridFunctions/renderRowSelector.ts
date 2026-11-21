@@ -4,8 +4,20 @@ import type { Grid } from '../grid';
 import type { ColType } from './colType';
 import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getColumnLabel } from './getColumnLabel';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { ROW_STATE_TEXT, rowStateOf, rowStatusIcon, rowStatusIconTemplate } from './rowStatus';
 
+/**
+ * The row number of a row: the first cell of the row, a click selects the row (a group row: the rows
+ * of the group). It shows the row's errors - the class `simple-html-row-error` (a red bar), the
+ * messages as the tooltip - and, with `GridConfig.rowStatus` (the default), the row's state: an icon
+ * in front of the number (see rowStatus.ts), the state as the tooltip's first line, the number struck
+ * through for a row marked for deletion, and the state and the errors as text for a screen reader.
+ *
+ * The element around the number has the class `row-is-new`, `row-is-modified` or `row-is-deleted`
+ * either way, users style them.
+ */
 export function renderRowSelector(
     ctx: Grid,
     cell: HTMLCellElement,
@@ -24,8 +36,21 @@ export function renderRowSelector(
         currentEntitySelected = 'simple-html-label';
     }
 
-    // the server's error and the validation errors of the row, one per line: shown as the tooltip
-    const errors = rowErrorText(ctx, rowData);
+    // the server's error and the validation errors of the row, a line each
+    const errors = rowErrorLines(ctx, rowData);
+
+    // the row's state: an icon, the tooltip's first line, the text for a screen reader
+    const rowStatus = ctx.gridInterface.__getGridConfig().rowStatus;
+    const state = rowStatus ? rowStateOf(rowData) : null;
+    const icon = rowStatus ? rowStatusIcon(state, errors.length > 0) : null;
+    const stateText = state ? gridText(ctx, ROW_STATE_TEXT[state]) : '';
+    const tooltip = [stateText, ...errors].filter((line) => line !== '').join('\n');
+    // the tooltip is not read out: the state and the errors are text in the cell, hidden on screen
+    const screenReaderText = rowStatus
+        ? [stateText, errors.length ? gridText(ctx, 'rowStatus.error', { errors: errors.join(', ') }) : '']
+              .filter((text) => text !== '')
+              .join(', ')
+        : '';
 
     // the first cell of the row for a screen reader, the row number: the row element is the row, see
     // ariaGrid.ts
@@ -33,8 +58,8 @@ export function renderRowSelector(
         html`<div
             role="gridcell"
             aria-colindex="1"
-            class=${`${currentEntitySelected} simple-html-absolute-fill${errors ? ' simple-html-row-error' : ''}`}
-            data-tooltip=${errors || nothing}
+            class=${`${currentEntitySelected} simple-html-absolute-fill${errors.length ? ' simple-html-row-error' : ''}`}
+            data-tooltip=${tooltip || nothing}
             @click=${(e: MouseEvent) => {
                 const ds = ctx.gridInterface.getDatasource();
                 if (isGroupRow(rowData)) {
@@ -58,8 +83,10 @@ export function renderRowSelector(
                 }
             }}
         >
-            <div class="${isModified(rowData)}">
+            <div class=${`${isModified(rowData)}${rowStatus ? ' simple-html-row-status' : ''}`}>
+                ${icon ? rowStatusIconTemplate(icon) : nothing}
                 <span class="simple-html-selector-text">${row + 1}</span>
+                ${screenReaderText ? html`<span class="simple-html-visually-hidden">${screenReaderText}</span>` : nothing}
             </div>
         </div>`,
         cell as any
@@ -81,14 +108,14 @@ export function renderRowSelectorOf(ctx: Grid, row: number) {
 }
 
 /**
- * The errors of a row as the row selector's tooltip, one per line: the server's (`__rowError`, from
+ * The errors of a row, a line each, for the row selector's tooltip: the server's (`__rowError`, from
  * setErrors()) first, then a line per field with a validation error - its column label and messages.
- * '' when the row has none. A row marked for deletion has no validation errors, but keeps the
+ * [] when the row has none. A row marked for deletion has no validation errors, but keeps the
  * server's: a delete the server refused says why
  */
-function rowErrorText(ctx: Grid, rowData: Entity | GroupRow | undefined): string {
+function rowErrorLines(ctx: Grid, rowData: Entity | GroupRow | undefined): string[] {
     if (!rowData || isGroupRow(rowData)) {
-        return '';
+        return [];
     }
     const lines: string[] = [];
     if (rowData.__rowError) {
@@ -97,7 +124,7 @@ function rowErrorText(ctx: Grid, rowData: Entity | GroupRow | undefined): string
     for (const [field, messages] of ctx.gridInterface.getDatasource().__getRowErrors(rowData) ?? []) {
         lines.push(`${getColumnLabel(ctx, field)}: ${messages.join(', ')}`);
     }
-    return lines.join('\n');
+    return lines;
 }
 
 // helper to add class so we can override color when row is modified. A group row is never modified

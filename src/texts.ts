@@ -22,6 +22,7 @@ const DEFAULTS = {
     'row.filter.add.hint': 'and',
     'row.view': 'View:',
     'row.view.dimRepeatedValues': 'Use dimmed values',
+    'row.view.changedOnly': 'Changed rows only',
     'row.paste': 'Paste:',
     'row.paste.cell': 'Paste cell',
     'row.paste.cell.hint': 'selected rows',
@@ -154,6 +155,7 @@ const DEFAULTS = {
     'footer.collapsed.other': '{count} filters — click to edit',
     'footer.and': 'AND',
     'footer.or': 'OR',
+    'footer.changedOnly': 'Changed rows only',
     'footer.operator.EQUAL': '=',
     'footer.operator.LESS_THAN_OR_EQUAL_TO': '≤',
     'footer.operator.GREATER_THAN_OR_EQUAL_TO': '≥',
@@ -175,6 +177,17 @@ const DEFAULTS = {
     'grid.filter': 'Filter {label}',
     'grid.groupToggle': '{name} ({total})',
     'grid.removeGroup': 'Remove the grouping on {title}',
+
+    // the row number of a row: its state (GridConfig.rowStatus), as a tooltip and for a screen reader
+    'rowStatus.new': 'New row',
+    'rowStatus.edited': 'Edited',
+    'rowStatus.deleted': 'Marked for deletion',
+    'rowStatus.error': 'Error: {errors}',
+
+    // the marker of an edited cell (GridConfig.editedMarker): its tooltip
+    'cell.editedMarker.tooltip': 'Original value: {value}',
+    'cell.editedMarker.blank': '(blank)',
+    'cell.editedMarker.revert': 'Click to revert',
 
     // the date picker: of date cells and date header filters, and a DateInterface of your own
     'datePicker.hours': 'HH',
@@ -285,6 +298,8 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
  * | `grid.*` | labels for screen readers |
+ * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
+ * | `cell.*` | the cells: the marker of an edited cell |
  * | `datePicker.*` | the date picker: the buttons, the names of the months and the days |
  * | `validation.*` | the messages of the built-in validators. Made by the datasource |
  * | `filterString.*` | `datasource.getFilterString()`: AND, OR and the operators. Made by the datasource |

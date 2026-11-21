@@ -129,6 +129,36 @@ export type GridConfig = {
     dimRepeatedValues?: boolean;
 
     /**
+     * shows the state of each row on its row number, default `true`: an icon for a new row (+), an
+     * edited row (a pencil), a row marked for deletion (a trash can, the row number and the text of
+     * its cells struck through) and a row with an error (!, with the red bar). The tooltip and a
+     * screen reader get the state as text. One icon: deleted wins, then an error, then new or edited.
+     * The row numbers are a little wider, to make room for the icon.
+     *
+     * `false` shows the plain row number. The classes `row-is-new`, `row-is-modified` and
+     * `row-is-deleted` around the number, and the error bar (`simple-html-row-error`), are there
+     * either way - for a look of your own. The colours are the theme's variables
+     * (`--simple-html-grid-new-color` ...), see the theming guide
+     *
+     * @sample editing
+     */
+    rowStatus?: boolean;
+
+    /**
+     * shows a marker in the top left corner of an edited cell, default `true`: a small triangle on a
+     * cell whose value differs from its original value (the datasource tracks it per field, see
+     * `getChanges()`). Not on a new row, every cell of it is new. Its tooltip shows the original
+     * value, and a click on it puts the original value back (`datasource.resetField()`, a step of the
+     * undo history) - in an editable grid.
+     *
+     * `false` shows no marker. The cell element has the class `simple-html-cell-edited` either way,
+     * for a look of your own. The colour is `--simple-html-grid-edited-color`
+     *
+     * @sample editing
+     */
+    editedMarker?: boolean;
+
+    /**
      * renders the built in tooltip, default = true: on the buttons and icons of the filter editor,
      * and the validation messages on a cell with an error and on its row selector
      *
@@ -451,6 +481,8 @@ export type ParsedGridOptions = GridOptions &
             | 'selectSizeHeight'
             | 'readonly'
             | 'tooltips'
+            | 'rowStatus'
+            | 'editedMarker'
             | 'placeholderRowCurrentEntityOnly'
         >
     >;

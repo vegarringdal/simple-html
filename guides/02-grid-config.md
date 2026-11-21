@@ -125,6 +125,8 @@ Every option is optional.
 | `hideLabels` | `false` | hides the row of header labels |
 | `hideFilter` | `false` | hides the row of header filters |
 | `dimRepeatedValues` | `false` | dims a cell that has the same value as the row above. The row menu can toggle it |
+| `rowStatus` | `true` | shows the state of each row on its row number: new, edited, marked for deletion, an error. The row numbers are 14px wider for the icon. See [Showing the row state](05-editing.md#showing-the-row-state) |
+| `editedMarker` | `true` | a marker in the corner of an edited cell: its tooltip has the original value, a click puts it back. See [Showing the row state](05-editing.md#showing-the-row-state) |
 | `placeholderRowCurrentEntityOnly` | `true` | shows `placeholderRow` on the current row only. `false` shows it on every row |
 | `autoRemoveContextMenuOnScrollEvent` | `false` | closes the open menu when the grid scrolls |
 | `tooltips` | `true` | the built-in tooltips: on the buttons of the filter editor, and the validation messages on a cell and its row number |

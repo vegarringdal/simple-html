@@ -364,13 +364,13 @@ built on it.
 
 ## Phase 5 - editing
 
-27. [ ] **Edited cell marker**: a small corner marker on a cell whose value differs from the
+27. [x] **Edited cell marker**: a small corner marker on a cell whose value differs from the
         original (the datasource already tracks this per field). Hovering it shows the original
         value. **S-M**
 28. [x] **Undo**: per cell (from the marker or the row menu, restores the original), per row
         (revert row), and an undo/redo history - Ctrl+Z / Ctrl+Y - covering edits, paste and
         clear. **M**
-29. [ ] **Row status built in**: the row selector shows the row's state - new, edited, deleted
+29. [x] **Row status built in**: the row selector shows the row's state - new, edited, deleted
         (struck through), error (with its message) - with proper icons and theme variables. Plus a
         "changed rows only" filter. **S-M**
 30. [ ] **Multiline text**: a field option `multiline`, and automatic for text containing a newline.

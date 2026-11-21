@@ -40,6 +40,17 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
 - **A cell** is a `gridcell` with `aria-colindex`; the input (or checkbox) in it is named with the
   column's label, the same as the header shows. The row number is the first cell of a row. A column of
   two fields (`fields: ['a', 'b']`) is two columns here, one per field.
+- **The state of a row** is text in its row number cell, hidden on screen (`simple-html-visually-hidden`):
+  `gridcell "3 Marked for deletion"`, `"2 Edited, Error: Age: Must be at least 18"`, `"5 New row"`. A
+  row as it was is its number only. The icons on screen are hidden from a screen reader, the text says
+  the same - the texts `rowStatus.*`, see [Texts](12-texts.md#row-state-and-edited-cells). Without the
+  row status (`rowStatus: false`) the row number is the number only: show the state another way, a
+  column of `__rowState` say.
+- **An edited cell**: its marker is hidden from a screen reader and is no stop of Tab; the row's state
+  says the row is edited. Ctrl+Z takes an edit back, the row menu's *Revert cell* and a click on the
+  marker are for the mouse.
+- **The state is not colour only** (WCAG 1.4.1): each state has a shape of its own - a plus, a pencil,
+  a trash can, an exclamation mark - and a row marked for deletion is struck through.
 - **A group row**, grouped, is a row with `aria-level` (1 for the first grouping) and
   `aria-expanded`; a data row is one level below the last grouping. Its one cell spans the columns
   after the row number, with a button that expands and collapses it: named with the text the row

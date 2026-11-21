@@ -74,6 +74,7 @@ function rowMenuEntries(
     const filterOnValue = () => !isGroupRow(rowData);
 
     const dimRepeated = gridInterface.__getGridConfig().dimRepeatedValues === true;
+    const changedOnly = gridInterface.getDatasource().isChangedOnly();
 
     const text = (id: TextId) => gridText(ctx, id);
 
@@ -140,6 +141,14 @@ function rowMenuEntries(
                 // an option: set it as updateConfig() does, or the next updateConfig() would undo it
                 gridInterface.updateConfig({ dimRepeatedValues: !dimRepeated });
             }
+        },
+        {
+            id: 'row.view.changedOnly',
+            // the check mark shows it is on
+            label: `${changedOnly ? '✓ ' : ''}${text('row.view.changedOnly')}`,
+            // the new, edited and deleted rows, with the filter there is. The datasource filters,
+            // the grid follows its event
+            action: () => gridInterface.getDatasource().filterChangedOnly(!changedOnly)
         },
         { type: 'section', id: 'row.paste', label: text('row.paste'), visible: pasteAndClear },
         {

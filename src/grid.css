@@ -41,10 +41,16 @@
     /* not used by this css, kept so overrides of them still work */
     --simple-html-grid-grouping-border: light-dark(#c7c7c7, #1f2937);
     --simple-html-grid-main-hr-border: light-dark(#ffffff, #4b5563);
-    /* a validation error: the border of the cell, the bar of the row selector */
+    /* a validation error: the border of the cell, the bar and the icon of the row selector */
     --simple-html-grid-error-color: light-dark(#dc2626, #fca5a5);
     /* a validation error: laid over the background of the cell and the row selector */
     --simple-html-grid-error-bg-color: light-dark(rgba(220, 38, 38, 0.12), rgba(248, 113, 113, 0.22));
+    /* the row state (rowStatus) and the edited cells (editedMarker): the marker of an edited cell and
+       the pencil of an edited row, the plus of a new row, the trash can of a row marked for deletion.
+       At least 3:1 against the rows, the row selector and a selected row, with an error's tint too */
+    --simple-html-grid-edited-color: light-dark(#9a3412, #fdba74);
+    --simple-html-grid-new-color: light-dark(#166534, #86efac);
+    --simple-html-grid-deleted-color: light-dark(#57534e, #d1d5db);
     /* the "too many values" warning of the filter menu's value list */
     --simple-html-grid-warning-font-color: light-dark(red, #fca5a5);
     /* the footer's clear filter button under the pointer: text, border */
@@ -735,6 +741,83 @@
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
+/**
+ * the row state on the row number (GridConfig.rowStatus): the element around the number has room on
+ * its left for the icon, ROW_STATUS_WIDTH in rowStatus.ts - the row numbers are that much wider. The
+ * number stays centered in the rest. The icon is 10px, in the middle of the number's line (1.5em)
+ */
+.simple-html-grid .simple-html-row-status {
+    position: relative;
+    padding-left: 14px;
+}
+
+.simple-html-grid .simple-html-row-status-icon {
+    position: absolute;
+    left: 4px;
+    top: calc(0.75em - 5px);
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.simple-html-grid .simple-html-row-status-new {
+    color: var(--simple-html-grid-new-color);
+}
+
+.simple-html-grid .simple-html-row-status-edited {
+    color: var(--simple-html-grid-edited-color);
+}
+
+.simple-html-grid .simple-html-row-status-deleted {
+    color: var(--simple-html-grid-deleted-color);
+}
+
+.simple-html-grid .simple-html-row-status-error {
+    color: var(--simple-html-grid-error-color);
+}
+
+/* a row marked for deletion: its number and the text of its cells struck through */
+.simple-html-grid .row-is-deleted.simple-html-row-status .simple-html-selector-text,
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted input {
+    text-decoration: line-through;
+}
+
+/**
+ * the marker of an edited cell (GridConfig.editedMarker): a triangle in the top left corner, over the
+ * input (1000). Its tooltip has the original value; a click reverts the cell, in an editable grid.
+ * The clip-path is the triangle, and what the pointer hits: the rest of the corner is the input's
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-cell-edited-marker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    z-index: 1001;
+    background-color: var(--simple-html-grid-edited-color);
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-cell-edited-marker-revert {
+    cursor: pointer;
+}
+
+/**
+ * text for a screen reader only: the state of a row on its row number. On the page, but 1px and
+ * clipped - display: none would hide it from the screen reader too
+ */
+.simple-html-grid .simple-html-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
 .simple-html-absolute-fill {
     box-sizing: border-box;
     position: absolute;
@@ -1221,6 +1304,12 @@
     text-align: center;
     pointer-events: none;
     z-index: 20;
+}
+
+/* "changed rows only" (datasource.filterChangedOnly()): a chip of its own in front of the filter's,
+ * not part of it - not a button, it keeps its size */
+.simple-html-grid .footer-filter-changed-only {
+    flex: 0 0 auto;
 }
 
 /* filter too large to show as chips - a single summary box */

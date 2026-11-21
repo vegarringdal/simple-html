@@ -154,6 +154,12 @@ export class Datasource<T = any> {
     private __filter: Filter;
 
     /**
+     * `true` while only the changed rows are shown, see filterChangedOnly(). Applied with the filter,
+     * on top of it
+     */
+    private __changedOnly = false;
+
+    /**
      * sorting controller, holds all logic for sorting
      */
     private __sorting: Sort;
@@ -1350,6 +1356,10 @@ export class Datasource<T = any> {
             } else {
                 this.__collectionFiltered = this.__dataContainer.getDataSet();
             }
+            // and the changed rows only, see filterChangedOnly()
+            if (this.__changedOnly) {
+                this.__collectionFiltered = this.__collectionFiltered.filter(isChangedRow);
+            }
         }
 
         if (this.__grouping.getGrouping().length) {
@@ -2193,6 +2203,55 @@ export class Datasource<T = any> {
     }
 
     /**
+     * Shows only the changed rows: the new rows, the edited ones and the ones marked for deletion -
+     * the rows with a `__rowState`. On top of the filter there is: a row is shown when the filter lets
+     * it through AND it is changed. Runs the filter, as `filter()` does.
+     *
+     * - **It is not part of the filter**: `getFilter()`, the header filters, the filter editor,
+     *   `getFilterString()` and the grid's state (`GridState.filter`) do not have it, and setting the
+     *   filter (`filter()`, the header filters, the filter editor) leaves it on. It stays on until it
+     *   is turned off: `filterChangedOnly(false)`, the grid's row menu (View: Changed rows only) or the
+     *   footer's Clear.
+     * - **It is applied when the rows are filtered**, as the filter is: `filter()`, a header filter,
+     *   `setData()`, `reloadDatasource()`, marking rows for deletion, `acceptChanges()` ... An edit does
+     *   not filter the rows again, so a row edited back to its original values stays shown until the
+     *   rows are filtered next - it does not disappear while the user types in it.
+     * - The grid shows it in the footer, as a chip in front of the filter's.
+     *
+     * @param on `true` for the changed rows only, `false` for every row the filter lets through
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * import { where } from '@simple-html/grid';
+     *
+     * datasource.filter(where('country', 'EQUAL', 'Norway'));
+     * datasource.filterChangedOnly(true); // the changed rows in Norway
+     * datasource.isChangedOnly(); // true
+     * datasource.getFilter(); // still { field: 'country', operator: 'EQUAL', value: 'Norway' }
+     * datasource.filterChangedOnly(false); // every row in Norway again
+     * ```
+     */
+    public filterChangedOnly(on: boolean): void {
+        this.__changedOnly = on;
+        this.filter();
+    }
+
+    /**
+     * `true` while only the changed rows are shown, see {@link filterChangedOnly}.
+     *
+     * @example
+     * ```ts
+     * datasource.isChangedOnly(); // false
+     * datasource.filterChangedOnly(true);
+     * datasource.isChangedOnly(); // true
+     * ```
+     */
+    public isChangedOnly(): boolean {
+        return this.__changedOnly;
+    }
+
+    /**
      * Sets the filter without running it - `filter()` runs it. `setFilter(null)` removes it.
      *
      * @param expression a condition or a group, see {@link FilterExpression}, or null for no filter
@@ -2387,4 +2446,12 @@ export class Datasource<T = any> {
         }
         return !this.__isIgnored(expression);
     }
+}
+
+/**
+ * true for a changed row: new, edited or marked for deletion - a row with a `__rowState`. What
+ * filterChangedOnly() shows
+ */
+function isChangedRow(row: Entity): boolean {
+    return row.__rowState !== undefined;
 }

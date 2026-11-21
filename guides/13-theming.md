@@ -112,13 +112,32 @@ grid's colour: `grid.css` sets `--simple-html-date-focus-color` to `--simple-htm
 
 ## The row state and errors
 
-The grid styles a cell and a row with a validation error with `--simple-html-grid-error-color` and
-`--simple-html-grid-error-bg-color`, see
-[How the grid shows the errors](05-editing.md#how-the-grid-shows-the-errors).
+The grid shows the state of each row on its row number and marks the edited cells (`rowStatus` and
+`editedMarker`, see [Showing the row state](05-editing.md#showing-the-row-state)), in these
+variables:
 
-The row state classes (`row-is-new`, `row-is-modified`, `row-is-deleted`, see
-[Showing the row state](05-editing.md#showing-the-row-state)) are not styled by `grid.css`. Give them
-a light and a dark colour the same way:
+- `--simple-html-grid-new-color` - the plus of a new row
+- `--simple-html-grid-edited-color` - the pencil of an edited row, the marker of an edited cell
+- `--simple-html-grid-deleted-color` - the trash can of a row marked for deletion
+- `--simple-html-grid-error-color` and `--simple-html-grid-error-bg-color` - a cell and a row with an
+  error: the border of the cell, the bar and the exclamation mark of the row number, the tint, see
+  [How the grid shows the errors](05-editing.md#how-the-grid-shows-the-errors)
+
+The icons and the marker are graphics: the new, edited and deleted colours have a contrast of at least
+3:1 to the rows, the row numbers and the selected rows, in light and in dark, also under an error's
+tint (WCAG 1.4.11). Keep that when you change them. Each state has a shape of its own too, the colour is
+not the only thing that tells them apart.
+
+```css
+.simple-html-grid {
+    --simple-html-grid-edited-color: light-dark(#1d4ed8, #93c5fd);
+}
+```
+
+The classes are there to restyle more: `row-is-new`, `row-is-modified` and `row-is-deleted` on the
+element around the row number, `simple-html-row-status-icon` on the icon (with
+`simple-html-row-status-new`, `-edited`, `-deleted` or `-error`), `simple-html-cell-edited-marker` on the
+marker. With `rowStatus: false` the classes `row-is-*` are still there for a look of your own:
 
 ```css
 .row-is-modified .simple-html-selector-text {
@@ -156,8 +175,11 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-boxshadow` | the inset shadow of the labels, the panel and the row selector | `#fffdfd` | `#4b5563` |
 | `--simple-html-grid-dropzone-color` | where a dragged column can go, the resize handle under the pointer | `rgba(129, 127, 127, 0.7)` | `rgba(151, 148, 148, 0.4)` |
 | `--simple-html-grid-focus-color` | the outline of the element with the keyboard focus | `#005fcc` | `#b3d7ff` |
-| `--simple-html-grid-error-color` | a validation error: the border of the cell, the bar of the row selector | `#dc2626` | `#fca5a5` |
+| `--simple-html-grid-error-color` | a validation error: the border of the cell, the bar and the exclamation mark of the row selector | `#dc2626` | `#fca5a5` |
 | `--simple-html-grid-error-bg-color` | a validation error: laid over the cell and the row selector | `rgba(220, 38, 38, 0.12)` | `rgba(248, 113, 113, 0.22)` |
+| `--simple-html-grid-edited-color` | the marker of an edited cell, the pencil of an edited row (`editedMarker`, `rowStatus`) | `#9a3412` | `#fdba74` |
+| `--simple-html-grid-new-color` | the plus of a new row (`rowStatus`) | `#166534` | `#86efac` |
+| `--simple-html-grid-deleted-color` | the trash can of a row marked for deletion (`rowStatus`) | `#57534e` | `#d1d5db` |
 | `--simple-html-grid-warning-font-color` | the "too many values" warning of the filter menu | `red` | `#fca5a5` |
 | `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text | `#c0392b` | `#fecaca` |
 | `--simple-html-grid-danger-border` | the footer's Clear filter button under the pointer: its border | `#d98282` | `#f87171` |

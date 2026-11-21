@@ -260,6 +260,18 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     // getFilterString(), every operator
     datasource.setFilter(and(...conditions(OPERATORS), or(where('age', 'EQUAL', 1), where('age', 'EQUAL', 2))));
     check([datasource.getFilterString((field) => `«${field}»`)]);
+
+    // the row state and the edited cells: an edited row (the marker of a value and of a blank), a
+    // new row, the row marked for deletion (above), the errors - and "changed rows only" in the footer
+    datasource.filter(null);
+    const [ann, blank] = datasource.getDataRows();
+    ann.name = '«anna»';
+    blank.name = '«x»';
+    datasource.addNewEmpty({ name: '«new»' }, { scrollTo: false });
+    datasource.filterChangedOnly(true);
+    datasource.validate();
+    gridInterface.refresh();
+    check();
 }
 
 beforeAll(() => {

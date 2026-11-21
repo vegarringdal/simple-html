@@ -136,6 +136,22 @@ filter as a row of chips: field, operator, value, with the groups in brackets. "
 whole filter, a click on the chips opens the filter editor. The labels are the column labels, the
 rest are texts (`footer.*`, the operators `footer.operator.*`), see [Texts](12-texts.md#footer).
 
+While only the changed rows are shown (below), a chip *Changed rows only* comes first, ANDed with the
+filter's chips. "✕ Clear" turns it off too.
+
+## Changed rows only
+
+`datasource.filterChangedOnly(true)` shows only the new, edited and deleted rows of the rows the
+filter lets through - the row menu's *View: Changed rows only* in the grid. It is not a condition of
+the filter but on top of it (AND): `getFilter()`, the filter editor and the state do not have it, and
+setting the filter leaves it on. See [Editing](05-editing.md#changed-rows-only).
+
+```ts
+datasource.filterChangedOnly(true);
+datasource.isChangedOnly(); // true
+datasource.filterChangedOnly(false);
+```
+
 ## Filters from code
 
 ```ts

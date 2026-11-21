@@ -1119,6 +1119,25 @@ in the console. All passed. Found and fixed:
   the session transcripts. Worth keeping real-browser checks in the repo (needs playwright as a dev
   dependency) - see candidates
 
+#### Edited cells and the row state (items 27, 29)
+
+* the row number shows one icon (inline svg, 10px in a 14px slot): deleted > error > new/edited; the
+  state is the first tooltip line and a visually hidden span for screen readers ("2 Edited, Error:
+  Age: Must be at least 18" in Chrome's tree). Deleted rows' cells are struck through - before, a
+  deleted row looked like any other
+* the edited marker is an element of its own (clip-path makes only the triangle hit), aria-hidden;
+  click -> `resetField()` (one undo step), its mousedown cancelled so the focus stays. It and the row
+  icon update while typing without rendering the input again. Not on new rows
+* changed rows only is a flag on the datasource ANDed in the filter run, not a `where('__rowState')`
+  condition in the user's filter: that would show as "__rowState is not blank", the filter editor has
+  no such field, and replace/setState would drop or wrap it. The flag is not in the grid state
+  (changes are not either)
+* checks: tests for marker, status, precedence, options, changed-only with filters/grouping/setData;
+  Chromium `status-check.js` 27/27 and the other four checks
+* left: the error colour is 2.8:1 on a selected row's number (pre-v6 light value, kept); other samples
+  (saving, validation, column-layout, grid01) still have their own RS column; the marker has no
+  keyboard path (Ctrl+Z and the row menu do)
+
 ## Considered, not done
 
 ## Candidates / not started

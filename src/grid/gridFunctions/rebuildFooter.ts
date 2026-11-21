@@ -71,13 +71,17 @@ export function rebuildFooter(ctx: Grid) {
     const filteredRows = ctx.gridInterface.getDatasource().length();
     const filterTree = ctx.gridInterface.getDatasource().getFilterTree((field) => getColumnLabel(ctx, field));
     const scrollbarHeight = ctx.gridInterface.__getGridConfig().__scrollbarSize;
+    // "changed rows only" (datasource.filterChangedOnly()) is not part of the filter: a chip of its own,
+    // in front of the filter's. The footer shows the filter row for either
+    const changedOnly = ctx.gridInterface.getDatasource().isChangedOnly();
+    const filtered = filterTree !== null || changedOnly;
 
     const conditionCount = filterTree ? countConditions(filterTree) : 0;
 
     // `collapse` replaces the chips with a single summary box - used both when there are more
     // conditions than the cap and (see below) when the chips do not fit the grid width.
     const paint = (collapse: boolean) => {
-        const filterRow = filterTree
+        const filterRow = filtered
             ? html`
                   <div class="footer-filter">
                       <button
@@ -90,7 +94,11 @@ export function rebuildFooter(ctx: Grid) {
                       >
                           ${gridText(ctx, 'footer.clear')}
                       </button>
-                      <div
+                      ${changedOnly ? html`<span class="footer-filter-chip footer-filter-changed-only">${gridText(ctx, 'footer.changedOnly')}</span>` : null}
+                      ${changedOnly && filterTree ? html`<span class="footer-filter-connector">${gridText(ctx, 'footer.and')}</span>` : null}
+                      ${
+                          filterTree
+                              ? html`<div
                           class="footer-filter-chips"
                           role="button"
                           tabindex="0"
@@ -113,7 +121,9 @@ export function rebuildFooter(ctx: Grid) {
                                 >`
                                   : renderChildren(ctx, filterTree)
 }
-                      </div>
+                      </div>`
+                              : null
+}
                   </div>
               `
             : null;
@@ -126,13 +136,13 @@ export function rebuildFooter(ctx: Grid) {
         render(
             html`
                 <div
-                    class="footer-inner ${filterTree ? 'has-filter' : ''}"
-                    style=${filterTree ? `padding-top:${scrollbarHeight}px;` : ''}
+                    class="footer-inner ${filtered ? 'has-filter' : ''}"
+                    style=${filtered ? `padding-top:${scrollbarHeight}px;` : ''}
                 >
                     <span
                         class="footer-count"
                         role="status"
-                        style=${filterTree ? `height:${scrollbarHeight}px;line-height:${scrollbarHeight}px;` : ''}
+                        style=${filtered ? `height:${scrollbarHeight}px;line-height:${scrollbarHeight}px;` : ''}
                         >${gridText(ctx, 'footer.rowCount', { shown: filteredRows, total: totalRows })}</span
                     >
                     ${filterRow}
