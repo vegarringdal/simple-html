@@ -108,6 +108,23 @@ export function rebuildHeaderColumns(ctx: Grid) {
                          */
                         dragEvent(ctx, cell as HTMLCellElement, true);
                         cell.addEventListener('keydown', (event) => headerLabelKeydown(ctx, cell as HTMLCellElement, event));
+                        // Shift+F10 and the menu key send contextmenu to the column header with the
+                        // focus, the header menu listens on the label in it (renderHeaderLabel): handed
+                        // on to the label, at the same point
+                        cell.addEventListener('contextmenu', (event) => {
+                            const label = cell.querySelector('[data-attribute-header]');
+                            if (event.target === cell && label) {
+                                event.preventDefault();
+                                label.dispatchEvent(
+                                    new MouseEvent('contextmenu', {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        clientX: event.clientX,
+                                        clientY: event.clientY
+                                    })
+                                );
+                            }
+                        });
                     }
                 }
 
@@ -162,6 +179,42 @@ export function rebuildHeaderColumns(ctx: Grid) {
                 columnElement.appendChild(resizeElement);
 
                 /**
+                 * the column of the layout the handle is the edge of now: the column element is slot i
+                 * (its refID), the column cache says which column of the layout the slot shows now
+                 */
+                const layoutColumn = (): LayoutColumn => {
+                    const refID = i;
+                    let column: ColumnCache[];
+                    // addColumns is only called with the 3 pinned types, so one of the ifs below sets it
+                    let col!: LayoutColumn;
+
+                    if (coltype === LEFT_PINNED_COLTYPE) {
+                        column = ctx.containerLeftColumnCache.filter((e) => e.refID === refID);
+                        col = ctx.gridInterface.__getGridConfig().layout.left[column[0].column];
+                    }
+
+                    if (coltype === MIDDLE_PINNED_COLTYPE) {
+                        column = ctx.containerMiddleColumnCache.filter((e) => e.refID === refID);
+                        col = ctx.gridInterface.__getGridConfig().layout.center[column[0].column];
+                    }
+
+                    if (coltype === RIGHT_PINNED_COLTYPE) {
+                        column = ctx.containerRightColumnCache.filter((e) => e.refID === refID);
+                        col = ctx.gridInterface.__getGridConfig().layout.right[column[0].column];
+                    }
+                    return col;
+                };
+
+                /**
+                 * a double click on the handle fits the column to its content, as Excel does
+                 * (gridInterface.fitColumns). Its two presses are resizes that did not move: they do
+                 * not rebuild the header, so both clicks are on this handle
+                 */
+                resizeElement.addEventListener('dblclick', () => {
+                    ctx.gridInterface.fitColumns(layoutColumn().fields);
+                });
+
+                /**
                  * event for resizing: pointer events, so a mouse, a pen or a finger. The handle
                  * captures the pointer, its events come to the handle wherever the pointer goes (see
                  * followPointer). touch-action none: the browser would scroll the page under a finger
@@ -172,36 +225,11 @@ export function rebuildHeaderColumns(ctx: Grid) {
                         return;
                     }
 
-                    // the column element is slot i (its refID), the column cache says which
-                    // column of the layout the slot shows now
-                    const refID = i;
-
                     // first section here is to collect data we need
                     const clientX = event.clientX;
-                    let column: ColumnCache[];
-                    let columnNumber: number;
-                    // addColumns is only called with the 3 pinned types, so one of the ifs below sets it
-                    let col!: LayoutColumn;
+                    const col = layoutColumn();
 
                     const scrollLeft = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle').scrollLeft;
-
-                    if (coltype === LEFT_PINNED_COLTYPE) {
-                        column = ctx.containerLeftColumnCache.filter((e) => e.refID === refID);
-                        columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().layout.left[columnNumber];
-                    }
-
-                    if (coltype === MIDDLE_PINNED_COLTYPE) {
-                        column = ctx.containerMiddleColumnCache.filter((e) => e.refID === refID);
-                        columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().layout.center[columnNumber];
-                    }
-
-                    if (coltype === RIGHT_PINNED_COLTYPE) {
-                        column = ctx.containerRightColumnCache.filter((e) => e.refID === refID);
-                        columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().layout.right[columnNumber];
-                    }
 
                     const originalWidth = col.width;
 
@@ -244,8 +272,14 @@ export function rebuildHeaderColumns(ctx: Grid) {
                             updateHorizontalScrollWidth(ctx);
                         },
                         // narrower columns (or a narrower pinned side) can mean more columns on
-                        // screen than the middle section has elements for, rebuild recounts them
-                        up: () => ctx.rebuild(),
+                        // screen than the middle section has elements for, rebuild recounts them.
+                        // Not after a press that did not resize: the header would be made again, and
+                        // the second click of a double click be on another handle
+                        up: () => {
+                            if (col.width !== originalWidth) {
+                                ctx.rebuild();
+                            }
+                        },
                         // the resize did not finish: the column gets its width back
                         cancel: () => {
                             col.width = originalWidth;

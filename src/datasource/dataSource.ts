@@ -1497,8 +1497,9 @@ export class Datasource<T = any> {
     /**
      * When the last {@link upsert} changed the value of a field of a row: the `Date.now()` of that upsert.
      * `undefined` when no upsert changed it. A value set by the user or by code does not count, nor
-     * does a conflict (the value stays the user's). For a short highlight on the cells a merge changed:
-     * the grid renders the rows an upsert changed, a `cellClass` hook can read it.
+     * does a conflict (the value stays the user's). The grid flashes the cells a merge changed on its own
+     * (`GridConfig.mergeHighlight`); for a look of your own a `cellClass` hook can read it - the grid
+     * renders the rows an upsert changed.
      *
      * @param row the row
      * @param field the field
@@ -2583,7 +2584,7 @@ export class Datasource<T = any> {
      * - **It is not part of the filter**: `getFilter()`, the header filters, the filter editor,
      *   `getFilterString()` and the grid's state (`GridState.filter`) do not have it, and setting the
      *   filter (`filter()`, the header filters, the filter editor) leaves it on. It stays on until it
-     *   is turned off: `filterChangedOnly(false)`, the grid's row menu (View: Changed rows only) or the
+     *   is turned off: `filterChangedOnly(false)`, the grid's row menu (View › Changed rows only) or the
      *   footer's Clear.
      * - **It is applied when the rows are filtered**, as the filter is: `filter()`, a header filter,
      *   `setData()`, `reloadDatasource()`, marking rows for deletion, `acceptChanges()` ... An edit does

@@ -6,8 +6,8 @@
  * FilterOperator: `filterEditor.operator.EQUAL`. `{name}` in a text is filled in when it is shown.
  */
 const DEFAULTS = {
-    // the row menu, right click on a cell: MENU_IDS.row
-    'row.copy': 'Copy:',
+    // the row menu, right click on a cell: MENU_IDS.row. A submenu's text is its label, without a colon
+    'row.copy': 'Copy',
     'row.copy.cell': 'Cell Value',
     'row.copy.column': 'Column',
     'row.copy.column.hint': 'selected rows',
@@ -16,28 +16,29 @@ const DEFAULTS = {
     'row.copy.selectedColumns': 'Row',
     'row.copy.selectedColumns.hint': 'selected rows/col',
     'row.copy.range': 'Range',
-    'row.filter': 'Filter:',
+    'row.filter': 'Filter',
     'row.filter.replace': 'Replace filter',
     'row.filter.replace.hint': 'all',
     'row.filter.add': 'Add to filter',
     'row.filter.add.hint': 'and',
-    'row.view': 'View:',
+    'row.view': 'View',
     'row.view.dimRepeatedValues': 'Use dimmed values',
     'row.view.changedOnly': 'Changed rows only',
-    'row.paste': 'Paste:',
+    'row.paste': 'Paste',
     'row.paste.cell': 'Paste cell',
     'row.paste.cell.hint': 'selected rows',
     'row.paste.range': 'Paste range',
-    'row.clear': 'Clear:',
+    'row.clear': 'Clear',
     'row.clear.cell': 'Clear cell',
     'row.clear.cell.hint': 'selected rows',
     'row.clear.range': 'Clear range',
-    'row.delete': 'Delete:',
+    'row.delete': 'Delete',
     'row.delete.rows': 'Rows',
     'row.delete.rows.hint': 'selected rows',
     'row.delete.undo': 'Undo',
     'row.delete.undo.hint': 'selected rows',
-    'row.edit': 'Edit:',
+    // the Undo submenu of the row menu, in an editable grid
+    'row.edit': 'Undo / Redo',
     'row.edit.undo': 'Undo last change',
     'row.edit.undo.hint': 'Ctrl+Z',
     'row.edit.redo': 'Redo',
@@ -46,42 +47,53 @@ const DEFAULTS = {
     'row.edit.revertRow': 'Undo row edits',
     'row.edit.revertRows': 'Undo row edits',
     'row.edit.revertRows.hint': 'selected rows',
-    'row.summary': 'Summary:',
-    'row.summary.count': 'Count: {count}',
-    'row.summary.sum': 'Sum: {sum}',
-    'row.summary.max': 'Max: {max}',
-    'row.summary.min': 'Min: {min}',
-    'row.summary.avg': 'Avg: {avg}',
-    'row.export': 'Export:',
-    'row.export.csv': 'CSV, all rows',
-    'row.export.csvSelected': 'CSV, selected rows',
+    'row.size': 'Size',
+    'row.size.fitColumn': 'Fit column to this cell',
+    'row.size.fitRow': 'Fit row height',
+    'row.size.fitRows': 'Fit row height',
+    'row.size.fitRows.hint': 'selected rows',
+    'row.size.fitAllRows': 'Fit all rows',
+    'row.size.resetRow': 'Reset row height',
+    'row.size.resetAllRows': 'Reset all row heights',
+    'row.export': 'Export',
+    'row.export.excel': 'Excel, all rows',
+    'row.export.excelSelected': 'Excel, selected rows',
 
     // the header menu, right click on a header label: MENU_IDS.header
-    'header.column': 'Column:',
+    'header.column.pin': 'Pin',
     'header.column.pinLeft': 'Pin left',
     'header.column.pinLeftCopy': 'Pin left (copy)',
     'header.column.pinRight': 'Pin right',
     'header.column.pinRightCopy': 'Pin right (copy)',
     'header.column.unpin': 'Unpin',
-    'header.column.hide': 'Hide',
+    'header.column.hide': 'Hide column',
     'header.column.removeSorting': 'Remove sorting',
-    'header.column.chooser': 'Column chooser',
-    'header.size': 'Size:',
-    'header.size.column': 'Resize Column',
-    'header.size.all': 'Resize all columns',
-    'header.grouping': 'Grouping:',
+    'header.column.chooser': 'Column chooser…',
+    'header.size': 'Size',
+    'header.size.column': 'Fit column width',
+    'header.size.all': 'Fit all columns',
+    'header.size.resetColumn': 'Reset column width',
+    'header.size.resetAll': 'Reset all column widths',
+    'header.aggregate': 'Aggregate',
+    'header.aggregate.sum': 'Sum',
+    'header.aggregate.avg': 'Average',
+    'header.aggregate.min': 'Min',
+    'header.aggregate.max': 'Max',
+    'header.aggregate.count': 'Count',
+    'header.aggregate.totalsRow': 'Totals row',
+    'header.grouping': 'Grouping',
     'header.grouping.expandAll': 'Expand all',
     'header.grouping.collapseAll': 'Collapse all',
     'header.grouping.clear': 'Clear all',
 
     // the filter menu, right click on a header filter: MENU_IDS.filter
-    'filter.filter': 'Filter:',
     'filter.filter.clear': 'Clear Filter',
     'filter.filter.clearAll': 'Clear All Filters',
-    'filter.filter.isBlank': 'Set "Is Blank"',
-    'filter.filter.isNotBlank': 'Set "Is Not Blank"',
-    'filter.filter.advanced': 'Advanced Filter',
-    'filter.operator': 'Set Operator:',
+    'filter.filter.blank': 'Blank',
+    'filter.filter.isBlank': 'Is blank',
+    'filter.filter.isNotBlank': 'Is not blank',
+    'filter.filter.advanced': 'Advanced Filter…',
+    'filter.operator': 'Operator',
     'filter.operator.greaterThanOrEqualTo': 'Greater than or equal',
     'filter.operator.lessThanOrEqualTo': 'Less than or equal',
     'filter.operator.equal': 'Equal',
@@ -163,6 +175,14 @@ const DEFAULTS = {
     'footer.and': 'AND',
     'footer.or': 'OR',
     'footer.changedOnly': 'Changed rows only',
+    // the summary of the selected cells, at the footer's right (ranges of more than one cell): its name
+    // for a screen reader, the cells with a value, and of the numbers the sum, average, smallest, largest
+    'footer.summary': 'Selected cells',
+    'footer.summary.count': 'Count: {count}',
+    'footer.summary.sum': 'Sum: {sum}',
+    'footer.summary.avg': 'Average: {avg}',
+    'footer.summary.min': 'Min: {min}',
+    'footer.summary.max': 'Max: {max}',
     'footer.operator.EQUAL': '=',
     'footer.operator.LESS_THAN_OR_EQUAL_TO': '≤',
     'footer.operator.GREATER_THAN_OR_EQUAL_TO': '≥',
@@ -199,19 +219,41 @@ const DEFAULTS = {
     'grid.groupToggle': '{name} ({total})',
     'grid.removeGroup': 'Remove the grouping on {title}',
 
+    // Find (Ctrl+F in the grid): the find bar - its name for a screen reader, the input, the count of the
+    // matches and the buttons, with their tooltips
+    'find.label': 'Find in the grid',
+    'find.placeholder': 'Find',
+    'find.count': '{current} of {count}',
+    'find.none': 'No matches',
+    'find.previous': 'Previous match',
+    'find.previous.tooltip': 'Previous match (Shift+Enter)',
+    'find.next': 'Next match',
+    'find.next.tooltip': 'Next match (Enter)',
+    'find.close': 'Close',
+    'find.close.tooltip': 'Close (Esc)',
+
     // the row number of a row: its state (GridConfig.rowStatus), as a tooltip and for a screen reader
     'rowStatus.new': 'New row',
     'rowStatus.edited': 'Edited',
     'rowStatus.deleted': 'Marked for deletion',
     'rowStatus.error': 'Error: {errors}',
+    // a row in conflict (datasource.getConflicts()): the fields the server changed too, as column labels
+    // joined with ', '; a row the server removed that has changes here
+    'rowStatus.conflict': 'Changed on the server too: {fields}',
+    'rowStatus.removedOnServer': 'Removed on the server, it has changes here',
 
     // the marker of an edited cell (GridConfig.editedMarker): its tooltip
     'cell.editedMarker.tooltip': 'Original value: {value}',
     'cell.editedMarker.blank': '(blank)',
     'cell.editedMarker.revert': 'Click to revert',
+    // the marker of a field in conflict: the server's value, and what a click on it does
+    'cell.conflictMarker.tooltip': 'Changed on the server to {value} while you edited it',
+    'cell.conflictMarker.take': "Click to take the server's value",
     // a cell of several lines (FieldConfig.multiline, or a value with a line break): the marker that
-    // there is more, for a screen reader, and the hint of the editor over the cell
+    // there is more, for a screen reader, the last line of its tooltip when it has more lines than it
+    // shows (GridConfig.multilineTooltipLines), and the hint of the editor over the cell
     'cell.multiline.more': 'More lines, Enter shows all',
+    'cell.multiline.moreLines': '… {count} more lines',
     'cell.multiline.hint': 'Ctrl+Enter to save, Esc to cancel',
     'cell.multiline.hintReadonly': 'Esc to close',
     // a lookup column (ColumnConfig.editor): the button of the cell, for a screen reader, and the select
@@ -228,6 +270,11 @@ const DEFAULTS = {
     'datePicker.clear': 'Clear',
     'datePicker.now': 'Now',
     'datePicker.use': 'Use',
+    // the buttons beside the month and year: their name for a screen reader, and their tooltip
+    'datePicker.previousYear': 'Previous year',
+    'datePicker.previousMonth': 'Previous month',
+    'datePicker.nextMonth': 'Next month',
+    'datePicker.nextYear': 'Next year',
     'datePicker.month.january': 'January',
     'datePicker.month.february': 'February',
     'datePicker.month.march': 'March',
@@ -308,8 +355,8 @@ export type TextId = keyof typeof DEFAULTS;
  * import type { Texts } from '@simple-html/grid';
  *
  * const norwegian: Texts = {
- *     'row.copy': 'Kopier:',
- *     'row.summary.count': 'Antall: {count}',
+ *     'row.copy': 'Kopier',
+ *     'footer.summary.count': 'Antall: {count}',
  *     'validation.required': 'Må fylles ut',
  *     'validation.phoneNO': 'Må være 8 siffer' // an id of your own, returned by a validator
  * };
@@ -331,6 +378,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
  * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `grid.*` | labels for screen readers |
+ * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, the buttons |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |
  * | `lookup.*` | a lookup column (`ColumnConfig.editor`): the button of the cell, the select under it |
@@ -349,13 +397,13 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * ```ts
  * import { setTexts, TEXTS } from '@simple-html/grid';
  *
- * TEXTS['row.summary.count']; // 'Count: {count}'
+ * TEXTS['footer.summary.count']; // 'Count: {count}'
  *
  * // every id with its English text, e.g. to hand to a translator
  * const english: string = JSON.stringify(TEXTS, null, 2);
  * console.log(english);
  *
- * setTexts({ 'row.summary.count': 'Antall: {count}' });
+ * setTexts({ 'footer.summary.count': 'Antall: {count}' });
  * ```
  */
 export const TEXTS: Readonly<Record<TextId, string>> = Object.freeze(DEFAULTS);
@@ -398,8 +446,8 @@ let pageTexts: Texts = {};
  *
  * // once, before the grids are made
  * setTexts({
- *     'row.copy': 'Kopier:',
- *     'row.summary.count': 'Antall: {count}',
+ *     'row.copy': 'Kopier',
+ *     'footer.summary.count': 'Antall: {count}',
  *     'validation.required': 'Må fylles ut'
  * });
  * const gridInterface = createGrid(host, { config, datasource });
@@ -423,7 +471,7 @@ export function setTexts(texts: Texts): void {
 export function assertTexts(texts: unknown, where: string): void {
     if (typeof texts !== 'object' || texts === null || Array.isArray(texts)) {
         throw new TypeError(
-            `${where} takes an object of texts by id, e.g. { 'row.copy': 'Kopier:' }, got ${JSON.stringify(texts)}`
+            `${where} takes an object of texts by id, e.g. { 'row.copy': 'Kopier' }, got ${JSON.stringify(texts)}`
         );
     }
     for (const [id, text] of Object.entries(texts)) {

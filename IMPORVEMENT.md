@@ -1286,10 +1286,325 @@ in the console. All passed. Found and fixed:
 * left: Cut (Ctrl+X) of a range; real Excel / Sheets interop untested (format checked only); after the
   wheel takes the focus from a cell, Ctrl+C/V go to the page
 
+### The wheel over the grid kept scrolling the page (user report)
+
+* the wheel listener set the body scroller's scrollTop but did not cancel the event, so the browser
+  scrolled the page too (the rows' views are overflow hidden, the page was the next thing to scroll);
+  it read the non-standard `wheelDeltaY` (none in Firefox) and ignored a trackpad's deltaX
+* now: cancelled (but Ctrl+wheel - zoom, pinch - is left to the browser), `deltaX`/`deltaY` with
+  line/page modes turned into px, left/right scrolls the middle columns. happy-dom's WheelEvent is a
+  UIEvent without modifier keys: the tests set them on the event
+* Chromium `wheel-check.js` on a guide page with a live grid: the grid scrolls, the page does not -
+  also at the grid's last row - and the page scrolls outside the grid
+
+### Excel export (user request: "Excel, not CSV"; frozen header, autofilter, flat list)
+
+* no dependency: `zip.ts` (APPNOTE local headers, central directory, CRC-32, deflate-raw through
+  CompressionStream - stored when it is missing), `xlsx.ts` (the six SpreadsheetML parts from plain
+  inputs), `gridExcel.ts` (rows and fields as the CSV export picks them). 10 000 rows x 8 columns:
+  441 KB deflated (4.6 MB stored)
+* typed cells: numbers as numbers (General - the formatters show full precision), dates as serials
+  from the local day (1900 system, its leap-year bug), `dd\.mm\.yyyy` for the DDMMYYYY formatters,
+  booleans, inline strings; widths from the grid's px by ECMA-376's Calibri 11 rule
+* always: the header bold and frozen, an autofilter over every row, a flat list (no group rows,
+  outline or totals) - the user's rules
+* checked: 2115 tests; Chromium downloads (buttons and row menu, grouped, aggregates sample) read
+  with python zipfile (CRCs), xml.etree and openpyxl - types, frozen pane, autofilter, widths, values
+  equal to the CSV of the same rows. Real Excel / LibreOffice not available to try
+* live-check.js failed 2 of 19 once on a loaded machine and passed twice after: its conflict steps
+  race the sample's timer - candidate below
+
+### Date picker redesign, no rounded buttons (user request)
+
+* flat and square, the grid's font; one header line « ‹ Month Year › »; today and the selected day
+  look different; square steppers and an equal-width button bar; other-month days and week numbers
+  were too light (1.3:1 / 3.4:1) - darker now; contrast measured in Chromium (30/30)
+* every border-radius in grid.css / date.css is 0 (buttons, chips, the filter editor, the tooltip)
+* the generic class names (`.main`, `.year`, `.icon` ...) picked up page css (the docs site's `.main`
+  boxed the month name): prefixed
+* merged cleanly with v6_maybe; all checks and eleven browser scripts on the merged build
+* left: changing the hour jumps the view back to the picked date's month; a day of the month before
+  or after is picked but not shown as selected; Firefox number spinners hidden by
+  `appearance: textfield`, checked in Chromium only
+
+### Plan: custom cell rendering (item 39, user question: switch to Solid 2.0?)
+
+* `custom_render.md`: why the core stays on lit-html (JSX cells would serve Solid apps only, Babel
+  in the build, signals do not fit the pooled cells), and a renderer hook instead -
+  `registerCellRenderer(id, (host) => ({ update, destroy }))`, `ColumnConfig.renderer`; the cell
+  template, the lifecycle across scrolling and rebuilds, what keeps working, steps, tests, docs
+* plan only, no code yet
+
+### The clipboard: every range, the column headers (user report)
+
+* "copy only copies part, not both ranges": several ranges copied the last one (Excel refuses them).
+  Now one table: the union of the ranges' rows (grid order) x fields (layout order), empty where no
+  range covers a cell - side by side is one wide table, stacked one long table
+* "pasting into Word needs the headers": every copy of more than one cell has a header line of the
+  labels, in the TSV and as `<thead>` in the html (Word reads the html); `copyHeaders: false` turns it
+  off. A single cell stays a value. The row menu's Column / Row copies use the same code (its html was
+  not escaped, its text had no header, its values were ISO / raw instead of what the cells show)
+* paste: a first line that is all column labels of the grid is left out, so copy -> paste back works
+  (also into other columns); a data line that is all labels is left out too - rare, undoable
+* done myself while the agent for it was stopped by the usage limit (it had changed one file in its
+  worktree; that worktree is dropped)
+* the docs site test (renders every guide) timed out at vitest's 5s at load 9-12 while other work ran
+  tests: its describe has 30s, as the texts test
+* checks: tests updated (header lines, the union, no last-range rule) and new (union side by side /
+  stacked, copyHeaders false, header skip, round trip, row menu Column/Row/Cell Value); Chromium
+  copy-check 8/8 (the real clipboard's text and html), range-check updated for the header (60/60)
+
+### Fit and reset sizes like Excel; the multiline tooltip (user requests)
+
+* tooltip: the first `multilineTooltipLines` (5) lines, then "… N more lines" (one hidden line is
+  shown instead, so N is always 2+); each line cut at 100 characters; the edited marker cuts the same
+* columns: `fitColumns(fields?, { rows? })` measures what the cells show (formatted, widest line of a
+  multiline text, the bold label + room for the sort icon), filtered rows only; measuring 100 000
+  texts took ~540 ms per field, so the 20 longest by character count are measured. `resetColumnWidths()`
+  to the resetState() widths. Double-click on the resize handle - it needed a fix: a press that did not
+  move rebuilt the header, so the second click hit a new handle
+* rows: heights in lines, by `String(row.__KEY)` (every row has a key), not in the state (generated keys
+  mean nothing saved); added where `__dataSourceUpdated` builds scrollTops/scrollHeights, so every
+  section follows. In a taller row the input stays (focus, keys, overlay, ranges, menus work as they
+  did) and the other lines of a multiline cell are an aria-hidden div under the transparent input
+* merged with v6_maybe (the Size: menu next to the Excel export entries; two imports): 2188 tests,
+  fourteen browser scripts on the merged build (size-check 46/46, copy, ranges, scroll...)
+* left: a row's height is lost when `acceptChanges({ newKeys })` gives it its server key; fitting a
+  row while its focus button shows resets the input's right offset; keyboard moves into a very tall row
+  scroll in steps of two default rows; the header label room is a fixed 50px
+
+### Aggregates v2: lines, several per column, the header menu (user requests)
+
+* "put the sum/type on the other side" - each line is the label at the left, the value at the right
+  (flex; the label shrinks first, then the value ends in an ellipsis), so labels and numbers line up
+* "force the row 1x higher so the grouping text can't block aggregates" and "sum and avg needs 3 rows":
+  a group row with aggregates is the name's line + a line per function of the column that has the most
+  (`aggregateRowHeights`, one function where __parseConfig builds the heights). A stacked column's
+  lines are its fields' functions from the top, with the field label (`Avg Age`) so they say which
+* "right click a column label to add avg, sum, count" - the header menu's Aggregate: toggles (sum, avg,
+  min, max on number fields, count everywhere, the totals row); they change `GridState.aggregates` /
+  `totalsRow`, so the user's choice is saved with the state and resetState() goes back to the config's.
+  updateConfig() keeps a totals row the user turned on unless it is given totalsRow
+* a11y: one gridcell per field (its first line, aria-label of all lines), the others aria-hidden
+* done myself (the agent for it stopped at the usage limit before changing anything), after the fit
+  sizes merge, so the group-row height and the data-row heights did not collide
+* checks: 41 aggregates tests (state, menu, lines, a11y), every suite; Chromium aggregate-check updated
+  for the taller rows and extended with v2 checks (32/32: nothing under the name, label left / value
+  right, Min from the header menu adds a line), the other twelve scripts, excel-check (its group step
+  reads the groups from the API now) and openpyxl on the six files
+
+### Docs site: the work in progress page and the build line (user request)
+
+* the sidebar's header says what the site is built from: `v6_maybe @ <commit>` linked to the commit on
+  github, its date, "local changes" for a local build of files not all committed. In the github action
+  its variables say it (GITHUB_REF_NAME, GITHUB_SHA: the action checks out the commit alone); a user or
+  token in the remote's url is left out (the page is public)
+* "Status: Work in progress" first in the sidebar (the start page stays the first guide): the plan's
+  "Now:" line, its open `[ ]` items by phase (an item moved elsewhere left out), and the "Candidates /
+  not started" section of this file - made when the site is built (`docs:status`,
+  scripts/site/status.js), so it is never behind
+* tests: status.test.ts (the plan parsing, the section, the links, the remote url, git and the action's
+  variables, no git), site.test.ts (the build line and the page in the built site)
+
+### Group rows: a +/- box and the lines of the levels (user request)
+
+* the user: "the + and - looks not very nice, should be more typical + - with border, and the line for
+  grouping should go all the way down"
+* renderRowGroup.ts: the toggle is an 11px svg box (frame + sign, crisp at 1x: half pixel coordinates),
+  centered in the 15px column of its level; `.simple-html-grid-group-levels` (the lines of the groups the
+  row is in) and `.simple-html-grid-group-line` (an expanded group's line from the middle of the name
+  line down; the box's fill covers its top) are in the row's full height container, so they go through
+  the aggregate lines too
+* grid.css: the lines are one background gradient, a 1px line in the middle of each 15px column; the data
+  rows' grouping column (`.simple-html-grid-grouping-row`) has it over all levels, no bottom border and
+  no inset shadow any more, so the lines read as one. `GROUP_LEVEL_WIDTH` (getGroupingWidth.ts) replaces
+  the 15 in the code; grid.css has it too (said in both)
+* new `--simple-html-grid-group-line-color` instead of reusing the unused `--simple-html-grid-grouping-border`:
+  the old dark sample (grid01) sets that one to the row background's dark, the lines would vanish there
+* tests: groupRowLook.test.ts (the box's sign collapsed/expanded, the lines' elements, widths and places by
+  level, after a collapse, the data rows' column per level, with aggregates the lines in the full height
+  container). Browser: group-look.js / group-look2.js screenshots at 3x, light and dark: two levels, a
+  group's end, a collapsed group, a row with aggregates
+
+### Live data: the flash of a merge, the look of a conflict (item 38)
+
+* `GridConfig.mergeHighlight` (default on, harmless without upsert: no merge times): showCellMerged.ts
+  puts `simple-html-cell-merged` on the cell element when it is rendered in the second after the merge
+  (`getMergedAt`), the css fades a `::before` tint out over 1s (`::after` is the range's). A new merge
+  of a cell that still has the class flips `data-merged-again`: an animation of another name starts it
+  again, no forced reflow (a merge of many cells would force one per cell)
+* the conflict marker is the edited marker with a class (showCellEdited.ts): shown with or without
+  `editedMarker`, the user has to choose; in a conflict the field's original is the server's value, so
+  the marker's click (`resetField`) is `resolveConflict(row, field, 'remote')`. No new subscription:
+  a conflict that comes or goes already puts its row in `rows-changed`
+* the row number: `rowStatusIcon(state, hasError, hasConflict)`, the arrows icon, the conflict lines in
+  the tooltip and the screen reader's text (renderRowSelector.ts)
+* the conflict colour is violet: at least 3:1 to the rows, the row numbers and the selected rows, under
+  an error's tint too (light `#6d28d9`, dark `#ddd6fe` - the first picks `#7c3aed` / `#c4b5fd` were
+  2.8:1 under the tint)
+* tests: mergeLook.test.ts (the flash: which cells, not for a value sent unchanged or set from code,
+  gone after the second, started again, off; the conflict: marker, tooltip, classes, the row number
+  and its screen reader text, a row removed on the server, without editedMarker, the click, keep mine,
+  readonly; the icon order); texts.test.ts shows the four new texts on a keyed grid of its own.
+  Browser: live-check.js (26/26: the flash's class and animation, the conflict look, keep mine, the
+  marker's click, the button) and screenshots light and dark
+* not done: "Keep mine" / "Take server's" in the row menu - the menus are being reorganized into
+  submenus, they go in after that
+
+### The summary of the selected cells in the footer (item 35)
+
+* selectionSummary.ts: the rectangle around the ranges cell by cell, a cell counted when it is in a
+  range (overlaps once), data rows only; count = not blank (isBlank: null, undefined, '', an invalid
+  date), numbers = finite numbers of `type: 'number'` fields. A million cells (Ctrl+A on 100 000 rows of
+  10 fields) is some ms
+* rebuildFooter.ts: `renderFooter()` split from `rebuildFooter()` (which also renders the totals row),
+  called on `__setRanges` and after values changed (renderChangedRows, both paths) when there are ranges.
+  The summary is absolute at the right: on the count's line, or with a filter on the chips' line; the
+  chips collapse to one box when their rectangle reaches under it (left of it and right edge past its
+  left - false in happy-dom, where every rect is the same)
+* formatted with the formatter of the first number field in layout order, rounded to 2 decimals like the
+  row menu summary was; mixed number fields with different formatters show the first one's format
+* not a live region: a drag changes it at every cell, a screen reader would talk all the time. A group
+  named "Selected cells"
+* tests: selectionSummary.test.ts (none / one cell, the count of every type, numbers of number fields
+  only, 0 and false, overlapping ranges, the formatter's field, group rows, the footer's items, title and
+  name, clearRanges, an edit, the config's texts). Browser:
+  .claude/browser-checks/scripts/footer-summary-check.js 11/11 (the numbers against the datasource, a
+  drag, an edit, two ranges, one cell, clear of the filter chips), screenshots light and dark
+* left: the row menu's Summary goes when the menus' submenus are merged (that work is in another
+  worktree)
+* the browser checks moved: the machine rebooted and /tmp went with the scratchpad's scripts, playwright
+  and Chromium. They are in `.claude/browser-checks/` now (git-excluded, not committed): new scripts
+  are written there
+
+### Find in the grid: Ctrl+F, the matches marked, next / previous (item 42)
+
+* findMatches.ts (no dom): the displayed rows (`getRows()`, group rows skipped - so not the rows of a
+  collapsed group) x the layout fields (`getLayoutFields()`), the text by `cellTextOf` (formatter,
+  `numberOverride`, `dynamicCellTypeColumn`), `toLowerCase().includes()`, boolean cells skipped (a
+  checkbox shows no text), the whole text of a multiline cell. `matchAtOrAfter`: the anchor itself while it
+  matches (by row object + field, so a sort keeps it), else the first match after its row (looked up
+  again, or the row it was at when filtered out), wrapping to 0
+* findBar.ts: the bar is `ctx.findBar`, made on the first open, the first child of the grid element
+  (absolute, top right, z-index 2000 over the cell inputs' 1000; 25px - over the default panel). lit
+  render of input / `role="status"` count / three `<button>`s, `role="search"` on the bar. Keys:
+  Ctrl+F / Cmd+F and F3 on a keydown listener of the grid element (createDom, aborted with the scroll
+  listeners), Enter on the input, Esc on the bar. The letter by `key`, by `code === 'KeyF'` only when
+  the key is no Latin letter (Cyrillic): Dvorak's F is where it types f
+* the search waits FIND_DELAY_MS (150) after the last key and after the last change of the data; Enter
+  in that time runs it and shows the first match (it does not skip it). `find()` runs at once (returns
+  the count). Matches are looked up per cell through `Map<row object, Set<field>>`, not by row index: a
+  render between a sort and the search marks the right cells
+* the classes are set in renderRowCell (showCellFind, next to showCellRange) and on the cells on screen
+  when the matches change (`forEachCellOnScreen`, split from renderRangeClasses in rangeSelection.ts)
+* following the data: `findDataChanged()` from `Grid.rebuild()` (filter, sort, group, expand,
+  collapse, rows set, layout, updateConfig, setState, resize), `updateAfterMerge()` (an upsert) and
+  `rows-changed` (values from code, the user, undo). Not on `current-entity` / `selection-change`: they
+  re-render, they change no text. It never scrolls for a change of the data
+* scrolling: `scrollCellIntoView` (rangeSelection.ts) got a `middle` option - out of view, the row / the
+  middle column in the middle of the view, a column wider than the view at its start - and returns
+  whether it scrolled; then `triggerScrollEvent` renders at once (a jump of more than 500px would else
+  wait 150ms for the scrolling to stop, and Esc could not focus the cell)
+* Esc / the close button: when the focus was in the bar - the current match's cell gets the focus
+  (`focusCellInput`, exported) and its row is made current (as Alt+arrows to another row does); without
+  a match the cell Ctrl+F came from (by row object, scrolled back), else the header filter / column header
+  it came from. The buttons cancel their mousedown: the focus stays in the input
+* the wheel and a swipe took the focus to the hidden focus input (for the cell being edited): not when
+  the find bar has it (addScrollEventListeners.ts) - Enter after the wheel goes on finding
+* the bar is closed in `disconnectElement` (its timer), without moving the focus
+* a narrow grid: the input shrinks to 40px and the count gives way (ellipsis) before the buttons - a
+  grid of 144px still shows ↑ ↓ ✕. Without a panel (`panelHeight: 0`) the bar covers the right end of
+  the labels row (25px), never the rows
+* decisions: the current match is not the current row while stepping (a detail form bound to
+  `current-entity` would load on every Enter) - only on Esc. `find()` does not move the focus,
+  `openFind()` does (for the "Find…" menu entry to come). No option to turn Ctrl+F off. The tint of the
+  other matches is under 3:1 to the rows (a highlighter's), the current match's line is 3:1+
+* colours: match yellow / amber, current orange + a 2px inset line (box-shadow, with an error's border
+  inside it); in a range both tints (two gradients). Contrast checked: text 4.98+ over every tint, row
+  colour, selected row, range and error tint; the line 3.25+ (light and dark, computed and read from the
+  pixels in the browser)
+* texts `find.label`, `find.placeholder`, `find.count`, `find.none`, `find.previous` / `.next` / `.close`
+  and their `.tooltip`; the texts test opens the bar with and without matches
+* tests: find.test.ts (43: formatted text, case, empty, order across pinned/stacked, checkbox, multiline,
+  numberOverride, filter / collapsed groups, the anchor after a sort and a filter, the API and the event,
+  scrolling down / sideways / a wide column, classes on reused cells, Ctrl+F in / outside / with Shift or
+  Alt / Cyrillic / Dvorak / already canceled, typing and the delay, Enter / Shift+Enter / F3, F3 in a cell,
+  Esc and the focus, the buttons, following a filter / sort / edit / layout, aria, texts, the wheel).
+  Browser: `.claude/browser-checks/scripts/find-check.js` 41/41 (in this worktree), screenshots
+  light and dark
+* left: a "Find…" entry in the row menu (after the menus' submenus are merged); Cmd+G / Ctrl+G; match
+  case / whole word
+
+### Fill down: Ctrl+D and the fill handle (item 34)
+
+* fillDown.ts: `fillDown(gridInterface, active)` - each range's top row into the rows under it
+  (rangeBlock: data rows only), a one-row range or the focused cell alone from the data row above (as
+  Excel). Values copied raw, a Date as a new Date (two rows must not share one object), through the
+  proxy: validated, edited marks, rows-changed, one run of code = one undo step; `endTyping()` first so
+  the typed cell is written and rendered like a paste
+* Ctrl+D / Cmd+D (`fillDownKey`, in the cell's keydown after the range keys); not with Shift/Alt, not in
+  a readonly grid - there it is the browser's bookmark key
+* the fill handle: one element per grid (WeakMap), moved by showCellRange into the cell at the last
+  range's bottom right corner on screen - for a field with empty cells under it (a column next to it
+  stacks more fields) the last empty one, where the range's line turns. Its pointerdown stops the
+  body's range press, keeps the focus, follows the pointer (followPointer, cellPointAt from
+  rangeSelection now exported), grows the range down only, scrolls down past the rows' bottom; let go
+  `fillRows()` repeats the range's rows over the new ones; cancel puts the ranges back. bodyCellOf leaves
+  the handle out like the edited marker
+* tests: fillDown.test.ts (the range, readonly column, dates copied, undo, one row / one cell from above,
+  the first row, Cmd, Ctrl+Shift and a readonly grid left alone, group rows, the API, the handle's cell,
+  a stacked layout, readonly, fillRows repeating + undo). Browser: .claude/browser-checks/scripts/fill-check.js
+  12/12 (Ctrl+D with a readonly column, default prevented, Ctrl+Z, the handle at the line's corner and
+  hit by the pointer, a drag of two rows, the handle at the new corner, the focus kept, Esc), light and
+  dark screenshots
+* not done: a "Fill down" entry in the row menu (after the menus' submenus merge); fill up/right; series
+  (1, 2, 3 ...) - the handle copies
+
+### Menus: submenus, shorter, the keyboard (user request)
+
+* the user: "our menus is pretty big ... organized better so it uses less height, can expand to the
+  right, many more sub menus". Done in a worktree by an agent, merged here
+* showMenu.ts: `MenuSubmenu` entries render as an item with a chevron; a submenu is its own
+  `popover="manual"` placed beside its item by the placeMenu rules (right, flipped left, over the menu
+  when neither fits, moved up, scrolling); one open per level, hover opens after 150ms (moving to it
+  diagonally does not open the others), ArrowRight/Enter/Space/click open it, ArrowLeft/Esc close it
+* keyboard per the APG menu pattern: roving tabindex, arrows wrap, Home/End, first letter, disabled
+  items focusable but not activated (APG), Tab closes and returns the focus - except in the filter
+  menu, where Tab goes into the value list. The last input (key or pointer, capture listeners) decides
+  whether a menu takes the focus: Shift+F10 sends a contextmenu event with `button: -1` in Chromium
+* the default trees: row menu 762px / 38 rows -> 285px / 14, header 485px / 24 -> 145px / 7, filter
+  menu 537 -> 437px (the value list stays inline). Section ids that became submenus kept their ids;
+  `header.column.pin` (not `header.pin`) so a filter on `header.column` still hides that part
+* the row menu's Summary is removed with the merge (item 35): its regression tests (negative max, 0 as
+  min, average not rounded and without blanks, two decimals) now run on the footer summary
+* tests: gridMenus.test.ts 68 -> 106 (trees, the hook on nested entries, submenus open/close/hover with
+  fake timers/diagonal/nesting, placement, every key, roles); helpers `menuEntry(id)` (opens the
+  submenus on the way), `menuTreeIds`, `openMenus`. Browser: .claude/browser-checks/scripts/
+  submenu-check.js 37/37 and menus-regression-check.js 25/25, screenshots in shots/submenu and
+  shots/menus-regression
+* known: the menus' box-shadow never shows (`.simple-html-grid { overflow: hidden }` clips it on the
+  popover); the top-level menu has no name; the filter editor's pickers, the column chooser and the date
+  picker are still mouse-only
+
+### The row menu's undo entries in a submenu (user request)
+
+* the user, after the submenus: "maybe undo/redo should be own section too". The five entries
+  (undo, redo, undo cell edit, undo row edits for the row and the selected rows) are the submenu
+  `row.edit` "Undo / Redo ›", first in the menu - the id the old section header had, so a hook filtering on
+  `row.edit` hides the lot as before. The line under them (`row.edit.separator`, new in the submenu work)
+  is gone. Hidden in a readonly grid with its entries
+* the row menu is 9 rows (38 before the submenus); Shift+F10 focuses Undo / Redo ›, ArrowRight goes into
+  it and its first item (greyed out with nothing to undo, still focusable)
+* tests: undoRedo.test.ts (the entries through the submenu, the submenu first), gridMenus.test.ts (the
+  top level, Shift+F10 then ArrowRight / Esc); browser submenu-check.js 38/38 (copy before:
+  submenu-check.js.before-undo-submenu), menus-regression-check.js 25/25
+
 ## Considered, not done
 
 ## Candidates / not started
 
+* **live-check.js races the live sample's timer** under load (2 of 19 failed once, passed on reruns):
+  wait for the timer's tick instead of a fixed delay.
 * **A flaky test under load**: one full run in ten or so fails one test while other test runs or
   builds load the machine (agents saw `datePickerCell.test.ts`); it passes on rerun. Find it and make it
   not depend on timing.

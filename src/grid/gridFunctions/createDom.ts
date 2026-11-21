@@ -5,6 +5,7 @@ import { TOTALS_CLASS } from './aggregates';
 import { ariaId, createAriaGrid } from './ariaGrid';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { findKeydown } from './findBar';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { addClipboardListeners } from './rangeClipboard';
 import { addRangeListeners } from './rangeSelection';
@@ -124,6 +125,8 @@ export function createDom(ctx: Grid) {
     // a cell left out of a render while it was typed in is rendered once the focus leaves it
     ctx.element.addEventListener('focusout', () => onGridFocusOut(ctx), { signal: ctx.scrollListenersAbort?.signal });
     addMenuListeners(ctx);
+    // Find: Ctrl+F (Cmd+F) and F3 anywhere in the grid, see findBar.ts
+    ctx.element.addEventListener('keydown', (event) => findKeydown(ctx, event), { signal: ctx.scrollListenersAbort?.signal });
     // the cell ranges: the mouse on the cells, copy and paste
     addRangeListeners(ctx);
     addClipboardListeners(ctx);

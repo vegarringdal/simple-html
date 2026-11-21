@@ -5,7 +5,7 @@ export const filterOperatorHeader: DemoSample = {
     title: 'Filter operator in header',
     group: 'Events',
     description:
-        'Right-click a filter cell (the row under the headers) and pick an operator under "Set Operator" (equal/contains for text, greater/less than for numbers and dates). The grid fires a filter-operator-change event with the field, the operator, the column\'s options and a rebuildHeader() helper, so you can e.g. write the active operator into the filter placeholder as feedback. The operator picked is state: getState().headerFilters has it, columns[field].operator in the config is only the one a header filter starts with.',
+        'Right-click a filter cell (the row under the headers) and pick an operator under "Operator ›" (equal/contains for text, greater/less than for numbers and dates). The grid fires a filter-operator-change event with the field, the operator, the column\'s options and a rebuildHeader() helper, so you can e.g. write the active operator into the filter placeholder as feedback. The operator picked is state: getState().headerFilters has it, columns[field].operator in the config is only the one a header filter starts with.',
     run(stage) {
         const ui = createStage(stage);
         const config = baseGridConfig();

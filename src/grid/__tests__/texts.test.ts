@@ -4,6 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 // the date picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
 import { Datasource } from '../../datasource/dataSource';
+import type { Entity } from '../../datasource/entity';
 import { and, type FilterCondition, type FilterOperator, or, where } from '../../datasource/filterExpression';
 import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
@@ -11,7 +12,7 @@ import { setTexts, TEXTS, type Texts } from '../../texts';
 import type { GridConfig } from '../gridConfig';
 import { GridInterface } from '../gridInterface';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { headerFilterInput, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
+import { headerFilterInput, menuTreeEntries, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
 
 /**
  * Every text the grid shows comes from the texts. With every text replaced by its id in «» - the
@@ -57,8 +58,9 @@ function fakeTexts(only: (id: string) => boolean): Texts {
 // 102 countries, 101 of them let through by the filter on age: the value list is cut off at 100
 const COUNTRIES = Array.from({ length: 102 }, (_, i) => `«c${i}»`);
 
-// notes of two lines: the marker of a multiline cell, and its editor
-const NOTES = '«line 1»\n«line 2»';
+// notes of seven lines: the marker of a multiline cell, its editor, and its tooltip - the first five
+// lines and how many more there are
+const NOTES = Array.from({ length: 7 }, (_, i) => `«line ${i + 1}»`).join('\n');
 
 const rows = () => [
     { name: '«ann»', country: COUNTRIES[0], age: 10, born: new Date(2026, 0, 5), active: true, notes: NOTES },
@@ -186,6 +188,13 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     // the grid, its footer with the filter. The notes have a marker for a screen reader
     check();
 
+    // the find bar (Ctrl+F): its name, the input, the buttons - the count with matches, and without
+    gridInterface.find('«bob»');
+    check();
+    gridInterface.find('«nobody»');
+    check();
+    gridInterface.closeFind();
+
     // the editor of the notes, and read-only in a readonly grid
     const notes = element.querySelector('input[data-attribute="notes"]') as HTMLInputElement;
     const pressKey = (target: Element, key: string) =>
@@ -206,15 +215,23 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     datasource.markForDeletion(datasource.getSelectedRows());
     // a range of cells: the range entries (marking rows clears the ranges, so after it)
     gridInterface.setRanges([{ fromRow: 0, fromField: 'name', toRow: 1, toField: 'age' }]);
+    // the menu, then each submenu as it opens
+    const checkMenu = () => {
+        check();
+        menuTreeEntries(check);
+    };
     openRowMenu(element, 'age', 0);
-    check();
+    checkMenu();
     gridInterface.clearRanges();
 
     // the header menus: pinned left (unpin) and in the center (pin), then the column chooser
     openLabelMenu(element, 'name');
-    check();
+    checkMenu();
     openLabelMenu(element, 'country');
-    check();
+    checkMenu();
+    // a number column: its Aggregate submenu has sum, average, min and max too
+    openLabelMenu(element, 'age');
+    checkMenu();
     (document.querySelector('[data-menu-id="header.column.chooser"]') as HTMLElement).click();
     check();
 
@@ -222,7 +239,7 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     // that is cut off
     for (const field of ['age', 'name', 'country']) {
         openFilterMenu(element, field);
-        check();
+        checkMenu();
     }
 
     // the filter editor: AND with an OR group, a condition compared with a field not picked yet
@@ -264,7 +281,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     await sleep(20);
     check();
     for (let month = 1; month < 12; month++) {
-        const next = document.querySelectorAll('simple-html-date .simple-html-date-month-header .month svg')[1];
+        // « ‹ › »: the third is the next month
+        const next = document.querySelectorAll('simple-html-date .simple-html-date-nav')[2];
         next.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         check();
     }
@@ -314,6 +332,27 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     check();
 }
 
+/**
+ * A conflict with the server, on a grid of its own: an upsert merges by key, and the rows of the other
+ * grid have none. A field the server changed while it was edited (its marker), and a row the server
+ * removed that has changes here (its row number)
+ */
+async function showConflicts(texts: Texts | undefined, check: (more?: string[]) => void) {
+    const keyed = rows().map((row, i) => ({ ...row, id: i + 1 }));
+    const { datasource, gridInterface } = await mountGrid(config(texts), keyed, { ...fields, key: 'id' });
+    // rows on screen: the config's filter hides the first (age 10)
+    const row = (id: number) => datasource.getDataRows().find((entity) => entity.id === id) as Entity;
+    row(3).age = 31;
+    row(4).name = '«x»';
+    // the server changed the age of row 3, and has no row 4 any more
+    datasource.upsert(
+        keyed.filter((entity) => entity.id !== 4).map((entity) => (entity.id === 3 ? { ...entity, age: 32 } : entity)),
+        { removeMissing: true }
+    );
+    gridInterface.refresh();
+    check();
+}
+
 beforeAll(() => {
     stubCanvas();
     stubElementSizes();
@@ -336,6 +375,7 @@ describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
         const { seen, check } = checker();
 
         await showEverything(await mountGrid(config(), rows(), fields), check);
+        await showConflicts(undefined, check);
 
         expect(Object.keys(TEXTS).filter((id) => !seen.has(id))).toEqual([]);
     });
@@ -345,15 +385,17 @@ describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
         setTexts(fakeTexts(isDatasourceText));
         const { seen, check } = checker();
 
-        await showEverything(await mountGrid(config(fakeTexts((id) => !isDatasourceText(id))), rows(), fields), check);
+        const gridTexts = fakeTexts((id) => !isDatasourceText(id));
+        await showEverything(await mountGrid(config(gridTexts), rows(), fields), check);
+        await showConflicts(gridTexts, check);
 
         expect(Object.keys(TEXTS).filter((id) => !seen.has(id))).toEqual([]);
     });
 });
 
 describe('texts in the grid - where a text comes from', () => {
-    const menuLabels = () =>
-        Array.from(document.querySelectorAll('[data-menu-id]'), (entry) => entry.textContent?.replace(/\s+/g, ' ').trim());
+    // the labels of the menu and its submenus
+    const menuLabels = () => menuTreeEntries().map((entry) => entry.textContent?.replace(/\s+/g, ' ').trim());
 
     it("expect the grid's texts, then the page's, then the defaults", async () => {
         setTexts({ 'row.copy': 'page copy', 'row.paste': 'page paste' });
@@ -370,7 +412,7 @@ describe('texts in the grid - where a text comes from', () => {
         gridInterface.updateConfig({ texts: { 'footer.clear': 'Tøm' } });
         expect(footerClear()).toEqual('Tøm');
         openRowMenu(element, 'age', 0);
-        expect(menuLabels()).toContain('Copy:');
+        expect(menuLabels()).toContain('Copy');
 
         gridInterface.updateConfig({ texts: undefined });
         expect(footerClear()).toEqual('✕ Clear');
@@ -407,7 +449,9 @@ describe('texts in the grid - where a text comes from', () => {
         await sleep(20);
 
         const picker = document.querySelector('simple-html-date') as HTMLElement;
-        const buttons = Array.from(picker.querySelectorAll('button'), (button) => button.textContent?.trim());
+        const buttons = Array.from(picker.querySelectorAll('.simple-html-date-actions button'), (button) =>
+            button.textContent?.trim()
+        );
         expect(buttons).toEqual(['Clear', 'Now', 'Bruk']);
         // the week starts on monday
         expect(picker.querySelector('.simple-html-date-day-header')?.textContent?.trim()).toEqual('Ma');
@@ -457,16 +501,12 @@ describe('texts in a date picker of your own', () => {
     it("expect the page's texts, and its own texts over them", () => {
         setTexts({ 'datePicker.month.april': 'April (side)', 'datePicker.now': 'Nå' });
 
-        expect(mount(dateConfig()).querySelector('.simple-html-date-month-header .main')?.textContent?.trim()).toEqual(
-            'April (side)'
-        );
+        expect(mount(dateConfig()).querySelector('.simple-html-date-month-name')?.textContent?.trim()).toEqual('April (side)');
 
         const own = mount(dateConfig({ 'datePicker.month.april': 'April (egen)' }));
-        expect(own.querySelector('.simple-html-date-month-header .main')?.textContent?.trim()).toEqual('April (egen)');
-        expect(Array.from(own.querySelectorAll('button'), (button) => button.textContent?.trim())).toEqual([
-            'Clear',
-            'Nå',
-            'Use'
-        ]);
+        expect(own.querySelector('.simple-html-date-month-name')?.textContent?.trim()).toEqual('April (egen)');
+        expect(
+            Array.from(own.querySelectorAll('.simple-html-date-actions button'), (button) => button.textContent?.trim())
+        ).toEqual(['Clear', 'Nå', 'Use']);
     });
 });

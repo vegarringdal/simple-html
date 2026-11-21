@@ -50,6 +50,7 @@ export type { EventHandler } from './emitter';
 export type { CellRange } from './grid/cellRange';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';
+export type { FindResult } from './grid/findResult';
 export type {
     ColumnConfig,
     ColumnEditor,
@@ -75,6 +76,8 @@ export {
     type MenuItem,
     type MenuPosition,
     type MenuSection,
-    type MenuSeparator
+    type MenuSeparator,
+    type MenuSubmenu
 } from './grid/gridMenus';
+export type { ExcelOptions } from './grid/xlsx';
 export { setTexts, TEXTS, type TextId, type Texts } from './texts';

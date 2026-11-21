@@ -57,6 +57,10 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   (`aria-describedby`) says so: `textbox "Notes" readonly: "Call back on Monday"`, described "More
   lines, Enter shows all" (the text `cell.multiline.more`). The marker on screen is hidden from a
   screen reader. Enter opens the editor, see [The editor of a multiline cell](#the-editor-of-a-multiline-cell).
+  In a row made taller (`fitRows()`, the row menu's "Fit row height") the cell shows its other lines
+  under the first one: they are for the eye and hidden from a screen reader, which reads the cell as
+  in a row of one line - its first line and the description - and Enter shows all of the text. A
+  taller row changes nothing else: the same cells, the same keys.
 - **The state is not colour only** (WCAG 1.4.1): each state has a shape of its own - a plus, a pencil,
   a trash can, an exclamation mark - and a row marked for deletion is struck through.
 - **A group row**, grouped, is a row with `aria-level` (1 for the first grouping) and
@@ -64,16 +68,21 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   after the row number, with a button that expands and collapses it: named with the text the row
   shows (`Country: Norway (12)`), `aria-expanded` says its state.
 - **The aggregates of a group row** (`ColumnConfig.aggregate`, see [Aggregates](18-aggregates.md)):
-  each is a `gridcell` with the `aria-colindex` of its field, `Sum 1234.5`, so a screen reader reads it
-  with the column's header. The name cell then spans the columns up to the first aggregate. The
-  aggregate of the first column is under the name on screen: it is not a cell of its own, its text is
-  in the name cell (`Country: Norway (12) Count 10`).
+  the aggregates of a field are one `gridcell` with the `aria-colindex` of its field, named with all its
+  lines (`Sum 1234.5, Avg 123.4`), so a screen reader reads them with the column's header. The name has
+  a line of its own on screen; for a screen reader it is the cell of the first column and spans the
+  columns up to the first aggregate - the aggregates of the first column are in its text
+  (`Country: Norway (12) Count 10`).
 - **The totals row** (`totalsRow`) is the last row of the grid, after the rows on screen: its first
   cell is a `rowheader`, "Total" (the text `aggregate.total`), then a `gridcell` per aggregate.
   `aria-rowcount` counts it, its `aria-rowindex` is the last.
 - **The row count** in the footer is a status (`role="status"`): a screen reader reads it out when it
   changes - after a filter, an expand or a collapse.
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
+- **The find bar** (Ctrl+F, see [Find](19-find.md#what-a-screen-reader-gets)): a search region named
+  "Find in the grid" before the grid, with an input named "Find", the count of the matches as a status
+  (`3 of 17`, read out when it changes) and the buttons "Previous match", "Next match" and "Close". The
+  cells of the matches have no state of their own for a screen reader, the count says where you are.
 
 The rows and the columns are virtual: only the rows on screen (and a few more) are in the dom, and
 of the middle section only the columns on screen. That is what `aria-rowindex` and `aria-colindex`
@@ -110,12 +119,15 @@ caret in them; Alt with an arrow moves between the cells.
 | F2 | in a multiline cell: opens its editor |
 | a character | in a multiline cell that can be edited: opens its editor, the character at the end of the text |
 | Space | in a cell with a `focusButton`: sends `cell-focus-button-click`, as a click on the button does. In a checkbox: checks it |
-| Shift+F10, the menu key | the row menu (the browser sends `contextmenu`) |
+| Shift+F10, the menu key | the row menu (the browser sends `contextmenu`), the focus on its first item |
 | Alt+Shift+arrows | a range of cells: from this cell, the end one cell further each time - a row up or down, a field left or right (the fields of a column of two are two). The focus stays in the cell. See [Selection and clipboard](17-selection-and-clipboard.md#the-keyboard) |
 | Esc | clears the ranges of cells (when there are some, and no menu is open) |
 | Ctrl+C, Cmd+C | with no text selected in the cell: the range of cells as tab separated text, or the cell's value |
 | Ctrl+V, Cmd+V | a block of cells (copied in a spreadsheet, or here) from this cell or the top left of the range; one value into every cell of the ranges. One value with no range is the input's own paste |
 | Delete / Backspace | with a range of more than one cell and no text selected: empties its cells. Else the input's own |
+| Ctrl+F, Cmd+F | opens the find bar, see [below](#the-find-bar). Anywhere in the grid: a header filter, a column header too |
+| F3 / Shift+F3 | while the find bar is open: the next / previous match. Anywhere in the grid |
+| Ctrl+D (Cmd+D) | fill down: each range gets the values of its top row, a range of one row or the cell alone the row above. See [Selection and clipboard](17-selection-and-clipboard.md#fill-down) |
 
 The grid scrolls to the cell the focus goes to. Moving to another cell (Tab, Alt+arrows, Enter) clears
 the ranges of cells, and so does typing in a cell.
@@ -129,7 +141,7 @@ the ranges of cells, and so does typing in a cell.
 | Alt+ArrowLeft / Alt+ArrowRight | the filter to the left / right |
 | Alt+ArrowUp | the filter above in a column of two fields, else the column header (label) above it |
 | Alt+ArrowDown | the filter below in a column of two fields, else the first row |
-| Shift+F10, the menu key | the filter menu |
+| Shift+F10, the menu key | the filter menu, the focus on its first item |
 
 ### A column header
 
@@ -141,7 +153,7 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | Enter / Space | sorts on the column, again for the other direction - as a click. The focus stays on it |
 | Shift+Enter / Shift+Space | adds the column to the sort - as shift+click |
 | Alt+ArrowUp / Alt+ArrowDown | the label above / below in a column of two fields; down from the last one, the column's filter |
-| Shift+F10, the menu key | the header menu |
+| Shift+F10, the menu key | the header menu, the focus on its first item |
 
 ### The rest
 
@@ -150,9 +162,27 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | the button of a group row | Enter / Space | expands or collapses the group. The focus stays on the button |
 | the x of a group chip in the panel | Enter / Space | removes the grouping. It is in the tab order, before the grid |
 | the filter chips in the footer | Enter / Space | opens the filter editor |
-| a menu | Esc | closes it, the focus goes back where it was |
+| a menu | ArrowDown / ArrowUp, Home / End, a letter | the next / previous / first / last item, the next one starting with the letter. A menu opened with the mouse leaves the focus on the cell: ArrowDown / ArrowUp get into it |
+| a menu | Enter, Space | uses the item: the menu closes, the focus goes back where it was. On an item with a submenu (`›`): opens it, as ArrowRight does |
+| a submenu | ArrowLeft, Esc | closes it, the focus back on its item |
+| a menu | Esc, Tab | closes it, the focus goes back where it was. Tab in the filter menu goes on into its value list: the search field, the checkboxes, Run Search |
 | the editor of a multiline cell | Esc / Ctrl+Enter / Tab | see [below](#the-editor-of-a-multiline-cell) |
 | the filter editor | Esc | closes it without filtering (a modal dialog) |
+| the find bar | Enter, F3, Esc | the next match, closes it: see [below](#the-find-bar) |
+
+### The find bar
+
+Ctrl+F (Cmd+F) with the focus in the grid opens it over the grid's top right corner, the focus in its
+input - see [Find](19-find.md). Outside the grid Ctrl+F is the browser's.
+
+| key | does |
+| --- | --- |
+| typing | finds the text when the typing stops: the cells are marked, the grid scrolls to the current match |
+| Enter, F3 | the next match, wrapping to the first. The focus stays in the input |
+| Shift+Enter, Shift+F3 | the previous match, wrapping to the last |
+| Esc | closes it: the focus goes to the cell of the current match (its row is the current row), else back to where Ctrl+F was pressed. In a modal dialog of your own, the dialog stays open |
+| Ctrl+F, Cmd+F | the focus back in the input, its text selected |
+| Tab / Shift+Tab | the input, previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid |
 
 ### The editor of a multiline cell
 
@@ -175,7 +205,9 @@ A readonly editor (a readonly grid or cell) shows the text, nothing can be typed
 ## Focus
 
 What can have the focus: the cell inputs and checkboxes, the header filters, the column headers, the
-buttons of the group rows, the x of the group chips and the filter chips in the footer. Each gets a
+buttons of the group rows, the x of the group chips, the filter chips in the footer, the input and
+buttons of the find bar, and the items of a menu (see [Menus](10-menus.md#the-keyboard): the WAI-ARIA
+menu pattern). Each gets a
 visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md#the-keyboard-focus)).
 
 - Sorting from the keyboard and expanding a group rebuild the header or the rows: the focus is put
@@ -184,7 +216,8 @@ visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md
   start or the end of the grid (`tabindex="-1"`, hidden from a screen reader), and the browser's Tab
   goes on from there to what is before or after the grid.
 - The wheel and a swipe take the focus from the cell being edited: its row element is about to show
-  another row. The grid uses a hidden input for it, out of the tab order. They save and close the
+  another row. The grid uses a hidden input for it, out of the tab order. Not from the find bar: no
+  cell is edited, and Enter goes on finding. They save and close the
   editor of a multiline cell too, and a click outside it does: the focus is where the click put it.
 
 ## Labels and translating
@@ -252,14 +285,15 @@ setTexts({
 - **Group rows by keyboard**: Tab and Alt+arrows skip the group rows, so the expand/collapse button
   is no stop of Tab. A screen reader reaches it (and presses it) in its browse mode, a keyboard alone
   does not.
-- **The menus** open from the keyboard (Shift+F10), but their entries can not be reached with it.
-  The date picker of a date cell or filter is for the mouse too - a date can be typed.
+- **The menus**: the right click menus and `openMenu()` follow the WAI-ARIA menu pattern (roles,
+  `aria-checked`, `aria-expanded`, the keys above), checked in Chrome's accessibility tree but not with
+  a screen reader yet. A menu has no name of its own (`aria-label`), a submenu is labelled by its item.
+  The field and operator pickers of the filter editor and the column chooser are for the mouse, and
+  so is the date picker of a date cell or filter - a date can be typed.
 - **The footer** (the Clear button, the filter chips) is not on the way of Tab from the cells. A
   screen reader reaches it.
 - **Only the first sort column** has `aria-sort`; the number of a column in a sort on several
   columns is shown, but not read out.
-- **An aggregate of a group row under its name** is covered on screen, a screen reader gets it with
-  the name. Put the aggregated columns after the first column.
 - **The column numbers** under the filters are hidden: selecting a column is for the mouse, and a
   selected column is not read out.
 - **The two scrollbars** are elements of their own, Chrome makes them stops of Tab (an element that

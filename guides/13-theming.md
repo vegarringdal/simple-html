@@ -119,11 +119,15 @@ variables:
 - `--simple-html-grid-new-color` - the plus of a new row
 - `--simple-html-grid-edited-color` - the pencil of an edited row, the marker of an edited cell
 - `--simple-html-grid-deleted-color` - the trash can of a row marked for deletion
+- `--simple-html-grid-conflict-color` - a conflict with the server: the arrows of the row number, the
+  marker of a field in conflict, see [Live data](16-live-data.md#how-the-grid-shows-them)
+- `--simple-html-grid-merged-color` - the flash of a cell a merge changed (`mergeHighlight`), it fades
+  out: a see-through colour
 - `--simple-html-grid-error-color` and `--simple-html-grid-error-bg-color` - a cell and a row with an
   error: the border of the cell, the bar and the exclamation mark of the row number, the tint, see
   [How the grid shows the errors](05-editing.md#how-the-grid-shows-the-errors)
 
-The icons and the marker are graphics: the new, edited and deleted colours have a contrast of at least
+The icons and the marker are graphics: the new, edited, deleted and conflict colours have a contrast of at least
 3:1 to the rows, the row numbers and the selected rows, in light and in dark, also under an error's
 tint (WCAG 1.4.11). Keep that when you change them. Each state has a shape of its own too, the colour is
 not the only thing that tells them apart.
@@ -132,7 +136,10 @@ not the only thing that tells them apart.
 
 A cell of several lines (see [Multiline text](05-editing.md#multiline-text)) has a marker at its
 right, lines of text, in `--simple-html-grid-multiline-color` - at least 3:1 to the rows and the
-selected rows too. The editor that opens over the cell uses the colours of the rest: the textarea is
+selected rows too. In a row made taller (`fitRows()`) the cell shows its other lines under the first
+one, in the cell's text colour (`--simple-html-grid-main-font-color`): an element of their own,
+`simple-html-grid-cell-lines`, with the classes the `cellClass` hook gives the input. The editor that
+opens over the cell uses the colours of the rest: the textarea is
 `--simple-html-grid-sec-bg-color` with `--simple-html-grid-main-font-color`, its hint
 `--simple-html-grid-main-bg-color`, its frame `--simple-html-grid-pinned-border` and its shadow
 `--simple-html-grid-dialog-shadow-color`. The editor is on the body (or in the dialog the grid is in),
@@ -195,6 +202,34 @@ The classes: `simple-html-cell-in-range` on every cell in a range, and `simple-h
 }
 ```
 
+## Find
+
+Find (Ctrl+F in the grid, see [Find](19-find.md)) marks the cells that show the text with a tint, the
+current match with a stronger tint and a 2px line inside its edge:
+
+- `--simple-html-grid-find-match-color` - laid over a cell that matches, under its text: yellow in
+  light, amber in dark. A colour with alpha, so the row's colour and a range's tint show through
+- `--simple-html-grid-find-current-color` - laid over the current match instead: orange
+- `--simple-html-grid-find-current-border-color` - the line around the current match
+
+The defaults keep the text at 4.5:1 or more over both tints (on the rows and on the selected rows), and
+the line at 3:1 or more against the rows, the selected rows and the current match's tint, in light and
+in dark (WCAG 1.4.3 and 1.4.11): the line tells the current match, not the colour alone. The tint of the
+other matches is a highlighter's, not a line - it is not 3:1 against the rows. Keep that when you change
+them.
+
+```css
+.simple-html-grid {
+    --simple-html-grid-find-match-color: light-dark(rgba(34, 197, 94, 0.3), rgba(21, 128, 61, 0.5));
+    --simple-html-grid-find-current-border-color: light-dark(#14532d, #bbf7d0);
+}
+```
+
+The classes: `simple-html-cell-find-match` on every match, `simple-html-cell-find-current` on the
+current one too. The find bar is `simple-html-grid-find`, in the grid's colours: the panel's background
+(`--simple-html-grid-main-bg-color`), the input of the header filters (`--simple-html-grid-sec-bg-color`),
+the frame and shadow of the tooltips.
+
 ## The variables of the grid
 
 On `.simple-html-grid`, in `grid.css`.
@@ -206,8 +241,8 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-alt-bg-color` | scrollbar tracks, the search input of the column chooser, the focus button of a cell | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-even` | the even rows | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-odd` | the odd rows | `#f7f7f7` | `#5a6370` |
-| `--simple-html-grid-main-bg-selected-odd` | selected rows (odd), the number of a selected column, the selected menu item, scrollbar thumbs | `#bdd4e7` | `#234882` |
-| `--simple-html-grid-main-bg-selected-even` | selected rows (even), menu items and buttons under the pointer | `#afc7db` | `#274e8f` |
+| `--simple-html-grid-main-bg-selected-odd` | selected rows (odd), the number of a selected column, scrollbar thumbs | `#bdd4e7` | `#234882` |
+| `--simple-html-grid-main-bg-selected-even` | selected rows (even), menu items and buttons under the pointer, the menu item the keyboard is on and the one whose submenu is open | `#afc7db` | `#274e8f` |
 | `--simple-html-grid-main-bg-border` | the lines between cells, rows and menu sections, the frame of the grid and the menus | `#e6e5e5` | `#1f2937` |
 | `--simple-html-grid-pinned-border` | the lines at the pinned columns and under the header, the frame of the filter editor, the tooltips and the buttons | `#d1d0d0` | `#1f2937` |
 | `--simple-html-grid-sec-bg-border` | the line right of the grouping columns | `#e6e5e5` | `#1f2937` |
@@ -218,15 +253,21 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-focus-color` | the outline of the element with the keyboard focus | `#005fcc` | `#b3d7ff` |
 | `--simple-html-grid-range-bg-color` | laid over the cells of a range of cells, see [Ranges of cells](#ranges-of-cells) | `rgba(37, 99, 235, 0.12)` | `rgba(59, 130, 246, 0.2)` |
 | `--simple-html-grid-range-border-color` | the line around a range of cells | `#1e40af` | `#dbeafe` |
+| `--simple-html-grid-find-match-color` | laid over a cell that matches Find (Ctrl+F), see [Find](#find) | `rgba(250, 204, 21, 0.4)` | `rgba(180, 83, 9, 0.45)` |
+| `--simple-html-grid-find-current-color` | laid over the current match of Find | `rgba(251, 146, 60, 0.6)` | `rgba(194, 65, 12, 0.65)` |
+| `--simple-html-grid-find-current-border-color` | the line around the current match of Find | `#9a3412` | `#fed7aa` |
 | `--simple-html-grid-error-color` | a validation error: the border of the cell, the bar and the exclamation mark of the row selector | `#dc2626` | `#fca5a5` |
 | `--simple-html-grid-error-bg-color` | a validation error: laid over the cell and the row selector | `rgba(220, 38, 38, 0.12)` | `rgba(248, 113, 113, 0.22)` |
 | `--simple-html-grid-edited-color` | the marker of an edited cell, the pencil of an edited row (`editedMarker`, `rowStatus`) | `#9a3412` | `#fdba74` |
 | `--simple-html-grid-new-color` | the plus of a new row (`rowStatus`) | `#166534` | `#86efac` |
 | `--simple-html-grid-deleted-color` | the trash can of a row marked for deletion (`rowStatus`) | `#57534e` | `#d1d5db` |
+| `--simple-html-grid-conflict-color` | a conflict with the server: the arrows of the row number, the marker of a field in conflict | `#6d28d9` | `#ddd6fe` |
+| `--simple-html-grid-merged-color` | the flash of a cell a merge changed (`mergeHighlight`), fading out | `rgba(250, 204, 21, 0.45)` | `rgba(250, 204, 21, 0.35)` |
 | `--simple-html-grid-multiline-color` | the marker of a cell with more lines than it shows (`FieldConfig.multiline`) | `#475569` | `#e2e8f0` |
 | `--simple-html-grid-totals-bg-color` | the totals row under the rows (`totalsRow`), see [Aggregates](18-aggregates.md) | `#e8edf3` | `#2a3441` |
 | `--simple-html-grid-totals-font-color` | the text of the totals row | `#1f2328` | `#f9fafb` |
 | `--simple-html-grid-aggregate-label-color` | the label in front of an aggregate (`Sum`) in a group row and the totals row. At least 4.5:1 to both | `#57606a` | `#c9d1d9` |
+| `--simple-html-grid-group-line-color` | the grouping columns: the line of each level down its group's rows, the frame of a group row's `+` / `-` box. At least 3:1 to the group rows | `#8c8c8c` | `#9ca3af` |
 | `--simple-html-grid-warning-font-color` | the "too many values" warning of the filter menu | `red` | `#fca5a5` |
 | `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text | `#c0392b` | `#fecaca` |
 | `--simple-html-grid-danger-border` | the footer's Clear filter button under the pointer: its border | `#d98282` | `#f87171` |
@@ -260,16 +301,32 @@ The fonts:
 On `.simple-html-date`, in `date.css`: the grid's date picker, and the date picker or calendar on
 its own (`<simple-html-date>`).
 
+It looks like the grid: flat, square corners, thin lines, the grid's font. On top the month and the
+year on one line, between square buttons to the year and the month before (« ‹) and after (› »).
+Then the week numbers and the days: the days of the months before and after are quieter, today is
+bold with a bar under it, the selected day has a frame and a fill. At the bottom the hour and the
+minutes, each a number between a step down and a step up (the arrow keys step it too), and Clear,
+Now and Use in a bar of buttons of the same width - Use in the colours of the selected day.
+
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
 | `--simple-html-date-main-bg-color` | the background, the buttons, the hour and minute inputs | `white` | `#374151` |
 | `--simple-html-date-main-color` | the text | `#2e2d2d` | `#f9f7f7` |
-| `--simple-html-date-dimmed-color` | the days of the months before and after | `#dfdfdf` | `#979494` |
-| `--simple-html-date-week-color` | the week numbers, the hour and minute labels | `#8b8b8b` | `#b4b4b4` |
-| `--simple-html-date-main-bg-border` | the lines, the frame of the buttons, the selected day and the day under the pointer | `#e6e5e5` | `#979494` |
-| `--simple-html-date-main-bg-selected` | the selected day, a button under the pointer | `#bdd4e7` | `#234882` |
+| `--simple-html-date-dimmed-color` | the days of the months before and after | `#767676` | `#adadad` |
+| `--simple-html-date-week-color` | the week numbers, the names of the days, the hour and minute labels | `#6b6b6b` | `#b4b4b4` |
+| `--simple-html-date-main-bg-border` | the lines: under the names of the days, right of the week numbers, over the time | `#e6e5e5` | `#4b5563` |
+| `--simple-html-date-button-border` | the frame of the buttons and of the hour and minute inputs | `#d1d0d0` | `#6b7280` |
+| `--simple-html-date-hover-bg-color` | a day or a button under the pointer | `#e5ebf1` | `#4b5563` |
+| `--simple-html-date-main-bg-selected` | the selected day, the Use button | `#bdd4e7` | `#234882` |
+| `--simple-html-date-selected-border` | the frame of the selected day and of the Use button | `#3f73a8` | `#7fb0ff` |
+| `--simple-html-date-today-color` | the bar under today | `#005fcc` | `#93c5fd` |
 | `--simple-html-date-focus-color` | the outline of the element with the keyboard focus (in the grid: the grid's) | `#005fcc` | `#b3d7ff` |
 | `--simple-html-date-font-size` | the text | `11px` | |
 | `--simple-html-date-font-family` | the text | `'Roboto', 'Helvetica', 'Arial', 'sans-serif'` | |
+
+The text has a contrast of at least 4.5:1 to its background, in light and in dark; the frame of the
+selected day and the bar under today at least 3:1 to the background and the selected day's fill
+(WCAG 1.4.3 and 1.4.11). Keep that when you change them. The dimmed days and the week numbers had
+lighter colours before v6 (`#dfdfdf`, `#8b8b8b`): too light to read.
 
 `--simple-html-date-header-bg-border` is still set, but nothing in `date.css` uses it.

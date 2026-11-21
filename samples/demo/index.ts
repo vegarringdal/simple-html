@@ -3,7 +3,8 @@ import '../../src/grid.css';
 import '../../src/date.css';
 import api from 'docs:api';
 import guides from 'docs:guides';
-import { renderApiPage, renderGuidePage, renderSamplePage, scrollToPlace } from './pages';
+import status from 'docs:status';
+import { buildLine, renderApiPage, renderGuidePage, renderSamplePage, renderStatusPage, scrollToPlace } from './pages';
 import { SAMPLES } from './sampleList';
 import { initTheme, toggleTheme } from './theme';
 
@@ -12,6 +13,7 @@ initTheme();
 /**
  * The docs site: a sidebar with the guides, the samples and the API, and the page picked in it.
  * Every page has its own link (hash routing, so it works as static files on github pages):
+ * - #status/work-in-progress   what is still open, from V6_PLAN.md and IMPORVEMENT.md (status.js)
  * - #guide/<id>    a guide, guides/NN-<id>.md, #guide/<id>/<section> goes to one of its headings
  * - #sample/<id>   a sample, samples/demo/samples
  * - #api/<name>    an export of the library, #api/<name>.<member> goes to one of its members
@@ -32,6 +34,8 @@ const sidebarHeader = document.createElement('div');
 sidebarHeader.className = 'sidebar-header';
 sidebarHeader.innerHTML =
     '<div class="sidebar-title">@simple-html/grid</div><div class="sidebar-sub">guides, samples &amp; API</div>';
+// what the site is built from: the branch and the commit, a link to it on github
+sidebarHeader.appendChild(buildLine(status.build));
 sidebar.appendChild(sidebarHeader);
 
 const nav = document.createElement('nav');
@@ -98,6 +102,10 @@ function navSection(
     nav.appendChild(section);
 }
 
+// first in the sidebar, so what is still open is easy to find. Not the start page, see fromHash
+navSection('Status', [
+    { route: 'status/work-in-progress', label: 'Work in progress', render: (main) => renderStatusPage(main, status) }
+]);
 if (guides.length) {
     navSection(
         'Guides',
@@ -180,8 +188,8 @@ function fromHash() {
         route = `sample/${route}`;
         history.replaceState(null, '', `#${route}`);
     } else if (!pages.has(route)) {
-        // no hash, or one the site does not have: the start page
-        route = pages.keys().next().value ?? '';
+        // no hash, or one the site does not have: the start page - the first guide, else the first page
+        route = [...pages.keys()].find((key) => key.startsWith('guide/')) ?? pages.keys().next().value ?? '';
         place = '';
         history.replaceState(null, '', `#${route}`);
     }

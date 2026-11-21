@@ -3,9 +3,10 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { and, isFilterGroup, or, where } from '../../datasource/filterExpression';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { menuEntry, menuItem } from './interactionTestHelpers';
 
 /**
- * "Filter:" section in the row context menu - filter on the value of the cell you right
+ * The "Filter" submenu of the row context menu - filter on the value of the cell you right
  * clicked, either replacing the current filter or adding to it.
  */
 
@@ -22,11 +23,6 @@ async function openRowMenu(rowIndex = 0, attribute = 'firstname') {
     return mounted;
 }
 
-function menuItem(text: string): HTMLElement {
-    const items = Array.from(document.querySelectorAll('.simple-html-grid-menu-item'));
-    return items.find((el) => el.textContent?.trim().startsWith(text)) as HTMLElement;
-}
-
 beforeAll(() => {
     stubCanvas();
     stubElementSizes();
@@ -36,19 +32,17 @@ beforeEach(() => {
     document.body.innerHTML = '';
 });
 
-describe('row menu - filter section', () => {
-    it('expect a Filter section in the menu', async () => {
+describe('row menu - filter submenu', () => {
+    it('expect a Filter submenu in the menu', async () => {
         await openRowMenu();
-        const sections = Array.from(document.querySelectorAll('.simple-html-grid-menu-section')).map((e) =>
-            e.textContent?.trim()
-        );
-        expect(sections).toContain('Filter:');
+        expect(menuEntry('row.filter').textContent?.trim()).toEqual('Filter');
+        expect(menuEntry('row.filter').getAttribute('aria-haspopup')).toEqual('menu');
     });
 
-    it('expect both filter actions to be offered', async () => {
+    it('expect both filter actions to be offered in it', async () => {
         await openRowMenu();
-        expect(menuItem('Replace filter')).toBeDefined();
-        expect(menuItem('Add to filter')).toBeDefined();
+        expect(menuEntry('row.filter.replace').textContent?.replace(/\s+/g, ' ').trim()).toEqual('Replace filter (all)');
+        expect(menuEntry('row.filter.add').textContent?.replace(/\s+/g, ' ').trim()).toEqual('Add to filter (and)');
     });
 });
 

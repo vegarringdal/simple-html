@@ -20,10 +20,11 @@ export const ROW_STATUS_WIDTH = 14;
 export type RowState = 'new' | 'edited' | 'deleted';
 
 /**
- * the icon a row gets: its state, or the error - one icon fits. A deleted row is not saved, so its
- * state wins over an error; an error wins over new and edited, it stops the save
+ * the icon a row gets: its state, the error or the conflict - one icon fits. A deleted row is not
+ * saved, so its state wins over an error; an error wins over a conflict and new and edited, it stops
+ * the save; a conflict wins over new and edited, the save would overwrite the server's newer values
  */
-export type RowStatusIcon = RowState | 'error';
+export type RowStatusIcon = RowState | 'error' | 'conflict';
 
 /**
  * the text of each state: the tooltip's first line and the screen reader's text
@@ -54,14 +55,18 @@ export function rowStateOf(rowData: Entity | GroupRow | undefined): RowState | n
 }
 
 /**
- * the icon of a row, see RowStatusIcon. `null` when the row has no state and no error
+ * the icon of a row, see RowStatusIcon. `null` when the row has no state, no error and no conflict
  * @param hasError the row has an error: the server's (`__rowError`) or a validation error
+ * @param hasConflict the row is in conflict: `datasource.getConflicts()` has it
  */
-export function rowStatusIcon(state: RowState | null, hasError: boolean): RowStatusIcon | null {
+export function rowStatusIcon(state: RowState | null, hasError: boolean, hasConflict = false): RowStatusIcon | null {
     if (state === 'deleted') {
         return 'deleted';
     }
-    return hasError ? 'error' : state;
+    if (hasError) {
+        return 'error';
+    }
+    return hasConflict ? 'conflict' : state;
 }
 
 /**
@@ -96,6 +101,15 @@ const ICONS: Record<RowStatusIcon, TemplateResult> = {
         focusable="false"
     >
         <path d="M3.5 0h3v1h-3z M1 1.5h8V3H1z M2 3.8h6L7.4 10H2.6z" />
+    </svg>`,
+    // two arrows, one each way: the server's value and the user's
+    conflict: html`<svg
+        class="simple-html-row-status-icon simple-html-row-status-conflict"
+        viewBox="0 0 10 10"
+        aria-hidden="true"
+        focusable="false"
+    >
+        <path d="M0 2.5L3 0v2h7v1H3v2z M10 7.5L7 10V8H0V7h7V5z" />
     </svg>`,
     // an exclamation mark cut out of a circle
     error: html`<svg

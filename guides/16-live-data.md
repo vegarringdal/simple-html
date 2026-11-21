@@ -154,12 +154,32 @@ for (const conflict of datasource.getConflicts()) {
 }
 ```
 
-## Showing what a merge changed
+## How the grid shows them
+
+- **A cell a merge changed flashes**: a tint that fades out over a second
+  (`--simple-html-grid-merged-color`), when the cell is rendered in the second after the `upsert()`
+  changed its value. The cell element has the class `simple-html-cell-merged` meanwhile.
+  `mergeHighlight: false` in the config turns it off.
+- **A field in conflict** has a marker in its top left corner in the conflict colour
+  (`--simple-html-grid-conflict-color`), where an edited cell has the edited marker - also with
+  `editedMarker: false`. Its tooltip has the server's value, and in an editable grid a click on it takes
+  the server's value (as `resolveConflict(row, field, 'remote')`, a step of the undo history). The cell
+  element has the class `simple-html-cell-conflict`.
+- **A row in conflict** has two arrows on its row number (with `rowStatus`, the default), and its tooltip
+  says which fields the server changed too, or that the server removed the row. A screen reader gets it
+  as text with the row number. An error wins the icon: it stops the save; a row marked for deletion
+  keeps its trash can.
+
+To keep the user's value, or to take the server's for every field at once, call `resolveConflict()` -
+from a button, as the "Live data" sample does.
+
+## Showing what a merge changed, your own way
 
 `datasource.getMergedAt(row, field)` is the time (`Date.now()`) the last `upsert()` changed the value
 of a field - `undefined` when no upsert changed it. A field the user has edited keeps the user's value,
 an upsert does not change it (a conflict is no change of the value). The grid renders the rows an
-upsert changed, so a `cellClass` hook can give those cells a class for a short highlight:
+upsert changed, so a `cellClass` hook can give those cells a class of your own - with
+`mergeHighlight: false`, for another look than the flash:
 
 ```ts
 gridInterface.updateHooks({

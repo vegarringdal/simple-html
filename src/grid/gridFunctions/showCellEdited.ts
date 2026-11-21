@@ -3,7 +3,7 @@ import type { Formatter } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { tooltipText } from './multilineText';
+import { gridTooltipText } from './multilineText';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
@@ -28,6 +28,11 @@ function isCellEdited(entity: Entity | null, attribute: string | null): boolean 
  * is the cell's errors, then the original value formatted with the cell's formatter, then "Click to
  * revert" in an editable grid: a click puts the original value back (`datasource.resetField()`).
  *
+ * A field in conflict (the server changed it while it was edited, `datasource.getConflicts()`): the
+ * class `simple-html-cell-conflict`, and the marker with or without editedMarker, in the conflict colour
+ * (`simple-html-cell-conflict-marker`). Its tooltip has the server's value - the field's original now -
+ * and a click takes it.
+ *
  * The marker is an element of its own in the cell element, after the cell's lit template, made and
  * removed here - like the errors (showCellErrors), it is set while the user types, when the template
  * is not rendered again. Call it after the template is rendered: lit removes what is after its
@@ -49,10 +54,16 @@ export function showCellEdited(
     const edited = isCellEdited(entity, attribute);
     cell.classList.toggle('simple-html-cell-edited', edited);
 
+    // a field the server changed while the user had it edited (datasource.getConflicts()): the marker
+    // shows it with or without editedMarker, the user has to choose
+    const datasource = ctx.gridInterface.getDatasource();
+    const conflict = entity && attribute ? datasource.__getRowConflicts(entity)?.get(attribute) : undefined;
+    cell.classList.toggle('simple-html-cell-conflict', conflict !== undefined);
+
     const config = ctx.gridInterface.__getGridConfig();
     let marker = markers.get(cell);
     const controller = entity?.__controller;
-    if (!edited || !config.editedMarker || !entity || !attribute || !controller) {
+    if (!entity || !attribute || !controller || (conflict === undefined && (!edited || !config.editedMarker))) {
         marker?.remove();
         return;
     }
@@ -65,23 +76,23 @@ export function showCellEdited(
         cell.appendChild(marker);
     }
 
-    // the errors first, as the cell's own tooltip has them: the marker has a tooltip of its own
-    const datasource = ctx.gridInterface.getDatasource();
+    // a value as the cell shows it; a text of several lines is cut, as in the tooltip of its cell
+    const format = (value: unknown) => {
+        const text = gridTooltipText(ctx, (formatter ?? datasource.getFormatter(attribute)).format(value));
+        return text === '' ? gridText(ctx, 'cell.editedMarker.blank') : text;
+    };
+    // the errors first, as the cell's own tooltip has them: the marker has a tooltip of its own. In a
+    // conflict the server's value is the field's original: a click takes it
     const errors = datasource.__getRowErrors(entity)?.get(attribute) ?? [];
-    // a text of several lines is cut, as in the tooltip of its cell
-    const original = tooltipText(
-        (formatter ?? datasource.getFormatter(attribute)).format(controller.__originalValues[attribute])
-    );
-    const lines = [
-        ...errors,
-        gridText(ctx, 'cell.editedMarker.tooltip', {
-            value: original === '' ? gridText(ctx, 'cell.editedMarker.blank') : original
-        })
-    ];
+    const lines =
+        conflict !== undefined
+            ? [...errors, gridText(ctx, 'cell.conflictMarker.tooltip', { value: format(conflict.remote) })]
+            : [...errors, gridText(ctx, 'cell.editedMarker.tooltip', { value: format(controller.__originalValues[attribute]) })];
     if (!config.readonly) {
-        lines.push(gridText(ctx, 'cell.editedMarker.revert'));
+        lines.push(gridText(ctx, conflict !== undefined ? 'cell.conflictMarker.take' : 'cell.editedMarker.revert'));
     }
     marker.setAttribute('data-tooltip', lines.join('\n'));
+    marker.classList.toggle('simple-html-cell-conflict-marker', conflict !== undefined);
     // the hand only where a click reverts
     marker.classList.toggle('simple-html-cell-edited-marker-revert', !config.readonly);
 }
@@ -104,7 +115,8 @@ function createMarker(ctx: Grid, cell: HTMLCellElement): HTMLElement {
         const datasource = ctx.gridInterface.getDatasource();
         const row = datasource.getRow(cell.$row);
         if (row && !isGroupRow(row) && cell.$attribute) {
-            // a step of the undo history, the field is validated as for an edit
+            // a step of the undo history, the field is validated as for an edit. In a conflict the
+            // original is the server's value: the same as resolveConflict(row, field, 'remote')
             datasource.resetField(row, cell.$attribute);
             triggerScrollEvent(ctx);
         }

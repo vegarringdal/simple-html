@@ -4,6 +4,7 @@ import { buildCsv, csvField, parseTsv } from '../csv';
 import type { Grid } from '../grid';
 import { type CellPoint, isMoreThanOneCell, rangeBlock, rangeRect } from './cellRanges';
 import { getCellType } from './getCellType';
+import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -14,10 +15,12 @@ import { focusedCell, hasSelectedText, pointOf } from './rangeSelection';
  * The clipboard of the cell ranges, like a spreadsheet's: copy a range as tab separated text, paste
  * tab separated text into the cells, clear the cells. See guides/17-selection-and-clipboard.md.
  *
- * - **Copy** (Ctrl/Cmd+C, the `copy` event): with ranges of more than one cell, the last range; else
- *   the cell with the focus. Not when text is selected in the cell's input: then it is the input's own
+ * - **Copy** (Ctrl/Cmd+C, the `copy` event): with ranges of more than one cell, every range as one table
+ *   (rangesClipboard), with a header line of the column labels (`copyHeaders`); else the cell with the
+ *   focus, its value only. Not when text is selected in the cell's input: then it is the input's own
  *   copy of that text. The text of each cell is the text the cell shows (cellText in gridCsv.ts)
- * - **Paste** (Ctrl/Cmd+V, the `paste` event): the text is read as tab separated cells (parseTsv). One
+ * - **Paste** (Ctrl/Cmd+V, the `paste` event): the text is read as tab separated cells (parseTsv), a
+ *   first line of the grid's column labels left out (a copy's header, withoutHeader). One
  *   value with ranges of more than one cell is written into every cell of the ranges; a block of cells
  *   from the top left cell of the last range, or the cell with the focus, down and right. One value
  *   with no range is the input's own paste - unless the input can not take it (see inputTakes)
@@ -56,9 +59,7 @@ function copyEvent(ctx: Grid, event: ClipboardEvent) {
     }
     const ranges = ctx.gridInterface.getRanges();
     const point = pointOf(focused.cell);
-    const { text, html } = isMoreThanOneCell(ranges)
-        ? rangeClipboardText(ctx, ranges[ranges.length - 1])
-        : cellClipboardText(ctx, point);
+    const { text, html } = isMoreThanOneCell(ranges) ? rangesClipboard(ctx, ranges) : cellClipboardText(ctx, point);
     event.preventDefault();
     event.clipboardData.setData('text/plain', text);
     event.clipboardData.setData('text/html', html);
@@ -72,7 +73,7 @@ function pasteEvent(ctx: Grid, event: ClipboardEvent) {
     if (event.defaultPrevented || !focused || ctx.gridInterface.__getGridConfig().readonly) {
         return;
     }
-    const block = parseTsv(event.clipboardData?.getData('text/plain') ?? '');
+    const block = withoutHeader(ctx, parseTsv(event.clipboardData?.getData('text/plain') ?? ''));
     if (!block.length) {
         return;
     }
@@ -128,14 +129,79 @@ function cellTexts(ctx: Grid, rows: Entity[], fields: string[]): string[][] {
 }
 
 /**
- * A range for the clipboard: tab separated text - a line per data row ended with CRLF, as Excel copies
- * it, a value with a tab, a line break or a quote in quotes (csv.ts) - and an html table of the same
- * cells
+ * A table of cells for the clipboard - every copy of more than one cell: tab separated text (a line
+ * per row ended with CRLF, as Excel copies it; a value with a tab, a line break or a quote in quotes,
+ * csv.ts) and an html table of the same cells, for the programs that read the clipboard's html (Word,
+ * Excel, Google Docs). Both start with a header line of the column labels, unless `copyHeaders` is
+ * false
+ * @param fields the copied fields, a text of each row for each
+ * @param texts the texts of the cells, as the cells show them
  */
-export function rangeClipboardText(ctx: Grid, range: CellRange): { text: string; html: string } {
-    const { rows, fields } = rangeBlock(ctx.gridInterface, range);
-    const texts = cellTexts(ctx, rows, fields);
-    return { text: buildCsv(null, texts, { separator: '\t', bom: false }), html: htmlTable(texts) };
+export function clipboardTable(ctx: Grid, fields: string[], texts: string[][]): { text: string; html: string } {
+    const header = ctx.gridInterface.__getGridConfig().copyHeaders ? fields.map((field) => getColumnLabel(ctx, field)) : null;
+    return { text: buildCsv(header, texts, { separator: '\t', bom: false }), html: htmlTable(header, texts) };
+}
+
+/**
+ * Rows of the grid for the clipboard, in these fields: the row menu's Column / Row copies
+ */
+export function rowsClipboard(ctx: Grid, rows: Entity[], fields: string[]): { text: string; html: string } {
+    return clipboardTable(ctx, fields, cellTexts(ctx, rows, fields));
+}
+
+/**
+ * The ranges for the clipboard, as one table: the data rows of every range, in the order of the
+ * displayed rows, and the fields of every range, in the layout's order. A cell that is in none of the
+ * ranges is empty - so two ranges side by side are one wide table, two ranges one above the other one
+ * long table, and ranges that cross leave the cells they do not cover empty
+ */
+export function rangesClipboard(ctx: Grid, ranges: CellRange[]): { text: string; html: string } {
+    const gridInterface = ctx.gridInterface;
+    const datasource = gridInterface.getDatasource();
+    const layout = getLayoutFields(gridInterface);
+    const rects = ranges.map((range) => rangeRect(range, layout)).filter((rect) => rect.left >= 0);
+
+    const rowIndexes = new Set<number>();
+    const fieldIndexes = new Set<number>();
+    for (const rect of rects) {
+        for (let row = rect.top; row <= rect.bottom; row++) {
+            const entity = datasource.getRow(row);
+            if (entity && !isGroupRow(entity)) {
+                rowIndexes.add(row);
+            }
+        }
+        for (let field = rect.left; field <= rect.right; field++) {
+            fieldIndexes.add(field);
+        }
+    }
+    const rows = [...rowIndexes].sort((a, b) => a - b);
+    const columns = [...fieldIndexes].sort((a, b) => a - b);
+    const fields = columns.map((index) => layout[index]);
+    const textOf = fields.map((field) => cellText(gridInterface, field, true));
+    const inARange = (row: number, column: number) =>
+        rects.some((rect) => row >= rect.top && row <= rect.bottom && column >= rect.left && column <= rect.right);
+
+    const texts = rows.map((row) => {
+        const entity = datasource.getRow(row) as Entity;
+        return columns.map((column, i) => (inARange(row, column) ? textOf[i](entity) : ''));
+    });
+    return clipboardTable(ctx, fields, texts);
+}
+
+/**
+ * A pasted block without its header: when every cell of its first line is the label of a column of
+ * the grid (trimmed, any case) - a copy of the grid's cells starts with one (`copyHeaders`) - that line
+ * is left out, so the labels are not written into cells. Also when it is pasted into other columns
+ * than it was copied from. A first line of data that happens to be all labels is left out too
+ */
+export function withoutHeader(ctx: Grid, block: string[][]): string[][] {
+    if (!block.length) {
+        return block;
+    }
+    const labels = new Set(getLayoutFields(ctx.gridInterface).map((field) => getColumnLabel(ctx, field).trim().toLowerCase()));
+    const first = block[0].map((text) => text.trim().toLowerCase());
+    const isHeader = first.some((text) => text !== '') && first.every((text) => text === '' || labels.has(text));
+    return isHeader ? block.slice(1) : block;
 }
 
 /**
@@ -145,7 +211,7 @@ export function rangeClipboardText(ctx: Grid, range: CellRange): { text: string;
 function cellClipboardText(ctx: Grid, point: CellPoint): { text: string; html: string } {
     const row = ctx.gridInterface.getDatasource().getRow(point.row);
     const text = row && !isGroupRow(row) ? cellTexts(ctx, [row], [point.field])[0][0] : '';
-    return { text: csvField(text, '\t'), html: htmlTable([[text]]) };
+    return { text: csvField(text, '\t'), html: htmlTable(null, [[text]]) };
 }
 
 /**
@@ -153,23 +219,34 @@ function cellClipboardText(ctx: Grid, point: CellPoint): { text: string; html: s
  * Excel). The texts are escaped; a line break in a cell is a `<br>` that Excel keeps in the cell
  * (`mso-data-placement:same-cell`)
  */
-function htmlTable(texts: string[][]): string {
+function htmlTable(header: string[] | null, texts: string[][]): string {
     const escapeHtml = (text: string) =>
         text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
-    const cell = (text: string) =>
-        `<td>${escapeHtml(text).replace(/\r\n|\r|\n/g, '<br style="mso-data-placement:same-cell">')}</td>`;
-    return `<table>${texts.map((row) => `<tr>${row.map(cell).join('')}</tr>`).join('')}</table>`;
+    // thin borders, so Word shows the cells; a line break stays in its cell in Excel
+    const style = 'border:1px solid #999;padding:2px 4px';
+    const content = (text: string) => escapeHtml(text).replace(/\r\n|\r|\n/g, '<br style="mso-data-placement:same-cell">');
+    const head = header
+        ? `<thead><tr>${header.map((text) => `<th style="${style}">${content(text)}</th>`).join('')}</tr></thead>`
+        : '';
+    const body = texts
+        .map((row) => `<tr>${row.map((text) => `<td style="${style}">${content(text)}</td>`).join('')}</tr>`)
+        .join('');
+    return `<table style="border-collapse:collapse">${head}<tbody>${body}</tbody></table>`;
 }
 
 /**
- * Writes text onto the clipboard, as plain text and html: for the row menu, outside a copy event. The
+ * Writes text onto the clipboard, as plain text and html (none for `''`): for the row menu, outside a copy
+ * event. The
  * listener is on the document in the capture phase, so it runs before the grid's own copy listener
  * (copyEvent, in the bubble phase), and cancels the copy: copyEvent leaves a canceled copy alone
  */
 export function writeClipboard(text: string, html: string) {
     const listener = (event: ClipboardEvent) => {
         event.clipboardData?.setData('text/plain', text);
-        event.clipboardData?.setData('text/html', html);
+        // a value only (the row menu's Cell Value) has no html: a program reads its text
+        if (html) {
+            event.clipboardData?.setData('text/html', html);
+        }
         event.preventDefault();
     };
     document.addEventListener('copy', listener, true);
@@ -182,7 +259,7 @@ export function writeClipboard(text: string, html: string) {
  * the ranges, a block from the top left cell of the last range
  */
 export function pasteText(ctx: Grid, text: string) {
-    const block = parseTsv(text);
+    const block = withoutHeader(ctx, parseTsv(text));
     if (block.length) {
         pasteBlock(ctx, block, null);
     }

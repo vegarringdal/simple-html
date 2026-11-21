@@ -70,7 +70,7 @@ export const aggregates: DemoSample = {
     title: 'Aggregates',
     group: 'Datasource',
     description:
-        "A column's aggregate (sum, avg, min, max or count) is shown in its place in every group row, over the group's rows - collapsed ones included - and in the totals row under the rows (totalsRow: true), over the rows the filter lets through. Here: the count of emails, the average age and the sum of the balances, grouped by country. Edit a balance, undo it (Ctrl+Z), filter, or start the live updates: the group rows and the totals follow. Scroll sideways: the totals row follows the columns.",
+        "A column's aggregate (sum, avg, min, max or count) is shown in its place in every group row, over the group's rows - collapsed ones included - and in the totals row under the rows (totalsRow: true), over the rows the filter lets through. Here: count of emails, average age, sum and average of balances, grouped by country. Right click a column label to turn them on and off. Edit a balance, undo it (Ctrl+Z), filter, or start the live updates: the group rows and the totals follow. Scroll sideways: the totals row follows the columns.",
     run(stage) {
         const ui = createStage(stage);
 
@@ -89,7 +89,7 @@ export const aggregates: DemoSample = {
                 id: { readonly: true },
                 email: { aggregate: 'count' },
                 age: { aggregate: 'avg' },
-                balance: { aggregate: 'sum' }
+                balance: { aggregate: ['sum', 'avg'] }
             },
             layout: {
                 left: [{ fields: ['company'], width: 170 }],

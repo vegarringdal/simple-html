@@ -40,7 +40,7 @@ const OPTION_KEYS: readonly (keyof CsvOptions)[] = [
 const BOOLEAN_KEYS: readonly (keyof CsvOptions)[] = ['header', 'formatted', 'bom', 'escapeFormulas'];
 
 /**
- * How long downloadCsv() keeps the file's object URL before it frees it. The download starts after
+ * How long downloadCsv() and downloadExcel() keep the file's object URL before they free it. The download starts after
  * click() returns, so the URL is not revoked right away; 40 seconds is what FileSaver.js waits.
  */
 export const REVOKE_URL_AFTER_MS = 40_000;
@@ -85,9 +85,7 @@ export function gridCsv(gridInterface: GridInterface<any>, method: CsvMethod, op
 }
 
 /**
- * Saves the grid's rows as a CSV file: a Blob, downloaded with the click of an `<a download>`. The
- * link is not put in the page (an `a` element does not need to be to download, and a modal dialog
- * makes the page inert). Its object URL is freed after REVOKE_URL_AFTER_MS.
+ * Saves the grid's rows as a CSV file: a Blob, downloaded by downloadBlob().
  * @throws a `TypeError` when the filename is not a text, or for options it does not know
  */
 export function downloadGridCsv(gridInterface: GridInterface<any>, filename: string, options: CsvOptions) {
@@ -97,8 +95,16 @@ export function downloadGridCsv(gridInterface: GridInterface<any>, filename: str
         );
     }
     const text = gridCsv(gridInterface, 'downloadCsv', options);
+    downloadBlob(new Blob([text], { type: 'text/csv;charset=utf-8' }), filename);
+}
 
-    const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+/**
+ * Downloads a Blob as a file, with the click of an `<a download>`: the CSV and the Excel export. The
+ * link is not put in the page (an `a` element does not need to be to download, and a modal dialog
+ * makes the page inert). Its object URL is freed after REVOKE_URL_AFTER_MS.
+ */
+export function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
@@ -109,7 +115,8 @@ export function downloadGridCsv(gridInterface: GridInterface<any>, filename: str
 /**
  * A function that gives the text of a field of a row: the text the grid's cell shows (as
  * renderRowCell builds it), or the value as it is stored. The clipboard of the cell ranges copies the
- * text the cells show with it too (rangeClipboard.ts).
+ * text the cells show with it too (rangeClipboard.ts), and the Excel export writes it for a value that
+ * is not of its cell's type.
  */
 export function cellText(gridInterface: GridInterface<any>, field: string, formatted: boolean): (row: Entity) => string {
     if (!formatted) {
@@ -194,7 +201,7 @@ function assertCsvOptions(method: CsvMethod, options: unknown): asserts options 
 /**
  * a value for a message: text in quotes, the rest as String() writes it
  */
-function show(value: unknown): string {
+export function show(value: unknown): string {
     if (typeof value === 'string') {
         return JSON.stringify(value);
     }

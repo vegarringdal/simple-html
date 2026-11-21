@@ -86,23 +86,14 @@ class FakeServer {
     }
 }
 
-/** the flash of a cell an upsert changed: an animation that runs once, when the class is added */
-const FLASH_STYLE = `
-@keyframes demo-live-flash { from { background: #ffe58a; } to { background: transparent; } }
-.demo-live-flash { animation: demo-live-flash 1s ease-out; }
-`;
-
 export const liveData: DemoSample = {
     id: 'live-data',
     title: 'Live data',
     group: 'Live data',
     description:
-        'A fake server changes prices every second, and datasource.upsert() merges its rows by key: the cells show the new values on their own, no refresh(). The cells a merge changed flash (getMergedAt() in a cellClass hook). Edit the price of one of the first three rows: the next merge does not overwrite it - your value stays, the server\'s is its original now, and it is a conflict. "Keep mine" and "Take server\'s" resolve the conflicts. "Full poll" sends every row with removeMissing: rows come and go, but a row you changed is kept, in conflict. Type in a cell while the timer runs: what you type stays.',
+        'A fake server changes prices every second, and datasource.upsert() merges its rows by key: the cells show the new values on their own, no refresh(). The cells a merge changed flash (GridConfig.mergeHighlight, on by default). Edit the price of one of the first three rows: the next merge does not overwrite it - your value stays, the server\'s is its original now, and it is a conflict: the cell\'s marker turns violet and the row number shows two arrows, their tooltips have the server\'s value, a click on the marker takes it. "Keep mine" and "Take server\'s" resolve every conflict. "Full poll" sends every row with removeMissing: rows come and go, but a row you changed is kept, in conflict. Type in a cell while the timer runs: what you type stays.',
     run(stage) {
         const ui = createStage(stage);
-        const style = document.createElement('style');
-        style.textContent = FLASH_STYLE;
-        stage.appendChild(style);
 
         const server = new FakeServer();
         const config: GridConfig = {
@@ -119,17 +110,8 @@ export const liveData: DemoSample = {
         };
         const datasource = new Datasource<Stock>({ key: 'id', fields: { id: 'number', price: 'number', stock: 'number' } });
         datasource.setData(server.all());
-        createGrid(ui.gridHost, {
-            config,
-            datasource,
-            hooks: {
-                // the cells an upsert changed in the last second
-                cellClass: (row, field) => {
-                    const at = datasource.getMergedAt(row, field);
-                    return at !== undefined && Date.now() - at < 1000 ? { input: 'demo-live-flash' } : null;
-                }
-            }
-        });
+        // the cells a merge changed flash, the fields in conflict have a marker: the grid does both
+        createGrid(ui.gridHost, { config, datasource });
 
         // the last merge and the conflicts, above the grid
         const panel = document.createElement('pre');

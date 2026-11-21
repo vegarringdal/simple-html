@@ -8,7 +8,7 @@ import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { GridInterface } from '../gridInterface';
 import { mountGrid, shownRowElements, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { menuItemsExact, openRowMenu } from './interactionTestHelpers';
+import { menuEntry, openLabelMenu } from './interactionTestHelpers';
 
 /**
  * Aggregates in the grid (ColumnConfig.aggregate): a cell per aggregate in the place of its field in
@@ -106,13 +106,13 @@ describe('aggregates - group rows', () => {
         const norway = groupRow(element, 'Country: Norway');
         expect(textOf(norway.querySelector('.simple-html-grid-group-name'))).toContain('Country: Norway (2)');
         expect(textOf(aggregateCell(norway, 'sum:balance'))).toEqual('Sum 12,5');
-        expect(textOf(aggregateCell(norway, 'avg:age'))).toEqual('Avg 35');
+        expect(textOf(aggregateCell(norway, 'avg:age'))).toEqual('Avg Age 35');
         expect(textOf(aggregateCell(norway, 'count:email'))).toEqual('Count 1');
         expect(textOf(aggregateCell(norway, 'max:score'))).toEqual('Max 8');
 
         const sweden = groupRow(element, 'Country: Sweden');
         expect(textOf(aggregateCell(sweden, 'sum:balance'))).toEqual('Sum -4');
-        expect(textOf(aggregateCell(sweden, 'avg:age'))).toEqual('Avg 35.5');
+        expect(textOf(aggregateCell(sweden, 'avg:age'))).toEqual('Avg Age 35.5');
         expect(textOf(aggregateCell(sweden, 'count:email'))).toEqual('Count 2');
     });
 
@@ -158,22 +158,58 @@ describe('aggregates - group rows', () => {
         expect(textOf(name)).toEqual('Count 2');
     });
 
-    it('expect a field on the second line of its column on the second line, the group rows two lines high', async () => {
+    it('expect the name on a line of its own and the aggregates under it: the group rows 1 + n lines high', async () => {
         const { element, datasource, gridInterface } = await mount();
         datasource.group([{ attribute: 'country', title: 'Country' }]);
         datasource.expandGroup();
 
-        // age is the second field of city+age: the group rows are as high as the data rows
+        // every column has one function: the name's line and one line of aggregates, as high as the
+        // data rows (city+age stacks two fields)
         const norway = groupRow(element, 'Country: Norway');
+        const name = norway.querySelector('.simple-html-grid-group-name') as HTMLElement;
+        expect(name.style.height).toEqual('22px');
         expect(aggregateCell(norway, 'avg:age').style.top).toEqual('22px');
-        expect(aggregateCell(norway, 'sum:balance').style.top).toEqual('0px');
-        const { scrollHeights } = gridInterface.__getScrollState();
-        expect(scrollHeights).toEqual([44, 44, 44, 44, 44, 44]);
+        expect(aggregateCell(norway, 'sum:balance').style.top).toEqual('22px');
+        expect(gridInterface.__getScrollState().scrollHeights).toEqual([44, 44, 44, 44, 44, 44]);
         expect(norway.style.height).toEqual('44px');
 
-        // without that aggregate one line again
-        gridInterface.updateConfig({ columns: { ...config().columns, age: {} } });
+        // sum and avg of balance: three lines, the functions one under the other
+        gridInterface.updateConfig({ columns: { ...config().columns, balance: { aggregate: ['avg', 'sum'] } } });
+        const again = groupRow(element, 'Country: Norway');
+        expect(aggregateCell(again, 'sum:balance').style.top).toEqual('22px');
+        expect(aggregateCell(again, 'avg:balance').style.top).toEqual('44px');
+        expect(gridInterface.__getScrollState().scrollHeights).toEqual([66, 44, 44, 66, 44, 44]);
+
+        // without aggregates one line again
+        gridInterface.updateConfig({ columns: {} });
         expect(gridInterface.__getScrollState().scrollHeights).toEqual([22, 44, 44, 22, 44, 44]);
+    });
+
+    it('expect each line the label at the left and the value at the right, a field label in a stacked column', async () => {
+        const { element, datasource } = await mount();
+        datasource.group([{ attribute: 'country', title: 'Country' }]);
+        const norway = groupRow(element, 'Country: Norway');
+
+        const balance = aggregateCell(norway, 'sum:balance');
+        const spans = Array.from(balance.querySelectorAll('span')).map((span) => [span.className, span.textContent?.trim()]);
+        expect(spans).toEqual([
+            ['simple-html-grid-aggregate-label', 'Sum'],
+            ['simple-html-grid-aggregate-value', '12,5']
+        ]);
+        // age shares its column with city: its label says which field it is
+        expect(textOf(aggregateCell(norway, 'avg:age'))).toEqual('Avg Age 35');
+    });
+
+    it('expect one gridcell per field for a screen reader, named with all its lines', async () => {
+        const { element, datasource, gridInterface } = await mount();
+        gridInterface.updateConfig({ columns: { ...config().columns, balance: { aggregate: ['sum', 'max'] } } });
+        datasource.group([{ attribute: 'country', title: 'Country' }]);
+        const norway = groupRow(element, 'Country: Norway');
+
+        const sum = aggregateCell(norway, 'sum:balance');
+        const max = aggregateCell(norway, 'max:balance');
+        expect([sum.getAttribute('role'), sum.getAttribute('aria-label')]).toEqual(['gridcell', 'Sum 12,5, Max 10,5']);
+        expect([max.getAttribute('role'), max.getAttribute('aria-hidden')]).toEqual(['none', 'true']);
     });
 
     it('expect a group row over all its rows: its sub groups, collapsed ones included', async () => {
@@ -252,7 +288,7 @@ describe('aggregates - the totals row', () => {
         expect(totals.style.display).toEqual('block');
         expect(textOf(totals.querySelector('.simple-html-grid-totals-label'))).toEqual('Total');
         expect(textOf(aggregateCell(totals, 'sum:balance'))).toEqual('Sum 8,5');
-        expect(textOf(aggregateCell(totals, 'avg:age'))).toEqual('Avg 35.25');
+        expect(textOf(aggregateCell(totals, 'avg:age'))).toEqual('Avg Age 35.25');
         expect(textOf(aggregateCell(totals, 'count:email'))).toEqual('Count 3');
         expect(textOf(aggregateCell(totals, 'max:score'))).toEqual('Max 8');
     });
@@ -271,19 +307,22 @@ describe('aggregates - the totals row', () => {
         // not grouped: no grouping column in the left section
         expect((totals.querySelector('.simple-html-grid-aggregates-left') as HTMLElement).style.width).toEqual('120px');
         expect(aggregateCell(totals, 'sum:balance').style.left).toEqual('190px');
-        expect(aggregateCell(totals, 'avg:age').style.top).toEqual('22px');
+        // the lines are the column's functions from the top: age's average is on the first line, and
+        // says which field it is - its column stacks city and age
+        expect(aggregateCell(totals, 'avg:age').style.top).toEqual('0px');
+        expect(textOf(aggregateCell(totals, 'avg:age'))).toEqual('Avg Age 35.25');
     });
 
     it('expect the rows to end above it, the horizontal scrollbar between them', async () => {
         const { element } = await mount({ totalsRow: true, footerHeight: 40 });
         const style = (className: string) => (element.querySelector(`.${className}`) as HTMLElement).style;
 
-        // two lines (age is on the second line of its column) and the scrollbar band of 10px
-        expect(style('simple-html-grid-totals').height).toEqual('54px');
+        // one line (every column has one function) and the scrollbar band of 10px
+        expect(style('simple-html-grid-totals').height).toEqual('32px');
         expect(style('simple-html-grid-totals').bottom).toEqual('40px');
-        expect(style('simple-html-grid-body').bottom).toEqual('94px');
-        expect(style('simple-html-grid-body-scroller').bottom).toEqual('94px');
-        expect(style('simple-html-grid-middle-scroller').bottom).toEqual('84px');
+        expect(style('simple-html-grid-body').bottom).toEqual('72px');
+        expect(style('simple-html-grid-body-scroller').bottom).toEqual('72px');
+        expect(style('simple-html-grid-middle-scroller').bottom).toEqual('62px');
         expect(style('simple-html-grid-footer').height).toEqual('40px');
     });
 
@@ -432,7 +471,9 @@ describe('aggregates - the config', () => {
         const datasource = await datasourceOf();
 
         expect(() => new GridInterface(config({ columns: { age: { aggregate: 'total' as any } } }), datasource)).toThrow(
-            new TypeError("GridConfig: columns.age.aggregate is \"total\", it is one of 'sum', 'avg', 'min', 'max', 'count'")
+            new TypeError(
+                "GridConfig: columns.age.aggregate is \"total\", it is one of 'sum', 'avg', 'min', 'max', 'count' or a list of them"
+            )
         );
     });
 
@@ -472,62 +513,117 @@ describe('aggregates - the config', () => {
     });
 });
 
-describe('aggregates - the row menu summary', () => {
-    /** the summary of a number column over the selected rows, its entries by id */
-    async function summary(values: (number | null)[]) {
-        const data = values.map((value, i) => ({ id: i + 1, name: `n${i}`, value }));
-        const { element, datasource } = await mountGrid(
-            {
-                layout: {
-                    center: [
-                        { fields: ['name'], width: 100 },
-                        { fields: ['value'], width: 100 }
-                    ]
-                }
-            },
-            data,
-            { key: 'id', fields: { value: 'number' } }
+describe('aggregates - the state', () => {
+    it('expect getState() to have the aggregates of the config and whether the totals row is shown', async () => {
+        const { gridInterface } = await mount({ totalsRow: true });
+
+        const state = gridInterface.getState();
+
+        expect(state.aggregates).toEqual({ age: ['avg'], balance: ['sum'], email: ['count'], score: ['max'] });
+        expect(state.totalsRow).toBe(true);
+    });
+
+    it('expect setState() to apply them: the functions listed, the other fields none', async () => {
+        const { element, datasource, gridInterface } = await mount();
+        datasource.group([{ attribute: 'country', title: 'Country' }]);
+
+        gridInterface.setState({ aggregates: { balance: ['sum', 'min'] }, totalsRow: true });
+
+        const norway = groupRow(element, 'Country: Norway');
+        expect(aggregateCell(norway, 'min:balance')).not.toBeNull();
+        expect(aggregateCell(norway, 'avg:age')).toBeNull();
+        expect(gridInterface.__getGridConfig().__totalsRowHeight).toEqual(44);
+        expect(gridInterface.getState().aggregates).toEqual({ balance: ['sum', 'min'] });
+    });
+
+    it('expect resetState() to go back to the config, and a state to round-trip as JSON', async () => {
+        const { gridInterface } = await mount();
+        const saved = JSON.parse(JSON.stringify(gridInterface.getState()));
+        gridInterface.setState({ aggregates: {}, totalsRow: true });
+
+        gridInterface.resetState();
+        expect(gridInterface.getState().aggregates).toEqual(saved.aggregates);
+        expect(gridInterface.getState().totalsRow).toBe(false);
+
+        gridInterface.setState({ aggregates: { score: ['count'] } });
+        gridInterface.setState(saved);
+        expect(gridInterface.getState()).toEqual(saved);
+    });
+
+    it('expect a wrong function in the state to throw a TypeError and change nothing', async () => {
+        const { gridInterface } = await mount();
+
+        expect(() => gridInterface.setState({ aggregates: { email: ['sum'] } })).toThrow(
+            new TypeError(
+                "setState: aggregates.email 'sum' is for a number field, 'email' is text: new Datasource({ fields: { email: 'number' } }), or 'count'"
+            )
         );
-        datasource.selectAll();
-        openRowMenu(element, 'value', 0);
-        const label = (id: string) => textOf(document.querySelector(`[data-menu-id="row.summary.${id}"]`));
-        return { count: label('count'), sum: label('sum'), max: label('max'), min: label('min'), avg: label('avg') };
-    }
-
-    it('expect the largest of negative numbers to be negative, not 0', async () => {
-        expect((await summary([-5, -3])).max).toEqual('Max: -3');
+        expect(gridInterface.getState().aggregates.email).toEqual(['count']);
     });
 
-    it('expect 0 to be the smallest value, not skipped', async () => {
-        expect((await summary([0, 5])).min).toEqual('Min: 0');
+    it('expect the totals row the user turned on to stay through an updateConfig() without totalsRow', async () => {
+        const { gridInterface } = await mount();
+        gridInterface.setState({ totalsRow: true });
+
+        gridInterface.updateConfig({ readonly: true });
+        expect(gridInterface.getState().totalsRow).toBe(true);
+
+        gridInterface.updateConfig({ totalsRow: false });
+        expect(gridInterface.getState().totalsRow).toBe(false);
+    });
+});
+
+describe('aggregates - the header menu', () => {
+    // in the aggregate submenu, opened on the way
+    const entry = (id: string) => menuEntry(id) as HTMLElement | null;
+    const isChecked = (id: string) => !!entry(id)?.classList.contains('simple-html-grid-menu-item-selected');
+
+    it('expect a toggle for each function on a number column, the ones on checked', async () => {
+        const { element } = await mount();
+        openLabelMenu(element, 'balance');
+
+        expect(['sum', 'avg', 'min', 'max', 'count'].map((fn) => !!entry(`header.aggregate.${fn}`))).toEqual([
+            true,
+            true,
+            true,
+            true,
+            true
+        ]);
+        expect(isChecked('header.aggregate.sum')).toBe(true);
+        expect(isChecked('header.aggregate.avg')).toBe(false);
     });
 
-    it('expect the average not rounded to a whole number', async () => {
-        expect((await summary([1, 2])).avg).toEqual('Avg: 1.5');
+    it('expect count only on a column that is not a number', async () => {
+        const { element } = await mount();
+        openLabelMenu(element, 'email');
+
+        expect(['sum', 'avg', 'min', 'max'].map((fn) => entry(`header.aggregate.${fn}`))).toEqual([null, null, null, null]);
+        expect(isChecked('header.aggregate.count')).toBe(true);
     });
 
-    it('expect the average of the numbers only: a blank is not counted', async () => {
-        expect((await summary([1, 2, null])).avg).toEqual('Avg: 1.5');
+    it('expect a click to turn a function on and off, in the state, the group rows growing a line', async () => {
+        const { element, datasource, gridInterface } = await mount();
+        datasource.group([{ attribute: 'country', title: 'Country' }]);
+
+        openLabelMenu(element, 'balance');
+        entry('header.aggregate.avg')?.click();
+        expect(gridInterface.getState().aggregates.balance).toEqual(['sum', 'avg']);
+        expect(gridInterface.__getGridConfig().__groupRowHeight).toEqual(66);
+        expect(aggregateCell(groupRow(element, 'Country: Norway'), 'avg:balance')).not.toBeNull();
+
+        openLabelMenu(element, 'balance');
+        entry('header.aggregate.sum')?.click();
+        expect(gridInterface.getState().aggregates.balance).toEqual(['avg']);
     });
 
-    it('expect the rest as before: the count of the selected rows, the values with two decimals at most', async () => {
-        const shown = await summary([1.5, 2.25, null]);
+    it('expect the totals row toggle', async () => {
+        const { element, gridInterface } = await mount();
 
-        expect({ count: shown.count, sum: shown.sum, max: shown.max, min: shown.min }).toEqual({
-            count: 'Count: 3',
-            sum: 'Sum: 3.75',
-            max: 'Max: 2.25',
-            min: 'Min: 1.5'
-        });
-        // 1.875, the average of the two numbers
-        expect(shown.avg).toEqual('Avg: 1.88');
-    });
+        openLabelMenu(element, 'balance');
+        expect(isChecked('header.aggregate.totalsRow')).toBe(false);
+        entry('header.aggregate.totalsRow')?.click();
 
-    it('expect a click on an entry to copy its value', async () => {
-        const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
-        await summary([-5, -3]);
-
-        menuItemsExact('Max: -3')[0].click();
-        expect(writeText).toHaveBeenCalledWith('-3');
+        expect(gridInterface.getState().totalsRow).toBe(true);
+        expect(textOf(totalsRow(element).querySelector('.simple-html-grid-totals-label'))).toEqual('Total');
     });
 });

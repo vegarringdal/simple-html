@@ -6,7 +6,7 @@ export const contextMenu: DemoSample = {
     title: 'Menus',
     group: 'Editing',
     description:
-        'The right click menus are lists of entries with ids (MENU_IDS lists them): the menus hook hides, reorders or adds entries. Here the row menu drops "Row (selected rows/col)" and gets a "Fruit:" part of its own on the fruit column. Hooks are functions, given next to the config: createGrid(host, { config, datasource, hooks: { menus } }). openMenu() opens a menu of your own: click a cell in the fruit column to pick a value. Every menu is a popover, over everything on the page; a click outside or Esc closes it.',
+        'The right click menus are trees of entries with ids (MENU_IDS lists them): most entries are in submenus - Copy ›, Filter › ... - that open beside their item, on hover, a click or ArrowRight. The menus hook hides, reorders or adds entries. Here the row menu drops "Row (selected rows/col)" from its Copy submenu and gets a "Fruit" submenu of its own on the fruit column. Hooks are functions, given next to the config: createGrid(host, { config, datasource, hooks: { menus } }). openMenu() opens a menu of your own: click a cell in the fruit column to pick a value. Every menu is a popover, over everything on the page; a click outside or Esc closes it. Shift+F10 (or the menu key) in a cell opens the row menu from the keyboard: the arrows, Enter, Esc.',
     run(stage) {
         const ui = createStage(stage);
         // a hook, not part of the config: the config stays plain JSON
@@ -16,23 +16,34 @@ export const contextMenu: DemoSample = {
                 // the row menu is opened on a cell, a data row. isGroupRow() tells TypeScript
                 const row = isGroupRow(context.row) ? undefined : context.row;
                 return [
-                    // hide a built-in entry by its id - MENU_IDS lists them all
-                    ...defaults.filter((entry) => entry.id !== 'row.copy.selectedColumns'),
-                    // and add your own
-                    { type: 'section', id: 'demo.fruit', label: 'Fruit:', visible: () => context.field === 'favoriteFruit' },
+                    // hide a built-in entry by its id - MENU_IDS lists them all. It is in the copy
+                    // submenu: change that submenu's entries
+                    ...defaults.map((entry) =>
+                        entry.type === 'submenu' && entry.id === 'row.copy'
+                            ? { ...entry, entries: entry.entries.filter((inner) => inner.id !== 'row.copy.selectedColumns') }
+                            : entry
+                    ),
+                    // and add your own: a submenu, shown on the fruit column only
                     {
-                        id: 'demo.fruit.clear',
-                        label: 'Clear fruit',
-                        hint: 'this row',
+                        type: 'submenu',
+                        id: 'demo.fruit',
+                        label: 'Fruit',
                         visible: () => context.field === 'favoriteFruit',
-                        disabled: () => !row?.favoriteFruit, // greyed out when there is nothing to clear
-                        action: () => {
-                            if (row) {
-                                row.favoriteFruit = null;
-                                context.gridInterface.refresh();
-                                ui.log(`cleared the fruit of ${row.company}`);
+                        entries: [
+                            {
+                                id: 'demo.fruit.clear',
+                                label: 'Clear fruit',
+                                hint: 'this row',
+                                disabled: () => !row?.favoriteFruit, // greyed out when there is nothing to clear
+                                action: () => {
+                                    if (row) {
+                                        row.favoriteFruit = null;
+                                        context.gridInterface.refresh();
+                                        ui.log(`cleared the fruit of ${row.company}`);
+                                    }
+                                }
                             }
-                        }
+                        ]
                     }
                 ];
             }

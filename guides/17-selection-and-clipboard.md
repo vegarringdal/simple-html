@@ -81,6 +81,25 @@ and `-right`.
 
 The cells are reused while the grid scrolls: the classes follow the rows and fields they show.
 
+### The summary in the footer
+
+With ranges of more than one cell the footer shows a summary of them at its right, like the status bar
+of a spreadsheet: `Count: 20   Sum: 201   Average: 40.2   Min: 26   Max: 53`.
+
+- **Count** is the cells with a value, of any type: a blank (`null`, `''`) is left out, `0` and
+  `false` count.
+- **Sum, Average, Min, Max** are of the numbers of the number fields (`type: 'number'`) - a text of
+  digits is no number. Without numbers only the count shows.
+- Every cell once: ranges that overlap count their common cells once; group rows have no cells.
+- The numbers are shown with the formatter of the number field furthest left in the ranges, two decimals
+  at most.
+- It follows the ranges and the values in them: an edit, a paste, an upsert. One cell, or no range,
+  shows none.
+
+It is a group named "Selected cells" for a screen reader, its tooltip has all of it when a narrow grid
+cuts it. The texts are `footer.summary.*`, see [Texts](12-texts.md). The filter chips collapse to one box
+when they would reach under it.
+
 ### When the ranges are cleared
 
 The rows of a range are indexes of the displayed rows, and its fields are good for the layout it was
@@ -131,29 +150,43 @@ const csv = gridInterface.getCsv({ rows: 'range' });
 
 Ctrl+C (Cmd+C) in a cell, with no text selected in it:
 
-- **with a range of more than one cell, or several ranges**: the last range, as tab separated text -
-  a line per data row ended with CRLF, a tab between the fields, as Excel puts cells on the clipboard.
-  A value with a tab, a line break or a double quote is put in double quotes, a quote in it doubled.
-  Every value is the text the cell shows, through the field's formatter: `12,5` with a decimal comma,
-  a date as its formatter writes it.
+- **with a range of more than one cell, or several ranges**: the cells as a table of tab separated
+  text - **a header line of the column labels first**, then a line per data row, each ended with CRLF,
+  a tab between the fields, as Excel puts cells on the clipboard. A value with a tab, a line break or a
+  double quote is put in double quotes, a quote in it doubled. Every value is the text the cell shows,
+  through the field's formatter: `12,5` with a decimal comma, a date as its formatter writes it.
 - **else**: the value of the cell with the focus, as the cell shows it, without a line end - as the
-  row menu's *Copy: Cell Value*. Before v6 this copied nothing.
+  row menu's *Copy › Cell Value*. Before v6 this copied nothing.
 
-An html table of the same cells goes on the clipboard too, for the programs that paste html rather
-than plain text. A line break in a cell is a `<br>` with the style Excel reads as a line break in the
-cell (`mso-data-placement:same-cell`).
+An html table of the same cells goes on the clipboard too, with the labels as its header row (`<th>`)
+and thin borders - Word, Google Docs and Excel paste the html, so the table has its headers there. A
+line break in a cell is a `<br>` with the style Excel reads as a line break in the cell
+(`mso-data-placement:same-cell`).
+
+**The header line** is there for every copy of more than one cell: Ctrl+C on ranges and the row
+menu's *Copy › Column*, *Row*, *Row (selected rows/col)* and *Range*. Not for one cell (Ctrl+C on a
+cell, *Copy › Cell Value*): that is a value. `copyHeaders: false` in the config copies the values only:
+
+```ts
+gridInterface.updateConfig({ copyHeaders: false });
+```
 
 **Text selected in the cell's input** is copied as before: the input's own copy. Making a range ends
 the text selection of the active cell, so after a drag or Alt+Shift+arrows Ctrl+C copies the range.
 
-**Several ranges**: the last one is copied. Excel refuses to copy ranges that do not make a rectangle
-together; the grid copies the one made last, so Ctrl+C always copies something you can see.
+**Several ranges are copied as one table**: the rows of every range, in the order of the grid, and
+the fields of every range, in the order of the layout. A cell that is in none of the ranges is
+empty. So two ranges side by side (Name and Age, rows 1-2) are one table of Name and Age - the
+columns between them are not copied - and two ranges one above the other (City rows 1-2 and row 5)
+one longer table; ranges that cross leave the cells they do not cover empty. Excel refuses to copy
+ranges that do not make a rectangle together; the grid copies them all.
 
 Text that looks like a formula (`=SUM(A1:A2)`) is copied as it is: what is copied is what is in the
 cells, and a paste back into the grid gives the same values. A spreadsheet may take it as a formula
 when it is pasted there - the CSV export escapes it (`escapeFormulas`), the clipboard does not.
 
-The row menu (right click a cell) has *Copy: Range* while there are ranges: the last range, as Ctrl+C.
+The row menu (right click a cell) has *Copy › Range* while there are ranges: every range, as Ctrl+C.
+*Copy › Column* and *Row* copy the selected rows, with the header line, values as the cells show them.
 That also works when the focus is not in a cell, after the wheel scrolled the grid.
 
 ## Paste
@@ -163,6 +196,10 @@ cells: what Excel and Google Sheets copy, and what the grid copies. A line per r
 a value in double quotes can hold tabs and line breaks, `""` is a quote; the line end Excel puts after
 the last row is not a row.
 
+- **A header line is left out**: when every cell of the first line is the label of one of the grid's
+  columns (any case, spaces around ignored), it is a copy's header and is not written into cells - so
+  a copy of the grid pasted back into it, into the same columns or others, writes the values. A
+  first line of data that is all labels is left out too; that is rare, and the paste can be undone.
 - **One value, ranges of more than one cell**: every cell of every range gets it - copy one cell,
   select a range, paste.
 - **A block of cells**: from the top left cell of the last range - or the cell with the focus when
@@ -203,6 +240,27 @@ selected in the input: every cell of every range is emptied (`null`), the readon
 an editable grid. In one cell they are the input's own keys, as before. The row menu's *Clear: Clear
 range* does the same.
 
+## Fill down
+
+**Ctrl+D** (Cmd+D on a Mac) in a cell fills down, like a spreadsheet:
+
+- **with ranges**: in every range the values of its top row go into the rows under it
+- **a range of one row**, or **the cell alone** (no range): it gets the values of the data row above it
+
+**The fill handle** is the small square at the bottom right corner of the last range. Drag it down: the
+range grows to the row under the pointer (past the bottom of the rows the grid scrolls), and when it
+is let go the rows it grew by get the values of the range's rows, repeated from its top - two rows
+`open`, `done` dragged over four more rows give `open`, `done`, `open`, `done`. Down only.
+
+The values are copied as they are, a date as a date of its own; the cells that can not be edited are
+skipped, group rows have no cells, and it is one step of the undo history (Ctrl+Z). In a readonly grid
+there is no handle, and Ctrl+D is the browser's. From code:
+
+```ts
+gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 4, toField: 'status' }]);
+gridInterface.fillDown();
+```
+
 ## Undo
 
 A paste, a Delete and a clear of ranges are written in one go: **one Ctrl+Z** takes all of it back,
@@ -212,6 +270,13 @@ see [Undo and redo](05-editing.md#undo-and-redo).
 // what a paste or a Delete did, from code: one step
 datasource.undo();
 ```
+
+## Find
+
+Ctrl+F in the grid finds a text in the cells and marks them - a match in a range shows both tints. It
+selects nothing: the ranges and the selected rows stay as they are; Esc in the find bar puts the focus in
+the cell of the current match, which clears the ranges as moving to another cell does. See
+[Find](19-find.md).
 
 ## What a screen reader gets
 
@@ -225,11 +290,11 @@ while it grows, the focus stays in the active cell.
 - **No ranges by touch**, see [The mouse](#the-mouse).
 - **Copy and paste listen while the focus is in a cell of the grid.** The wheel takes the focus from
   the cell (its row element is reused for other rows), then Ctrl+C goes to the page: use the row
-  menu's *Copy: Range*, or Shift+click the cell at the end of the range again - the range stays as it
+  menu's *Copy › Range*, or Shift+click the cell at the end of the range again - the range stays as it
   is and the cell gets the focus.
 - **Cut** (Ctrl+X) is the input's own: it cuts the text selected in the cell, not a range. Copy, then
   Delete.
-- **Several ranges** copy the last one; a block is pasted into the last one.
+- **Several ranges** copy as one table (see [Copy](#copy)); a block is pasted into the last one.
 - **No fill**: a block is not repeated to fill a larger range, only one value fills it.
 - **Checked in Chrome**: the drag over the cells, the text selection it ends, the clipboard. Firefox
   and Safari have not been tried.

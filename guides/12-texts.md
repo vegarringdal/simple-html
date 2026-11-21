@@ -16,8 +16,8 @@ import { setTexts, type Texts } from '@simple-html/grid';
 
 // a text for each id to change, the rest stay English
 const norwegian: Texts = {
-    'row.copy': 'Kopier:',
-    'row.summary.count': 'Antall: {count}',
+    'row.copy': 'Kopier',
+    'footer.summary.count': 'Antall: {count}',
     'filterEditor.addCondition.tooltip': 'Legg til betingelse',
     'validation.required': 'Må fylles ut'
 };
@@ -54,11 +54,11 @@ A text is looked up in this order, the first that has the id wins:
 ```ts
 import { createGrid, type GridConfig, setTexts } from '@simple-html/grid';
 
-setTexts({ 'row.copy': 'Kopier:', 'row.paste': 'Lim inn:' }); // every grid of the page
+setTexts({ 'row.copy': 'Kopier', 'row.paste': 'Lim inn' }); // every grid of the page
 
 const config: GridConfig = {
     layout: { center: [{ fields: ['name'], width: 150 }] },
-    texts: { 'row.copy': 'Copy:' } // this grid: Copy: and Lim inn:
+    texts: { 'row.copy': 'Copy' } // this grid: Copy and Lim inn
 };
 const gridInterface = createGrid(host, { config, datasource });
 ```
@@ -75,14 +75,14 @@ as a whole, `texts: undefined` removes them. The object given is copied by `setT
 
 ## Texts with values
 
-A text with `{name}` in it gets a value when it is shown: `'row.summary.count': 'Count: {count}'`
+A text with `{name}` in it gets a value when it is shown: `'footer.summary.count': 'Count: {count}'`
 shows `Count: 3`. The tables [below](#all-ids) name the values of each text. Keep the names in a
 translation, a value can go anywhere in the text; a name the text has no value for is shown as it is.
 
 ```ts
 import { setTexts } from '@simple-html/grid';
 
-setTexts({ 'row.summary.count': '{count} rader', 'footer.rowCount': 'Viser {shown} av {total}' });
+setTexts({ 'footer.summary.count': '{count} celler', 'footer.rowCount': 'Viser {shown} av {total}' });
 ```
 
 ## The ids
@@ -90,9 +90,10 @@ setTexts({ 'row.summary.count': '{count} rader', 'footer.rowCount': 'Viser {show
 The ids are grouped by area, the area first. Within an area:
 
 - **A menu entry's text has the entry's id**, see [Menus](10-menus.md#the-built-in-ids): the text of the
-  entry `row.copy.cell` is `row.copy.cell`. The text in parentheses after an entry, its hint, is
-  `<id>.hint`. The separators and the value list (`filter.values`, a block) have no text of their own,
-  the parts of the value list are `filter.values.*`.
+  entry `row.copy.cell` is `row.copy.cell`, the label of the submenu `row.copy` is `row.copy`. The
+  text in parentheses after an entry, its hint, is `<id>.hint`. The separators and the value list
+  (`filter.values`, a block) have no text of their own, the parts of the value list are
+  `filter.values.*`.
 - **A tooltip is `<id>.tooltip`**: `filterEditor.filterOnly` is the button, `filterEditor.filterOnly.tooltip`
   its tooltip. A tooltip of an icon has no text without `.tooltip`.
 - **An operator has a name in each place it is shown**, the `FilterOperator` at the end:
@@ -147,7 +148,7 @@ Nothing is shown again when a text changes, it is read when what shows it is mad
 
 | what | shows a changed text |
 | --- | --- |
-| the grid: header, rows, footer | after its next rebuild. `updateConfig({ texts })` rebuilds, after `setTexts()` call `gridInterface.rebuild()` |
+| the grid: header, rows, footer, the find bar | after its next rebuild. `updateConfig({ texts })` rebuilds, after `setTexts()` call `gridInterface.rebuild()` |
 | a menu, the column chooser, the filter editor, the date picker | the next time it opens (the filter editor also when it is rendered again after an edit) |
 | `getFilterString()` | on its next call |
 | a validation message | when the value is validated: an edit of the field, or `validate()`. An error already there keeps its text |
@@ -172,9 +173,10 @@ gridInterface.rebuild(); // every grid of the page
 - The placeholders of the date formatters, `YYYY-MM-DD` and `DD.MM.YYYY` in an empty date header
   filter: give the column a `placeholderFilter`, or use a formatter of your own with another
   `placeholder` (see [Formatting](08-formatting.md#a-formatter-of-your-own)).
-- Symbols and numbers: `✕` closes the filter editor, `✓` marks the dimmed values on, `?` a footer
-  chip without a field or operator, `(12)` the count of a value in the
-  value list.
+- Symbols and numbers: `✕` closes the filter editor and the find bar, `↑` and `↓` of the find bar,
+  `✓` marks a menu item that is on (an aggregate, the dimmed values, the operator in use), `›` an item
+  that opens a submenu, `?` a footer chip without a field or operator, `(12)` the count of a value in
+  the value list.
 - `headerTitle` of a `DateInterface` calendar: your own text.
 
 ## All ids
@@ -185,7 +187,7 @@ Right click on a cell.
 
 | id | English | shown |
 | --- | --- | --- |
-| `row.copy` | `Copy:` | section header |
+| `row.copy` | `Copy` | the copy submenu |
 | `row.copy.cell` | `Cell Value` | copies the value of the cell |
 | `row.copy.column` | `Column` | copies the column of the selected rows |
 | `row.copy.column.hint` | `selected rows` | its hint |
@@ -194,28 +196,28 @@ Right click on a cell.
 | `row.copy.selectedColumns` | `Row` | copies the selected columns of the selected rows |
 | `row.copy.selectedColumns.hint` | `selected rows/col` | its hint |
 | `row.copy.range` | `Range` | copies the last range of cells, see [Selection and clipboard](17-selection-and-clipboard.md) |
-| `row.filter` | `Filter:` | section header |
+| `row.filter` | `Filter` | the filter submenu |
 | `row.filter.replace` | `Replace filter` | filters on the value of the cell, replacing the filter |
 | `row.filter.replace.hint` | `all` | its hint |
 | `row.filter.add` | `Add to filter` | ANDs the value of the cell with the filter |
 | `row.filter.add.hint` | `and` | its hint |
-| `row.view` | `View:` | section header |
-| `row.view.dimRepeatedValues` | `Use dimmed values` | turns `dimRepeatedValues` on and off. A `✓ ` is put in front while it is on |
-| `row.view.changedOnly` | `Changed rows only` | turns `datasource.filterChangedOnly()` on and off: the new, edited and deleted rows only. A `✓ ` is put in front while it is on |
-| `row.paste` | `Paste:` | section header, an editable cell or ranges of cells |
+| `row.view` | `View` | the view submenu |
+| `row.view.dimRepeatedValues` | `Use dimmed values` | turns `dimRepeatedValues` on and off, with a ✓ in front while it is on |
+| `row.view.changedOnly` | `Changed rows only` | turns `datasource.filterChangedOnly()` on and off: the new, edited and deleted rows only. A ✓ in front while it is on |
+| `row.paste` | `Paste` | the paste submenu, an editable cell or ranges of cells |
 | `row.paste.cell` | `Paste cell` | pastes into the column of the selected rows |
 | `row.paste.cell.hint` | `selected rows` | its hint |
 | `row.paste.range` | `Paste range` | pastes the clipboard into the ranges of cells, as Ctrl+V |
-| `row.clear` | `Clear:` | section header, an editable cell or ranges of cells |
+| `row.clear` | `Clear` | the clear submenu, an editable cell or ranges of cells |
 | `row.clear.cell` | `Clear cell` | empties the column of the selected rows |
 | `row.clear.cell.hint` | `selected rows` | its hint |
 | `row.clear.range` | `Clear range` | empties the cells of the ranges, as Delete |
-| `row.delete` | `Delete:` | section header, an editable grid |
+| `row.delete` | `Delete` | the delete submenu, an editable grid |
 | `row.delete.rows` | `Rows` | marks the selected rows for deletion |
 | `row.delete.rows.hint` | `selected rows` | its hint |
 | `row.delete.undo` | `Undo` | takes the mark off the selected rows |
 | `row.delete.undo.hint` | `selected rows` | its hint |
-| `row.edit` | `Edit:` | section header, an editable grid |
+| `row.edit` | `Undo / Redo` | the row menu's submenu of undo, redo and the reverts, in an editable grid |
 | `row.edit.undo` | `Undo last change` | undoes the last step of the undo history |
 | `row.edit.undo.hint` | `Ctrl+Z` | its hint, the key |
 | `row.edit.redo` | `Redo` | redoes the last step undone |
@@ -224,15 +226,17 @@ Right click on a cell.
 | `row.edit.revertRow` | `Undo row edits` | puts the original values of the row right clicked back |
 | `row.edit.revertRows` | `Undo row edits` | puts the original values of the selected rows back |
 | `row.edit.revertRows.hint` | `selected rows` | its hint |
-| `row.summary` | `Summary:` | section header, a number column |
-| `row.summary.count` | `Count: {count}` | `{count}`: the number of selected rows |
-| `row.summary.sum` | `Sum: {sum}` | `{sum}`: their sum, formatted |
-| `row.summary.max` | `Max: {max}` | `{max}`: the largest value, formatted |
-| `row.summary.min` | `Min: {min}` | `{min}`: the smallest value, formatted |
-| `row.summary.avg` | `Avg: {avg}` | `{avg}`: the average, formatted |
-| `row.export` | `Export:` | section header |
-| `row.export.csv` | `CSV, all rows` | downloads the rows the filter lets through |
-| `row.export.csvSelected` | `CSV, selected rows` | downloads the selected rows |
+| `row.size` | `Size` | the size submenu |
+| `row.size.fitColumn` | `Fit column to this cell` | the column as wide as the text of the cell right clicked |
+| `row.size.fitRow` | `Fit row height` | the row right clicked as high as its multiline cells need |
+| `row.size.fitRows` | `Fit row height` | the selected rows and the rows of the ranges of cells, the same |
+| `row.size.fitRows.hint` | `selected rows` | its hint |
+| `row.size.fitAllRows` | `Fit all rows` | every row the filter lets through, the same |
+| `row.size.resetRow` | `Reset row height` | the row right clicked back to the height of the layout |
+| `row.size.resetAllRows` | `Reset all row heights` | every row back to the height of the layout |
+| `row.export` | `Export` | the export submenu |
+| `row.export.excel` | `Excel, all rows` | downloads the rows the filter lets through as an .xlsx file |
+| `row.export.excelSelected` | `Excel, selected rows` | downloads the selected rows as an .xlsx file |
 
 ### Header menu
 
@@ -240,19 +244,28 @@ Right click on a header label.
 
 | id | English | shown |
 | --- | --- | --- |
-| `header.column` | `Column:` | section header |
+| `header.column.pin` | `Pin` | the pin submenu |
 | `header.column.pinLeft` | `Pin left` | not pinned left |
 | `header.column.pinLeftCopy` | `Pin left (copy)` | not pinned left |
 | `header.column.pinRight` | `Pin right` | not pinned right |
 | `header.column.pinRightCopy` | `Pin right (copy)` | not pinned right |
 | `header.column.unpin` | `Unpin` | pinned |
-| `header.column.hide` | `Hide` | takes the column out of the layout |
+| `header.column.hide` | `Hide column` | takes the column out of the layout |
 | `header.column.removeSorting` | `Remove sorting` | keeps the sort of the grouped fields |
-| `header.column.chooser` | `Column chooser` | opens the column chooser |
-| `header.size` | `Size:` | section header |
-| `header.size.column` | `Resize Column` | sizes the column to its content |
-| `header.size.all` | `Resize all columns` | sizes every column to its content |
-| `header.grouping` | `Grouping:` | section header |
+| `header.column.chooser` | `Column chooser…` | opens the column chooser |
+| `header.size` | `Size` | the size submenu |
+| `header.size.column` | `Fit column width` | fits the column to its content and its label |
+| `header.size.all` | `Fit all columns` | fits every column |
+| `header.size.resetColumn` | `Reset column width` | the column back to the width of the config |
+| `header.size.resetAll` | `Reset all column widths` | every column back to the width of the config |
+| `header.aggregate` | `Aggregate` | the aggregate submenu |
+| `header.aggregate.sum` | `Sum` | turns the column's sum on or off |
+| `header.aggregate.avg` | `Average` | turns its average on or off |
+| `header.aggregate.min` | `Min` | turns its smallest value on or off |
+| `header.aggregate.max` | `Max` | turns its largest value on or off |
+| `header.aggregate.count` | `Count` | turns its count on or off |
+| `header.aggregate.totalsRow` | `Totals row` | shows or hides the totals row |
+| `header.grouping` | `Grouping` | the grouping submenu |
 | `header.grouping.expandAll` | `Expand all` | expands every group |
 | `header.grouping.collapseAll` | `Collapse all` | collapses every group |
 | `header.grouping.clear` | `Clear all` | removes the grouping |
@@ -263,13 +276,13 @@ Right click on a header filter.
 
 | id | English | shown |
 | --- | --- | --- |
-| `filter.filter` | `Filter:` | section header |
 | `filter.filter.clear` | `Clear Filter` | removes the column's conditions |
 | `filter.filter.clearAll` | `Clear All Filters` | removes the whole filter |
-| `filter.filter.isBlank` | `Set "Is Blank"` | replaces the column's conditions with `IS_BLANK` |
-| `filter.filter.isNotBlank` | `Set "Is Not Blank"` | replaces the column's conditions with `IS_NOT_BLANK` |
-| `filter.filter.advanced` | `Advanced Filter` | opens the filter editor |
-| `filter.operator` | `Set Operator:` | section header, not a boolean field |
+| `filter.filter.blank` | `Blank` | the blank submenu |
+| `filter.filter.isBlank` | `Is blank` | replaces the column's conditions with `IS_BLANK` |
+| `filter.filter.isNotBlank` | `Is not blank` | replaces the column's conditions with `IS_NOT_BLANK` |
+| `filter.filter.advanced` | `Advanced Filter…` | opens the filter editor |
+| `filter.operator` | `Operator` | the operator submenu, not a boolean field |
 | `filter.operator.greaterThanOrEqualTo` | `Greater than or equal` | a number or date field |
 | `filter.operator.lessThanOrEqualTo` | `Less than or equal` | a number or date field |
 | `filter.operator.equal` | `Equal` | not a boolean field |
@@ -369,6 +382,12 @@ The names of the operators, in the operator menu and on a condition:
 | `footer.and` | `AND` | between the chips of an AND group |
 | `footer.or` | `OR` | between the chips of an OR group |
 | `footer.changedOnly` | `Changed rows only` | the chip in front of the filter's while only the changed rows are shown (`datasource.filterChangedOnly()`) |
+| `footer.summary` | `Selected cells` | the name of the summary of the selected cells at the footer's right, for a screen reader |
+| `footer.summary.count` | `Count: {count}` | the cells of the ranges with a value, any type |
+| `footer.summary.sum` | `Sum: {sum}` | the sum of the numbers of the number fields in the ranges |
+| `footer.summary.avg` | `Average: {avg}` | their average |
+| `footer.summary.min` | `Min: {min}` | the smallest |
+| `footer.summary.max` | `Max: {max}` | the largest |
 
 The short names of the operators, on a chip:
 
@@ -413,6 +432,23 @@ filter shows its formatter's format (`YYYY-MM-DD`), a boolean filter is a checkb
 | `filter.placeholder.text` | `Text` | an empty header filter of a text field |
 | `filter.placeholder.number` | `Number` | an empty header filter of a number field |
 
+### Find
+
+The find bar of Ctrl+F in the grid, see [Find](19-find.md).
+
+| id | English | shown |
+| --- | --- | --- |
+| `find.label` | `Find in the grid` | the name of the find bar (a search region) for a screen reader |
+| `find.placeholder` | `Find` | the placeholder of its input, and the input's name for a screen reader |
+| `find.count` | `{current} of {count}` | the count of the matches. `{current}`: the number of the current match, `{count}`: how many cells match |
+| `find.none` | `No matches` | the count when no cell matches the text |
+| `find.previous` | `Previous match` | the `↑` button: its name for a screen reader |
+| `find.previous.tooltip` | `Previous match (Shift+Enter)` | its tooltip |
+| `find.next` | `Next match` | the `↓` button |
+| `find.next.tooltip` | `Next match (Enter)` | its tooltip |
+| `find.close` | `Close` | the `✕` button, closes the find bar |
+| `find.close.tooltip` | `Close (Esc)` | its tooltip |
+
 ### Screen readers
 
 Labels (`aria-label`) that are read out, not shown. The [keyboard and accessibility
@@ -437,10 +473,14 @@ tooltip's first line and the text a screen reader reads with the row number.
 | `rowStatus.new` | `New row` | a new row: the tooltip of its row number, and for a screen reader |
 | `rowStatus.edited` | `Edited` | an edited row |
 | `rowStatus.deleted` | `Marked for deletion` | a row marked for deletion |
+| `rowStatus.conflict` | `Changed on the server too: {fields}` | a row with fields in conflict (`datasource.getConflicts()`): the tooltip of its row number, and for a screen reader. `{fields}`: their column labels, joined with `, ` |
+| `rowStatus.removedOnServer` | `Removed on the server, it has changes here` | a row the server removed (`upsert(rows, { removeMissing: true })`) that has changes here |
 | `rowStatus.error` | `Error: {errors}` | a row with an error, for a screen reader (the tooltip has the errors, a line each). `{errors}`: the server's error and the fields' errors, `Age: Must be at least 18`, joined with `, ` |
 | `cell.editedMarker.tooltip` | `Original value: {value}` | the tooltip of the marker of an edited cell. `{value}`: the value before the edit, shown with the field's formatter |
 | `cell.editedMarker.blank` | `(blank)` | the `{value}` of an original value that is blank |
 | `cell.editedMarker.revert` | `Click to revert` | the tooltip's last line, in an editable grid: a click on the marker puts the original value back |
+| `cell.conflictMarker.tooltip` | `Changed on the server to {value} while you edited it` | the tooltip of the marker of a field in conflict. `{value}`: the server's value, shown with the field's formatter |
+| `cell.conflictMarker.take` | `Click to take the server's value` | its last line, in an editable grid: a click on the marker takes the server's value |
 
 ### Multiline cells
 
@@ -450,6 +490,7 @@ opens over it, see [Editing](05-editing.md#multiline-text).
 | id | English | shown |
 | --- | --- | --- |
 | `cell.multiline.more` | `More lines, Enter shows all` | for a screen reader: the description of a cell that shows the first of its lines. Hidden on screen, the cell has a marker |
+| `cell.multiline.moreLines` | `… {count} more lines` | the last line of the cell's tooltip when its text has more lines than the tooltip shows (`multilineTooltipLines`). `{count}`: how many are not shown, 2 or more - one line more is shown instead |
 | `cell.multiline.hint` | `Ctrl+Enter to save, Esc to cancel` | under the textarea of the editor. Cmd+Enter saves too |
 | `cell.multiline.hintReadonly` | `Esc to close` | under the textarea of the editor of a readonly cell |
 
@@ -459,12 +500,16 @@ Of a date cell and a date header filter, and a `DateInterface` of your own.
 
 | id | English | shown |
 | --- | --- | --- |
-| `datePicker.hours` | `HH` | label over the hours |
-| `datePicker.minutes` | `MM` | label over the minutes |
+| `datePicker.hours` | `HH` | label in front of the hours, and their name for a screen reader |
+| `datePicker.minutes` | `MM` | label in front of the minutes, and their name for a screen reader |
 | `datePicker.week` | `W` | header of the week numbers |
 | `datePicker.clear` | `Clear` | button, empties the date |
 | `datePicker.now` | `Now` | button, goes to now |
 | `datePicker.use` | `Use` | button, picks the date |
+| `datePicker.previousYear` | `Previous year` | the « button left of the month: its name for a screen reader and its tooltip |
+| `datePicker.previousMonth` | `Previous month` | the ‹ button left of the month |
+| `datePicker.nextMonth` | `Next month` | the › button right of the month |
+| `datePicker.nextYear` | `Next year` | the » button right of the month |
 
 | id | English |
 | --- | --- |

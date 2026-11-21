@@ -1,9 +1,14 @@
 import type { Grid } from '../grid';
 import { removeContextMenu } from './removeContextMenu';
+import { focusMenu } from './showMenu';
 
 /**
  * Closes the grid's open menu on a click outside it and on Esc. The menus are `popover="manual"`
  * (see openMenuElement), so the browser does neither.
+ *
+ * And the keyboard of the menus (showMenu): whether the last input was a key or a pointer press - a
+ * menu opened from the keyboard takes the focus - and ArrowDown / ArrowUp into a menu that was opened
+ * with the mouse, which left the focus where it was.
  *
  * The listeners are on the document, removed with `ctx.menuListenersAbort` when the grid leaves the
  * page (disconnectElement): a listener left on the document keeps the whole grid (and its datasource)
@@ -31,17 +36,44 @@ export function addMenuListeners(ctx: Grid) {
         { signal }
     );
 
+    // in the capture phase: before the element that has the focus can stop the event. Shift+F10 and
+    // the menu key come as a keydown before the contextmenu event, a right click as a pointerdown
+    document.addEventListener(
+        'keydown',
+        () => {
+            ctx.keyboardUsed = true;
+        },
+        { capture: true, signal }
+    );
+    document.addEventListener(
+        'pointerdown',
+        () => {
+            ctx.keyboardUsed = false;
+        },
+        { capture: true, signal }
+    );
+
     document.addEventListener(
         'keydown',
         (event) => {
-            // canceled: something on the page has used this Esc already
-            if (event.key !== 'Escape' || event.defaultPrevented || !ctx.contextMenu?.isConnected) {
+            // canceled: something on the page has used this key already - an item of the menu, Esc in
+            // a submenu (it closes the submenu only)
+            if (event.defaultPrevented || !ctx.contextMenu?.isConnected) {
                 return;
             }
-            // Esc closes the menu only: the browser closes a modal dialog - the filter editor, the menu
-            // of a picker in it - on an Esc that is not canceled
-            event.preventDefault();
-            removeContextMenu(ctx);
+            if (event.key === 'Escape') {
+                // Esc closes the menu only: the browser closes a modal dialog - the filter editor, the
+                // menu of a picker in it - on an Esc that is not canceled
+                event.preventDefault();
+                removeContextMenu(ctx);
+                return;
+            }
+            // a menu opened with the mouse: the focus is still on the cell. The arrows get into it
+            const arrow = event.key === 'ArrowDown' || event.key === 'ArrowUp';
+            if (arrow && ctx.menuTree && !ctx.contextMenu.contains(document.activeElement)) {
+                event.preventDefault();
+                focusMenu(ctx.menuTree, event.key === 'ArrowUp');
+            }
         },
         { signal }
     );

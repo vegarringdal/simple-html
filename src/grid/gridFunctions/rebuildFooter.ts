@@ -8,6 +8,7 @@ import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { gridText } from './gridText';
 import { openFilterEditor } from './openFilterEditor';
+import { selectionSummary } from './selectionSummary';
 
 /**
  * The footer runs inside every rebuild, so it must never throw - if it does, the rows are not
@@ -66,10 +67,70 @@ function renderChildren(ctx: Grid, group: FilterGroupNode) {
     );
 }
 
+/**
+ * The summary of the selected cells at the footer's right (selectionSummary.ts): how many have a value,
+ * and of the numbers the sum, average, smallest and largest - shown with the formatter of the first
+ * number field, two decimals at most. All of it in its tooltip too, when it is cut. null when the
+ * ranges are one cell or none
+ * @param top where it starts: on the line of the filter chips under the horizontal scrollbar's band
+ *   when there is a filter, else the whole height - in the middle, like the row count
+ */
+function summaryTemplate(ctx: Grid, top: number) {
+    const summary = selectionSummary(ctx);
+    if (!summary) {
+        return null;
+    }
+    const parts = [gridText(ctx, 'footer.summary.count', { count: summary.count })];
+    if (summary.numberField && summary.sum !== null && summary.avg !== null && summary.min !== null && summary.max !== null) {
+        const formatter = ctx.gridInterface.getDatasource().getFormatter(summary.numberField);
+        const shown = (value: number) => formatter.format(Math.round(value * 100) / 100);
+        parts.push(
+            gridText(ctx, 'footer.summary.sum', { sum: shown(summary.sum) }),
+            gridText(ctx, 'footer.summary.avg', { avg: shown(summary.avg) }),
+            gridText(ctx, 'footer.summary.min', { min: shown(summary.min) }),
+            gridText(ctx, 'footer.summary.max', { max: shown(summary.max) })
+        );
+    }
+    return html`<div
+        class="footer-summary"
+        role="group"
+        aria-label=${gridText(ctx, 'footer.summary')}
+        title=${parts.join('\n')}
+        style="top:${top}px"
+    >
+        ${parts.map((part) => html`<span class="footer-summary-item">${part}</span>`)}
+    </div>`;
+}
+
+/**
+ * true when the filter chips reach under the summary of the selected cells: the chips are centered, the
+ * summary is at the right
+ */
+function chipsUnderSummary(footer: HTMLElement): boolean {
+    const chips = footer.querySelector('.footer-filter-chips');
+    const summary = footer.querySelector('.footer-summary');
+    if (!chips || !summary) {
+        return false;
+    }
+    const chipsRect = chips.getBoundingClientRect();
+    const summaryRect = summary.getBoundingClientRect();
+    return chipsRect.left < summaryRect.left && chipsRect.right > summaryRect.left;
+}
+
+/**
+ * The totals row and the footer, for a rebuild
+ */
 export function rebuildFooter(ctx: Grid) {
     // the totals row over the footer: the filter, the rows and the layout it follows change the footer too
     renderTotalsRow(ctx);
+    renderFooter(ctx);
+}
 
+/**
+ * The footer: the row count, the filter, the summary of the selected cells. On its own when the ranges
+ * or the values in them change (see GridInterface.__setRanges, renderChangedRows)
+ */
+export function renderFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
     const totalRows = ctx.gridInterface.getDatasource().getAllData().length;
     const filteredRows = ctx.gridInterface.getDatasource().length();
@@ -81,6 +142,7 @@ export function rebuildFooter(ctx: Grid) {
     const filtered = filterTree !== null || changedOnly;
 
     const conditionCount = filterTree ? countConditions(filterTree) : 0;
+    const summary = summaryTemplate(ctx, filtered ? scrollbarHeight : 0);
 
     // `collapse` replaces the chips with a single summary box - used both when there are more
     // conditions than the cap and (see below) when the chips do not fit the grid width.
@@ -149,7 +211,7 @@ export function rebuildFooter(ctx: Grid) {
                         style=${filtered ? `height:${scrollbarHeight}px;line-height:${scrollbarHeight}px;` : ''}
                         >${gridText(ctx, 'footer.rowCount', { shown: filteredRows, total: totalRows })}</span
                     >
-                    ${filterRow}
+                    ${filterRow} ${summary}
                 </div>
             `,
             footer
@@ -159,11 +221,11 @@ export function rebuildFooter(ctx: Grid) {
     const tooMany = conditionCount > MAX_FOOTER_CONDITIONS;
     paint(tooMany);
 
-    // if the chips still overflow the (possibly narrow) grid width, collapse to the summary
-    // box rather than hard-clipping a chip mid-word
+    // if the chips still overflow the (possibly narrow) grid width, or reach under the summary of the
+    // selected cells, collapse to one box ("2 filters - click to edit") rather than hard-clipping a chip mid-word
     if (filterTree && !tooMany) {
         const chips = footer.querySelector('.footer-filter-chips');
-        if (chips && chips.scrollWidth - chips.clientWidth > 1) {
+        if ((chips && chips.scrollWidth - chips.clientWidth > 1) || chipsUnderSummary(footer)) {
             paint(true);
         }
     }

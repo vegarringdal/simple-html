@@ -1,0 +1,148 @@
+# Find
+
+Ctrl+F (Cmd+F on a Mac) with the focus in the grid opens a find bar over the grid's top right corner:
+type a text, and every cell that shows it is marked - the current match more - with the count beside
+it, `3 of 17`. Enter goes to the next match, Shift+Enter to the previous one, and the grid scrolls to
+it. Esc closes the bar and puts the focus in the cell of the current match. A browser's find does not
+work in a grid: only the rows on screen are in the page, and the text is in inputs.
+
+```sample find
+```
+
+## The keys
+
+With the focus anywhere in the grid - a cell, a header filter, a column header:
+
+| key | does |
+| --- | --- |
+| Ctrl+F, Cmd+F | opens the find bar, the focus in its input with the text it had selected. Again while it is open: the focus back in its input |
+| F3 / Shift+F3 | while the find bar is open: the next / previous match |
+
+Outside the grid Ctrl+F is the browser's own: the page around it, and the grid's menus, the editor of a
+multiline cell and the filter editor, which are on the body. Ctrl+Shift+F and Ctrl+Alt+F are left alone.
+It is the key that types f; on a keyboard layout without Latin letters (Cyrillic, Greek) the key where
+F is on a US keyboard.
+
+In the find bar:
+
+| key | does |
+| --- | --- |
+| typing | finds the text, 150ms after the last key: the cells are marked, the grid scrolls to the current match |
+| Enter, F3 | the next match. After the last one, the first. Right after typing, before the matches showed: the first match |
+| Shift+Enter, Shift+F3 | the previous match. Before the first one, the last |
+| Esc | closes the bar. The focus goes to the cell of the current match, which is the active cell then and its row the current row - as moving to it with the keys makes it. Without a match, back to the cell (or the header filter) Ctrl+F was pressed in |
+| Tab, Shift+Tab | the buttons: previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid, Tab from the close button goes on to the header filters |
+
+The focus stays in the input while you go from match to match, as in a browser: a click on ↑ or ↓
+keeps it there too. The wheel scrolls the grid and leaves the focus in the bar. A click in a cell puts
+the focus there and leaves the bar open; Ctrl+F gets back to it.
+
+## What is found
+
+- **The text a cell shows**: its value through the field's formatter - a date as `2026-03-14` (or
+  `14.03.2026` with that formatter), `12,5` with a decimal comma, a `0` shown blank (`numberOverride`)
+  not as `0`. The text contains what you typed, in any case: `acme` finds `ACME CORP`.
+- **Every line** of a cell of several lines, also those it does not show.
+- **The displayed rows**: after the filter, in the sort order. When grouped, the rows of the expanded
+  groups; the rows of a collapsed group are not displayed, they are not found. The group rows (their
+  names, `Country: Norway (12)`) are not searched.
+- **The fields of the layout**: a field not in it (hidden) is not searched. Not the row numbers, and not
+  a checkbox - a boolean cell shows no text.
+- **The order** of the matches, for next and previous: the rows top to bottom, and in a row the fields
+  in the order of `gridInterface.getLayoutFields()` - pinned left, center, pinned right, the stacked
+  fields of a column top to bottom.
+- **Where it starts**: at the cell that had the focus when the bar opened, the first match at or after
+  it - else the first match. While you type, the current match stays while it still matches (`acm`,
+  `acme`), else it is the next one after it.
+- An empty text finds nothing.
+
+## How the matches look
+
+Every match has a tint, the current one a stronger tint and a 2px line inside its edge. The colours are
+`--simple-html-grid-find-match-color`, `--simple-html-grid-find-current-color` and
+`--simple-html-grid-find-current-border-color`, light and dark, see [Find](13-theming.md#find). The cells
+have the classes `simple-html-cell-find-match` and `simple-html-cell-find-current` (the current match has
+both); the cells are reused while the grid scrolls, the classes follow the rows and fields they show. A
+match in a range of cells shows both tints.
+
+The find bar is an element of the grid, `simple-html-grid-find`, the first one in it: over the top right
+of the grouping panel - or of the column labels, without a panel (`panelHeight: 0`). It gets narrower
+with a narrow grid.
+
+## It follows the data
+
+While the bar is open the text is found again when what the grid shows changes: rows set, added or
+removed, a filter, a sort, grouping, a group expanded or collapsed, a value edited (in the grid, from
+code, by undo, by an upsert), a column moved, hidden or pinned, the texts of the grid. The current match
+stays the current one while it still matches - also when a sort moved it - else it is the next one
+after it. The grid does not scroll for it: you may be typing in a cell somewhere. It waits until the
+changes stop, 150ms, as for the typing.
+
+Closed, the bar finds nothing. Its text is kept: Ctrl+F shows it again, selected, and finds it. The bar
+is closed when the grid is taken off the page.
+
+## The API
+
+```ts
+import type { FindResult } from '@simple-html/grid';
+
+// as typing in the find bar: opens it with the text, marks the cells, the current match scrolled to
+const count = gridInterface.find('acme'); // how many cells show it
+
+gridInterface.findNext(); // { row: 5, field: 'company' }, the cell of the current match
+gridInterface.findPrevious();
+
+const result: FindResult = gridInterface.getFind();
+// { open: true, text: 'acme', count: 17, position: 3, current: { row: 5, field: 'company' } }
+
+gridInterface.on('find-change', ({ open, count, position }) => {
+    console.log(open ? `${position} of ${count}` : 'find closed');
+});
+
+// as Ctrl+F: the focus into the bar - for a button or a menu entry of your own
+gridInterface.openFind();
+gridInterface.closeFind();
+```
+
+- **`find(text)`** opens the bar with the text and returns how many cells show it. The focus does not
+  move. The current match is the first one at or after the cell with the focus; while the bar is open,
+  the current match stays while it still matches. A text that is not a string throws a `TypeError`.
+- **`openFind()`** does what Ctrl+F does: the bar opens, the focus goes into its input.
+- **`findNext()`** and **`findPrevious()`** move the current match, as Enter and Shift+Enter, and
+  return its cell: `{ row, field }`, `row` an index in the displayed rows (`datasource.getRows()`) as in
+  the grid events. `null` while the bar is closed or nothing matches.
+- **`closeFind()`** closes it, as Esc: when the focus was in the bar it goes to the current match.
+- **`getFind()`** gives what it has found, see `FindResult`: `open`, `text`, `count`, `position` (1 to
+  `count`, 0 without a match) and `current`. Plain JSON.
+- **`find-change`** is sent with the same each time it changes: the bar opened or closed, the typing
+  stopped, the current match moved, the matches were found again after the data changed. Not when
+  nothing changed.
+
+Without the grid on the page they do nothing: `find()` returns 0, `getFind()` gives a closed find. The
+matches are not part of `getState()`.
+
+## What a screen reader gets
+
+- The find bar is a search region (`role="search"`) named "Find in the grid" (`find.label`); its input is
+  named "Find" (`find.placeholder`).
+- The count is a status (`role="status"`): a screen reader reads it out when it changes - after the
+  typing stopped, at each next and previous: `3 of 17`, `No matches`.
+- The buttons are buttons, named "Previous match", "Next match" and "Close", with the key in their
+  tooltip.
+- The texts are `find.*`, see [Texts](12-texts.md#find). The keys are in the table of
+  [Keyboard and accessibility](14-accessibility.md#the-find-bar).
+
+## Known limits
+
+- **Ctrl+F needs the focus in the grid.** The wheel takes the focus from the cell (its row element is
+  reused for other rows): Ctrl+F then is the browser's. Click a cell first, or call `openFind()` from a
+  button.
+- **The current match is not read out**, only the count: the focus stays in the input. Esc puts the
+  focus in its cell, which is read then.
+- **Contains, in any case**: no match case, whole word or regular expression. Not the group rows, the
+  rows of collapsed groups, the hidden fields, the checkboxes.
+- **No Cmd+G / Ctrl+G** for the next match: F3, Enter in the bar, `findNext()`.
+- **A large grid**: each search makes the text of every cell, 100 000 rows of 10 fields are a million
+  texts - some hundred ms. It runs once the typing (or the changes of the data) stop.
+- **Checked in Chrome** (the keys, the bar, the look in light and dark). Firefox, Safari and screen
+  readers have not been tried.

@@ -6,11 +6,14 @@ import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
+import { overrideNumberText } from './cellText';
 import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { fillDownKey } from './fillDown';
+import { showCellFind } from './findBar';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
@@ -18,12 +21,14 @@ import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
 import { writeCellValue } from './lookupColumn';
 import { isLookupEditorOpen, openLookupEditor } from './lookupEditor';
-import { firstLine, hasLineBreak, isMultilineCell } from './multilineText';
+import { firstLine, hasLineBreak, isMultilineCell, textLines } from './multilineText';
 import { rangeDeleteKey } from './rangeClipboard';
 import { rangeCellFocused, rangeKeydown, showCellRange } from './rangeSelection';
 import { renderRowSelectorOf } from './renderRowSelector';
+import { placeRowCell } from './rowHeights';
 import { showCellEdited } from './showCellEdited';
 import { showCellErrors } from './showCellErrors';
+import { showCellMerged } from './showCellMerged';
 import { openTextEditor } from './textEditor';
 import { triggerScrollEvent } from './triggerScrollEvent';
 import { undoRedoKey } from './undoRedoKey';
@@ -71,14 +76,23 @@ export function renderRowCell(
     if (isGroupRow(entity)) {
         showCellErrors(ctx, cell, null, null);
         showCellEdited(ctx, cell, null, null);
+        showCellMerged(ctx, cell, null, null);
         showCellRange(ctx, cell);
+        showCellFind(ctx, cell, null, null);
         cell.classList.remove('simple-html-cell-deleted');
         return;
     }
 
+    // its top and height in the row: more than a line in a row made taller (fitRows, rowHeights.ts)
+    const lines = placeRowCell(ctx, cell, row, entity, colType, column, celno);
+    // a cell taller than a line keeps its text on the first line: the input fills the cell (the pointer
+    // finds it anywhere in it), its padding pushes the text up - the text of an input is in the middle
+    // of its content box
+    const config = ctx.gridInterface.__getGridConfig();
+    const firstLinePadding = lines > 1 ? `padding-bottom:${asPx((lines - 1) * config.cellHeight)};` : '';
+
     // the cell element is the gridcell, the input in it the widget. A column with fewer fields than
     // the tallest one has empty cells under its last field: those are no cells for a screen reader
-    const config = ctx.gridInterface.__getGridConfig();
     setAria(cell, 'role', attribute ? 'gridcell' : 'none');
     setAria(cell, 'aria-colindex', attribute ? String(ariaColIndex(config, colType, column, celno)) : null);
 
@@ -140,17 +154,10 @@ export function renderRowCell(
 
         // a checkbox shows the raw value, every other cell the text from the field's formatter
         const checked = Boolean(entity?.[attribute]);
-        let value = formatter.format(entity?.[attribute]);
-
+        const formatted = formatter.format(entity?.[attribute]);
         // not for a lookup column, it shows a label
-        if (fieldType === 'number' && !lookupColumn) {
-            if (cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') {
-                value = '0';
-            }
-            if (cellConfig.numberOverride === 'ZERO_TO_BLANK' && value === '0') {
-                value = '';
-            }
-        }
+        const value =
+            fieldType === 'number' && !lookupColumn ? overrideNumberText(formatted, cellConfig.numberOverride) : formatted;
 
         // the name of the input for a screen reader: the column's label, as in the header
         const label = getColumnLabel(ctx, attribute);
@@ -160,6 +167,11 @@ export function renderRowCell(
         // and the whole text in its tooltip
         const multiline = !lookupColumn && isMultilineCell(field, cellConfigType, value);
         const more = multiline && hasLineBreak(value);
+        // in a cell of more than a line (fitRows): the lines after the first that it has room for are
+        // shown under the input. The marker only when some lines are not shown, on the last line
+        const textLineList = more ? textLines(value) : [];
+        const linesUnder = textLineList.slice(1, lines);
+        const showMarker = more && textLineList.length > lines;
 
         // the validation errors: a class and a tooltip on the cell element
         showCellErrors(ctx, cell, entity, attribute, more ? value : undefined);
@@ -177,7 +189,7 @@ export function renderRowCell(
                 html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
                     <input
-                        style="width:100%;"
+                        style=${lines > 1 ? `width:100%;height:${asPx(config.cellHeight)};bottom:auto;` : 'width:100%;'}
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
                         aria-label=${label}
@@ -190,7 +202,11 @@ export function renderRowCell(
                         }}
                         @keydown=${(e: any) => {
                             // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
-                            if (rangeKeydown(ctx, e, row, attribute) || rangeDeleteKey(ctx, e)) {
+                            if (
+                                rangeKeydown(ctx, e, row, attribute) ||
+                                rangeDeleteKey(ctx, e) ||
+                                fillDownKey(ctx, e, row, attribute)
+                            ) {
                                 return;
                             }
                             if (undoRedoKey(ctx, e, entity, attribute)) {
@@ -290,15 +306,22 @@ export function renderRowCell(
             render(
                 html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
+                    ${
+                        // the other lines of a multiline cell in a taller row: under the input, which is
+                        // transparent and gets the pointer. A screen reader has the marker's description
+                        linesUnder.length
+                            ? html`<div
+                                  class=${`simple-html-grid-cell-lines ${cellClass.input}${repeatedClass}`}
+                                  aria-hidden="true"
+                                  style=${`top:${asPx(config.cellHeight)};line-height:${asPx(config.cellHeight)};`}
+                              >${linesUnder.join('\n')}</div>`
+                            : nothing
+                    }
                     <input
                         aria-label=${label}
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
-                        style=${
-                            cellConfigType === 'number' && !lookupColumn
-                                ? 'text-align: right;width:100%;height:100%;'
-                                : 'width:100%;height:100%;'
-                        }
+                        style=${`${cellConfigType === 'number' && !lookupColumn ? 'text-align: right;' : ''}width:100%;height:100%;${firstLinePadding}`}
                         .value=${live(multiline ? firstLine(value) : value)}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}${lookupEditable ? ' simple-html-grid-cell-lookup' : ''}`}
                         .readOnly=${multiline || !!lookupColumn || !!config.readonly || cellReadOnly}
@@ -395,7 +418,12 @@ export function renderRowCell(
                                 const el = createElement(DIV, 'simple-html-grid-focus-button');
                                 el.style.position = 'absolute';
                                 el.style.top = asPx(0);
-                                el.style.bottom = asPx(0);
+                                // on the first line of a cell taller than a line, with the text
+                                if (lines > 1) {
+                                    el.style.height = asPx(config.cellHeight);
+                                } else {
+                                    el.style.bottom = asPx(0);
+                                }
                                 el.style.right = asPx(0);
                                 el.style.width = asPx(30);
                                 el.onmousedown = (event: MouseEvent) => {
@@ -450,7 +478,11 @@ export function renderRowCell(
                         }}
                         @keydown=${(e: any) => {
                             // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
-                            if (rangeKeydown(ctx, e, row, attribute) || rangeDeleteKey(ctx, e)) {
+                            if (
+                                rangeKeydown(ctx, e, row, attribute) ||
+                                rangeDeleteKey(ctx, e) ||
+                                fillDownKey(ctx, e, row, attribute)
+                            ) {
                                 return;
                             }
                             // Ctrl+Z / Ctrl+Y, unless the user is typing in the cell: then they are the input's
@@ -583,9 +615,15 @@ export function renderRowCell(
                             : nothing
                     }
                     ${
+                        // the marker describes the input for a screen reader also when every line is
+                        // shown: the input has the first line. In a taller cell it is on the last line
                         more
-                            ? html`<span class="simple-html-grid-cell-more" id=${moreId} aria-hidden="true"
-                                  >${MORE_ICON}<span class="simple-html-visually-hidden"
+                            ? html`<span
+                                  class="simple-html-grid-cell-more"
+                                  id=${moreId}
+                                  aria-hidden="true"
+                                  style=${lines > 1 ? `top:${asPx((lines - 0.5) * config.cellHeight - 5)};` : nothing}
+                                  >${showMarker ? MORE_ICON : nothing}<span class="simple-html-visually-hidden"
                                       >${gridText(ctx, 'cell.multiline.more')}</span
                                   ></span
                               >`
@@ -598,12 +636,17 @@ export function renderRowCell(
 
         // after the template: a template of another kind removes what is after it, the marker too
         showCellEdited(ctx, cell, entity, attribute, formatter);
+        // the flash of a value a merge changed (upsert)
+        showCellMerged(ctx, cell, entity, attribute);
     } else {
         showCellErrors(ctx, cell, entity, null);
         render(html`<div data-dimmed-emtpy class="simple-html-dimmed"></div>`, cell as any);
         showCellEdited(ctx, cell, null, null);
+        showCellMerged(ctx, cell, null, null);
     }
 
     // in a range of cells or not: the cell is reused for other rows and fields while scrolling
     showCellRange(ctx, cell);
+    // a match of Find (Ctrl+F) or not, the same
+    showCellFind(ctx, cell, entity, attribute || null);
 }

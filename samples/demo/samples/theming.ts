@@ -25,6 +25,9 @@ const TEAL_THEME = `
         --simple-html-date-main-bg-color: light-dark(#ffffff, #1d3532);
         --simple-html-date-main-color: light-dark(#14302c, #e8f5f2);
         --simple-html-date-main-bg-selected: light-dark(#b9e4dc, #0f5c52);
+        --simple-html-date-selected-border: light-dark(#2f7d70, #5fd3bf);
+        --simple-html-date-today-color: light-dark(#0f6b5f, #7ee0cf);
+        --simple-html-date-hover-bg-color: light-dark(#e3f1ee, #2a4a46);
     }
 `;
 

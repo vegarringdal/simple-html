@@ -1,8 +1,10 @@
 # Aggregates
 
 A column can be summed up: its sum, average, smallest or largest number, or the number of values it
-has. The grid shows it in the column's place in every group row - over the rows of the group - and in
-a totals row under the rows, over every row the filter lets through. The datasource computes the
+has - one of them, or several. The grid shows them in the column's place in every group row - over the
+rows of the group - and in a totals row under the rows, over every row the filter lets through. The
+user turns them on and off in the header menu (right click a column label), and they are part of the
+grid's state. The datasource computes the
 values, so they are there without a grid too: `datasource.aggregate()`.
 
 ```sample aggregates
@@ -17,7 +19,7 @@ import type { GridConfig } from '@simple-html/grid';
 
 const config: GridConfig = {
     columns: {
-        balance: { aggregate: 'sum' },
+        balance: { aggregate: ['sum', 'avg'] }, // two functions: two lines
         age: { aggregate: 'avg' },
         email: { aggregate: 'count' }
     },
@@ -51,7 +53,9 @@ const config: GridConfig = {
 - **Rows marked for deletion count** until they are saved (`clearMarkedForDeletion()`, or
   `acceptChanges()` after the server took them): they are rows of the grid until then, as in the
   footer's count and the export.
-- **One function per column.** A field shown in two columns of the layout has the same function in both.
+- **One function or several**: `aggregate: 'sum'` or `aggregate: ['sum', 'avg']`. Each is a line of
+  its own, always in the order sum, avg, min, max, count. A field shown in two columns of the layout
+  has the same functions in both.
 
 The two options of the grid:
 
@@ -60,9 +64,31 @@ The two options of the grid:
 | `groupAggregates` | `true` | the aggregates in the group rows. `false` shows the name of the group only |
 | `totalsRow` | `false` | the totals row under the rows |
 
+## From the header menu
+
+Right click a column label: the **Aggregate:** section has *Sum*, *Average*, *Min*, *Max* - on a number
+column - and *Count*, each a toggle with a ✓ when it is on, and *Totals row*, a toggle of the totals row.
+What the user turns on is part of the grid's state:
+
+```ts
+gridInterface.getState().aggregates; // { balance: ['sum', 'avg'], email: ['count'] }
+gridInterface.getState().totalsRow; // true
+
+// the same from code - every field listed gets these, the others none
+gridInterface.setState({ aggregates: { balance: ['sum'] }, totalsRow: false });
+
+// back to the config's: columns.<field>.aggregate and totalsRow
+gridInterface.resetState();
+```
+
+`setState()` checks the functions as the config's are checked: a function that is none, or `sum` on a
+field that is not a number, throws a `TypeError` and changes nothing. `updateConfig()` changes the
+totals row only when it is given `totalsRow`, so a toggle the user made stays. The ids are
+`header.aggregate.*`, see [Menus](10-menus.md).
+
 ## How they are shown
 
-Each value is shown with a short label in front, `Sum 1234.5`: the texts `aggregate.sum`,
+Each value is a line in its column: the label at the left - `Sum`, the texts `aggregate.sum`,
 `aggregate.avg`, `aggregate.min`, `aggregate.max` and `aggregate.count`, see
 [Texts](12-texts.md#aggregates). Translate them like the other texts, or make them shorter:
 `setTexts({ 'aggregate.sum': 'Σ' })`.
@@ -72,31 +98,31 @@ Each value is shown with a short label in front, `Sum 1234.5`: the texts `aggreg
   `34.666666666666664` until the formatter makes it `34.7`. A formatter that shows whole numbers as
   they are and the rest with one decimal suits a field of whole numbers, see the sample. `count` is
   shown as a whole number.
-- **Right aligned in the column**, like the numbers in the cells. A value too long for its column is
-  cut off with `...`.
+- **The label at the left, the value at the right** of the column, so the labels line up and so do
+  the numbers. In a narrow column the label gives way first; a value still too long ends in `...`.
 - **The sum does not drift** over many rows: it is added up with a compensated sum, 100 000 times
   `0.1` is `10000`, not `10000.000000018848`. What is left is what a number in javascript is:
   `0.1 + 0.2` is `0.30000000000000004` - the formatter shows it.
-- **A column of stacked fields** (`fields: ['debit', 'credit']`): each field's value is on the line of
-  its field. When an aggregated field is not the first of its column, the group rows get the lines
-  they need to show it, and so does the totals row.
+- **A line per function**: a column's lines are its fields' functions one under the other, from the
+  top. In a column of stacked fields (`fields: ['debit', 'credit']`) the label says which field it is:
+  `Sum Debit`, `Sum Credit`.
 
 ## In the group rows
 
-A group row shows the group's name at the left, and each aggregate in its column, over every row of
-the group: the rows of its sub groups, and of collapsed groups too. A collapsed group shows the same
-values as an expanded one.
-
-The name is over the first columns: an aggregate in a column under the name is covered by it. Put the
-aggregated columns after the first column, or make the first column wide enough for the name. A
-screen reader gets the covered value with the name, see [Accessibility](14-accessibility.md).
+A group row with aggregates has the group's name on a line of its own, and the aggregates on the lines
+under it, each in its column, over every row of the group: the rows of its sub groups, and of
+collapsed groups too. A collapsed group shows the same values as an expanded one. So a group row is
+1 + n lines high, n the most lines a column needs - a column with sum and avg makes it three lines.
+The name never covers a value. Without aggregates (or `groupAggregates: false`) a group row is one
+line.
 
 ## The totals row
 
 `totalsRow: true` shows a row under the rows: "Total" under the row numbers (the text
 `aggregate.total`) and each aggregate in its column, over every row the filter lets through - when
 grouped, the rows of collapsed groups too. It follows the columns when the middle scrolls sideways,
-and the pinned columns stay where they are, as in the rows.
+and the pinned columns stay where they are, as in the rows. It is as many lines high as the column with
+the most functions needs.
 
 The horizontal scrollbar is between the rows and the totals row. The totals row takes its own room:
 the rows get less, the footer stays as it is.
@@ -151,6 +177,7 @@ The totals row has colours of its own, `--simple-html-grid-totals-bg-color` and
 `--simple-html-grid-aggregate-label-color`. The group rows keep their colours. See
 [Theming](13-theming.md#the-variables-of-the-grid).
 
-For a screen reader each aggregate is a cell of its column, read with the column's header, and the
-totals row is the last row of the grid with "Total" as its row header. See
+For a screen reader the aggregates of a field are one cell of its column, named with all its lines
+(`Sum 12 500, Avg 1 250`) and read with the column's header; the group's name is the cell of the first
+column. The totals row is the last row of the grid with "Total" as its row header. See
 [Accessibility](14-accessibility.md).

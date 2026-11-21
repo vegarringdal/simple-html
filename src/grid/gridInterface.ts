@@ -1,4 +1,4 @@
-import { AGGREGATE_FUNCTIONS, isAggregateFunction } from '../datasource/aggregate';
+import { AGGREGATE_FUNCTIONS, type AggregateFunction, isAggregateFunction } from '../datasource/aggregate';
 import { assertOptions } from '../datasource/assertOptions';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
@@ -8,8 +8,10 @@ import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
 import type { CellRange } from './cellRange';
 import type { CsvOptions } from './csv';
+import type { FindResult } from './findResult';
 import type { Grid } from './grid';
 import type {
+    ColumnConfig,
     GridConfig,
     GridLayout,
     GridOptions,
@@ -20,21 +22,26 @@ import type {
     ParsedGridOptions
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
-import { aggregateLines } from './gridFunctions/aggregates';
-import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
+import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
+import { fillDown } from './gridFunctions/fillDown';
+import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
+import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { type LookupColumn, lookupColumnsOf } from './gridFunctions/lookupColumn';
 import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
+import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
+import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
-import { renderRangeClasses } from './gridFunctions/rangeSelection';
-import { rebuildFooter } from './gridFunctions/rebuildFooter';
+import { focusedCell, pointOf, renderRangeClasses } from './gridFunctions/rangeSelection';
+import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
+import { fitRowLinesOf, layoutColumns } from './gridFunctions/rowHeights';
 import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
@@ -42,6 +49,7 @@ import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
+import type { ExcelOptions } from './xlsx';
 
 /**
  * The grid: its config, its datasource and its state. What you call to work with a grid - read and
@@ -84,6 +92,8 @@ export class GridInterface<T> {
     private options: GridOptions;
     // copies of the config's layout and initialState: the state resetState() goes back to
     private configLayout: Required<GridLayout>;
+    // the aggregates of the config's columns: what resetState() goes back to, see GridState.aggregates
+    private configAggregates: Record<string, AggregateFunction[]> = {};
     private initialState: Partial<GridState>;
     // the functions: isReadonly, cellClass, menus. A copy, updateHooks() changes it
     private hooks: GridHooks<T>;
@@ -117,6 +127,12 @@ export class GridInterface<T> {
      * a value or a picked operator are in it
      */
     private headerFilters: Record<string, HeaderFilter> = {};
+
+    /**
+     * the lines of the rows made taller by fitRows(), by the row's key (`String(row.__KEY)`). A row
+     * that is not in it is as high as the layout makes a row. See rowHeights.ts
+     */
+    private rowLines = new Map<string, number>();
 
     /**
      * the ranges of cells, see getRanges(): copies of what was set
@@ -154,8 +170,9 @@ export class GridInterface<T> {
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
      * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
-     * object of strings, a column's `aggregate` is no aggregate function or needs a number field, or a
-     * column's `editor` is wrong - its lookup not registered, see {@link ColumnEditor}
+     * object of strings, `multilineTooltipLines` is not a whole number of 1 or more, a column's
+     * `aggregate` is no aggregate function or needs a number field, or a column's `editor` is wrong -
+     * its lookup not registered, see {@link ColumnEditor}
      *
      * @example
      * ```ts
@@ -174,6 +191,7 @@ export class GridInterface<T> {
         assertNoHooks(gridConfig);
         assertNoV5Options(gridConfig);
         assertConfigTexts(gridConfig);
+        assertTooltipLines(gridConfig);
         assertAggregates(gridConfig, datasource);
         this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
         this.columnsSelected = new Set();
@@ -189,6 +207,7 @@ export class GridInterface<T> {
             ...NO_SIZES
         };
         this.configLayout = copyLayout(layout);
+        this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
         // structuredClone, not JSON: it keeps the Dates of a filter
         this.initialState = structuredClone(initialState ?? {});
 
@@ -226,7 +245,9 @@ export class GridInterface<T> {
             grouping: structuredClone(datasource.getGrouping()),
             expandedGroups: structuredClone(datasource.getExpanded()),
             filter: structuredClone(datasource.getFilter()),
-            headerFilters: structuredClone(this.headerFilters)
+            headerFilters: structuredClone(this.headerFilters),
+            aggregates: aggregatesOfColumns(this.gridConfig.columns),
+            totalsRow: this.gridConfig.totalsRow
         };
     }
 
@@ -308,7 +329,9 @@ export class GridInterface<T> {
             grouping: initialState.grouping ?? [],
             expandedGroups: initialState.expandedGroups ?? [],
             filter: initialState.filter ?? null,
-            headerFilters: initialState.headerFilters ?? {}
+            headerFilters: initialState.headerFilters ?? {},
+            aggregates: initialState.aggregates ?? structuredClone(this.configAggregates),
+            totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false
         };
     }
 
@@ -337,8 +360,9 @@ export class GridInterface<T> {
      * @param config the parts of the config to change
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
      * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
-     * strings, a column's `aggregate` is no aggregate function or needs a number field, or a column's
-     * `editor` is wrong - its lookup not registered, see {@link ColumnEditor}
+     * strings, `multilineTooltipLines` is not a whole number of 1 or more, a column's `aggregate` is no
+     * aggregate function or needs a number field, or a column's `editor` is wrong - its lookup not
+     * registered, see {@link ColumnEditor}
      *
      * @sample misc-options
      * @example
@@ -355,18 +379,24 @@ export class GridInterface<T> {
         assertNoHooks(config);
         assertNoV5Options(config);
         assertConfigTexts(config);
+        assertTooltipLines(config);
         assertAggregates(config, this.dataSource);
         // checked before anything changes, like the rest
         const lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
         const { columns, layout, initialState, ...options } = config;
 
         this.options = { ...this.options, ...options };
+        // the totals row is state too (the header menu turns it on and off): only a totalsRow given
+        // here changes it
+        const totalsRow = 'totalsRow' in config ? withDefaults(this.options).totalsRow : this.gridConfig.totalsRow;
         // in place, so code that got the parsed config before reads the new options too
-        Object.assign(this.gridConfig, withDefaults(this.options));
+        Object.assign(this.gridConfig, withDefaults(this.options), { totalsRow });
 
-        // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option
+        // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option.
+        // Their aggregates are the ones resetState() goes back to from now on
         if ('columns' in config) {
             this.gridConfig.columns = structuredClone(columns ?? {});
+            this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
         }
         if (lookupColumns) {
             // the list open for a column of the old config is closed, the cells are rendered anew
@@ -430,10 +460,30 @@ export class GridInterface<T> {
      * (shift+click sort, drag/drop, resizing)
      */
     private applyState(state: Partial<GridState>) {
+        // checked before anything changes: a wrong one throws and leaves the grid as it is
+        if (state.aggregates) {
+            assertAggregates({ columns: columnsWithAggregates(state.aggregates) }, this.dataSource, 'setState: aggregates');
+        }
         this.suppressEvents = true;
 
         if (state.layout) {
             this.gridConfig.layout = copyLayout(state.layout);
+        }
+
+        // every column gets the functions listed for it, the others none
+        if (state.aggregates) {
+            for (const column of Object.values(this.gridConfig.columns)) {
+                delete column.aggregate;
+            }
+            for (const [field, fns] of Object.entries(state.aggregates)) {
+                const list = normalizeAggregates(fns);
+                if (list.length) {
+                    this.gridConfig.columns[field] = { ...this.gridConfig.columns[field], aggregate: list };
+                }
+            }
+        }
+        if (state.totalsRow !== undefined) {
+            this.gridConfig.totalsRow = state.totalsRow === true;
         }
 
         if (state.headerFilters) {
@@ -601,28 +651,248 @@ export class GridInterface<T> {
     }
 
     /**
-     * Sizes the columns to their content: the label, the header filter's placeholder, and the longest
-     * value of the fields in each column (every row, not only the filtered ones). A column is at most
-     * 750px. Rebuilds the grid.
+     * Fits the width of columns to their content, like Excel's AutoFit: each column as wide as the
+     * widest text of its fields - for a column with stacked fields the widest of them, every line of a
+     * multiline text - and its header label. At least 25px, at most 750px. Then rebuilds the grid. A
+     * column with nothing to measure keeps its width. The user does the same from the header menu
+     * ("Fit column width", "Fit all columns") and with a double click on a column's resize handle.
      *
-     * Measures the text with the grid's font, so call it once the grid is on the page: right after
+     * - **The text** is what the cells show: formatted, with `numberOverride`. A checkbox cell needs
+     *   the room of its checkbox. By default the rows the filter lets through (the rows of collapsed
+     *   groups too), and the header label.
+     * - **Measured** with the grid's font (the labels with theirs) on a canvas: the 20 longest texts of
+     *   each field, by their number of characters - every text of 100 000 rows would take the browser
+     *   half a second per field. The widest text is one of the longest, unless a short text of wide
+     *   letters is wider than 20 longer ones of narrow letters.
+     * - **`options.rows`**: only the text of these rows, and not the header label - a column fitted to
+     *   cells, as the row menu's "Fit column to this cell" does.
+     * - The widths are part of the state (`getState().layout`). {@link resetColumnWidths} goes back to
+     *   the widths of the config.
+     *
+     * Measures with the grid's font, so call it once the grid is on the page: right after
      * {@link createGrid}, or from a `grid-connected` handler for an element you connect yourself. It
      * does nothing before the interface is connected to an element.
      *
+     * @param fields the columns that show one of these fields, every column when left out. A field
+     * that is not in the layout is skipped
+     * @param options.rows fit to the cells of these rows only, see above
+     * @throws a `TypeError` when `fields` is not an array of field names, or `options.rows` not an array
+     *
+     * @sample multiline
      * @sample misc-options
      * @example
      * ```ts
-     * import { createGrid, type GridConfig } from '@simple-html/grid';
+     * import { createGrid, type GridConfig, isGroupRow } from '@simple-html/grid';
      *
      * declare const config: GridConfig;
      *
      * const gridInterface = createGrid(host, { config, datasource });
-     * gridInterface.autoResizeColumns();
+     * gridInterface.fitColumns(); // every column
+     * gridInterface.fitColumns(['name', 'notes']); // the columns of these fields
+     *
+     * // the name column as wide as the name of the current row
+     * const row = datasource.currentEntity;
+     * if (row && !isGroupRow(row)) {
+     *     gridInterface.fitColumns(['name'], { rows: [row] });
+     * }
      * ```
      */
-    public autoResizeColumns() {
+    public fitColumns(fields?: string[], options: { rows?: EntityUnion<T>[] } = {}) {
+        assertFields('fitColumns', fields);
+        assertOptions('fitColumns', options, "fitColumns(['name'], { rows: [row] })");
+        if (options.rows !== undefined && !Array.isArray(options.rows)) {
+            throw new TypeError("fitColumns(): options.rows is an array of rows: fitColumns(['name'], { rows: [row] })");
+        }
         if (this.grid) {
-            autoResizeColumns(this.grid);
+            fitColumns(this.grid, fields, options.rows);
+        }
+    }
+
+    /**
+     * Fits every column to its content: the same as {@link fitColumns} without arguments.
+     *
+     * @deprecated use `fitColumns()`. Before v6 it measured the values as they are stored, not as the
+     * cells show them, of every row - also the rows the filter hides
+     */
+    public autoResizeColumns() {
+        this.fitColumns();
+    }
+
+    /**
+     * Gives columns back the width they start with: the width of the field's column in the layout
+     * `resetState()` goes back to - `initialState.layout` when the config has one, else the config's
+     * `layout`. A field that is not in it (added from the column chooser) gets 100px, as when it is
+     * added. For a column with stacked fields, the width of its first field that is in it. Then
+     * rebuilds the grid. The header menu has it too: "Reset column width", "Reset all column widths".
+     *
+     * Only the widths change: the columns stay where the user put them.
+     *
+     * @param fields the columns that show one of these fields, every column when left out
+     * @throws a `TypeError` when `fields` is not an array of field names
+     *
+     * @example
+     * ```ts
+     * gridInterface.fitColumns();
+     * gridInterface.resetColumnWidths(['notes']); // the notes column as wide as in the config again
+     * gridInterface.resetColumnWidths(); // every column
+     * ```
+     */
+    public resetColumnWidths(fields?: string[]) {
+        assertFields('resetColumnWidths', fields);
+        const start = layoutColumns({ layout: copyLayout(this.getStartState().layout) });
+        for (const column of layoutColumns(this.gridConfig)) {
+            if (fields && !column.fields.some((field) => fields.includes(field))) {
+                continue;
+            }
+            const startColumn = column.fields
+                .map((field) => start.find((candidate) => candidate.fields.includes(field)))
+                .find((candidate) => candidate !== undefined);
+            column.width = startColumn?.width ?? DEFAULT_COLUMN_WIDTH;
+        }
+        if (this.grid) {
+            this.grid.rebuild();
+        } else {
+            this.__dataSourceUpdated();
+        }
+    }
+
+    /**
+     * Makes rows as high as their multiline cells need to show every line, like Excel's AutoFit of a
+     * row: each row as many lines (of `cellHeight` px) as its tallest column needs - a multiline cell
+     * the lines of its text (the empty lines at its end left out), every other cell one line, the
+     * fields of a column with stacked fields added up. At most 20 lines. A row that needs no more lines
+     * than the layout gives a row goes back to that height. The user does the same from the row menu:
+     * "Fit row height", "Fit all rows".
+     *
+     * - **Cheap**: it counts the line breaks of the cells' text, nothing is measured. A long line is
+     *   not wrapped, it is cut at the cell's edge as in a row of one line.
+     * - **In a taller row** a multiline cell shows as many of its lines as it has room for, the marker
+     *   when there are more. Every other cell has its text on the first line. The editor of a
+     *   multiline cell is the same.
+     * - **Kept by the row's key** (`__KEY`: the datasource's `key` field, or the key it generated), so
+     *   a row keeps its height through a sort, a filter, grouping and new data with the same keys
+     *   (`setData()`, `upsert()`). A row whose text changes keeps its height: fit it again.
+     * - **Not part of the state** (`getState()`): the heights belong to the rows loaded now.
+     *   {@link resetRowHeights} takes them back.
+     *
+     * Works before the grid is on the page too.
+     *
+     * @param rows the rows to fit, a row or a list. Left out: the rows the filter lets through (the
+     * rows of collapsed groups too) - and the heights of rows that are no longer in the data are
+     * dropped. Group rows are skipped
+     * @throws a `TypeError` when `rows` is not a row or an array of rows
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * import { isGroupRow } from '@simple-html/grid';
+     *
+     * gridInterface.fitRows(); // every row the filter lets through
+     * gridInterface.fitRows(datasource.getSelectedRows());
+     *
+     * const row = datasource.currentEntity;
+     * if (row && !isGroupRow(row)) {
+     *     gridInterface.fitRows(row);
+     * }
+     * ```
+     */
+    public fitRows(rows?: EntityUnion<T> | EntityUnion<T>[]) {
+        const list = this.rowList('fitRows', rows);
+        if (rows === undefined) {
+            // a full fit: the heights of rows that are gone are dropped, they would never be used again
+            const kept = new Map<string, number>();
+            for (const row of this.dataSource.getAllData()) {
+                const key = String(row.__KEY);
+                const lines = this.rowLines.get(key);
+                if (lines !== undefined) {
+                    kept.set(key, lines);
+                }
+            }
+            this.rowLines = kept;
+        }
+
+        const fitLines = fitRowLinesOf({ gridInterface: this });
+        const cells = this.gridConfig.__columnCells;
+        for (const row of list) {
+            const key = rowKey(row);
+            if (key === undefined) {
+                continue;
+            }
+            const lines = fitLines(row);
+            if (lines > cells) {
+                this.rowLines.set(key, lines);
+            } else {
+                this.rowLines.delete(key);
+            }
+        }
+        this.updateRowHeights();
+    }
+
+    /**
+     * Gives rows back the height the layout gives a row, after {@link fitRows}. The row menu has it
+     * too: "Reset row height", "Reset all row heights".
+     *
+     * @param rows a row or a list of rows. Left out: every row
+     * @throws a `TypeError` when `rows` is not a row or an array of rows
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * gridInterface.resetRowHeights(); // every row back to the height of the layout
+     * gridInterface.resetRowHeights(datasource.getSelectedRows());
+     * ```
+     */
+    public resetRowHeights(rows?: EntityUnion<T> | EntityUnion<T>[]) {
+        if (rows === undefined) {
+            this.rowLines.clear();
+        } else {
+            for (const row of this.rowList('resetRowHeights', rows)) {
+                const key = rowKey(row);
+                if (key !== undefined) {
+                    this.rowLines.delete(key);
+                }
+            }
+        }
+        this.updateRowHeights();
+    }
+
+    /**
+     * @internal
+     * true when the row has a height of its own (fitRows), for the row menu. Left out: any row
+     */
+    public __hasRowHeight(row?: Entity): boolean {
+        if (row === undefined) {
+            return this.rowLines.size > 0;
+        }
+        const key = rowKey(row);
+        return key !== undefined && this.rowLines.has(key);
+    }
+
+    /**
+     * the rows given to fitRows() / resetRowHeights() as a list: the rows the filter lets through when
+     * none are given
+     * @throws a `TypeError` when it is not a row or an array of rows
+     */
+    private rowList(method: string, rows: EntityUnion<T> | EntityUnion<T>[] | undefined): readonly Entity[] {
+        if (rows === undefined) {
+            return this.dataSource.getDataRows();
+        }
+        if (Array.isArray(rows)) {
+            return rows;
+        }
+        if (rows && typeof rows === 'object') {
+            return [rows];
+        }
+        throw new TypeError(`${method}(): rows is a row or an array of rows, not ${JSON.stringify(rows)}`);
+    }
+
+    /**
+     * the rows have other heights: the tops of the rows again, and the rows on screen rendered
+     */
+    private updateRowHeights() {
+        this.__dataSourceUpdated();
+        if (this.grid) {
+            triggerScrollEvent(this.grid);
         }
     }
 
@@ -779,6 +1049,26 @@ export class GridInterface<T> {
     }
 
     /**
+     * Fill down, as Ctrl+D (Cmd+D) in a cell does: in every range the values of its top row go into the
+     * rows under it, a range of one row gets the values of the data row above it. Without a range, the
+     * cell with the focus gets the value of the cell above it. The values are copied as they are; cells
+     * that can not be edited are skipped (the grid's `readonly`, the column's, the `isReadonly` hook),
+     * group rows have no cells. One step of the undo history. See the guide "Selection and clipboard".
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * // the status of the first row into the next four
+     * gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 4, toField: 'status' }]);
+     * gridInterface.fillDown();
+     * ```
+     */
+    public fillDown() {
+        const focused = this.grid ? focusedCell(this.grid) : null;
+        fillDown(this, focused ? pointOf(focused.cell) : null);
+    }
+
+    /**
      * @internal
      * Sets the ranges, for the grid's mouse and keys and for setRanges() (which checks them first): the
      * cells on screen show them, and `range-change` is sent. Nothing happens when they are the ranges
@@ -793,6 +1083,10 @@ export class GridInterface<T> {
         this.rangeState = rangeState(this.gridConfig, copies);
         if (this.grid) {
             renderRangeClasses(this.grid);
+            // the summary of the selected cells
+            if (this.grid.domCreated) {
+                renderFooter(this.grid);
+            }
         }
         this.__callSubscribers('range-change', { ranges: this.getRanges() });
     }
@@ -803,6 +1097,192 @@ export class GridInterface<T> {
      */
     public __getRangeState(): RangeState | null {
         return this.rangeState;
+    }
+
+    /**
+     * Finds a text in the cells, as Ctrl+F in the grid does: opens the find bar with the text, marks
+     * every cell that shows it and scrolls to the current match. See {@link FindResult} for what a
+     * match is and their order - the text a cell shows, formatted, in any case.
+     *
+     * The current match is the first one at or after the cell that has the focus (or the first one);
+     * while the bar is open, the current match stays while it still matches, else it is the next one.
+     * The focus does not move: {@link openFind} puts it in the bar, as Ctrl+F does. `find-change` is
+     * sent. Does nothing while the grid is not on the page.
+     *
+     * @param text the text to find. `''` opens the bar with no matches
+     * @returns how many cells show the text
+     * @throws a `TypeError` when the text is not a string
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * const count = gridInterface.find('acme');
+     * console.log(`${count} cells`, gridInterface.getFind().current); // { row: 3, field: 'company' }
+     * gridInterface.findNext();
+     * gridInterface.closeFind();
+     * ```
+     */
+    public find(text: string): number {
+        if (typeof text !== 'string') {
+            throw new TypeError(`find(text): the text is a string, e.g. find('acme'), got ${String(text)}`);
+        }
+        if (this.grid) {
+            openFind(this.grid, { text, focus: false });
+        }
+        return this.getFind().count;
+    }
+
+    /**
+     * Opens the find bar as Ctrl+F does: the focus goes into its input, with the text it had selected,
+     * and the matches of that text show. For a button or a menu entry of your own. Does nothing while
+     * the grid is not on the page.
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * document.getElementById('find-button')!.onclick = () => gridInterface.openFind();
+     * ```
+     */
+    public openFind() {
+        if (this.grid) {
+            openFind(this.grid, { focus: true });
+        }
+    }
+
+    /**
+     * Goes to the next match, as Enter and F3 in the find bar: it is the current one, the grid scrolls
+     * to it. After the last one, the first. Nothing while the find bar is closed or nothing matches.
+     *
+     * @returns the cell of the current match - its row in the displayed rows and its field - or `null`
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * gridInterface.find('norway');
+     * const cell = gridInterface.findNext(); // { row: 12, field: 'country' }
+     * ```
+     */
+    public findNext(): FindResult['current'] {
+        return this.grid ? findStep(this.grid, 1) : null;
+    }
+
+    /**
+     * Goes to the previous match, as Shift+Enter and Shift+F3 in the find bar. Before the first one, the
+     * last. See {@link findNext}.
+     *
+     * @returns the cell of the current match, or `null`
+     *
+     * @example
+     * ```ts
+     * gridInterface.find('norway');
+     * gridInterface.findPrevious(); // the last match: the first one comes before it
+     * ```
+     */
+    public findPrevious(): FindResult['current'] {
+        return this.grid ? findStep(this.grid, -1) : null;
+    }
+
+    /**
+     * Closes the find bar, as Esc in it does: the cells are not marked any more. Its text is kept, Ctrl+F
+     * shows it again. When the focus was in the bar it goes to the cell of the current match. `find-change`
+     * is sent.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('close-find')!.onclick = () => gridInterface.closeFind();
+     * ```
+     */
+    public closeFind() {
+        if (this.grid) {
+            closeFind(this.grid);
+        }
+    }
+
+    /**
+     * What Find has found now: whether the bar is open, its text, how many cells match and the current
+     * match, see {@link FindResult}. A copy. The `find-change` event sends the same each time it changes.
+     *
+     * @example
+     * ```ts
+     * const { open, count, position } = gridInterface.getFind();
+     * if (open) {
+     *     console.log(count ? `${position} of ${count}` : 'no matches');
+     * }
+     * ```
+     */
+    public getFind(): FindResult {
+        return this.grid ? getFindResult(this.grid) : { open: false, text: '', count: 0, position: 0, current: null };
+    }
+
+    /**
+     * The rows as an Excel workbook (.xlsx), a Blob: one sheet with a header row of the column labels
+     * (bold, frozen, with an autofilter over it and every row), then a row per data row. By default
+     * every row the filter lets through, in the sort order, and the columns of the layout in the
+     * order the user sees them, as wide as in the grid. See {@link ExcelOptions} for what can be
+     * changed: the selected rows, the selected range of cells, the fields, the sheet name.
+     *
+     * - **Typed cells**, so Excel can sum, sort and filter: a number field gives numbers, a date or
+     *   datetime field Excel dates (the local date and time the grid shows), a boolean field TRUE /
+     *   FALSE, text text - with wrapped lines when it has a line break. A value that is not of its
+     *   field's type (text in a number field) is written as the text the cell shows. Blanks are empty
+     *   cells.
+     * - **A flat list**: when grouped, every data row in the grouped order - the rows of collapsed
+     *   groups too - and no group rows, no outline, no totals. Rows marked for deletion are rows of the
+     *   grid until they are saved, they are exported too.
+     * - **No formulas**: text is never a formula in an .xlsx file, a value a user typed
+     *   (`=HYPERLINK(...)`) shows as the text it is.
+     * - **The values when called**: the rows and values are read before the promise is returned, the
+     *   file is zipped after (with the browser's `CompressionStream`, so this is async).
+     *
+     * Works without the grid on the page too: it reads the config and the datasource.
+     *
+     * @param options what to export, see {@link ExcelOptions}. Every option is optional
+     * @returns the .xlsx file, of the type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+     * @throws (the promise rejects with) a `TypeError` for an option it does not know or a value an
+     * option does not take (`rows: 'some'`, a sheet name Excel does not take), a `RangeError` for more
+     * rows (1 048 576 with the header) or columns (16 384) than an Excel sheet holds
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * // the file, for code of your own: upload it, attach it to a mail ...
+     * const blob = await gridInterface.getExcel();
+     * await fetch('/api/reports', { method: 'POST', body: blob });
+     *
+     * // the selected rows, two fields, on a sheet named People
+     * const people = await gridInterface.getExcel({ rows: 'selected', fields: ['name', 'born'], sheetName: 'People' });
+     *
+     * // the cells the user selected (the last range of cells)
+     * const cells = await gridInterface.getExcel({ rows: 'range' });
+     * ```
+     */
+    public getExcel(options: ExcelOptions = {}): Promise<Blob> {
+        return gridExcel(this, 'getExcel', options);
+    }
+
+    /**
+     * Saves the rows as an Excel file (.xlsx): the browser downloads it, as from a link. The file is
+     * {@link getExcel}'s. The row menu's *Excel, all rows* and *Excel, selected rows* call this.
+     *
+     * @param filename the name the file is saved as, default `'export.xlsx'`. Give it the `.xlsx`
+     * ending yourself, it is not added
+     * @param options what to export, see {@link ExcelOptions}
+     * @returns a promise that is fulfilled once the download is started
+     * @throws (the promise rejects with) a `TypeError` when the filename is not a text
+     * (`downloadExcel({ rows: 'selected' })`: the filename comes first), for an option it does not
+     * know or a value an option does not take
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * document.getElementById('export')!.onclick = () => gridInterface.downloadExcel();
+     *
+     * // the selected rows, on a sheet named Orders
+     * await gridInterface.downloadExcel('orders.xlsx', { rows: 'selected', sheetName: 'Orders' });
+     * ```
+     */
+    public downloadExcel(filename: string = 'export.xlsx', options: ExcelOptions = {}): Promise<void> {
+        return downloadGridExcel(this, filename, options);
     }
 
     /**
@@ -876,7 +1356,8 @@ export class GridInterface<T> {
     /**
      * Opens a menu of your own, in the grid's menu style: a value picker for a cell, the actions of a
      * button, a second grid as a dropdown ({@link MenuBlock}). See {@link MenuEntry} for what it can
-     * show. To change the grid's own right click menus, use the `menus` hook ({@link GridHooks}).
+     * show, submenus too ({@link MenuSubmenu}). To change the grid's own right click menus, use the
+     * `menus` hook ({@link GridHooks}).
      *
      * The menu is a popover: shown in the top layer, over everything on the page - a container with
      * `overflow: hidden` does not cut it off, no z-index covers it. Opened from an element in a
@@ -886,9 +1367,13 @@ export class GridInterface<T> {
      * The menu open before is closed: there is one menu at a time. The grid closes this one, as its
      * own, on a click outside it, on Esc, when another menu opens, on scroll (with
      * `autoRemoveContextMenuOnScrollEvent`) and when the grid leaves the page. Clicking an item closes
-     * it too, then calls the item's action; clicking in a block does not. {@link closeMenu} closes it
-     * from code. When the focus is in the menu as it closes (a field in a block), it goes back to the
-     * element that had it when the menu opened.
+     * it too, with its submenus, then calls the item's action; clicking in a block does not.
+     * {@link closeMenu} closes it from code. When the focus is in the menu as it closes (an item, a
+     * field in a block), it goes back to the element that had it when the menu opened.
+     *
+     * The keyboard: called after a key (a button pressed with Enter) the menu takes the focus, on its
+     * first item, and the arrows, Enter, Esc work as in the grid's menus - the WAI-ARIA menu pattern.
+     * Called after a pointer press the focus stays where it is, ArrowDown gets into the menu.
      *
      * Called from a click handler the menu stays open: the click that opened it does not count as a
      * click outside it.
@@ -1070,13 +1555,12 @@ export class GridInterface<T> {
         }
 
         /**
-         * the aggregates (aggregates.ts): a group row is one line, more when an aggregate it shows is
-         * on a lower line of a column with stacked fields. The totals row has the lines it needs, at
-         * least one
+         * the aggregates (aggregates.ts): a group row with aggregates is its name's line and a line for
+         * each function of the column that has the most; the totals row has those lines
          */
-        const aggregateLineCount = aggregateLines(config);
-        config.__groupRowHeight = config.cellHeight * (config.groupAggregates ? Math.max(1, aggregateLineCount) : 1);
-        config.__totalsRowHeight = config.totalsRow ? config.cellHeight * Math.max(1, aggregateLineCount) : 0;
+        const heights = aggregateRowHeights(config);
+        config.__groupRowHeight = heights.group;
+        config.__totalsRowHeight = heights.totals;
     }
 
     /**
@@ -1215,10 +1699,22 @@ export class GridInterface<T> {
 
         const groupRow = this.gridConfig.__groupRowHeight;
         const row = this.gridConfig.__rowHeight;
+        // the rows made taller by fitRows(): their lines, a row is at least as high as the layout makes it
+        const rowLines = this.rowLines;
+        const cells = this.gridConfig.__columnCells;
+        const cellHeight = this.gridConfig.cellHeight;
         let count = 0;
 
         this.dataSource.getRows().forEach((ent) => {
-            const height = isGroupRow(ent) ? groupRow : row;
+            let height = row;
+            if (isGroupRow(ent)) {
+                height = groupRow;
+            } else if (rowLines.size) {
+                const lines = rowLines.get(String(ent.__KEY));
+                if (lines !== undefined && lines > cells) {
+                    height = lines * cellHeight;
+                }
+            }
             this.scrollTops.push(count);
             this.scrollHeights.push(height);
             count = count + height;
@@ -1367,8 +1863,12 @@ export class GridInterface<T> {
                     this.updateRows(grid);
                 }
             }),
-            // values set from code, by undo, by an upsert ...: the rows on screen, in the next frame
-            follow('rows-changed', (data, grid) => requestRowsRender(grid, data.rows))
+            // values set from code, by undo, by an upsert ...: the rows on screen, in the next frame. An
+            // open find bar finds its text again
+            follow('rows-changed', (data, grid) => {
+                requestRowsRender(grid, data.rows);
+                findDataChanged(grid);
+            })
         ];
 
         // the rows of a lookup came, went or changed: a cell of any row can show another label now
@@ -1419,6 +1919,8 @@ export class GridInterface<T> {
         updateMainElementSizes(grid);
         rebuildFooter(grid);
         triggerScrollEvent(grid);
+        // rows added, removed or moved: an open find bar finds its text again
+        findDataChanged(grid);
     }
 
     /**
@@ -1438,12 +1940,14 @@ export class GridInterface<T> {
         const scrollElScrollTop = scrollEl?.scrollTop;
 
         const newTop = this.__getScrollState().scrollTops[row];
+        // the row's own height: a row can be taller than the layout makes a row (fitRows)
+        const rowHeight = this.__getScrollState().scrollHeights[row] ?? this.__getGridConfig().__rowHeight;
 
-        if (newTop - this.__getGridConfig().__rowHeight < scrollElScrollTop) {
+        if (newTop - rowHeight < scrollElScrollTop) {
             scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
         }
 
-        if (newTop + this.__getGridConfig().__rowHeight > scrollElHeight + scrollElScrollTop) {
+        if (newTop + rowHeight > scrollElHeight + scrollElScrollTop) {
             scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
         }
     }
@@ -1473,8 +1977,11 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         selectSizeHeight: options.selectSizeHeight ?? 18,
         readonly: options.readonly ?? true,
         tooltips: options.tooltips ?? true,
+        multilineTooltipLines: options.multilineTooltipLines ?? TOOLTIP_LINES,
         rowStatus: options.rowStatus ?? true,
         editedMarker: options.editedMarker ?? true,
+        mergeHighlight: options.mergeHighlight ?? true,
+        copyHeaders: options.copyHeaders ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false
@@ -1567,29 +2074,92 @@ function assertConfigTexts(config: Partial<GridConfig>) {
 }
 
 /**
- * A column's `aggregate` is one of the functions, and `sum`, `avg`, `min` and `max` are for a number
- * field: TypeScript catches neither in a config from plain JavaScript or JSON, and the grid would show
- * nothing (a text field has no numbers to sum) without a word
+ * `multilineTooltipLines` is a whole number of 1 or more: TypeScript does not catch `0`, `-1` or `2.5`,
+ * nor a text from plain JavaScript or JSON - the tooltip would show no line, or all of them. Left out or
+ * undefined is the default
+ * @throws a `TypeError` naming the option and what it takes
+ */
+function assertTooltipLines(config: Partial<GridConfig>) {
+    const lines: unknown = config.multilineTooltipLines;
+    if (lines !== undefined && !(Number.isInteger(lines) && (lines as number) >= 1)) {
+        throw new TypeError(`GridConfig: multilineTooltipLines is ${JSON.stringify(lines)}, it is a whole number of 1 or more`);
+    }
+}
+
+/**
+ * A column's `aggregate` is one of the functions or a list of them, and `sum`, `avg`, `min` and `max`
+ * are for a number field: TypeScript catches neither in a config from plain JavaScript or JSON, and the
+ * grid would show nothing (a text field has no numbers to sum) without a word
+ * @param where how the message names it: the config's columns, or the state given to setState()
  * @throws a `TypeError` naming the column and what it takes
  */
-function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<any>) {
+function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<any>, where = 'GridConfig: columns') {
     for (const [field, column] of Object.entries(config.columns ?? {})) {
-        const fn: unknown = column?.aggregate;
-        if (fn === undefined) {
+        const value: unknown = column?.aggregate;
+        if (value === undefined) {
             continue;
         }
-        if (!isAggregateFunction(fn)) {
-            throw new TypeError(
-                `GridConfig: columns.${field}.aggregate is ${JSON.stringify(fn)}, it is one of ${AGGREGATE_FUNCTIONS.map((name) => `'${name}'`).join(', ')}`
-            );
-        }
-        const type = datasource.getField(field).type;
-        if (fn !== 'count' && type !== 'number') {
-            throw new TypeError(
-                `GridConfig: columns.${field}.aggregate '${fn}' is for a number field, '${field}' is ${type}: new Datasource({ fields: { ${field}: 'number' } }), or 'count'`
-            );
+        const name = where.endsWith('columns') ? `${where}.${field}.aggregate` : `${where}.${field}`;
+        const list: unknown[] = Array.isArray(value) ? value : [value];
+        for (const fn of list) {
+            if (!isAggregateFunction(fn)) {
+                throw new TypeError(
+                    `${name} is ${JSON.stringify(value)}, it is one of ${AGGREGATE_FUNCTIONS.map((fnName) => `'${fnName}'`).join(', ')} or a list of them`
+                );
+            }
+            const type = datasource.getField(field).type;
+            if (fn !== 'count' && type !== 'number') {
+                throw new TypeError(
+                    `${name} '${fn}' is for a number field, '${field}' is ${type}: new Datasource({ fields: { ${field}: 'number' } }), or 'count'`
+                );
+            }
         }
     }
+}
+
+/**
+ * The aggregates of the columns, for the state: the fields that have some, a list each
+ */
+function aggregatesOfColumns(columns: Record<string, ColumnConfig>): Record<string, AggregateFunction[]> {
+    const aggregates: Record<string, AggregateFunction[]> = {};
+    for (const [field, column] of Object.entries(columns)) {
+        const list = normalizeAggregates(column?.aggregate);
+        if (list.length) {
+            aggregates[field] = list;
+        }
+    }
+    return aggregates;
+}
+
+/**
+ * The state's aggregates as columns, to check them as a config's
+ */
+function columnsWithAggregates(aggregates: Record<string, unknown>): Record<string, ColumnConfig> {
+    return Object.fromEntries(
+        Object.entries(aggregates).map(([field, fns]) => [field, { aggregate: fns as AggregateFunction[] }])
+    );
+}
+
+/**
+ * The fields of fitColumns() / resetColumnWidths(): left out, or an array of field names. A field
+ * name on its own, from plain JavaScript, would be read as a list of its letters
+ * @throws a `TypeError` naming the method
+ */
+function assertFields(method: string, fields: unknown) {
+    if (fields !== undefined && !(Array.isArray(fields) && fields.every((field) => typeof field === 'string'))) {
+        throw new TypeError(`${method}(): fields is an array of field names, not ${JSON.stringify(fields)}: ${method}(['name'])`);
+    }
+}
+
+/**
+ * The key fitRows() keeps a row's height by, as text: `7` and `'7'` are the same key, as the datasource
+ * compares them. undefined for what is no data row of a datasource: a group row, an object of your own
+ */
+function rowKey(row: Entity | null | undefined): string | undefined {
+    if (!row || typeof row !== 'object' || isGroupRow(row) || !row.__controller) {
+        return undefined;
+    }
+    return String(row.__KEY);
 }
 
 /**

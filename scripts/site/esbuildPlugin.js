@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { GUIDES_DIR, renderGuides } = require('./guides');
 const { readApiModel } = require('./api');
+const { readStatus } = require('./status');
 
 /**
  * esbuild plugin for the docs site (samples/demo), used by scripts/buildDemo.js and the dev server.
@@ -11,6 +12,8 @@ const { readApiModel } = require('./api');
  * - `import guides from 'docs:guides'`     guides/*.md rendered to html, see guides.js.
  *                                          docsPlugin({ guidesDir }) reads another folder
  * - `import api from 'docs:api'`           the API pages, from typedoc, see api.js
+ * - `import status from 'docs:status'`     what the site is built from (branch, commit) and the work
+ *                                          in progress page, from V6_PLAN.md and IMPORVEMENT.md, see status.js
  */
 function docsPlugin({ guidesDir = GUIDES_DIR } = {}) {
     return {
@@ -26,9 +29,14 @@ function docsPlugin({ guidesDir = GUIDES_DIR } = {}) {
                 watchFiles: [args.path]
             }));
 
-            build.onResolve({ filter: /^docs:(guides|api)$/ }, (args) => ({ path: args.path, namespace: 'docs' }));
+            build.onResolve({ filter: /^docs:(guides|api|status)$/ }, (args) => ({ path: args.path, namespace: 'docs' }));
             build.onLoad({ filter: /.*/, namespace: 'docs' }, async (args) => {
-                const data = args.path === 'docs:guides' ? renderGuides(guidesDir) : await readApiModel();
+                const data =
+                    args.path === 'docs:guides'
+                        ? renderGuides(guidesDir)
+                        : args.path === 'docs:status'
+                          ? readStatus()
+                          : await readApiModel();
                 return { contents: JSON.stringify(data), loader: 'json' };
             });
         }

@@ -12,12 +12,29 @@ const NOTES = [
     'VIP customer\r\nAlways confirm by phone'
 ];
 
+/**
+ * the notes of a meeting, on every tenth row from row 7: more lines than the tooltip shows, an empty
+ * line between the parts
+ */
+const MEETING = [
+    'Meeting 12 March',
+    'Present: Anna, Ole, Kari',
+    '',
+    'Agreed:',
+    '- new prices from April',
+    '- delivery every second week',
+    '',
+    'To do:',
+    '- Ole sends the contract',
+    '- Kari calls the bank'
+].join('\n');
+
 export const multiline: DemoSample = {
     id: 'multiline',
     title: 'Multiline text',
     group: 'Editing',
     description:
-        'Notes is a multiline field (fields: { notes: { multiline: true } }): a cell shows its first line, a marker when there are more, and the whole text as its tooltip - hover it. Address (pinned right) has no option: only its values with a line break are multiline, the others are cells as usual. Enter, F2, a double click or typing a character opens an editor over the cell: Enter is a new line, Ctrl+Enter (Cmd+Enter) saves, Esc cancels, Tab saves and goes to the next cell. A click outside the editor saves too, and so does scrolling the grid. A save is one step of the undo history: Ctrl+Z in the cell. The notes have a rule, at most 120 characters. In a readonly grid the editor shows the text, to read it.',
+        'Notes is a multiline field (fields: { notes: { multiline: true } }): a cell shows its first line, a marker when there are more, and its first 5 lines as its tooltip (multilineTooltipLines) - hover the notes of row 8. Address (pinned right) has no option: only its values with a line break are multiline. Enter, F2, a double click or typing a character opens an editor over the cell: Enter is a new line, Ctrl+Enter saves, Esc cancels, Tab saves and goes on; a click outside or scrolling saves too. A save is one undo step (Ctrl+Z in the cell). The notes have a rule, at most 120 characters. Sizes, like Excel: fitRows() makes the rows as high as their notes need, fitColumns() the columns as wide as their content - also in the Size › submenu of the row and header menus, and a double click on the edge of a column header.',
     run(stage) {
         const ui = createStage(stage);
 
@@ -38,7 +55,7 @@ export const multiline: DemoSample = {
 
         const rows = generateRows(200).map((row, i) => ({
             ...row,
-            notes: NOTES[i % NOTES.length],
+            notes: i % 10 === 7 ? MEETING : NOTES[i % NOTES.length],
             // every third address has a line break
             address: i % 3 === 0 ? `Storgata ${i + 1}\n0155 Oslo` : `Kirkeveien ${i + 1}, Oslo`
         }));
@@ -61,5 +78,11 @@ export const multiline: DemoSample = {
             ui.log(JSON.stringify(datasource.currentEntity?.notes ?? null));
         });
         ui.button('Undo', () => datasource.undo());
+
+        // the sizes: rows as high as their notes need, columns as wide as their content
+        ui.button('fitRows()', () => gridInterface.fitRows());
+        ui.button('resetRowHeights()', () => gridInterface.resetRowHeights());
+        ui.button('fitColumns()', () => gridInterface.fitColumns());
+        ui.button('resetColumnWidths()', () => gridInterface.resetColumnWidths());
     }
 };

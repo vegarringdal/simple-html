@@ -7,11 +7,11 @@ import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import type { ColumnConfig, GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { MAX_OPTIONS } from '../gridFunctions/lookupEditor';
-import { rangeClipboardText } from '../gridFunctions/rangeClipboard';
+import { rangesClipboard } from '../gridFunctions/rangeClipboard';
 import { GridInterface } from '../gridInterface';
 import { registerLookup } from '../lookup';
 import { mountGrid, renderedColumn, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { gridOf, headerFilterInput, openFilterMenu, openRowMenu, sleep, typeInHeaderFilter } from './interactionTestHelpers';
+import { gridOf, headerFilterInput, menuEntry, menuTreeIds, openFilterMenu, openRowMenu, sleep, typeInHeaderFilter } from './interactionTestHelpers';
 
 /**
  * Lookup columns (ColumnConfig.editor): the registry of the lookups, the checks of the config, the cell
@@ -75,7 +75,7 @@ const config = (more: Partial<GridConfig> = {}): GridConfig => ({
     ...more
 });
 
-const mount = (more: Partial<GridConfig> = {}, rows = data()) => mountGrid(config(more), rows, fields());
+const mount = (more: Partial<GridConfig> = {}, rows: any[] = data()) => mountGrid(config(more), rows, fields());
 
 /** the input of a body cell, by the row it shows */
 function cellInput(element: GridElement, field: string, row = 0): HTMLInputElement {
@@ -953,11 +953,12 @@ describe('lookups - sorting, filtering, export and clipboard on the label', () =
     it("expect the filter menu of a lookup column to offer the text operators, IS_BLANK on the cell's value", async () => {
         const { element, datasource } = await mount();
         openFilterMenu(element, 'customerId');
-        const entry = (id: string) => document.querySelector(`[data-menu-id="${id}"]`) as HTMLElement | null;
-        expect(entry('filter.operator.contains')).not.toBeNull();
-        expect(entry('filter.operator.greaterThanOrEqualTo')).toBeNull();
+        const ids = menuTreeIds();
+        expect(ids).toContain('filter.operator.contains');
+        expect(ids).not.toContain('filter.operator.greaterThanOrEqualTo');
 
-        (entry('filter.filter.isBlank') as HTMLElement).click();
+        openFilterMenu(element, 'customerId');
+        menuEntry('filter.filter.isBlank').click();
         expect(renderedColumn(element, 'customerId')).toEqual(['']);
         expect(datasource.getDataRows()).toHaveLength(1);
     });
@@ -972,8 +973,9 @@ describe('lookups - sorting, filtering, export and clipboard on the label', () =
     it('expect copy to give the labels, paste of a label to write its value and set', async () => {
         const { element, datasource, gridInterface } = await mount();
         const ctx = gridOf(element);
-        const copied = rangeClipboardText(ctx, { fromRow: 0, fromField: 'country', toRow: 1, toField: 'customerId' });
-        expect(copied.text).toEqual('Norway\tGLOBEX\r\nSweden\tACME\r\n');
+        const copied = rangesClipboard(ctx, [{ fromRow: 0, fromField: 'country', toRow: 1, toField: 'customerId' }]);
+        // the labels of the columns first (GridConfig.copyHeaders)
+        expect(copied.text).toEqual('Country\tCustomer\r\nNorway\tGLOBEX\r\nSweden\tACME\r\n');
 
         // pasted into the first two rows, the other way around
         gridInterface.setRanges([{ fromRow: 0, fromField: 'country', toRow: 0, toField: 'customerId' }]);
@@ -993,7 +995,7 @@ describe('lookups - sorting, filtering, export and clipboard on the label', () =
         const { element, datasource } = await mount();
         datasource.select(1);
         openRowMenu(element, 'customerId', 0);
-        (document.querySelector('[data-menu-id="row.clear.cell"]') as HTMLElement).click();
+        menuEntry('row.clear.cell').click();
         const row = datasource.getAllData()[0];
         expect([row.customerId, row.customerName, row.city]).toEqual([null, null, null]);
     });

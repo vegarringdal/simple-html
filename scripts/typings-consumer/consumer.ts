@@ -25,6 +25,7 @@ import {
     DateInterface,
     type Entity,
     type EventHandler,
+    type ExcelOptions,
     type Field,
     type FieldConfig,
     type FieldType,
@@ -57,6 +58,7 @@ import {
     type MenuPosition,
     type MenuSection,
     type MenuSeparator,
+    type MenuSubmenu,
     type ModifiedEntity,
     NumberFormatterComma,
     NumberFormatterDot,
@@ -312,6 +314,18 @@ created.updateConfig({ columns: { name: nameColumn }, layout: { center: [stacked
 created.refresh();
 created.rebuild();
 created.autoResizeColumns();
+// the sizes: columns fitted to their content or to cells, rows to their multiline cells, and back
+created.fitColumns();
+created.fitColumns(['name'], { rows: created.getDatasource().getDataRows().slice(0, 1) });
+created.resetColumnWidths(['name']);
+created.resetColumnWidths();
+created.fitRows();
+created.fitRows(created.getDatasource().getDataRows());
+created.resetRowHeights(created.getDatasource().getDataRows()[0]);
+created.resetRowHeights();
+// @ts-expect-error the fields are a list
+created.fitColumns('name');
+created.updateConfig({ multilineTooltipLines: 10 });
 created.openFilterEditor();
 const layoutFields: string[] = created.getLayoutFields();
 const selectedFields: string[] = created.getLayoutFields({ selectedOnly: true });
@@ -352,6 +366,21 @@ const pipe: CsvOptions = { separator: '|' };
 // @ts-expect-error the filename comes first: downloadCsv('export.csv', { rows: 'selected' })
 created.downloadCsv({ rows: 'selected' });
 console.log(pipe);
+// Excel: a Blob, or a file. Async, the options are plain JSON
+const excelOptions: ExcelOptions = { rows: 'selected', fields: ['name', 'born'], sheetName: 'People' };
+const excelFile: Promise<Blob> = created.getExcel();
+const selectedExcel: Promise<Blob> = created.getExcel(excelOptions);
+const downloaded: Promise<void> = created.downloadExcel();
+created.downloadExcel('selected.xlsx', { rows: 'selected' });
+created.downloadExcel('range.xlsx', { rows: 'range' });
+console.log(excelFile, selectedExcel, downloaded);
+// @ts-expect-error the header row is always there: no header option
+created.getExcel({ header: false });
+// @ts-expect-error the CSV options are not Excel's
+const formattedExcel: ExcelOptions = { formatted: false };
+// @ts-expect-error the filename comes first: downloadExcel('export.xlsx', { rows: 'selected' })
+created.downloadExcel({ rows: 'selected' });
+console.log(formattedExcel);
 created.destroy();
 withHooks.destroy();
 // @ts-expect-error readonlySetter is gone: the isReadonly hook
@@ -393,11 +422,24 @@ const logRow: MenuItem = {
 const mySection: MenuSection = { type: 'section', id: 'my.section', label: 'Mine:' };
 const mySeparator: MenuSeparator = { type: 'separator', id: 'my.separator', visible: () => true };
 const myBlock: MenuBlock = { type: 'block', id: 'my.block', element: document.createElement('div') };
+const mySubmenu: MenuSubmenu = {
+    type: 'submenu',
+    id: 'my.more',
+    label: 'More',
+    entries: [logRow, mySeparator],
+    visible: () => true
+};
 const menus: GridMenus = {
     row: (defaults, context) => [
-        ...defaults.filter((entry) => entry.id !== 'row.copy.cell'),
+        // an entry of a submenu: changed in the submenu's entries
+        ...defaults.map((entry) =>
+            entry.type === 'submenu' && entry.id === 'row.copy'
+                ? { ...entry, entries: entry.entries.filter((inner) => inner.id !== 'row.copy.cell') }
+                : entry
+        ),
         mySection,
         logRow,
+        mySubmenu,
         context.row ? mySeparator : myBlock
     ],
     header: (defaults) =>
@@ -409,7 +451,7 @@ gridInterface.updateHooks({ menus: { row: (defaults) => defaults.slice(1) } });
 gridInterface.updateHooks({ menus: undefined });
 const builtInRowIds: readonly string[] = MENU_IDS.row;
 console.log(withMenus, builtInRowIds, MENU_IDS.header[0], MENU_IDS.filter.includes('filter.values'));
-const pickEntries: MenuEntry[] = [mySection, { id: 'pick.a', label: 'A', action: () => {} }, mySeparator, myBlock];
+const pickEntries: MenuEntry[] = [mySection, { id: 'pick.a', label: 'A', action: () => {} }, mySeparator, myBlock, mySubmenu];
 const position: MenuPosition = { x: 10, y: 20 };
 gridInterface.openMenu(new MouseEvent('click'), pickEntries);
 gridInterface.openMenu(position, pickEntries);
@@ -482,7 +524,7 @@ gridInterface.updateInitConfig(config);
 console.log(gridInterface.on('filter-operator-change', (data) => data.cellConfig));
 // @ts-expect-error a layout column has fields, not rows
 gridInterface.setState({ layout: { center: [{ rows: ['name'], width: 100 }] } });
-gridInterface.on('grid-connected', () => gridInterface.autoResizeColumns());
+gridInterface.on('grid-connected', () => gridInterface.fitColumns());
 
 const onFiltered: EventHandler<DatasourceEvents['collection-filtered']> = (data) => {
     const info: 'filter' | 'resetData' | 'markForDeletion' | 'unmarkForDeletion' | 'acceptChanges' | '__internalUpdate, forced' =
@@ -720,7 +762,7 @@ const copyText: string = TEXTS['row.copy'];
 const tooltipId: TextId = 'filterEditor.addCondition.tooltip';
 const norwegian: Texts = {
     'row.copy': 'Kopier:',
-    'row.summary.count': 'Antall: {count}',
+    'footer.summary.count': 'Antall: {count}',
     [tooltipId]: 'Legg til betingelse',
     // an id of your own, for a validator's message
     'validation.phoneNO': 'Må være 8 siffer'
@@ -764,9 +806,10 @@ const configIsData: HasFunction<GridConfig> extends false ? true : never = true;
 const stateIsData: HasFunction<GridState> extends false ? true : never = true;
 const fieldsAreData: HasFunction<Pick<DatasourceOptions, 'fields' | 'formatters'>> extends false ? true : never = true;
 const csvOptionsAreData: HasFunction<CsvOptions> extends false ? true : never = true;
+const excelOptionsAreData: HasFunction<ExcelOptions> extends false ? true : never = true;
 // boolean: true for the hooks, false for an optional hook left out (undefined)
 const hooksAreFunctions: HasFunction<GridHooks> extends false ? never : true = true;
-console.log(configIsData, stateIsData, fieldsAreData, csvOptionsAreData, hooksAreFunctions);
+console.log(configIsData, stateIsData, fieldsAreData, csvOptionsAreData, excelOptionsAreData, hooksAreFunctions);
 
 // internals are not part of the typings any more
 // @ts-expect-error

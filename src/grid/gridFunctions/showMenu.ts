@@ -1,6 +1,6 @@
 import { html, nothing, render } from 'lit-html';
 import type { Grid } from '../grid';
-import type { MenuContext, MenuEntry, MenuPosition } from '../gridMenus';
+import type { MenuContext, MenuEntry, MenuPosition, MenuSubmenu } from '../gridMenus';
 import { asPx } from './asPx';
 import { createElement } from './createElement';
 import { removeContextMenu } from './removeContextMenu';
@@ -134,26 +134,13 @@ export function openMenuElement(ctx: Grid, menu: HTMLElement, anchor: Element | 
  * - when there is room neither below nor above: next to the point, on its right - on its left when
  *   there is no room on the right - so it does not cover the cell, moved up as far as it has to
  * - moved in from the right edge, never past the left one
- * - taller than the window: as tall as the window, and it scrolls. Only then: the scroll box would
- *   cut off the menu's shadow
+ * - taller than the window: as tall as the window, and it scrolls, see {@link fitWindowHeight}
  */
 export function placeMenu(menu: HTMLElement, place: MenuPlace) {
     // the window, as the filter editor is placed in it (a page scrollbar can cover its last px)
     const width = window.innerWidth;
     const height = window.innerHeight;
-
-    menu.style.maxHeight = '';
-    menu.style.overflowY = '';
-    // measured in the window's top left corner: near the right edge an absolutely placed element
-    // shrinks to the room that is left (its text wraps), and would grow again once moved left
-    moveMenu(menu, 0, 0);
-    let rect = menu.getBoundingClientRect();
-    const maxHeight = height - 2 * WINDOW_MARGIN;
-    if (rect.height > maxHeight) {
-        menu.style.maxHeight = asPx(maxHeight);
-        menu.style.overflowY = 'auto';
-        rect = menu.getBoundingClientRect();
-    }
+    const rect = fitWindowHeight(menu);
 
     let top = place.top;
     let left = place.left;
@@ -177,27 +164,196 @@ export function placeMenu(menu: HTMLElement, place: MenuPlace) {
 }
 
 /**
+ * Places a submenu that is shown beside the item that opens it, kept in the window as
+ * {@link placeMenu} keeps a menu:
+ * - on the right of the menu the item is in, its first entry level with the item
+ * - on the left of that menu when there is no room on the right. With room on neither side: moved in
+ *   from the right edge (over the menu), never past the left one
+ * - moved up as far as it has to when it does not fit below the item's top
+ * - taller than the window: as tall as the window, and it scrolls
+ * @param item the item that opens it
+ * @param parent the menu the item is in: its popover
+ */
+export function placeSubmenu(menu: HTMLElement, item: HTMLElement, parent: HTMLElement) {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const rect = fitWindowHeight(menu);
+    const itemRect = item.getBoundingClientRect();
+    const parentRect = parent.getBoundingClientRect();
+
+    let left = parentRect.right;
+    const leftOf = parentRect.left - rect.width;
+    if (left + rect.width > width - WINDOW_MARGIN && leftOf >= WINDOW_MARGIN) {
+        left = leftOf;
+    }
+    left = Math.max(WINDOW_MARGIN, Math.min(left, width - WINDOW_MARGIN - rect.width));
+    // the frame of a menu is 1px: its first item is 1px below its top
+    const top = Math.max(WINDOW_MARGIN, Math.min(itemRect.top - 1, height - WINDOW_MARGIN - rect.height));
+    moveMenu(menu, left, top);
+}
+
+/**
+ * Measures a menu that is shown, and makes one taller than the window as tall as the window
+ * ({@link WINDOW_MARGIN} from its edges): it scrolls. Only then: the scroll box would cut off the
+ * menu's shadow.
+ * @returns the size of the menu
+ */
+function fitWindowHeight(menu: HTMLElement): DOMRect {
+    menu.style.maxHeight = '';
+    menu.style.overflowY = '';
+    // measured in the window's top left corner: near the right edge an absolutely placed element
+    // shrinks to the room that is left (its text wraps), and would grow again once moved left
+    moveMenu(menu, 0, 0);
+    const rect = menu.getBoundingClientRect();
+    const maxHeight = window.innerHeight - 2 * WINDOW_MARGIN;
+    if (rect.height <= maxHeight) {
+        return rect;
+    }
+    menu.style.maxHeight = asPx(maxHeight);
+    menu.style.overflowY = 'auto';
+    return menu.getBoundingClientRect();
+}
+
+/**
+ * How long the pointer rests on an item before its submenu opens, or before the submenu open next to
+ * it closes: in ms. Moving the pointer from an item to its open submenu crosses other items on the
+ * way, they must not swap the submenu
+ */
+export const SUBMENU_DELAY = 150;
+
+/**
+ * An open menu of entries ({@link showMenu}) with its open submenus: on the grid (`ctx.menuTree`)
+ * while it is open. The pickers of the filter editor and the date picker are menus without entries,
+ * there is no tree for them.
+ */
+export interface MenuTree {
+    /** what the menu was opened on, handed to the callbacks of the entries */
+    context: MenuContext;
+    /** the menu, then its open submenu, then that one's ...: one submenu open per menu */
+    levels: MenuLevel[];
+    /** a submenu opening or closing a while after the pointer moved, see hoverItem */
+    timer: ReturnType<typeof setTimeout> | undefined;
+    /** the item the pointer was on last */
+    hovered: HTMLElement | null;
+}
+
+/**
+ * The menu, or one of its open submenus
+ */
+interface MenuLevel {
+    /** the popover. A submenu's is put in the menu's popover: it closes with it */
+    popover: HTMLElement;
+    /** the element with `role="menu"`, the entries are its children */
+    menu: HTMLElement;
+    /** the item that opened the submenu, null for the menu */
+    opener: HTMLElement | null;
+    /** it has a block: Tab is the browser's, it gets into the block, see itemKeydown */
+    hasBlock: boolean;
+}
+
+/**
+ * a number for the ids of the items that open a submenu: the submenu is labelled by its item
+ */
+let openerCount = 0;
+
+/**
  * Opens a menu of entries: renders the entries that are visible and opens it as the grid's menu, see
- * {@link openMenuElement}.
+ * {@link openMenuElement}. Its submenus open beside their items, see {@link openSubmenu}.
  *
  * An item click closes the menu first, then calls the item's action: an action can open another menu.
+ *
+ * The keyboard: opened by a key (Shift+F10, the menu key, Enter on a button that calls openMenu())
+ * the menu takes the focus, on its first item - the ARIA menu pattern. Opened with the mouse the
+ * focus stays where it is (the cell), as before: ArrowDown and ArrowUp move it into the menu, see
+ * addMenuListeners. The keys in the menu: {@link itemKeydown}.
  */
 export function showMenu(ctx: Grid, entries: MenuEntry[], context: MenuContext, place: MenuPlace) {
-    const menu = createElement('div', 'simple-html-grid');
-    menu.classList.add('simple-html-grid-reset');
+    const tree: MenuTree = { context, levels: [], timer: undefined, hovered: null };
+    const level = renderLevel(ctx, tree, visibleEntries(entries, context), 0, null);
 
-    const shown = entries.filter((entry) => entry.visible?.(context) ?? true);
+    openMenuElement(ctx, level.popover, place.anchor);
+    placeMenu(level.popover, place);
+    tree.levels.push(level);
+    ctx.menuTree = tree;
+
+    if (ctx.keyboardUsed) {
+        focusItem(menuItems(level.menu)[0]);
+    }
+}
+
+/**
+ * The entries to show: those whose `visible` callback does not return false, in the submenus too. A
+ * submenu with no item, submenu or block left is left out, a submenu of lines and headers only too.
+ * A submenu shown is a copy with its visible entries
+ */
+function visibleEntries(entries: MenuEntry[], context: MenuContext): MenuEntry[] {
+    const shown: MenuEntry[] = [];
+    for (const entry of entries) {
+        if (!(entry.visible?.(context) ?? true)) {
+            continue;
+        }
+        if (entry.type === 'submenu') {
+            const inner = visibleEntries(entry.entries, context);
+            if (inner.some((child) => child.type !== 'section' && child.type !== 'separator')) {
+                shown.push({ ...entry, entries: inner });
+            }
+        } else {
+            shown.push(entry);
+        }
+    }
+    return shown;
+}
+
+/**
+ * Renders the menu, or a submenu (`depth` 1 and more), into a popover element of its own: a
+ * `role="menu"` element with the entries in it. The entries are the visible ones already
+ * (visibleEntries); `disabled` and `selected` are called here, when the menu or submenu opens.
+ *
+ * - An item is a `menuitem`, a `menuitemcheckbox` with `aria-checked` when it has a `selected`
+ *   callback, `aria-disabled` when it is disabled. It is not a stop of Tab (`tabindex="-1"`) but for
+ *   one item per menu, the one the keyboard was on last (a roving tabindex): Shift+Tab from a block
+ *   gets back to it.
+ * - An item that opens a submenu has `aria-haspopup="menu"` and `aria-expanded`, and an id: the
+ *   submenu is labelled by it.
+ * - A section header and its line have no role: the keyboard passes them by. A separator is an `hr`,
+ *   a `separator`.
+ *
+ * A mousedown on an item is canceled: an item does not take the focus from the mouse, it stays on the
+ * cell the menu was opened from (the filter editor, opened from an item, gives it back there when it
+ * closes) - or on the item the keyboard is on.
+ */
+function renderLevel(ctx: Grid, tree: MenuTree, entries: MenuEntry[], depth: number, opener: HTMLElement | null): MenuLevel {
+    const popover = createElement('div', 'simple-html-grid');
+    popover.classList.add('simple-html-grid-reset');
+    const context = tree.context;
+    const noFocus = (event: MouseEvent) => event.preventDefault();
 
     const entryTemplate = (entry: MenuEntry) => {
         switch (entry.type) {
             case 'section':
-                return html`<div class="simple-html-grid-menu-section" data-menu-id=${entry.id}>${entry.label}</div>
-                    <hr class="hr-solid" />`;
+                return html`<div class="simple-html-grid-menu-section" role="none" data-menu-id=${entry.id}>${entry.label}</div>
+                    <hr class="hr-solid" role="none" />`;
             case 'separator':
                 return html`<hr class="hr-dashed" data-menu-id=${entry.id} />`;
             case 'block':
                 // lit puts the element itself in the menu
                 return entry.element;
+            case 'submenu':
+                return html`<div
+                    class="simple-html-grid-menu-item"
+                    role="menuitem"
+                    tabindex="-1"
+                    id=${`${ctx.ariaIdPrefix}-menu-${++openerCount}`}
+                    data-menu-id=${entry.id}
+                    aria-haspopup="menu"
+                    aria-expanded="false"
+                    @mousedown=${noFocus}
+                    @mousemove=${(event: MouseEvent) => hoverItem(ctx, tree, depth, event.currentTarget as HTMLElement, entry)}
+                    @click=${(event: MouseEvent) => openSubmenu(ctx, tree, depth, event.currentTarget as HTMLElement, entry, false)}
+                    @keydown=${(event: KeyboardEvent) => itemKeydown(ctx, tree, depth, event, entry)}
+                >
+                    ${entry.label}
+                </div>`;
             default: {
                 const disabled = entry.disabled?.(context) ?? false;
                 const selected = entry.selected?.(context) ?? false;
@@ -208,19 +364,22 @@ export function showMenu(ctx: Grid, entries: MenuEntry[], context: MenuContext, 
                 if (disabled) {
                     classes += ' simple-html-grid-menu-item-disabled';
                 }
-                // mousedown: an item does not take the focus, it stays on the cell the menu was opened
-                // from - and the filter editor, opened from an item, gives it back there when it closes
                 return html`<div
                     class=${classes}
+                    role=${entry.selected ? 'menuitemcheckbox' : 'menuitem'}
+                    tabindex="-1"
                     data-menu-id=${entry.id}
+                    aria-checked=${entry.selected ? String(selected) : nothing}
                     aria-disabled=${disabled ? 'true' : nothing}
-                    @mousedown=${(event: MouseEvent) => event.preventDefault()}
+                    @mousedown=${noFocus}
+                    @mousemove=${(event: MouseEvent) => hoverItem(ctx, tree, depth, event.currentTarget as HTMLElement)}
                     @click=${() => {
                         if (!disabled) {
                             removeContextMenu(ctx);
                             entry.action(context);
                         }
                     }}
+                    @keydown=${(event: KeyboardEvent) => itemKeydown(ctx, tree, depth, event)}
                 >
                     ${entry.label}${entry.hint ? html` <i>(${entry.hint})</i>` : nothing}
                 </div>`;
@@ -228,8 +387,218 @@ export function showMenu(ctx: Grid, entries: MenuEntry[], context: MenuContext, 
         }
     };
 
-    render(html`<div class="simple-html-grid-menu">${shown.map((entry) => entryTemplate(entry))}</div>`, menu);
+    render(html`<div class="simple-html-grid-menu" role="menu">${entries.map((entry) => entryTemplate(entry))}</div>`, popover);
+    const menu = popover.firstElementChild as HTMLElement;
 
-    openMenuElement(ctx, menu, place.anchor);
-    placeMenu(menu, place);
+    // Shift+Tab from a block gets back to the first item, until the keyboard moves on
+    const first = menuItems(menu)[0];
+    if (first) {
+        first.tabIndex = 0;
+    }
+    // the submenu open in this menu would stay where it opened, apart from its item
+    popover.addEventListener('scroll', () => closeLevels(tree, depth + 1));
+
+    return { popover, menu, opener, hasBlock: entries.some((entry) => entry.type === 'block') };
+}
+
+/**
+ * The items of a menu or submenu, in order: its children with a menuitem role. Sections, lines and
+ * blocks are not
+ */
+function menuItems(menu: Element | null): HTMLElement[] {
+    return Array.from(menu?.children ?? []).filter(
+        (child): child is HTMLElement => child instanceof HTMLElement && /^menuitem/.test(child.getAttribute('role') ?? '')
+    );
+}
+
+/**
+ * Gives `item` the focus, and makes it the stop of Tab of its menu (a roving tabindex)
+ */
+function focusItem(item: HTMLElement | undefined) {
+    if (!item) {
+        return;
+    }
+    for (const other of menuItems(item.parentElement)) {
+        other.tabIndex = other === item ? 0 : -1;
+    }
+    item.focus();
+}
+
+/**
+ * The focus to the first item - or the last - of the deepest open menu: ArrowDown / ArrowUp while
+ * a menu is open and the focus is not in it (opened with the mouse), see addMenuListeners
+ */
+export function focusMenu(tree: MenuTree, last: boolean) {
+    const items = menuItems(tree.levels[tree.levels.length - 1].menu);
+    focusItem(last ? items[items.length - 1] : items[0]);
+}
+
+/**
+ * Opens the submenu of `item`, an item of the menu at `depth`, beside it (placeSubmenu). The submenu
+ * open in that menu closes first: one per menu. Already open, it stays as it is.
+ *
+ * The submenu is a popover of its own, put in the menu's popover: it closes with the menu, and a
+ * click in it is a click in the menu. It is shown in the top layer, the menu's box does not cut it
+ * off.
+ * @param focus the focus to its first item: it is opened from the keyboard
+ */
+function openSubmenu(ctx: Grid, tree: MenuTree, depth: number, item: HTMLElement, submenu: MenuSubmenu, focus: boolean) {
+    clearTimeout(tree.timer);
+    let level = tree.levels[depth + 1];
+    if (level?.opener !== item) {
+        closeLevels(tree, depth + 1);
+        level = renderLevel(ctx, tree, submenu.entries, depth + 1, item);
+        level.menu.setAttribute('aria-labelledby', item.id);
+        level.popover.classList.add('simple-html-grid-popover');
+        level.popover.popover = 'manual';
+        level.popover.style.minWidth = asPx(130);
+        // the pointer is in the submenu: the items it crossed on the way do not swap it, see hoverItem
+        level.popover.addEventListener('mouseenter', () => clearTimeout(tree.timer));
+        tree.levels[0].popover.appendChild(level.popover);
+        level.popover.showPopover();
+        placeSubmenu(level.popover, item, tree.levels[depth].popover);
+        item.setAttribute('aria-expanded', 'true');
+        tree.levels.push(level);
+    }
+    if (focus) {
+        focusItem(menuItems(level.menu)[0]);
+    }
+}
+
+/**
+ * Closes the open submenus from `depth` on: 1 closes every submenu, the menu stays. The focus in one
+ * of them goes back to the item that opened the first: it must not be lost with its element
+ */
+function closeLevels(tree: MenuTree, depth: number) {
+    if (depth < 1 || depth >= tree.levels.length) {
+        return;
+    }
+    const closed = tree.levels.splice(depth);
+    if (closed.some((level) => level.popover.contains(document.activeElement))) {
+        focusItem(closed[0].opener ?? undefined);
+    }
+    for (const level of closed) {
+        level.opener?.setAttribute('aria-expanded', 'false');
+        level.popover.remove();
+    }
+}
+
+/**
+ * The pointer moving on `item`, an item of the menu at `depth` (its mousemove).
+ *
+ * - The focus follows the pointer when it is on an item: one item is lit, the keyboard goes on from
+ *   it. Not from a block's input, which the user is typing in, nor into a menu the mouse opened
+ * - {@link SUBMENU_DELAY} later the submenu open in this menu closes, and the item's own submenu
+ *   opens. The pointer crossing other items on its way to the open submenu does not swap it: entering
+ *   the submenu stops the timer
+ */
+function hoverItem(ctx: Grid, tree: MenuTree, depth: number, item: HTMLElement, submenu?: MenuSubmenu) {
+    if (tree.hovered === item) {
+        return;
+    }
+    tree.hovered = item;
+    const focused = document.activeElement;
+    if (
+        focused instanceof HTMLElement &&
+        tree.levels[0].popover.contains(focused) &&
+        menuItems(focused.parentElement).includes(focused)
+    ) {
+        focusItem(item);
+    }
+
+    clearTimeout(tree.timer);
+    const open = tree.levels[depth + 1];
+    if (open?.opener === item || (!open && !submenu)) {
+        return;
+    }
+    tree.timer = setTimeout(() => {
+        closeLevels(tree, depth + 1);
+        if (submenu && item.isConnected) {
+            openSubmenu(ctx, tree, depth, item, submenu, false);
+        }
+    }, SUBMENU_DELAY);
+}
+
+/**
+ * The keys on an item of the menu at `depth`, the ARIA menu pattern:
+ *
+ * - ArrowDown / ArrowUp: the next / previous item, round. Home / End: the first / last. Sections and
+ *   lines are passed by, disabled items are not (they can not be used). Moving closes the submenu
+ *   open in this menu
+ * - ArrowRight, Enter, Space on an item with a submenu: opens it, the focus on its first item
+ * - Enter, Space on an item: as a click - the menu closes, the focus goes back, the action runs
+ * - ArrowLeft, Esc in a submenu: closes it, the focus back on its item. Esc in the menu itself is left
+ *   to addMenuListeners: it closes the menu
+ * - Tab: closes the menu, the focus goes back where it was. Not in a menu with a block (the filter
+ *   menu's value list): there Tab is the browser's, it gets into the block's inputs
+ * - a letter: the next item whose label starts with it
+ * @param submenu what the item opens, it is an item that opens a submenu
+ */
+function itemKeydown(ctx: Grid, tree: MenuTree, depth: number, event: KeyboardEvent, submenu?: MenuSubmenu) {
+    const item = event.currentTarget as HTMLElement;
+    const level = tree.levels[depth];
+    const items = menuItems(level.menu);
+    const index = items.indexOf(item);
+    const moveTo = (next: HTMLElement | undefined) => {
+        clearTimeout(tree.timer);
+        closeLevels(tree, depth + 1);
+        focusItem(next);
+    };
+
+    switch (event.key) {
+        case 'ArrowDown':
+            moveTo(items[(index + 1) % items.length]);
+            break;
+        case 'ArrowUp':
+            moveTo(items[(index - 1 + items.length) % items.length]);
+            break;
+        case 'Home':
+            moveTo(items[0]);
+            break;
+        case 'End':
+            moveTo(items[items.length - 1]);
+            break;
+        case 'ArrowRight':
+            if (!submenu) {
+                return;
+            }
+            openSubmenu(ctx, tree, depth, item, submenu, true);
+            break;
+        case 'ArrowLeft':
+        case 'Escape':
+            if (depth === 0) {
+                return;
+            }
+            closeLevels(tree, depth);
+            break;
+        case 'Enter':
+        case ' ':
+            if (submenu) {
+                openSubmenu(ctx, tree, depth, item, submenu, true);
+            } else {
+                // the click: closes the menu and runs the action, nothing when the item is disabled
+                item.click();
+            }
+            break;
+        case 'Tab':
+            if (level.hasBlock) {
+                return;
+            }
+            removeContextMenu(ctx);
+            break;
+        default: {
+            if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) {
+                return;
+            }
+            // the next item whose label starts with the letter, after this one and round
+            const letter = event.key.toLowerCase();
+            const next = [...items.slice(index + 1), ...items.slice(0, index + 1)].find((other) =>
+                other.textContent?.trim().toLowerCase().startsWith(letter)
+            );
+            if (next) {
+                moveTo(next);
+            }
+        }
+    }
+    event.preventDefault();
 }

@@ -269,7 +269,46 @@ export class DateInterface {
     }
 
     /**
-     * Shows the next month, what the arrow in the month header does.
+     * Shows the same month a year later, what the » button in the month header of a date picker does.
+     * The date picked stays as it is.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * dateInterface.nextYear();
+     * dateInterface.config.startYear; // one later
+     * ```
+     */
+    nextYear() {
+        this.config = structuredClone(this.config);
+        this.config.startYear = this.config.startYear + 1;
+        this.render();
+    }
+
+    /**
+     * Shows the same month a year before, what the « button in the month header of a date picker does.
+     * The date picked stays as it is.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * dateInterface.prevYear();
+     * ```
+     */
+    prevYear() {
+        this.config = structuredClone(this.config);
+        this.config.startYear = this.config.startYear - 1;
+        this.render();
+    }
+
+    /**
+     * Shows the next month, what the › button in the month header of a date picker does.
      *
      * @example
      * ```ts
@@ -291,7 +330,7 @@ export class DateInterface {
         this.render();
     }
     /**
-     * Shows the month before, what the arrow in the month header does.
+     * Shows the month before, what the ‹ button in the month header of a date picker does.
      *
      * @example
      * ```ts

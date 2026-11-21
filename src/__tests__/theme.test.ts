@@ -117,11 +117,13 @@ const GRID_LIGHT: Record<string, string> = {
     '--simple-html-grid-backdrop-color': 'rgba(129, 127, 127, 0.2)'
 };
 
+// the dimmed days and the week numbers were changed in v6 (#dfdfdf, #8b8b8b before): too light for
+// text, 1.3:1 and 3.4:1 to white. Now 4.5:1 and more
 const DATE_LIGHT: Record<string, string> = {
     '--simple-html-date-main-bg-color': 'white',
     '--simple-html-date-main-color': '#2e2d2d',
-    '--simple-html-date-dimmed-color': '#dfdfdf',
-    '--simple-html-date-week-color': '#8b8b8b',
+    '--simple-html-date-dimmed-color': '#767676',
+    '--simple-html-date-week-color': '#6b6b6b',
     '--simple-html-date-header-bg-border': '#181515',
     '--simple-html-date-main-bg-border': '#e6e5e5',
     '--simple-html-date-main-bg-selected': '#bdd4e7'
@@ -160,7 +162,7 @@ describe('theme - light and dark', () => {
         }
     });
 
-    it('expect the light colour of every date picker variable to be the colour before v6', () => {
+    it('expect the light colour of every date picker variable to be the colour before v6, the two made darker aside', () => {
         for (const [name, light] of Object.entries(DATE_LIGHT)) {
             expect(lightAndDark(dateVariables.get(name) ?? '')[0], name).toBe(light);
         }

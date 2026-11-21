@@ -43,7 +43,9 @@ function text(selector: string) {
     return document.querySelector(selector)?.textContent;
 }
 
-describe('docs site', () => {
+// the site is built once and every guide is rendered with its live grids: seconds, more than the 5s vitest
+// gives a test when the machine is busy (other test runs, builds)
+describe('docs site', { timeout: 30_000 }, () => {
     beforeAll(() => {
         stubCanvas();
         stubElementSizes();
@@ -64,13 +66,30 @@ describe('docs site', () => {
         const guideFiles = fs.existsSync(guidesDir) ? fs.readdirSync(guidesDir).filter((file) => file.endsWith('.md')) : [];
         expect(routesOf('#guide/').length).toBe(guideFiles.length);
         const sections = [...document.querySelectorAll('.nav-section-title')].map((el) => el.textContent);
-        expect(sections).toEqual(guideFiles.length ? ['Guides', 'Samples', 'API'] : ['Samples', 'API']);
+        expect(sections).toEqual(guideFiles.length ? ['Status', 'Guides', 'Samples', 'API'] : ['Status', 'Samples', 'API']);
 
         expect(routesOf('#sample/').length).toBeGreaterThan(0);
         expect(routesOf('#api/').length).toBeGreaterThan(0);
-        // no hash: the start page, the first link
-        expect(location.hash).toBe(routesOf('#')[0]);
+        // no hash: the start page, the first guide - the work in progress page is first in the sidebar
+        expect(location.hash).toBe(routesOf('#guide/')[0] ?? routesOf('#')[0]);
         expect(document.querySelector('.nav-item.active')?.getAttribute('href')).toBe(location.hash);
+    });
+
+    it('shows the branch and the commit the site is built from, at the top of the sidebar', () => {
+        const line = document.querySelector('.sidebar-header .sidebar-build');
+        const branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT }).toString().trim();
+        const commit = execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT }).toString().trim();
+        expect(line?.textContent).toContain(`${branch} @ ${commit}`);
+        expect(line?.querySelector('a')?.getAttribute('href')).toMatch(/^https:\/\/[^@]+\/commit\/[0-9a-f]{40}$/);
+    });
+
+    it('renders the work in progress page: the open items of the plan and the known issues', async () => {
+        await open('#status/work-in-progress');
+
+        expect(text('.doc h1')).toBe('Work in progress');
+        const headings = [...document.querySelectorAll('.doc h2')].map((el) => el.textContent);
+        expect(headings).toEqual(['Open in the plan', 'Known issues and candidates']);
+        expect(document.querySelector('.doc .doc-status .sidebar-build')).not.toBeNull();
     });
 
     it('renders every guide, with a running grid for each ```sample block', async () => {

@@ -89,13 +89,17 @@ export type GridConfig = {
      */
     initialState?: Partial<GridState>;
 
-    /** height of a cell in px, default 22 */
+    /**
+     * height of a cell in px, default 22. A row is a line of cells this high, or one per field of a
+     * column with stacked fields. `gridInterface.fitRows()` makes a row as many lines high as its
+     * multiline cells need
+     */
     cellHeight?: number;
     /** height of the top panel (grouping) in px, default 25 */
     panelHeight?: number;
     /**
      * height of a header label cell in px, default `cellHeight`. Make it 2-3 times `cellHeight` for long
-     * labels that wrap. `autoResizeColumns()` measures the label on one line
+     * labels that wrap. `fitColumns()` measures the label on one line
      */
     cellHeaderLabelHeight?: number;
     /** height of the footer in px, default 45 */
@@ -155,9 +159,34 @@ export type GridConfig = {
      * `false` shows no marker. The cell element has the class `simple-html-cell-edited` either way,
      * for a look of your own. The colour is `--simple-html-grid-edited-color`
      *
+     * A field in conflict - the server changed it while the user had it edited, see
+     * `datasource.getConflicts()` - has the conflict marker instead, with or without this option: its
+     * colour is `--simple-html-grid-conflict-color`, its tooltip has the server's value, a click takes it
+     * (in an editable grid). The cell element has the class `simple-html-cell-conflict`
+     *
      * @sample editing
      */
     editedMarker?: boolean;
+
+    /**
+     * the cells a merge changed flash once, default `true`: a cell whose value `datasource.upsert()`
+     * changed gets the class `simple-html-cell-merged` when it is rendered in the second after, and a
+     * tint that fades out over that second (`--simple-html-grid-merged-color`). A field the user has
+     * edited is not changed by a merge - it is a conflict, the cell has the conflict marker. `false`: no
+     * flash. See the guide "Live data"
+     *
+     * @sample live-data
+     */
+    mergeHighlight?: boolean;
+
+    /**
+     * a copy of more than one cell starts with a header line of the column labels - ranges (Ctrl+C) and
+     * the row menu's Column / Row / Range copies - in the text and in the html table, so a table pasted
+     * into Word or Excel has its headers. Default `true`; `false` copies the values only. A single cell
+     * copies its value only. Pasted into the grid, a first line of the grid's column labels is skipped.
+     * See the guide "Selection and clipboard"
+     */
+    copyHeaders?: boolean;
 
     /**
      * renders the built in tooltip, default = true: on the buttons and icons of the filter editor,
@@ -171,6 +200,29 @@ export type GridConfig = {
      * @sample validation
      */
     tooltips?: boolean;
+
+    /**
+     * the lines of a multiline cell's text its tooltip shows, default `5`: the first lines, then a
+     * line that says how many more there are (`… 7 more lines`, the text `cell.multiline.moreLines`).
+     * When only one line is left over, it is shown instead. The empty lines at the end of the text
+     * are left out, a line of more than 100 characters is cut with `…`. The tooltip of the marker of
+     * an edited cell shows the original value the same way.
+     *
+     * A whole number of 1 or more, anything else throws a `TypeError` when the grid is made or
+     * `updateConfig()` is given it.
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['notes'], width: 200 }] },
+     *     multilineTooltipLines: 10 // longer notes in the tooltip
+     * };
+     * ```
+     */
+    multilineTooltipLines?: number;
 
     /**
      * The texts of this grid, by id: the ones to change. They win over the texts of the page
@@ -193,7 +245,7 @@ export type GridConfig = {
      * const config: GridConfig = {
      *     layout: { center: [{ fields: ['name'], width: 150 }] },
      *     texts: {
-     *         'row.copy': 'Kopier:',
+     *         'row.copy': 'Kopier',
      *         'filterEditor.addCondition.tooltip': 'Legg til betingelse'
      *     }
      * };
@@ -205,7 +257,7 @@ export type GridConfig = {
      * the date picker of date cells and date header filters: only the fields to change. Of the
      * {@link IDateConfig} the grid reads `showWeek` (default true), `isoWeek` (true), `weekStart` (1,
      * monday), `rowHeight` (22), `monthWidth` (230), `monthMargin` (10), `hideDimmedDates` (false),
-     * `showYearInMonth` (false) and `datepickerHeight` (317), and sets the rest itself. Its texts - the
+     * `showYearInMonth` (false) and `datepickerHeight` (282), and sets the rest itself. Its texts - the
      * names of the months and days, the buttons - are the grid's `texts` (`datePicker.*`)
      *
      * @example
@@ -229,13 +281,14 @@ export type GridConfig = {
     placeholderRowCurrentEntityOnly?: boolean;
 
     /**
-     * shows the aggregate of each column that has one (`ColumnConfig.aggregate`) in the group rows,
+     * shows the aggregates of each column that has some (`ColumnConfig.aggregate`) in the group rows,
      * default `true`: in the column's place, over the group's rows - the rows of its sub groups and
-     * of collapsed groups included. The group's name stays at the left, over the first columns.
+     * of collapsed groups included.
      *
-     * A group row is one line high; when an aggregated field is not the first of a column with
-     * stacked fields, the group rows get as many lines as it takes to show it on its own line.
-     * `false` shows the name only, as without aggregates
+     * A group row with aggregates has its name on a line of its own, and the aggregates on the lines
+     * under it - a line for each function of a column (`aggregate: ['sum', 'avg']` is two lines), so a
+     * group row is 1 + n lines, n the most a column needs. `false` shows the name only, one line, as
+     * without aggregates
      *
      * @sample aggregates
      */
@@ -246,7 +299,10 @@ export type GridConfig = {
      * (`ColumnConfig.aggregate`), over the rows the filter lets through - when grouped, the rows of
      * collapsed groups too. "Total" at the left (the text `aggregate.total`). It follows the columns
      * when they scroll sideways, and the values follow the filter and every change of a row: an edit,
-     * undo, `upsert()`. The horizontal scrollbar is between the rows and the totals row
+     * undo, `upsert()`. The horizontal scrollbar is between the rows and the totals row. As many lines
+     * as the column with the most functions needs.
+     *
+     * Part of the grid's state (`GridState.totalsRow`): the header menu turns it on and off
      *
      * @sample aggregates
      */
@@ -450,11 +506,16 @@ export type ColumnConfig = {
     editor?: ColumnEditor;
 
     /**
-     * sums the column up: `'sum'`, `'avg'`, `'min'`, `'max'` or `'count'`, see
-     * {@link AggregateFunction}. The grid shows it in the column's place in each group row
-     * (`GridConfig.groupAggregates`, on by default) and in the totals row (`GridConfig.totalsRow`), with
-     * a short label in front: `Sum 1234.5` (the texts `aggregate.*`). The datasource computes it:
-     * `datasource.aggregate(field, fn)`.
+     * sums the column up: `'sum'`, `'avg'`, `'min'`, `'max'` or `'count'` - one, or a list of them
+     * (`['sum', 'avg']`), see {@link AggregateFunction}. The grid shows each in the column's place in
+     * each group row (`GridConfig.groupAggregates`, on by default) and in the totals row
+     * (`GridConfig.totalsRow`), a line each in the order sum, avg, min, max, count: the label at the
+     * left, the value at the right - `Sum        1 234,50` (the texts `aggregate.*`). The datasource
+     * computes them: `datasource.aggregate(field, fn)`.
+     *
+     * These are where the grid starts: the user turns functions on and off in the header menu (right
+     * click a column label, "Aggregate:"), and they are part of the grid's state
+     * (`GridState.aggregates`), `resetState()` goes back to these.
      *
      * - `sum`, `avg`, `min` and `max` are for a `number` field (the datasource's `fields`), anything
      *   else throws a `TypeError` when the grid is made or `updateConfig()` is given the column. They
@@ -469,7 +530,7 @@ export type ColumnConfig = {
      *
      * const config: GridConfig = {
      *     columns: {
-     *         balance: { aggregate: 'sum' },
+     *         balance: { aggregate: ['sum', 'avg'] },
      *         age: { aggregate: 'avg' },
      *         email: { aggregate: 'count' }
      *     },
@@ -478,7 +539,7 @@ export type ColumnConfig = {
      * };
      * ```
      */
-    aggregate?: AggregateFunction;
+    aggregate?: AggregateFunction | AggregateFunction[];
 };
 
 /**
@@ -562,6 +623,14 @@ export interface GridState {
      * in `filter` already. A state from `getState()` has both.
      */
     headerFilters: Record<string, HeaderFilter>;
+    /**
+     * the aggregate functions of the columns, keyed by field - what `ColumnConfig.aggregate` starts
+     * with and the header menu changes: `{ balance: ['sum', 'avg'] }`. Only the fields that have some are
+     * listed; a field left out has none. See `ColumnConfig.aggregate`
+     */
+    aggregates: Record<string, AggregateFunction[]>;
+    /** whether the totals row is shown, `GridConfig.totalsRow` */
+    totalsRow: boolean;
 }
 
 /**
@@ -608,8 +677,11 @@ export type ParsedGridOptions = GridOptions &
             | 'selectSizeHeight'
             | 'readonly'
             | 'tooltips'
+            | 'multilineTooltipLines'
             | 'rowStatus'
             | 'editedMarker'
+            | 'mergeHighlight'
+            | 'copyHeaders'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'

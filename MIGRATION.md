@@ -1677,6 +1677,10 @@ An entry (`MenuEntry`) is one of:
 | `{ type: 'section', id, label }` - `MenuSection` | a section header, "Copy:" |
 | `{ type: 'separator', id }` - `MenuSeparator` | a dashed line |
 | `{ type: 'block', id, element }` - `MenuBlock` | your element, as it is |
+| `{ type: 'submenu', id, label, entries, visible? }` - `MenuSubmenu` | an item with a `›`: its entries open beside it on hover, click or the right arrow. Can nest |
+
+The menus work from the keyboard as the WAI-ARIA menu pattern says (arrows, Home/End, Enter, Esc, a
+letter), see [Menus](guides/10-menus.md).
 
 `visible`, `disabled` and `selected` are called with the `MenuContext` when the menu opens: what it was
 opened on (`field`, `row`, `rowIndex`, `cell`), the `gridInterface` and the `datasource`.
@@ -1692,8 +1696,8 @@ entries and the context, and returns what to show. It is a hook, given next to t
 const hooks: GridHooks = {
     menus: {
         row: (defaults, context) => [
-            // hide built-in entries by id
-            ...defaults.filter((entry) => !entry.id.startsWith('row.summary')),
+            // hide built-in entries by id: the export submenu, with what is in it
+            ...defaults.filter((entry) => !entry.id.startsWith('row.export')),
             // add your own
             { type: 'section', id: 'my.section', label: 'Mine:' },
             { id: 'my.logRow', label: 'Log row', action: () => console.log(context.field, context.row) }
@@ -1709,12 +1713,14 @@ const gridInterface = createGrid(container, { config: gridConfig, datasource, ho
 ```
 
 * **Every built-in entry has an id**, listed with its label in `MENU_IDS` (exported, in the order the
-  menus show them): `row.copy.cell`, `row.paste.cell`, `header.column.hide`, `filter.values` ... A
-  section is `menu.section`, what is under it `menu.section.entry`.
+  menus show them): `row.copy.cell`, `row.paste.cell`, `header.column.hide`, `filter.values` ... The
+  menus are short trees: a submenu is `menu.part` (`row.copy`), what is in it `menu.part.entry`
+  (`row.copy.cell`) - change an entry in a submenu through its `entries`, see the guide.
 * **`defaults` always has every entry.** The ones that do not apply have a `visible` callback that
-  hides them: paste and clear on a readonly cell, the summary of a column that is not a number, the
-  operators of another type. A section header or separator is shown as long as it is in the list:
-  hide it with the entries under it.
+  hides them: paste and clear on a readonly cell, the operators of another type. A submenu with
+  nothing left to show is hidden; a separator is shown as long as it is in the list.
+* **v5's row menu summary** (count, sum, max, min, average of the selected rows) is the summary of the
+  selected cells in the footer now, see [Selection and clipboard](guides/17-selection-and-clipboard.md#the-summary-in-the-footer).
 * **The header filter's value list** (the search box, a checkbox per value and "Run Search") is one
   entry, the block `filter.values`: hide or move it as a whole.
 * `updateHooks({ menus })` changes them while the grid is shown, `updateHooks({ menus: undefined })`
@@ -2074,6 +2080,32 @@ New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can cha
   finds an entry by its id is not affected; code that counted on the order is.
 
 ## Other behaviour changes
+
+* **Group rows with aggregates are taller**: the name on a line of its own, a line for each function
+  of the column with the most. `aggregate` takes a list (`['sum', 'avg']`), the header menu turns them
+  on and off, and `getState()` has `aggregates` and `totalsRow` - a saved state from before has neither,
+  `setState()` then keeps what the grid has.
+
+* **`autoResizeColumns()` is `fitColumns()`** (the old name still works, deprecated): it measures what
+  the cells show, the filtered rows only. `fitColumns(['name'])` fits one column, `resetColumnWidths()`
+  goes back. Rows can be fitted to their multiline text: `fitRows()` / `resetRowHeights()`.
+
+* **Copies of more than one cell start with a header line** of the column labels (text and html), and
+  several ranges copy as one table. `copyHeaders: false` gives the values only. The row menu's copies
+  write what the cells show (not ISO dates / raw numbers).
+
+* **The date picker's class names are prefixed** (`.year` -> `.simple-html-date-year`, `.side` ->
+  `.simple-html-date-time-field`, `.date-flex-col` -> `.simple-html-date-actions` ..., see the
+  changelog) - css of your own that styled the old names needs the new ones. `datepickerHeight`
+  defaults to 282.
+
+* **The row menu exports Excel**: `row.export.csv` / `row.export.csvSelected` are now
+  `row.export.excel` / `row.export.excelSelected` (texts too). CSV is still `getCsv()` /
+  `downloadCsv()`; a `menus` hook can add a CSV entry back.
+
+* **The wheel over the grid no longer scrolls the page**: the grid cancels it. Ctrl+wheel (zoom) is
+  the browser's as before. A test that sent a `wheel` event with `wheelDeltaY` has to send
+  `deltaY` (`new WheelEvent('wheel', { deltaY: 40 })` scrolls the rows down 40px).
 
 * **An empty text or number header filter shows `Text` / `Number`**, not 🔍 - the texts
   `filter.placeholder.text` / `filter.placeholder.number`. A test that looked for the 🔍 placeholder

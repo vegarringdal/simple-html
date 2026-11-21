@@ -77,14 +77,37 @@ const datasource = new Datasource({
 });
 ```
 
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    layout: { center: [{ fields: ['notes'], width: 220 }] },
+    multilineTooltipLines: 10 // the tooltip shows 10 lines, then how many more there are
+};
+
+// every row as high as its notes need, after the data is loaded
+gridInterface.fitRows();
+```
+
 - **The option**: `multiline: true` in the field's `FieldConfig`, for a text field only - on another
   type it throws when the datasource is made. `getField('notes').multiline` says it.
 - **Automatic**: a text cell whose value has a line break is multiline for that value, without the
   option. CR LF, CR and LF are line breaks. The option is for a field whose values have no line break
   yet: its cells are edited in the editor from the start.
 - **The cell** shows the first line, readonly (no typing in it), with a marker at its right when there
-  are more lines. The whole text is its tooltip, after the validation errors when it has any (an empty
-  line between them), cut after 15 lines or 600 characters. The rows keep their height.
+  are more lines. The rows keep their height, unless they are made taller (below).
+- **The tooltip** of the cell shows the first 5 lines of the text, then how many more there are -
+  `… 7 more lines` (the text `cell.multiline.moreLines`), one line more is shown instead. The empty
+  lines count, the ones at the end are left out; a line longer than 100 characters is cut with `…`.
+  The validation errors come first when the cell has any, an empty line between them. More or fewer
+  lines: `multilineTooltipLines` in the config, a whole number of 1 or more (anything else throws a
+  `TypeError`). The tooltip of the [edited marker](#showing-the-row-state) shows the original value
+  the same way.
+- **Taller rows**: `gridInterface.fitRows()`, or "Fit row height" / "Fit all rows" in the row menu,
+  makes a row as many lines high as its multiline cells have (at most 20); `resetRowHeights()` and
+  "Reset row height" take it back. In a taller row the cell shows its lines under the first one, as
+  many as there is room for, and the marker only when some are not shown. See
+  [Column widths and row heights](02-grid-config.md#column-widths-and-row-heights).
 - **Opening the editor**: Enter, F2, a double click - or typing a character, in a cell that can be
   edited: the editor opens with the text and the character at its end (nothing is replaced). A click
   only focuses the cell; Tab, Alt+arrows and the row menu (Shift+F10) work as in any cell.
@@ -165,7 +188,7 @@ It is listed in `getChanges().deletedEntities`. Unmarked, it is as it was before
 A new row is marked too. While it is marked it is in none of the lists of `getChanges()`: it was
 never saved, there is nothing to send. Unmarked, it is a new row again.
 
-In an editable grid the row menu (right click a cell) has a **Delete:** section: *Rows (selected
+In an editable grid the row menu (right click a cell) has a **Delete ›** submenu: *Rows (selected
 rows)* marks the selected rows, *Undo (selected rows)* takes the mark off - shown when a selected row
 is marked. Ctrl+Z takes a delete back too, see [Undo and redo](#undo-and-redo). A row the `isReadonly` hook returns `true` for in every column is locked: the menu does not
 mark it. The columns' `readonly` option does not lock a row, so a grid of readonly columns can still
@@ -252,10 +275,15 @@ default:
 | edited | a pencil | an edited cell: a small triangle in its top left corner |
 | marked for deletion | a trash can, the number struck through | the text struck through |
 | with an error | an exclamation mark, and a red bar | a cell with an error: a red border and a tint |
+| in conflict with the server | two arrows | a field in conflict: a larger triangle in the conflict colour |
 
 - **One icon**: a row marked for deletion shows the trash can (it is not saved, its errors do not
-  stop a save), else a row with an error the exclamation mark, else the plus or the pencil.
-- **The tooltip of the row number** has the state, then the errors, a line each: `Edited` and
+  stop a save), else a row with an error the exclamation mark, else a row in conflict the arrows,
+  else the plus or the pencil.
+- **A conflict** is a value the server changed while the user had it edited, see
+  [Live data](16-live-data.md#how-the-grid-shows-them): the marker's tooltip has the server's value, a
+  click takes it.
+- **The tooltip of the row number** has the state, the conflicts, then the errors, a line each: `Edited` and
   `Age: Must be at least 18`. A screen reader reads them with the row number, see
   [Accessibility](14-accessibility.md#what-a-screen-reader-gets).
 - **An edited cell** is a cell whose value differs from its original value, as `getChanges()` compares
@@ -321,7 +349,7 @@ datasource.isChangedOnly(); // true
 datasource.filterChangedOnly(false); // every row in Norway
 ```
 
-- **In the grid**: the row menu's *View: Changed rows only* turns it on and off (a ✓ while it is
+- **In the grid**: the row menu's *View › Changed rows only* turns it on and off (a ✓ while it is
   on), and the footer shows a chip *Changed rows only* in front of the filter's. The footer's *Clear*
   and the filter menu's *Clear All Filters* turn it off with the filter.
 - **It is not part of the filter**, it is ANDed with it: `getFilter()`, `getFilterString()`, the filter
@@ -352,11 +380,11 @@ again. In the grid the user has them too:
   every key to the row as it is typed, so what was typed in the cell is the last step of the history;
   once the typing is undone back to the value the cell started with, or the focus left the cell,
   Ctrl+Z undoes the history.
-- The row menu (right click a cell) has an **Edit:** section: *Undo (Ctrl+Z)* and *Redo (Ctrl+Y)*,
-  greyed out when there is nothing to undo or redo, and the reverts, see
-  [Reverting a cell or a row](#reverting-a-cell-or-a-row). The ids are `row.edit`, `row.edit.undo`,
-  `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow` and `row.edit.revertRows`, change or hide them with the
-  [menus hook](10-menus.md).
+- The row menu (right click a cell) starts with the submenu *Undo / Redo ›*: *Undo last change
+  (Ctrl+Z)* and *Redo (Ctrl+Y)*, greyed out when there is nothing to undo or redo, and the reverts, see
+  [Reverting a cell or a row](#reverting-a-cell-or-a-row). The ids are `row.edit` (the submenu),
+  `row.edit.undo`, `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow` and
+  `row.edit.revertRows`, change or hide them with the [menus hook](10-menus.md).
 
 ```ts
 const row = datasource.getDataRows()[0];
@@ -440,7 +468,7 @@ datasource.resetRows(datasource.getSelectedRows());
 - The fields are validated as for an edit.
 - A field that is not edited (`getChanges()` would not list it) is left as it is.
 
-In an editable grid the row menu (right click a cell) starts with an **Edit:** section:
+In an editable grid the row menu (right click a cell) starts with the submenu *Undo / Redo ›*:
 *Undo last change* (Ctrl+Z) and *Redo* (Ctrl+Y) go through the undo history; *Undo cell edit* puts
 the original value of the cell right clicked back, greyed out while it is not edited - a click on the
 marker of an edited cell does the same, see [Showing the row state](#showing-the-row-state);

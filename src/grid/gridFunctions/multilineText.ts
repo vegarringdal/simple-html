@@ -1,4 +1,6 @@
 import type { Field, FieldType } from '../../datasource/field';
+import type { Grid } from '../grid';
+import { gridText } from './gridText';
 
 /**
  * Text of several lines in a cell: `FieldConfig.multiline`, or a value with a line break.
@@ -7,7 +9,8 @@ import type { Field, FieldType } from '../../datasource/field';
  * browser strips them (the value sanitization algorithm of the Text state, "Strip newlines from the
  * value"). A value with a line break shown in the input and written back from it would lose them, so
  * a multiline cell is a readonly input that shows the first line, and it is edited in an editor over
- * the cell, a textarea (textEditor.ts).
+ * the cell, a textarea (textEditor.ts). In a row made taller (`gridInterface.fitRows()`, see
+ * rowHeights.ts) the cell shows the lines that fit under the input.
  */
 
 /**
@@ -16,11 +19,15 @@ import type { Field, FieldType } from '../../datasource/field';
 const LINE_BREAK = /\r\n|\r|\n/;
 
 /**
- * the most the tooltip of a multiline cell shows of its text: lines, then characters. The tooltip is
- * at most 260px wide, more would cover the grid
+ * the lines of the tooltip of a multiline cell, when `GridConfig.multilineTooltipLines` is not set
  */
-const TOOLTIP_MAX_LINES = 15;
-const TOOLTIP_MAX_LENGTH = 600;
+export const TOOLTIP_LINES = 5;
+
+/**
+ * the most characters of a line the tooltip shows: the tooltip is at most 260px wide and wraps a long
+ * line, more would make it cover the grid
+ */
+export const TOOLTIP_LINE_LENGTH = 100;
 
 /**
  * true when the text has a line break: CR LF, CR or LF
@@ -34,6 +41,20 @@ export function hasLineBreak(text: string): boolean {
  */
 export function firstLine(text: string): string {
     return text.split(LINE_BREAK, 1)[0];
+}
+
+/**
+ * The lines of a text, split at every line break (CR LF, CR, LF). The empty lines at its end are left
+ * out - they show nothing - the empty lines between the others are kept. At least one line: `''` is
+ * `['']`
+ */
+export function textLines(text: string): string[] {
+    const lines = text.split(LINE_BREAK);
+    let end = lines.length;
+    while (end > 1 && lines[end - 1] === '') {
+        end--;
+    }
+    return end === lines.length ? lines : lines.slice(0, end);
 }
 
 /**
@@ -58,18 +79,35 @@ export function isMultilineCell(field: Field, cellType: FieldType, text: string)
 }
 
 /**
- * The text for a tooltip: the line breaks as LF (the tooltip shows a line per LF), cut after
- * {@link TOOLTIP_MAX_LINES} lines and {@link TOOLTIP_MAX_LENGTH} characters, with `…` where it is cut
+ * The text for a tooltip: its lines (see textLines), joined with LF - the tooltip shows a line per LF.
+ *
+ * - the first `maxLines` lines, then a line from `moreLines` with how many are left out. When one line
+ *   is left over it is shown instead: it takes no more room than the line that would count it
+ * - a line longer than {@link TOOLTIP_LINE_LENGTH} characters is cut, with `…` where it is cut
+ *
+ * @param maxLines how many lines are shown, a whole number of 1 or more
+ * @param moreLines the line after them, from the number of lines left out
  */
-export function tooltipText(text: string): string {
-    const lines = normalizeLineBreaks(text).split('\n');
-    let shown = lines.slice(0, TOOLTIP_MAX_LINES).join('\n');
-    let cut = lines.length > TOOLTIP_MAX_LINES;
-    // by code points: a cut between the two halves of an emoji would show half of it
-    const characters = Array.from(shown);
-    if (characters.length > TOOLTIP_MAX_LENGTH) {
-        shown = characters.slice(0, TOOLTIP_MAX_LENGTH).join('');
-        cut = true;
+export function tooltipText(text: string, maxLines: number, moreLines: (count: number) => string): string {
+    const lines = textLines(text);
+    const shown = lines.length > maxLines + 1 ? lines.slice(0, maxLines) : lines;
+    const cut = shown.map((line) => {
+        // by code points: a cut between the two halves of an emoji would show half of it
+        const characters = Array.from(line);
+        return characters.length > TOOLTIP_LINE_LENGTH ? `${characters.slice(0, TOOLTIP_LINE_LENGTH).join('')}…` : line;
+    });
+    if (shown.length < lines.length) {
+        cut.push(moreLines(lines.length - shown.length));
     }
-    return cut ? `${shown}…` : shown;
+    return cut.join('\n');
+}
+
+/**
+ * The tooltip text of a multiline cell's text: {@link tooltipText} with the grid's
+ * `multilineTooltipLines` and its text `cell.multiline.moreLines`
+ */
+export function gridTooltipText(ctx: Grid, text: string): string {
+    return tooltipText(text, ctx.gridInterface.__getGridConfig().multilineTooltipLines, (count) =>
+        gridText(ctx, 'cell.multiline.moreLines', { count })
+    );
 }

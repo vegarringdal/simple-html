@@ -969,6 +969,45 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The `row-is-*` states had no built-in look.
 - A row's errors were in its tooltip only; a screen reader now gets them with the row number.
 
+#### The date picker redesigned, no rounded buttons (user request)
+
+##### ⚠️ Breaking changes
+- The date picker's generic class names are prefixed (they also picked up page css): `.year` ->
+  `.simple-html-date-year`; `.main` -> `.simple-html-date-month-title` / `.simple-html-date-month-name`;
+  `.month` is gone (`.simple-html-date-month-header` is the row); `.side` -> `.simple-html-date-time-field`;
+  `.icon` -> `.simple-html-date-nav` / `.simple-html-date-step`; `.date-flex` -> `.simple-html-date-time-row`;
+  `.date-flex-col` -> `.simple-html-date-actions`; the time `<label>` -> `.simple-html-date-time-label`.
+- `--simple-html-date-main-bg-border` colours only the lines (button frames:
+  `--simple-html-date-button-border`, the selected frame: `--simple-html-date-selected-border`);
+  `--simple-html-date-main-bg-selected` is no longer the button hover (`--simple-html-date-hover-bg-color`).
+- `datepickerHeight` defaults to 282 (was 317): the picker is 277px tall now.
+
+##### Changed
+- Flat and square, the grid's font: month and year on one line with square « ‹ › » buttons (« »
+  change the year); quieter week numbers and other months' days (readable now: they were 1.3:1);
+  today bold with a bar under it, apart from the selected day (fill and frame); hour and minute a number
+  between two square steppers; Clear / Now / Use an equal-width button bar, Use the primary. Text at
+  least 4.5:1, the marks 3:1, light and dark.
+- **No rounded corners in the grid's own UI**: the footer chips, Clear, the row count, the filter
+  group box, the filter editor and its buttons, the column chooser and filter menu buttons, the tooltip.
+- New `DateInterface.nextYear()` / `prevYear()`; texts `datePicker.previousYear` / `previousMonth` /
+  `nextMonth` / `nextYear` (the buttons' names); variables `--simple-html-date-button-border`,
+  `-hover-bg-color`, `-selected-border`, `-today-color`.
+
+##### Fixed
+- The picker's buttons are `type="button"`: a picker in a `<form>` no longer submits it. The hour and
+  minute inputs have names for screen readers.
+
+#### The wheel scrolls the grid, not the page
+
+##### Fixed
+- The wheel over the grid also scrolled the page under it (the event was not cancelled): it is now,
+  so a grid in a scrolling page keeps the wheel, also at its first and last row. Ctrl+wheel (the
+  browser's zoom, a trackpad's pinch) is left alone.
+- The wheel used the non-standard `wheelDeltaY` (Firefox has none): it uses `deltaX` / `deltaY`, a
+  wheel that counts lines or pages moves as many px, and left/right (a trackpad, Shift+wheel) scrolls
+  the middle columns.
+
 #### Header filters say what to type
 
 ##### ⚠️ Breaking changes
@@ -1151,6 +1190,97 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Row menu "Summary:": the max of negative numbers was 0, min skipped 0, the average was rounded to a
   whole number and counted blank cells. A text value (`'12'`) is no longer read as a number.
 
+#### Aggregates: several per column, on lines of their own, from the header menu (user request)
+
+##### ⚠️ Breaking changes
+- A group row with aggregates has its **name on a line of its own** and the aggregates on the lines
+  under it: 1 + n lines (n the most functions a column has), where it was one line with the name over
+  the first columns. The totals row has the n lines.
+- Each aggregate line has its **label at the left and its value at the right** of the column (was the
+  label in front of a right aligned value). In a column that stacks fields the label says which field:
+  `Avg Age`. The lines of a column are its fields' functions from the top (an aggregate of a stacked
+  field is no longer on the line of its field).
+- `GridState` has `aggregates` and `totalsRow`: `getState()` gives them, `setState()` applies them,
+  `resetState()` goes back to the config's. `updateConfig()` changes the totals row only when it is
+  given `totalsRow`.
+
+##### Added
+- **Several functions per column**: `ColumnConfig.aggregate: ['sum', 'avg']`, a line each, in the order
+  sum, avg, min, max, count.
+- **The header menu** (right click a column label) has an "Aggregate:" section: Sum, Average, Min, Max
+  (number columns) and Count as toggles with a ✓, and Totals row. Ids `header.aggregate.*`, texts too.
+- For a screen reader a field's aggregates are one gridcell named with all its lines.
+
+#### Fit and reset column widths and row heights, like Excel; the multiline tooltip (user request)
+
+##### ⚠️ Breaking changes
+- `autoResizeColumns()` is deprecated, use `fitColumns()`: it measures the text as the cells show it
+  (formatted, `numberOverride`), only the rows the filter lets through, a multiline text by its widest
+  line (it measured the stored values of every row).
+- Header menu: `header.size.column` / `header.size.all` read "Fit column width" / "Fit all columns".
+- A multiline cell's tooltip shows the first 5 lines and "… N more lines"
+  (`GridConfig.multilineTooltipLines`), each line cut at 100 characters (was 15 lines / 600).
+- The row menu has a "Size:" section before "Export:" (new ids in `MENU_IDS.row`).
+
+##### Added
+- `gridInterface.fitColumns(fields?, { rows? })` (one, some or every column; `{ rows: [row] }` fits a
+  column to one cell) and `resetColumnWidths(fields?)` (back to the widths `resetState()` gives). A
+  double-click on a column's resize handle fits it.
+- `gridInterface.fitRows(rows?)` / `resetRowHeights(rows?)`: a row as many lines high as its multiline
+  cells need (at most 20), kept by row key (not in the state); a multiline cell shows its lines in a
+  taller row. 100 000 rows: `fitRows()` ~85 ms, `fitColumns()` ~180 ms (the 20 longest texts of a field
+  are measured).
+- `GridConfig.multilineTooltipLines` (default 5).
+- Header menu: Reset column width / Reset all column widths. Row menu "Size:": Fit column to this cell,
+  Fit row height, Fit rows (selected rows / ranges), Fit all rows, Reset row height, Reset all row
+  heights. Texts `row.size.*`, `header.size.reset*`, `cell.multiline.moreLines`.
+
+##### Fixed
+- Fitting columns counted rows the filter hides, skipped dates, ignored `numberOverride`, and measured
+  a multiline text as one long line.
+- A press on a resize handle that does not move rebuilt the header, so a double-click never reached it.
+- Scrolling to a selected row uses the row's own height.
+
+#### The clipboard: every range, with the column headers (user request)
+
+##### ⚠️ Breaking changes
+- A copy of more than one cell starts with a **header line of the column labels**, in the text and in
+  the html table (`<thead>`): Ctrl+C on ranges and the row menu's Copy: Column / Row / Row (selected
+  rows/col) / Range. `GridConfig.copyHeaders: false` copies the values only. One cell (Ctrl+C, Copy:
+  Cell Value) is still just its value.
+- **Several ranges are copied as one table** (they copied the last range): the rows of every range x
+  the fields of every range, a cell in no range empty.
+- The row menu's copies write the values **as the cells show them** (they wrote dates as ISO and
+  numbers raw), through the same code as Ctrl+C.
+
+##### Added
+- `GridConfig.copyHeaders` (default `true`).
+- A paste whose first line is all column labels of the grid leaves that line out: a copy of the grid
+  pasted back into it writes the values, not the labels.
+
+##### Fixed
+- The row menu's copied html table did not escape the values (a `<` broke the table); it had no header
+  in its plain text.
+
+#### Excel export (user request)
+
+##### ⚠️ Breaking changes
+- The row menu's **Export:** offers Excel instead of CSV: `row.export.excel` ("Excel, all rows") and
+  `row.export.excelSelected` ("Excel, selected rows"); `row.export.csv` / `row.export.csvSelected` and
+  their texts are gone. `getCsv()` / `downloadCsv()` stay.
+
+##### Added
+- `gridInterface.getExcel(options?)` (a `Promise<Blob>`) and `downloadExcel(filename = 'export.xlsx',
+  options?)`: a real .xlsx with no dependency - the grid writes the ZIP and the SpreadsheetML, deflated
+  with `CompressionStream` where there is one. Typed cells: numbers, dates and datetimes (the local
+  day, Excel date formats), booleans, text (line breaks wrapped). The header row is always there, bold
+  and frozen, with an autofilter over every row; the widths follow the grid's. **Always a flat list**:
+  grouped, every data row in the grouped order, collapsed groups included - no group rows, no outline,
+  no totals.
+- `ExcelOptions`: `rows: 'all' | 'selected' | 'range'`, `fields`, `sheetName` (Excel's rules, a
+  `TypeError` otherwise). More rows or columns than Excel takes reject with a `RangeError`.
+- The export guide covers Excel first; the export sample has Excel buttons.
+
 #### CSV export (item 41)
 
 ##### Added
@@ -1169,6 +1299,124 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Row menu **Export:** section: `row.export.csv` (CSV, all rows) and `row.export.csvSelected` (CSV, selected
   rows, greyed out with none selected), in every grid. Texts `row.export*`.
 - Guide "Export" and sample "Export to CSV".
+
+#### Menus: submenus, much shorter, and the keyboard (user request)
+
+##### ⚠️ Breaking changes
+- **The default menus are trees of submenus**: the row menu went from 38 rows to 14, the header menu
+  from 24 to 7. The `menus` hook's `defaults` hold submenus (`MenuSubmenu`), so an entry in one is
+  changed through that submenu's `entries`; a filter on a submenu's id prefix (`row.export`) still
+  hides it as a whole. The section ids `row.edit`, `header.column` and `filter.filter` are gone from
+  `MENU_IDS` and the texts (no section headers left in the defaults); the other ids stay - the Pin
+  submenu is `header.column.pin` and the Blank one `filter.filter.blank`, so their entries keep theirs.
+- **The row menu's Summary is gone** (`row.summary`, `row.summary.count` / `.sum` / `.max` / `.min` /
+  `.avg`, ids and texts): the summary of the selected cells is in the footer (item 35).
+- Submenu labels have no colon; texts changed: "Hide column", "Column chooser…", "Advanced Filter…",
+  "Is blank", "Is not blank", "Operator". A selected item shows a ✓ and is a `menuitemcheckbox`
+  (`aria-checked`) instead of a highlighted background; "Use dimmed values" and "Changed rows only" use
+  `selected` instead of a "✓ " in the label.
+
+##### Added
+- `MenuSubmenu` (`{ type: 'submenu', id, label, entries, visible? }`) in `openMenu()` and the `menus` hook:
+  opens beside its item on hover (after 150ms), click, ArrowRight, Enter or Space; flipped left when there
+  is no room on the right, kept in the window, scrolls when taller; nests; hidden when it has nothing to
+  show. New ids `header.column.pin`, `filter.filter.blank`, `row.edit.separator`,
+  `header.aggregate.totalsSeparator`; texts `header.column.pin` ("Pin"), `filter.filter.blank` ("Blank").
+- **The keyboard in every menu** (the WAI-ARIA menu pattern): a menu opened from the keyboard focuses its
+  first item (a mouse-opened one on ArrowDown/Up), arrows, Home/End, a letter, Enter/Space, ArrowLeft/Esc
+  for a submenu, Tab closes it; the focus goes back on close. Roles `menu`, `menuitem`,
+  `menuitemcheckbox`, `aria-haspopup` / `aria-expanded` / `aria-disabled`. The filter menu's value list:
+  Tab into it, "Run Search" is a button.
+
+##### Fixed
+- Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
+  header cell, the handler was on the label in it).
+
+#### Find in the grid (item 42)
+
+##### Added
+- **Find in the grid** (Ctrl+F / Cmd+F with the focus in the grid): a find bar over the grid's top right
+  corner with an input, the count (`3 of 17`), previous / next and close. Typing finds as you go: every
+  cell whose shown text (formatted, any case) contains the text gets a tint, the current match a stronger
+  tint and a 2px line, and the grid scrolls to it, sideways too. Enter / F3 go to the next match and
+  Shift+Enter / Shift+F3 to the previous, wrapping at the ends. Esc closes the bar and puts the focus in
+  the current match's cell (its row becomes the current row). Ctrl+F outside the grid stays the
+  browser's. While open it follows the data (filter, sort, grouping, edits, upserts, layout), keeping the
+  current match while it still matches. Not in checkboxes, group row names, collapsed groups or hidden
+  fields.
+- API: `gridInterface.find(text)`, `openFind()`, `findNext()`, `findPrevious()`, `closeFind()`, `getFind()`,
+  the `find-change` event and the type `FindResult`.
+- Texts `find.label`, `find.placeholder`, `find.count`, `find.none`, `find.previous[.tooltip]`,
+  `find.next[.tooltip]`, `find.close[.tooltip]`. Variables `--simple-html-grid-find-match-color`,
+  `--simple-html-grid-find-current-color`, `--simple-html-grid-find-current-border-color`. Classes
+  `simple-html-cell-find-match`, `simple-html-cell-find-current`, `simple-html-grid-find`.
+- Accessibility: the bar is a `role="search"` region with a named input, the count is a status, the
+  buttons are named with their key in the tooltip. Find keys in the keyboard guide.
+- Guide "Find" (19) and sample "Find (Ctrl+F)".
+
+#### The row menu's undo entries in a submenu of their own (user request)
+
+##### ⚠️ Breaking changes
+- Undo last change, Redo, Undo cell edit and the two Undo row edits are in the submenu **Undo / Redo ›**
+  (`row.edit`, text `row.edit` "Undo / Redo"), first in the row menu, instead of five items and a line at
+  its top: the row menu is 9 rows. The entries keep their ids; the line `row.edit.separator` is gone.
+
+#### Fill down: Ctrl+D and the fill handle (item 34)
+
+##### Added
+- **Ctrl+D** (Cmd+D) in a cell fills down like a spreadsheet: in every range the values of its top row go
+  into the rows under it; a range of one row, or the cell alone, gets the values of the data row above.
+  `gridInterface.fillDown()` does the same from code.
+- **The fill handle**: a small square at the bottom right corner of the last range (`.simple-html-grid-fill-handle`,
+  in the range colour). Dragged down, the range grows with the pointer (the grid scrolls past the
+  bottom), and the rows it grew by get the range's rows, repeated from its top.
+- Values are copied as they are (a date as a new Date), readonly cells skipped, group rows skipped, one
+  undo step; nothing in a readonly grid (no handle, Ctrl+D stays the browser's).
+
+#### The summary of the selected cells in the footer (item 35)
+
+##### Added
+- With cell ranges of more than one cell the footer shows **Count, Sum, Average, Min, Max** at its right,
+  like a spreadsheet's status bar: the cells with a value (any type, `0` and `false` count), and the
+  numbers of the number fields, every cell once, group rows skipped, shown with the formatter of the
+  number field furthest left. It follows the ranges and edits of their values. Texts `footer.summary`
+  (its name for a screen reader), `footer.summary.count` / `.sum` / `.avg` / `.min` / `.max`; the class
+  `.footer-summary`. The filter chips collapse to one box when they would reach under it.
+
+##### Docs
+- Guide "Selection and clipboard": The summary in the footer; its known limits said several ranges copy
+  the last one - they copy as one table since the clipboard change.
+
+#### Live data: the flash of a merge, the look of a conflict (item 38)
+
+##### Added
+- **`GridConfig.mergeHighlight`** (default `true`): a cell whose value `datasource.upsert()` changed
+  flashes once - a tint that fades out over a second (`--simple-html-grid-merged-color`); the cell
+  element has the class `simple-html-cell-merged` meanwhile. The hook in the "Live data" guide is for a
+  look of your own now.
+- **The look of a conflict**: a field the server changed while the user had it edited has a larger
+  marker in the conflict colour (`--simple-html-grid-conflict-color`), with or without `editedMarker`;
+  its tooltip has the server's value and a click takes it (as `resolveConflict(row, field, 'remote')`,
+  undoable). The cell element has the class `simple-html-cell-conflict`, the marker
+  `simple-html-cell-conflict-marker`.
+- **The row number of a row in conflict** shows two arrows (`rowStatus`), its tooltip and the screen
+  reader's text say which fields (`Changed on the server too: Price`) or that the server removed the row.
+  An error wins the icon, then a conflict, then new / edited; a deleted row keeps its trash can.
+- Texts `rowStatus.conflict`, `rowStatus.removedOnServer`, `cell.conflictMarker.tooltip`,
+  `cell.conflictMarker.take`.
+- The "Live data" sample uses the grid's flash, no hook.
+
+#### Group rows: a +/- box and the lines of the levels, like a tree (user request)
+
+##### Changed
+- The `+` / `-` of a group row is a square box with a frame, in the column of its level. The line of an
+  expanded group runs from under its box down through its rows, the lines of the groups a row is in go
+  through it: where a group ends shows. In a row with aggregates the lines go down the aggregate lines too.
+- The grouping columns of the data rows are one column, no line under each row and no inset shadow.
+- New variable `--simple-html-grid-group-line-color` (the lines and the box's frame, at least 3:1 to the
+  group rows). The group row's elements have classes of their own: `.simple-html-grid-group-toggle`
+  (the button), `-group-box` / `-group-box-frame` / `-group-box-sign`, `-group-text`, `-group-levels`,
+  `-group-line`; `.simple-html-grid-grouping-row-group` is the header's grouping columns only.
 
 ## 5.0.1
 

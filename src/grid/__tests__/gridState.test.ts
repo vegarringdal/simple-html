@@ -89,7 +89,9 @@ describe('getState', () => {
             grouping: [],
             expandedGroups: [],
             filter: null,
-            headerFilters: {}
+            headerFilters: {},
+            aggregates: {},
+            totalsRow: false
         });
     });
 
@@ -434,7 +436,9 @@ describe('initialState', () => {
         expect(headerFilterInput(element, 'age').value).toEqual('20');
         expect(gridInterface.getState()).toEqual({
             ...config.initialState,
-            layout: { left: [], center: config.layout.center, right: [] }
+            layout: { left: [], center: config.layout.center, right: [] },
+            aggregates: {},
+            totalsRow: false
         });
     });
 

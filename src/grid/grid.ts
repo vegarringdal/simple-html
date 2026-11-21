@@ -2,6 +2,7 @@ import type { Entity } from '../datasource/entity';
 import { addMenuListeners } from './gridFunctions/addMenuListeners';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
+import { closeFind, type FindBar, findDataChanged } from './gridFunctions/findBar';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
 import { addClipboardListeners } from './gridFunctions/rangeClipboard';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
@@ -13,6 +14,7 @@ import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { cancelRowsRender } from './gridFunctions/renderChangedRows';
 import { closeLookupEditor, type LookupEditor } from './gridFunctions/lookupEditor';
 import { closeFilterEditor } from './gridFunctions/renderFilterEditor';
+import type { MenuTree } from './gridFunctions/showMenu';
 import { closeTextEditor, type TextEditor } from './gridFunctions/textEditor';
 import { hideTooltip } from './gridFunctions/tooltip';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
@@ -79,6 +81,11 @@ export class Grid {
     public menuReturnFocus: Element | null = null;
     // true from a menu opening until the task that opened it ends, see openMenuElement
     public menuJustOpened = false;
+    // the open menu of entries with its open submenus, see showMenu. Null when none is open
+    public menuTree: MenuTree | null = null;
+    // true when the last input was a key, false after a pointer press: a menu opened from the
+    // keyboard takes the focus, see showMenu and addMenuListeners
+    public keyboardUsed = false;
     // the filter editor, a modal dialog: see renderFilterEditor. Null when it is closed
     public filterEditor?: HTMLDialogElement | null;
     // the column chooser, a popover that stays open while columns are dragged from it
@@ -87,6 +94,8 @@ export class Grid {
     public textEditor: TextEditor | null = null;
     // the editor of a lookup column, a popover under the cell: see openLookupEditor. Null when it is closed
     public lookupEditor: LookupEditor | null = null;
+    // Find (Ctrl+F): the find bar and what it found, see findBar.ts. Null until it opens the first time
+    public findBar: FindBar | null = null;
     /** aborts the document listeners addMenuListeners added, see there */
     public menuListenersAbort?: AbortController;
     /** aborts the document listeners of copy and paste, see addClipboardListeners in rangeClipboard.ts */
@@ -198,6 +207,8 @@ export class Grid {
         closeLookupEditor(this);
         removeContextMenu(this);
         closeFilterEditor(this);
+        // the find bar is in the element, its search may wait on a timer: closed, the focus left as it is
+        closeFind(this, false);
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
         // shown for a cell of this grid maybe: it is not in the element either
@@ -284,5 +295,7 @@ export class Grid {
         rebuildTopPanel(this);
         rebuildFooter(this);
         triggerScrollEvent(this);
+        // the rows, the layout or the texts can be others: an open find bar finds the text again
+        findDataChanged(this);
     }
 }

@@ -205,9 +205,7 @@ describe('gridInterface.destroy()', () => {
         scroller.scrollTop = 0;
 
         gridInterface.destroy();
-        const wheel = new Event('wheel');
-        (wheel as any).wheelDeltaY = -40;
-        element.dispatchEvent(wheel);
+        element.dispatchEvent(new WheelEvent('wheel', { deltaY: 40 }));
 
         expect(scroller.scrollTop).toBe(0);
     });

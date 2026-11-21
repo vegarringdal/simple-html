@@ -1,18 +1,15 @@
-import { DateFormatterYYYYMMDD } from '../../datasource/DateFormatterYYYYMMDD';
-import { DateFormatterYYYYMMDDTHHMMSS } from '../../datasource/DateFormatterYYYYMMDDTHHMMSS';
-import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
+import { type Entity, isGroupRow } from '../../datasource/entity';
 import { and, type FilterExpression, type FilterGroup, isFilterGroup, where } from '../../datasource/filterExpression';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
-import type { MenuContext, MenuEntry } from '../gridMenus';
+import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
 import type { ColType } from './colType';
-import { getCellType } from './getCellType';
-import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
+import { cellText } from './gridCsv';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { writeCellValue } from './lookupColumn';
-import { clearRangeCells, pasteText, rangeClipboardText, writeClipboard } from './rangeClipboard';
+import { clearRangeCells, pasteText, rangesClipboard, rowsClipboard, writeClipboard } from './rangeClipboard';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { placeUnderCell, showMenu } from './showMenu';
 import { triggerScrollEvent } from './triggerScrollEvent';
@@ -50,7 +47,22 @@ export function contextmenuRow(
 }
 
 /**
- * The row menu's default entries, new objects every call. The ids are documented in MENU_IDS.row
+ * The right clicked cell, what the events of the row menu send (copy-cell, paste, clear ...)
+ */
+interface RowMenuEventData {
+    cell: HTMLCellElement;
+    row: number;
+    column: number;
+    celno: number;
+    colType: ColType;
+    cellType: string;
+    attribute: string;
+    rowData: Entity;
+}
+
+/**
+ * The row menu's default entries, new objects every call: the edit entries, then a submenu per part.
+ * The ids are documented in MENU_IDS.row
  */
 function rowMenuEntries(
     ctx: Grid,
@@ -66,7 +78,7 @@ function rowMenuEntries(
     const gridInterface = ctx.gridInterface;
 
     // what the cell events send
-    const eventData = { cell, row, column, celno, colType, cellType, attribute, rowData };
+    const eventData: RowMenuEventData = { cell, row, column, celno, colType, cellType, attribute, rowData };
 
     // paste and clear: an editable grid, and the clicked cell editable. The other selected rows are
     // checked one by one when pasting/clearing
@@ -87,13 +99,136 @@ function rowMenuEntries(
 
     return [
         // first: in an editable grid, taking an edit back is what the menu is opened for most
-        ...editEntries(ctx, attribute, rowData),
-        { type: 'section', id: 'row.copy', label: text('row.copy') },
+        editSubmenu(ctx, attribute, rowData),
+        { type: 'submenu', id: 'row.copy', label: text('row.copy'), entries: copyEntries(ctx, eventData) },
+        {
+            type: 'submenu',
+            id: 'row.paste',
+            label: text('row.paste'),
+            visible: () => pasteAndClear() || pasteAndClearRanges(),
+            entries: [
+                {
+                    id: 'row.paste.cell',
+                    label: text('row.paste.cell'),
+                    hint: text('row.paste.cell.hint'),
+                    visible: pasteAndClear,
+                    action: async () => {
+                        if (navigator.clipboard.readText) {
+                            const data = await navigator.clipboard.readText();
+                            pasteIntoCells(ctx, attribute, data, eventData);
+                        }
+                    }
+                },
+                {
+                    id: 'row.paste.range',
+                    label: text('row.paste.range'),
+                    visible: pasteAndClearRanges,
+                    // as Ctrl+V with ranges: one value into every cell of them, a block from the top left
+                    // of the last one (rangeClipboard.ts)
+                    action: async () => {
+                        if (navigator.clipboard.readText) {
+                            pasteText(ctx, await navigator.clipboard.readText());
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            type: 'submenu',
+            id: 'row.clear',
+            label: text('row.clear'),
+            visible: () => pasteAndClear() || pasteAndClearRanges(),
+            entries: [
+                {
+                    id: 'row.clear.cell',
+                    label: text('row.clear.cell'),
+                    hint: text('row.clear.cell.hint'),
+                    visible: pasteAndClear,
+                    action: () => {
+                        clearRows(ctx, attribute);
+                        gridInterface.__callSubscribers('clear', eventData);
+                        triggerScrollEvent(ctx);
+                    }
+                },
+                {
+                    id: 'row.clear.range',
+                    label: text('row.clear.range'),
+                    visible: pasteAndClearRanges,
+                    // as Delete with ranges: every cell of them
+                    action: () => clearRangeCells(ctx)
+                }
+            ]
+        },
+        deleteSubmenu(ctx),
+        {
+            type: 'submenu',
+            id: 'row.filter',
+            label: text('row.filter'),
+            visible: filterOnValue,
+            entries: [
+                {
+                    id: 'row.filter.replace',
+                    label: text('row.filter.replace'),
+                    hint: text('row.filter.replace.hint'),
+                    visible: filterOnValue,
+                    action: () => replaceFilter(ctx, attribute, rowData)
+                },
+                {
+                    id: 'row.filter.add',
+                    label: text('row.filter.add'),
+                    hint: text('row.filter.add.hint'),
+                    visible: filterOnValue,
+                    action: () => addToFilter(ctx, attribute, rowData)
+                }
+            ]
+        },
+        {
+            type: 'submenu',
+            id: 'row.view',
+            label: text('row.view'),
+            entries: [
+                {
+                    id: 'row.view.dimRepeatedValues',
+                    label: text('row.view.dimRepeatedValues'),
+                    // a toggle: a check mark while it is on
+                    selected: () => dimRepeated,
+                    action: () => {
+                        // an option: set it as updateConfig() does, or the next updateConfig() would undo it
+                        gridInterface.updateConfig({ dimRepeatedValues: !dimRepeated });
+                    }
+                },
+                {
+                    id: 'row.view.changedOnly',
+                    label: text('row.view.changedOnly'),
+                    selected: () => changedOnly,
+                    // the new, edited and deleted rows, with the filter there is. The datasource filters,
+                    // the grid follows its event
+                    action: () => gridInterface.getDatasource().filterChangedOnly(!changedOnly)
+                }
+            ]
+        },
+        sizeSubmenu(ctx, attribute, rowData),
+        exportSubmenu(ctx)
+    ];
+}
+
+/**
+ * The copy submenu's entries: the cell, the column or the row of the selected rows, the ranges of
+ * cells
+ * @param eventData the right clicked cell, what the copy events send
+ */
+function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
+    const gridInterface = ctx.gridInterface;
+    const { attribute, rowData } = eventData;
+    const hasRanges = () => gridInterface.getRanges().length > 0;
+    const text = (id: TextId) => gridText(ctx, id);
+    return [
         {
             id: 'row.copy.cell',
             label: text('row.copy.cell'),
             action: () => {
-                copyData(ctx, [attribute], true, rowData);
+                // the value only, as the cell shows it: no header, no line end
+                writeClipboard(cellText(gridInterface, attribute, true)(rowData), '');
                 gridInterface.__callSubscribers('copy-cell', eventData);
             }
         },
@@ -102,7 +237,7 @@ function rowMenuEntries(
             label: text('row.copy.column'),
             hint: text('row.copy.column.hint'),
             action: () => {
-                copyData(ctx, [attribute], false);
+                copyRows(ctx, [attribute]);
                 gridInterface.__callSubscribers('copy-column', eventData);
             }
         },
@@ -111,7 +246,7 @@ function rowMenuEntries(
             label: text('row.copy.row'),
             hint: text('row.copy.row.hint'),
             action: () => {
-                copyData(ctx, getLayoutFields(gridInterface), false);
+                copyRows(ctx, getLayoutFields(gridInterface));
                 gridInterface.__callSubscribers('copy-row', eventData);
             }
         },
@@ -122,7 +257,7 @@ function rowMenuEntries(
             action: () => {
                 // no column selected: every column
                 const selected = getLayoutFields(gridInterface, { selectedOnly: true });
-                copyData(ctx, selected.length ? selected : getLayoutFields(gridInterface), false);
+                copyRows(ctx, selected.length ? selected : getLayoutFields(gridInterface));
                 gridInterface.__callSubscribers('copy-row-col', eventData);
             }
         },
@@ -130,106 +265,25 @@ function rowMenuEntries(
             id: 'row.copy.range',
             label: text('row.copy.range'),
             visible: hasRanges,
-            // the last range, as Ctrl+C copies it (rangeClipboard.ts)
+            // every range as one table, as Ctrl+C copies them (rangeClipboard.ts)
             action: () => {
-                const ranges = gridInterface.getRanges();
-                const { text: tsv, html } = rangeClipboardText(ctx, ranges[ranges.length - 1]);
+                const { text: tsv, html } = rangesClipboard(ctx, gridInterface.getRanges());
                 writeClipboard(tsv, html);
             }
-        },
-        { type: 'section', id: 'row.filter', label: text('row.filter'), visible: filterOnValue },
-        {
-            id: 'row.filter.replace',
-            label: text('row.filter.replace'),
-            hint: text('row.filter.replace.hint'),
-            visible: filterOnValue,
-            action: () => replaceFilter(ctx, attribute, rowData)
-        },
-        {
-            id: 'row.filter.add',
-            label: text('row.filter.add'),
-            hint: text('row.filter.add.hint'),
-            visible: filterOnValue,
-            action: () => addToFilter(ctx, attribute, rowData)
-        },
-        { type: 'section', id: 'row.view', label: text('row.view') },
-        {
-            id: 'row.view.dimRepeatedValues',
-            // the check mark shows it is on
-            label: `${dimRepeated ? '✓ ' : ''}${text('row.view.dimRepeatedValues')}`,
-            action: () => {
-                // an option: set it as updateConfig() does, or the next updateConfig() would undo it
-                gridInterface.updateConfig({ dimRepeatedValues: !dimRepeated });
-            }
-        },
-        {
-            id: 'row.view.changedOnly',
-            // the check mark shows it is on
-            label: `${changedOnly ? '✓ ' : ''}${text('row.view.changedOnly')}`,
-            // the new, edited and deleted rows, with the filter there is. The datasource filters,
-            // the grid follows its event
-            action: () => gridInterface.getDatasource().filterChangedOnly(!changedOnly)
-        },
-        { type: 'section', id: 'row.paste', label: text('row.paste'), visible: () => pasteAndClear() || pasteAndClearRanges() },
-        {
-            id: 'row.paste.cell',
-            label: text('row.paste.cell'),
-            hint: text('row.paste.cell.hint'),
-            visible: pasteAndClear,
-            action: async () => {
-                if (navigator.clipboard.readText) {
-                    const data = await navigator.clipboard.readText();
-                    pasteIntoCells(ctx, attribute, data, eventData);
-                }
-            }
-        },
-        {
-            id: 'row.paste.range',
-            label: text('row.paste.range'),
-            visible: pasteAndClearRanges,
-            // as Ctrl+V with ranges: one value into every cell of them, a block from the top left of
-            // the last one (rangeClipboard.ts)
-            action: async () => {
-                if (navigator.clipboard.readText) {
-                    pasteText(ctx, await navigator.clipboard.readText());
-                }
-            }
-        },
-        { type: 'section', id: 'row.clear', label: text('row.clear'), visible: () => pasteAndClear() || pasteAndClearRanges() },
-        {
-            id: 'row.clear.cell',
-            label: text('row.clear.cell'),
-            hint: text('row.clear.cell.hint'),
-            visible: pasteAndClear,
-            action: () => {
-                clearRows(ctx, attribute);
-                gridInterface.__callSubscribers('clear', eventData);
-                triggerScrollEvent(ctx);
-            }
-        },
-        {
-            id: 'row.clear.range',
-            label: text('row.clear.range'),
-            visible: pasteAndClearRanges,
-            // as Delete with ranges: every cell of them
-            action: () => clearRangeCells(ctx)
-        },
-        ...deleteEntries(ctx),
-        ...summaryEntries(ctx, attribute),
-        ...exportEntries(ctx)
+        }
     ];
 }
 
 /**
- * Undo, redo and revert: the undo history of the datasource, and putting the original values back -
- * of the clicked cell, the clicked row (no selection needed: a click in a cell does not select its
- * row), or the selected rows. Only in an editable grid, at the top of the menu.
+ * The Undo submenu: the undo history of the datasource (undo, redo), and putting the original values
+ * back - of the clicked cell, the clicked row (no selection needed: a click in a cell does not select
+ * its row), or the selected rows. Only in an editable grid, first in the menu.
  *
  * A revert puts values back, so like the delete's undo it is not stopped by readonly cells or rows:
  * readonly is about typing new values. The values are set from code, the grid renders the cells again
  * after - undo and redo send history-changed, the grid follows that
  */
-function editEntries(ctx: Grid, attribute: string, rowData: Entity): MenuEntry[] {
+function editSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
     const datasource = gridInterface.getDatasource();
     const editable = () => !gridInterface.__getGridConfig().readonly;
@@ -238,56 +292,61 @@ function editEntries(ctx: Grid, attribute: string, rowData: Entity): MenuEntry[]
     const toRevert = () =>
         datasource.getSelectedRows().filter((row) => row.__controller?.__edited || row.__controller?.__isDeleted);
 
-    return [
-        { type: 'section', id: 'row.edit', label: gridText(ctx, 'row.edit'), visible: editable },
-        {
-            id: 'row.edit.undo',
-            label: gridText(ctx, 'row.edit.undo'),
-            hint: gridText(ctx, 'row.edit.undo.hint'),
-            visible: editable,
-            disabled: () => !datasource.canUndo(),
-            action: () => datasource.undo()
-        },
-        {
-            id: 'row.edit.redo',
-            label: gridText(ctx, 'row.edit.redo'),
-            hint: gridText(ctx, 'row.edit.redo.hint'),
-            visible: editable,
-            disabled: () => !datasource.canRedo(),
-            action: () => datasource.redo()
-        },
-        {
-            id: 'row.edit.revertCell',
-            label: gridText(ctx, 'row.edit.revertCell'),
-            visible: editable,
-            disabled: () => !rowData.__controller?.__editedProps[attribute],
-            action: () => {
-                datasource.resetField(rowData, attribute);
-                triggerScrollEvent(ctx);
+    return {
+        type: 'submenu',
+        id: 'row.edit',
+        label: gridText(ctx, 'row.edit'),
+        visible: editable,
+        entries: [
+            {
+                id: 'row.edit.undo',
+                label: gridText(ctx, 'row.edit.undo'),
+                hint: gridText(ctx, 'row.edit.undo.hint'),
+                visible: editable,
+                disabled: () => !datasource.canUndo(),
+                action: () => datasource.undo()
+            },
+            {
+                id: 'row.edit.redo',
+                label: gridText(ctx, 'row.edit.redo'),
+                hint: gridText(ctx, 'row.edit.redo.hint'),
+                visible: editable,
+                disabled: () => !datasource.canRedo(),
+                action: () => datasource.redo()
+            },
+            {
+                id: 'row.edit.revertCell',
+                label: gridText(ctx, 'row.edit.revertCell'),
+                visible: editable,
+                disabled: () => !rowData.__controller?.__editedProps[attribute],
+                action: () => {
+                    datasource.resetField(rowData, attribute);
+                    triggerScrollEvent(ctx);
+                }
+            },
+            {
+                id: 'row.edit.revertRow',
+                label: gridText(ctx, 'row.edit.revertRow'),
+                visible: editable,
+                disabled: () => !rowData.__controller?.__edited && !rowData.__controller?.__isDeleted,
+                action: () => {
+                    datasource.resetRows(rowData);
+                    triggerScrollEvent(ctx);
+                }
+            },
+            {
+                id: 'row.edit.revertRows',
+                label: gridText(ctx, 'row.edit.revertRows'),
+                hint: gridText(ctx, 'row.edit.revertRows.hint'),
+                visible: editable,
+                disabled: () => toRevert().length === 0,
+                action: () => {
+                    datasource.resetRows(toRevert());
+                    triggerScrollEvent(ctx);
+                }
             }
-        },
-        {
-            id: 'row.edit.revertRow',
-            label: gridText(ctx, 'row.edit.revertRow'),
-            visible: editable,
-            disabled: () => !rowData.__controller?.__edited && !rowData.__controller?.__isDeleted,
-            action: () => {
-                datasource.resetRows(rowData);
-                triggerScrollEvent(ctx);
-            }
-        },
-        {
-            id: 'row.edit.revertRows',
-            label: gridText(ctx, 'row.edit.revertRows'),
-            hint: gridText(ctx, 'row.edit.revertRows.hint'),
-            visible: editable,
-            disabled: () => toRevert().length === 0,
-            action: () => {
-                datasource.resetRows(toRevert());
-                triggerScrollEvent(ctx);
-            }
-        }
-    ];
+        ]
+    };
 }
 
 /**
@@ -297,7 +356,7 @@ function editEntries(ctx: Grid, attribute: string, rowData: Entity): MenuEntry[]
  * Delete skips a row the isReadonly hook locks (see isLockedByHook). Undo works on every selected
  * row that is marked: a hook that makes the deleted rows readonly must not stop the undo
  */
-function deleteEntries(ctx: Grid): MenuEntry[] {
+function deleteSubmenu(ctx: Grid): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
     const datasource = gridInterface.getDatasource();
     const editable = () => !gridInterface.__getGridConfig().readonly;
@@ -306,25 +365,30 @@ function deleteEntries(ctx: Grid): MenuEntry[] {
         datasource.getSelectedRows().filter((row) => row.__rowState !== 'D' && !isLockedByHook(gridInterface, row));
     const toUnmark = () => datasource.getSelectedRows().filter((row) => row.__rowState === 'D');
 
-    return [
-        { type: 'section', id: 'row.delete', label: gridText(ctx, 'row.delete'), visible: editable },
-        {
-            id: 'row.delete.rows',
-            label: gridText(ctx, 'row.delete.rows'),
-            hint: gridText(ctx, 'row.delete.rows.hint'),
-            visible: editable,
-            // nothing selected, or every selected row marked or locked
-            disabled: () => toMark().length === 0,
-            action: () => datasource.markForDeletion(toMark())
-        },
-        {
-            id: 'row.delete.undo',
-            label: gridText(ctx, 'row.delete.undo'),
-            hint: gridText(ctx, 'row.delete.undo.hint'),
-            visible: () => editable() && toUnmark().length > 0,
-            action: () => datasource.unmarkForDeletion(toUnmark())
-        }
-    ];
+    return {
+        type: 'submenu',
+        id: 'row.delete',
+        label: gridText(ctx, 'row.delete'),
+        visible: editable,
+        entries: [
+            {
+                id: 'row.delete.rows',
+                label: gridText(ctx, 'row.delete.rows'),
+                hint: gridText(ctx, 'row.delete.rows.hint'),
+                visible: editable,
+                // nothing selected, or every selected row marked or locked
+                disabled: () => toMark().length === 0,
+                action: () => datasource.markForDeletion(toMark())
+            },
+            {
+                id: 'row.delete.undo',
+                label: gridText(ctx, 'row.delete.undo'),
+                hint: gridText(ctx, 'row.delete.undo.hint'),
+                visible: () => editable() && toUnmark().length > 0,
+                action: () => datasource.unmarkForDeletion(toUnmark())
+            }
+        ]
+    };
 }
 
 /**
@@ -344,217 +408,108 @@ function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity): bool
 }
 
 /**
- * Export as a CSV file (gridInterface.downloadCsv): every row the filter lets through, or the selected
- * ones - the columns and values as the grid shows them, see guides/15-export.md. In every grid,
- * readonly ones too: an export changes nothing
+ * The sizes, like Excel's AutoFit: the column as wide as the right clicked cell's text, rows as high as
+ * their multiline cells need (gridInterface.fitRows), and back to the height of the layout. In every
+ * grid, readonly ones too: a size changes no data
  */
-function exportEntries(ctx: Grid): MenuEntry[] {
+function sizeSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
-    return [
-        { type: 'section', id: 'row.export', label: gridText(ctx, 'row.export') },
-        {
-            id: 'row.export.csv',
-            label: gridText(ctx, 'row.export.csv'),
-            action: () => gridInterface.downloadCsv()
-        },
-        {
-            id: 'row.export.csvSelected',
-            label: gridText(ctx, 'row.export.csvSelected'),
-            disabled: () => gridInterface.getDatasource().getSelectedRows().length === 0,
-            action: () => gridInterface.downloadCsv('export.csv', { rows: 'selected' })
-        }
-    ];
-}
-
-/**
- * The summary of a number column over the selected rows: count, sum, max, min and average. Clicking
- * one copies its value. Only shown for a number field, the values are only computed for one.
- *
- * The values are the datasource's aggregates of the selected rows (`datasource.aggregate()`): the
- * numbers only, a blank is left out - also of the average, and 0 is a value. Shown with two decimals
- * at most. Count is the number of selected rows. (Before v6 the largest of negative numbers was 0, a 0
- * was skipped by min, and the average was rounded to a whole number and counted the blanks.)
- */
-function summaryEntries(ctx: Grid, attribute: string): MenuEntry[] {
-    const datasource = ctx.gridInterface.getDatasource();
-    const { type, formatter } = datasource.getField(attribute);
-    const isNumber = () => type === 'number';
-
-    const summary = { count: 0, sum: '', max: '', min: '', avg: '' };
-    if (type === 'number') {
-        const selectedRows = datasource.getSelectedRows();
-        // two decimals at most; null (min, max and avg of no numbers) is shown blank
-        const shown = (value: number | null) => formatter.format(value === null ? null : Math.round(value * 100) / 100);
-
-        summary.count = selectedRows.length;
-        summary.sum = shown(datasource.aggregate(attribute, 'sum', selectedRows));
-        summary.max = shown(datasource.aggregate(attribute, 'max', selectedRows));
-        summary.min = shown(datasource.aggregate(attribute, 'min', selectedRows));
-        summary.avg = shown(datasource.aggregate(attribute, 'avg', selectedRows));
-    }
-
-    const copy = (text: string) => navigator.clipboard.writeText(text);
-
-    return [
-        { type: 'section', id: 'row.summary', label: gridText(ctx, 'row.summary'), visible: isNumber },
-        {
-            id: 'row.summary.count',
-            label: gridText(ctx, 'row.summary.count', { count: summary.count }),
-            visible: isNumber,
-            action: () => copy(String(summary.count))
-        },
-        {
-            id: 'row.summary.sum',
-            label: gridText(ctx, 'row.summary.sum', { sum: summary.sum }),
-            visible: isNumber,
-            action: () => copy(summary.sum)
-        },
-        {
-            id: 'row.summary.max',
-            label: gridText(ctx, 'row.summary.max', { max: summary.max }),
-            visible: isNumber,
-            action: () => copy(summary.max)
-        },
-        {
-            id: 'row.summary.min',
-            label: gridText(ctx, 'row.summary.min', { min: summary.min }),
-            visible: isNumber,
-            action: () => copy(summary.min)
-        },
-        {
-            id: 'row.summary.avg',
-            label: gridText(ctx, 'row.summary.avg', { avg: summary.avg || 0 }),
-            visible: isNumber,
-            action: () => copy(summary.avg)
-        }
-    ];
-}
-
-/**
- * The selected rows as an html table (for excel) and as tab separated text, or only the current row
- * (`onlyCurrentEntity`): the right clicked one when `overRideCurrentEntity` is given
- */
-function generateCopyPasteData(
-    ctx: Grid,
-    attributes: string[],
-    onlyCurrentEntity: boolean,
-    overRideCurrentEntity: Entity | null
-) {
-    const TableOuterTop = `
-            <html>
-                <body>
-                <style>
-                   .number {
-                        mso-number-format:"General";
-                    }
-                   .text{
-                        mso-number-format:"@";
-                    }
-                   .date {
-                        mso-number-format:"Short Date";
-                    }
-                    table {
-                        border-collapse: collapse;
-                        border:.5pt solid windowtext;
-                        mso-displayed-decimal-separator:".";
-                    }
-                    td,
-                    th {
-                        border-collapse: collapse;
-                        padding:3px;
-                        border:.5pt solid windowtext;
-                    }
-                </style>
-            <table>`;
-    const TableOuterBottom = '</table></body></html>';
-
-    let tableHeader = '<tr>';
-    attributes.forEach((attribute) => {
-        tableHeader = `${tableHeader}<th>${getColumnLabel(ctx, attribute)}</th>`;
-    });
-    tableHeader = `${tableHeader}</tr>`;
-
-    let tableInnerData = '';
-    let justData = '';
-
-    const datasource = ctx.gridInterface.getDatasource();
-
-    const loopData = (entity: Entity | GroupRow | null) => {
-        if (entity && !isGroupRow(entity)) {
-            tableInnerData = `${tableInnerData}<tr>`;
-            attributes.forEach((attribute, i) => {
-                const colData = entity[attribute];
-                const dataType = getCellType(ctx, attribute, entity);
-
-                if (i > 0) {
-                    justData = `${justData}\t`;
-                }
-
-                // dates are copied in a fixed format, whatever the field's formatter shows
-                if (dataType === 'date' || dataType === 'datetime') {
-                    const formatter = dataType === 'date' ? DateFormatterYYYYMMDD : DateFormatterYYYYMMDDTHHMMSS;
-                    const data = formatter.format(colData);
-                    justData = justData + data;
-                    tableInnerData = `${tableInnerData}<td>${data}</td>`;
-                } else if (dataType === 'number') {
-                    const data = colData;
-                    justData = justData + data;
-                    tableInnerData = `${tableInnerData}<td class="number">${data || ''}</td >`;
-                } else {
-                    //
-                    justData = justData + colData;
-                    tableInnerData = `${tableInnerData}<td class="text">${colData || ''}</td>`;
-                }
-            });
-            // single entity copy is one line only, so no trailing carriage return
-            if (!onlyCurrentEntity && !overRideCurrentEntity) {
-                justData = `${justData}\r\n`;
+    return {
+        type: 'submenu',
+        id: 'row.size',
+        label: gridText(ctx, 'row.size'),
+        entries: [
+            {
+                id: 'row.size.fitColumn',
+                label: gridText(ctx, 'row.size.fitColumn'),
+                action: () => gridInterface.fitColumns([attribute], { rows: [rowData] })
+            },
+            {
+                id: 'row.size.fitRow',
+                label: gridText(ctx, 'row.size.fitRow'),
+                action: () => gridInterface.fitRows(rowData)
+            },
+            {
+                id: 'row.size.fitRows',
+                label: gridText(ctx, 'row.size.fitRows'),
+                hint: gridText(ctx, 'row.size.fitRows.hint'),
+                visible: () => selectedAndRangeRows(ctx).length > 0,
+                action: () => gridInterface.fitRows(selectedAndRangeRows(ctx))
+            },
+            {
+                id: 'row.size.fitAllRows',
+                label: gridText(ctx, 'row.size.fitAllRows'),
+                action: () => gridInterface.fitRows()
+            },
+            {
+                id: 'row.size.resetRow',
+                label: gridText(ctx, 'row.size.resetRow'),
+                disabled: () => !gridInterface.__hasRowHeight(rowData),
+                action: () => gridInterface.resetRowHeights(rowData)
+            },
+            {
+                id: 'row.size.resetAllRows',
+                label: gridText(ctx, 'row.size.resetAllRows'),
+                disabled: () => !gridInterface.__hasRowHeight(),
+                action: () => gridInterface.resetRowHeights()
             }
-
-            tableInnerData = `${tableInnerData}</tr>`;
-        }
+        ]
     };
-
-    if (onlyCurrentEntity) {
-        if (overRideCurrentEntity) {
-            loopData(overRideCurrentEntity);
-        } else {
-            loopData(datasource.currentEntity);
-        }
-    } else {
-        datasource.getSelectedRows().forEach((entity) => {
-            loopData(entity);
-        });
-    }
-
-    return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
 }
 
 /**
- * Copies to the clipboard: tab separated text, plus an html table when more than one row is copied.
- *
- * The listener is on the document in the capture phase: it runs before the grid's own copy listener
- * (rangeClipboard.ts, on the document in the bubble phase), which leaves a copy that is canceled alone.
- * It would else write the cell with the focus over this - or its html next to the plain text of Cell
- * Value
+ * The selected rows and the data rows of the ranges of cells, each once: what "Fit row height
+ * (selected rows)" fits
  */
-function copyData(ctx: Grid, attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity: Entity | null = null) {
-    const [html, text] = generateCopyPasteData(ctx, attributes, onlyCurrentEntity, overRideCurrentEntity);
-
-    function listener(e: ClipboardEvent) {
-        // we only want text if it is
-        if (onlyCurrentEntity) {
-            e.clipboardData?.setData('text/plain', text);
-        } else {
-            e.clipboardData?.setData('text/html', html);
-            e.clipboardData?.setData('text/plain', text);
+function selectedAndRangeRows(ctx: Grid): Entity[] {
+    const datasource = ctx.gridInterface.getDatasource();
+    const rows = new Set<Entity>(datasource.getSelectedRows());
+    for (const range of ctx.gridInterface.getRanges()) {
+        for (let i = Math.min(range.fromRow, range.toRow); i <= Math.max(range.fromRow, range.toRow); i++) {
+            const row = datasource.getRow(i);
+            if (row && !isGroupRow(row)) {
+                rows.add(row);
+            }
         }
-
-        e.preventDefault();
     }
-    document.addEventListener('copy', listener, true);
-    document.execCommand('copy');
-    document.removeEventListener('copy', listener, true);
+    return Array.from(rows);
+}
+
+/**
+ * Export as an Excel file (gridInterface.downloadExcel): every row the filter lets through, or the
+ * selected ones - the columns of the layout, typed values, see guides/15-export.md. In every grid,
+ * readonly ones too: an export changes nothing. The CSV export is in the API (downloadCsv), not here
+ */
+function exportSubmenu(ctx: Grid): MenuSubmenu {
+    const gridInterface = ctx.gridInterface;
+    return {
+        type: 'submenu',
+        id: 'row.export',
+        label: gridText(ctx, 'row.export'),
+        entries: [
+            {
+                id: 'row.export.excel',
+                label: gridText(ctx, 'row.export.excel'),
+                action: () => gridInterface.downloadExcel()
+            },
+            {
+                id: 'row.export.excelSelected',
+                label: gridText(ctx, 'row.export.excelSelected'),
+                disabled: () => gridInterface.getDatasource().getSelectedRows().length === 0,
+                action: () => gridInterface.downloadExcel('export.xlsx', { rows: 'selected' })
+            }
+        ]
+    };
+}
+
+/**
+ * The selected rows, in these fields, onto the clipboard as a table: tab separated text and html, with
+ * a header line of the labels (`copyHeaders`) - see rangeClipboard.ts. The row menu's Column / Row
+ * copies
+ */
+function copyRows(ctx: Grid, fields: string[]) {
+    const { text, html } = rowsClipboard(ctx, ctx.gridInterface.getDatasource().getSelectedRows(), fields);
+    writeClipboard(text, html);
 }
 
 /**
@@ -579,12 +534,7 @@ function clearRows(ctx: Grid, attribute: string) {
  * pastes the text into the column of every selected row that is editable, a `paste` event per row
  * @param eventData the right clicked cell, what the paste event sends
  */
-function pasteIntoCells(
-    ctx: Grid,
-    attribute: string,
-    data: string,
-    eventData: { cell: HTMLCellElement; row: number; column: number; celno: number; colType: ColType; cellType: string }
-) {
+function pasteIntoCells(ctx: Grid, attribute: string, data: string, eventData: RowMenuEventData) {
     const datasource = ctx.gridInterface.getDatasource();
     // a lookup column (ColumnConfig.editor) takes a label, copied from it, as the value of its row
     const formatter = ctx.gridInterface.__getLookupColumn(attribute)?.formatter ?? datasource.getFormatter(attribute);

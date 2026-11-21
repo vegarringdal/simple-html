@@ -23,9 +23,9 @@
     --simple-html-grid-pinned-border: light-dark(#d1d0d0, #1f2937);
     /* the line right of the grouping columns */
     --simple-html-grid-sec-bg-border: light-dark(#e6e5e5, #1f2937);
-    /* selected rows (odd), a selected column's number, the selected menu item, scrollbar thumbs */
+    /* selected rows (odd), a selected column's number, scrollbar thumbs */
     --simple-html-grid-main-bg-selected-odd: light-dark(#bdd4e7, #234882);
-    /* selected rows (even), hover in the menus and on the buttons */
+    /* selected rows (even), hover and the keyboard's item in the menus, hover on the buttons */
     --simple-html-grid-main-bg-selected-even: light-dark(#afc7db, #274e8f);
     /* the rows, every other one */
     --simple-html-grid-main-bg-even: light-dark(#ffffff, #4b5563);
@@ -51,6 +51,11 @@
     --simple-html-grid-edited-color: light-dark(#9a3412, #fdba74);
     --simple-html-grid-new-color: light-dark(#166534, #86efac);
     --simple-html-grid-deleted-color: light-dark(#57534e, #d1d5db);
+    /* a conflict with the server (datasource.getConflicts()): the marker of a field in conflict and the
+       arrows on the row number. At least 3:1 like the row state */
+    --simple-html-grid-conflict-color: light-dark(#6d28d9, #ddd6fe);
+    /* the flash of a cell a merge changed (GridConfig.mergeHighlight), it fades out */
+    --simple-html-grid-merged-color: light-dark(rgba(250, 204, 21, 0.45), rgba(250, 204, 21, 0.35));
     /* the marker of a cell of several lines (FieldConfig.multiline): there are more lines than it
        shows. At least 3:1 against the rows and a selected row, like the row state */
     --simple-html-grid-multiline-color: light-dark(#475569, #e2e8f0);
@@ -65,6 +70,9 @@
     /* the label in front of an aggregate ("Sum") in a group row and the totals row. At least 4.5:1
        against both */
     --simple-html-grid-aggregate-label-color: light-dark(#57606a, #c9d1d9);
+    /* the grouping columns: the line of each level down its group's rows, and the frame of the +/- box
+       of a group row. At least 3:1 against the group rows */
+    --simple-html-grid-group-line-color: light-dark(#8c8c8c, #9ca3af);
     /* the "too many values" warning of the filter menu's value list */
     --simple-html-grid-warning-font-color: light-dark(red, #fca5a5);
     /* the footer's clear filter button under the pointer: text, border */
@@ -83,6 +91,12 @@
        those */
     --simple-html-grid-range-bg-color: light-dark(rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.2));
     --simple-html-grid-range-border-color: light-dark(#1e40af, #dbeafe);
+    /* Find (Ctrl+F in the grid): laid over a cell that shows the text, a stronger one over the current
+       match, and the 2px line around the current match. The text keeps 4.5:1 over the tints, the line
+       has 3:1 or more to the rows, the selected rows and the tint - in light and dark */
+    --simple-html-grid-find-match-color: light-dark(rgba(250, 204, 21, 0.4), rgba(180, 83, 9, 0.45));
+    --simple-html-grid-find-current-color: light-dark(rgba(251, 146, 60, 0.6), rgba(194, 65, 12, 0.65));
+    --simple-html-grid-find-current-border-color: light-dark(#9a3412, #fed7aa);
     /* shadows: the menus, the filter editor, the tooltips, the scrollbar thumbs. A plain colour is the
        same in light and dark */
     --simple-html-grid-menu-shadow-color: black;
@@ -539,10 +553,6 @@
     background-color: var(--simple-html-grid-sec-bg-color);
 }
 
-.simple-html-grid-grouping-row {
-    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
-}
-
 .simple-html-grid-body-row-container-group .simple-html-grid-row {
     border-bottom: 1px solid var(--simple-html-grid-pinned-border);
 }
@@ -612,7 +622,7 @@
     margin: 6px;
     padding: 4px 10px;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 3px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     pointer-events: all;
     font-family: var(--simple-html-grid-font-family);
@@ -779,6 +789,135 @@
     border-right-width: 2px;
 }
 
+/* the fill handle at the bottom right corner of the last range (fillDown.ts): drag it down to fill the
+   rows under the range. In the range's colour with a frame of the cell's, over the input (1000) */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-fill-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 7px;
+    height: 7px;
+    box-sizing: border-box;
+    z-index: 1002;
+    background-color: var(--simple-html-grid-range-border-color);
+    border: 1px solid var(--simple-html-grid-sec-bg-color);
+    cursor: crosshair;
+    touch-action: none;
+}
+
+/**
+ * Find (Ctrl+F in the grid, findBar.ts): a cell that shows the text gets a tint under its input, the
+ * current match a stronger one and a 2px line inside its edge. Over a range's tint (both show) and an
+ * error's. The line is a shadow inside the cell, with an error's border inside it
+ */
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-match {
+    background-image: linear-gradient(var(--simple-html-grid-find-match-color), var(--simple-html-grid-find-match-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-match.simple-html-cell-in-range {
+    background-image:
+        linear-gradient(var(--simple-html-grid-find-match-color), var(--simple-html-grid-find-match-color)),
+        linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current {
+    background-image: linear-gradient(var(--simple-html-grid-find-current-color), var(--simple-html-grid-find-current-color));
+    box-shadow: inset 0 0 0 2px var(--simple-html-grid-find-current-border-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current.simple-html-cell-in-range {
+    background-image:
+        linear-gradient(var(--simple-html-grid-find-current-color), var(--simple-html-grid-find-current-color)),
+        linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current.simple-html-cell-error {
+    box-shadow:
+        inset 0 0 0 2px var(--simple-html-grid-find-current-border-color),
+        inset 0 0 0 3px var(--simple-html-grid-error-color);
+}
+
+/**
+ * the find bar (Ctrl+F, findBar.ts): over the top right corner of the grid - the panel, or the labels
+ * without one - over the inputs of the cells (1000). The input, the count of the matches, previous,
+ * next and close in a row; it gets narrower with the grid
+ */
+.simple-html-grid .simple-html-grid-find {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2000;
+    box-sizing: border-box;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    max-width: 100%;
+    height: 25px;
+    padding: 2px;
+    background-color: var(--simple-html-grid-main-bg-color);
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    box-shadow: 0 2px 6px var(--simple-html-grid-tooltip-shadow-color);
+    color: var(--simple-html-grid-main-font-color);
+    pointer-events: all;
+}
+
+.simple-html-grid .simple-html-grid-find[hidden] {
+    display: none;
+}
+
+.simple-html-grid .simple-html-grid-find-input {
+    flex: 1 1 160px;
+    width: 160px;
+    min-width: 40px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+.simple-html-grid .simple-html-grid-find-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* the count gives way first in a narrow grid, the buttons stay */
+.simple-html-grid .simple-html-grid-find-count {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 0 4px;
+    overflow: hidden;
+    line-height: 19px;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.simple-html-grid .simple-html-grid-find-button {
+    flex: 0 0 auto;
+    width: 21px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-find-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+    border-color: var(--simple-html-grid-pinned-border);
+}
+
 /**
  * the row selector of a row with an error - a validation error, or the server's (setErrors()): a bar
  * on its left and a tint over its background, the messages are its tooltip. The tint is a layer over
@@ -830,9 +969,14 @@
     color: var(--simple-html-grid-error-color);
 }
 
+.simple-html-grid .simple-html-row-status-conflict {
+    color: var(--simple-html-grid-conflict-color);
+}
+
 /* a row marked for deletion: its number and the text of its cells struck through */
 .simple-html-grid .row-is-deleted.simple-html-row-status .simple-html-selector-text,
-.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted input {
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted input,
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted .simple-html-grid-cell-lines {
     text-decoration: line-through;
 }
 
@@ -854,6 +998,52 @@
 
 .simple-html-grid .simple-html-grid-col-cell .simple-html-cell-edited-marker-revert {
     cursor: pointer;
+}
+
+/* a field in conflict: the marker in the conflict colour, larger - the user has to choose */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-cell-conflict-marker {
+    width: 10px;
+    height: 10px;
+    background-color: var(--simple-html-grid-conflict-color);
+}
+
+/**
+ * the flash of a cell a merge changed (GridConfig.mergeHighlight, showCellMerged.ts): a tint over the
+ * cell that fades out, once - when the class is added. data-merged-again is flipped for a new merge
+ * while the cell has the class: an animation of another name starts again. A layer the pointer goes
+ * through, under the input (1000)
+ */
+@keyframes simple-html-grid-merged {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes simple-html-grid-merged-again {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-merged::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-color: var(--simple-html-grid-merged-color);
+    opacity: 0;
+    animation: simple-html-grid-merged 1s ease-out;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-merged[data-merged-again]::before {
+    animation-name: simple-html-grid-merged-again;
 }
 
 /**
@@ -887,6 +1077,28 @@
 
 .simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-multiline {
     padding-right: 16px;
+}
+
+/**
+ * the other lines of a multiline cell in a row made taller (gridInterface.fitRows): under the input,
+ * which has the first line. A line is cellHeight high, the element gets its top and line-height from
+ * renderRowCell. The input is transparent and over it, the pointer finds the input. The text starts
+ * and stops where the input's does: its padding, the room for the marker at the right
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-lines {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    padding: 0 16px 0 3px;
+    overflow: hidden;
+    white-space: pre;
+    pointer-events: none;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
 }
 
 /**
@@ -1255,6 +1467,27 @@
     padding: 2px;
 }
 
+/*
+ * the grouping columns, like a tree: a column per level of grouping (GROUP_LEVEL_WIDTH, 15px, in
+ * getGroupingWidth.ts) with the line of its groups down the middle. In a data row the lines of all the
+ * levels; in a group row those of the groups it is in, its +/- box in the column of its level and,
+ * expanded, its line from under the box down. Together the line of a group runs from its box down to its
+ * last row
+ */
+.simple-html-grid-grouping-row,
+.simple-html-grid-group-levels,
+.simple-html-grid-group-line {
+    background-image: linear-gradient(
+        to right,
+        transparent 7px,
+        var(--simple-html-grid-group-line-color) 7px,
+        var(--simple-html-grid-group-line-color) 8px,
+        transparent 8px
+    );
+    background-size: 15px 100%;
+}
+
+/* in the rows: one column over the rows, no line under each */
 .simple-html-grid-grouping-row {
     height: 100%;
     box-sizing: border-box;
@@ -1264,7 +1497,64 @@
     left: 0;
     background-color: var(--simple-html-grid-main-bg-color);
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
-    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+/* in a group row: the lines of the groups it is in, and the line of an expanded group, from the middle of
+   the name line (under the box, which is over it) to the bottom */
+.simple-html-grid-group-levels,
+.simple-html-grid-group-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.simple-html-grid-group-line {
+    width: 15px;
+}
+
+/* the button with the +/- box: the whole column of its level, the box in the middle */
+.simple-html-grid-group-toggle {
+    position: relative;
+    flex: none;
+    align-self: stretch;
+    width: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.simple-html-grid-group-box {
+    width: 11px;
+    height: 11px;
+    display: block;
+    overflow: visible;
+}
+
+.simple-html-grid-group-box-frame {
+    fill: var(--simple-html-grid-sec-bg-color);
+    stroke: var(--simple-html-grid-group-line-color);
+    stroke-width: 1;
+}
+
+.simple-html-grid-group-box-sign {
+    fill: none;
+    stroke: var(--simple-html-grid-main-font-color);
+    stroke-width: 1;
+}
+
+.simple-html-grid-group-toggle:hover .simple-html-grid-group-box-frame {
+    stroke: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid-group-text {
+    align-self: center;
+    padding-left: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .simple-html-grid-grouping-row-group {
@@ -1285,20 +1575,20 @@
  * and left pinned borders are there, transparent in a group row
  */
 
-/* the name of a group row with aggregates: at the left, over the aggregates of the first columns */
+/* the name of a group row with aggregates: the first line, the whole width - the aggregates are on the
+   lines under it, so it covers none of them */
 .simple-html-grid-group-name {
     box-sizing: border-box;
     position: absolute;
     top: 0;
     left: 0;
+    right: 0;
     z-index: 1;
     display: flex;
     align-items: center;
     padding-right: 8px;
+    overflow: hidden;
     white-space: nowrap;
-    /* the look of the group row it is over, the inset shadow too: no seam where it ends */
-    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
-    background-color: var(--simple-html-grid-main-bg-color);
 }
 
 .simple-html-grid-aggregates-left,
@@ -1321,14 +1611,33 @@
     border-left: 2px solid transparent;
 }
 
+/* a line of an aggregate: the label at the left, the value at the right of the column - labels and
+   numbers line up. Too narrow, the label gives way first (it shrinks 1000 times faster), then the
+   value ends in an ellipsis */
 .simple-html-grid-aggregate {
     box-sizing: border-box;
     position: absolute;
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
     padding: 0 4px;
     overflow: hidden;
     white-space: nowrap;
+}
+
+.simple-html-grid-aggregate-label,
+.simple-html-grid-aggregate-value {
+    min-width: 0;
+    overflow: hidden;
     text-overflow: ellipsis;
-    text-align: right;
+}
+
+.simple-html-grid-aggregate-label {
+    flex: 0 1000 auto;
+}
+
+.simple-html-grid-aggregate-value {
+    flex: 0 1 auto;
 }
 
 /* "Sum" in front of the value */
@@ -1489,6 +1798,7 @@
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
     pointer-events: all;
+    position: relative;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
@@ -1570,8 +1880,37 @@
     white-space: nowrap;
 }
 
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-selected {
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
+/**
+ * an item with a `selected` callback (a menuitemcheckbox) has room for a ✓ in front of its label;
+ * the ✓ is shown while the callback returns true (aria-checked="true"). The alt text after the / is
+ * empty: aria-checked says it to a screen reader. A browser without the alt text syntax drops that
+ * line and keeps the first
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[role='menuitemcheckbox'] {
+    padding-left: 20px;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-selected::before {
+    content: '✓';
+    content: '✓' / '';
+    position: absolute;
+    left: 7px;
+}
+
+/**
+ * an item that opens a submenu: a › at its right
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu'] {
+    padding-right: 24px;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu']::after {
+    content: '›';
+    content: '›' / '';
+    position: absolute;
+    right: 8px;
+    font-size: 15px;
+    line-height: 17px;
 }
 
 /**
@@ -1584,6 +1923,15 @@
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-disabled:hover {
     background-color: var(--simple-html-grid-main-bg-color);
+}
+
+/**
+ * the item the keyboard is on, a disabled one too, and the item whose submenu is open: lit as under
+ * the pointer. The keyboard's has the focus outline as well (:focus-visible, below)
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item:focus,
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-expanded='true'] {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
 .simple-html-grid .simple-html-grid-menu .hr-solid {
@@ -1662,16 +2010,37 @@
     left: 0;
     right: 0;
     margin: 0 auto;
-    /* a small opaque pill so the number stays readable over the scrollbar track/thumb */
+    /* a small opaque box so the number stays readable over the scrollbar track/thumb, square as the chips */
     width: fit-content;
     max-width: 100%;
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
     text-align: center;
     pointer-events: none;
     z-index: 20;
+}
+
+/* the summary of the selected cells (ranges of more than one cell, selectionSummary.ts): at the right,
+ * like the status bar of a spreadsheet - on the line of the row count, or with a filter on the line of
+ * its chips (its top is set to the horizontal scrollbar's band). The filter chips collapse to one box when they would reach under it. Cut on a narrow
+ * grid, its tooltip has all of it */
+.simple-html-grid .footer-summary {
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    max-width: 45%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid .footer-summary-item {
+    flex: 0 0 auto;
 }
 
 /* "changed rows only" (datasource.filterChangedOnly()): a chip of its own in front of the filter's,
@@ -1686,7 +2055,7 @@
     box-sizing: border-box;
     padding: 1px 10px;
     border: 1px dashed var(--simple-html-grid-pinned-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-sec-font-color);
     white-space: nowrap;
@@ -1711,7 +2080,7 @@
     box-sizing: border-box;
     padding: 1px 7px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-main-font-color);
     font-family: inherit;
@@ -1749,7 +2118,7 @@
     box-sizing: border-box;
     padding: 1px 6px;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 12px;
+    border-radius: 0;
     background-color: color-mix(in srgb, var(--simple-html-grid-sec-bg-color) 55%, transparent);
 }
 
@@ -1771,7 +2140,7 @@
     max-width: 260px;
     padding: 1px 8px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     white-space: nowrap;
 }
@@ -1836,7 +2205,7 @@
     overflow: hidden;
     box-sizing: border-box;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 4px;
+    border-radius: 0;
     box-shadow: 0 8px 26px var(--simple-html-grid-dialog-shadow-color);
 }
 
@@ -1944,7 +2313,7 @@
 .simple-html-grid.filter-editor-content .filter-editor-close {
     cursor: pointer;
     padding: 0 6px;
-    border-radius: 3px;
+    border-radius: 0;
     font-size: var(--simple-html-grid-font-size);
 }
 
@@ -1963,7 +2332,7 @@
     margin: 2px;
     padding: 3px 6px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
@@ -1982,7 +2351,7 @@
  */
 .simple-html-grid.filter-editor-content .grid-pick {
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 0;
     border: 1px dashed var(--simple-html-grid-main-bg-border);
     margin: 0 2px;
     padding: 1px 2px;
@@ -1997,7 +2366,7 @@
     margin: 2px;
     padding: 1px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 0;
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
@@ -2083,7 +2452,7 @@
     width: max-content;
     height: auto;
     padding: 3px 6px;
-    border-radius: 3px;
+    border-radius: 0;
     border: 1px solid var(--simple-html-grid-pinned-border);
     background-color: var(--simple-html-grid-sec-bg-color);
     text-align: left;

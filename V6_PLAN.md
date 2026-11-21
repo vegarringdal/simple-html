@@ -388,9 +388,9 @@ built on it.
 33. [x] **Clipboard like a spreadsheet**: copy a range as tab separated text (pastes into
         Excel/Sheets), paste one into a range (several rows and columns, respecting readonly and
         validation, one undo step), Delete clears a range. **M**
-34. [ ] **Fill down** (Ctrl+D) and a drag-fill handle. **M**
-35. [ ] **Summary of the selection** in the footer: count, sum, average, min, max. Replaces the row
-        menu summary, which has known bugs. **S**
+34. [x] **Fill down** (Ctrl+D) and a drag-fill handle. **M** - `gridInterface.fillDown()`, the handle fills down only
+35. [x] **Summary of the selection** in the footer: count, sum, average, min, max. Replaces the row
+        menu summary, which has known bugs. **S** - of the cell ranges; the row menu's summary is gone
 
 ## Phase 7 - live data
 
@@ -399,27 +399,29 @@ built on it.
 37. [x] **Merge by key**: `datasource.upsert(rows, { removeMissing })` updates rows by key, adds new
         ones, keeps selection, scroll position and expanded groups, and runs filter/sort/group
         once. For polling or push updates from a server. **M**
-38. [ ] **Show what changed**: a short highlight on cells a merge changed. A merge that hits a cell
+38. [x] **Show what changed**: a short highlight on cells a merge changed. A merge that hits a cell
         the user is editing, or has edited and not saved, is marked as a conflict instead of
-        overwriting it. **M** - the data part is done (conflicts, `getMergedAt`); the highlight and
-        the conflict look in the cell are next
+        overwriting it. **M** - the data part (conflicts, `getMergedAt`), the flash
+        (`GridConfig.mergeHighlight`) and the conflict look (the marker, the arrows on the row number)
 
 Needs phase 4: a merge every second on a large grid has to stay cheap.
 
 ## Phase 8 - more
 
 39. [ ] **Custom cell rendering** per column (a lit-html template: badges, links, progress bars,
-        icons) and conditional formatting (cell/row classes from a function or simple rules). **M**
+        icons) and conditional formatting (cell/row classes from a function or simple rules). **M** -
+        planned in `custom_render.md`: a renderer registered by id (mount/update/destroy), for any
+        tool - plain DOM, lit-html, React, Solid. The `cellClass` hook covers cell classes
 40. [x] **Aggregates**: sum/count/average in each group row, and a totals row in the footer. **M**
 41. [x] **Export** the filtered and sorted rows, or the selected range, as CSV. xlsx later if
-        needed. **S** - done for all / selected rows, `rows: 'range'`, and in the row menu
-42. [ ] **Find** (Ctrl+F) in the grid: highlight matches, next/previous. **M**
+        needed. **S** - and Excel (.xlsx, the row menu's export) on the user's request - done for all / selected rows, `rows: 'range'`, and in the row menu
+42. [x] **Find** (Ctrl+F) in the grid: highlight matches, next/previous. **M** - the find bar, `gridInterface.find()` / `openFind()` / `findNext()` / `findPrevious()` / `closeFind()` / `getFind()`, `find-change`
 
 Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** items 34, 35 (fill down, selection summary), 38 UI, 39, 42 - the rest is done.
+**Now:** item 39 (custom cell rendering, planned in `custom_render.md`) - the rest is done.
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies
