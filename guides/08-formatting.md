@@ -12,14 +12,16 @@ renderer, see [Custom cells](21-custom-cells.md): it gets the formatter's text t
 
 ## What a formatter does
 
-A formatter is a plain object with two methods and two optional parts:
+A formatter is a plain object with two methods and three optional parts:
 
 ```ts
 import type { Formatter } from '@simple-html/grid';
 
 const percent: Formatter = {
-    // value -> text: a cell, the edit input, the header filter, a group row, the footer, getFilterString()
+    // value -> text: a cell, the header filter, a group row, the footer, getFilterString()
     format: (value) => (typeof value === 'number' ? `${Math.round(value * 100)} %` : ''),
+    // optional: the text while a cell is edited, the plain value to type over. Left out, format is used
+    formatForEdit: (value) => (typeof value === 'number' ? String(Math.round(value * 100)) : ''),
     // text the user typed or pasted -> the value stored in the row
     parse: (text) => (text.trim() === '' ? null : Number(text.replace('%', '').trim()) / 100),
     // optional: text typed in a filter -> the value filtered on. Left out, parse is used
@@ -30,6 +32,10 @@ const percent: Formatter = {
 ```
 
 - `format` gets whatever the row holds and returns text: `''` for an empty value.
+- `formatForEdit` is what a cell shows while it is edited - from when its input gets the focus until it
+  loses it - and the text the editor over a cell starts from. Give the plain value where `format` is
+  hard to type over: thousands separators, a currency sign, a `%`. `parse` must read it back. The cell
+  shows `format` again when it loses the focus. A readonly cell always shows `format`.
 - `parse` and `parseFilter` always get text from the grid.
 - A boolean field is shown as a checkbox from the raw value. Its formatter is used where it is
   shown as text: the filter string, group rows, and text pasted into the column.
@@ -141,10 +147,11 @@ const upperCase: Formatter = {
     format: (value) => TextFormatter.format(value).toUpperCase()
 };
 
-// two decimals and a space between the thousands: 12345.6 -> '12 345.60'
+// two decimals and a space between the thousands: 12345.6 -> '12 345.60', edited as '12345.6'
 const money: Formatter = {
     ...NumberFormatterDot,
     format: (value) => (typeof value === 'number' ? value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : ''),
+    formatForEdit: (value) => NumberFormatterDot.format(value),
     parse: (text) => NumberFormatterDot.parse(text.replaceAll(' ', ''))
 };
 

@@ -457,7 +457,8 @@ const datasource = new Datasource({ fields: { country: { formatter: 'upperCase' 
 ```
 
 v5 had a different text for a readonly cell (`fromSourceDisplay`) and for the edit input
-(`fromSource`). v6 has one, `format`, for both.
+(`fromSource`). In v6 `format` is the text of a cell, and the optional `formatForEdit` the text while
+it is edited (its input has the focus) - left out, `format`.
 
 The formatters are fixed once the datasource is made. To switch, make a new datasource - or give
 it a formatter that hands every call on to the one picked last (the `samples/grid01` playground
@@ -506,7 +507,7 @@ methods. A `Formatter` has `format`, `parse`, an optional `parseFilter` and an o
 
 | v5 | v6 |
 | --- | --- |
-| `fromSource(value)` | `format(value)` |
+| `fromSource(value)` | `format(value)`, or `formatForEdit(value)` for the text while a cell is edited |
 | `fromSourceDisplay(value)` | `format(value)` |
 | `fromSourceGrouping(value)` | `format(value)` |
 | `toSource(value)` | `parse(text)` |

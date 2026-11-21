@@ -130,7 +130,8 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
     );
     // the textarea, or the input of one line: what is done with it here is the same for both
     const textarea = element.querySelector('.simple-html-grid-text-editor-input') as HTMLTextAreaElement | HTMLInputElement;
-    textarea.value = formatter.format(row[field]);
+    // the formatter's formatForEdit, when it has one and the text can be edited: the plain value
+    textarea.value = (readonly ? undefined : formatter.formatForEdit?.(row[field])) ?? formatter.format(row[field]);
     // read back: a browser gives the line breaks as LF. Unchanged is what it gives back now
     const original = textarea.value;
     if (typed && !readonly) {

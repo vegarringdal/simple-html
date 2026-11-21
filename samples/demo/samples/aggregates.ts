@@ -23,11 +23,12 @@ interface Account {
 
 /**
  * the aggregates are not rounded, the formatter shows them: money with two decimals and spaces
- * between the thousands, 1234567.8 -> '1 234 567.80'
+ * between the thousands, 1234567.8 -> '1 234 567.80'. Edited as the plain number (formatForEdit)
  */
 const money: Formatter = {
     ...NumberFormatterDot,
     format: (value) => (typeof value === 'number' ? value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : ''),
+    formatForEdit: (value) => NumberFormatterDot.format(value),
     parse: (text) => NumberFormatterDot.parse(text.replaceAll(' ', ''))
 };
 

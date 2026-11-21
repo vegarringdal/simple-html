@@ -8,6 +8,8 @@
  *   headers, the footer's filter and `getFilterString()`. Booleans are the exception, the grid's
  *   checkbox shows the raw value. The header filter's value list (text fields only) shows the raw
  *   values, in upper case.
+ * - `formatForEdit` (optional) is what a cell shows while it is edited - the text the user starts from:
+ *   the plain value where `format` is hard to type over (thousands separators, a currency sign).
  * - `parse` turns what the user typed or pasted into the value stored in the row.
  * - `parseFilter` turns what the user typed into a filter input into the value filtered on. Left out,
  *   `parse` is used.
@@ -22,9 +24,10 @@
  * ```ts
  * import { Datasource, type Formatter, registerFormatter } from '@simple-html/grid';
  *
- * // money with two decimals and a space between the thousands: 12345.6 -> '12 345.60'
+ * // money with two decimals and a space between the thousands: 12345.6 -> '12 345.60', edited as '12345.6'
  * const money: Formatter = {
  *     format: (value) => (typeof value === 'number' ? value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : ''),
+ *     formatForEdit: (value) => (typeof value === 'number' ? String(value) : ''),
  *     parse: (text) => (text.trim() === '' ? null : Number(text.replaceAll(' ', ''))),
  *     placeholder: '0.00'
  * };
@@ -43,6 +46,15 @@ export interface Formatter {
      * @param value the value in the row, can be anything the row holds
      */
     format(value: unknown): string;
+
+    /**
+     * Optional: a value of the field as text while its cell is edited - what the input shows when it
+     * gets the focus, and the text the editor over a cell starts from. Left out, `format` is used.
+     * Give the plain value where `format` is hard to type over: `'12 345.60'` is edited as `'12345.6'`.
+     * `parse` must read it back. When the cell loses the focus it shows `format` again.
+     * @param value the value in the row
+     */
+    formatForEdit?(value: unknown): string;
 
     /**
      * Text the user typed or pasted into a cell, as the value to store in the row.

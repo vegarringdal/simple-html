@@ -1332,6 +1332,14 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Formatters: a text for editing (user request)
+
+##### Added
+- `Formatter.formatForEdit(value)` (optional): what a cell shows while it is edited - from when its input
+  gets the focus until it loses it - and the text the editor over a cell starts from: the plain value to
+  type over, `'25008.76'` for `'25 008.76'`. Left out, `format` is used; a readonly cell always shows
+  `format`. The money formatters of the samples and the guide have one.
+
 #### The filter editor keeps the header filters it did not change
 
 ##### Changed

@@ -1965,6 +1965,20 @@ in the console. All passed. Found and fixed:
   1.3:1 - the rule is gone, they are the secondary text like every placeholder of the grid (Chrome's own
   placeholder grey is about the same)
 
+### Formatter.formatForEdit: the plain value while a cell is edited (user request)
+
+* the user: "in edit mode value converter should show real values, not formatted" - a money cell showed
+  '25 008.76' while typed in. v5 had a text for the edit input (`fromSource`) apart from the display
+  one; v6 had one `format` for both (a candidate)
+* `Formatter.formatForEdit?(value)`: renderRowCell shows it while the cell is edited - `cell.$focused`
+  (the focus handler sets it and renders the cell) and the cell can be typed in (not readonly, multiline,
+  a lookup's label, allowPasteClearOnly) - else `format`; the blur renders the cell again when the
+  formatter has one, so it shows `format`. The editor over a cell (textEditor.ts, custom cells) starts
+  from it too. The built-in formatters need none (no thousands separators); the money formatters of the
+  formatters and aggregates samples and the guide's examples have one
+* tests: formatForEdit.test.ts (formatted, plain while focused, formatted after; typed over and stored;
+  a blank; a readonly grid; without formatForEdit as before). Browser: format-for-edit-check.js
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -2027,6 +2041,4 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 * **Custom cells, the plan's "later"**: `focusButton` and `placeholderRow` on a custom cell, a `measure()`
   for `fitColumns()`, renderers for group rows, the totals row and header labels
-* **One `format` for a cell and its edit input**: v5 could differ (`fromSourceDisplay`); no built-in used
-  it, an optional `formatForEdit` would bring it back if needed
 * **Formatters are fixed when the datasource is made**: there is no setter to switch a field's formatter
