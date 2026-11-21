@@ -1943,6 +1943,16 @@ in the console. All passed. Found and fixed:
   `samples/date01/toggleDarkDate.ts`) injected a block of v5 style dark colours; every colour of
   grid.css and date.css is `light-dark()` now, so they switch the page's `color-scheme`
 
+### Sorting with a collator that calls different strings equal (a candidate)
+
+* with `setLocaleCompare(code, { sensitivity: 'base' })` the collator calls 'a' and 'A' equal, and the sort
+  turned its 0 into 1 both ways round: an inconsistent comparator, so their order was the order they came
+  in - and grouping, which puts equal values next to each other, could split one value into two groups.
+  Now different strings the collator calls equal are put by their code points: a consistent order,
+  'A' before 'a'. Still not 0: grouping keys a group by its own text, and only equal ones may be one group
+* tests: simpleSorting.test.ts +3 (the same order from three input orders, descending the reverse, one
+  group per value) - all three fail with the old line
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -1961,9 +1971,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   window does not close a menu
 * **Undo**: after an undo the focus stays in its cell rather than moving to the changed one; the menu
   hints say Ctrl+Z / Ctrl+Y on a Mac too (texts `row.edit.undo.hint` / `row.edit.redo.hint`)
-* **A collator with `sensitivity: 'base'`**: `'a'` vs `'A'` compares as 1 both ways (sort.ts turns a 0
-  into 1), so their order is the order they came in. Returning 0 needs grouping to use the collator too,
-  or the groups split
 * **The value list shows raw values**: a text field's list has its values upper cased, not what a
   formatter of the field shows - nor a lookup column's labels (dropDownFilterData reads the row values) -
   and `IN` on a text field compares the raw text

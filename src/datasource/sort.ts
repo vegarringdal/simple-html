@@ -172,7 +172,13 @@ export class Sort {
                 return 0;
             }
             const result = this.localeCompareCode ? this.localeCompareCode.compare(s1, s2) : s1.localeCompare(s2);
-            return result < 0 ? -1 : 1;
+            if (result !== 0) {
+                return result < 0 ? -1 : 1;
+            }
+            // different strings the collator calls equal ('a' and 'A' with sensitivity 'base'): by their
+            // code points, so the order is the same whatever order they came in. Not 0 - grouping keys
+            // them by their own text, equal ones must be the same
+            return s1 < s2 ? -1 : 1;
         }
 
         if (v1 < v2) {

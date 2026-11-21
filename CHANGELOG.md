@@ -1335,6 +1335,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### The filter editor keeps the header filters it did not change
 
 ##### Fixed
+- Sorting with a collator that calls different strings equal (`setLocaleCompare(code, { sensitivity:
+  'base' })`: 'a' and 'A') put them in the order they came in, and grouping could split a value into two
+  groups. They are put by their code points now ('A' before 'a').
 - Applying the filter editor emptied every header filter cell, also of the columns whose conditions it
   kept: the rows stayed filtered by them while the headers showed nothing. Only the cells whose column's
   conditions were changed or removed are emptied now.
