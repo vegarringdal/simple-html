@@ -12,6 +12,7 @@ import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { fillDownKey } from './fillDown';
 import { showCellFind } from './findBar';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
@@ -186,7 +187,11 @@ export function renderRowCell(
                         }}
                         @keydown=${(e: any) => {
                             // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
-                            if (rangeKeydown(ctx, e, row, attribute) || rangeDeleteKey(ctx, e)) {
+                            if (
+                                rangeKeydown(ctx, e, row, attribute) ||
+                                rangeDeleteKey(ctx, e) ||
+                                fillDownKey(ctx, e, row, attribute)
+                            ) {
                                 return;
                             }
                             if (undoRedoKey(ctx, e, entity, attribute)) {
@@ -431,7 +436,11 @@ export function renderRowCell(
                         }}
                         @keydown=${(e: any) => {
                             // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
-                            if (rangeKeydown(ctx, e, row, attribute) || rangeDeleteKey(ctx, e)) {
+                            if (
+                                rangeKeydown(ctx, e, row, attribute) ||
+                                rangeDeleteKey(ctx, e) ||
+                                fillDownKey(ctx, e, row, attribute)
+                            ) {
                                 return;
                             }
                             // Ctrl+Z / Ctrl+Y, unless the user is typing in the cell: then they are the input's

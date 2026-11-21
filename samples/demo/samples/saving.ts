@@ -6,7 +6,7 @@ export const saving: DemoSample = {
     title: 'Saving',
     group: 'Editing',
     description:
-        'Edit cells, add rows and delete rows (select them, then "Delete selected" or right click a cell: Delete: Rows), then click "Save". getChanges() has the deleted, edited and new rows: one call sends them to a fake server, which saves them in one transaction and gives each new row an id. acceptChanges({ newKeys }) then shows what was saved: the deleted rows are gone, the new rows have the ids from the server, and nothing counts as changed (hasChanges() is false).',
+        'Edit cells, add rows and delete rows (select them, then "Delete selected" or right click a cell: Delete › Rows), then click "Save". getChanges() has the deleted, edited and new rows: one call sends them to a fake server, which saves them in one transaction and gives each new row an id. acceptChanges({ newKeys }) then shows what was saved: the deleted rows are gone, the new rows have the ids from the server, and nothing counts as changed (hasChanges() is false).',
     run(stage) {
         const ui = createStage(stage);
         const config = baseGridConfig();

@@ -173,10 +173,10 @@ The row menu (right click a cell) sends these when the user picks an entry:
 
 | event | entry | payload |
 | --- | --- | --- |
-| `copy-cell` | Copy: Cell Value | the cell |
-| `copy-column` | Copy: Column (selected rows) | the cell |
-| `copy-row` | Copy: Row (selected rows) | the cell |
-| `copy-row-col` | Copy: Row (selected rows/col) | the cell |
+| `copy-cell` | Copy › Cell Value | the cell |
+| `copy-column` | Copy › Column (selected rows) | the cell |
+| `copy-row` | Copy › Row (selected rows) | the cell |
+| `copy-row-col` | Copy › Row (selected rows/col) | the cell |
 | `paste` | Paste: Paste cell (selected rows) | the cell, without `rowData`. `entity`: the row pasted into. Sent once per row |
 | `clear` | Clear: Clear cell (selected rows) | the cell |
 

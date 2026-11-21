@@ -2,14 +2,17 @@
 
 The grid has three right click menus:
 
-- the **row menu**, on a cell: copy, filter on the value, dimmed values, paste, clear, delete, a
-  summary
-- the **header menu**, on a header label: pin, hide, the column chooser, sizes, grouping
-- the **filter menu**, on a header filter: clear, is blank, the filter editor, the operator, the
+- the **row menu**, on a cell: undo and redo, then the submenus copy, paste, clear, delete, filter
+  on the value, view, sizes, export. The summary of selected cells is in the footer, see
+  [Selection and clipboard](17-selection-and-clipboard.md#the-summary-in-the-footer)
+- the **header menu**, on a header label: pin, hide, remove sorting, the column chooser, then the
+  submenus sizes, aggregates, grouping
+- the **filter menu**, on a header filter: clear, is blank, the operator, the filter editor, the
   value list
 
-Each is a list of entries with ids. The `menus` hook changes them: hide entries, reorder them,
-change their labels, add your own. `openMenu()` opens a menu of your own, in the same style.
+Each is a tree of entries with ids: most entries are in submenus, so a menu is short and opens
+beside it what you point at. The `menus` hook changes them: hide entries, reorder them, change their
+labels, add your own. `openMenu()` opens a menu of your own, in the same style, with submenus too.
 
 ## How a menu opens and closes
 
@@ -25,9 +28,10 @@ not be clicked. A menu has the classes `simple-html-grid simple-html-grid-popove
 - It closes on a click outside it, on Esc, when another menu opens, on scroll (with
   `autoRemoveContextMenuOnScrollEvent: true`) and when the grid leaves the page. Clicking an item
   closes it too, then runs the item's action; a click in a block does not.
-- An item does not take the focus: it stays on the cell the menu was opened from. When the focus is
-  in the menu as it closes - a search field - it goes back to the element that had it when the menu
-  opened.
+- Opened with the mouse, the focus stays on the cell the menu was opened from: an item does not take
+  it. Opened from the keyboard (Shift+F10, the menu key) it takes the focus, see
+  [The keyboard](#the-keyboard). When the focus is in the menu as it closes - an item, a search
+  field - it goes back to the element that had it when the menu opened.
 - The column chooser is a panel more than a menu: it stays open while you drag columns from it into
   the header, and when another menu opens. It closes with its Close button, Esc in its search field,
   and when the grid leaves the page.
@@ -37,6 +41,42 @@ browser sends `contextmenu` on the button press (macOS, Linux), the pointerup th
 the menu, and an `auto` popover would be closed by it the moment a right click opened it. So the grid
 closes its menus itself, the same way everywhere.
 
+### Submenus
+
+An item with a `›` opens a submenu beside it:
+
+- when the pointer rests on it (150ms: moving the pointer across other items on the way to an open
+  submenu does not swap it), on a click, and with ArrowRight, Enter or Space
+- on the right of the menu, its first entry level with the item; on the left when there is no room
+  on the right. It is kept in the window as a menu is, and scrolls when it is taller than the window
+- one at a time in a menu: pointing at another item closes it, and so do ArrowLeft and Esc - the
+  focus goes back to its item
+- a click on an item in a submenu closes the whole menu, then runs the action. A click outside, Esc in
+  the menu itself, another menu: everything closes
+- a submenu is a popover of its own, put in the menu's popover; submenus can have submenus
+
+### The keyboard
+
+The menus follow the WAI-ARIA [menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/):
+
+| key | does |
+| --- | --- |
+| Shift+F10, the menu key | opens the menu of the cell, header label or header filter with the focus, the focus on its first item |
+| ArrowDown / ArrowUp | the next / previous item, round. Lines and section headers are passed by; a disabled item gets the focus too, it can not be used. In a menu opened with the mouse, the first ArrowDown (ArrowUp) gets into it: the first (last) item |
+| Home / End | the first / last item |
+| a letter | the next item whose label starts with it |
+| Enter, Space | on an item: as a click - the menu closes, the focus goes back, the action runs. On an item with a submenu: opens it, the focus on its first item |
+| ArrowRight | opens the submenu of the item, the focus on its first item |
+| ArrowLeft | closes the submenu, the focus back on its item |
+| Esc | in a submenu: closes it, the focus back on its item. In the menu: closes it, the focus goes back where it was |
+| Tab, Shift+Tab | closes the menu, the focus goes back where it was. In a menu with a block - the filter menu's value list - Tab is the browser's: it goes on into the block's inputs, and Shift+Tab back to the item the keyboard was on |
+
+For a screen reader the menu is a `menu`, an item a `menuitem` - a `menuitemcheckbox` with
+`aria-checked` when it has a `selected` callback (the aggregates, the dimmed values, the operator in
+use) - with `aria-disabled` when it is disabled. An item with a submenu has `aria-haspopup="menu"` and
+`aria-expanded`, its submenu is labelled by it. In the filter menu's value list the checkboxes and
+*Run Search* are stops of Tab, Enter or Space runs the search.
+
 ## Changing the grid's menus
 
 The `menus` hook has a function per menu: `row`, `header` and `filter`. It gets the grid's own
@@ -44,8 +84,13 @@ entries (`defaults`) and what the menu was opened on (`context`), and returns th
 It is called every time the menu opens. Like the other [hooks](02-grid-config.md#hooks) it is given
 next to the config, not in it: the config stays plain JSON.
 
+`defaults` is a tree: a submenu (`type: 'submenu'`) has its own `entries`. Its id is the start of
+the ids in it - `row.copy.cell` is in `row.copy` - so a filter on the start of an id hides a submenu
+with what is in it, as it hid a section before. An entry in a submenu is changed in that submenu,
+with `map`:
+
 ```ts
-import { createGrid, type GridConfig, type GridHooks, isGroupRow } from '@simple-html/grid';
+import { createGrid, type GridConfig, type GridHooks, isGroupRow, type MenuEntry } from '@simple-html/grid';
 
 const config: GridConfig = {
     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['age'], width: 80 }] }
@@ -54,10 +99,9 @@ const config: GridConfig = {
 const hooks: GridHooks = {
     menus: {
         row: (defaults, context) => [
-            // hide built-in entries by id: here the summary
-            ...defaults.filter((entry) => !entry.id.startsWith('row.summary')),
+            // hide built-in entries by id: here the export submenu, with what is in it
+            ...defaults.filter((entry) => !entry.id.startsWith('row.export')),
             // add your own
-            { type: 'section', id: 'my.section', label: 'Row:' },
             {
                 id: 'my.logRow',
                 label: 'Log row',
@@ -70,8 +114,20 @@ const hooks: GridHooks = {
             ...defaults.filter((entry) => entry.id === 'filter.values'),
             ...defaults.filter((entry) => entry.id !== 'filter.values')
         ],
-        // relabel
-        header: (defaults) => defaults.map((entry) => (entry.id === 'header.column.hide' ? { ...entry, label: 'Hide column' } : entry))
+        // in a submenu: hide an entry of the size submenu, add one of your own to it
+        header: (defaults, context) =>
+            defaults.map((entry): MenuEntry => {
+                if (entry.type !== 'submenu' || entry.id !== 'header.size') {
+                    return entry;
+                }
+                return {
+                    ...entry,
+                    entries: [
+                        ...entry.entries.filter((inner) => inner.id !== 'header.size.resetAll'),
+                        { id: 'my.wide', label: 'Wide', action: () => console.log('wide', context.field) }
+                    ]
+                };
+            })
     }
 };
 
@@ -80,9 +136,13 @@ const gridInterface = createGrid(host, { config, datasource, hooks });
 
 - `defaults` always has every entry of the menu. The ones that do not apply here have a `visible`
   callback that hides them: paste and clear on a readonly cell, delete in a readonly grid, the
-  summary of a column that is not a number, the operators of another type.
+  operators of another type. A submenu with nothing
+  left to show is hidden too.
 - A section header or a separator is shown as long as it is in the list: hide it together with the
   entries under it.
+- To move an entry out of its submenu, take it from the submenu's `entries`:
+  `defaults.flatMap((entry) => (entry.type === 'submenu' ? entry.entries : [entry]))` is every entry
+  of the first level of submenus, in a flat list.
 - The entries in `defaults` are new objects every time, change them as you like. Their labels are
   the texts of their ids, already looked up: to translate the menus use the texts (see
   [Texts](12-texts.md)), the hook is for changes in one menu.
@@ -99,19 +159,20 @@ A `MenuEntry` is one of:
 | entry | shown as |
 | --- | --- |
 | `{ id, label, action, hint?, visible?, disabled?, selected? }` - a `MenuItem` | an entry to click. `type: 'item'` can be left out |
-| `{ type: 'section', id, label, visible? }` - a `MenuSection` | a section header with a line under it, `Copy:` |
+| `{ type: 'submenu', id, label, entries, visible? }` - a `MenuSubmenu` | an entry with a `›` that opens `entries` beside it, see [Submenus](#submenus) |
+| `{ type: 'section', id, label, visible? }` - a `MenuSection` | a section header with a line under it, `Pick a fruit:` |
 | `{ type: 'separator', id, visible? }` - a `MenuSeparator` | a dashed line |
 | `{ type: 'block', id, element, visible? }` - a `MenuBlock` | your element, as it is |
 
 - Clicking an item closes the menu, then calls `action(context)`.
 - `hint` is shown after the label, in italics and in parentheses: `Paste cell (selected rows)`.
 - `visible(context)`: `false` leaves the entry out. `disabled(context)`: `true` shows the item greyed
-  out, a click does nothing. `selected(context)`: `true` marks it as the one picked now. They are
-  called when the menu opens.
-- Labels are shown as they are given. The grid's own come from the texts, by the id of the entry,
-  and its section labels end with a colon.
+  out, a click does nothing. `selected(context)`: `true` shows a ✓ in front of the label - a toggle
+  that is on, the choice in use. They are called when the menu (or submenu) opens.
+- Labels are shown as they are given. The grid's own come from the texts, by the id of the entry.
 - Every entry is rendered with its id in a `data-menu-id` attribute, for css and tests. A disabled
-  item has the class `simple-html-grid-menu-item-disabled`.
+  item has the class `simple-html-grid-menu-item-disabled`, a selected one
+  `simple-html-grid-menu-item-selected`, an item with a submenu `aria-haspopup="menu"`.
 
 Every callback gets a `MenuContext`:
 
@@ -127,59 +188,71 @@ Every callback gets a `MenuContext`:
 
 ## The built-in ids
 
-`MENU_IDS` lists the ids of every built-in entry, per menu, in the order the menus show them. A
-section is `menu.section`, the entries under it `menu.section.entry`. The ids stay the same between
-versions, so a menu changed by id keeps working.
+`MENU_IDS` lists the ids of every built-in entry, per menu: a flat list in the order of the tree, a
+submenu then what is in it. An entry in a submenu starts with the id of the submenu (`row.copy.cell`
+is in `row.copy`); the pin and blank submenus kept the ids their entries had, which share the start
+of their part of the menu (`header.column.pinLeft` is in `header.column.pin`, `filter.filter.isBlank`
+in `filter.filter.blank`). The ids stay the same between versions, so a menu changed by id keeps
+working.
 
 The ids are the ids of the texts too: the label of `row.copy.cell` is the text `row.copy.cell`, its
 hint `<id>.hint`. Change them with `setTexts()` or the grid's `texts`, see [Texts](12-texts.md#row-menu).
 The "shown as" below is the English text.
 
+The menus as they open, a `›` is a submenu:
+
+```text
+row menu                          header menu                     filter menu
+Undo / Redo ›                     Pin ›                           Clear Filter
+Copy ›                            Hide column                     Clear All Filters
+Paste ›                           Remove sorting                  ----
+Clear ›                           ----                            Blank ›
+Delete ›                          Column chooser…                 Operator ›
+Filter ›                          Size ›                          ----
+View ›                            Aggregate ›                     Advanced Filter…
+Size ›                            Grouping ›                      Search: the value list
+Export ›
+```
+
 ### Row menu (`MENU_IDS.row`)
 
 | id | shown as | shown when |
 | --- | --- | --- |
-| `row.edit` | Edit: - first in the menu | the grid is editable |
+| `row.edit` | Undo / Redo ›: a submenu, first in the menu | the grid is editable |
 | `row.edit.undo` | Undo last change (Ctrl+Z): `datasource.undo()`, see [Undo and redo](05-editing.md#undo-and-redo). Greyed out when there is nothing to undo | the grid is editable |
 | `row.edit.redo` | Redo (Ctrl+Y): `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
 | `row.edit.revertCell` | Undo cell edit: the cell's original value, see [Reverting a cell or a row](05-editing.md#reverting-a-cell-or-a-row). Greyed out when the cell is not edited | the grid is editable |
 | `row.edit.revertRow` | Undo row edits: the row right clicked back to its original values, its deletion mark taken off - no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
 | `row.edit.revertRows` | Undo row edits (selected rows): the selected rows back, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |
-| `row.copy` | Copy: | |
+| `row.copy` | Copy › - a submenu | |
 | `row.copy.cell` | Cell Value | |
 | `row.copy.column` | Column (selected rows) | |
 | `row.copy.row` | Row (selected rows) | |
 | `row.copy.selectedColumns` | Row (selected rows/col): the selected columns, every column when none is selected | |
 | `row.copy.range` | Range: the last range of cells, as Ctrl+C copies it - see [Selection and clipboard](17-selection-and-clipboard.md#copy) | there are ranges of cells |
-| `row.filter` | Filter: | |
-| `row.filter.replace` | Replace filter (all) | |
-| `row.filter.add` | Add to filter (and) | |
-| `row.view` | View: | |
-| `row.view.dimRepeatedValues` | Use dimmed values, with a ✓ when it is on | |
-| `row.view.changedOnly` | Changed rows only, with a ✓ when it is on: the new, edited and deleted rows of the filter, see [Changed rows only](05-editing.md#changed-rows-only) | |
-| `row.paste` | Paste: | the grid and the cell are editable, or the grid is and there are ranges of cells |
+| `row.paste` | Paste › - a submenu | the grid and the cell are editable, or the grid is and there are ranges of cells |
 | `row.paste.cell` | Paste cell (selected rows) | the grid and the cell are editable |
 | `row.paste.range` | Paste range: the clipboard as Ctrl+V pastes it with ranges - one value into every cell of them, a block from the top left of the last one. Reads the clipboard with `navigator.clipboard.readText()`, the browser may ask the user first | the grid is editable, there are ranges of cells |
-| `row.clear` | Clear: | the grid and the cell are editable, or the grid is and there are ranges of cells |
+| `row.clear` | Clear › - a submenu | the grid and the cell are editable, or the grid is and there are ranges of cells |
 | `row.clear.cell` | Clear cell (selected rows) | the grid and the cell are editable |
 | `row.clear.range` | Clear range: every cell of the ranges, as Delete | the grid is editable, there are ranges of cells |
-| `row.delete` | Delete: | the grid is editable |
+| `row.delete` | Delete › - a submenu | the grid is editable |
 | `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows). Greyed out when no selected row is left to mark | the grid is editable |
 | `row.delete.undo` | Undo (selected rows): takes the mark off | the grid is editable, and a selected row is marked for deletion |
-| `row.summary` | Summary: | a number field |
-| `row.summary.count` | Count: the number of selected rows. A click copies the value | a number field |
-| `row.summary.sum` | Sum: of the selected rows' numbers, `datasource.aggregate(field, 'sum', rows)`. With two decimals at most, as max, min and avg | a number field |
-| `row.summary.max` | Max: the largest number | a number field |
-| `row.summary.min` | Min: the smallest number, 0 included | a number field |
-| `row.summary.avg` | Avg: the average of the numbers, a blank is not counted | a number field |
-| `row.size` | Size: | |
+| `row.filter` | Filter › - a submenu | |
+| `row.filter.replace` | Replace filter (all) | |
+| `row.filter.add` | Add to filter (and) | |
+| `row.view` | View › - a submenu | |
+| `row.view.dimRepeatedValues` | Use dimmed values, with a ✓ when it is on | |
+| `row.view.changedOnly` | Changed rows only, with a ✓ when it is on: the new, edited and deleted rows of the filter, see [Changed rows only](05-editing.md#changed-rows-only) | |
+| `row.size` | Size › - a submenu | |
 | `row.size.fitColumn` | Fit column to this cell: the column as wide as the cell's text, `gridInterface.fitColumns([field], { rows: [row] })`. See [Column widths and row heights](02-grid-config.md#column-widths-and-row-heights) | |
 | `row.size.fitRow` | Fit row height: the row right clicked as high as its multiline cells need, `fitRows(row)` | |
 | `row.size.fitRows` | Fit row height (selected rows): the selected rows and the rows of the ranges of cells | rows are selected, or there are ranges of cells |
 | `row.size.fitAllRows` | Fit all rows: every row the filter lets through, `fitRows()` | |
 | `row.size.resetRow` | Reset row height: the row right clicked, `resetRowHeights(row)`. Greyed out when it has the height of the layout | |
 | `row.size.resetAllRows` | Reset all row heights: `resetRowHeights()`. Greyed out when no row has a height of its own | |
-| `row.export` | Export: | |
+| `row.export` | Export › - a submenu | |
 | `row.export.excel` | Excel, all rows: `gridInterface.downloadExcel()`, an .xlsx file, see [Export](15-export.md) | |
 | `row.export.excelSelected` | Excel, selected rows: `downloadExcel('export.xlsx', { rows: 'selected' })`. Greyed out when no row is selected | |
 
@@ -187,29 +260,30 @@ The "shown as" below is the English text.
 
 | id | shown as | shown when |
 | --- | --- | --- |
-| `header.column` | Column: | |
+| `header.column.pin` | Pin › - a submenu | |
 | `header.column.pinLeft` | Pin left | not pinned left |
 | `header.column.pinLeftCopy` | Pin left (copy): pinned, and kept where it is | not pinned left |
 | `header.column.pinRight` | Pin right | not pinned right |
 | `header.column.pinRightCopy` | Pin right (copy) | not pinned right |
 | `header.column.unpin` | Unpin | pinned |
-| `header.column.hide` | Hide | |
+| `header.column.hide` | Hide column | |
 | `header.column.removeSorting` | Remove sorting: keeps the sort of the grouped fields | |
 | `header.column.chooserSeparator` | a line | |
-| `header.column.chooser` | Column chooser: every field, drag one into the header | |
-| `header.size` | Size: | |
+| `header.column.chooser` | Column chooser…: every field, drag one into the header | |
+| `header.size` | Size › - a submenu | |
 | `header.size.column` | Fit column width: to its content and its label, `gridInterface.fitColumns([field])` | |
 | `header.size.all` | Fit all columns: `fitColumns()` | |
 | `header.size.resetColumn` | Reset column width: the width of the config, `resetColumnWidths([field])` | |
 | `header.size.resetAll` | Reset all column widths: `resetColumnWidths()` | |
-| `header.aggregate` | Aggregate: | |
+| `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |
 | `header.aggregate.min` | Min, a toggle | a number field |
 | `header.aggregate.max` | Max, a toggle | a number field |
 | `header.aggregate.count` | Count, a toggle: the values that are not blank | |
+| `header.aggregate.totalsSeparator` | a line | |
 | `header.aggregate.totalsRow` | Totals row, a toggle | |
-| `header.grouping` | Grouping: | |
+| `header.grouping` | Grouping › - a submenu | |
 | `header.grouping.expandAll` | Expand all | |
 | `header.grouping.collapseAll` | Collapse all | |
 | `header.grouping.clear` | Clear all: no grouping | |
@@ -218,20 +292,20 @@ The "shown as" below is the English text.
 
 | id | shown as | shown when |
 | --- | --- | --- |
-| `filter.filter` | Filter: | |
 | `filter.filter.clear` | Clear Filter: the column's conditions | |
 | `filter.filter.clearAll` | Clear All Filters | |
 | `filter.filter.blankSeparator` | a line | |
-| `filter.filter.isBlank` | Set "Is Blank" | |
-| `filter.filter.isNotBlank` | Set "Is Not Blank" | |
-| `filter.filter.advancedSeparator` | a line | |
-| `filter.filter.advanced` | Advanced Filter: opens the filter editor | |
-| `filter.operator` | Set Operator: | not a boolean field |
+| `filter.filter.blank` | Blank › - a submenu | |
+| `filter.filter.isBlank` | Is blank | |
+| `filter.filter.isNotBlank` | Is not blank | |
+| `filter.operator` | Operator › - a submenu, the operator in use has a ✓ | not a boolean field |
 | `filter.operator.greaterThanOrEqualTo` | Greater than or equal | a number, date or datetime field |
 | `filter.operator.lessThanOrEqualTo` | Less than or equal | a number, date or datetime field |
 | `filter.operator.equal` | Equal | not a boolean field |
 | `filter.operator.notEqualTo` | Not Equal | a text field |
 | `filter.operator.contains` | Contains | a text field |
+| `filter.filter.advancedSeparator` | a line | |
+| `filter.filter.advanced` | Advanced Filter…: opens the filter editor | |
 | `filter.values` | the value list: a search box, a checkbox per value, "Run Search". One `MenuBlock`, its texts are `filter.values.*` | a text field |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
@@ -239,7 +313,7 @@ See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu
 ```ts
 import { type GridHooks, MENU_IDS } from '@simple-html/grid';
 
-// a row menu with the copy entries only
+// a row menu with the copy submenu only
 const hooks: GridHooks = {
     menus: { row: (defaults) => defaults.filter((entry) => entry.id.startsWith('row.copy')) }
 };
@@ -249,7 +323,7 @@ MENU_IDS.row.includes('row.paste.cell'); // true
 
 ## A menu of your own: `openMenu()` and `closeMenu()`
 
-`gridInterface.openMenu(at, entries)` opens a menu of your own, with the same entries:
+`gridInterface.openMenu(at, entries)` opens a menu of your own, with the same entries, submenus too:
 
 ```ts
 gridInterface.on('cell-click', (data) => {
@@ -264,6 +338,15 @@ gridInterface.on('cell-click', (data) => {
         { type: 'section', id: 'fruit', label: 'Pick a fruit:' },
         { id: 'fruit.apple', label: 'Apple', action: () => pick('Apple') },
         { id: 'fruit.banana', label: 'Banana', action: () => pick('Banana') },
+        {
+            type: 'submenu',
+            id: 'fruit.more',
+            label: 'More',
+            entries: [
+                { id: 'fruit.kiwi', label: 'Kiwi', action: () => pick('Kiwi') },
+                { id: 'fruit.mango', label: 'Mango', action: () => pick('Mango') }
+            ]
+        },
         { type: 'separator', id: 'fruit.separator' },
         { id: 'fruit.none', label: 'None', hint: 'clears the cell', action: () => pick(null) }
     ]);
@@ -291,6 +374,8 @@ than the window gets the window's height and scrolls.
 - `gridInterface.closeMenu()` closes the open menu from code.
 - The callbacks of its entries get a context with `menu: 'custom'` and no field, row or cell: let
   them use what they were made for, as `pick` above.
+- Opened from the keyboard - a button that calls `openMenu()` on Enter - it takes the focus, on its
+  first item; opened with the mouse it leaves the focus where it is. See [The keyboard](#the-keyboard).
 - It does nothing while the grid is not on the page.
 
 ## A dropdown grid as a block

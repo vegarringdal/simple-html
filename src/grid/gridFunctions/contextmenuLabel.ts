@@ -3,7 +3,7 @@ import type { Entity, GroupRow } from '../../datasource/entity';
 import type { SortArgument } from '../../datasource/sortArgument';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
-import type { MenuContext, MenuEntry } from '../gridMenus';
+import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
 import { aggregatesOf } from './aggregates';
 import type { ColType } from './colType';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';
@@ -45,7 +45,9 @@ export function contextmenuLabel(
 }
 
 /**
- * The header menu's default entries, new objects every call. The ids are documented in MENU_IDS.header
+ * The header menu's default entries, new objects every call: pin (a submenu), hide, remove sorting,
+ * the column chooser, then the submenus size, aggregate and grouping. The ids are documented in
+ * MENU_IDS.header
  */
 function headerMenuEntries(
     ctx: Grid,
@@ -109,48 +111,54 @@ function headerMenuEntries(
     const text = (id: TextId) => gridText(ctx, id);
 
     return [
-        { type: 'section', id: 'header.column', label: text('header.column') },
         {
-            id: 'header.column.pinLeft',
-            label: text('header.column.pinLeft'),
-            visible: notPinnedLeft,
-            action: () => pin('left', true)
-        },
-        {
-            id: 'header.column.pinLeftCopy',
-            label: text('header.column.pinLeftCopy'),
-            visible: notPinnedLeft,
-            action: () => pin('left', false)
-        },
-        {
-            id: 'header.column.pinRight',
-            label: text('header.column.pinRight'),
-            visible: notPinnedRight,
-            action: () => pin('right', true)
-        },
-        {
-            id: 'header.column.pinRightCopy',
-            label: text('header.column.pinRightCopy'),
-            visible: notPinnedRight,
-            action: () => pin('right', false)
-        },
-        {
-            id: 'header.column.unpin',
-            label: text('header.column.unpin'),
-            visible: () => colType === 'left-pinned' || colType === 'right-pinned',
-            action: () => {
-                // back in the center, next to the side it was pinned to
-                const width = currentWidth();
-                if (colType === 'right-pinned') {
-                    removeFromColumn();
-                    layout().center.push({ fields: [attribute], width });
+            type: 'submenu',
+            id: 'header.column.pin',
+            label: text('header.column.pin'),
+            entries: [
+                {
+                    id: 'header.column.pinLeft',
+                    label: text('header.column.pinLeft'),
+                    visible: notPinnedLeft,
+                    action: () => pin('left', true)
+                },
+                {
+                    id: 'header.column.pinLeftCopy',
+                    label: text('header.column.pinLeftCopy'),
+                    visible: notPinnedLeft,
+                    action: () => pin('left', false)
+                },
+                {
+                    id: 'header.column.pinRight',
+                    label: text('header.column.pinRight'),
+                    visible: notPinnedRight,
+                    action: () => pin('right', true)
+                },
+                {
+                    id: 'header.column.pinRightCopy',
+                    label: text('header.column.pinRightCopy'),
+                    visible: notPinnedRight,
+                    action: () => pin('right', false)
+                },
+                {
+                    id: 'header.column.unpin',
+                    label: text('header.column.unpin'),
+                    visible: () => colType === 'left-pinned' || colType === 'right-pinned',
+                    action: () => {
+                        // back in the center, next to the side it was pinned to
+                        const width = currentWidth();
+                        if (colType === 'right-pinned') {
+                            removeFromColumn();
+                            layout().center.push({ fields: [attribute], width });
+                        }
+                        if (colType === 'left-pinned') {
+                            removeFromColumn();
+                            layout().center.unshift({ fields: [attribute], width });
+                        }
+                        ctx.rebuild(true);
+                    }
                 }
-                if (colType === 'left-pinned') {
-                    removeFromColumn();
-                    layout().center.unshift({ fields: [attribute], width });
-                }
-                ctx.rebuild(true);
-            }
+            ]
         },
         {
             id: 'header.column.hide',
@@ -181,32 +189,52 @@ function headerMenuEntries(
             label: text('header.column.chooser'),
             action: () => contextMenuColumnChooser(ctx, event, cell)
         },
-        { type: 'section', id: 'header.size', label: text('header.size') },
-        // fitted to the content, like Excel's AutoFit, and back to the widths of the config
-        { id: 'header.size.column', label: text('header.size.column'), action: () => ctx.gridInterface.fitColumns([attribute]) },
-        { id: 'header.size.all', label: text('header.size.all'), action: () => ctx.gridInterface.fitColumns() },
         {
-            id: 'header.size.resetColumn',
-            label: text('header.size.resetColumn'),
-            action: () => ctx.gridInterface.resetColumnWidths([attribute])
+            type: 'submenu',
+            id: 'header.size',
+            label: text('header.size'),
+            // fitted to the content, like Excel's AutoFit, and back to the widths of the config
+            entries: [
+                {
+                    id: 'header.size.column',
+                    label: text('header.size.column'),
+                    action: () => ctx.gridInterface.fitColumns([attribute])
+                },
+                { id: 'header.size.all', label: text('header.size.all'), action: () => ctx.gridInterface.fitColumns() },
+                {
+                    id: 'header.size.resetColumn',
+                    label: text('header.size.resetColumn'),
+                    action: () => ctx.gridInterface.resetColumnWidths([attribute])
+                },
+                {
+                    id: 'header.size.resetAll',
+                    label: text('header.size.resetAll'),
+                    action: () => ctx.gridInterface.resetColumnWidths()
+                }
+            ]
         },
-        { id: 'header.size.resetAll', label: text('header.size.resetAll'), action: () => ctx.gridInterface.resetColumnWidths() },
-        ...aggregateEntries(ctx, attribute),
-        { type: 'section', id: 'header.grouping', label: text('header.grouping') },
+        aggregateSubmenu(ctx, attribute),
         {
-            id: 'header.grouping.expandAll',
-            label: text('header.grouping.expandAll'),
-            action: () => ctx.gridInterface.getDatasource().expandGroup()
-        },
-        {
-            id: 'header.grouping.collapseAll',
-            label: text('header.grouping.collapseAll'),
-            action: () => ctx.gridInterface.getDatasource().collapseGroup()
-        },
-        {
-            id: 'header.grouping.clear',
-            label: text('header.grouping.clear'),
-            action: () => ctx.gridInterface.getDatasource().removeGroup()
+            type: 'submenu',
+            id: 'header.grouping',
+            label: text('header.grouping'),
+            entries: [
+                {
+                    id: 'header.grouping.expandAll',
+                    label: text('header.grouping.expandAll'),
+                    action: () => ctx.gridInterface.getDatasource().expandGroup()
+                },
+                {
+                    id: 'header.grouping.collapseAll',
+                    label: text('header.grouping.collapseAll'),
+                    action: () => ctx.gridInterface.getDatasource().collapseGroup()
+                },
+                {
+                    id: 'header.grouping.clear',
+                    label: text('header.grouping.clear'),
+                    action: () => ctx.gridInterface.getDatasource().removeGroup()
+                }
+            ]
         }
     ];
 }
@@ -217,7 +245,7 @@ function headerMenuEntries(
  * state (GridState.aggregates / totalsRow), so getState() keeps them and resetState() goes back to the
  * config's. See aggregates.ts
  */
-function aggregateEntries(ctx: Grid, attribute: string): MenuEntry[] {
+function aggregateSubmenu(ctx: Grid, attribute: string): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
     const isNumber = gridInterface.getDatasource().getField(attribute).type === 'number';
     const current = () => aggregatesOf(gridInterface.__getGridConfig(), attribute);
@@ -227,22 +255,28 @@ function aggregateEntries(ctx: Grid, attribute: string): MenuEntry[] {
         aggregates[attribute] = now.includes(fn) ? now.filter((other) => other !== fn) : [...now, fn];
         gridInterface.setState({ aggregates });
     };
-    return [
-        { type: 'section', id: 'header.aggregate', label: gridText(ctx, 'header.aggregate') },
-        ...AGGREGATE_FUNCTIONS.map(
-            (fn): MenuEntry => ({
-                id: `header.aggregate.${fn}`,
-                label: gridText(ctx, `header.aggregate.${fn}`),
-                visible: () => fn === 'count' || isNumber,
-                selected: () => current().includes(fn),
-                action: () => toggle(fn)
-            })
-        ),
-        {
-            id: 'header.aggregate.totalsRow',
-            label: gridText(ctx, 'header.aggregate.totalsRow'),
-            selected: () => gridInterface.__getGridConfig().totalsRow,
-            action: () => gridInterface.setState({ totalsRow: !gridInterface.__getGridConfig().totalsRow })
-        }
-    ];
+    return {
+        type: 'submenu',
+        id: 'header.aggregate',
+        label: gridText(ctx, 'header.aggregate'),
+        entries: [
+            ...AGGREGATE_FUNCTIONS.map(
+                (fn): MenuEntry => ({
+                    id: `header.aggregate.${fn}`,
+                    label: gridText(ctx, `header.aggregate.${fn}`),
+                    visible: () => fn === 'count' || isNumber,
+                    selected: () => current().includes(fn),
+                    action: () => toggle(fn)
+                })
+            ),
+            // the totals row is for every column, the functions above are this column's
+            { type: 'separator', id: 'header.aggregate.totalsSeparator' },
+            {
+                id: 'header.aggregate.totalsRow',
+                label: gridText(ctx, 'header.aggregate.totalsRow'),
+                selected: () => gridInterface.__getGridConfig().totalsRow,
+                action: () => gridInterface.setState({ totalsRow: !gridInterface.__getGridConfig().totalsRow })
+            }
+        ]
+    };
 }

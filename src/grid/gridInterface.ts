@@ -24,6 +24,7 @@ import type {
 import type { GridEvents } from './gridEvents';
 import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
+import { fillDown } from './gridFunctions/fillDown';
 import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
@@ -34,7 +35,7 @@ import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
 import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
 import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
-import { renderRangeClasses } from './gridFunctions/rangeSelection';
+import { focusedCell, pointOf, renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
@@ -1015,6 +1016,26 @@ export class GridInterface<T> {
     }
 
     /**
+     * Fill down, as Ctrl+D (Cmd+D) in a cell does: in every range the values of its top row go into the
+     * rows under it, a range of one row gets the values of the data row above it. Without a range, the
+     * cell with the focus gets the value of the cell above it. The values are copied as they are; cells
+     * that can not be edited are skipped (the grid's `readonly`, the column's, the `isReadonly` hook),
+     * group rows have no cells. One step of the undo history. See the guide "Selection and clipboard".
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * // the status of the first row into the next four
+     * gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 4, toField: 'status' }]);
+     * gridInterface.fillDown();
+     * ```
+     */
+    public fillDown() {
+        const focused = this.grid ? focusedCell(this.grid) : null;
+        fillDown(this, focused ? pointOf(focused.cell) : null);
+    }
+
+    /**
      * @internal
      * Sets the ranges, for the grid's mouse and keys and for setRanges() (which checks them first): the
      * cells on screen show them, and `range-change` is sent. Nothing happens when they are the ranges
@@ -1302,7 +1323,8 @@ export class GridInterface<T> {
     /**
      * Opens a menu of your own, in the grid's menu style: a value picker for a cell, the actions of a
      * button, a second grid as a dropdown ({@link MenuBlock}). See {@link MenuEntry} for what it can
-     * show. To change the grid's own right click menus, use the `menus` hook ({@link GridHooks}).
+     * show, submenus too ({@link MenuSubmenu}). To change the grid's own right click menus, use the
+     * `menus` hook ({@link GridHooks}).
      *
      * The menu is a popover: shown in the top layer, over everything on the page - a container with
      * `overflow: hidden` does not cut it off, no z-index covers it. Opened from an element in a
@@ -1312,9 +1334,13 @@ export class GridInterface<T> {
      * The menu open before is closed: there is one menu at a time. The grid closes this one, as its
      * own, on a click outside it, on Esc, when another menu opens, on scroll (with
      * `autoRemoveContextMenuOnScrollEvent`) and when the grid leaves the page. Clicking an item closes
-     * it too, then calls the item's action; clicking in a block does not. {@link closeMenu} closes it
-     * from code. When the focus is in the menu as it closes (a field in a block), it goes back to the
-     * element that had it when the menu opened.
+     * it too, with its submenus, then calls the item's action; clicking in a block does not.
+     * {@link closeMenu} closes it from code. When the focus is in the menu as it closes (an item, a
+     * field in a block), it goes back to the element that had it when the menu opened.
+     *
+     * The keyboard: called after a key (a button pressed with Enter) the menu takes the focus, on its
+     * first item, and the arrows, Enter, Esc work as in the grid's menus - the WAI-ARIA menu pattern.
+     * Called after a pointer press the focus stays where it is, ArrowDown gets into the menu.
      *
      * Called from a click handler the menu stays open: the click that opened it does not count as a
      * click outside it.

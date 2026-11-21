@@ -4,10 +4,10 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GridConfig } from '../gridConfig';
 import { MENU_IDS } from '../gridMenus';
 import { mountGrid, simpleConfig, simpleData, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { gridOf, openRowMenu } from './interactionTestHelpers';
+import { gridOf, menuEntry, menuTreeIds, openRowMenu } from './interactionTestHelpers';
 
 /**
- * The row menu's "Delete:" section: delete marks the selected rows for deletion, undo takes the mark
+ * The row menu's "Delete" submenu: delete marks the selected rows for deletion, undo takes the mark
  * off. Only in an editable grid; undo only when a selected row is marked. A row the isReadonly hook
  * makes readonly in every column is locked, delete skips it.
  */
@@ -23,16 +23,13 @@ beforeEach(() => {
 
 const DELETE_IDS = ['row.delete', 'row.delete.rows', 'row.delete.undo'];
 
-/** the delete entries the open menu shows */
+/** the delete entries the open menu shows: the submenu and what is in it */
 function shownDeleteIds(): string[] {
-    return Array.from(document.querySelectorAll('.simple-html-grid-menu [data-menu-id]'))
-        .map((el) => el.getAttribute('data-menu-id') ?? '')
-        .filter((id) => id.startsWith('row.delete'));
+    return menuTreeIds().filter((id) => id.startsWith('row.delete'));
 }
 
-function entry(id: string): HTMLElement {
-    return document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`) as HTMLElement;
-}
+/** an entry of the delete submenu, the submenu opened */
+const entry = (id: string) => menuEntry(id);
 
 const isDisabled = (id: string) => entry(id).classList.contains('simple-html-grid-menu-item-disabled');
 
@@ -43,12 +40,12 @@ const states = (datasource: { getAllData(): { firstname?: string; __rowState?: s
     datasource.getAllData().map((row) => [row.firstname, row.__rowState]);
 
 describe('row menu - delete: the ids', () => {
-    it('expect the delete ids in MENU_IDS.row, after clear and before the summary', () => {
+    it('expect the delete ids in MENU_IDS.row, after clear and before filter', () => {
         const ids: readonly string[] = MENU_IDS.row;
         const at = ids.indexOf('row.delete');
         expect(ids.slice(at, at + 3)).toEqual(DELETE_IDS);
         expect(ids[at - 1]).toEqual('row.clear.range');
-        expect(ids[at + 3]).toEqual('row.summary');
+        expect(ids[at + 3]).toEqual('row.filter');
     });
 });
 

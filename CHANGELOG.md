@@ -1300,6 +1300,79 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   rows, greyed out with none selected), in every grid. Texts `row.export*`.
 - Guide "Export" and sample "Export to CSV".
 
+#### Menus: submenus, much shorter, and the keyboard (user request)
+
+##### ⚠️ Breaking changes
+- **The default menus are trees of submenus**: the row menu went from 38 rows to 14, the header menu
+  from 24 to 7. The `menus` hook's `defaults` hold submenus (`MenuSubmenu`), so an entry in one is
+  changed through that submenu's `entries`; a filter on a submenu's id prefix (`row.export`) still
+  hides it as a whole. The section ids `row.edit`, `header.column` and `filter.filter` are gone from
+  `MENU_IDS` and the texts (no section headers left in the defaults); the other ids stay - the Pin
+  submenu is `header.column.pin` and the Blank one `filter.filter.blank`, so their entries keep theirs.
+- **The row menu's Summary is gone** (`row.summary`, `row.summary.count` / `.sum` / `.max` / `.min` /
+  `.avg`, ids and texts): the summary of the selected cells is in the footer (item 35).
+- Submenu labels have no colon; texts changed: "Hide column", "Column chooser…", "Advanced Filter…",
+  "Is blank", "Is not blank", "Operator". A selected item shows a ✓ and is a `menuitemcheckbox`
+  (`aria-checked`) instead of a highlighted background; "Use dimmed values" and "Changed rows only" use
+  `selected` instead of a "✓ " in the label.
+
+##### Added
+- `MenuSubmenu` (`{ type: 'submenu', id, label, entries, visible? }`) in `openMenu()` and the `menus` hook:
+  opens beside its item on hover (after 150ms), click, ArrowRight, Enter or Space; flipped left when there
+  is no room on the right, kept in the window, scrolls when taller; nests; hidden when it has nothing to
+  show. New ids `header.column.pin`, `filter.filter.blank`, `row.edit.separator`,
+  `header.aggregate.totalsSeparator`; texts `header.column.pin` ("Pin"), `filter.filter.blank` ("Blank").
+- **The keyboard in every menu** (the WAI-ARIA menu pattern): a menu opened from the keyboard focuses its
+  first item (a mouse-opened one on ArrowDown/Up), arrows, Home/End, a letter, Enter/Space, ArrowLeft/Esc
+  for a submenu, Tab closes it; the focus goes back on close. Roles `menu`, `menuitem`,
+  `menuitemcheckbox`, `aria-haspopup` / `aria-expanded` / `aria-disabled`. The filter menu's value list:
+  Tab into it, "Run Search" is a button.
+
+##### Fixed
+- Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
+  header cell, the handler was on the label in it).
+
+#### Find in the grid (item 42)
+
+##### Added
+- **Find in the grid** (Ctrl+F / Cmd+F with the focus in the grid): a find bar over the grid's top right
+  corner with an input, the count (`3 of 17`), previous / next and close. Typing finds as you go: every
+  cell whose shown text (formatted, any case) contains the text gets a tint, the current match a stronger
+  tint and a 2px line, and the grid scrolls to it, sideways too. Enter / F3 go to the next match and
+  Shift+Enter / Shift+F3 to the previous, wrapping at the ends. Esc closes the bar and puts the focus in
+  the current match's cell (its row becomes the current row). Ctrl+F outside the grid stays the
+  browser's. While open it follows the data (filter, sort, grouping, edits, upserts, layout), keeping the
+  current match while it still matches. Not in checkboxes, group row names, collapsed groups or hidden
+  fields.
+- API: `gridInterface.find(text)`, `openFind()`, `findNext()`, `findPrevious()`, `closeFind()`, `getFind()`,
+  the `find-change` event and the type `FindResult`.
+- Texts `find.label`, `find.placeholder`, `find.count`, `find.none`, `find.previous[.tooltip]`,
+  `find.next[.tooltip]`, `find.close[.tooltip]`. Variables `--simple-html-grid-find-match-color`,
+  `--simple-html-grid-find-current-color`, `--simple-html-grid-find-current-border-color`. Classes
+  `simple-html-cell-find-match`, `simple-html-cell-find-current`, `simple-html-grid-find`.
+- Accessibility: the bar is a `role="search"` region with a named input, the count is a status, the
+  buttons are named with their key in the tooltip. Find keys in the keyboard guide.
+- Guide "Find" (19) and sample "Find (Ctrl+F)".
+
+#### The row menu's undo entries in a submenu of their own (user request)
+
+##### ⚠️ Breaking changes
+- Undo last change, Redo, Undo cell edit and the two Undo row edits are in the submenu **Undo / Redo ›**
+  (`row.edit`, text `row.edit` "Undo / Redo"), first in the row menu, instead of five items and a line at
+  its top: the row menu is 9 rows. The entries keep their ids; the line `row.edit.separator` is gone.
+
+#### Fill down: Ctrl+D and the fill handle (item 34)
+
+##### Added
+- **Ctrl+D** (Cmd+D) in a cell fills down like a spreadsheet: in every range the values of its top row go
+  into the rows under it; a range of one row, or the cell alone, gets the values of the data row above.
+  `gridInterface.fillDown()` does the same from code.
+- **The fill handle**: a small square at the bottom right corner of the last range (`.simple-html-grid-fill-handle`,
+  in the range colour). Dragged down, the range grows with the pointer (the grid scrolls past the
+  bottom), and the rows it grew by get the range's rows, repeated from its top.
+- Values are copied as they are (a date as a new Date), readonly cells skipped, group rows skipped, one
+  undo step; nothing in a readonly grid (no handle, Ctrl+D stays the browser's).
+
 #### The summary of the selected cells in the footer (item 35)
 
 ##### Added

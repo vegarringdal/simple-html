@@ -43,7 +43,7 @@ import type { GridMenus } from './gridMenus';
  *     // .negative { position: absolute; inset: 0; background: rgba(239, 68, 68, 0.25); }
  *     cellClass: (row, field) => (field === 'balance' && row.balance < 0 ? { background: 'negative' } : null),
  *     // no summary in the row menu
- *     menus: { row: (defaults) => defaults.filter((entry) => !entry.id.startsWith('row.summary')) }
+ *     menus: { row: (defaults) => defaults.filter((entry) => !entry.id.startsWith('row.export')) }
  * };
  *
  * const gridInterface = createGrid(host, { config, datasource, hooks });

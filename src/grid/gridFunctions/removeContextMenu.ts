@@ -1,11 +1,15 @@
 import type { Grid } from '../grid';
 
 /**
- * Closes the grid's open menu, see openMenuElement. Does nothing when no menu is open.
+ * Closes the grid's open menu, see openMenuElement, with its submenus: they are in its popover (see
+ * showMenu). Does nothing when no menu is open.
  */
 export function removeContextMenu(ctx: Grid) {
     const menu = ctx.contextMenu;
     const returnFocus = ctx.menuReturnFocus;
+    // a submenu about to open or close on its timer
+    clearTimeout(ctx.menuTree?.timer);
+    ctx.menuTree = null;
     ctx.contextMenu = null;
     ctx.menuReturnFocus = null;
     if (menu) {

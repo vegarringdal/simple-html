@@ -6,8 +6,8 @@
  * FilterOperator: `filterEditor.operator.EQUAL`. `{name}` in a text is filled in when it is shown.
  */
 const DEFAULTS = {
-    // the row menu, right click on a cell: MENU_IDS.row
-    'row.copy': 'Copy:',
+    // the row menu, right click on a cell: MENU_IDS.row. A submenu's text is its label, without a colon
+    'row.copy': 'Copy',
     'row.copy.cell': 'Cell Value',
     'row.copy.column': 'Column',
     'row.copy.column.hint': 'selected rows',
@@ -16,28 +16,29 @@ const DEFAULTS = {
     'row.copy.selectedColumns': 'Row',
     'row.copy.selectedColumns.hint': 'selected rows/col',
     'row.copy.range': 'Range',
-    'row.filter': 'Filter:',
+    'row.filter': 'Filter',
     'row.filter.replace': 'Replace filter',
     'row.filter.replace.hint': 'all',
     'row.filter.add': 'Add to filter',
     'row.filter.add.hint': 'and',
-    'row.view': 'View:',
+    'row.view': 'View',
     'row.view.dimRepeatedValues': 'Use dimmed values',
     'row.view.changedOnly': 'Changed rows only',
-    'row.paste': 'Paste:',
+    'row.paste': 'Paste',
     'row.paste.cell': 'Paste cell',
     'row.paste.cell.hint': 'selected rows',
     'row.paste.range': 'Paste range',
-    'row.clear': 'Clear:',
+    'row.clear': 'Clear',
     'row.clear.cell': 'Clear cell',
     'row.clear.cell.hint': 'selected rows',
     'row.clear.range': 'Clear range',
-    'row.delete': 'Delete:',
+    'row.delete': 'Delete',
     'row.delete.rows': 'Rows',
     'row.delete.rows.hint': 'selected rows',
     'row.delete.undo': 'Undo',
     'row.delete.undo.hint': 'selected rows',
-    'row.edit': 'Edit:',
+    // the Undo submenu of the row menu, in an editable grid
+    'row.edit': 'Undo / Redo',
     'row.edit.undo': 'Undo last change',
     'row.edit.undo.hint': 'Ctrl+Z',
     'row.edit.redo': 'Redo',
@@ -46,13 +47,7 @@ const DEFAULTS = {
     'row.edit.revertRow': 'Undo row edits',
     'row.edit.revertRows': 'Undo row edits',
     'row.edit.revertRows.hint': 'selected rows',
-    'row.summary': 'Summary:',
-    'row.summary.count': 'Count: {count}',
-    'row.summary.sum': 'Sum: {sum}',
-    'row.summary.max': 'Max: {max}',
-    'row.summary.min': 'Min: {min}',
-    'row.summary.avg': 'Avg: {avg}',
-    'row.size': 'Size:',
+    'row.size': 'Size',
     'row.size.fitColumn': 'Fit column to this cell',
     'row.size.fitRow': 'Fit row height',
     'row.size.fitRows': 'Fit row height',
@@ -60,45 +55,45 @@ const DEFAULTS = {
     'row.size.fitAllRows': 'Fit all rows',
     'row.size.resetRow': 'Reset row height',
     'row.size.resetAllRows': 'Reset all row heights',
-    'row.export': 'Export:',
+    'row.export': 'Export',
     'row.export.excel': 'Excel, all rows',
     'row.export.excelSelected': 'Excel, selected rows',
 
     // the header menu, right click on a header label: MENU_IDS.header
-    'header.column': 'Column:',
+    'header.column.pin': 'Pin',
     'header.column.pinLeft': 'Pin left',
     'header.column.pinLeftCopy': 'Pin left (copy)',
     'header.column.pinRight': 'Pin right',
     'header.column.pinRightCopy': 'Pin right (copy)',
     'header.column.unpin': 'Unpin',
-    'header.column.hide': 'Hide',
+    'header.column.hide': 'Hide column',
     'header.column.removeSorting': 'Remove sorting',
-    'header.column.chooser': 'Column chooser',
-    'header.size': 'Size:',
+    'header.column.chooser': 'Column chooser…',
+    'header.size': 'Size',
     'header.size.column': 'Fit column width',
     'header.size.all': 'Fit all columns',
     'header.size.resetColumn': 'Reset column width',
     'header.size.resetAll': 'Reset all column widths',
-    'header.aggregate': 'Aggregate:',
+    'header.aggregate': 'Aggregate',
     'header.aggregate.sum': 'Sum',
     'header.aggregate.avg': 'Average',
     'header.aggregate.min': 'Min',
     'header.aggregate.max': 'Max',
     'header.aggregate.count': 'Count',
     'header.aggregate.totalsRow': 'Totals row',
-    'header.grouping': 'Grouping:',
+    'header.grouping': 'Grouping',
     'header.grouping.expandAll': 'Expand all',
     'header.grouping.collapseAll': 'Collapse all',
     'header.grouping.clear': 'Clear all',
 
     // the filter menu, right click on a header filter: MENU_IDS.filter
-    'filter.filter': 'Filter:',
     'filter.filter.clear': 'Clear Filter',
     'filter.filter.clearAll': 'Clear All Filters',
-    'filter.filter.isBlank': 'Set "Is Blank"',
-    'filter.filter.isNotBlank': 'Set "Is Not Blank"',
-    'filter.filter.advanced': 'Advanced Filter',
-    'filter.operator': 'Set Operator:',
+    'filter.filter.blank': 'Blank',
+    'filter.filter.isBlank': 'Is blank',
+    'filter.filter.isNotBlank': 'Is not blank',
+    'filter.filter.advanced': 'Advanced Filter…',
+    'filter.operator': 'Operator',
     'filter.operator.greaterThanOrEqualTo': 'Greater than or equal',
     'filter.operator.lessThanOrEqualTo': 'Less than or equal',
     'filter.operator.equal': 'Equal',
@@ -354,8 +349,8 @@ export type TextId = keyof typeof DEFAULTS;
  * import type { Texts } from '@simple-html/grid';
  *
  * const norwegian: Texts = {
- *     'row.copy': 'Kopier:',
- *     'row.summary.count': 'Antall: {count}',
+ *     'row.copy': 'Kopier',
+ *     'footer.summary.count': 'Antall: {count}',
  *     'validation.required': 'Må fylles ut',
  *     'validation.phoneNO': 'Må være 8 siffer' // an id of your own, returned by a validator
  * };
@@ -395,13 +390,13 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * ```ts
  * import { setTexts, TEXTS } from '@simple-html/grid';
  *
- * TEXTS['row.summary.count']; // 'Count: {count}'
+ * TEXTS['footer.summary.count']; // 'Count: {count}'
  *
  * // every id with its English text, e.g. to hand to a translator
  * const english: string = JSON.stringify(TEXTS, null, 2);
  * console.log(english);
  *
- * setTexts({ 'row.summary.count': 'Antall: {count}' });
+ * setTexts({ 'footer.summary.count': 'Antall: {count}' });
  * ```
  */
 export const TEXTS: Readonly<Record<TextId, string>> = Object.freeze(DEFAULTS);
@@ -444,8 +439,8 @@ let pageTexts: Texts = {};
  *
  * // once, before the grids are made
  * setTexts({
- *     'row.copy': 'Kopier:',
- *     'row.summary.count': 'Antall: {count}',
+ *     'row.copy': 'Kopier',
+ *     'footer.summary.count': 'Antall: {count}',
  *     'validation.required': 'Må fylles ut'
  * });
  * const gridInterface = createGrid(host, { config, datasource });
@@ -469,7 +464,7 @@ export function setTexts(texts: Texts): void {
 export function assertTexts(texts: unknown, where: string): void {
     if (typeof texts !== 'object' || texts === null || Array.isArray(texts)) {
         throw new TypeError(
-            `${where} takes an object of texts by id, e.g. { 'row.copy': 'Kopier:' }, got ${JSON.stringify(texts)}`
+            `${where} takes an object of texts by id, e.g. { 'row.copy': 'Kopier' }, got ${JSON.stringify(texts)}`
         );
     }
     for (const [id, text] of Object.entries(texts)) {

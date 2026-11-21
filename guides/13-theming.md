@@ -241,8 +241,8 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-alt-bg-color` | scrollbar tracks, the search input of the column chooser, the focus button of a cell | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-even` | the even rows | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-odd` | the odd rows | `#f7f7f7` | `#5a6370` |
-| `--simple-html-grid-main-bg-selected-odd` | selected rows (odd), the number of a selected column, the selected menu item, scrollbar thumbs | `#bdd4e7` | `#234882` |
-| `--simple-html-grid-main-bg-selected-even` | selected rows (even), menu items and buttons under the pointer | `#afc7db` | `#274e8f` |
+| `--simple-html-grid-main-bg-selected-odd` | selected rows (odd), the number of a selected column, scrollbar thumbs | `#bdd4e7` | `#234882` |
+| `--simple-html-grid-main-bg-selected-even` | selected rows (even), menu items and buttons under the pointer, the menu item the keyboard is on and the one whose submenu is open | `#afc7db` | `#274e8f` |
 | `--simple-html-grid-main-bg-border` | the lines between cells, rows and menu sections, the frame of the grid and the menus | `#e6e5e5` | `#1f2937` |
 | `--simple-html-grid-pinned-border` | the lines at the pinned columns and under the header, the frame of the filter editor, the tooltips and the buttons | `#d1d0d0` | `#1f2937` |
 | `--simple-html-grid-sec-bg-border` | the line right of the grouping columns | `#e6e5e5` | `#1f2937` |

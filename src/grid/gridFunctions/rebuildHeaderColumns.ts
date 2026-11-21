@@ -108,6 +108,23 @@ export function rebuildHeaderColumns(ctx: Grid) {
                          */
                         dragEvent(ctx, cell as HTMLCellElement, true);
                         cell.addEventListener('keydown', (event) => headerLabelKeydown(ctx, cell as HTMLCellElement, event));
+                        // Shift+F10 and the menu key send contextmenu to the column header with the
+                        // focus, the header menu listens on the label in it (renderHeaderLabel): handed
+                        // on to the label, at the same point
+                        cell.addEventListener('contextmenu', (event) => {
+                            const label = cell.querySelector('[data-attribute-header]');
+                            if (event.target === cell && label) {
+                                event.preventDefault();
+                                label.dispatchEvent(
+                                    new MouseEvent('contextmenu', {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        clientX: event.clientX,
+                                        clientY: event.clientY
+                                    })
+                                );
+                            }
+                        });
                     }
                 }
 

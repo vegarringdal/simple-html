@@ -1535,6 +1535,70 @@ in the console. All passed. Found and fixed:
 * left: a "Find…" entry in the row menu (after the menus' submenus are merged); Cmd+G / Ctrl+G; match
   case / whole word
 
+### Fill down: Ctrl+D and the fill handle (item 34)
+
+* fillDown.ts: `fillDown(gridInterface, active)` - each range's top row into the rows under it
+  (rangeBlock: data rows only), a one-row range or the focused cell alone from the data row above (as
+  Excel). Values copied raw, a Date as a new Date (two rows must not share one object), through the
+  proxy: validated, edited marks, rows-changed, one run of code = one undo step; `endTyping()` first so
+  the typed cell is written and rendered like a paste
+* Ctrl+D / Cmd+D (`fillDownKey`, in the cell's keydown after the range keys); not with Shift/Alt, not in
+  a readonly grid - there it is the browser's bookmark key
+* the fill handle: one element per grid (WeakMap), moved by showCellRange into the cell at the last
+  range's bottom right corner on screen - for a field with empty cells under it (a column next to it
+  stacks more fields) the last empty one, where the range's line turns. Its pointerdown stops the
+  body's range press, keeps the focus, follows the pointer (followPointer, cellPointAt from
+  rangeSelection now exported), grows the range down only, scrolls down past the rows' bottom; let go
+  `fillRows()` repeats the range's rows over the new ones; cancel puts the ranges back. bodyCellOf leaves
+  the handle out like the edited marker
+* tests: fillDown.test.ts (the range, readonly column, dates copied, undo, one row / one cell from above,
+  the first row, Cmd, Ctrl+Shift and a readonly grid left alone, group rows, the API, the handle's cell,
+  a stacked layout, readonly, fillRows repeating + undo). Browser: .claude/browser-checks/scripts/fill-check.js
+  12/12 (Ctrl+D with a readonly column, default prevented, Ctrl+Z, the handle at the line's corner and
+  hit by the pointer, a drag of two rows, the handle at the new corner, the focus kept, Esc), light and
+  dark screenshots
+* not done: a "Fill down" entry in the row menu (after the menus' submenus merge); fill up/right; series
+  (1, 2, 3 ...) - the handle copies
+
+### Menus: submenus, shorter, the keyboard (user request)
+
+* the user: "our menus is pretty big ... organized better so it uses less height, can expand to the
+  right, many more sub menus". Done in a worktree by an agent, merged here
+* showMenu.ts: `MenuSubmenu` entries render as an item with a chevron; a submenu is its own
+  `popover="manual"` placed beside its item by the placeMenu rules (right, flipped left, over the menu
+  when neither fits, moved up, scrolling); one open per level, hover opens after 150ms (moving to it
+  diagonally does not open the others), ArrowRight/Enter/Space/click open it, ArrowLeft/Esc close it
+* keyboard per the APG menu pattern: roving tabindex, arrows wrap, Home/End, first letter, disabled
+  items focusable but not activated (APG), Tab closes and returns the focus - except in the filter
+  menu, where Tab goes into the value list. The last input (key or pointer, capture listeners) decides
+  whether a menu takes the focus: Shift+F10 sends a contextmenu event with `button: -1` in Chromium
+* the default trees: row menu 762px / 38 rows -> 285px / 14, header 485px / 24 -> 145px / 7, filter
+  menu 537 -> 437px (the value list stays inline). Section ids that became submenus kept their ids;
+  `header.column.pin` (not `header.pin`) so a filter on `header.column` still hides that part
+* the row menu's Summary is removed with the merge (item 35): its regression tests (negative max, 0 as
+  min, average not rounded and without blanks, two decimals) now run on the footer summary
+* tests: gridMenus.test.ts 68 -> 106 (trees, the hook on nested entries, submenus open/close/hover with
+  fake timers/diagonal/nesting, placement, every key, roles); helpers `menuEntry(id)` (opens the
+  submenus on the way), `menuTreeIds`, `openMenus`. Browser: .claude/browser-checks/scripts/
+  submenu-check.js 37/37 and menus-regression-check.js 25/25, screenshots in shots/submenu and
+  shots/menus-regression
+* known: the menus' box-shadow never shows (`.simple-html-grid { overflow: hidden }` clips it on the
+  popover); the top-level menu has no name; the filter editor's pickers, the column chooser and the date
+  picker are still mouse-only
+
+### The row menu's undo entries in a submenu (user request)
+
+* the user, after the submenus: "maybe undo/redo should be own section too". The five entries
+  (undo, redo, undo cell edit, undo row edits for the row and the selected rows) are the submenu
+  `row.edit` "Undo / Redo ›", first in the menu - the id the old section header had, so a hook filtering on
+  `row.edit` hides the lot as before. The line under them (`row.edit.separator`, new in the submenu work)
+  is gone. Hidden in a readonly grid with its entries
+* the row menu is 9 rows (38 before the submenus); Shift+F10 focuses Undo / Redo ›, ArrowRight goes into
+  it and its first item (greyed out with nothing to undo, still focusable)
+* tests: undoRedo.test.ts (the entries through the submenu, the submenu first), gridMenus.test.ts (the
+  top level, Shift+F10 then ArrowRight / Esc); browser submenu-check.js 38/38 (copy before:
+  submenu-check.js.before-undo-submenu), menus-regression-check.js 25/25
+
 ## Considered, not done
 
 ## Candidates / not started

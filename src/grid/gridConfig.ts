@@ -245,7 +245,7 @@ export type GridConfig = {
      * const config: GridConfig = {
      *     layout: { center: [{ fields: ['name'], width: 150 }] },
      *     texts: {
-     *         'row.copy': 'Kopier:',
+     *         'row.copy': 'Kopier',
      *         'filterEditor.addCondition.tooltip': 'Legg til betingelse'
      *     }
      * };

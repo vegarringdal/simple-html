@@ -99,7 +99,11 @@ const fullConfig = (): GridConfig => ({
     mergeHighlight: false,
     copyHeaders: false,
     tooltips: false,
-    texts: { 'filterEditor.close.tooltip': 'Lukk', 'datePicker.month.january': 'Januar', 'row.summary.count': 'Antall: {count}' },
+    texts: {
+        'filterEditor.close.tooltip': 'Lukk',
+        'datePicker.month.january': 'Januar',
+        'footer.summary.count': 'Antall: {count}'
+    },
     datePickerConfig: {
         showWeek: false,
         isoWeek: false,

@@ -23,9 +23,9 @@
     --simple-html-grid-pinned-border: light-dark(#d1d0d0, #1f2937);
     /* the line right of the grouping columns */
     --simple-html-grid-sec-bg-border: light-dark(#e6e5e5, #1f2937);
-    /* selected rows (odd), a selected column's number, the selected menu item, scrollbar thumbs */
+    /* selected rows (odd), a selected column's number, scrollbar thumbs */
     --simple-html-grid-main-bg-selected-odd: light-dark(#bdd4e7, #234882);
-    /* selected rows (even), hover in the menus and on the buttons */
+    /* selected rows (even), hover and the keyboard's item in the menus, hover on the buttons */
     --simple-html-grid-main-bg-selected-even: light-dark(#afc7db, #274e8f);
     /* the rows, every other one */
     --simple-html-grid-main-bg-even: light-dark(#ffffff, #4b5563);
@@ -782,6 +782,22 @@
 
 .simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-right::after {
     border-right-width: 2px;
+}
+
+/* the fill handle at the bottom right corner of the last range (fillDown.ts): drag it down to fill the
+   rows under the range. In the range's colour with a frame of the cell's, over the input (1000) */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-fill-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 7px;
+    height: 7px;
+    box-sizing: border-box;
+    z-index: 1002;
+    background-color: var(--simple-html-grid-range-border-color);
+    border: 1px solid var(--simple-html-grid-sec-bg-color);
+    cursor: crosshair;
+    touch-action: none;
 }
 
 /**
@@ -1643,6 +1659,7 @@
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
     pointer-events: all;
+    position: relative;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
@@ -1724,8 +1741,37 @@
     white-space: nowrap;
 }
 
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-selected {
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
+/**
+ * an item with a `selected` callback (a menuitemcheckbox) has room for a ✓ in front of its label;
+ * the ✓ is shown while the callback returns true (aria-checked="true"). The alt text after the / is
+ * empty: aria-checked says it to a screen reader. A browser without the alt text syntax drops that
+ * line and keeps the first
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[role='menuitemcheckbox'] {
+    padding-left: 20px;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-selected::before {
+    content: '✓';
+    content: '✓' / '';
+    position: absolute;
+    left: 7px;
+}
+
+/**
+ * an item that opens a submenu: a › at its right
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu'] {
+    padding-right: 24px;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu']::after {
+    content: '›';
+    content: '›' / '';
+    position: absolute;
+    right: 8px;
+    font-size: 15px;
+    line-height: 17px;
 }
 
 /**
@@ -1738,6 +1784,15 @@
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-disabled:hover {
     background-color: var(--simple-html-grid-main-bg-color);
+}
+
+/**
+ * the item the keyboard is on, a disabled one too, and the item whose submenu is open: lit as under
+ * the pointer. The keyboard's has the focus outline as well (:focus-visible, below)
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item:focus,
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-expanded='true'] {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
 .simple-html-grid .simple-html-grid-menu .hr-solid {

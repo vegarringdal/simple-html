@@ -143,17 +143,18 @@ describe('grid lifecycle - connecting a new interface', () => {
 });
 
 describe('grid lifecycle - removing the element', () => {
-    it('expect the document click and keydown listeners to be removed', async () => {
+    it('expect the document click, keydown and pointerdown listeners to be removed', async () => {
         const add = vi.spyOn(document, 'addEventListener');
         const { element } = await mountGrid();
 
-        // added with an AbortSignal: aborting it removes them
+        // added with an AbortSignal: aborting it removes them. The menus': a click outside, Esc and the
+        // arrows, and whether the last input was a key or a pointer press
         const signals = add.mock.calls
-            .filter((call) => call[0] === 'click' || call[0] === 'keydown')
+            .filter((call) => call[0] === 'click' || call[0] === 'keydown' || call[0] === 'pointerdown')
             .map((call) => optionsSignal(call[2]));
         element.remove();
 
-        expect(signals.length).toBe(2);
+        expect(signals.length).toBe(4);
         expect(signals.every((signal) => signal?.aborted)).toBe(true);
     });
 

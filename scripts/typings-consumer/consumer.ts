@@ -58,6 +58,7 @@ import {
     type MenuPosition,
     type MenuSection,
     type MenuSeparator,
+    type MenuSubmenu,
     type ModifiedEntity,
     NumberFormatterComma,
     NumberFormatterDot,
@@ -421,11 +422,24 @@ const logRow: MenuItem = {
 const mySection: MenuSection = { type: 'section', id: 'my.section', label: 'Mine:' };
 const mySeparator: MenuSeparator = { type: 'separator', id: 'my.separator', visible: () => true };
 const myBlock: MenuBlock = { type: 'block', id: 'my.block', element: document.createElement('div') };
+const mySubmenu: MenuSubmenu = {
+    type: 'submenu',
+    id: 'my.more',
+    label: 'More',
+    entries: [logRow, mySeparator],
+    visible: () => true
+};
 const menus: GridMenus = {
     row: (defaults, context) => [
-        ...defaults.filter((entry) => entry.id !== 'row.copy.cell'),
+        // an entry of a submenu: changed in the submenu's entries
+        ...defaults.map((entry) =>
+            entry.type === 'submenu' && entry.id === 'row.copy'
+                ? { ...entry, entries: entry.entries.filter((inner) => inner.id !== 'row.copy.cell') }
+                : entry
+        ),
         mySection,
         logRow,
+        mySubmenu,
         context.row ? mySeparator : myBlock
     ],
     header: (defaults) =>
@@ -437,7 +451,7 @@ gridInterface.updateHooks({ menus: { row: (defaults) => defaults.slice(1) } });
 gridInterface.updateHooks({ menus: undefined });
 const builtInRowIds: readonly string[] = MENU_IDS.row;
 console.log(withMenus, builtInRowIds, MENU_IDS.header[0], MENU_IDS.filter.includes('filter.values'));
-const pickEntries: MenuEntry[] = [mySection, { id: 'pick.a', label: 'A', action: () => {} }, mySeparator, myBlock];
+const pickEntries: MenuEntry[] = [mySection, { id: 'pick.a', label: 'A', action: () => {} }, mySeparator, myBlock, mySubmenu];
 const position: MenuPosition = { x: 10, y: 20 };
 gridInterface.openMenu(new MouseEvent('click'), pickEntries);
 gridInterface.openMenu(position, pickEntries);
@@ -748,7 +762,7 @@ const copyText: string = TEXTS['row.copy'];
 const tooltipId: TextId = 'filterEditor.addCondition.tooltip';
 const norwegian: Texts = {
     'row.copy': 'Kopier:',
-    'row.summary.count': 'Antall: {count}',
+    'footer.summary.count': 'Antall: {count}',
     [tooltipId]: 'Legg til betingelse',
     // an id of your own, for a validator's message
     'validation.phoneNO': 'Må være 8 siffer'

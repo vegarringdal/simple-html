@@ -156,7 +156,7 @@ Ctrl+C (Cmd+C) in a cell, with no text selected in it:
   double quote is put in double quotes, a quote in it doubled. Every value is the text the cell shows,
   through the field's formatter: `12,5` with a decimal comma, a date as its formatter writes it.
 - **else**: the value of the cell with the focus, as the cell shows it, without a line end - as the
-  row menu's *Copy: Cell Value*. Before v6 this copied nothing.
+  row menu's *Copy › Cell Value*. Before v6 this copied nothing.
 
 An html table of the same cells goes on the clipboard too, with the labels as its header row (`<th>`)
 and thin borders - Word, Google Docs and Excel paste the html, so the table has its headers there. A
@@ -164,8 +164,8 @@ line break in a cell is a `<br>` with the style Excel reads as a line break in t
 (`mso-data-placement:same-cell`).
 
 **The header line** is there for every copy of more than one cell: Ctrl+C on ranges and the row
-menu's *Copy: Column*, *Row*, *Row (selected rows/col)* and *Range*. Not for one cell (Ctrl+C on a
-cell, *Copy: Cell Value*): that is a value. `copyHeaders: false` in the config copies the values only:
+menu's *Copy › Column*, *Row*, *Row (selected rows/col)* and *Range*. Not for one cell (Ctrl+C on a
+cell, *Copy › Cell Value*): that is a value. `copyHeaders: false` in the config copies the values only:
 
 ```ts
 gridInterface.updateConfig({ copyHeaders: false });
@@ -185,8 +185,8 @@ Text that looks like a formula (`=SUM(A1:A2)`) is copied as it is: what is copie
 cells, and a paste back into the grid gives the same values. A spreadsheet may take it as a formula
 when it is pasted there - the CSV export escapes it (`escapeFormulas`), the clipboard does not.
 
-The row menu (right click a cell) has *Copy: Range* while there are ranges: every range, as Ctrl+C.
-*Copy: Column* and *Row* copy the selected rows, with the header line, values as the cells show them.
+The row menu (right click a cell) has *Copy › Range* while there are ranges: every range, as Ctrl+C.
+*Copy › Column* and *Row* copy the selected rows, with the header line, values as the cells show them.
 That also works when the focus is not in a cell, after the wheel scrolled the grid.
 
 ## Paste
@@ -240,6 +240,27 @@ selected in the input: every cell of every range is emptied (`null`), the readon
 an editable grid. In one cell they are the input's own keys, as before. The row menu's *Clear: Clear
 range* does the same.
 
+## Fill down
+
+**Ctrl+D** (Cmd+D on a Mac) in a cell fills down, like a spreadsheet:
+
+- **with ranges**: in every range the values of its top row go into the rows under it
+- **a range of one row**, or **the cell alone** (no range): it gets the values of the data row above it
+
+**The fill handle** is the small square at the bottom right corner of the last range. Drag it down: the
+range grows to the row under the pointer (past the bottom of the rows the grid scrolls), and when it
+is let go the rows it grew by get the values of the range's rows, repeated from its top - two rows
+`open`, `done` dragged over four more rows give `open`, `done`, `open`, `done`. Down only.
+
+The values are copied as they are, a date as a date of its own; the cells that can not be edited are
+skipped, group rows have no cells, and it is one step of the undo history (Ctrl+Z). In a readonly grid
+there is no handle, and Ctrl+D is the browser's. From code:
+
+```ts
+gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 4, toField: 'status' }]);
+gridInterface.fillDown();
+```
+
 ## Undo
 
 A paste, a Delete and a clear of ranges are written in one go: **one Ctrl+Z** takes all of it back,
@@ -269,7 +290,7 @@ while it grows, the focus stays in the active cell.
 - **No ranges by touch**, see [The mouse](#the-mouse).
 - **Copy and paste listen while the focus is in a cell of the grid.** The wheel takes the focus from
   the cell (its row element is reused for other rows), then Ctrl+C goes to the page: use the row
-  menu's *Copy: Range*, or Shift+click the cell at the end of the range again - the range stays as it
+  menu's *Copy › Range*, or Shift+click the cell at the end of the range again - the range stays as it
   is and the cell gets the focus.
 - **Cut** (Ctrl+X) is the input's own: it cuts the text selected in the cell, not a range. Copy, then
   Delete.

@@ -135,6 +135,46 @@ describe('selection summary - what it counts', () => {
     });
 });
 
+// the bugs of the row menu's summary that it replaces: the largest of negative numbers was 0, a 0 was
+// skipped by min, the average was rounded to a whole number and counted the blanks
+describe('selection summary - what the row menu summary got wrong', () => {
+    /** the summary of these values, the cells of one number column selected */
+    async function summaryOfValues(values: (number | null)[]) {
+        const data = values.map((value, i) => ({ id: i + 1, name: `n${i}`, value }));
+        const { element, gridInterface } = await mountGrid(
+            {
+                layout: {
+                    center: [
+                        { fields: ['name'], width: 100 },
+                        { fields: ['value'], width: 100 }
+                    ]
+                }
+            },
+            data,
+            { key: 'id', fields: { id: 'number', value: 'number' } }
+        );
+        gridInterface.setRanges([{ fromRow: 0, fromField: 'value', toRow: values.length - 1, toField: 'value' }]);
+        return footerSummary(element);
+    }
+
+    it('expect the largest of negative numbers to be negative, not 0', async () => {
+        expect(await summaryOfValues([-5, -3])).toContain('Max: -3');
+    });
+
+    it('expect 0 to be the smallest value, not skipped', async () => {
+        expect(await summaryOfValues([0, 5])).toContain('Min: 0');
+    });
+
+    it('expect the average of the numbers only, not rounded to a whole number', async () => {
+        expect(await summaryOfValues([1, 2, null])).toEqual(['Count: 2', 'Sum: 3', 'Average: 1.5', 'Min: 1', 'Max: 2']);
+    });
+
+    it('expect two decimals at most', async () => {
+        // 1.875, the average of the two numbers
+        expect(await summaryOfValues([1.5, 2.25])).toEqual(['Count: 2', 'Sum: 3.75', 'Average: 1.88', 'Min: 1.5', 'Max: 2.25']);
+    });
+});
+
 describe('selection summary - in the footer', () => {
     it('expect the items for a range, with the formatter of the first number field', async () => {
         const { element, gridInterface } = await mount();

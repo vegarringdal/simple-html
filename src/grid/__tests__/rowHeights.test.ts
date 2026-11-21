@@ -10,7 +10,7 @@ import type { GridElement } from '../gridElement';
 import { columnCellLines } from '../gridFunctions/rowHeights';
 import { GridInterface } from '../gridInterface';
 import { displayedRowOf, mountGrid, shownRowElements, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { menuItemsExact, openRowMenu } from './interactionTestHelpers';
+import { menuEntry, menuTreeIds, openRowMenu } from './interactionTestHelpers';
 
 /**
  * Rows taller than a line: `fitRows()` makes a row as high as its multiline cells need,
@@ -432,9 +432,9 @@ describe('fitRows - the cells of a taller row', () => {
 });
 
 describe('fitRows - the row menu', () => {
-    const shownIds = () =>
-        Array.from(document.querySelectorAll('[data-menu-id^="row.size"]'), (el) => el.getAttribute('data-menu-id'));
-    const disabled = (id: string) => document.querySelector(`[data-menu-id="${id}"]`)?.getAttribute('aria-disabled') === 'true';
+    // the size submenu and what is in it
+    const shownIds = () => menuTreeIds().filter((id) => id.startsWith('row.size'));
+    const disabled = (id: string) => menuEntry(id)?.getAttribute('aria-disabled') === 'true';
 
     it('expect "Fit row height" and "Reset row height" on the row right clicked, greyed out when it has no height', async () => {
         const { element, gridInterface } = await mountGrid(config(), data(), fields());
@@ -451,12 +451,12 @@ describe('fitRows - the row menu', () => {
         ]);
         expect(disabled('row.size.resetRow')).toBe(true);
         expect(disabled('row.size.resetAllRows')).toBe(true);
-        menuItemsExact('Fit row height')[0].click();
+        menuEntry('row.size.fitRow').click();
         expect(heights(gridInterface)).toEqual([3 * LINE, LINE, LINE, LINE, LINE]);
 
         openRowMenu(element, 'company', 0);
         expect(disabled('row.size.resetRow')).toBe(false);
-        menuItemsExact('Reset row height')[0].click();
+        menuEntry('row.size.resetRow').click();
         expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, LINE]);
     });
 
@@ -464,13 +464,13 @@ describe('fitRows - the row menu', () => {
         const { element, gridInterface } = await mountGrid(config(), data(), fields());
 
         openRowMenu(element, 'company', 2);
-        menuItemsExact('Fit all rows')[0].click();
+        menuEntry('row.size.fitAllRows').click();
         expect(heights(gridInterface)).toEqual([3 * LINE, 2 * LINE, LINE, 20 * LINE, LINE]);
 
         openRowMenu(element, 'company', 2);
         // the row right clicked has no height of its own, others have
         expect(disabled('row.size.resetRow')).toBe(true);
-        menuItemsExact('Reset all row heights')[0].click();
+        menuEntry('row.size.resetAllRows').click();
         expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, LINE]);
     });
 
@@ -481,13 +481,13 @@ describe('fitRows - the row menu', () => {
         datasource.select(2);
         openRowMenu(element, 'company', 2);
         expect(shownIds()).toContain('row.size.fitRows');
-        menuItemsExact('Fit row height (selected rows)')[0].click();
+        menuEntry('row.size.fitRows').click();
         expect(heights(gridInterface)).toEqual([LINE, 2 * LINE, LINE, LINE, LINE]);
 
         datasource.deselectAll();
         gridInterface.setRanges([{ fromRow: 3, fromField: 'notes', toRow: 0, toField: 'company' }]);
         openRowMenu(element, 'company', 2);
-        menuItemsExact('Fit row height (selected rows)')[0].click();
+        menuEntry('row.size.fitRows').click();
         expect(heights(gridInterface)).toEqual([3 * LINE, 2 * LINE, LINE, 20 * LINE, LINE]);
     });
 });

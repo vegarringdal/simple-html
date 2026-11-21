@@ -8,7 +8,7 @@ import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { GridInterface } from '../gridInterface';
 import { mountGrid, shownRowElements, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { menuItemsExact, openLabelMenu, openRowMenu } from './interactionTestHelpers';
+import { menuEntry, openLabelMenu } from './interactionTestHelpers';
 
 /**
  * Aggregates in the grid (ColumnConfig.aggregate): a cell per aggregate in the place of its field in
@@ -574,7 +574,8 @@ describe('aggregates - the state', () => {
 });
 
 describe('aggregates - the header menu', () => {
-    const entry = (id: string) => document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`) as HTMLElement | null;
+    // in the aggregate submenu, opened on the way
+    const entry = (id: string) => menuEntry(id) as HTMLElement | null;
     const isChecked = (id: string) => !!entry(id)?.classList.contains('simple-html-grid-menu-item-selected');
 
     it('expect a toggle for each function on a number column, the ones on checked', async () => {
@@ -624,65 +625,5 @@ describe('aggregates - the header menu', () => {
 
         expect(gridInterface.getState().totalsRow).toBe(true);
         expect(textOf(totalsRow(element).querySelector('.simple-html-grid-totals-label'))).toEqual('Total');
-    });
-});
-
-describe('aggregates - the row menu summary', () => {
-    /** the summary of a number column over the selected rows, its entries by id */
-    async function summary(values: (number | null)[]) {
-        const data = values.map((value, i) => ({ id: i + 1, name: `n${i}`, value }));
-        const { element, datasource } = await mountGrid(
-            {
-                layout: {
-                    center: [
-                        { fields: ['name'], width: 100 },
-                        { fields: ['value'], width: 100 }
-                    ]
-                }
-            },
-            data,
-            { key: 'id', fields: { value: 'number' } }
-        );
-        datasource.selectAll();
-        openRowMenu(element, 'value', 0);
-        const label = (id: string) => textOf(document.querySelector(`[data-menu-id="row.summary.${id}"]`));
-        return { count: label('count'), sum: label('sum'), max: label('max'), min: label('min'), avg: label('avg') };
-    }
-
-    it('expect the largest of negative numbers to be negative, not 0', async () => {
-        expect((await summary([-5, -3])).max).toEqual('Max: -3');
-    });
-
-    it('expect 0 to be the smallest value, not skipped', async () => {
-        expect((await summary([0, 5])).min).toEqual('Min: 0');
-    });
-
-    it('expect the average not rounded to a whole number', async () => {
-        expect((await summary([1, 2])).avg).toEqual('Avg: 1.5');
-    });
-
-    it('expect the average of the numbers only: a blank is not counted', async () => {
-        expect((await summary([1, 2, null])).avg).toEqual('Avg: 1.5');
-    });
-
-    it('expect the rest as before: the count of the selected rows, the values with two decimals at most', async () => {
-        const shown = await summary([1.5, 2.25, null]);
-
-        expect({ count: shown.count, sum: shown.sum, max: shown.max, min: shown.min }).toEqual({
-            count: 'Count: 3',
-            sum: 'Sum: 3.75',
-            max: 'Max: 2.25',
-            min: 'Min: 1.5'
-        });
-        // 1.875, the average of the two numbers
-        expect(shown.avg).toEqual('Avg: 1.88');
-    });
-
-    it('expect a click on an entry to copy its value', async () => {
-        const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
-        await summary([-5, -3]);
-
-        menuItemsExact('Max: -3')[0].click();
-        expect(writeText).toHaveBeenCalledWith('-3');
     });
 });

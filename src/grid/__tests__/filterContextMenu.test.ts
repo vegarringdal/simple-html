@@ -3,7 +3,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { and, or, where } from '../../datasource/filterExpression';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { headerFilterInput, menuItem, openFilterMenu, typeInHeaderFilter } from './interactionTestHelpers';
+import { headerFilterInput, menuEntry, menuItem, openFilterMenu, typeInHeaderFilter } from './interactionTestHelpers';
 
 /**
  * The right click menu on a header filter: "Is Blank" and the excel style value list.
@@ -33,7 +33,7 @@ describe('filter menu - "Is Blank"', () => {
         datasource.filter(or(where('firstname', 'EQUAL', 'a'), where('firstname', 'EQUAL', 'b')));
 
         openFilterMenu(element, 'lastname');
-        menuItem('Set "Is Blank"').click();
+        menuEntry('filter.filter.isBlank').click();
 
         expect(names(datasource)).toEqual(['b']);
     });
@@ -43,7 +43,7 @@ describe('filter menu - "Is Blank"', () => {
         datasource.filter(where('age', 'LESS_THAN', 3));
 
         openFilterMenu(element, 'lastname');
-        menuItem('Set "Is Blank"').click();
+        menuEntry('filter.filter.isBlank').click();
 
         // v5 dropped a root condition that was not in a group
         expect(datasource.getFilter()).toEqual(and(where('lastname', 'IS_BLANK'), where('age', 'LESS_THAN', 3)));
@@ -55,7 +55,7 @@ describe('filter menu - "Is Blank"', () => {
         datasource.filter(where('lastname', 'EQUAL', 'x'));
 
         openFilterMenu(element, 'lastname');
-        menuItem('Set "Is Blank"').click();
+        menuEntry('filter.filter.isBlank').click();
 
         expect(datasource.getFilter()).toEqual(and(where('lastname', 'IS_BLANK')));
         expect(names(datasource)).toEqual(['b', 'd']);
@@ -66,7 +66,7 @@ describe('filter menu - "Is Blank"', () => {
         typeInHeaderFilter(element, 'lastname', 'x');
 
         openFilterMenu(element, 'lastname');
-        menuItem('Set "Is Blank"').click();
+        menuEntry('filter.filter.isBlank').click();
 
         expect(headerFilterInput(element, 'lastname').value).toEqual('');
     });

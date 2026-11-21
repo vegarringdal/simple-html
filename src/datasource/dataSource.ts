@@ -2566,7 +2566,7 @@ export class Datasource<T = any> {
      * - **It is not part of the filter**: `getFilter()`, the header filters, the filter editor,
      *   `getFilterString()` and the grid's state (`GridState.filter`) do not have it, and setting the
      *   filter (`filter()`, the header filters, the filter editor) leaves it on. It stays on until it
-     *   is turned off: `filterChangedOnly(false)`, the grid's row menu (View: Changed rows only) or the
+     *   is turned off: `filterChangedOnly(false)`, the grid's row menu (View › Changed rows only) or the
      *   footer's Clear.
      * - **It is applied when the rows are filtered**, as the filter is: `filter()`, a header filter,
      *   `setData()`, `reloadDatasource()`, marking rows for deletion, `acceptChanges()` ... An edit does

@@ -67,7 +67,8 @@ export {
     type MenuItem,
     type MenuPosition,
     type MenuSection,
-    type MenuSeparator
+    type MenuSeparator,
+    type MenuSubmenu
 } from './grid/gridMenus';
 export type { ExcelOptions } from './grid/xlsx';
 export { setTexts, TEXTS, type TextId, type Texts } from './texts';
