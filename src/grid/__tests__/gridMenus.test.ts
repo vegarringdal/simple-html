@@ -972,9 +972,9 @@ describe('menus - the value list block', () => {
         openFilterMenu(element, 'firstname');
         const clear = entry('filter.filter.clear');
 
-        valueRow('FIRST1').click();
+        valueRow('first1').click();
 
-        expect(valueCheckbox('FIRST1').checked).toBe(false);
+        expect(valueCheckbox('first1').checked).toBe(false);
         // the same element: the menu was not rendered again
         expect(entry('filter.filter.clear')).toBe(clear);
         expect(menuOpen()).toBe(true);
@@ -1776,12 +1776,12 @@ describe('menus - the keyboard', () => {
 
         // uncheck a value. Apply is a button of the browser: a stop of Tab, Enter and Space click it -
         // the browser's, checked in a real browser. Enter on a checkbox applies too
-        valueRow('FIRST1').click();
+        valueRow('first1').click();
         const apply = document.querySelector(
             '.simple-html-grid-value-buttons .simple-html-grid-button-primary'
         ) as HTMLButtonElement;
         expect([apply.tagName, apply.type, apply.tabIndex, apply.textContent?.trim()]).toEqual(['BUTTON', 'button', 0, 'Apply']);
-        press(valueCheckbox('FIRST2'), 'Enter');
+        press(valueCheckbox('first2'), 'Enter');
 
         expect(menuOpen()).toBe(false);
         expect(datasource.getRows().map((row) => (row as { firstname?: string }).firstname)).not.toContain('first1');

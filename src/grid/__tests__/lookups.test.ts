@@ -983,6 +983,18 @@ describe('lookups - sorting, filtering, export and clipboard on the label', () =
         expect(renderedColumn(element, 'country')).toEqual([]);
     });
 
+    it("expect the footer's chip of the header filter's IN to show the labels, getFilterString() the values", async () => {
+        const { element, datasource } = await mount();
+        typeInHeaderFilter(element, 'country', 'sweden');
+        typeInHeaderFilter(element, 'customerId', 'acme');
+
+        const chips = Array.from(element.querySelectorAll('.footer-filter-chip'), (chip) =>
+            chip.textContent?.replace(/\s+/g, ' ').trim()
+        );
+        expect(chips).toEqual(['Country in Sweden', 'Customer in ACME']);
+        expect(datasource.getFilterString()).toEqual("([COUNTRY] <<IN>> ['SE'] AND [CUSTOMERID] <<IN>> ['1'])");
+    });
+
     it('expect the header filter of a number lookup column to be a text filter on the labels', async () => {
         const { element, datasource } = await mount();
         const filter = headerFilterInput(element, 'customerId');

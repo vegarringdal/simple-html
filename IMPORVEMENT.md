@@ -1943,6 +1943,69 @@ in the console. All passed. Found and fixed:
   `samples/date01/toggleDarkDate.ts`) injected a block of v5 style dark colours; every colour of
   grid.css and date.css is `light-dark()` now, so they switch the page's `color-scheme`
 
+### The filter menu's value list shows what the cells show (a candidate, with the lookup columns)
+
+* the candidate "The value list shows raw values": a text field's list had its values upper cased, not
+  a formatter's text, and a lookup column listed its codes (`NO`) where the cells show `Norway`. Done in
+  a worktree by an agent
+* the list (dropDownFilterData.ts, rewritten) is of **entries**: the text the column's cells show
+  (`cellTextOf`, as Find, fit widths and dim repeated values: the formatter's text, a lookup's label), the
+  values behind it and their number of rows. The text of a value is read once (its first row). Sorted with
+  `localeCompare` (it was the character codes: capitals first), Blank first
+* **grouping**: values shown the same are one entry, their counts added (two values a formatter shows as
+  `1234`, two codes with one label). Values are keyed first by what `IN` compares them as (`inListKey`,
+  filter.ts, now shared with `IN` itself): values `IN` can not tell apart are never split over two entries.
+  So texts that differ in case only (`Oslo`, `OSLO`) are one entry, the first row's text
+* **the upper casing** was there because `IN` compares ignoring case: the upper cased raw value was the
+  one key of every spelling. Dropped from what is shown (the cells' text), kept as the key - the reason
+  is still there
+* **Apply** builds the filter of the values behind the checked entries, through filterCallback as the
+  header filter (the column's own conditions replaced, the header cell emptied): the shorter of `IN` of
+  the checked values or `NOT_IN` of the unchecked ones, as before (`'NULL'` for Blank). A normal filter:
+  the footer, `getFilterString()`, the filter editor, the state. A lookup's label search in its header
+  filter makes the same `IN` (a test checks it)
+* **the search** searches the texts. With a search, Apply was `CONTAINS search` + the IN / NOT_IN; a
+  CONTAINS compares the values, not the texts (a lookup's `nor` never matched `NO`): now an `IN` of the
+  values the search found and are checked. The other side: when the search finds more than 100 texts,
+  the ones past the cap are not in it (the list says it is cut off; type more). filterCallback lost its
+  `filterArrayAndValue` parameter (only the list used it). Blank is not listed with a search - it has no
+  text, and with the CONTAINS it never mattered
+* **the cap**: the first 100 texts in order (it was the first 100 values found in the rows, then sorted);
+  the counts are complete for every value now, still only shown when nothing is cut off
+* **a lookup on a number field** gets a value list: its cells show text labels. A number field without a
+  lookup still has none. `numberOverride` changes nothing in the list, as on a lookup column's cells
+* **`IN` on a number field**: the row's number is compared as the formatter shows it, a number in the list
+  was compared as `String(n)` - `[1.5]` never found the `1,5` of numberComma, `[2]` never a 2 shown as
+  `2.00`. A number in the list is formatted too now (filter.ts `inListKeys`); text in the list is as
+  before. This also fixed the lookup header filter's `IN` on a number field with such a formatter. The
+  keys of a list are made once per condition and filter run (a WeakMap), not for every row
+* **the footer's chip** shows a lookup column's labels: `getFilterTree(label, formatterOf)` takes a
+  formatter per field (new, optional; it formats the `IN` / `NOT_IN` values too, not `'NULL'`), the
+  footer passes the lookup columns' formatters - `Country in Norway`. `getFilterString()`, the filter
+  editor (it edits the values) and the state have the values
+* `false` stays a value of its own, 0 stays under Blank in a text field, a value whose cell shows no text
+  is under Blank too (with its value in the IN). "Only values in filtered rows", Select all, the counts,
+  Cancel / Apply and the keyboard are as they were; a grouped grid lists its data rows
+* docs: guides/06-filtering.md (the value list, IN on a number field, `getFilterTree`'s formatter, the
+  footer), 20-lookups.md (the limit gone: the value list and the chip show labels), 10-menus, 12-texts
+  (`filter.values` for a lookup column too), the Formatter doc, ColumnConfig.editor, the lookups sample's
+  text. No new texts
+* tests: dropDownFilterData.test.ts rewritten (26: texts of a formatter and a lookup on a text and a
+  number field, grouping and counts, case, order, Blank, false, the cap, search, checked, grouped),
+  filterContextMenu.test.ts +11 (Apply of a lookup: NOT_IN of the code, the chip, the state, reopened;
+  search and Enter: IN; the same IN as the header filter; a number lookup; a formatter; case; Blank; the
+  cap and the search; nothing checked; grouped) and the texts as the cells show them, filterIn.test.ts +4
+  (numbers formatted, a list changed between runs), filterString.test.ts +3 (formatterOf), lookups.test.ts
+  +1 (the chip of a header filter), gridMenus / rowStatus moved to the shown texts. vitest 2583 (126 files)
+* browser (Chromium, dist_demo on 8093): `.claude/browser-checks/scripts/value-list-check.js` 51/51 (the
+  lookups sample: labels, counts, search by label, Enter's IN, the rows, the chip, reopened, a number
+  lookup's NOT_IN and chip; the custom formatter sample: NORWAY as a NOT_IN of Norway, phone searched
+  without spaces, IN of the values with spaces; light and dark, screenshots `shots/value-list/`),
+  filter-ui-check.js 117/117 (its value texts compared ignoring case: it expected upper case),
+  lookup-check.js 55/55, find-check.js 68/68, menus-regression-check.js 25/25
+* not done: the group rows of a lookup column still show the value (documented in the lookups guide);
+  the filter editor shows the values
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -1964,9 +2027,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 * **A collator with `sensitivity: 'base'`**: `'a'` vs `'A'` compares as 1 both ways (sort.ts turns a 0
   into 1), so their order is the order they came in. Returning 0 needs grouping to use the collator too,
   or the groups split
-* **The value list shows raw values**: a text field's list has its values upper cased, not what a
-  formatter of the field shows - nor a lookup column's labels (dropDownFilterData reads the row values) -
-  and `IN` on a text field compares the raw text
 * **The column chooser and a finger or a drag**: its items have `touch-action: none` (for the drag), so a
   finger can not scroll a long chooser by them; the ghost of a dragged column is on the body, under the
   chooser (top layer)

@@ -21,7 +21,7 @@ export const lookups: DemoSample = {
     title: 'Lookups: select and dropdown grid',
     group: 'Editing',
     description:
-        'Three columns pick their value from a lookup (registerLookup). Country stores a code (NO) and shows the name (Norway): a select with a search on top. Customer stores the customer id and shows the name: a dropdown grid of the customers, and picking one also copies its name and city into the row (set) - one undo step, Ctrl+Z. Product is a select over 10 000 products: it shows the first 500, the search finds the rest. Open a list with the button at the right of the cell, Alt+ArrowDown, F4, Space, or by typing; Delete empties the cell. Sorting a lookup column sorts on the names, its header filter finds the names (type nor in Country), the CSV export writes the names.',
+        'Three columns pick their value from a lookup (registerLookup). Country stores a code (NO) and shows the name (Norway): a select with a search on top. Customer stores the customer id and shows the name: a dropdown grid of the customers, and picking one also copies its name and city into the row (set) - one undo step, Ctrl+Z. Product is a select over 10 000 products: it shows the first 500, the search finds the rest. Open a list with the button at the right of the cell, Alt+ArrowDown, F4, Space, or by typing; Delete empties the cell. Sorting a lookup column sorts on the names, its header filter finds the names (type nor in Country), the value list of its filter menu (right click the header filter) lists and searches them, the CSV export writes the names.',
     run(stage) {
         const ui = createStage(stage);
 

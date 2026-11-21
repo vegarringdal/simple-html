@@ -484,7 +484,8 @@ export type ColumnConfig = {
      * Not in a readonly grid or cell: there it shows the label only.
      *
      * Sorting the column sorts on the labels, typing in its header filter finds the rows whose label
-     * matches, the CSV export and copy write the labels - see the lookups guide.
+     * matches, the filter menu's value list lists the labels, the CSV export and copy write the labels -
+     * see the lookups guide.
      *
      * @sample lookups
      * @sample dropdown-grid

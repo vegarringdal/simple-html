@@ -477,7 +477,7 @@ export interface GridMenus {
  * | `filter.filter.clearAll` | Clear All Filters | |
  * | `filter.filter.advancedSeparator` | a line | |
  * | `filter.filter.advanced` | Advanced Filter… - the filter editor | |
- * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field |
+ * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column |
  *
  * @sample context-menu
  * @example

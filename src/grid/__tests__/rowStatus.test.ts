@@ -598,7 +598,8 @@ describe('changed rows only in the grid', () => {
         const available = dropDownFilterData(gridOf(element), 'name', true, null);
         const all = dropDownFilterData(gridOf(element), 'name', false, null);
 
-        expect(Array.from(available?.dataFilterSetFull ?? [])).toEqual(['ANNA']);
-        expect(Array.from(all?.dataFilterSetFull ?? []).sort()).toEqual(['ANNA', 'CID', 'DAN', 'NULL']);
+        const texts = (list: typeof all) => list?.entries.map((entry) => (entry.blank ? 'Blank' : entry.text));
+        expect(texts(available)).toEqual(['Anna']);
+        expect(texts(all)).toEqual(['Blank', 'Anna', 'Cid', 'Dan']);
     });
 });

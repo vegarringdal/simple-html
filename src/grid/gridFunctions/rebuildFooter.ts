@@ -135,7 +135,11 @@ export function renderFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
     const totalRows = ctx.gridInterface.getDatasource().getAllData().length;
     const filteredRows = ctx.gridInterface.getDatasource().length();
-    const filterTree = ctx.gridInterface.getDatasource().getFilterTree((field) => getColumnLabel(ctx, field));
+    // a lookup column (ColumnConfig.editor) shows the labels of its values, as its cells do
+    const filterTree = ctx.gridInterface.getDatasource().getFilterTree(
+        (field) => getColumnLabel(ctx, field),
+        (field) => ctx.gridInterface.__getLookupColumn(field)?.formatter
+    );
     const scrollbarHeight = ctx.gridInterface.__getGridConfig().__scrollbarSize;
     // "changed rows only" (datasource.filterChangedOnly()) is not part of the filter: a chip of its own,
     // in front of the filter's. The footer shows the filter row for either

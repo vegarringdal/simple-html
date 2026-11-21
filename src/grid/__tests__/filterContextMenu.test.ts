@@ -1,8 +1,15 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { Datasource } from '../../datasource/dataSource';
+import { isGroupRow } from '../../datasource/entity';
 import { and, or, where } from '../../datasource/filterExpression';
+import { registerFormatter } from '../../datasource/formatterRegistry';
+import { TextFormatter } from '../../datasource/textFormatter';
+import type { GridConfig } from '../gridConfig';
+import type { GridElement } from '../gridElement';
 import { DROPDOWN_FILTER_MAX_ROWS } from '../gridFunctions/dropDownFilterData';
+import { registerLookup } from '../lookup';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import {
     headerFilterInput,
@@ -23,6 +30,24 @@ const names = (datasource: any) => datasource.getDataRows().map((row: any) => ro
 beforeAll(() => {
     stubCanvas();
     stubElementSizes();
+    // the phone without its spaces, as the custom formatter sample
+    registerFormatter('fcm-compact', {
+        ...TextFormatter,
+        format: (value: unknown) => TextFormatter.format(value).replaceAll(' ', '')
+    });
+    const countries = new Datasource();
+    countries.setData([
+        { code: 'NO', name: 'Norway' },
+        { code: 'SE', name: 'Sweden' },
+        { code: 'DK', name: 'Denmark' }
+    ]);
+    registerLookup('fcm-countries', { datasource: countries, valueField: 'code', labelField: 'name' });
+    const customers = new Datasource({ fields: { id: 'number' } });
+    customers.setData([
+        { id: 1, name: 'ACME' },
+        { id: 2, name: 'Globex' }
+    ]);
+    registerLookup('fcm-customers', { datasource: customers, valueField: 'id', labelField: 'name' });
 });
 
 beforeEach(() => {
@@ -143,30 +168,30 @@ describe('filter menu - value list', () => {
 
     it('expect unchecking one more value to keep the values excluded earlier', async () => {
         const { element, datasource } = await mountGrid(simpleConfig(), data());
-        runValueList(element, ['D', 'E']);
+        runValueList(element, ['d', 'e']);
         expect(names(datasource)).toEqual(['a', 'b', 'c']);
 
-        runValueList(element, ['A']);
+        runValueList(element, ['a']);
 
         expect(names(datasource)).toEqual(['b', 'c']);
     });
 
     it('expect the values the column excluded itself to be listed unchecked', async () => {
         const { element } = await mountGrid(simpleConfig(), data());
-        runValueList(element, ['D', 'E']);
+        runValueList(element, ['d', 'e']);
 
         openFilterMenu(element, 'firstname');
 
-        expect(valueChecked('A')).toEqual(true);
-        expect(valueChecked('D')).toEqual(false);
-        expect(valueChecked('E')).toEqual(false);
+        expect(valueChecked('a')).toEqual(true);
+        expect(valueChecked('d')).toEqual(false);
+        expect(valueChecked('e')).toEqual(false);
     });
 
     it('expect checking an excluded value again to bring it back', async () => {
         const { element, datasource } = await mountGrid(simpleConfig(), data());
-        runValueList(element, ['D', 'E']);
+        runValueList(element, ['d', 'e']);
 
-        runValueList(element, ['D']);
+        runValueList(element, ['d']);
 
         expect(names(datasource)).toEqual(['a', 'b', 'c', 'd']);
     });
@@ -207,13 +232,12 @@ describe('filter menu - the value list: what it shows', () => {
         openFilterMenu(element, 'firstname');
 
         typeSearch('b');
-        // Blank stays in the list
-        expect([info().textContent?.trim(), shown()]).toEqual(['2 values', ['Blank', 'B']]);
+        // Blank has no text to find: not with a search (it stayed, and was not filtered on)
+        expect([info().textContent?.trim(), shown()]).toEqual(['1 value', ['b']]);
 
-        // lastname has no blanks
         openFilterMenu(element, 'lastname');
-        typeSearch('y');
-        expect([info().textContent?.trim(), shown()]).toEqual(['1 value', ['Y']]);
+        typeSearch('');
+        expect([info().textContent?.trim(), shown()]).toEqual(['2 values', ['x', 'y']]);
     });
 
     it('expect each value with its number of rows on its right, no parentheses, Blank first and in italics', async () => {
@@ -226,14 +250,14 @@ describe('filter menu - the value list: what it shows', () => {
         ]);
         expect(rows).toEqual([
             ['Blank', '1'],
-            ['A', '3'],
-            ['B', '1']
+            ['a', '3'],
+            ['b', '1']
         ]);
         expect(valueRow('Blank').querySelector('.simple-html-grid-value-blank')).not.toBeNull();
-        expect(valueRow('A').querySelector('.simple-html-grid-value-blank')).toBeNull();
+        expect(valueRow('a').querySelector('.simple-html-grid-value-blank')).toBeNull();
         // the label around it: the checkbox's name is the value and its count, a click on the row checks it
-        expect(valueRow('A').tagName).toEqual('LABEL');
-        expect(valueRow('A').contains(valueCheckbox('A'))).toBe(true);
+        expect(valueRow('a').tagName).toEqual('LABEL');
+        expect(valueRow('a').contains(valueCheckbox('a'))).toBe(true);
     });
 
     it('expect no counts and a warning when the list is cut off', async () => {
@@ -255,13 +279,13 @@ describe('filter menu - the value list: what it shows', () => {
         openFilterMenu(element, 'firstname');
         const text = (value: string) => valueRow(value).querySelector('.simple-html-grid-value-text') as HTMLElement;
         // happy-dom lays nothing out: wider than it is shown, and as wide
-        Object.defineProperty(text('A'), 'scrollWidth', { configurable: true, value: 5000 });
-        Object.defineProperty(text('B'), 'scrollWidth', { configurable: true, value: text('B').clientWidth });
+        Object.defineProperty(text('a'), 'scrollWidth', { configurable: true, value: 5000 });
+        Object.defineProperty(text('b'), 'scrollWidth', { configurable: true, value: text('b').clientWidth });
 
-        text('A').dispatchEvent(new MouseEvent('mouseenter'));
-        text('B').dispatchEvent(new MouseEvent('mouseenter'));
+        text('a').dispatchEvent(new MouseEvent('mouseenter'));
+        text('b').dispatchEvent(new MouseEvent('mouseenter'));
 
-        expect([text('A').title, text('B').title]).toEqual(['A', '']);
+        expect([text('a').title, text('b').title]).toEqual(['a', '']);
     });
 
     it('expect "Only values in filtered rows" when another column hides rows, unchecked it lists every value', async () => {
@@ -285,7 +309,7 @@ describe('filter menu - the value list: "Select all", checked, unchecked or mixe
     const data = () => ['a', 'b', 'c'].map((firstname, i) => ({ firstname, lastname: 'x', age: i }));
     const selectAll = () => document.querySelector('.simple-html-grid-value-all input') as HTMLInputElement;
     const state = () => [selectAll().checked, selectAll().indeterminate];
-    const checkedValues = () => ['A', 'B', 'C'].filter((value) => valueCheckbox(value).checked);
+    const checkedValues = () => ['a', 'b', 'c'].filter((value) => valueCheckbox(value).checked);
 
     it('expect it to be the header of the list: a row with a line under it, over the box that scrolls', async () => {
         const { element } = await mountGrid(simpleConfig(), data());
@@ -302,17 +326,17 @@ describe('filter menu - the value list: "Select all", checked, unchecked or mixe
         openFilterMenu(element, 'firstname');
         expect(state()).toEqual([true, false]);
 
-        valueRow('A').click();
+        valueRow('a').click();
         expect(state()).toEqual([false, true]);
 
-        valueRow('B').click();
-        valueRow('C').click();
+        valueRow('b').click();
+        valueRow('c').click();
         expect(state()).toEqual([false, false]);
 
-        valueRow('B').click();
+        valueRow('b').click();
         expect(state()).toEqual([false, true]);
-        valueRow('A').click();
-        valueRow('C').click();
+        valueRow('a').click();
+        valueRow('c').click();
         expect(state()).toEqual([true, false]);
     });
 
@@ -323,25 +347,25 @@ describe('filter menu - the value list: "Select all", checked, unchecked or mixe
         selectAll().click();
         expect([state(), checkedValues()]).toEqual([[false, false], []]);
 
-        valueRow('B').click();
+        valueRow('b').click();
         selectAll().click();
         expect([state(), checkedValues()]).toEqual([
             [true, false],
-            ['A', 'B', 'C']
+            ['a', 'b', 'c']
         ]);
     });
 
     it('expect it to open mixed when the column has values filtered away', async () => {
         const { element } = await mountGrid(simpleConfig(), data());
         openFilterMenu(element, 'firstname');
-        valueRow('B').click();
+        valueRow('b').click();
         menuItem('Apply').click();
 
         openFilterMenu(element, 'firstname');
 
         // it showed checked before
         expect(state()).toEqual([false, true]);
-        expect(checkedValues()).toEqual(['A', 'C']);
+        expect(checkedValues()).toEqual(['a', 'c']);
     });
 
     it('expect it to be disabled when the search finds no value', async () => {
@@ -381,7 +405,7 @@ describe('filter menu - the value list: Apply, Cancel and the keyboard', () => {
     it('expect Cancel to close the menu and leave the filter as it was', async () => {
         const { element, datasource } = await mountGrid(simpleConfig(), data());
         openFilterMenu(element, 'firstname');
-        valueRow('A').click();
+        valueRow('a').click();
 
         buttons()[0].click();
 
@@ -393,16 +417,20 @@ describe('filter menu - the value list: Apply, Cancel and the keyboard', () => {
     it('expect Enter on a checkbox to apply, as Apply does', async () => {
         const { element, datasource } = await mountGrid(simpleConfig(), data());
         openFilterMenu(element, 'firstname');
-        valueRow('A').click();
+        valueRow('a').click();
 
-        const enter = press(valueCheckbox('B'), 'Enter');
+        const enter = press(valueCheckbox('b'), 'Enter');
 
         expect(enter.defaultPrevented).toBe(true);
         expect(menuOpen()).toBe(false);
         expect(names(datasource)).toEqual(['b', 'c']);
     });
 
-    it('expect Enter in the search box to apply the search: a CONTAINS', async () => {
+    /**
+     * the search searches the texts the cells show, a CONTAINS (it was) compares the values: an IN of
+     * the values the search found and are checked
+     */
+    it('expect Enter in the search box to apply what the search found: an IN of its values', async () => {
         const { element, datasource } = await mountGrid(simpleConfig(), data());
         openFilterMenu(element, 'firstname');
         const search = document.querySelector('.simple-html-grid-value-search') as HTMLInputElement;
@@ -412,7 +440,7 @@ describe('filter menu - the value list: Apply, Cancel and the keyboard', () => {
         press(document.querySelector('.simple-html-grid-value-search') as HTMLElement, 'Enter');
 
         expect(menuOpen()).toBe(false);
-        expect(datasource.getFilter()).toEqual(and(where('firstname', 'CONTAINS', 'b')));
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'IN', ['b'])));
         expect(names(datasource)).toEqual(['b']);
     });
 
@@ -432,6 +460,230 @@ describe('filter menu - the value list: Apply, Cancel and the keyboard', () => {
         });
 
         // the first ArrowUp in the search box stays there
-        expect(moves).toEqual(['Select all', 'A', 'B', 'A', 'Select all', 'search', 'search']);
+        expect(moves).toEqual(['Select all', 'a', 'b', 'a', 'Select all', 'search', 'search']);
+    });
+});
+
+describe('filter menu - the value list shows the texts of the cells, Apply filters on their values', () => {
+    const lookupConfig = (): GridConfig => ({
+        columns: {
+            country: { label: 'Country', editor: { type: 'select', lookup: 'fcm-countries' } },
+            customer: { label: 'Customer', editor: { type: 'grid', lookup: 'fcm-customers' } }
+        },
+        layout: {
+            center: [
+                { fields: ['name'], width: 100 },
+                { fields: ['country'], width: 100 },
+                { fields: ['customer'], width: 100 }
+            ]
+        }
+    });
+    const lookupRows = () => [
+        { name: 'a', country: 'NO', customer: 2 },
+        { name: 'b', country: 'SE', customer: 1 },
+        { name: 'c', country: 'NO', customer: 2 },
+        // a value the lookup does not have, and blanks
+        { name: 'd', country: 'XX', customer: null },
+        { name: 'e', country: null, customer: 1 }
+    ];
+    const mountLookups = () => mountGrid(lookupConfig(), lookupRows(), { fields: { customer: 'number' } });
+
+    const list = () => document.querySelector('[data-menu-id="filter.values"]') as HTMLElement;
+    const shown = () =>
+        Array.from(list().querySelectorAll('.simple-html-grid-value-scroll .simple-html-grid-value-row'), (row) =>
+            [
+                row.querySelector('.simple-html-grid-value-text')?.textContent?.trim(),
+                row.querySelector('.simple-html-grid-value-count')?.textContent?.trim()
+            ].join(' ')
+        );
+    const typeSearch = (text: string) => {
+        const search = list().querySelector('.simple-html-grid-value-search') as HTMLInputElement;
+        search.value = text;
+        search.dispatchEvent(new Event('input'));
+    };
+    const selectAll = () => (document.querySelector('.simple-html-grid-value-all input') as HTMLInputElement).click();
+    const rowNames = (datasource: any) => datasource.getDataRows().map((row: any) => row.name);
+    /** the footer's chips: field, operator, value */
+    const chips = (element: GridElement) =>
+        Array.from(element.querySelectorAll('.footer-filter-chip'), (chip) => chip.textContent?.replace(/\s+/g, ' ').trim());
+
+    it('expect a lookup column to list its labels with their counts, not its values', async () => {
+        const { element } = await mountLookups();
+        openFilterMenu(element, 'country');
+
+        // in the order of the labels; a value the lookup does not have shows itself, as in the cell
+        expect(shown()).toEqual(['Blank 1', 'Norway 2', 'Sweden 1', 'XX 1']);
+    });
+
+    it('expect Apply to filter on the values behind the labels: a NOT_IN of the unchecked, the chip shows the label', async () => {
+        const { element, datasource, gridInterface } = await mountLookups();
+        openFilterMenu(element, 'country');
+        valueRow('Sweden').click();
+        menuItem('Apply').click();
+
+        // a normal filter of the datasource: the values
+        expect(datasource.getFilter()).toEqual(and(where('country', 'NOT_IN', ['SE'])));
+        expect(rowNames(datasource)).toEqual(['a', 'c', 'd', 'e']);
+        expect(datasource.getFilterString()).toEqual("([COUNTRY] <<NOT_IN>> ['SE'])");
+        // the footer shows the labels, as the cells
+        expect(chips(element)).toEqual(['Country not in Sweden']);
+        // the header filter cell is empty: a list is nothing it can show
+        expect(gridInterface.getState().headerFilters).toEqual({});
+
+        // opened again: Sweden unchecked
+        openFilterMenu(element, 'country');
+        expect([valueCheckbox('Sweden').checked, valueCheckbox('Norway').checked]).toEqual([false, true]);
+    });
+
+    it('expect a search to find the labels, Enter an IN of the values found', async () => {
+        const { element, datasource } = await mountLookups();
+        openFilterMenu(element, 'country');
+        typeSearch('way');
+        expect(shown()).toEqual(['Norway 2']);
+
+        menuItem('Apply').click();
+
+        expect(datasource.getFilter()).toEqual(and(where('country', 'IN', ['NO'])));
+        expect(rowNames(datasource)).toEqual(['a', 'c']);
+        expect(chips(element)).toEqual(['Country in Norway']);
+    });
+
+    it('expect the same IN as the header filter makes of a label', async () => {
+        const { element, datasource } = await mountLookups();
+        typeInHeaderFilter(element, 'country', 'norway');
+        const typed = datasource.getFilter();
+
+        openFilterMenu(element, 'country');
+        menuItem('Clear Filter').click();
+        openFilterMenu(element, 'country');
+        selectAll();
+        valueRow('Norway').click();
+        menuItem('Apply').click();
+
+        expect(datasource.getFilter()).toEqual(typed);
+    });
+
+    it('expect a lookup on a number field to have a value list of its labels, Apply to filter on the numbers', async () => {
+        const { element, datasource } = await mountLookups();
+        openFilterMenu(element, 'customer');
+        expect(shown()).toEqual(['Blank 1', 'ACME 2', 'Globex 2']);
+
+        valueRow('Globex').click();
+        menuItem('Apply').click();
+
+        expect(datasource.getFilter()).toEqual(and(where('customer', 'NOT_IN', [2])));
+        expect(rowNames(datasource)).toEqual(['b', 'd', 'e']);
+        expect(chips(element)).toEqual(['Customer not in Globex']);
+
+        // more unchecked than checked: an IN, with the blanks
+        openFilterMenu(element, 'customer');
+        valueRow('ACME').click();
+        menuItem('Apply').click();
+        expect(datasource.getFilter()).toEqual(and(where('customer', 'IN', ['NULL'])));
+        expect(rowNames(datasource)).toEqual(['d']);
+        expect(chips(element)).toEqual(['Customer in NULL']);
+    });
+
+    it('expect the texts of a formatter: two values shown the same are one entry, both filtered', async () => {
+        const { element, datasource } = await mountGrid(
+            simpleConfig(),
+            ['12 34', '1234', '56 78', '5', '6'].map((firstname, i) => ({ firstname, lastname: 'x', age: i })),
+            { fields: { age: 'number', firstname: { formatter: 'fcm-compact' } } }
+        );
+        openFilterMenu(element, 'firstname');
+        expect(shown()).toEqual(['1234 2', '5 1', '5678 1', '6 1']);
+
+        valueRow('1234').click();
+        menuItem('Apply').click();
+
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'NOT_IN', ['12 34', '1234'])));
+        expect(names(datasource)).toEqual(['56 78', '5', '6']);
+    });
+
+    it('expect values that differ in case only to be one entry, filtered together', async () => {
+        const { element, datasource } = await mountGrid(
+            simpleConfig(),
+            ['Oslo', 'OSLO', 'Bergen', 'oslo'].map((firstname, i) => ({ firstname, lastname: 'x', age: i }))
+        );
+        openFilterMenu(element, 'firstname');
+        expect(shown()).toEqual(['Bergen 1', 'Oslo 3']);
+
+        valueRow('Oslo').click();
+        menuItem('Apply').click();
+
+        expect(names(datasource)).toEqual(['Bergen']);
+    });
+
+    it('expect unchecking Blank to leave out the empty cells: null, "" and 0', async () => {
+        const { element, datasource } = await mountGrid(
+            simpleConfig(),
+            ['a', null, '', 0, 'b'].map((firstname, i) => ({ firstname, lastname: 'x', age: i }))
+        );
+        openFilterMenu(element, 'firstname');
+        expect(shown()).toEqual(['Blank 3', 'a 1', 'b 1']);
+
+        valueRow('Blank').click();
+        menuItem('Apply').click();
+
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'NOT_IN', ['NULL'])));
+        expect(names(datasource)).toEqual(['a', 'b']);
+    });
+
+    it('expect a NOT_IN to keep the values past the cap, an IN after a search the values it lists', async () => {
+        const many = Array.from({ length: DROPDOWN_FILTER_MAX_ROWS + 5 }, (_, i) => ({
+            firstname: `v${String(i).padStart(3, '0')}`,
+            lastname: 'x',
+            age: i
+        }));
+        const { element, datasource } = await mountGrid(simpleConfig(), many);
+        openFilterMenu(element, 'firstname');
+        valueRow('v000').click();
+        menuItem('Apply').click();
+
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'NOT_IN', ['v000'])));
+        expect(datasource.getDataRows()).toHaveLength(DROPDOWN_FILTER_MAX_ROWS + 4);
+
+        // the search finds every value, it lists the first 100 - v000 unchecked: Apply is an IN of the
+        // checked ones of those
+        openFilterMenu(element, 'firstname');
+        typeSearch('v');
+        menuItem('Apply').click();
+
+        expect(datasource.getDataRows()).toHaveLength(DROPDOWN_FILTER_MAX_ROWS - 1);
+        expect([names(datasource)[0], names(datasource).at(-1)]).toEqual([
+            'v001',
+            `v${String(DROPDOWN_FILTER_MAX_ROWS - 1).padStart(3, '0')}`
+        ]);
+    });
+
+    it('expect nothing checked to leave the column without a condition of the list, as before', async () => {
+        const { element, datasource } = await mountGrid(
+            simpleConfig(),
+            ['a', 'b'].map((firstname, i) => ({ firstname, lastname: 'x', age: i }))
+        );
+        datasource.filter(and(where('firstname', 'IN', ['a']), where('age', 'LESS_THAN', 5)));
+        openFilterMenu(element, 'firstname');
+        // mixed: a click checks all, the next none
+        selectAll();
+        selectAll();
+        menuItem('Apply').click();
+
+        expect(datasource.getFilter()).toEqual(and(where('age', 'LESS_THAN', 5)));
+    });
+
+    it('expect it to work on a grouped grid: the values of the data rows, the group rows kept', async () => {
+        const { element, datasource } = await mountGrid(
+            simpleConfig(),
+            ['a', 'b', 'a', 'c'].map((firstname, i) => ({ firstname, lastname: 'x', age: i }))
+        );
+        datasource.group([{ attribute: 'lastname', title: 'Last' }]);
+        openFilterMenu(element, 'firstname');
+        expect(shown()).toEqual(['a 2', 'b 1', 'c 1']);
+
+        valueRow('b').click();
+        menuItem('Apply').click();
+
+        expect(names(datasource)).toEqual(['a', 'a', 'c']);
+        expect(datasource.getRows().some(isGroupRow)).toBe(true);
     });
 });

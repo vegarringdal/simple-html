@@ -309,7 +309,7 @@ Export ›                                                          ----
 | `filter.filter.clearAll` | Clear All Filters | |
 | `filter.filter.advancedSeparator` | a line | |
 | `filter.filter.advanced` | Advanced Filter…: opens the filter editor | |
-| `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field |
+| `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field, a lookup column |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 

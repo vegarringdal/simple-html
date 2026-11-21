@@ -230,6 +230,13 @@ works with what the cell shows:
   ignoring case; set `operator: 'CONTAINS'` to search in it), and the rows are filtered on their values
   - the condition is `IN` the values found. A value no lookup row has does not match a typed text. The
   filter menu offers the operators of a text; its Is blank / Is not blank are on the cell's value.
+- **The value list of the filter menu** lists the labels (`Denmark`, `Norway`, `Sweden`), in their
+  order, and its search searches them - also on a number field, which has no value list without a
+  lookup. Two values with one label are one entry. Apply filters on the values behind the checked
+  labels, as the header filter does: `IN ['NO']`, or `NOT_IN` the unchecked ones. A value no lookup
+  row has is listed as the cell shows it (`XX`). See [the value list](06-filtering.md#the-value-list).
+- **The footer's filter chip** shows the labels of an `IN` / `NOT_IN` of values (`Country in Norway`)
+  and of a condition's value (the grid gives `getFilterTree()` the column's formatter).
 - **The CSV and Excel export** write the label, as text. `formatted: false` writes the value.
 - **Copy** gives the labels. **Paste** takes a label (ignoring case) and writes its value, and the
   fields of `set`; a text no label has is written as it is. **Clear** (the row menu, Delete in a range)
@@ -238,11 +245,10 @@ works with what the cell shows:
 
 Where the value shows, and not the label:
 
-- **The value list of the filter menu** lists the values (`NO`, `SE`), its search searches them.
 - **Grouped** on a lookup column, the rows are grouped on the value and the group row shows it
   (`Country: NO (12)`). The groups are in the order of the labels.
-- **The filter** a typed header filter made is an `IN` of values: the footer's filter chip, the filter
-  editor and `getFilterString()` show the values.
+- **The filter** the header filter and the value list make is an `IN` (or `NOT_IN`) of values: the
+  filter editor - where they can be edited - `getFilterString()` and the state have the values.
 - **The row menu's "Filter: Replace / Add to filter"** filters on the cell's value (`EQUAL NO`).
 
 ## Doing it yourself

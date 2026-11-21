@@ -132,3 +132,41 @@ describe('datasource filter tree (footer chips)', () => {
         });
     });
 });
+
+describe('datasource filter tree - formatterOf, a formatter of its own for the values of a field', () => {
+    // what the grid passes for a lookup column: the label of a value, the value when it has none
+    const names: Record<string, string> = { NO: 'Norway', SE: 'Sweden' };
+    const countryName = {
+        format: (value: unknown) => names[String(value)] ?? String(value ?? ''),
+        parse: (text: string) => text
+    };
+    const ofCountry = (field: string) => (field === 'country' ? countryName : undefined);
+
+    const datasource = () => {
+        const ds = new Datasource({ fields: { age: 'number' } });
+        ds.setData([{ country: 'NO', age: 1 }]);
+        return ds;
+    };
+    const values = (ds: Datasource) =>
+        ds.getFilterTree(undefined, ofCountry)?.children.map((node) => (node.kind === 'condition' ? node.value : node));
+
+    it('expect the values of IN and NOT_IN to be formatted with it, NULL (the blanks) as it is', () => {
+        const ds = datasource();
+        ds.filter(and(where('country', 'IN', ['NO', 'SE', 'XX', 'NULL']), where('country', 'NOT_IN', 'SE\nnull')));
+        expect(values(ds)).toEqual(['Norway, Sweden, XX, NULL', 'Sweden, null']);
+    });
+
+    it('expect the value of a condition to be formatted with it, the other fields with their own', () => {
+        const ds = datasource();
+        ds.filter(and(where('country', 'EQUAL', 'SE'), where('age', 'GREATER_THAN', 2), where('country', 'IS_BLANK')));
+        expect(values(ds)).toEqual(['Sweden', '2', '']);
+    });
+
+    it('expect the values of IN as they are without it, and in getFilterString()', () => {
+        const ds = datasource();
+        ds.filter(where('country', 'IN', ['NO', 'SE']));
+        expect(ds.getFilterTree()?.children[0]).toMatchObject({ value: 'NO, SE' });
+        expect(ds.getFilterTree(undefined, () => undefined)?.children[0]).toMatchObject({ value: 'NO, SE' });
+        expect(ds.getFilterString()).toEqual("([COUNTRY] <<IN>> ['NO','SE'])");
+    });
+});

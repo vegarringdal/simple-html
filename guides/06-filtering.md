@@ -63,7 +63,7 @@ What each header cell shows is part of the [state](03-state.md#header-filters-in
 ### The header filter menu
 
 Right click a header filter for its menu: the submenu **Filter ›**, then the **value list** (for
-text fields), the main tool, in the menu itself. In Filter ›:
+text fields and [lookup columns](20-lookups.md)), the main tool, in the menu itself. In Filter ›:
 
 - **Operator ›** picks the operator the column's header filter uses, the one in use has a ✓: Equal,
   Not Equal and Contains for text, Greater than or equal, Less than or equal and Equal for numbers
@@ -82,23 +82,35 @@ Filter ›, ArrowRight goes into it; Tab goes from Filter › into the value lis
 
 ### The value list
 
-The value list is the part of a text column's filter menu with a checkbox per value, as in a
-spreadsheet:
+The value list is the part of the filter menu of a text column, and of a lookup column, with a
+checkbox per value, as in a spreadsheet:
 
-- It lists the values of the rows the *other* columns' filters let through, text in upper case,
-  with the number of rows of each on its right. "Blank" (in italics) is every empty value: `null`,
-  `''`, and also `0` and `false`. Over the list: how many values it has.
-- It lists at most 100 values, and then says so. The counts are only shown when every value is
+- It lists **what the cells show**: the text of the field's formatter, the label of a
+  [lookup column](20-lookups.md) (`Norway`, not `NO`) - for the rows the *other* columns' filters let
+  through, in the order of the texts (`localeCompare`), with the number of rows of each on its right.
+  Over the list: how many values it has.
+- Values shown the same are **one entry**, their rows counted together: two values a formatter shows
+  as `1234`, two codes with one label. So are texts that differ in case only (`Oslo`, `OSLO`): `IN`
+  compares ignoring case, it can not filter them apart. The entry shows the text of the first row.
+- **"Blank"** (in italics), first, is every empty value - `null`, `''` and also `0` (see
+  [0 is blank](#0-is-blank)) - and a value whose cell shows no text. `false` is a value of its own.
+- It lists the first 100 texts, and then says so. The counts are only shown when every value is
   listed.
 - **Only values in filtered rows**, when other columns filter rows: uncheck it to list the values of
   every row.
-- The search box narrows the list. With search text, Apply also adds a `CONTAINS` condition for it.
+- The search box narrows the list to the texts with the search text in them, ignoring case (`*` and
+  `%` are left out); Blank, which has no text, is not listed then.
 - **Select all**, the header of the list, is checked when every value is, mixed when some are: a
   click checks every value, or none when every value is checked.
-- **Apply** filters the column on the checked values: an `IN` condition with them, or a `NOT_IN`
-  with the unchecked ones when there are fewer of those. Enter in the search box or on a checkbox
-  does the same. **Cancel** (or Esc, or a click outside) closes the menu, the filter stays as it
-  was: nothing is filtered while you check and uncheck.
+- **Apply** filters the column on the **values** behind the checked texts - a filter as any other:
+  the footer, `getFilterString()`, the filter editor and the state have it. An `IN` condition with
+  them, or a `NOT_IN` with the values of the unchecked ones when there are fewer of those: the values
+  past the first 100 stay then. Blank is `'NULL'` in the list. After a search it is an `IN` of the
+  values the search found and are checked - of the first 100: type more to narrow it. Nothing
+  checked, or nothing unchecked: no condition from the list. It replaces the column's conditions,
+  as the header filter does, and empties the header filter cell. Enter in the search box or on a
+  checkbox does the same. **Cancel** (or Esc, or a click outside) closes the menu, the filter stays
+  as it was: nothing is filtered while you check and uncheck.
 - The keyboard: Tab goes from the menu's items into the search box, the checkboxes and the buttons;
   ArrowDown / ArrowUp move between the search box and the checkboxes, Space checks one.
 
@@ -156,7 +168,9 @@ The footer shows the number of rows shown (`datasource.length()`, group rows inc
 number of rows there are (`12/500`), and the
 filter as a row of chips: field, operator, value, with the groups in brackets. "✕ Clear" removes the
 whole filter, a click on the chips opens the filter editor. The labels are the column labels, the
-rest are texts (`footer.*`, the operators `footer.operator.*`), see [Texts](12-texts.md#footer).
+rest are texts (`footer.*`, the operators `footer.operator.*`), see [Texts](12-texts.md#footer). The
+values of a lookup column are shown as its cells show them, by their labels (`Country in Norway`);
+the filter editor shows the values (`NO`), they are what it edits.
 
 While only the changed rows are shown (below), a chip *Changed rows only* comes first, ANDed with the
 filter's chips. "✕ Clear" turns it off too. While Find's *Filter rows* hides rows (below), a chip
@@ -279,7 +293,9 @@ The field's type decides how a condition compares the row's value with its value
 - A **boolean** field compares every operator as `EQUAL`, apart from `IN`, `NOT_IN`, `IS_BLANK` and
   `IS_NOT_BLANK`. The value must be `true` or `false`.
 - `IN` / `NOT_IN` take a list as `value`: `where('country', 'IN', ['Norway', 'Sweden'])`. Text with
-  one value per line works too. `'NULL'` in the list matches an empty value.
+  one value per line works too. `'NULL'` in the list matches an empty value. On a number field a
+  number in the list is formatted as the rows are: `where('price', 'IN', [2])` finds the 2 a formatter
+  shows as `2.00`; text in the list is the text shown (`'2.00'`).
 - A **blank row date** is not before, after or on any date: of the comparisons it only matches
   `NOT_EQUAL_TO`.
 - A **blank number** compares as 0: `where('age', 'LESS_THAN', 5)` also matches the rows without an
@@ -320,9 +336,13 @@ people.getFilterTree();
 
 - `getFilterString()` is `''` and `getFilterTree()` is `null` when no filter is set, or nothing of
   it is left.
-- The values are formatted with the field's formatter. The tree's root is always a group, also for
-  a single condition.
-- The grid's footer uses `getFilterTree()` with the column labels.
+- The values are formatted with the field's formatter, the values of `IN` / `NOT_IN` are shown as
+  they are. The tree's root is always a group, also for a single condition.
+- `getFilterTree(label, formatterOf)` takes a formatter for the values of a field too, the `IN` /
+  `NOT_IN` values included (`'NULL'` stays): `formatterOf(field)` gives one, or `undefined` for the
+  field's own.
+- The grid's footer uses `getFilterTree()` with the column labels, and the formatter of its lookup
+  columns: a chip shows `Country in Norway` where the filter has `IN ['NO']`.
 - The operators and AND / OR of `getFilterString()` are texts, `filterString.*`: change them with
   `setTexts()`, see [Texts](12-texts.md#getfilterstring). `getFilterTree()` has the operators as they
   are (`'EQUAL'`), for your own rendering.

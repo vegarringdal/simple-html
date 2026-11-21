@@ -18,15 +18,10 @@ import { valuesWithLabel } from './lookupColumn';
  * @param value what the user typed, or the column's current header filter value (a Date or number) when
  * the filter is run again with another operator - that is formatted first, the formatter parses text only
  * @param field the column's field
+ * @param filterArray the values of the filter menu's value list (contextmenuFilter.ts): an `IN` of them,
+ * or a `NOT_IN` with `notinArray`. The header filter cell is emptied then, a list is nothing it can show
  */
-export function filterCallback(
-    ctx: Grid,
-    value: unknown,
-    field: string,
-    filterArray?: unknown[] | null,
-    filterArrayAndValue?: string | null,
-    notinArray?: boolean
-) {
+export function filterCallback(ctx: Grid, value: unknown, field: string, filterArray?: unknown[] | null, notinArray?: boolean) {
     const datasource = ctx.gridInterface.getDatasource();
     const { type, formatter } = datasource.getField(field);
     const text = typeof value === 'string' ? value : formatter.format(value);
@@ -48,7 +43,7 @@ export function filterCallback(
 
             break;
         default:
-            filterValue = filterArrayAndValue ? filterArrayAndValue : value;
+            filterValue = value;
     }
 
     /**
@@ -63,10 +58,7 @@ export function filterCallback(
     const byLabel = lookupColumn && typeof filterValue === 'string' && operator !== 'IS_BLANK' && operator !== 'IS_NOT_BLANK';
 
     // no type on the condition, the datasource reads it from its fields
-    if (filterArrayAndValue) {
-        // search text from the value list menu, always a contains
-        filter.children.push(where(field, 'CONTAINS', filterArrayAndValue));
-    } else if (filterValue !== null && filterValue !== undefined && filterValue !== '') {
+    if (filterValue !== null && filterValue !== undefined && filterValue !== '') {
         filter.children.push(
             byLabel
                 ? where(field, 'IN', valuesWithLabel(lookupColumn, operator, String(filterValue)))
@@ -78,8 +70,8 @@ export function filterCallback(
         filter.children.push(where(field, notinArray ? 'NOT_IN' : 'IN', filterArray));
     }
 
-    // a value list without search text: the cell is cleared, the list is not something it can show
-    ctx.gridInterface.__setHeaderFilterValue(field, filterArray && !filterArrayAndValue ? null : filterValue);
+    // a value list: the cell is cleared, the list is not something it can show
+    ctx.gridInterface.__setHeaderFilterValue(field, filterArray ? null : filterValue);
 
     datasource.filter(filter);
 }

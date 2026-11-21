@@ -292,7 +292,8 @@ Right click on a header filter.
 
 ### The value list
 
-The part of the filter menu with a checkbox per value, for a text field.
+The part of the filter menu with a checkbox per value - the text its cells show - for a text field
+and a lookup column.
 
 | id | English | shown |
 | --- | --- | --- |

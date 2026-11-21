@@ -5,9 +5,8 @@
  * registered from the start.
  *
  * - `format` is used for everything shown as text: the cells, the edit and filter inputs, the group
- *   headers, the footer's filter and `getFilterString()`. Booleans are the exception, the grid's
- *   checkbox shows the raw value. The header filter's value list (text fields only) shows the raw
- *   values, in upper case.
+ *   headers, the value list of the filter menu, the footer's filter and `getFilterString()`. Booleans
+ *   are the exception, the grid's checkbox shows the raw value.
  * - `parse` turns what the user typed or pasted into the value stored in the row.
  * - `parseFilter` turns what the user typed into a filter input into the value filtered on. Left out,
  *   `parse` is used.

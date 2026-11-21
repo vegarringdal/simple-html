@@ -6,7 +6,7 @@ import type { Grid } from '../grid';
 import type { MenuBlock, MenuContext, MenuEntry, MenuItem } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
-import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from './dropDownFilterData';
+import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData, type ValueListEntry } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
@@ -146,10 +146,10 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
 }
 
 /**
- * The excel style value list, the main tool of the filter menu: a search box, a checkbox per value
- * with its number of rows, "Select all" over them, then Cancel and Apply. One block (`filter.values`)
- * with an element of its own, which it renders again as the user checks values and types. Only for a
- * text field, dropDownFilterData gives null for the rest.
+ * The excel style value list, the main tool of the filter menu: a search box, a checkbox per text the
+ * column's cells show with its number of rows, "Select all" over them, then Cancel and Apply. One block
+ * (`filter.values`) with an element of its own, which it renders again as the user checks values and
+ * types. For a text field and a lookup column, dropDownFilterData gives null for the rest.
  *
  * Nothing is filtered until Apply: the checkboxes are a draft, Cancel (or Esc, a click outside)
  * leaves the filter as it was.
@@ -173,21 +173,24 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
     const text = (id: TextId, values?: Record<string, unknown>) => gridText(ctx, id, values);
 
     /**
-     * filters the column on the checked values: an IN with them, or a NOT_IN with the unchecked ones
-     * when there are fewer of those (none unchecked: no list). The search text is a CONTAINS too, see
-     * filterCallback. Then the menu closes
+     * Filters the column on the values behind the checked texts, as the header filter does
+     * (filterCallback: the column's conditions are replaced): an `IN` with them, or a `NOT_IN` with the
+     * values of the unchecked ones when there are fewer of those - the values not listed (the
+     * DROPDOWN_FILTER_MAX_ROWS cap) stay then. After a search always an `IN`: the values it found and
+     * are checked. None unchecked, or none checked: no condition of the list. Then the menu closes
      */
     const apply = () => {
         const data = state.data;
         if (!data) {
             return;
         }
-        const unchecked = Array.from(data.dataFilterSetFull).filter((value) => !data.dataFilterSet.has(value));
-        const search = state.searchInput || null;
-        if (unchecked.length < data.dataFilterSet.size) {
-            filterCallback(ctx, null, attribute, unchecked.length ? unchecked : null, search, unchecked.length > 0);
+        const valuesOf = (entries: ValueListEntry[]) => entries.flatMap((entry) => entry.values);
+        const checked = valuesOf(data.entries.filter((entry) => data.checked.has(entry)));
+        const unchecked = valuesOf(data.entries.filter((entry) => !data.checked.has(entry)));
+        if (!data.searched && unchecked.length < checked.length) {
+            filterCallback(ctx, null, attribute, unchecked.length ? unchecked : null, true);
         } else {
-            filterCallback(ctx, null, attribute, data.dataFilterSet.size ? Array.from(data.dataFilterSet) : null, search, false);
+            filterCallback(ctx, null, attribute, checked.length ? checked : null, false);
         }
         removeContextMenu(ctx);
     };
@@ -224,24 +227,24 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
             return;
         }
 
-        const total = data.dataFilterSetFull.size;
-        const checked = data.dataFilterSet.size;
+        const total = data.entries.length;
+        const checked = data.checked.size;
         // "Select all" is checked when every value is, mixed (indeterminate) when some are
         const allChecked = total > 0 && checked === total;
         const someChecked = checked > 0 && checked < total;
 
-        const toggleValue = (value: unknown) => {
-            if (data.dataFilterSet.has(value)) {
-                data.dataFilterSet.delete(value);
+        const toggleValue = (entry: ValueListEntry) => {
+            if (data.checked.has(entry)) {
+                data.checked.delete(entry);
             } else {
-                data.dataFilterSet.add(value);
+                data.checked.add(entry);
             }
             reRender();
         };
 
         // all checked: none. Some or none: all, as a mixed checkbox goes
         const toggleAll = () => {
-            data.dataFilterSet = allChecked ? new Set() : new Set(data.dataFilterSetFull);
+            data.checked = allChecked ? new Set() : new Set(data.entries);
             reRender();
         };
 
@@ -258,21 +261,20 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
         };
 
         /**
-         * A value: its checkbox, the value - cut off with an ellipsis when it is too long, the whole
-         * value as its tooltip then - and its number of rows on the right. The label around them makes
-         * the whole row a click on the checkbox, and is the checkbox's name. The counts are only shown
-         * when the list is complete: with values dropped (the DROPDOWN_FILTER_MAX_ROWS cap) they would
-         * mislead
+         * A value: its checkbox, the text the cells show - cut off with an ellipsis when it is too long,
+         * the whole text as its tooltip then - and its number of rows on the right. The label around them
+         * makes the whole row a click on the checkbox, and is the checkbox's name. The counts are only
+         * shown when the list is complete: with values left out (the DROPDOWN_FILTER_MAX_ROWS cap) they
+         * would mislead
          */
-        const valueRow = (value: unknown) => {
-            const count = data.truncated ? undefined : data.counts.get(value);
-            const blank = value === 'NULL';
+        const valueRow = (entry: ValueListEntry) => {
+            const count = data.truncated ? undefined : entry.count;
             return html`<label class="simple-html-grid-value-row">
-                <input type="checkbox" .checked=${live(data.dataFilterSet.has(value))} @change=${() => toggleValue(value)} />
+                <input type="checkbox" .checked=${live(data.checked.has(entry))} @change=${() => toggleValue(entry)} />
                 <span
-                    class=${blank ? 'simple-html-grid-value-text simple-html-grid-value-blank' : 'simple-html-grid-value-text'}
+                    class=${entry.blank ? 'simple-html-grid-value-text simple-html-grid-value-blank' : 'simple-html-grid-value-text'}
                     @mouseenter=${showCutOffText}
-                    >${blank ? text('filter.values.blank') : value}</span
+                    >${entry.blank ? text('filter.values.blank') : entry.text}</span
                 >
                 ${count ? html`<span class="simple-html-grid-value-count">${count}</span>` : nothing}
             </label>`;
@@ -312,9 +314,7 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
                         />
                         <span class="simple-html-grid-value-text">${text('filter.values.selectAll')}</span>
                     </label>
-                    <div class="simple-html-grid-value-scroll simple-html-dialog-scroller">
-                        ${Array.from(data.dataFilterSetFull, valueRow)}
-                    </div>
+                    <div class="simple-html-grid-value-scroll simple-html-dialog-scroller">${data.entries.map(valueRow)}</div>
                 </div>
                 <div class="simple-html-grid-value-buttons">
                     <button type="button" class="simple-html-grid-button" @click=${() => removeContextMenu(ctx)}>

@@ -2,11 +2,18 @@ import type { Datasource } from './dataSource';
 import type { Entity } from './entity';
 import type { FieldType } from './field';
 import { type FilterCondition, type FilterExpression, type FilterOperator, isFilterGroup } from './filterExpression';
+import type { Formatter } from './formatter';
 import { isBlank } from './isBlank';
 import { objectFilter } from './objectFilter';
 
 export class Filter {
     private currentFilter: FilterExpression | null;
+
+    /**
+     * the keys of the IN / NOT_IN lists of the filter that runs (see inListKeys), made once per condition
+     * and run - not once per row. A new run makes them again: the list may have changed
+     */
+    private inListKeyCache = new WeakMap<FilterCondition, Set<string>>();
 
     constructor() {
         this.currentFilter = null;
@@ -33,6 +40,7 @@ export class Filter {
 
     public filter(objArray: Entity[], expression: FilterExpression | null, ds: Datasource) {
         this.currentFilter = expression;
+        this.inListKeyCache = new WeakMap();
 
         if (!expression) {
             return objArray.slice();
@@ -87,33 +95,58 @@ export class Filter {
     }
 
     /**
-     * IN / NOT_IN. The list and the row value are both compared as upper case text, so a number or
-     * boolean in the row matches the same value in the list. A blank row value only matches the list
-     * value 'NULL', and so does a 0 in a text field - a number field compares its formatted text, '0'.
+     * IN / NOT_IN. The list and the row value are both compared as upper case text (see inListKey), so a
+     * number or boolean in the row matches the same value in the list. A blank row value only matches the
+     * list value 'NULL', and so does a 0 in a text field - a number field compares its formatted text, '0'.
      */
     private inStatement(rowData: Entity, condition: FilterCondition, type: FieldType, ds: Datasource): boolean {
-        // a list, or text with one value per line
-        let list: unknown[] = [];
-        if (Array.isArray(condition.value)) {
-            list = condition.value;
-        } else if (typeof condition.value === 'string') {
-            list = condition.value.split('\n');
-        } else if (condition.value !== null && condition.value !== undefined) {
-            list = [condition.value];
+        let keys = this.inListKeyCache.get(condition);
+        if (!keys) {
+            keys = inListKeys(condition, type, ds);
+            this.inListKeyCache.set(condition, keys);
         }
-        const values = list.map((value) => String(value).toUpperCase());
-
-        let data: unknown = rowData?.[condition.field];
-        if (type === 'date' || type === 'datetime' || type === 'number') {
-            // the formatted text, same as what is shown and typed into the list
-            data = ds.getFormatter(condition.field, type).format(data);
-        }
-
-        const key = isInListBlank(data) ? 'NULL' : String(data).toUpperCase();
-        const found = values.indexOf(key) !== -1;
+        const found = keys.has(inListKey(rowData?.[condition.field], type, ds.getFormatter(condition.field, type)));
 
         return condition.operator === 'IN' ? found : !found;
     }
+}
+
+/**
+ * The keys of an IN / NOT_IN condition's list: each value as upper case text. A number in the list of a
+ * number field is formatted, as the row values are (inListKey): the value a row holds finds it, `[2]` the 2
+ * a formatter shows as `'2.00'`. Text is taken as it is: what is shown, typed into the list
+ * @param type the field's type
+ */
+function inListKeys(condition: FilterCondition, type: FieldType, ds: Datasource): Set<string> {
+    // a list, or text with one value per line
+    let list: unknown[] = [];
+    if (Array.isArray(condition.value)) {
+        list = condition.value;
+    } else if (typeof condition.value === 'string') {
+        list = condition.value.split('\n');
+    } else if (condition.value !== null && condition.value !== undefined) {
+        list = [condition.value];
+    }
+    const formatter = ds.getFormatter(condition.field, type);
+    return new Set(
+        list.map((value) =>
+            String(type === 'number' && typeof value === 'number' ? formatter.format(value) : value).toUpperCase()
+        )
+    );
+}
+
+/**
+ * @internal
+ * The text `IN` / `NOT_IN` compare a row value as: `'NULL'` for a blank (isInListBlank), else the value
+ * as upper case text - of a date or number field the text its formatter shows, the same as what is shown
+ * and typed into the list. The value list of the header filter menu (dropDownFilterData) keys the values
+ * with it too, so an entry of it never splits values the `IN` it applies can not tell apart
+ * @param type the field's type
+ * @param formatter the field's formatter (`datasource.getFormatter(field)`)
+ */
+export function inListKey(value: unknown, type: FieldType, formatter: Formatter): string {
+    const data = type === 'date' || type === 'datetime' || type === 'number' ? formatter.format(value) : value;
+    return isInListBlank(data) ? 'NULL' : String(data).toUpperCase();
 }
 
 /**

@@ -2766,11 +2766,15 @@ export class Datasource<T = any> {
      *
      * @param label the name to show for a field. Default the field's label (`FieldConfig.label`, else
      * the field name). The grid passes its column labels.
+     * @param formatterOf a formatter to show the values of a field with instead of the field's own, or
+     * undefined for the field's own. It formats the values of `IN` / `NOT_IN` too (not `'NULL'`), which
+     * are shown as they are otherwise. The grid passes the formatters of its lookup columns
+     * (`ColumnConfig.editor`): the footer shows their labels, `Country in Norway, Sweden`.
      *
      * @sample filtering
      * @example
      * ```ts
-     * import { Datasource, where } from '@simple-html/grid';
+     * import { Datasource, type Formatter, TextFormatter, where } from '@simple-html/grid';
      *
      * const datasource = new Datasource({ fields: { age: { type: 'number', label: 'Age' } } });
      * datasource.filter(where('age', 'GREATER_THAN', 18));
@@ -2779,9 +2783,19 @@ export class Datasource<T = any> {
      * // { kind: 'group', group: 'AND', children: [
      * //     { kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true }
      * // ] }
+     *
+     * // the codes of country shown as names
+     * const names: Record<string, string> = { NO: 'Norway', SE: 'Sweden' };
+     * const countryName: Formatter = { ...TextFormatter, format: (value) => names[String(value)] ?? TextFormatter.format(value) };
+     * datasource.filter(where('country', 'IN', ['NO', 'SE']));
+     * datasource.getFilterTree(undefined, (field) => (field === 'country' ? countryName : undefined));
+     * // ... { kind: 'condition', label: 'country', operator: 'IN', value: 'Norway, Sweden', hasValue: true } ...
      * ```
      */
-    public getFilterTree(label: (field: string) => string = (field) => this.getField(field).label): FilterGroupNode | null {
+    public getFilterTree(
+        label: (field: string) => string = (field) => this.getField(field).label,
+        formatterOf: (field: string) => Formatter | undefined = () => undefined
+    ): FilterGroupNode | null {
         const filter = this.__filter.getFilter();
         if (!filter || !this.__isShown(filter)) {
             return null;
@@ -2803,16 +2817,20 @@ export class Datasource<T = any> {
             }
 
             const blank = expression.operator === 'IS_BLANK' || expression.operator === 'IS_NOT_BLANK';
+            const formatter = formatterOf(expression.field);
             let value = '';
             if (!blank) {
                 if (expression.operator === 'IN' || expression.operator === 'NOT_IN') {
                     const list = Array.isArray(expression.value) ? expression.value : String(expression.value ?? '').split('\n');
-                    value = list.join(', ');
+                    // 'NULL' is the blanks (see IN), not a value to format
+                    const shown = (item: unknown) =>
+                        formatter && String(item).toUpperCase() !== 'NULL' ? formatter.format(item) : item;
+                    value = list.map(shown).join(', ');
                 } else if (expression.valueField) {
                     value = `[${label(expression.valueField)}]`;
                 } else {
                     const type = this.getField(expression.field).type;
-                    value = this.getFormatter(expression.field, type).format(expression.value);
+                    value = (formatter ?? this.getFormatter(expression.field, type)).format(expression.value);
                 }
             }
 

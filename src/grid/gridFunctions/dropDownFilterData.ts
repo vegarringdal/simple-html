@@ -1,22 +1,73 @@
-import { Filter, isInListBlank } from '../../datasource/filter';
+import { Filter, inListKey } from '../../datasource/filter';
 import { and, type FilterExpression, isFilterGroup } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
+import { cellTextOf } from './cellText';
 
+/**
+ * the most entries the value list shows, Blank not counted
+ */
 export const DROPDOWN_FILTER_MAX_ROWS = 100;
 
 /**
- * helper for column excel similar filter
- * @param attribute
- * @param availableOnly
- * @param searchInput
- * @returns
+ * One entry of the filter menu's value list: a text the cells of the column show, and the values of the
+ * rows behind it
  */
-export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: boolean, searchInput: string | null) {
-    const datasource = ctx.gridInterface.getDatasource();
-    const type = ctx.gridInterface.getDatasource().getField(attribute).type;
-    let dataFilterSet = new Set();
+export interface ValueListEntry {
+    /**
+     * the text as the column's cells show it (cellTextOf): the formatter's text, a lookup's label. Values
+     * shown with texts that differ in case only are one entry - `IN` compares ignoring case, it can not
+     * filter them apart - with the text of the first row. `''` for the blank entry
+     */
+    text: string;
+    /**
+     * true for "Blank": the values `IN` takes as blank (`'NULL'`, see isInListBlank) and the values whose
+     * cells show no text
+     */
+    blank: boolean;
+    /** the values behind it, once each, as an `IN` of them takes them: `'NULL'` for the blanks */
+    values: unknown[];
+    /** the number of rows */
+    count: number;
+}
 
-    if (type !== 'text') {
+/**
+ * The value list of the filter menu: the entries to show and which of them start checked.
+ * Excel style, see contextmenuFilter.ts `valueListBlock`
+ */
+export interface ValueListData {
+    /** true when other filters hide rows: "Only values in filtered rows" changes the list then */
+    enableAvailableOnlyOption: boolean;
+    /**
+     * the entries listed: Blank first (not with a search: it has no text to find), then the texts in
+     * order (`localeCompare`), at most DROPDOWN_FILTER_MAX_ROWS of them
+     */
+    entries: ValueListEntry[];
+    /** the entries checked: the ones with a row the column's own conditions let through, all without */
+    checked: Set<ValueListEntry>;
+    /** true when there were more texts than DROPDOWN_FILTER_MAX_ROWS: the ones after it are not listed */
+    truncated: boolean;
+    /** true when the list is what a search found */
+    searched: boolean;
+}
+
+/**
+ * The value list of a column's filter menu: the texts its cells show, with their values and number of
+ * rows. For a text field and a lookup column (ColumnConfig.editor - a number field too, its cells show
+ * text labels); null for the rest.
+ * @param availableOnly "Only values in filtered rows": only the rows the other filters let through
+ * @param searchInput the search text: only the texts with it in them, ignoring case. `*` and `%` are
+ * left out, they are no wildcards here
+ */
+export function dropDownFilterData(
+    ctx: Grid,
+    attribute: string,
+    availableOnly: boolean,
+    searchInput: string | null
+): ValueListData | null {
+    const datasource = ctx.gridInterface.getDatasource();
+    const { type } = datasource.getField(attribute);
+
+    if (type !== 'text' && !ctx.gridInterface.__getLookupColumn(attribute)) {
         return null;
     }
 
@@ -38,118 +89,55 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
 
     // rows the column's own conditions let through, null when it has none (all checked)
     const passingOwn = own.length ? new Set(filter.filter(data, and(...own), datasource)) : null;
-    const checkedValues = new Set();
 
-    const length = data.length;
-    let haveNull = false;
-    const search = searchInput?.replaceAll('%', '').replaceAll('*', '');
+    const textOf = cellTextOf(ctx, attribute);
+    const formatter = datasource.getFormatter(attribute);
 
     /**
-     * how many rows each distinct value has. Counted for every row, also the ones past the
-     * DROPDOWN_FILTER_MAX_ROWS cap, so the numbers are only shown when nothing was cut off.
+     * The entries by the key `IN` compares a value as (inListKey), and by their text in upper case. A
+     * value is keyed first: its rows are in one entry, whatever text another row of it shows - an entry
+     * never splits values the `IN` it applies can not tell apart. The text is read once per value
      */
-    const counts = new Map<any, number>();
+    const byValue = new Map<string, ValueListEntry>();
+    const byText = new Map<string, ValueListEntry>();
+    const checked = new Set<ValueListEntry>();
 
-    /**
-     * set when a value had to be dropped because the cap was reached.
-     * The list size cannot be used to detect this - the cap stops the set at exactly
-     * DROPDOWN_FILTER_MAX_ROWS, so "size > max" was only ever true when a blank pushed it
-     * one over.
-     */
-    let truncated = false;
-
-    const addValue = (value: any, row: any) => {
-        counts.set(value, (counts.get(value) || 0) + 1);
-        if (dataFilterSet.size < DROPDOWN_FILTER_MAX_ROWS || dataFilterSet.has(value)) {
-            dataFilterSet.add(value);
-        } else {
-            truncated = true;
+    for (const row of data) {
+        const value = row[attribute];
+        const key = inListKey(value, type, formatter);
+        let entry = byValue.get(key);
+        if (!entry) {
+            const text = key === 'NULL' ? '' : textOf(row).text;
+            // '' is the blank entry
+            const textKey = text.toUpperCase();
+            entry = byText.get(textKey);
+            if (!entry) {
+                entry = { text, blank: text === '', values: [], count: 0 };
+                byText.set(textKey, entry);
+            }
+            entry.values.push(key === 'NULL' ? 'NULL' : value);
+            byValue.set(key, entry);
         }
+        entry.count++;
         if (!passingOwn || passingOwn.has(row)) {
-            checkedValues.add(value);
-        }
-    };
-
-    for (let i = 0; i < length; i++) {
-        // blank as IN takes it: a false is a value, listed as one (it was under "Blank", and the IN
-        // of the list then left its rows out)
-        if (data[i] && !isInListBlank(data[i][attribute])) {
-            if (typeof data[i][attribute] === 'string') {
-                if (search) {
-                    if (data[i][attribute].toLocaleUpperCase().indexOf(search.toLocaleUpperCase()) !== -1) {
-                        addValue(data[i][attribute].toLocaleUpperCase(), data[i]);
-                    }
-                } else {
-                    addValue(data[i][attribute].toLocaleUpperCase(), data[i]);
-                }
-            }
-            if (typeof data[i][attribute] === 'number') {
-                if (search) {
-                    if (data[i][attribute].toString().indexOf(search) !== -1) {
-                        addValue(data[i][attribute], data[i]);
-                    }
-                } else {
-                    addValue(data[i][attribute], data[i]);
-                }
-            }
-            if (typeof data[i][attribute] === 'boolean') {
-                if (search) {
-                    if (data[i][attribute].toString().indexOf(search) !== -1) {
-                        addValue(data[i][attribute], data[i]);
-                    }
-                } else {
-                    addValue(data[i][attribute], data[i]);
-                }
-            }
-
-            if (data[i][attribute] && typeof data[i][attribute] === 'object') {
-                if (search) {
-                    if (data[i][attribute].toISOString().indexOf(search) !== -1) {
-                        addValue(data[i][attribute], data[i]);
-                    }
-                } else {
-                    addValue(data[i][attribute].toISOString(), data[i]);
-                }
-            }
-        } else {
-            haveNull = true;
-            counts.set('NULL', (counts.get('NULL') || 0) + 1);
-            if (!passingOwn || passingOwn.has(data[i])) {
-                checkedValues.add('NULL');
-            }
+            checked.add(entry);
         }
     }
 
-    if (haveNull) {
-        dataFilterSet.add('NULL'); // null so we can get the blanks
-    }
-
-    const tempArray = Array.from(dataFilterSet).sort();
-
-    if (haveNull) {
-        tempArray.unshift('NULL'); // null so we can get the blanks
-    }
-
-    const dataFilterSetFull = new Set(tempArray);
-
-    // the column's current selection: the listed values its own conditions let through
-    const selectAll = !passingOwn;
-    if (passingOwn) {
-        dataFilterSet = new Set(tempArray.filter((value) => checkedValues.has(value)));
-    }
-
-    // "Only values in filtered rows" only changes the list when other columns hide rows
-    const enableAvailableOnlyOption = availableRows.length !== allData.length;
+    const search = (searchInput ?? '').replaceAll('%', '').replaceAll('*', '').toLocaleUpperCase();
+    const found = Array.from(byText.values())
+        .filter((entry) => !entry.blank && entry.text.toLocaleUpperCase().includes(search))
+        .sort((a, b) => a.text.localeCompare(b.text));
+    const blank = byText.get('');
+    const entries = [...(blank && !search ? [blank] : []), ...found.slice(0, DROPDOWN_FILTER_MAX_ROWS)];
 
     return {
-        enableAvailableOnlyOption,
-        dataFilterSet,
-        dataFilterSetFull,
-        selectAll,
-        /** true when values were dropped because of the DROPDOWN_FILTER_MAX_ROWS cap */
-        truncated,
-        /** rows per distinct value, only meaningful when nothing was truncated */
-        counts
+        // "Only values in filtered rows" only changes the list when other columns hide rows
+        enableAvailableOnlyOption: availableRows.length !== allData.length,
+        entries,
+        checked: new Set(entries.filter((entry) => checked.has(entry))),
+        truncated: found.length > DROPDOWN_FILTER_MAX_ROWS,
+        searched: search !== ''
     };
 }
 
