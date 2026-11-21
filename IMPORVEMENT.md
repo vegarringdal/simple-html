@@ -1528,6 +1528,19 @@ in the console. All passed. Found and fixed:
   popover); the top-level menu has no name; the filter editor's pickers, the column chooser and the date
   picker are still mouse-only
 
+### The row menu's undo entries in a submenu (user request)
+
+* the user, after the submenus: "maybe undo/redo should be own section too". The five entries
+  (undo, redo, undo cell edit, undo row edits for the row and the selected rows) are the submenu
+  `row.edit` "Undo / Redo ›", first in the menu - the id the old section header had, so a hook filtering on
+  `row.edit` hides the lot as before. The line under them (`row.edit.separator`, new in the submenu work)
+  is gone. Hidden in a readonly grid with its entries
+* the row menu is 9 rows (38 before the submenus); Shift+F10 focuses Undo / Redo ›, ArrowRight goes into
+  it and its first item (greyed out with nothing to undo, still focusable)
+* tests: undoRedo.test.ts (the entries through the submenu, the submenu first), gridMenus.test.ts (the
+  top level, Shift+F10 then ArrowRight / Esc); browser submenu-check.js 38/38 (copy before:
+  submenu-check.js.before-undo-submenu), menus-regression-check.js 25/25
+
 ## Considered, not done
 
 ## Candidates / not started

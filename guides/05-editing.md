@@ -380,12 +380,11 @@ again. In the grid the user has them too:
   every key to the row as it is typed, so what was typed in the cell is the last step of the history;
   once the typing is undone back to the value the cell started with, or the focus left the cell,
   Ctrl+Z undoes the history.
-- The row menu (right click a cell) starts with *Undo (Ctrl+Z)* and *Redo (Ctrl+Y)*, greyed out
-  when there is nothing to undo or redo, and the reverts, see
-  [Reverting a cell or a row](#reverting-a-cell-or-a-row): not in a submenu, a line under them. The ids
-  are `row.edit.undo`, `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow`,
-  `row.edit.revertRows` and the line `row.edit.separator`, change or hide them with the
-  [menus hook](10-menus.md).
+- The row menu (right click a cell) starts with the submenu *Undo / Redo ›*: *Undo last change
+  (Ctrl+Z)* and *Redo (Ctrl+Y)*, greyed out when there is nothing to undo or redo, and the reverts, see
+  [Reverting a cell or a row](#reverting-a-cell-or-a-row). The ids are `row.edit` (the submenu),
+  `row.edit.undo`, `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow` and
+  `row.edit.revertRows`, change or hide them with the [menus hook](10-menus.md).
 
 ```ts
 const row = datasource.getDataRows()[0];
@@ -469,7 +468,7 @@ datasource.resetRows(datasource.getSelectedRows());
 - The fields are validated as for an edit.
 - A field that is not edited (`getChanges()` would not list it) is left as it is.
 
-In an editable grid the row menu (right click a cell) starts with the edit entries, not in a submenu:
+In an editable grid the row menu (right click a cell) starts with the submenu *Undo / Redo ›*:
 *Undo last change* (Ctrl+Z) and *Redo* (Ctrl+Y) go through the undo history; *Undo cell edit* puts
 the original value of the cell right clicked back, greyed out while it is not edited - a click on the
 marker of an edited cell does the same, see [Showing the row state](#showing-the-row-state);

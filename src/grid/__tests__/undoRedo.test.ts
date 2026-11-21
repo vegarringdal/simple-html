@@ -276,38 +276,36 @@ describe('undo and redo - the keys in a cell', () => {
 });
 
 describe('undo and redo - the row menu', () => {
-    // the items, not in a submenu, and the line under them
-    const EDIT_IDS = [
-        'row.edit.undo',
-        'row.edit.redo',
-        'row.edit.revertCell',
-        'row.edit.revertRow',
-        'row.edit.revertRows',
-        'row.edit.separator'
-    ];
+    // the items of the Undo / Redo submenu, first in the menu
+    const EDIT_IDS = ['row.edit.undo', 'row.edit.redo', 'row.edit.revertCell', 'row.edit.revertRow', 'row.edit.revertRows'];
 
-    const entry = (id: string) => document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`) as HTMLElement;
+    // the entry, its submenu opened on the way
+    const entry = (id: string) => menuEntry(id);
     const isDisabled = (id: string) => entry(id).classList.contains('simple-html-grid-menu-item-disabled');
     const label = (id: string) => entry(id).textContent?.replace(/\s+/g, ' ').trim();
-    const shownEditIds = () =>
-        Array.from(document.querySelectorAll('.simple-html-grid-menu [data-menu-id]'))
+    // the ids of the Undo / Redo submenu and what is in it, the submenu opened
+    const shownEditIds = () => {
+        menuEntry('row.edit')?.click();
+        return Array.from(document.querySelectorAll('.simple-html-grid-menu [data-menu-id]'))
             .map((el) => el.getAttribute('data-menu-id') ?? '')
             .filter((id) => id.startsWith('row.edit'));
+    };
 
     it('expect the edit entries in an editable grid, greyed out with nothing to do', async () => {
         const { element } = await mountGrid(editable(), data(), simpleFields());
 
         openRowMenu(element, 'firstname', 0);
 
-        expect(shownEditIds()).toEqual(EDIT_IDS);
-        expect(EDIT_IDS.slice(0, -1).map(label)).toEqual([
+        expect(shownEditIds()).toEqual(['row.edit', ...EDIT_IDS]);
+        expect(label('row.edit')).toMatch(/^Undo \/ Redo/);
+        expect(EDIT_IDS.map(label)).toEqual([
             'Undo last change (Ctrl+Z)',
             'Redo (Ctrl+Y)',
             'Undo cell edit',
             'Undo row edits',
             'Undo row edits (selected rows)'
         ]);
-        expect(EDIT_IDS.slice(0, -1).map(isDisabled)).toEqual([true, true, true, true, true]);
+        expect(EDIT_IDS.map(isDisabled)).toEqual([true, true, true, true, true]);
     });
 
     it('expect no edit entries in a readonly grid', async () => {
@@ -379,15 +377,14 @@ describe('undo and redo - the row menu', () => {
         expect(second.__rowState).toEqual('D');
     });
 
-    it('expect the edit entries first in the menu, not in a submenu', async () => {
+    it('expect the Undo / Redo submenu first in the menu', async () => {
         const { element } = await mountGrid(editable(), data(), simpleFields());
 
         openRowMenu(element, 'firstname', 0);
 
-        const ids = Array.from(document.querySelectorAll('.simple-html-grid-menu [data-menu-id]')).map((el) =>
-            el.getAttribute('data-menu-id')
-        );
-        expect(ids.slice(0, EDIT_IDS.length)).toEqual(EDIT_IDS);
+        const first = document.querySelector('.simple-html-grid-menu [data-menu-id]');
+        expect(first?.getAttribute('data-menu-id')).toEqual('row.edit');
+        expect(first?.getAttribute('aria-haspopup')).toEqual('menu');
     });
 
     it('expect undo row edits to revert the row right clicked, without selecting it, as one step', async () => {

@@ -97,9 +97,8 @@ function rowMenuEntries(
     const text = (id: TextId) => gridText(ctx, id);
 
     return [
-        // first, not in a submenu: in an editable grid, taking an edit back is what the menu is opened
-        // for most
-        ...editEntries(ctx, attribute, rowData),
+        // first: in an editable grid, taking an edit back is what the menu is opened for most
+        editSubmenu(ctx, attribute, rowData),
         { type: 'submenu', id: 'row.copy', label: text('row.copy'), entries: copyEntries(ctx, eventData) },
         {
             type: 'submenu',
@@ -275,16 +274,15 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
 }
 
 /**
- * Undo, redo and revert: the undo history of the datasource, and putting the original values back -
- * of the clicked cell, the clicked row (no selection needed: a click in a cell does not select its
- * row), or the selected rows. Only in an editable grid, at the top of the menu and not in a submenu,
- * a line under them.
+ * The Undo submenu: the undo history of the datasource (undo, redo), and putting the original values
+ * back - of the clicked cell, the clicked row (no selection needed: a click in a cell does not select
+ * its row), or the selected rows. Only in an editable grid, first in the menu.
  *
  * A revert puts values back, so like the delete's undo it is not stopped by readonly cells or rows:
  * readonly is about typing new values. The values are set from code, the grid renders the cells again
  * after - undo and redo send history-changed, the grid follows that
  */
-function editEntries(ctx: Grid, attribute: string, rowData: Entity): MenuEntry[] {
+function editSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
     const datasource = gridInterface.getDatasource();
     const editable = () => !gridInterface.__getGridConfig().readonly;
@@ -293,56 +291,61 @@ function editEntries(ctx: Grid, attribute: string, rowData: Entity): MenuEntry[]
     const toRevert = () =>
         datasource.getSelectedRows().filter((row) => row.__controller?.__edited || row.__controller?.__isDeleted);
 
-    return [
-        {
-            id: 'row.edit.undo',
-            label: gridText(ctx, 'row.edit.undo'),
-            hint: gridText(ctx, 'row.edit.undo.hint'),
-            visible: editable,
-            disabled: () => !datasource.canUndo(),
-            action: () => datasource.undo()
-        },
-        {
-            id: 'row.edit.redo',
-            label: gridText(ctx, 'row.edit.redo'),
-            hint: gridText(ctx, 'row.edit.redo.hint'),
-            visible: editable,
-            disabled: () => !datasource.canRedo(),
-            action: () => datasource.redo()
-        },
-        {
-            id: 'row.edit.revertCell',
-            label: gridText(ctx, 'row.edit.revertCell'),
-            visible: editable,
-            disabled: () => !rowData.__controller?.__editedProps[attribute],
-            action: () => {
-                datasource.resetField(rowData, attribute);
-                triggerScrollEvent(ctx);
+    return {
+        type: 'submenu',
+        id: 'row.edit',
+        label: gridText(ctx, 'row.edit'),
+        visible: editable,
+        entries: [
+            {
+                id: 'row.edit.undo',
+                label: gridText(ctx, 'row.edit.undo'),
+                hint: gridText(ctx, 'row.edit.undo.hint'),
+                visible: editable,
+                disabled: () => !datasource.canUndo(),
+                action: () => datasource.undo()
+            },
+            {
+                id: 'row.edit.redo',
+                label: gridText(ctx, 'row.edit.redo'),
+                hint: gridText(ctx, 'row.edit.redo.hint'),
+                visible: editable,
+                disabled: () => !datasource.canRedo(),
+                action: () => datasource.redo()
+            },
+            {
+                id: 'row.edit.revertCell',
+                label: gridText(ctx, 'row.edit.revertCell'),
+                visible: editable,
+                disabled: () => !rowData.__controller?.__editedProps[attribute],
+                action: () => {
+                    datasource.resetField(rowData, attribute);
+                    triggerScrollEvent(ctx);
+                }
+            },
+            {
+                id: 'row.edit.revertRow',
+                label: gridText(ctx, 'row.edit.revertRow'),
+                visible: editable,
+                disabled: () => !rowData.__controller?.__edited && !rowData.__controller?.__isDeleted,
+                action: () => {
+                    datasource.resetRows(rowData);
+                    triggerScrollEvent(ctx);
+                }
+            },
+            {
+                id: 'row.edit.revertRows',
+                label: gridText(ctx, 'row.edit.revertRows'),
+                hint: gridText(ctx, 'row.edit.revertRows.hint'),
+                visible: editable,
+                disabled: () => toRevert().length === 0,
+                action: () => {
+                    datasource.resetRows(toRevert());
+                    triggerScrollEvent(ctx);
+                }
             }
-        },
-        {
-            id: 'row.edit.revertRow',
-            label: gridText(ctx, 'row.edit.revertRow'),
-            visible: editable,
-            disabled: () => !rowData.__controller?.__edited && !rowData.__controller?.__isDeleted,
-            action: () => {
-                datasource.resetRows(rowData);
-                triggerScrollEvent(ctx);
-            }
-        },
-        {
-            id: 'row.edit.revertRows',
-            label: gridText(ctx, 'row.edit.revertRows'),
-            hint: gridText(ctx, 'row.edit.revertRows.hint'),
-            visible: editable,
-            disabled: () => toRevert().length === 0,
-            action: () => {
-                datasource.resetRows(toRevert());
-                triggerScrollEvent(ctx);
-            }
-        },
-        { type: 'separator', id: 'row.edit.separator', visible: editable }
-    ];
+        ]
+    };
 }
 
 /**

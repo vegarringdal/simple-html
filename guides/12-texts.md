@@ -216,6 +216,7 @@ Right click on a cell.
 | `row.delete.rows.hint` | `selected rows` | its hint |
 | `row.delete.undo` | `Undo` | takes the mark off the selected rows |
 | `row.delete.undo.hint` | `selected rows` | its hint |
+| `row.edit` | `Undo / Redo` | the row menu's submenu of undo, redo and the reverts, in an editable grid |
 | `row.edit.undo` | `Undo last change` | undoes the last step of the undo history |
 | `row.edit.undo.hint` | `Ctrl+Z` | its hint, the key |
 | `row.edit.redo` | `Redo` | redoes the last step undone |

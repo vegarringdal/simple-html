@@ -373,19 +373,14 @@ export interface GridMenus {
  *
  * ```text
  * row menu                          header menu                     filter menu
- * Undo last change (Ctrl+Z)         Pin ›                           Clear Filter
- * Redo (Ctrl+Y)                     Hide column                     Clear All Filters
- * Undo cell edit                    Remove sorting                  ----
- * Undo row edits                    ----                            Blank ›
- * Undo row edits (selected rows)    Column chooser…                 Operator ›
- * ----                              Size ›                          ----
- * Copy ›                            Aggregate ›                     Advanced Filter…
- * Paste ›                           Grouping ›                      Search: the value list
- * Clear ›
- * Delete ›
- * Filter ›
- * View ›
- * Size ›
+ * Undo / Redo ›                     Pin ›                           Clear Filter
+ * Copy ›                            Hide column                     Clear All Filters
+ * Paste ›                           Remove sorting                  ----
+ * Clear ›                           ----                            Blank ›
+ * Delete ›                          Column chooser…                 Operator ›
+ * Filter ›                          Size ›                          ----
+ * View ›                            Aggregate ›                     Advanced Filter…
+ * Size ›                            Grouping ›                      Search: the value list
  * Export ›
  * ```
  *
@@ -393,12 +388,12 @@ export interface GridMenus {
  *
  * | id | shown as | shown when |
  * | --- | --- | --- |
+ * | `row.edit` | Undo / Redo › - a submenu, first in the menu | the grid is editable |
  * | `row.edit.undo` | Undo last change (Ctrl+Z) - `datasource.undo()`, the last edit, paste, clear, delete or revert. Greyed out when there is nothing to undo | the grid is editable |
  * | `row.edit.redo` | Redo (Ctrl+Y) - `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
  * | `row.edit.revertCell` | Undo cell edit - the cell's original value (`datasource.resetField()`). Greyed out when the cell is not edited | the grid is editable |
  * | `row.edit.revertRow` | Undo row edits - the row right clicked back to its original values, unmarked for deletion (`datasource.resetRows(row)`), no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
  * | `row.edit.revertRows` | Undo row edits (selected rows) - the selected rows back, unmarked for deletion (`datasource.resetRows()`). Greyed out when no selected row is edited or marked | the grid is editable |
- * | `row.edit.separator` | a line | the grid is editable |
  * | `row.copy` | Copy › - a submenu | |
  * | `row.copy.cell` | Cell Value | |
  * | `row.copy.column` | Column (selected rows) | |
@@ -499,12 +494,12 @@ export interface GridMenus {
 export const MENU_IDS = {
     /** the row menu's ids, right click on a cell */
     row: [
+        'row.edit',
         'row.edit.undo',
         'row.edit.redo',
         'row.edit.revertCell',
         'row.edit.revertRow',
         'row.edit.revertRows',
-        'row.edit.separator',
         'row.copy',
         'row.copy.cell',
         'row.copy.column',

@@ -38,6 +38,7 @@ const norwegian: Record<TextId, string> = {
     'row.delete.rows.hint': 'valgte rader',
     'row.delete.undo': 'Angre',
     'row.delete.undo.hint': 'valgte rader',
+    'row.edit': 'Angre / Gjør om',
     'row.edit.undo': 'Angre siste endring',
     'row.edit.undo.hint': 'Ctrl+Z',
     'row.edit.redo': 'Gjør om',

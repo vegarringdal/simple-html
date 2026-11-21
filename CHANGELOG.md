@@ -1332,6 +1332,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The row menu's undo entries in a submenu of their own (user request)
+
+##### ⚠️ Breaking changes
+- Undo last change, Redo, Undo cell edit and the two Undo row edits are in the submenu **Undo / Redo ›**
+  (`row.edit`, text `row.edit` "Undo / Redo"), first in the row menu, instead of five items and a line at
+  its top: the row menu is 9 rows. The entries keep their ids; the line `row.edit.separator` is gone.
+
 #### Fill down: Ctrl+D and the fill handle (item 34)
 
 ##### Added

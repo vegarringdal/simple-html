@@ -37,6 +37,8 @@ const DEFAULTS = {
     'row.delete.rows.hint': 'selected rows',
     'row.delete.undo': 'Undo',
     'row.delete.undo.hint': 'selected rows',
+    // the Undo submenu of the row menu, in an editable grid
+    'row.edit': 'Undo / Redo',
     'row.edit.undo': 'Undo last change',
     'row.edit.undo.hint': 'Ctrl+Z',
     'row.edit.redo': 'Redo',

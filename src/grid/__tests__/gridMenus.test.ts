@@ -1043,14 +1043,9 @@ describe('menus - the default menus, short', () => {
 
         openRowMenu(element, 'age', 0);
 
-        // no submenu open: what the menu itself shows, 15 rows - 35 before the submenus
+        // no submenu open: what the menu itself shows, 9 rows - 35 before the submenus
         expect(shownIds()).toEqual([
-            'row.edit.undo',
-            'row.edit.redo',
-            'row.edit.revertCell',
-            'row.edit.revertRow',
-            'row.edit.revertRows',
-            'row.edit.separator',
+            'row.edit',
             'row.copy',
             'row.paste',
             'row.clear',
@@ -1505,11 +1500,16 @@ describe('menus - the keyboard', () => {
         press(cell, 'F10', { shiftKey: true });
         openRowMenu(grid, 'age', 0);
 
-        // nothing to undo: greyed out, but the keyboard gets to it (the ARIA menu pattern)
+        // the Undo / Redo submenu first; in it, with nothing to undo, a greyed out item the keyboard
+        // gets to (the ARIA menu pattern)
+        expect(focusedId()).toEqual('row.edit');
+        press(document.activeElement as HTMLElement, 'ArrowRight');
         expect(focusedId()).toEqual('row.edit.undo');
         expect(document.activeElement?.getAttribute('aria-disabled')).toEqual('true');
         expect((document.activeElement as HTMLElement).tabIndex).toEqual(0);
 
+        press(document.activeElement as HTMLElement, 'Escape');
+        expect(focusedId()).toEqual('row.edit');
         press(document.activeElement as HTMLElement, 'Escape');
         expect(menuOpen()).toBe(false);
         expect(document.activeElement).toBe(cell);
