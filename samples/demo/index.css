@@ -135,6 +135,30 @@ body {
     color: var(--demo-side-strong);
 }
 
+/* the branch and the commit the site is built from */
+.sidebar-build {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--demo-side-muted);
+    overflow-wrap: anywhere;
+}
+
+.sidebar-build a {
+    color: var(--demo-accent);
+    text-decoration: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+.sidebar-build a:hover {
+    text-decoration: underline;
+}
+
+.doc-status .sidebar-build {
+    display: inline;
+    margin: 0;
+    font-size: inherit;
+}
+
 .sidebar-sub {
     margin-top: 2px;
     font-size: 11px;

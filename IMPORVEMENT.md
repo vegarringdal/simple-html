@@ -1393,6 +1393,19 @@ in the console. All passed. Found and fixed:
   right, Min from the header menu adds a line), the other twelve scripts, excel-check (its group step
   reads the groups from the API now) and openpyxl on the six files
 
+### Docs site: the work in progress page and the build line (user request)
+
+* the sidebar's header says what the site is built from: `v6_maybe @ <commit>` linked to the commit on
+  github, its date, "local changes" for a local build of files not all committed. In the github action
+  its variables say it (GITHUB_REF_NAME, GITHUB_SHA: the action checks out the commit alone); a user or
+  token in the remote's url is left out (the page is public)
+* "Status: Work in progress" first in the sidebar (the start page stays the first guide): the plan's
+  "Now:" line, its open `[ ]` items by phase (an item moved elsewhere left out), and the "Candidates /
+  not started" section of this file - made when the site is built (`docs:status`,
+  scripts/site/status.js), so it is never behind
+* tests: status.test.ts (the plan parsing, the section, the links, the remote url, git and the action's
+  variables, no git), site.test.ts (the build line and the page in the built site)
+
 ## Considered, not done
 
 ## Candidates / not started

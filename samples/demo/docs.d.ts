@@ -44,3 +44,28 @@ declare module 'docs:api' {
     const api: { symbols: ApiSymbol[] };
     export default api;
 }
+
+/** what the site is built from, and the work in progress page (scripts/site/status.js) */
+declare module 'docs:status' {
+    export interface BuildInfo {
+        /** the branch, 'unknown' when git could not say */
+        branch: string;
+        /** the short hash of the commit */
+        commit: string;
+        sha: string;
+        /** the commit's date, ISO */
+        date: string;
+        /** built from files that were not all committed (a local build) */
+        localChanges: boolean;
+        /** the commit on github, '' when unknown */
+        url: string;
+    }
+    const status: {
+        build: BuildInfo;
+        /** the "Now:" line of V6_PLAN.md */
+        now: string;
+        /** the open items of the plan and the known issues, as html */
+        html: string;
+    };
+    export default status;
+}

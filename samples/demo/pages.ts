@@ -1,5 +1,6 @@
 import api, { type ApiMember, type ApiSymbol } from 'docs:api';
 import type { Guide } from 'docs:guides';
+import type { BuildInfo } from 'docs:status';
 import { highlightTs } from './highlight';
 import { SAMPLES, type Sample } from './sampleList';
 
@@ -136,6 +137,68 @@ export function renderGuidePage(main: HTMLElement, guide: Guide) {
     doc.insertAdjacentHTML('beforeend', guide.html);
     highlightCodeBlocks(doc);
     doc.querySelectorAll<HTMLElement>('.doc-sample').forEach(renderSampleBlock);
+}
+
+// ------------------------------------------------------------------ status
+
+/**
+ * The date of a commit as the page shows it, `2026-11-21 17:50`; '' for no date
+ */
+function commitDate(iso: string) {
+    return iso ? iso.slice(0, 16).replace('T', ' ') : '';
+}
+
+/**
+ * What the site is built from, for the top of the sidebar: `v6_maybe @ b577f41`, the commit linked on
+ * github, and its date - "local changes" when it was built from files that were not all committed
+ */
+export function buildLine(build: BuildInfo): HTMLElement {
+    const line = document.createElement('div');
+    line.className = 'sidebar-build';
+    const label = `${build.branch} @ ${build.commit}`;
+    if (build.url) {
+        const link = document.createElement('a');
+        link.href = build.url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = label;
+        line.appendChild(link);
+    } else {
+        line.append(label);
+    }
+    const date = commitDate(build.date);
+    line.append(date ? ` · ${date}` : '');
+    if (build.localChanges) {
+        line.append(' · local changes');
+    }
+    line.title = 'the branch and the commit the site is built from';
+    return line;
+}
+
+/**
+ * The work in progress page: what the site is built from, what the plan is on now, the open items
+ * of the plan and the known issues (made when the site is built, scripts/site/status.js)
+ */
+export function renderStatusPage(main: HTMLElement, status: { build: BuildInfo; now: string; html: string }) {
+    const doc = article(main, 'Work in progress');
+    const intro = document.createElement('p');
+    intro.className = 'doc-status';
+    intro.append('Built from ', buildLine(status.build), '. Made from the repo when the site is built: ');
+    const code = (text: string) => {
+        const el = document.createElement('code');
+        el.textContent = text;
+        return el;
+    };
+    intro.append(code('V6_PLAN.md'), ' and ', code('IMPORVEMENT.md'), '.');
+    doc.appendChild(intro);
+    if (status.now) {
+        const now = document.createElement('p');
+        now.innerHTML = '<strong>Now:</strong> ';
+        now.append(status.now);
+        doc.appendChild(now);
+    }
+    doc.insertAdjacentHTML('beforeend', status.html);
+    highlightCodeBlocks(doc);
 }
 
 // ------------------------------------------------------------------ API
