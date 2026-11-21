@@ -1024,6 +1024,28 @@ in the console. All passed. Found and fixed:
   expect the label.
 * the docs site (and the dev server) had no favicon, every page load logged a 404. An inline svg icon.
 
+#### Step 3 - theming (item 25)
+
+* every colour is a variable (17 were written in the css: scrollbar shadows, the readonly/required
+  stripes, menu/dialog/tooltip shadows, the backdrop, the warning/danger reds), names kept, light
+  colours unchanged - screenshots before/after in Chromium are pixel-identical except focused elements
+* dark mode is `light-dark()` in each variable, so the grid follows the page's `color-scheme`. Set it
+  on :root/body: menus, tooltips and the filter editor live on the body. The demo's hand-made dark
+  overrides (DARK_WIDGET_CSS) are gone, its toggle sets `body.dark { color-scheme: dark }`. Dark
+  colours from the demo's, lightened where contrast was under 4.5:1 (secondary text, errors, rows)
+* focus: one generic `:focus-visible` inset outline (inset, the cells are in overflow-hidden parents);
+  a checkbox cell puts it on the cell with `:has()`. The old dashed `:focus` border is gone
+* fixed: the resize handle (z-index 8) sat under the filter input (z-index 1000) in the column's
+  stacking context, only the top half could be grabbed - now 1001, drop zones 1002. The global
+  `input { z-index; pointer-events }` rule is scoped to the grid
+* "two stacked .simple-html-label elements": not a bug - the label cell and its inner text div share
+  the class name, a click lands in the right cell. Left as is
+* `src/__tests__/theme.test.ts` reads the css: no literal colour outside the theme rules, every var()
+  defined, every light value the pre-v6 colour, the input < resize handle < drop zone order
+* not done (kept light pixel-identical): a few light colours under AA (secondary text 3.0:1, week
+  numbers 3.4:1, row numbers at 50% opacity); the date picker's generic class names (`.main`, `.side`
+  ...) clash with page css (the demo's `.main`)
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

@@ -1,97 +1,15 @@
 /**
- * light/dark theme helper for the demo shell + grid/date widgets
- * grid/date theming is plain css variables, so dark mode is just a style tag
+ * light/dark theme of the demo: the dark class on the body.
+ * index.css has `body.dark { color-scheme: dark }` and the demo shell's own dark colours. The grid
+ * and the date picker need nothing more: every colour of grid.css and date.css is
+ * light-dark(<light>, <dark>), so they follow the color-scheme. On the body and not on the grid's
+ * container: the menus, the tooltips and the filter editor are put on the body (see the theming guide)
  */
 
-const STYLE_ID = 'demo-dark-widgets';
 const STORAGE_KEY = 'simple-html-demo-theme';
-
-const DARK_WIDGET_CSS = `
-    body,
-    .simple-html-grid-menu,
-    .simple-html-grid {
-        --simple-html-grid-main-bg-color: #374151;
-        --simple-html-grid-sec-bg-color: #4b5563;
-        --simple-html-grid-alt-bg-color: #4b5563;
-        --simple-html-grid-main-bg-border: #1f2937;
-        --simple-html-grid-main-bg-even: #59606a;
-        --simple-html-grid-main-bg-odd: #6b7178;
-        --simple-html-grid-sec-bg-border: #1f2937;
-        --simple-html-grid-pinned-border: #1f2937;
-        --simple-html-grid-grouping-border: #1f2937;
-        --simple-html-grid-main-bg-selected-odd: #234882;
-        --simple-html-grid-main-bg-selected-even: #274e8f;
-        --simple-html-grid-main-font-color: #f9f7f7;
-        --simple-html-grid-sec-font-color: #979494;
-        --simple-html-grid-dropzone-color: rgb(151, 148, 148, 0.4);
-        --simple-html-grid-boxshadow: #4b5563;
-        --simple-html-grid-main-hr-border: #4b5563;
-        /* the validation errors: a lighter red reads on the dark rows */
-        --simple-html-grid-error-color: #f87171;
-        --simple-html-grid-error-bg-color: rgba(248, 113, 113, 0.22);
-    }
-
-    .simple-html-grid ul.dialog-row {
-        box-shadow: none;
-    }
-
-    .simple-html-grid li.dialog-row {
-        border-left: 1px dotted rgb(100, 100, 100);
-    }
-
-    .simple-html-grid .grid-edit-button {
-        border-color: #374151;
-    }
-
-    .simple-html-grid .filter-dialog-bottom-row {
-        border-top: 0px;
-    }
-
-    .simple-html-grid .filter-dialog-bottom-row button {
-        border: 1px solid #515458;
-    }
-
-    .simple-html-grid-header input::placeholder {
-        filter: opacity(0.4);
-    }
-
-    /* the row state class is on the element around the row number */
-    .row-is-modified .simple-html-selector-text {
-        color: #9595f1;
-    }
-
-    .row-is-new .simple-html-selector-text {
-        color: #5ff95f;
-    }
-
-    .row-is-deleted .simple-html-selector-text {
-        color: red;
-    }
-
-    body,
-    .simple-html-date {
-        --simple-html-date-main-bg-color: #374151;
-        --simple-html-date-main-color: #f9f7f7;
-        --simple-html-date-dimmed-color: #979494;
-        --simple-html-date-week-color: #8b8b8b;
-        --simple-html-date-header-bg-border: #8b8b8b;
-        --simple-html-date-main-bg-border: #979494;
-        --simple-html-date-main-bg-selected: #234882;
-    }
-`;
 
 export function applyTheme(dark: boolean) {
     document.body.classList.toggle('dark', dark);
-    const existing = document.getElementById(STYLE_ID);
-    if (dark && !existing) {
-        const style = document.createElement('style');
-        style.id = STYLE_ID;
-        style.appendChild(document.createTextNode(DARK_WIDGET_CSS));
-        document.head.appendChild(style);
-    }
-    if (!dark && existing) {
-        existing.parentElement!.removeChild(existing);
-    }
     localStorage.setItem(STORAGE_KEY, dark ? 'dark' : 'light');
 }
 

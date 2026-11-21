@@ -351,7 +351,7 @@ built on it.
         hand and cleaning up afterwards (where the v5 leaks came from). **M**
 24. [x] **Pointer events**: column resize and drag/drop listen to mouse events only. Pointer events
         make them work with touch and pen as well. **S-M**
-25. [ ] **Theming**: 21 CSS variables, but 17 colors are still hardcoded. Finish the variables,
+25. [x] **Theming**: 21 CSS variables, but 17 colors are still hardcoded. Finish the variables,
         document them, ship a dark theme (class and/or `prefers-color-scheme`). Fix the known
         glitches on the way: the resize handle half covered by the filter input, two labels
         stacked on top of each other, paste and clear both called "Cell (selected rows)". **S-M**

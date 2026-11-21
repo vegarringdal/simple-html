@@ -1,29 +1,79 @@
+/**
+ * The theme. Every colour of the grid, its menus, the column chooser, the filter editor and the
+ * tooltips is one of these variables - they are all elements with the simple-html-grid class, so an
+ * override on .simple-html-grid reaches every one of them. guides/13-theming.md has the list.
+ *
+ * Each colour is light-dark(<light>, <dark>): the grid follows the color-scheme of the page. No
+ * color-scheme (normal) or `light` gives the first, `color-scheme: dark` the second, and
+ * `color-scheme: light dark` the one of the OS setting. color-scheme is inherited, set it on :root or
+ * body: the menus, the tooltips and the filter editor are put on the body (or in the dialog or
+ * popover the grid is in), not in the grid's container.
+ */
 .simple-html-grid {
     text-align: initial;
-    --simple-html-grid-main-bg-color: #f5f5f5;
-    --simple-html-grid-sec-bg-color: #ffffff;
-    --simple-html-grid-alt-bg-color: #ffffff;
-    --simple-html-grid-main-bg-border: #e6e5e5;
-    --simple-html-grid-pinned-border: #d1d0d0;
-    --simple-html-grid-sec-bg-border: #e6e5e5;
-    --simple-html-grid-main-bg-selected-odd: #bdd4e7;
-    --simple-html-grid-main-bg-selected-even: #afc7db;
-    --simple-html-grid-main-bg-even: #ffffff;
-    --simple-html-grid-main-bg-odd: #f7f7f7;
-    --simple-html-grid-main-font-color: #2e2d2d;
-    --simple-html-grid-sec-font-color: #979494;
-    --simple-html-grid-dropzone-color: rgba(129, 127, 127, 0.7);
-    --simple-html-grid-grouping-border: #c7c7c7;
-    --simple-html-grid-boxshadow: #fffdfd;
-    --simple-html-grid-main-hr-border: #ffffff;
+    /* the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor */
+    --simple-html-grid-main-bg-color: light-dark(#f5f5f5, #374151);
+    /* the filter row, the inputs and buttons of the filter editor, the filter chips, the tooltips */
+    --simple-html-grid-sec-bg-color: light-dark(#ffffff, #4b5563);
+    /* scrollbar tracks, the search input of the column chooser, the focus button of a cell */
+    --simple-html-grid-alt-bg-color: light-dark(#ffffff, #4b5563);
+    /* the lines between cells, rows and menu sections */
+    --simple-html-grid-main-bg-border: light-dark(#e6e5e5, #1f2937);
+    /* the lines at the pinned columns and under the header, frames of the dialog, the tooltips, the buttons */
+    --simple-html-grid-pinned-border: light-dark(#d1d0d0, #1f2937);
+    /* the line right of the grouping columns */
+    --simple-html-grid-sec-bg-border: light-dark(#e6e5e5, #1f2937);
+    /* selected rows (odd), a selected column's number, the selected menu item, scrollbar thumbs */
+    --simple-html-grid-main-bg-selected-odd: light-dark(#bdd4e7, #234882);
+    /* selected rows (even), hover in the menus and on the buttons */
+    --simple-html-grid-main-bg-selected-even: light-dark(#afc7db, #274e8f);
+    /* the rows, every other one */
+    --simple-html-grid-main-bg-even: light-dark(#ffffff, #4b5563);
+    --simple-html-grid-main-bg-odd: light-dark(#f7f7f7, #5a6370);
+    /* all text */
+    --simple-html-grid-main-font-color: light-dark(#2e2d2d, #f9f7f7);
+    /* placeholders, the "AND"/"OR" of the filter chips, the too many conditions box */
+    --simple-html-grid-sec-font-color: light-dark(#979494, #c8c8c8);
+    /* where a dragged column can go, the column resize handle under the pointer */
+    --simple-html-grid-dropzone-color: light-dark(rgba(129, 127, 127, 0.7), rgba(151, 148, 148, 0.4));
+    /* the inset shadow of labels, panels and the row selector */
+    --simple-html-grid-boxshadow: light-dark(#fffdfd, #4b5563);
+    /* not used by this css, kept so overrides of them still work */
+    --simple-html-grid-grouping-border: light-dark(#c7c7c7, #1f2937);
+    --simple-html-grid-main-hr-border: light-dark(#ffffff, #4b5563);
     /* a validation error: the border of the cell, the bar of the row selector */
-    --simple-html-grid-error-color: #dc2626;
+    --simple-html-grid-error-color: light-dark(#dc2626, #fca5a5);
     /* a validation error: laid over the background of the cell and the row selector */
-    --simple-html-grid-error-bg-color: rgba(220, 38, 38, 0.12);
+    --simple-html-grid-error-bg-color: light-dark(rgba(220, 38, 38, 0.12), rgba(248, 113, 113, 0.22));
+    /* the "too many values" warning of the filter menu's value list */
+    --simple-html-grid-warning-font-color: light-dark(red, #fca5a5);
+    /* the footer's clear filter button under the pointer: text, border */
+    --simple-html-grid-danger-font-color: light-dark(#c0392b, #fecaca);
+    --simple-html-grid-danger-border: light-dark(#d98282, #f87171);
+    /* the red stripes of a readonly cell in an editable grid (.simple-html-readonly), the same in dark */
+    --simple-html-grid-readonly-stripe-color: rgb(255, 0, 0);
+    /* the blue stripes of an empty required cell (.simple-html-mandatory) */
+    --simple-html-grid-required-stripe-color: light-dark(rgb(0, 8, 255), rgb(120, 140, 255));
+    /* between the stripes */
+    --simple-html-grid-stripe-bg-color: light-dark(rgb(255, 255, 255), transparent);
+    /* the outline of the element that has the keyboard focus */
+    --simple-html-grid-focus-color: light-dark(#005fcc, #b3d7ff);
+    /* shadows: the menus, the filter editor, the tooltips, the scrollbar thumbs. A plain colour is the
+       same in light and dark */
+    --simple-html-grid-menu-shadow-color: black;
+    --simple-html-grid-dialog-shadow-color: light-dark(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.6));
+    --simple-html-grid-tooltip-shadow-color: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.5));
+    --simple-html-grid-scrollbar-shadow-color: rgb(0 0 0 / 30%);
+    /* the layer over the page behind the filter editor */
+    --simple-html-grid-backdrop-color: light-dark(rgba(129, 127, 127, 0.2), rgba(0, 0, 0, 0.4));
 
+    /* the text: the cells, the menus, the filter editor */
     --simple-html-grid-font-size: 11px;
     --simple-html-grid-font-weight: 500;
+    /* the labels, the menu section headings, group rows, buttons */
     --simple-html-grid-font-weight-header: 700;
+    /* the menu items, the filter editor's title and captions (was used but never set: it inherited) */
+    --simple-html-grid-font-weight-cell: var(--simple-html-grid-font-weight);
     --simple-html-grid-font-family: 'Roboto', 'Helvetica', 'Arial', 'sans-serif';
     border: 0;
 
@@ -36,7 +86,6 @@
     overflow: hidden;
     display: block;
     position: relative;
-    outline-color: var(--simple-html-grid-main-bg-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight);
@@ -46,7 +95,9 @@
     box-sizing: border-box;
 }
 
-input {
+/* the inputs of the grid: over what else is in their cell. Only in the grid, it was every input of the
+ * page before v6 */
+.simple-html-grid input {
     z-index: 1000;
     pointer-events: all;
 }
@@ -364,7 +415,7 @@ input {
 .simple-html-grid-middle-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     background-color: var(--simple-html-grid-main-bg-selected-odd);
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
     z-index: 10;
 }
@@ -395,7 +446,7 @@ input {
 .simple-html-grid-body-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     background-color: var(--simple-html-grid-main-bg-selected-odd);
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
 .simple-html-grid-body-scroller::-webkit-scrollbar-track {
@@ -419,7 +470,7 @@ input {
 .simple-html-grid-header::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     background-color: var(--simple-html-grid-main-bg-selected-odd);
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
 .simple-html-grid-header::-webkit-scrollbar-track {
@@ -441,7 +492,7 @@ input {
 .simple-html-dialog-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
     background-color: var(--simple-html-grid-main-bg-selected-odd);
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
 .simple-html-dialog-scroller::-webkit-scrollbar-track {
@@ -628,11 +679,11 @@ input {
     filter: opacity(0.2);
     background-image: repeating-linear-gradient(
         -45deg,
-        rgb(255, 255, 255),
-        rgb(255, 0, 0) 1px,
-        rgb(255, 255, 255),
+        var(--simple-html-grid-stripe-bg-color),
+        var(--simple-html-grid-readonly-stripe-color) 1px,
+        var(--simple-html-grid-stripe-bg-color),
         1px,
-        rgb(255, 0, 0) 1px
+        var(--simple-html-grid-readonly-stripe-color) 1px
     );
 }
 
@@ -651,11 +702,11 @@ input {
     filter: opacity(0.2);
     background-image: repeating-linear-gradient(
         45deg,
-        rgb(255, 255, 255),
-        rgb(0, 8, 255) 1px,
-        rgb(255, 255, 255),
+        var(--simple-html-grid-stripe-bg-color),
+        var(--simple-html-grid-required-stripe-color) 1px,
+        var(--simple-html-grid-stripe-bg-color),
         1px,
-        rgb(0, 8, 255) 1px
+        var(--simple-html-grid-required-stripe-color) 1px
     );
 }
 
@@ -735,7 +786,7 @@ input {
     bottom: 0;
     left: 0;
     width: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 .simple-html-grid .dragdrop-state .simple-html-grid-drop-zone-left-panel {
@@ -757,7 +808,7 @@ input {
     bottom: 0;
     right: 0;
     width: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 /* 
@@ -770,7 +821,7 @@ input {
     left: 5px;
     right: 5px;
     height: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 /* 
@@ -783,7 +834,7 @@ input {
     left: 5px;
     right: 5px;
     height: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 /* 
@@ -796,19 +847,25 @@ input {
     left: 5px;
     right: 5px;
     bottom: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 .simple-html-selector-text {
     filter: opacity(0.5);
 }
 
+/**
+ * The column resize handle, the full height of a header column. A header column is a stacking
+ * context (it has a transform), in it: the filter input 1000 < the resize handle 1001 < the drop zones
+ * of the label cells 1002, which only have a size while a column is dragged. So the handle can be
+ * grabbed over the filter input too, and a column can still be dropped on the right edge of a label
+ */
 .simple-html-grid-col-resize {
     position: absolute;
     bottom: 0;
     right: 0;
     cursor: ew-resize;
-    z-index: 8;
+    z-index: 1001;
     top: 0;
     width: 10px;
     opacity: 0.2;
@@ -819,7 +876,7 @@ input {
     bottom: 0;
     left: 0;
     cursor: ew-resize;
-    z-index: 8;
+    z-index: 1001;
     top: 0;
     width: 10px;
     opacity: 0.2;
@@ -930,7 +987,6 @@ input {
 }
 
 .simple-html-grid input {
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
@@ -976,7 +1032,7 @@ input {
     flex-direction: column;
     position: relative;
     background-color: var(--simple-html-grid-main-bg-color);
-    box-shadow: 10px 5px 5px black;
+    box-shadow: 10px 5px 5px var(--simple-html-grid-menu-shadow-color);
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
@@ -999,7 +1055,6 @@ input {
     padding-right: 15px;
 
     transition: initial;
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 }
 
@@ -1022,7 +1077,6 @@ input {
     padding-left: 5px;
     padding-right: 15px;
     transition: initial;
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 
     border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
@@ -1113,7 +1167,7 @@ input {
 
 .simple-html-grid .simple-html-grid-menu .max-row-info-warning {
     padding: 2px;
-    color: red;
+    color: var(--simple-html-grid-warning-font-color);
     margin: auto;
     width: fit-content;
 }
@@ -1210,8 +1264,8 @@ input {
 }
 
 .simple-html-grid .footer-filter-clear:hover {
-    border-color: #d98282;
-    color: #c0392b;
+    border-color: var(--simple-html-grid-danger-border);
+    color: var(--simple-html-grid-danger-font-color);
 }
 
 .simple-html-grid .footer-filter-clear:active {
@@ -1326,7 +1380,7 @@ input {
     box-sizing: border-box;
     border: 1px solid var(--simple-html-grid-pinned-border);
     border-radius: 4px;
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+    box-shadow: 0 8px 26px var(--simple-html-grid-dialog-shadow-color);
 }
 
 /* the browser hides a dialog that is not open with display: none, .simple-html-grid would show it */
@@ -1334,9 +1388,10 @@ input {
     display: none;
 }
 
-/* the grey layer over the page behind the editor (was the .filter-editor-container element) */
+/* the grey layer over the page behind the editor (was the .filter-editor-container element).
+ * A ::backdrop inherits from its dialog (Chrome 122, Firefox 120, Safari 17.4), so it has the variables */
 .simple-html-grid.filter-editor-content::backdrop {
-    background: rgba(129, 127, 127, 0.2);
+    background: var(--simple-html-grid-backdrop-color);
 }
 
 /**
@@ -1578,7 +1633,7 @@ input {
     /* a line per message: the validation tooltips join them with a newline */
     white-space: pre-line;
     overflow: visible;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 2px 8px var(--simple-html-grid-tooltip-shadow-color);
     pointer-events: none;
 }
 
@@ -1607,7 +1662,6 @@ input {
     margin: 0px;
     filter: opacity(0.5);
     transition: initial;
-    outline-color: var(--simple-html-grid-main-bg-color);
 }
 
 /**
@@ -1637,11 +1691,9 @@ input {
 }
 
 /* the value field of a condition. In .grid-condition: the editor's menus and the date picker are in
- * the dialog too (see popoverParent), they keep their own look. Two classes, as before: the :focus
- * rules below still win */
+ * the dialog too (see popoverParent), they keep their own look. The focus outline is at the end */
 .filter-editor-content .grid-condition input {
     background-color: var(--simple-html-grid-sec-bg-color);
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
@@ -1654,7 +1706,6 @@ input {
 }
 .filter-editor-content .grid-condition textarea {
     background-color: var(--simple-html-grid-sec-bg-color);
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
@@ -1677,26 +1728,6 @@ input {
  * filter editor css
  ****************************************************************************/
 
-.simple-html-grid input:focus {
-    border: 1px dashed;
-    outline: thin;
-    outline-color: var(--simple-html-grid-main-font-color);
-    opacity: 1;
-}
-
-.simple-html-grid input[type='checkbox']:focus {
-    outline: 1px dashed var(--simple-html-grid-main-font-color);
-    opacity: 1;
-}
-
-.simple-html-grid textarea:focus {
-    border: 1px dashed;
-    outline: thin;
-    outline-color: var(--simple-html-grid-main-bg-color);
-    /* incase someone uses duplicate value class with opacity */
-    opacity: 1;
-}
-
 /*
  * override left pinned border
  */
@@ -1718,7 +1749,6 @@ input {
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight-cell);
     transition: initial;
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
     background-color: var(--simple-html-grid-alt-bg-color);
 }
@@ -1728,4 +1758,59 @@ input {
     text-align: center;
     z-index: 1000;
     cursor: pointer;
+}
+
+/****************************************************************************
+ * keyboard focus
+ */
+
+/**
+ * The element with the keyboard focus gets an outline in --simple-html-grid-focus-color: a cell, a
+ * filter input, a checkbox, a menu item, a button of the filter editor, the date picker - and what is
+ * made focusable later, the selectors are generic. On .simple-html-grid, so the grid, its menus, the
+ * column chooser and the filter editor dialog.
+ *
+ * Inset (outline-offset -2px): the cells are packed edge to edge in containers with overflow: hidden,
+ * an outline outside the element would be painted over by the next cell or cut off at the edge of the
+ * grid or a menu. It covers the border of the element, if it has one.
+ *
+ * :focus-visible and not :focus: the browser decides when focus is shown. A click on a checkbox or
+ * a button shows no outline, the keyboard does. An input you type in shows it on a click too.
+ */
+.simple-html-grid:focus-visible,
+.simple-html-grid :focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* the filter editor's dialog takes the focus when it opens, Tab goes on into it: it is not a control */
+.simple-html-grid.filter-editor-content:focus-visible {
+    outline: none;
+}
+
+/* a checkbox of a cell is wider than its cell (width 100% and the browser's margin), its outline
+ * would stick out over the next cell: the outline goes on the cell instead */
+.simple-html-grid .simple-html-grid-col-cell input[type='checkbox']:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid .simple-html-grid-col-cell:has(input[type='checkbox']:focus-visible) {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* the checkboxes of the filter menu's value list are small and have room around them: outside */
+.simple-html-grid .simple-html-grid-menu-checkbox input:focus-visible {
+    outline-offset: 1px;
+}
+
+/* the date picker of the grid has the grid's focus colour, date.css draws the same outline */
+.simple-html-grid .simple-html-date {
+    --simple-html-date-focus-color: var(--simple-html-grid-focus-color);
+}
+
+/* a focused input or textarea is never dimmed, a repeated value (dimRepeatedValues) included */
+.simple-html-grid input:focus,
+.simple-html-grid textarea:focus {
+    opacity: 1;
 }

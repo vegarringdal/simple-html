@@ -1956,6 +1956,26 @@ A drag finds its drop target with `document.elementFromPoint()` (once a press is
 cell captures the pointer, so the target of the events is always that cell). A test environment
 without layout - jsdom, happy-dom - has to stub `elementFromPoint` to drag and drop.
 
+## Theming
+
+The variables keep their names and their light colours, a theme of your own still works. What
+changes, see [Theming](guides/13-theming.md):
+
+* **The colours are `light-dark()`.** Each variable has a light and a dark colour, and the grid
+  follows the `color-scheme` of the page: `:root { color-scheme: dark }` turns it dark, `light dark`
+  follows the OS. Set it on `:root` or `body`, not only on the grid's container: the menus, tooltips
+  and the filter editor are on the body. Remove your own dark overrides if you had them.
+* **It needs a browser with `light-dark()`**: Chrome/Edge 123, Firefox 120, Safari 17.5. In an older
+  browser every colour is invalid; give the variables plain colours inside
+  `@supports not (color: light-dark(white, black))` if you have to support one.
+* **The keyboard focus is a 2px inset outline on `:focus-visible`** in
+  `--simple-html-grid-focus-color`. The dashed border on a focused input and the dashed outline on a
+  focused checkbox (`:focus`) are gone, and a click in a text cell shows the same ring as the keyboard.
+* **`grid.css` only styles the grid's inputs.** It set `z-index: 1000` and `pointer-events: all` on
+  every `input` of the page; now only on `.simple-html-grid input`.
+* The colours that were written in the css (17: stripes, shadows, the backdrop, the warning and danger
+  reds) are variables now, see the tables in the guide.
+
 ## Other behaviour changes
 
 Found while writing the v6 docs: each did not do what its name or its docs said.

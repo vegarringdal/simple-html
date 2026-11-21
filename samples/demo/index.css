@@ -14,7 +14,10 @@ body {
     --demo-accent: #3b82f6;
 }
 
+/* the grid and the date picker follow color-scheme on their own (light-dark() in grid.css and
+   date.css). On the body: the grid's menus, tooltips and filter editor are on the body too */
 body.dark {
+    color-scheme: dark;
     --demo-bg: #1f2937;
     --demo-panel: #374151;
     --demo-text: #f3f4f6;
@@ -393,18 +396,19 @@ body {
     background: rgba(34, 197, 94, 0.25);
 }
 
-/* the row state, on the element around the row number (see the editing guide). theme.ts has the
-   dark colours. A row marked for deletion stays in the grid until it is saved: struck through */
+/* the row state, on the element around the row number (see the editing guide). light-dark(): the
+   second colour when the page is dark, as the grid's own (see the theming guide). A row marked for
+   deletion stays in the grid until it is saved: struck through */
 .row-is-modified .simple-html-selector-text {
-    color: #4f46e5;
+    color: light-dark(#4f46e5, #a5b4fc);
 }
 
 .row-is-new .simple-html-selector-text {
-    color: #16a34a;
+    color: light-dark(#16a34a, #86efac);
 }
 
 .row-is-deleted .simple-html-selector-text {
-    color: #dc2626;
+    color: light-dark(#dc2626, #fca5a5);
     text-decoration: line-through;
 }
 

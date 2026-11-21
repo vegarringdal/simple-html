@@ -1,12 +1,27 @@
+/**
+ * The theme of the date picker/calendar, the grid's date picker included. Each colour is
+ * light-dark(<light>, <dark>): it follows the color-scheme of the page, as the grid does - no
+ * color-scheme (normal) or `light` gives the first, `color-scheme: dark` the second.
+ * guides/13-theming.md has the list.
+ */
 .simple-html-date {
     text-align: initial;
-    --simple-html-date-main-bg-color: white;
-    --simple-html-date-main-color: #2e2d2d;
-    --simple-html-date-dimmed-color: #dfdfdf;
-    --simple-html-date-week-color: #8b8b8b;
-    --simple-html-date-header-bg-border: #181515;
-    --simple-html-date-main-bg-border: #e6e5e5;
-    --simple-html-date-main-bg-selected: #bdd4e7;
+    /* the background, also of the buttons and the hour/minute inputs */
+    --simple-html-date-main-bg-color: light-dark(white, #374151);
+    /* the text */
+    --simple-html-date-main-color: light-dark(#2e2d2d, #f9f7f7);
+    /* the days of the month before and after, the year of the month before and after */
+    --simple-html-date-dimmed-color: light-dark(#dfdfdf, #979494);
+    /* the week numbers, the hour/minute labels */
+    --simple-html-date-week-color: light-dark(#8b8b8b, #b4b4b4);
+    /* not used by this css, kept so overrides of it still work */
+    --simple-html-date-header-bg-border: light-dark(#181515, #8b8b8b);
+    /* the lines, the frame of the buttons and of the selected day and the day under the pointer */
+    --simple-html-date-main-bg-border: light-dark(#e6e5e5, #979494);
+    /* the selected day, a button under the pointer */
+    --simple-html-date-main-bg-selected: light-dark(#bdd4e7, #234882);
+    /* the outline of the element that has the keyboard focus */
+    --simple-html-date-focus-color: light-dark(#005fcc, #b3d7ff);
     /* same defaults as the grid, so the widget looks identical standalone -
        without these it inherits whatever font the page happens to have */
     --simple-html-date-font-size: 11px;
@@ -43,7 +58,6 @@
 }
 .simple-html-date .simple-html-date-time .side input {
     text-align: center;
-    outline: none;
     font-family: inherit;
     font-size: inherit;
     color: var(--simple-html-date-main-color);
@@ -227,4 +241,16 @@
 .simple-html-date .simple-html-date-day:hover:not(.simple-html-date-day-dimmed) {
     border: 1px solid var(--simple-html-date-main-bg-border);
     color: var(--simple-html-date-main-color);
+}
+
+/**
+ * The element with the keyboard focus: the buttons, the hour/minute inputs, and what is made
+ * focusable later. Inset (outline-offset -2px), as the grid does - in a grid the date picker is in a
+ * menu with overflow: hidden. The grid sets --simple-html-date-focus-color to its own focus colour.
+ * :focus-visible: a click on a button shows no outline, the keyboard does
+ */
+.simple-html-date:focus-visible,
+.simple-html-date :focus-visible {
+    outline: 2px solid var(--simple-html-date-focus-color);
+    outline-offset: -2px;
 }

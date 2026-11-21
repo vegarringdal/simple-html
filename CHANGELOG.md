@@ -833,6 +833,39 @@ sorting in the header work with a mouse, a pen and a finger.
 - the touch scrolling looked up `' simple-html-grid-middle-scroller'` (a leading space); browsers ignore
   it, happy-dom threw.
 
+#### Theming (item 25)
+
+##### ⚠️ Breaking changes
+- **The colours are `light-dark()`** and the grid follows the page's `color-scheme`. Needs Chrome/Edge
+  123, Firefox 120, Safari 17.5; in an older browser the colours are invalid (set the variables with
+  plain colours in `@supports not (color: light-dark(white, black))`).
+- **The focus style**: the dashed border and outline on `:focus` are replaced by a 2px inset outline
+  on `:focus-visible`, in `--simple-html-grid-focus-color`.
+- **`grid.css` no longer styles every `input` of the page**: its `z-index` / `pointer-events` rule is
+  `.simple-html-grid input`.
+
+##### Added
+- **Dark theme**: `color-scheme: dark` on `:root` or `body` (or `light dark` to follow the OS). Every
+  variable has a dark colour, checked for contrast (text at least 4.5:1).
+- **Visible keyboard focus** in the grid, its menus, the filter editor and the date picker.
+- New variables: `--simple-html-grid-focus-color`, `--simple-html-date-focus-color`,
+  `--simple-html-grid-warning-font-color`, `--simple-html-grid-danger-font-color`,
+  `--simple-html-grid-danger-border`, `--simple-html-grid-readonly-stripe-color`,
+  `--simple-html-grid-required-stripe-color`, `--simple-html-grid-stripe-bg-color`,
+  `--simple-html-grid-menu-shadow-color`, `--simple-html-grid-dialog-shadow-color`,
+  `--simple-html-grid-tooltip-shadow-color`, `--simple-html-grid-scrollbar-shadow-color`,
+  `--simple-html-grid-backdrop-color`.
+- Guide `guides/13-theming.md` (every variable with its light and dark colour) and the sample
+  "Theming & dark mode".
+
+##### Fixed
+- The column resize handle can be grabbed over its full height: the filter input covered its lower
+  half.
+- 17 colours were written in the css, out of reach of a theme.
+- `--simple-html-grid-font-weight-cell` was used but never defined (menu items, the filter editor's
+  title): it is `--simple-html-grid-font-weight`.
+- The date picker's hour and minute inputs had no focus outline.
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all
