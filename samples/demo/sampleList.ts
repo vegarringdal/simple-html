@@ -31,6 +31,8 @@ import { find } from './samples/find';
 import findSource from './samples/find.ts?raw';
 import { formatters } from './samples/formatters';
 import formattersSource from './samples/formatters.ts?raw';
+import { fullGrid } from './samples/fullGrid';
+import fullGridSource from './samples/fullGrid.ts?raw';
 import { gridState } from './samples/gridState';
 import gridStateSource from './samples/gridState.ts?raw';
 import { liveData } from './samples/liveData';
@@ -77,6 +79,7 @@ export const SAMPLES: Sample[] = [
     // getting started
     { ...basicGrid, source: basicGridSource },
     { ...columnLayout, source: columnLayoutSource },
+    { ...fullGrid, source: fullGridSource },
     // datasource
     { ...sortingGrouping, source: sortingGroupingSource },
     { ...aggregates, source: aggregatesSource },

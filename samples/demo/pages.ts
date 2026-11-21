@@ -27,12 +27,13 @@ function copySource(text: string): Promise<boolean> {
 }
 
 /**
- * The source of a sample in a dark panel that folds, with a copy button
+ * The source of a sample in a dark panel that folds, with a copy button. Folded at the start: the
+ * running sample is what the page is for, the source opens with a click
  */
 function sourcePanel(sample: Sample) {
     const panel = document.createElement('details');
     panel.className = 'code-panel';
-    panel.open = true;
+    panel.open = false;
 
     const summary = document.createElement('summary');
     summary.className = 'code-summary';
@@ -69,7 +70,7 @@ function sourcePanel(sample: Sample) {
  */
 function runSample(sample: Sample, parent: HTMLElement) {
     const stage = document.createElement('section');
-    stage.className = 'stage';
+    stage.className = sample.fullPage ? 'stage stage-full' : 'stage';
     parent.appendChild(stage);
     sample.run(stage);
 }

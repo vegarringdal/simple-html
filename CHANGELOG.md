@@ -1332,6 +1332,44 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The keyboard of a spreadsheet (user request)
+
+##### Added
+- Ctrl+Home / Ctrl+End (Cmd on a Mac) go to the first cell of the first row / the last cell of the last
+  row; Alt+Home / Alt+End to the first / last cell of the row; PageUp / PageDown a page of rows (the rows
+  scroll with the focus); Alt+PageUp / Alt+PageDown a page of middle columns; Ctrl+ArrowUp / Ctrl+ArrowDown
+  to the edge of the data. Home / End still move the caret in the cell.
+- With Shift those keys extend the last range of cells: Shift+PageDown, Ctrl+Shift+End, Alt+Shift+Home,
+  Ctrl+Shift+ArrowDown.
+- A header filter has Ctrl+Home / Ctrl+End, Alt+Home / Alt+End and PageDown; a column header and a group
+  row's button have Ctrl+Home / Ctrl+End.
+- Undo / redo (Ctrl+Z / Ctrl+Y and the row menu) scroll to and focus the cell they changed.
+- On a Mac the key hints show ⌘Z / ⇧⌘Z, ⇧Enter and ⌘Enter. Texts `row.edit.undo.hint.mac`,
+  `row.edit.redo.hint.mac`, `find.previous.tooltip.mac`, `cell.multiline.hint.mac`.
+- The buttons of group rows and the footer's Clear and filter chips are Tab stops.
+
+##### Changed
+- Tab from the last cell of a row before a group row goes to the group's button, not past it; Tab from the
+  last cell of the last row goes to the footer's buttons while the rows are filtered.
+- Moving into the header filter row no longer changes the current row (it made row 0 current - a group
+  row when grouped).
+- For the 100ms after Tab, Enter or an Alt+arrow only the keys that move or type are held back, and only
+  in that grid: Esc (a menu closes), Ctrl+C and the keys of other grids pass (they were all cancelled,
+  in every grid).
+- A range extended from the keyboard that scrolls the active cell away moves the focus to the end of the
+  range, so Ctrl+C and more Shift keys keep working.
+
+#### Docs site: a full grid to try everything, the sidebar and the sources folded (user request)
+
+##### Docs
+- Sample "Full grid: try everything" (Getting started): 50 columns of every kind - text, money numbers
+  edited as the plain number, dates, a date and time, checkboxes, a lookup, a badge renderer, notes of
+  several lines, monthly sales with aggregates - pinned left and right, 5 000 rows to start and buttons to
+  add 5 000 / 50 000, editing on and off, grouping, the totals row, undo / redo, the changes. The grid is
+  most of the window (`fullPage`).
+- The sidebar's groups (the samples' "Getting started", "Datasource" ... and the API's) fold too, and every
+  part starts folded: the way to the page shown unfolds. The source of every sample starts folded.
+
 #### Formatters: a text for editing (user request)
 
 ##### Added

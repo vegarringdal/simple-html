@@ -266,10 +266,9 @@ const names = datasource
 const allNames = datasource.getDataRows().map((row) => row.name);
 ```
 
-`currentEntity` is a group row when the keyboard moves from the first data row up into the header
-filter row while grouped (row 0 becomes current, and that is a group row), or after
-`setRowAsCurrentEntity()` with a group row's index. Clicking a group row, `select()`,
-`selectNext()` ... never make one current.
+`currentEntity` is a group row after `setRowAsCurrentEntity()` with a group row's index. Clicking a
+group row, `select()`, `selectNext()` ... never make one current, and moving into the header filter row
+from the keyboard leaves the current row as it is (v5 made row 0 current - a group row when grouped).
 
 The `cell-header-focus` event's `rowData` is not the header's own row: it is the first displayed
 row. When grouped that is a group row, and `undefined` when there were no rows. The other cell

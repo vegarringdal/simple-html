@@ -2064,6 +2064,26 @@ in the console. All passed. Found and fixed:
   keys with a mocked platform, the keys during a move); find 68/68, fill 12/12, submenu 40/40,
   menus-regression 25/25, lookup 55/55, custom cells 39/39. Screenshots in .claude/browser-checks/shots/keyboard
 
+### Docs site: the full grid sample, folding groups, folded sources (user requests)
+
+* the user: "a full grid sample, where we can add 5k rows with a button, and 50 columns, so it can be
+  really tested, where it uses most of the full section, not large code/source parts. Even add an edit
+  mode"; "demo should have sub sections expand/collapse also, and should always start collapsed"; "source
+  sections should be collapsed by default always"
+* samples/demo/samples/fullGrid.ts: 50 fields (id and company pinned left, total and approved pinned
+  right; a lookup column, a badge renderer, a money formatter with formatForEdit, validation, multiline
+  notes, 12 months and 9 kpis, aggregates), seeded rows so every load is the same, buttons for 5 000 /
+  50 000 more rows, remove all, editing on / off (`updateConfig({ readonly })`), grouping, totals row,
+  undo / redo, the changes. `DemoSample.fullPage` makes its grid at least the window less 190px high
+* the sidebar: a group of a section is a `<details>` of its own (`.nav-subsection`, its title the
+  `.nav-group` summary); every part starts folded, `show()` unfolds the parts around the page's link. A
+  part opened for a page stays open when another page is shown (one visit). Every source panel starts
+  folded (`sourcePanel`)
+* browser: .claude/browser-checks/scripts/full-grid-check.js 11/11 (the sidebar folded but the way to the
+  page, a guide's sources folded, a group folding with a click, the grid most of the window with 50
+  columns and 5 000 rows, 5 000 more, the last row and the far right, editing off, grouping, light and
+  dark)
+
 ## Considered, not done
 
 ## Candidates / not started
