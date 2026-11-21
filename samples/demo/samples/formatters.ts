@@ -5,7 +5,8 @@ import { baseFields, baseGridConfig, createStage, type DemoSample, mountGrid } f
 
 /**
  * your own: an object with format (value -> text) and parse (typed text -> value).
- * Two decimals, comma, space as thousand separator. 12345.6 -> '12 345,60'
+ * Two decimals, comma, space as thousand separator. 12345.6 -> '12 345,60'. While a cell is edited it
+ * shows formatForEdit: the plain number, '12345,6' - no spaces to type around
  */
 const money: Formatter = {
     format: (value) =>
@@ -15,6 +16,7 @@ const money: Formatter = {
                   .replace('.', ',')
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
             : '',
+    formatForEdit: (value) => NumberFormatterComma.format(value),
     // take the spaces out, then the built-in parser: '12 345,60' -> 12345.6
     parse: (text) => NumberFormatterComma.parse(text.replaceAll(' ', ''))
 };

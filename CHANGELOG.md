@@ -1332,9 +1332,81 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
-#### The filter editor keeps the header filters it did not change
+#### The filter menu's value list shows what the cells show
+
+##### ⚠️ Breaking changes
+- The value list's texts are no longer upper case, and Apply after a search no longer adds a `CONTAINS`
+  of the search text: `getFilter()` has another shape for it (an `IN` of the values the search found).
 
 ##### Fixed
+- The filter menu's value list shows, searches and sorts (`localeCompare`) the text the cells show - the
+  formatter's text, a lookup column's labels (`Norway`, not `NO`) - not the raw values upper cased. Apply
+  filters on the values behind the checked texts; values shown the same are one entry, their counts
+  added. The first 100 texts are listed, in order.
+- `IN` / `NOT_IN` on a number field formats a number in the list as the rows are: `[1.5]` finds
+  numberComma's `1,5`. A number lookup column's header filter with such a formatter found nothing.
+
+##### Added
+- A value list for a lookup column on a number field (its cells show labels).
+- The footer chips show a lookup column's labels: `getFilterTree(label, formatterOf)`.
+
+#### The keyboard of a spreadsheet (user request)
+
+##### Added
+- Ctrl+Home / Ctrl+End (Cmd on a Mac) go to the first cell of the first row / the last cell of the last
+  row; Alt+Home / Alt+End to the first / last cell of the row; PageUp / PageDown a page of rows (the rows
+  scroll with the focus); Alt+PageUp / Alt+PageDown a page of middle columns; Ctrl+ArrowUp / Ctrl+ArrowDown
+  to the edge of the data. Home / End still move the caret in the cell.
+- With Shift those keys extend the last range of cells: Shift+PageDown, Ctrl+Shift+End, Alt+Shift+Home,
+  Ctrl+Shift+ArrowDown.
+- A header filter has Ctrl+Home / Ctrl+End, Alt+Home / Alt+End and PageDown; a column header and a group
+  row's button have Ctrl+Home / Ctrl+End.
+- Undo / redo (Ctrl+Z / Ctrl+Y and the row menu) scroll to and focus the cell they changed.
+- On a Mac the key hints show ⌘Z / ⇧⌘Z, ⇧Enter and ⌘Enter. Texts `row.edit.undo.hint.mac`,
+  `row.edit.redo.hint.mac`, `find.previous.tooltip.mac`, `cell.multiline.hint.mac`.
+- The buttons of group rows and the footer's Clear and filter chips are Tab stops.
+
+##### Changed
+- Tab from the last cell of a row before a group row goes to the group's button, not past it; Tab from the
+  last cell of the last row goes to the footer's buttons while the rows are filtered.
+- Moving into the header filter row no longer changes the current row (it made row 0 current - a group
+  row when grouped).
+- For the 100ms after Tab, Enter or an Alt+arrow only the keys that move or type are held back, and only
+  in that grid: Esc (a menu closes), Ctrl+C and the keys of other grids pass (they were all cancelled,
+  in every grid).
+- A range extended from the keyboard that scrolls the active cell away moves the focus to the end of the
+  range, so Ctrl+C and more Shift keys keep working.
+
+#### Docs site: a full grid to try everything, the sidebar and the sources folded (user request)
+
+##### Docs
+- Sample "Full grid: try everything" (Getting started): 50 columns of every kind - text, money numbers
+  edited as the plain number, dates, a date and time, checkboxes, a lookup, a badge renderer, notes of
+  several lines, monthly sales with aggregates - pinned left and right, 5 000 rows to start and buttons to
+  add 5 000 / 50 000, editing on and off, grouping, the totals row, undo / redo, the changes. The grid is
+  most of the window (`fullPage`).
+- The sidebar's groups (the samples' "Getting started", "Datasource" ... and the API's) fold too, and every
+  part starts folded: the way to the page shown unfolds. The source of every sample starts folded.
+
+#### Formatters: a text for editing (user request)
+
+##### Added
+- `Formatter.formatForEdit(value)` (optional): what a cell shows while it is edited - from when its input
+  gets the focus until it loses it - and the text the editor over a cell starts from: the plain value to
+  type over, `'25008.76'` for `'25 008.76'`. Left out, `format` is used; a readonly cell always shows
+  `format`. The money formatters of the samples and the guide have one.
+
+#### The filter editor keeps the header filters it did not change
+
+##### Changed
+- Light mode text contrast to WCAG AA: the secondary text (`--simple-html-grid-sec-font-color`,
+  placeholders, search boxes) is `#6b6b6b` (was `#979494`, 3.0:1), the row numbers are at 80% opacity
+  (was 50%, 2.9:1), and the header filters' placeholders are no longer at 20% opacity (1.3:1).
+
+##### Fixed
+- Sorting with a collator that calls different strings equal (`setLocaleCompare(code, { sensitivity:
+  'base' })`: 'a' and 'A') put them in the order they came in, and grouping could split a value into two
+  groups. They are put by their code points now ('A' before 'a').
 - Applying the filter editor emptied every header filter cell, also of the columns whose conditions it
   kept: the rows stayed filtered by them while the headers showed nothing. Only the cells whose column's
   conditions were changed or removed are emptied now.

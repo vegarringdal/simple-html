@@ -3,7 +3,8 @@
  *
  * Ids: `area.part`, the area first. A menu entry's id is its id in MENU_IDS, its hint is
  * `<id>.hint`. The tooltip of an element is `<id>.tooltip`. An operator's name ends with the
- * FilterOperator: `filterEditor.operator.EQUAL`. `{name}` in a text is filled in when it is shown.
+ * FilterOperator: `filterEditor.operator.EQUAL`. `{name}` in a text is filled in when it is shown. A text
+ * that names a key has the text shown on a Mac, `<id>.mac` (`⌘Z`).
  */
 const DEFAULTS = {
     // the row menu, right click on a cell: MENU_IDS.row. A submenu's text is its label, without a colon
@@ -37,12 +38,15 @@ const DEFAULTS = {
     'row.delete.rows.hint': 'selected rows',
     'row.delete.undo': 'Undo',
     'row.delete.undo.hint': 'selected rows',
-    // the Undo submenu of the row menu, in an editable grid
+    // the Undo submenu of the row menu, in an editable grid. A text that names a key has a text for a
+    // Mac, `<id>.mac`: its keys as a Mac shows them
     'row.edit': 'Undo / Redo',
     'row.edit.undo': 'Undo last change',
     'row.edit.undo.hint': 'Ctrl+Z',
+    'row.edit.undo.hint.mac': '⌘Z',
     'row.edit.redo': 'Redo',
     'row.edit.redo.hint': 'Ctrl+Y',
+    'row.edit.redo.hint.mac': '⇧⌘Z',
     'row.edit.revertCell': 'Undo cell edit',
     'row.edit.revertRow': 'Undo row edits',
     'row.edit.revertRows': 'Undo row edits',
@@ -237,6 +241,7 @@ const DEFAULTS = {
     'find.filterRows.tooltip': 'Show only the rows with a match',
     'find.previous': 'Previous match',
     'find.previous.tooltip': 'Previous match (Shift+Enter)',
+    'find.previous.tooltip.mac': 'Previous match (⇧Enter)',
     'find.next': 'Next match',
     'find.next.tooltip': 'Next match (Enter)',
     'find.close': 'Close',
@@ -265,6 +270,7 @@ const DEFAULTS = {
     'cell.multiline.more': 'More lines, Enter shows all',
     'cell.multiline.moreLines': '… {count} more lines',
     'cell.multiline.hint': 'Ctrl+Enter to save, Esc to cancel',
+    'cell.multiline.hint.mac': '⌘Enter to save, Esc to cancel',
     'cell.multiline.hintReadonly': 'Esc to close',
     // a lookup column (ColumnConfig.editor): the button of the cell, for a screen reader, and the select
     // under the cell - the placeholder of its search, no match, a long list cut off
@@ -400,7 +406,8 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `grouping.blank` | the value in the name of the group of blank values. Made by the datasource |
  *
  * The tooltip of an element is `<id>.tooltip`: `filterEditor.addCondition.tooltip`. `{name}` in a text
- * is filled in when it is shown (`'Count: {count}'`).
+ * is filled in when it is shown (`'Count: {count}'`). A text that names a key - `row.edit.undo.hint`,
+ * `Ctrl+Z` - has a text of its own for a Mac, `<id>.mac` (`⌘Z`): the grid shows that one on a Mac.
  *
  * The texts guide has every id with its text and where it is shown.
  *

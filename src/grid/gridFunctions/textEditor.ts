@@ -8,6 +8,7 @@ import { DIV } from './DIV';
 import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { gridText } from './gridText';
+import { keyText } from './keyText';
 import { normalizeLineBreaks } from './multilineText';
 import { removeContextMenu } from './removeContextMenu';
 import { moveMenu, popoverParent } from './showMenu';
@@ -120,17 +121,23 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
               aria-describedby=${hintId}
               .readOnly=${readonly}
           ></textarea>`;
-    const hint = readonly ? 'cell.multiline.hintReadonly' : singleLine ? 'cell.editor.hint' : 'cell.multiline.hint';
+    // Ctrl+Enter saves a multiline cell: ⌘Enter on a Mac (keyText)
+    const hint = readonly
+        ? gridText(ctx, 'cell.multiline.hintReadonly')
+        : singleLine
+          ? gridText(ctx, 'cell.editor.hint')
+          : keyText(ctx, 'cell.multiline.hint');
     render(
         html`${textInput}
             <div class="simple-html-grid-text-editor-hint" id=${hintId}>
-                ${gridText(ctx, hint)}
+                ${hint}
             </div>`,
         element
     );
     // the textarea, or the input of one line: what is done with it here is the same for both
     const textarea = element.querySelector('.simple-html-grid-text-editor-input') as HTMLTextAreaElement | HTMLInputElement;
-    textarea.value = formatter.format(row[field]);
+    // the formatter's formatForEdit, when it has one and the text can be edited: the plain value
+    textarea.value = (readonly ? undefined : formatter.formatForEdit?.(row[field])) ?? formatter.format(row[field]);
     // read back: a browser gives the line breaks as LF. Unchanged is what it gives back now
     const original = textarea.value;
     if (typed && !readonly) {

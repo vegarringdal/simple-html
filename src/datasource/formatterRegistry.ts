@@ -71,10 +71,11 @@ export const DEFAULT_FORMATTER_IDS: Readonly<Record<FieldType, string>> = {
  * ```ts
  * import { Datasource, type Formatter, NumberFormatterDot, registerFormatter } from '@simple-html/grid';
  *
- * // two decimals and a space between the thousands: 12345.6 -> '12 345.60'
+ * // two decimals and a space between the thousands: 12345.6 -> '12 345.60'; edited as the plain number
  * const money: Formatter = {
  *     ...NumberFormatterDot,
  *     format: (value) => (typeof value === 'number' ? value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : ''),
+ *     formatForEdit: (value) => NumberFormatterDot.format(value),
  *     parse: (text) => NumberFormatterDot.parse(text.replaceAll(' ', ''))
  * };
  * registerFormatter('money', money);

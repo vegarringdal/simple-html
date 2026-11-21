@@ -2006,6 +2006,147 @@ in the console. All passed. Found and fixed:
 * not done: the group rows of a lookup column still show the value (documented in the lookups guide);
   the filter editor shows the values
 
+### Sorting with a collator that calls different strings equal (a candidate)
+
+* with `setLocaleCompare(code, { sensitivity: 'base' })` the collator calls 'a' and 'A' equal, and the sort
+  turned its 0 into 1 both ways round: an inconsistent comparator, so their order was the order they came
+  in - and grouping, which puts equal values next to each other, could split one value into two groups.
+  Now different strings the collator calls equal are put by their code points: a consistent order,
+  'A' before 'a'. Still not 0: grouping keys a group by its own text, and only equal ones may be one group
+* tests: simpleSorting.test.ts +3 (the same order from three input orders, descending the reverse, one
+  group per value) - all three fail with the old line
+
+### Light mode text contrast to WCAG AA (a candidate)
+
+* the light colours were kept as they were before v6 (theme.test.ts pins them), and two were under AA's
+  4.5:1 for text: the secondary text `--simple-html-grid-sec-font-color` #979494 (placeholders, search
+  boxes, the AND/OR between the filter chips) 3.0:1 on white and 2.8:1 on the panel, and the row numbers
+  at 50% opacity 2.9:1 (2.5:1 on a selected row). Now #6b6b6b (5.3:1 on white, 4.9:1 on the panel) and
+  80% (5.0:1 at the lowest, a selected row; 5.5:1 and up in dark). The test keeps pinning the rest, this
+  one with the reason. A disabled menu item stays at 50%: WCAG leaves out disabled controls
+* the header filters' placeholders ("Text", "Number", "YYYY-MM-DD") were also at 20% opacity, about
+  1.3:1 - the rule is gone, they are the secondary text like every placeholder of the grid (Chrome's own
+  placeholder grey is about the same)
+
+### Formatter.formatForEdit: the plain value while a cell is edited (user request)
+
+* the user: "in edit mode value converter should show real values, not formatted" - a money cell showed
+  '25 008.76' while typed in. v5 had a text for the edit input (`fromSource`) apart from the display
+  one; v6 had one `format` for both (a candidate)
+* `Formatter.formatForEdit?(value)`: renderRowCell shows it while the cell is edited - `cell.$focused`
+  (the focus handler sets it and renders the cell) and the cell can be typed in (not readonly, multiline,
+  a lookup's label, allowPasteClearOnly) - else `format`; the blur renders the cell again when the
+  formatter has one, so it shows `format`. The editor over a cell (textEditor.ts, custom cells) starts
+  from it too. The built-in formatters need none (no thousands separators); the money formatters of the
+  formatters and aggregates samples and the guide's examples have one
+* tests: formatForEdit.test.ts (formatted, plain while focused, formatted after; typed over and stored;
+  a blank; a readonly grid; without formatForEdit as before). Browser: format-for-edit-check.js
+
+### The keyboard of a spreadsheet: jump keys, undo goes to the change, Mac hints, Tab stops (user request)
+
+* the user: "the most capable grid" - the keys Excel / Google Sheets users expect, without breaking the
+  typing in the cells (always text inputs). Done in a worktree, merged with v6_maybe on the way (rowClass,
+  the candidates triage, the filter editor's header filters)
+* **the keys that jump** (new jumpKeys.ts, the row steps in rowSteps.ts): Ctrl+Home / Ctrl+End (Cmd too)
+  the first cell of the first row / the last cell of the last row; Alt+Home / Alt+End the ends of the row;
+  PageUp / PageDown a page of rows in the same column, the rows scrolling as far (the cell stays where it
+  was on screen; down and up again the same row: `pageIndex`, "the furthest start within a page", at least
+  one row - a row taller than a page is no wall); Alt+PageUp / Alt+PageDown a page of middle columns
+  (in a pinned column the middle scrolls, the focus stays); Ctrl+ArrowUp / Ctrl+ArrowDown the edge of the
+  data as Excel (`edgeRow`: isBlank - 0 and false are values, group rows skipped and no blank). Group rows
+  skipped as the arrows skip them (`dataRowNear`). The first / last cell are in the order of Tab
+  (`rowPlaces` = getLayoutFields' order); Ctrl+Home / End and Alt+Home / End also scroll the middle
+  columns to their start / end. Focusing is synchronous: `goToCell` scrolls (row, middle column), renders
+  now (triggerScrollEvent - a far jump would else hide the rows until the scrolling stops) and focuses the
+  input / custom host found by the `$` fields of the shown cells (`cellpos-` classes of hidden row
+  elements are stale), then makes the row current
+* **decisions**: Home / End stay the caret's - the cells are always "being edited", and in edit mode
+  Excel and Sheets move the caret too; Alt is already the grid's key (Alt+arrows), so Alt+Home / Alt+End.
+  "Home at the start of the text moves to the first cell" was rejected: a habitual double press jumps
+  away. Ctrl+Home / End do what Home / End do in a one line input, so the grid takes them. Ctrl+ArrowLeft
+  / Right stay the input's word moves; Ctrl+ArrowUp / Down do nothing in a one line input (Cmd+Up / Down
+  = Cmd+Left / Right on a Mac, where Ctrl+Up / Down are Mission Control), so they are the edge of the data
+  vertically only. Ctrl+PageUp / Down left to the browser (tabs). A custom cell: on its host only, a
+  control in it keeps its own PageDown
+* **with Shift** each key moves the end of the last range where the key without Shift moves the focus
+  (consistent with Alt+Shift+arrows): Shift+PageUp / PageDown, Ctrl+Shift+Home / End, Alt+Shift+Home / End,
+  Ctrl+Shift+ArrowUp / Down - not Alt+Shift+PageUp / Down. `extendRange` (rangeSelection.ts, also behind
+  Alt+Shift+arrows now) renders after its scroll, and when the cell with the focus scrolled away
+  (`keepFocusInRange`: its element shows another row, or was hidden and lost the focus) the focus goes to
+  the active cell if on screen, else the end of the range, with `rangeGesture` set so the ranges stay -
+  found in Chromium: after Ctrl+Shift+End the focus was on the body, Ctrl+C copied nothing
+* **from the header**: a header filter has Ctrl+Home / End, Alt+Home / End (the first / last filter,
+  `focusFilter`) and PageDown (the cell under it in the last row on screen as a whole); a column header and
+  the button of a group row Ctrl+Home / End (`gridCornerKey`)
+* **undo goes to the change**: `undoRedoInGrid` (undoRedoKey.ts) for Ctrl+Z / Ctrl+Y and the row menu's
+  Undo / Redo: the changes of the step are read before (`History.nextChanges(action)`, internal), and the
+  first change whose row is displayed gets the focus (`goToCell`, in the middle of the view when it was out
+  of it), its row current. A deletion mark or a field not in the layout: the row, in the column of the cell
+  the key / menu was in. No row displayed: the focus stays. `datasource.undo()` from code does not move it
+* **Mac hints**: keyText.ts - `isMacPlatform()` reads `navigator.userAgentData.platform` (Chromium, `macOS`)
+  else `navigator.platform` (`MacIntel` on every Mac, `iPhone`, `iPad`), each time (testable with a mocked
+  getter); `keyText(ctx, id)` picks `<id>.mac`. New texts `row.edit.undo.hint.mac` `⌘Z`,
+  `row.edit.redo.hint.mac` `⇧⌘Z`, `find.previous.tooltip.mac` `Previous match (⇧Enter)`,
+  `cell.multiline.hint.mac` `⌘Enter to save, Esc to cancel` (+ Norwegian, guide 12). Text ids of their own
+  rather than rewriting "Ctrl+" in a text: a translation keeps control, and redo is another key on a Mac.
+  Cmd+Shift+Z, Cmd+Y and Cmd+Z were accepted already
+* **Tab stops** (tabExit.ts), the grid's Tab is "every cell, in the order shown" (a form, not the APG's one
+  stop - kept, documented): a group row is one stop, its button (`tabGroupStop` from the edge cells and the
+  last filter, `groupRowTab` on the button: the next / previous row, the filters, out of the grid); after
+  the last row the footer's Clear and filter chips while the rows are filtered (`tabPastRows`), Tab past
+  them leaves the grid, Shift+Tab on the first goes back to the last row (`addFooterKeys`, one listener on
+  the footer element; none with `footerHeight: 0`). Alt+arrows, Enter and the jump keys still skip group
+  rows. The date picker stays for the mouse: its days have no keys, taking the focus into it would trap a
+  keyboard user in a calendar that can not pick a day (documented, a candidate)
+* **the header filter row made row 0 current** (a candidate): moving into the filters (Alt+ArrowUp,
+  Shift+Tab, Alt+ArrowLeft) no longer calls `setRowAsCurrentEntity` - the group row above when grouped.
+  groupRows.test.ts changed on purpose (the current row stays, + one for Alt+ArrowLeft / Shift+Tab)
+* **keys swallowed after a move** (a candidate): `waitForFocusTrigger` (since b6d5094, "fix issue when
+  holding tab in") was one module flag of each key handler: 100ms after Tab / Enter / an Alt+arrow every
+  key reaching the handlers of every grid was canceled. Its reason: the focus moves 100ms later (the rows
+  scroll and render first), a held key repeats from the cell being left - Tab would be the browser's own,
+  an Alt+arrow would go from the old cell again. Now `ctx.focusMovePending` (per grid, both handlers share
+  it, `focusInAMoment`) and `focusMoveKey` cancels only Tab, Enter, Alt+arrows (and a key the cell overrides),
+  a typed character, Backspace and Delete (they would land in the cell being left); Esc (a menu closes),
+  Ctrl+C, Home ... pass, and so do the other grids' keys
+* tests: jumpKeys.test.ts (32: every key, the caret kept for Home / End / Shift+Home / Ctrl+Left, off
+  screen rows, pinned sections, a column of two fields, group rows, a tall row, the edge of the data,
+  Shift with ranges and the focus moving to the end + copy, a checkbox, a custom cell's host and control,
+  a pending Alt+arrow, a filter, a column header, a group button); accessibility.test.ts (+10, the Tab stops
+  of the group rows and the footer; one test changed on purpose: Tab from the last data row before a
+  collapsed group goes to its button); keyNavigation.test.ts (+6, the keys while a move is on its way, two
+  grids, Esc closes a menu); undoRedo.test.ts (+13, the focus after undo / redo / the menu, a deletion
+  mark, a hidden field, a filtered out row, code; the Mac hints, the platform detection, Cmd keys, the
+  multiline hint and the find tooltip); texts.test.ts (the `.mac` texts shown with a mocked Mac);
+  groupRows.test.ts (1 changed, +1)
+* browser (Chromium 1148, scrollbars shown - headless hides them and the middle scroller is then 10px
+  taller than the rows, a last row looked cut): keyboard-check.js 52/52 in the worktree's
+  .claude/browser-checks/scripts (the caret, Ctrl+End to row 500 and back, PageDown scrolling with the cell
+  in place, Alt+Home / End, Ctrl+Arrow, Shift ranges and the focus at the end, undo off screen and the row
+  menu's, a filter's keys, the footer's Tab stops, pinned sections, the group buttons, Mac hints and Cmd
+  keys with a mocked platform, the keys during a move); find 68/68, fill 12/12, submenu 40/40,
+  menus-regression 25/25, lookup 55/55, custom cells 39/39. Screenshots in .claude/browser-checks/shots/keyboard
+
+### Docs site: the full grid sample, folding groups, folded sources (user requests)
+
+* the user: "a full grid sample, where we can add 5k rows with a button, and 50 columns, so it can be
+  really tested, where it uses most of the full section, not large code/source parts. Even add an edit
+  mode"; "demo should have sub sections expand/collapse also, and should always start collapsed"; "source
+  sections should be collapsed by default always"
+* samples/demo/samples/fullGrid.ts: 50 fields (id and company pinned left, total and approved pinned
+  right; a lookup column, a badge renderer, a money formatter with formatForEdit, validation, multiline
+  notes, 12 months and 9 kpis, aggregates), seeded rows so every load is the same, buttons for 5 000 /
+  50 000 more rows, remove all, editing on / off (`updateConfig({ readonly })`), grouping, totals row,
+  undo / redo, the changes. `DemoSample.fullPage` makes its grid at least the window less 190px high
+* the sidebar: a group of a section is a `<details>` of its own (`.nav-subsection`, its title the
+  `.nav-group` summary); every part starts folded, `show()` unfolds the parts around the page's link. A
+  part opened for a page stays open when another page is shown (one visit). Every source panel starts
+  folded (`sourcePanel`)
+* browser: .claude/browser-checks/scripts/full-grid-check.js 11/11 (the sidebar folded but the way to the
+  page, a guide's sources folded, a group folding with a click, the grid most of the window with 50
+  columns and 5 000 rows, 5 000 more, the last row and the far right, editing off, grouping, light and
+  dark)
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -2014,19 +2155,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Bugs
 
-* **The header filter row makes row 0 current**: Alt+ArrowUp (Shift+Tab, Alt+ArrowLeft) from the first
-  data row into the header filter row calls `setRowAsCurrentEntity(0)` - the group row above when grouped.
-  Not grouped row 0 is the row left, nothing changes. Documented (MIGRATION, CHANGELOG) and pinned by
-  groupRows.test.ts; the fix is in the timer of cellRowKeyNavigationCellRowHandler.ts: no current row for
-  a filter cell (`filterClass`) - for the keyboard work
-* **Keys swallowed after a move**: `waitForFocusTrigger` is a module variable of the two key handlers: for
-  100ms after a move (Tab, an Alt+arrow) every key of every grid on the page is cancelled, an Esc in that
-  window does not close a menu
-* **Undo**: after an undo the focus stays in its cell rather than moving to the changed one; the menu
-  hints say Ctrl+Z / Ctrl+Y on a Mac too (texts `row.edit.undo.hint` / `row.edit.redo.hint`)
-* **A collator with `sensitivity: 'base'`**: `'a'` vs `'A'` compares as 1 both ways (sort.ts turns a 0
-  into 1), so their order is the order they came in. Returning 0 needs grouping to use the collator too,
-  or the groups split
 * **The column chooser and a finger or a drag**: its items have `touch-action: none` (for the drag), so a
   finger can not scroll a long chooser by them; the ghost of a dragged column is on the body, under the
   chooser (top layer)
@@ -2035,15 +2163,17 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Accessibility
 
-* **Contrast in light mode** under WCAG AA, kept for a pixel-identical light mode: the secondary text
-  (placeholders, `#979494`) 3.0:1 on white and 2.8:1 on the panel; the row numbers at 50% opacity 2.9:1,
-  and the row-state colours under that opacity
-* **Keyboard**: no Home / End / PageUp / PageDown / Ctrl+Home in the grid (the keyboard work); the buttons
-  of the group rows are not on the way of Tab (Tab and Alt+arrows skip group rows), nor are the footer's
-  chips and Clear; the days of the date picker and the column chooser are for the mouse (the picker's
+* **Keyboard**: the days of the date picker and the column chooser are for the mouse (the picker's
   buttons and hour / minute fields can be reached, a date can be typed); the picker opened from a cell is
-  put at the end of the body and does not take the focus; the two scrollbar elements are unnamed stops of
-  Tab in Chrome
+  put at the end of the body, no key opens it and it does not take the focus - worth doing together with
+  keys for its days; the two scrollbar elements are unnamed stops of Tab in Chrome; Shift+Tab into the
+  grid from after it lands on the last input in the dom (a cell of a row rendered at the bottom of the
+  view), not the last row or the footer; no Shift+Space / Ctrl+Space (a row, a column), no Ctrl+Left /
+  Ctrl+Right to the edge of the data sideways (they are the input's word), no Alt+Shift+PageUp / PageDown;
+  the treegrid's ArrowRight / ArrowLeft on a group row
+* **Tab, Enter and Alt+arrows move the focus 100ms later** (the rows scroll first, the cell is found by its
+  `cellpos-` class once rendered): the jump keys move it at once (scroll, render, focus - goToCell in
+  jumpKeys.ts); the old handlers could do the same and drop `focusMovePending`
 * **`grid.label`** defaults to `Grid`, read as "Grid grid"; a better default needs the app's context
 * **Only Chrome's accessibility tree** was tried: Firefox, Safari (weaker `aria-owns`) and real screen
   readers (NVDA, JAWS, VoiceOver) not
@@ -2071,6 +2201,4 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 * **Custom cells, the plan's "later"**: `focusButton` and `placeholderRow` on a custom cell, a `measure()`
   for `fitColumns()`, renderers for group rows, the totals row and header labels
-* **One `format` for a cell and its edit input**: v5 could differ (`fromSourceDisplay`); no built-in used
-  it, an optional `formatForEdit` would bring it back if needed
 * **Formatters are fixed when the datasource is made**: there is no setter to switch a field's formatter

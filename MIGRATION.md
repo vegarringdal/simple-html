@@ -266,10 +266,9 @@ const names = datasource
 const allNames = datasource.getDataRows().map((row) => row.name);
 ```
 
-`currentEntity` is a group row when the keyboard moves from the first data row up into the header
-filter row while grouped (row 0 becomes current, and that is a group row), or after
-`setRowAsCurrentEntity()` with a group row's index. Clicking a group row, `select()`,
-`selectNext()` ... never make one current.
+`currentEntity` is a group row after `setRowAsCurrentEntity()` with a group row's index. Clicking a
+group row, `select()`, `selectNext()` ... never make one current, and moving into the header filter row
+from the keyboard leaves the current row as it is (v5 made row 0 current - a group row when grouped).
 
 The `cell-header-focus` event's `rowData` is not the header's own row: it is the first displayed
 row. When grouped that is a group row, and `undefined` when there were no rows. The other cell
@@ -457,7 +456,8 @@ const datasource = new Datasource({ fields: { country: { formatter: 'upperCase' 
 ```
 
 v5 had a different text for a readonly cell (`fromSourceDisplay`) and for the edit input
-(`fromSource`). v6 has one, `format`, for both.
+(`fromSource`). In v6 `format` is the text of a cell, and the optional `formatForEdit` the text while
+it is edited (its input has the focus) - left out, `format`.
 
 The formatters are fixed once the datasource is made. To switch, make a new datasource - or give
 it a formatter that hands every call on to the one picked last (the `samples/grid01` playground
@@ -506,7 +506,7 @@ methods. A `Formatter` has `format`, `parse`, an optional `parseFilter` and an o
 
 | v5 | v6 |
 | --- | --- |
-| `fromSource(value)` | `format(value)` |
+| `fromSource(value)` | `format(value)`, or `formatForEdit(value)` for the text while a cell is edited |
 | `fromSourceDisplay(value)` | `format(value)` |
 | `fromSourceGrouping(value)` | `format(value)` |
 | `toSource(value)` | `parse(text)` |

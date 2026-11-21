@@ -139,3 +139,113 @@ describe('key navigation - header filter row', () => {
         expect(focusedCell()).toEqual('filter-cellpos-left-pinned-0-1-0');
     });
 });
+
+describe('key navigation - the keys while a move is on its way', () => {
+    // the focus moves 100ms after Tab, Enter or an Alt+arrow: the rows scroll first
+    const config = (): GridConfig => ({
+        readonly: false,
+        columns,
+        layout: {
+            center: [
+                { fields: ['a'], width: 100 },
+                { fields: ['b'], width: 100 }
+            ]
+        }
+    });
+    const rows = () => [...data(), { a: 'a3', b: 'b3', c: 'c3', d: 'd3' }];
+
+    /** a keydown on the input with the class, the event back */
+    const keydown = (element: HTMLElement, cellClass: string, init: KeyboardEventInit) => {
+        const input = element.querySelector(`.${cellClass}`) as HTMLElement;
+        const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+        input.dispatchEvent(event);
+        return event;
+    };
+    const altDown = { key: 'ArrowDown', code: 'ArrowDown', altKey: true };
+
+    it('expect the keys that move or type canceled until the focus is there: a held key goes one cell at a time', async () => {
+        const { element } = await mountGrid(config(), rows());
+        const from = 'cellpos-middle-pinned-0-0-0';
+
+        expect(keydown(element, from, altDown).defaultPrevented).toBe(true);
+        // the repeats of a held key, from the cell being left
+        expect(keydown(element, from, altDown).defaultPrevented).toBe(true);
+        expect(keydown(element, from, { key: 'Tab', code: 'Tab' }).defaultPrevented).toBe(true);
+        expect(keydown(element, from, { key: 'Enter', code: 'Enter' }).defaultPrevented).toBe(true);
+        expect(keydown(element, from, { key: 'x', code: 'KeyX' }).defaultPrevented).toBe(true);
+        expect(keydown(element, from, { key: 'Backspace', code: 'Backspace' }).defaultPrevented).toBe(true);
+        await sleep(150);
+
+        // one row down, not three
+        expect(focusedCell()).toEqual('cellpos-middle-pinned-1-0-0');
+    });
+
+    it('expect the other keys left alone meanwhile: Esc, Ctrl+C, Home, Shift', async () => {
+        const { element } = await mountGrid(config(), rows());
+        const from = 'cellpos-middle-pinned-0-0-0';
+        keydown(element, from, altDown);
+
+        expect(keydown(element, from, { key: 'Escape', code: 'Escape' }).defaultPrevented).toBe(false);
+        expect(keydown(element, from, { key: 'c', code: 'KeyC', ctrlKey: true }).defaultPrevented).toBe(false);
+        expect(keydown(element, from, { key: 'Home', code: 'Home' }).defaultPrevented).toBe(false);
+        expect(keydown(element, from, { key: 'Shift', code: 'ShiftLeft', shiftKey: true }).defaultPrevented).toBe(false);
+        await sleep(150);
+        expect(focusedCell()).toEqual('cellpos-middle-pinned-1-0-0');
+    });
+
+    it('expect Esc meanwhile to close a menu opened with the mouse', async () => {
+        const { element } = await mountGrid(config(), rows());
+        const input = element.querySelector('.cellpos-middle-pinned-0-0-0') as HTMLElement;
+        input.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
+        expect(document.querySelector('.simple-html-grid-menu')).not.toBeNull();
+
+        keydown(element, 'cellpos-middle-pinned-0-0-0', altDown);
+        keydown(element, 'cellpos-middle-pinned-0-0-0', { key: 'Escape', code: 'Escape' });
+
+        expect(document.querySelector('.simple-html-grid-menu')).toBeNull();
+        await sleep(150);
+    });
+
+    it('expect a move in one grid to leave the keys of another grid alone', async () => {
+        const first = await mountGrid(config(), rows());
+        const second = await mountGrid(config(), rows());
+        const cellOf = (grid: HTMLElement) => grid.querySelector('.cellpos-middle-pinned-0-0-0') as HTMLElement;
+
+        keydown(first.element, 'cellpos-middle-pinned-0-0-0', altDown);
+
+        // typing in the other grid is typing, its own move moves
+        const typed = new KeyboardEvent('keydown', { key: 'x', code: 'KeyX', bubbles: true, cancelable: true });
+        cellOf(second.element).dispatchEvent(typed);
+        expect(typed.defaultPrevented).toBe(false);
+        const move = new KeyboardEvent('keydown', { ...altDown, bubbles: true, cancelable: true });
+        cellOf(second.element).dispatchEvent(move);
+        expect(move.defaultPrevented).toBe(true);
+        await sleep(150);
+
+        expect(second.element.contains(document.activeElement)).toBe(true);
+        expect(focusedCell()).toEqual('cellpos-middle-pinned-1-0-0');
+    });
+
+    it('expect the keys to work again once the focus is there', async () => {
+        const { element } = await mountGrid(config(), rows());
+        keydown(element, 'cellpos-middle-pinned-0-0-0', altDown);
+        await sleep(150);
+
+        expect(keydown(element, 'cellpos-middle-pinned-1-0-0', { key: 'x', code: 'KeyX' }).defaultPrevented).toBe(false);
+        expect(keydown(element, 'cellpos-middle-pinned-1-0-0', altDown).defaultPrevented).toBe(true);
+        await sleep(150);
+        expect(focusedCell()).toEqual('cellpos-middle-pinned-2-0-0');
+    });
+
+    it('expect the keys of a header filter to wait too, and the filter row in its own grid only', async () => {
+        const { element } = await mountGrid(config(), rows());
+        const filter = 'filter-cellpos-middle-pinned-0-0-0';
+
+        expect(keydown(element, filter, { key: 'Tab', code: 'Tab' }).defaultPrevented).toBe(true);
+        expect(keydown(element, filter, { key: 'Tab', code: 'Tab' }).defaultPrevented).toBe(true);
+        expect(keydown(element, filter, { key: 'Escape', code: 'Escape' }).defaultPrevented).toBe(false);
+        await sleep(150);
+
+        expect(focusedCell()).toEqual('filter-cellpos-middle-pinned-0-1-0');
+    });
+});

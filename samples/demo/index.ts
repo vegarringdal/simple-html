@@ -66,37 +66,41 @@ interface Page {
 const pages = new Map<string, Page>();
 
 /**
- * Guides, Samples, API: a part of the sidebar that folds, with a link to each page in it.
- * A group header goes in front of the links each time the group changes.
- * @param open unfolded at the start. A section unfolds when one of its pages is shown
+ * Guides, Samples, API: a part of the sidebar that folds, with a link to each page in it. The items of
+ * a group (the samples' "Getting started", "Datasource" ...) are a part of their own in it that folds
+ * too. Everything starts folded; the parts around the page shown unfold (see show)
  */
 function navSection(
     title: string,
-    items: { route: string; label: string; group?: string; render: (main: HTMLElement) => void }[],
-    open = true
+    items: { route: string; label: string; group?: string; render: (main: HTMLElement) => void }[]
 ) {
     const section = document.createElement('details');
     section.className = 'nav-section';
-    section.open = open;
     const summary = document.createElement('summary');
     summary.className = 'nav-section-title';
     summary.textContent = title;
     section.appendChild(summary);
 
+    // where the links go: the section, or the part of the group they are in
+    let parent: HTMLElement = section;
     let lastGroup = '';
     for (const item of items) {
         if (item.group && item.group !== lastGroup) {
             lastGroup = item.group;
-            const groupEl = document.createElement('div');
-            groupEl.className = 'nav-group';
-            groupEl.textContent = item.group;
-            section.appendChild(groupEl);
+            const group = document.createElement('details');
+            group.className = 'nav-subsection';
+            const groupTitle = document.createElement('summary');
+            groupTitle.className = 'nav-group';
+            groupTitle.textContent = item.group;
+            group.appendChild(groupTitle);
+            section.appendChild(group);
+            parent = group;
         }
         const link = document.createElement('a');
         link.className = 'nav-item';
         link.href = `#${item.route}`;
         link.textContent = item.label;
-        section.appendChild(link);
+        parent.appendChild(link);
         pages.set(item.route, { link, render: item.render });
     }
     nav.appendChild(section);
@@ -132,9 +136,7 @@ navSection(
         label: symbol.name,
         group: symbol.group,
         render: (main) => renderApiPage(main, symbol)
-    })),
-    // long, the guides and samples link to what they use
-    false
+    }))
 );
 
 // ---------------------------------------------------------------- main + routing
@@ -160,10 +162,9 @@ function show(page: Page) {
     pages.forEach((other) => {
         other.link.classList.toggle('active', other === page);
     });
-    // its part of the sidebar may be folded
-    const section = page.link.closest('details');
-    if (section) {
-        section.open = true;
+    // its part of the sidebar, and the group in it, may be folded
+    for (let part = page.link.closest('details'); part; part = part.parentElement?.closest('details') ?? null) {
+        part.open = true;
     }
     page.link.scrollIntoView({ block: 'nearest' });
 

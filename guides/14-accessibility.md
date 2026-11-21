@@ -112,16 +112,26 @@ have ids of the grid's own, `simple-html-grid-<n>-...`, one `<n>` per grid on th
 
 ## The keyboard
 
-Every key the grid handles, by where the focus is. The cells are inputs, the arrow keys move the
-caret in them; Alt with an arrow moves between the cells. A custom cell (`ColumnConfig.renderer`) has
-no caret: there the plain arrows move between the cells too, see [Custom cells](21-custom-cells.md#the-keys-and-the-focus).
+Every key the grid handles, by where the focus is. The cells are inputs, always ready to be typed in:
+the arrow keys, Home and End move the caret in them, as in a spreadsheet's cell being edited. Alt is
+the key of the grid: Alt with an arrow moves between the cells, Alt+Home / Alt+End to the first / last
+cell of the row - see [The keys that jump](#the-keys-that-jump). A custom cell (`ColumnConfig.renderer`)
+has no caret: there the plain arrows move between the cells too, see [Custom cells](21-custom-cells.md#the-keys-and-the-focus).
+Ctrl is Cmd on a Mac, Alt is Option.
 
 ### A cell
 
 | key | does |
 | --- | --- |
-| Tab / Shift+Tab | the next / previous cell, across the sections, then the next / previous row. Group rows are skipped. Shift+Tab in the first row goes up to the header filters. Tab on the last cell of the last row, and Shift+Tab on the first cell with the filters hidden, leave the grid |
+| Tab / Shift+Tab | the next / previous cell, across the sections, then the next / previous row. A group row between them is a stop of its own, its button. Shift+Tab in the first row goes up to the header filters. Tab on the last cell of the last row goes on to the footer's buttons while the rows are filtered, else it leaves the grid; Shift+Tab on the first cell with the filters hidden leaves it. See [Focus](#focus) |
 | Alt+ArrowLeft / Alt+ArrowRight | the cell to the left / right, across the sections. Past the end of a row: the next row |
+| Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row, scrolled to - in the order of Tab: the left pinned columns first, the right pinned ones last. The middle columns scroll to their start / end |
+| Alt+Home / Alt+End | the first / last cell of the row |
+| Home / End | the input's: the caret to the start / end of the text (Shift+Home selects to the start) |
+| PageUp / PageDown | the cell a page of rows up / down, the same column: the rows scroll as far, the cell stays where it was on screen. At the first / last row it stops there |
+| Alt+PageUp / Alt+PageDown | the cell a page of the middle columns left / right, the same row: the middle columns scroll as far. In a pinned column the middle columns scroll, the focus stays |
+| Ctrl+ArrowUp / Ctrl+ArrowDown | the edge of the data in the column, as in a spreadsheet: the last cell with a value before a blank one, from a blank one the next cell with a value, else the first / last row |
+| Ctrl+ArrowLeft / Ctrl+ArrowRight | the input's: the caret a word left / right |
 | Alt+ArrowUp / Alt+ArrowDown | the cell above / below: the next field of a column of two fields, then the next row. Up from the first row: the header filter |
 | Enter | in a text cell that can be edited: the cell below (Alt+ArrowDown). In a multiline cell: opens its editor, also when the cell is readonly |
 | F2 | in a multiline cell: opens its editor |
@@ -133,6 +143,7 @@ no caret: there the plain arrows move between the cells too, see [Custom cells](
 | ArrowUp / ArrowDown / ArrowLeft / ArrowRight | on a custom cell itself: as with Alt. On a control the renderer put in the cell, the control's |
 | Shift+F10, the menu key | the row menu (the browser sends `contextmenu`), the focus on its first item |
 | Alt+Shift+arrows | a range of cells: from this cell, the end one cell further each time - a row up or down, a field left or right (the fields of a column of two are two). The focus stays in the cell. See [Selection and clipboard](17-selection-and-clipboard.md#the-keyboard) |
+| Shift+PageUp / Shift+PageDown, Ctrl+Shift+Home / Ctrl+Shift+End, Alt+Shift+Home / Alt+Shift+End, Ctrl+Shift+ArrowUp / Ctrl+Shift+ArrowDown | the end of the range where the key without Shift goes: a page, the first / last cell of the grid, of the row, the edge of the data. Not Alt+Shift+PageUp / PageDown |
 | Esc | clears the ranges of cells (when there are some, and no menu is open) |
 | Ctrl+C, Cmd+C | with no text selected in the cell: the range of cells as tab separated text, or the cell's value |
 | Ctrl+V, Cmd+V | a block of cells (copied in a spreadsheet, or here) from this cell or the top left of the range; one value into every cell of the ranges. One value with no range is the input's own paste |
@@ -140,20 +151,70 @@ no caret: there the plain arrows move between the cells too, see [Custom cells](
 | Ctrl+F, Cmd+F | opens the find bar, see [below](#the-find-bar). Anywhere in the grid: a header filter, a column header too |
 | F3 / Shift+F3 | while the find bar is open: the next / previous match. Anywhere in the grid |
 | Ctrl+D (Cmd+D) | fill down: each range gets the values of its top row, a range of one row or the cell alone the row above. See [Selection and clipboard](17-selection-and-clipboard.md#fill-down) |
+| Ctrl+Z, Ctrl+Y / Ctrl+Shift+Z | in an editable grid: undo, redo - and the focus goes to the cell it changed, scrolled to. While the cell is typed in Ctrl+Z is the input's own. See [Undo and redo](05-editing.md#undo-and-redo) |
 
-The grid scrolls to the cell the focus goes to. Moving to another cell (Tab, Alt+arrows, Enter) clears
-the ranges of cells, and so does typing in a cell.
+The grid scrolls to the cell the focus goes to. Moving to another cell (Tab, Alt+arrows, Enter, the keys
+that jump) clears the ranges of cells, and so does typing in a cell. The focus is moved 100ms after Tab,
+Enter and an Alt+arrow - the rows scroll first: until then a key that would move it again, or type in
+the cell being left, waits (it is canceled; a key held down goes one cell at a time). The other keys -
+Esc for a menu, Ctrl+C - are not held up, nor are the keys of another grid on the page.
+
+### The keys that jump
+
+The keys of a spreadsheet that go further than the next cell, in the table above:
+
+| key | goes to | with Shift |
+| --- | --- | --- |
+| Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row | the end of the range there |
+| Alt+Home / Alt+End | the first / last cell of the row | the end of the range there |
+| PageUp / PageDown | a page of rows up / down, the same column | the end of the range a page further |
+| Alt+PageUp / Alt+PageDown | a page of the middle columns left / right, the same row | - |
+| Ctrl+ArrowUp / Ctrl+ArrowDown | the edge of the data in the column | the end of the range there |
+
+- **Home and End stay the caret's.** The WAI-ARIA grid pattern and a spreadsheet move to the first /
+  last cell of the row with Home / End - but only while no cell is being edited: in a cell being edited
+  they move the caret, in Excel and Google Sheets too. The cells here are always being edited (an
+  input, the caret in it), so Home / End are the input's, and Alt - the key that moves between the cells
+  with the arrows - makes them the grid's: Alt+Home / Alt+End. Home / End only when the caret is at the
+  start / end already was considered: pressed twice to be sure, a key that also moves the caret would
+  jump away from the cell. Ctrl+Home / Ctrl+End do in a text input what Home / End do: the grid takes
+  them (Cmd+Home / Cmd+End on a Mac too).
+- **Ctrl+ArrowLeft / Ctrl+ArrowRight stay the input's**: a word left / right (Option+arrows on a Mac).
+  Ctrl+ArrowUp / Ctrl+ArrowDown do nothing in an input of one line (Cmd+ArrowUp / Cmd+ArrowDown move the
+  caret to its start / end on a Mac, as Cmd+ArrowLeft / Cmd+ArrowRight do): they are the grid's, to the
+  edge of the data as in Excel. On a Mac Ctrl+ArrowUp / Ctrl+ArrowDown are the system's (Mission
+  Control): Cmd+ArrowUp / Cmd+ArrowDown. A blank is `null`, `undefined`, `''` or an invalid date; 0 and
+  false are values.
+- **PageUp / PageDown** have nothing to do in an input of one line: the grid's, a page being the rows the
+  view shows. The rows scroll as far as the focus goes, so the cell stays where it was on screen; down a
+  page and up again is the same row. Ctrl+PageUp / Ctrl+PageDown are left to the browser (its tabs).
+- **Group rows are skipped**, as the arrows skip them: a key landing on one goes on to the data row after
+  it. Tab stops on their buttons, see [Focus](#focus).
+- **With Shift** the key moves the end of the last range of cells instead, as Alt+Shift+arrows do - the
+  key without Shift moves the focus, with Shift the range follows it; see
+  [Selection and clipboard](17-selection-and-clipboard.md#the-keyboard). The focus stays in the active
+  cell while it is on screen; when the range scrolled it away (Ctrl+Shift+End from the top) it goes to
+  the end of the range, and the keys go on from there - copy, Delete, the next Shift key.
+- **From the header**: a header filter has Ctrl+Home / Ctrl+End, Alt+Home / Alt+End (the first / last
+  filter) and PageDown; a column header and the button of a group row Ctrl+Home / Ctrl+End.
 
 ### A header filter
 
 | key | does |
 | --- | --- |
 | Enter | filters |
-| Tab / Shift+Tab | the next / previous filter. Tab on the last one goes to the first row, Shift+Tab on the first one leaves the grid |
+| Tab / Shift+Tab | the next / previous filter. Tab on the last one goes to the first row (the button of its group row, when the rows are grouped; the footer's buttons when the filter left no rows), Shift+Tab on the first one leaves the grid |
 | Alt+ArrowLeft / Alt+ArrowRight | the filter to the left / right |
 | Alt+ArrowUp | the filter above in a column of two fields, else the column header (label) above it |
 | Alt+ArrowDown | the filter below in a column of two fields, else the first row |
+| Alt+Home / Alt+End | the first / last filter |
+| Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row |
+| PageDown | the cell under the filter in the last row on screen |
+| Home / End | the input's: the caret |
 | Shift+F10, the menu key | the filter menu, the focus on its first item |
+
+The current row stays as it is when the focus goes up into the filters (Alt+ArrowUp, Shift+Tab,
+Alt+ArrowLeft from the first row): the filter row is no row of the data.
 
 ### A column header
 
@@ -165,6 +226,7 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | Enter / Space | sorts on the column, again for the other direction - as a click. The focus stays on it |
 | Shift+Enter / Shift+Space | adds the column to the sort - as shift+click |
 | Alt+ArrowUp / Alt+ArrowDown | the label above / below in a column of two fields; down from the last one, the column's filter |
+| Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row |
 | Shift+F10, the menu key | the header menu, the focus on its first item |
 
 ### The rest
@@ -172,7 +234,10 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | where | key | does |
 | --- | --- | --- |
 | the button of a group row | Enter / Space | expands or collapses the group. The focus stays on the button |
+| the button of a group row | Tab / Shift+Tab | the next / previous stop: the first cell of the row after it (the button of a group row after it), the last cell of the row before it (the last header filter before the first row). Out of the grid at its ends, see [Focus](#focus) |
+| the button of a group row | Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row |
 | the x of a group chip in the panel | Enter / Space | removes the grouping. It is in the tab order, before the grid |
+| the footer: Clear, the filter chips | Tab / Shift+Tab | the stops after the last row while the rows are filtered: Tab from the last cell of the last row gets there, Tab from the last of them leaves the grid. Shift+Tab from the first goes back to the last row |
 | the filter chips in the footer | Enter / Space | opens the filter editor |
 | a menu | ArrowDown / ArrowUp, Home / End, a letter | the next / previous / first / last item, the next one starting with the letter. A menu opened with the mouse leaves the focus on the cell: ArrowDown / ArrowUp get into it |
 | a menu | Enter, Space | uses the item: the menu closes, the focus goes back where it was. On an item with a submenu (`›`): opens it, as ArrowRight does |
@@ -248,6 +313,19 @@ buttons of the find bar, and the items of a menu (see [Menus](10-menus.md#the-ke
 menu pattern). Each gets a
 visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md#the-keyboard-focus)).
 
+Tab goes through the grid in the order it is shown, as through a form - every cell is a stop, not
+the one stop of the WAI-ARIA grid pattern (see [Known limits](#known-limits)):
+
+1. the x of the group chips in the panel (the browser's Tab, before the grid)
+2. the header filters, left to right
+3. the rows, top to bottom: the cells of a data row left to right, across the pinned sections; a group
+   row is one stop, its button
+4. the footer's Clear and filter chips, while the rows are filtered
+5. out of the grid
+
+Shift+Tab goes the same way back. The column headers are no stops (Alt+ArrowUp from a filter gets
+there), nor are the button of a lookup cell, the marker of an edited cell and the focus button.
+
 - Sorting from the keyboard and expanding a group rebuild the header or the rows: the focus is put
   back on the new column header / group button.
 - At the ends of the grid Tab is left to the browser: the focus first goes to an empty element at the
@@ -308,34 +386,42 @@ setTexts({
   `aria-owns`, which Safari supports less well than Chrome and Firefox.
 - **Not the keyboard of the grid pattern**: there every cell is reached with the arrow keys and only
   one cell is a stop of Tab. Here every cell input is a stop of Tab for the browser (the grid moves
-  the focus on Tab itself), and the plain arrow keys move the caret in the input, Alt+arrows move
-  between the cells, Alt+Shift+arrows select a range of cells. There is no Home / End / Page Up / Page
-  Down / Ctrl+Home in the grid, and no key to select a whole row or column (Shift+Space, Ctrl+Space).
+  the focus on Tab itself), and the plain arrow keys, Home and End move the caret in the input; Alt+arrows
+  move between the cells, Alt+Home / Alt+End to the ends of the row, Alt+Shift+arrows select a range of
+  cells - see [The keys that jump](#the-keys-that-jump). There is no key to select a whole row or column
+  (Shift+Space, Ctrl+Space), and Ctrl+ArrowLeft / Ctrl+ArrowRight are the input's (a word), not the edge
+  of the data sideways. Alt+Shift+PageUp / Alt+Shift+PageDown do not extend a range.
+- **Shift+Tab into the grid from after it** is the browser's: the last input in the dom, the last cell of
+  a row the grid rendered at the bottom of the view (row 20 at the top of 500 rows, checked in Chrome) -
+  not the last row, and not the footer's buttons. Tab into the grid from before goes to the first header
+  filter, as it should.
 - **Ranges of cells**: only the cells in a range have `aria-selected` (`true`). WAI-ARIA asks for
   `true` or `false` on every cell that can be selected, in a grid with `aria-multiselectable`: the
   grid keeps `aria-multiselectable` for the row selection (the selection mode `'multiple'`), and gives
   the other cells no `false`: every cell of the grid would get a "not selected" state, the way the
   rows have one with a selection mode. Not tried with a screen reader yet, see above. A range
-  made with Alt+Shift+arrows is not read out while it grows: the focus stays in the active cell. Only
-  the cells on screen are in the dom, so a screen reader reads only those of a large range.
+  made with Alt+Shift+arrows (Shift+PageDown ...) is not read out while it grows: the focus stays in the
+  active cell, or goes to the end once the active cell scrolled away. Only the cells on screen are in
+  the dom, so a screen reader reads only those of a large range.
 - **Only the rows on screen are in the dom**: a screen reader reading the page (browse mode) reads
   the rows on screen, not row 400. The counts and the indexes say where they are.
-- **Group rows by keyboard**: Tab and Alt+arrows skip the group rows, so the expand/collapse button
-  is no stop of Tab. A screen reader reaches it (and presses it) in its browse mode, a keyboard alone
-  does not.
+- **Group rows by keyboard**: Tab stops on the button of a group row; Alt+arrows, Enter and the keys
+  that jump skip the group rows (they move between cells), so a group row is reached with Tab only.
+  The treegrid pattern's ArrowRight / ArrowLeft to expand / collapse a row are not there: Enter / Space
+  on the button.
 - **The menus**: the right click menus and `openMenu()` follow the WAI-ARIA menu pattern (roles,
   `aria-checked`, `aria-expanded`, the keys above), checked in Chrome's accessibility tree but not with
   a screen reader yet. A menu has no name of its own (`aria-label`), a submenu is labelled by its item.
   The field and operator pickers of the filter editor are menus of the grid too: buttons
   (`aria-haspopup="menu"`, named `Field: Country`) that open them, the keys above in them. The
   column chooser is for the mouse, and so is the date picker of a date cell or filter - a date can be
-  typed.
+  typed. The date picker opens on a click in the cell, under it at the end of the page's body: no key
+  opens it and Tab does not get into it (its days have no keys, so taking the focus into it would leave
+  a keyboard user in a calendar that can not pick a day).
 - **The list of a lookup column**: the select is checked in Chrome's accessibility tree, not with a
   screen reader yet. The cell's input is a textbox with `aria-haspopup`, not a combobox: it is not
   `aria-expanded` while its list is open - the focus is in the list then. The select shows at most 500
   options; the search finds the rest.
-- **The footer** (the Clear button, the filter chips) is not on the way of Tab from the cells. A
-  screen reader reaches it.
 - **Only the first sort column** has `aria-sort`; the number of a column in a sort on several
   columns is shown, but not read out.
 - **The column numbers** under the filters are hidden: selecting a column is for the mouse, and a

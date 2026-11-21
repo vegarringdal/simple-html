@@ -689,14 +689,19 @@ describe('accessibility - Tab out of the grid (it was a keyboard trap)', () => {
         expect(document.activeElement).toBe(cellInput(element, 'firstname', 2));
     });
 
-    it('expect Tab on the last cell of the last data row to leave the grid when group rows follow it', async () => {
+    it('expect Tab on the last cell of the last data row to go to the button of the group row after it, then out of the grid', async () => {
         const { element, datasource } = await mountGrid(pinnedConfig(), people(4), fields);
         datasource.group([{ attribute: 'city', title: 'City' }]);
         datasource.expandGroup('Bergen');
-        // Bergen, its 2 rows, then Oslo collapsed
+        // Bergen, its 2 rows, then Oslo collapsed: its button is a stop of Tab (it was skipped)
         const input = lastCell(element, 2);
 
-        expect(keydown(input, 'Tab', { code: 'Tab' }).defaultPrevented).toBe(false);
+        expect(keydown(input, 'Tab', { code: 'Tab' }).defaultPrevented).toBe(true);
+        const oslo = document.activeElement as HTMLElement;
+        expect(oslo.getAttribute('aria-label')).toEqual('City: Oslo (2)');
+
+        expect(keydown(oslo, 'Tab', { code: 'Tab' }).defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(element.lastElementChild);
     });
 
     it('expect Shift+Tab on the first header filter not canceled: the focus goes to the start of the grid', async () => {
@@ -735,6 +740,137 @@ describe('accessibility - Tab out of the grid (it was a keyboard trap)', () => {
             expect(end?.getAttribute('tabindex')).toEqual('-1');
             expect(end?.getAttribute('aria-hidden')).toEqual('true');
         }
+    });
+});
+
+describe('accessibility - the group rows and the footer on the way of Tab', () => {
+    const tab = (target: Element, shiftKey = false) => keydown(target, 'Tab', { code: 'Tab', shiftKey });
+    const active = () => document.activeElement as HTMLElement;
+    const lastCell = (element: GridElement, row: number) => cellInput(element, 'id', row);
+    /** the button of a group row on screen, by its city */
+    const groupButton = (element: GridElement, city: string) =>
+        Array.from(element.querySelectorAll<HTMLElement>('.simple-html-grid-body-row-container-group [role="button"]')).find(
+            (button) => !isHidden(button) && button.getAttribute('aria-label')?.startsWith(`City: ${city}`)
+        ) as HTMLElement;
+
+    /** Bergen (row 0), first1 and first3 (1, 2), Oslo (3), first2 and first4 (4, 5) */
+    const grouped = async (config: GridConfig = pinnedConfig()) => {
+        const mounted = await mountGrid(config, people(4), fields);
+        mounted.datasource.group([{ attribute: 'city', title: 'City' }]);
+        mounted.datasource.expandGroup();
+        return mounted;
+    };
+
+    it('expect Tab from the last cell of a row to the button of the group row after it, then the first cell of the next row', async () => {
+        const { element } = await grouped();
+
+        expect(tab(lastCell(element, 2)).defaultPrevented).toBe(true);
+        expect(active()).toBe(groupButton(element, 'Oslo'));
+
+        expect(tab(active()).defaultPrevented).toBe(true);
+        expect(active()).toBe(cellInput(element, 'firstname', 4));
+    });
+
+    it('expect Shift+Tab back the same way: the button, then the last cell of the row before', async () => {
+        const { element } = await grouped();
+
+        expect(tab(cellInput(element, 'firstname', 4), true).defaultPrevented).toBe(true);
+        expect(active()).toBe(groupButton(element, 'Oslo'));
+
+        expect(tab(active(), true).defaultPrevented).toBe(true);
+        expect(active()).toBe(lastCell(element, 2));
+    });
+
+    it('expect the first group row between the header filters and the first row, both ways', async () => {
+        const { element } = await grouped();
+
+        expect(tab(headerFilterInput(element, 'id')).defaultPrevented).toBe(true);
+        expect(active()).toBe(groupButton(element, 'Bergen'));
+        expect(tab(active(), true).defaultPrevented).toBe(true);
+        expect(active()).toBe(headerFilterInput(element, 'id'));
+
+        expect(tab(cellInput(element, 'firstname', 1), true).defaultPrevented).toBe(true);
+        expect(active()).toBe(groupButton(element, 'Bergen'));
+    });
+
+    it('expect collapsed groups one stop each, then out of the grid', async () => {
+        const { element, datasource } = await grouped();
+        datasource.collapseGroup();
+
+        tab(groupButton(element, 'Bergen'));
+        expect(active()).toBe(groupButton(element, 'Oslo'));
+        tab(active(), true);
+        expect(active()).toBe(groupButton(element, 'Bergen'));
+
+        expect(tab(groupButton(element, 'Oslo')).defaultPrevented).toBe(false);
+        expect(active()).toBe(element.lastElementChild);
+    });
+
+    it('expect Shift+Tab on the first group row to leave the grid when the filters are hidden', async () => {
+        const { element } = await grouped({ ...pinnedConfig(), hideFilter: true });
+
+        expect(tab(groupButton(element, 'Bergen'), true).defaultPrevented).toBe(false);
+        expect(active().nextElementSibling?.classList.contains('simple-html-grid-header')).toBe(true);
+    });
+
+    it('expect Alt+ArrowDown to skip the group rows still: it moves between cells', async () => {
+        const { element } = await grouped({ ...pinnedConfig(), readonly: false });
+        vi.useFakeTimers();
+
+        keydown(cellInput(element, 'firstname', 2), 'ArrowDown', { code: 'ArrowDown', altKey: true });
+        vi.advanceTimersByTime(150);
+
+        expect(active()).toBe(cellInput(element, 'firstname', 4));
+    });
+
+    it('expect the footer after the last row while the rows are filtered: Clear, the chips, then out of the grid', async () => {
+        const { element, datasource } = await mountGrid(pinnedConfig(), people(5), fields);
+        datasource.filter(where('age', 'GREATER_THAN', 20));
+        const clear = element.querySelector('.footer-filter-clear') as HTMLElement;
+        const chips = element.querySelector('.footer-filter-chips') as HTMLElement;
+
+        expect(tab(lastCell(element, 3)).defaultPrevented).toBe(true);
+        expect(active()).toBe(clear);
+        // between the footer's buttons the browser's Tab
+        expect(tab(clear).defaultPrevented).toBe(false);
+        expect(active()).toBe(clear);
+        // after the last one: the end of the grid, the browser goes on from there
+        expect(tab(chips).defaultPrevented).toBe(false);
+        expect(active()).toBe(element.lastElementChild);
+
+        // back: Shift+Tab on Clear to the last cell of the last row
+        expect(tab(clear, true).defaultPrevented).toBe(true);
+        expect(active()).toBe(lastCell(element, 3));
+        expect(tab(chips, true).defaultPrevented).toBe(false);
+    });
+
+    it('expect the footer after the last header filter when the filter leaves no rows, and back', async () => {
+        const { element, datasource } = await mountGrid(pinnedConfig(), people(5), fields);
+        datasource.filter(where('age', 'GREATER_THAN', 100));
+        const clear = element.querySelector('.footer-filter-clear') as HTMLElement;
+
+        expect(tab(headerFilterInput(element, 'id')).defaultPrevented).toBe(true);
+        expect(active()).toBe(clear);
+        expect(tab(clear, true).defaultPrevented).toBe(true);
+        expect(active()).toBe(headerFilterInput(element, 'id'));
+    });
+
+    it('expect Shift+Tab from the footer to the button of the last row when it is a group row', async () => {
+        const { element, datasource } = await grouped();
+        datasource.collapseGroup('Oslo');
+        datasource.filter(where('age', 'GREATER_THAN', 0));
+
+        tab(element.querySelector('.footer-filter-clear') as HTMLElement, true);
+
+        expect(active()).toBe(groupButton(element, 'Oslo'));
+    });
+
+    it('expect no stop in a footer of no height, nor without a filter: out of the grid', async () => {
+        const { element, datasource } = await mountGrid({ ...pinnedConfig(), footerHeight: 0 }, people(5), fields);
+        datasource.filter(where('age', 'GREATER_THAN', 20));
+
+        expect(tab(lastCell(element, 3)).defaultPrevented).toBe(false);
+        expect(active()).toBe(element.lastElementChild);
     });
 });
 

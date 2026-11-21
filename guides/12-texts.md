@@ -101,6 +101,12 @@ The ids are grouped by area, the area first. Within an area:
   (symbols, so a chip stays short) and `filterString.operator.EQUAL` in `getFilterString()`. AND and OR
   as well: `filterEditor.operatorAnd`, `footer.and`, `filterString.and`. The filter menu's operators
   are menu entries: `filter.operator.equal`.
+- **A text that names a key has a text for a Mac, `<id>.mac`**: `row.edit.undo.hint` is `Ctrl+Z`,
+  `row.edit.undo.hint.mac` is `⌘Z`. The grid shows the `.mac` one on a Mac - and an iPad or iPhone -
+  from the platform the browser gives (`navigator.userAgentData.platform`, else `navigator.platform`).
+  The grid takes both keys everywhere (Ctrl+Z and Cmd+Z), the texts say what a user there presses.
+  Translate both: a `.mac` text left out shows its English default on a Mac. They are
+  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip` and `cell.multiline.hint`.
 
 ### The names of the months and days
 
@@ -220,8 +226,10 @@ Right click on a cell.
 | `row.edit` | `Undo / Redo` | the row menu's submenu of undo, redo and the reverts, in an editable grid |
 | `row.edit.undo` | `Undo last change` | undoes the last step of the undo history |
 | `row.edit.undo.hint` | `Ctrl+Z` | its hint, the key |
+| `row.edit.undo.hint.mac` | `⌘Z` | its hint on a Mac |
 | `row.edit.redo` | `Redo` | redoes the last step undone |
-| `row.edit.redo.hint` | `Ctrl+Y` | its hint, the key |
+| `row.edit.redo.hint` | `Ctrl+Y` | its hint, the key. Ctrl+Shift+Z redoes too |
+| `row.edit.redo.hint.mac` | `⇧⌘Z` | its hint on a Mac. ⌘Y redoes too |
 | `row.edit.revertCell` | `Undo cell edit` | puts the original value of the cell back |
 | `row.edit.revertRow` | `Undo row edits` | puts the original values of the row right clicked back |
 | `row.edit.revertRows` | `Undo row edits` | puts the original values of the selected rows back |
@@ -454,6 +462,7 @@ The find bar of Ctrl+F in the grid, see [Find](19-find.md).
 | `find.filterRows.tooltip` | `Show only the rows with a match` | its tooltip |
 | `find.previous` | `Previous match` | the `↑` button: its name for a screen reader |
 | `find.previous.tooltip` | `Previous match (Shift+Enter)` | its tooltip |
+| `find.previous.tooltip.mac` | `Previous match (⇧Enter)` | its tooltip on a Mac |
 | `find.next` | `Next match` | the `↓` button |
 | `find.next.tooltip` | `Next match (Enter)` | its tooltip |
 | `find.close` | `Close` | the `✕` button, closes the find bar |
@@ -502,6 +511,7 @@ opens over it, see [Editing](05-editing.md#multiline-text).
 | `cell.multiline.more` | `More lines, Enter shows all` | for a screen reader: the description of a cell that shows the first of its lines. Hidden on screen, the cell has a marker |
 | `cell.multiline.moreLines` | `… {count} more lines` | the last line of the cell's tooltip when its text has more lines than the tooltip shows (`multilineTooltipLines`). `{count}`: how many are not shown, 2 or more - one line more is shown instead |
 | `cell.multiline.hint` | `Ctrl+Enter to save, Esc to cancel` | under the textarea of the editor. Cmd+Enter saves too |
+| `cell.multiline.hint.mac` | `⌘Enter to save, Esc to cancel` | the same on a Mac |
 | `cell.multiline.hintReadonly` | `Esc to close` | under the textarea of the editor of a readonly cell |
 
 ### Lookup columns

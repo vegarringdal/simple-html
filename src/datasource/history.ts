@@ -115,6 +115,15 @@ export class History {
     }
 
     /**
+     * The changes of the step undo (or redo) takes next, in the order they were made - empty when there
+     * is none. For the grid: after an undo it moves the focus to the first cell it changed
+     */
+    public nextChanges(action: 'undo' | 'redo'): readonly HistoryChange[] {
+        const steps = action === 'undo' ? this.undoSteps : this.redoSteps;
+        return steps.at(-1)?.changes ?? [];
+    }
+
+    /**
      * Records a change: into the open step, or the step of the cell being typed in (see the class).
      * Not while paused, and not when it changes nothing.
      */

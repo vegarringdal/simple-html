@@ -36,7 +36,7 @@
     --simple-html-grid-main-font-color: light-dark(#2e2d2d, #f9f7f7);
     /* placeholders (a picker of the filter editor with nothing picked too), the "AND"/"OR" of the
        filter chips, the too many conditions box */
-    --simple-html-grid-sec-font-color: light-dark(#979494, #c8c8c8);
+    --simple-html-grid-sec-font-color: light-dark(#6b6b6b, #c8c8c8);
     /* where a dragged column can go, the column resize handle under the pointer */
     --simple-html-grid-dropzone-color: light-dark(rgba(129, 127, 127, 0.7), rgba(151, 148, 148, 0.4));
     /* the inset shadow of labels, panels and the row selector */
@@ -1390,9 +1390,6 @@
     background-color: var(--simple-html-grid-dropzone-color);
 }
 
-.simple-html-grid-header input::placeholder {
-    filter: opacity(0.2);
-}
 
 /* 
  * used when dragdrop is actived, 
@@ -1468,8 +1465,10 @@
     z-index: 1002;
 }
 
+/* the row number, quieter than the cells: at least 4.5:1 to the row numbers' background, a selected
+   row's too, light and dark (it was 0.5, 2.5:1) */
 .simple-html-selector-text {
-    filter: opacity(0.5);
+    filter: opacity(0.8);
 }
 
 /**

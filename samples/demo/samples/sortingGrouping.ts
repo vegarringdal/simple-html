@@ -6,7 +6,7 @@ export const sortingGrouping: DemoSample = {
     title: 'Sorting & grouping',
     group: 'Datasource',
     description:
-        'Sorting and grouping live on the datasource. Users can click headers to sort (shift-click for multi sort) and drag columns to the panel to group - the buttons below do the same from code. When grouped, getRows() has a group row in front of each group: isGroupRow() tells it from a data row, getDataRows() leaves the group rows out.',
+        'Sorting and grouping live on the datasource. Users can click headers to sort (shift-click for multi sort) and drag columns to the panel to group - the buttons below do the same from code. When grouped, getRows() has a group row in front of each group: isGroupRow() tells it from a data row, getDataRows() leaves the group rows out. From the keyboard Tab stops on the +/- of a group row between the cells, Enter or Space expands or collapses it; Ctrl+End goes to the last data row.',
     run(stage) {
         const ui = createStage(stage);
         const { datasource } = mountGrid(ui.gridHost, baseGridConfig());

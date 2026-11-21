@@ -241,6 +241,9 @@ it as they find the input of another cell. It has the keyboard focus ring of eve
   bubble to the host.
 - **The plain arrows** move to the next cell too when the host has the focus: it has no caret. On your
   own control they are the control's.
+- **The keys that jump** - Ctrl+Home / Ctrl+End, Alt+Home / Alt+End, PageUp / PageDown, Ctrl+ArrowUp /
+  Ctrl+ArrowDown, with Shift for a range, see [Keyboard](14-accessibility.md#the-keys-that-jump) - work
+  on the host. On your own control they are the control's: a select has its own PageDown.
 - **Space** on the host does not scroll the page (a typed space opens the editor).
 - **Copy** (Ctrl+C) copies the cell's text - the formatter's, not what the renderer drew. **Paste** writes
   the value, as into a checkbox: the host is no input.

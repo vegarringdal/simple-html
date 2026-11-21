@@ -10,6 +10,7 @@ import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
 import { fillDownKey } from './fillDown';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { jumpKeydown } from './jumpKeys';
 import { rangeDeleteKey } from './rangeClipboard';
 import { rangeCellFocused, rangeKeydown } from './rangeSelection';
 import { isTypedCharacter } from './renderRowCell';
@@ -232,8 +233,8 @@ export function releaseAllRenderers(ctx: Grid) {
 /**
  * The keys of a custom cell: those of the default cell - the ranges, Delete, fill down, undo / redo, Tab
  * and Alt+arrows - and on the host itself (not on what the renderer put in it, those keys are the
- * renderer's): the plain arrows move to the next cell, the host has no caret; Enter, F2 and a character
- * typed edit the cell
+ * renderer's): the keys that jump (Ctrl+Home, PageDown ..., jumpKeys.ts), the plain arrows move to the
+ * next cell, the host has no caret; Enter, F2 and a character typed edit the cell
  */
 function customCellKeydown(ctx: Grid, custom: CustomCell, e: KeyboardEvent) {
     const { cell, row, column, celno, colType, field, entity } = custom;
@@ -246,6 +247,10 @@ function customCellKeydown(ctx: Grid, custom: CustomCell, e: KeyboardEvent) {
     }
 
     if (e.target === e.currentTarget && !e.isComposing) {
+        // the keys that jump (jumpKeys.ts): on the host only, a control in the cell has its own PageDown
+        if (jumpKeydown(ctx, e, row, { colType, column, celno })) {
+            return;
+        }
         const modifier = e.altKey || e.ctrlKey || e.metaKey;
         if (!modifier && (e.key === 'Enter' || e.key === 'F2')) {
             if (editCustomCell(ctx, custom)) {

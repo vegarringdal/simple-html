@@ -20,6 +20,7 @@ import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
+import { jumpKeydown } from './jumpKeys';
 import { writeCellValue } from './lookupColumn';
 import { isLookupEditorOpen, openLookupEditor } from './lookupEditor';
 import { firstLine, hasLineBreak, isMultilineCell, textLines } from './multilineText';
@@ -168,6 +169,18 @@ export function renderRowCell(
         // and the whole text in its tooltip
         const multiline = !lookupColumn && isMultilineCell(field, cellConfigType, value);
         const more = multiline && hasLineBreak(value);
+        // while the cell is edited - its input has the focus - it shows the formatter's formatForEdit
+        // when it has one: the plain value to type over, '12345.6' for '12 345.60'. Not a cell that can
+        // not be typed in: readonly, a multiline cell (its editor), a lookup's label, paste/clear only
+        const editing =
+            cell.$focused === true &&
+            !config.readonly &&
+            !cellReadOnly &&
+            !multiline &&
+            !lookupColumn &&
+            !cellConfig.allowPasteClearOnly;
+        const inputText =
+            (editing ? formatter.formatForEdit?.(entity?.[attribute]) : undefined) ?? (multiline ? firstLine(value) : value);
         // in a cell of more than a line (fitRows): the lines after the first that it has room for are
         // shown under the input. The marker only when some lines are not shown, on the last line
         const textLineList = more ? textLines(value) : [];
@@ -227,9 +240,11 @@ export function renderRowCell(
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: any) => {
-                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
+                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts). The
+                            // keys that jump: Ctrl+Home, PageDown ... (jumpKeys.ts)
                             if (
                                 rangeKeydown(ctx, e, row, attribute) ||
+                                jumpKeydown(ctx, e, row, { colType, column, celno }) ||
                                 rangeDeleteKey(ctx, e) ||
                                 fillDownKey(ctx, e, row, attribute)
                             ) {
@@ -349,7 +364,7 @@ export function renderRowCell(
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
                         style=${`${cellConfigType === 'number' && !lookupColumn ? 'text-align: right;' : ''}width:100%;height:100%;${firstLinePadding}`}
-                        .value=${live(multiline ? firstLine(value) : value)}
+                        .value=${live(inputText)}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}${lookupEditable ? ' simple-html-grid-cell-lookup' : ''}`}
                         .readOnly=${multiline || !!lookupColumn || !!config.readonly || cellReadOnly}
                         aria-describedby=${more ? moreId : nothing}
@@ -502,11 +517,17 @@ export function renderRowCell(
                             cell.$focused = false;
                             // the typing in this cell is done: typing in it again is a new step
                             history.endTyping();
+                            // it showed formatForEdit while it had the focus: the formatted text again
+                            if (formatter.formatForEdit) {
+                                renderRowCell(ctx, cell, row, column, celno, colType, cellType, attribute, rowData);
+                            }
                         }}
                         @keydown=${(e: any) => {
-                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
+                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts). The
+                            // keys that jump: Ctrl+Home, PageDown ... (jumpKeys.ts) - Home and End are the caret's
                             if (
                                 rangeKeydown(ctx, e, row, attribute) ||
+                                jumpKeydown(ctx, e, row, { colType, column, celno }) ||
                                 rangeDeleteKey(ctx, e) ||
                                 fillDownKey(ctx, e, row, attribute)
                             ) {

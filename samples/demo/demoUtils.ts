@@ -20,6 +20,10 @@ export interface DemoSample {
     /** the group in the sidebar */
     group: string;
     description: string;
+    /**
+     * the grid takes the page: it is most of the window high - for a sample to try everything in
+     */
+    fullPage?: boolean;
     run: (stage: HTMLElement) => void;
 }
 

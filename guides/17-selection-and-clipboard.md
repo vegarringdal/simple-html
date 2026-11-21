@@ -60,11 +60,22 @@ In a cell (see [Keyboard and accessibility](14-accessibility.md#the-keyboard) fo
 | key | does |
 | --- | --- |
 | Alt+Shift+arrows | starts a range at the cell, or moves the end of the last range one cell: a row up or down (group rows are skipped), a field left or right in the order of the layout - in a column of two stacked fields, right of the top field is the field under it. The focus stays in the active cell, the grid scrolls to the end |
+| Shift+PageDown / Shift+PageUp | the end a page of rows down / up, the same field |
+| Ctrl+Shift+End / Ctrl+Shift+Home | the end to the last field of the last row / the first field of the first row |
+| Alt+Shift+End / Alt+Shift+Home | the end to the last / first field of its row |
+| Ctrl+Shift+ArrowDown / Ctrl+Shift+ArrowUp | the end to the edge of the data in its field: the last cell with a value before a blank one, from a blank one the next cell with a value, else the last / first row |
 | Esc | clears the ranges. With a menu open, Esc closes the menu first |
 | Ctrl+C, Ctrl+V, Delete | see [Copy](#copy), [Paste](#paste), [Delete](#delete) |
 
 The arrows move the caret in the cell's input and Shift+arrows select text in it, as always; Alt+arrows
-move to the next cell. On a Mac, Alt is the Option key: Option+Shift+arrows select a range, not words.
+move to the next cell. On a Mac, Alt is the Option key: Option+Shift+arrows select a range, not words,
+and Ctrl is Cmd: Cmd+Shift+End.
+
+Each key with Shift moves the end of the range where the key without it moves the focus - see
+[The keys that jump](14-accessibility.md#the-keys-that-jump) - and starts a range at the cell when there
+is none. The focus stays in the active cell; when the range scrolls it away (Ctrl+Shift+End from the
+first row) the focus goes to the end of the range, which is on screen, so the keys go on working:
+Ctrl+C copies the range, the next Shift key moves its end again. The ranges stay.
 
 Moving to another cell - Tab, Alt+arrows, Enter, a click - clears the ranges, and so does typing in a
 cell: as moving the active cell does in a spreadsheet. A right click does not, the row menu works on

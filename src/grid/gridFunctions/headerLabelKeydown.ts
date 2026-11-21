@@ -5,11 +5,13 @@ import { sortOn } from './dragEvent';
 import { LEFT_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { gridCornerKey } from './jumpKeys';
 
 /**
  * The keys of a header label (a column header), which is focusable but not in the tab order -
  * Alt+ArrowUp from the header filter under it gets there:
  *
+ * - Ctrl+Home / Ctrl+End: the first cell of the first row / the last cell of the last row
  * - Enter / Space: sorts on the field, like a click. Shift adds the field to the sort
  * - Alt+ArrowDown: the label of the next field of the column, from the last one its header filter
  * - Alt+ArrowUp: the label of the field above, in a column with several fields
@@ -24,6 +26,11 @@ export function headerLabelKeydown(ctx: Grid, cell: HTMLCellElement, event: Keyb
     }
     const { $coltype: colType, $column: column, $celno: celno } = cell;
     const config = ctx.gridInterface.__getGridConfig();
+
+    // Ctrl+Home / Ctrl+End: the first / last cell of the rows, see jumpKeys.ts
+    if (gridCornerKey(ctx, event)) {
+        return;
+    }
 
     if (event.key === 'Enter' || event.key === ' ') {
         // Space would scroll the page

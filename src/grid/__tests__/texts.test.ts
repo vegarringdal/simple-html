@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 // the date picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
 import { Datasource } from '../../datasource/dataSource';
@@ -262,6 +262,23 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     openRowMenu(element, 'age', 0);
     checkMenu();
     gridInterface.clearRanges();
+
+    // on a Mac: the texts that name a key, `<id>.mac` - the hints of undo and redo, the find bar's
+    // previous, the hint of the editor of the notes
+    const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+    try {
+        openRowMenu(element, 'age', 0);
+        checkMenu();
+        gridInterface.closeMenu();
+        gridInterface.find('«bob»');
+        check();
+        gridInterface.closeFind();
+        pressKey(element.querySelector('input[data-attribute="notes"]') as HTMLElement, 'Enter');
+        check();
+        pressKey(document.querySelector('.simple-html-grid-text-editor textarea') as HTMLElement, 'Escape');
+    } finally {
+        platform.mockRestore();
+    }
 
     // the header menus: pinned left (unpin) and in the center (pin), then the column chooser
     openLabelMenu(element, 'name');

@@ -11,6 +11,8 @@ import { getElementByClassName } from './getElementByClassName';
 import { getLayoutFields } from './getLayoutFields';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { pinnedSection } from './pinnedSection';
+import { nextDataRow } from './rowSteps';
+import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
  * The cell ranges in the grid (see CellRange, cellRanges.ts for the model): making them with the
@@ -32,7 +34,8 @@ import { pinnedSection } from './pinnedSection';
  * - a finger does none of this: it scrolls the grid, see addScrollEventListeners.ts
  *
  * The keyboard, in a cell (the cell's keydown calls rangeKeydown): Alt+Shift+arrows move the end of
- * the last range (from the focused cell when there is none), Esc clears the ranges. Delete and
+ * the last range (from the focused cell when there is none), Esc clears the ranges. Shift+PageDown,
+ * Ctrl+Shift+End ... move it further, see jumpKeys.ts. Delete and
  * Backspace clear the cells of the ranges, see rangeDeleteKey in rangeClipboard.ts. Ctrl+D fills down, and
  * the last range has a fill handle at its bottom right corner, see fillDown.ts.
  *
@@ -449,38 +452,67 @@ export function rangeKeydown(ctx: Grid, event: KeyboardEvent, row: number, field
  * At the edge of the grid nothing moves
  */
 function extendRangeByKey(ctx: Grid, here: CellPoint, key: string) {
+    extendRange(ctx, here, (end, fields) => {
+        if (key === 'ArrowUp' || key === 'ArrowDown') {
+            return { row: nextDataRow(ctx, end.row, key === 'ArrowUp' ? -1 : 1), field: end.field };
+        }
+        const index = fields.indexOf(end.field) + (key === 'ArrowLeft' ? -1 : 1);
+        return { row: end.row, field: fields[Math.min(Math.max(index, 0), fields.length - 1)] };
+    });
+}
+
+/**
+ * Moves the end (`to`) of the last range to where `move` puts it: for the keys that extend a range,
+ * Alt+Shift+arrows here and Shift+PageDown, Ctrl+Shift+End ... in jumpKeys.ts. With no range it starts
+ * one at `here`, the cell with the focus. The focus stays where it is, its text selection is collapsed;
+ * the grid scrolls the end into view - and when the active cell scrolls away the focus goes to the end,
+ * see keepFocusInRange
+ * @param move the new end, from the end there is now and the fields of the layout (getLayoutFields)
+ */
+export function extendRange(ctx: Grid, here: CellPoint, move: (end: CellPoint, fields: string[]) => CellPoint) {
     const gridInterface = ctx.gridInterface;
     const fields = getLayoutFields(gridInterface);
     const ranges = gridInterface.getRanges();
     const last = ranges.at(-1) ?? oneCell(here);
+    const end = move({ row: last.toRow, field: last.toField }, fields);
 
-    let row = last.toRow;
-    let index = fields.indexOf(last.toField);
-    if (key === 'ArrowUp' || key === 'ArrowDown') {
-        row = nextDataRow(ctx, row, key === 'ArrowUp' ? -1 : 1);
-    } else {
-        index = Math.min(Math.max(index + (key === 'ArrowLeft' ? -1 : 1), 0), fields.length - 1);
+    gridInterface.__setRanges([...ranges.slice(0, -1), { ...last, toRow: end.row, toField: end.field }]);
+    const focused = focusedCell(ctx);
+    if (focused?.input) {
+        collapseTextSelection(focused.input);
     }
-
-    gridInterface.__setRanges([...ranges.slice(0, -1), { ...last, toRow: row, toField: fields[index] }]);
-    const input = focusedCell(ctx)?.input;
-    if (input) {
-        collapseTextSelection(input);
+    // what the focused cell shows: its element shows another row once the rows scrolled far
+    const had = focused ? pointOf(focused.cell) : null;
+    // rendered now: a jump far away (Ctrl+Shift+End) would hide the rows until the scrolling stops, and
+    // the cell with the focus with them
+    if (scrollCellIntoView(ctx, end.row, end.field)) {
+        triggerScrollEvent(ctx);
+        keepFocusInRange(ctx, had, { row: last.fromRow, field: last.fromField }, end);
     }
-    scrollCellIntoView(ctx, row, fields[index]);
 }
 
 /**
- * The next data row up (`step` -1) or down (1) from a row, group rows skipped. The row itself when
- * there is none
+ * After the rows scrolled to the end of a range: the cell with the focus keeps it while its cell element
+ * shows it still. Scrolled away, its cell element shows another row or is hidden (and a hidden element
+ * loses the focus): the focus goes to the active cell (where the range starts) when it is on screen,
+ * else to the end of the range - the keys go on working there: copy, Delete, the keys that extend the
+ * range. The ranges stay, as for the cell a drag ends on
+ * @param had the cell that had the focus before the scroll, null for none
+ * @param from where the range starts, the active cell
+ * @param end the end of the range, on screen
  */
-function nextDataRow(ctx: Grid, row: number, step: number) {
-    const datasource = ctx.gridInterface.getDatasource();
-    let next = row + step;
-    while (next >= 0 && next < datasource.length() && isGroupRow(datasource.getRow(next))) {
-        next = next + step;
+function keepFocusInRange(ctx: Grid, had: CellPoint | null, from: CellPoint, end: CellPoint) {
+    const focused = focusedCell(ctx);
+    if (focused && had && samePoint(pointOf(focused.cell), had)) {
+        return;
     }
-    return next >= 0 && next < datasource.length() ? next : row;
+    // a focus that is part of the range: rangeCellFocused leaves the ranges as they are
+    ctx.rangeGesture = true;
+    try {
+        focusCellInput(ctx, from) || focusCellInput(ctx, end);
+    } finally {
+        ctx.rangeGesture = false;
+    }
 }
 
 /**
@@ -493,8 +525,18 @@ function nextDataRow(ctx: Grid, row: number, step: number) {
  * @returns true when it scrolled
  */
 export function scrollCellIntoView(ctx: Grid, row: number, field: string, middle = false): boolean {
-    const gridInterface = ctx.gridInterface;
-    const { scrollTops, scrollHeights } = gridInterface.__getScrollState();
+    const scrolled = scrollRowIntoView(ctx, row, middle);
+    const center = ctx.gridInterface.__getGridConfig().layout.center;
+    const column = center.findIndex((col) => col.fields.includes(field));
+    return (column !== -1 && scrollCenterColumnIntoView(ctx, column, middle)) || scrolled;
+}
+
+/**
+ * Scrolls a row into view when it is above or below the rows shown, see scrollCellIntoView
+ * @returns true when it scrolled
+ */
+export function scrollRowIntoView(ctx: Grid, row: number, middle = false): boolean {
+    const { scrollTops, scrollHeights } = ctx.gridInterface.__getScrollState();
     const bodyScroller = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
     const scrollTop = bodyScroller.scrollTop;
     const top = scrollTops[row];
@@ -506,13 +548,16 @@ export function scrollCellIntoView(ctx: Grid, row: number, field: string, middle
     } else if (bottom > bodyScroller.scrollTop + bodyScroller.clientHeight) {
         bodyScroller.scrollTop = middle ? inTheMiddle : bottom - bodyScroller.clientHeight;
     }
-    const scrolled = bodyScroller.scrollTop !== scrollTop;
+    return bodyScroller.scrollTop !== scrollTop;
+}
 
-    const center = gridInterface.__getGridConfig().layout.center;
-    const column = center.findIndex((col) => col.fields.includes(field));
-    if (column === -1) {
-        return scrolled;
-    }
+/**
+ * Scrolls a middle column (an index in `layout.center`) into view when it is left or right of the
+ * middle columns shown, see scrollCellIntoView
+ * @returns true when it scrolled
+ */
+export function scrollCenterColumnIntoView(ctx: Grid, column: number, middle = false): boolean {
+    const center = ctx.gridInterface.__getGridConfig().layout.center;
     const middleScroller = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
     const scrollLeft = middleScroller.scrollLeft;
     const left = center.slice(0, column).reduce((sum, col) => sum + col.width, 0);
@@ -524,5 +569,5 @@ export function scrollCellIntoView(ctx: Grid, row: number, field: string, middle
     } else if (left + width > middleScroller.scrollLeft + middleScroller.clientWidth) {
         middleScroller.scrollLeft = middle ? leftInTheMiddle : left + width - middleScroller.clientWidth;
     }
-    return scrolled || middleScroller.scrollLeft !== scrollLeft;
+    return middleScroller.scrollLeft !== scrollLeft;
 }

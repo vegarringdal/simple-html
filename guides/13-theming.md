@@ -275,7 +275,7 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-pinned-border` | the lines at the pinned columns and under the header, the frame of the filter editor, the tooltips and the column chooser's button, the line of a group (the bracket) in the filter editor | `#d1d0d0` | `#1f2937` |
 | `--simple-html-grid-sec-bg-border` | the line right of the grouping columns | `#e6e5e5` | `#1f2937` |
 | `--simple-html-grid-main-font-color` | the text | `#2e2d2d` | `#f9f7f7` |
-| `--simple-html-grid-sec-font-color` | placeholders - the filter row, the search boxes, a picker of the filter editor with nothing picked - the AND/OR between the filter chips, the "too many conditions" box | `#979494` | `#c8c8c8` |
+| `--simple-html-grid-sec-font-color` | placeholders - the filter row, the search boxes, a picker of the filter editor with nothing picked - the AND/OR between the filter chips, the "too many conditions" box | `#6b6b6b` | `#c8c8c8` |
 | `--simple-html-grid-boxshadow` | the inset shadow of the labels, the panel and the row selector | `#fffdfd` | `#4b5563` |
 | `--simple-html-grid-dropzone-color` | where a dragged column can go, the resize handle under the pointer | `rgba(129, 127, 127, 0.7)` | `rgba(151, 148, 148, 0.4)` |
 | `--simple-html-grid-focus-color` | the outline of the element with the keyboard focus | `#005fcc` | `#b3d7ff` |
