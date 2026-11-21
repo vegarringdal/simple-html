@@ -130,7 +130,7 @@ describe('header filter - a single condition at the root', () => {
         const chips = Array.from(element.querySelectorAll('.footer-filter-chip')).map((chip) =>
             chip.textContent?.replace(/\s+/g, ' ').trim()
         );
-        expect(chips).toEqual(['age ≥ 20']);
+        expect(chips).toEqual(['Age ≥ 20']);
     });
 
     it('expect the header condition to be shown next to it in the footer', async () => {
@@ -142,6 +142,6 @@ describe('header filter - a single condition at the root', () => {
         const chips = Array.from(element.querySelectorAll('.footer-filter-chip')).map((chip) =>
             chip.textContent?.replace(/\s+/g, ' ').trim()
         );
-        expect(chips).toEqual(['age ≥ 20', 'lastname = x']);
+        expect(chips).toEqual(['Age ≥ 20', 'Lastname = x']);
     });
 });

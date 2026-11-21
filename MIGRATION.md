@@ -364,8 +364,10 @@ const gridConfig: GridConfig = {
 
 `attributes` and `columnsCenter` are gone too, see [Grid config](#grid-config).
 
-A column's label is its own `label`, else the field's `label`, else the field name (the header
-shows that one prettified, as before).
+A column's label is its own `label`, else the field's `label`, else the field name prettified
+(`first_name` is `First Name`). The grid shows that label everywhere; in v5 only the header, the
+column chooser and the attribute menu prettified the name, while the footer filter, the filter editor,
+the group chip and a copied table showed `first_name`.
 
 `dynamicCellTypeColumn` stays. It needs a text field, and a field that is not listed is text now -
 in v5 the column needed `type: 'text'` set. Each row is formatted with the default formatter of its

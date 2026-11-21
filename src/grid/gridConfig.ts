@@ -280,7 +280,8 @@ export interface LayoutColumn {
 export type ColumnConfig = {
     /**
      * the column's header text. Left out, the label of the datasource field (`FieldConfig.label`) is
-     * used, and without that the field name
+     * used, and without that the field name prettified (`first_name` is `First Name`). The grid shows
+     * the same label everywhere: header, column chooser, group chip, filter editor, footer filter
      */
     label?: string;
     /**

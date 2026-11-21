@@ -677,6 +677,11 @@ translation can be stored with the config in a backend.
   spaces; the html showed one). Its id is still `' blank'`.
 - `getFilterString()` shows an operator that is not one (plain JS) as it is, not as `UNDEFINED`.
 - The filter editor shows an operator that is not one as it is, not prettified.
+- **One label per column, wherever the grid shows it.** A column without a `label` of its own or of
+  its field showed `First Name` in the header, the column chooser and the attribute menu, but
+  `first_name` in the footer filter, the filter editor, the group chip, the drag ghost and a copied
+  table. Now it is `First Name` in all of them. A grouping made by dragging gets that label as its
+  `title`.
 
 #### Docs
 - `guides/12-texts.md`; the grid config, editing (messages), filtering, events (date picker) and menus

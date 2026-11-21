@@ -159,6 +159,17 @@ describe('drag/drop - drop targets', () => {
         expect(datasource.getGrouping().map((group) => group.attribute)).toEqual(['age']);
     });
 
+    it('expect the group chip to show the label the header shows', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+
+        dragAndDrop(labelCell(element, 'age'), panelOf(element));
+        await sleep(10);
+
+        expect(datasource.getGrouping()).toEqual([{ attribute: 'age', title: 'Age' }]);
+        const chip = element.querySelector('.simple-html-grid-panel-label-text') as HTMLElement;
+        expect(chip.textContent?.trim()).toEqual('Age');
+    });
+
     it('expect a group chip dropped on the left zone of another chip to go before it', async () => {
         const { element, datasource } = await mountGrid(threeColumns(), data());
         datasource.group([

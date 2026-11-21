@@ -94,7 +94,7 @@ function rowErrorText(ctx: Grid, rowData: Entity | GroupRow | undefined): string
         lines.push(rowData.__rowError);
     }
     for (const [field, messages] of ctx.gridInterface.getDatasource().__getRowErrors(rowData) ?? []) {
-        lines.push(`${getColumnLabel(ctx, field, true)}: ${messages.join(', ')}`);
+        lines.push(`${getColumnLabel(ctx, field)}: ${messages.join(', ')}`);
     }
     return lines.join('\n');
 }

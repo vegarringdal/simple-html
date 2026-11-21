@@ -1008,6 +1008,22 @@ Phase 2b is complete with this step: 1211 tests.
   loaded for every test (`vitest.config.ts`). What the browser does (top layer, inert, focus, Esc,
   capture retargeting) is checked against the spec by reading, not in a browser.
 
+#### Real-browser check of step 2
+
+happy-dom can't show the top layer, inert, focus or pointer capture, so step 2 was checked in headless
+Chromium (playwright, a scratch script outside the repo) against the built docs site: the row menu and
+the filter menu open as popovers, sized and on screen, and close on Esc and an outside click; Advanced
+Filter opens a modal dialog that covers the grid, it moves by its title bar and closes on Esc; a column
+resizes with the mouse; a label dropped on the panel groups on it; a click on a label sorts; no errors
+in the console. All passed. Found and fixed:
+
+* one column had two names: the header, column chooser and attribute menu prettified a field name
+  (`First Name`), the footer filter, filter editor, group chip, drag ghost and copied table did not
+  (`first_name`). `getColumnLabel()` lost its `pretty` flag and always prettifies the fallback. Test:
+  the group chip shows the header's label (failed before), and the footer/filter editor tests now
+  expect the label.
+* the docs site (and the dev server) had no favicon, every page load logged a 404. An inline svg icon.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler

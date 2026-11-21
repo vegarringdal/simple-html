@@ -40,7 +40,7 @@ export function renderHeaderLabel(
         });
 
     if (attribute) {
-        const label = getColumnLabel(ctx, attribute, true);
+        const label = getColumnLabel(ctx, attribute);
 
         render(
             html`<div

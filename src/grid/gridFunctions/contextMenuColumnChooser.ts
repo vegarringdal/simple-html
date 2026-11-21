@@ -60,7 +60,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                     .sort()
                     .map((attribute) => {
                         return html`<div class="simple-html-grid-menu-item" .$attribute=${attribute}>
-                            ${getColumnLabel(ctx, attribute, true)}
+                            ${getColumnLabel(ctx, attribute)}
                         </div>`;
                     })}
             </div>`;

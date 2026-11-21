@@ -181,7 +181,7 @@ describe('fields in the grid - labels', () => {
         expect(headerLabel(element, 'first_name')).toEqual('First Name');
     });
 
-    it('expect the footer filter to show the same labels, the name as it is', async () => {
+    it('expect the footer filter to show the same labels as the header', async () => {
         const { element, datasource } = await mountGrid(config(), [{ own: 'a', field: 'b', first_name: 'c' }], fields);
         datasource.filter(
             and(
@@ -193,7 +193,7 @@ describe('fields in the grid - labels', () => {
             )
         );
         const chips = Array.from(element.querySelectorAll('.footer-filter-attr')).map((chip) => chip.textContent?.trim());
-        expect(chips).toEqual(['Column label', 'Field label', 'first_name', 'other']);
+        expect(chips).toEqual(['Column label', 'Field label', 'First Name', 'Other']);
     });
 
     it('expect the datasource on its own to use the field labels', async () => {

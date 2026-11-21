@@ -52,7 +52,7 @@ export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLEl
                                     callback(attribute);
                                 }}
                             >
-                                ${getColumnLabel(ctx, attribute, true)}
+                                ${getColumnLabel(ctx, attribute)}
                             </div>`;
                         })}
                 </div>

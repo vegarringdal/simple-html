@@ -97,7 +97,7 @@ describe('filter editor - a single condition at the root', () => {
         gridInterface.openFilterEditor();
 
         expect(editorConditions()).toHaveLength(1);
-        expect(editorConditions()[0].textContent).toContain('age');
+        expect(editorConditions()[0].textContent).toContain('Age');
 
         menuItem('Filter Only').click();
 
@@ -150,7 +150,7 @@ describe('filter editor - drafts', () => {
         const picker = document.querySelector(
             '.filter-editor-content [data-tooltip="Pick which column to compare against"]'
         ) as HTMLElement;
-        expect(picker.textContent?.trim()).toEqual('lastname');
+        expect(picker.textContent?.trim()).toEqual('Lastname');
         menuItem('Filter Only').click();
 
         expect(datasource.getFilter()).toEqual(and({ field: 'firstname', operator: 'EQUAL', valueField: 'lastname' }));
