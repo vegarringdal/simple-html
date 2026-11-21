@@ -4,6 +4,7 @@ import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
 import type { ColType } from './colType';
+import { rowsToMark, rowsToUnmark } from './deleteRows';
 import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
 import { gridText } from './gridText';
@@ -365,9 +366,8 @@ function deleteSubmenu(ctx: Grid): MenuSubmenu {
     const datasource = gridInterface.getDatasource();
     const editable = () => !gridInterface.__getGridConfig().readonly;
 
-    const toMark = () =>
-        datasource.getSelectedRows().filter((row) => row.__rowState !== 'D' && !isLockedByHook(gridInterface, row));
-    const toUnmark = () => datasource.getSelectedRows().filter((row) => row.__rowState === 'D');
+    const toMark = () => rowsToMark(gridInterface);
+    const toUnmark = () => rowsToUnmark(gridInterface);
 
     return {
         type: 'submenu',
@@ -393,22 +393,6 @@ function deleteSubmenu(ctx: Grid): MenuSubmenu {
             }
         ]
     };
-}
-
-/**
- * true when the isReadonly hook returns true for every field in the layout: the row is locked, the row
- * menu does not delete it. Only the hook counts - the columns' readonly option does not lock a row,
- * so a grid of readonly columns can still delete rows. Without the hook no row is locked
- */
-function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity): boolean {
-    const hooks = gridInterface.__getHooks();
-    const columns = gridInterface.__getGridConfig().columns;
-    const fields = getLayoutFields(gridInterface);
-    return (
-        hooks.isReadonly !== undefined &&
-        fields.length > 0 &&
-        fields.every((field) => hooks.isReadonly?.(row, field, columns[field]?.readonly ?? false) === true)
-    );
 }
 
 /**

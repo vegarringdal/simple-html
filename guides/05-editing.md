@@ -197,6 +197,12 @@ It is listed in `getChanges().deletedEntities`. Unmarked, it is as it was before
 A new row is marked too. While it is marked it is in none of the lists of `getChanges()`: it was
 never saved, there is nothing to send. Unmarked, it is a new row again.
 
+**From the keyboard**: a click on a row number selects the row and puts the focus on the number, as a
+spreadsheet's row header (Shift+click and Ctrl+click select more). There **Delete** or **Backspace**
+marks the selected rows for deletion - the number's row alone when it is not selected - and Ctrl+Z on
+the number takes it back. In a cell Delete stays the input's own key (or empties a range of cells).
+A row the `isReadonly` hook locks is left out, as below. Only in an editable grid.
+
 In an editable grid the row menu (right click a cell) has a **Delete ›** submenu: *Rows (selected
 rows)* marks the selected rows, *Undo (selected rows)* takes the mark off - shown when a selected row
 is marked. Ctrl+Z takes a delete back too, see [Undo and redo](#undo-and-redo). A row the `isReadonly` hook returns `true` for in every column is locked: the menu does not

@@ -2147,6 +2147,21 @@ in the console. All passed. Found and fixed:
   columns and 5 000 rows, 5 000 more, the last row and the far right, editing off, grouping, light and
   dark)
 
+### Delete on a row number marks rows for deletion (user request)
+
+* the user: "maybe if grid have focus and we click delete it should mark rows for delete?". Delete in a
+  cell is the input's own key (the character after the caret) or empties a range of cells, so it can
+  not be that. As a spreadsheet's row header: a click on a row number selects the row (as before) and
+  now also puts the focus on the number (the gridcell has `tabindex="-1"`, not a stop of Tab); there
+  Delete or Backspace marks the selected rows - the number's row alone when it is not selected - and
+  Ctrl+Z / Ctrl+Y on the number undo / redo (`undoRedoInGrid`). Not with Ctrl / Alt / Cmd, not in a
+  readonly grid, not on a group row
+* deleteRows.ts: `rowsToMark` / `rowsToUnmark` / `isLockedByHook` moved out of contextmenuRow.ts (the row
+  menu's Delete › uses them), `rowNumberKeydown`
+* tests: rowNumberDelete.test.ts (the click's focus and selection, the selected rows marked and the undo,
+  Backspace on an unselected row, a locked row, readonly and modifiers, Delete in a cell, a group row).
+  Browser: row-delete-check.js
+
 ## Considered, not done
 
 ## Candidates / not started

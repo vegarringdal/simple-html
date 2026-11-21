@@ -81,7 +81,7 @@ const LETTER_OF_CODE: Readonly<Record<string, string>> = { KeyZ: 'z', KeyY: 'y' 
  * Ctrl+Alt on Windows, it types characters). The letter is the one the layout gives (`key`), the key
  * where it is on a US keyboard (`code`) when the layout gives no latin letter - a Russian layout, say
  */
-function undoRedoAction(event: KeyboardEvent): 'undo' | 'redo' | null {
+export function undoRedoAction(event: KeyboardEvent): 'undo' | 'redo' | null {
     if (!(event.ctrlKey || event.metaKey) || event.altKey) {
         return null;
     }

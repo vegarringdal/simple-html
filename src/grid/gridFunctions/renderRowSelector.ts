@@ -2,6 +2,7 @@ import { html, nothing, render } from 'lit-html';
 import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import type { ColType } from './colType';
+import { rowNumberKeydown } from './deleteRows';
 import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
@@ -63,7 +64,12 @@ export function renderRowSelector(
             aria-colindex="1"
             class=${`${currentEntitySelected} simple-html-absolute-fill${errors.length ? ' simple-html-row-error' : ''}`}
             data-tooltip=${tooltip || nothing}
+            tabindex="-1"
+            @keydown=${(e: KeyboardEvent) => rowNumberKeydown(ctx, e, row)}
             @click=${(e: MouseEvent) => {
+                // the focus on the number, as a spreadsheet's row header: Delete marks the selected rows
+                // for deletion (deleteRows.ts). Not a stop of Tab
+                (e.currentTarget as HTMLElement).focus({ preventScroll: true });
                 const ds = ctx.gridInterface.getDatasource();
                 if (isGroupRow(rowData)) {
                     // selects the data rows of the group, up to the next group row

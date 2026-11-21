@@ -1332,6 +1332,14 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Delete on a row number (user request)
+
+##### Added
+- A click on a row number puts the focus on it (as a spreadsheet's row header, not a stop of Tab); there
+  Delete or Backspace marks the selected rows for deletion - the number's row alone when it is not
+  selected - one step of the undo history, and Ctrl+Z / Ctrl+Y undo and redo. Delete in a cell is as it
+  was.
+
 #### The filter menu's value list shows what the cells show
 
 ##### ⚠️ Breaking changes
