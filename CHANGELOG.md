@@ -1190,6 +1190,27 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Row menu "Summary:": the max of negative numbers was 0, min skipped 0, the average was rounded to a
   whole number and counted blank cells. A text value (`'12'`) is no longer read as a number.
 
+#### The clipboard: every range, with the column headers (user request)
+
+##### ⚠️ Breaking changes
+- A copy of more than one cell starts with a **header line of the column labels**, in the text and in
+  the html table (`<thead>`): Ctrl+C on ranges and the row menu's Copy: Column / Row / Row (selected
+  rows/col) / Range. `GridConfig.copyHeaders: false` copies the values only. One cell (Ctrl+C, Copy:
+  Cell Value) is still just its value.
+- **Several ranges are copied as one table** (they copied the last range): the rows of every range x
+  the fields of every range, a cell in no range empty.
+- The row menu's copies write the values **as the cells show them** (they wrote dates as ISO and
+  numbers raw), through the same code as Ctrl+C.
+
+##### Added
+- `GridConfig.copyHeaders` (default `true`).
+- A paste whose first line is all column labels of the grid leaves that line out: a copy of the grid
+  pasted back into it writes the values, not the labels.
+
+##### Fixed
+- The row menu's copied html table did not escape the values (a `<` broke the table); it had no header
+  in its plain text.
+
 #### Excel export (user request)
 
 ##### ⚠️ Breaking changes

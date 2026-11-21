@@ -2075,6 +2075,10 @@ New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can cha
 
 ## Other behaviour changes
 
+* **Copies of more than one cell start with a header line** of the column labels (text and html), and
+  several ranges copy as one table. `copyHeaders: false` gives the values only. The row menu's copies
+  write what the cells show (not ISO dates / raw numbers).
+
 * **The date picker's class names are prefixed** (`.year` -> `.simple-html-date-year`, `.side` ->
   `.simple-html-date-time-field`, `.date-flex-col` -> `.simple-html-date-actions` ..., see the
   changelog) - css of your own that styled the old names needs the new ones. `datepickerHeight`

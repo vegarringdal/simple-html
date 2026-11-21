@@ -1,17 +1,14 @@
-import { DateFormatterYYYYMMDD } from '../../datasource/DateFormatterYYYYMMDD';
-import { DateFormatterYYYYMMDDTHHMMSS } from '../../datasource/DateFormatterYYYYMMDDTHHMMSS';
-import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
+import { type Entity, isGroupRow } from '../../datasource/entity';
 import { and, type FilterExpression, type FilterGroup, isFilterGroup, where } from '../../datasource/filterExpression';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry } from '../gridMenus';
 import type { ColType } from './colType';
-import { getCellType } from './getCellType';
-import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
+import { cellText } from './gridCsv';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { clearRangeCells, pasteText, rangeClipboardText, writeClipboard } from './rangeClipboard';
+import { clearRangeCells, pasteText, rangesClipboard, rowsClipboard, writeClipboard } from './rangeClipboard';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { placeUnderCell, showMenu } from './showMenu';
 import { triggerScrollEvent } from './triggerScrollEvent';
@@ -92,7 +89,8 @@ function rowMenuEntries(
             id: 'row.copy.cell',
             label: text('row.copy.cell'),
             action: () => {
-                copyData(ctx, [attribute], true, rowData);
+                // the value only, as the cell shows it: no header, no line end
+                writeClipboard(cellText(gridInterface, attribute, true)(rowData), '');
                 gridInterface.__callSubscribers('copy-cell', eventData);
             }
         },
@@ -101,7 +99,7 @@ function rowMenuEntries(
             label: text('row.copy.column'),
             hint: text('row.copy.column.hint'),
             action: () => {
-                copyData(ctx, [attribute], false);
+                copyRows(ctx, [attribute]);
                 gridInterface.__callSubscribers('copy-column', eventData);
             }
         },
@@ -110,7 +108,7 @@ function rowMenuEntries(
             label: text('row.copy.row'),
             hint: text('row.copy.row.hint'),
             action: () => {
-                copyData(ctx, getLayoutFields(gridInterface), false);
+                copyRows(ctx, getLayoutFields(gridInterface));
                 gridInterface.__callSubscribers('copy-row', eventData);
             }
         },
@@ -121,7 +119,7 @@ function rowMenuEntries(
             action: () => {
                 // no column selected: every column
                 const selected = getLayoutFields(gridInterface, { selectedOnly: true });
-                copyData(ctx, selected.length ? selected : getLayoutFields(gridInterface), false);
+                copyRows(ctx, selected.length ? selected : getLayoutFields(gridInterface));
                 gridInterface.__callSubscribers('copy-row-col', eventData);
             }
         },
@@ -129,10 +127,9 @@ function rowMenuEntries(
             id: 'row.copy.range',
             label: text('row.copy.range'),
             visible: hasRanges,
-            // the last range, as Ctrl+C copies it (rangeClipboard.ts)
+            // every range as one table, as Ctrl+C copies them (rangeClipboard.ts)
             action: () => {
-                const ranges = gridInterface.getRanges();
-                const { text: tsv, html } = rangeClipboardText(ctx, ranges[ranges.length - 1]);
+                const { text: tsv, html } = rangesClipboard(ctx, gridInterface.getRanges());
                 writeClipboard(tsv, html);
             }
         },
@@ -430,130 +427,13 @@ function summaryEntries(ctx: Grid, attribute: string): MenuEntry[] {
 }
 
 /**
- * The selected rows as an html table (for excel) and as tab separated text, or only the current row
- * (`onlyCurrentEntity`): the right clicked one when `overRideCurrentEntity` is given
+ * The selected rows, in these fields, onto the clipboard as a table: tab separated text and html, with
+ * a header line of the labels (`copyHeaders`) - see rangeClipboard.ts. The row menu's Column / Row
+ * copies
  */
-function generateCopyPasteData(
-    ctx: Grid,
-    attributes: string[],
-    onlyCurrentEntity: boolean,
-    overRideCurrentEntity: Entity | null
-) {
-    const TableOuterTop = `
-            <html>
-                <body>
-                <style>
-                   .number {
-                        mso-number-format:"General";
-                    }
-                   .text{
-                        mso-number-format:"@";
-                    }
-                   .date {
-                        mso-number-format:"Short Date";
-                    }
-                    table {
-                        border-collapse: collapse;
-                        border:.5pt solid windowtext;
-                        mso-displayed-decimal-separator:".";
-                    }
-                    td,
-                    th {
-                        border-collapse: collapse;
-                        padding:3px;
-                        border:.5pt solid windowtext;
-                    }
-                </style>
-            <table>`;
-    const TableOuterBottom = '</table></body></html>';
-
-    let tableHeader = '<tr>';
-    attributes.forEach((attribute) => {
-        tableHeader = `${tableHeader}<th>${getColumnLabel(ctx, attribute)}</th>`;
-    });
-    tableHeader = `${tableHeader}</tr>`;
-
-    let tableInnerData = '';
-    let justData = '';
-
-    const datasource = ctx.gridInterface.getDatasource();
-
-    const loopData = (entity: Entity | GroupRow | null) => {
-        if (entity && !isGroupRow(entity)) {
-            tableInnerData = `${tableInnerData}<tr>`;
-            attributes.forEach((attribute, i) => {
-                const colData = entity[attribute];
-                const dataType = getCellType(ctx, attribute, entity);
-
-                if (i > 0) {
-                    justData = `${justData}\t`;
-                }
-
-                // dates are copied in a fixed format, whatever the field's formatter shows
-                if (dataType === 'date' || dataType === 'datetime') {
-                    const formatter = dataType === 'date' ? DateFormatterYYYYMMDD : DateFormatterYYYYMMDDTHHMMSS;
-                    const data = formatter.format(colData);
-                    justData = justData + data;
-                    tableInnerData = `${tableInnerData}<td>${data}</td>`;
-                } else if (dataType === 'number') {
-                    const data = colData;
-                    justData = justData + data;
-                    tableInnerData = `${tableInnerData}<td class="number">${data || ''}</td >`;
-                } else {
-                    //
-                    justData = justData + colData;
-                    tableInnerData = `${tableInnerData}<td class="text">${colData || ''}</td>`;
-                }
-            });
-            // single entity copy is one line only, so no trailing carriage return
-            if (!onlyCurrentEntity && !overRideCurrentEntity) {
-                justData = `${justData}\r\n`;
-            }
-
-            tableInnerData = `${tableInnerData}</tr>`;
-        }
-    };
-
-    if (onlyCurrentEntity) {
-        if (overRideCurrentEntity) {
-            loopData(overRideCurrentEntity);
-        } else {
-            loopData(datasource.currentEntity);
-        }
-    } else {
-        datasource.getSelectedRows().forEach((entity) => {
-            loopData(entity);
-        });
-    }
-
-    return [TableOuterTop + tableHeader + tableInnerData + TableOuterBottom, justData];
-}
-
-/**
- * Copies to the clipboard: tab separated text, plus an html table when more than one row is copied.
- *
- * The listener is on the document in the capture phase: it runs before the grid's own copy listener
- * (rangeClipboard.ts, on the document in the bubble phase), which leaves a copy that is canceled alone.
- * It would else write the cell with the focus over this - or its html next to the plain text of Cell
- * Value
- */
-function copyData(ctx: Grid, attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity: Entity | null = null) {
-    const [html, text] = generateCopyPasteData(ctx, attributes, onlyCurrentEntity, overRideCurrentEntity);
-
-    function listener(e: ClipboardEvent) {
-        // we only want text if it is
-        if (onlyCurrentEntity) {
-            e.clipboardData?.setData('text/plain', text);
-        } else {
-            e.clipboardData?.setData('text/html', html);
-            e.clipboardData?.setData('text/plain', text);
-        }
-
-        e.preventDefault();
-    }
-    document.addEventListener('copy', listener, true);
-    document.execCommand('copy');
-    document.removeEventListener('copy', listener, true);
+function copyRows(ctx: Grid, fields: string[]) {
+    const { text, html } = rowsClipboard(ctx, ctx.gridInterface.getDatasource().getSelectedRows(), fields);
+    writeClipboard(text, html);
 }
 
 /**

@@ -1327,6 +1327,33 @@ in the console. All passed. Found and fixed:
   or after is picked but not shown as selected; Firefox number spinners hidden by
   `appearance: textfield`, checked in Chromium only
 
+### Plan: custom cell rendering (item 39, user question: switch to Solid 2.0?)
+
+* `custom_render.md`: why the core stays on lit-html (JSX cells would serve Solid apps only, Babel
+  in the build, signals do not fit the pooled cells), and a renderer hook instead -
+  `registerCellRenderer(id, (host) => ({ update, destroy }))`, `ColumnConfig.renderer`; the cell
+  template, the lifecycle across scrolling and rebuilds, what keeps working, steps, tests, docs
+* plan only, no code yet
+
+### The clipboard: every range, the column headers (user report)
+
+* "copy only copies part, not both ranges": several ranges copied the last one (Excel refuses them).
+  Now one table: the union of the ranges' rows (grid order) x fields (layout order), empty where no
+  range covers a cell - side by side is one wide table, stacked one long table
+* "pasting into Word needs the headers": every copy of more than one cell has a header line of the
+  labels, in the TSV and as `<thead>` in the html (Word reads the html); `copyHeaders: false` turns it
+  off. A single cell stays a value. The row menu's Column / Row copies use the same code (its html was
+  not escaped, its text had no header, its values were ISO / raw instead of what the cells show)
+* paste: a first line that is all column labels of the grid is left out, so copy -> paste back works
+  (also into other columns); a data line that is all labels is left out too - rare, undoable
+* done myself while the agent for it was stopped by the usage limit (it had changed one file in its
+  worktree; that worktree is dropped)
+* the docs site test (renders every guide) timed out at vitest's 5s at load 9-12 while other work ran
+  tests: its describe has 30s, as the texts test
+* checks: tests updated (header lines, the union, no last-range rule) and new (union side by side /
+  stacked, copyHeaders false, header skip, round trip, row menu Column/Row/Cell Value); Chromium
+  copy-check 8/8 (the real clipboard's text and html), range-check updated for the header (60/60)
+
 ## Considered, not done
 
 ## Candidates / not started

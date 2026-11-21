@@ -131,29 +131,43 @@ const csv = gridInterface.getCsv({ rows: 'range' });
 
 Ctrl+C (Cmd+C) in a cell, with no text selected in it:
 
-- **with a range of more than one cell, or several ranges**: the last range, as tab separated text -
-  a line per data row ended with CRLF, a tab between the fields, as Excel puts cells on the clipboard.
-  A value with a tab, a line break or a double quote is put in double quotes, a quote in it doubled.
-  Every value is the text the cell shows, through the field's formatter: `12,5` with a decimal comma,
-  a date as its formatter writes it.
+- **with a range of more than one cell, or several ranges**: the cells as a table of tab separated
+  text - **a header line of the column labels first**, then a line per data row, each ended with CRLF,
+  a tab between the fields, as Excel puts cells on the clipboard. A value with a tab, a line break or a
+  double quote is put in double quotes, a quote in it doubled. Every value is the text the cell shows,
+  through the field's formatter: `12,5` with a decimal comma, a date as its formatter writes it.
 - **else**: the value of the cell with the focus, as the cell shows it, without a line end - as the
   row menu's *Copy: Cell Value*. Before v6 this copied nothing.
 
-An html table of the same cells goes on the clipboard too, for the programs that paste html rather
-than plain text. A line break in a cell is a `<br>` with the style Excel reads as a line break in the
-cell (`mso-data-placement:same-cell`).
+An html table of the same cells goes on the clipboard too, with the labels as its header row (`<th>`)
+and thin borders - Word, Google Docs and Excel paste the html, so the table has its headers there. A
+line break in a cell is a `<br>` with the style Excel reads as a line break in the cell
+(`mso-data-placement:same-cell`).
+
+**The header line** is there for every copy of more than one cell: Ctrl+C on ranges and the row
+menu's *Copy: Column*, *Row*, *Row (selected rows/col)* and *Range*. Not for one cell (Ctrl+C on a
+cell, *Copy: Cell Value*): that is a value. `copyHeaders: false` in the config copies the values only:
+
+```ts
+gridInterface.updateConfig({ copyHeaders: false });
+```
 
 **Text selected in the cell's input** is copied as before: the input's own copy. Making a range ends
 the text selection of the active cell, so after a drag or Alt+Shift+arrows Ctrl+C copies the range.
 
-**Several ranges**: the last one is copied. Excel refuses to copy ranges that do not make a rectangle
-together; the grid copies the one made last, so Ctrl+C always copies something you can see.
+**Several ranges are copied as one table**: the rows of every range, in the order of the grid, and
+the fields of every range, in the order of the layout. A cell that is in none of the ranges is
+empty. So two ranges side by side (Name and Age, rows 1-2) are one table of Name and Age - the
+columns between them are not copied - and two ranges one above the other (City rows 1-2 and row 5)
+one longer table; ranges that cross leave the cells they do not cover empty. Excel refuses to copy
+ranges that do not make a rectangle together; the grid copies them all.
 
 Text that looks like a formula (`=SUM(A1:A2)`) is copied as it is: what is copied is what is in the
 cells, and a paste back into the grid gives the same values. A spreadsheet may take it as a formula
 when it is pasted there - the CSV export escapes it (`escapeFormulas`), the clipboard does not.
 
-The row menu (right click a cell) has *Copy: Range* while there are ranges: the last range, as Ctrl+C.
+The row menu (right click a cell) has *Copy: Range* while there are ranges: every range, as Ctrl+C.
+*Copy: Column* and *Row* copy the selected rows, with the header line, values as the cells show them.
 That also works when the focus is not in a cell, after the wheel scrolled the grid.
 
 ## Paste
@@ -163,6 +177,10 @@ cells: what Excel and Google Sheets copy, and what the grid copies. A line per r
 a value in double quotes can hold tabs and line breaks, `""` is a quote; the line end Excel puts after
 the last row is not a row.
 
+- **A header line is left out**: when every cell of the first line is the label of one of the grid's
+  columns (any case, spaces around ignored), it is a copy's header and is not written into cells - so
+  a copy of the grid pasted back into it, into the same columns or others, writes the values. A
+  first line of data that is all labels is left out too; that is rare, and the paste can be undone.
 - **One value, ranges of more than one cell**: every cell of every range gets it - copy one cell,
   select a range, paste.
 - **A block of cells**: from the top left cell of the last range - or the cell with the focus when

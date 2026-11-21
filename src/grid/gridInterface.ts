@@ -1468,6 +1468,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         tooltips: options.tooltips ?? true,
         rowStatus: options.rowStatus ?? true,
         editedMarker: options.editedMarker ?? true,
+        copyHeaders: options.copyHeaders ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false
