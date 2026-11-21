@@ -47,8 +47,13 @@ in the config's `initialState`.
 
 The user groups by dragging a header label to the panel above the header. A group shows as a chip
 in the panel: its icon removes it, and the chips can be dragged to change the order. A group row
-shows the group's name and its number of rows, and its `+` / `-` icon expands or collapses it. The
+shows the group's name and its number of rows, and its `+` / `-` box expands or collapses it. The
 header menu has "Expand all", "Collapse all" and "Clear all".
+
+Left of the rows each level of grouping has a column, like a tree: a group row has its box in the
+column of its level, and the line of an expanded group runs from under its box down through its rows,
+so where a group ends shows. The colour of the lines and the box's frame is
+`--simple-html-grid-group-line-color` (see [Theming](13-theming.md)).
 
 From code:
 

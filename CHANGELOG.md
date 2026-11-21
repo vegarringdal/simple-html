@@ -1300,6 +1300,18 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   rows, greyed out with none selected), in every grid. Texts `row.export*`.
 - Guide "Export" and sample "Export to CSV".
 
+#### Group rows: a +/- box and the lines of the levels, like a tree (user request)
+
+##### Changed
+- The `+` / `-` of a group row is a square box with a frame, in the column of its level. The line of an
+  expanded group runs from under its box down through its rows, the lines of the groups a row is in go
+  through it: where a group ends shows. In a row with aggregates the lines go down the aggregate lines too.
+- The grouping columns of the data rows are one column, no line under each row and no inset shadow.
+- New variable `--simple-html-grid-group-line-color` (the lines and the box's frame, at least 3:1 to the
+  group rows). The group row's elements have classes of their own: `.simple-html-grid-group-toggle`
+  (the button), `-group-box` / `-group-box-frame` / `-group-box-sign`, `-group-text`, `-group-levels`,
+  `-group-line`; `.simple-html-grid-grouping-row-group` is the header's grouping columns only.
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

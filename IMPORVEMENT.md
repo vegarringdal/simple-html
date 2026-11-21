@@ -1406,6 +1406,26 @@ in the console. All passed. Found and fixed:
 * tests: status.test.ts (the plan parsing, the section, the links, the remote url, git and the action's
   variables, no git), site.test.ts (the build line and the page in the built site)
 
+### Group rows: a +/- box and the lines of the levels (user request)
+
+* the user: "the + and - looks not very nice, should be more typical + - with border, and the line for
+  grouping should go all the way down"
+* renderRowGroup.ts: the toggle is an 11px svg box (frame + sign, crisp at 1x: half pixel coordinates),
+  centered in the 15px column of its level; `.simple-html-grid-group-levels` (the lines of the groups the
+  row is in) and `.simple-html-grid-group-line` (an expanded group's line from the middle of the name
+  line down; the box's fill covers its top) are in the row's full height container, so they go through
+  the aggregate lines too
+* grid.css: the lines are one background gradient, a 1px line in the middle of each 15px column; the data
+  rows' grouping column (`.simple-html-grid-grouping-row`) has it over all levels, no bottom border and
+  no inset shadow any more, so the lines read as one. `GROUP_LEVEL_WIDTH` (getGroupingWidth.ts) replaces
+  the 15 in the code; grid.css has it too (said in both)
+* new `--simple-html-grid-group-line-color` instead of reusing the unused `--simple-html-grid-grouping-border`:
+  the old dark sample (grid01) sets that one to the row background's dark, the lines would vanish there
+* tests: groupRows.test.ts (the box's sign collapsed/expanded, the lines' elements, widths and places by
+  level, after a collapse, the data rows' column per level, with aggregates the lines in the full height
+  container). Browser: group-look.js / group-look2.js screenshots at 3x, light and dark: two levels, a
+  group's end, a collapsed group, a row with aggregates
+
 ## Considered, not done
 
 ## Candidates / not started

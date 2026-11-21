@@ -60,6 +60,9 @@
     /* the label in front of an aggregate ("Sum") in a group row and the totals row. At least 4.5:1
        against both */
     --simple-html-grid-aggregate-label-color: light-dark(#57606a, #c9d1d9);
+    /* the grouping columns: the line of each level down its group's rows, and the frame of the +/- box
+       of a group row. At least 3:1 against the group rows */
+    --simple-html-grid-group-line-color: light-dark(#8c8c8c, #9ca3af);
     /* the "too many values" warning of the filter menu's value list */
     --simple-html-grid-warning-font-color: light-dark(red, #fca5a5);
     /* the footer's clear filter button under the pointer: text, border */
@@ -532,10 +535,6 @@
     pointer-events: all;
     /*    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);  */
     background-color: var(--simple-html-grid-sec-bg-color);
-}
-
-.simple-html-grid-grouping-row {
-    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 .simple-html-grid-body-row-container-group .simple-html-grid-row {
@@ -1139,6 +1138,27 @@
     padding: 2px;
 }
 
+/*
+ * the grouping columns, like a tree: a column per level of grouping (GROUP_LEVEL_WIDTH, 15px, in
+ * getGroupingWidth.ts) with the line of its groups down the middle. In a data row the lines of all the
+ * levels; in a group row those of the groups it is in, its +/- box in the column of its level and,
+ * expanded, its line from under the box down. Together the line of a group runs from its box down to its
+ * last row
+ */
+.simple-html-grid-grouping-row,
+.simple-html-grid-group-levels,
+.simple-html-grid-group-line {
+    background-image: linear-gradient(
+        to right,
+        transparent 7px,
+        var(--simple-html-grid-group-line-color) 7px,
+        var(--simple-html-grid-group-line-color) 8px,
+        transparent 8px
+    );
+    background-size: 15px 100%;
+}
+
+/* in the rows: one column over the rows, no line under each */
 .simple-html-grid-grouping-row {
     height: 100%;
     box-sizing: border-box;
@@ -1148,7 +1168,64 @@
     left: 0;
     background-color: var(--simple-html-grid-main-bg-color);
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
-    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+/* in a group row: the lines of the groups it is in, and the line of an expanded group, from the middle of
+   the name line (under the box, which is over it) to the bottom */
+.simple-html-grid-group-levels,
+.simple-html-grid-group-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.simple-html-grid-group-line {
+    width: 15px;
+}
+
+/* the button with the +/- box: the whole column of its level, the box in the middle */
+.simple-html-grid-group-toggle {
+    position: relative;
+    flex: none;
+    align-self: stretch;
+    width: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.simple-html-grid-group-box {
+    width: 11px;
+    height: 11px;
+    display: block;
+    overflow: visible;
+}
+
+.simple-html-grid-group-box-frame {
+    fill: var(--simple-html-grid-sec-bg-color);
+    stroke: var(--simple-html-grid-group-line-color);
+    stroke-width: 1;
+}
+
+.simple-html-grid-group-box-sign {
+    fill: none;
+    stroke: var(--simple-html-grid-main-font-color);
+    stroke-width: 1;
+}
+
+.simple-html-grid-group-toggle:hover .simple-html-grid-group-box-frame {
+    stroke: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid-group-text {
+    align-self: center;
+    padding-left: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .simple-html-grid-grouping-row-group {
