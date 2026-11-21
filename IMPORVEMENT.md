@@ -968,6 +968,26 @@ Asked for in review after phase 2: the user stores grid and datasource configura
 
 Phase 2b is complete with this step: 1211 tests.
 
+### v6 phase 3 - UI
+
+`V6_PLAN.md` items 21-25.
+
+#### Step 1 - every text replaceable (item 21)
+
+* 190 text ids, `TEXTS` (English defaults), `setTexts()` for the page and `GridConfig.texts` per grid;
+  grid texts -> page texts -> defaults. The datasource's texts (validation messages, the filter
+  string, the blank group) use the page texts - a datasource has no grid, and validation runs in the
+  container, which datasources can share.
+* ids by area (`row.*`, `filter.values.*`, `filterEditor.*`, `footer.*`, `datePicker.*` ...); menu
+  entries keep their `MENU_IDS` id, a tooltip is `<id>.tooltip`; templates with `{name}`
+* month and day names are texts too (`IDateConfig.monthHeader` / `weekHeader` are gone), so one
+  `setTexts()` translates every grid's date picker
+* coverage is tested three ways: every id documented in the texts guide; a scan of every template
+  in src for literal English; and a render of every menu, dialog, footer state and the date picker
+  with each text replaced by `«id»`, failing on any visible letter outside «» or an id never shown
+* also: a v5 option in a grid config throws now (`V5_CONFIG_OPTIONS` / `V5_COLUMN_OPTIONS`), not only
+  `mandatory` - `tooltipText` from a stored config would otherwise silently fall back to English
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -1011,7 +1031,6 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
     says `group`
   * `deselectAll()` does not send `selection-change` by default (`selectAll()` does, in 'multiple'
     mode); `selectRowRange()` (a group row's selector) sends it in 'single' mode with nothing selected
-  * a `selectionMode` left in a grid config (plain js) is silently ignored, no runtime error
   * a date picked in a header filter's date picker is stored as text, a typed one as a `Date`
   * the column chooser keeps listing fields that were once in the layout
   * some menu labels are built when the menu opens ("Count: 5", "✓ Use dimmed values") and the

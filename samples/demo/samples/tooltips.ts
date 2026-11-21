@@ -1,4 +1,4 @@
-import { TOOLTIPS } from '@simple-html/grid';
+import { TEXTS } from '@simple-html/grid';
 import { baseGridConfig, createStage, type DemoSample, mountGrid } from '../demoUtils';
 
 export const tooltips: DemoSample = {
@@ -6,7 +6,7 @@ export const tooltips: DemoSample = {
     title: 'Tooltips',
     group: 'Config',
     description:
-        'The grid renders a built-in tooltip on buttons/icons (open the filter editor and hover its buttons). Override any text via tooltipText keyed by the TOOLTIPS ids - handy for translations - or set tooltips: false and hook up your own library: the data-tooltip attribute is always written to the elements either way.',
+        'The grid renders a built-in tooltip on buttons/icons (open the filter editor and hover its buttons). The tooltips are texts like the others: their ids end with .tooltip, change them with texts in the config (one grid) or setTexts() (the page) - see the Translation sample. Or set tooltips: false and hook up your own library: the data-tooltip attribute is always written to the elements either way.',
     run(stage) {
         const ui = createStage(stage);
         const { gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
@@ -14,22 +14,22 @@ export const tooltips: DemoSample = {
         ui.button('Open filter editor (hover the buttons)', () => {
             gridInterface.openFilterEditor();
         });
-        ui.button('Norwegian texts', () => {
-            // override a text by its id, TOOLTIPS has them all. tooltipText is replaced as a whole
+        ui.button('Norwegian tooltips', () => {
+            // a text by its id: a tooltip's id ends with .tooltip. texts is replaced as a whole
             gridInterface.updateConfig({
-                tooltipText: {
-                    'filterEditor.addCondition': 'Legg til betingelse',
-                    'filterEditor.addSubGroup': 'Legg til undergruppe',
-                    'filterEditor.clearAll': 'Fjern alle betingelser',
-                    'filterEditor.close': 'Lukk uten filtrering',
-                    'filterEditor.filterAndClose': 'Filtrer og lukk',
-                    'filterEditor.deleteCondition': 'Slett betingelsen'
+                texts: {
+                    'filterEditor.addCondition.tooltip': 'Legg til betingelse',
+                    'filterEditor.addSubGroup.tooltip': 'Legg til undergruppe',
+                    'filterEditor.clearAll.tooltip': 'Fjern alle betingelser',
+                    'filterEditor.close.tooltip': 'Lukk uten filtrering',
+                    'filterEditor.filterAndClose.tooltip': 'Filtrer og lukk',
+                    'filterEditor.deleteCondition.tooltip': 'Slett betingelsen'
                 }
             });
             ui.log('open the filter editor and hover its buttons');
         });
         ui.button('Default texts', () => {
-            gridInterface.updateConfig({ tooltipText: undefined });
+            gridInterface.updateConfig({ texts: undefined });
         });
         // even with tooltips: false, data-tooltip is written to the elements,
         // so you can wire up your own tooltip library instead
@@ -40,9 +40,11 @@ export const tooltips: DemoSample = {
         ui.button('Enable built-in tooltips', () => {
             gridInterface.updateConfig({ tooltips: true });
         });
-        ui.button('Log TOOLTIPS ids', () => {
-            console.log(TOOLTIPS);
-            ui.log(Object.keys(TOOLTIPS).join(', '));
+        ui.button('Log the tooltip ids', () => {
+            // TEXTS has every text by id, the tooltips end with .tooltip
+            const ids = Object.keys(TEXTS).filter((id) => id.endsWith('.tooltip'));
+            console.log(ids);
+            ui.log(ids.join(', '));
         });
     }
 };

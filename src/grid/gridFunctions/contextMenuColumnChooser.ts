@@ -5,6 +5,7 @@ import { asPx } from './asPx';
 import { createElement } from './createElement';
 import { dragEvent } from './dragEvent';
 import { getColumnLabel } from './getColumnLabel';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { removeContextMenu } from './removeContextMenu';
 
@@ -62,7 +63,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                 <input
                     class="simple-html-grid-menu-item-input"
                     .value=${live(currentColumnSearchvalue)}
-                    placeholder="search"
+                    placeholder=${gridText(ctx, 'columnChooser.search')}
                     @input=${(e: any) => {
                         currentColumnSearchvalue = e.target.value;
                         controller.abort();
@@ -75,7 +76,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
 
         render(
             html`<div class="simple-html-grid-menu ">
-                <div class="simple-html-grid-menu-section">All Fields:</div>
+                <div class="simple-html-grid-menu-section">${gridText(ctx, 'columnChooser.title')}</div>
                 <hr class="hr-solid" />
                 ${searchInput()} ${list()}
                 <div
@@ -86,7 +87,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                         ctx.columnChooserMenu = null;
                     }}
                 >
-                    Close
+                    ${gridText(ctx, 'columnChooser.close')}
                 </div>
             </div>`,
             contextMenu

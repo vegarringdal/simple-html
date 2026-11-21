@@ -4,6 +4,7 @@ import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
+import { assertTexts } from '../texts';
 import type { Grid } from './grid';
 import type {
     GridConfig,
@@ -117,7 +118,8 @@ export class GridInterface<T> {
      * @param hooks optional: the functions - `isReadonly`, `cellClass`, `menus`, see {@link GridHooks}.
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
-     * hooks), or a column has v5's `mandatory` (it is the field's `required` rule)
+     * hooks), a column has v5's `mandatory` (it is the field's `required` rule), or `texts` is not an
+     * object of strings
      *
      * @example
      * ```ts
@@ -134,7 +136,8 @@ export class GridInterface<T> {
      */
     constructor(gridConfig: GridConfig, datasource: Datasource<T>, hooks: GridHooks<T> = {}) {
         assertNoHooks(gridConfig);
-        assertNoMandatory(gridConfig);
+        assertNoV5Options(gridConfig);
+        assertConfigTexts(gridConfig);
         this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.hooks = { ...hooks };
@@ -283,6 +286,9 @@ export class GridInterface<T> {
      *   on (unless `initialState` has a layout).
      * - **`initialState` changes nothing now**: it is the state a later `resetState()` goes back to.
      *   Call `resetState()` after to apply it.
+     * - **`texts` replaces the grid's texts as a whole**, the ids are not merged: an id left out shows
+     *   the page's text again (`setTexts()`). A menu or the filter editor shows them the next time it
+     *   opens.
      *
      * The rest of the state - sorting, grouping, filter, header filters - is kept, and so are the
      * handlers subscribed with {@link on}. The object passed in is not changed, the grid copies
@@ -290,7 +296,8 @@ export class GridInterface<T> {
      *
      * @param config the parts of the config to change
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
-     * or a column has v5's `mandatory` (it is the field's `required` rule)
+     * a column has v5's `mandatory` (it is the field's `required` rule), or `texts` is not an object of
+     * strings
      *
      * @sample misc-options
      * @example
@@ -305,7 +312,8 @@ export class GridInterface<T> {
      */
     public updateConfig(config: Partial<GridConfig>) {
         assertNoHooks(config);
-        assertNoMandatory(config);
+        assertNoV5Options(config);
+        assertConfigTexts(config);
         const { columns, layout, initialState, ...options } = config;
 
         this.options = { ...this.options, ...options };
@@ -456,8 +464,8 @@ export class GridInterface<T> {
     /**
      * Builds the grid again: sizes, rows, columns, header, grouping panel and footer, then renders the
      * cells. For when more than the visible cells changed: what a formatter returns (the header
-     * filters show it too), the size of the element without a resize event, a column's options changed
-     * in place. To change an option, use {@link updateConfig} - it rebuilds too. For the cells only,
+     * filters show it too), the texts of the page ({@link setTexts}), the size of the element without a
+     * resize event, a column's options changed in place. To change an option, use {@link updateConfig} - it rebuilds too. For the cells only,
      * {@link refresh} is cheaper.
      *
      * Does nothing while the grid is not on the page, it is built when it is put there.
@@ -1118,18 +1126,67 @@ function assertNoHooks(config: Partial<GridConfig>) {
 }
 
 /**
- * v5's `mandatory` column option is the `required` rule of the datasource field in v6, which also
- * draws the stripes. TypeScript catches it, a config from plain JavaScript or a backend does not - the
- * grid would drop it without a word, and the field would no longer be checked.
- * @throws a `TypeError` naming the column and the rule
+ * v5 options that are gone or moved in v6, with where they went. TypeScript catches them, a config
+ * from plain JavaScript or one stored in a backend does not - the grid would drop the option without
+ * a word, and e.g. a column would silently stop being checked or translated.
  */
-function assertNoMandatory(config: Partial<GridConfig>) {
-    for (const [field, column] of Object.entries(config.columns ?? {})) {
-        if (column && typeof column === 'object' && 'mandatory' in column) {
-            throw new TypeError(
-                `GridConfig: columns.${field}.mandatory is gone in v6, it is the required rule of the datasource field: new Datasource({ fields: { ${field}: { validate: ['required'] } } })`
-            );
+const V5_CONFIG_OPTIONS: Record<string, string> = {
+    attributes: "'columns', keyed by field",
+    columnsPinnedLeft: "'layout.left'",
+    columnsCenter: "'layout.center'",
+    columnsPinnedRight: "'layout.right'",
+    sorting: "'initialState.sorting'",
+    grouping: "'initialState.grouping'",
+    expandedGroups: "'initialState.expandedGroups'",
+    filter: "'initialState.filter'",
+    tooltipText: "'texts' (a tooltip id ends in '.tooltip')",
+    selectionMode: 'the datasource: new Datasource({ selectionMode })',
+    placeHolderRowCurrentEnityOnly: "'placeholderRowCurrentEntityOnly'",
+    placeHolderRowCurrentEntityOnly: "'placeholderRowCurrentEntityOnly'"
+};
+
+/**
+ * the same for the options of a column, `{field}` is filled in
+ */
+const V5_COLUMN_OPTIONS: Record<string, string> = {
+    mandatory: "the required rule of the datasource field: new Datasource({ fields: { {field}: { validate: ['required'] } } })",
+    type: "the datasource field: new Datasource({ fields: { {field}: 'date' } })",
+    attribute: "the key of 'columns'",
+    currentFilterValue: 'the state: setState({ headerFilters: { {field}: { value } } })',
+    placeHolderRow: "'placeholderRow'",
+    placeHolderFilter: "'placeholderFilter'"
+};
+
+/**
+ * @throws a `TypeError` naming the v5 option and where it went in v6
+ */
+function assertNoV5Options(config: Partial<GridConfig>) {
+    for (const [key, where] of Object.entries(V5_CONFIG_OPTIONS)) {
+        if (key in config) {
+            throw new TypeError(`GridConfig: '${key}' is gone in v6, it is ${where}`);
         }
+    }
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (!column || typeof column !== 'object') {
+            continue;
+        }
+        for (const [key, where] of Object.entries(V5_COLUMN_OPTIONS)) {
+            if (key in column) {
+                throw new TypeError(
+                    `GridConfig: columns.${field}.${key} is gone in v6, it is ${where.replaceAll('{field}', field)}`
+                );
+            }
+        }
+    }
+}
+
+/**
+ * `texts` is an object of strings, see assertTexts. Left out or undefined is no texts of its own
+ * @throws a `TypeError` naming the id whose text is not a string
+ */
+function assertConfigTexts(config: Partial<GridConfig>) {
+    if (config.texts !== undefined) {
+        assertTexts(config.texts, 'GridConfig.texts');
     }
 }
 

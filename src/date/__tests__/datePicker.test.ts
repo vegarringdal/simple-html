@@ -16,8 +16,6 @@ const config = (overrides: Partial<IDateConfig> = {}): IDateConfig => ({
     startYear: 2026,
     showWeek: true,
     isoWeek: true,
-    weekHeader: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-    monthHeader: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     weekStart: 1,
     rowHeight: 22,
     monthWidth: 230,

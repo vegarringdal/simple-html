@@ -108,7 +108,11 @@ export interface GroupRow {
      * by `-`: `'Norway-Apple'`. The group of the blank values is `' blank'`
      */
     __groupID: string;
-    /** the text the grid shows: the group's title (its first letter in upper case) and the value, `'Country: Norway'` */
+    /**
+     * the text the grid shows: the group's title (its first letter in upper case) and the value,
+     * `'Country: Norway'`. The group of the blank values shows the text `grouping.blank`,
+     * `'Country: blank'` - see {@link TEXTS}
+     */
     __groupName: string;
     /** the grouping level, 0 for the first `group()` attribute. The grid indents the row by it */
     __groupLvl: number;

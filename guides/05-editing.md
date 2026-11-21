@@ -249,15 +249,25 @@ They take their option as `value`:
 A rule's `message` replaces the default, and `{name}` in it is replaced by the rule's option `name`:
 `{ id: 'max', value: 150, message: 'at most {value}' }` gives `at most 150`.
 
-The default messages have ids, `VALIDATION_MESSAGES` lists them: `'validation.required'`,
-`'validation.min'`, `'validation.max'`, `'validation.minLength'`, `'validation.maxLength'` and
-`'validation.pattern'`. The texts of the grid will be replaceable by id (planned for phase 3), these
-included; until then give the rule a `message`.
+The default messages are texts: `'validation.required'`, `'validation.min'`, `'validation.max'`,
+`'validation.minLength'`, `'validation.maxLength'` and `'validation.pattern'` in `TEXTS`. Translate
+them with `setTexts()` - for the page, the datasource has no grid, so a grid's `texts` do not change
+them. A rule's `message` can be a text id as well, see [Texts](12-texts.md#messages-of-your-own).
+
+```ts
+import { setTexts } from '@simple-html/grid';
+
+setTexts({ 'validation.required': 'Må fylles ut', 'validation.max': 'Kan være høyst {value}' });
+```
+
+A message is made when the value is validated: after `setTexts()` an error already there keeps its
+text until the field is validated again.
 
 ### Rules of your own
 
 A validator is a function `(value, row, rule) => message | null`: `null` when the value is valid,
-else the message - or a message id, the way the built-ins return `'validation.required'`. `rule` is
+else the message - or a text id, the way the built-ins return `'validation.required'`. An id of your
+own gets its text from `setTexts()`, so it can be translated. `rule` is
 the rule written out, so a rule can carry options of its own. Register it before the datasource that
 names it is made:
 

@@ -1,6 +1,7 @@
 import { addBodyClickListener } from './gridFunctions/addBodyClickListener';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
+import { gridText } from './gridFunctions/gridText';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
@@ -229,6 +230,8 @@ export class Grid {
         }
         rebuildTopPanel(this);
         rebuildFooter(this);
+        // createDom made it, its label is a text that can have changed
+        this.focusElement.setAttribute('aria-label', gridText(this, 'grid.focusHelper'));
         triggerScrollEvent(this);
     }
 }

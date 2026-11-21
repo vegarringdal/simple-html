@@ -4,6 +4,7 @@ import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { createElement } from './createElement';
 import { getColumnLabel } from './getColumnLabel';
+import { gridText } from './gridText';
 import { removeContextMenu } from './removeContextMenu';
 
 // might want to add this as part of context, so I can share it?
@@ -42,7 +43,7 @@ export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLEl
                 <input
                     class="simple-html-grid-menu-item-input"
                     .value=${live(currentColumnSearchvalue)}
-                    placeholder="search"
+                    placeholder=${gridText(ctx, 'filterEditor.fieldMenu.search')}
                     @input=${(e: any) => {
                         currentColumnSearchvalue = e.target.value;
                         reRender();
@@ -53,7 +54,7 @@ export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLEl
 
         render(
             html`<div class="simple-html-grid-menu ">
-                <div class="simple-html-grid-menu-section">Available Fields:</div>
+                <div class="simple-html-grid-menu-section">${gridText(ctx, 'filterEditor.fieldMenu')}</div>
                 <hr class="hr-solid" />
                 ${searchInput()}
                 <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">

@@ -624,6 +624,86 @@ what was saved, the new rows with the server's keys.
   `menus` in `GridConfig` no longer compile, and a type-level check that `GridConfig`, `GridState` and
   the `fields` + `formatters` options hold no function anywhere
 
+### Phase 3 - UI
+
+Every text the grid shows has an id, and every one can be replaced: one texts map, plain JSON, so a
+translation can be stored with the config in a backend.
+
+#### ⚠️ Breaking changes
+- **A v5 option left in a grid config throws** a `TypeError` naming where it went in v6 (was only
+  `mandatory`): a config stored before v6 can not lose a setting without a word
+- **`GridConfig.tooltipText` and `TOOLTIPS` are removed**: the tooltips are texts like the others,
+  their ids end with `.tooltip` - `tooltipText: { 'filterEditor.close': 'Lukk' }` is
+  `texts: { 'filterEditor.close.tooltip': 'Lukk' }`. Some of the old ids without `.tooltip` are now the
+  text of the element itself (`filterEditor.title` is `Filter Editor`).
+- **`OPERATORS` is removed**: what `getFilterString()` shows for an operator is the text
+  `filterString.operator.<FilterOperator>`, AND / OR are `filterString.and` / `filterString.or`. The
+  string is the same with the default texts.
+- **`IDateConfig.monthHeader` and `weekHeader` are removed**, and the grid no longer reads them from
+  `datePickerConfig`: each name is a text, `datePicker.month.january` ... and `datePicker.day.sunday`
+  ... A `DateInterface` of your own uses the page's texts, or its own in the new `IDateConfig.texts`.
+- **`VALIDATION_MESSAGES` is removed** (it came in phase 2b): the default messages are the texts
+  `validation.*` in `TEXTS`.
+
+#### Added
+- **`TEXTS`**: every text by id with its English default, 190 ids grouped by area - the menus (the ids
+  of `MENU_IDS`, a hint is `<id>.hint`), the value list (`filter.values.*`), the column chooser, the
+  filter editor, the footer, labels for screen readers, the date picker, and the texts the datasource
+  makes: the validation messages, `getFilterString()` and the name of the group of blank values
+  (`grouping.blank`). A tooltip is `<id>.tooltip`. An operator has a name in each place it is shown:
+  `filterEditor.operator.*`, `footer.operator.*`, `filterString.operator.*`. Types `Texts` and `TextId`.
+- **`setTexts(texts)`**: the texts of the page, for every grid and datasource. It replaces the texts set
+  before, `setTexts({})` is English again. Throws a `TypeError` for a text that is not a string.
+- **`GridConfig.texts`**: the texts of one grid, they win over the page's. `updateConfig({ texts })`
+  replaces them as a whole and rebuilds. The lookup is `GridConfig.texts`, then `setTexts()`, then
+  `TEXTS`; the texts the datasource makes come from `setTexts()` and `TEXTS` only (it has no grid, and
+  validation runs in the `DataContainer` that datasources share - so no texts option on the datasource).
+- **Values in texts**: `{name}` is filled in when the text is shown - `'Count: {count}'`,
+  `'{shown}/{total}'`, `'{count} rows found'`.
+- **Text ids for your own messages**: a validator, or a rule's `message`, can return a text id; its
+  text comes from `setTexts()`, so a message of your own is translated like the built-ins'. An id
+  without a text is shown as it is.
+- New guide `guides/12-texts.md`: how to translate, the lookup order, when a changed text shows, and
+  every id with its English text. New sample "Translation": the grid in Norwegian, every id typed
+  `Record<TextId, string>` so the compiler names a missing one.
+
+#### Changed
+- A changed text is read when what shows it is made: the grid after its next rebuild, a menu, the
+  filter editor and the date picker the next time they open, `getFilterString()` on its next call. A
+  validation message is made when the value is validated, so after `setTexts()` an error already there
+  keeps its text until the field is validated again; the blank group's name changes the next time the
+  rows are grouped.
+- The name of the group of blank values is `'Country: blank'` (was `'Country:  blank'` with two
+  spaces; the html showed one). Its id is still `' blank'`.
+- `getFilterString()` shows an operator that is not one (plain JS) as it is, not as `UNDEFINED`.
+- The filter editor shows an operator that is not one as it is, not prettified.
+
+#### Docs
+- `guides/12-texts.md`; the grid config, editing (messages), filtering, events (date picker) and menus
+  guides say where their texts come from. `MIGRATION.md` has a Texts section: `tooltipText` /
+  `TOOLTIPS`, `OPERATORS` and the month and day names.
+
+#### Internal
+- `src/texts.ts`: the defaults, `setTexts()` and the lookup (`findText`, `getText`, `fillText`), used
+  by the datasource and the date picker; `gridText(ctx, id)` adds the grid's own texts. The validation
+  messages use the same `{name}` filling as the texts.
+- tests: `src/__tests__/texts.test.ts` - the lookup order, values, what `setTexts()` takes, every id
+  and its English text in the tables of the texts guide (and nothing else), and a scan of the
+  `html` / `svg` templates in `src` for text of their own (between the tags, and in `placeholder`,
+  `title`, `aria-label`, `data-tooltip`). `src/grid/__tests__/texts.test.ts` - every text replaced by
+  its id in «»: the menus, the value list, the column chooser, the filter editor and its menus, the
+  footer (every operator, the collapsed box), the date picker (every month), the validation messages,
+  the group rows and `getFilterString()` are opened one by one; nothing with a letter may be left
+  outside «», and every id has to be shown. Once with `setTexts()`, once with the grid's texts in the
+  config and the datasource's from `setTexts()`. Plus the lookup order in a grid, `updateConfig({ texts })`,
+  `setTexts()` after a rebuild, the date picker's texts. `datasourceTexts.test.ts` - the validation
+  messages (built-ins, ids of your own, a rule's message as an id, made at validation time),
+  `getFilterString()` and the blank group. Tests that call `setTexts()` go back to `setTexts({})`
+  after each test.
+- typings consumer: `setTexts`, `TEXTS`, `Texts`, `TextId`, `GridConfig.texts`, `IDateConfig.texts`,
+  a `Record<TextId, string>` translation, and `@ts-expect-error` checks that `tooltipText`,
+  `monthHeader`, a text that is not a string and changing `TEXTS` do not compile
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

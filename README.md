@@ -85,6 +85,7 @@ gridInterface.destroy(); // done with it
 9. [Events](guides/09-events.md)
 10. [Menus](guides/10-menus.md)
 11. [Migrating from v5](guides/11-migrating-from-v5.md)
+12. [Texts](guides/12-texts.md)
 
 ## Migrating from v5
 

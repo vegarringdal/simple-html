@@ -3,6 +3,7 @@ import { addBodyClickListener } from './addBodyClickListener';
 import { addScrollEventListeners } from './addScrollEventListeners';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { gridText } from './gridText';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { rebuildFooter } from './rebuildFooter';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
@@ -23,7 +24,8 @@ export function createDom(ctx: Grid) {
     // focus helper
     const tmp = document.createElement('input');
     tmp.style.opacity = '0';
-    tmp.setAttribute('aria-label', 'dummy cell, helper to set focus');
+    // a text, rebuild() sets it again
+    tmp.setAttribute('aria-label', gridText(ctx, 'grid.focusHelper'));
 
     body.appendChild(tmp);
     ctx.focusElement = tmp;

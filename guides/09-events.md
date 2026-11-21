@@ -198,21 +198,6 @@ const config: IDateConfig = {
     monthColumns: 1,
     startMonth: 0,
     startYear: 2026,
-    monthHeader: [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December'
-    ],
-    weekHeader: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
     weekStart: 1,
     showWeek: true,
     isoWeek: true,
@@ -235,5 +220,8 @@ dateInterface.on('date-select', (date) => {
 });
 ```
 
+The names of the months and days and the buttons are texts, `datePicker.*`: the page's
+(`setTexts()`), or the picker's own in `texts` of its config - see [Texts](12-texts.md#date-picker).
+
 The date pickers the grid opens in date cells and date header filters are its own: they write the
-date into the cell or the filter, you do not subscribe to them.
+date into the cell or the filter, you do not subscribe to them. They show the grid's texts.

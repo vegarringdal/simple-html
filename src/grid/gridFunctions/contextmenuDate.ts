@@ -32,21 +32,8 @@ export function contextmenuDate(
         startYear: 2023, // set automatically when datepicker is true
         showWeek: config.showWeek !== undefined ? config.showWeek : true,
         isoWeek: config.isoWeek !== undefined ? config.isoWeek : true,
-        weekHeader: config.weekHeader || ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-        monthHeader: config.monthHeader || [
-            'January',
-            'February',
-            'March',
-            'April',
-            'May',
-            'June',
-            'July',
-            'August',
-            'September',
-            'October',
-            'November',
-            'December'
-        ],
+        // the grid's texts: the names of the months and days, the buttons
+        texts: ctx.gridInterface.__getGridConfig().texts,
         // ?? and not ||, 0 (sunday) is a valid week start
         weekStart: config.weekStart ?? 1,
         rowHeight: config.rowHeight || 22,

@@ -1,10 +1,11 @@
 import { afterAll, describe, expect, it } from 'vitest';
+import { TEXTS } from '../../texts';
 import { DataContainer } from '../dataContainer';
 import { Datasource } from '../dataSource';
 import type { DatasourceEvents } from '../datasourceEvents';
 import type { FieldConfig } from '../field';
 import type { ValidationError } from '../validator';
-import { isMissingValue, registerValidator, VALIDATION_MESSAGES } from '../validatorRegistry';
+import { isMissingValue, registerValidator } from '../validatorRegistry';
 
 /**
  * Validation: the rules are in the datasource's fields as JSON, the validators are registered by id
@@ -101,8 +102,9 @@ describe('validation - the built-in validators', () => {
         }
     });
 
-    it('expect the default messages to be listed by their ids', () => {
-        expect(VALIDATION_MESSAGES).toEqual({
+    it('expect the default messages to be texts, by their ids', () => {
+        const validationTexts = Object.fromEntries(Object.entries(TEXTS).filter(([id]) => id.startsWith('validation.')));
+        expect(validationTexts).toEqual({
             'validation.required': 'Required',
             'validation.min': 'Must be at least {value}',
             'validation.max': 'Must be at most {value}',

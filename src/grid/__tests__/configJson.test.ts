@@ -95,12 +95,10 @@ const fullConfig = (): GridConfig => ({
     autoRemoveContextMenuOnScrollEvent: true,
     dimRepeatedValues: true,
     tooltips: false,
-    tooltipText: { 'filterEditor.close': 'Lukk' },
+    texts: { 'filterEditor.close.tooltip': 'Lukk', 'datePicker.month.january': 'Januar', 'row.summary.count': 'Antall: {count}' },
     datePickerConfig: {
         showWeek: false,
         isoWeek: false,
-        weekHeader: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
-        monthHeader: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         weekStart: 0,
         rowHeight: 20,
         monthWidth: 200,

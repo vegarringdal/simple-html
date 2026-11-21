@@ -118,12 +118,16 @@ click on AND / OR in a group switches it. "Filter & Close" and "Filter Only" app
 leaves the filter as it was. A condition with no field or operator picked is left out when it is
 applied. Applying it empties the header filter cells.
 
+Its texts - the buttons, the labels, the names of the operators, the tooltips - are `filterEditor.*`,
+those of the header filter menu and its value list `filter.*`: see [Texts](12-texts.md#filter-editor).
+
 ## The footer
 
 The footer shows the number of rows shown (`datasource.length()`, group rows included) and the
 number of rows there are (`12/500`), and the
 filter as a row of chips: field, operator, value, with the groups in brackets. "✕ Clear" removes the
-whole filter, a click on the chips opens the filter editor. The labels are the column labels.
+whole filter, a click on the chips opens the filter editor. The labels are the column labels, the
+rest are texts (`footer.*`, the operators `footer.operator.*`), see [Texts](12-texts.md#footer).
 
 ## Filters from code
 
@@ -259,3 +263,6 @@ people.getFilterTree();
 - The values are formatted with the field's formatter. The tree's root is always a group, also for
   a single condition.
 - The grid's footer uses `getFilterTree()` with the column labels.
+- The operators and AND / OR of `getFilterString()` are texts, `filterString.*`: change them with
+  `setTexts()`, see [Texts](12-texts.md#getfilterstring). `getFilterTree()` has the operators as they
+  are (`'EQUAL'`), for your own rendering.

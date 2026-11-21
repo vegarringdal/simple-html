@@ -109,8 +109,8 @@ Every option is optional.
 | `placeholderRowCurrentEntityOnly` | `true` | shows `placeholderRow` on the current row only. `false` shows it on every row |
 | `autoRemoveContextMenuOnScrollEvent` | `false` | closes the open menu when the grid scrolls |
 | `tooltips` | `true` | the built-in tooltips: on the buttons of the filter editor, and the validation messages on a cell and its row number |
-| `tooltipText` | | your own tooltip texts, keyed by the ids in `TOOLTIPS` |
-| `datePickerConfig` | | names of months and days, week start and sizes of the date picker: only the fields to change (`Partial<IDateConfig>`), e.g. `{ weekStart: 0, isoWeek: false }`. The rest are the defaults: English names, weeks from monday with their numbers |
+| `texts` | | the texts of this grid by id, e.g. `{ 'row.copy': 'Kopier:' }`: they win over the page's (`setTexts()`). The tooltips are texts too, their ids end with `.tooltip`. See [Texts](12-texts.md) |
+| `datePickerConfig` | | week start and sizes of the date picker: only the fields to change (`Partial<IDateConfig>`), e.g. `{ weekStart: 0, isoWeek: false }`. The rest are the defaults: weeks from monday with their numbers. The names of the months and days are texts |
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |
 
 How rows are selected is not a grid option: the datasource has the selection mode, see
@@ -282,6 +282,8 @@ await fetch('/api/grids/accounts', { method: 'PUT', body: JSON.stringify(body) }
 ```
 
 - A formatter id that is not registered throws when the datasource is made, with the ids that are.
+- The texts are JSON too: `texts` in the config for one grid, `setTexts()` with the texts of the page -
+  see [Texts](12-texts.md).
 - `container` is the one datasource option that is not data: a `DataContainer` is made in code.
 - A `Date` does not come back from JSON as a `Date`, but as its ISO text: a `Date` in a filter of
   the state, or of `initialState`. See [Dates in a saved state](03-state.md#dates-in-a-saved-state) for what the grid does
@@ -295,8 +297,8 @@ selection. When something changes that it can not see, tell it:
 - `gridInterface.refresh()` renders the visible cells again. Call it after you set a value on a row
   from code, or when what the `isReadonly` / `cellClass` hooks read has changed. It is cheap.
 - `gridInterface.rebuild()` builds the whole grid again: sizes, header, rows, footer. Call it when a
-  formatter shows values differently now, or after you changed the size of the grid's container
-  without a resize event.
+  formatter shows values differently now, after `setTexts()` (see [Texts](12-texts.md#when-a-changed-text-shows)),
+  or after you changed the size of the grid's container without a resize event.
 - `gridInterface.autoResizeColumns()` sizes every column to its content (at most 750px) and
   rebuilds. It measures with the grid's font, so call it once the grid is on the page.
 

@@ -1,5 +1,6 @@
 import { html } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
+import { getText } from '../../texts';
 import type { DateInterface } from '../dateInterface';
 import type { IDateConfig } from '../interfaces';
 
@@ -15,7 +16,7 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
         <!-- hour -->
         <div class="date-flex">
             <div class="side">
-                <label>HH </label>
+                <label>${getText('datePicker.hours', config.texts)}</label>
                 <div class="date-flex">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -99,7 +100,7 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
 
             <!-- minute -->
             <div class="side">
-                <label>MM</label>
+                <label>${getText('datePicker.minutes', config.texts)}</label>
                 <div class="date-flex">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -190,7 +191,7 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                     context.__callSubscribers('date-select', null);
                 }}
             >
-                Clear
+                ${getText('datePicker.clear', config.texts)}
             </button>
             <button
                 @click=${(e: any) => {
@@ -199,14 +200,14 @@ export function time(context: DateInterface, config: IDateConfig, _year: number,
                     context.gotoNow();
                 }}
             >
-                Now
+                ${getText('datePicker.now', config.texts)}
             </button>
             <button
                 @click=${() => {
                     context.__callSubscribers('date-select', config.datepickerDate!);
                 }}
             >
-                Use
+                ${getText('datePicker.use', config.texts)}
             </button>
         </div>
     </div>`;

@@ -39,6 +39,8 @@ import { sortingGrouping } from './samples/sortingGrouping';
 import sortingGroupingSource from './samples/sortingGrouping.ts?raw';
 import { tooltips } from './samples/tooltips';
 import tooltipsSource from './samples/tooltips.ts?raw';
+import { translation } from './samples/translation';
+import translationSource from './samples/translation.ts?raw';
 import { validation } from './samples/validation';
 import validationSource from './samples/validation.ts?raw';
 
@@ -81,5 +83,6 @@ export const SAMPLES: Sample[] = [
     // config
     { ...gridState, source: gridStateSource },
     { ...tooltips, source: tooltipsSource },
+    { ...translation, source: translationSource },
     { ...miscConfig, source: miscConfigSource }
 ];

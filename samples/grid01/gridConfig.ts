@@ -32,10 +32,10 @@ export const gridConfig: GridConfig = {
      */
     tooltips: true,
     /**
-     * override any of the built in tooltip texts, import TOOLTIPS to see the ids
+     * override any of the texts of this grid, import TEXTS to see the ids. A tooltip's id ends with .tooltip
      */
-    tooltipText: {
-        // 'filterEditor.addCondition': 'Legg til betingelse'
+    texts: {
+        // 'filterEditor.addCondition.tooltip': 'Legg til betingelse'
     },
     /*   cellHeaderLabelHeight: 40, */
     /*  selectSizeHeight: 0, */

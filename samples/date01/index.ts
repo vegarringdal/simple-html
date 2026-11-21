@@ -10,21 +10,7 @@ const dateconfig: IDateConfig = {
     startYear: 2023,
     showWeek: true, // not working
     isoWeek: true, // not working
-    weekHeader: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], // must be in js order, widget reorder them if you have other start day
-    monthHeader: [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December'
-    ],
+    // the names of the months and days are texts: setTexts() or texts: { 'datePicker.month.january': ... }
     weekStart: 1,
     rowHeight: 22,
     monthWidth: 230,

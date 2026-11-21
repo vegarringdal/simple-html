@@ -57,7 +57,9 @@ const gridInterface = createGrid(host, { config, datasource, hooks });
   summary of a column that is not a number, the operators of another type.
 - A section header or a separator is shown as long as it is in the list: hide it together with the
   entries under it.
-- The entries in `defaults` are new objects every time, change them as you like.
+- The entries in `defaults` are new objects every time, change them as you like. Their labels are
+  the texts of their ids, already looked up: to translate the menus use the texts (see
+  [Texts](12-texts.md)), the hook is for changes in one menu.
 - `updateHooks({ menus })` changes the functions while the grid is shown,
   `updateHooks({ menus: undefined })` gives back the defaults.
 
@@ -80,7 +82,8 @@ A `MenuEntry` is one of:
 - `visible(context)`: `false` leaves the entry out. `disabled(context)`: `true` shows the item greyed
   out, a click does nothing. `selected(context)`: `true` marks it as the one picked now. They are
   called when the menu opens.
-- Labels are shown as they are given. The grid's own section labels end with a colon.
+- Labels are shown as they are given. The grid's own come from the texts, by the id of the entry,
+  and its section labels end with a colon.
 - Every entry is rendered with its id in a `data-menu-id` attribute, for css and tests. A disabled
   item has the class `simple-html-grid-menu-item-disabled`.
 
@@ -101,6 +104,10 @@ Every callback gets a `MenuContext`:
 `MENU_IDS` lists the ids of every built-in entry, per menu, in the order the menus show them. A
 section is `menu.section`, the entries under it `menu.section.entry`. The ids stay the same between
 versions, so a menu changed by id keeps working.
+
+The ids are the ids of the texts too: the label of `row.copy.cell` is the text `row.copy.cell`, its
+hint `<id>.hint`. Change them with `setTexts()` or the grid's `texts`, see [Texts](12-texts.md#row-menu).
+The "shown as" below is the English text.
 
 ### Row menu (`MENU_IDS.row`)
 
@@ -170,7 +177,7 @@ versions, so a menu changed by id keeps working.
 | `filter.operator.equal` | Equal | not a boolean field |
 | `filter.operator.notEqualTo` | Not Equal | a text field |
 | `filter.operator.contains` | Contains | a text field |
-| `filter.values` | the value list: a search box, a checkbox per value, "Run Search". One `MenuBlock` | a text field |
+| `filter.values` | the value list: a search box, a checkbox per value, "Run Search". One `MenuBlock`, its texts are `filter.values.*` | a text field |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 

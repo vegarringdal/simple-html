@@ -1,45 +1,7 @@
+import { fillText, findText } from '../texts';
 import type { Entity } from './entity';
 import { isBlank } from './isBlank';
 import type { ValidationRule, ValidationRuleObject, Validator } from './validator';
-
-/**
- * The default message of each built-in validator, by message id. A built-in validator returns the id,
- * and the message shown is the rule's own `message` when it has one, else the text here. `{value}`
- * is replaced by the rule's `value`.
- *
- * | id | message |
- * | --- | --- |
- * | `'validation.required'` | `Required` |
- * | `'validation.min'` | `Must be at least {value}` |
- * | `'validation.max'` | `Must be at most {value}` |
- * | `'validation.minLength'` | `Must be at least {value} characters` |
- * | `'validation.maxLength'` | `Must be at most {value} characters` |
- * | `'validation.pattern'` | `Not in the expected format` |
- *
- * The ids are stable: the texts of the grid will be replaceable by id (planned for phase 3 of v6),
- * these included. Until then give a rule a `message` of its own for another text.
- *
- * @sample validation
- * @example
- * ```ts
- * import { Datasource, VALIDATION_MESSAGES } from '@simple-html/grid';
- *
- * VALIDATION_MESSAGES['validation.min']; // 'Must be at least {value}'
- *
- * // another text for one rule
- * const datasource = new Datasource({
- *     fields: { age: { type: 'number', validate: [{ id: 'min', value: 0, message: 'Kan ikke være under {value}' }] } }
- * });
- * ```
- */
-export const VALIDATION_MESSAGES: Readonly<Record<string, string>> = {
-    'validation.required': 'Required',
-    'validation.min': 'Must be at least {value}',
-    'validation.max': 'Must be at most {value}',
-    'validation.minLength': 'Must be at least {value} characters',
-    'validation.maxLength': 'Must be at most {value} characters',
-    'validation.pattern': 'Not in the expected format'
-};
 
 /**
  * @internal
@@ -177,7 +139,10 @@ const registry = new Map<string, RegisteredValidator>([
  *   numbers, the others text - and pass the rest.
  * - **`pattern` is not anchored**: `'[0-9]'` finds a digit anywhere, write `'^[0-9]+$'` for the whole
  *   text. It is a `RegExp` without flags.
- * - The messages are in {@link VALIDATION_MESSAGES}; a rule's `message` replaces it.
+ * - **The messages are texts**: the built-ins return the ids `validation.*` of {@link TEXTS}, changed
+ *   with {@link setTexts}. A rule's `message` replaces what the validator returns. Either is the
+ *   message itself or a text id: an id of your own gets its text from `setTexts()`, so it is translated
+ *   like the built-ins' (`'validation.phoneNO'` below).
  *
  * Registering an id again replaces the validator - a built-in one too, for the fields that name
  * it (its options are not checked then, and the grid's stripes for `required` still mark what the
@@ -191,12 +156,13 @@ const registry = new Map<string, RegisteredValidator>([
  * @sample validation
  * @example
  * ```ts
- * import { Datasource, registerValidator } from '@simple-html/grid';
+ * import { Datasource, registerValidator, setTexts } from '@simple-html/grid';
  *
- * // a Norwegian phone number: 8 digits, spaces allowed
+ * // a Norwegian phone number: 8 digits, spaces allowed. Returns a text id, its text is set below
  * registerValidator('phoneNO', (value) =>
- *     typeof value === 'string' && value !== '' && !/^(\d\s*){8}$/.test(value) ? 'Must be 8 digits' : null
+ *     typeof value === 'string' && value !== '' && !/^(\d\s*){8}$/.test(value) ? 'validation.phoneNO' : null
  * );
+ * setTexts({ 'validation.phoneNO': 'Must be 8 digits' });
  * // a number that must be there, 0 included (the built-in required takes 0 as missing)
  * registerValidator('present', (value) => (value === null || value === undefined ? 'validation.required' : null));
  *
@@ -276,13 +242,14 @@ export function resolveRules(rules: readonly ValidationRule[], field: string): R
 
 /**
  * @internal
- * The message for what a validator returned: the rule's own `message`, else the text of the message
- * id (VALIDATION_MESSAGES), else what it returned. `{name}` is replaced by the rule's option `name`,
- * a name the rule does not have is left as it is
+ * The message for what a validator returned: the rule's own `message`, else what the validator
+ * returned. Either is a text id or the message itself: the text of the id (setTexts(), else TEXTS)
+ * when there is one. `{name}` is replaced by the rule's option `name`, a name the rule does not have
+ * is left as it is
  */
 export function errorMessage(result: string, rule: ValidationRuleObject): string {
-    const text = rule.message ?? (Object.hasOwn(VALIDATION_MESSAGES, result) ? VALIDATION_MESSAGES[result] : result);
-    return text.replace(/\{(\w+)\}/g, (match, name: string) => (Object.hasOwn(rule, name) ? String(rule[name]) : match));
+    const message = rule.message ?? result;
+    return fillText(findText(message) ?? message, rule);
 }
 
 /**

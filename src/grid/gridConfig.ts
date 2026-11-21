@@ -2,6 +2,7 @@ import type { FilterExpression, FilterOperator } from '../datasource/filterExpre
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
+import type { Texts } from '../texts';
 
 /**
  * The grid's config: the options of each column (`columns`), where the columns go (`layout`), sizes
@@ -132,7 +133,8 @@ export type GridConfig = {
      * and the validation messages on a cell with an error and on its row selector
      *
      * the `data-tooltip` attribute is always written to the elements, also when this is
-     * false, so you can hook up your own tooltip library instead
+     * false, so you can hook up your own tooltip library instead. The texts of the tooltips are
+     * texts like the others, their ids end with `.tooltip`: see `texts`
      *
      * @sample tooltips
      * @sample validation
@@ -140,19 +142,40 @@ export type GridConfig = {
     tooltips?: boolean;
 
     /**
-     * override the built in tooltip texts, keyed by tooltip id.
-     * import `TOOLTIPS` to see the ids and their default text
+     * The texts of this grid, by id: the ones to change. They win over the texts of the page
+     * ({@link setTexts}), which win over the defaults ({@link TEXTS}, English). Plain JSON.
      *
-     * @sample tooltips
+     * - Every text the grid shows: the menus, the filter editor, the column chooser, the footer, the
+     *   tooltips (ids ending with `.tooltip`) and the date picker. Not the texts the datasource makes -
+     *   the validation messages, `getFilterString()` and the name of the group of blank values: they are
+     *   set with `setTexts()` only.
+     * - `updateConfig({ texts })` replaces them as a whole, and rebuilds the grid. A menu or the filter
+     *   editor shows them the next time it opens.
+     *
+     * For one language on the whole page, `setTexts()` is enough: this is for a grid that differs.
+     *
+     * @sample translation
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 150 }] },
+     *     texts: {
+     *         'row.copy': 'Kopier:',
+     *         'filterEditor.addCondition.tooltip': 'Legg til betingelse'
+     *     }
+     * };
+     * ```
      */
-    tooltipText?: Record<string, string>;
+    texts?: Texts;
 
     /**
      * the date picker of date cells and date header filters: only the fields to change. Of the
-     * {@link IDateConfig} the grid reads `showWeek` (default true), `isoWeek` (true), `weekHeader` and
-     * `monthHeader` (English), `weekStart` (1, monday), `rowHeight` (22), `monthWidth` (230), `monthMargin`
-     * (10), `hideDimmedDates` (false), `showYearInMonth` (false) and `datepickerHeight` (317), and sets the
-     * rest itself
+     * {@link IDateConfig} the grid reads `showWeek` (default true), `isoWeek` (true), `weekStart` (1,
+     * monday), `rowHeight` (22), `monthWidth` (230), `monthMargin` (10), `hideDimmedDates` (false),
+     * `showYearInMonth` (false) and `datepickerHeight` (317), and sets the rest itself. Its texts - the
+     * names of the months and days, the buttons - are the grid's `texts` (`datePicker.*`)
      *
      * @example
      * ```ts

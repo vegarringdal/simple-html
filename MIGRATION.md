@@ -61,6 +61,9 @@ Search and replace is enough for all of them.
 | `GridConfig.selectionMode` | `new Datasource({ selectionMode })` or `datasource.setSelectionMode()`, see [below](#selectionmode-is-the-datasources) |
 | `ColumnConfig.mandatory` | the field's `required` rule, `fields: { name: { validate: ['required'] } }` - see [Validation](#validation-mandatory-is-the-required-rule) |
 | `ColumnConfig.mandatoryOnlyIfEmpty` | nothing - it had no effect, `mandatory` marked only the empty cells |
+| `GridConfig.tooltipText`, `TOOLTIPS` | `GridConfig.texts` / `setTexts()` and `TEXTS`, the ids end with `.tooltip` - see [Texts](#texts) |
+| `OPERATORS` | the texts `filterString.operator.<FilterOperator>` in `TEXTS`, see [Texts](#texts) |
+| `IDateConfig.monthHeader`, `IDateConfig.weekHeader` | the texts `datePicker.month.*` and `datePicker.day.*`, see [Texts](#texts) |
 
 ## Events
 
@@ -1063,7 +1066,7 @@ const errors = datasource.validate(); // before a save: [] when every row is val
 | `FieldConfig.validate` | the field's rules: `['required', { id: 'min', value: 0, message: 'at least {value}' }]` |
 | `registerValidator(id, validator)` | a validator of your own, `(value, row, rule) => message \| null` |
 | built-in validators | `required`, `min`, `max`, `minLength`, `maxLength`, `pattern` (a regular expression as text) |
-| `VALIDATION_MESSAGES` | the default messages by id: `'validation.required'`, `'validation.min'`, `'validation.max'`, `'validation.minLength'`, `'validation.maxLength'`, `'validation.pattern'` |
+| the texts `validation.*` | the default messages, texts in `TEXTS` changed with `setTexts()`: `'validation.required'`, `'validation.min'`, `'validation.max'`, `'validation.minLength'`, `'validation.maxLength'`, `'validation.pattern'` |
 | `datasource.validate(rows?)` | validates every row, or the rows given, keeps and returns the errors: `{ row, field, messages }[]` |
 | `datasource.getErrors(rows?)`, `hasErrors()` | the errors there are now, without validating |
 | `getField(name).validate` | the field's rules, written out as objects |
@@ -1098,6 +1101,14 @@ two in one `GridConfig`; v6 keeps them apart.
 The config is plain JSON in v6: it has no functions, so it can be stored and loaded as it is. The
 functions - `isReadonly`, `cellClass`, `menus` - are hooks, given next to it, see
 [The callbacks are hooks](#the-callbacks-are-hooks-isreadonly-and-cellclass).
+
+**A v5 option left in a config throws** a `TypeError` that says where it went in v6 - in the
+constructor, `createGrid()` and `updateConfig()`. TypeScript catches them, but a config from plain
+JavaScript or one stored in a backend before v6 would otherwise lose the option without a word. It
+covers `attributes`, `columnsPinnedLeft` / `columnsCenter` / `columnsPinnedRight`, `sorting`,
+`grouping`, `expandedGroups`, `filter`, `tooltipText`, `selectionMode`,
+`placeHolderRowCurrentEntityOnly`, and on a column `mandatory`, `type`, `attribute`,
+`currentFilterValue`, `placeHolderRow`, `placeHolderFilter`.
 
 ### `attributes` and `columns*` become `columns` and `layout`
 
@@ -1211,7 +1222,9 @@ datasource.setSelectionMode('none'); // later, also while a grid shows it
 
 `GridConfig.datePickerConfig` is a `Partial<IDateConfig>` (v5: a whole `IDateConfig`, though the grid
 read only some fields and filled in the rest). `{ weekStart: 0, isoWeek: false }` is enough, every
-field the grid reads has a default. A whole `IDateConfig` still works.
+field the grid reads has a default. A whole `IDateConfig` still works, without `monthHeader` and
+`weekHeader`: the names of the months and days are texts now, see
+[Texts](#the-names-of-the-months-and-days-are-texts).
 
 ### The state: `getState()`, `setState()` and `resetState()`
 
@@ -1788,12 +1801,92 @@ gridInterface.closeMenu();
 * The header and filter menus open above the cell when they do not fit below it, as the row menu
   did. Every menu is moved left when it sticks out on the right of the window.
 * The entries carry their id in a `data-menu-id` attribute, for css and tests.
+* The labels are texts, looked up by the id of the entry: translate them with `setTexts()` or
+  `GridConfig.texts`, see [Texts](#texts). The `menus` hook gets them looked up already.
 * A disabled item gets the class `simple-html-grid-menu-item-disabled` and `aria-disabled="true"`.
 * **The row menu can delete rows**: an editable grid has a "Delete:" section - `row.delete`,
   `row.delete.rows` marks the selected rows for deletion, `row.delete.undo` takes the mark off. A row
   the `isReadonly` hook returns `true` for in every column is not marked. Where the user should not
   delete rows, hide it with the `menus` hook:
   `row: (defaults) => defaults.filter((entry) => !entry.id.startsWith('row.delete'))`.
+
+## Texts
+
+Every text of the grid has an id now, and every one can be changed: the menus, the filter editor, the
+column chooser, the footer, the tooltips, the date picker, and the texts the datasource makes (the
+validation messages, `getFilterString()`). `TEXTS` has them all with their English text;
+`setTexts(texts)` changes them for the page, `GridConfig.texts` for one grid. v5 could only change the
+tooltips of the filter editor. See [the texts guide](guides/12-texts.md).
+
+### `tooltipText` is `texts`, the ids end with `.tooltip`
+
+The tooltips are texts like the others. `GridConfig.tooltipText` and `TOOLTIPS` are removed: give the
+texts in `GridConfig.texts` (or `setTexts()` for every grid), with `.tooltip` after the v5 id.
+
+```ts nocheck
+// v5
+const gridConfig: GridConfig = {
+    // ...
+    tooltipText: { 'filterEditor.addCondition': 'Legg til betingelse', 'filterEditor.close': 'Lukk' }
+};
+console.log(TOOLTIPS);
+```
+
+```ts
+// v6
+import { type GridConfig, setTexts, TEXTS } from '@simple-html/grid';
+
+const gridConfig: GridConfig = {
+    layout: { center: [{ fields: ['name'], width: 150 }] },
+    texts: { 'filterEditor.addCondition.tooltip': 'Legg til betingelse', 'filterEditor.close.tooltip': 'Lukk' }
+};
+// or for every grid of the page
+setTexts({ 'filterEditor.addCondition.tooltip': 'Legg til betingelse' });
+
+console.log(Object.keys(TEXTS).filter((id) => id.endsWith('.tooltip')));
+```
+
+Every v5 tooltip id is the v6 id without `.tooltip`: `filterEditor.title`, `filterEditor.close`,
+`filterEditor.filterAndClose`, `filterEditor.filterOnly`, `filterEditor.closeButton`,
+`filterEditor.pickAttribute`, `filterEditor.pickOperator`, `filterEditor.pickValueAttribute`,
+`filterEditor.deleteCondition`, `filterEditor.deleteGroup`, `filterEditor.clearAll`,
+`filterEditor.addCondition`, `filterEditor.addSubGroup`, `filterEditor.wrapGroup`,
+`filterEditor.operatorAnd`, `filterEditor.operatorOr`, `filterEditor.useValue`,
+`filterEditor.useAttribute`. Some of those ids without `.tooltip` are now the text of the element:
+`filterEditor.title` is `Filter Editor`, `filterEditor.closeButton` is `Close`.
+
+`updateConfig({ texts })` replaces the grid's texts as a whole, as `tooltipText` was.
+
+### `OPERATORS` is the texts `filterString.operator.*`
+
+The text `getFilterString()` shows for an operator is a text, `OPERATORS` is removed:
+`OPERATORS.EQUAL` is `TEXTS['filterString.operator.EQUAL']` (`'equal_to'`, still shown as
+`<<EQUAL_TO>>`). `AND` and `OR` are `filterString.and` and `filterString.or`. The string is the same
+as in v5 with the default texts.
+
+### The names of the months and days are texts
+
+`IDateConfig.monthHeader` and `weekHeader` are removed, and the grid no longer reads them from
+`datePickerConfig`: each name is a text, `datePicker.month.january` ... `datePicker.month.december`
+and `datePicker.day.sunday` ... `datePicker.day.saturday` (Sunday first, as `weekHeader` was).
+
+```ts nocheck
+// v5
+const gridConfig: GridConfig = {
+    // ...
+    datePickerConfig: { monthHeader: ['Januar', 'Februar' /* ... */], weekHeader: ['Sø', 'Ma' /* ... */] }
+};
+```
+
+```ts
+// v6
+import { setTexts } from '@simple-html/grid';
+
+setTexts({ 'datePicker.month.january': 'Januar', 'datePicker.month.february': 'Februar', 'datePicker.day.sunday': 'Sø' });
+```
+
+A `DateInterface` of your own takes its texts in `texts`, or uses the page's: drop `monthHeader` and
+`weekHeader` from its `IDateConfig`.
 
 ## Other behaviour changes
 

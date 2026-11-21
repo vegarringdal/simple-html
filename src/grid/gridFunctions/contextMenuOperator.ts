@@ -3,7 +3,7 @@ import type { FilterOperator } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
 import { createElement } from './createElement';
-import { prettyPrintString } from './prettyPrintString';
+import { gridText } from './gridText';
 import { removeContextMenu } from './removeContextMenu';
 
 /**
@@ -54,19 +54,17 @@ export function contextMenuOperator(
 
     render(
         html`<div class="simple-html-grid-menu">
-            <div class="simple-html-grid-menu-section">Operator:</div>
+            <div class="simple-html-grid-menu-section">${gridText(ctx, 'filterEditor.operatorMenu')}</div>
             <hr class="hr-solid" />
             <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                 ${operators.map((operator) => {
-                    const prettytext = prettyPrintString(operator);
-
                     return html`<div
                         class="simple-html-grid-menu-item"
                         @click=${() => {
                             callback(operator);
                         }}
                     >
-                        ${prettytext}
+                        ${gridText(ctx, `filterEditor.operator.${operator}`)}
                     </div>`;
                 })}
             </div>

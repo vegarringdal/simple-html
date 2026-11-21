@@ -43,6 +43,7 @@ import {
     type GroupRow,
     type HeaderFilter,
     type HTMLCellElement,
+    type IDateConfig,
     isGroupRow,
     type LayoutColumn,
     MENU_IDS,
@@ -60,9 +61,11 @@ import {
     registerFormatter,
     registerValidator,
     type SortArgument,
+    setTexts,
+    TEXTS,
     TextFormatter,
-    TOOLTIPS,
-    VALIDATION_MESSAGES,
+    type TextId,
+    type Texts,
     type ValidationError,
     type ValidationOption,
     type ValidationRule,
@@ -495,7 +498,8 @@ const currentErrors: ValidationError<Person>[] = validated.getErrors();
 const ofRow: ValidationError<Person>[] = validated.getErrors(validated.getDataRows()[0]);
 const invalid: boolean = validated.hasErrors();
 const rulesOfName: readonly ValidationRuleObject[] = validated.getField('name').validate;
-const requiredText: string | undefined = VALIDATION_MESSAGES['validation.required'];
+// the default messages are texts
+const requiredText: string = TEXTS['validation.required'];
 console.log(
     ruleWithoutId,
     withFunction,
@@ -647,10 +651,8 @@ console.log(cellData, paste);
 const dateInterface = new DateInterface({
     monthsToShow: 1,
     monthColumns: 1,
-    monthHeader: [],
     startMonth: 0,
     startYear: 2026,
-    weekHeader: [],
     weekStart: 1,
     showWeek: true,
     isoWeek: true,
@@ -675,7 +677,36 @@ element.connectInterface(gridInterface);
 // @ts-expect-error the enableCleanup test flag is gone
 element.enableCleanup = true;
 
-console.log(TOOLTIPS);
+// texts: every text by id, the page's with setTexts(), a grid's in its config. Plain JSON
+const copyText: string = TEXTS['row.copy'];
+const tooltipId: TextId = 'filterEditor.addCondition.tooltip';
+const norwegian: Texts = {
+    'row.copy': 'Kopier:',
+    'row.summary.count': 'Antall: {count}',
+    [tooltipId]: 'Legg til betingelse',
+    // an id of your own, for a validator's message
+    'validation.phoneNO': 'Må være 8 siffer'
+};
+setTexts(norwegian);
+setTexts({});
+const translatedGrid: GridConfig = { layout, texts: norwegian };
+gridInterface.updateConfig({ texts: { 'footer.clear': 'Tøm' } });
+gridInterface.updateConfig({ texts: undefined });
+// a translation that has every id: the compiler names the ones missing
+const everyText: Record<TextId, string> = { ...TEXTS };
+setTexts(everyText);
+// the date picker's texts, for a DateInterface of your own
+const dateTexts: IDateConfig['texts'] = { 'datePicker.month.january': 'Januar', 'datePicker.day.monday': 'Ma' };
+console.log(copyText, translatedGrid, dateTexts);
+// @ts-expect-error tooltipText is gone, the tooltips are texts: texts: { 'filterEditor.close.tooltip': 'Lukk' }
+const withTooltipText: GridConfig = { layout, tooltipText: { 'filterEditor.close': 'Lukk' } };
+// @ts-expect-error a text is a string
+const notAText: Texts = { 'row.copy': 1 };
+// @ts-expect-error the defaults stay as they are, setTexts() changes the texts
+TEXTS['row.copy'] = 'Kopier:';
+// @ts-expect-error the names of the months are texts, datePicker.month.*
+const withMonthHeader: Partial<IDateConfig> = { monthHeader: ['Januar'] };
+console.log(withTooltipText, notAText, withMonthHeader);
 
 // the config, the state and the datasource's fields + formatters are plain data: no function
 // anywhere in them, nested types included (a Date is data). The hooks are where the functions are.

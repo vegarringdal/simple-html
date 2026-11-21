@@ -1,8 +1,14 @@
+import { getText } from '../texts';
 import type { Datasource } from './dataSource';
 import { type Entity, type GroupRow, isGroupRow } from './entity';
 import type { Formatter } from './formatter';
 import type { GroupArgument } from './groupArgument';
 import { isBlank } from './isBlank';
+
+/**
+ * the key (and group id) of the group of the blank values. Its name shows the text `grouping.blank`
+ */
+const BLANK_GROUP = ' blank';
 
 /**
  * This takes care the generating the flat array the grid can use for grouping
@@ -303,13 +309,21 @@ export class Grouping {
      */
     private groupKey(value: unknown, formatter: Formatter): string {
         if (isBlank(value)) {
-            return ' blank';
+            return BLANK_GROUP;
         }
         if (typeof value === 'boolean') {
             return value.toString();
         }
         // a formatter can still format a value to nothing, NaN for example
-        return formatter.format(value) || ' blank';
+        return formatter.format(value) || BLANK_GROUP;
+    }
+
+    /**
+     * the name a group row shows: the title and the value, `'Country: Norway'`. The group of the blank
+     * values shows the text `grouping.blank` (setTexts(), made when the rows are grouped)
+     */
+    private groupName(title: string, groupID: string): string {
+        return `${this.toUppercase(title)}: ${groupID === BLANK_GROUP ? getText('grouping.blank') : groupID}`;
     }
 
     private createMainGrouping(array: Entity[], groupBy: string, groupNo: number, title: string, ds: Datasource) {
@@ -325,7 +339,7 @@ export class Grouping {
 
             if (groupID !== lastGroupID) {
                 curGroup = {
-                    __groupName: `${this.toUppercase(title)}: ${groupID}`,
+                    __groupName: this.groupName(title, groupID),
                     __group: true,
                     __groupID: groupID,
                     __groupLvl: groupNo,
@@ -368,7 +382,7 @@ export class Grouping {
                 if (groupID !== tempValue) {
                     const gidc = element.__groupID;
                     curGroup = {
-                        __groupName: `${this.toUppercase(title)}: ${groupID}`,
+                        __groupName: this.groupName(title, groupID),
                         __groupID: `${gidc}-${groupID}`,
                         __group: true,
                         __groupLvl: groupNo,

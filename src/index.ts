@@ -26,7 +26,6 @@ export { registerFormatter } from './datasource/formatterRegistry';
 export type { GroupArgument } from './datasource/groupArgument';
 export { NumberFormatterComma } from './datasource/numberFormatterComma';
 export { NumberFormatterDot } from './datasource/numberFormatterDot';
-export { OPERATORS } from './datasource/OPERATORS';
 export type { SelectionMode } from './datasource/selectionMode';
 export type { SortArgument } from './datasource/sortArgument';
 export { TextFormatter } from './datasource/textFormatter';
@@ -37,7 +36,7 @@ export type {
     ValidationRuleObject,
     Validator
 } from './datasource/validator';
-export { registerValidator, VALIDATION_MESSAGES } from './datasource/validatorRegistry';
+export { registerValidator } from './datasource/validatorRegistry';
 export { DateElement } from './date/dateElement';
 export type { DateEvents } from './date/dateEvents';
 export { DateInterface } from './date/dateInterface';
@@ -52,7 +51,6 @@ export { GridElement } from './grid/gridElement';
 export type { GridCellEventData, GridEvents } from './grid/gridEvents';
 export type { ColType } from './grid/gridFunctions/colType';
 export type { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
-export { TOOLTIPS } from './grid/gridFunctions/tooltip';
 export type { CellClass, GridHooks } from './grid/gridHooks';
 export { GridInterface } from './grid/gridInterface';
 export {
@@ -66,3 +64,4 @@ export {
     type MenuSection,
     type MenuSeparator
 } from './grid/gridMenus';
+export { setTexts, TEXTS, type TextId, type Texts } from './texts';

@@ -1,15 +1,20 @@
+import type { Texts } from '../texts';
+
 /**
  * The config of a {@link DateInterface}: a date picker (`datepicker: true` - one month, one date with a
  * time, and Clear / Now / Use buttons) or a calendar (`datepicker: false` - one or more months, click
  * days to select them).
  *
- * The type requires every field but `datepickerDate`, `datepickerHour`, `datepickerMinute` and
+ * The type requires every field but `texts`, `datepickerDate`, `datepickerHour`, `datepickerMinute` and
  * `datepickerHeight`.
  *
+ * The names of the months and days and the buttons are texts, the ids `datePicker.*` of {@link TEXTS}:
+ * set with {@link setTexts}, or with `texts` for this picker.
+ *
  * The grid's date picker (`GridConfig.datePickerConfig`) takes a `Partial<IDateConfig>`: the fields to
- * change. It reads only `showWeek`, `isoWeek`, `weekHeader`, `monthHeader`, `weekStart`, `rowHeight`,
- * `monthWidth`, `monthMargin`, `hideDimmedDates`, `showYearInMonth` and `datepickerHeight`, each with a
- * default; the others it sets itself.
+ * change. It reads only `showWeek`, `isoWeek`, `weekStart`, `rowHeight`, `monthWidth`, `monthMargin`,
+ * `hideDimmedDates`, `showYearInMonth` and `datepickerHeight`, each with a default; the others it sets
+ * itself - `texts` to the grid's texts.
  *
  * @example
  * ```ts
@@ -23,8 +28,6 @@
  *     monthColumns: 1,
  *     startMonth: 0, // set from datepickerDate in a date picker
  *     startYear: 2026,
- *     monthHeader: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
- *     weekHeader: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], // sunday first, as in js
  *     weekStart: 1, // the week starts on monday
  *     showWeek: true,
  *     isoWeek: true,
@@ -52,20 +55,13 @@ export interface IDateConfig {
      * how many months a calendar shows side by side, before it starts a new row. A date picker sets 1
      */
     monthColumns: number;
-    /** the names of the months, January first: 12 texts */
-    monthHeader: string[];
 
     /** the first month shown, 0 (January) to 11. A date picker sets it from `datepickerDate` */
     startMonth: number;
     /** the year of the first month shown. A date picker sets it from `datepickerDate` */
     startYear: number;
 
-    /**
-     * the names of the days, in javascript's order: Sunday first (`['Su', 'Mo', ...]`). They are shown
-     * from `weekStart` on
-     */
-    weekHeader: string[];
-    /** the first day of the week: 0 Sunday, 1 Monday ... */
+    /** the first day of the week: 0 Sunday, 1 Monday ... The days are shown from it on */
     weekStart: number;
 
     /** shows the week numbers in front of each week */
@@ -89,6 +85,20 @@ export interface IDateConfig {
      * the title above the months of a calendar. Not shown by a date picker
      */
     headerTitle: string;
+
+    /**
+     * The texts of this picker, by id: the ones to change, they win over the page's ({@link setTexts}).
+     * The ids are `datePicker.*` of {@link TEXTS}: `datePicker.month.january` ..., `datePicker.day.sunday`
+     * ... (`'Su'`), and the buttons and labels. The grid sets it to its own `texts`.
+     *
+     * @example
+     * ```ts
+     * import type { IDateConfig } from '@simple-html/grid';
+     *
+     * const texts: IDateConfig['texts'] = { 'datePicker.month.january': 'Januar', 'datePicker.day.monday': 'Ma' };
+     * ```
+     */
+    texts?: Texts;
 
     /**
      * `true`: a date picker - one month, one date and its time, and Clear / Now / Use buttons that

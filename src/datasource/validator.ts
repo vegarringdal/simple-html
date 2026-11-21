@@ -35,9 +35,9 @@ export interface ValidationRuleObject {
     id: string;
 
     /**
-     * the message when the value fails the rule, instead of the validator's. `{name}` in it is
-     * replaced by the rule's option `name`: `'at most {value}'` is `'at most 150'` for
-     * `{ id: 'max', value: 150 }`
+     * the message when the value fails the rule, instead of the validator's: the message itself, or a
+     * text id - a text set with `setTexts()`, so it can be translated. `{name}` in it is replaced by
+     * the rule's option `name`: `'at most {value}'` is `'at most 150'` for `{ id: 'max', value: 150 }`
      */
     message?: string;
 
@@ -66,9 +66,9 @@ export type ValidationRule = string | ValidationRuleObject;
  * else the error. Register it under an id with {@link registerValidator}, and name it in a field's
  * rules.
  *
- * The error is a message id - one of {@link VALIDATION_MESSAGES}, like the built-ins return - or the
- * message itself. The rule's own `message` is used instead when it has one, and `{name}` in the
- * message is replaced by the rule's option `name`.
+ * The error is a text id - a `validation.*` id of {@link TEXTS}, like the built-ins return, or an id
+ * of your own given a text with `setTexts()` - or the message itself. The rule's own `message` is used
+ * instead when it has one, and `{name}` in the message is replaced by the rule's option `name`.
  *
  * - `value` - the field's value in the row
  * - `row` - the row, to compare with its other fields. Such a validator runs when its own field is

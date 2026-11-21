@@ -4,6 +4,7 @@ import type { Grid } from '../grid';
 import type { ColType } from './colType';
 import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getColumnLabel } from './getColumnLabel';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 
 export function renderRowSelector(
@@ -55,7 +56,7 @@ export function renderRowSelector(
             }}
         >
             <div class="${isModified(rowData)}">
-                <span role="cell" aria-label=${'row selector'} class="simple-html-selector-text"
+                <span role="cell" aria-label=${gridText(ctx, 'grid.rowSelector')} class="simple-html-selector-text"
                     >${row + 1}</span
                 >
             </div>

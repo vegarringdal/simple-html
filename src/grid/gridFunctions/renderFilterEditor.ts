@@ -1,19 +1,27 @@
 import { html, render, type TemplateResult } from 'lit-html';
 import type { Datasource } from '../../datasource/dataSource';
 import { isIgnoredCondition } from '../../datasource/filter';
-import { type FilterCondition, type FilterExpression, type FilterGroup, where } from '../../datasource/filterExpression';
+import {
+    type FilterCondition,
+    type FilterExpression,
+    type FilterGroup,
+    type FilterOperator,
+    where
+} from '../../datasource/filterExpression';
 import { parseFilterText } from '../../datasource/formatter';
 import { TextFormatter } from '../../datasource/textFormatter';
+import { findText, type TextId } from '../../texts';
 import type { Grid } from '../grid';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { contextmenuDate } from './contextmenuDate';
 import { createElement } from './createElement';
 import { getColumnLabel } from './getColumnLabel';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
-import { attachTooltips, hideTooltip, tooltip, tooltipsEnabled } from './tooltip';
+import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
 
 /**
  * A condition while the filter editor builds it, one pick at a time: any part can still be missing.
@@ -100,6 +108,18 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
     filterEditorContainer.appendChild(filterEditorGridCssContext);
 
     const label = (attribute: string) => getColumnLabel(ctx, attribute);
+    const text = (id: TextId) => gridText(ctx, id);
+
+    /**
+     * the name of a condition's operator, the picker's text while none is picked. An operator of plain
+     * js that is not one is shown as it is
+     */
+    const operatorName = (operator: FilterOperator | undefined) => {
+        if (!operator) {
+            return text('filterEditor.pickOperator');
+        }
+        return findText(`filterEditor.operator.${operator}`, ctx.gridInterface.__getGridConfig().texts) ?? operator;
+    };
 
     /**
      * Icon helper
@@ -296,7 +316,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
             // same look as the other two pickers, it opens a menu the same way
             filterElement = html`<div
                 class="grid-pick grid-text-center"
-                data-tooltip=${tooltip(ctx, 'filterEditor.pickValueAttribute')}
+                data-tooltip=${text('filterEditor.pickValueAttribute.tooltip')}
                 @click=${(e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -307,21 +327,21 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                     });
                 }}
             >
-                ${label || 'Click me to select attribute'}
+                ${label || text('filterEditor.pickValueAttribute')}
             </div>`;
         }
 
         return html`<div>
             <div class="grid-flex-column grid-condition">
                 <div class="grid-flex">
-                    <div class="grid-flex-1 grid-text-label">Query Field:</div>
-                    <div class="grid-flex-1 grid-text-label">Operator:</div>
-                    <div class="grid-flex-1 grid-text-label">Filter value:</div>
+                    <div class="grid-flex-1 grid-text-label">${text('filterEditor.label.field')}</div>
+                    <div class="grid-flex-1 grid-text-label">${text('filterEditor.label.operator')}</div>
+                    <div class="grid-flex-1 grid-text-label">${text('filterEditor.label.value')}</div>
                 </div>
                 <div class="grid-flex">
                     <div
                         class="grid-flex-1 grid-text-center grid-pick"
-                        data-tooltip=${tooltip(ctx, 'filterEditor.pickAttribute')}
+                        data-tooltip=${text('filterEditor.pickAttribute.tooltip')}
                         @click=${(e: MouseEvent) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -333,12 +353,12 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                             });
                         }}
                     >
-                        ${arg.field ? label(arg.field) : 'Click me to select field'}
+                        ${arg.field ? label(arg.field) : text('filterEditor.pickAttribute')}
                     </div>
 
                     <div
                         class="grid-flex-1 grid-text-center grid-pick"
-                        data-tooltip=${tooltip(ctx, 'filterEditor.pickOperator')}
+                        data-tooltip=${text('filterEditor.pickOperator.tooltip')}
                         @click=${(e: MouseEvent) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -350,19 +370,12 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                             });
                         }}
                     >
-                        ${
-                            arg.operator
-                                ? arg.operator
-                                      .split('_')
-                                      .map((e) => e[0].toUpperCase() + e.substring(1, e.length).toLowerCase())
-                                      .join(' ')
-                                : 'Click me to select Operator'
-                        }
+                        ${operatorName(arg.operator)}
                     </div>
                     <div class="grid-flex-1 grid-text-center ">${filterElement}</div>
                 </div>
                 <div class="grid-flex-reverse grid-m-4">
-                    <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.deleteCondition')}>
+                    <div class="grid-m-4" data-tooltip=${text('filterEditor.deleteCondition.tooltip')}>
                         ${trashIcon(() => {
                             let x: number | null = null;
                             context.forEach((row, i) => {
@@ -377,7 +390,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                     </div>
                     <div
                         class="grid-m-4"
-                        data-tooltip=${tooltip(ctx, arg.valueField !== undefined ? 'filterEditor.useValue' : 'filterEditor.useAttribute')}
+                        data-tooltip=${text(arg.valueField !== undefined ? 'filterEditor.useValue.tooltip' : 'filterEditor.useAttribute.tooltip')}
                     >
                         ${inputSwitchIcon(arg, () => {
                             renderFilterEditor(ctx, structuredClone(filterArg));
@@ -414,29 +427,29 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                     <div class="grid-flex grid-m-4">
                         <div
                             class="grid-m-4 grid-button-small grid-text-center grid-text-label"
-                            data-tooltip=${tooltip(ctx, arg.group === 'AND' ? 'filterEditor.operatorAnd' : 'filterEditor.operatorOr')}
+                            data-tooltip=${text(arg.group === 'AND' ? 'filterEditor.operatorAnd.tooltip' : 'filterEditor.operatorOr.tooltip')}
                             @click=${() => {
                                 arg.group = arg.group === 'AND' ? 'OR' : 'AND';
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             }}
                         >
-                            <span> ${arg.group}</span>
+                            <span> ${text(arg.group === 'AND' ? 'filterEditor.operatorAnd' : 'filterEditor.operatorOr')}</span>
                         </div>
-                        <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.wrapGroup')}>
+                        <div class="grid-m-4" data-tooltip=${text('filterEditor.wrapGroup.tooltip')}>
                             ${addFilterGroupIcon(false, () => {
                                 arg.children = [{ group: 'AND', children: arg.children }];
 
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
-                        <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.addSubGroup')}>
+                        <div class="grid-m-4" data-tooltip=${text('filterEditor.addSubGroup.tooltip')}>
                             ${addFilterGroupIcon(true, () => {
                                 arg.children.push({ group: 'AND', children: [] });
 
                                 renderFilterEditor(ctx, structuredClone(filterArg));
                             })}
                         </div>
-                        <div class="grid-m-4" data-tooltip=${tooltip(ctx, 'filterEditor.addCondition')}>
+                        <div class="grid-m-4" data-tooltip=${text('filterEditor.addCondition.tooltip')}>
                             ${addFilterConditionIcon(() => {
                                 // a draft, filled in one pick at a time
                                 arg.children.push({});
@@ -445,7 +458,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                         </div>
                         <div
                             class="grid-m-4"
-                            data-tooltip=${tooltip(ctx, context ? 'filterEditor.deleteGroup' : 'filterEditor.clearAll')}
+                            data-tooltip=${text(context ? 'filterEditor.deleteGroup.tooltip' : 'filterEditor.clearAll.tooltip')}
                         >
                             ${trashIcon(() => {
                                 if (context) {
@@ -483,8 +496,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
     };
 
     const headerTemplate = () => html`<div class="grid-text-title filter-editor-titlebar">
-        <span data-tooltip=${tooltip(ctx, 'filterEditor.title')}>Filter Editor</span>
-        <span class="filter-editor-close" data-tooltip=${tooltip(ctx, 'filterEditor.close')} @click=${() => closeEditor()}>&#10005;</span>
+        <span data-tooltip=${text('filterEditor.title.tooltip')}>${text('filterEditor.title')}</span>
+        <span class="filter-editor-close" data-tooltip=${text('filterEditor.close.tooltip')} @click=${() => closeEditor()}>&#10005;</span>
     </div>`;
 
     /**
@@ -511,31 +524,31 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
         return html`<div class="grid-flex-reverse grid-m-4 filter-editor-footer">
             <div
                 class="grid-button grid-text-center grid-button-primary"
-                data-tooltip=${tooltip(ctx, 'filterEditor.filterAndClose')}
+                data-tooltip=${text('filterEditor.filterAndClose.tooltip')}
                 @click=${() => {
                     removeContextMenu(ctx);
                     closeEditor();
                     applyFilter();
                 }}
             >
-                Filter & Close
+                ${text('filterEditor.filterAndClose')}
             </div>
             <div
                 class="grid-button grid-text-center"
-                data-tooltip=${tooltip(ctx, 'filterEditor.filterOnly')}
+                data-tooltip=${text('filterEditor.filterOnly.tooltip')}
                 @click=${() => {
                     removeContextMenu(ctx);
                     applyFilter();
                 }}
             >
-                Filter Only
+                ${text('filterEditor.filterOnly')}
             </div>
             <div
                 class="grid-button grid-text-center"
-                data-tooltip=${tooltip(ctx, 'filterEditor.closeButton')}
+                data-tooltip=${text('filterEditor.closeButton.tooltip')}
                 @click=${() => closeEditor()}
             >
-                Close
+                ${text('filterEditor.closeButton')}
             </div>
         </div>`;
     };

@@ -280,8 +280,10 @@ export interface GridMenus {
  * (paste on a readonly cell, the summary of a text column ...) have a `visible` callback that hides
  * them. Ids are `menu.section` for a section header and `menu.section.entry` for what is under it.
  *
- * The ids stay the same between versions, so a menu changed by id keeps working. Texts will be
- * replaceable by these ids.
+ * The ids stay the same between versions, so a menu changed by id keeps working. They are text ids
+ * too: the label of an entry is the text of its id, its hint the text `<id>.hint` - see {@link TEXTS}
+ * and {@link setTexts}. The "shown as" below is the English text; the separators and `filter.values`
+ * have no text of their own.
  *
  * Row menu (`GridMenus.row`), right click on a cell:
  *
@@ -351,7 +353,7 @@ export interface GridMenus {
  * | `filter.operator.equal` | Equal | not a boolean field |
  * | `filter.operator.notEqualTo` | Not Equal | a text field |
  * | `filter.operator.contains` | Contains | a text field |
- * | `filter.values` | the value list: "Search:", search box, a checkbox per value, "Run Search" - a {@link MenuBlock} | a text field |
+ * | `filter.values` | the value list: "Search:", search box, a checkbox per value, "Run Search" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field |
  *
  * @sample context-menu
  * @example

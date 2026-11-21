@@ -171,3 +171,4 @@ element is put back.
 - [Events](09-events.md) - every event and what it sends
 - [Menus](10-menus.md) - change the right click menus, open menus of your own
 - [Migrating from v5](11-migrating-from-v5.md)
+- [Texts](12-texts.md) - translate the grid: every text by id, `setTexts()`

@@ -2,6 +2,7 @@ import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Entity, GroupRow } from '../../datasource/entity';
 import { and, type FilterExpression, type FilterOperator, isFilterGroup, where } from '../../datasource/filterExpression';
+import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuBlock, MenuContext, MenuEntry, MenuItem } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
@@ -9,6 +10,7 @@ import type { ColType } from './colType';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
@@ -77,33 +79,40 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     const isRange = () => type === 'date' || type === 'datetime' || type === 'number';
     const isText = () => type !== 'boolean' && !isRange();
 
-    const operatorItem = (id: string, label: string, operator: FilterOperator, visible: () => boolean): MenuItem => ({
+    const text = (id: TextId) => gridText(ctx, id);
+
+    // the id of the entry is the id of its text
+    const operatorItem = (id: TextId, operator: FilterOperator, visible: () => boolean): MenuItem => ({
         id,
-        label,
+        label: text(id),
         visible,
         selected: () => current === operator,
         action: () => setOperator(operator)
     });
 
     return [
-        { type: 'section', id: 'filter.filter', label: 'Filter:' },
-        { id: 'filter.filter.clear', label: 'Clear Filter', action: () => clearColumnFilter(ctx, attribute) },
-        { id: 'filter.filter.clearAll', label: 'Clear All Filters', action: () => clearAllColumnFilters(ctx) },
+        { type: 'section', id: 'filter.filter', label: text('filter.filter') },
+        { id: 'filter.filter.clear', label: text('filter.filter.clear'), action: () => clearColumnFilter(ctx, attribute) },
+        { id: 'filter.filter.clearAll', label: text('filter.filter.clearAll'), action: () => clearAllColumnFilters(ctx) },
         { type: 'separator', id: 'filter.filter.blankSeparator' },
-        { id: 'filter.filter.isBlank', label: 'Set "Is Blank"', action: () => setBlankOrNotBlank(ctx, attribute, 'IS_BLANK') },
+        {
+            id: 'filter.filter.isBlank',
+            label: text('filter.filter.isBlank'),
+            action: () => setBlankOrNotBlank(ctx, attribute, 'IS_BLANK')
+        },
         {
             id: 'filter.filter.isNotBlank',
-            label: 'Set "Is Not Blank"',
+            label: text('filter.filter.isNotBlank'),
             action: () => setBlankOrNotBlank(ctx, attribute, 'IS_NOT_BLANK')
         },
         { type: 'separator', id: 'filter.filter.advancedSeparator' },
-        { id: 'filter.filter.advanced', label: 'Advanced Filter', action: () => openFilterEditor(ctx) },
-        { type: 'section', id: 'filter.operator', label: 'Set Operator:', visible: hasOperators },
-        operatorItem('filter.operator.greaterThanOrEqualTo', 'Greater than or equal', 'GREATER_THAN_OR_EQUAL_TO', isRange),
-        operatorItem('filter.operator.lessThanOrEqualTo', 'Less than or equal', 'LESS_THAN_OR_EQUAL_TO', isRange),
-        operatorItem('filter.operator.equal', 'Equal', 'EQUAL', hasOperators),
-        operatorItem('filter.operator.notEqualTo', 'Not Equal', 'NOT_EQUAL_TO', isText),
-        operatorItem('filter.operator.contains', 'Contains', 'CONTAINS', isText),
+        { id: 'filter.filter.advanced', label: text('filter.filter.advanced'), action: () => openFilterEditor(ctx) },
+        { type: 'section', id: 'filter.operator', label: text('filter.operator'), visible: hasOperators },
+        operatorItem('filter.operator.greaterThanOrEqualTo', 'GREATER_THAN_OR_EQUAL_TO', isRange),
+        operatorItem('filter.operator.lessThanOrEqualTo', 'LESS_THAN_OR_EQUAL_TO', isRange),
+        operatorItem('filter.operator.equal', 'EQUAL', hasOperators),
+        operatorItem('filter.operator.notEqualTo', 'NOT_EQUAL_TO', isText),
+        operatorItem('filter.operator.contains', 'CONTAINS', isText),
         valueListBlock(ctx, attribute)
     ];
 }
@@ -205,7 +214,7 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
                             filterValueClick(value);
                         }}
                     >
-                        ${value === 'NULL' ? 'Blank' : value}${countFor(value)}</label
+                        ${value === 'NULL' ? gridText(ctx, 'filter.values.blank') : value}${countFor(value)}</label
                     >
                 </div>`;
             });
@@ -235,7 +244,9 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
                     type="checkbox"
                     .checked=${live(state.availableOnly)}
                     @click=${(e: MouseEvent) => handleEvent(e)}
-                /><label style="padding:2px" @click=${(e: MouseEvent) => handleEvent(e)}>Filter Available</label>
+                /><label style="padding:2px" @click=${(e: MouseEvent) => handleEvent(e)}
+                    >${gridText(ctx, 'filter.values.availableOnly')}</label
+                >
             </div>`;
         };
 
@@ -258,13 +269,17 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
             return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
                 ${
                     data.truncated
-                        ? html`<div class="max-row-info-warning">Showing only first ${DROPDOWN_FILTER_MAX_ROWS}  !</div>`
-                        : html`<div class="max-row-info">${data.dataFilterSetFull.size} rows found</div>`
+                        ? html`<div class="max-row-info-warning">
+                              ${gridText(ctx, 'filter.values.truncated', { max: DROPDOWN_FILTER_MAX_ROWS })}
+                          </div>`
+                        : html`<div class="max-row-info">
+                              ${gridText(ctx, 'filter.values.rowsFound', { count: data.dataFilterSetFull.size })}
+                          </div>`
                 }
                 <div class="simple-html-grid-menu-checkbox">
                     <input type="checkbox" .checked=${live(state.selectAll)} @click=${() => clickHandler()} /><label
                         @click=${() => clickHandler()}
-                        >Select All</label
+                        >${gridText(ctx, 'filter.values.selectAll')}</label
                     >
                 </div>
 
@@ -291,14 +306,14 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
                 @blur=${(e: FocusEvent) => {
                     (e.target as HTMLInputElement).style.border = '1px solid transparent';
                 }}
-                placeholder="type to search"
+                placeholder=${gridText(ctx, 'filter.values.searchPlaceholder')}
                 .value=${state.searchInput}
                 @input=${(e: Event) => inputHandler(e)}
             />`;
         };
 
         render(
-            html` <div class="simple-html-grid-menu-section">Search:</div>
+            html` <div class="simple-html-grid-menu-section">${gridText(ctx, 'filter.values.search')}</div>
                 <hr class="hr-solid" />
                 ${availableCheckbox()} ${inputTemplate()} ${listContainerTemplate()}
                 <div
@@ -307,7 +322,7 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
                         runFilterClick();
                     }}
                 >
-                    Run Search
+                    ${gridText(ctx, 'filter.values.run')}
                 </div>`,
             element
         );

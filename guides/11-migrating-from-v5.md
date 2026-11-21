@@ -28,6 +28,8 @@ hooks next to the config. TypeScript points to most of the places to change.
   `createGrid()`, the `isReadonly` / `cellClass` hooks, `updateConfig()`, `updateHooks()`, renamed
   methods
 - [Menus](../MIGRATION.md#menus): the `menus` hook, `openMenu()`
+- [Texts](../MIGRATION.md#texts): every text has an id, `setTexts()` and `GridConfig.texts`;
+  `tooltipText` is `texts` with `.tooltip` ids, `OPERATORS` and the month and day names are texts
 - [Other behaviour changes](../MIGRATION.md#other-behaviour-changes): `currentEntity` after
   `setData()`, `selectAll()`, `removeGroup()`, `expandGroup()`, grouping always sorted
 - [Internals are no longer in the typings](../MIGRATION.md#internals-are-no-longer-in-the-typings)

@@ -1,59 +1,6 @@
 import type { Grid } from '../grid';
 
 /**
- * Default tooltip texts, keyed by id: the tooltips of the filter editor's buttons and icons. The
- * validation messages the grid shows as tooltips are in {@link VALIDATION_MESSAGES}.
- *
- * The id is what you override with `tooltipText` in the grid config. `data-tooltip` is written to the
- * elements no matter what `tooltips` is set to, so you can hook up your own tooltip library and just
- * turn the built in one off.
- *
- * @sample tooltips
- * @example
- * ```ts
- * import { type GridConfig, TOOLTIPS } from '@simple-html/grid';
- *
- * TOOLTIPS['filterEditor.addCondition']; // 'Add a condition to this group'
- *
- * const gridConfig: GridConfig = {
- *     layout: { center: [{ fields: ['name'], width: 150 }] },
- *     tooltips: true, // default, set false to not render the built in tooltip
- *     tooltipText: {
- *         'filterEditor.addCondition': 'Legg til betingelse'
- *     }
- * };
- * ```
- */
-export const TOOLTIPS: Record<string, string> = {
-    'filterEditor.title': 'Drag to move the dialog',
-    'filterEditor.close': 'Close without filtering',
-    'filterEditor.filterAndClose': 'Apply this filter to the grid and close the dialog',
-    'filterEditor.filterOnly': 'Apply this filter to the grid but keep the dialog open, so you can keep adjusting it',
-    'filterEditor.closeButton': 'Close the dialog and leave the current filter as it is',
-    'filterEditor.pickAttribute': 'Pick which column this condition looks at',
-    'filterEditor.pickOperator': 'Pick how the value is compared, for example equal or greater than',
-    'filterEditor.pickValueAttribute': 'Pick which column to compare against',
-    'filterEditor.deleteCondition': 'Delete this condition',
-    'filterEditor.deleteGroup': 'Delete this group and everything in it',
-    'filterEditor.clearAll': 'Clear all conditions',
-    'filterEditor.addCondition': 'Add a condition to this group',
-    'filterEditor.addSubGroup': 'Add a sub group inside this group',
-    'filterEditor.wrapGroup': 'Wrap everything in this group inside a new parent group',
-    'filterEditor.operatorAnd': 'All conditions in this group must match. Click for OR',
-    'filterEditor.operatorOr': 'Any condition in this group may match. Click for AND',
-    'filterEditor.useValue': 'Compare against a typed in value instead of another column',
-    'filterEditor.useAttribute': 'Compare against another column instead of a typed in value'
-};
-
-/**
- * tooltip text for an id, using the override from the grid config if there is one
- */
-export function tooltip(ctx: Grid, id: string): string {
-    const override = ctx?.gridInterface?.__getGridConfig()?.tooltipText?.[id];
-    return override ?? TOOLTIPS[id] ?? '';
-}
-
-/**
  * the built in tooltip is on unless the config turns it off
  */
 export function tooltipsEnabled(ctx: Grid): boolean {

@@ -2,12 +2,14 @@ import { DateFormatterYYYYMMDD } from '../../datasource/DateFormatterYYYYMMDD';
 import { DateFormatterYYYYMMDDTHHMMSS } from '../../datasource/DateFormatterYYYYMMDDTHHMMSS';
 import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import { and, type FilterExpression, type FilterGroup, isFilterGroup, where } from '../../datasource/filterExpression';
+import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry } from '../gridMenus';
 import type { ColType } from './colType';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { placeUnderCell, showMenu } from './showMenu';
@@ -73,11 +75,13 @@ function rowMenuEntries(
 
     const dimRepeated = gridInterface.__getGridConfig().dimRepeatedValues === true;
 
+    const text = (id: TextId) => gridText(ctx, id);
+
     return [
-        { type: 'section', id: 'row.copy', label: 'Copy:' },
+        { type: 'section', id: 'row.copy', label: text('row.copy') },
         {
             id: 'row.copy.cell',
-            label: 'Cell Value',
+            label: text('row.copy.cell'),
             action: () => {
                 copyData(ctx, [attribute], true, rowData);
                 gridInterface.__callSubscribers('copy-cell', eventData);
@@ -85,8 +89,8 @@ function rowMenuEntries(
         },
         {
             id: 'row.copy.column',
-            label: 'Column',
-            hint: 'selected rows',
+            label: text('row.copy.column'),
+            hint: text('row.copy.column.hint'),
             action: () => {
                 copyData(ctx, [attribute], false);
                 gridInterface.__callSubscribers('copy-column', eventData);
@@ -94,8 +98,8 @@ function rowMenuEntries(
         },
         {
             id: 'row.copy.row',
-            label: 'Row',
-            hint: 'selected rows',
+            label: text('row.copy.row'),
+            hint: text('row.copy.row.hint'),
             action: () => {
                 copyData(ctx, getLayoutFields(gridInterface), false);
                 gridInterface.__callSubscribers('copy-row', eventData);
@@ -103,8 +107,8 @@ function rowMenuEntries(
         },
         {
             id: 'row.copy.selectedColumns',
-            label: 'Row',
-            hint: 'selected rows/col',
+            label: text('row.copy.selectedColumns'),
+            hint: text('row.copy.selectedColumns.hint'),
             action: () => {
                 // no column selected: every column
                 const selected = getLayoutFields(gridInterface, { selectedOnly: true });
@@ -112,35 +116,36 @@ function rowMenuEntries(
                 gridInterface.__callSubscribers('copy-row-col', eventData);
             }
         },
-        { type: 'section', id: 'row.filter', label: 'Filter:', visible: filterOnValue },
+        { type: 'section', id: 'row.filter', label: text('row.filter'), visible: filterOnValue },
         {
             id: 'row.filter.replace',
-            label: 'Replace filter',
-            hint: 'all',
+            label: text('row.filter.replace'),
+            hint: text('row.filter.replace.hint'),
             visible: filterOnValue,
             action: () => replaceFilter(ctx, attribute, rowData)
         },
         {
             id: 'row.filter.add',
-            label: 'Add to filter',
-            hint: 'and',
+            label: text('row.filter.add'),
+            hint: text('row.filter.add.hint'),
             visible: filterOnValue,
             action: () => addToFilter(ctx, attribute, rowData)
         },
-        { type: 'section', id: 'row.view', label: 'View:' },
+        { type: 'section', id: 'row.view', label: text('row.view') },
         {
             id: 'row.view.dimRepeatedValues',
-            label: `${dimRepeated ? '✓ ' : ''}Use dimmed values`,
+            // the check mark shows it is on
+            label: `${dimRepeated ? '✓ ' : ''}${text('row.view.dimRepeatedValues')}`,
             action: () => {
                 // an option: set it as updateConfig() does, or the next updateConfig() would undo it
                 gridInterface.updateConfig({ dimRepeatedValues: !dimRepeated });
             }
         },
-        { type: 'section', id: 'row.paste', label: 'Paste:', visible: pasteAndClear },
+        { type: 'section', id: 'row.paste', label: text('row.paste'), visible: pasteAndClear },
         {
             id: 'row.paste.cell',
-            label: 'Cell',
-            hint: 'selected rows',
+            label: text('row.paste.cell'),
+            hint: text('row.paste.cell.hint'),
             visible: pasteAndClear,
             action: async () => {
                 if (navigator.clipboard.readText) {
@@ -149,11 +154,11 @@ function rowMenuEntries(
                 }
             }
         },
-        { type: 'section', id: 'row.clear', label: 'Clear:', visible: pasteAndClear },
+        { type: 'section', id: 'row.clear', label: text('row.clear'), visible: pasteAndClear },
         {
             id: 'row.clear.cell',
-            label: 'Cell',
-            hint: 'selected rows',
+            label: text('row.clear.cell'),
+            hint: text('row.clear.cell.hint'),
             visible: pasteAndClear,
             action: () => {
                 clearRows(ctx, attribute);
@@ -183,11 +188,11 @@ function deleteEntries(ctx: Grid): MenuEntry[] {
     const toUnmark = () => datasource.getSelectedRows().filter((row) => row.__rowState === 'D');
 
     return [
-        { type: 'section', id: 'row.delete', label: 'Delete:', visible: editable },
+        { type: 'section', id: 'row.delete', label: gridText(ctx, 'row.delete'), visible: editable },
         {
             id: 'row.delete.rows',
-            label: 'Rows',
-            hint: 'selected rows',
+            label: gridText(ctx, 'row.delete.rows'),
+            hint: gridText(ctx, 'row.delete.rows.hint'),
             visible: editable,
             // nothing selected, or every selected row marked or locked
             disabled: () => toMark().length === 0,
@@ -195,8 +200,8 @@ function deleteEntries(ctx: Grid): MenuEntry[] {
         },
         {
             id: 'row.delete.undo',
-            label: 'Undo',
-            hint: 'selected rows',
+            label: gridText(ctx, 'row.delete.undo'),
+            hint: gridText(ctx, 'row.delete.undo.hint'),
             visible: () => editable() && toUnmark().length > 0,
             action: () => datasource.unmarkForDeletion(toUnmark())
         }
@@ -266,19 +271,34 @@ function summaryEntries(ctx: Grid, attribute: string): MenuEntry[] {
     const copy = (text: string) => navigator.clipboard.writeText(text);
 
     return [
-        { type: 'section', id: 'row.summary', label: 'Summary:', visible: isNumber },
+        { type: 'section', id: 'row.summary', label: gridText(ctx, 'row.summary'), visible: isNumber },
         {
             id: 'row.summary.count',
-            label: `Count: ${summary.count}`,
+            label: gridText(ctx, 'row.summary.count', { count: summary.count }),
             visible: isNumber,
             action: () => copy(String(summary.count))
         },
-        { id: 'row.summary.sum', label: `Sum: ${summary.sum}`, visible: isNumber, action: () => copy(summary.sum) },
-        { id: 'row.summary.max', label: `Max: ${summary.max}`, visible: isNumber, action: () => copy(summary.max) },
-        { id: 'row.summary.min', label: `Min: ${summary.min}`, visible: isNumber, action: () => copy(summary.min) },
+        {
+            id: 'row.summary.sum',
+            label: gridText(ctx, 'row.summary.sum', { sum: summary.sum }),
+            visible: isNumber,
+            action: () => copy(summary.sum)
+        },
+        {
+            id: 'row.summary.max',
+            label: gridText(ctx, 'row.summary.max', { max: summary.max }),
+            visible: isNumber,
+            action: () => copy(summary.max)
+        },
+        {
+            id: 'row.summary.min',
+            label: gridText(ctx, 'row.summary.min', { min: summary.min }),
+            visible: isNumber,
+            action: () => copy(summary.min)
+        },
         {
             id: 'row.summary.avg',
-            label: `Avg: ${summary.avg || 0}`,
+            label: gridText(ctx, 'row.summary.avg', { avg: summary.avg || 0 }),
             visible: isNumber,
             action: () => copy(summary.avg)
         }

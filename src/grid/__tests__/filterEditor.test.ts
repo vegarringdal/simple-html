@@ -96,9 +96,9 @@ describe('filter editor - tooltips', () => {
         expect(container().querySelectorAll('[data-tooltip]').length).toBeGreaterThan(0);
     });
 
-    it('expect tooltipText to override a default tooltip', async () => {
+    it("expect the grid's texts to override a default tooltip, by the id ending with .tooltip", async () => {
         const config = simpleConfig();
-        config.tooltipText = { 'filterEditor.closeButton': 'Lukk vinduet' };
+        config.texts = { 'filterEditor.closeButton.tooltip': 'Lukk vinduet' };
         await openEditor(config);
 
         const overridden = container().querySelector('[data-tooltip="Lukk vinduet"]');
@@ -107,7 +107,7 @@ describe('filter editor - tooltips', () => {
 
     it('expect a tooltip that is not overridden to keep its default text', async () => {
         const config = simpleConfig();
-        config.tooltipText = { 'filterEditor.closeButton': 'Lukk vinduet' };
+        config.texts = { 'filterEditor.closeButton.tooltip': 'Lukk vinduet' };
         await openEditor(config);
 
         const text = container().innerHTML;

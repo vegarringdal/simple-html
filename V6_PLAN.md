@@ -340,7 +340,7 @@ built on it.
 
 ## Phase 3 - UI
 
-21. [ ] **Every text replaceable.** Menu labels and headings ("Filter:", "Paste:", "Select All",
+21. [x] **Every text replaceable.** Menu labels and headings ("Filter:", "Paste:", "Select All",
         "Run Search" ...) are hardcoded English. Only tooltips can be overridden today
         (`tooltipText`). One `texts` map for all of it, with the tooltips folded in. **M**
 22. [ ] **Accessibility.** There are 7 aria/role attributes in the whole grid today. Needed:

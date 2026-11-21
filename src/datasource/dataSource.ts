@@ -1,4 +1,5 @@
 import { Emitter, type EventHandler } from '../emitter';
+import { findText, getText } from '../texts';
 import { assertOptions } from './assertOptions';
 import type { Changes } from './changes';
 import { DataContainer } from './dataContainer';
@@ -12,7 +13,6 @@ import type { Formatter } from './formatter';
 import { DEFAULT_FORMATTER_IDS, getRegisteredFormatter } from './formatterRegistry';
 import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
-import { OPERATORS } from './OPERATORS';
 import { Selection } from './selection';
 import type { SelectionMode } from './selectionMode';
 import { Sort } from './sort';
@@ -2051,6 +2051,9 @@ export class Datasource<T = any> {
      * field's formatter, a `valueField` as `[LABEL]`. What the filter ignores - incomplete conditions,
      * empty groups - is left out, and `''` is returned when nothing is left (or no filter is set).
      *
+     * The operators and AND / OR are texts, the ids `filterString.*` of {@link TEXTS}: change them with
+     * {@link setTexts} (`'filterString.operator.EQUAL': 'equal_to'` is shown as `<<EQUAL_TO>>`).
+     *
      * @param label the name to show for a field. Default the field's label (`FieldConfig.label`, else
      * the field name). The grid passes its column labels.
      *
@@ -2078,12 +2081,14 @@ export class Datasource<T = any> {
         const parser = (expression: FilterExpression): string => {
             if (isFilterGroup(expression)) {
                 // the filter treats anything but OR as AND
-                const operator = expression.group === 'OR' ? 'OR' : 'AND';
+                const operator = getText(expression.group === 'OR' ? 'filterString.or' : 'filterString.and');
                 const children = expression.children.filter((child) => this.__isShown(child));
                 return `(${children.map(parser).join(` ${operator} `)})`;
             }
 
-            const condition = `[${label(expression.field)}] <<${OPERATORS[expression.operator]}>>`;
+            // an operator of plain js that is not one is shown as it is
+            const operator = findText(`filterString.operator.${expression.operator}`) ?? expression.operator;
+            const condition = `[${label(expression.field)}] <<${operator}>>`;
             if (expression.operator === 'IS_BLANK' || expression.operator === 'IS_NOT_BLANK') {
                 return condition;
             }

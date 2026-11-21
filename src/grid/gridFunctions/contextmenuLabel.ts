@@ -1,10 +1,12 @@
 import type { Entity, GroupRow } from '../../datasource/entity';
 import type { SortArgument } from '../../datasource/sortArgument';
+import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry } from '../gridMenus';
 import { autoResizeColumns } from './autoResizeColumns';
 import type { ColType } from './colType';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { placeUnderCell, showMenu } from './showMenu';
 
@@ -103,25 +105,37 @@ function headerMenuEntries(
     const notPinnedLeft = () => colType !== 'left-pinned';
     const notPinnedRight = () => colType !== 'right-pinned';
 
+    const text = (id: TextId) => gridText(ctx, id);
+
     return [
-        { type: 'section', id: 'header.column', label: 'Column:' },
-        { id: 'header.column.pinLeft', label: 'Pin left', visible: notPinnedLeft, action: () => pin('left', true) },
+        { type: 'section', id: 'header.column', label: text('header.column') },
+        {
+            id: 'header.column.pinLeft',
+            label: text('header.column.pinLeft'),
+            visible: notPinnedLeft,
+            action: () => pin('left', true)
+        },
         {
             id: 'header.column.pinLeftCopy',
-            label: 'Pin left (copy)',
+            label: text('header.column.pinLeftCopy'),
             visible: notPinnedLeft,
             action: () => pin('left', false)
         },
-        { id: 'header.column.pinRight', label: 'Pin right', visible: notPinnedRight, action: () => pin('right', true) },
+        {
+            id: 'header.column.pinRight',
+            label: text('header.column.pinRight'),
+            visible: notPinnedRight,
+            action: () => pin('right', true)
+        },
         {
             id: 'header.column.pinRightCopy',
-            label: 'Pin right (copy)',
+            label: text('header.column.pinRightCopy'),
             visible: notPinnedRight,
             action: () => pin('right', false)
         },
         {
             id: 'header.column.unpin',
-            label: 'Unpin',
+            label: text('header.column.unpin'),
             visible: () => colType === 'left-pinned' || colType === 'right-pinned',
             action: () => {
                 // back in the center, next to the side it was pinned to
@@ -139,7 +153,7 @@ function headerMenuEntries(
         },
         {
             id: 'header.column.hide',
-            label: 'Hide',
+            label: text('header.column.hide'),
             action: () => {
                 removeFromColumn();
                 ctx.rebuild(true);
@@ -147,7 +161,7 @@ function headerMenuEntries(
         },
         {
             id: 'header.column.removeSorting',
-            label: 'Remove sorting',
+            label: text('header.column.removeSorting'),
             action: () => {
                 // the grouped fields stay sorted, grouping needs it
                 const datasource = ctx.gridInterface.getDatasource();
@@ -163,26 +177,26 @@ function headerMenuEntries(
         { type: 'separator', id: 'header.column.chooserSeparator' },
         {
             id: 'header.column.chooser',
-            label: 'Column chooser',
+            label: text('header.column.chooser'),
             action: () => contextMenuColumnChooser(ctx, event, cell)
         },
-        { type: 'section', id: 'header.size', label: 'Size:' },
-        { id: 'header.size.column', label: 'Resize Column', action: () => autoResizeColumns(ctx, attribute) },
-        { id: 'header.size.all', label: 'Resize all columns', action: () => autoResizeColumns(ctx) },
-        { type: 'section', id: 'header.grouping', label: 'Grouping:' },
+        { type: 'section', id: 'header.size', label: text('header.size') },
+        { id: 'header.size.column', label: text('header.size.column'), action: () => autoResizeColumns(ctx, attribute) },
+        { id: 'header.size.all', label: text('header.size.all'), action: () => autoResizeColumns(ctx) },
+        { type: 'section', id: 'header.grouping', label: text('header.grouping') },
         {
             id: 'header.grouping.expandAll',
-            label: 'Expand all',
+            label: text('header.grouping.expandAll'),
             action: () => ctx.gridInterface.getDatasource().expandGroup()
         },
         {
             id: 'header.grouping.collapseAll',
-            label: 'Collapse all',
+            label: text('header.grouping.collapseAll'),
             action: () => ctx.gridInterface.getDatasource().collapseGroup()
         },
         {
             id: 'header.grouping.clear',
-            label: 'Clear all',
+            label: text('header.grouping.clear'),
             action: () => ctx.gridInterface.getDatasource().removeGroup()
         }
     ];
