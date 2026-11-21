@@ -204,7 +204,7 @@ export type GridConfig = {
      * the date picker of date cells and date header filters: only the fields to change. Of the
      * {@link IDateConfig} the grid reads `showWeek` (default true), `isoWeek` (true), `weekStart` (1,
      * monday), `rowHeight` (22), `monthWidth` (230), `monthMargin` (10), `hideDimmedDates` (false),
-     * `showYearInMonth` (false) and `datepickerHeight` (317), and sets the rest itself. Its texts - the
+     * `showYearInMonth` (false) and `datepickerHeight` (282), and sets the rest itself. Its texts - the
      * names of the months and days, the buttons - are the grid's `texts` (`datePicker.*`)
      *
      * @example

@@ -432,12 +432,16 @@ Of a date cell and a date header filter, and a `DateInterface` of your own.
 
 | id | English | shown |
 | --- | --- | --- |
-| `datePicker.hours` | `HH` | label over the hours |
-| `datePicker.minutes` | `MM` | label over the minutes |
+| `datePicker.hours` | `HH` | label in front of the hours, and their name for a screen reader |
+| `datePicker.minutes` | `MM` | label in front of the minutes, and their name for a screen reader |
 | `datePicker.week` | `W` | header of the week numbers |
 | `datePicker.clear` | `Clear` | button, empties the date |
 | `datePicker.now` | `Now` | button, goes to now |
 | `datePicker.use` | `Use` | button, picks the date |
+| `datePicker.previousYear` | `Previous year` | the « button left of the month: its name for a screen reader and its tooltip |
+| `datePicker.previousMonth` | `Previous month` | the ‹ button left of the month |
+| `datePicker.nextMonth` | `Next month` | the › button right of the month |
+| `datePicker.nextYear` | `Next year` | the » button right of the month |
 
 | id | English |
 | --- | --- |

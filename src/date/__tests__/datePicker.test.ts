@@ -37,11 +37,32 @@ function mount(dateConfig: IDateConfig) {
 }
 
 /**
- * the minute "down" arrow is the first icon in the second (minute) side of the time row
+ * a step of the time row: the hours are the first stepper, the minutes the second; down is the
+ * first step of one, up the second
  */
+function clickStep(element: HTMLElement, field: 'hour' | 'minute', direction: 'down' | 'up') {
+    const stepper = element.querySelectorAll('.simple-html-date-stepper')[field === 'hour' ? 0 : 1];
+    const step = stepper.querySelectorAll('.simple-html-date-step')[direction === 'down' ? 0 : 1];
+    step.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+}
+
 function clickMinuteDown(element: HTMLElement) {
-    const minuteSide = element.querySelectorAll('.simple-html-date-time .side')[1];
-    minuteSide.querySelectorAll('svg')[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    clickStep(element, 'minute', 'down');
+}
+
+/**
+ * the month and year in the header of a date picker: `April 2026`
+ */
+function title(element: HTMLElement) {
+    return element.querySelector('.simple-html-date-month-title')?.textContent?.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * the buttons « ‹ › » of the month header, by their position
+ */
+function clickNav(element: HTMLElement, which: 'previousYear' | 'previousMonth' | 'nextMonth' | 'nextYear') {
+    const index = ['previousYear', 'previousMonth', 'nextMonth', 'nextYear'].indexOf(which);
+    (element.querySelectorAll('.simple-html-date-nav')[index] as HTMLButtonElement).click();
 }
 
 beforeEach(() => {
@@ -63,6 +84,168 @@ describe('date picker - minutes', () => {
         clickMinuteDown(element);
 
         expect(dateInterface.config.datepickerDate?.getMinutes()).toEqual(59);
+    });
+
+    it('expect the minute up arrow to wrap from 59 to 0', () => {
+        const { dateInterface, element } = mount(config({ datepickerDate: new Date(2026, 3, 15, 10, 59) }));
+
+        clickStep(element, 'minute', 'up');
+
+        expect(dateInterface.config.datepickerDate?.getMinutes()).toEqual(0);
+    });
+});
+
+describe('date picker - hours', () => {
+    it('expect the hour arrows to go one hour up and down, and wrap between 23 and 0', () => {
+        const { dateInterface, element } = mount(config({ datepickerDate: new Date(2026, 3, 15, 23, 40) }));
+        const hours: number[] = [];
+
+        clickStep(element, 'hour', 'up');
+        hours.push(dateInterface.config.datepickerDate?.getHours() as number);
+        clickStep(element, 'hour', 'down');
+        hours.push(dateInterface.config.datepickerDate?.getHours() as number);
+        clickStep(element, 'hour', 'down');
+        hours.push(dateInterface.config.datepickerDate?.getHours() as number);
+
+        expect(hours).toEqual([0, 23, 22]);
+    });
+
+    it('expect an hour typed past 23 to be 0, as before', () => {
+        const { dateInterface, element } = mount(config({ datepickerDate: new Date(2026, 3, 15, 10, 40) }));
+        const hourInput = element.querySelectorAll('.simple-html-date-stepper input')[0] as HTMLInputElement;
+
+        hourInput.value = '30';
+        hourInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(dateInterface.config.datepickerDate?.getHours()).toEqual(0);
+    });
+
+    it('expect the inputs to be named by the labels in front of them, for a screen reader', () => {
+        const { element } = mount(config({ texts: { 'datePicker.hours': 'TT' } }));
+
+        const labels = Array.from(element.querySelectorAll('.simple-html-date-time-label'), (label) => label.textContent?.trim());
+        const names = Array.from(element.querySelectorAll('.simple-html-date-stepper input'), (input) =>
+            input.getAttribute('aria-label')
+        );
+
+        expect(labels).toEqual(['TT', 'MM']);
+        expect(names).toEqual(['TT', 'MM']);
+    });
+});
+
+describe('date picker - the month header', () => {
+    it('expect the month and the year on one line', () => {
+        const { element } = mount(config());
+
+        expect(title(element)).toEqual('April 2026');
+    });
+
+    it('expect ‹ › to show the month before and after, over the end of the year', () => {
+        const { element } = mount(config({ datepickerDate: new Date(2026, 0, 15) }));
+        const shown: (string | undefined)[] = [];
+
+        clickNav(element, 'previousMonth');
+        shown.push(title(element));
+        clickNav(element, 'nextMonth');
+        clickNav(element, 'nextMonth');
+        shown.push(title(element));
+
+        expect(shown).toEqual(['December 2025', 'February 2026']);
+    });
+
+    it('expect « » to show the same month a year before and after, the date picked stays', () => {
+        const { dateInterface, element } = mount(config({ datepickerDate: new Date(2026, 3, 15, 10, 40) }));
+        const shown: (string | undefined)[] = [];
+
+        clickNav(element, 'previousYear');
+        shown.push(title(element));
+        clickNav(element, 'nextYear');
+        clickNav(element, 'nextYear');
+        shown.push(title(element));
+
+        expect(shown).toEqual(['April 2025', 'April 2027']);
+        expect(dateInterface.config.datepickerDate?.getTime()).toEqual(new Date(2026, 3, 15, 10, 40).getTime());
+        // the day picked is in 2026: not in this month
+        expect(element.querySelectorAll('.simple-html-date-day-selected').length).toEqual(0);
+    });
+
+    it('expect the buttons to be named for a screen reader, from the texts', () => {
+        const { element } = mount(config({ texts: { 'datePicker.nextYear': 'Neste år' } }));
+
+        const names = Array.from(element.querySelectorAll('.simple-html-date-nav'), (button) =>
+            button.getAttribute('aria-label')
+        );
+
+        expect(names).toEqual(['Previous year', 'Previous month', 'Next month', 'Neste år']);
+    });
+
+    it('expect every button to be type button: in a form it does not submit it', () => {
+        const { element } = mount(config());
+
+        const types = Array.from(element.querySelectorAll('button'), (button) => button.type);
+
+        // « ‹ › » and Clear / Now / Use
+        expect(types).toEqual(Array(7).fill('button'));
+    });
+
+    it('expect a click on a button or a step not to reach the page: the grid closes its menu on a click outside it', () => {
+        const { element } = mount(config());
+        let reached = 0;
+        const count = () => reached++;
+        document.body.addEventListener('click', count);
+
+        try {
+            clickNav(element, 'nextYear');
+            clickNav(element, 'previousMonth');
+            clickStep(element, 'hour', 'up');
+            clickStep(element, 'minute', 'down');
+        } finally {
+            document.body.removeEventListener('click', count);
+        }
+
+        expect(reached).toEqual(0);
+    });
+});
+
+describe('date picker - today', () => {
+    it('expect today to be marked, and no other day', () => {
+        const now = new Date();
+        const { element } = mount(config({ datepickerDate: now }));
+
+        const marked = Array.from(element.querySelectorAll('.simple-html-date-day-today'), (day) => day.textContent?.trim());
+
+        expect(marked).toEqual([String(now.getDate())]);
+    });
+
+    it('expect today to keep its mark when another day is picked, and to have none in another year', () => {
+        const { element } = mount(config({ datepickerDate: new Date() }));
+        const other = element.querySelector(
+            '.simple-html-date-day:not(.simple-html-date-day-dimmed):not(.simple-html-date-day-today)'
+        ) as HTMLElement;
+
+        other.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const today = element.querySelector('.simple-html-date-day-today') as HTMLElement;
+        const todaySelected = today.classList.contains('simple-html-date-day-selected');
+        clickNav(element, 'nextYear');
+
+        expect(todaySelected).toBe(false);
+        expect(element.querySelectorAll('.simple-html-date-day-today').length).toEqual(0);
+    });
+});
+
+describe('calendar - the month header', () => {
+    const calendar = (showYearInMonth: boolean) =>
+        config({ datepicker: false, datepickerDate: undefined, startMonth: 10, startYear: 2026, showYearInMonth });
+
+    it('expect the name of the month, and the year after it with showYearInMonth', () => {
+        expect(title(mount(calendar(false)).element)).toEqual('November');
+        expect(title(mount(calendar(true)).element)).toEqual('November-2026');
+    });
+
+    it('expect no buttons: the month and year do not change in a calendar', () => {
+        const { element } = mount(calendar(true));
+
+        expect(element.querySelectorAll('button').length).toEqual(0);
     });
 });
 
@@ -141,6 +324,14 @@ describe('date picker - date-select event', () => {
         expect(received).toHaveLength(2);
         expect(received[0]?.getTime()).toEqual(new Date(2026, 3, 15, 10, 40).getTime());
         expect(received[1]).toBeNull();
+    });
+
+    it('expect Use to be the primary button, the one in the colours of the selected day', () => {
+        const { element } = mount(config());
+
+        const primary = Array.from(element.querySelectorAll('.simple-html-date-button-primary'), (b) => b.textContent?.trim());
+
+        expect(primary).toEqual(['Use']);
     });
 
     it('expect the function on() returns to unsubscribe', () => {

@@ -205,6 +205,11 @@ const DEFAULTS = {
     'datePicker.clear': 'Clear',
     'datePicker.now': 'Now',
     'datePicker.use': 'Use',
+    // the buttons beside the month and year: their name for a screen reader, and their tooltip
+    'datePicker.previousYear': 'Previous year',
+    'datePicker.previousMonth': 'Previous month',
+    'datePicker.nextMonth': 'Next month',
+    'datePicker.nextYear': 'Next year',
     'datePicker.month.january': 'January',
     'datePicker.month.february': 'February',
     'datePicker.month.march': 'March',

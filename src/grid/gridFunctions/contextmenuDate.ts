@@ -70,7 +70,8 @@ export function contextmenuDate(
     if (rect.left + width > window.innerWidth) {
         left = window.innerWidth - width;
     }
-    const height = config.datepickerHeight || 317;
+    // the default is the height of the picker with the default config (277) and a gap of 5
+    const height = config.datepickerHeight || 282;
     if (rect.bottom + height > window.innerHeight) {
         top = rect.top - height;
     }

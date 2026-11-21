@@ -116,8 +116,9 @@ export interface IDateConfig {
     /** the minutes of the picked time, set from `datepickerDate` by the date picker */
     datepickerMinute?: number;
     /**
-     * grid only: the height of the date picker in px, default 317. The grid opens the picker above the
-     * cell when there is no room for this below it
+     * grid only: the height of the date picker in px, default 282 - its height with the other defaults
+     * (277) and a gap of 5. The grid opens the picker above the cell when there is no room for this
+     * below it. Set it when you change `rowHeight` or `monthMargin`
      */
     datepickerHeight?: number;
 }

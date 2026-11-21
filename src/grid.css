@@ -596,7 +596,7 @@
     margin: 6px;
     padding: 4px 10px;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 3px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     pointer-events: all;
     font-family: var(--simple-html-grid-font-family);
@@ -1368,11 +1368,11 @@
     left: 0;
     right: 0;
     margin: 0 auto;
-    /* a small opaque pill so the number stays readable over the scrollbar track/thumb */
+    /* a small opaque box so the number stays readable over the scrollbar track/thumb, square as the chips */
     width: fit-content;
     max-width: 100%;
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
     text-align: center;
@@ -1392,7 +1392,7 @@
     box-sizing: border-box;
     padding: 1px 10px;
     border: 1px dashed var(--simple-html-grid-pinned-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-sec-font-color);
     white-space: nowrap;
@@ -1417,7 +1417,7 @@
     box-sizing: border-box;
     padding: 1px 7px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-main-font-color);
     font-family: inherit;
@@ -1455,7 +1455,7 @@
     box-sizing: border-box;
     padding: 1px 6px;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 12px;
+    border-radius: 0;
     background-color: color-mix(in srgb, var(--simple-html-grid-sec-bg-color) 55%, transparent);
 }
 
@@ -1477,7 +1477,7 @@
     max-width: 260px;
     padding: 1px 8px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     white-space: nowrap;
 }
@@ -1542,7 +1542,7 @@
     overflow: hidden;
     box-sizing: border-box;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 4px;
+    border-radius: 0;
     box-shadow: 0 8px 26px var(--simple-html-grid-dialog-shadow-color);
 }
 
@@ -1650,7 +1650,7 @@
 .simple-html-grid.filter-editor-content .filter-editor-close {
     cursor: pointer;
     padding: 0 6px;
-    border-radius: 3px;
+    border-radius: 0;
     font-size: var(--simple-html-grid-font-size);
 }
 
@@ -1669,7 +1669,7 @@
     margin: 2px;
     padding: 3px 6px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
@@ -1688,7 +1688,7 @@
  */
 .simple-html-grid.filter-editor-content .grid-pick {
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 0;
     border: 1px dashed var(--simple-html-grid-main-bg-border);
     margin: 0 2px;
     padding: 1px 2px;
@@ -1703,7 +1703,7 @@
     margin: 2px;
     padding: 1px;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 0;
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
@@ -1789,7 +1789,7 @@
     width: max-content;
     height: auto;
     padding: 3px 6px;
-    border-radius: 3px;
+    border-radius: 0;
     border: 1px solid var(--simple-html-grid-pinned-border);
     background-color: var(--simple-html-grid-sec-bg-color);
     text-align: left;

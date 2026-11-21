@@ -224,16 +224,32 @@ The fonts:
 On `.simple-html-date`, in `date.css`: the grid's date picker, and the date picker or calendar on
 its own (`<simple-html-date>`).
 
+It looks like the grid: flat, square corners, thin lines, the grid's font. On top the month and the
+year on one line, between square buttons to the year and the month before (« ‹) and after (› »).
+Then the week numbers and the days: the days of the months before and after are quieter, today is
+bold with a bar under it, the selected day has a frame and a fill. At the bottom the hour and the
+minutes, each a number between a step down and a step up (the arrow keys step it too), and Clear,
+Now and Use in a bar of buttons of the same width - Use in the colours of the selected day.
+
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
 | `--simple-html-date-main-bg-color` | the background, the buttons, the hour and minute inputs | `white` | `#374151` |
 | `--simple-html-date-main-color` | the text | `#2e2d2d` | `#f9f7f7` |
-| `--simple-html-date-dimmed-color` | the days of the months before and after | `#dfdfdf` | `#979494` |
-| `--simple-html-date-week-color` | the week numbers, the hour and minute labels | `#8b8b8b` | `#b4b4b4` |
-| `--simple-html-date-main-bg-border` | the lines, the frame of the buttons, the selected day and the day under the pointer | `#e6e5e5` | `#979494` |
-| `--simple-html-date-main-bg-selected` | the selected day, a button under the pointer | `#bdd4e7` | `#234882` |
+| `--simple-html-date-dimmed-color` | the days of the months before and after | `#767676` | `#adadad` |
+| `--simple-html-date-week-color` | the week numbers, the names of the days, the hour and minute labels | `#6b6b6b` | `#b4b4b4` |
+| `--simple-html-date-main-bg-border` | the lines: under the names of the days, right of the week numbers, over the time | `#e6e5e5` | `#4b5563` |
+| `--simple-html-date-button-border` | the frame of the buttons and of the hour and minute inputs | `#d1d0d0` | `#6b7280` |
+| `--simple-html-date-hover-bg-color` | a day or a button under the pointer | `#e5ebf1` | `#4b5563` |
+| `--simple-html-date-main-bg-selected` | the selected day, the Use button | `#bdd4e7` | `#234882` |
+| `--simple-html-date-selected-border` | the frame of the selected day and of the Use button | `#3f73a8` | `#7fb0ff` |
+| `--simple-html-date-today-color` | the bar under today | `#005fcc` | `#93c5fd` |
 | `--simple-html-date-focus-color` | the outline of the element with the keyboard focus (in the grid: the grid's) | `#005fcc` | `#b3d7ff` |
 | `--simple-html-date-font-size` | the text | `11px` | |
 | `--simple-html-date-font-family` | the text | `'Roboto', 'Helvetica', 'Arial', 'sans-serif'` | |
+
+The text has a contrast of at least 4.5:1 to its background, in light and in dark; the frame of the
+selected day and the bar under today at least 3:1 to the background and the selected day's fill
+(WCAG 1.4.3 and 1.4.11). Keep that when you change them. The dimmed days and the week numbers had
+lighter colours before v6 (`#dfdfdf`, `#8b8b8b`): too light to read.
 
 `--simple-html-date-header-bg-border` is still set, but nothing in `date.css` uses it.

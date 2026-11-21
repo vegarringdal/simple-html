@@ -60,6 +60,11 @@ function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
     }
 }
 
+/**
+ * A day of the month: its number, and the classes `simple-html-date-day-dimmed` (a day of the month
+ * before or after), `-selected`, `-today` and `-hidden` (a dimmed day with `hideDimmedDates`).
+ * A click picks it (date picker) or selects it (calendar)
+ */
 export function day(context: DateInterface, config: IDateConfig, year: number, month: number, block: number) {
     const FirstDateOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month === 11 ? 0 : month + 1, 0);
@@ -115,6 +120,12 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
     const selected = [...context.selected].some((time) => isSameDay(time, currentDate));
     if (selected && !dimmedCell) {
         classList.push('simple-html-date-day-selected');
+    }
+
+    // today has a mark of its own, also when it is not the day picked. In the month shown only, as
+    // the selected day
+    if (isSameDay(Date.now(), currentDate) && !dimmedCell) {
+        classList.push('simple-html-date-day-today');
     }
 
     if (config.hideDimmedDates && dimmedCell) {
