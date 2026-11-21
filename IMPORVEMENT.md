@@ -1794,6 +1794,55 @@ in the console. All passed. Found and fixed:
 * left (custom_render.md "later"): `focusButton` and `placeholderRow` on a custom cell, a `measure()` for
   fitColumns, renderers for group rows / totals / headers, a renderer per row
 
+### Find: "Filter rows" (user request)
+
+* the user, on Find (item 42): "maybe control+f should have option to also filter rows...". Done in a
+  worktree by an agent, merged with v6_maybe twice on the way (the filter menu / editor redo, custom cells)
+* a toggle in the find bar (findBar.ts): a `<button aria-pressed>` with a funnel (inline svg,
+  `aria-hidden`), after the count and before ↑ ↓ ✕ - one Tab from the input. Pressed: filled with
+  `--simple-html-grid-accent-color` as the filter editor's AND / OR in use. State `bar.filterRows` (the
+  toggle) and `bar.rowFilter` (the text and the layout fields the rows are filtered with, null while every
+  row is shown)
+* the datasource got an internal hook, not a public API: `__setRowFilter(keep | null)` (set without
+  running, as `setFilter()`), applied in `__internalUpdate` after the filter and after changed-only, as
+  `filterChangedOnly()` is. So setData, upsert, reloadDatasource, removeData, filterChangedOnly ... apply it,
+  sort / group do not run it, an edit does not, and getFilter() / getFilterString() / the filter tree /
+  GridState know nothing of it. Public was not worth it: the grid would own it anyway (the footer chip,
+  Clear, closing), and a predicate of the app's would need a second layer to not fight the grid's
+* the rows match exactly as the cells are marked: findMatches.ts got `cellShowsText` (one cell test, used
+  by findMatches and the new `findRowFilter`), so the formatter, numberOverride, dynamic cell types, lookup
+  labels, custom cells (their formatter's text) and the checkbox rule are shared. The predicate is made
+  again on every search (fresh fields and formatters), the rows are filtered again only when the text or
+  the layout fields changed (`filterRows()` in runFind, before the matches are found: they are found in
+  the rows shown). Filtering rebuilds the grid, which schedules a search; runFind clears that timer
+* closing turns it off (closeFind: `bar.filterRows = false`, every row back before the focus goes to the
+  match - looked up again by its row object). `disconnectElement` now closes the bar after
+  `__disconnectGrid()`, so un-filtering does not rebuild a grid leaving the page; `connectGridInterface`
+  with another interface closes it too (the old datasource would keep the filter). An empty text shows
+  every row, the toggle stays on
+* the footer: a chip `Find: {text}` (`footer.findFilter`, the text the rows are filtered with - while
+  typing the one before), after "Changed rows only", ANDed with the filter's chips; ellipsis + tooltip for
+  a long text. The footer's Clear / Clear All Filters (clearAllColumnFilters) turn it off and keep the bar
+  open with its matches - decided so Clear means "every row" and nothing more
+* API: `find(text, { filterRows })` (left out: as it is; a boolean throws via assertOptions),
+  `FindResult.filterRows`, sent with `find-change`. No setter of its own: `find(getFind().text, { filterRows })`
+* no shortcut: Alt+R types `®` with Option on a Mac, and is "regular expression" in VS Code's find widget;
+  Tab from the input, Space / Enter, Shift+Tab back
+* texts `find.filterRows`, `find.filterRows.tooltip`, `footer.findFilter` (+ Norwegian in the translation
+  sample); guides 19 (a section), 06, 12, 13, 14; the find sample's description and a button
+* tests: rowFilter.test.ts (15, the datasource: set without running, AND with filter and changed-only,
+  not in the filter / string / tree, sort keeps, groups and their counts, aggregates, setData / add /
+  refilter false, upsert, edit, reload / remove, addNewEmpty, selection and current row as a filter);
+  find.test.ts 43 -> 62 (the toggle, rows = marked rows for a date / decimal comma / multiline / checkbox,
+  numberOverride, a lookup label, a custom cell, on top of filter + changed-only + not in the state,
+  setData / upsert / sort, an edit, typing and the debounce, a layout change, groups, ranges / selection /
+  current row compared with an equal filter, Esc / ✕ / closeFind / leaving the page / another interface,
+  the chip and Clear, the API and the event, texts); texts.test.ts shows the chip. Browser:
+  find-check.js 68/68 (in the worktree's .claude/browser-checks/scripts, the copy before:
+  find-check.js.before-filter-rows), screenshots in .claude/browser-checks/shots/find-filter
+* known: the bar needs about 148px now (four buttons): in a grid of 144px the ✕ is cut by a few px. A
+  datasource in two grids: both show the filtered rows, the chip is in one footer
+
 ## Considered, not done
 
 ## Candidates / not started

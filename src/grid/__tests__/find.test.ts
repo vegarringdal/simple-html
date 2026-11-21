@@ -4,6 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { Datasource } from '../../datasource/dataSource';
 import { isGroupRow } from '../../datasource/entity';
 import { where } from '../../datasource/filterExpression';
+import { registerCellRenderer } from '../cellRendererRegistry';
 import type { FindResult } from '../findResult';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
@@ -959,6 +960,42 @@ describe('find - filter rows', () => {
         mounted.gridInterface.find('bergen', { filterRows: true });
         expect(shownIds(mounted)).toEqual([1, 3, 5]);
         mounted.gridInterface.find('k1', { filterRows: true });
+        expect(shownIds(mounted)).toEqual([]);
+    });
+
+    it('expect a custom cell by the text of its formatter, as Find marks it - not what its renderer drew', async () => {
+        // stars drawn for a number: the formatter's text is the number
+        registerCellRenderer('find-stars', (host) => ({
+            update({ value }) {
+                host.textContent = '★'.repeat(Number(value));
+            }
+        }));
+        const rows = Array.from({ length: 6 }, (_, i) => ({ id: i, name: `name ${i}`, stars: (i % 3) + 1 }));
+        const mounted = await mountGrid(
+            {
+                readonly: false,
+                layout: {
+                    left: [],
+                    center: [
+                        { fields: ['name'], width: 100 },
+                        { fields: ['stars'], width: 100 }
+                    ],
+                    right: []
+                },
+                columns: { stars: { renderer: 'find-stars' } }
+            },
+            rows,
+            { key: 'id', fields: { id: 'number', stars: 'number' } }
+        );
+
+        mounted.gridInterface.find('3', { filterRows: true });
+
+        // the stars 3 of rows 2 and 5, and the name of row 3
+        expect(shownIds(mounted)).toEqual([2, 3, 5]);
+        expect(matchedIds(mounted, '3')).toEqual([2, 3, 5]);
+        expect(matchesOnScreen(mounted.element)).toEqual(['0:stars', '1:name', '2:stars']);
+        expect(mounted.element.querySelectorAll('.simple-html-cell-find-match .simple-html-grid-cell-custom')).toHaveLength(2);
+        mounted.gridInterface.find('★', { filterRows: true });
         expect(shownIds(mounted)).toEqual([]);
     });
 

@@ -1332,6 +1332,18 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Find: filter the rows (user request)
+
+##### Added
+- A **Filter rows** toggle in the find bar (the funnel after the count, `aria-pressed`): only the rows with
+  a match are shown, matched exactly as Find marks the cells (the shown text: formatters, numberOverride,
+  lookup labels, custom cells). It sits on top of the filter and "changed rows only" and is not part of
+  them, the state or `getFilterString()`; it filters again with the text and whenever the datasource
+  filters, not on an edit. Closing the bar (Esc, ✕, `closeFind()`) or the footer's Clear turns it off.
+- A footer chip `Find: {text}` while it hides rows.
+- `gridInterface.find(text, { filterRows })` and `FindResult.filterRows`, sent with `find-change`.
+- Texts `find.filterRows`, `find.filterRows.tooltip`, `footer.findFilter`.
+
 #### Custom cell rendering (item 39)
 
 ##### Added
