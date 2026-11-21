@@ -9,6 +9,8 @@ import { columnLayout } from './samples/columnLayout';
 import columnLayoutSource from './samples/columnLayout.ts?raw';
 import { contextMenu } from './samples/contextMenu';
 import contextMenuSource from './samples/contextMenu.ts?raw';
+import { customCells } from './samples/customCells';
+import customCellsSource from './samples/customCells.ts?raw';
 import { customFormatter } from './samples/customFormatter';
 import customFormatterSource from './samples/customFormatter.ts?raw';
 import { dropdownGrid } from './samples/dropdownGrid';
@@ -94,6 +96,7 @@ export const SAMPLES: Sample[] = [
     // cells
     { ...dynamicCellTypes, source: dynamicCellTypesSource },
     { ...requiredPlaceholders, source: requiredPlaceholdersSource },
+    { ...customCells, source: customCellsSource },
     // formatting
     { ...formatters, source: formattersSource },
     { ...customFormatter, source: customFormatterSource },

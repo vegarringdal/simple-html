@@ -4,6 +4,7 @@ import { ariaId } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
 import { createElement } from './createElement';
+import { releaseAllRenderers } from './customCell';
 import { DIV } from './DIV';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
@@ -108,7 +109,8 @@ export function rebuildRowColumns(ctx: Grid) {
         return columnCache;
     };
 
-    // clear old config
+    // clear old config. The old cells are thrown away: their renderers are done
+    releaseAllRenderers(ctx);
     ctx.columns.clear();
 
     ctx.containerLeftRowCache.forEach((e) => {

@@ -1740,6 +1740,60 @@ in the console. All passed. Found and fixed:
   that second timer when the first ran late. `openPicker()` now waits for the picker (`vi.waitFor`), then
   one task more: a timer set after the reset timer runs after it. Same 0ms delay, insertion order
 
+### Custom cells: a renderer of your own per column (item 39, steps 1 and 2 of custom_render.md)
+
+* the plan is custom_render.md (no Solid in the core: a renderer hook any tool can use). Done in a worktree
+  by an agent; its open questions as proposed: `ColumnConfig.renderer` (an id), an unknown id throws a
+  `TypeError` at createGrid / `updateConfig()`, `update()` on every render, step 2 with the text editor
+* cellRendererRegistry.ts: `registerCellRenderer(id, renderer)`, the types `CellRenderer` (host ->
+  instance), `CellRendererInstance` (`update`, `destroy?`, `edit?`), `CellRenderContext` (row, field,
+  value, text of the formatter with numberOverride, type, readonly, rowIndex, gridInterface). The config
+  check is `assertRenderers` in gridInterface.ts, next to the aggregates'; a renderer and a lookup
+  `editor` on one column throw (a lookup column draws its own cell: label input and its button)
+* customCell.ts: the template (the dimmed div and the host div, `cellpos-` class, `tabindex="0"`, no
+  aria-label), the lifecycle - `cell.$renderer = { id, instance, host }` (@internal on HTMLCellElement):
+  same id and host -> update(), another id -> destroy, host emptied, mount; `releaseRenderer` before the
+  checkbox / input / empty templates (renderRowCell.ts, 3 lines), `releaseAllRenderers` in rebuildRows,
+  rebuildRowColumns and disconnectElement. A group row calls nothing. A destroy() that throws does not
+  leave it mounted
+* the host's handlers are the input's without the typing: ranges, Delete, Ctrl+D, undo/redo, Tab and
+  Alt+arrows from anywhere in the cell; on the host itself (not the renderer's content) the plain arrows
+  navigate (a div has no caret, and the browser would scroll), Space is prevented, Enter/F2/a character
+  edit. `focusin`/`focusout` with relatedTarget: moving from the host into the renderer's content is no new
+  `cell-row-focus`. The right click's skip of the focus (the row menu keeps the ranges) as in the input
+* rangeSelection.ts: `focusedCell` also finds a custom cell (`input: null`) - copy, paste, fill down,
+  Find's Esc and the range drag work there; `focusCellInput` focuses the host. rangeClipboard.ts: one
+  value pasted on a host is written by the grid (as for a checkbox)
+* step 2: textEditor.ts got `singleLine` - an `<input>`, Enter saves, the text `cell.editor.hint`; a text of
+  several lines gets the multiline editor (read-only in a readonly cell, as a multiline cell). A click on a
+  date cell opens the date picker (as the default cell), a double click there does not open the editor.
+  A boolean has none. Deviation from the plan: `CellRendererInstance.edit?(typed)` - a renderer that edits
+  itself (the sample's select) gets Enter/F2/typing/double click instead of the grid's editor; without it
+  Enter on the select's cell would open a text editor over the select
+* css: the host fills the cell (absolute, flex, centered on the line, the input's padding and font,
+  z-index 1000 as the input: under the markers and the fill handle), struck through in a deleted row; the
+  focus ring is the generic `:focus-visible` rule
+* docs: guides/21-custom-cells.md (plain DOM and lit-html typechecked; React 18/19 `createRoot` and Solid
+  2.0 `render` from `@solidjs/web`, `createSignal`/`Show` from `solid-js` - checked on react.dev and
+  docs.solidjs.com), links from 05, 08, 12, 14, 17; check:docs maps `lit-html` to its typings for that.
+  Sample custom-cells (badge, lit-html progress bar, link, a select with edit(), a date with its weekday;
+  a wrapper counts the renderers; 10 000 rows). Typings consumer example
+* tests: customCell.test.ts (39: registry, config checks, the host, the context, readonly from grid /
+  column / hook, 1000 rows scrolled twice with the mounts at the pool, horizontal scroll to another
+  renderer in the same host / the same renderer kept / no renderer, rebuild, updateConfig, destroy(),
+  removed and put back, group rows, a value from code in the next frame, a write as an edit with one undo
+  step, Ctrl+Z, deleted rows, arrows / Alt+arrows / Tab, keys on the content, focus events, click, row
+  menu, Space, errors / range / fill handle / Find, copy / paste / Delete, Ctrl+D, Find's Esc, the editor
+  of one line and the multiline one, Esc / Tab, readonly / allowPasteClearOnly / boolean, the date picker,
+  edit()); texts.test.ts opens the editor of one line. Browser:
+  .claude/browser-checks/scripts/custom-cells-check.js in the worktree 39/39 (light and dark: focus ring,
+  arrows, copy, the editor, an error, the date picker, the select + undo, the a11y tree - the cell a
+  gridcell named by the content, the host a focusable generic node with the content as its name - and
+  10 000 rows: 115 renderers in use for 189 cell elements, no mount the second time), screenshots in
+  .claude/browser-checks/shots/custom-cells
+* left (custom_render.md "later"): `focusButton` and `placeholderRow` on a custom cell, a `measure()` for
+  fitColumns, renderers for group rows / totals / headers, a renderer per row
+
 ## Considered, not done
 
 ## Candidates / not started

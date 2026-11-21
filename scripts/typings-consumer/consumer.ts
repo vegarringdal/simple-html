@@ -10,6 +10,9 @@ import {
     and,
     type CellClass,
     type CellRange,
+    type CellRenderContext,
+    type CellRenderer,
+    type CellRendererInstance,
     type Changes,
     type ColumnConfig,
     type ColumnEditor,
@@ -67,6 +70,7 @@ import {
     NumberFormatterComma,
     NumberFormatterDot,
     or,
+    registerCellRenderer,
     registerFormatter,
     registerLookup,
     registerValidator,
@@ -846,3 +850,45 @@ const bothLookup: Lookup = { datasource: countryRows, gridInterface: pickerInter
 // @ts-expect-error the editor is a select or a grid
 const badEditor: ColumnEditor = { type: 'list', lookup: 'countries' };
 console.log(lookupColumns, bothLookup, badEditor);
+
+// custom cells: a renderer registered by id - the column names it in plain JSON. Called once per cell
+// element with its host, update() on every render, destroy() when the cell is done with it
+interface Task {
+    id: number;
+    status: string;
+}
+const badgeRenderer: CellRenderer<Task> = (cellHost) => {
+    const span = document.createElement('span');
+    cellHost.appendChild(span);
+    const instance: CellRendererInstance<Task> = {
+        update(context: CellRenderContext<Task>) {
+            // the row is typed by the renderer's T
+            const status: string = context.row.status;
+            const text: string = context.text;
+            const type: FieldType = context.type;
+            const readonly: boolean = context.readonly;
+            const rowIndex: number = context.rowIndex;
+            const grid: GridInterface<Task> = context.gridInterface;
+            span.textContent = `${status} ${text} ${type} ${readonly} ${rowIndex} ${grid ? '' : '-'}`;
+            if (!readonly) {
+                context.row.status = 'seen';
+            }
+        },
+        destroy: () => span.remove(),
+        edit: (typed?: string) => console.log(typed)
+    };
+    return instance;
+};
+registerCellRenderer('badge', badgeRenderer);
+// a renderer of the default T, update() only
+registerCellRenderer('plain', (cellHost) => ({
+    update: ({ value }) => {
+        cellHost.textContent = String(value);
+    }
+}));
+const rendererColumns: Record<string, ColumnConfig> = { status: { renderer: 'badge' } };
+// @ts-expect-error a renderer returns an instance with update()
+registerCellRenderer('nothing', () => ({}));
+// @ts-expect-error the column names the renderer by its id
+const rendererObject: ColumnConfig = { renderer: badgeRenderer };
+console.log(rendererColumns, rendererObject);

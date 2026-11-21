@@ -15,7 +15,8 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
  * The editor of a multiline cell (multilineText.ts): a textarea in a popover over the cell. The
- * grid's one open editor is `ctx.textEditor`.
+ * grid's one open editor is `ctx.textEditor`. With `singleLine` an input instead, Enter saves: the
+ * editor of a custom cell (customCell.ts) whose text is one line.
  */
 
 /**
@@ -60,6 +61,11 @@ export interface TextEditorCell {
     readonly: boolean;
     /** the cell's Tab, called with the Tab's keydown once the editor is closed: the next cell */
     tab: (event: KeyboardEvent) => void;
+    /**
+     * one line of text: an input, Enter saves and closes it. For a custom cell (customCell.ts) whose
+     * text has no line break. Default false: a textarea, Enter is a new line
+     */
+    singleLine?: boolean;
 }
 
 /**
@@ -67,7 +73,8 @@ export interface TextEditorCell {
  * editor of a lookup column and the open menu. The textarea has the cell's text, the caret at its
  * end. Its label is the column's.
  *
- * - Esc closes it, the value as it was. Ctrl+Enter (Cmd+Enter) saves and closes. Enter is a new line
+ * - Esc closes it, the value as it was. Ctrl+Enter (Cmd+Enter) saves and closes. Enter is a new line,
+ *   with `singleLine` it saves and closes too
  * - Tab saves and closes, and goes on to the next cell as Tab in the cell does (Shift+Tab back)
  * - a click outside it saves and closes it, and so does scrolling the grid (the wheel, a swipe, the
  *   scrollbars) or opening a menu
@@ -85,7 +92,7 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
     ctx.lookupEditor?.close(true);
     removeContextMenu(ctx);
 
-    const { cell, row, field, formatter, readonly } = target;
+    const { cell, row, field, formatter, readonly, singleLine = false } = target;
     // the cell input, it gets the focus back
     const returnFocus = document.activeElement;
     // the cell counts as being edited while the editor is open: a merge (datasource.upsert) does not
@@ -96,20 +103,33 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
     element.classList.add('simple-html-grid-reset', 'simple-html-grid-popover', 'simple-html-grid-text-editor');
     element.popover = 'manual';
     const hintId = `${ctx.ariaIdPrefix}-text-editor-hint`;
+    const label = getColumnLabel(ctx, field);
+    // one line: an input, it can not hold a line break - Enter saves
+    const textInput = singleLine
+        ? html`<input
+              type="text"
+              class="simple-html-grid-text-editor-input simple-html-grid-text-editor-line"
+              aria-label=${label}
+              aria-describedby=${hintId}
+              .readOnly=${readonly}
+          />`
+        : html`<textarea
+              class="simple-html-grid-text-editor-input"
+              rows=${ROWS}
+              aria-label=${label}
+              aria-describedby=${hintId}
+              .readOnly=${readonly}
+          ></textarea>`;
+    const hint = readonly ? 'cell.multiline.hintReadonly' : singleLine ? 'cell.editor.hint' : 'cell.multiline.hint';
     render(
-        html`<textarea
-                class="simple-html-grid-text-editor-input"
-                rows=${ROWS}
-                aria-label=${getColumnLabel(ctx, field)}
-                aria-describedby=${hintId}
-                .readOnly=${readonly}
-            ></textarea>
+        html`${textInput}
             <div class="simple-html-grid-text-editor-hint" id=${hintId}>
-                ${gridText(ctx, readonly ? 'cell.multiline.hintReadonly' : 'cell.multiline.hint')}
+                ${gridText(ctx, hint)}
             </div>`,
         element
     );
-    const textarea = element.querySelector('textarea') as HTMLTextAreaElement;
+    // the textarea, or the input of one line: what is done with it here is the same for both
+    const textarea = element.querySelector('.simple-html-grid-text-editor-input') as HTMLTextAreaElement | HTMLInputElement;
     textarea.value = formatter.format(row[field]);
     // read back: a browser gives the line breaks as LF. Unchanged is what it gives back now
     const original = textarea.value;
@@ -157,7 +177,8 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
     };
     ctx.textEditor = editor;
 
-    textarea.addEventListener(
+    // as an HTMLElement: on the union of the two elements TypeScript does not find the keydown's event type
+    (textarea as HTMLElement).addEventListener(
         'keydown',
         (event) => {
             // the keys of an input method (IME) while it composes are its own
@@ -168,7 +189,7 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
                 // canceled: a modal dialog the grid is in does not close on it
                 event.preventDefault();
                 editor.close(false, true);
-            } else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+            } else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey || singleLine)) {
                 event.preventDefault();
                 editor.close(true, true);
             } else if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey) {

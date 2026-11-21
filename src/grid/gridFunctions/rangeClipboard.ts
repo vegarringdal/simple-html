@@ -89,10 +89,14 @@ function pasteEvent(ctx: Grid, event: ClipboardEvent) {
  * true when the input's own paste can take one value: a text input that can be typed in, and the
  * value has no line break. The grid writes it itself into a checkbox, a multiline cell (its input is
  * readonly, see multilineText.ts), a column with `allowPasteClearOnly` (it can not be typed in, but
- * pasted into) and a value with a line break (an input has no line breaks, the browser would make them
- * spaces)
+ * pasted into), a value with a line break (an input has no line breaks, the browser would make them
+ * spaces) and a custom cell with the focus on its host (customCell.ts, no input)
  */
-function inputTakes(ctx: Grid, { cell, input }: { cell: HTMLCellElement; input: HTMLInputElement }, value: string) {
+function inputTakes(ctx: Grid, { cell, input }: { cell: HTMLCellElement; input: HTMLInputElement | null }, value: string) {
+    // the host of a custom cell is no input: the grid writes the value
+    if (!input) {
+        return false;
+    }
     const pasteClearOnly = !!ctx.gridInterface.__getGridConfig().columns[cell.$attribute ?? '']?.allowPasteClearOnly;
     return input.type !== 'checkbox' && !input.readOnly && !pasteClearOnly && !/[\r\n]/.test(value);
 }

@@ -58,6 +58,10 @@ for `isReadonly`. Readonly cells of an editable grid are shown with stripes.
   `NO`) and is not typed in: a character, the button at its right, Alt+ArrowDown or F4 open the list.
   A pick, with the other fields its `set` copies, is one step of the undo history. See
   [Lookups](20-lookups.md).
+- **Custom cells** (`renderer`): a renderer of your own draws the cell. Where it only draws, Enter, F2,
+  typing or a double click open the grid's editor of one line over the cell (Enter saves), and a click
+  on a date cell the date picker; a renderer can also edit the value itself, a select say. See
+  [Custom cells](21-custom-cells.md).
 
 A column with `allowPasteClearOnly: true` can not be typed in, only pasted into and cleared. Use it
 for a field the user sets with a picker of your own, such as a [dropdown grid](10-menus.md#a-dropdown-grid-as-a-block).

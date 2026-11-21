@@ -245,6 +245,7 @@ const norwegian: Record<TextId, string> = {
     'lookup.search': 'Søk',
     'lookup.noMatch': 'Ingen treff',
     'lookup.more': '{shown} av {count} vises, skriv for å søke',
+    'cell.editor.hint': 'Enter lagrer, Esc avbryter',
 
     // the date picker
     'datePicker.hours': 'TT',

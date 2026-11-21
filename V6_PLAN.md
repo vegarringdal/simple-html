@@ -408,7 +408,7 @@ Needs phase 4: a merge every second on a large grid has to stay cheap.
 
 ## Phase 8 - more
 
-39. [ ] **Custom cell rendering** per column (a lit-html template: badges, links, progress bars,
+39. [x] **Custom cell rendering** per column (a lit-html template: badges, links, progress bars,
         icons) and conditional formatting (cell/row classes from a function or simple rules). **M** -
         planned in `custom_render.md`: a renderer registered by id (mount/update/destroy), for any
         tool - plain DOM, lit-html, React, Solid. The `cellClass` hook covers cell classes
@@ -421,7 +421,7 @@ Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** item 39 (custom cell rendering, planned in `custom_render.md`) - the rest is done.
+**Now:** every item of the plan is done - see IMPORVEMENT.md "Candidates / not started" for what could come next.
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies
