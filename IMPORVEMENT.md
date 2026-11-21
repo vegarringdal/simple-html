@@ -1798,6 +1798,11 @@ in the console. All passed. Found and fixed:
 
 ## Candidates / not started
 
+* **Row classes from a function** (the other half of plan item 39's conditional formatting): the
+  `cellClass` hook gives cells classes, nothing gives a whole row one (a late or blocked order). A
+  `rowClass(row)` hook on the row elements of every section would.
+* **Custom cells, the plan's "later"**: `focusButton` and `placeholderRow` on a custom cell, a
+  `measure()` for fit column widths, renderers for group rows, the totals row and header labels.
 * **live-check.js races the live sample's timer** under load (2 of 19 failed once, passed on reruns):
   wait for the timer's tick instead of a fixed delay.
 * **Real-browser checks in the repo**: the Chromium checks live in `.claude/browser-checks/` (git-excluded,
