@@ -1109,7 +1109,13 @@ export class GridInterface<T> {
      * The focus does not move: {@link openFind} puts it in the bar, as Ctrl+F does. `find-change` is
      * sent. Does nothing while the grid is not on the page.
      *
-     * @param text the text to find. `''` opens the bar with no matches
+     * **`filterRows`** turns "Filter rows" of the find bar on or off, as its toggle does: only the rows
+     * with a match are shown - on top of the filter, not part of it (`getFilter()` and the state do not
+     * have it). Left out, it stays as it is. It is turned off when the bar closes ({@link closeFind},
+     * Esc), and by the footer's Clear. See {@link FindResult.filterRows}.
+     *
+     * @param text the text to find. `''` opens the bar with no matches (and every row)
+     * @param options.filterRows `true` for only the rows with a match, `false` for every row
      * @returns how many cells show the text
      * @throws a `TypeError` when the text is not a string
      *
@@ -1119,15 +1125,20 @@ export class GridInterface<T> {
      * const count = gridInterface.find('acme');
      * console.log(`${count} cells`, gridInterface.getFind().current); // { row: 3, field: 'company' }
      * gridInterface.findNext();
+     *
+     * // only the rows with a cell that shows "acme", then every row again with the bar still open
+     * gridInterface.find('acme', { filterRows: true });
+     * gridInterface.find('acme', { filterRows: false });
      * gridInterface.closeFind();
      * ```
      */
-    public find(text: string): number {
+    public find(text: string, options: { filterRows?: boolean } = {}): number {
         if (typeof text !== 'string') {
             throw new TypeError(`find(text): the text is a string, e.g. find('acme'), got ${String(text)}`);
         }
+        assertOptions('find', options, "find('acme', { filterRows: true })");
         if (this.grid) {
-            openFind(this.grid, { text, focus: false });
+            openFind(this.grid, { text, focus: false, filterRows: options.filterRows });
         }
         return this.getFind().count;
     }
@@ -1184,8 +1195,8 @@ export class GridInterface<T> {
 
     /**
      * Closes the find bar, as Esc in it does: the cells are not marked any more. Its text is kept, Ctrl+F
-     * shows it again. When the focus was in the bar it goes to the cell of the current match. `find-change`
-     * is sent.
+     * shows it again. "Filter rows" is turned off: every row the filter lets through is shown again. When
+     * the focus was in the bar it goes to the cell of the current match. `find-change` is sent.
      *
      * @example
      * ```ts
@@ -1199,19 +1210,20 @@ export class GridInterface<T> {
     }
 
     /**
-     * What Find has found now: whether the bar is open, its text, how many cells match and the current
-     * match, see {@link FindResult}. A copy. The `find-change` event sends the same each time it changes.
+     * What Find has found now: whether the bar is open, its text, whether "Filter rows" is on, how many
+     * cells match and the current match, see {@link FindResult}. A copy. The `find-change` event sends the
+     * same each time it changes.
      *
      * @example
      * ```ts
-     * const { open, count, position } = gridInterface.getFind();
+     * const { open, count, position, filterRows } = gridInterface.getFind();
      * if (open) {
-     *     console.log(count ? `${position} of ${count}` : 'no matches');
+     *     console.log(count ? `${position} of ${count}` : 'no matches', filterRows ? '(rows filtered)' : '');
      * }
      * ```
      */
     public getFind(): FindResult {
-        return this.grid ? getFindResult(this.grid) : { open: false, text: '', count: 0, position: 0, current: null };
+        return this.grid ? getFindResult(this.grid) : { open: false, text: '', filterRows: false, count: 0, position: 0, current: null };
     }
 
     /**

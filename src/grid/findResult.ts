@@ -8,16 +8,19 @@
  *   the filter, sorted): not the rows of a collapsed group, not a group row, not a checkbox.
  * - **The order** is the rows top to bottom, and in a row the fields in the order of
  *   `gridInterface.getLayoutFields()`: pinned left, center, pinned right.
+ * - **"Filter rows"** (`filterRows`) shows only the rows with a match. The matches are the same, in
+ *   fewer rows.
  *
  * Plain JSON. The row of `current` is an index in the displayed rows as they are now, as the `row` of
  * the grid events.
  *
  * @example
  * ```ts
- * gridInterface.on('find-change', ({ open, count, position, current }) => {
+ * gridInterface.on('find-change', ({ open, count, position, current, filterRows }) => {
  *     if (open && current) {
  *         console.log(`match ${position} of ${count}: row ${current.row}, ${current.field}`);
  *     }
+ *     console.log(filterRows ? 'only the rows with a match' : 'every row');
  * });
  * ```
  */
@@ -26,6 +29,12 @@ export interface FindResult {
     open: boolean;
     /** the text searched for, as it was typed. It is kept when the bar closes, Ctrl+F shows it again */
     text: string;
+    /**
+     * "Filter rows" is on: only the rows with a match are shown - the toggle of the find bar, or
+     * `find(text, { filterRows: true })`. With an empty text every row is shown. `false` while the bar
+     * is closed: closing it turns it off
+     */
+    filterRows: boolean;
     /** how many cells show the text. 0 for an empty text, and while the bar is closed */
     count: number;
     /** which match is the current one, 1 to `count` - 0 when there is none */

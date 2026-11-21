@@ -1,9 +1,9 @@
-import { html, render } from 'lit-html';
+import { html, render, svg } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Entity } from '../../datasource/entity';
 import type { FindResult } from '../findResult';
 import type { Grid } from '../grid';
-import { type FindAnchor, type FindMatch, findMatches, matchAtOrAfter } from './findMatches';
+import { type FindAnchor, type FindMatch, findMatches, findRowFilter, matchAtOrAfter } from './findMatches';
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -12,8 +12,8 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
  * Find in the grid: Ctrl+F (Cmd+F) with the focus in the grid opens a find bar over its top right
- * corner - a text input, the count ("3 of 17"), previous and next, close. The model (which cells match,
- * in which order) is findMatches.ts.
+ * corner - a text input, the count ("3 of 17"), "Filter rows", previous and next, close. The model
+ * (which cells match, in which order) is findMatches.ts.
  *
  * - typing finds as it goes, FIND_DELAY_MS after the last key: the cells that show the text get the
  *   class `simple-html-cell-find-match`, the current one `simple-html-cell-find-current`, and the grid
@@ -26,6 +26,11 @@ import { triggerScrollEvent } from './triggerScrollEvent';
  * - it follows the data while it is open: rows set, filtered, sorted, grouped, values changed, the
  *   layout changed - the matches are found again, the current one kept while it still matches (else the
  *   next one after it). The grid does not scroll for that
+ * - "Filter rows" (a toggle button, `aria-pressed`): only the rows with a match are shown - a filter of
+ *   the datasource on top of its filter (`datasource.__setRowFilter()`, findRowFilter). The rows are
+ *   filtered again when the text changes (after the typing stops), when the fields of the layout change,
+ *   and whenever the datasource filters them - not for an edit, as for every filter. Closing the bar
+ *   turns it off, every row is shown again; the footer shows a chip for it, its Clear turns it off too
  *
  * The bar is an element of the grid, the first child of the grid element (absolute, over the panel):
  * the theme reaches it, and it scrolls with the page. Made the first time it opens, then hidden and
@@ -38,6 +43,13 @@ export const FIND_DELAY_MS = 150;
 /** the class of a cell that shows the text, and of the current match */
 const MATCH_CLASS = 'simple-html-cell-find-match';
 const CURRENT_CLASS = 'simple-html-cell-find-current';
+
+/**
+ * the icon of "Filter rows": a funnel, 12x12px in the colour of the button's text
+ */
+const FILTER_ICON = svg`<svg class="simple-html-grid-find-filter-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+    <path d="M1 2h10L7.2 6.6v3.9L4.8 9.3V6.6z" />
+</svg>`;
 
 /**
  * The state of the find bar of a grid, `ctx.findBar`: made the first time it opens
@@ -66,6 +78,13 @@ export interface FindBar {
     scrollWhenFound: boolean;
     /** what the last find-change sent, as JSON: it is sent when that changes */
     sent: string;
+    /** "Filter rows" is on - the toggle is pressed. Off when the bar closes */
+    filterRows: boolean;
+    /**
+     * what the rows are filtered with now: the text and the fields of the layout it was looked for in.
+     * null while "Filter rows" shows every row - it is off, the bar is closed or the text is empty
+     */
+    rowFilter: { text: string; fields: string[] } | null;
 }
 
 /**
@@ -114,8 +133,9 @@ export function findBarHasFocus(ctx: Grid): boolean {
  * from another cell while it is open: there). Nothing before the dom is made.
  * @param options.text the text to find, else the one it had
  * @param options.focus the focus into the input, its text selected - as Ctrl+F does
+ * @param options.filterRows "Filter rows" on or off, else as it is
  */
-export function openFind(ctx: Grid, options: { text?: string; focus: boolean }) {
+export function openFind(ctx: Grid, options: { text?: string; focus: boolean; filterRows?: boolean }) {
     if (!ctx.domCreated) {
         return;
     }
@@ -133,6 +153,9 @@ export function openFind(ctx: Grid, options: { text?: string; focus: boolean }) 
     if (options.text !== undefined) {
         bar.text = options.text;
     }
+    if (options.filterRows !== undefined) {
+        bar.filterRows = options.filterRows;
+    }
     // now, not after a wait: the count is returned, and Ctrl+F shows what the text finds right away
     runFind(ctx, true);
     if (options.focus) {
@@ -143,10 +166,10 @@ export function openFind(ctx: Grid, options: { text?: string; focus: boolean }) 
 }
 
 /**
- * Closes the find bar: the matches are not shown any more, the text is kept for the next time. When
- * the focus was in the bar (Esc, the close button) it goes to the cell of the current match - the
- * active cell now, its row the current row - else back to the cell (or what else in the grid) it came
- * from. `find-change` is sent.
+ * Closes the find bar: the matches are not shown any more, the text is kept for the next time. "Filter
+ * rows" is turned off: every row the filter lets through is shown again. When the focus was in the bar
+ * (Esc, the close button) it goes to the cell of the current match - the active cell now, its row the
+ * current row - else back to the cell (or what else in the grid) it came from. `find-change` is sent.
  * @param moveFocus false: the focus is left where it is - the grid leaves the page (disconnectElement)
  */
 export function closeFind(ctx: Grid, moveFocus = true) {
@@ -164,9 +187,12 @@ export function closeFind(ctx: Grid, moveFocus = true) {
     clearTimeout(bar.timer ?? undefined);
     bar.timer = null;
     bar.open = false;
+    bar.filterRows = false;
     bar.matches = [];
     bar.cells = new Map();
     bar.index = -1;
+    // every row again, before the focus goes to the match: at its row among them
+    filterRows(ctx, bar);
 
     if (hadFocus) {
         focusAfterClose(ctx, bar, match);
@@ -218,16 +244,56 @@ export function findDataChanged(ctx: Grid) {
 export function getFindResult(ctx: Grid): FindResult {
     const bar = ctx.findBar;
     if (!bar) {
-        return { open: false, text: '', count: 0, position: 0, current: null };
+        return { open: false, text: '', filterRows: false, count: 0, position: 0, current: null };
     }
     const match = bar.matches[bar.index];
     return {
         open: bar.open,
         text: bar.text,
+        filterRows: bar.filterRows,
         count: bar.matches.length,
         position: bar.index + 1,
         current: match ? { row: match.row, field: match.field } : null
     };
+}
+
+/**
+ * Turns "Filter rows" on or off - the toggle of the bar, `gridInterface.find(text, { filterRows })`:
+ * the rows are filtered now, not after a wait, and the grid scrolls to the current match - among the
+ * rows shown, or among every row again. Nothing while the bar is closed
+ */
+export function setFindFilterRows(ctx: Grid, on: boolean) {
+    const bar = ctx.findBar;
+    if (!bar?.open) {
+        return;
+    }
+    bar.filterRows = on;
+    runFind(ctx, true);
+}
+
+/**
+ * Turns "Filter rows" off without filtering the rows: for the footer's Clear and the filter menu's
+ * Clear All Filters (clearAllColumnFilters), which filter the rows once after it. The bar stays open,
+ * its matches stay
+ */
+export function clearFindFilterRows(ctx: Grid) {
+    const bar = ctx.findBar;
+    if (!bar?.filterRows) {
+        return;
+    }
+    bar.filterRows = false;
+    bar.rowFilter = null;
+    ctx.gridInterface.getDatasource().__setRowFilter(null);
+    renderFindBar(ctx, bar);
+    sendChange(ctx, bar);
+}
+
+/**
+ * The text "Filter rows" filters the rows with now, for the chip in the footer: null while it shows
+ * every row. While the user types it is the text before, until the typing stops
+ */
+export function findFilterRowsText(ctx: Grid): string | null {
+    return ctx.findBar?.rowFilter?.text ?? null;
 }
 
 /**
@@ -283,7 +349,9 @@ function makeFindBar(ctx: Grid): FindBar {
         returnFocus: null,
         timer: null,
         scrollWhenFound: false,
-        sent: ''
+        sent: '',
+        filterRows: false,
+        rowFilter: null
     };
     return ctx.findBar;
 }
@@ -314,18 +382,21 @@ function rememberFocus(ctx: Grid, bar: FindBar) {
 /**
  * After Esc or the close button: the cell of the current match gets the focus and its row is the
  * current row, as moving to a cell with the keys makes it. Without a match the cell the bar was opened
- * from, if its row is still displayed, or the element of the grid it was opened from
+ * from, if its row is still displayed, or the element of the grid it was opened from. The rows are
+ * looked up again: closing turned "Filter rows" off, every row is displayed again
  */
 function focusAfterClose(ctx: Grid, bar: FindBar, match: FindMatch | undefined) {
     const datasource = ctx.gridInterface.getDatasource();
-    if (match) {
-        focusCell(ctx, match.row, match.field);
+    const rows = datasource.getRows();
+    const matchRow = match ? rows.indexOf(match.entity) : -1;
+    if (match && matchRow !== -1) {
+        focusCell(ctx, matchRow, match.field);
         if (datasource.currentEntity !== match.entity) {
-            datasource.setRowAsCurrentEntity(match.row);
+            datasource.setRowAsCurrentEntity(matchRow);
         }
         return;
     }
-    const row = bar.origin ? datasource.getRows().indexOf(bar.origin.entity) : -1;
+    const row = bar.origin ? rows.indexOf(bar.origin.entity) : -1;
     if (bar.origin && row !== -1) {
         focusCell(ctx, row, bar.origin.field);
     } else if (bar.returnFocus?.isConnected) {
@@ -378,6 +449,9 @@ function runFind(ctx: Grid, scroll: boolean) {
     if (!bar?.open) {
         return;
     }
+    // the rows first: the matches are found in the rows "Filter rows" shows. Filtering them rebuilds
+    // the grid, which asks for a search after the wait - this one is it
+    filterRows(ctx, bar);
     clearTimeout(bar.timer ?? undefined);
     bar.timer = null;
     bar.scrollWhenFound = false;
@@ -396,6 +470,36 @@ function runFind(ctx: Grid, scroll: boolean) {
         bar.anchor = { entity: match.entity, field: match.field, row: match.row };
     }
     showCurrent(ctx, bar, scroll);
+}
+
+/**
+ * "Filter rows": the rows the datasource shows follow the find - the rows with a match (findRowFilter)
+ * while the bar is open, the toggle is on and the text is not empty, every row else. The rows are
+ * filtered again (`datasource.filter()`, the filter runs with it) only when that changed: turned on or
+ * off, another text, other fields in the layout. An edit does not filter them again, as for every
+ * filter: a row edited so it no longer matches stays until the rows are filtered next.
+ *
+ * The function the datasource gets is made anew every time all the same: when the datasource filters
+ * on its own (a filter, setData, an upsert) it reads the columns as they are now
+ */
+function filterRows(ctx: Grid, bar: FindBar) {
+    const datasource = ctx.gridInterface.getDatasource();
+    const on = bar.open && bar.filterRows && bar.text !== '';
+    if (!on) {
+        if (bar.rowFilter) {
+            bar.rowFilter = null;
+            datasource.__setRowFilter(null);
+            datasource.filter();
+        }
+        return;
+    }
+    const fields = getLayoutFields(ctx.gridInterface);
+    const same = bar.rowFilter?.text === bar.text && bar.rowFilter.fields.join('\n') === fields.join('\n');
+    bar.rowFilter = { text: bar.text, fields };
+    datasource.__setRowFilter(findRowFilter(ctx, bar.text));
+    if (!same) {
+        datasource.filter();
+    }
 }
 
 /**
@@ -426,8 +530,9 @@ function sendChange(ctx: Grid, bar: FindBar) {
 
 /**
  * The bar: the input, the count (a status, read out when it changes - after the typing stopped, or a
- * step), previous, next and close. The buttons keep the focus where it is when they are clicked: in the
- * input, so Enter goes on from there. The texts are read on every render, a rebuild shows changed ones
+ * step), "Filter rows" (a toggle button: `aria-pressed`), previous, next and close. The buttons keep the
+ * focus where it is when they are clicked: in the input, so Enter goes on from there. The texts are read
+ * on every render, a rebuild shows changed ones
  */
 function renderFindBar(ctx: Grid, bar: FindBar) {
     bar.element.setAttribute('aria-label', gridText(ctx, 'find.label'));
@@ -467,6 +572,16 @@ function renderFindBar(ctx: Grid, bar: FindBar) {
                     }
                 }}
             /><span class="simple-html-grid-find-count" role="status">${status}</span
+            ><button
+                type="button"
+                class="simple-html-grid-find-button simple-html-grid-find-filter"
+                aria-label=${gridText(ctx, 'find.filterRows')}
+                aria-pressed=${bar.filterRows ? 'true' : 'false'}
+                title=${gridText(ctx, 'find.filterRows.tooltip')}
+                @mousedown=${keepFocus}
+                @click=${() => setFindFilterRows(ctx, !bar.filterRows)}
+            >
+                ${FILTER_ICON}</button
             ><button
                 type="button"
                 class="simple-html-grid-find-button"

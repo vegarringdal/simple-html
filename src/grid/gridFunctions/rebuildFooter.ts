@@ -4,6 +4,7 @@ import { findText } from '../../texts';
 import type { Grid } from '../grid';
 import { renderTotalsRow } from './aggregates';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
+import { findFilterRowsText } from './findBar';
 import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { gridText } from './gridText';
@@ -139,7 +140,12 @@ export function renderFooter(ctx: Grid) {
     // "changed rows only" (datasource.filterChangedOnly()) is not part of the filter: a chip of its own,
     // in front of the filter's. The footer shows the filter row for either
     const changedOnly = ctx.gridInterface.getDatasource().isChangedOnly();
-    const filtered = filterTree !== null || changedOnly;
+    // and Find's "Filter rows" (findBar.ts) while it hides rows: a chip with its text, after that one.
+    // The text can be long: cut with an ellipsis, all of it in the tooltip
+    const findFilterText = findFilterRowsText(ctx);
+    const findChip = findFilterText === null ? null : gridText(ctx, 'footer.findFilter', { text: findFilterText });
+    const filtered = filterTree !== null || changedOnly || findChip !== null;
+    const and = html`<span class="footer-filter-connector">${gridText(ctx, 'footer.and')}</span>`;
 
     const conditionCount = filterTree ? countConditions(filterTree) : 0;
     const summary = summaryTemplate(ctx, filtered ? scrollbarHeight : 0);
@@ -161,7 +167,15 @@ export function renderFooter(ctx: Grid) {
                           ${gridText(ctx, 'footer.clear')}
                       </button>
                       ${changedOnly ? html`<span class="footer-filter-chip footer-filter-changed-only">${gridText(ctx, 'footer.changedOnly')}</span>` : null}
-                      ${changedOnly && filterTree ? html`<span class="footer-filter-connector">${gridText(ctx, 'footer.and')}</span>` : null}
+                      ${changedOnly && (findChip !== null || filterTree) ? and : null}
+                      ${
+                          findChip !== null
+                              ? html`<span class="footer-filter-chip footer-filter-find" title=${findChip}
+                                    ><span class="footer-filter-find-text">${findChip}</span></span
+                                >`
+                              : null
+                      }
+                      ${findChip !== null && filterTree ? and : null}
                       ${
                           filterTree
                               ? html`<div

@@ -162,6 +162,12 @@ export class Datasource<T = any> {
     private __changedOnly = false;
 
     /**
+     * the grid's own filter of the rows, see __setRowFilter(): Find's "Filter rows". Applied with the
+     * filter, after it and after changed only. null for none
+     */
+    private __rowFilter: ((row: Entity) => boolean) | null = null;
+
+    /**
      * sorting controller, holds all logic for sorting
      */
     private __sorting: Sort;
@@ -1628,6 +1634,10 @@ export class Datasource<T = any> {
             if (this.__changedOnly) {
                 this.__collectionFiltered = this.__collectionFiltered.filter(isChangedRow);
             }
+            // and the grid's filter of the rows, Find's "Filter rows": see __setRowFilter()
+            if (this.__rowFilter) {
+                this.__collectionFiltered = this.__collectionFiltered.filter(this.__rowFilter);
+            }
         }
 
         if (this.__grouping.getGrouping().length) {
@@ -2383,6 +2393,22 @@ export class Datasource<T = any> {
     public setLocaleCompare(code: string, options?: any) {
         // should we also use this for filter ?
         this.__sorting.setLocaleCompare(code, options);
+    }
+
+    /**
+     * @internal
+     * A filter of the grid's own on top of the filter: Find's "Filter rows" (findBar.ts) shows only the
+     * rows with a cell that shows the text. Set without running it - `filter()` runs it, as for
+     * `setFilter()`.
+     *
+     * As {@link filterChangedOnly}: a row is shown when the filter lets it through AND changed only does
+     * (when on) AND this does. It is applied when the rows are filtered - `filter()`, `setData()`,
+     * `upsert()`, `reloadDatasource()` ... - not by a sort, a grouping or an edit. It is not part of the
+     * filter: `getFilter()`, `getFilterString()` and the grid's state do not have it.
+     * @param keep true for a row to show, null to show every row the filter lets through
+     */
+    public __setRowFilter(keep: ((row: Entity) => boolean) | null): void {
+        this.__rowFilter = keep;
     }
 
     /**

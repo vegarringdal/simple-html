@@ -141,6 +141,8 @@ const bar = (element: GridElement) => element.querySelector('.simple-html-grid-f
 const findInput = (element: GridElement) => bar(element).querySelector('input') as HTMLInputElement;
 const findCount = (element: GridElement) => bar(element).querySelector('[role="status"]')?.textContent?.trim();
 const findButtons = (element: GridElement) => Array.from(bar(element).querySelectorAll('button'));
+/** the "Filter rows" toggle of the bar */
+const filterButton = (element: GridElement) => bar(element).querySelector('.simple-html-grid-find-filter') as HTMLButtonElement;
 
 /** types into the find input as a user does: the value, an input event */
 function typeFind(element: GridElement, text: string) {
@@ -308,6 +310,7 @@ describe('find - the API', () => {
         expect(gridInterface.getFind()).toEqual({
             open: true,
             text: 'acme',
+            filterRows: false,
             count: 4,
             position: 1,
             current: { row: 2, field: 'name' }
@@ -335,7 +338,7 @@ describe('find - the API', () => {
         expect(bar(element).hidden).toBe(true);
         expect(matchesOnScreen(element)).toEqual([]);
         expect(currentOnScreen(element)).toEqual([]);
-        expect(gridInterface.getFind()).toEqual({ open: false, text: 'acme', count: 0, position: 0, current: null });
+        expect(gridInterface.getFind()).toEqual({ open: false, text: 'acme', filterRows: false, count: 0, position: 0, current: null });
         expect(gridInterface.findNext()).toBeNull();
     });
 
@@ -376,9 +379,9 @@ describe('find - the API', () => {
         mounted.gridInterface.closeFind();
 
         expect(events).toEqual([
-            { open: true, text: 'acme', count: 4, position: 1, current: { row: 2, field: 'name' } },
-            { open: true, text: 'acme', count: 4, position: 2, current: { row: 5, field: 'name' } },
-            { open: false, text: 'acme', count: 0, position: 0, current: null }
+            { open: true, text: 'acme', filterRows: false, count: 4, position: 1, current: { row: 2, field: 'name' } },
+            { open: true, text: 'acme', filterRows: false, count: 4, position: 2, current: { row: 5, field: 'name' } },
+            { open: false, text: 'acme', filterRows: false, count: 0, position: 0, current: null }
         ]);
     });
 
@@ -671,7 +674,7 @@ describe('find - the keys', () => {
     it('expect Esc on a button of the bar to close it too', async () => {
         const { element, gridInterface } = await mount();
         gridInterface.find('acme');
-        const close = findButtons(element)[2];
+        const close = findButtons(element)[3];
         close.focus();
 
         key(close, 'Escape');
@@ -687,7 +690,7 @@ describe('find - the buttons', () => {
         ctrlF(inputAt(element, 0, 'city'));
         typeFind(element, 'acme');
         await afterDelay();
-        const [previous, next, close] = findButtons(element);
+        const [, previous, next, close] = findButtons(element);
 
         const press = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
         next.dispatchEvent(press);
@@ -783,11 +786,23 @@ describe('find - what a screen reader gets, the texts', () => {
         expect(findInput(element).getAttribute('aria-label')).toBe('Find');
         expect(findInput(element).getAttribute('placeholder')).toBe('Find');
         expect(bar(element).querySelector('.simple-html-grid-find-count')?.getAttribute('role')).toBe('status');
-        expect(findButtons(element).map((button) => [button.type, button.getAttribute('aria-label'), button.title])).toEqual([
-            ['button', 'Previous match', 'Previous match (Shift+Enter)'],
-            ['button', 'Next match', 'Next match (Enter)'],
-            ['button', 'Close', 'Close (Esc)']
+        // in this order, which is the order of Tab: "Filter rows" first, after the input and the count
+        expect(
+            findButtons(element).map((button) => [
+                button.type,
+                button.getAttribute('aria-label'),
+                button.title,
+                button.getAttribute('aria-pressed')
+            ])
+        ).toEqual([
+            ['button', 'Filter rows', 'Show only the rows with a match', 'false'],
+            ['button', 'Previous match', 'Previous match (Shift+Enter)', null],
+            ['button', 'Next match', 'Next match (Enter)', null],
+            ['button', 'Close', 'Close (Esc)', null]
         ]);
+        // the funnel is not read out: the name is
+        expect(filterButton(element).querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+        expect(filterButton(element).textContent?.trim()).toBe('');
     });
 
     it("expect the grid's texts", async () => {

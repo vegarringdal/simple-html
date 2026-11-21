@@ -175,6 +175,8 @@ const DEFAULTS = {
     'footer.and': 'AND',
     'footer.or': 'OR',
     'footer.changedOnly': 'Changed rows only',
+    // Find's "Filter rows" while it hides rows: the text the rows are filtered with
+    'footer.findFilter': 'Find: {text}',
     // the summary of the selected cells, at the footer's right (ranges of more than one cell): its name
     // for a screen reader, the cells with a value, and of the numbers the sum, average, smallest, largest
     'footer.summary': 'Selected cells',
@@ -220,11 +222,13 @@ const DEFAULTS = {
     'grid.removeGroup': 'Remove the grouping on {title}',
 
     // Find (Ctrl+F in the grid): the find bar - its name for a screen reader, the input, the count of the
-    // matches and the buttons, with their tooltips
+    // matches and the buttons, with their tooltips. "Filter rows" is a toggle: only the rows with a match
     'find.label': 'Find in the grid',
     'find.placeholder': 'Find',
     'find.count': '{current} of {count}',
     'find.none': 'No matches',
+    'find.filterRows': 'Filter rows',
+    'find.filterRows.tooltip': 'Show only the rows with a match',
     'find.previous': 'Previous match',
     'find.previous.tooltip': 'Previous match (Shift+Enter)',
     'find.next': 'Next match',
@@ -378,7 +382,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
  * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `grid.*` | labels for screen readers |
- * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, the buttons |
+ * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, "Filter rows", the buttons |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |
  * | `lookup.*` | a lookup column (`ColumnConfig.editor`): the button of the cell, the select under it |

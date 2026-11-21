@@ -34,10 +34,29 @@ export interface FindAnchor {
 }
 
 /**
- * The cells that show a text: the text each cell shows - its value through the field's formatter, with
- * the column's `numberOverride`, as renderRowCell shows it (cellTextOf) - holds the text, in any case.
- * The whole text of a cell of several lines, not only its first line. Not a checkbox (a `boolean` cell
- * shows no text), not a group row, not the rows of a collapsed group (they are not displayed).
+ * For a field, whether its cell shows a text for a row: the text the cell shows - its value through the
+ * field's formatter, with the column's `numberOverride`, as renderRowCell shows it (cellTextOf) - holds
+ * the text, in any case. The whole text of a cell of several lines, not only its first line. Not a
+ * checkbox: a `boolean` cell shows no text.
+ * @param needle the text to find, lower case, not empty
+ */
+function cellShowsText(ctx: Pick<Grid, 'gridInterface'>, field: string, needle: string): (row: Entity) => boolean {
+    const textOf = cellTextOf(ctx, field);
+    return (row) => {
+        const cell = textOf(row);
+        // a formatter of plain JavaScript can give something else than text
+        return (
+            cell.type !== 'boolean' &&
+            String(cell.text ?? '')
+                .toLowerCase()
+                .includes(needle)
+        );
+    };
+}
+
+/**
+ * The cells that show a text (see cellShowsText): the cells of the fields of the layout in the displayed
+ * rows. Not a group row, not the rows of a collapsed group (they are not displayed).
  *
  * In the order of the grid: the displayed rows top to bottom, and in a row the fields of the layout
  * left to right (getLayoutFields(): pinned left, center, pinned right, the stacked fields of a column
@@ -53,7 +72,7 @@ export function findMatches(ctx: Pick<Grid, 'gridInterface'>, text: string): Fin
         return [];
     }
     const fields = getLayoutFields(ctx.gridInterface);
-    const textOf = fields.map((field) => cellTextOf(ctx, field));
+    const shows = fields.map((field) => cellShowsText(ctx, field, needle));
     const matches: FindMatch[] = [];
 
     ctx.gridInterface
@@ -64,19 +83,26 @@ export function findMatches(ctx: Pick<Grid, 'gridInterface'>, text: string): Fin
                 return;
             }
             for (let column = 0; column < fields.length; column++) {
-                const cell = textOf[column](entity);
-                // a formatter of plain JavaScript can give something else than text
-                if (
-                    cell.type !== 'boolean' &&
-                    String(cell.text ?? '')
-                        .toLowerCase()
-                        .includes(needle)
-                ) {
+                if (shows[column](entity)) {
                     matches.push({ row, entity, field: fields[column], column });
                 }
             }
         });
     return matches;
+}
+
+/**
+ * Find's "Filter rows" (findBar.ts): a function that is true for a row with at least one cell that shows
+ * the text - a cell findMatches finds, of the fields of the layout as they are now. The datasource runs
+ * it over the rows the filter lets through (`datasource.__setRowFilter()`), so the rows shown are the
+ * rows with a match.
+ * @param ctx the grid, or an object with the grid's interface
+ * @param text the text to find, not empty
+ */
+export function findRowFilter(ctx: Pick<Grid, 'gridInterface'>, text: string): (row: Entity) => boolean {
+    const needle = text.toLowerCase();
+    const shows = getLayoutFields(ctx.gridInterface).map((field) => cellShowsText(ctx, field, needle));
+    return (row) => shows.some((show) => show(row));
 }
 
 /**

@@ -155,6 +155,8 @@ export class Grid {
         // the old interface would keep listening to its datasource and rebuilding this grid
         if (this.gridInterface && this.gridInterface !== gridInterface) {
             this.gridInterface.__disconnectGrid();
+            // the find bar found in the old interface's rows: closed, so "Filter rows" leaves its datasource
+            closeFind(this, false);
         }
 
         this.gridInterface = gridInterface;
@@ -207,8 +209,6 @@ export class Grid {
         closeLookupEditor(this);
         removeContextMenu(this);
         closeFilterEditor(this);
-        // the find bar is in the element, its search may wait on a timer: closed, the focus left as it is
-        closeFind(this, false);
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
         // shown for a cell of this grid maybe: it is not in the element either
@@ -230,6 +230,10 @@ export class Grid {
 
         // the element can be removed before an interface was ever connected
         this.gridInterface?.__disconnectGrid();
+        // the find bar is in the element, its search may wait on a timer: closed, the focus left as it
+        // is. After the interface let go of the datasource: closing turns "Filter rows" off, every row is
+        // shown again - in the other grids of the datasource, and here when the element comes back
+        closeFind(this, false);
     }
 
     /**

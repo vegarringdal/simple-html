@@ -918,6 +918,25 @@
     border-color: var(--simple-html-grid-pinned-border);
 }
 
+/* "Filter rows" while it is on (aria-pressed): the tint of a selected row, the line of a range */
+.simple-html-grid .simple-html-grid-find-button[aria-pressed='true'] {
+    background-color: var(--simple-html-grid-main-bg-selected-odd);
+    border-color: var(--simple-html-grid-range-border-color);
+}
+
+.simple-html-grid .simple-html-grid-find-button[aria-pressed='true']:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the funnel of "Filter rows", in the colour of the button's text */
+.simple-html-grid .simple-html-grid-find-filter-icon {
+    display: block;
+    width: 12px;
+    height: 12px;
+    margin: auto;
+    fill: currentColor;
+}
+
 /**
  * the row selector of a row with an error - a validation error, or the server's (setErrors()): a bar
  * on its left and a tint over its background, the messages are its tooltip. The tint is a layer over
@@ -2047,6 +2066,16 @@
  * not part of it - not a button, it keeps its size */
 .simple-html-grid .footer-filter-changed-only {
     flex: 0 0 auto;
+}
+
+/* Find's "Filter rows" (findBar.ts): a chip of its own too, with the text - a long one is cut with an
+ * ellipsis, the chip's tooltip has all of it */
+.simple-html-grid .footer-filter-find-text {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* filter too large to show as chips - a single summary box */
