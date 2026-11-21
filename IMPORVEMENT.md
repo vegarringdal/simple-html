@@ -1953,6 +1953,18 @@ in the console. All passed. Found and fixed:
 * tests: simpleSorting.test.ts +3 (the same order from three input orders, descending the reverse, one
   group per value) - all three fail with the old line
 
+### Light mode text contrast to WCAG AA (a candidate)
+
+* the light colours were kept as they were before v6 (theme.test.ts pins them), and two were under AA's
+  4.5:1 for text: the secondary text `--simple-html-grid-sec-font-color` #979494 (placeholders, search
+  boxes, the AND/OR between the filter chips) 3.0:1 on white and 2.8:1 on the panel, and the row numbers
+  at 50% opacity 2.9:1 (2.5:1 on a selected row). Now #6b6b6b (5.3:1 on white, 4.9:1 on the panel) and
+  80% (5.0:1 at the lowest, a selected row; 5.5:1 and up in dark). The test keeps pinning the rest, this
+  one with the reason. A disabled menu item stays at 50%: WCAG leaves out disabled controls
+* the header filters' placeholders ("Text", "Number", "YYYY-MM-DD") were also at 20% opacity, about
+  1.3:1 - the rule is gone, they are the secondary text like every placeholder of the grid (Chrome's own
+  placeholder grey is about the same)
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -1982,9 +1994,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Accessibility
 
-* **Contrast in light mode** under WCAG AA, kept for a pixel-identical light mode: the secondary text
-  (placeholders, `#979494`) 3.0:1 on white and 2.8:1 on the panel; the row numbers at 50% opacity 2.9:1,
-  and the row-state colours under that opacity
 * **Keyboard**: no Home / End / PageUp / PageDown / Ctrl+Home in the grid (the keyboard work); the buttons
   of the group rows are not on the way of Tab (Tab and Alt+arrows skip group rows), nor are the footer's
   chips and Clear; the days of the date picker and the column chooser are for the mouse (the picker's

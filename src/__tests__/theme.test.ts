@@ -97,7 +97,8 @@ const GRID_LIGHT: Record<string, string> = {
     '--simple-html-grid-main-bg-even': '#ffffff',
     '--simple-html-grid-main-bg-odd': '#f7f7f7',
     '--simple-html-grid-main-font-color': '#2e2d2d',
-    '--simple-html-grid-sec-font-color': '#979494',
+    // darker than before v6 on purpose: #979494 was 3.0:1 on white, under WCAG AA's 4.5:1 for text
+    '--simple-html-grid-sec-font-color': '#6b6b6b',
     '--simple-html-grid-dropzone-color': 'rgba(129, 127, 127, 0.7)',
     '--simple-html-grid-grouping-border': '#c7c7c7',
     '--simple-html-grid-boxshadow': '#fffdfd',

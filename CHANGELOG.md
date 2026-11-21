@@ -1334,6 +1334,11 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 
 #### The filter editor keeps the header filters it did not change
 
+##### Changed
+- Light mode text contrast to WCAG AA: the secondary text (`--simple-html-grid-sec-font-color`,
+  placeholders, search boxes) is `#6b6b6b` (was `#979494`, 3.0:1), the row numbers are at 80% opacity
+  (was 50%, 2.9:1), and the header filters' placeholders are no longer at 20% opacity (1.3:1).
+
 ##### Fixed
 - Sorting with a collator that calls different strings equal (`setLocaleCompare(code, { sensitivity:
   'base' })`: 'a' and 'A') put them in the order they came in, and grouping could split a value into two
