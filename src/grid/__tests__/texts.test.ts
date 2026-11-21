@@ -265,7 +265,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     await sleep(20);
     check();
     for (let month = 1; month < 12; month++) {
-        const next = document.querySelectorAll('simple-html-date .simple-html-date-month-header .month svg')[1];
+        // « ‹ › »: the third is the next month
+        const next = document.querySelectorAll('simple-html-date .simple-html-date-nav')[2];
         next.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         check();
     }
@@ -408,7 +409,9 @@ describe('texts in the grid - where a text comes from', () => {
         await sleep(20);
 
         const picker = document.querySelector('simple-html-date') as HTMLElement;
-        const buttons = Array.from(picker.querySelectorAll('button'), (button) => button.textContent?.trim());
+        const buttons = Array.from(picker.querySelectorAll('.simple-html-date-actions button'), (button) =>
+            button.textContent?.trim()
+        );
         expect(buttons).toEqual(['Clear', 'Now', 'Bruk']);
         // the week starts on monday
         expect(picker.querySelector('.simple-html-date-day-header')?.textContent?.trim()).toEqual('Ma');
@@ -458,16 +461,12 @@ describe('texts in a date picker of your own', () => {
     it("expect the page's texts, and its own texts over them", () => {
         setTexts({ 'datePicker.month.april': 'April (side)', 'datePicker.now': 'Nå' });
 
-        expect(mount(dateConfig()).querySelector('.simple-html-date-month-header .main')?.textContent?.trim()).toEqual(
-            'April (side)'
-        );
+        expect(mount(dateConfig()).querySelector('.simple-html-date-month-name')?.textContent?.trim()).toEqual('April (side)');
 
         const own = mount(dateConfig({ 'datePicker.month.april': 'April (egen)' }));
-        expect(own.querySelector('.simple-html-date-month-header .main')?.textContent?.trim()).toEqual('April (egen)');
-        expect(Array.from(own.querySelectorAll('button'), (button) => button.textContent?.trim())).toEqual([
-            'Clear',
-            'Nå',
-            'Use'
-        ]);
+        expect(own.querySelector('.simple-html-date-month-name')?.textContent?.trim()).toEqual('April (egen)');
+        expect(
+            Array.from(own.querySelectorAll('.simple-html-date-actions button'), (button) => button.textContent?.trim())
+        ).toEqual(['Clear', 'Nå', 'Use']);
     });
 });

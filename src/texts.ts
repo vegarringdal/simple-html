@@ -61,8 +61,8 @@ const DEFAULTS = {
     'row.size.resetRow': 'Reset row height',
     'row.size.resetAllRows': 'Reset all row heights',
     'row.export': 'Export:',
-    'row.export.csv': 'CSV, all rows',
-    'row.export.csvSelected': 'CSV, selected rows',
+    'row.export.excel': 'Excel, all rows',
+    'row.export.excelSelected': 'Excel, selected rows',
 
     // the header menu, right click on a header label: MENU_IDS.header
     'header.column': 'Column:',
@@ -234,6 +234,11 @@ const DEFAULTS = {
     'datePicker.clear': 'Clear',
     'datePicker.now': 'Now',
     'datePicker.use': 'Use',
+    // the buttons beside the month and year: their name for a screen reader, and their tooltip
+    'datePicker.previousYear': 'Previous year',
+    'datePicker.previousMonth': 'Previous month',
+    'datePicker.nextMonth': 'Next month',
+    'datePicker.nextYear': 'Next year',
     'datePicker.month.january': 'January',
     'datePicker.month.february': 'February',
     'datePicker.month.march': 'March',

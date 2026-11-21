@@ -164,6 +164,15 @@ export type GridConfig = {
     editedMarker?: boolean;
 
     /**
+     * a copy of more than one cell starts with a header line of the column labels - ranges (Ctrl+C) and
+     * the row menu's Column / Row / Range copies - in the text and in the html table, so a table pasted
+     * into Word or Excel has its headers. Default `true`; `false` copies the values only. A single cell
+     * copies its value only. Pasted into the grid, a first line of the grid's column labels is skipped.
+     * See the guide "Selection and clipboard"
+     */
+    copyHeaders?: boolean;
+
+    /**
      * renders the built in tooltip, default = true: on the buttons and icons of the filter editor,
      * and the validation messages on a cell with an error and on its row selector
      *
@@ -232,7 +241,7 @@ export type GridConfig = {
      * the date picker of date cells and date header filters: only the fields to change. Of the
      * {@link IDateConfig} the grid reads `showWeek` (default true), `isoWeek` (true), `weekStart` (1,
      * monday), `rowHeight` (22), `monthWidth` (230), `monthMargin` (10), `hideDimmedDates` (false),
-     * `showYearInMonth` (false) and `datepickerHeight` (317), and sets the rest itself. Its texts - the
+     * `showYearInMonth` (false) and `datepickerHeight` (282), and sets the rest itself. Its texts - the
      * names of the months and days, the buttons - are the grid's `texts` (`datePicker.*`)
      *
      * @example
@@ -567,6 +576,7 @@ export type ParsedGridOptions = GridOptions &
             | 'multilineTooltipLines'
             | 'rowStatus'
             | 'editedMarker'
+            | 'copyHeaders'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'

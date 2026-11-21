@@ -239,8 +239,8 @@ Right click on a cell.
 | `row.size.resetRow` | `Reset row height` | the row right clicked back to the height of the layout |
 | `row.size.resetAllRows` | `Reset all row heights` | every row back to the height of the layout |
 | `row.export` | `Export:` | section header |
-| `row.export.csv` | `CSV, all rows` | downloads the rows the filter lets through |
-| `row.export.csvSelected` | `CSV, selected rows` | downloads the selected rows |
+| `row.export.excel` | `Excel, all rows` | downloads the rows the filter lets through as an .xlsx file |
+| `row.export.excelSelected` | `Excel, selected rows` | downloads the selected rows as an .xlsx file |
 
 ### Header menu
 
@@ -470,12 +470,16 @@ Of a date cell and a date header filter, and a `DateInterface` of your own.
 
 | id | English | shown |
 | --- | --- | --- |
-| `datePicker.hours` | `HH` | label over the hours |
-| `datePicker.minutes` | `MM` | label over the minutes |
+| `datePicker.hours` | `HH` | label in front of the hours, and their name for a screen reader |
+| `datePicker.minutes` | `MM` | label in front of the minutes, and their name for a screen reader |
 | `datePicker.week` | `W` | header of the week numbers |
 | `datePicker.clear` | `Clear` | button, empties the date |
 | `datePicker.now` | `Now` | button, goes to now |
 | `datePicker.use` | `Use` | button, picks the date |
+| `datePicker.previousYear` | `Previous year` | the « button left of the month: its name for a screen reader and its tooltip |
+| `datePicker.previousMonth` | `Previous month` | the ‹ button left of the month |
+| `datePicker.nextMonth` | `Next month` | the › button right of the month |
+| `datePicker.nextYear` | `Next year` | the » button right of the month |
 
 | id | English |
 | --- | --- |

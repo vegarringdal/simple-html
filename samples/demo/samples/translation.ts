@@ -61,8 +61,8 @@ const norwegian: Record<TextId, string> = {
     'row.size.resetRow': 'Tilbakestill radhøyden',
     'row.size.resetAllRows': 'Tilbakestill alle radhøyder',
     'row.export': 'Eksport:',
-    'row.export.csv': 'CSV, alle rader',
-    'row.export.csvSelected': 'CSV, valgte rader',
+    'row.export.excel': 'Excel, alle rader',
+    'row.export.excelSelected': 'Excel, valgte rader',
     'row.summary.avg': 'Snitt: {avg}',
 
     // the header menu
@@ -221,6 +221,10 @@ const norwegian: Record<TextId, string> = {
     'datePicker.clear': 'Tøm',
     'datePicker.now': 'Nå',
     'datePicker.use': 'Bruk',
+    'datePicker.previousYear': 'Forrige år',
+    'datePicker.previousMonth': 'Forrige måned',
+    'datePicker.nextMonth': 'Neste måned',
+    'datePicker.nextYear': 'Neste år',
     'datePicker.month.january': 'Januar',
     'datePicker.month.february': 'Februar',
     'datePicker.month.march': 'Mars',

@@ -142,10 +142,22 @@ describe('clipboard - copy', () => {
         const { text, taken } = copy();
 
         expect(taken).toBe(true);
-        expect(text).toBe('n1\tc1\t10\t2026-01-02\tfalse\r\nn2\tc2\t20\t2026-01-03\ttrue\r\n');
+        // the header line first: the column labels (copyHeaders), so Word and Excel show them
+        expect(text).toBe('Name\tCity\tAge\tBorn\tActive\r\nn1\tc1\t10\t2026-01-02\tfalse\r\nn2\tc2\t20\t2026-01-03\ttrue\r\n');
     });
 
-    it('expect an html table of the same cells, escaped, a line break kept in the cell', async () => {
+    it('expect no header line with copyHeaders: false', async () => {
+        const { element, gridInterface } = await mount({ copyHeaders: false });
+        gridInterface.setRanges([range(1, 'name', 2, 'city')]);
+        focusCell(element, 1, 'name');
+
+        const { text, html } = copy();
+
+        expect(text).toBe('n1\tc1\r\nn2\tc2\r\n');
+        expect(html).not.toContain('<th');
+    });
+
+    it('expect an html table of the same cells with a header row, escaped, a line break kept in the cell', async () => {
         const { element, datasource, gridInterface } = await mount();
         datasource.getRow(1).name = '<b>&"x"</b>';
         datasource.getRow(2).name = 'two\nlines';
@@ -154,8 +166,12 @@ describe('clipboard - copy', () => {
 
         const { html } = copy();
 
+        const td = '<td style="border:1px solid #999;padding:2px 4px">';
+        const th = '<th style="border:1px solid #999;padding:2px 4px">';
         expect(html).toBe(
-            '<table><tr><td>&lt;b&gt;&amp;&quot;x&quot;&lt;/b&gt;</td><td>c1</td></tr><tr><td>two<br style="mso-data-placement:same-cell">lines</td><td>c2</td></tr></table>'
+            `<table style="border-collapse:collapse"><thead><tr>${th}Name</th>${th}City</th></tr></thead><tbody>` +
+                `<tr>${td}&lt;b&gt;&amp;&quot;x&quot;&lt;/b&gt;</td>${td}c1</td></tr>` +
+                `<tr>${td}two<br style="mso-data-placement:same-cell">lines</td>${td}c2</td></tr></tbody></table>`
         );
     });
 
@@ -167,7 +183,7 @@ describe('clipboard - copy', () => {
         gridInterface.setRanges([range(1, 'name', 2, 'city')]);
         focusCell(element, 1, 'name');
 
-        expect(copy().text).toBe('"a\tb"\t"say ""hi"""\r\n"two\r\nlines"\tc2\r\n');
+        expect(copy().text).toBe('Name\tCity\r\n"a\tb"\t"say ""hi"""\r\n"two\r\nlines"\tc2\r\n');
     });
 
     it('expect the range drawn upwards and leftwards to be copied top to bottom, left to right', async () => {
@@ -175,15 +191,27 @@ describe('clipboard - copy', () => {
         gridInterface.setRanges([range(2, 'city', 1, 'name')]);
         focusCell(element, 2, 'city');
 
-        expect(copy().text).toBe('n1\tc1\r\nn2\tc2\r\n');
+        expect(copy().text).toBe('Name\tCity\r\nn1\tc1\r\nn2\tc2\r\n');
     });
 
-    it('expect several ranges to copy the last one, the one made last', async () => {
+    it('expect several ranges copied as one table: their rows x their fields, a cell in no range empty', async () => {
         const { element, gridInterface } = await mount();
         gridInterface.setRanges([range(0, 'name', 0, 'name'), range(3, 'city', 4, 'city')]);
         focusCell(element, 3, 'city');
 
-        expect(copy().text).toBe('c3\r\nc4\r\n');
+        expect(copy().text).toBe('Name\tCity\r\nn0\t\r\n\tc3\r\n\tc4\r\n');
+    });
+
+    it('expect two ranges side by side to be one wide table, one above the other one long table', async () => {
+        const { element, gridInterface } = await mount();
+        // name and age, rows 1-2: city between them is in no range, so it is not copied
+        gridInterface.setRanges([range(1, 'name', 2, 'name'), range(1, 'age', 2, 'age')]);
+        focusCell(element, 1, 'age');
+        expect(copy().text).toBe('Name\tAge\r\nn1\t10\r\nn2\t20\r\n');
+
+        gridInterface.setRanges([range(0, 'city', 1, 'city'), range(4, 'city', 4, 'city')]);
+        focusCell(element, 4, 'city');
+        expect(copy().text).toBe('City\r\nc0\r\nc1\r\nc4\r\n');
     });
 
     it('expect no group row in what is copied', async () => {
@@ -194,13 +222,19 @@ describe('clipboard - copy', () => {
         gridInterface.setRanges([range(3, 'city', 6, 'city')]);
         focusCell(element, 3, 'city');
 
-        expect(copy().text.split('\r\n')).toHaveLength(4);
+        // the header, rows 3, 4 and 6, and the empty text after the last line end
+        expect(copy().text.split('\r\n')).toHaveLength(5);
     });
 
     it('expect one cell with no text selected: its value as the cell shows it, quoted when it has to be, no line end', async () => {
         const { element, datasource } = await mount();
         focusCell(element, 2, 'born');
-        expect(copy()).toEqual({ text: '2026-01-03', html: '<table><tr><td>2026-01-03</td></tr></table>', taken: true });
+        // a value: no header line
+        expect(copy()).toEqual({
+            text: '2026-01-03',
+            html: '<table style="border-collapse:collapse"><tbody><tr><td style="border:1px solid #999;padding:2px 4px">2026-01-03</td></tr></tbody></table>',
+            taken: true
+        });
 
         datasource.getRow(3).notes = 'two\nlines';
         await sleep(30);
@@ -235,7 +269,7 @@ describe('clipboard - copy', () => {
         expect(copy(document.body).text).toBe('true');
 
         gridInterface.setRanges([range(1, 'active', 2, 'active')]);
-        expect(copy(document.body).text).toBe('false\r\ntrue\r\n');
+        expect(copy(document.body).text).toBe('Active\r\nfalse\r\ntrue\r\n');
     });
 
     it('expect a copy in a readonly grid too', async () => {
@@ -243,7 +277,7 @@ describe('clipboard - copy', () => {
         gridInterface.setRanges([range(0, 'name', 1, 'name')]);
         focusCell(element, 0, 'name');
 
-        expect(copy().text).toBe('n0\r\nn1\r\n');
+        expect(copy().text).toBe('Name\r\nn0\r\nn1\r\n');
     });
 
     it('expect nothing taken when the focus is not in a cell of the grid: a header filter, another input', async () => {
@@ -304,6 +338,40 @@ describe('clipboard - paste', () => {
         expect(values(datasource, 'active', [1, 2])).toEqual([true, false]);
         // the cells pasted into are a range now: where it went
         expect(gridInterface.getRanges()).toEqual([range(1, 'city', 2, 'active')]);
+    });
+
+    it("expect a first line of the grid's column labels left out: a copy's header is not written into cells", async () => {
+        const { element, datasource } = await mount();
+        focusCell(element, 1, 'city');
+
+        // labels of any of the grid's columns, any case: also pasted into other columns than copied from
+        paste('Name\tAGE \r\nOslo\t12\r\n');
+
+        expect(values(datasource, 'city', [1, 2])).toEqual(['Oslo', 'c2']);
+        expect(values(datasource, 'age', [1])).toEqual([12]);
+    });
+
+    it('expect a first line that is not all labels to be pasted', async () => {
+        const { element, datasource } = await mount();
+        focusCell(element, 1, 'city');
+
+        paste('City\tsomething else\r\nOslo\t12\r\n');
+
+        expect(values(datasource, 'city', [1, 2])).toEqual(['City', 'Oslo']);
+    });
+
+    it('expect a copy pasted back into the grid to write the values, not the labels', async () => {
+        const { element, datasource, gridInterface } = await mount();
+        gridInterface.setRanges([range(0, 'city', 1, 'city')]);
+        focusCell(element, 0, 'city');
+        const { text } = copy();
+        expect(text.startsWith('City\r\n')).toBe(true);
+
+        gridInterface.clearRanges();
+        focusCell(element, 3, 'city');
+        paste(text);
+
+        expect(values(datasource, 'city', [3, 4])).toEqual(['c0', 'c1']);
     });
 
     it('expect a block from the top left cell of the last range, the range drawn upwards too', async () => {
@@ -567,7 +635,7 @@ describe('clipboard - the row menu', () => {
         expect(document.querySelector('[data-menu-id$=".range"]')).toBeNull();
     });
 
-    it('expect Copy: Range to put the last range on the clipboard, as Ctrl+C does', async () => {
+    it('expect Copy: Range to put the ranges on the clipboard, as Ctrl+C does', async () => {
         const { element, gridInterface } = await mount();
         const written = stubExecCommand();
         // the focus in a cell outside the range: the menu copies the range all the same
@@ -577,7 +645,36 @@ describe('clipboard - the row menu', () => {
         openRowMenu(element, 'name', 0);
         menuItem('Range').click();
 
-        expect(written.map(({ text }) => text)).toEqual(['n0\tc0\r\nn1\tc1\r\n']);
+        expect(written.map(({ text }) => text)).toEqual(['Name\tCity\r\nn0\tc0\r\nn1\tc1\r\n']);
+    });
+
+    it('expect Copy: Column and Row of the selected rows with the header line, values as the cells show them', async () => {
+        const { element, datasource } = await mount();
+        const written = stubExecCommand();
+        datasource.getRow(1).name = '<b>';
+        datasource.getSelection().selectRowRange(1, 2);
+
+        openRowMenu(element, 'born', 1);
+        menuItem('Column').click();
+        openRowMenu(element, 'born', 1);
+        menuItem('Row').click();
+
+        expect(written[0].text).toBe('Born\r\n2026-01-02\r\n2026-01-03\r\n');
+        expect(written[0].html).toContain('<thead><tr><th style="border:1px solid #999;padding:2px 4px">Born</th></tr></thead>');
+        expect(written[1].text.split('\r\n')[0]).toBe('Name\tCity\tAge\tBorn\tActive\tNotes');
+        // escaped: the old html table of the row menu was not
+        expect(written[1].html).toContain('&lt;b&gt;');
+        expect(written[1].html).not.toContain('<b>');
+    });
+
+    it('expect Copy: Cell Value to copy the value only: no header, no html', async () => {
+        const { element } = await mount();
+        const written = stubExecCommand();
+
+        openRowMenu(element, 'born', 2);
+        menuItem('Cell Value').click();
+
+        expect(written).toEqual([{ text: '2026-01-03', html: '', taken: true }]);
     });
 
     it('expect Copy: Cell Value with a range not to be written over by the copy of the range', async () => {

@@ -180,8 +180,8 @@ The "shown as" below is the English text.
 | `row.size.resetRow` | Reset row height: the row right clicked, `resetRowHeights(row)`. Greyed out when it has the height of the layout | |
 | `row.size.resetAllRows` | Reset all row heights: `resetRowHeights()`. Greyed out when no row has a height of its own | |
 | `row.export` | Export: | |
-| `row.export.csv` | CSV, all rows: `gridInterface.downloadCsv()`, see [Export](15-export.md) | |
-| `row.export.csvSelected` | CSV, selected rows: `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
+| `row.export.excel` | Excel, all rows: `gridInterface.downloadExcel()`, an .xlsx file, see [Export](15-export.md) | |
+| `row.export.excelSelected` | Excel, selected rows: `downloadExcel('export.xlsx', { rows: 'selected' })`. Greyed out when no row is selected | |
 
 ### Header menu (`MENU_IDS.header`)
 

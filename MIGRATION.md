@@ -2075,6 +2075,27 @@ New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can cha
 
 ## Other behaviour changes
 
+* **`autoResizeColumns()` is `fitColumns()`** (the old name still works, deprecated): it measures what
+  the cells show, the filtered rows only. `fitColumns(['name'])` fits one column, `resetColumnWidths()`
+  goes back. Rows can be fitted to their multiline text: `fitRows()` / `resetRowHeights()`.
+
+* **Copies of more than one cell start with a header line** of the column labels (text and html), and
+  several ranges copy as one table. `copyHeaders: false` gives the values only. The row menu's copies
+  write what the cells show (not ISO dates / raw numbers).
+
+* **The date picker's class names are prefixed** (`.year` -> `.simple-html-date-year`, `.side` ->
+  `.simple-html-date-time-field`, `.date-flex-col` -> `.simple-html-date-actions` ..., see the
+  changelog) - css of your own that styled the old names needs the new ones. `datepickerHeight`
+  defaults to 282.
+
+* **The row menu exports Excel**: `row.export.csv` / `row.export.csvSelected` are now
+  `row.export.excel` / `row.export.excelSelected` (texts too). CSV is still `getCsv()` /
+  `downloadCsv()`; a `menus` hook can add a CSV entry back.
+
+* **The wheel over the grid no longer scrolls the page**: the grid cancels it. Ctrl+wheel (zoom) is
+  the browser's as before. A test that sent a `wheel` event with `wheelDeltaY` has to send
+  `deltaY` (`new WheelEvent('wheel', { deltaY: 40 })` scrolls the rows down 40px).
+
 * **An empty text or number header filter shows `Text` / `Number`**, not 🔍 - the texts
   `filter.placeholder.text` / `filter.placeholder.number`. A test that looked for the 🔍 placeholder
   has to look for those; `placeholderFilter` on a column still wins.

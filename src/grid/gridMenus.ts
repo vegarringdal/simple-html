@@ -330,8 +330,8 @@ export interface GridMenus {
  * | `row.size.resetRow` | Reset row height - the row right clicked (`resetRowHeights(row)`). Greyed out when it has the height of the layout | |
  * | `row.size.resetAllRows` | Reset all row heights (`resetRowHeights()`). Greyed out when no row has a height of its own | |
  * | `row.export` | Export: | |
- * | `row.export.csv` | CSV, all rows - `gridInterface.downloadCsv()`: the rows the filter lets through, as the grid shows them | |
- * | `row.export.csvSelected` | CSV, selected rows - `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
+ * | `row.export.excel` | Excel, all rows - `gridInterface.downloadExcel()`: the rows the filter lets through, as an .xlsx file | |
+ * | `row.export.excelSelected` | Excel, selected rows - `downloadExcel('export.xlsx', { rows: 'selected' })`. Greyed out when no row is selected | |
  *
  * Header menu (`GridMenus.header`), right click on a header label:
  *
@@ -434,8 +434,8 @@ export const MENU_IDS = {
         'row.size.resetRow',
         'row.size.resetAllRows',
         'row.export',
-        'row.export.csv',
-        'row.export.csvSelected'
+        'row.export.excel',
+        'row.export.excelSelected'
     ],
     /** the header menu's ids, right click on a header label */
     header: [

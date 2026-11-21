@@ -969,6 +969,45 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The `row-is-*` states had no built-in look.
 - A row's errors were in its tooltip only; a screen reader now gets them with the row number.
 
+#### The date picker redesigned, no rounded buttons (user request)
+
+##### ⚠️ Breaking changes
+- The date picker's generic class names are prefixed (they also picked up page css): `.year` ->
+  `.simple-html-date-year`; `.main` -> `.simple-html-date-month-title` / `.simple-html-date-month-name`;
+  `.month` is gone (`.simple-html-date-month-header` is the row); `.side` -> `.simple-html-date-time-field`;
+  `.icon` -> `.simple-html-date-nav` / `.simple-html-date-step`; `.date-flex` -> `.simple-html-date-time-row`;
+  `.date-flex-col` -> `.simple-html-date-actions`; the time `<label>` -> `.simple-html-date-time-label`.
+- `--simple-html-date-main-bg-border` colours only the lines (button frames:
+  `--simple-html-date-button-border`, the selected frame: `--simple-html-date-selected-border`);
+  `--simple-html-date-main-bg-selected` is no longer the button hover (`--simple-html-date-hover-bg-color`).
+- `datepickerHeight` defaults to 282 (was 317): the picker is 277px tall now.
+
+##### Changed
+- Flat and square, the grid's font: month and year on one line with square « ‹ › » buttons (« »
+  change the year); quieter week numbers and other months' days (readable now: they were 1.3:1);
+  today bold with a bar under it, apart from the selected day (fill and frame); hour and minute a number
+  between two square steppers; Clear / Now / Use an equal-width button bar, Use the primary. Text at
+  least 4.5:1, the marks 3:1, light and dark.
+- **No rounded corners in the grid's own UI**: the footer chips, Clear, the row count, the filter
+  group box, the filter editor and its buttons, the column chooser and filter menu buttons, the tooltip.
+- New `DateInterface.nextYear()` / `prevYear()`; texts `datePicker.previousYear` / `previousMonth` /
+  `nextMonth` / `nextYear` (the buttons' names); variables `--simple-html-date-button-border`,
+  `-hover-bg-color`, `-selected-border`, `-today-color`.
+
+##### Fixed
+- The picker's buttons are `type="button"`: a picker in a `<form>` no longer submits it. The hour and
+  minute inputs have names for screen readers.
+
+#### The wheel scrolls the grid, not the page
+
+##### Fixed
+- The wheel over the grid also scrolled the page under it (the event was not cancelled): it is now,
+  so a grid in a scrolling page keeps the wheel, also at its first and last row. Ctrl+wheel (the
+  browser's zoom, a trackpad's pinch) is left alone.
+- The wheel used the non-standard `wheelDeltaY` (Firefox has none): it uses `deltaX` / `deltaY`, a
+  wheel that counts lines or pages moves as many px, and left/right (a trackpad, Shift+wheel) scrolls
+  the middle columns.
+
 #### Header filters say what to type
 
 ##### ⚠️ Breaking changes
@@ -1150,6 +1189,76 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 ##### Fixed
 - Row menu "Summary:": the max of negative numbers was 0, min skipped 0, the average was rounded to a
   whole number and counted blank cells. A text value (`'12'`) is no longer read as a number.
+
+#### Fit and reset column widths and row heights, like Excel; the multiline tooltip (user request)
+
+##### ⚠️ Breaking changes
+- `autoResizeColumns()` is deprecated, use `fitColumns()`: it measures the text as the cells show it
+  (formatted, `numberOverride`), only the rows the filter lets through, a multiline text by its widest
+  line (it measured the stored values of every row).
+- Header menu: `header.size.column` / `header.size.all` read "Fit column width" / "Fit all columns".
+- A multiline cell's tooltip shows the first 5 lines and "… N more lines"
+  (`GridConfig.multilineTooltipLines`), each line cut at 100 characters (was 15 lines / 600).
+- The row menu has a "Size:" section before "Export:" (new ids in `MENU_IDS.row`).
+
+##### Added
+- `gridInterface.fitColumns(fields?, { rows? })` (one, some or every column; `{ rows: [row] }` fits a
+  column to one cell) and `resetColumnWidths(fields?)` (back to the widths `resetState()` gives). A
+  double-click on a column's resize handle fits it.
+- `gridInterface.fitRows(rows?)` / `resetRowHeights(rows?)`: a row as many lines high as its multiline
+  cells need (at most 20), kept by row key (not in the state); a multiline cell shows its lines in a
+  taller row. 100 000 rows: `fitRows()` ~85 ms, `fitColumns()` ~180 ms (the 20 longest texts of a field
+  are measured).
+- `GridConfig.multilineTooltipLines` (default 5).
+- Header menu: Reset column width / Reset all column widths. Row menu "Size:": Fit column to this cell,
+  Fit row height, Fit rows (selected rows / ranges), Fit all rows, Reset row height, Reset all row
+  heights. Texts `row.size.*`, `header.size.reset*`, `cell.multiline.moreLines`.
+
+##### Fixed
+- Fitting columns counted rows the filter hides, skipped dates, ignored `numberOverride`, and measured
+  a multiline text as one long line.
+- A press on a resize handle that does not move rebuilt the header, so a double-click never reached it.
+- Scrolling to a selected row uses the row's own height.
+
+#### The clipboard: every range, with the column headers (user request)
+
+##### ⚠️ Breaking changes
+- A copy of more than one cell starts with a **header line of the column labels**, in the text and in
+  the html table (`<thead>`): Ctrl+C on ranges and the row menu's Copy: Column / Row / Row (selected
+  rows/col) / Range. `GridConfig.copyHeaders: false` copies the values only. One cell (Ctrl+C, Copy:
+  Cell Value) is still just its value.
+- **Several ranges are copied as one table** (they copied the last range): the rows of every range x
+  the fields of every range, a cell in no range empty.
+- The row menu's copies write the values **as the cells show them** (they wrote dates as ISO and
+  numbers raw), through the same code as Ctrl+C.
+
+##### Added
+- `GridConfig.copyHeaders` (default `true`).
+- A paste whose first line is all column labels of the grid leaves that line out: a copy of the grid
+  pasted back into it writes the values, not the labels.
+
+##### Fixed
+- The row menu's copied html table did not escape the values (a `<` broke the table); it had no header
+  in its plain text.
+
+#### Excel export (user request)
+
+##### ⚠️ Breaking changes
+- The row menu's **Export:** offers Excel instead of CSV: `row.export.excel` ("Excel, all rows") and
+  `row.export.excelSelected` ("Excel, selected rows"); `row.export.csv` / `row.export.csvSelected` and
+  their texts are gone. `getCsv()` / `downloadCsv()` stay.
+
+##### Added
+- `gridInterface.getExcel(options?)` (a `Promise<Blob>`) and `downloadExcel(filename = 'export.xlsx',
+  options?)`: a real .xlsx with no dependency - the grid writes the ZIP and the SpreadsheetML, deflated
+  with `CompressionStream` where there is one. Typed cells: numbers, dates and datetimes (the local
+  day, Excel date formats), booleans, text (line breaks wrapped). The header row is always there, bold
+  and frozen, with an autofilter over every row; the widths follow the grid's. **Always a flat list**:
+  grouped, every data row in the grouped order, collapsed groups included - no group rows, no outline,
+  no totals.
+- `ExcelOptions`: `rows: 'all' | 'selected' | 'range'`, `fields`, `sheetName` (Excel's rules, a
+  `TypeError` otherwise). More rows or columns than Excel takes reject with a `RangeError`.
+- The export guide covers Excel first; the export sample has Excel buttons.
 
 #### CSV export (item 41)
 

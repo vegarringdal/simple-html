@@ -43,7 +43,9 @@ function text(selector: string) {
     return document.querySelector(selector)?.textContent;
 }
 
-describe('docs site', () => {
+// the site is built once and every guide is rendered with its live grids: seconds, more than the 5s vitest
+// gives a test when the machine is busy (other test runs, builds)
+describe('docs site', { timeout: 30_000 }, () => {
     beforeAll(() => {
         stubCanvas();
         stubElementSizes();

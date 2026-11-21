@@ -83,7 +83,7 @@ describe('grid date picker', () => {
 
         const picker = await openPicker(element);
 
-        expect(picker.querySelector('.year')?.textContent?.trim()).toEqual('2001');
+        expect(picker.querySelector('.simple-html-date-year')?.textContent?.trim()).toEqual('2001');
         expect(picker.querySelector('.simple-html-date-day-selected')?.textContent?.trim()).toEqual('17');
     });
 
@@ -92,7 +92,7 @@ describe('grid date picker', () => {
 
         const picker = await openPicker(element);
 
-        expect(picker.querySelector('.year')?.textContent?.trim()).toEqual('2001');
+        expect(picker.querySelector('.simple-html-date-year')?.textContent?.trim()).toEqual('2001');
         expect(picker.querySelector('.simple-html-date-day-selected')?.textContent?.trim()).toEqual('17');
     });
 

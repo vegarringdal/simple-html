@@ -3,6 +3,9 @@
  * light-dark(<light>, <dark>): it follows the color-scheme of the page, as the grid does - no
  * color-scheme (normal) or `light` gives the first, `color-scheme: dark` the second.
  * guides/13-theming.md has the list.
+ *
+ * The look follows the grid: flat, square corners, thin lines, the grid's font. The text has a
+ * contrast of at least 4.5:1, the marks of the selected day and of today at least 3:1 (WCAG AA).
  */
 .simple-html-date {
     text-align: initial;
@@ -11,15 +14,23 @@
     /* the text */
     --simple-html-date-main-color: light-dark(#2e2d2d, #f9f7f7);
     /* the days of the month before and after, the year of the month before and after */
-    --simple-html-date-dimmed-color: light-dark(#dfdfdf, #979494);
-    /* the week numbers, the hour/minute labels */
-    --simple-html-date-week-color: light-dark(#8b8b8b, #b4b4b4);
+    --simple-html-date-dimmed-color: light-dark(#767676, #adadad);
+    /* the week numbers, the names of the days, the hour/minute labels */
+    --simple-html-date-week-color: light-dark(#6b6b6b, #b4b4b4);
     /* not used by this css, kept so overrides of it still work */
     --simple-html-date-header-bg-border: light-dark(#181515, #8b8b8b);
-    /* the lines, the frame of the buttons and of the selected day and the day under the pointer */
-    --simple-html-date-main-bg-border: light-dark(#e6e5e5, #979494);
-    /* the selected day, a button under the pointer */
+    /* the lines: under the names of the days, right of the week numbers, over the time */
+    --simple-html-date-main-bg-border: light-dark(#e6e5e5, #4b5563);
+    /* the frame of the buttons and of the hour/minute inputs */
+    --simple-html-date-button-border: light-dark(#d1d0d0, #6b7280);
+    /* a day or a button under the pointer */
+    --simple-html-date-hover-bg-color: light-dark(#e5ebf1, #4b5563);
+    /* the selected day, the Use button */
     --simple-html-date-main-bg-selected: light-dark(#bdd4e7, #234882);
+    /* the frame of the selected day and of the Use button: 3:1 to the background */
+    --simple-html-date-selected-border: light-dark(#3f73a8, #7fb0ff);
+    /* the bar under today: 3:1 to the background and to the selected day */
+    --simple-html-date-today-color: light-dark(#005fcc, #93c5fd);
     /* the outline of the element that has the keyboard focus */
     --simple-html-date-focus-color: light-dark(#005fcc, #b3d7ff);
     /* same defaults as the grid, so the widget looks identical standalone -
@@ -35,132 +46,20 @@
     user-select: none;
 }
 
+/* a row of months: a calendar shows monthColumns side by side, a date picker one */
 .simple-html-date .simple-html-date-col {
     display: flex;
     flex-direction: row;
 }
 
-.simple-html-date .simple-html-date-time {
-    border-top: 1px solid var(--simple-html-date-main-bg-border);
-    margin-top: 5px;
-    display: flex;
-    flex-direction: column;
-    color: var(--simple-html-date-week-color);
-}
-
-.simple-html-date .simple-html-date-time .side {
-    flex: 1 1 0%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-top: 5px;
-}
-.simple-html-date .simple-html-date-time .side input {
-    text-align: center;
-    font-family: inherit;
-    font-size: inherit;
-    color: var(--simple-html-date-main-color);
-    background-color: var(--simple-html-date-main-bg-color);
-    border: 0px;
-}
-
-.simple-html-date .simple-html-date-time .side input::-webkit-outer-spin-button,
-.simple-html-date .simple-html-date-time .side input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-    
-}
-
-.date-flex {
-    flex: 1 1 0%;
-    display: flex;
-}
-
-.date-flex-col {
-    width: 100%;
-    flex: 1 1 0%;
-    display: flex;
-}
-
-.date-flex-col button{
-    margin: 5px;
-    margin-top: 10px;
-}
-
-/* Clear/Now/Use - follow the widget theme instead of native button chrome */
-.simple-html-date button {
-    font-family: inherit;
-    font-size: inherit;
-    color: var(--simple-html-date-main-color);
-    background-color: var(--simple-html-date-main-bg-color);
-    border: 1px solid var(--simple-html-date-main-bg-border);
-    border-radius: 3px;
-    padding: 3px 10px;
-    cursor: pointer;
-}
-
-.simple-html-date button:hover {
-    background-color: var(--simple-html-date-main-bg-selected);
-}
-
+/* a month: its width and margin are set from monthWidth and monthMargin */
 .simple-html-date .simple-html-date-month {
     position: relative;
     display: flex;
     flex-direction: column;
 }
-.simple-html-date .simple-html-date-month-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 5px;
-}
-.simple-html-date .simple-html-date-month-header .year {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    
-}
 
-.simple-html-date .icon {
-    width: 20px;
-    height: 20px;
-    margin: 3px;
-    cursor: pointer;
-}
-
-.simple-html-date .simple-html-date-month-header .month {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: medium;
-}
-.simple-html-date .simple-html-date-month-header .main {
-    flex: 1 1 0%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-}
-
-.simple-html-date .simple-html-date-month-header .side {
-    flex: 1 1 0%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--simple-html-date-dimmed-color);
-}
-
-.simple-html-date .simple-html-date-day-row {
-    display: flex;
-    box-sizing: border-box;
-}
-
+/* the title over the months of a calendar (headerTitle), a date picker has none */
 .simple-html-date .simple-html-date-header {
     flex: 1 1 0%;
     display: flex;
@@ -170,18 +69,60 @@
     font-weight: 600;
 }
 
-.simple-html-date .simple-html-date-header-row {
+/**
+ * The month and the year on one line. A date picker has square buttons around them:
+ * « ‹ (the year and the month before), › » (the month and the year after)
+ */
+.simple-html-date .simple-html-date-month-header {
     display: flex;
     align-items: center;
+    gap: 4px;
+    height: 24px;
+    margin-bottom: 4px;
+}
+
+.simple-html-date .simple-html-date-month-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: calc(var(--simple-html-date-font-size) + 1px);
+    font-weight: 700;
+}
+
+/* « ‹ › »: no frame until the pointer is over one, they are quieter than Clear / Now / Use */
+.simple-html-date .simple-html-date-nav {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
-    border-top: 1px solid var(--simple-html-date-main-bg-border);
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-color: transparent;
+}
+
+.simple-html-date .simple-html-date-nav:hover {
+    border-color: var(--simple-html-date-button-border);
+}
+
+.simple-html-date .simple-html-date-nav svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* the names of the days, with the line under them. The height is rowHeight */
+.simple-html-date .simple-html-date-header-row {
+    display: flex;
     border-bottom: 1px solid var(--simple-html-date-main-bg-border);
 }
 
-.simple-html-date .simple-html-date-week-header {
+/* the "W" over the week numbers, and the names of the days */
+.simple-html-date .simple-html-date-week-header,
+.simple-html-date .simple-html-date-day-header {
     position: relative;
-    margin-left: 1px;
-    margin-top: 1px;
     flex: 1;
     display: flex;
     align-items: center;
@@ -191,16 +132,16 @@
     user-select: none;
 }
 
-.simple-html-date .simple-html-date-day-header {
-    position: relative;
-    margin-left: 1px;
-    margin-top: 1px;
-    flex: 1;
+/* a week of days. The height is rowHeight */
+.simple-html-date .simple-html-date-day-row {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    user-select: none;
+    box-sizing: border-box;
+}
+
+/* the column of the week numbers: quiet, with a line between it and the days */
+.simple-html-date .simple-html-date-week-header,
+.simple-html-date .simple-html-date-week {
+    border-right: 1px solid var(--simple-html-date-main-bg-border);
 }
 
 .simple-html-date .simple-html-date-week {
@@ -210,10 +151,9 @@
     align-items: center;
     justify-content: center;
     color: var(--simple-html-date-week-color);
-    font-weight: 100;
-    font-style: italic;
 }
 
+/* a day: a square cell, the frame is there (transparent) so the selected day does not move */
 .simple-html-date .simple-html-date-day {
     position: relative;
     flex: 1;
@@ -222,25 +162,152 @@
     justify-content: center;
     box-sizing: border-box;
     border: 1px solid transparent;
+    cursor: pointer;
 }
 
+/* a day of the month before or after */
 .simple-html-date .simple-html-date-day-dimmed {
     color: var(--simple-html-date-dimmed-color);
+    cursor: default;
 }
 
-.simple-html-date .simple-html-date-day-selected {
-    background-color: var(--simple-html-date-main-bg-selected);
-    border: 1px solid var(--simple-html-date-main-bg-border);
-    box-sizing: border-box;
-}
-
+/* a day of the month before or after with hideDimmedDates: empty, it can not be clicked */
 .simple-html-date .simple-html-date-day-hidden {
     pointer-events: none; /* disable hover */
 }
 
-.simple-html-date .simple-html-date-day:hover:not(.simple-html-date-day-dimmed) {
-    border: 1px solid var(--simple-html-date-main-bg-border);
+/* the pointer over a day of the month - not the selected day, it keeps its colour */
+.simple-html-date .simple-html-date-day:hover:not(.simple-html-date-day-dimmed):not(.simple-html-date-day-selected) {
+    background-color: var(--simple-html-date-hover-bg-color);
+}
+
+/* today: bold, with a bar under it - inside the frame, so it shows on the selected day too */
+.simple-html-date .simple-html-date-day-today {
+    font-weight: 700;
+    box-shadow: inset 0 -2px 0 var(--simple-html-date-today-color);
+}
+
+.simple-html-date .simple-html-date-day-selected {
+    background-color: var(--simple-html-date-main-bg-selected);
+    border-color: var(--simple-html-date-selected-border);
+}
+
+/* the bottom of a date picker: the time, and the Clear / Now / Use buttons */
+.simple-html-date .simple-html-date-time {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--simple-html-date-main-bg-border);
+}
+
+/* the hours and the minutes, side by side */
+.simple-html-date .simple-html-date-time-row {
+    display: flex;
+}
+
+.simple-html-date .simple-html-date-time-field {
+    flex: 1 1 0%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.simple-html-date .simple-html-date-time-label {
+    color: var(--simple-html-date-week-color);
+    font-weight: 600;
+}
+
+/* the number between a step down and a step up, in one frame */
+.simple-html-date .simple-html-date-stepper {
+    display: flex;
+    box-sizing: border-box;
+    height: 24px;
+    border: 1px solid var(--simple-html-date-button-border);
+}
+
+.simple-html-date .simple-html-date-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    cursor: pointer;
+}
+
+.simple-html-date .simple-html-date-step:hover {
+    background-color: var(--simple-html-date-hover-bg-color);
+}
+
+.simple-html-date .simple-html-date-step svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* the number: the margin and padding of the grid's inputs (.simple-html-grid input) off */
+.simple-html-date .simple-html-date-stepper input {
+    box-sizing: border-box;
+    width: 32px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid var(--simple-html-date-button-border);
+    border-right: 1px solid var(--simple-html-date-button-border);
+    border-radius: 0;
+    text-align: center;
+    font-family: inherit;
+    font-size: inherit;
     color: var(--simple-html-date-main-color);
+    background-color: var(--simple-html-date-main-bg-color);
+    /* no spin buttons: the steps are beside it, the arrow keys still step */
+    appearance: textfield;
+}
+
+.simple-html-date .simple-html-date-stepper input::-webkit-outer-spin-button,
+.simple-html-date .simple-html-date-stepper input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Clear / Now / Use: a bar of buttons of the same width */
+.simple-html-date .simple-html-date-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.simple-html-date .simple-html-date-actions button {
+    flex: 1 1 0%;
+    height: 24px;
+}
+
+/* the buttons: square and flat, the widget's colours instead of the browser's button */
+.simple-html-date button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 8px;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--simple-html-date-main-color);
+    background-color: var(--simple-html-date-main-bg-color);
+    border: 1px solid var(--simple-html-date-button-border);
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.simple-html-date button:hover {
+    background-color: var(--simple-html-date-hover-bg-color);
+}
+
+/* Use - sends the date picked: in the colours of the selected day */
+.simple-html-date .simple-html-date-button-primary {
+    font-weight: 700;
+    background-color: var(--simple-html-date-main-bg-selected);
+    border-color: var(--simple-html-date-selected-border);
+}
+
+.simple-html-date .simple-html-date-button-primary:hover {
+    background-color: color-mix(in srgb, var(--simple-html-date-main-bg-selected) 75%, var(--simple-html-date-selected-border));
 }
 
 /**

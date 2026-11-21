@@ -96,6 +96,7 @@ const fullConfig = (): GridConfig => ({
     dimRepeatedValues: true,
     rowStatus: false,
     editedMarker: false,
+    copyHeaders: false,
     tooltips: false,
     texts: { 'filterEditor.close.tooltip': 'Lukk', 'datePicker.month.january': 'Januar', 'row.summary.count': 'Antall: {count}' },
     datePickerConfig: {

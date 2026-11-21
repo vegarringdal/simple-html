@@ -1286,10 +1286,99 @@ in the console. All passed. Found and fixed:
 * left: Cut (Ctrl+X) of a range; real Excel / Sheets interop untested (format checked only); after the
   wheel takes the focus from a cell, Ctrl+C/V go to the page
 
+### The wheel over the grid kept scrolling the page (user report)
+
+* the wheel listener set the body scroller's scrollTop but did not cancel the event, so the browser
+  scrolled the page too (the rows' views are overflow hidden, the page was the next thing to scroll);
+  it read the non-standard `wheelDeltaY` (none in Firefox) and ignored a trackpad's deltaX
+* now: cancelled (but Ctrl+wheel - zoom, pinch - is left to the browser), `deltaX`/`deltaY` with
+  line/page modes turned into px, left/right scrolls the middle columns. happy-dom's WheelEvent is a
+  UIEvent without modifier keys: the tests set them on the event
+* Chromium `wheel-check.js` on a guide page with a live grid: the grid scrolls, the page does not -
+  also at the grid's last row - and the page scrolls outside the grid
+
+### Excel export (user request: "Excel, not CSV"; frozen header, autofilter, flat list)
+
+* no dependency: `zip.ts` (APPNOTE local headers, central directory, CRC-32, deflate-raw through
+  CompressionStream - stored when it is missing), `xlsx.ts` (the six SpreadsheetML parts from plain
+  inputs), `gridExcel.ts` (rows and fields as the CSV export picks them). 10 000 rows x 8 columns:
+  441 KB deflated (4.6 MB stored)
+* typed cells: numbers as numbers (General - the formatters show full precision), dates as serials
+  from the local day (1900 system, its leap-year bug), `dd\.mm\.yyyy` for the DDMMYYYY formatters,
+  booleans, inline strings; widths from the grid's px by ECMA-376's Calibri 11 rule
+* always: the header bold and frozen, an autofilter over every row, a flat list (no group rows,
+  outline or totals) - the user's rules
+* checked: 2115 tests; Chromium downloads (buttons and row menu, grouped, aggregates sample) read
+  with python zipfile (CRCs), xml.etree and openpyxl - types, frozen pane, autofilter, widths, values
+  equal to the CSV of the same rows. Real Excel / LibreOffice not available to try
+* live-check.js failed 2 of 19 once on a loaded machine and passed twice after: its conflict steps
+  race the sample's timer - candidate below
+
+### Date picker redesign, no rounded buttons (user request)
+
+* flat and square, the grid's font; one header line « ‹ Month Year › »; today and the selected day
+  look different; square steppers and an equal-width button bar; other-month days and week numbers
+  were too light (1.3:1 / 3.4:1) - darker now; contrast measured in Chromium (30/30)
+* every border-radius in grid.css / date.css is 0 (buttons, chips, the filter editor, the tooltip)
+* the generic class names (`.main`, `.year`, `.icon` ...) picked up page css (the docs site's `.main`
+  boxed the month name): prefixed
+* merged cleanly with v6_maybe; all checks and eleven browser scripts on the merged build
+* left: changing the hour jumps the view back to the picked date's month; a day of the month before
+  or after is picked but not shown as selected; Firefox number spinners hidden by
+  `appearance: textfield`, checked in Chromium only
+
+### Plan: custom cell rendering (item 39, user question: switch to Solid 2.0?)
+
+* `custom_render.md`: why the core stays on lit-html (JSX cells would serve Solid apps only, Babel
+  in the build, signals do not fit the pooled cells), and a renderer hook instead -
+  `registerCellRenderer(id, (host) => ({ update, destroy }))`, `ColumnConfig.renderer`; the cell
+  template, the lifecycle across scrolling and rebuilds, what keeps working, steps, tests, docs
+* plan only, no code yet
+
+### The clipboard: every range, the column headers (user report)
+
+* "copy only copies part, not both ranges": several ranges copied the last one (Excel refuses them).
+  Now one table: the union of the ranges' rows (grid order) x fields (layout order), empty where no
+  range covers a cell - side by side is one wide table, stacked one long table
+* "pasting into Word needs the headers": every copy of more than one cell has a header line of the
+  labels, in the TSV and as `<thead>` in the html (Word reads the html); `copyHeaders: false` turns it
+  off. A single cell stays a value. The row menu's Column / Row copies use the same code (its html was
+  not escaped, its text had no header, its values were ISO / raw instead of what the cells show)
+* paste: a first line that is all column labels of the grid is left out, so copy -> paste back works
+  (also into other columns); a data line that is all labels is left out too - rare, undoable
+* done myself while the agent for it was stopped by the usage limit (it had changed one file in its
+  worktree; that worktree is dropped)
+* the docs site test (renders every guide) timed out at vitest's 5s at load 9-12 while other work ran
+  tests: its describe has 30s, as the texts test
+* checks: tests updated (header lines, the union, no last-range rule) and new (union side by side /
+  stacked, copyHeaders false, header skip, round trip, row menu Column/Row/Cell Value); Chromium
+  copy-check 8/8 (the real clipboard's text and html), range-check updated for the header (60/60)
+
+### Fit and reset sizes like Excel; the multiline tooltip (user requests)
+
+* tooltip: the first `multilineTooltipLines` (5) lines, then "… N more lines" (one hidden line is
+  shown instead, so N is always 2+); each line cut at 100 characters; the edited marker cuts the same
+* columns: `fitColumns(fields?, { rows? })` measures what the cells show (formatted, widest line of a
+  multiline text, the bold label + room for the sort icon), filtered rows only; measuring 100 000
+  texts took ~540 ms per field, so the 20 longest by character count are measured. `resetColumnWidths()`
+  to the resetState() widths. Double-click on the resize handle - it needed a fix: a press that did not
+  move rebuilt the header, so the second click hit a new handle
+* rows: heights in lines, by `String(row.__KEY)` (every row has a key), not in the state (generated keys
+  mean nothing saved); added where `__dataSourceUpdated` builds scrollTops/scrollHeights, so every
+  section follows. In a taller row the input stays (focus, keys, overlay, ranges, menus work as they
+  did) and the other lines of a multiline cell are an aria-hidden div under the transparent input
+* merged with v6_maybe (the Size: menu next to the Excel export entries; two imports): 2188 tests,
+  fourteen browser scripts on the merged build (size-check 46/46, copy, ranges, scroll...)
+* left: a row's height is lost when `acceptChanges({ newKeys })` gives it its server key; fitting a
+  row while its focus button shows resets the input's right offset; keyboard moves into a very tall row
+  scroll in steps of two default rows; the header label room is a fixed 50px
+
 ## Considered, not done
 
 ## Candidates / not started
 
+* **live-check.js races the live sample's timer** under load (2 of 19 failed once, passed on reruns):
+  wait for the timer's tick instead of a fixed delay.
 * **A flaky test under load**: one full run in ten or so fails one test while other test runs or
   builds load the machine (agents saw `datePickerCell.test.ts`); it passes on rerun. Find it and make it
   not depend on timing.
