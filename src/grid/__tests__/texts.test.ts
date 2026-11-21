@@ -204,8 +204,11 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     const marked = datasource.getRows().findIndex((row) => row.country === COUNTRIES[5]);
     datasource.select(marked);
     datasource.markForDeletion(datasource.getSelectedRows());
+    // a range of cells: the range entries (marking rows clears the ranges, so after it)
+    gridInterface.setRanges([{ fromRow: 0, fromField: 'name', toRow: 1, toField: 'age' }]);
     openRowMenu(element, 'age', 0);
     check();
+    gridInterface.clearRanges();
 
     // the header menus: pinned left (unpin) and in the center (pin), then the column chooser
     openLabelMenu(element, 'name');

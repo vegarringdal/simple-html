@@ -9,6 +9,7 @@
 import {
     and,
     type CellClass,
+    type CellRange,
     type Changes,
     type ColumnConfig,
     type CreateGridOptions,
@@ -332,8 +333,20 @@ const selectedCsv: string = created.getCsv(csvOptions);
 created.downloadCsv();
 created.downloadCsv('selected.csv', { rows: 'selected', separator: ';' });
 console.log(csvText, selectedCsv);
-// @ts-expect-error a range comes with cell ranges, not yet
-created.getCsv({ rows: 'range' });
+// the cells of the selected range
+const rangeCsv: string = created.getCsv({ rows: 'range' });
+// @ts-expect-error rows is 'all', 'selected' or 'range'
+created.getCsv({ rows: 'some' });
+// the ranges of cells: plain JSON, field names and displayed rows
+const cellRange: CellRange = { fromRow: 0, fromField: 'name', toRow: 2, toField: 'born' };
+created.setRanges([cellRange]);
+const ranges: CellRange[] = created.getRanges();
+created.clearRanges();
+const offRanges: () => void = created.on('range-change', (data) => console.log(data.ranges.length));
+offRanges();
+// @ts-expect-error a range has its rows and fields, not cells
+created.setRanges([{ from: 0, to: 2 }]);
+console.log(rangeCsv, ranges);
 // @ts-expect-error the separators are ',', ';' and '\t'
 const pipe: CsvOptions = { separator: '|' };
 // @ts-expect-error the filename comes first: downloadCsv('export.csv', { rows: 'selected' })

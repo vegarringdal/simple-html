@@ -294,16 +294,19 @@ export interface GridMenus {
  * | `row.copy.column` | Column (selected rows) | |
  * | `row.copy.row` | Row (selected rows) | |
  * | `row.copy.selectedColumns` | Row (selected rows/col) - the selected columns, all when none is selected | |
+ * | `row.copy.range` | Range - the last range of cells, as Ctrl+C copies it: tab separated text and an html table | there are ranges of cells |
  * | `row.filter` | Filter: | |
  * | `row.filter.replace` | Replace filter (all) | |
  * | `row.filter.add` | Add to filter (and) | |
  * | `row.view` | View: | |
  * | `row.view.dimRepeatedValues` | Use dimmed values, with a ✓ when on | |
  * | `row.view.changedOnly` | Changed rows only, with a ✓ when on - the new, edited and deleted rows of the filter (`datasource.filterChangedOnly()`) | |
- * | `row.paste` | Paste: | the grid and the cell are editable |
+ * | `row.paste` | Paste: | the grid and the cell are editable, or the grid is and there are ranges of cells |
  * | `row.paste.cell` | Paste cell (selected rows) | the grid and the cell are editable |
- * | `row.clear` | Clear: | the grid and the cell are editable |
+ * | `row.paste.range` | Paste range - the clipboard as Ctrl+V pastes it with ranges: one value into every cell of them, a block from the top left of the last one | the grid is editable, there are ranges of cells |
+ * | `row.clear` | Clear: | the grid and the cell are editable, or the grid is and there are ranges of cells |
  * | `row.clear.cell` | Clear cell (selected rows) - sets the field to `null`, also a number field (emptying the cell stores 0) | the grid and the cell are editable |
+ * | `row.clear.range` | Clear range - every cell of the ranges, as Delete: `null`, the readonly cells skipped | the grid is editable, there are ranges of cells |
  * | `row.delete` | Delete: | the grid is editable |
  * | `row.delete.rows` | Rows (selected rows) - marks them for deletion (`markForDeletion()`), they stay in the grid until the changes are accepted. Skips a row the `isReadonly` hook returns `true` for in every column of the layout. Greyed out when no selected row is left to mark | the grid is editable |
  * | `row.delete.undo` | Undo (selected rows) - takes the mark off the selected rows marked for deletion (`unmarkForDeletion()`) | the grid is editable, and a selected row is marked for deletion |
@@ -385,6 +388,7 @@ export const MENU_IDS = {
         'row.copy.column',
         'row.copy.row',
         'row.copy.selectedColumns',
+        'row.copy.range',
         'row.filter',
         'row.filter.replace',
         'row.filter.add',
@@ -393,8 +397,10 @@ export const MENU_IDS = {
         'row.view.changedOnly',
         'row.paste',
         'row.paste.cell',
+        'row.paste.range',
         'row.clear',
         'row.clear.cell',
+        'row.clear.range',
         'row.delete',
         'row.delete.rows',
         'row.delete.undo',

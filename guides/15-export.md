@@ -70,7 +70,16 @@ gives. That is the selected rows that are displayed: a selected row in a collaps
 filter leaves out, is not exported, as the row menu's actions on the selected rows leave it out.
 With nothing selected the text is the header line only.
 
-A selected range of cells will be a third value of `rows` once the grid has cell ranges.
+`rows: 'range'` is the selected range of cells - the last of `gridInterface.getRanges()`, the one
+the user made last, see [Selection and clipboard](17-selection-and-clipboard.md): its data rows top to
+bottom (a group row in it is left out) and, unless `fields` is given, its fields left to right, with
+their labels as the header. With no range the text is empty. Ctrl+C copies the same cells as tab
+separated text, without the header.
+
+```ts
+// the cells the user selected, as a file
+gridInterface.downloadCsv('range.csv', { rows: 'range' });
+```
 
 ## The columns and their labels
 
@@ -169,13 +178,13 @@ The text follows [RFC 4180](https://www.rfc-editor.org/rfc/rfc4180):
 ## The options
 
 `CsvOptions`, every option optional. It is plain JSON: it can be stored, or come from a menu of your
-own. An option the grid does not know, or a value an option does not take (`rows: 'range'`,
+own. An option the grid does not know, or a value an option does not take (`rows: 'some'`,
 `separator: '|'`), throws a `TypeError`.
 
 | option | default | |
 | --- | --- | --- |
-| `rows` | `'all'` | `'all'`: the rows the filter lets through, sorted. `'selected'`: the selected rows |
-| `fields` | the layout | the fields, in order |
+| `rows` | `'all'` | `'all'`: the rows the filter lets through, sorted. `'selected'`: the selected rows. `'range'`: the rows of the selected range of cells |
+| `fields` | the layout (`'range'`: the range's) | the fields, in order |
 | `header` | `true` | a first line with the column labels |
 | `formatted` | `true` | the values as the cells show them; `false` as they are stored |
 | `separator` | `','` | `';'` for Excel in a locale with a decimal comma, `'\t'` tab separated |

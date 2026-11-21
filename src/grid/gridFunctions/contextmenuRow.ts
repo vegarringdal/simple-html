@@ -11,6 +11,7 @@ import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { clearRangeCells, pasteText, rangeClipboardText, writeClipboard } from './rangeClipboard';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { placeUnderCell, showMenu } from './showMenu';
 import { triggerScrollEvent } from './triggerScrollEvent';
@@ -73,6 +74,11 @@ function rowMenuEntries(
     // a group row has no value of its own to filter on
     const filterOnValue = () => !isGroupRow(rowData);
 
+    // the entries of the ranges of cells: when there are ranges. Paste and clear in an editable grid,
+    // the cells of the ranges are checked one by one
+    const hasRanges = () => gridInterface.getRanges().length > 0;
+    const pasteAndClearRanges = () => !gridInterface.__getGridConfig().readonly && hasRanges();
+
     const dimRepeated = gridInterface.__getGridConfig().dimRepeatedValues === true;
     const changedOnly = gridInterface.getDatasource().isChangedOnly();
 
@@ -117,6 +123,17 @@ function rowMenuEntries(
                 gridInterface.__callSubscribers('copy-row-col', eventData);
             }
         },
+        {
+            id: 'row.copy.range',
+            label: text('row.copy.range'),
+            visible: hasRanges,
+            // the last range, as Ctrl+C copies it (rangeClipboard.ts)
+            action: () => {
+                const ranges = gridInterface.getRanges();
+                const { text: tsv, html } = rangeClipboardText(ctx, ranges[ranges.length - 1]);
+                writeClipboard(tsv, html);
+            }
+        },
         { type: 'section', id: 'row.filter', label: text('row.filter'), visible: filterOnValue },
         {
             id: 'row.filter.replace',
@@ -150,7 +167,7 @@ function rowMenuEntries(
             // the grid follows its event
             action: () => gridInterface.getDatasource().filterChangedOnly(!changedOnly)
         },
-        { type: 'section', id: 'row.paste', label: text('row.paste'), visible: pasteAndClear },
+        { type: 'section', id: 'row.paste', label: text('row.paste'), visible: () => pasteAndClear() || pasteAndClearRanges() },
         {
             id: 'row.paste.cell',
             label: text('row.paste.cell'),
@@ -163,7 +180,19 @@ function rowMenuEntries(
                 }
             }
         },
-        { type: 'section', id: 'row.clear', label: text('row.clear'), visible: pasteAndClear },
+        {
+            id: 'row.paste.range',
+            label: text('row.paste.range'),
+            visible: pasteAndClearRanges,
+            // as Ctrl+V with ranges: one value into every cell of them, a block from the top left of
+            // the last one (rangeClipboard.ts)
+            action: async () => {
+                if (navigator.clipboard.readText) {
+                    pasteText(ctx, await navigator.clipboard.readText());
+                }
+            }
+        },
+        { type: 'section', id: 'row.clear', label: text('row.clear'), visible: () => pasteAndClear() || pasteAndClearRanges() },
         {
             id: 'row.clear.cell',
             label: text('row.clear.cell'),
@@ -174,6 +203,13 @@ function rowMenuEntries(
                 gridInterface.__callSubscribers('clear', eventData);
                 triggerScrollEvent(ctx);
             }
+        },
+        {
+            id: 'row.clear.range',
+            label: text('row.clear.range'),
+            visible: pasteAndClearRanges,
+            // as Delete with ranges: every cell of them
+            action: () => clearRangeCells(ctx)
         },
         ...deleteEntries(ctx),
         ...editEntries(ctx, attribute, rowData),
@@ -499,7 +535,12 @@ function generateCopyPasteData(
 }
 
 /**
- * Copies to the clipboard: tab separated text, plus an html table when more than one row is copied
+ * Copies to the clipboard: tab separated text, plus an html table when more than one row is copied.
+ *
+ * The listener is on the document in the capture phase: it runs before the grid's own copy listener
+ * (rangeClipboard.ts, on the document in the bubble phase), which leaves a copy that is canceled alone.
+ * It would else write the cell with the focus over this - or its html next to the plain text of Cell
+ * Value
  */
 function copyData(ctx: Grid, attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity: Entity | null = null) {
     const [html, text] = generateCopyPasteData(ctx, attributes, onlyCurrentEntity, overRideCurrentEntity);
@@ -515,9 +556,9 @@ function copyData(ctx: Grid, attributes: string[], onlyCurrentEntity: boolean, o
 
         e.preventDefault();
     }
-    document.addEventListener('copy', listener);
+    document.addEventListener('copy', listener, true);
     document.execCommand('copy');
-    document.removeEventListener('copy', listener);
+    document.removeEventListener('copy', listener, true);
 }
 
 /**

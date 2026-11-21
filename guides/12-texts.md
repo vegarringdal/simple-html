@@ -193,6 +193,7 @@ Right click on a cell.
 | `row.copy.row.hint` | `selected rows` | its hint |
 | `row.copy.selectedColumns` | `Row` | copies the selected columns of the selected rows |
 | `row.copy.selectedColumns.hint` | `selected rows/col` | its hint |
+| `row.copy.range` | `Range` | copies the last range of cells, see [Selection and clipboard](17-selection-and-clipboard.md) |
 | `row.filter` | `Filter:` | section header |
 | `row.filter.replace` | `Replace filter` | filters on the value of the cell, replacing the filter |
 | `row.filter.replace.hint` | `all` | its hint |
@@ -201,12 +202,14 @@ Right click on a cell.
 | `row.view` | `View:` | section header |
 | `row.view.dimRepeatedValues` | `Use dimmed values` | turns `dimRepeatedValues` on and off. A `✓ ` is put in front while it is on |
 | `row.view.changedOnly` | `Changed rows only` | turns `datasource.filterChangedOnly()` on and off: the new, edited and deleted rows only. A `✓ ` is put in front while it is on |
-| `row.paste` | `Paste:` | section header, an editable cell |
+| `row.paste` | `Paste:` | section header, an editable cell or ranges of cells |
 | `row.paste.cell` | `Paste cell` | pastes into the column of the selected rows |
 | `row.paste.cell.hint` | `selected rows` | its hint |
-| `row.clear` | `Clear:` | section header, an editable cell |
+| `row.paste.range` | `Paste range` | pastes the clipboard into the ranges of cells, as Ctrl+V |
+| `row.clear` | `Clear:` | section header, an editable cell or ranges of cells |
 | `row.clear.cell` | `Clear cell` | empties the column of the selected rows |
 | `row.clear.cell.hint` | `selected rows` | its hint |
+| `row.clear.range` | `Clear range` | empties the cells of the ranges, as Delete |
 | `row.delete` | `Delete:` | section header, an editable grid |
 | `row.delete.rows` | `Rows` | marks the selected rows for deletion |
 | `row.delete.rows.hint` | `selected rows` | its hint |

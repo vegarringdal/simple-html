@@ -67,6 +67,11 @@
     --simple-html-grid-stripe-bg-color: light-dark(rgb(255, 255, 255), transparent);
     /* the outline of the element that has the keyboard focus */
     --simple-html-grid-focus-color: light-dark(#005fcc, #b3d7ff);
+    /* a range of cells (gridInterface.getRanges()): laid over its cells - over the rows, a selected
+       row and an error's tint, the text keeps 4.5:1 - and the line around it, at least 3:1 to all of
+       those */
+    --simple-html-grid-range-bg-color: light-dark(rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.2));
+    --simple-html-grid-range-border-color: light-dark(#1e40af, #dbeafe);
     /* shadows: the menus, the filter editor, the tooltips, the scrollbar thumbs. A plain colour is the
        same in light and dark */
     --simple-html-grid-menu-shadow-color: black;
@@ -726,6 +731,41 @@
 .simple-html-grid-col-cell.simple-html-cell-error {
     box-shadow: inset 0 0 0 1px var(--simple-html-grid-error-color);
     background-color: var(--simple-html-grid-error-bg-color);
+}
+
+/**
+ * a cell in a range of cells (gridInterface.getRanges(), see rangeSelection.ts): a tint under the
+ * cell's input - over the row's colour, a selected row's and an error's tint - and a line on the sides
+ * that are an edge of the range (the -top, -bottom, -left and -right classes). The line is a layer
+ * over the cell the pointer goes through, under the input (1000): the input is transparent
+ */
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-in-range {
+    background-image: linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-in-range::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+    border: 0 solid var(--simple-html-grid-range-border-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-top::after {
+    border-top-width: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-bottom::after {
+    border-bottom-width: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-left::after {
+    border-left-width: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-right::after {
+    border-right-width: 2px;
 }
 
 /**

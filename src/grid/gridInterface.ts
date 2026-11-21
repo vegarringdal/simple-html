@@ -5,6 +5,7 @@ import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
+import type { CellRange } from './cellRange';
 import type { CsvOptions } from './csv';
 import type { Grid } from './grid';
 import type {
@@ -19,12 +20,14 @@ import type {
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
+import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
+import { renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
@@ -111,6 +114,17 @@ export class GridInterface<T> {
      * a value or a picked operator are in it
      */
     private headerFilters: Record<string, HeaderFilter> = {};
+
+    /**
+     * the ranges of cells, see getRanges(): copies of what was set
+     */
+    private ranges: CellRange[] = [];
+
+    /**
+     * the ranges in indexes, with the layout they were made in - what the cells need to show them.
+     * null without ranges. See cellRanges.ts
+     */
+    private rangeState: RangeState | null = null;
 
     /**
      * Most of the time {@link createGrid} makes the interface. Make it yourself for a
@@ -394,7 +408,8 @@ export class GridInterface<T> {
             }
         }
 
-        if (state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups) {
+        const datasourceParts = state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups;
+        if (datasourceParts) {
             // what is not given: the datasource's own, it replaces these when it is given new ones
             const datasource = this.getDatasource();
             const filter = state.filter !== undefined ? state.filter : datasource.getFilter();
@@ -424,6 +439,13 @@ export class GridInterface<T> {
 
         this.suppressEvents = false;
 
+        // the displayed rows can be others now, the ranges of cells were made for the rows as they were.
+        // The datasource's events that clear them otherwise were skipped. A new layout clears them in
+        // __dataSourceUpdated()
+        if (datasourceParts) {
+            this.clearRanges();
+        }
+
         if (this.grid) {
             this.grid.rebuild();
         } else {
@@ -439,6 +461,9 @@ export class GridInterface<T> {
     public connectGrid(grid: Grid) {
         this.grid = grid;
         this.lastGrid = grid;
+        // the datasource was not followed while no grid was connected: its displayed rows can be
+        // others than the ranges of cells were made for
+        this.clearRanges();
         this.subscribeToDatasource();
         this.__callSubscribers('grid-connected', {});
     }
@@ -642,11 +667,113 @@ export class GridInterface<T> {
     }
 
     /**
+     * The ranges of cells the user selected - by dragging over the cells, Shift+click, Ctrl/Cmd+click
+     * for another one, Alt+Shift+arrows - or that {@link setRanges} set. See {@link CellRange}: rows
+     * are indexes in the displayed rows, fields are field names. The last range is the one made last,
+     * its `fromRow` / `fromField` is the active cell. `[]` when no cells are selected.
+     *
+     * Copies: changing them changes nothing in the grid.
+     *
+     * The ranges are cleared when the displayed rows change - a filter, a sort, grouping, a group
+     * expanded or collapsed, rows added or removed (`setData()`, `upsert()` that adds or removes
+     * rows, rows marked for deletion) - and when the fields of the layout change: a column moved,
+     * pinned, hidden or added. A column resized keeps them, and so does an edit: the rows stay where
+     * they are. `range-change` is sent every time they change.
+     *
+     * The row selection of the datasource (`datasource.getSelectedRows()`) is something else: a
+     * range does not select rows, selecting rows changes no range.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * const ranges = gridInterface.getRanges();
+     * if (ranges.length) {
+     *     const { fromRow, fromField, toRow, toField } = ranges[ranges.length - 1];
+     *     console.log(`from row ${fromRow} ${fromField} to row ${toRow} ${toField}`);
+     * }
+     * ```
+     */
+    public getRanges(): CellRange[] {
+        return this.ranges.map((range) => ({ ...range }));
+    }
+
+    /**
+     * Selects ranges of cells, replacing the ones there are - as if the user had selected them. See
+     * {@link CellRange}. The cells show them, `range-change` is sent. The focus does not move and the
+     * grid does not scroll to them.
+     *
+     * The grid keeps copies, with only the four keys of a range. They are cleared when the displayed
+     * rows or the layout change, see {@link getRanges}.
+     *
+     * @param ranges the ranges, the last one is the active one. `[]` clears them, as {@link clearRanges}
+     * @throws a `TypeError` for a range with a row that is not displayed (0 to `datasource.length() - 1`)
+     * or a field that is not in the layout
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * // rows 0 to 4, the fields from name to age
+     * gridInterface.setRanges([{ fromRow: 0, fromField: 'name', toRow: 4, toField: 'age' }]);
+     *
+     * // two ranges, as Ctrl+click makes them
+     * gridInterface.setRanges([
+     *     { fromRow: 0, fromField: 'name', toRow: 0, toField: 'name' },
+     *     { fromRow: 5, fromField: 'age', toRow: 9, toField: 'age' }
+     * ]);
+     * ```
+     */
+    public setRanges(ranges: CellRange[]) {
+        assertRanges(this, ranges);
+        this.__setRanges(ranges);
+    }
+
+    /**
+     * Clears the ranges of cells: no cell is selected. Sends `range-change` when there were ranges.
+     * The rows selected in the datasource stay selected.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * document.getElementById('clear-selection')!.onclick = () => gridInterface.clearRanges();
+     * ```
+     */
+    public clearRanges() {
+        this.__setRanges([]);
+    }
+
+    /**
+     * @internal
+     * Sets the ranges, for the grid's mouse and keys and for setRanges() (which checks them first): the
+     * cells on screen show them, and `range-change` is sent. Nothing happens when they are the ranges
+     * there are - a pointer moving within a cell
+     */
+    public __setRanges(ranges: CellRange[]) {
+        const copies = ranges.map(({ fromRow, fromField, toRow, toField }) => ({ fromRow, fromField, toRow, toField }));
+        if (sameRanges(this.ranges, copies)) {
+            return;
+        }
+        this.ranges = copies;
+        this.rangeState = rangeState(this.gridConfig, copies);
+        if (this.grid) {
+            renderRangeClasses(this.grid);
+        }
+        this.__callSubscribers('range-change', { ranges: this.getRanges() });
+    }
+
+    /**
+     * @internal
+     * the ranges in indexes, for the cells: see RangeState. null without ranges
+     */
+    public __getRangeState(): RangeState | null {
+        return this.rangeState;
+    }
+
+    /**
      * The rows as CSV text (RFC 4180): a header line with the column labels, then a line per row,
      * every line ended with CRLF. By default every row the filter lets through, in the sort order, and
      * the columns of the layout in the order the user sees them, each value as the grid shows it. See
-     * {@link CsvOptions} for what can be changed: the selected rows, the fields, the separator
-     * (`';'` for Excel in Norway), raw values ...
+     * {@link CsvOptions} for what can be changed: the selected rows, the selected range of cells, the
+     * fields, the separator (`';'` for Excel in Norway), raw values ...
      *
      * - **The rows**: when grouped, every data row in the grouped order - the rows of collapsed groups
      *   too, no group rows. Rows marked for deletion are rows of the grid until they are saved, they
@@ -660,7 +787,7 @@ export class GridInterface<T> {
      * @param options what to export and how, see {@link CsvOptions}. Every option is optional
      * @returns the CSV text, `''` when there are no columns
      * @throws a `TypeError` for an option it does not know or a value an option does not take
-     * (`rows: 'range'`)
+     * (`rows: 'some'`)
      *
      * @sample export
      * @example
@@ -672,6 +799,9 @@ export class GridInterface<T> {
      *
      * // two fields, no header line
      * const names = gridInterface.getCsv({ fields: ['name', 'email'], header: false });
+     *
+     * // the cells of the range the user selected, see getRanges()
+     * const range = gridInterface.getCsv({ rows: 'range' });
      * ```
      */
     public getCsv(options: CsvOptions = {}): string {
@@ -1025,6 +1155,12 @@ export class GridInterface<T> {
      */
     public __dataSourceUpdated() {
         this.__parseConfig();
+        // the layout changed since the ranges of cells were made - a column moved, pinned, hidden: the
+        // fields between their ends are others now. Every change of the layout comes here (a rebuild,
+        // or applyState() without a grid)
+        if (this.rangeState && this.rangeState.key !== layoutKey(this.gridConfig)) {
+            this.clearRanges();
+        }
         this.scrollTops = [];
         this.scrollHeights = [];
         this.scrollHeight = 0;
@@ -1104,19 +1240,42 @@ export class GridInterface<T> {
                 }
             });
 
+        // the displayed rows are others after these: the ranges of cells were made for the rows as they
+        // were, they are cleared first
         this.datasourceSubscriptions = [
             follow('collection-filtered', (data, grid) => {
+                this.clearRanges();
                 // '__internalUpdate, forced' comes before a collection-changed, that one rebuilds
                 if (data.info !== '__internalUpdate, forced') {
                     grid.rebuild(false);
                 }
             }),
-            follow('collection-sorted', (_data, grid) => grid.rebuild()),
-            follow('collection-grouped', (_data, grid) => grid.rebuild()),
-            follow('collection-expand', (_data, grid) => grid.rebuild()),
-            follow('collection-collapse', (_data, grid) => grid.rebuild()),
-            // an upsert keeps the row elements: the input the user types in stays, with its focus
-            follow('collection-changed', (data, grid) => (data.info === 'upsert' ? this.updateAfterMerge(grid) : grid.rebuild())),
+            follow('collection-sorted', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-grouped', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-expand', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-collapse', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            // an upsert keeps the row elements: the input the user types in stays, with its focus. One
+            // that only changed values sends rows-changed, not this: the ranges stay
+            follow('collection-changed', (data, grid) => {
+                this.clearRanges();
+                if (data.info === 'upsert') {
+                    this.updateAfterMerge(grid);
+                } else {
+                    grid.rebuild();
+                }
+            }),
             follow('current-entity', (_data, grid) => this.updateRows(grid)),
             follow('selection-change', (_data, grid) => this.updateRows(grid)),
             follow('select', (data, grid) => this.scrollToRow(grid, data.row)),

@@ -2,6 +2,7 @@ import { assertOptions } from '../../datasource/assertOptions';
 import type { Entity } from '../../datasource/entity';
 import { buildCsv, CSV_SEPARATORS, type CsvOptions, escapeFormula, rawValueText } from '../csv';
 import type { GridInterface } from '../gridInterface';
+import { rangeBlock } from './cellRanges';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
@@ -53,8 +54,12 @@ export function gridCsv(gridInterface: GridInterface<any>, method: CsvMethod, op
     assertCsvOptions(method, options);
     const { rows = 'all', header = true, formatted = true, separator = ',', escapeFormulas = true } = options;
     const bom = options.bom ?? BOM_BY_DEFAULT[method];
-    const fields = options.fields ?? getLayoutFields(gridInterface);
     const datasource = gridInterface.getDatasource();
+
+    // 'range': the cells of the range made last, no range is no fields and no rows
+    const range = rows === 'range' ? gridInterface.getRanges().at(-1) : undefined;
+    const block = range ? rangeBlock(gridInterface, range) : { rows: [], fields: [] };
+    const fields = options.fields ?? (rows === 'range' ? block.fields : getLayoutFields(gridInterface));
 
     // the text with a formula escaped, see escapeFormulas
     const safeText = (text: string) => (escapeFormulas ? escapeFormula(text) : text);
@@ -63,8 +68,10 @@ export function gridCsv(gridInterface: GridInterface<any>, method: CsvMethod, op
     const labels = header ? fields.map((field) => safeText(getColumnLabel({ gridInterface }, field))) : null;
 
     // 'all': what the filter lets through, sorted - grouped, the rows of collapsed groups too, no
-    // group rows. 'selected': the selected rows that are displayed, in the same order
-    const dataRows = rows === 'selected' ? datasource.getSelectedRows() : datasource.getDataRows();
+    // group rows. 'selected': the selected rows that are displayed, in the same order. 'range': the
+    // data rows of the range, top to bottom
+    const dataRows =
+        rows === 'range' ? block.rows : rows === 'selected' ? datasource.getSelectedRows() : datasource.getDataRows();
 
     const textOf = fields.map((field) => cellText(gridInterface, field, formatted));
     const records = dataRows.map((row) =>
@@ -101,9 +108,10 @@ export function downloadGridCsv(gridInterface: GridInterface<any>, filename: str
 
 /**
  * A function that gives the text of a field of a row: the text the grid's cell shows (as
- * renderRowCell builds it), or the value as it is stored.
+ * renderRowCell builds it), or the value as it is stored. The clipboard of the cell ranges copies the
+ * text the cells show with it too (rangeClipboard.ts).
  */
-function cellText(gridInterface: GridInterface<any>, field: string, formatted: boolean): (row: Entity) => string {
+export function cellText(gridInterface: GridInterface<any>, field: string, formatted: boolean): (row: Entity) => string {
     if (!formatted) {
         return (row) => rawValueText(row[field]);
     }
@@ -160,8 +168,8 @@ function assertCsvOptions(method: CsvMethod, options: unknown): asserts options 
         }
     }
     const { rows, fields, separator } = options as CsvOptions;
-    if (rows !== undefined && rows !== 'all' && rows !== 'selected') {
-        throw new TypeError(`${method}(): rows is 'all' or 'selected', got ${show(rows)}`);
+    if (rows !== undefined && rows !== 'all' && rows !== 'selected' && rows !== 'range') {
+        throw new TypeError(`${method}(): rows is 'all', 'selected' or 'range', got ${show(rows)}`);
     }
     if (fields !== undefined && !(Array.isArray(fields) && fields.every((field) => typeof field === 'string'))) {
         throw new TypeError(`${method}(): fields is a list of field names, got ${show(fields)}`);

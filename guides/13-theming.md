@@ -164,6 +164,37 @@ marker. With `rowStatus: false` the classes `row-is-*` are still there for a loo
 }
 ```
 
+## Ranges of cells
+
+A range of cells the user selected (see [Selection and clipboard](17-selection-and-clipboard.md)) is
+a tint over its cells and a 2px line around it, in two variables:
+
+- `--simple-html-grid-range-bg-color` - laid over the cells, under their text: over the colour of
+  the row, a selected row's and an error's tint. A colour with alpha, so those still show through
+- `--simple-html-grid-range-border-color` - the line on the outer sides of the range
+
+The defaults keep the text at 4.5:1 or more over the tint, and the line at 3:1 or more against the
+rows, the selected rows and an error's tint, in light and in dark (WCAG 1.4.3 and 1.4.11). Keep that
+when you change them.
+
+```css
+.simple-html-grid {
+    --simple-html-grid-range-bg-color: light-dark(rgba(22, 163, 74, 0.12), rgba(74, 222, 128, 0.18));
+    --simple-html-grid-range-border-color: light-dark(#166534, #bbf7d0);
+}
+```
+
+The classes: `simple-html-cell-in-range` on every cell in a range, and `simple-html-cell-range-top`,
+`-bottom`, `-left` and `-right` on the cells whose side is an edge of the ranges. The line is a
+`::after` of the cell, so a rule of your own can restyle it:
+
+```css
+/* a dashed line, as a cut in a spreadsheet */
+.simple-html-grid .simple-html-cell-in-range::after {
+    border-style: dashed;
+}
+```
+
 ## The variables of the grid
 
 On `.simple-html-grid`, in `grid.css`.
@@ -185,6 +216,8 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-boxshadow` | the inset shadow of the labels, the panel and the row selector | `#fffdfd` | `#4b5563` |
 | `--simple-html-grid-dropzone-color` | where a dragged column can go, the resize handle under the pointer | `rgba(129, 127, 127, 0.7)` | `rgba(151, 148, 148, 0.4)` |
 | `--simple-html-grid-focus-color` | the outline of the element with the keyboard focus | `#005fcc` | `#b3d7ff` |
+| `--simple-html-grid-range-bg-color` | laid over the cells of a range of cells, see [Ranges of cells](#ranges-of-cells) | `rgba(37, 99, 235, 0.12)` | `rgba(59, 130, 246, 0.2)` |
+| `--simple-html-grid-range-border-color` | the line around a range of cells | `#1e40af` | `#dbeafe` |
 | `--simple-html-grid-error-color` | a validation error: the border of the cell, the bar and the exclamation mark of the row selector | `#dc2626` | `#fca5a5` |
 | `--simple-html-grid-error-bg-color` | a validation error: laid over the cell and the row selector | `rgba(220, 38, 38, 0.12)` | `rgba(248, 113, 113, 0.22)` |
 | `--simple-html-grid-edited-color` | the marker of an edited cell, the pencil of an edited row (`editedMarker`, `rowStatus`) | `#9a3412` | `#fdba74` |

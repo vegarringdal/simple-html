@@ -3,6 +3,7 @@ import { addMenuListeners } from './gridFunctions/addMenuListeners';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
+import { addClipboardListeners } from './gridFunctions/rangeClipboard';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
@@ -85,6 +86,13 @@ export class Grid {
     public textEditor: TextEditor | null = null;
     /** aborts the document listeners addMenuListeners added, see there */
     public menuListenersAbort?: AbortController;
+    /** aborts the document listeners of copy and paste, see addClipboardListeners in rangeClipboard.ts */
+    public clipboardListenersAbort?: AbortController;
+    /**
+     * true while the pointer is down on a cell, from a press that can make a range of cells: the focus
+     * moving to a cell then is part of it and keeps the ranges, see rangeCellFocused in rangeSelection.ts
+     */
+    public rangeGesture = false;
     // set by createDom
     public focusElement!: HTMLInputElement;
 
@@ -158,6 +166,7 @@ export class Grid {
 
         if (this.domCreated) {
             addMenuListeners(this);
+            addClipboardListeners(this);
             // catch up on data changed while detached, or the new interface/config
             this.rebuild();
             this.oldHeight = this.element.clientHeight;
@@ -191,6 +200,7 @@ export class Grid {
         hideTooltip();
 
         this.menuListenersAbort?.abort();
+        this.clipboardListenersAbort?.abort();
 
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;

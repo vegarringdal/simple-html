@@ -2,7 +2,7 @@
 
 The datasource and the grid interface both send events. The datasource's are about the rows: they
 changed, were sorted, filtered or grouped, the selection or the current row changed. The grid's are
-about the cells: clicks, focus, copy and paste from the row menu.
+about the cells: clicks, focus, the ranges of cells selected, copy and paste from the row menu.
 
 ## Subscribing: `on()`
 
@@ -180,6 +180,10 @@ The row menu (right click a cell) sends these when the user picks an entry:
 | `paste` | Paste: Paste cell (selected rows) | the cell, without `rowData`. `entity`: the row pasted into. Sent once per row |
 | `clear` | Clear: Clear cell (selected rows) | the cell |
 
+The entries of the ranges of cells (Range, Paste range, Clear range) and Ctrl+C / Ctrl+V / Delete on
+a range send none of these: the cells changed are in `rows-changed`, see
+[Selection and clipboard](17-selection-and-clipboard.md).
+
 `filter-operator-change` is sent when the user picks an operator in a header filter's menu, after
 the filter ran with it. It sends `{ field, operator, column, rebuildHeader }`: `column` is the
 column's options as the grid uses them, change them and call `rebuildHeader()` to show it:
@@ -188,6 +192,22 @@ column's options as the grid uses them, change them and call `rebuildHeader()` t
 gridInterface.on('filter-operator-change', (data) => {
     data.column.placeholderFilter = data.operator; // show the operator in the empty filter cell
     data.rebuildHeader();
+});
+```
+
+### `range-change`
+
+`range-change` is sent when the ranges of cells change: the user dragged over the cells, Shift+clicked,
+Ctrl/Cmd+clicked, pressed Alt+Shift+arrows or Esc, moved to another cell or typed in one, or
+`setRanges()` / `clearRanges()` were called. Also when the grid cleared them because the displayed rows
+or the layout changed. While the mouse drags it is sent each time the range reaches another cell; it is
+not sent when nothing changed. The payload is `{ ranges }`, what `getRanges()` gives now - `[]` when
+they were cleared. See [Selection and clipboard](17-selection-and-clipboard.md#the-api).
+
+```ts
+gridInterface.on('range-change', ({ ranges }) => {
+    const last = ranges[ranges.length - 1];
+    console.log(last ? `rows ${last.fromRow}-${last.toRow}, ${last.fromField} to ${last.toField}` : 'no cells selected');
 });
 ```
 

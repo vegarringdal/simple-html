@@ -1,5 +1,6 @@
 import type { Entity, GroupRow } from '../datasource/entity';
 import type { FilterOperator } from '../datasource/filterExpression';
+import type { CellRange } from './cellRange';
 import type { ColumnConfig } from './gridConfig';
 import type { ColType } from './gridFunctions/colType';
 import type { HTMLCellElement } from './gridFunctions/HTMLCellElement';
@@ -176,4 +177,26 @@ export interface GridEvents {
      * are selected), in the selected rows.
      */
     'copy-row-col': GridCellEventData;
+
+    /**
+     * The ranges of cells changed: the user dragged over the cells, Shift+clicked, Ctrl/Cmd+clicked,
+     * pressed Alt+Shift+arrows or Esc, moved to another cell, or `setRanges()` / `clearRanges()` were
+     * called. Also when the grid cleared them: the displayed rows or the layout changed, see
+     * `gridInterface.getRanges()`. While the mouse drags it is sent each time the range reaches another
+     * cell. Not sent when nothing changed.
+     *
+     * `ranges` is what `getRanges()` gives now, `[]` when they were cleared.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * gridInterface.on('range-change', ({ ranges }) => {
+     *     console.log(ranges.length ? `${ranges.length} ranges, the last ends at row ${ranges[ranges.length - 1].toRow}` : 'no cells selected');
+     * });
+     * ```
+     */
+    'range-change': {
+        /** the ranges now, copies: see {@link CellRange} */
+        ranges: CellRange[];
+    };
 }

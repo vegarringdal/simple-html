@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCsv, CSV_BOM, csvField, escapeFormula, rawValueText } from '../csv';
+import { buildCsv, CSV_BOM, csvField, escapeFormula, parseTsv, rawValueText } from '../csv';
 
 /**
  * The CSV text itself (RFC 4180), from plain inputs. What the grid puts in - rows, fields, labels,
@@ -165,5 +165,80 @@ describe('csv - rawValueText', () => {
         expect(rawValueText(true)).toBe('true');
         expect(rawValueText(false)).toBe('false');
         expect(rawValueText('  Ann ')).toBe('  Ann ');
+    });
+});
+
+describe('tsv - parseTsv: what Excel and the grid put on the clipboard', () => {
+    it('expect a tab between the cells and a line per row, CRLF, LF or CR', () => {
+        expect(parseTsv('a\tb\r\nc\td')).toEqual([
+            ['a', 'b'],
+            ['c', 'd']
+        ]);
+        expect(parseTsv('a\tb\nc\td')).toEqual([
+            ['a', 'b'],
+            ['c', 'd']
+        ]);
+        expect(parseTsv('a\tb\rc\td')).toEqual([
+            ['a', 'b'],
+            ['c', 'd']
+        ]);
+    });
+
+    it('expect the one line end Excel puts at the end not to be a row', () => {
+        expect(parseTsv('a\tb\r\nc\td\r\n')).toEqual([
+            ['a', 'b'],
+            ['c', 'd']
+        ]);
+        expect(parseTsv('x\n')).toEqual([['x']]);
+        // a second one is an empty row
+        expect(parseTsv('x\r\n\r\n')).toEqual([['x'], ['']]);
+    });
+
+    it('expect empty text, and a line end only, to be no cells', () => {
+        expect(parseTsv('')).toEqual([]);
+        expect(parseTsv('\r\n')).toEqual([]);
+        expect(parseTsv('\n')).toEqual([]);
+    });
+
+    it('expect one value to be one cell, spaces kept', () => {
+        expect(parseTsv('  Ann ')).toEqual([['  Ann ']]);
+    });
+
+    it('expect empty cells kept: between tabs, at the start and at the end of a line', () => {
+        expect(parseTsv('\ta\t\tb\t')).toEqual([['', 'a', '', 'b', '']]);
+        expect(parseTsv('a\t\r\n\tb')).toEqual([
+            ['a', ''],
+            ['', 'b']
+        ]);
+    });
+
+    it('expect a quoted cell to hold tabs, line breaks and doubled quotes', () => {
+        expect(parseTsv('"a\tb"\t"two\r\nlines"\t"say ""hi"""\r\n')).toEqual([['a\tb', 'two\r\nlines', 'say "hi"']]);
+        expect(parseTsv('"x\ny"\nz')).toEqual([['x\ny'], ['z']]);
+        expect(parseTsv('""')).toEqual([['']]);
+    });
+
+    it('expect a quote inside a cell that does not start with one to be a character', () => {
+        expect(parseTsv('5" screen\tit\'s "ok"')).toEqual([['5" screen', 'it\'s "ok"']]);
+    });
+
+    it('expect what follows the closing quote, up to the tab, to be added to the cell', () => {
+        expect(parseTsv('"a"b\tc')).toEqual([['ab', 'c']]);
+    });
+
+    it('expect a quote that is never closed to run to the end of the text', () => {
+        expect(parseTsv('"open\tstill')).toEqual([['open\tstill']]);
+    });
+
+    it('expect rows of different lengths kept as they are', () => {
+        expect(parseTsv('a\tb\tc\r\nd\r\n')).toEqual([['a', 'b', 'c'], ['d']]);
+    });
+
+    it('expect the text buildCsv writes with a tab to read back as the same cells', () => {
+        const cells = [
+            ['plain', 'tab\there', 'line\r\nbreak'],
+            ['"quoted"', '', 'last']
+        ];
+        expect(parseTsv(buildCsv(null, cells, { separator: '\t', bom: false }))).toEqual(cells);
     });
 });

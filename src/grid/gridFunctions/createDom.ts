@@ -5,6 +5,8 @@ import { ariaId, createAriaGrid } from './ariaGrid';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { addClipboardListeners } from './rangeClipboard';
+import { addRangeListeners } from './rangeSelection';
 import { rebuildFooter } from './rebuildFooter';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { rebuildRowColumns } from './rebuildRowColumns';
@@ -117,6 +119,9 @@ export function createDom(ctx: Grid) {
     // a cell left out of a render while it was typed in is rendered once the focus leaves it
     ctx.element.addEventListener('focusout', () => onGridFocusOut(ctx), { signal: ctx.scrollListenersAbort?.signal });
     addMenuListeners(ctx);
+    // the cell ranges: the mouse on the cells, copy and paste
+    addRangeListeners(ctx);
+    addClipboardListeners(ctx);
     // the validation messages of the cells and the row selectors. The body is made once, the
     // `tooltips` option is read on every hover: updateConfig() can change it
     attachTooltips(body, () => tooltipsEnabled(ctx));
