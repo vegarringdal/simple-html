@@ -144,7 +144,7 @@ describe('config as JSON - GridConfig', () => {
         // and the aggregates: in the totals row, over Ann, Bob and Cid, and in the group rows
         const aggregate = (selector: string) =>
             fromJson.element.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim();
-        expect(aggregate('.simple-html-grid-totals [data-aggregate="avg:age"]')).toEqual('Avg 35');
+        expect(aggregate('.simple-html-grid-totals [data-aggregate="avg:age"]')).toEqual('Avg Age 35');
         expect(aggregate('.simple-html-grid-body-row-container-group [data-aggregate="count:country"]')).toEqual('Count 2');
     });
 

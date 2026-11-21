@@ -1,11 +1,12 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
-import type { AggregateFunction } from '../../datasource/aggregate';
+import { AGGREGATE_FUNCTIONS, type AggregateFunction } from '../../datasource/aggregate';
 import type { Grid } from '../grid';
 import type { LayoutColumn, ParsedGridConfig } from '../gridConfig';
 import { ariaColCount, ariaColIndex, ariaId, headerRowCount } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType } from './colType';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
+import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 import { gridText } from './gridText';
@@ -15,9 +16,14 @@ import { gridText } from './gridText';
  * (renderRowGroup.ts) and in the totals row under the rows (renderTotalsRow below). The datasource
  * computes them, `datasource.aggregate()`.
  *
+ * A field can have several (`aggregate: ['sum', 'avg']`): each is a line of its own in the field's
+ * column, the label at the left and the value at the right. The lines of a column are its fields'
+ * functions one under the other, in the order of its fields - a column that stacks fields lists all
+ * their functions. A group row has its name on a line of its own, the aggregates on the lines under it
+ * (1 + n lines, n the most lines a column needs); the totals row has the n lines.
+ *
  * Both rows show them the same way: a cell in the place of the field - the left, middle and right
- * sections side by side, as in the body, each field at the left of its column and on the line of its
- * place in the column (a column can stack fields). The middle section follows the horizontal scroll:
+ * sections side by side, as in the body. The middle section follows the horizontal scroll:
  * its cells are in an element moved by the css variable `--simple-html-grid-scroll-left`, which
  * {@link followMiddleScroll} sets on the group rows' view and on the totals row. Every aggregated field
  * of the middle has its cell, not only the ones on screen - there are few.
@@ -29,7 +35,24 @@ import { gridText } from './gridText';
 export const TOTALS_CLASS = 'simple-html-grid-totals';
 
 /**
- * A field of the layout with an aggregate, and where its cell goes
+ * The functions of a field's `aggregate`: one or a list of them, as a list - each once, in a fixed
+ * order (sum, avg, min, max, count), so a function turned on in the header menu always gets the same
+ * line. Empty when it has none
+ */
+export function normalizeAggregates(value: AggregateFunction | readonly AggregateFunction[] | undefined): AggregateFunction[] {
+    const list: readonly unknown[] = value === undefined ? [] : Array.isArray(value) ? value : [value];
+    return AGGREGATE_FUNCTIONS.filter((fn) => list.includes(fn));
+}
+
+/**
+ * The aggregate functions of a field, see normalizeAggregates
+ */
+export function aggregatesOf(config: ParsedGridConfig, field: string): AggregateFunction[] {
+    return normalizeAggregates(config.columns[field]?.aggregate);
+}
+
+/**
+ * An aggregate of a field of the layout, and where its line goes
  */
 interface AggregatedField {
     field: string;
@@ -37,32 +60,39 @@ interface AggregatedField {
     /** left of the column in its section, px */
     left: number;
     width: number;
-    /** the line, the field's place in its column */
-    celno: number;
-    /** the cell's aria-colindex */
+    /** the line in its column: the column's fields' functions one under the other */
+    line: number;
+    /** the cell's aria-colindex: the field's */
     colIndex: number;
+    /** the first function of its field: its line is the field's gridcell, the others are hidden from a screen reader */
+    first: boolean;
+    /** the field's label after the function's: when its column stacks fields, which field it is */
+    fieldLabel: string;
 }
 
 /**
- * The fields of a section that have an aggregate, left to right
+ * The aggregates of a section, left to right, a column's lines from the top
  * @param offset where the first column starts: after the grouping column in the left section
  */
-function sectionFields(config: ParsedGridConfig, colType: ColType, columns: LayoutColumn[], offset: number): AggregatedField[] {
+function sectionFields(ctx: Grid, colType: ColType, columns: LayoutColumn[], offset: number): AggregatedField[] {
+    const config = ctx.gridInterface.__getGridConfig();
     const fields: AggregatedField[] = [];
     let left = offset;
     columns.forEach((column, columnNo) => {
+        let line = 0;
         column.fields.forEach((field, celno) => {
-            const fn = config.columns[field]?.aggregate;
-            if (fn) {
+            aggregatesOf(config, field).forEach((fn, i) => {
                 fields.push({
                     field,
                     fn,
                     left,
                     width: column.width,
-                    celno,
-                    colIndex: ariaColIndex(config, colType, columnNo, celno)
+                    line: line++,
+                    colIndex: ariaColIndex(config, colType, columnNo, celno),
+                    first: i === 0,
+                    fieldLabel: column.fields.length > 1 ? getColumnLabel(ctx, field) : ''
                 });
-            }
+            });
         });
         left = left + column.width;
     });
@@ -77,26 +107,37 @@ type SectionFields = Record<'left' | 'middle' | 'right', AggregatedField[]>;
 function aggregatedFields(ctx: Grid): SectionFields {
     const config = ctx.gridInterface.__getGridConfig();
     return {
-        left: sectionFields(config, LEFT_PINNED_COLTYPE, config.layout.left, getGroupingWidth(ctx, LEFT_PINNED_COLTYPE)),
-        middle: sectionFields(config, MIDDLE_PINNED_COLTYPE, config.layout.center, 0),
-        right: sectionFields(config, RIGHT_PINNED_COLTYPE, config.layout.right, 0)
+        left: sectionFields(ctx, LEFT_PINNED_COLTYPE, config.layout.left, getGroupingWidth(ctx, LEFT_PINNED_COLTYPE)),
+        middle: sectionFields(ctx, MIDDLE_PINNED_COLTYPE, config.layout.center, 0),
+        right: sectionFields(ctx, RIGHT_PINNED_COLTYPE, config.layout.right, 0)
     };
 }
 
 /**
- * How many lines the aggregates of the layout need: one more than the highest place in a column of a
- * field with an aggregate. 0 when no field of the layout has one
+ * How many lines the aggregates of the layout need: the most a column needs, a line for every function
+ * of every field in it. 0 when no field of the layout has one
  */
 export function aggregateLines(config: ParsedGridConfig): number {
     let lines = 0;
     for (const column of [...config.layout.left, ...config.layout.center, ...config.layout.right]) {
-        column.fields.forEach((field, celno) => {
-            if (config.columns[field]?.aggregate) {
-                lines = Math.max(lines, celno + 1);
-            }
-        });
+        const columnLines = column.fields.reduce((sum, field) => sum + aggregatesOf(config, field).length, 0);
+        lines = Math.max(lines, columnLines);
     }
     return lines;
+}
+
+/**
+ * The height of a group row and of the totals row, for GridInterface.__parseConfig - in one place, as
+ * the row heights are built from it. A group row with aggregates is its name's line and the lines of
+ * the aggregates under it; without, one line. The totals row has the aggregates' lines, at least one;
+ * 0 when it is not shown
+ */
+export function aggregateRowHeights(config: ParsedGridConfig): { group: number; totals: number } {
+    const lines = aggregateLines(config);
+    return {
+        group: config.cellHeight * (config.groupAggregates && lines ? 1 + lines : 1),
+        totals: config.totalsRow ? config.cellHeight * Math.max(1, lines) : 0
+    };
 }
 
 /**
@@ -121,24 +162,47 @@ function formatAggregate(ctx: Grid, field: string, fn: AggregateFunction, value:
 }
 
 /**
- * The cell of an aggregate: its label (`Sum`, the text `aggregate.sum`) and its value, right aligned
- * in the place of the field. Empty when the value is null. A gridcell at the field's column, unless
- * `hidden`: the group row's name cell has it then, see renderRowGroup
+ * The label of an aggregate: `Sum` (the text `aggregate.sum`), with the field's label after it when its
+ * column stacks fields - which of them it is: `Avg Age`
  */
-function aggregateCell(ctx: Grid, aggregated: AggregatedField, value: number | null, hidden: boolean) {
+function aggregateLabel(ctx: Grid, aggregated: AggregatedField): string {
+    const label = gridText(ctx, `aggregate.${aggregated.fn}`);
+    return aggregated.fieldLabel ? `${label} ${aggregated.fieldLabel}` : label;
+}
+
+/**
+ * The line of an aggregate: its label at the left and its value at the right of the field's column -
+ * the labels line up, and so do the numbers. When the column is too narrow the label gives way first
+ * (css). Empty when the value is null.
+ *
+ * For a screen reader the first line of a field is the field's gridcell, named with all its lines
+ * (`ariaText`); the field's other lines are hidden from it, as are all of them when `hidden` - the
+ * group row's name cell has their text then, see renderRowGroup
+ * @param offset the lines above the aggregates: the group row's name
+ */
+function aggregateCell(
+    ctx: Grid,
+    aggregated: AggregatedField,
+    value: number | null,
+    offset: number,
+    ariaText: string,
+    hidden: boolean
+) {
     const config = ctx.gridInterface.__getGridConfig();
     const text = formatAggregate(ctx, aggregated.field, aggregated.fn, value);
+    const cell = aggregated.first && !hidden;
     return html`<div
-        role=${hidden ? 'none' : 'gridcell'}
-        aria-colindex=${hidden ? nothing : aggregated.colIndex}
-        aria-hidden=${hidden ? 'true' : nothing}
+        role=${cell ? 'gridcell' : 'none'}
+        aria-colindex=${cell ? aggregated.colIndex : nothing}
+        aria-label=${cell && ariaText ? ariaText : nothing}
+        aria-hidden=${cell ? nothing : 'true'}
         class="simple-html-grid-aggregate"
         data-aggregate=${`${aggregated.fn}:${aggregated.field}`}
-        style="left:${asPx(aggregated.left)};width:${asPx(aggregated.width)};top:${asPx(aggregated.celno * config.cellHeight)};height:${asPx(config.cellHeight)};line-height:${asPx(config.cellHeight)}"
+        style="left:${asPx(aggregated.left)};width:${asPx(aggregated.width)};top:${asPx((offset + aggregated.line) * config.cellHeight)};height:${asPx(config.cellHeight)};line-height:${asPx(config.cellHeight)}"
     >
         ${
             text
-                ? html`<span class="simple-html-grid-aggregate-label">${gridText(ctx, `aggregate.${aggregated.fn}`)}</span>
+                ? html`<span class="simple-html-grid-aggregate-label">${aggregateLabel(ctx, aggregated)}</span>
                       <span class="simple-html-grid-aggregate-value">${text}</span>`
                 : nothing
         }
@@ -146,12 +210,23 @@ function aggregateCell(ctx: Grid, aggregated: AggregatedField, value: number | n
 }
 
 /**
- * The text of an aggregate for a screen reader, `Sum 1234.5`: for the aggregate the group row's name
- * cell has, see renderRowGroup. '' when it has no value
+ * The text of a field's aggregates for a screen reader, `Sum 1234.5, Avg 12`: the name of its gridcell,
+ * or of the group row's name cell (see renderRowGroup). '' when none has a value
  */
-function aggregateText(ctx: Grid, aggregated: AggregatedField, value: number | null): string {
-    const text = formatAggregate(ctx, aggregated.field, aggregated.fn, value);
-    return text ? `${gridText(ctx, `aggregate.${aggregated.fn}`)} ${text}` : '';
+function fieldAriaText(
+    ctx: Grid,
+    all: AggregatedField[],
+    field: string,
+    valueFor: (field: string, fn: AggregateFunction) => number | null
+): string {
+    return all
+        .filter((aggregated) => aggregated.field === field)
+        .map((aggregated) => {
+            const text = formatAggregate(ctx, aggregated.field, aggregated.fn, valueFor(aggregated.field, aggregated.fn));
+            return text ? `${aggregateLabel(ctx, aggregated)} ${text}` : '';
+        })
+        .filter((text) => text)
+        .join(', ');
 }
 
 /**
@@ -160,19 +235,29 @@ function aggregateText(ctx: Grid, aggregated: AggregatedField, value: number | n
  * pinned columns. Fills the element it is put in, which starts where the left section starts
  * @param fields the aggregated fields, aggregatedFields()
  * @param valueFor the value of an aggregate in this row
+ * @param offset the lines above the aggregates: 1 in a group row (its name), 0 in the totals row
  * @param hiddenColIndex the aria-colindex of a cell that is no gridcell, see aggregateCell
  */
 function aggregateSections(
     ctx: Grid,
     fields: SectionFields,
     valueFor: (field: string, fn: AggregateFunction) => number | null,
+    offset: number,
     hiddenColIndex: number | null
 ): TemplateResult {
     const config = ctx.gridInterface.__getGridConfig();
     const leftWidth = config.__leftWidth + getGroupingWidth(ctx, LEFT_PINNED_COLTYPE);
+    const all = [...fields.left, ...fields.middle, ...fields.right];
     const cells = (list: AggregatedField[]) =>
         list.map((aggregated) =>
-            aggregateCell(ctx, aggregated, valueFor(aggregated.field, aggregated.fn), aggregated.colIndex === hiddenColIndex)
+            aggregateCell(
+                ctx,
+                aggregated,
+                valueFor(aggregated.field, aggregated.fn),
+                offset,
+                aggregated.first ? fieldAriaText(ctx, all, aggregated.field, valueFor) : '',
+                aggregated.colIndex === hiddenColIndex
+            )
         );
 
     return html`<div role="none" class="simple-html-absolute-fill simple-html-grid-aggregates">
@@ -203,9 +288,10 @@ function aggregateSections(
 }
 
 /**
- * The aggregates of a group row, for renderRowGroup: the cells, and for the name cell the aggregate
- * of the first field (aria-colindex 2) - its cell is under the name, so the name cell has its text for
- * a screen reader. And the aria-colspan of the name cell: up to the first aggregated field after it
+ * The aggregates of a group row, for renderRowGroup: the cells, on the lines under the name, and for
+ * the name cell the aggregates of the first field (aria-colindex 2) - the name cell is the gridcell of
+ * that column for a screen reader, so it has their text. And the aria-colspan of the name cell: up to
+ * the first aggregated field after it
  */
 export function groupRowAggregates(ctx: Grid, valueFor: (field: string, fn: AggregateFunction) => number | null) {
     const fields = aggregatedFields(ctx);
@@ -213,8 +299,8 @@ export function groupRowAggregates(ctx: Grid, valueFor: (field: string, fn: Aggr
     const first = all.find((aggregated) => aggregated.colIndex === 2);
     const next = all.find((aggregated) => aggregated.colIndex > 2);
     return {
-        sections: aggregateSections(ctx, fields, valueFor, first ? 2 : null),
-        nameText: first ? aggregateText(ctx, first, valueFor(first.field, first.fn)) : '',
+        sections: aggregateSections(ctx, fields, valueFor, 1, first ? 2 : null),
+        nameText: first ? fieldAriaText(ctx, all, first.field, valueFor) : '',
         // every column after the row number, without an aggregate after the first column
         nameColSpan: next ? next.colIndex - 2 : ariaColCount(ctx.gridInterface.__getGridConfig()) - 1
     };
@@ -254,7 +340,7 @@ export function renderTotalsRow(ctx: Grid) {
                 ${gridText(ctx, 'aggregate.total')}
             </div>
             <div role="none" class="simple-html-grid-totals-cells" style="left:${asPx(config.__selectSizeWidth)}">
-                ${aggregateSections(ctx, aggregatedFields(ctx), (field, fn) => datasource.aggregate(field, fn), null)}
+                ${aggregateSections(ctx, aggregatedFields(ctx), (field, fn) => datasource.aggregate(field, fn), 0, null)}
             </div>
         </div>`,
         totals

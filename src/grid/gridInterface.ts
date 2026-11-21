@@ -1,4 +1,4 @@
-import { AGGREGATE_FUNCTIONS, isAggregateFunction } from '../datasource/aggregate';
+import { AGGREGATE_FUNCTIONS, type AggregateFunction, isAggregateFunction } from '../datasource/aggregate';
 import { assertOptions } from '../datasource/assertOptions';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
@@ -10,6 +10,7 @@ import type { CellRange } from './cellRange';
 import type { CsvOptions } from './csv';
 import type { Grid } from './grid';
 import type {
+    ColumnConfig,
     GridConfig,
     GridLayout,
     GridOptions,
@@ -20,7 +21,7 @@ import type {
     ParsedGridOptions
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
-import { aggregateLines } from './gridFunctions/aggregates';
+import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
@@ -87,6 +88,8 @@ export class GridInterface<T> {
     private options: GridOptions;
     // copies of the config's layout and initialState: the state resetState() goes back to
     private configLayout: Required<GridLayout>;
+    // the aggregates of the config's columns: what resetState() goes back to, see GridState.aggregates
+    private configAggregates: Record<string, AggregateFunction[]> = {};
     private initialState: Partial<GridState>;
     // the functions: isReadonly, cellClass, menus. A copy, updateHooks() changes it
     private hooks: GridHooks<T>;
@@ -186,6 +189,7 @@ export class GridInterface<T> {
             ...NO_SIZES
         };
         this.configLayout = copyLayout(layout);
+        this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
         // structuredClone, not JSON: it keeps the Dates of a filter
         this.initialState = structuredClone(initialState ?? {});
 
@@ -221,7 +225,9 @@ export class GridInterface<T> {
             grouping: structuredClone(datasource.getGrouping()),
             expandedGroups: structuredClone(datasource.getExpanded()),
             filter: structuredClone(datasource.getFilter()),
-            headerFilters: structuredClone(this.headerFilters)
+            headerFilters: structuredClone(this.headerFilters),
+            aggregates: aggregatesOfColumns(this.gridConfig.columns),
+            totalsRow: this.gridConfig.totalsRow
         };
     }
 
@@ -303,7 +309,9 @@ export class GridInterface<T> {
             grouping: initialState.grouping ?? [],
             expandedGroups: initialState.expandedGroups ?? [],
             filter: initialState.filter ?? null,
-            headerFilters: initialState.headerFilters ?? {}
+            headerFilters: initialState.headerFilters ?? {},
+            aggregates: initialState.aggregates ?? structuredClone(this.configAggregates),
+            totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false
         };
     }
 
@@ -355,12 +363,17 @@ export class GridInterface<T> {
         const { columns, layout, initialState, ...options } = config;
 
         this.options = { ...this.options, ...options };
+        // the totals row is state too (the header menu turns it on and off): only a totalsRow given
+        // here changes it
+        const totalsRow = 'totalsRow' in config ? withDefaults(this.options).totalsRow : this.gridConfig.totalsRow;
         // in place, so code that got the parsed config before reads the new options too
-        Object.assign(this.gridConfig, withDefaults(this.options));
+        Object.assign(this.gridConfig, withDefaults(this.options), { totalsRow });
 
-        // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option
+        // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option.
+        // Their aggregates are the ones resetState() goes back to from now on
         if ('columns' in config) {
             this.gridConfig.columns = structuredClone(columns ?? {});
+            this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
         }
         if ('initialState' in config) {
             this.initialState = structuredClone(initialState ?? {});
@@ -413,10 +426,30 @@ export class GridInterface<T> {
      * (shift+click sort, drag/drop, resizing)
      */
     private applyState(state: Partial<GridState>) {
+        // checked before anything changes: a wrong one throws and leaves the grid as it is
+        if (state.aggregates) {
+            assertAggregates({ columns: columnsWithAggregates(state.aggregates) }, this.dataSource, 'setState: aggregates');
+        }
         this.suppressEvents = true;
 
         if (state.layout) {
             this.gridConfig.layout = copyLayout(state.layout);
+        }
+
+        // every column gets the functions listed for it, the others none
+        if (state.aggregates) {
+            for (const column of Object.values(this.gridConfig.columns)) {
+                delete column.aggregate;
+            }
+            for (const [field, fns] of Object.entries(state.aggregates)) {
+                const list = normalizeAggregates(fns);
+                if (list.length) {
+                    this.gridConfig.columns[field] = { ...this.gridConfig.columns[field], aggregate: list };
+                }
+            }
+        }
+        if (state.totalsRow !== undefined) {
+            this.gridConfig.totalsRow = state.totalsRow === true;
         }
 
         if (state.headerFilters) {
@@ -1342,13 +1375,12 @@ export class GridInterface<T> {
         }
 
         /**
-         * the aggregates (aggregates.ts): a group row is one line, more when an aggregate it shows is
-         * on a lower line of a column with stacked fields. The totals row has the lines it needs, at
-         * least one
+         * the aggregates (aggregates.ts): a group row with aggregates is its name's line and a line for
+         * each function of the column that has the most; the totals row has those lines
          */
-        const aggregateLineCount = aggregateLines(config);
-        config.__groupRowHeight = config.cellHeight * (config.groupAggregates ? Math.max(1, aggregateLineCount) : 1);
-        config.__totalsRowHeight = config.totalsRow ? config.cellHeight * Math.max(1, aggregateLineCount) : 0;
+        const heights = aggregateRowHeights(config);
+        config.__groupRowHeight = heights.group;
+        config.__totalsRowHeight = heights.totals;
     }
 
     /**
@@ -1821,29 +1853,57 @@ function assertTooltipLines(config: Partial<GridConfig>) {
 }
 
 /**
- * A column's `aggregate` is one of the functions, and `sum`, `avg`, `min` and `max` are for a number
- * field: TypeScript catches neither in a config from plain JavaScript or JSON, and the grid would show
- * nothing (a text field has no numbers to sum) without a word
+ * A column's `aggregate` is one of the functions or a list of them, and `sum`, `avg`, `min` and `max`
+ * are for a number field: TypeScript catches neither in a config from plain JavaScript or JSON, and the
+ * grid would show nothing (a text field has no numbers to sum) without a word
+ * @param where how the message names it: the config's columns, or the state given to setState()
  * @throws a `TypeError` naming the column and what it takes
  */
-function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<any>) {
+function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<any>, where = 'GridConfig: columns') {
     for (const [field, column] of Object.entries(config.columns ?? {})) {
-        const fn: unknown = column?.aggregate;
-        if (fn === undefined) {
+        const value: unknown = column?.aggregate;
+        if (value === undefined) {
             continue;
         }
-        if (!isAggregateFunction(fn)) {
-            throw new TypeError(
-                `GridConfig: columns.${field}.aggregate is ${JSON.stringify(fn)}, it is one of ${AGGREGATE_FUNCTIONS.map((name) => `'${name}'`).join(', ')}`
-            );
-        }
-        const type = datasource.getField(field).type;
-        if (fn !== 'count' && type !== 'number') {
-            throw new TypeError(
-                `GridConfig: columns.${field}.aggregate '${fn}' is for a number field, '${field}' is ${type}: new Datasource({ fields: { ${field}: 'number' } }), or 'count'`
-            );
+        const name = where.endsWith('columns') ? `${where}.${field}.aggregate` : `${where}.${field}`;
+        const list: unknown[] = Array.isArray(value) ? value : [value];
+        for (const fn of list) {
+            if (!isAggregateFunction(fn)) {
+                throw new TypeError(
+                    `${name} is ${JSON.stringify(value)}, it is one of ${AGGREGATE_FUNCTIONS.map((fnName) => `'${fnName}'`).join(', ')} or a list of them`
+                );
+            }
+            const type = datasource.getField(field).type;
+            if (fn !== 'count' && type !== 'number') {
+                throw new TypeError(
+                    `${name} '${fn}' is for a number field, '${field}' is ${type}: new Datasource({ fields: { ${field}: 'number' } }), or 'count'`
+                );
+            }
         }
     }
+}
+
+/**
+ * The aggregates of the columns, for the state: the fields that have some, a list each
+ */
+function aggregatesOfColumns(columns: Record<string, ColumnConfig>): Record<string, AggregateFunction[]> {
+    const aggregates: Record<string, AggregateFunction[]> = {};
+    for (const [field, column] of Object.entries(columns)) {
+        const list = normalizeAggregates(column?.aggregate);
+        if (list.length) {
+            aggregates[field] = list;
+        }
+    }
+    return aggregates;
+}
+
+/**
+ * The state's aggregates as columns, to check them as a config's
+ */
+function columnsWithAggregates(aggregates: Record<string, unknown>): Record<string, ColumnConfig> {
+    return Object.fromEntries(
+        Object.entries(aggregates).map(([field, fns]) => [field, { aggregate: fns as AggregateFunction[] }])
+    );
 }
 
 /**

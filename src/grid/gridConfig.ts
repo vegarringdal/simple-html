@@ -265,13 +265,14 @@ export type GridConfig = {
     placeholderRowCurrentEntityOnly?: boolean;
 
     /**
-     * shows the aggregate of each column that has one (`ColumnConfig.aggregate`) in the group rows,
+     * shows the aggregates of each column that has some (`ColumnConfig.aggregate`) in the group rows,
      * default `true`: in the column's place, over the group's rows - the rows of its sub groups and
-     * of collapsed groups included. The group's name stays at the left, over the first columns.
+     * of collapsed groups included.
      *
-     * A group row is one line high; when an aggregated field is not the first of a column with
-     * stacked fields, the group rows get as many lines as it takes to show it on its own line.
-     * `false` shows the name only, as without aggregates
+     * A group row with aggregates has its name on a line of its own, and the aggregates on the lines
+     * under it - a line for each function of a column (`aggregate: ['sum', 'avg']` is two lines), so a
+     * group row is 1 + n lines, n the most a column needs. `false` shows the name only, one line, as
+     * without aggregates
      *
      * @sample aggregates
      */
@@ -282,7 +283,10 @@ export type GridConfig = {
      * (`ColumnConfig.aggregate`), over the rows the filter lets through - when grouped, the rows of
      * collapsed groups too. "Total" at the left (the text `aggregate.total`). It follows the columns
      * when they scroll sideways, and the values follow the filter and every change of a row: an edit,
-     * undo, `upsert()`. The horizontal scrollbar is between the rows and the totals row
+     * undo, `upsert()`. The horizontal scrollbar is between the rows and the totals row. As many lines
+     * as the column with the most functions needs.
+     *
+     * Part of the grid's state (`GridState.totalsRow`): the header menu turns it on and off
      *
      * @sample aggregates
      */
@@ -452,11 +456,16 @@ export type ColumnConfig = {
     allowPasteClearOnly?: boolean;
 
     /**
-     * sums the column up: `'sum'`, `'avg'`, `'min'`, `'max'` or `'count'`, see
-     * {@link AggregateFunction}. The grid shows it in the column's place in each group row
-     * (`GridConfig.groupAggregates`, on by default) and in the totals row (`GridConfig.totalsRow`), with
-     * a short label in front: `Sum 1234.5` (the texts `aggregate.*`). The datasource computes it:
-     * `datasource.aggregate(field, fn)`.
+     * sums the column up: `'sum'`, `'avg'`, `'min'`, `'max'` or `'count'` - one, or a list of them
+     * (`['sum', 'avg']`), see {@link AggregateFunction}. The grid shows each in the column's place in
+     * each group row (`GridConfig.groupAggregates`, on by default) and in the totals row
+     * (`GridConfig.totalsRow`), a line each in the order sum, avg, min, max, count: the label at the
+     * left, the value at the right - `Sum        1 234,50` (the texts `aggregate.*`). The datasource
+     * computes them: `datasource.aggregate(field, fn)`.
+     *
+     * These are where the grid starts: the user turns functions on and off in the header menu (right
+     * click a column label, "Aggregate:"), and they are part of the grid's state
+     * (`GridState.aggregates`), `resetState()` goes back to these.
      *
      * - `sum`, `avg`, `min` and `max` are for a `number` field (the datasource's `fields`), anything
      *   else throws a `TypeError` when the grid is made or `updateConfig()` is given the column. They
@@ -471,7 +480,7 @@ export type ColumnConfig = {
      *
      * const config: GridConfig = {
      *     columns: {
-     *         balance: { aggregate: 'sum' },
+     *         balance: { aggregate: ['sum', 'avg'] },
      *         age: { aggregate: 'avg' },
      *         email: { aggregate: 'count' }
      *     },
@@ -480,7 +489,7 @@ export type ColumnConfig = {
      * };
      * ```
      */
-    aggregate?: AggregateFunction;
+    aggregate?: AggregateFunction | AggregateFunction[];
 };
 
 /**
@@ -527,6 +536,14 @@ export interface GridState {
      * in `filter` already. A state from `getState()` has both.
      */
     headerFilters: Record<string, HeaderFilter>;
+    /**
+     * the aggregate functions of the columns, keyed by field - what `ColumnConfig.aggregate` starts
+     * with and the header menu changes: `{ balance: ['sum', 'avg'] }`. Only the fields that have some are
+     * listed; a field left out has none. See `ColumnConfig.aggregate`
+     */
+    aggregates: Record<string, AggregateFunction[]>;
+    /** whether the totals row is shown, `GridConfig.totalsRow` */
+    totalsRow: boolean;
 }
 
 /**

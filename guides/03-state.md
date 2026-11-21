@@ -15,6 +15,8 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `expandedGroups` | the ids of the expanded groups |
 | `filter` | the filter the rows are filtered by, as `datasource.getFilter()`. `null` when there is none |
 | `headerFilters` | what each header filter cell shows: the value and the operator picked in its menu |
+| `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
+| `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
 
 ```ts
 const state = gridInterface.getState();

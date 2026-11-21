@@ -1169,20 +1169,20 @@
  * and left pinned borders are there, transparent in a group row
  */
 
-/* the name of a group row with aggregates: at the left, over the aggregates of the first columns */
+/* the name of a group row with aggregates: the first line, the whole width - the aggregates are on the
+   lines under it, so it covers none of them */
 .simple-html-grid-group-name {
     box-sizing: border-box;
     position: absolute;
     top: 0;
     left: 0;
+    right: 0;
     z-index: 1;
     display: flex;
     align-items: center;
     padding-right: 8px;
+    overflow: hidden;
     white-space: nowrap;
-    /* the look of the group row it is over, the inset shadow too: no seam where it ends */
-    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
-    background-color: var(--simple-html-grid-main-bg-color);
 }
 
 .simple-html-grid-aggregates-left,
@@ -1205,14 +1205,33 @@
     border-left: 2px solid transparent;
 }
 
+/* a line of an aggregate: the label at the left, the value at the right of the column - labels and
+   numbers line up. Too narrow, the label gives way first (it shrinks 1000 times faster), then the
+   value ends in an ellipsis */
 .simple-html-grid-aggregate {
     box-sizing: border-box;
     position: absolute;
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
     padding: 0 4px;
     overflow: hidden;
     white-space: nowrap;
+}
+
+.simple-html-grid-aggregate-label,
+.simple-html-grid-aggregate-value {
+    min-width: 0;
+    overflow: hidden;
     text-overflow: ellipsis;
-    text-align: right;
+}
+
+.simple-html-grid-aggregate-label {
+    flex: 0 1000 auto;
+}
+
+.simple-html-grid-aggregate-value {
+    flex: 0 1 auto;
 }
 
 /* "Sum" in front of the value */

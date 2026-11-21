@@ -262,6 +262,13 @@ Right click on a header label.
 | `header.size.all` | `Fit all columns` | fits every column |
 | `header.size.resetColumn` | `Reset column width` | the column back to the width of the config |
 | `header.size.resetAll` | `Reset all column widths` | every column back to the width of the config |
+| `header.aggregate` | `Aggregate:` | section header |
+| `header.aggregate.sum` | `Sum` | turns the column's sum on or off |
+| `header.aggregate.avg` | `Average` | turns its average on or off |
+| `header.aggregate.min` | `Min` | turns its smallest value on or off |
+| `header.aggregate.max` | `Max` | turns its largest value on or off |
+| `header.aggregate.count` | `Count` | turns its count on or off |
+| `header.aggregate.totalsRow` | `Totals row` | shows or hides the totals row |
 | `header.grouping` | `Grouping:` | section header |
 | `header.grouping.expandAll` | `Expand all` | expands every group |
 | `header.grouping.collapseAll` | `Collapse all` | collapses every group |

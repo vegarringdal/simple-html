@@ -1373,6 +1373,26 @@ in the console. All passed. Found and fixed:
   row while its focus button shows resets the input's right offset; keyboard moves into a very tall row
   scroll in steps of two default rows; the header label room is a fixed 50px
 
+### Aggregates v2: lines, several per column, the header menu (user requests)
+
+* "put the sum/type on the other side" - each line is the label at the left, the value at the right
+  (flex; the label shrinks first, then the value ends in an ellipsis), so labels and numbers line up
+* "force the row 1x higher so the grouping text can't block aggregates" and "sum and avg needs 3 rows":
+  a group row with aggregates is the name's line + a line per function of the column that has the most
+  (`aggregateRowHeights`, one function where __parseConfig builds the heights). A stacked column's
+  lines are its fields' functions from the top, with the field label (`Avg Age`) so they say which
+* "right click a column label to add avg, sum, count" - the header menu's Aggregate: toggles (sum, avg,
+  min, max on number fields, count everywhere, the totals row); they change `GridState.aggregates` /
+  `totalsRow`, so the user's choice is saved with the state and resetState() goes back to the config's.
+  updateConfig() keeps a totals row the user turned on unless it is given totalsRow
+* a11y: one gridcell per field (its first line, aria-label of all lines), the others aria-hidden
+* done myself (the agent for it stopped at the usage limit before changing anything), after the fit
+  sizes merge, so the group-row height and the data-row heights did not collide
+* checks: 41 aggregates tests (state, menu, lines, a11y), every suite; Chromium aggregate-check updated
+  for the taller rows and extended with v2 checks (32/32: nothing under the name, label left / value
+  right, Min from the header menu adds a line), the other twelve scripts, excel-check (its group step
+  reads the groups from the API now) and openpyxl on the six files
+
 ## Considered, not done
 
 ## Candidates / not started

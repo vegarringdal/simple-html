@@ -1190,6 +1190,27 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Row menu "Summary:": the max of negative numbers was 0, min skipped 0, the average was rounded to a
   whole number and counted blank cells. A text value (`'12'`) is no longer read as a number.
 
+#### Aggregates: several per column, on lines of their own, from the header menu (user request)
+
+##### ⚠️ Breaking changes
+- A group row with aggregates has its **name on a line of its own** and the aggregates on the lines
+  under it: 1 + n lines (n the most functions a column has), where it was one line with the name over
+  the first columns. The totals row has the n lines.
+- Each aggregate line has its **label at the left and its value at the right** of the column (was the
+  label in front of a right aligned value). In a column that stacks fields the label says which field:
+  `Avg Age`. The lines of a column are its fields' functions from the top (an aggregate of a stacked
+  field is no longer on the line of its field).
+- `GridState` has `aggregates` and `totalsRow`: `getState()` gives them, `setState()` applies them,
+  `resetState()` goes back to the config's. `updateConfig()` changes the totals row only when it is
+  given `totalsRow`.
+
+##### Added
+- **Several functions per column**: `ColumnConfig.aggregate: ['sum', 'avg']`, a line each, in the order
+  sum, avg, min, max, count.
+- **The header menu** (right click a column label) has an "Aggregate:" section: Sum, Average, Min, Max
+  (number columns) and Count as toggles with a ✓, and Totals row. Ids `header.aggregate.*`, texts too.
+- For a screen reader a field's aggregates are one gridcell named with all its lines.
+
 #### Fit and reset column widths and row heights, like Excel; the multiline tooltip (user request)
 
 ##### ⚠️ Breaking changes

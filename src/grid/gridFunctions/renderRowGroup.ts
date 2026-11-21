@@ -79,10 +79,10 @@ export function renderRowGroup(
         <span class="" aria-hidden="true"> ${group.__groupName} (${group.__groupTotal})</span>`;
 
     if (showsGroupAggregates(config)) {
-        // the aggregates of the columns (aggregates.ts), each a cell at its column. The name stays at
-        // the left, over the first columns (css): an aggregate under it is covered, and the one of the
-        // first column is in the name cell for a screen reader. The name cell spans the columns up to
-        // the next aggregate, and comes first: the cells of a row go left to right
+        // the aggregates of the columns (aggregates.ts), a line each at its column, under the name: the
+        // name has the first line to itself, so it covers none. For a screen reader the name cell is
+        // the gridcell of the first column, with that column's aggregates in its text; it spans the
+        // columns up to the next aggregate, and comes first: the cells of a row go left to right
         const datasource = ctx.gridInterface.getDatasource();
         const aggregates = groupRowAggregates(ctx, (field, fn) => datasource.aggregate(field, fn, group));
         render(

@@ -352,6 +352,13 @@ export interface GridMenus {
  * | `header.size.all` | Fit all columns (`fitColumns()`) | |
  * | `header.size.resetColumn` | Reset column width - the width of the config (`resetColumnWidths([field])`) | |
  * | `header.size.resetAll` | Reset all column widths (`resetColumnWidths()`) | |
+ * | `header.aggregate` | Aggregate: | |
+ * | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row (`GridState.aggregates`) | a number field |
+ * | `header.aggregate.avg` | Average, a toggle | a number field |
+ * | `header.aggregate.min` | Min, a toggle | a number field |
+ * | `header.aggregate.max` | Max, a toggle | a number field |
+ * | `header.aggregate.count` | Count, a toggle: the values that are not blank | |
+ * | `header.aggregate.totalsRow` | Totals row, a toggle (`GridState.totalsRow`) | |
  * | `header.grouping` | Grouping: | |
  * | `header.grouping.expandAll` | Expand all | |
  * | `header.grouping.collapseAll` | Collapse all | |
@@ -454,6 +461,13 @@ export const MENU_IDS = {
         'header.size.all',
         'header.size.resetColumn',
         'header.size.resetAll',
+        'header.aggregate',
+        'header.aggregate.sum',
+        'header.aggregate.avg',
+        'header.aggregate.min',
+        'header.aggregate.max',
+        'header.aggregate.count',
+        'header.aggregate.totalsRow',
         'header.grouping',
         'header.grouping.expandAll',
         'header.grouping.collapseAll',

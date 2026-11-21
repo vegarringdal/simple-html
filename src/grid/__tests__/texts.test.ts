@@ -216,6 +216,9 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     check();
     openLabelMenu(element, 'country');
     check();
+    // a number column: its Aggregate: section has sum, average, min and max too
+    openLabelMenu(element, 'age');
+    check();
     (document.querySelector('[data-menu-id="header.column.chooser"]') as HTMLElement).click();
     check();
 

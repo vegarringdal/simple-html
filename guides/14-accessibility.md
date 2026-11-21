@@ -68,10 +68,11 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   after the row number, with a button that expands and collapses it: named with the text the row
   shows (`Country: Norway (12)`), `aria-expanded` says its state.
 - **The aggregates of a group row** (`ColumnConfig.aggregate`, see [Aggregates](18-aggregates.md)):
-  each is a `gridcell` with the `aria-colindex` of its field, `Sum 1234.5`, so a screen reader reads it
-  with the column's header. The name cell then spans the columns up to the first aggregate. The
-  aggregate of the first column is under the name on screen: it is not a cell of its own, its text is
-  in the name cell (`Country: Norway (12) Count 10`).
+  the aggregates of a field are one `gridcell` with the `aria-colindex` of its field, named with all its
+  lines (`Sum 1234.5, Avg 123.4`), so a screen reader reads them with the column's header. The name has
+  a line of its own on screen; for a screen reader it is the cell of the first column and spans the
+  columns up to the first aggregate - the aggregates of the first column are in its text
+  (`Country: Norway (12) Count 10`).
 - **The totals row** (`totalsRow`) is the last row of the grid, after the rows on screen: its first
   cell is a `rowheader`, "Total" (the text `aggregate.total`), then a `gridcell` per aggregate.
   `aria-rowcount` counts it, its `aria-rowindex` is the last.
@@ -262,8 +263,6 @@ setTexts({
   screen reader reaches it.
 - **Only the first sort column** has `aria-sort`; the number of a column in a sort on several
   columns is shown, but not read out.
-- **An aggregate of a group row under its name** is covered on screen, a screen reader gets it with
-  the name. Put the aggregated columns after the first column.
 - **The column numbers** under the filters are hidden: selecting a column is for the mouse, and a
   selected column is not read out.
 - **The two scrollbars** are elements of their own, Chrome makes them stops of Tab (an element that

@@ -2075,6 +2075,11 @@ New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can cha
 
 ## Other behaviour changes
 
+* **Group rows with aggregates are taller**: the name on a line of its own, a line for each function
+  of the column with the most. `aggregate` takes a list (`['sum', 'avg']`), the header menu turns them
+  on and off, and `getState()` has `aggregates` and `totalsRow` - a saved state from before has neither,
+  `setState()` then keeps what the grid has.
+
 * **`autoResizeColumns()` is `fitColumns()`** (the old name still works, deprecated): it measures what
   the cells show, the filtered rows only. `fitColumns(['name'])` fits one column, `resetColumnWidths()`
   goes back. Rows can be fitted to their multiline text: `fitRows()` / `resetRowHeights()`.

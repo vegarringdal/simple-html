@@ -1,8 +1,10 @@
+import { AGGREGATE_FUNCTIONS, type AggregateFunction } from '../../datasource/aggregate';
 import type { Entity, GroupRow } from '../../datasource/entity';
 import type { SortArgument } from '../../datasource/sortArgument';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry } from '../gridMenus';
+import { aggregatesOf } from './aggregates';
 import type { ColType } from './colType';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';
 import { gridText } from './gridText';
@@ -189,6 +191,7 @@ function headerMenuEntries(
             action: () => ctx.gridInterface.resetColumnWidths([attribute])
         },
         { id: 'header.size.resetAll', label: text('header.size.resetAll'), action: () => ctx.gridInterface.resetColumnWidths() },
+        ...aggregateEntries(ctx, attribute),
         { type: 'section', id: 'header.grouping', label: text('header.grouping') },
         {
             id: 'header.grouping.expandAll',
@@ -204,6 +207,42 @@ function headerMenuEntries(
             id: 'header.grouping.clear',
             label: text('header.grouping.clear'),
             action: () => ctx.gridInterface.getDatasource().removeGroup()
+        }
+    ];
+}
+
+/**
+ * The aggregates of the column, turned on and off by the user: a toggle with a ✓ for each function -
+ * sum, average, min and max on a number field only - and one for the totals row. They change the grid's
+ * state (GridState.aggregates / totalsRow), so getState() keeps them and resetState() goes back to the
+ * config's. See aggregates.ts
+ */
+function aggregateEntries(ctx: Grid, attribute: string): MenuEntry[] {
+    const gridInterface = ctx.gridInterface;
+    const isNumber = gridInterface.getDatasource().getField(attribute).type === 'number';
+    const current = () => aggregatesOf(gridInterface.__getGridConfig(), attribute);
+    const toggle = (fn: AggregateFunction) => {
+        const aggregates = gridInterface.getState().aggregates;
+        const now = current();
+        aggregates[attribute] = now.includes(fn) ? now.filter((other) => other !== fn) : [...now, fn];
+        gridInterface.setState({ aggregates });
+    };
+    return [
+        { type: 'section', id: 'header.aggregate', label: gridText(ctx, 'header.aggregate') },
+        ...AGGREGATE_FUNCTIONS.map(
+            (fn): MenuEntry => ({
+                id: `header.aggregate.${fn}`,
+                label: gridText(ctx, `header.aggregate.${fn}`),
+                visible: () => fn === 'count' || isNumber,
+                selected: () => current().includes(fn),
+                action: () => toggle(fn)
+            })
+        ),
+        {
+            id: 'header.aggregate.totalsRow',
+            label: gridText(ctx, 'header.aggregate.totalsRow'),
+            selected: () => gridInterface.__getGridConfig().totalsRow,
+            action: () => gridInterface.setState({ totalsRow: !gridInterface.__getGridConfig().totalsRow })
         }
     ];
 }
