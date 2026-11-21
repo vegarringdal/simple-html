@@ -1,0 +1,216 @@
+/**
+ * CSV text from plain inputs: no grid, no datasource, no DOM. The grid's `getCsv()` and `downloadCsv()`
+ * pick the rows, the fields and the texts (see gridFunctions/gridCsv.ts) and build the file with this.
+ *
+ * The format is RFC 4180 (https://www.rfc-editor.org/rfc/rfc4180): a line per record, ended with CRLF;
+ * a field is put in double quotes when it holds the separator, a double quote, CR or LF, and a double
+ * quote in it is doubled. Spaces are part of a field, they are kept as they are.
+ */
+
+/**
+ * The separators {@link CsvOptions} can use: `','` (RFC 4180), `';'` (what Excel expects in a locale
+ * with a decimal comma, Norwegian for one) and `'\t'` (tab separated text).
+ */
+export type CsvSeparator = ',' | ';' | '\t';
+
+/**
+ * @internal
+ * every separator, for checking an option that comes from plain JavaScript
+ */
+export const CSV_SEPARATORS: readonly CsvSeparator[] = [',', ';', '\t'];
+
+/**
+ * What `gridInterface.getCsv()` and `gridInterface.downloadCsv()` export, and how. Every option is
+ * optional, and the object is plain JSON - it can be stored, or come from a menu of your own.
+ *
+ * | option | default | |
+ * | --- | --- | --- |
+ * | `rows` | `'all'` | `'all'`: every row the filter lets through, in the sort order. `'selected'`: the selected rows |
+ * | `fields` | the layout | the fields to export, in order |
+ * | `header` | `true` | a first line with the column labels |
+ * | `formatted` | `true` | the values as the grid shows them; `false` the values themselves |
+ * | `separator` | `','` | `';'` for Excel in a locale with a decimal comma |
+ * | `bom` | `true` for `downloadCsv()`, `false` for `getCsv()` | a UTF-8 byte order mark first |
+ * | `escapeFormulas` | `true` | text that starts with `=`, `+`, `-`, `@` ... gets a `'` in front |
+ *
+ * An option with a value it does not know (`rows: 'range'`, `separator: '|'`), or a key it does not
+ * know, throws a `TypeError`.
+ *
+ * @example
+ * ```ts
+ * import type { CsvOptions } from '@simple-html/grid';
+ *
+ * // for Excel in Norway: a semicolon between the fields, and the BOM so it reads æøå
+ * const forExcel: CsvOptions = { separator: ';', bom: true };
+ * const text = gridInterface.getCsv(forExcel);
+ *
+ * // the selected rows, two fields, the values as they are stored
+ * gridInterface.downloadCsv('selected.csv', { rows: 'selected', fields: ['name', 'born'], formatted: false });
+ * ```
+ */
+export interface CsvOptions {
+    /**
+     * Which rows, default `'all'`:
+     * - `'all'`: every row the filter lets through, in the sort order - `datasource.getDataRows()`.
+     *   When grouped, every data row in the grouped order, the rows of collapsed groups included; no
+     *   group rows
+     * - `'selected'`: the selected rows, in the same order - `datasource.getSelectedRows()`. That is
+     *   the selected rows that are displayed: a selected row in a collapsed group is left out, as the
+     *   row menu's actions on the selected rows leave it out. Nothing selected gives the header only
+     *
+     * A selected range of cells comes with cell ranges, as a `'range'` value of this option.
+     */
+    rows?: 'all' | 'selected';
+
+    /**
+     * The fields to export, in this order, a column each. Default the fields of the layout now, in
+     * the order the user sees them: pinned left, center, pinned right, and a column of stacked fields
+     * gives a CSV column for each of its fields, top to bottom - `gridInterface.getLayoutFields()`.
+     * The hidden columns (`getHiddenFields()`) are not in the layout, so they are left out.
+     *
+     * Any field of the rows can be given, also one that is not in the grid.
+     */
+    fields?: string[];
+
+    /**
+     * A first line with the label of each column, default `true`: the label the grid's header shows -
+     * the column's `label`, else the datasource field's `label`, else the field name prettified
+     * (`first_name` is `First Name`).
+     */
+    header?: boolean;
+
+    /**
+     * Default `true`: each value as the grid shows it, the text of the field's formatter - `12,5` with
+     * the `numberComma` formatter, a date as `2026-11-20` (or as its formatter writes it), a boolean
+     * as `true` / `false`. A column's `numberOverride` (`ZERO_TO_BLANK`, `BLANK_TO_ZERO`) and
+     * `dynamicCellTypeColumn` are followed, as in the cells.
+     *
+     * `false`: the values as they are stored - a number with a dot (`String(12.5)`), a `Date` as
+     * `toISOString()` (UTC: a date at midnight in Norway is the day before at 23:00 or 22:00), a
+     * boolean as `true` / `false`, a blank (null, undefined, `''`, an invalid Date) as nothing.
+     */
+    formatted?: boolean;
+
+    /**
+     * Between the fields, default `','` (RFC 4180). Excel uses the list separator of the computer's
+     * locale when it opens a .csv file: in a locale with a decimal comma (Norwegian, German ...) that
+     * is `';'`, and a file with `','` opens with every row in one column. Use `';'` for those users.
+     * `'\t'` gives tab separated text.
+     */
+    separator?: CsvSeparator;
+
+    /**
+     * Writes a UTF-8 byte order mark (`﻿`) first. Excel needs it to read the file as UTF-8,
+     * without it `æøå` show up garbled. Default `true` for `downloadCsv()`, `false` for `getCsv()` -
+     * text for code of your own does not want it.
+     */
+    bom?: boolean;
+
+    /**
+     * Default `true`: text that starts with `=`, `+`, `-`, `@`, a tab, CR or LF (or the full width
+     * `＝ ＋ － ＠`) gets a `'` in front, so a spreadsheet shows it as text and does not run it as a
+     * formula. A value a user typed, `=HYPERLINK("http://evil.example", "click")`, would else run on
+     * the computer of whoever opens the file - "CSV injection",
+     * https://owasp.org/www-community/attacks/CSV_Injection.
+     *
+     * Only text is escaped: a value that is text in the row (a string, or an object), and the labels.
+     * A number, a boolean, a `Date` and a blank never are, whatever their formatter writes - `-5`
+     * stays `-5`. The value decides, not the field's type: keep the numbers of a number field as
+     * numbers, one holding the text `'-5'` is written as `'-5`. Text that only looks like a formula
+     * gets the `'` too: a phone number `+47 912 34 567` is written `'+47 912 34 567`.
+     *
+     * The `'` is part of the text in the file, a program that reads it gets it too. OWASP notes that
+     * the escaping is not reliable in Excel once the file is saved and opened again, so treat a file
+     * of data users typed with care anyway.
+     *
+     * `false` writes the text as it is: for a file that is read by a program, not opened in a
+     * spreadsheet.
+     */
+    escapeFormulas?: boolean;
+}
+
+/**
+ * The first character of a UTF-8 file with a byte order mark: U+FEFF, the bytes EF BB BF
+ */
+export const CSV_BOM = '﻿';
+
+/**
+ * The line end of RFC 4180
+ */
+const CRLF = '\r\n';
+
+/**
+ * What a spreadsheet takes as the start of a formula (OWASP, CSV injection): = + - @, tab, CR, LF, and
+ * the full width = + - @ (U+FF1D, U+FF0B, U+FF0D, U+FF20)
+ */
+const FORMULA_START = ['=', '+', '-', '@', '\t', '\r', '\n', '＝', '＋', '－', '＠'];
+
+/**
+ * A text with a `'` in front when a spreadsheet would take it as a formula: it starts with
+ * `=`, `+`, `-`, `@`, a tab, CR or LF, or a full width `＝ ＋ － ＠`. Other text is returned as it is.
+ *
+ * @example
+ * escapeFormula('=1+1'); // "'=1+1"
+ * escapeFormula('Ann'); // 'Ann'
+ */
+export function escapeFormula(text: string): string {
+    return FORMULA_START.some((start) => text.startsWith(start)) ? `'${text}` : text;
+}
+
+/**
+ * A value as it is stored, as text: `''` for null, undefined, `''` and an invalid Date, a `Date` as
+ * `toISOString()` (UTC), anything else with `String()` - a number with a dot, `true` / `false`.
+ *
+ * @example
+ * rawValueText(12.5); // '12.5'
+ * rawValueText(new Date(Date.UTC(2026, 10, 20))); // '2026-11-20T00:00:00.000Z'
+ * rawValueText(null); // ''
+ */
+export function rawValueText(value: unknown): string {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    if (value instanceof Date) {
+        // toISOString() throws a RangeError for an invalid Date
+        return Number.isNaN(value.getTime()) ? '' : value.toISOString();
+    }
+    return String(value);
+}
+
+/**
+ * One field of a record: in double quotes when it holds the separator, a double quote, CR or LF,
+ * with every double quote doubled (RFC 4180, rules 6 and 7). Else as it is, spaces included.
+ */
+export function csvField(text: string, separator: CsvSeparator): string {
+    const quote = text.includes(separator) || text.includes('"') || text.includes('\r') || text.includes('\n');
+    return quote ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+/**
+ * The CSV text: the header line (when given), then a line per row, every line ended with CRLF. The
+ * fields are quoted where they need it, see {@link csvField}. The texts are written as they are given:
+ * formatting and formula escaping are done before.
+ *
+ * A record of one empty field is written as `""`: an empty line is read as no fields at all by many
+ * programs. A record of no fields has no line, so no fields at all give an empty text (the BOM only).
+ *
+ * @param header the labels, a field each; `null` for no header line
+ * @param rows the rows, a text for each field
+ * @param options.separator between the fields
+ * @param options.bom a UTF-8 byte order mark first
+ *
+ * @example
+ * buildCsv(['Name', 'City'], [['Ann', 'Oslo, Norway']], { separator: ',', bom: false });
+ * // 'Name,City\r\nAnn,"Oslo, Norway"\r\n'
+ */
+export function buildCsv(header: string[] | null, rows: string[][], options: { separator: CsvSeparator; bom: boolean }): string {
+    const records = (header ? [header, ...rows] : rows).filter((record) => record.length > 0);
+    const lines = records.map((record) => {
+        if (record.length === 1 && record[0] === '') {
+            return '""';
+        }
+        return record.map((text) => csvField(text, options.separator)).join(options.separator);
+    });
+    const text = lines.map((line) => line + CRLF).join('');
+    return options.bom ? CSV_BOM + text : text;
+}

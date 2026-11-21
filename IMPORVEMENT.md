@@ -1138,6 +1138,26 @@ in the console. All passed. Found and fixed:
   (saving, validation, column-layout, grid01) still have their own RS column; the marker has no
   keyboard path (Ctrl+Z and the row menu do)
 
+### v6 phase 8 - more
+
+#### CSV export (item 41)
+
+* pure core `src/grid/csv.ts` (RFC 4180 quoting, CRLF, BOM, formula escaping), the grid side in
+  `gridCsv.ts`: rows from `getDataRows()` (filtered + sorted, grouped order, collapsed groups
+  included) or `getSelectedRows()`; fields from the layout; labels with `getColumnLabel()` and values
+  formatted as `renderRowCell` does (`getCellType` per row for `dynamicCellTypeColumn`,
+  `numberOverride`). `getColumnLabel` / `getCellType` only read `ctx.gridInterface`, so they take
+  `Pick<Grid, 'gridInterface'>` and export works without a connected grid
+* formula escaping is by value, not by field type: the number formatter writes the text `'-1+1'` back
+  as it is (`parseFloat` reads -1), and `dynamicCellTypeColumn` changes the type per row
+* the download is a detached `<a download>` (not in the page: an open modal dialog would make it inert),
+  the object url revoked after 40s (revoking at once can stop the download)
+* tests 35 + 42; Chromium export check 18/18 (the downloaded file: BOM, CRLF, labels, escaping, `;`,
+  selected rows, raw values, follows a sort)
+* left: the row menu entry (after item 30, it shares texts.ts); the formatted-value code is in
+  gridCsv.ts and renderRowCell.ts - one helper later; `rows: 'selected'` leaves out selected rows
+  hidden by the filter or a collapsed group, like every row-menu action on selected rows
+
 ## Considered, not done
 
 ## Candidates / not started

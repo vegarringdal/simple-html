@@ -998,6 +998,25 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Guides: "Undo and redo" and "Reverting a cell or a row" in the editing guide; the editing sample has
   Undo/Redo buttons that follow `history-changed`.
 
+### Phase 8 - more
+
+#### CSV export (item 41)
+
+##### Added
+- `gridInterface.getCsv(options?)`: the rows as CSV text (RFC 4180, CRLF line ends, a header line of
+  the column labels). By default every row the filter lets through, in the sort order (grouped: every
+  data row, collapsed groups included, no group rows), the columns of the layout in the order the user
+  sees them, each value as the cell shows it. Works without a connected grid too.
+- `gridInterface.downloadCsv(filename = 'export.csv', options?)`: saves the same text as a file, with a
+  UTF-8 BOM by default so Excel reads æøå.
+- `CsvOptions` / `CsvSeparator`, plain JSON: `rows: 'all' | 'selected'`, `fields`, `header`,
+  `formatted` (`false`: raw values, ISO dates in UTC, dot decimals), `separator: ',' | ';' | '\t'`
+  (`';'` for Excel in a locale with a decimal comma), `bom`, `escapeFormulas` (default on: text
+  starting with `=`, `+`, `-`, `@`, tab, CR, LF or their full-width forms gets a `'` in front - OWASP
+  CSV injection; numbers, dates and booleans are never escaped, a phone number `+47 ...` is). An
+  unknown option or value throws a `TypeError`.
+- Guide "Export" and sample "Export to CSV".
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

@@ -12,6 +12,8 @@ import {
     type Changes,
     type ColumnConfig,
     type CreateGridOptions,
+    type CsvOptions,
+    type CsvSeparator,
     createGrid,
     DataContainer,
     Datasource,
@@ -314,6 +316,29 @@ const layoutFields: string[] = created.getLayoutFields();
 const selectedFields: string[] = created.getLayoutFields({ selectedOnly: true });
 const hiddenFields: string[] = created.getHiddenFields();
 console.log(layoutFields, selectedFields, hiddenFields);
+// export: the text, or a file. The options are plain JSON
+const separator: CsvSeparator = ';';
+const csvOptions: CsvOptions = {
+    rows: 'selected',
+    fields: ['name', 'born'],
+    header: true,
+    formatted: false,
+    separator,
+    bom: true,
+    escapeFormulas: false
+};
+const csvText: string = created.getCsv();
+const selectedCsv: string = created.getCsv(csvOptions);
+created.downloadCsv();
+created.downloadCsv('selected.csv', { rows: 'selected', separator: ';' });
+console.log(csvText, selectedCsv);
+// @ts-expect-error a range comes with cell ranges, not yet
+created.getCsv({ rows: 'range' });
+// @ts-expect-error the separators are ',', ';' and '\t'
+const pipe: CsvOptions = { separator: '|' };
+// @ts-expect-error the filename comes first: downloadCsv('export.csv', { rows: 'selected' })
+created.downloadCsv({ rows: 'selected' });
+console.log(pipe);
 created.destroy();
 withHooks.destroy();
 // @ts-expect-error readonlySetter is gone: the isReadonly hook
@@ -725,9 +750,10 @@ type HasFunction<T, Depth extends unknown[] = []> = Depth['length'] extends 12
 const configIsData: HasFunction<GridConfig> extends false ? true : never = true;
 const stateIsData: HasFunction<GridState> extends false ? true : never = true;
 const fieldsAreData: HasFunction<Pick<DatasourceOptions, 'fields' | 'formatters'>> extends false ? true : never = true;
+const csvOptionsAreData: HasFunction<CsvOptions> extends false ? true : never = true;
 // boolean: true for the hooks, false for an optional hook left out (undefined)
 const hooksAreFunctions: HasFunction<GridHooks> extends false ? never : true = true;
-console.log(configIsData, stateIsData, fieldsAreData, hooksAreFunctions);
+console.log(configIsData, stateIsData, fieldsAreData, csvOptionsAreData, hooksAreFunctions);
 
 // internals are not part of the typings any more
 // @ts-expect-error

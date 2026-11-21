@@ -17,6 +17,8 @@ import { editing } from './samples/editing';
 import editingSource from './samples/editing.ts?raw';
 import { events } from './samples/events';
 import eventsSource from './samples/events.ts?raw';
+import { exportCsv } from './samples/export';
+import exportCsvSource from './samples/export.ts?raw';
 import { filtering } from './samples/filtering';
 import filteringSource from './samples/filtering.ts?raw';
 import { filterOperatorHeader } from './samples/filterOperatorHeader';
@@ -87,5 +89,7 @@ export const SAMPLES: Sample[] = [
     { ...tooltips, source: tooltipsSource },
     { ...translation, source: translationSource },
     { ...theming, source: themingSource },
-    { ...miscConfig, source: miscConfigSource }
+    { ...miscConfig, source: miscConfigSource },
+    // export
+    { ...exportCsv, source: exportCsvSource }
 ];

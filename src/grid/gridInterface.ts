@@ -5,6 +5,7 @@ import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
+import type { CsvOptions } from './csv';
 import type { Grid } from './grid';
 import type {
     GridConfig,
@@ -22,6 +23,7 @@ import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
+import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
@@ -628,6 +630,71 @@ export class GridInterface<T> {
             fields.delete(field);
         }
         return Array.from(fields);
+    }
+
+    /**
+     * The rows as CSV text (RFC 4180): a header line with the column labels, then a line per row,
+     * every line ended with CRLF. By default every row the filter lets through, in the sort order, and
+     * the columns of the layout in the order the user sees them, each value as the grid shows it. See
+     * {@link CsvOptions} for what can be changed: the selected rows, the fields, the separator
+     * (`';'` for Excel in Norway), raw values ...
+     *
+     * - **The rows**: when grouped, every data row in the grouped order - the rows of collapsed groups
+     *   too, no group rows. Rows marked for deletion are rows of the grid until they are saved, they
+     *   are exported too.
+     * - **Formulas**: text starting with `=`, `+`, `-`, `@` ... gets a `'` in front, so a spreadsheet
+     *   does not run a formula a user typed in (`escapeFormulas`).
+     * - **No BOM** by default, unlike {@link downloadCsv}: the text is for code of your own.
+     *
+     * Works without the grid on the page too: it reads the config and the datasource.
+     *
+     * @param options what to export and how, see {@link CsvOptions}. Every option is optional
+     * @returns the CSV text, `''` when there are no columns
+     * @throws a `TypeError` for an option it does not know or a value an option does not take
+     * (`rows: 'range'`)
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * const text = gridInterface.getCsv(); // 'Name,Born\r\nAnn,2001-05-17\r\n...'
+     *
+     * // the selected rows, semicolons for Excel in Norway, the values as they are stored
+     * const selected = gridInterface.getCsv({ rows: 'selected', separator: ';', formatted: false });
+     *
+     * // two fields, no header line
+     * const names = gridInterface.getCsv({ fields: ['name', 'email'], header: false });
+     * ```
+     */
+    public getCsv(options: CsvOptions = {}): string {
+        return gridCsv(this, 'getCsv', options);
+    }
+
+    /**
+     * Saves the rows as a CSV file: the browser downloads it, as from a link. The text is
+     * {@link getCsv}'s, with a UTF-8 byte order mark (BOM) first by default - Excel needs it to read
+     * `æøå` (`bom: false` leaves it out).
+     *
+     * For Excel in a locale with a decimal comma (Norwegian, German ...), use `separator: ';'`:
+     * Excel splits a .csv file on the list separator of the computer's locale, and with `','` every
+     * row ends up in one column.
+     *
+     * @param filename the name the file is saved as, default `'export.csv'`. Give it the `.csv`
+     * ending yourself, it is not added
+     * @param options what to export and how, see {@link CsvOptions}
+     * @throws a `TypeError` when the filename is not a text (`downloadCsv({ rows: 'selected' })`: the
+     * filename comes first), for an option it does not know or a value an option does not take
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * document.getElementById('export')!.onclick = () => gridInterface.downloadCsv();
+     *
+     * // the selected rows, for Excel in Norway
+     * gridInterface.downloadCsv('selected.csv', { rows: 'selected', separator: ';' });
+     * ```
+     */
+    public downloadCsv(filename: string = 'export.csv', options: CsvOptions = {}): void {
+        downloadGridCsv(this, filename, options);
     }
 
     /**
