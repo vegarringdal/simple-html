@@ -7,6 +7,7 @@ import { type FindAnchor, type FindMatch, findMatches, findRowFilter, matchAtOrA
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { keyText } from './keyText';
 import { bodyCellOf, focusCellInput, forEachCellOnScreen, scrollCellIntoView } from './rangeSelection';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
@@ -586,7 +587,7 @@ function renderFindBar(ctx: Grid, bar: FindBar) {
                 type="button"
                 class="simple-html-grid-find-button"
                 aria-label=${gridText(ctx, 'find.previous')}
-                title=${gridText(ctx, 'find.previous.tooltip')}
+                title=${keyText(ctx, 'find.previous.tooltip')}
                 @mousedown=${keepFocus}
                 @click=${() => findStep(ctx, -1)}
             >

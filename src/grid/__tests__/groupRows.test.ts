@@ -185,17 +185,34 @@ describe('group rows - callbacks and events', () => {
 });
 
 describe('group rows - current entity', () => {
-    it('expect alt+up from the first data row to the header filter row to make the group row above current', async () => {
-        // why currentEntity is typed EntityUnion<T> | GroupRow | null: leaving the first data row
-        // for the header filter row makes row 0 current, and row 0 is a group row when grouped
+    it('expect alt+up from the first data row to the header filter row to leave the current row as it is', async () => {
+        // it made row 0 current - the group row above, when grouped: the filter row is no row of the data
         const { element, datasource } = await mountGrouped();
         datasource.setRowAsCurrentEntity(1);
+        const current = datasource.currentEntity;
 
         cellInput(element, 1, 0).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', altKey: true, bubbles: true }));
         await sleep(150); // the handler moves the focus in a setTimeout
 
         expect((document.activeElement as HTMLElement).className).toContain('filter-cellpos-middle-pinned-0-0-0');
-        expect(datasource.currentEntity).toBe(datasource.getRow(0));
-        expect(isGroupRow(datasource.currentEntity)).toBe(true);
+        expect(datasource.currentEntity).toBe(current);
+        expect(isGroupRow(datasource.currentEntity)).toBe(false);
+    });
+
+    it('expect alt+left from the first cell of the first data row to the last filter, shift+tab to the group button, to leave the current row too', async () => {
+        const { element, datasource } = await mountGrouped();
+        datasource.setRowAsCurrentEntity(1);
+        const current = datasource.currentEntity;
+
+        cellInput(element, 1, 0).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowLeft', altKey: true, bubbles: true }));
+        await sleep(150);
+        expect((document.activeElement as HTMLElement).className).toContain('filter-cellpos-middle-pinned-0-2-0');
+        expect(datasource.currentEntity).toBe(current);
+
+        cellInput(element, 1, 0).dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'Tab', code: 'Tab', shiftKey: true, bubbles: true })
+        );
+        expect((document.activeElement as HTMLElement).getAttribute('aria-label')).toMatch(/^Lastname: /);
+        expect(datasource.currentEntity).toBe(current);
     });
 });

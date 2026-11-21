@@ -15,7 +15,7 @@ import { rebuildRowColumns } from './rebuildRowColumns';
 import { rebuildRows } from './rebuildRows';
 import { rebuildTopPanel } from './rebuildTopPanel';
 import { onGridFocusOut } from './renderChangedRows';
-import { createTabExits } from './tabExit';
+import { addFooterKeys, createTabExits } from './tabExit';
 import { attachTooltips, tooltipsEnabled } from './tooltip';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
@@ -127,6 +127,8 @@ export function createDom(ctx: Grid) {
     addMenuListeners(ctx);
     // Find: Ctrl+F (Cmd+F) and F3 anywhere in the grid, see findBar.ts
     ctx.element.addEventListener('keydown', (event) => findKeydown(ctx, event), { signal: ctx.scrollListenersAbort?.signal });
+    // Tab in the footer: out of the grid after its last button, back to the rows before its first, see tabExit.ts
+    addFooterKeys(ctx, footer);
     // the cell ranges: the mouse on the cells, copy and paste
     addRangeListeners(ctx);
     addClipboardListeners(ctx);

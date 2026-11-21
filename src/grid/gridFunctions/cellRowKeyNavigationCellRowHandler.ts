@@ -4,7 +4,9 @@ import type { ParsedGridConfig } from '../gridConfig';
 import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { leaveGrid, tabLeavesRows } from './tabExit';
+import { focusGroupButton } from './jumpKeys';
+import { isTypedCharacter } from './renderRowCell';
+import { leaveGrid, tabGroupStop, tabLeavesRows, tabPastRows } from './tabExit';
 
 const TAB_KEY = 'Tab';
 const ARROW_UP_KEY = 'ArrowUp';
@@ -13,7 +15,44 @@ const ARROW_LEFT_KEY = 'ArrowLeft';
 const ARROW_RIGHT_KEY = 'ArrowRight';
 type CurrentKey = typeof TAB_KEY | typeof ARROW_UP_KEY | typeof ARROW_DOWN_KEY | typeof ARROW_LEFT_KEY | typeof ARROW_RIGHT_KEY;
 
-let waitForFocusTrigger = false;
+/**
+ * A key moves the focus in a moment, not at once (Tab, Enter, Alt+arrows): the rows scroll first, and
+ * the cell is focused 100ms later, once they are rendered - `ctx.focusMovePending` meanwhile. The key
+ * comes from the cell the focus is leaving until then; held down, it repeats from there. So the keys
+ * that would move the focus again or type in that cell are canceled until the focus is there: Tab
+ * would else be the browser's own (to the next input in the dom), an Alt+arrow would go from the old
+ * cell again, a character would land in the cell being left. The other keys are left alone - Esc closes
+ * a menu, Ctrl+C copies - and the other grids of the page too (it was one flag for every grid).
+ * @param override the key the cell gives instead of the event's: Enter as ArrowDown, a plain arrow on a
+ * custom cell
+ */
+export function focusMoveKey(event: KeyboardEvent, override = ''): boolean {
+    const arrow = event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight';
+    const typing = isTypedCharacter(event) || event.key === 'Backspace' || event.key === 'Delete';
+    return !!override || event.key === 'Tab' || event.key === 'Enter' || (arrow && event.altKey) || typing;
+}
+
+/**
+ * Moves the focus to the element of a class in a moment, see focusMoveKey: the rows scroll first. A
+ * move to another row makes it the current row - not one to a header filter, the filter row is no row
+ * of the data
+ * @param name the class of the cell's input: `cellpos-...`, `filter-cellpos-...` for a header filter
+ * @param fromRow the row the key was pressed in
+ * @param toRow the row it goes to
+ */
+export function focusInAMoment(ctx: Grid, name: string, fromRow: number, toRow: number) {
+    ctx.focusMovePending = true;
+    setTimeout(() => {
+        const el = getElementByClassName(ctx.element, name);
+        if (el) {
+            el.focus();
+            if (toRow !== fromRow && !name.startsWith('filter-')) {
+                ctx.gridInterface.getDatasource().setRowAsCurrentEntity(toRow);
+            }
+        }
+        ctx.focusMovePending = false;
+    }, 100);
+}
 
 function overrideGroupRow(ctx: Grid, currentKey: string, gotoRow: number) {
     let x = 0;
@@ -139,9 +178,13 @@ export const cellRowKeyNavigationCellRowHandler = (
     event: any,
     codeOverride: string // when we want to force a action
 ) => {
-    if (waitForFocusTrigger) {
-        event.preventDefault();
-        return false;
+    // a move is on its way: the keys that move or type wait for it, see focusMoveKey
+    if (ctx.focusMovePending) {
+        if (focusMoveKey(event, codeOverride)) {
+            event.preventDefault();
+            return false;
+        }
+        return true;
     }
 
     const currentKey: CurrentKey = codeOverride ? codeOverride : event.code;
@@ -326,20 +369,7 @@ export const cellRowKeyNavigationCellRowHandler = (
             scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
         }
 
-        waitForFocusTrigger = true;
-        setTimeout(() => {
-            const el = getElementByClassName(
-                ctx.element,
-                `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`
-            );
-            if (el) {
-                el.focus();
-                if (gotoRow !== row) {
-                    ctx.gridInterface.getDatasource().setRowAsCurrentEntity(gotoRow);
-                }
-            }
-            waitForFocusTrigger = false;
-        }, 100);
+        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
     }
 
     /*
@@ -462,30 +492,28 @@ export const cellRowKeyNavigationCellRowHandler = (
             scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
         }
 
-        waitForFocusTrigger = true;
-        setTimeout(() => {
-            const el = getElementByClassName(
-                ctx.element,
-                `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`
-            );
-            if (el) {
-                el.focus();
-                if (gotoRow !== row) {
-                    ctx.gridInterface.getDatasource().setRowAsCurrentEntity(gotoRow);
-                }
-            }
-            waitForFocusTrigger = false;
-        }, 100);
+        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
     }
 
     /**
      * all logic if using tab
      */
     if (currentKey === TAB_KEY) {
-        // no cell to go to: the browser's Tab takes the focus out of the grid, see tabExit.ts
+        // no row to go to: on to the footer, or the browser's Tab takes the focus out of the grid, see tabExit.ts
         if (tabLeavesRows(ctx, row, column, celno, colType, event.shiftKey)) {
-            leaveGrid(ctx, !event.shiftKey);
+            if (event.shiftKey) {
+                leaveGrid(ctx, false);
+            } else {
+                tabPastRows(ctx, event);
+            }
             return true;
+        }
+        // a group row next: its button is the next stop
+        const groupStop = tabGroupStop(ctx, row, column, celno, colType, event.shiftKey);
+        if (groupStop !== -1) {
+            event.preventDefault();
+            focusGroupButton(ctx, groupStop);
+            return false;
         }
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
@@ -693,20 +721,7 @@ export const cellRowKeyNavigationCellRowHandler = (
             scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
         }
 
-        waitForFocusTrigger = true;
-        setTimeout(() => {
-            const el = getElementByClassName(
-                ctx.element,
-                `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`
-            );
-            if (el) {
-                el.focus();
-                if (gotoRow !== row) {
-                    ctx.gridInterface.getDatasource().setRowAsCurrentEntity(gotoRow);
-                }
-            }
-            waitForFocusTrigger = false;
-        }, 100);
+        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
     }
 
     return false;

@@ -7,11 +7,13 @@ import type { ColType } from './colType';
 import { GROUP_LEVEL_WIDTH } from './getGroupingWidth';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { focusGroupButton, gridCornerKey } from './jumpKeys';
+import { groupRowTab } from './tabExit';
 
 export function renderRowGroup(
     ctx: Grid,
     cell: HTMLCellElement,
-    _row: number,
+    row: number,
     _column: number,
     _celno: number,
     _colType: ColType,
@@ -77,7 +79,14 @@ export function renderRowGroup(
                     event.preventDefault();
                     toggle();
                     focusGroupToggle(ctx, group.__groupID);
+                    return;
                 }
+                // a stop of Tab, between the rows: see tabExit.ts. Ctrl+Home / Ctrl+End to the cells
+                if (event.key === 'Tab' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+                    groupRowTab(ctx, row, event);
+                    return;
+                }
+                gridCornerKey(ctx, event);
             }}
         >
             <svg class="simple-html-grid-group-box" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11 11">
@@ -138,7 +147,7 @@ function focusGroupToggle(ctx: Grid, groupID: string) {
         .getDatasource()
         .getRows()
         .findIndex((rowData) => isGroupRow(rowData) && rowData.__groupID === groupID);
-    const cached = ctx.containerGroupRowCache.find((entry) => entry.row === row);
-    const element = cached ? ctx.rows.get(cached.id) : undefined;
-    element?.querySelector<HTMLElement>('[role="button"]')?.focus();
+    if (row !== -1) {
+        focusGroupButton(ctx, row);
+    }
 }

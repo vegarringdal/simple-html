@@ -8,11 +8,13 @@ import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { keyText } from './keyText';
 import { writeCellValue } from './lookupColumn';
 import { clearRangeCells, pasteText, rangesClipboard, rowsClipboard, writeClipboard } from './rangeClipboard';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { placeUnderCell, showMenu } from './showMenu';
 import { triggerScrollEvent } from './triggerScrollEvent';
+import { undoRedoInGrid } from './undoRedoKey';
 
 /**
  * Opens the row menu, the right click menu of a cell: the default entries (see MENU_IDS.row), changed
@@ -301,18 +303,20 @@ function editSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
             {
                 id: 'row.edit.undo',
                 label: gridText(ctx, 'row.edit.undo'),
-                hint: gridText(ctx, 'row.edit.undo.hint'),
+                // ⌘Z on a Mac
+                hint: keyText(ctx, 'row.edit.undo.hint'),
                 visible: editable,
                 disabled: () => !datasource.canUndo(),
-                action: () => datasource.undo()
+                // the focus goes to what it changed, as Ctrl+Z
+                action: () => undoRedoInGrid(ctx, 'undo', attribute)
             },
             {
                 id: 'row.edit.redo',
                 label: gridText(ctx, 'row.edit.redo'),
-                hint: gridText(ctx, 'row.edit.redo.hint'),
+                hint: keyText(ctx, 'row.edit.redo.hint'),
                 visible: editable,
                 disabled: () => !datasource.canRedo(),
-                action: () => datasource.redo()
+                action: () => undoRedoInGrid(ctx, 'redo', attribute)
             },
             {
                 id: 'row.edit.revertCell',

@@ -222,8 +222,8 @@ Export ›                                                          ----
 | id | shown as | shown when |
 | --- | --- | --- |
 | `row.edit` | Undo / Redo ›: a submenu, first in the menu | the grid is editable |
-| `row.edit.undo` | Undo last change (Ctrl+Z): `datasource.undo()`, see [Undo and redo](05-editing.md#undo-and-redo). Greyed out when there is nothing to undo | the grid is editable |
-| `row.edit.redo` | Redo (Ctrl+Y): `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
+| `row.edit.undo` | Undo last change (Ctrl+Z, ⌘Z on a Mac): `datasource.undo()`, and the focus goes to the cell it changed, see [Undo and redo](05-editing.md#undo-and-redo). Greyed out when there is nothing to undo | the grid is editable |
+| `row.edit.redo` | Redo (Ctrl+Y, ⇧⌘Z on a Mac): `datasource.redo()`, the focus to the cell it changed. Greyed out when there is nothing to redo | the grid is editable |
 | `row.edit.revertCell` | Undo cell edit: the cell's original value, see [Reverting a cell or a row](05-editing.md#reverting-a-cell-or-a-row). Greyed out when the cell is not edited | the grid is editable |
 | `row.edit.revertRow` | Undo row edits: the row right clicked back to its original values, its deletion mark taken off - no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
 | `row.edit.revertRows` | Undo row edits (selected rows): the selected rows back, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |

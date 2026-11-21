@@ -20,6 +20,7 @@ import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
+import { jumpKeydown } from './jumpKeys';
 import { writeCellValue } from './lookupColumn';
 import { isLookupEditorOpen, openLookupEditor } from './lookupEditor';
 import { firstLine, hasLineBreak, isMultilineCell, textLines } from './multilineText';
@@ -239,9 +240,11 @@ export function renderRowCell(
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: any) => {
-                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
+                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts). The
+                            // keys that jump: Ctrl+Home, PageDown ... (jumpKeys.ts)
                             if (
                                 rangeKeydown(ctx, e, row, attribute) ||
+                                jumpKeydown(ctx, e, row, { colType, column, celno }) ||
                                 rangeDeleteKey(ctx, e) ||
                                 fillDownKey(ctx, e, row, attribute)
                             ) {
@@ -520,9 +523,11 @@ export function renderRowCell(
                             }
                         }}
                         @keydown=${(e: any) => {
-                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
+                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts). The
+                            // keys that jump: Ctrl+Home, PageDown ... (jumpKeys.ts) - Home and End are the caret's
                             if (
                                 rangeKeydown(ctx, e, row, attribute) ||
+                                jumpKeydown(ctx, e, row, { colType, column, celno }) ||
                                 rangeDeleteKey(ctx, e) ||
                                 fillDownKey(ctx, e, row, attribute)
                             ) {

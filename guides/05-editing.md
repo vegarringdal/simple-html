@@ -383,15 +383,23 @@ is a condition of the filter, in `getFilter()` and the state.
 The datasource keeps a history of the edits: `undo()` takes the last step back, `redo()` does it
 again. In the grid the user has them too:
 
-- **Ctrl+Z** (Cmd+Z on a Mac) undoes, **Ctrl+Y** and **Ctrl+Shift+Z** (Cmd+Shift+Z) redo - with the
-  focus in a cell of an editable grid. Not in the header filters and the filter editor: the keys are
-  the input's own there.
+- **Ctrl+Z** (Cmd+Z on a Mac) undoes, **Ctrl+Y** and **Ctrl+Shift+Z** (Cmd+Y, Cmd+Shift+Z) redo - with
+  the focus in a cell of an editable grid. Not in the header filters and the filter editor: the keys
+  are the input's own there.
+- **The focus goes to what changed**, as in a spreadsheet: after Ctrl+Z, Ctrl+Y and the row menu's
+  *Undo last change* / *Redo* the grid scrolls to the first cell of the step - the first change made
+  (the top left cell of a paste) whose row is displayed - puts it in the middle of the view when it was
+  out of it, focuses it and makes its row the current row. A deletion mark, or a field that is not in
+  the layout, is its row in the column of the cell the key was pressed in (the menu opened on). When
+  no row of the step is displayed - filtered out, in a collapsed group - the focus stays.
+  `datasource.undo()` / `redo()` from code (an Undo button of your own) do not move it.
 - **While the user types in a cell, Ctrl+Z is the input's own undo** of the typing. The grid writes
   every key to the row as it is typed, so what was typed in the cell is the last step of the history;
   once the typing is undone back to the value the cell started with, or the focus left the cell,
   Ctrl+Z undoes the history.
 - The row menu (right click a cell) starts with the submenu *Undo / Redo ›*: *Undo last change
-  (Ctrl+Z)* and *Redo (Ctrl+Y)*, greyed out when there is nothing to undo or redo, and the reverts, see
+  (Ctrl+Z)* and *Redo (Ctrl+Y)* - *(⌘Z)* and *(⇧⌘Z)* on a Mac, see
+  [Texts](12-texts.md#the-ids) - greyed out when there is nothing to undo or redo, and the reverts, see
   [Reverting a cell or a row](#reverting-a-cell-or-a-row). The ids are `row.edit` (the submenu),
   `row.edit.undo`, `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow` and
   `row.edit.revertRows`, change or hide them with the [menus hook](10-menus.md).
