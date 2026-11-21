@@ -23,6 +23,7 @@ import type {
 import type { GridEvents } from './gridEvents';
 import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
+import { fillDown } from './gridFunctions/fillDown';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
@@ -32,7 +33,7 @@ import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
 import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
 import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
-import { renderRangeClasses } from './gridFunctions/rangeSelection';
+import { focusedCell, pointOf, renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
@@ -1010,6 +1011,26 @@ export class GridInterface<T> {
      */
     public clearRanges() {
         this.__setRanges([]);
+    }
+
+    /**
+     * Fill down, as Ctrl+D (Cmd+D) in a cell does: in every range the values of its top row go into the
+     * rows under it, a range of one row gets the values of the data row above it. Without a range, the
+     * cell with the focus gets the value of the cell above it. The values are copied as they are; cells
+     * that can not be edited are skipped (the grid's `readonly`, the column's, the `isReadonly` hook),
+     * group rows have no cells. One step of the undo history. See the guide "Selection and clipboard".
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * // the status of the first row into the next four
+     * gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 4, toField: 'status' }]);
+     * gridInterface.fillDown();
+     * ```
+     */
+    public fillDown() {
+        const focused = this.grid ? focusedCell(this.grid) : null;
+        fillDown(this, focused ? pointOf(focused.cell) : null);
     }
 
     /**

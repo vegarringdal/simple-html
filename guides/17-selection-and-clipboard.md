@@ -240,6 +240,27 @@ selected in the input: every cell of every range is emptied (`null`), the readon
 an editable grid. In one cell they are the input's own keys, as before. The row menu's *Clear: Clear
 range* does the same.
 
+## Fill down
+
+**Ctrl+D** (Cmd+D on a Mac) in a cell fills down, like a spreadsheet:
+
+- **with ranges**: in every range the values of its top row go into the rows under it
+- **a range of one row**, or **the cell alone** (no range): it gets the values of the data row above it
+
+**The fill handle** is the small square at the bottom right corner of the last range. Drag it down: the
+range grows to the row under the pointer (past the bottom of the rows the grid scrolls), and when it
+is let go the rows it grew by get the values of the range's rows, repeated from its top - two rows
+`open`, `done` dragged over four more rows give `open`, `done`, `open`, `done`. Down only.
+
+The values are copied as they are, a date as a date of its own; the cells that can not be edited are
+skipped, group rows have no cells, and it is one step of the undo history (Ctrl+Z). In a readonly grid
+there is no handle, and Ctrl+D is the browser's. From code:
+
+```ts
+gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 4, toField: 'status' }]);
+gridInterface.fillDown();
+```
+
 ## Undo
 
 A paste, a Delete and a clear of ranges are written in one go: **one Ctrl+Z** takes all of it back,

@@ -1300,6 +1300,18 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   rows, greyed out with none selected), in every grid. Texts `row.export*`.
 - Guide "Export" and sample "Export to CSV".
 
+#### Fill down: Ctrl+D and the fill handle (item 34)
+
+##### Added
+- **Ctrl+D** (Cmd+D) in a cell fills down like a spreadsheet: in every range the values of its top row go
+  into the rows under it; a range of one row, or the cell alone, gets the values of the data row above.
+  `gridInterface.fillDown()` does the same from code.
+- **The fill handle**: a small square at the bottom right corner of the last range (`.simple-html-grid-fill-handle`,
+  in the range colour). Dragged down, the range grows with the pointer (the grid scrolls past the
+  bottom), and the rows it grew by get the range's rows, repeated from its top.
+- Values are copied as they are (a date as a new Date), readonly cells skipped, group rows skipped, one
+  undo step; nothing in a readonly grid (no handle, Ctrl+D stays the browser's).
+
 #### The summary of the selected cells in the footer (item 35)
 
 ##### Added

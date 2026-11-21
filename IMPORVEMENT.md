@@ -1477,6 +1477,31 @@ in the console. All passed. Found and fixed:
   and Chromium. They are in `.claude/browser-checks/` now (git-excluded, not committed): new scripts
   are written there
 
+### Fill down: Ctrl+D and the fill handle (item 34)
+
+* fillDown.ts: `fillDown(gridInterface, active)` - each range's top row into the rows under it
+  (rangeBlock: data rows only), a one-row range or the focused cell alone from the data row above (as
+  Excel). Values copied raw, a Date as a new Date (two rows must not share one object), through the
+  proxy: validated, edited marks, rows-changed, one run of code = one undo step; `endTyping()` first so
+  the typed cell is written and rendered like a paste
+* Ctrl+D / Cmd+D (`fillDownKey`, in the cell's keydown after the range keys); not with Shift/Alt, not in
+  a readonly grid - there it is the browser's bookmark key
+* the fill handle: one element per grid (WeakMap), moved by showCellRange into the cell at the last
+  range's bottom right corner on screen - for a field with empty cells under it (a column next to it
+  stacks more fields) the last empty one, where the range's line turns. Its pointerdown stops the
+  body's range press, keeps the focus, follows the pointer (followPointer, cellPointAt from
+  rangeSelection now exported), grows the range down only, scrolls down past the rows' bottom; let go
+  `fillRows()` repeats the range's rows over the new ones; cancel puts the ranges back. bodyCellOf leaves
+  the handle out like the edited marker
+* tests: fillDown.test.ts (the range, readonly column, dates copied, undo, one row / one cell from above,
+  the first row, Cmd, Ctrl+Shift and a readonly grid left alone, group rows, the API, the handle's cell,
+  a stacked layout, readonly, fillRows repeating + undo). Browser: .claude/browser-checks/scripts/fill-check.js
+  12/12 (Ctrl+D with a readonly column, default prevented, Ctrl+Z, the handle at the line's corner and
+  hit by the pointer, a drag of two rows, the handle at the new corner, the focus kept, Esc), light and
+  dark screenshots
+* not done: a "Fill down" entry in the row menu (after the menus' submenus merge); fill up/right; series
+  (1, 2, 3 ...) - the handle copies
+
 ## Considered, not done
 
 ## Candidates / not started

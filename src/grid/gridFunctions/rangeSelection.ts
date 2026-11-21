@@ -4,6 +4,7 @@ import type { Grid } from '../grid';
 import { setAria } from './ariaGrid';
 import { type CellPoint, rangeEdges } from './cellRanges';
 import type { ColType } from './colType';
+import { showFillHandle } from './fillDown';
 import { followPointer, isPrimaryPress } from './followPointer';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
@@ -32,7 +33,8 @@ import { pinnedSection } from './pinnedSection';
  *
  * The keyboard, in a cell (the cell's keydown calls rangeKeydown): Alt+Shift+arrows move the end of
  * the last range (from the focused cell when there is none), Esc clears the ranges. Delete and
- * Backspace clear the cells of the ranges, see rangeDeleteKey in rangeClipboard.ts.
+ * Backspace clear the cells of the ranges, see rangeDeleteKey in rangeClipboard.ts. Ctrl+D fills down, and
+ * the last range has a fill handle at its bottom right corner, see fillDown.ts.
  *
  * The cells in a range have the class `simple-html-cell-in-range` and `aria-selected="true"`, the
  * cells at its edges `simple-html-cell-range-top` / `-bottom` / `-left` / `-right`: see showCellRange.
@@ -65,6 +67,8 @@ const AUTO_SCROLL_X = 40;
 export function showCellRange(ctx: Grid, cell: HTMLCellElement) {
     const state = ctx.gridInterface.__getRangeState();
     const edges = state ? rangeEdges(ctx.gridInterface, state, cell.$row, cell.$coltype, cell.$column, cell.$celno) : null;
+    // the fill handle at the bottom right corner of the last range (fillDown.ts)
+    showFillHandle(ctx, cell);
 
     if (!edges) {
         if (cell.classList.contains(IN_RANGE_CLASS)) {
@@ -127,13 +131,13 @@ export function addRangeListeners(ctx: Grid) {
 /**
  * The body cell of the grid with a field an element is in: null for anything else - a header cell, a
  * group row, the row selector, an empty cell under the last field of a column - and for the focus
- * button and the edited marker of a cell, they are buttons
+ * button, the edited marker and the fill handle of a cell, they are buttons
  */
 export function bodyCellOf(ctx: Grid, target: EventTarget | null): HTMLCellElement | null {
     if (
         !(target instanceof Element) ||
         !ctx.body?.contains(target) ||
-        target.closest('.simple-html-grid-focus-button, .simple-html-cell-edited-marker')
+        target.closest('.simple-html-grid-focus-button, .simple-html-cell-edited-marker, .simple-html-grid-fill-handle')
     ) {
         return null;
     }
@@ -198,7 +202,7 @@ function collapseTextSelection(input: HTMLInputElement) {
  * an edge selects up to the cell at that edge. An empty cell under the last field of a column is that
  * field, as it is in a range (rangeEdges). null when there is no body cell there
  */
-function cellPointAt(ctx: Grid, x: number, y: number): CellPoint | null {
+export function cellPointAt(ctx: Grid, x: number, y: number): CellPoint | null {
     // inside the border of the element of the rows: the views of the rows are in its padding box
     const rect = ctx.body.getBoundingClientRect();
     const left = rect.left + ctx.body.clientLeft;
