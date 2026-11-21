@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html, nothing, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Entity, GroupRow } from '../../datasource/entity';
 import { and, type FilterExpression, type FilterOperator, isFilterGroup, where } from '../../datasource/filterExpression';
@@ -51,9 +51,10 @@ export function contextmenuFilter(
 }
 
 /**
- * The filter menu's default entries, new objects every call: clear, the submenus blank and operator,
- * the filter editor, then the value list - the main tool, not in a submenu. The ids are documented in
- * MENU_IDS.filter
+ * The filter menu's default entries, new objects every call: the submenu Filter (`filter.filter`) -
+ * the submenus operator and blank, clear, clear all, a line, the filter editor - then the value list,
+ * the main tool, not in a submenu. The entries kept the ids they had before they were in Filter. The
+ * ids are documented in MENU_IDS.filter
  */
 function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     // a lookup column filters on its labels: the operators of a text (filterCallback)
@@ -96,66 +97,128 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     });
 
     return [
-        { id: 'filter.filter.clear', label: text('filter.filter.clear'), action: () => clearColumnFilter(ctx, attribute) },
-        { id: 'filter.filter.clearAll', label: text('filter.filter.clearAll'), action: () => clearAllColumnFilters(ctx) },
-        { type: 'separator', id: 'filter.filter.blankSeparator' },
         {
             type: 'submenu',
-            id: 'filter.filter.blank',
-            label: text('filter.filter.blank'),
+            id: 'filter.filter',
+            label: text('filter.filter'),
             entries: [
                 {
-                    id: 'filter.filter.isBlank',
-                    label: text('filter.filter.isBlank'),
-                    action: () => setBlankOrNotBlank(ctx, attribute, 'IS_BLANK')
+                    type: 'submenu',
+                    id: 'filter.operator',
+                    label: text('filter.operator'),
+                    visible: hasOperators,
+                    // the operator in use has a check mark
+                    entries: [
+                        operatorItem('filter.operator.greaterThanOrEqualTo', 'GREATER_THAN_OR_EQUAL_TO', isRange),
+                        operatorItem('filter.operator.lessThanOrEqualTo', 'LESS_THAN_OR_EQUAL_TO', isRange),
+                        operatorItem('filter.operator.equal', 'EQUAL', hasOperators),
+                        operatorItem('filter.operator.notEqualTo', 'NOT_EQUAL_TO', isText),
+                        operatorItem('filter.operator.contains', 'CONTAINS', isText)
+                    ]
                 },
                 {
-                    id: 'filter.filter.isNotBlank',
-                    label: text('filter.filter.isNotBlank'),
-                    action: () => setBlankOrNotBlank(ctx, attribute, 'IS_NOT_BLANK')
-                }
+                    type: 'submenu',
+                    id: 'filter.filter.blank',
+                    label: text('filter.filter.blank'),
+                    entries: [
+                        {
+                            id: 'filter.filter.isBlank',
+                            label: text('filter.filter.isBlank'),
+                            action: () => setBlankOrNotBlank(ctx, attribute, 'IS_BLANK')
+                        },
+                        {
+                            id: 'filter.filter.isNotBlank',
+                            label: text('filter.filter.isNotBlank'),
+                            action: () => setBlankOrNotBlank(ctx, attribute, 'IS_NOT_BLANK')
+                        }
+                    ]
+                },
+                {
+                    id: 'filter.filter.clear',
+                    label: text('filter.filter.clear'),
+                    action: () => clearColumnFilter(ctx, attribute)
+                },
+                { id: 'filter.filter.clearAll', label: text('filter.filter.clearAll'), action: () => clearAllColumnFilters(ctx) },
+                { type: 'separator', id: 'filter.filter.advancedSeparator' },
+                { id: 'filter.filter.advanced', label: text('filter.filter.advanced'), action: () => openFilterEditor(ctx) }
             ]
         },
-        {
-            type: 'submenu',
-            id: 'filter.operator',
-            label: text('filter.operator'),
-            visible: hasOperators,
-            // the operator in use has a check mark
-            entries: [
-                operatorItem('filter.operator.greaterThanOrEqualTo', 'GREATER_THAN_OR_EQUAL_TO', isRange),
-                operatorItem('filter.operator.lessThanOrEqualTo', 'LESS_THAN_OR_EQUAL_TO', isRange),
-                operatorItem('filter.operator.equal', 'EQUAL', hasOperators),
-                operatorItem('filter.operator.notEqualTo', 'NOT_EQUAL_TO', isText),
-                operatorItem('filter.operator.contains', 'CONTAINS', isText)
-            ]
-        },
-        { type: 'separator', id: 'filter.filter.advancedSeparator' },
-        { id: 'filter.filter.advanced', label: text('filter.filter.advanced'), action: () => openFilterEditor(ctx) },
         valueListBlock(ctx, attribute)
     ];
 }
 
 /**
- * The excel style value list: "Search:", a search box, a checkbox per value and "Run Search". One
- * block (`filter.values`) with an element of its own, which it renders again as the user checks values
- * and types. Only for a text field, dropDownFilterData gives null for the rest.
+ * The excel style value list, the main tool of the filter menu: a search box, a checkbox per value
+ * with its number of rows, "Select all" over them, then Cancel and Apply. One block (`filter.values`)
+ * with an element of its own, which it renders again as the user checks values and types. Only for a
+ * text field, dropDownFilterData gives null for the rest.
+ *
+ * Nothing is filtered until Apply: the checkboxes are a draft, Cancel (or Esc, a click outside)
+ * leaves the filter as it was.
+ *
+ * The keyboard: Tab goes on from the menu's items into it (see itemKeydown in showMenu) - the search
+ * box, the checkboxes, Cancel, Apply. ArrowDown / ArrowUp move between the search box and the
+ * checkboxes, Space checks one, Enter in the search box or on a checkbox applies, as Apply does.
  */
 function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
     const element = document.createElement('div');
     element.setAttribute('data-menu-id', 'filter.values');
-    // its parts are laid out as they were when they were entries of the menu itself (a flex column)
-    element.style.display = 'flex';
-    element.style.flexDirection = 'column';
+    element.className = 'simple-html-grid-value-list';
 
     const state = {
-        searchInput: '' as string | null,
+        searchInput: '',
         availableOnly: true,
-        selectAll: true,
         data: dropDownFilterData(ctx, attribute, true, '')
     };
 
     const block: MenuBlock = { type: 'block', id: 'filter.values', element, visible: () => state.data !== null };
+    const text = (id: TextId, values?: Record<string, unknown>) => gridText(ctx, id, values);
+
+    /**
+     * filters the column on the checked values: an IN with them, or a NOT_IN with the unchecked ones
+     * when there are fewer of those (none unchecked: no list). The search text is a CONTAINS too, see
+     * filterCallback. Then the menu closes
+     */
+    const apply = () => {
+        const data = state.data;
+        if (!data) {
+            return;
+        }
+        const unchecked = Array.from(data.dataFilterSetFull).filter((value) => !data.dataFilterSet.has(value));
+        const search = state.searchInput || null;
+        if (unchecked.length < data.dataFilterSet.size) {
+            filterCallback(ctx, null, attribute, unchecked.length ? unchecked : null, search, unchecked.length > 0);
+        } else {
+            filterCallback(ctx, null, attribute, data.dataFilterSet.size ? Array.from(data.dataFilterSet) : null, search, false);
+        }
+        removeContextMenu(ctx);
+    };
+
+    /**
+     * the keys of the list: Enter in the search box or on a checkbox applies, ArrowDown / ArrowUp go to
+     * the next / previous input (the search box, the checkboxes). The buttons are the browser's: Enter
+     * and Space click them
+     */
+    element.addEventListener('keydown', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) {
+            return;
+        }
+        // not the Enter that ends the composing of a character (an input method editor)
+        if (event.key === 'Enter' && !event.isComposing) {
+            event.preventDefault();
+            apply();
+            return;
+        }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            const inputs = Array.from(element.querySelectorAll<HTMLInputElement>('input:not(:disabled)'));
+            const next = inputs[inputs.indexOf(target) + (event.key === 'ArrowDown' ? 1 : -1)];
+            if (next) {
+                event.preventDefault();
+                next.focus();
+            }
+        }
+    });
 
     const reRender = () => {
         const data = state.data;
@@ -163,194 +226,105 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
             return;
         }
 
-        /**
-         * update grid with new result
-         */
-        const runFilterClick = () => {
-            const intersection = Array.from(data.dataFilterSetFull).filter((x) => !data.dataFilterSet.has(x));
+        const total = data.dataFilterSetFull.size;
+        const checked = data.dataFilterSet.size;
+        // "Select all" is checked when every value is, mixed (indeterminate) when some are
+        const allChecked = total > 0 && checked === total;
+        const someChecked = checked > 0 && checked < total;
 
-            if (intersection.length < data.dataFilterSet.size) {
-                // if full we want to use NOT in
-                filterCallback(
-                    ctx,
-                    null,
-                    attribute,
-                    intersection.length ? intersection : null,
-                    state.searchInput ? state.searchInput : null,
-                    !!intersection.length
-                );
+        const toggleValue = (value: unknown) => {
+            if (data.dataFilterSet.has(value)) {
+                data.dataFilterSet.delete(value);
             } else {
-                filterCallback(
-                    ctx,
-                    null,
-                    attribute,
-                    data.dataFilterSet.size ? Array.from(data.dataFilterSet) : null,
-                    state.searchInput ? state.searchInput : null,
-                    false
-                );
+                data.dataFilterSet.add(value);
             }
+            reRender();
+        };
 
-            removeContextMenu(ctx);
+        // all checked: none. Some or none: all, as a mixed checkbox goes
+        const toggleAll = () => {
+            data.dataFilterSet = allChecked ? new Set() : new Set(data.dataFilterSetFull);
+            reRender();
+        };
+
+        const toggleAvailableOnly = () => {
+            state.availableOnly = !state.availableOnly;
+            state.data = dropDownFilterData(ctx, attribute, state.availableOnly, state.searchInput);
+            reRender();
+        };
+
+        const search = (event: Event) => {
+            state.searchInput = (event.target as HTMLInputElement).value;
+            state.data = dropDownFilterData(ctx, attribute, state.availableOnly, state.searchInput);
+            reRender();
         };
 
         /**
-         * items found
+         * A value: its checkbox, the value - cut off with an ellipsis when it is too long, the whole
+         * value as its tooltip then - and its number of rows on the right. The label around them makes
+         * the whole row a click on the checkbox, and is the checkbox's name. The counts are only shown
+         * when the list is complete: with values dropped (the DROPDOWN_FILTER_MAX_ROWS cap) they would
+         * mislead
          */
-        const filterValues = () => {
-            const filterValueClick = (value: unknown) => {
-                state.selectAll = false;
-                if (data.dataFilterSet.has(value)) {
-                    data.dataFilterSet.delete(value);
-                } else {
-                    data.dataFilterSet.add(value);
-                }
-                state.selectAll = data.dataFilterSetFull.size === data.dataFilterSet.size && !state.availableOnly;
-                reRender();
-            };
-            /**
-             * row count per value, in parentheses.
-             * Only shown when the list is complete - if values were dropped because of the
-             * DROPDOWN_FILTER_MAX_ROWS cap the counts would be misleading.
-             */
-            const countFor = (value: unknown) => {
-                if (data.truncated) {
-                    return '';
-                }
-                const count = data.counts?.get(value);
-                return count ? ` (${count})` : '';
-            };
-
-            return Array.from(data.dataFilterSetFull).map((value) => {
-                return html`<div class="simple-html-grid-menu-checkbox">
-                    <input
-                        type="checkbox"
-                        .checked=${live(data.dataFilterSet.has(value))}
-                        @click=${() => {
-                            filterValueClick(value);
-                        }}
-                    /><label
-                        @click=${() => {
-                            filterValueClick(value);
-                        }}
-                    >
-                        ${value === 'NULL' ? gridText(ctx, 'filter.values.blank') : value}${countFor(value)}</label
-                    >
-                </div>`;
-            });
-        };
-
-        /**
-         * top checkbox - available
-         * will show only column filtered
-         */
-        const availableCheckbox = () => {
-            if (!data.enableAvailableOnlyOption) {
-                return null;
-            }
-
-            const handleEvent = (e: MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-                state.availableOnly = !state.availableOnly;
-                state.selectAll = data.dataFilterSetFull.size === data.dataFilterSet.size && !state.availableOnly;
-                state.data = dropDownFilterData(ctx, attribute, state.availableOnly, state.searchInput);
-                reRender();
-            };
-
-            return html` <div style="padding:2px">
-                <input
-                    style="padding:2px"
-                    type="checkbox"
-                    .checked=${live(state.availableOnly)}
-                    @click=${(e: MouseEvent) => handleEvent(e)}
-                /><label style="padding:2px" @click=${(e: MouseEvent) => handleEvent(e)}
-                    >${gridText(ctx, 'filter.values.availableOnly')}</label
+        const valueRow = (value: unknown) => {
+            const count = data.truncated ? undefined : data.counts.get(value);
+            const blank = value === 'NULL';
+            return html`<label class="simple-html-grid-value-row">
+                <input type="checkbox" .checked=${live(data.dataFilterSet.has(value))} @change=${() => toggleValue(value)} />
+                <span
+                    class=${blank ? 'simple-html-grid-value-text simple-html-grid-value-blank' : 'simple-html-grid-value-text'}
+                    @mouseenter=${showCutOffText}
+                    >${blank ? text('filter.values.blank') : value}</span
                 >
-            </div>`;
+                ${count ? html`<span class="simple-html-grid-value-count">${count}</span>` : nothing}
+            </label>`;
         };
 
-        /**
-         * container, ncluding select all button
-         */
-        const listContainerTemplate = () => {
-            const clickHandler = () => {
-                state.selectAll = !state.selectAll;
-                if (state.selectAll) {
-                    data.dataFilterSet = new Set(data.dataFilterSetFull);
-                } else {
-                    data.dataFilterSet = new Set();
-                }
-                reRender();
-            };
-
-            // if we have more then DROPDOWN_FILTER_MAX_ROWS we display warning
-            // since we only display first DROPDOWN_FILTER_MAX_ROWS row
-            return html` <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                ${
-                    data.truncated
-                        ? html`<div class="max-row-info-warning">
-                              ${gridText(ctx, 'filter.values.truncated', { max: DROPDOWN_FILTER_MAX_ROWS })}
-                          </div>`
-                        : html`<div class="max-row-info">
-                              ${gridText(ctx, 'filter.values.rowsFound', { count: data.dataFilterSetFull.size })}
-                          </div>`
-                }
-                <div class="simple-html-grid-menu-checkbox">
-                    <input type="checkbox" .checked=${live(state.selectAll)} @click=${() => clickHandler()} /><label
-                        @click=${() => clickHandler()}
-                        >${gridText(ctx, 'filter.values.selectAll')}</label
-                    >
-                </div>
-
-                ${filterValues()}
-            </div>`;
-        };
-
-        /**
-         * input field
-         */
-        const inputTemplate = () => {
-            const inputHandler = (e: Event) => {
-                state.searchInput = (e.target as HTMLInputElement).value || null;
-                state.data = dropDownFilterData(ctx, attribute, state.availableOnly, state.searchInput);
-                reRender();
-            };
-
-            return html` <input
-                class="simple-html-grid-menu-item-input"
-                style="border:1px solid transparent; width: 100%; margin:0"
-                @focus=${(e: FocusEvent) => {
-                    (e.target as HTMLInputElement).style.border = '';
-                }}
-                @blur=${(e: FocusEvent) => {
-                    (e.target as HTMLInputElement).style.border = '1px solid transparent';
-                }}
-                placeholder=${gridText(ctx, 'filter.values.searchPlaceholder')}
-                .value=${state.searchInput}
-                @input=${(e: Event) => inputHandler(e)}
-            />`;
-        };
+        // how many values the list has, or that it is cut off. Read out when it changes (aria-live)
+        const info = data.truncated
+            ? html`<span class="simple-html-grid-value-warning">${text('filter.values.truncated', { max: DROPDOWN_FILTER_MAX_ROWS })}</span>`
+            : text(total === 1 ? 'filter.values.rowsFound.one' : 'filter.values.rowsFound', { count: total });
 
         render(
-            html` <div class="simple-html-grid-menu-section">${gridText(ctx, 'filter.values.search')}</div>
-                <hr class="hr-solid" />
-                ${availableCheckbox()} ${inputTemplate()} ${listContainerTemplate()}
-                <div
-                    class="simple-html-label-button-menu-bottom"
-                    role="button"
-                    tabindex="0"
-                    @click=${() => {
-                        runFilterClick();
-                    }}
-                    @keydown=${(event: KeyboardEvent) => {
-                        // a button for the keyboard too: Tab gets to it from the checkboxes
-                        if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            runFilterClick();
-                        }
-                    }}
-                >
-                    ${gridText(ctx, 'filter.values.run')}
+            html`<input
+                    class="simple-html-grid-value-search"
+                    type="text"
+                    aria-label=${text('filter.values.search')}
+                    placeholder=${text('filter.values.searchPlaceholder')}
+                    .value=${live(state.searchInput)}
+                    @input=${search}
+                />
+                ${
+                    data.enableAvailableOnlyOption
+                        ? html`<label class="simple-html-grid-value-row simple-html-grid-value-option">
+                              <input type="checkbox" .checked=${live(state.availableOnly)} @change=${toggleAvailableOnly} />
+                              <span class="simple-html-grid-value-text">${text('filter.values.availableOnly')}</span>
+                          </label>`
+                        : nothing
+                }
+                <div class="simple-html-grid-value-info" aria-live="polite">${info}</div>
+                <div class="simple-html-grid-value-box">
+                    <label class="simple-html-grid-value-row simple-html-grid-value-all">
+                        <input
+                            type="checkbox"
+                            .checked=${live(allChecked)}
+                            .indeterminate=${someChecked}
+                            ?disabled=${total === 0}
+                            @change=${toggleAll}
+                        />
+                        <span class="simple-html-grid-value-text">${text('filter.values.selectAll')}</span>
+                    </label>
+                    <div class="simple-html-grid-value-scroll simple-html-dialog-scroller">
+                        ${Array.from(data.dataFilterSetFull, valueRow)}
+                    </div>
+                </div>
+                <div class="simple-html-grid-value-buttons">
+                    <button type="button" class="simple-html-grid-button" @click=${() => removeContextMenu(ctx)}>
+                        ${text('filter.values.cancel')}
+                    </button>
+                    <button type="button" class="simple-html-grid-button simple-html-grid-button-primary" @click=${apply}>
+                        ${text('filter.values.run')}
+                    </button>
                 </div>`,
             element
         );
@@ -358,6 +332,14 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
 
     reRender();
     return block;
+}
+
+/**
+ * The whole text of a value as its tooltip, when it is cut off (an ellipsis): the pointer entering it
+ */
+function showCutOffText(event: MouseEvent) {
+    const span = event.currentTarget as HTMLElement;
+    span.title = span.scrollWidth > span.clientWidth ? (span.textContent ?? '') : '';
 }
 
 /**

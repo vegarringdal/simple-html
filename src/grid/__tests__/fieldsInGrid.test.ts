@@ -276,10 +276,10 @@ describe('fields in the grid - filter editor', () => {
         datasource.filter(and(where('active', 'EQUAL', null)));
         gridInterface.openFilterEditor();
 
-        const input = document.querySelector('.filter-editor-content .grid-condition input') as HTMLInputElement;
+        const input = document.querySelector('.filter-editor-content .filter-editor-value') as HTMLInputElement;
         input.value = 'true';
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        menuItem('Filter Only').click();
+        menuItem('Apply').click();
 
         expect(datasource.getDataRows().map((row) => row.name)).toEqual(['a']);
     });
@@ -296,12 +296,12 @@ describe('fields in the grid - filter editor', () => {
         datasource.filter(and(where('price', 'EQUAL', 3)));
         gridInterface.openFilterEditor();
 
-        const input = document.querySelector('.filter-editor-content .grid-condition input') as HTMLInputElement;
+        const input = document.querySelector('.filter-editor-content .filter-editor-value') as HTMLInputElement;
         // the editor shows the value with the field's formatter
         expect(input.value).toEqual('3');
         input.value = '12,5';
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        menuItem('Filter Only').click();
+        menuItem('Apply').click();
 
         expect(datasource.getDataRows().map((row) => row.name)).toEqual(['a']);
     });

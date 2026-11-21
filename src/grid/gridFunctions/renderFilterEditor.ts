@@ -1,4 +1,4 @@
-import { html, render, type TemplateResult } from 'lit-html';
+import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Datasource } from '../../datasource/dataSource';
 import { isIgnoredCondition } from '../../datasource/filter';
@@ -82,6 +82,14 @@ export function draftToFilter(draft: GroupDraft, datasource: Datasource): Filter
  * Every edit renders it again from the start, in the same dialog: lit keeps the elements, so the
  * dialog stays where the user put it and as big as they made it, and the focus stays where it is.
  *
+ * What it shows, top to bottom: the title bar (drag it, ✕ closes), the root group, then Cancel, Apply
+ * and Apply & close. A group is a line down its left side (a bracket) with its header on top - AND / OR
+ * as two buttons, the one in use filled, "+ Condition", "+ Group", then wrap and delete as icons - and
+ * its conditions, then its sub groups, indented. A condition is one row: the field and the operator
+ * pickers, the value (or the column it is compared with), switch value / column, delete. The row
+ * wraps when the dialog is narrow. Every control is a button or an input: Tab goes through them in
+ * that order, Enter and Space use them, each has a name for a screen reader.
+ *
  * @param filterArg the root group, the editor's own copy: it is changed in place while editing
  */
 export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
@@ -90,450 +98,286 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
     const opening = !ctx.filterEditor;
     const dialog = ctx.filterEditor ?? createFilterEditorDialog(ctx);
 
-    const label = (attribute: string) => getColumnLabel(ctx, attribute);
     const text = (id: TextId) => gridText(ctx, id);
+    /** renders the editor again, after an edit of the model */
+    const update = () => renderFilterEditor(ctx, structuredClone(filterArg));
 
     /**
-     * the name of a condition's operator, the picker's text while none is picked. An operator of plain
-     * js that is not one is shown as it is
+     * the name of an operator. An operator of plain js that is not one is shown as it is
      */
-    const operatorName = (operator: FilterOperator | undefined) => {
-        if (!operator) {
-            return text('filterEditor.pickOperator');
+    const operatorName = (operator: FilterOperator) =>
+        findText(`filterEditor.operator.${operator}`, ctx.gridInterface.__getGridConfig().texts) ?? operator;
+
+    /** takes `child` out of the group it is in */
+    const removeFrom = (children: (GroupDraft | ConditionDraft)[], child: GroupDraft | ConditionDraft) => {
+        const index = children.indexOf(child);
+        if (index !== -1) {
+            children.splice(index, 1);
         }
-        return findText(`filterEditor.operator.${operator}`, ctx.gridInterface.__getGridConfig().texts) ?? operator;
+        update();
     };
 
     /**
-     * Icon helper
-     * @param callback
-     * @returns
+     * A button with an icon only: its tooltip is its name for a screen reader too
      */
-    const trashIcon = (callback: (e: any) => void) => {
-        return html`<svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="simple-html-grid-icon-group-svg"
-            @click=${(e: any) => callback(e)}
+    const iconButton = (icon: TemplateResult, label: string, onClick: () => void) =>
+        html`<button type="button" class="filter-editor-icon" aria-label=${label} data-tooltip=${label} @click=${onClick}>
+            ${icon}
+        </button>`;
+
+    /**
+     * A picker: a button framed as a select, with a chevron. It shows what is picked, or `placeholder`
+     * (quiet) while nothing is, and opens a menu under it. Its name for a screen reader is
+     * "label: what is picked", the label alone while nothing is
+     */
+    const picker = (
+        className: string,
+        label: string,
+        picked: string | undefined,
+        placeholder: string,
+        tooltip: string,
+        open: (button: HTMLElement) => void
+    ) =>
+        html`<button
+            type="button"
+            class=${`filter-editor-pick ${className}${picked === undefined ? ' filter-editor-pick-empty' : ''}`}
+            aria-haspopup="menu"
+            aria-label=${picked === undefined ? label : `${label}: ${picked}`}
+            data-tooltip=${tooltip}
+            @click=${(event: MouseEvent) => open(event.currentTarget as HTMLElement)}
         >
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-            />
-        </svg> `;
-    };
+            <span class="filter-editor-pick-text">${picked ?? placeholder}</span>
+        </button>`;
 
     /**
-     * icon helper, switch between value and aattribute input
-     * @param arg
-     * @param callback
-     * @returns
+     * A condition, one row: field, operator, value, switch value / column, delete
+     * @param children the conditions and groups of the group it is in
      */
-    const inputSwitchIcon = (arg: ConditionDraft, callback: (e: any) => void) => {
-        return html`
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="simple-html-grid-icon-group-svg"
-                @click=${(e: any) => {
-                    // '' is "compare with a field" before the field is picked, undefined is a value
-                    arg.valueField = arg.valueField === undefined ? '' : undefined;
-                    callback(e);
-                }}
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                />
-            </svg>
-        `;
-    };
-
-    /**
-     * icon helper
-     * @param callback
-     * @returns
-     */
-    const addFilterConditionIcon = (callback: (e: any) => void) => {
-        return html`
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="simple-html-grid-icon-group-svg"
-                @click=${(e: any) => callback(e)}
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"
-                />
-            </svg>
-        `;
-    };
-
-    /**
-     * icon helper
-     * @param callback
-     * @returns
-     */
-    const addFilterGroupIcon = (add: boolean, callback: (e: any) => void) => {
-        if (add) {
-            return html`
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="simple-html-grid-icon-group-svg"
-                    @click=${(e: any) => callback(e)}
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
-                    />
-                </svg>
-            `;
-        }
-        return html`
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="simple-html-grid-icon-group-svg"
-                @click=${(e: any) => callback(e)}
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M15 13.5H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"
-                />
-            </svg>
-        `;
-    };
-
-    /**
-     * generate html for condition
-     * @param arg
-     * @param context
-     * @returns
-     */
-    const condition = (arg: ConditionDraft, context: (GroupDraft | ConditionDraft)[]) => {
+    const condition = (arg: ConditionDraft, children: (GroupDraft | ConditionDraft)[]) => {
         // a new condition has no field yet, it is text until one is picked
         const field = arg.field ? ctx.gridInterface.getDatasource().getField(arg.field) : null;
         const formatter = field?.formatter ?? TextFormatter;
         const isDate = field?.type === 'date' || field?.type === 'datetime';
-        const value = formatter.format(arg.value);
+        const valueLabel = text('filterEditor.label.value');
+
+        /**
+         * the date picker under the value input of a date condition: a click on it, or Enter. The input
+         * is no cell, the picker only opens under it
+         */
+        const openDatePicker = (event: MouseEvent | KeyboardEvent) => {
+            const input = event.target as HTMLCellElement & HTMLInputElement;
+            setTimeout(() => {
+                contextmenuDate(ctx, event as MouseEvent, input, parseFilterText(formatter, input.value), (value) => {
+                    arg.value = value;
+                    update();
+                });
+            }, 2);
+        };
 
         // live(): the elements are kept between renders, what the user typed is in the input, not in lit
-        let filterElement = html`<input
-            .value=${live(value || '')}
-            @keydown=${(e: any) => {
-                if (e.key === 'Enter' && isDate) {
-                    setTimeout(() => {
-                        contextmenuDate(
-                            ctx,
-                            e,
-                            e.target,
-                            parseFilterText(formatter, e.target.value),
-
-                            (value: Date | null) => {
-                                arg.value = value;
-                                renderFilterEditor(ctx, structuredClone(filterArg));
-                            }
-                        );
-                    }, 2);
+        let value: TemplateResult | typeof nothing = html`<input
+            class="filter-editor-value"
+            type="text"
+            aria-label=${valueLabel}
+            placeholder=${valueLabel}
+            .value=${live(formatter.format(arg.value) || '')}
+            @keydown=${(event: KeyboardEvent) => {
+                if (event.key === 'Enter' && isDate) {
+                    openDatePicker(event);
                 }
             }}
-            @input=${(e: any) => (arg.value = parseFilterText(formatter, e.target.value))}
-            @change=${(e: any) => (arg.value = parseFilterText(formatter, e.target.value))}
-            @click=${(e: any) => {
+            @input=${(event: Event) => (arg.value = parseFilterText(formatter, (event.target as HTMLInputElement).value))}
+            @change=${(event: Event) => (arg.value = parseFilterText(formatter, (event.target as HTMLInputElement).value))}
+            @click=${(event: MouseEvent) => {
                 if (isDate) {
-                    setTimeout(() => {
-                        contextmenuDate(
-                            ctx,
-                            e,
-                            e.target,
-                            parseFilterText(formatter, e.target.value),
-
-                            (value: Date | null) => {
-                                arg.value = value;
-                                renderFilterEditor(ctx, structuredClone(filterArg));
-                            }
-                        );
-                    }, 2);
+                    openDatePicker(event);
                 }
             }}
         />`;
 
         if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
-            const value = Array.isArray(arg.value)
-                ? arg.value.filter((e) => e !== '').join('\n')
+            // a value per line
+            const lines = Array.isArray(arg.value)
+                ? arg.value.filter((line) => line !== '').join('\n')
                 : arg.value === null || arg.value === undefined
                   ? ''
                   : String(arg.value);
 
-            filterElement = html`<textarea
-                .value=${live(value || '')}
-                @change=${(e: any) => (arg.value = e.target.value.split('\n').filter((e: string) => e !== ''))}
+            value = html`<textarea
+                class="filter-editor-value"
+                rows="2"
+                aria-label=${valueLabel}
+                placeholder=${valueLabel}
+                .value=${live(lines)}
+                @change=${(event: Event) =>
+                    (arg.value = (event.target as HTMLTextAreaElement).value.split('\n').filter((line) => line !== ''))}
             ></textarea>`;
+        } else if (arg.operator === 'IS_BLANK' || arg.operator === 'IS_NOT_BLANK') {
+            // they take no value: nothing to type
+            value = nothing;
         }
 
         if (arg.valueField !== undefined) {
             // compare with another field of the row, '' until it is picked
-            const label = arg.valueField ? getColumnLabel(ctx, arg.valueField) : '';
-
-            // same look as the other two pickers, it opens a menu the same way
-            filterElement = html`<div
-                class="grid-pick grid-text-center"
-                data-tooltip=${text('filterEditor.pickValueAttribute.tooltip')}
-                @click=${(e: MouseEvent) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    contextMenuAttributes(ctx, e, e.target as HTMLCellElement, (attribute) => {
-                        removeContextMenu(ctx);
+            value = picker(
+                'filter-editor-pick-column',
+                valueLabel,
+                arg.valueField ? getColumnLabel(ctx, arg.valueField) : undefined,
+                text('filterEditor.pickValueAttribute'),
+                text('filterEditor.pickValueAttribute.tooltip'),
+                (button) =>
+                    contextMenuAttributes(ctx, button, arg.valueField, (attribute) => {
                         arg.valueField = attribute;
-                        renderFilterEditor(ctx, structuredClone(filterArg));
-                    });
-                }}
-            >
-                ${label || text('filterEditor.pickValueAttribute')}
-            </div>`;
+                        update();
+                    })
+            );
         }
 
-        return html`<div>
-            <div class="grid-flex-column grid-condition">
-                <div class="grid-flex">
-                    <div class="grid-flex-1 grid-text-label">${text('filterEditor.label.field')}</div>
-                    <div class="grid-flex-1 grid-text-label">${text('filterEditor.label.operator')}</div>
-                    <div class="grid-flex-1 grid-text-label">${text('filterEditor.label.value')}</div>
-                </div>
-                <div class="grid-flex">
-                    <div
-                        class="grid-flex-1 grid-text-center grid-pick"
-                        data-tooltip=${text('filterEditor.pickAttribute.tooltip')}
-                        @click=${(e: MouseEvent) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            contextMenuAttributes(ctx, e, e.target as HTMLCellElement, (attribute) => {
-                                removeContextMenu(ctx);
-                                // the type comes from the datasource's fields, the condition has none
-                                arg.field = attribute;
-                                renderFilterEditor(ctx, structuredClone(filterArg));
-                            });
-                        }}
-                    >
-                        ${arg.field ? label(arg.field) : text('filterEditor.pickAttribute')}
-                    </div>
-
-                    <div
-                        class="grid-flex-1 grid-text-center grid-pick"
-                        data-tooltip=${text('filterEditor.pickOperator.tooltip')}
-                        @click=${(e: MouseEvent) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            contextMenuOperator(ctx, e, e.target as HTMLCellElement, (operator) => {
-                                removeContextMenu(ctx);
-                                arg.operator = operator;
-
-                                renderFilterEditor(ctx, structuredClone(filterArg));
-                            });
-                        }}
-                    >
-                        ${operatorName(arg.operator)}
-                    </div>
-                    <div class="grid-flex-1 grid-text-center ">${filterElement}</div>
-                </div>
-                <div class="grid-flex-reverse grid-m-4">
-                    <div class="grid-m-4" data-tooltip=${text('filterEditor.deleteCondition.tooltip')}>
-                        ${trashIcon(() => {
-                            let x: number | null = null;
-                            context.forEach((row, i) => {
-                                if (row === arg) {
-                                    x = i;
-                                }
-                            });
-                            // splice(null) starts at 0 too
-                            context.splice(x ?? 0, 1);
-                            renderFilterEditor(ctx, structuredClone(filterArg));
-                        })}
-                    </div>
-                    <div
-                        class="grid-m-4"
-                        data-tooltip=${text(arg.valueField !== undefined ? 'filterEditor.useValue.tooltip' : 'filterEditor.useAttribute.tooltip')}
-                    >
-                        ${inputSwitchIcon(arg, () => {
-                            renderFilterEditor(ctx, structuredClone(filterArg));
-                        })}
-                    </div>
-                </div>
-            </div>
+        return html`<div class="filter-editor-condition">
+            ${picker(
+                'filter-editor-pick-field',
+                text('filterEditor.label.field'),
+                arg.field ? getColumnLabel(ctx, arg.field) : undefined,
+                text('filterEditor.pickAttribute'),
+                text('filterEditor.pickAttribute.tooltip'),
+                (button) =>
+                    contextMenuAttributes(ctx, button, arg.field, (attribute) => {
+                        // the type comes from the datasource's fields, the condition has none
+                        arg.field = attribute;
+                        update();
+                    })
+            )}
+            ${picker(
+                'filter-editor-pick-operator',
+                text('filterEditor.label.operator'),
+                arg.operator ? operatorName(arg.operator) : undefined,
+                text('filterEditor.pickOperator'),
+                text('filterEditor.pickOperator.tooltip'),
+                (button) =>
+                    contextMenuOperator(ctx, button, arg.operator, (operator) => {
+                        arg.operator = operator;
+                        update();
+                    })
+            )}
+            <div class="filter-editor-value-slot">${value}</div>
+            ${iconButton(
+                SWAP_ICON,
+                text(arg.valueField !== undefined ? 'filterEditor.useValue.tooltip' : 'filterEditor.useAttribute.tooltip'),
+                () => {
+                    // '' is "compare with a field" before the field is picked, undefined is a value
+                    arg.valueField = arg.valueField === undefined ? '' : undefined;
+                    update();
+                }
+            )}
+            ${iconButton(TRASH_ICON, text('filterEditor.deleteCondition.tooltip'), () => removeFrom(children, arg))}
         </div>`;
     };
 
     /**
-     * generate html for group
-     * @param arg
-     * @param context
-     * @returns
+     * A group: its header, then its conditions and its sub groups (the conditions first), indented
+     * behind a line - a bracket. The root group with nothing in it says so
+     * @param children the conditions and groups of the group it is in, null for the root group
      */
-    const group = (arg: GroupDraft, context: (GroupDraft | ConditionDraft)[] | null): TemplateResult<1> => {
-        // the conditions first, then the sub groups
+    const group = (arg: GroupDraft, children: (GroupDraft | ConditionDraft)[] | null): TemplateResult => {
         // (condition/group only change children from click handlers, so reading it once is the same)
-        const args = arg.children;
-        const conditions: TemplateResult<1>[] = [];
-        const groupsArgs: TemplateResult<1>[] = [];
-        for (const child of args) {
+        const conditions: TemplateResult[] = [];
+        const groups: TemplateResult[] = [];
+        for (const child of arg.children) {
             if (isGroupDraft(child)) {
-                groupsArgs.push(group(child, args));
+                groups.push(group(child, arg.children));
             } else {
-                conditions.push(condition(child, args));
+                conditions.push(condition(child, arg.children));
             }
         }
 
-        return html`<div>
-            <div class="grid-flex-column grid-sub-group">
-                <div class="grid-flex grid-group">
-                    <div class="grid-flex grid-m-4">
-                        <div
-                            class="grid-m-4 grid-button-small grid-text-center grid-text-label"
-                            data-tooltip=${text(arg.group === 'AND' ? 'filterEditor.operatorAnd.tooltip' : 'filterEditor.operatorOr.tooltip')}
-                            @click=${() => {
-                                arg.group = arg.group === 'AND' ? 'OR' : 'AND';
-                                renderFilterEditor(ctx, structuredClone(filterArg));
-                            }}
-                        >
-                            <span> ${text(arg.group === 'AND' ? 'filterEditor.operatorAnd' : 'filterEditor.operatorOr')}</span>
-                        </div>
-                        <div class="grid-m-4" data-tooltip=${text('filterEditor.wrapGroup.tooltip')}>
-                            ${addFilterGroupIcon(false, () => {
-                                arg.children = [{ group: 'AND', children: arg.children }];
+        // AND or OR, the one in use pressed (filled). Anything but OR is AND, as the filter runs it
+        const isOr = arg.group === 'OR';
+        const segment = (value: 'AND' | 'OR') => {
+            const and = value === 'AND';
+            return html`<button
+                type="button"
+                class="filter-editor-segment-button"
+                aria-pressed=${String(and !== isOr)}
+                data-tooltip=${text(and ? 'filterEditor.operatorAnd.tooltip' : 'filterEditor.operatorOr.tooltip')}
+                @click=${() => {
+                    arg.group = value;
+                    update();
+                }}
+            >
+                ${text(and ? 'filterEditor.operatorAnd' : 'filterEditor.operatorOr')}
+            </button>`;
+        };
 
-                                renderFilterEditor(ctx, structuredClone(filterArg));
-                            })}
-                        </div>
-                        <div class="grid-m-4" data-tooltip=${text('filterEditor.addSubGroup.tooltip')}>
-                            ${addFilterGroupIcon(true, () => {
-                                arg.children.push({ group: 'AND', children: [] });
-
-                                renderFilterEditor(ctx, structuredClone(filterArg));
-                            })}
-                        </div>
-                        <div class="grid-m-4" data-tooltip=${text('filterEditor.addCondition.tooltip')}>
-                            ${addFilterConditionIcon(() => {
-                                // a draft, filled in one pick at a time
-                                arg.children.push({});
-                                renderFilterEditor(ctx, structuredClone(filterArg));
-                            })}
-                        </div>
-                        <div
-                            class="grid-m-4"
-                            data-tooltip=${text(context ? 'filterEditor.deleteGroup.tooltip' : 'filterEditor.clearAll.tooltip')}
-                        >
-                            ${trashIcon(() => {
-                                if (context) {
-                                    let x: number | null = null;
-                                    context.forEach((row, i) => {
-                                        if (row === arg) {
-                                            x = i;
-                                        }
-                                    });
-                                    // splice(null) starts at 0 too
-                                    context.splice(x ?? 0, 1);
-                                    renderFilterEditor(ctx, structuredClone(filterArg));
-                                } else {
-                                    arg.children = [];
-                                    renderFilterEditor(ctx, structuredClone(filterArg));
-                                }
-                            })}
-                        </div>
-                    </div>
-                </div>
-                <div class="grid-flex-column grid-sub-group ">${conditions}</div>
-                ${groupsArgs}
+        return html`<div class="filter-editor-group">
+            <div class="filter-editor-group-header">
+                <div class="filter-editor-segment">${segment('AND')}${segment('OR')}</div>
+                <button
+                    type="button"
+                    class="simple-html-grid-button filter-editor-add"
+                    data-tooltip=${text('filterEditor.addCondition.tooltip')}
+                    @click=${() => {
+                        // a draft, filled in one pick at a time
+                        arg.children.push({});
+                        update();
+                    }}
+                >
+                    ${text('filterEditor.addCondition')}
+                </button>
+                <button
+                    type="button"
+                    class="simple-html-grid-button filter-editor-add"
+                    data-tooltip=${text('filterEditor.addSubGroup.tooltip')}
+                    @click=${() => {
+                        arg.children.push({ group: 'AND', children: [] });
+                        update();
+                    }}
+                >
+                    ${text('filterEditor.addSubGroup')}
+                </button>
+                <span class="filter-editor-group-tools">
+                    ${iconButton(WRAP_ICON, text('filterEditor.wrapGroup.tooltip'), () => {
+                        arg.children = [{ group: 'AND', children: arg.children }];
+                        update();
+                    })}
+                    ${iconButton(
+                        TRASH_ICON,
+                        text(children ? 'filterEditor.deleteGroup.tooltip' : 'filterEditor.clearAll.tooltip'),
+                        () => {
+                            if (children) {
+                                removeFrom(children, arg);
+                            } else {
+                                arg.children = [];
+                                update();
+                            }
+                        }
+                    )}
+                </span>
+            </div>
+            <div class="filter-editor-group-body">
+                ${!children && !arg.children.length ? html`<div class="filter-editor-empty">${text('filterEditor.empty')}</div>` : nothing}
+                ${conditions}${groups}
             </div>
         </div>`;
     };
 
     /**
-     * closes the dialog, used by the titlebar X and the Close button
+     * closes the dialog, used by the titlebar ✕ and the Cancel button
      */
     const closeEditor = () => closeFilterEditor(ctx);
 
-    // drag the dialog around by its titlebar
-    const headerTemplate = () => html`<div
-        class="grid-text-title filter-editor-titlebar"
-        @pointerdown=${(event: PointerEvent) => moveDialog(dialog, event)}
-    >
-        <span data-tooltip=${text('filterEditor.title.tooltip')}>${text('filterEditor.title')}</span>
-        <span class="filter-editor-close" data-tooltip=${text('filterEditor.close.tooltip')} @click=${() => closeEditor()}>&#10005;</span>
-    </div>`;
-
     /**
-     * header filter inputs would otherwise keep showing text the applied filter no longer has
+     * Applies the conditions that are complete, see draftToFilter. A copy: the dialog can stay open
+     * and keep editing its own. Nothing left ("clear all") is no filter, like "Clear All Filters".
+     * The header filter inputs would otherwise keep showing text the applied filter no longer has
      * (and the next header filter edit would put it back)
      */
-    const clearOldValues = () => {
-        ctx.gridInterface.__clearHeaderFilterValues();
-    };
-
-    /**
-     * applies the conditions that are complete, see draftToFilter. A copy: the dialog can stay open
-     * and keep editing its own. Nothing left ("clear all") is no filter, like "Clear All Filters"
-     */
     const applyFilter = () => {
+        removeContextMenu(ctx);
         const datasource = ctx.gridInterface.getDatasource();
         const filter = draftToFilter(structuredClone(filterArg), datasource);
         datasource.filter(filter.children.length ? filter : null);
-        clearOldValues();
+        ctx.gridInterface.__clearHeaderFilterValues();
         rebuildHeaderColumns(ctx);
-    };
-
-    const footerTemplate = () => {
-        return html`<div class="grid-flex-reverse grid-m-4 filter-editor-footer">
-            <div
-                class="grid-button grid-text-center grid-button-primary"
-                data-tooltip=${text('filterEditor.filterAndClose.tooltip')}
-                @click=${() => {
-                    removeContextMenu(ctx);
-                    closeEditor();
-                    applyFilter();
-                }}
-            >
-                ${text('filterEditor.filterAndClose')}
-            </div>
-            <div
-                class="grid-button grid-text-center"
-                data-tooltip=${text('filterEditor.filterOnly.tooltip')}
-                @click=${() => {
-                    removeContextMenu(ctx);
-                    applyFilter();
-                }}
-            >
-                ${text('filterEditor.filterOnly')}
-            </div>
-            <div
-                class="grid-button grid-text-center"
-                data-tooltip=${text('filterEditor.closeButton.tooltip')}
-                @click=${() => closeEditor()}
-            >
-                ${text('filterEditor.closeButton')}
-            </div>
-        </div>`;
     };
 
     /**
@@ -549,14 +393,51 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                 ></div>`
         );
 
-    /**
-     * render dialog
-     */
+    // the titlebar: drag the dialog around by it. Its title is the dialog's name (aria-labelledby)
     render(
-        html`<div class="grid-flex-column grid-w-full grid-h-full">
-                ${headerTemplate()}
-                <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg, null)}</div>
-                ${footerTemplate()}
+        html`<div class="filter-editor-titlebar" @pointerdown=${(event: PointerEvent) => moveDialog(dialog, event)}>
+                <span class="filter-editor-title" id=${titleId(ctx)} data-tooltip=${text('filterEditor.title.tooltip')}
+                    >${text('filterEditor.title')}</span
+                >
+                <button
+                    type="button"
+                    class="filter-editor-close"
+                    aria-label=${text('filterEditor.close.tooltip')}
+                    data-tooltip=${text('filterEditor.close.tooltip')}
+                    @click=${closeEditor}
+                >
+                    ✕
+                </button>
+            </div>
+            <div class="filter-editor-body simple-html-dialog-scroller">${group(filterArg, null)}</div>
+            <div class="filter-editor-footer">
+                <button
+                    type="button"
+                    class="simple-html-grid-button"
+                    data-tooltip=${text('filterEditor.closeButton.tooltip')}
+                    @click=${closeEditor}
+                >
+                    ${text('filterEditor.closeButton')}
+                </button>
+                <button
+                    type="button"
+                    class="simple-html-grid-button"
+                    data-tooltip=${text('filterEditor.filterOnly.tooltip')}
+                    @click=${applyFilter}
+                >
+                    ${text('filterEditor.filterOnly')}
+                </button>
+                <button
+                    type="button"
+                    class="simple-html-grid-button simple-html-grid-button-primary"
+                    data-tooltip=${text('filterEditor.filterAndClose.tooltip')}
+                    @click=${() => {
+                        closeEditor();
+                        applyFilter();
+                    }}
+                >
+                    ${text('filterEditor.filterAndClose')}
+                </button>
             </div>
             ${resizeHandles()}`,
         dialog
@@ -565,16 +446,63 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
     if (opening) {
         // rendered before it is shown: showModal() moves the focus into what is there
         dialog.showModal();
+        // the focus on the dialog itself, Tab goes on into it. showModal() does that for a dialog with
+        // autofocus by the HTML spec now, Chrome 131 still gives it to the first button (the ✕)
+        dialog.focus();
         /**
-         * position + size.
-         * The css only gives a default size, left/top are set here so the dialog can be
-         * dragged and resized without fighting the browser's centering (inset: 0, margin: auto).
-         * Centered on the window, once it is shown and has its size
+         * position.
+         * The css only gives a default size - the height follows the content - left/top are set here so
+         * the dialog can be dragged and resized without fighting the browser's centering (inset: 0,
+         * margin: auto). Centered on the window, once it is shown and has its size
          */
         dialog.style.left = asPx(Math.max(0, Math.round((window.innerWidth - dialog.offsetWidth) / 2)));
         dialog.style.top = asPx(Math.max(0, Math.round((window.innerHeight - dialog.offsetHeight) / 2)));
+        return;
+    }
+
+    // grown with a condition or a group: its bottom is kept in the window, it moves up as far as it has to
+    const rect = dialog.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight) {
+        dialog.style.top = asPx(Math.max(0, Math.round(window.innerHeight - rect.height)));
+    }
+    // the button that had the focus is gone (a condition or group deleted): the dialog gets it, Tab goes
+    // on from its start. Left on the body, the next Tab would start there
+    if (!dialog.contains(document.activeElement)) {
+        dialog.focus({ preventScroll: true });
     }
 }
+
+/**
+ * the id of the editor's title, the dialog's name
+ */
+function titleId(ctx: Grid) {
+    return `${ctx.ariaIdPrefix}-filter-editor-title`;
+}
+
+/**
+ * The icons of the editor's buttons, square lines in the text colour (24 x 24, drawn at 15px). The
+ * button around one has its name
+ */
+const icon = (path: string) =>
+    html`<svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.75"
+        stroke="currentColor"
+        stroke-linecap="square"
+        aria-hidden="true"
+        class="simple-html-grid-icon-group-svg"
+    >
+        <path d=${path} />
+    </svg>`;
+
+/** a trash can: delete the condition or the group */
+const TRASH_ICON = icon('M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6');
+/** two arrows, right and left: compare with another column / with a value */
+const SWAP_ICON = icon('M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4');
+/** square brackets: wrap the group in a new group */
+const WRAP_ICON = icon('M9 4H5v16h4M15 4h4v16h-4');
 
 /**
  * Makes the filter editor's dialog and puts it on the body, closed: renderFilterEditor renders it and
@@ -584,9 +512,12 @@ function createFilterEditorDialog(ctx: Grid): HTMLDialogElement {
     const dialog = document.createElement('dialog');
     dialog.classList.add('simple-html-grid', 'filter-editor-content');
     // showModal() moves the focus to the element with autofocus: the dialog itself, not a value field
-    // (which would show the keyboard on a phone). tabindex -1 makes it focusable, Tab goes on into it
+    // (which would show the keyboard on a phone) nor the ✕. tabindex -1 makes it focusable, Tab goes
+    // on into it. renderFilterEditor focuses it too, for the browsers that do not yet
     dialog.setAttribute('autofocus', '');
     dialog.tabIndex = -1;
+    // its name: the title in its titlebar
+    dialog.setAttribute('aria-labelledby', titleId(ctx));
     if (tooltipsEnabled(ctx)) {
         // data-tooltip is always written, this is what renders the built in tooltip for it
         dialog.classList.add('simple-html-grid-tooltips');

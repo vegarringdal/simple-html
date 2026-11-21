@@ -1332,6 +1332,38 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The filter menu and the filter editor redone (user request)
+
+##### Changed
+- **The header filter menu** is **Filter ›** (Operator ›, Blank ›, Clear Filter, Clear All Filters,
+  Advanced Filter…) and then the value list: a framed search box ("Search values"), a "10 values" count,
+  "Select all" as the list's header (tri-state: checked, mixed, unchecked), each value's row count
+  right-aligned and muted, a scrolling list, Cancel and Apply buttons. Entry ids are unchanged;
+  `filter.filter` is the submenu (the old section id), the separator `filter.filter.blankSeparator` is gone.
+- **The filter editor**: a condition is one row - Field ▾, Operator ▾, the value (a list for IN / NOT IN,
+  none for the blank operators), ⇄, delete - with select-style pickers; a group is an indented bracket
+  with an AND/OR toggle (`aria-pressed`), "+ Condition", "+ Group", wrap and delete; an empty filter says
+  so; Cancel / Apply / Apply & close. The pickers are grid menus and work from the keyboard, the field
+  picker has a search box. The dialog is as tall as its content, up to the window, and stays in it;
+  min size 360×200.
+- Texts reworded: `filter.values.*` ("Search values", "{count} values", "Select all", "Apply", "Only values
+  in filtered rows", "Only the first {max} values are shown"), the editor's labels and pickers ("Field",
+  "Operator", "Value", "Column") and buttons ("Cancel", "Apply", "Apply & close"), "Search fields".
+
+##### Fixed
+- Nested groups in the filter editor ran past the dialog's right edge.
+- "Select all" showed checked when values of the column were filtered away.
+- The value list's count said "rows found" but counted values.
+- Menu separators showed as dots instead of lines.
+- The filter editor's focus went to its first button (Chrome 131) instead of the dialog; the focus fell to
+  the page when the focused condition was deleted; the footer's Tab order was reversed; the field
+  picker's search text carried over between openings.
+
+##### Added
+- Texts `filter.filter`, `filter.values.rowsFound.one`, `filter.values.cancel`, `filterEditor.addCondition`,
+  `filterEditor.addSubGroup`, `filterEditor.empty`; variables `--simple-html-grid-accent-color`,
+  `--simple-html-grid-accent-font-color`, `--simple-html-grid-control-border-color`.
+
 #### Lookup columns: a select or a dropdown grid (user request)
 
 ##### Added

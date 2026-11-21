@@ -184,7 +184,7 @@ export interface MenuSeparator {
  * call `gridInterface.closeMenu()` for that. The arrow keys of the menu pass it by: Tab gets into it,
  * from an item of its menu.
  *
- * The header filter menu's value list (search box, checkboxes, "Run Search") is a block of the grid's
+ * The header filter menu's value list (search box, checkboxes, "Cancel" and "Apply") is a block of the grid's
  * own, `'filter.values'`: hide or move it as one entry, it is not built from items.
  *
  * Also for something bigger than a list of items in a menu of your own: a second grid as a dropdown,
@@ -373,15 +373,16 @@ export interface GridMenus {
  *
  * ```text
  * row menu                          header menu                     filter menu
- * Undo / Redo ›                     Pin ›                           Clear Filter
- * Copy ›                            Hide column                     Clear All Filters
- * Paste ›                           Remove sorting                  ----
- * Clear ›                           ----                            Blank ›
+ * Undo / Redo ›                     Pin ›                           Filter ›
+ * Copy ›                            Hide column                     the value list
+ * Paste ›                           Remove sorting
+ * Clear ›                           ----                            in Filter ›:
  * Delete ›                          Column chooser…                 Operator ›
- * Filter ›                          Size ›                          ----
- * View ›                            Aggregate ›                     Advanced Filter…
- * Size ›                            Grouping ›                      Search: the value list
- * Export ›
+ * Filter ›                          Size ›                          Blank ›
+ * View ›                            Aggregate ›                     Clear Filter
+ * Size ›                            Grouping ›                      Clear All Filters
+ * Export ›                                                          ----
+ *                                                                   Advanced Filter…
  * ```
  *
  * Row menu (`GridMenus.row`), right click on a cell:
@@ -462,21 +463,21 @@ export interface GridMenus {
  *
  * | id | shown as | shown when |
  * | --- | --- | --- |
- * | `filter.filter.clear` | Clear Filter - the column's conditions | |
- * | `filter.filter.clearAll` | Clear All Filters | |
- * | `filter.filter.blankSeparator` | a line | |
- * | `filter.filter.blank` | Blank › - a submenu | |
- * | `filter.filter.isBlank` | Is blank - the column's conditions replaced with `IS_BLANK` | |
- * | `filter.filter.isNotBlank` | Is not blank | |
- * | `filter.operator` | Operator › - a submenu, the operator in use has a ✓ | not a boolean field |
+ * | `filter.filter` | Filter › - a submenu, first in the menu: the entries below up to the value list | |
+ * | `filter.operator` | Operator › - a submenu in Filter ›, the operator in use has a ✓ | not a boolean field |
  * | `filter.operator.greaterThanOrEqualTo` | Greater than or equal | a number, date or datetime field |
  * | `filter.operator.lessThanOrEqualTo` | Less than or equal | a number, date or datetime field |
  * | `filter.operator.equal` | Equal | not a boolean field |
  * | `filter.operator.notEqualTo` | Not Equal | a text field |
  * | `filter.operator.contains` | Contains | a text field |
+ * | `filter.filter.blank` | Blank › - a submenu in Filter › | |
+ * | `filter.filter.isBlank` | Is blank - the column's conditions replaced with `IS_BLANK` | |
+ * | `filter.filter.isNotBlank` | Is not blank | |
+ * | `filter.filter.clear` | Clear Filter - the column's conditions | |
+ * | `filter.filter.clearAll` | Clear All Filters | |
  * | `filter.filter.advancedSeparator` | a line | |
  * | `filter.filter.advanced` | Advanced Filter… - the filter editor | |
- * | `filter.values` | the value list: "Search:", search box, a checkbox per value, "Run Search" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field |
+ * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field |
  *
  * @sample context-menu
  * @example
@@ -564,18 +565,18 @@ export const MENU_IDS = {
     ],
     /** the filter menu's ids, right click on a header filter */
     filter: [
-        'filter.filter.clear',
-        'filter.filter.clearAll',
-        'filter.filter.blankSeparator',
-        'filter.filter.blank',
-        'filter.filter.isBlank',
-        'filter.filter.isNotBlank',
+        'filter.filter',
         'filter.operator',
         'filter.operator.greaterThanOrEqualTo',
         'filter.operator.lessThanOrEqualTo',
         'filter.operator.equal',
         'filter.operator.notEqualTo',
         'filter.operator.contains',
+        'filter.filter.blank',
+        'filter.filter.isBlank',
+        'filter.filter.isNotBlank',
+        'filter.filter.clear',
+        'filter.filter.clearAll',
         'filter.filter.advancedSeparator',
         'filter.filter.advanced',
         'filter.values'

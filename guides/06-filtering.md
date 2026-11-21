@@ -48,8 +48,8 @@ const config: GridConfig = {
 };
 ```
 
-The user can also pick the operator of a column in the header filter's menu (Operator ›, below),
-and type `*ann*` in any text header filter.
+The user can also pick the operator of a column in the header filter's menu (Filter › Operator ›,
+below), and type `*ann*` in any text header filter.
 
 A header filter only replaces the conditions on its own column, at the top of the filter. The rest
 of the filter is kept, and the column's condition is ANDed with it.
@@ -62,17 +62,20 @@ What each header cell shows is part of the [state](03-state.md#header-filters-in
 
 ### The header filter menu
 
-Right click a header filter for its menu:
+Right click a header filter for its menu: the submenu **Filter ›**, then the **value list** (for
+text fields), the main tool, in the menu itself. In Filter ›:
 
-- **Clear Filter** removes the conditions on this column, **Clear All Filters** the whole filter
-- **Blank ›** **Is blank** / **Is not blank** replace the column's conditions with `IS_BLANK` /
-  `IS_NOT_BLANK`
 - **Operator ›** picks the operator the column's header filter uses, the one in use has a ✓: Equal,
   Not Equal and Contains for text, Greater than or equal, Less than or equal and Equal for numbers
   and dates. The filter runs again with it, and the grid sends a `filter-operator-change` event. The
   operator picked is state (`headerFilters[field].operator`).
+- **Blank ›** **Is blank** / **Is not blank** replace the column's conditions with `IS_BLANK` /
+  `IS_NOT_BLANK`
+- **Clear Filter** removes the conditions on this column, **Clear All Filters** the whole filter
 - **Advanced Filter…** opens the [filter editor](#the-filter-editor)
-- the **value list**, for text fields
+
+From the keyboard: Shift+F10 (or the menu key) on the header filter opens the menu with the focus on
+Filter ›, ArrowRight goes into it; Tab goes from Filter › into the value list.
 
 ```sample filter-operator-header
 ```
@@ -83,14 +86,21 @@ The value list is the part of a text column's filter menu with a checkbox per va
 spreadsheet:
 
 - It lists the values of the rows the *other* columns' filters let through, text in upper case,
-  with the number of rows of each. "Blank" is every empty value: `null`, `''`, and also `0` and `false`.
+  with the number of rows of each on its right. "Blank" (in italics) is every empty value: `null`,
+  `''`, and also `0` and `false`. Over the list: how many values it has.
 - It lists at most 100 values, and then says so. The counts are only shown when every value is
   listed.
-- **Filter Available**, when other columns filter rows: uncheck it to list the values of every row.
-- The search box narrows the list. With search text, "Run Search" also adds a `CONTAINS` condition
-  for it.
-- **Run Search** filters the column on the checked values: an `IN` condition with them, or a
-  `NOT_IN` with the unchecked ones when there are fewer of those.
+- **Only values in filtered rows**, when other columns filter rows: uncheck it to list the values of
+  every row.
+- The search box narrows the list. With search text, Apply also adds a `CONTAINS` condition for it.
+- **Select all**, the header of the list, is checked when every value is, mixed when some are: a
+  click checks every value, or none when every value is checked.
+- **Apply** filters the column on the checked values: an `IN` condition with them, or a `NOT_IN`
+  with the unchecked ones when there are fewer of those. Enter in the search box or on a checkbox
+  does the same. **Cancel** (or Esc, or a click outside) closes the menu, the filter stays as it
+  was: nothing is filtered while you check and uncheck.
+- The keyboard: Tab goes from the menu's items into the search box, the checkboxes and the buttons;
+  ArrowDown / ArrowUp move between the search box and the checkboxes, Space checks one.
 
 ### Filters from the row menu
 
@@ -105,18 +115,29 @@ An empty cell gives `IS_BLANK` instead of `= value`.
 ## The filter editor
 
 The filter editor is a dialog where the user builds any filter: conditions and AND/OR groups,
-nested. It opens from the header filter menu (Advanced Filter), from a click on the filter in the
-footer, and from code:
+nested. It opens from the header filter menu (Filter › Advanced Filter…), from a click on the filter
+in the footer, and from code:
 
 ```ts
 document.getElementById('advanced-filter')!.addEventListener('click', () => gridInterface.openFilterEditor());
 ```
 
-It starts with the filter there is. A condition picks a field (every field the grid knows), an
-operator (all of them, see [below](#operators)) and a value, or another field to compare with. A
-click on AND / OR in a group switches it. "Filter & Close" and "Filter Only" apply it, "Close"
-leaves the filter as it was. A condition with no field or operator picked is left out when it is
-applied. Applying it empties the header filter cells.
+It starts with the filter there is. A condition is one row: a field (every field the grid knows),
+an operator (all of them, see [below](#operators)) and a value - or another field to compare with,
+the arrows switch between the two - then the trash can. The field and the operator are pickers: a
+button that opens a menu under it, the field's with a search box. A group is a line down the left of
+what is in it, its header on top: **AND** / **OR** (the one in use filled), **+ Condition**,
+**+ Group**, then wrap it in a new group and delete it. "Apply & close" and "Apply" apply it,
+"Cancel" leaves the filter as it was. A condition with no field or operator picked is left out when
+it is applied. Applying it empties the header filter cells.
+
+Every control is a button or an input, Tab goes through them in the order they are shown: the `✕`,
+then each group's header and its conditions, then Cancel, Apply, Apply & close. A picker opened from
+the keyboard has the focus in its menu - the field picker in its search box: type, then ArrowDown to
+the fields or Enter for the first one - and gives it back to the picker when it closes. The icons and
+the pickers have names for a screen reader: `Field: Country`, `Delete this condition`. The dialog is
+as high as what is in it, up to the window, then the groups scroll; a nested group is indented, its
+rows as wide as what is left, and a row wraps when the dialog is narrow.
 
 It is a modal `<dialog>`, over everything on the page: the grid behind it can not be used while it is
 open. The focus moves to the dialog when it opens, and goes back to where it was when it closes. Esc

@@ -258,9 +258,9 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     (document.querySelector('[data-menu-id="header.column.chooser"]') as HTMLElement).click();
     check();
 
-    // the filter menus: a number (the range operators), text with its value list, and a value list
-    // that is cut off
-    for (const field of ['age', 'name', 'country']) {
+    // the filter menus: a number (the range operators), text with its value list, a value list that
+    // is cut off, and one with one value (every row has the same notes)
+    for (const field of ['age', 'name', 'country', 'notes']) {
         openFilterMenu(element, field);
         checkMenu();
     }
@@ -277,6 +277,9 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     clickIcon('«filterEditor.pickOperator.tooltip»');
     check();
     clickIcon('«filterEditor.pickAttribute.tooltip»');
+    check();
+    // nothing left in it: the hint
+    clickIcon('«filterEditor.clearAll.tooltip»');
     check();
     clickIcon('«filterEditor.closeButton.tooltip»');
 

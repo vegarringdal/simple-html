@@ -7,8 +7,8 @@ The grid has three right click menus:
   [Selection and clipboard](17-selection-and-clipboard.md#the-summary-in-the-footer)
 - the **header menu**, on a header label: pin, hide, remove sorting, the column chooser, then the
   submenus sizes, aggregates, grouping
-- the **filter menu**, on a header filter: clear, is blank, the operator, the filter editor, the
-  value list
+- the **filter menu**, on a header filter: the submenu filter (the operator, is blank, clear, the
+  filter editor), then the value list
 
 Each is a tree of entries with ids: most entries are in submenus, so a menu is short and opens
 beside it what you point at. The `menus` hook changes them: hide entries, reorder them, change their
@@ -74,8 +74,9 @@ The menus follow the WAI-ARIA [menu pattern](https://www.w3.org/WAI/ARIA/apg/pat
 For a screen reader the menu is a `menu`, an item a `menuitem` - a `menuitemcheckbox` with
 `aria-checked` when it has a `selected` callback (the aggregates, the dimmed values, the operator in
 use) - with `aria-disabled` when it is disabled. An item with a submenu has `aria-haspopup="menu"` and
-`aria-expanded`, its submenu is labelled by it. In the filter menu's value list the checkboxes and
-*Run Search* are stops of Tab, Enter or Space runs the search.
+`aria-expanded`, its submenu is labelled by it. In the filter menu's value list the search box,
+the checkboxes, *Cancel* and *Apply* are stops of Tab; ArrowDown / ArrowUp move between the search
+box and the checkboxes, Enter in them applies, see [The value list](06-filtering.md#the-value-list).
 
 ## Changing the grid's menus
 
@@ -192,8 +193,9 @@ Every callback gets a `MenuContext`:
 submenu then what is in it. An entry in a submenu starts with the id of the submenu (`row.copy.cell`
 is in `row.copy`); the pin and blank submenus kept the ids their entries had, which share the start
 of their part of the menu (`header.column.pinLeft` is in `header.column.pin`, `filter.filter.isBlank`
-in `filter.filter.blank`). The ids stay the same between versions, so a menu changed by id keeps
-working.
+in `filter.filter.blank`). The operator submenu `filter.operator` is in the filter menu's submenu
+`filter.filter` with the ids it had before it was there: a hook that hides `filter.filter` hides it
+too. The ids stay the same between versions, so a menu changed by id keeps working.
 
 The ids are the ids of the texts too: the label of `row.copy.cell` is the text `row.copy.cell`, its
 hint `<id>.hint`. Change them with `setTexts()` or the grid's `texts`, see [Texts](12-texts.md#row-menu).
@@ -203,15 +205,16 @@ The menus as they open, a `›` is a submenu:
 
 ```text
 row menu                          header menu                     filter menu
-Undo / Redo ›                     Pin ›                           Clear Filter
-Copy ›                            Hide column                     Clear All Filters
-Paste ›                           Remove sorting                  ----
-Clear ›                           ----                            Blank ›
+Undo / Redo ›                     Pin ›                           Filter ›
+Copy ›                            Hide column                     the value list
+Paste ›                           Remove sorting
+Clear ›                           ----                            in Filter ›:
 Delete ›                          Column chooser…                 Operator ›
-Filter ›                          Size ›                          ----
-View ›                            Aggregate ›                     Advanced Filter…
-Size ›                            Grouping ›                      Search: the value list
-Export ›
+Filter ›                          Size ›                          Blank ›
+View ›                            Aggregate ›                     Clear Filter
+Size ›                            Grouping ›                      Clear All Filters
+Export ›                                                          ----
+                                                                  Advanced Filter…
 ```
 
 ### Row menu (`MENU_IDS.row`)
@@ -292,21 +295,21 @@ Export ›
 
 | id | shown as | shown when |
 | --- | --- | --- |
-| `filter.filter.clear` | Clear Filter: the column's conditions | |
-| `filter.filter.clearAll` | Clear All Filters | |
-| `filter.filter.blankSeparator` | a line | |
-| `filter.filter.blank` | Blank › - a submenu | |
-| `filter.filter.isBlank` | Is blank | |
-| `filter.filter.isNotBlank` | Is not blank | |
-| `filter.operator` | Operator › - a submenu, the operator in use has a ✓ | not a boolean field |
+| `filter.filter` | Filter › - a submenu, first in the menu: the entries below up to the value list | |
+| `filter.operator` | Operator › - a submenu in Filter ›, the operator in use has a ✓ | not a boolean field |
 | `filter.operator.greaterThanOrEqualTo` | Greater than or equal | a number, date or datetime field |
 | `filter.operator.lessThanOrEqualTo` | Less than or equal | a number, date or datetime field |
 | `filter.operator.equal` | Equal | not a boolean field |
 | `filter.operator.notEqualTo` | Not Equal | a text field |
 | `filter.operator.contains` | Contains | a text field |
+| `filter.filter.blank` | Blank › - a submenu in Filter › | |
+| `filter.filter.isBlank` | Is blank | |
+| `filter.filter.isNotBlank` | Is not blank | |
+| `filter.filter.clear` | Clear Filter: the column's conditions | |
+| `filter.filter.clearAll` | Clear All Filters | |
 | `filter.filter.advancedSeparator` | a line | |
 | `filter.filter.advanced` | Advanced Filter…: opens the filter editor | |
-| `filter.values` | the value list: a search box, a checkbox per value, "Run Search". One `MenuBlock`, its texts are `filter.values.*` | a text field |
+| `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 
