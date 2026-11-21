@@ -13,13 +13,15 @@
     text-align: initial;
     /* the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor */
     --simple-html-grid-main-bg-color: light-dark(#f5f5f5, #374151);
-    /* the filter row, the inputs and buttons of the filter editor, the filter chips, the tooltips */
+    /* the filter row, the inputs, pickers and buttons of the filter editor and the value list, the
+       value list's box, the filter chips, the tooltips */
     --simple-html-grid-sec-bg-color: light-dark(#ffffff, #4b5563);
     /* scrollbar tracks, the search input of the column chooser, the focus button of a cell */
     --simple-html-grid-alt-bg-color: light-dark(#ffffff, #4b5563);
     /* the lines between cells, rows and menu sections */
     --simple-html-grid-main-bg-border: light-dark(#e6e5e5, #1f2937);
-    /* the lines at the pinned columns and under the header, frames of the dialog, the tooltips, the buttons */
+    /* the lines at the pinned columns and under the header, frames of the dialog, the tooltips and the
+       column chooser's button, the line of a group (the bracket) in the filter editor */
     --simple-html-grid-pinned-border: light-dark(#d1d0d0, #1f2937);
     /* the line right of the grouping columns */
     --simple-html-grid-sec-bg-border: light-dark(#e6e5e5, #1f2937);
@@ -32,7 +34,8 @@
     --simple-html-grid-main-bg-odd: light-dark(#f7f7f7, #5a6370);
     /* all text */
     --simple-html-grid-main-font-color: light-dark(#2e2d2d, #f9f7f7);
-    /* placeholders, the "AND"/"OR" of the filter chips, the too many conditions box */
+    /* placeholders (a picker of the filter editor with nothing picked too), the "AND"/"OR" of the
+       filter chips, the too many conditions box */
     --simple-html-grid-sec-font-color: light-dark(#979494, #c8c8c8);
     /* where a dragged column can go, the column resize handle under the pointer */
     --simple-html-grid-dropzone-color: light-dark(rgba(129, 127, 127, 0.7), rgba(151, 148, 148, 0.4));
@@ -73,7 +76,7 @@
     /* the grouping columns: the line of each level down its group's rows, and the frame of the +/- box
        of a group row. At least 3:1 against the group rows */
     --simple-html-grid-group-line-color: light-dark(#8c8c8c, #9ca3af);
-    /* the "too many values" warning of the filter menu's value list */
+    /* the "only the first 100 values" warning of the filter menu's value list */
     --simple-html-grid-warning-font-color: light-dark(red, #fca5a5);
     /* the footer's clear filter button under the pointer: text, border */
     --simple-html-grid-danger-font-color: light-dark(#c0392b, #fecaca);
@@ -86,6 +89,14 @@
     --simple-html-grid-stripe-bg-color: light-dark(rgb(255, 255, 255), transparent);
     /* the outline of the element that has the keyboard focus */
     --simple-html-grid-focus-color: light-dark(#005fcc, #b3d7ff);
+    /* the filled controls of the filter menu's value list and the filter editor: the primary buttons
+       (Apply), the active AND/OR of a group, the checkboxes of the value list (accent-color). Its text
+       on it: at least 4.5:1. The fill at least 3:1 to the menus and the dialog */
+    --simple-html-grid-accent-color: light-dark(#2563eb, #93c5fd);
+    --simple-html-grid-accent-font-color: light-dark(#ffffff, #111827);
+    /* the frame of the controls of the value list and the filter editor - the search box, the pickers,
+       the value inputs, the buttons - at least 3:1 to the menus and the dialog (WCAG 1.4.11) */
+    --simple-html-grid-control-border-color: light-dark(#8c8c8c, #9ca3af);
     /* a range of cells (gridInterface.getRanges()): laid over its cells - over the rows, a selected
        row and an error's tint, the text keeps 4.5:1 - and the line around it, at least 3:1 to all of
        those */
@@ -1871,32 +1882,38 @@
  * The section headers are not clickable, they have pointer-events: none above.
  */
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item,
-.simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom,
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox,
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox input,
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox label {
+.simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom {
     cursor: pointer;
 }
 
+/* an item hidden by a search (the filter editor's field picker): display: block above would show it */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[hidden] {
+    display: none;
+}
+
 /**
- * a row in the excel style value list - checkbox plus label, the whole row is clickable
+ * The search box of the filter editor's field picker, over its fields: framed as an input, the text
+ * from the left. It stays at the top while a long menu scrolls
  */
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox {
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-search {
+    position: sticky;
+    top: 0;
+    box-sizing: border-box;
+    width: auto;
+    height: 24px;
+    margin: 4px 6px;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    text-align: left;
+    /* the margin around it in the menu's colour: the fields scrolled under it do not show there */
+    box-shadow: 0 0 0 4px var(--simple-html-grid-main-bg-color);
 }
 
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox label {
-    flex: 1 1 auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-search::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
 }
 
 /**
@@ -1964,6 +1981,8 @@
     width: 0; /*  yes... they made it to messy */
 }
 
+/* a separator: a line across the menu. No side margins - the browser's auto ones made it a dot in the
+ * middle of the menu (a flex column does not stretch an item with auto margins) */
 .simple-html-grid .simple-html-grid-menu .hr-dashed {
     border-top: 0px dashed;
     border-bottom: 1px dashed;
@@ -1971,23 +1990,181 @@
     box-sizing: content-box;
     height: 0;
     overflow: visible;
-    width: 0; /*  yes... they made it to messy */
-    margin-top: 1px;
-    margin-bottom: 1px;
+    margin: 1px 0;
 }
 
-.simple-html-grid .simple-html-grid-menu .max-row-info {
-    padding: 2px;
-    margin: auto;
-    width: fit-content;
-    filter: opacity(0.75);
+/**
+ * The value list of the filter menu (contextmenuFilter.ts), a block under the menu's items: the search
+ * box, "Only values in filtered rows", how many values there are, the list - "Select all" over a box
+ * that scrolls - and Cancel / Apply. Wide enough for the values, a long one is cut off with an
+ * ellipsis (its tooltip has it whole)
+ */
+.simple-html-grid .simple-html-grid-value-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-sizing: border-box;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 6px 8px 8px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .simple-html-grid-menu .max-row-info-warning {
-    padding: 2px;
+/* framed as an input, the text from the left */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-search {
+    box-sizing: border-box;
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    text-align: left;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-search::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
+}
+
+/* how many values there are: quiet, the text colour at 70% (4.5:1 in light and dark) */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-info {
+    padding: 0 2px;
+    opacity: 0.7;
+}
+
+/* the list is cut off at 100 values: not quiet */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-info:has(.simple-html-grid-value-warning) {
+    opacity: 1;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-warning {
     color: var(--simple-html-grid-warning-font-color);
-    margin: auto;
-    width: fit-content;
+}
+
+/* the list: "Select all" as its header, a line under it, the values in a box that scrolls */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-box {
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-all {
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-scroll {
+    max-height: 242px;
+    overflow-y: auto;
+}
+
+/* a checkbox and its text, the whole row a click on the checkbox. Lit under the pointer and when its
+ * checkbox has the keyboard focus, as the items of the menus */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 22px;
+    padding: 0 6px 0 4px;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row:hover,
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row:has(input:focus-visible) {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the option over the list is on the menu's background, no frame: a row of the menu */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-option {
+    padding-left: 2px;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row input {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    accent-color: var(--simple-html-grid-accent-color);
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row input:disabled {
+    cursor: default;
+}
+
+/* the checkboxes have room around them: the focus outline outside */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row input:focus-visible {
+    outline-offset: 1px;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* "Blank", the empty values: not a value of the column */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-blank {
+    font-style: italic;
+}
+
+/* the number of rows of a value, on the right: quiet, as the info above */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-count {
+    flex: none;
+    padding-left: 8px;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+/**
+ * A button of the value list and the filter editor: square, framed, the grid's font. The primary one
+ * (Apply, Apply & close) filled with the accent colour. The focus outline is outside: a filled button
+ * would hide an inset one, and the buttons have room around them
+ */
+.simple-html-grid .simple-html-grid-button {
+    box-sizing: border-box;
+    min-width: 64px;
+    height: 24px;
+    margin: 0;
+    padding: 0 10px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-button.simple-html-grid-button-primary {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-button.simple-html-grid-button-primary:hover {
+    filter: brightness(1.1);
+}
+
+.simple-html-grid .simple-html-grid-button:focus-visible {
+    outline-offset: 1px;
 }
 
 .simple-html-draggable-element {
@@ -2218,17 +2395,22 @@
  * padding, a border, a max size and its own colours. left/top are set from renderFilterEditor so the
  * dialog can be dragged, the size here is only the starting size - the user can resize it from every
  * edge and corner. Two classes: .simple-html-grid sets position: relative and a border.
+ * :not([open]) below wins over its display: flex, it has the attribute too.
  */
 .simple-html-grid.filter-editor-content {
+    /* the titlebar, the groups (they scroll), the buttons */
+    display: flex;
+    flex-direction: column;
     background-color: var(--simple-html-grid-main-bg-color);
     position: fixed;
     inset: auto;
     margin: 0;
     padding: 0;
+    /* as high as what is in it, up to the window: then the groups scroll */
     width: 650px;
-    height: 650px;
-    min-width: 460px;
-    min-height: 240px;
+    height: auto;
+    min-width: min(360px, 100vw);
+    min-height: min(200px, 100vh);
     max-width: 100vw;
     max-height: 100vh;
     overflow: hidden;
@@ -2328,132 +2510,288 @@
 }
 
 .simple-html-grid.filter-editor-content .filter-editor-titlebar {
+    flex: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     cursor: move;
     user-select: none;
     /* a finger on the titlebar moves the dialog, it does not scroll the page */
     touch-action: none;
     margin: 0;
-    padding: 4px 8px;
+    padding: 6px 6px 6px 12px;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
+.simple-html-grid.filter-editor-content .filter-editor-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: calc(var(--simple-html-grid-font-size) + 3px);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the ✕: a button without a frame */
 .simple-html-grid.filter-editor-content .filter-editor-close {
-    cursor: pointer;
-    padding: 0 6px;
+    flex: none;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
     border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
+    cursor: pointer;
 }
 
 .simple-html-grid.filter-editor-content .filter-editor-close:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
+/* the groups: they scroll when the dialog is as high as the window, or made smaller */
+.simple-html-grid.filter-editor-content .filter-editor-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 10px 12px;
+}
+
+/* Cancel, Apply, Apply & close: the buttons of the value list's look, see .simple-html-grid-button */
 .simple-html-grid.filter-editor-content .filter-editor-footer {
+    flex: none;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 8px 12px;
     border-top: 1px solid var(--simple-html-grid-main-bg-border);
-    padding-top: 6px;
-    margin-bottom: 8px;
-}
-
-.simple-html-grid.filter-editor-content .grid-button {
-    min-width: 100px;
-    margin: 2px;
-    padding: 3px 6px;
-    cursor: pointer;
-    border-radius: 0;
-    background-color: var(--simple-html-grid-sec-bg-color);
-    border: 1px solid var(--simple-html-grid-main-bg-border);
-}
-
-.simple-html-grid.filter-editor-content .grid-button:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid.filter-editor-content .grid-button-primary {
-    font-weight: var(--simple-html-grid-font-weight-header);
-    border-color: var(--simple-html-grid-pinned-border);
 }
 
 /**
- * the "click me to select ..." cells that open the attribute/operator menus
+ * A group: its header, then its conditions and sub groups behind a line down its left side - a
+ * bracket. Each level is indented by the bracket, its content as wide as what is left: nothing gets
+ * wider than the dialog (min-width: 0 lets a flex item be narrower than its content)
  */
-.simple-html-grid.filter-editor-content .grid-pick {
-    cursor: pointer;
-    border-radius: 0;
-    border: 1px dashed var(--simple-html-grid-main-bg-border);
-    margin: 0 2px;
-    padding: 1px 2px;
-}
-
-.simple-html-grid.filter-editor-content .grid-pick:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid.filter-editor-content .grid-button-small {
-    min-width: 40px;
-    margin: 2px;
-    padding: 1px;
-    cursor: pointer;
-    border-radius: 0;
-    border: 1px solid var(--simple-html-grid-main-bg-border);
-}
-
-.simple-html-grid.filter-editor-content .grid-button-small:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid.filter-editor-content .grid-flex-reverse {
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.simple-html-grid.filter-editor-content .grid-flex {
-    display: flex;
-}
-
-.simple-html-grid.filter-editor-content .grid-mt-6 {
-    margin-top: 6px;
-}
-
-.simple-html-grid.filter-editor-content .grid-m-4 {
-    margin: 4px;
-}
-
-.simple-html-grid.filter-editor-content .grid-flex-1 {
-    flex: 1 1 0%;
-}
-
-.simple-html-grid.filter-editor-content .grid-flex-column {
+.simple-html-grid.filter-editor-content .filter-editor-group {
     display: flex;
     flex-direction: column;
+    gap: 6px;
+    min-width: 0;
 }
 
-.simple-html-grid.filter-editor-content .grid-sub-group {
-    margin-left: 10px;
+.simple-html-grid.filter-editor-content .filter-editor-group-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
 }
 
-.simple-html-grid.filter-editor-content .grid-condition {
-    border-bottom: 1px dashed var(--simple-html-grid-main-bg-border);
-    border-left: 1px dashed var(--simple-html-grid-main-bg-border);
-    padding: 2px;
-    padding-top: 5px;
+.simple-html-grid.filter-editor-content .filter-editor-group-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin-left: 11px;
+    padding: 2px 0 2px 10px;
+    border-left: 2px solid var(--simple-html-grid-pinned-border);
 }
 
-.simple-html-grid.filter-editor-content .grid-group {
-    border-bottom: 1px dashed var(--simple-html-grid-main-bg-border);
-    border-left: 1px dashed var(--simple-html-grid-main-bg-border);
-    padding: 2px;
-    padding-top: 5px;
+/* the root group without conditions */
+.simple-html-grid.filter-editor-content .filter-editor-empty {
+    padding: 4px 0;
+    font-style: italic;
+    opacity: 0.7;
 }
 
-.simple-html-grid.filter-editor-content .grid-group-indent {
-    padding: 2px;
-    padding-top: 5px;
+/* AND / OR: two buttons side by side, the one in use (aria-pressed) filled */
+.simple-html-grid.filter-editor-content .filter-editor-segment {
+    display: flex;
 }
 
-.simple-html-grid.filter-editor-content .grid-text-center {
-    text-align: center;
+.simple-html-grid.filter-editor-content .filter-editor-segment-button {
+    box-sizing: border-box;
+    min-width: 40px;
+    height: 24px;
+    margin: 0;
+    padding: 0 8px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    cursor: pointer;
+}
+
+/* one line between the two */
+.simple-html-grid.filter-editor-content .filter-editor-segment-button + .filter-editor-segment-button {
+    border-left: 0;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-segment-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-segment-button[aria-pressed='true'] {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    cursor: default;
+}
+
+/* "+ Condition", "+ Group": as wide as their text */
+.simple-html-grid.filter-editor-content .filter-editor-add {
+    min-width: 0;
+    padding: 0 8px;
+}
+
+/* wrap and delete, at the right end of the header. They wrap to the next line together */
+.simple-html-grid.filter-editor-content .filter-editor-group-tools {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+/* a button with an icon only: wrap, delete, switch value / column. Framed under the pointer */
+.simple-html-grid.filter-editor-content .filter-editor-icon {
+    flex: none;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-icon:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the outline outside the buttons of the editor: they have room around them, and an inset one would
+ * hide in a filled one. Over the button next to it. Not the buttons of the menus and the date picker
+ * put in the dialog (see popoverParent): they keep their own */
+.simple-html-grid.filter-editor-content .filter-editor-titlebar button:focus-visible,
+.simple-html-grid.filter-editor-content .filter-editor-body button:focus-visible,
+.simple-html-grid.filter-editor-content .filter-editor-footer button:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline-offset: 1px;
+}
+
+/**
+ * A condition: one row - field, operator, the value (it takes the room left), switch, delete. It
+ * wraps when the dialog is narrow: the value goes to the next line, then the operator
+ */
+.simple-html-grid.filter-editor-content .filter-editor-condition {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+}
+
+/* a picker: a button framed as a select, with a chevron on the right */
+.simple-html-grid.filter-editor-content .filter-editor-pick {
+    flex: 1 1 130px;
+    max-width: 220px;
+    min-width: 0;
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    height: 24px;
+    margin: 0;
+    padding: 0 22px 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-pick:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-pick::after {
+    content: '';
+    position: absolute;
+    right: 9px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    margin-top: -5px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-pick-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* nothing picked: the placeholder, in the colour of the placeholders */
+.simple-html-grid.filter-editor-content .filter-editor-pick-empty .filter-editor-pick-text {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* the value: the room that is left. Its input, textarea or column picker fills it */
+.simple-html-grid.filter-editor-content .filter-editor-value-slot {
+    flex: 3 1 140px;
+    min-width: 80px;
+    display: flex;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-value-slot > * {
+    flex: 1 1 auto;
+    max-width: none;
+}
+
+/* the value input and the textarea of IN / NOT_IN (a value per line): framed as the pickers */
+.simple-html-grid.filter-editor-content .filter-editor-value {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+}
+
+.simple-html-grid.filter-editor-content textarea.filter-editor-value {
+    height: auto;
+    min-height: 24px;
+    padding: 3px 6px;
+    line-height: 1.4;
+    resize: vertical;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-value::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
 }
 
 /**
@@ -2490,88 +2828,6 @@
     overflow: visible;
     box-shadow: 0 2px 8px var(--simple-html-grid-tooltip-shadow-color);
     pointer-events: none;
-}
-
-.simple-html-grid.filter-editor-content .grid-text-title {
-    font-family: var(--simple-html-grid-font-family);
-    font-size: medium;
-    font-weight: var(--simple-html-grid-font-weight-cell);
-    background-color: var(--simple-html-grid-main-bg-color);
-    margin: 4px;
-    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
-}
-
-.simple-html-grid.filter-editor-content .grid-text-label {
-    box-sizing: border-box;
-    border: 0;
-    border-radius: initial;
-    display: block;
-    height: 20px;
-    text-align: center;
-    overflow: hidden;
-    user-select: none;
-    font-family: var(--simple-html-grid-font-family);
-    font-size: var(--simple-html-grid-font-size);
-    font-weight: var(--simple-html-grid-font-weight-cell);
-    background-color: var(--simple-html-grid-main-bg-color);
-    margin: 0px;
-    filter: opacity(0.5);
-    transition: initial;
-}
-
-/**
- * The AND/OR toggle shares .grid-text-label with the small captions above the condition
- * fields, but it is a button you click - it should not be dimmed like a caption.
- * Comes after the rule above so it wins on background too.
- */
-.simple-html-grid.filter-editor-content .grid-button-small.grid-text-label {
-    filter: none;
-    background-color: transparent;
-}
-
-.simple-html-grid.filter-editor-content .grid-button-small.grid-text-label:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid.filter-editor-content .grid-overflow-auto {
-    overflow: auto;
-}
-
-.simple-html-grid.filter-editor-content .grid-w-full {
-    width: 100%;
-}
-
-.simple-html-grid.filter-editor-content .grid-h-full {
-    height: 100%;
-}
-
-/* the value field of a condition. In .grid-condition: the editor's menus and the date picker are in
- * the dialog too (see popoverParent), they keep their own look. The focus outline is at the end */
-.filter-editor-content .grid-condition input {
-    background-color: var(--simple-html-grid-sec-bg-color);
-    color: var(--simple-html-grid-main-font-color);
-    font-family: var(--simple-html-grid-font-family);
-    font-size: var(--simple-html-grid-font-size);
-    font-weight: var(--simple-html-grid-font-weight);
-    margin-left: 3px;
-    margin-right: 3px;
-    text-align: center;
-    padding: 3px;
-    border: 1px solid var(--simple-html-grid-main-bg-border);
-}
-.filter-editor-content .grid-condition textarea {
-    background-color: var(--simple-html-grid-sec-bg-color);
-    color: var(--simple-html-grid-main-font-color);
-    font-family: var(--simple-html-grid-font-family);
-    font-size: var(--simple-html-grid-font-size);
-    font-weight: var(--simple-html-grid-font-weight);
-    margin-left: 3px;
-    margin-right: 3px;
-    max-width: 145px;
-    min-width: 145px;
-    text-align: center;
-    padding: 3px;
-    border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 .simple-html-grid .simple-html-grid-menu-sub {
@@ -2652,11 +2908,6 @@
 .simple-html-grid .simple-html-grid-col-cell:has(input[type='checkbox']:focus-visible) {
     outline: 2px solid var(--simple-html-grid-focus-color);
     outline-offset: -2px;
-}
-
-/* the checkboxes of the filter menu's value list are small and have room around them: outside */
-.simple-html-grid .simple-html-grid-menu-checkbox input:focus-visible {
-    outline-offset: 1px;
 }
 
 /* the date picker of the grid has the grid's focus colour, date.css draws the same outline */

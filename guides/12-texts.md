@@ -276,13 +276,14 @@ Right click on a header filter.
 
 | id | English | shown |
 | --- | --- | --- |
+| `filter.filter` | `Filter` | the filter submenu, first in the menu: the operator, blank, clear and the filter editor |
 | `filter.filter.clear` | `Clear Filter` | removes the column's conditions |
 | `filter.filter.clearAll` | `Clear All Filters` | removes the whole filter |
-| `filter.filter.blank` | `Blank` | the blank submenu |
+| `filter.filter.blank` | `Blank` | the blank submenu, in the filter submenu |
 | `filter.filter.isBlank` | `Is blank` | replaces the column's conditions with `IS_BLANK` |
 | `filter.filter.isNotBlank` | `Is not blank` | replaces the column's conditions with `IS_NOT_BLANK` |
 | `filter.filter.advanced` | `Advanced Filter…` | opens the filter editor |
-| `filter.operator` | `Operator` | the operator submenu, not a boolean field |
+| `filter.operator` | `Operator` | the operator submenu, in the filter submenu, not a boolean field |
 | `filter.operator.greaterThanOrEqualTo` | `Greater than or equal` | a number or date field |
 | `filter.operator.lessThanOrEqualTo` | `Less than or equal` | a number or date field |
 | `filter.operator.equal` | `Equal` | not a boolean field |
@@ -295,14 +296,16 @@ The part of the filter menu with a checkbox per value, for a text field.
 
 | id | English | shown |
 | --- | --- | --- |
-| `filter.values.search` | `Search:` | section header |
-| `filter.values.searchPlaceholder` | `type to search` | the placeholder of the search box |
-| `filter.values.availableOnly` | `Filter Available` | the checkbox that lists only the values the other filters let through |
-| `filter.values.rowsFound` | `{count} rows found` | `{count}`: the number of values listed |
-| `filter.values.truncated` | `Showing only first {max} !` | `{max}`: the most values listed (100), when there are more |
-| `filter.values.selectAll` | `Select All` | the checkbox that checks every value |
+| `filter.values.search` | `Search values` | the name of the search box, for a screen reader |
+| `filter.values.searchPlaceholder` | `Search values` | the placeholder of the search box |
+| `filter.values.availableOnly` | `Only values in filtered rows` | the checkbox that lists only the values the other filters let through |
+| `filter.values.rowsFound` | `{count} values` | under the search box, `{count}`: the number of values listed |
+| `filter.values.rowsFound.one` | `{count} value` | the same, when one value is listed |
+| `filter.values.truncated` | `Only the first {max} values are shown` | instead, `{max}`: the most values listed (100), when there are more |
+| `filter.values.selectAll` | `Select all` | the checkbox over the values that checks every value - or none, when every value is checked |
 | `filter.values.blank` | `Blank` | the value of the empty cells |
-| `filter.values.run` | `Run Search` | the button that filters on the checked values |
+| `filter.values.run` | `Apply` | the button that filters on the checked values |
+| `filter.values.cancel` | `Cancel` | the button that closes the menu without filtering |
 
 ### Column chooser
 
@@ -318,36 +321,39 @@ The part of the filter menu with a checkbox per value, for a text field.
 | --- | --- | --- |
 | `filterEditor.title` | `Filter Editor` | the title |
 | `filterEditor.title.tooltip` | `Drag to move the dialog` | tooltip of the title |
-| `filterEditor.close.tooltip` | `Close without filtering` | tooltip of the `✕` in the title bar |
-| `filterEditor.operatorAnd` | `AND` | the button of an AND group |
-| `filterEditor.operatorAnd.tooltip` | `All conditions in this group must match. Click for OR` | its tooltip |
-| `filterEditor.operatorOr` | `OR` | the button of an OR group |
-| `filterEditor.operatorOr.tooltip` | `Any condition in this group may match. Click for AND` | its tooltip |
-| `filterEditor.wrapGroup.tooltip` | `Wrap everything in this group inside a new parent group` | tooltip of an icon of a group |
-| `filterEditor.addSubGroup.tooltip` | `Add a sub group inside this group` | tooltip of an icon of a group |
-| `filterEditor.addCondition.tooltip` | `Add a condition to this group` | tooltip of an icon of a group |
-| `filterEditor.deleteGroup.tooltip` | `Delete this group and everything in it` | tooltip of the trash icon of a sub group |
-| `filterEditor.clearAll.tooltip` | `Clear all conditions` | tooltip of the trash icon of the top group |
-| `filterEditor.label.field` | `Query Field:` | label over the field of a condition |
-| `filterEditor.label.operator` | `Operator:` | label over the operator |
-| `filterEditor.label.value` | `Filter value:` | label over the value |
-| `filterEditor.pickAttribute` | `Click me to select field` | a condition without a field |
+| `filterEditor.close.tooltip` | `Close without filtering` | tooltip and name of the `✕` in the title bar |
+| `filterEditor.operatorAnd` | `AND` | the button that makes a group AND, filled while it is |
+| `filterEditor.operatorAnd.tooltip` | `All conditions in this group must match` | its tooltip |
+| `filterEditor.operatorOr` | `OR` | the button that makes a group OR, filled while it is |
+| `filterEditor.operatorOr.tooltip` | `Any condition in this group may match` | its tooltip |
+| `filterEditor.wrapGroup.tooltip` | `Wrap everything in this group inside a new parent group` | tooltip and name of the bracket icon of a group |
+| `filterEditor.addSubGroup` | `+ Group` | the button of a group that adds a sub group |
+| `filterEditor.addSubGroup.tooltip` | `Add a sub group inside this group` | its tooltip |
+| `filterEditor.addCondition` | `+ Condition` | the button of a group that adds a condition |
+| `filterEditor.addCondition.tooltip` | `Add a condition to this group` | its tooltip |
+| `filterEditor.deleteGroup.tooltip` | `Delete this group and everything in it` | tooltip and name of the trash icon of a sub group |
+| `filterEditor.clearAll.tooltip` | `Clear all conditions` | tooltip and name of the trash icon of the top group |
+| `filterEditor.empty` | `No conditions: every row is shown` | in the top group while it has nothing in it |
+| `filterEditor.label.field` | `Field` | the name of the field picker of a condition, for a screen reader: `Field: Country` |
+| `filterEditor.label.operator` | `Operator` | the name of the operator picker |
+| `filterEditor.label.value` | `Value` | the name and the placeholder of the value input, the name of the column picker that replaces it |
+| `filterEditor.pickAttribute` | `Field` | in the field picker of a condition without a field |
 | `filterEditor.pickAttribute.tooltip` | `Pick which column this condition looks at` | its tooltip |
-| `filterEditor.pickOperator` | `Click me to select Operator` | a condition without an operator |
+| `filterEditor.pickOperator` | `Operator` | in the operator picker of a condition without an operator |
 | `filterEditor.pickOperator.tooltip` | `Pick how the value is compared, for example equal or greater than` | its tooltip |
-| `filterEditor.pickValueAttribute` | `Click me to select attribute` | compared with a field that is not picked yet |
+| `filterEditor.pickValueAttribute` | `Column` | in the column picker, compared with a field that is not picked yet |
 | `filterEditor.pickValueAttribute.tooltip` | `Pick which column to compare against` | its tooltip |
-| `filterEditor.deleteCondition.tooltip` | `Delete this condition` | tooltip of the trash icon of a condition |
-| `filterEditor.useValue.tooltip` | `Compare against a typed in value instead of another column` | tooltip of the icon that switches to a value |
-| `filterEditor.useAttribute.tooltip` | `Compare against another column instead of a typed in value` | tooltip of the icon that switches to another field |
-| `filterEditor.filterAndClose` | `Filter & Close` | button |
+| `filterEditor.deleteCondition.tooltip` | `Delete this condition` | tooltip and name of the trash icon of a condition |
+| `filterEditor.useValue.tooltip` | `Compare against a typed in value instead of another column` | tooltip and name of the icon that switches to a value |
+| `filterEditor.useAttribute.tooltip` | `Compare against another column instead of a typed in value` | tooltip and name of the icon that switches to another field |
+| `filterEditor.filterAndClose` | `Apply & close` | button, the primary one |
 | `filterEditor.filterAndClose.tooltip` | `Apply this filter to the grid and close the dialog` | its tooltip |
-| `filterEditor.filterOnly` | `Filter Only` | button |
+| `filterEditor.filterOnly` | `Apply` | button |
 | `filterEditor.filterOnly.tooltip` | `Apply this filter to the grid but keep the dialog open, so you can keep adjusting it` | its tooltip |
-| `filterEditor.closeButton` | `Close` | button |
+| `filterEditor.closeButton` | `Cancel` | button |
 | `filterEditor.closeButton.tooltip` | `Close the dialog and leave the current filter as it is` | its tooltip |
 | `filterEditor.fieldMenu` | `Available Fields:` | section header of the menu of fields |
-| `filterEditor.fieldMenu.search` | `search` | the placeholder of its search box |
+| `filterEditor.fieldMenu.search` | `Search fields` | the placeholder and the name of its search box |
 | `filterEditor.operatorMenu` | `Operator:` | section header of the menu of operators |
 
 The names of the operators, in the operator menu and on a condition:

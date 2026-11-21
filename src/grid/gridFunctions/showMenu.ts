@@ -403,11 +403,13 @@ function renderLevel(ctx: Grid, tree: MenuTree, entries: MenuEntry[], depth: num
 
 /**
  * The items of a menu or submenu, in order: its children with a menuitem role. Sections, lines and
- * blocks are not
+ * blocks are not, nor an item that is hidden (the search of the filter editor's field picker hides
+ * the fields it does not find)
  */
 function menuItems(menu: Element | null): HTMLElement[] {
     return Array.from(menu?.children ?? []).filter(
-        (child): child is HTMLElement => child instanceof HTMLElement && /^menuitem/.test(child.getAttribute('role') ?? '')
+        (child): child is HTMLElement =>
+            child instanceof HTMLElement && !child.hidden && /^menuitem/.test(child.getAttribute('role') ?? '')
     );
 }
 

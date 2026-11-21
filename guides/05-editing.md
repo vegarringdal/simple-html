@@ -368,7 +368,8 @@ datasource.filterChangedOnly(false); // every row in Norway
 - After `setData()` with the rows from the server, or `acceptChanges()`, no row is changed: nothing
   is shown until it is turned off. The footer's chip says why.
 - It is the datasource's, as the filter is: other datasources on the same container are not filtered.
-- The filter menu's value list, with *Filter Available*, lists the values of the changed rows.
+- The filter menu's value list, with *Only values in filtered rows*, lists the values of the
+  changed rows.
 
 For one state only, filter on `__rowState`: `where('__rowState', 'IN', ['N'])` is the new rows. That
 is a condition of the filter, in `getFilter()` and the state.

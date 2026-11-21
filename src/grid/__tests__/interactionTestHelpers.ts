@@ -103,12 +103,12 @@ export function menuTreeIds(): string[] {
 }
 
 /**
- * first menu entry (context menus, the menu bottom button, filter editor buttons) whose text
- * starts with `text`. Not shown: looked for in the submenus of the open menu, which are opened on the
- * way to it (see searchMenus)
+ * first menu entry (context menus, the column chooser's bottom button, the buttons of the value list
+ * and the filter editor) whose text starts with `text`. Not shown: looked for in the submenus of the
+ * open menu, which are opened on the way to it (see searchMenus)
  */
 export function menuItem(text: string): HTMLElement {
-    const selector = '.simple-html-grid-menu-item, .simple-html-label-button-menu-bottom, .grid-button';
+    const selector = '.simple-html-grid-menu-item, .simple-html-label-button-menu-bottom, .simple-html-grid-button';
     const matches = (element: HTMLElement) => element.textContent?.trim().startsWith(text) === true;
     const shown = Array.from(document.querySelectorAll<HTMLElement>(selector)).find(matches);
     return (shown ?? searchMenus(selector, matches, false)[0]) as HTMLElement;
@@ -124,6 +124,23 @@ export function menuItemsExact(text: string): HTMLElement[] {
         (element) => element.textContent?.replace(/\s+/g, ' ').trim() === text,
         true
     );
+}
+
+/**
+ * The row of a value in the filter menu's value list - a label around its checkbox, a click on it is a
+ * click on the checkbox - by the value as it is shown (upper case, "Blank" for the empty ones)
+ */
+export function valueRow(value: string): HTMLLabelElement {
+    return Array.from(
+        document.querySelectorAll<HTMLLabelElement>('.simple-html-grid-value-scroll .simple-html-grid-value-row')
+    ).find((row) => row.querySelector('.simple-html-grid-value-text')?.textContent?.trim() === value) as HTMLLabelElement;
+}
+
+/**
+ * the checkbox of a value in the filter menu's value list, see valueRow
+ */
+export function valueCheckbox(value: string): HTMLInputElement {
+    return valueRow(value)?.querySelector('input') as HTMLInputElement;
 }
 
 /**

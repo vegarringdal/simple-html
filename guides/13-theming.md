@@ -91,7 +91,9 @@ The element that has the keyboard focus gets an outline of 2px in `--simple-html
 a cell, a filter input, a checkbox, a menu item, a button of the filter editor, the date picker. The
 outline is inside the element (`outline-offset: -2px`): the cells are packed edge to edge, an outline
 outside the cell would be painted over by the next one or cut off at the edge of the grid. A checkbox
-in a cell has it on the cell.
+in a cell has it on the cell. The buttons of the filter editor and of the filter menu's value list,
+and the value list's checkboxes, have room around them: theirs is outside (`outline-offset: 1px`),
+an outline inside a filled button would not show.
 
 It is drawn for `:focus-visible`, so the browser decides when it shows: when you move with the
 keyboard, and in an input you type in; not when you click a checkbox or a button. It replaces the
@@ -261,20 +263,23 @@ On `.simple-html-grid`, in `grid.css`.
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
 | `--simple-html-grid-main-bg-color` | the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor | `#f5f5f5` | `#374151` |
-| `--simple-html-grid-sec-bg-color` | the filter row, the inputs and buttons of the filter editor, the filter chips, the tooltips | `#ffffff` | `#4b5563` |
+| `--simple-html-grid-sec-bg-color` | the filter row, the inputs, pickers and buttons of the filter editor and the value list, the value list's box, the filter chips, the tooltips | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-alt-bg-color` | scrollbar tracks, the search input of the column chooser, the focus button of a cell | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-even` | the even rows | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-odd` | the odd rows | `#f7f7f7` | `#5a6370` |
 | `--simple-html-grid-main-bg-selected-odd` | selected rows (odd), the number of a selected column, scrollbar thumbs | `#bdd4e7` | `#234882` |
 | `--simple-html-grid-main-bg-selected-even` | selected rows (even), menu items and buttons under the pointer, the menu item the keyboard is on and the one whose submenu is open | `#afc7db` | `#274e8f` |
 | `--simple-html-grid-main-bg-border` | the lines between cells, rows and menu sections, the frame of the grid and the menus | `#e6e5e5` | `#1f2937` |
-| `--simple-html-grid-pinned-border` | the lines at the pinned columns and under the header, the frame of the filter editor, the tooltips and the buttons | `#d1d0d0` | `#1f2937` |
+| `--simple-html-grid-pinned-border` | the lines at the pinned columns and under the header, the frame of the filter editor, the tooltips and the column chooser's button, the line of a group (the bracket) in the filter editor | `#d1d0d0` | `#1f2937` |
 | `--simple-html-grid-sec-bg-border` | the line right of the grouping columns | `#e6e5e5` | `#1f2937` |
 | `--simple-html-grid-main-font-color` | the text | `#2e2d2d` | `#f9f7f7` |
-| `--simple-html-grid-sec-font-color` | placeholders, the AND/OR between the filter chips, the "too many conditions" box | `#979494` | `#c8c8c8` |
+| `--simple-html-grid-sec-font-color` | placeholders - the filter row, the search boxes, a picker of the filter editor with nothing picked - the AND/OR between the filter chips, the "too many conditions" box | `#979494` | `#c8c8c8` |
 | `--simple-html-grid-boxshadow` | the inset shadow of the labels, the panel and the row selector | `#fffdfd` | `#4b5563` |
 | `--simple-html-grid-dropzone-color` | where a dragged column can go, the resize handle under the pointer | `rgba(129, 127, 127, 0.7)` | `rgba(151, 148, 148, 0.4)` |
 | `--simple-html-grid-focus-color` | the outline of the element with the keyboard focus | `#005fcc` | `#b3d7ff` |
+| `--simple-html-grid-accent-color` | the filled controls of the filter menu's value list and the filter editor: Apply and Apply & close, the AND / OR a group uses, the checkboxes of the value list (`accent-color`). At least 3:1 to the menus and the dialog | `#2563eb` | `#93c5fd` |
+| `--simple-html-grid-accent-font-color` | the text on the accent colour, at least 4.5:1 to it | `#ffffff` | `#111827` |
+| `--simple-html-grid-control-border-color` | the frame of the controls of the value list and the filter editor: the search boxes, the pickers, the value inputs, the buttons. At least 3:1 to the menus and the dialog (WCAG 1.4.11) | `#8c8c8c` | `#9ca3af` |
 | `--simple-html-grid-range-bg-color` | laid over the cells of a range of cells, see [Ranges of cells](#ranges-of-cells) | `rgba(37, 99, 235, 0.12)` | `rgba(59, 130, 246, 0.2)` |
 | `--simple-html-grid-range-border-color` | the line around a range of cells | `#1e40af` | `#dbeafe` |
 | `--simple-html-grid-find-match-color` | laid over a cell that matches Find (Ctrl+F), see [Find](#find) | `rgba(250, 204, 21, 0.4)` | `rgba(180, 83, 9, 0.45)` |
@@ -295,7 +300,7 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-totals-font-color` | the text of the totals row | `#1f2328` | `#f9fafb` |
 | `--simple-html-grid-aggregate-label-color` | the label in front of an aggregate (`Sum`) in a group row and the totals row. At least 4.5:1 to both | `#57606a` | `#c9d1d9` |
 | `--simple-html-grid-group-line-color` | the grouping columns: the line of each level down its group's rows, the frame of a group row's `+` / `-` box. At least 3:1 to the group rows | `#8c8c8c` | `#9ca3af` |
-| `--simple-html-grid-warning-font-color` | the "too many values" warning of the filter menu | `red` | `#fca5a5` |
+| `--simple-html-grid-warning-font-color` | the "only the first 100 values" warning of the filter menu's value list | `red` | `#fca5a5` |
 | `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text | `#c0392b` | `#fecaca` |
 | `--simple-html-grid-danger-border` | the footer's Clear filter button under the pointer: its border | `#d98282` | `#f87171` |
 | `--simple-html-grid-readonly-stripe-color` | the red stripes of a readonly cell in an editable grid (`.simple-html-readonly`) | `rgb(255, 0, 0)` | `rgb(255, 0, 0)` |

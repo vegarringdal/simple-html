@@ -18,7 +18,9 @@ import {
     openMenus,
     openRowMenu,
     pointerEvent,
-    sleep
+    sleep,
+    valueCheckbox,
+    valueRow
 } from './interactionTestHelpers';
 
 /**
@@ -305,16 +307,16 @@ describe('menus - the menus hook', () => {
         const menus: GridMenus = {
             filter: (defaults) => [
                 ...defaults.filter((e) => e.id === 'filter.values'),
-                ...defaults.filter((e) => e.id === 'filter.operator' || e.id === 'filter.filter.clear')
+                ...defaults.filter((e) => e.id === 'filter.filter')
             ]
         };
         const { element } = await mountMenus(menus);
 
         openFilterMenu(element, 'firstname');
 
-        expect(shownIds()).toEqual(['filter.values', 'filter.filter.clear', 'filter.operator']);
+        expect(shownIds()).toEqual(['filter.values', 'filter.filter']);
         // the value list still works where it was moved to
-        expect(menuItem('Run Search')).toBeDefined();
+        expect(menuItem('Apply')).toBeDefined();
     });
 
     it('expect a label to be changed and the entry to keep its action', async () => {
@@ -935,8 +937,9 @@ describe('menus - the value list block', () => {
 
         openFilterMenu(element, 'firstname');
 
-        expect(document.querySelector('.simple-html-grid-menu-checkbox')).toBeNull();
-        expect(menuItem('Run Search')).toBeUndefined();
+        expect(document.querySelector('.simple-html-grid-value-row')).toBeNull();
+        expect(document.querySelector('[data-menu-id="filter.values"]')).toBeNull();
+        expect(menuItem('Apply')).toBeUndefined();
         expect(menuItem('Clear Filter')).toBeDefined();
     });
 
@@ -944,13 +947,10 @@ describe('menus - the value list block', () => {
         const { element } = await mountGrid();
         openFilterMenu(element, 'firstname');
         const clear = entry('filter.filter.clear');
-        const label = Array.from(document.querySelectorAll('.simple-html-grid-menu-checkbox label')).find((el) =>
-            el.textContent?.trim().startsWith('FIRST1')
-        ) as HTMLElement;
 
-        label.click();
+        valueRow('FIRST1').click();
 
-        expect((label.previousElementSibling as HTMLInputElement).checked).toBe(false);
+        expect(valueCheckbox('FIRST1').checked).toBe(false);
         // the same element: the menu was not rendered again
         expect(entry('filter.filter.clear')).toBe(clear);
         expect(menuOpen()).toBe(true);
@@ -1082,21 +1082,38 @@ describe('menus - the default menus, short', () => {
         ]);
     });
 
-    it('expect the filter menu: clear, the blank and operator submenus, the filter editor, the value list', async () => {
+    it('expect the filter menu: the Filter submenu, then the value list', async () => {
         const { element } = await mountGrid();
 
         openFilterMenu(element, 'firstname');
 
-        expect(shownIds()).toEqual([
+        expect(shownIds()).toEqual(['filter.filter', 'filter.values']);
+        expect(entry('filter.filter').textContent?.trim()).toEqual('Filter');
+        expect(entry('filter.filter').getAttribute('aria-haspopup')).toEqual('menu');
+    });
+
+    it('expect in Filter: the operator and blank submenus, clear, clear all, a line, the filter editor', async () => {
+        const { element } = await mountGrid();
+        openFilterMenu(element, 'firstname');
+
+        entry('filter.filter').click();
+
+        const submenu = openMenus()[1];
+        expect(Array.from(submenu.children, (child) => child.getAttribute('data-menu-id'))).toEqual([
+            'filter.operator',
+            'filter.filter.blank',
             'filter.filter.clear',
             'filter.filter.clearAll',
-            'filter.filter.blankSeparator',
-            'filter.filter.blank',
-            'filter.operator',
             'filter.filter.advancedSeparator',
-            'filter.filter.advanced',
-            'filter.values'
+            'filter.filter.advanced'
         ]);
+        expect(submenu.getAttribute('aria-labelledby')).toEqual(entry('filter.filter').id);
+        // the operator in use has its ✓ one level deeper
+        entry('filter.operator').click();
+        expect(openMenus()).toHaveLength(3);
+        expect(openMenus()[2].querySelector('[aria-checked="true"]')?.getAttribute('data-menu-id')).toEqual(
+            'filter.operator.equal'
+        );
     });
 
     it('expect no operator submenu on a boolean column: it has none of its entries', async () => {
@@ -1112,7 +1129,7 @@ describe('menus - the default menus, short', () => {
         expect(menuTreeIds()).toContain('filter.filter.isBlank');
     });
 
-    it('expect the entries of a submenu to start with its id, the pin and blank submenus aside', async () => {
+    it('expect the entries of a submenu to start with its id, the pin, blank and operator submenus aside', async () => {
         const { element, seen } = await mountCapturing();
         openRowMenu(element, 'age', 0);
         openLabelMenu(element, 'age');
@@ -1130,7 +1147,12 @@ describe('menus - the default menus, short', () => {
                         : entry.id === 'filter.filter.blank'
                           ? 'filter.filter.'
                           : `${entry.id}.`;
-                outOfPlace.push(...entry.entries.map((inner) => inner.id).filter((id) => !id.startsWith(start)));
+                // the operator submenu is in Filter with the id it had before
+                outOfPlace.push(
+                    ...entry.entries
+                        .map((inner) => inner.id)
+                        .filter((id) => !id.startsWith(start) && !(entry.id === 'filter.filter' && id === 'filter.operator'))
+                );
                 check(entry.entries);
             }
         };
@@ -1140,7 +1162,7 @@ describe('menus - the default menus, short', () => {
         expect(outOfPlace).toEqual([]);
     });
 
-    it('expect a filter on the start of the old section ids to hide that part as before', async () => {
+    it('expect a filter on the start of a section id to hide that part, with what is in it', async () => {
         const menus: GridMenus = {
             header: (defaults) => defaults.filter((e) => !e.id.startsWith('header.column')),
             filter: (defaults) => defaults.filter((e) => !e.id.startsWith('filter.filter'))
@@ -1150,9 +1172,9 @@ describe('menus - the default menus, short', () => {
         openLabelMenu(element, 'age');
         expect(menuTreeIds().filter((id) => id.startsWith('header.column'))).toEqual([]);
 
+        // the Filter submenu with the operator submenu in it: the value list is left
         openFilterMenu(element, 'firstname');
-        expect(menuTreeIds().filter((id) => id.startsWith('filter.filter'))).toEqual([]);
-        expect(menuTreeIds()).toContain('filter.operator.equal');
+        expect(menuTreeIds()).toEqual(['filter.values']);
     });
 });
 
@@ -1712,26 +1734,30 @@ describe('menus - the keyboard', () => {
         expect(document.activeElement).toBe(cell);
     });
 
-    it("expect Tab to be the browser's in a menu with a block: the filter menu's value list, Run Search a button", async () => {
+    it("expect Tab to be the browser's in a menu with a block: the filter menu's value list, Apply a button", async () => {
         const { element: grid, datasource } = await mountGrid();
         const cell = headerFilterInput(grid, 'firstname');
         cell.focus();
         press(cell, 'F10', { shiftKey: true });
         openFilterMenu(grid, 'firstname');
-        expect(focusedId()).toEqual('filter.filter.clear');
+        // the Filter submenu first: ArrowRight goes into it, Esc back out
+        expect(focusedId()).toEqual('filter.filter');
+        press(document.activeElement as HTMLElement, 'ArrowRight');
+        expect(focusedId()).toEqual('filter.operator');
+        press(document.activeElement as HTMLElement, 'Escape');
+        expect(focusedId()).toEqual('filter.filter');
 
         expect(press(document.activeElement as HTMLElement, 'Tab').defaultPrevented).toBe(false);
         expect(menuOpen()).toBe(true);
 
-        // uncheck a value, then Enter on Run Search
-        const first = Array.from(document.querySelectorAll('.simple-html-grid-menu-checkbox label')).find((label) =>
-            label.textContent?.trim().startsWith('FIRST1')
-        ) as HTMLElement;
-        first.click();
-        const run = document.querySelector('.simple-html-label-button-menu-bottom') as HTMLElement;
-        expect(run.getAttribute('role')).toEqual('button');
-        expect(run.tabIndex).toEqual(0);
-        press(run, 'Enter');
+        // uncheck a value. Apply is a button of the browser: a stop of Tab, Enter and Space click it -
+        // the browser's, checked in a real browser. Enter on a checkbox applies too
+        valueRow('FIRST1').click();
+        const apply = document.querySelector(
+            '.simple-html-grid-value-buttons .simple-html-grid-button-primary'
+        ) as HTMLButtonElement;
+        expect([apply.tagName, apply.type, apply.tabIndex, apply.textContent?.trim()]).toEqual(['BUTTON', 'button', 0, 'Apply']);
+        press(valueCheckbox('FIRST2'), 'Enter');
 
         expect(menuOpen()).toBe(false);
         expect(datasource.getRows().map((row) => (row as { firstname?: string }).firstname)).not.toContain('first1');

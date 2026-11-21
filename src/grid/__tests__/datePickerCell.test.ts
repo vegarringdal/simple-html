@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isPopoverShown } from '../../__tests__/popoverStub';
 // the picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
@@ -33,11 +33,24 @@ const fields = { fields: { born: 'date' as const } };
 /**
  * clicks the date cell, the grid opens the picker in a timeout
  */
+/**
+ * Clicks the date cell and waits for its picker. It opens in a timer after the click (renderRowCell),
+ * and when it opens it sets the timer that ends `menuJustOpened` (showMenu.ts): until then a click
+ * outside is taken for the click that opened it. One more task after the picker is there runs after
+ * that timer - a fixed sleep raced it on a loaded machine
+ */
 async function openPicker(element: HTMLElement) {
     const input = element.querySelector('input[data-attribute="born"]') as HTMLInputElement;
     input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await sleep(20);
-    return document.querySelector('simple-html-date') as HTMLElement;
+    const picker = await vi.waitFor(() => {
+        const found = document.querySelector('simple-html-date');
+        if (!found) {
+            throw new Error('the picker is not open yet');
+        }
+        return found as HTMLElement;
+    });
+    await sleep(0);
+    return picker;
 }
 
 beforeAll(() => {

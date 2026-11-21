@@ -20,7 +20,7 @@ function clickIcon(tooltipText: string, index = 0) {
     (holder.querySelector('svg') ?? holder).dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
-const editorConditions = () => document.querySelectorAll('.filter-editor-content .grid-condition');
+const editorConditions = () => document.querySelectorAll('.filter-editor-content .filter-editor-condition');
 
 beforeAll(() => {
     stubCanvas();
@@ -56,10 +56,10 @@ describe('filter editor - typed values', () => {
         datasource.filter(and(where('born', 'EQUAL', new Date(2001, 4, 18))));
         gridInterface.openFilterEditor();
 
-        const input = document.querySelector('.filter-editor-content .grid-condition input') as HTMLInputElement;
+        const input = document.querySelector('.filter-editor-content .filter-editor-value') as HTMLInputElement;
         input.value = '2001-05-17';
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        menuItem('Filter Only').click();
+        menuItem('Apply').click();
 
         expect(datasource.getDataRows().map((row: any) => row.name)).toEqual(['a']);
         // a Date, v5 applied a JSON copy and the date became text
@@ -77,10 +77,9 @@ describe('filter editor - header filter inputs', () => {
         expect(datasource.getDataRows()).toHaveLength(1);
 
         gridInterface.openFilterEditor();
-        // root group trash icon: clear all
-        const toolbar = document.querySelector('.filter-editor-content .grid-group') as HTMLElement;
-        toolbar.querySelectorAll('svg')[3].dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        menuItem('Filter & Close').click();
+        // the root group's trash icon: clear all
+        clickIcon('Clear all conditions');
+        menuItem('Apply & close').click();
 
         expect(datasource.getDataRows()).toHaveLength(5);
         expect(headerFilterInput(element, 'lastname').value).toEqual('');
@@ -99,7 +98,7 @@ describe('filter editor - a single condition at the root', () => {
         expect(editorConditions()).toHaveLength(1);
         expect(editorConditions()[0].textContent).toContain('Age');
 
-        menuItem('Filter Only').click();
+        menuItem('Apply').click();
 
         expect(datasource.getFilter()).toEqual(and(where('age', 'GREATER_THAN', 15)));
         expect(datasource.getDataRows()).toHaveLength(4);
@@ -115,7 +114,7 @@ describe('filter editor - drafts', () => {
         clickIcon('Add a condition to this group');
         clickIcon('Add a sub group inside this group');
         expect(editorConditions()).toHaveLength(2);
-        menuItem('Filter Only').click();
+        menuItem('Apply').click();
 
         // the draft is gone, the empty sub group is kept (the filter ignores it)
         expect(datasource.getFilter()).toEqual(and(where('age', 'GREATER_THAN', 15), and()));
@@ -134,7 +133,7 @@ describe('filter editor - drafts', () => {
         expect(
             document.querySelector('.filter-editor-content [data-tooltip="Pick which column to compare against"]')
         ).not.toBeNull();
-        menuItem('Filter Only').click();
+        menuItem('Apply').click();
 
         expect(datasource.getFilter()).toEqual(and(where('age', 'GREATER_THAN', 15)));
     });
@@ -151,7 +150,7 @@ describe('filter editor - drafts', () => {
             '.filter-editor-content [data-tooltip="Pick which column to compare against"]'
         ) as HTMLElement;
         expect(picker.textContent?.trim()).toEqual('Lastname');
-        menuItem('Filter Only').click();
+        menuItem('Apply').click();
 
         expect(datasource.getFilter()).toEqual(and({ field: 'firstname', operator: 'EQUAL', valueField: 'lastname' }));
         expect(datasource.getDataRows()).toHaveLength(1);

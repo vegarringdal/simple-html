@@ -1626,17 +1626,129 @@ in the console. All passed. Found and fixed:
   leaves its last filter on the lookup datasource until the next open clears it; the value list, group
   rows and the filter text show values, not labels
 
+### The filter menu's value list and the filter editor redone (user request)
+
+* the user, with two dark screenshots: "this menu and filter editor needs some improvements". Before /
+  after screenshots, light and dark, 2x: `.claude/browser-checks/shots/filter-ui/` (`before-*`, `after-*`)
+* **the value list** (contextmenuFilter.ts `valueListBlock`, grid.css `.simple-html-grid-value-*`): no
+  "Search:" header; a framed search box (placeholder "Search values", text from the left, full width);
+  a quiet line "10 values" (it counted the values, the text said rows; `filter.values.rowsFound.one`
+  for one), the cut-off warning in its place; the list in a framed box: "Select all" its header with a
+  line under it, a tri-state checkbox (`.indeterminate`: the browser exposes it as mixed, checked in
+  Chrome's accessibility tree - no aria-checked, ARIA in HTML forbids it on a native checkbox), each
+  value a `<label>` around its checkbox (the row is the click, the label the name), the value with an
+  ellipsis and its whole text as a tooltip when cut off, its count right-aligned and quiet (70% of the
+  text colour, 4.5:1), "Blank" in italics; the values scroll in a box of 242px, the menu 220-320px
+  wide; Cancel and Apply (`<button>`s, Apply filled). The blue "Select all" in the screenshot was
+  the hover, not a state; it is lit only under the pointer or the keyboard now, as a menu item
+* "Select all" was its own flag, set to checked when the menu opened - also when the column had values
+  filtered away. It is worked out from the checked values now: checked / mixed / unchecked, a click
+  on mixed or unchecked checks all, on checked unchecks all; disabled when the search finds nothing
+* keyboard: Tab from the menu's items into the search box, the checkboxes, Cancel, Apply (native
+  buttons: Enter and Space are the browser's); ArrowDown / ArrowUp between the search box and the
+  checkboxes; Enter in the search box or on a checkbox applies (not while composing). The menu
+  opened from the keyboard keeps the focus on its first item (the APG menu pattern, as the other
+  menus): one Tab gets to the search box
+* the menus' dashed separators were dots in the middle (`width: 0`, auto side margins in a flex
+  column): lines across the menu now, every menu
+* **the filter editor** (renderFilterEditor.ts, grid.css `.filter-editor-*`): the nested groups ran
+  past the dialog's right edge (full width plus their indent); now a group is a bracket - a line down
+  its left, its body indented, `min-width: 0` all the way down - nothing outside the dialog at 650px,
+  at 480, at its smallest (360) and with 7 levels (rects compared in Chromium)
+* a condition is one row: [Field ▾] [Operator ▾] [value] [⇄] [trash]; the pickers are `<button>`s
+  framed as selects with a chevron, the placeholder quiet ("Field", "Operator", "Column"), named for a
+  screen reader `Field: Country` (`filterEditor.label.*`); the value takes the room left, IN / NOT_IN a
+  textarea, IS_BLANK / IS_NOT_BLANK no input (they take no value; the model keeps what it had); the
+  row wraps when narrow (value to the next line, then the operator)
+* a group's header: AND / OR as two buttons (`aria-pressed`, the one in use filled), "+ Condition",
+  "+ Group" (new ids `filterEditor.addCondition`, `filterEditor.addSubGroup`), then wrap (brackets
+  icon) and delete as icon buttons named by their tooltips; the icons are new square-cap svgs. The
+  empty root says "No conditions: every row is shown" (`filterEditor.empty`)
+* the dialog is as high as what is in it (`height: auto`, max the window, the groups scroll), kept in
+  the window when it grows (moved up); min 360 x 200 (was 460 x 240, more than a phone). Footer:
+  Cancel, Apply, Apply & close (primary), in the order shown - the Tab order (it was row-reverse)
+* the field and operator pickers are menus of the grid now (`gridInterface.openMenu` -> showMenu):
+  the keyboard of the menus (arrows, letters, Enter), the picked one with a ✓, the focus back on the
+  picker; the field picker has a sticky search box (hides the fields with `hidden`; showMenu's
+  `menuItems` passes hidden items by), opened from the keyboard the focus is in it, ArrowDown to the
+  fields, Enter picks the first shown; the fields by their labels. Its search no longer stays from
+  the last time (a module variable shared by every grid)
+* the focus: Chrome 131 gives a modal dialog's focus to its first button, not to the dialog with
+  `autofocus` (the scroll area had it before, it was focusable): renderFilterEditor focuses the dialog
+  after showModal(). A deleted condition's focused button gone: the focus to the dialog, not the body
+* the dialog is named by its title (`aria-labelledby`); the ✕ is a `<button>`
+* texts (English, the Norwegian sample with them): `filter.values.search` Search: -> Search values (the
+  box's name now), `searchPlaceholder` type to search -> Search values, `availableOnly` Filter Available
+  -> Only values in filtered rows, `rowsFound` {count} rows found -> {count} values, `truncated` Showing
+  only first {max} ! -> Only the first {max} values are shown, `selectAll` Select All -> Select all,
+  `run` Run Search -> Apply; `filterEditor.operatorAnd/Or.tooltip` without "Click for OR/AND",
+  `label.field/operator/value` Query Field: / Operator: / Filter value: -> Field / Operator / Value,
+  `pickAttribute/pickOperator/pickValueAttribute` Click me to select ... -> Field / Operator / Column,
+  `filterAndClose` Filter & Close -> Apply & close, `filterOnly` Filter Only -> Apply, `closeButton`
+  Close -> Cancel, `fieldMenu.search` search -> Search fields. New: `filter.values.rowsFound.one`,
+  `filter.values.cancel`, `filterEditor.addCondition`, `filterEditor.addSubGroup`, `filterEditor.empty`
+* variables: `--simple-html-grid-accent-color` / `-accent-font-color` (Apply, the AND/OR in use, the
+  value list's checkboxes; 4.5:1 text, 3:1 to the menus) and `--simple-html-grid-control-border-color`
+  (frames of the search boxes, pickers, inputs, buttons: 3:1, WCAG 1.4.11). guides/13-theming.md
+* tests: filterEditor.test.ts +25 (one row, names, placeholders, IN / blank / column, icon names,
+  delete and the focus, AND/OR pressed, the header, + Group in the bracket, wrap, the hint, the Tab
+  order, both pickers from the keyboard and the mouse, kept in the window), filterContextMenu.test.ts
+  +16 (what it shows, counts, cut off, tooltip, the option, tri-state, Cancel, Enter, arrows); the
+  existing ones moved to the new structure and texts (gridMenus, filterEditorApply, fieldsInGrid,
+  texts: `notes` gives a list of one value, "clear all" the hint). Browser:
+  `.claude/browser-checks/scripts/filter-ui-check.js` 111/111 (117 with the Filter submenu below),
+  `filter-ui-shots.js` for the screenshots;
+  on the merge with v6_maybe (657e5bc: the Undo / Redo submenu, Find, lookups) also
+  menus-regression-check.js 25/25, submenu-check.js 38/38, lookup-check.js 55/55, find-check.js 41/41
+* the menus' known list above: the filter editor's pickers work from the keyboard now
+* not done: the checkboxes are the browser's (`accent-color`): Chrome draws them with slightly rounded
+  corners - square ones would need checkboxes drawn by the grid; a new condition does not take the
+  focus (it stays on "+ Condition"); the picker buttons have no `aria-expanded`
+
+### The filter menu's entries in a submenu Filter (user request)
+
+* the user, with a screenshot of the header filter menu: "filter can be own section, section, then
+  operator/clear, advanced goes under it" - as the row menu's Undo / Redo: a submenu. The filter menu
+  is Filter ›, then the value list (the main tool, in the menu). In Filter ›: Operator ›, Blank ›,
+  Clear Filter, Clear All Filters, a line, Advanced Filter…
+* the submenu is `filter.filter` (the old section id, removed with the submenus, back with a meaning),
+  text "Filter" (Norwegian "Filter"). Every entry kept its id: `filter.operator` is in `filter.filter`
+  without its start - the ids stay the same between versions; a hook hiding `filter.filter` hides the
+  operators too. The line between clear and blank (`filter.filter.blankSeparator`) is gone, the one
+  over Advanced Filter… (`filter.filter.advancedSeparator`) stays
+* a number, date or boolean column has no value list: its filter menu is Filter › alone
+* keyboard: Shift+F10 on a header filter focuses Filter ›, ArrowRight goes in (Operator ›), again into
+  the operators; Tab from Filter › goes on into the value list as before
+* MENU_IDS.filter in tree order, the trees and id tables in gridMenus.ts and guides/10-menus.md, the
+  texts guide, guides/06-filtering.md and the operator sample's text
+* tests: gridMenus.test.ts (the top level, what is in Filter › and the ✓ a level deeper, the ids of a
+  submenu, a hook hiding `filter.filter`, Shift+F10 / ArrowRight / Esc / Tab); the tests that click
+  entries in it open the submenus on the way (menuEntry). Browser: filter-ui-check.js (Shift+F10,
+  ArrowRight twice, ArrowLeft back, Tab into the value list; screenshot after-filter-submenu-open-*),
+  menus-regression-check.js and submenu-check.js open Filter › first now (copies of the scripts before:
+  `*.before-filter-submenu`). submenu-check's bottom edge case runs in a window 850 high: the Filter
+  submenu is short, at 900 it fits under its item and is not moved up; it checks the operator submenu
+  in it too. Counts: vitest 2455, filter-ui-check 117/117, menus-regression-check 25/25,
+  submenu-check 40/40, lookup-check 55/55, find-check 41/41
+
+### The flaky date picker test (a candidate)
+
+* `datePickerCell.test.ts` "a click in the picker not to close it, a click outside to close it" failed
+  about once in ten full runs on a loaded machine. The cell opens its picker in a timer after the click
+  (renderRowCell), and opening sets the timer that ends `menuJustOpened` (showMenu.ts) - a click outside
+  before it is taken for the click that opened the menu. The test's fixed `sleep(20)` could run before
+  that second timer when the first ran late. `openPicker()` now waits for the picker (`vi.waitFor`), then
+  one task more: a timer set after the reset timer runs after it. Same 0ms delay, insertion order
+
 ## Considered, not done
 
 ## Candidates / not started
 
 * **live-check.js races the live sample's timer** under load (2 of 19 failed once, passed on reruns):
   wait for the timer's tick instead of a fixed delay.
-* **A flaky test under load**: one full run in ten or so fails one test while other test runs or
-  builds load the machine (agents saw `datePickerCell.test.ts`); it passes on rerun. Find it and make it
-  not depend on timing.
-* **Real-browser checks in the repo**: the Chromium checks (menus/dialog/drag, the accessibility
-  tree, undo) live in a scratch folder that a restart can wipe. Moving them to `scripts/browser/` with
+* **Real-browser checks in the repo**: the Chromium checks live in `.claude/browser-checks/` (git-excluded,
+  local only) since a reboot wiped the scratch folder with the first ones (check.js, undo, a11y, live,
+  range, aggregate ... are gone; menus, fill, footer summary, find, lookups and the filter UI are there). Moving them to `scripts/browser/` with
   playwright as a dev dependency would make them a CI job. Chromium download hangs on this dev machine.
 * **Undo**: the menu hints say Ctrl+Z / Ctrl+Y also on a Mac; after an undo the focus stays in the
   current cell rather than moving to the changed one.

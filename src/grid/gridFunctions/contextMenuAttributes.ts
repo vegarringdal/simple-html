@@ -1,69 +1,78 @@
-import { html, render } from 'lit-html';
-import { live } from 'lit-html/directives/live.js';
 import type { Grid } from '../grid';
-import { createElement } from './createElement';
+import type { MenuEntry } from '../gridMenus';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
-import { openMenuElement, placeMenu, placeUnderCell } from './showMenu';
-
-// might want to add this as part of context, so I can share it?
-let currentColumnSearchvalue = '';
+import { focusMenu } from './showMenu';
 
 /**
- * the field picker of the filter editor, the grid's menu (one at a time, closed as the others)
- * @param cell
- * @param callback
+ * The field picker of the filter editor: a menu under the picker's button with a search box and every
+ * field of the grid's columns, by their labels, the one picked with a ✓. A menu of the grid (showMenu,
+ * as `openMenu()` opens it): one at a time, closed as the others. It is put in the editor's dialog: a
+ * menu outside a modal dialog can not be used, see popoverParent.
+ *
+ * The search box hides the fields whose label (or field name) does not have its text. Opened from the
+ * keyboard the focus is in it: type, then ArrowDown to the fields, or Enter for the first one shown.
+ * The fields are items of the menu: the arrows, a letter, Enter as in the other menus
+ * @param button the picker, the menu opens under it
+ * @param current the field picked, undefined (or '') for none
+ * @param callback gets the picked field, after the menu has closed
  */
-export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLElement, callback: (attribute: string) => void) {
-    const contextMenu = createElement('div', 'simple-html-grid');
-    contextMenu.classList.add('simple-html-grid-reset');
+export function contextMenuAttributes(
+    ctx: Grid,
+    button: HTMLElement,
+    current: string | undefined,
+    callback: (attribute: string) => void
+) {
+    const fields = Object.keys(ctx.gridInterface.__getGridConfig().columns)
+        .map((field) => ({ field, label: getColumnLabel(ctx, field) }))
+        .sort((a, b) => a.label.localeCompare(b.label));
 
-    // the search renders the list again, the menu stays where it opened
-    const reRender = () => {
-        const attributes = Object.keys(ctx.gridInterface.__getGridConfig().columns) || [];
+    const search = document.createElement('input');
+    search.type = 'text';
+    search.className = 'simple-html-grid-menu-search';
+    search.placeholder = gridText(ctx, 'filterEditor.fieldMenu.search');
+    search.setAttribute('aria-label', gridText(ctx, 'filterEditor.fieldMenu.search'));
 
-        const searchInput = () => {
-            return html`
-                <input
-                    class="simple-html-grid-menu-item-input"
-                    .value=${live(currentColumnSearchvalue)}
-                    placeholder=${gridText(ctx, 'filterEditor.fieldMenu.search')}
-                    @input=${(e: any) => {
-                        currentColumnSearchvalue = e.target.value;
-                        reRender();
-                    }}
-                />
-            `;
-        };
+    /** the items of the fields, in the menu the search box is in */
+    const items = () =>
+        Array.from(search.parentElement?.querySelectorAll<HTMLElement>('[data-menu-id^="filterEditor.field."]') ?? []);
 
-        render(
-            html`<div class="simple-html-grid-menu ">
-                <div class="simple-html-grid-menu-section">${gridText(ctx, 'filterEditor.fieldMenu')}</div>
-                <hr class="hr-solid" />
-                ${searchInput()}
-                <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                    ${attributes
-                        .filter((e) => e.toLowerCase().includes(currentColumnSearchvalue.toLowerCase()))
-                        .sort()
-                        .map((attribute) => {
-                            return html`<div
-                                class="simple-html-grid-menu-item"
-                                @click=${() => {
-                                    callback(attribute);
-                                }}
-                            >
-                                ${getColumnLabel(ctx, attribute)}
-                            </div>`;
-                        })}
-                </div>
-            </div>`,
-            contextMenu
-        );
-    };
+    search.addEventListener('input', () => {
+        const text = search.value.toLowerCase();
+        // the items are in the order of `fields`
+        for (const [index, item] of items().entries()) {
+            const { field, label } = fields[index];
+            item.hidden = !(label.toLowerCase().includes(text) || field.toLowerCase().includes(text));
+        }
+    });
+    search.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowDown' && ctx.menuTree) {
+            event.preventDefault();
+            focusMenu(ctx.menuTree, false);
+        }
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            items()
+                .find((item) => !item.hidden)
+                ?.click();
+        }
+    });
 
-    reRender();
+    const entries: MenuEntry[] = [
+        { type: 'section', id: 'filterEditor.fieldMenu', label: gridText(ctx, 'filterEditor.fieldMenu') },
+        { type: 'block', id: 'filterEditor.fieldMenu.search', element: search },
+        ...fields.map(
+            ({ field, label }): MenuEntry => ({
+                id: `filterEditor.field.${field}`,
+                label,
+                selected: () => field === current,
+                action: () => callback(field)
+            })
+        )
+    ];
 
-    // in the editor's dialog: a menu outside a modal dialog can not be clicked, see popoverParent
-    openMenuElement(ctx, contextMenu, cell);
-    placeMenu(contextMenu, placeUnderCell(event, cell));
+    ctx.gridInterface.openMenu(button, entries);
+    if (ctx.keyboardUsed) {
+        search.focus();
+    }
 }

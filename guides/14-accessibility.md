@@ -172,10 +172,10 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | a menu | ArrowDown / ArrowUp, Home / End, a letter | the next / previous / first / last item, the next one starting with the letter. A menu opened with the mouse leaves the focus on the cell: ArrowDown / ArrowUp get into it |
 | a menu | Enter, Space | uses the item: the menu closes, the focus goes back where it was. On an item with a submenu (`›`): opens it, as ArrowRight does |
 | a submenu | ArrowLeft, Esc | closes it, the focus back on its item |
-| a menu | Esc, Tab | closes it, the focus goes back where it was. Tab in the filter menu goes on into its value list: the search field, the checkboxes, Run Search |
+| a menu | Esc, Tab | closes it, the focus goes back where it was. Tab in the filter menu goes on into its value list: the search field, the checkboxes, Cancel, Apply. ArrowDown / ArrowUp move between the search field and the checkboxes, Enter applies |
 | the editor of a multiline cell | Esc / Ctrl+Enter / Tab | see [below](#the-editor-of-a-multiline-cell) |
 | the list of a lookup column | the arrows, Enter, Tab, Esc | see [below](#the-list-of-a-lookup-column) |
-| the filter editor | Esc | closes it without filtering (a modal dialog) |
+| the filter editor | Tab, Enter / Space, Esc | every control is a button or an input, in the order shown: the `✕`, each group's AND / OR, + Condition, + Group, wrap and delete, each condition's field, operator, value, switch and delete, then Cancel, Apply, Apply & close. A picker opens its menu, see [Filtering](06-filtering.md#the-filter-editor). Esc closes the menu open in it, else the editor without filtering (a modal dialog) |
 | the find bar | Enter, F3, Esc | the next match, closes it: see [below](#the-find-bar) |
 
 ### The list of a lookup column
@@ -315,8 +315,10 @@ setTexts({
 - **The menus**: the right click menus and `openMenu()` follow the WAI-ARIA menu pattern (roles,
   `aria-checked`, `aria-expanded`, the keys above), checked in Chrome's accessibility tree but not with
   a screen reader yet. A menu has no name of its own (`aria-label`), a submenu is labelled by its item.
-  The field and operator pickers of the filter editor and the column chooser are for the mouse, and
-  so is the date picker of a date cell or filter - a date can be typed.
+  The field and operator pickers of the filter editor are menus of the grid too: buttons
+  (`aria-haspopup="menu"`, named `Field: Country`) that open them, the keys above in them. The
+  column chooser is for the mouse, and so is the date picker of a date cell or filter - a date can be
+  typed.
 - **The list of a lookup column**: the select is checked in Chrome's accessibility tree, not with a
   screen reader yet. The cell's input is a textbox with `aria-haspopup`, not a combobox: it is not
   `aria-expanded` while its list is open - the focus is in the list then. The select shows at most 500

@@ -136,7 +136,7 @@ export function dropDownFilterData(ctx: Grid, attribute: string, availableOnly: 
         dataFilterSet = new Set(tempArray.filter((value) => checkedValues.has(value)));
     }
 
-    // "Filter Available" only changes the list when other columns hide rows
+    // "Only values in filtered rows" only changes the list when other columns hide rows
     const enableAvailableOnlyOption = availableRows.length !== allData.length;
 
     return {
