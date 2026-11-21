@@ -1421,7 +1421,7 @@ in the console. All passed. Found and fixed:
   the 15 in the code; grid.css has it too (said in both)
 * new `--simple-html-grid-group-line-color` instead of reusing the unused `--simple-html-grid-grouping-border`:
   the old dark sample (grid01) sets that one to the row background's dark, the lines would vanish there
-* tests: groupRows.test.ts (the box's sign collapsed/expanded, the lines' elements, widths and places by
+* tests: groupRowLook.test.ts (the box's sign collapsed/expanded, the lines' elements, widths and places by
   level, after a collapse, the data rows' column per level, with aggregates the lines in the full height
   container). Browser: group-look.js / group-look2.js screenshots at 3x, light and dark: two levels, a
   group's end, a collapsed group, a row with aggregates

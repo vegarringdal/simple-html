@@ -1,18 +1,49 @@
 // @vitest-environment happy-dom
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GridConfig } from '../gridConfig';
+import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import type { GridElement } from '../gridElement';
-import { GROUP_LEVEL_WIDTH } from '../gridFunctions/getGroupingWidth';
-import { mountGrid, shownRowElements, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import type { GridEvents } from '../gridEvents';
+import { mountGrid, selectorRowOf, simpleConfig, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { headerFilterInput, menuItemsExact, sleep } from './interactionTestHelpers';
 
 /**
- * The grouping columns look like a tree (renderRowGroup.ts, grid.css): a column per level of grouping,
- * the +/- of a group row a box in the column of its level, and the line of a group from under its box
- * down through its rows - in a group row the lines of the groups it is in, and in a data row the lines
- * of all the levels. grid.css draws the lines; here: which elements are there, their sizes and places.
- * The real browser look is checked with screenshots, see IMPORVEMENT.md
+ * Group rows in the grid: the row menu, the row selector and the callbacks never treat a group
+ * row as data. Where the grid does hand one out (the header focus event, the current entity),
+ * the types say so - these tests pin that down.
  */
+
+const data = () => [
+    { firstname: 'a', lastname: 'group1', age: 1 },
+    { firstname: 'b', lastname: 'group1', age: 2 },
+    { firstname: 'c', lastname: 'group2', age: 3 }
+];
+
+/**
+ * a grid grouped on lastname, all expanded. Displayed: [G:group1, a, b, G:group2, c]
+ */
+async function mountGrouped() {
+    const mounted = await mountGrid({ ...simpleConfig(), readonly: false }, data());
+    mounted.datasource.group([{ attribute: 'lastname', title: 'lastname' }]);
+    mounted.datasource.expandGroup();
+    return mounted;
+}
+
+/**
+ * the input of a body cell, by its position class - the dom order of the recycled rows means nothing
+ */
+function cellInput(element: GridElement, row: number, column: number) {
+    return element.querySelector(`.cellpos-middle-pinned-${row}-${column}-0`) as HTMLInputElement;
+}
+
+/**
+ * the row selector cell (the row number on the left) of a displayed row
+ */
+function selectorCell(element: GridElement, row: number) {
+    return selectorRowOf(element, row)?.firstElementChild as HTMLElement;
+}
+
+const groupRowsOf = (rows: (Entity | GroupRow)[]) => rows.filter(isGroupRow);
 
 beforeAll(() => {
     stubCanvas();
@@ -27,155 +58,125 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-// two levels: firstname a (lastname x, y) and b (lastname x)
-const data = () => [
-    { firstname: 'a', lastname: 'x', age: 10 },
-    { firstname: 'a', lastname: 'y', age: 20 },
-    { firstname: 'b', lastname: 'x', age: 30 }
-];
+describe('group rows - row menu', () => {
+    it('expect clear to only clear the selected data rows', async () => {
+        const { element, datasource } = await mountGrouped();
+        datasource.selectAll();
 
-const grouping = [
-    { attribute: 'firstname', title: 'First' },
-    { attribute: 'lastname', title: 'Last' }
-];
+        cellInput(element, 1, 2).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
+        // paste and clear share the label, clear is the second one
+        menuItemsExact('Clear cell (selected rows)')[0].click();
 
-type GroupRowLook = {
-    text: string;
-    expanded: string | null;
-    /** the path of the sign in the box: a minus, or a minus and an upright (a plus) */
-    sign: string | null;
-    /** the width of the lines of the groups it is in, null when it is in none */
-    levels: string | null;
-    /** the line of the group under its box: where, null when collapsed */
-    line: { left: string; top: string } | null;
-};
-
-/**
- * not hidden: a data row hides the group cell of its row element, what a group row showed in it before
- * is left there (renderRowGroup)
- */
-function shown(element: HTMLElement) {
-    for (let e: HTMLElement | null = element; e; e = e.parentElement) {
-        if (e.style.display === 'none') {
-            return false;
-        }
-    }
-    return true;
-}
-
-/** the group rows on screen, in their order: how their grouping columns look */
-function groupRows(element: GridElement): GroupRowLook[] {
-    return shownRowElements(element, 'group')
-        .map((row) => row.querySelector<HTMLElement>('.simple-html-grid-group-toggle'))
-        .filter((toggle): toggle is HTMLElement => !!toggle && shown(toggle))
-        .map((toggle) => {
-            // the cell's content: the gridcell, or the container of a row with aggregates
-            const cell = (toggle.closest('.simple-html-grid-group-aggregates') ??
-                toggle.closest('.simple-html-label-group')) as HTMLElement;
-            const levels = cell.querySelector<HTMLElement>('.simple-html-grid-group-levels');
-            const line = cell.querySelector<HTMLElement>('.simple-html-grid-group-line');
-            return {
-                text: cell.querySelector('.simple-html-grid-group-text')?.textContent?.trim() ?? '',
-                expanded: toggle.getAttribute('aria-expanded'),
-                sign: toggle.querySelector('.simple-html-grid-group-box-sign')?.getAttribute('d') ?? null,
-                levels: levels ? levels.style.width : null,
-                line: line ? { left: line.style.left, top: line.style.top } : null
-            };
-        });
-}
-
-const MINUS = 'M3 5.5h5';
-const PLUS = 'M3 5.5h5M5.5 3v5';
-
-describe('group rows - the +/- box and the lines of the levels', () => {
-    it('expect a plus in the box of a collapsed group, no line under it', async () => {
-        const { element, datasource } = await mountGrid(simpleConfig(), data());
-        datasource.group(grouping);
-
-        expect(groupRows(element)).toEqual([
-            { text: 'First: a (2)', expanded: 'false', sign: PLUS, levels: null, line: null },
-            { text: 'First: b (1)', expanded: 'false', sign: PLUS, levels: null, line: null }
-        ]);
+        expect(datasource.getAllData().map((row) => row.age)).toEqual([null, null, null]);
+        expect(groupRowsOf(datasource.getRows()).some((row) => 'age' in row)).toBe(false);
     });
 
-    it('expect a minus and the line from the middle of the row down when expanded, a sub group in the next column', async () => {
-        const { element, datasource, gridInterface } = await mountGrid(simpleConfig(), data());
-        datasource.group(grouping);
-        datasource.expandGroup();
-        // the line starts in the middle of the name line, the box is over its top
-        const top = `${Math.floor(gridInterface.__getGridConfig().cellHeight / 2)}px`;
+    it('expect paste to only paste into the selected data rows', async () => {
+        const { element, datasource, gridInterface } = await mountGrouped();
+        vi.spyOn(navigator.clipboard, 'readText').mockResolvedValue('9');
+        const pasted: GridEvents['paste'][] = [];
+        gridInterface.on('paste', (event) => {
+            pasted.push(event);
+        });
+        datasource.selectAll();
 
-        const rows = groupRows(element);
-        expect(rows.map((row) => row.text)).toEqual([
-            'First: a (2)',
-            'Last: x (1)',
-            'Last: y (1)',
-            'First: b (1)',
-            'Last: x (1)'
-        ]);
-        expect(rows[0]).toEqual({
-            text: 'First: a (2)',
-            expanded: 'true',
-            sign: MINUS,
-            levels: null,
-            line: { left: '0px', top }
+        cellInput(element, 1, 2).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
+        menuItemsExact('Paste cell (selected rows)')[0].click();
+        await sleep(0); // the clipboard is read async
+
+        expect(datasource.getAllData().map((row) => row.age)).toEqual([9, 9, 9]);
+        expect(groupRowsOf(datasource.getRows()).some((row) => 'age' in row)).toBe(false);
+        expect(pasted.map((event) => event.entity.firstname)).toEqual(['a', 'b', 'c']);
+    });
+});
+
+describe('group rows - row selector', () => {
+    it("expect clicking a group row's selector to select the data rows of the group", async () => {
+        const { element, datasource } = await mountGrouped();
+
+        selectorCell(element, 0).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(datasource.getSelectedRows().map((row) => row.firstname)).toEqual(['a', 'b']);
+        expect(isGroupRow(datasource.currentEntity)).toBe(false);
+    });
+});
+
+describe('group rows - callbacks and events', () => {
+    it('expect the isReadonly and cellClass hooks to only get data rows', async () => {
+        const seen: Entity[] = [];
+        const { datasource } = await mountGrid({ ...simpleConfig(), readonly: false }, data(), simpleFields(), {
+            isReadonly: (row) => {
+                seen.push(row);
+                return null;
+            },
+            cellClass: (row) => {
+                seen.push(row);
+                return null;
+            }
         });
-        // in group a: its line goes through, its own box and line one column further
-        expect(rows[1]).toEqual({
-            text: 'Last: x (1)',
-            expanded: 'true',
-            sign: MINUS,
-            levels: `${GROUP_LEVEL_WIDTH}px`,
-            line: { left: `${GROUP_LEVEL_WIDTH}px`, top }
-        });
+
+        datasource.group([{ attribute: 'lastname', title: 'lastname' }]);
+        datasource.expandGroup();
+
+        expect(seen.length).toBeGreaterThan(0);
+        expect(seen.some((row) => isGroupRow(row))).toBe(false);
     });
 
-    it('expect the box and the lines to follow a collapse', async () => {
-        const { element, datasource } = await mountGrid(simpleConfig(), data());
-        datasource.group(grouping);
-        datasource.expandGroup();
-        const sub = datasource.getRows().find((row: any) => row.__groupLvl === 1);
-        datasource.collapseGroup(sub.__groupID);
-
-        expect(groupRows(element)[1]).toEqual({
-            text: 'Last: x (1)',
-            expanded: 'false',
-            sign: PLUS,
-            levels: `${GROUP_LEVEL_WIDTH}px`,
-            line: null
+    it('expect cell-click to send the data row', async () => {
+        const { element, datasource, gridInterface } = await mountGrouped();
+        const received: GridEvents['cell-click'][] = [];
+        gridInterface.on('cell-click', (event) => {
+            received.push(event);
         });
+
+        cellInput(element, 1, 0).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        await sleep(0); // sent in a setTimeout
+
+        expect(received).toHaveLength(1);
+        expect(received[0].rowData).toBe(datasource.getRow(1));
+        expect(isGroupRow(received[0].rowData)).toBe(false);
     });
 
-    it('expect the grouping column of a data row as wide as the levels, so it has the line of each', async () => {
-        const { element, datasource } = await mountGrid(simpleConfig(), data());
-        const gutters = () =>
-            shownRowElements(element, 'pinned-left')
-                .map((row) => row.querySelector<HTMLElement>('.simple-html-grid-grouping-row'))
-                .filter((gutter): gutter is HTMLElement => !!gutter && gutter.style.display !== 'none')
-                .map((gutter) => gutter.style.width);
+    it('expect cell-header-focus to send the first displayed row: a group row when grouped', async () => {
+        const { element, datasource, gridInterface } = await mountGrouped();
+        const received: GridEvents['cell-header-focus'][] = [];
+        gridInterface.on('cell-header-focus', (event) => {
+            received.push(event);
+        });
 
-        datasource.group(grouping);
-        datasource.expandGroup();
-        expect(new Set(gutters())).toEqual(new Set([`${2 * GROUP_LEVEL_WIDTH}px`]));
+        headerFilterInput(element, 'firstname').dispatchEvent(new FocusEvent('focus'));
 
-        datasource.group([grouping[0]]);
-        datasource.expandGroup();
-        expect(new Set(gutters())).toEqual(new Set([`${GROUP_LEVEL_WIDTH}px`]));
+        expect(received).toHaveLength(1);
+        expect(received[0].rowData).toBe(datasource.getRow(0));
+        expect(isGroupRow(received[0].rowData)).toBe(true);
     });
 
-    it('expect the lines over the whole group row with aggregates, the box in the name line', async () => {
-        const config: GridConfig = { ...simpleConfig(), columns: { age: { aggregate: ['sum', 'avg'] } } };
-        const { element, datasource } = await mountGrid(config, data());
-        datasource.group(grouping);
-        datasource.expandGroup();
+    it('expect cell-header-focus to send undefined when no rows were displayed', async () => {
+        const { element, gridInterface } = await mountGrid(simpleConfig(), []);
+        const received: GridEvents['cell-header-focus'][] = [];
+        gridInterface.on('cell-header-focus', (event) => {
+            received.push(event);
+        });
 
-        const cell = shownRowElements(element, 'group')
-            .map((row) => row.querySelector<HTMLElement>('.simple-html-grid-group-aggregates'))
-            .filter(Boolean)[1] as HTMLElement;
-        // the lines are in the row's container, over its height; the box is in the name cell
-        expect(cell.querySelector(':scope > .simple-html-grid-group-levels')).not.toBeNull();
-        expect(cell.querySelector(':scope > .simple-html-grid-group-line')).not.toBeNull();
-        expect(cell.querySelector('.simple-html-grid-group-name .simple-html-grid-group-toggle')).not.toBeNull();
-        expect(cell.querySelector('.simple-html-grid-group-name .simple-html-grid-group-levels')).toBeNull();
+        headerFilterInput(element, 'firstname').dispatchEvent(new FocusEvent('focus'));
+
+        expect(received).toHaveLength(1);
+        expect(received[0].rowData).toBeUndefined();
+    });
+});
+
+describe('group rows - current entity', () => {
+    it('expect alt+up from the first data row to the header filter row to make the group row above current', async () => {
+        // why currentEntity is typed EntityUnion<T> | GroupRow | null: leaving the first data row
+        // for the header filter row makes row 0 current, and row 0 is a group row when grouped
+        const { element, datasource } = await mountGrouped();
+        datasource.setRowAsCurrentEntity(1);
+
+        cellInput(element, 1, 0).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', altKey: true, bubbles: true }));
+        await sleep(150); // the handler moves the focus in a setTimeout
+
+        expect((document.activeElement as HTMLElement).className).toContain('filter-cellpos-middle-pinned-0-0-0');
+        expect(datasource.currentEntity).toBe(datasource.getRow(0));
+        expect(isGroupRow(datasource.currentEntity)).toBe(true);
     });
 });
