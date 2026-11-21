@@ -133,6 +133,13 @@ export class DataContainer {
     private __events = new Emitter<ContainerEvents>();
 
     /**
+     * counts the values set, per field, see changed(): one up on every value set on a row, right away -
+     * not in the microtask of `rows-changed`. What is computed from the values of a field and kept is
+     * out of date once its count has moved, see __getChangeCount
+     */
+    private __changeCounts = new Map<string, number>();
+
+    /**
      * @param UniqueKeyAttribute the field that identifies a row, e.g. `'id'`. The selection follows it,
      * so it survives replacing the rows with fresh ones from a server. Left out, every row gets a
      * generated key (a negative number)
@@ -312,10 +319,24 @@ export class DataContainer {
     }
 
     /**
+     * @internal
+     * How many times a value of the field was set on a row so far, by anything (see changed()): goes
+     * up right away, before `rows-changed` is sent. A deletion mark, a server error or a conflict about
+     * a whole row change no value, they do not count. The datasource keeps the aggregates of a field
+     * while it stays the same, see Datasource.aggregate()
+     */
+    public __getChangeCount(field: string): number {
+        return this.__changeCounts.get(field) ?? 0;
+    }
+
+    /**
      * A row changed, for `rows-changed`: a field was set on it (`field`), or its deletion mark, its
      * server error or a conflict about the whole row changed (`null`). Collected for this run of code
      */
     private changed(row: Entity, field: string | null) {
+        if (field !== null) {
+            this.__changeCounts.set(field, (this.__changeCounts.get(field) ?? 0) + 1);
+        }
         let fields = this.__changed.get(row);
         if (!fields) {
             fields = new Set();

@@ -1,5 +1,6 @@
 import { Emitter, type EventHandler } from '../emitter';
 import { findText, getText } from '../texts';
+import { AGGREGATE_FUNCTIONS, type AggregateFunction, aggregateRows, groupDataRows, isAggregateFunction } from './aggregate';
 import { assertOptions } from './assertOptions';
 import type { Changes } from './changes';
 import { DataContainer } from './dataContainer';
@@ -222,6 +223,22 @@ export class Datasource<T = any> {
      * objects, for getField(). The validators are the container's, it validates the edits
      */
     private __fieldRules = new Map<string, ValidationRuleObject[]>();
+
+    /**
+     * the aggregates of the group rows asked so far, see aggregate() and keptAggregate(). A WeakMap: the
+     * group rows of an old grouping go away
+     */
+    private __groupAggregates = new WeakMap<GroupRow, KeptAggregates>();
+
+    /**
+     * the aggregates of the filtered rows asked so far (aggregate() without rows), see keptAggregate():
+     * while `__collectionFiltered` is the same list, of the same length
+     */
+    private __filteredAggregates: { rows: Entity[] | null; length: number; values: KeptAggregates } = {
+        rows: null,
+        length: 0,
+        values: new Map()
+    };
 
     /**
      * The current row: the one last clicked, selected or set with `setRowAsCurrentEntity()`. Use it
@@ -547,7 +564,7 @@ export class Datasource<T = any> {
      * `getChanges()` would not list) is left as it is.
      *
      * It is an edit like any other: validated, and one step of the undo history - {@link undo} brings
-     * the edited value back. The grid's row menu has it as "Revert cell" (`row.edit.revertCell`). The
+     * the edited value back. The grid's row menu has it as "Undo cell edit" (`row.edit.revertCell`). The
      * grid shows it on its own, as any value set on a row (the `rows-changed` event). A conflict of the
      * field goes with the edit, see {@link getConflicts}.
      *
@@ -579,7 +596,7 @@ export class Datasource<T = any> {
      * - The fields are validated as for an edit: an error of an edit goes away with it, an original
      *   value that breaks a rule shows its error.
      * - The displayed rows are not rebuilt, the rows stay where they are. The grid's row menu has it
-     *   as "Revert rows" (`row.edit.revertRows`, the selected rows). The grid shows it on its own, as
+     *   as "Undo row edits" (`row.edit.revertRow`, the row right clicked, and `row.edit.revertRows`, the selected rows). The grid shows it on its own, as
      *   any value set on a row (the `rows-changed` event).
      * - The conflicts of the rows go with their changes, see {@link getConflicts}.
      *
@@ -2110,6 +2127,87 @@ export class Datasource<T = any> {
     }
 
     /**
+     * Sums up a field over rows: its sum, average, smallest or largest number, or how many values it
+     * has - see {@link AggregateFunction}. Blank values are left out, `sum`, `avg`, `min` and `max`
+     * take numbers only. Nothing is rounded, format the result with the field's formatter
+     * (`getFormatter(field).format(value)`).
+     *
+     * - **No rows given**: the rows the filter lets through, `getDataRows()` - when grouped, the rows of
+     *   collapsed groups too. Rows marked for deletion count until they are saved, as they are rows
+     *   of the grid until then.
+     * - **A group row**: the data rows of the group, of its sub groups - collapsed ones too.
+     * - **A list of rows**: those rows, e.g. `getSelectedRows()`. Computed on each call.
+     *
+     * The value of the filtered rows and of a group row is kept until a value of the field changes (set
+     * on a row: an edit, `undo()`, `upsert()` ...) or other rows are filtered (`filter()`, `setData()`,
+     * rows added or removed). Asking again is cheap: the grid asks on every rebuild, and for every
+     * group row it renders. A sort changes no value; a filter, sort or `group()` makes new group rows.
+     *
+     * The grid shows these in its group rows and its totals row: a column's `aggregate` in the grid
+     * config, see the aggregates guide.
+     *
+     * @param field the field, the property on the row
+     * @param fn `'sum'`, `'avg'`, `'min'`, `'max'` or `'count'`
+     * @param rows the rows: left out the filtered rows, a group row, or a list of data rows
+     * @returns the number, `null` for the average, smallest or largest of no numbers
+     * @throws a `TypeError` when `fn` is no aggregate function
+     *
+     * @sample aggregates
+     * @example
+     * ```ts
+     * import { isGroupRow } from '@simple-html/grid';
+     *
+     * datasource.aggregate('balance', 'sum'); // 1234567.89, over the rows the filter lets through
+     * datasource.aggregate('age', 'avg'); // 38.5, or null when no row has an age
+     * datasource.aggregate('email', 'count'); // the rows with an email
+     *
+     * // per group, the rows of collapsed groups included
+     * datasource.group([{ attribute: 'country', title: 'Country' }]);
+     * for (const row of datasource.getRows()) {
+     *     if (isGroupRow(row)) {
+     *         console.log(row.__groupName, datasource.aggregate('balance', 'sum', row));
+     *     }
+     * }
+     *
+     * // the selected rows, formatted as the field shows its values
+     * const sum = datasource.aggregate('balance', 'sum', datasource.getSelectedRows());
+     * datasource.getFormatter('balance').format(sum);
+     * ```
+     */
+    public aggregate(field: string, fn: AggregateFunction, rows?: Entity[] | GroupRow): number | null {
+        // plain js and JSON can give anything
+        if (!isAggregateFunction(fn)) {
+            throw new TypeError(
+                `Datasource.aggregate: '${String(fn)}' is no aggregate function, use ${AGGREGATE_FUNCTIONS.map((name) => `'${name}'`).join(', ')}`
+            );
+        }
+        if (Array.isArray(rows)) {
+            return aggregateRows(rows, field, fn);
+        }
+        const changeCount = this.__dataContainer.__getChangeCount(field);
+
+        if (rows === undefined) {
+            // the filtered rows: kept while they are the same list. Every change of which rows they are
+            // makes a new list (filter(), setData(), upsert(), removeData() ...) or adds to it
+            // (addNewEmpty() pushes: its length). A sort reorders it in place, the values stay
+            const filtered = this.__collectionFiltered;
+            if (this.__filteredAggregates.rows !== filtered || this.__filteredAggregates.length !== filtered.length) {
+                this.__filteredAggregates = { rows: filtered, length: filtered.length, values: new Map() };
+            }
+            return keptAggregate(this.__filteredAggregates.values, field, fn, changeCount, () => filtered);
+        }
+
+        // a group row: a group row is made new when the rows are grouped again, so it never has to be
+        // told that rows came or went
+        let kept = this.__groupAggregates.get(rows);
+        if (!kept) {
+            kept = new Map();
+            this.__groupAggregates.set(rows, kept);
+        }
+        return keptAggregate(kept, field, fn, changeCount, () => groupDataRows(rows));
+    }
+
+    /**
      * Selects a row and makes it the current entity. A group row can not be selected, the first
      * data row after it is.
      *
@@ -2703,6 +2801,34 @@ export class Datasource<T = any> {
         }
         return !this.__isIgnored(expression);
     }
+}
+
+/**
+ * aggregates kept, by `fn:field`: the value, and the change count of the field it was computed at
+ */
+type KeptAggregates = Map<string, { changeCount: number; value: number | null }>;
+
+/**
+ * An aggregate kept in `kept`: computed over the rows when it is not kept, or the field changed since
+ * (its change count moved, see DataContainer.__getChangeCount). An edit of another field keeps it
+ * @param changeCount the change count of the field now
+ * @param rows gives the rows, called only when the value is computed
+ */
+function keptAggregate(
+    kept: KeptAggregates,
+    field: string,
+    fn: AggregateFunction,
+    changeCount: number,
+    rows: () => readonly Entity[]
+): number | null {
+    const key = `${fn}:${field}`;
+    const entry = kept.get(key);
+    if (entry && entry.changeCount === changeCount) {
+        return entry.value;
+    }
+    const value = aggregateRows(rows(), field, fn);
+    kept.set(key, { changeCount, value });
+    return value;
 }
 
 /**

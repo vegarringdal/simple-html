@@ -139,6 +139,12 @@ The "shown as" below is the English text.
 
 | id | shown as | shown when |
 | --- | --- | --- |
+| `row.edit` | Edit: - first in the menu | the grid is editable |
+| `row.edit.undo` | Undo last change (Ctrl+Z): `datasource.undo()`, see [Undo and redo](05-editing.md#undo-and-redo). Greyed out when there is nothing to undo | the grid is editable |
+| `row.edit.redo` | Redo (Ctrl+Y): `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
+| `row.edit.revertCell` | Undo cell edit: the cell's original value, see [Reverting a cell or a row](05-editing.md#reverting-a-cell-or-a-row). Greyed out when the cell is not edited | the grid is editable |
+| `row.edit.revertRow` | Undo row edits: the row right clicked back to its original values, its deletion mark taken off - no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
+| `row.edit.revertRows` | Undo row edits (selected rows): the selected rows back, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |
 | `row.copy` | Copy: | |
 | `row.copy.cell` | Cell Value | |
 | `row.copy.column` | Column (selected rows) | |
@@ -160,17 +166,12 @@ The "shown as" below is the English text.
 | `row.delete` | Delete: | the grid is editable |
 | `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows). Greyed out when no selected row is left to mark | the grid is editable |
 | `row.delete.undo` | Undo (selected rows): takes the mark off | the grid is editable, and a selected row is marked for deletion |
-| `row.edit` | Edit: | the grid is editable |
-| `row.edit.undo` | Undo (Ctrl+Z): `datasource.undo()`, see [Undo and redo](05-editing.md#undo-and-redo). Greyed out when there is nothing to undo | the grid is editable |
-| `row.edit.redo` | Redo (Ctrl+Y): `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
-| `row.edit.revertCell` | Revert cell: the cell's original value, see [Reverting a cell or a row](05-editing.md#reverting-a-cell-or-a-row). Greyed out when the cell is not edited | the grid is editable |
-| `row.edit.revertRows` | Revert rows (selected rows): their original values, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |
 | `row.summary` | Summary: | a number field |
 | `row.summary.count` | Count: the number of selected rows. A click copies the value | a number field |
-| `row.summary.sum` | Sum: of the selected rows | a number field |
-| `row.summary.max` | Max: | a number field |
-| `row.summary.min` | Min: | a number field |
-| `row.summary.avg` | Avg: | a number field |
+| `row.summary.sum` | Sum: of the selected rows' numbers, `datasource.aggregate(field, 'sum', rows)`. With two decimals at most, as max, min and avg | a number field |
+| `row.summary.max` | Max: the largest number | a number field |
+| `row.summary.min` | Min: the smallest number, 0 included | a number field |
+| `row.summary.avg` | Avg: the average of the numbers, a blank is not counted | a number field |
 | `row.export` | Export: | |
 | `row.export.csv` | CSV, all rows: `gridInterface.downloadCsv()`, see [Export](15-export.md) | |
 | `row.export.csvSelected` | CSV, selected rows: `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
@@ -259,8 +260,10 @@ gridInterface.on('cell-click', (data) => {
 - a `MenuPosition`, `{ x, y }` in px from the window's left and top edges: its top left corner there
 - an element: under the element, lined up with its left edge
 
-The menu is kept in the window: it opens above when there is no room below, and moves left when it
-sticks out on the right.
+The menu is kept in the window, 4px from its edges - every menu of the grid, the long row menu too:
+it opens below the point, above it when there is no room below, and next to it (on its right, or on
+its left when there is no room on the right) when there is room neither below nor above. A menu taller
+than the window gets the window's height and scrolls.
 
 - There is one menu at a time: opening one closes the one before, the grid's own too.
 - The grid closes it as its own menus: on a click outside it, on Esc, when another menu opens, on

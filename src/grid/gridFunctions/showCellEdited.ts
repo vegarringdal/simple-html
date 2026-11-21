@@ -33,7 +33,7 @@ function isCellEdited(entity: Entity | null, attribute: string | null): boolean 
  * is not rendered again. Call it after the template is rendered: lit removes what is after its
  * content when the cell gets another template (a checkbox after text), this puts the marker back.
  * Hidden from a screen reader and no stop of Tab: the row number says the row is edited, the row menu
- * has "Revert cell".
+ * has "Undo cell edit".
  * @param entity the cell's row, null for a cell without a row or field
  * @param attribute the cell's field, null for a cell without one
  * @param formatter the cell's formatter, the one its value is shown with (`dynamicCellTypeColumn` can

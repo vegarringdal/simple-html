@@ -969,6 +969,32 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The `row-is-*` states had no built-in look.
 - A row's errors were in its tooltip only; a screen reader now gets them with the row number.
 
+#### Header filters say what to type
+
+##### ⚠️ Breaking changes
+- An empty text or number header filter shows its type, `Text` / `Number` (text ids
+  `filter.placeholder.text` / `filter.placeholder.number`), where it showed a 🔍 - like a date filter
+  shows its format. A column's `placeholderFilter` still wins; a boolean filter is a checkbox as before.
+
+#### Menus stay in the window
+
+##### Fixed
+- A menu taller than the room below and above the cell (the row menu in a small window) was cut off.
+  It now goes next to the point (right, else left), as near it as the window allows; a menu taller
+  than the window scrolls. Every menu keeps 4px from the window's edges; a menu near the right edge
+  is measured at its natural width (it was squeezed by the edge, then grew past it once moved).
+
+#### Row menu: undo a cell edit, a row's edits
+
+##### ⚠️ Breaking changes
+- The row menu's "Edit:" section is first in the menu (it was after Delete). Default texts:
+  `row.edit.undo` "Undo last change", `row.edit.revertCell` "Undo cell edit", `row.edit.revertRows`
+  "Undo row edits" (with the hint "selected rows").
+
+##### Added
+- `row.edit.revertRow` "Undo row edits": the row right clicked back to its original values and
+  unmarked for deletion, without selecting it first - one undo step.
+
 #### Undo and redo (item 28)
 
 ##### ⚠️ Breaking changes
@@ -1023,6 +1049,41 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   stripped value was written back).
 - The edited-cell marker's tooltip cuts a long original value.
 
+### Phase 6 - selection and clipboard
+
+#### Cell ranges and the clipboard (items 32, 33)
+
+##### ⚠️ Breaking changes
+- Alt+Shift+arrows in a cell select a range of cells (they moved like Alt+arrows).
+- Shift+click on a cell no longer makes its row current or opens the date picker; Ctrl/Cmd+click no
+  longer opens the date picker; Shift/Ctrl/Cmd+click on a checkbox no longer toggles it.
+- Esc in a cell with ranges clears them and cancels the key (a dialog the grid is in stays open for
+  that Esc).
+- Ctrl+C in a cell with no text selected copies the cell's value (it copied nothing).
+- `MENU_IDS.row` has `row.copy.range`, `row.paste.range`, `row.clear.range`; the Paste:/Clear:
+  sections also show on a readonly cell when there are ranges. The row menu's copy listener runs in
+  the document's capture phase.
+
+##### Added
+- **Cell ranges**: drag across cells (pinned sections and stacked fields included), Shift+click,
+  Ctrl/Cmd+click or drag for more ranges, Alt+Shift+arrows, Esc clears, auto-scroll while dragging.
+  `getRanges()`, `setRanges()`, `clearRanges()`, event `range-change`, type `CellRange`
+  (`{ fromRow, fromField, toRow, toField }`). Cleared when the displayed rows or the layout's fields
+  change. `aria-selected="true"` on the gridcells in a range.
+- **Copy** a range (Ctrl+C) as TSV and an HTML table - pastes into Excel / Sheets; **paste** TSV with
+  Excel's quoting (Ctrl+V): a block from the top left of the range, one value fills the ranges,
+  readonly cells skipped, parsed per field type, no rows added, one undo step. **Delete / Backspace**
+  clear a range. Row menu Copy: Range, Paste range, Clear range.
+- `CsvOptions.rows: 'range'`.
+- Theme variables `--simple-html-grid-range-bg-color`, `--simple-html-grid-range-border-color`;
+  classes `simple-html-cell-in-range`, `simple-html-cell-range-top/-bottom/-left/-right`.
+- Guide "Selection and clipboard", sample "Ranges & clipboard".
+
+##### Fixed
+- Cells copied from a spreadsheet and pasted into a cell went into that one cell, tabs and all, line
+  breaks turned into spaces; they go into the grid's cells now.
+- A single value pasted into a checkbox, a multiline cell or an `allowPasteClearOnly` column did nothing.
+
 ### Phase 7 - live data
 
 #### Reactive cells, merge by key, conflicts (items 36, 37, 38 data)
@@ -1067,6 +1128,28 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   filter/sort/group run when they are set.
 
 ### Phase 8 - more
+
+#### Aggregates (item 40)
+
+##### Added
+- `ColumnConfig.aggregate`: `'sum' | 'avg' | 'min' | 'max' | 'count'`, shown in each group row
+  (`GridConfig.groupAggregates`, default `true`) in the column's place, and in a totals row under the
+  rows (`GridConfig.totalsRow`, default `false`). sum/avg/min/max need a number field; a wrong config
+  throws a `TypeError`.
+- `datasource.aggregate(field, fn, rows?)`: over the filtered rows, a group row's rows (collapsed
+  sub-groups included) or a list of rows; type `AggregateFunction`. Blanks skipped, nothing rounded
+  (the formatter formats), a compensated sum (100 000 x 0.1 is 10000), kept until a value of the field
+  changes - edits and merges update them in the next frame.
+- Texts `aggregate.sum` / `avg` / `min` / `max` / `count` / `total`; theme variables
+  `--simple-html-grid-totals-bg-color`, `--simple-html-grid-totals-font-color`,
+  `--simple-html-grid-aggregate-label-color`.
+- Accessibility: an aggregate is a gridcell of its column; the totals row is the grid's last row with
+  "Total" as its row header.
+- Guide "Aggregates", sample "Aggregates". Not in the CSV export.
+
+##### Fixed
+- Row menu "Summary:": the max of negative numbers was 0, min skipped 0, the average was rounded to a
+  whole number and counted blank cells. A text value (`'12'`) is no longer read as a number.
 
 #### CSV export (item 41)
 

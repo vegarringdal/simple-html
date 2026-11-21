@@ -1,6 +1,7 @@
 import type { Grid } from '../grid';
 import { addMenuListeners } from './addMenuListeners';
 import { addScrollEventListeners } from './addScrollEventListeners';
+import { TOTALS_CLASS } from './aggregates';
 import { ariaId, createAriaGrid } from './ariaGrid';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
@@ -47,6 +48,9 @@ export function createDom(ctx: Grid) {
     middleScroller.appendChild(middleScrollerBody);
 
     const footer = createElement(DIV, 'simple-html-grid-footer');
+    // the totals row (GridConfig.totalsRow): between the rows and the footer, see aggregates.ts. The
+    // scrollbars are put after it, the horizontal one is painted over its top
+    const totals = createElement(DIV, TOTALS_CLASS);
 
     ctx.element.appendChild(panel);
     // the grid a screen reader gets, see ariaGrid.ts
@@ -57,6 +61,7 @@ export function createDom(ctx: Grid) {
     ctx.element.appendChild(header);
     ctx.element.appendChild(body);
     ctx.element.appendChild(footer);
+    ctx.element.appendChild(totals);
     ctx.element.appendChild(bodyScroller);
     ctx.element.appendChild(middleScroller);
 

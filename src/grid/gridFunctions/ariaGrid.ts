@@ -27,6 +27,10 @@ import { gridText } from './gridText';
  *   owns the group row's cell and the column elements of the left, middle and right sections, in the
  *   order of the columns
  * - the other row and column elements are `role="none"`: their cells come up into the row
+ * - a group row's element has one cell over the columns, the name. With aggregates (aggregates.ts)
+ *   the name cell spans the columns up to the first aggregate after it, then a cell per aggregate
+ * - the totals row (GridConfig.totalsRow) is the last row the grid owns: "Total" (a rowheader at
+ *   column 1) and a cell per aggregate. Its aria-rowindex is set where it is rendered
  *
  * `aria-rowindex` / `aria-colindex` say where a row / cell is in the whole grid, the rows and columns
  * not in the dom included, and `aria-rowcount` / `aria-colcount` how many there are. The spec wants
@@ -217,7 +221,9 @@ export function updateAriaGrid(ctx: Grid) {
     // must not have aria-level and aria-expanded on its rows (WAI-ARIA 1.2, row)
     setAria(grid, 'role', datasource.getGrouping().length ? 'treegrid' : 'grid');
     setAria(grid, 'aria-label', gridText(ctx, 'grid.label'));
-    setAria(grid, 'aria-rowcount', String(headerRows + datasource.length()));
+    // the totals row is a row too, the last
+    const totalsRow = config.__totalsRowHeight > 0;
+    setAria(grid, 'aria-rowcount', String(headerRows + datasource.length() + (totalsRow ? 1 : 0)));
     setAria(grid, 'aria-colcount', String(ariaColCount(config)));
     setAria(grid, 'aria-multiselectable', datasource.getSelectionMode() === 'multiple' ? 'true' : null);
 
@@ -259,9 +265,13 @@ export function updateAriaGrid(ctx: Grid) {
         }
     });
 
-    // the body rows, in the order of the rows: the dom order is the order of the pool
+    // the body rows, in the order of the rows: the dom order is the order of the pool. Then the totals row
     shown.sort((a, b) => a.row - b.row);
-    setAria(grid, 'aria-owns', shown.map((entry) => entry.id).join(' ') || null);
+    const owns = shown.map((entry) => entry.id);
+    if (totalsRow) {
+        owns.push(ariaId(ctx, 'totals'));
+    }
+    setAria(grid, 'aria-owns', owns.join(' ') || null);
 }
 
 /**

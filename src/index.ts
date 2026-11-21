@@ -1,3 +1,4 @@
+export type { AggregateFunction } from './datasource/aggregate';
 export { BooleanFormatter } from './datasource/booleanFormatter';
 export type { Changes, ModifiedEntity } from './datasource/changes';
 export { DateFormatterDDMMYYYY } from './datasource/DateFormatterDDMMYYYY';

@@ -263,7 +263,7 @@ default:
 - **The marker's tooltip** has the original value, shown with the field's formatter (a boolean as
   `true` / `false`: give the field a formatter of your own for other words, see
   [Formatting](08-formatting.md)), after the cell's errors. A blank value is `(blank)`.
-- **A click on the marker** puts the original value back - the row menu's *Revert cell*, see
+- **A click on the marker** puts the original value back - the row menu's *Undo cell edit*, see
   [Reverting a cell or a row](#reverting-a-cell-or-a-row). In an editable grid only: a readonly grid
   shows the markers of the rows it is given, a click does nothing. The marker is not a stop of Tab
   and a screen reader does not see it; Ctrl+Z takes an edit back from the keyboard.
@@ -355,7 +355,7 @@ again. In the grid the user has them too:
 - The row menu (right click a cell) has an **Edit:** section: *Undo (Ctrl+Z)* and *Redo (Ctrl+Y)*,
   greyed out when there is nothing to undo or redo, and the reverts, see
   [Reverting a cell or a row](#reverting-a-cell-or-a-row). The ids are `row.edit`, `row.edit.undo`,
-  `row.edit.redo`, `row.edit.revertCell` and `row.edit.revertRows`, change or hide them with the
+  `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow` and `row.edit.revertRows`, change or hide them with the
   [menus hook](10-menus.md).
 
 ```ts
@@ -440,10 +440,13 @@ datasource.resetRows(datasource.getSelectedRows());
 - The fields are validated as for an edit.
 - A field that is not edited (`getChanges()` would not list it) is left as it is.
 
-The row menu's *Revert cell* reverts the cell right clicked, greyed out while it is not edited - a
-click on the marker of an edited cell does the same, see [Showing the row state](#showing-the-row-state) - and
-*Revert rows (selected rows)* the selected rows, greyed out while none of them is edited or marked
-for deletion. Like the delete's undo they also work on readonly cells: they put values back,
+In an editable grid the row menu (right click a cell) starts with an **Edit:** section:
+*Undo last change* (Ctrl+Z) and *Redo* (Ctrl+Y) go through the undo history; *Undo cell edit* puts
+the original value of the cell right clicked back, greyed out while it is not edited - a click on the
+marker of an edited cell does the same, see [Showing the row state](#showing-the-row-state);
+*Undo row edits* puts the row right clicked back - no need to select it first - and
+*Undo row edits (selected rows)* the selected rows, each greyed out while none of its rows is edited
+or marked for deletion. Like the delete's undo they also work on readonly cells: they put values back,
 readonly is about typing new ones.
 
 ## Validation

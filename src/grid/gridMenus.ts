@@ -289,6 +289,12 @@ export interface GridMenus {
  *
  * | id | shown as | shown when |
  * | --- | --- | --- |
+ * | `row.edit` | Edit: - first in the menu | the grid is editable |
+ * | `row.edit.undo` | Undo last change (Ctrl+Z) - `datasource.undo()`, the last edit, paste, clear, delete or revert. Greyed out when there is nothing to undo | the grid is editable |
+ * | `row.edit.redo` | Redo (Ctrl+Y) - `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
+ * | `row.edit.revertCell` | Undo cell edit - the cell's original value (`datasource.resetField()`). Greyed out when the cell is not edited | the grid is editable |
+ * | `row.edit.revertRow` | Undo row edits - the row right clicked back to its original values, unmarked for deletion (`datasource.resetRows(row)`), no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
+ * | `row.edit.revertRows` | Undo row edits (selected rows) - the selected rows back, unmarked for deletion (`datasource.resetRows()`). Greyed out when no selected row is edited or marked | the grid is editable |
  * | `row.copy` | Copy: | |
  * | `row.copy.cell` | Cell Value | |
  * | `row.copy.column` | Column (selected rows) | |
@@ -310,11 +316,6 @@ export interface GridMenus {
  * | `row.delete` | Delete: | the grid is editable |
  * | `row.delete.rows` | Rows (selected rows) - marks them for deletion (`markForDeletion()`), they stay in the grid until the changes are accepted. Skips a row the `isReadonly` hook returns `true` for in every column of the layout. Greyed out when no selected row is left to mark | the grid is editable |
  * | `row.delete.undo` | Undo (selected rows) - takes the mark off the selected rows marked for deletion (`unmarkForDeletion()`) | the grid is editable, and a selected row is marked for deletion |
- * | `row.edit` | Edit: | the grid is editable |
- * | `row.edit.undo` | Undo (Ctrl+Z) - `datasource.undo()`, the last edit, paste, clear, delete or revert. Greyed out when there is nothing to undo | the grid is editable |
- * | `row.edit.redo` | Redo (Ctrl+Y) - `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
- * | `row.edit.revertCell` | Revert cell - the cell's original value (`datasource.resetField()`). Greyed out when the cell is not edited | the grid is editable |
- * | `row.edit.revertRows` | Revert rows (selected rows) - their original values, unmarked for deletion (`datasource.resetRows()`). Greyed out when no selected row is edited or marked | the grid is editable |
  * | `row.summary` | Summary: | a number field |
  * | `row.summary.count` | Count: 3 - of the selected rows, click to copy | a number field |
  * | `row.summary.sum` | Sum: 60 | a number field |
@@ -383,6 +384,12 @@ export interface GridMenus {
 export const MENU_IDS = {
     /** the row menu's ids, right click on a cell */
     row: [
+        'row.edit',
+        'row.edit.undo',
+        'row.edit.redo',
+        'row.edit.revertCell',
+        'row.edit.revertRow',
+        'row.edit.revertRows',
         'row.copy',
         'row.copy.cell',
         'row.copy.column',
@@ -404,11 +411,6 @@ export const MENU_IDS = {
         'row.delete',
         'row.delete.rows',
         'row.delete.undo',
-        'row.edit',
-        'row.edit.undo',
-        'row.edit.redo',
-        'row.edit.revertCell',
-        'row.edit.revertRows',
         'row.summary',
         'row.summary.count',
         'row.summary.sum',

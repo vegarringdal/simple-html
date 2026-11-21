@@ -1,4 +1,6 @@
 import type { DemoSample } from './demoUtils';
+import { aggregates } from './samples/aggregates';
+import aggregatesSource from './samples/aggregates.ts?raw';
 import { basicGrid } from './samples/basicGrid';
 import basicGridSource from './samples/basicGrid.ts?raw';
 import { cellStyling } from './samples/cellStyling';
@@ -71,6 +73,7 @@ export const SAMPLES: Sample[] = [
     { ...columnLayout, source: columnLayoutSource },
     // datasource
     { ...sortingGrouping, source: sortingGroupingSource },
+    { ...aggregates, source: aggregatesSource },
     { ...filtering, source: filteringSource },
     { ...selection, source: selectionSource },
     { ...rowsData, source: rowsDataSource },

@@ -224,6 +224,9 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-new-color` | the plus of a new row (`rowStatus`) | `#166534` | `#86efac` |
 | `--simple-html-grid-deleted-color` | the trash can of a row marked for deletion (`rowStatus`) | `#57534e` | `#d1d5db` |
 | `--simple-html-grid-multiline-color` | the marker of a cell with more lines than it shows (`FieldConfig.multiline`) | `#475569` | `#e2e8f0` |
+| `--simple-html-grid-totals-bg-color` | the totals row under the rows (`totalsRow`), see [Aggregates](18-aggregates.md) | `#e8edf3` | `#2a3441` |
+| `--simple-html-grid-totals-font-color` | the text of the totals row | `#1f2328` | `#f9fafb` |
+| `--simple-html-grid-aggregate-label-color` | the label in front of an aggregate (`Sum`) in a group row and the totals row. At least 4.5:1 to both | `#57606a` | `#c9d1d9` |
 | `--simple-html-grid-warning-font-color` | the "too many values" warning of the filter menu | `red` | `#fca5a5` |
 | `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text | `#c0392b` | `#fecaca` |
 | `--simple-html-grid-danger-border` | the footer's Clear filter button under the pointer: its border | `#d98282` | `#f87171` |

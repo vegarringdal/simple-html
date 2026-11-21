@@ -38,12 +38,13 @@ const DEFAULTS = {
     'row.delete.undo': 'Undo',
     'row.delete.undo.hint': 'selected rows',
     'row.edit': 'Edit:',
-    'row.edit.undo': 'Undo',
+    'row.edit.undo': 'Undo last change',
     'row.edit.undo.hint': 'Ctrl+Z',
     'row.edit.redo': 'Redo',
     'row.edit.redo.hint': 'Ctrl+Y',
-    'row.edit.revertCell': 'Revert cell',
-    'row.edit.revertRows': 'Revert rows',
+    'row.edit.revertCell': 'Undo cell edit',
+    'row.edit.revertRow': 'Undo row edits',
+    'row.edit.revertRows': 'Undo row edits',
     'row.edit.revertRows.hint': 'selected rows',
     'row.summary': 'Summary:',
     'row.summary.count': 'Count: {count}',
@@ -177,6 +178,20 @@ const DEFAULTS = {
     'footer.operator.IS_BLANK': 'is blank',
     'footer.operator.IS_NOT_BLANK': 'is not blank',
 
+    // the aggregates of the columns (ColumnConfig.aggregate): the label in front of the value in a group
+    // row and in the totals row, and the label of the totals row
+    'aggregate.sum': 'Sum',
+    'aggregate.avg': 'Avg',
+    'aggregate.min': 'Min',
+    'aggregate.max': 'Max',
+    'aggregate.count': 'Count',
+    'aggregate.total': 'Total',
+
+    // the placeholder of an empty header filter, by the field's type - a date filter shows its
+    // formatter's format (YYYY-MM-DD), a boolean filter is a checkbox
+    'filter.placeholder.text': 'Text',
+    'filter.placeholder.number': 'Number',
+
     // labels for screen readers (aria-label)
     'grid.label': 'Grid',
     'grid.rowSelector': 'row selector',
@@ -308,6 +323,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
+ * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `grid.*` | labels for screen readers |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |

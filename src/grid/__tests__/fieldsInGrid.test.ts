@@ -100,7 +100,26 @@ describe('fields in the grid - formatters', () => {
         expect(headerFilterInput(element, 'd').placeholder).toEqual('YYYY-MM-DD');
         expect(headerFilterInput(element, 't').placeholder).toEqual('YYYY-MM-DDTHH:MM:SS');
         expect(headerFilterInput(element, 'e').placeholder).toEqual('DD.MM.YYYY');
-        expect(headerFilterInput(element, 'name').placeholder).toEqual('🔍');
+        expect(headerFilterInput(element, 'name').placeholder).toEqual('Text');
+    });
+
+    it("expect an empty text or number filter to say its type, the column's own placeholder first", async () => {
+        const config = columns('name', 'age', 'price');
+        config.columns = { price: { placeholderFilter: 'max price' } };
+        const { element } = await mountGrid(config, [{}], { fields: { age: 'number', price: 'number' } });
+
+        expect(headerFilterInput(element, 'name').placeholder).toEqual('Text');
+        expect(headerFilterInput(element, 'age').placeholder).toEqual('Number');
+        expect(headerFilterInput(element, 'price').placeholder).toEqual('max price');
+    });
+
+    it('expect the type placeholders to be texts: replaced by the grid texts', async () => {
+        const config = columns('name', 'age');
+        config.texts = { 'filter.placeholder.text': 'Tekst', 'filter.placeholder.number': 'Tall' };
+        const { element } = await mountGrid(config, [{}], { fields: { age: 'number' } });
+
+        expect(headerFilterInput(element, 'name').placeholder).toEqual('Tekst');
+        expect(headerFilterInput(element, 'age').placeholder).toEqual('Tall');
     });
 });
 

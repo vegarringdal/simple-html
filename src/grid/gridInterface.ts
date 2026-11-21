@@ -1,3 +1,4 @@
+import { AGGREGATE_FUNCTIONS, isAggregateFunction } from '../datasource/aggregate';
 import { assertOptions } from '../datasource/assertOptions';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
@@ -19,6 +20,7 @@ import type {
     ParsedGridOptions
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
+import { aggregateLines } from './gridFunctions/aggregates';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
 import { getCellHeight } from './gridFunctions/getCellHeight';
@@ -138,8 +140,8 @@ export class GridInterface<T> {
      * @param hooks optional: the functions - `isReadonly`, `cellClass`, `menus`, see {@link GridHooks}.
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
-     * hooks), a column has v5's `mandatory` (it is the field's `required` rule), or `texts` is not an
-     * object of strings
+     * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
+     * object of strings, or a column's `aggregate` is no aggregate function or needs a number field
      *
      * @example
      * ```ts
@@ -158,6 +160,7 @@ export class GridInterface<T> {
         assertNoHooks(gridConfig);
         assertNoV5Options(gridConfig);
         assertConfigTexts(gridConfig);
+        assertAggregates(gridConfig, datasource);
         this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.hooks = { ...hooks };
@@ -316,8 +319,8 @@ export class GridInterface<T> {
      *
      * @param config the parts of the config to change
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
-     * a column has v5's `mandatory` (it is the field's `required` rule), or `texts` is not an object of
-     * strings
+     * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
+     * strings, or a column's `aggregate` is no aggregate function or needs a number field
      *
      * @sample misc-options
      * @example
@@ -334,6 +337,7 @@ export class GridInterface<T> {
         assertNoHooks(config);
         assertNoV5Options(config);
         assertConfigTexts(config);
+        assertAggregates(config, this.dataSource);
         const { columns, layout, initialState, ...options } = config;
 
         this.options = { ...this.options, ...options };
@@ -1031,6 +1035,15 @@ export class GridInterface<T> {
                 }
             }
         }
+
+        /**
+         * the aggregates (aggregates.ts): a group row is one line, more when an aggregate it shows is
+         * on a lower line of a column with stacked fields. The totals row has the lines it needs, at
+         * least one
+         */
+        const aggregateLineCount = aggregateLines(config);
+        config.__groupRowHeight = config.cellHeight * (config.groupAggregates ? Math.max(1, aggregateLineCount) : 1);
+        config.__totalsRowHeight = config.totalsRow ? config.cellHeight * Math.max(1, aggregateLineCount) : 0;
     }
 
     /**
@@ -1167,12 +1180,12 @@ export class GridInterface<T> {
 
         // lets make a index if datasource is > 1000k, and store top for each k
 
-        const cell = this.gridConfig.cellHeight;
+        const groupRow = this.gridConfig.__groupRowHeight;
         const row = this.gridConfig.__rowHeight;
         let count = 0;
 
         this.dataSource.getRows().forEach((ent) => {
-            const height = isGroupRow(ent) ? cell : row;
+            const height = isGroupRow(ent) ? groupRow : row;
             this.scrollTops.push(count);
             this.scrollHeights.push(height);
             count = count + height;
@@ -1382,7 +1395,9 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         tooltips: options.tooltips ?? true,
         rowStatus: options.rowStatus ?? true,
         editedMarker: options.editedMarker ?? true,
-        placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true
+        placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
+        groupAggregates: options.groupAggregates ?? true,
+        totalsRow: options.totalsRow ?? false
     };
 }
 
@@ -1472,6 +1487,32 @@ function assertConfigTexts(config: Partial<GridConfig>) {
 }
 
 /**
+ * A column's `aggregate` is one of the functions, and `sum`, `avg`, `min` and `max` are for a number
+ * field: TypeScript catches neither in a config from plain JavaScript or JSON, and the grid would show
+ * nothing (a text field has no numbers to sum) without a word
+ * @throws a `TypeError` naming the column and what it takes
+ */
+function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<any>) {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        const fn: unknown = column?.aggregate;
+        if (fn === undefined) {
+            continue;
+        }
+        if (!isAggregateFunction(fn)) {
+            throw new TypeError(
+                `GridConfig: columns.${field}.aggregate is ${JSON.stringify(fn)}, it is one of ${AGGREGATE_FUNCTIONS.map((name) => `'${name}'`).join(', ')}`
+            );
+        }
+        const type = datasource.getField(field).type;
+        if (fn !== 'count' && type !== 'number') {
+            throw new TypeError(
+                `GridConfig: columns.${field}.aggregate '${fn}' is for a number field, '${field}' is ${type}: new Datasource({ fields: { ${field}: 'number' } }), or 'count'`
+            );
+        }
+    }
+}
+
+/**
  * The internal sizes before `__parseConfig()` computes them
  */
 const NO_SIZES = {
@@ -1481,7 +1522,9 @@ const NO_SIZES = {
     __leftWidth: 0,
     __rightWidth: 0,
     __scrollbarSize: 0,
-    __selectSizeWidth: 0
+    __selectSizeWidth: 0,
+    __groupRowHeight: 0,
+    __totalsRowHeight: 0
 };
 
 /**

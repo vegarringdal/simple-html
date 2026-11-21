@@ -50,7 +50,7 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   row status (`rowStatus: false`) the row number is the number only: show the state another way, a
   column of `__rowState` say.
 - **An edited cell**: its marker is hidden from a screen reader and is no stop of Tab; the row's state
-  says the row is edited. Ctrl+Z takes an edit back, the row menu's *Revert cell* and a click on the
+  says the row is edited. Ctrl+Z takes an edit back, the row menu's *Undo cell edit* and a click on the
   marker are for the mouse.
 - **A cell of several lines** (`FieldConfig.multiline`, or a value with a line break) is a readonly
   textbox with its first line as the value. When it has more lines, its description
@@ -63,6 +63,14 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   `aria-expanded`; a data row is one level below the last grouping. Its one cell spans the columns
   after the row number, with a button that expands and collapses it: named with the text the row
   shows (`Country: Norway (12)`), `aria-expanded` says its state.
+- **The aggregates of a group row** (`ColumnConfig.aggregate`, see [Aggregates](18-aggregates.md)):
+  each is a `gridcell` with the `aria-colindex` of its field, `Sum 1234.5`, so a screen reader reads it
+  with the column's header. The name cell then spans the columns up to the first aggregate. The
+  aggregate of the first column is under the name on screen: it is not a cell of its own, its text is
+  in the name cell (`Country: Norway (12) Count 10`).
+- **The totals row** (`totalsRow`) is the last row of the grid, after the rows on screen: its first
+  cell is a `rowheader`, "Total" (the text `aggregate.total`), then a `gridcell` per aggregate.
+  `aria-rowcount` counts it, its `aria-rowindex` is the last.
 - **The row count** in the footer is a status (`role="status"`): a screen reader reads it out when it
   changes - after a filter, an expand or a collapse.
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
@@ -250,6 +258,8 @@ setTexts({
   screen reader reaches it.
 - **Only the first sort column** has `aria-sort`; the number of a column in a sort on several
   columns is shown, but not read out.
+- **An aggregate of a group row under its name** is covered on screen, a screen reader gets it with
+  the name. Put the aggregated columns after the first column.
 - **The column numbers** under the filters are hidden: selecting a column is for the mouse, and a
   selected column is not read out.
 - **The two scrollbars** are elements of their own, Chrome makes them stops of Tab (an element that

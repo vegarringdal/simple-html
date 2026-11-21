@@ -2,6 +2,7 @@ import { html, render } from 'lit-html';
 import type { FilterGroupNode, FilterNode } from '../../datasource/dataSource';
 import { findText } from '../../texts';
 import type { Grid } from '../grid';
+import { renderTotalsRow } from './aggregates';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
@@ -66,6 +67,9 @@ function renderChildren(ctx: Grid, group: FilterGroupNode) {
 }
 
 export function rebuildFooter(ctx: Grid) {
+    // the totals row over the footer: the filter, the rows and the layout it follows change the footer too
+    renderTotalsRow(ctx);
+
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
     const totalRows = ctx.gridInterface.getDatasource().getAllData().length;
     const filteredRows = ctx.gridInterface.getDatasource().length();
