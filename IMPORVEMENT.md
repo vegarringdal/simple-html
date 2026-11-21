@@ -1928,6 +1928,21 @@ in the console. All passed. Found and fixed:
   candidates-check.js 9/9 (the basic grid's date filter picker, the copy button allowed and refused),
   filter-ui-check 117/117, find-check 68/68, lookup-check 55/55, menus-regression-check 25/25
 
+### The filter editor kept the header filters it did not change (a candidate)
+
+* Apply emptied every header filter cell (`__clearHeaderFilterValues`), also of the columns whose
+  conditions it kept: the rows stayed filtered by them, the headers showed nothing, and the next header
+  edit replaced the column's conditions from an empty cell. Now `__clearChangedHeaderFilters(before,
+  after)` empties only the cells whose column's conditions changed - the ones a header filter owns, its
+  top level conditions of an AND root or the root condition (`columnConditions`, filterCallback.ts,
+  the mirror of filterWithoutColumn), compared field, operator, valueField and value (a date by its time,
+  a list by its items: `sameConditions`)
+* tests: filterEditorApply.test.ts +2 (a kept column keeps its text and state, a changed one is emptied;
+  a removed condition empties its header) - both fail with the old line
+* with it, a second candidate: the dev samples' dark toggles (`samples/grid01/toggleDarkGrid.ts`,
+  `samples/date01/toggleDarkDate.ts`) injected a block of v5 style dark colours; every colour of
+  grid.css and date.css is `light-dark()` now, so they switch the page's `color-scheme`
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -1949,8 +1964,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 * **A collator with `sensitivity: 'base'`**: `'a'` vs `'A'` compares as 1 both ways (sort.ts turns a 0
   into 1), so their order is the order they came in. Returning 0 needs grouping to use the collator too,
   or the groups split
-* **The filter editor blanks the header filters** when it applies, also of the columns whose conditions
-  it keeps (`__clearHeaderFilterValues`): the rows stay filtered, the header shows nothing
 * **The value list shows raw values**: a text field's list has its values upper cased, not what a
   formatter of the field shows - nor a lookup column's labels (dropDownFilterData reads the row values) -
   and `IN` on a text field compares the raw text
@@ -1980,8 +1993,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 * **Class names**: the label cell and its inner text div share the class `simple-html-label` (so does the
   inner div of a column-selector cell): `simple-html-label-text` for the inner ones would make selectors
   exact - a css change for apps that style them
-* **The dev samples** `samples/grid01/toggleDarkGrid.ts` and `samples/date01/toggleDarkDate.ts` still
-  inject v5 style dark overrides; the grid follows `color-scheme` now (`light-dark()`)
 
 ### Tooling
 

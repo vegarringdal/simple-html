@@ -1332,6 +1332,14 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The filter editor keeps the header filters it did not change
+
+##### Fixed
+- Applying the filter editor emptied every header filter cell, also of the columns whose conditions it
+  kept: the rows stayed filtered by them while the headers showed nothing. Only the cells whose column's
+  conditions were changed or removed are emptied now.
+- The dev samples' dark toggles switch the page's `color-scheme` instead of injecting v5 colours.
+
 #### The candidates list checked, small bugs fixed
 
 ##### ⚠️ Breaking changes

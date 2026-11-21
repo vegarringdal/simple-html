@@ -368,15 +368,17 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
     /**
      * Applies the conditions that are complete, see draftToFilter. A copy: the dialog can stay open
      * and keep editing its own. Nothing left ("clear all") is no filter, like "Clear All Filters".
-     * The header filter inputs would otherwise keep showing text the applied filter no longer has
-     * (and the next header filter edit would put it back)
+     * A header filter cell whose column's conditions were changed is emptied: it would otherwise show
+     * text the applied filter no longer has (and the next header filter edit would put it back). One
+     * whose conditions are as they were keeps its text
      */
     const applyFilter = () => {
         removeContextMenu(ctx);
         const datasource = ctx.gridInterface.getDatasource();
+        const before = datasource.getFilter();
         const filter = draftToFilter(structuredClone(filterArg), datasource);
         datasource.filter(filter.children.length ? filter : null);
-        ctx.gridInterface.__clearHeaderFilterValues();
+        ctx.gridInterface.__clearChangedHeaderFilters(before, datasource.getFilter());
         rebuildHeaderColumns(ctx);
     };
 

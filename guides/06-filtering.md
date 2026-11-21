@@ -129,7 +129,8 @@ button that opens a menu under it, the field's with a search box. A group is a l
 what is in it, its header on top: **AND** / **OR** (the one in use filled), **+ Condition**,
 **+ Group**, then wrap it in a new group and delete it. "Apply & close" and "Apply" apply it,
 "Cancel" leaves the filter as it was. A condition with no field or operator picked is left out when
-it is applied. Applying it empties the header filter cells.
+it is applied. Applying it empties the header filter cells of the columns whose conditions it
+changed; a header filter whose conditions are as they were keeps its text.
 
 Every control is a button or an input, Tab goes through them in the order they are shown: the `✕`,
 then each group's header and its conditions, then Cancel, Apply, Apply & close. A picker opened from

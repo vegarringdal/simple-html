@@ -87,6 +87,41 @@ describe('filter editor - header filter inputs', () => {
         // nothing left is no filter, like "Clear All Filters"
         expect(datasource.getFilter()).toEqual(null);
     });
+
+    it('expect a header filter whose conditions the editor left as they were to keep its text', async () => {
+        const { element, datasource, gridInterface } = await mountGrid();
+        typeInHeaderFilter(element, 'lastname', 'last1');
+        typeInHeaderFilter(element, 'firstname', 'first');
+
+        // a change to the firstname condition only
+        gridInterface.openFilterEditor();
+        const values = document.querySelectorAll<HTMLInputElement>('.filter-editor-content .filter-editor-value');
+        const firstname = Array.from(values).find((input) => input.value === 'first') as HTMLInputElement;
+        firstname.value = 'first2';
+        firstname.dispatchEvent(new Event('input', { bubbles: true }));
+        menuItem('Apply & close').click();
+
+        // lastname's condition is as it was: its header still shows it, the filter still has it
+        expect(headerFilterInput(element, 'lastname').value).toEqual('last1');
+        expect(gridInterface.getState().headerFilters.lastname).toMatchObject({ value: 'last1' });
+        // firstname's was changed: its header text would be wrong
+        expect(headerFilterInput(element, 'firstname').value).toEqual('');
+        expect(datasource.getDataRows()).toEqual([]);
+    });
+
+    it('expect a header filter whose condition the editor removed to be emptied', async () => {
+        const { element, gridInterface } = await mountGrid();
+        typeInHeaderFilter(element, 'lastname', 'last1');
+        typeInHeaderFilter(element, 'firstname', 'first1');
+
+        gridInterface.openFilterEditor();
+        // the trash of the second condition: firstname's
+        clickIcon('Delete this condition', 1);
+        menuItem('Apply').click();
+
+        expect(headerFilterInput(element, 'lastname').value).toEqual('last1');
+        expect(headerFilterInput(element, 'firstname').value).toEqual('');
+    });
 });
 
 describe('filter editor - a single condition at the root', () => {

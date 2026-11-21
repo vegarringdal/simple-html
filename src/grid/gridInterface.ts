@@ -3,7 +3,7 @@ import { assertOptions } from '../datasource/assertOptions';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
-import type { FilterOperator } from '../datasource/filterExpression';
+import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
 import type { CellRange } from './cellRange';
@@ -26,6 +26,7 @@ import type { GridEvents } from './gridEvents';
 import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
 import { fillDown } from './gridFunctions/fillDown';
+import { columnConditions, sameConditions } from './gridFunctions/filterCallback';
 import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
@@ -1631,6 +1632,23 @@ export class GridInterface<T> {
     public __clearHeaderFilterValues() {
         for (const field of Object.keys(this.headerFilters)) {
             this.__setHeaderFilterValue(field, null);
+        }
+    }
+
+    /**
+     * @internal
+     * For the filter editor's Apply: empties the header filter cells whose column's conditions it
+     * changed - the ones a header filter owns, its top level conditions (columnConditions). A cell whose
+     * conditions are as they were keeps its text: the filter still has what it shows. The operators
+     * picked are kept
+     * @param before the filter before it was applied
+     * @param after the filter it applied
+     */
+    public __clearChangedHeaderFilters(before: FilterExpression | null, after: FilterExpression | null) {
+        for (const field of Object.keys(this.headerFilters)) {
+            if (!sameConditions(columnConditions(before, field), columnConditions(after, field))) {
+                this.__setHeaderFilterValue(field, null);
+            }
         }
     }
 

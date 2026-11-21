@@ -1,4 +1,11 @@
-import { and, type FilterExpression, type FilterGroup, isFilterGroup, where } from '../../datasource/filterExpression';
+import {
+    and,
+    type FilterCondition,
+    type FilterExpression,
+    type FilterGroup,
+    isFilterGroup,
+    where
+} from '../../datasource/filterExpression';
 import { parseFilterText } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
@@ -85,6 +92,49 @@ function asFilterValue(value: unknown): string | number | boolean | Date | null 
         return value;
     }
     return null;
+}
+
+/**
+ * The conditions a column's header filter owns in a filter: the top level conditions on the column - of
+ * an AND group, or the filter itself when it is one condition on the column (see filterWithoutColumn).
+ * [] for none, and for an OR root: a header filter never writes into one
+ */
+export function columnConditions(filter: FilterExpression | null, field: string): FilterCondition[] {
+    if (!filter) {
+        return [];
+    }
+    if (isFilterGroup(filter)) {
+        return filter.group === 'OR'
+            ? []
+            : filter.children.filter((child): child is FilterCondition => !isFilterGroup(child) && child.field === field);
+    }
+    return filter.field === field ? [filter] : [];
+}
+
+/**
+ * true when two lists of conditions are the same: the fields, operators, `valueField`s and values - a
+ * date by its time, a list value by its items
+ */
+export function sameConditions(a: FilterCondition[], b: FilterCondition[]): boolean {
+    const sameValue = (x: unknown, y: unknown): boolean => {
+        if (x instanceof Date && y instanceof Date) {
+            return x.getTime() === y.getTime();
+        }
+        if (Array.isArray(x) && Array.isArray(y)) {
+            return x.length === y.length && x.every((item, i) => sameValue(item, y[i]));
+        }
+        return x === y;
+    };
+    return (
+        a.length === b.length &&
+        a.every(
+            (condition, i) =>
+                condition.field === b[i].field &&
+                condition.operator === b[i].operator &&
+                condition.valueField === b[i].valueField &&
+                sameValue(condition.value, b[i].value)
+        )
+    );
 }
 
 /**
