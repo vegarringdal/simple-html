@@ -79,6 +79,10 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
 - **The row count** in the footer is a status (`role="status"`): a screen reader reads it out when it
   changes - after a filter, an expand or a collapse.
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
+- **The find bar** (Ctrl+F, see [Find](19-find.md#what-a-screen-reader-gets)): a search region named
+  "Find in the grid" before the grid, with an input named "Find", the count of the matches as a status
+  (`3 of 17`, read out when it changes) and the buttons "Previous match", "Next match" and "Close". The
+  cells of the matches have no state of their own for a screen reader, the count says where you are.
 
 The rows and the columns are virtual: only the rows on screen (and a few more) are in the dom, and
 of the middle section only the columns on screen. That is what `aria-rowindex` and `aria-colindex`
@@ -121,6 +125,8 @@ caret in them; Alt with an arrow moves between the cells.
 | Ctrl+C, Cmd+C | with no text selected in the cell: the range of cells as tab separated text, or the cell's value |
 | Ctrl+V, Cmd+V | a block of cells (copied in a spreadsheet, or here) from this cell or the top left of the range; one value into every cell of the ranges. One value with no range is the input's own paste |
 | Delete / Backspace | with a range of more than one cell and no text selected: empties its cells. Else the input's own |
+| Ctrl+F, Cmd+F | opens the find bar, see [below](#the-find-bar). Anywhere in the grid: a header filter, a column header too |
+| F3 / Shift+F3 | while the find bar is open: the next / previous match. Anywhere in the grid |
 
 The grid scrolls to the cell the focus goes to. Moving to another cell (Tab, Alt+arrows, Enter) clears
 the ranges of cells, and so does typing in a cell.
@@ -158,6 +164,21 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | a menu | Esc | closes it, the focus goes back where it was |
 | the editor of a multiline cell | Esc / Ctrl+Enter / Tab | see [below](#the-editor-of-a-multiline-cell) |
 | the filter editor | Esc | closes it without filtering (a modal dialog) |
+| the find bar | Enter, F3, Esc | the next match, closes it: see [below](#the-find-bar) |
+
+### The find bar
+
+Ctrl+F (Cmd+F) with the focus in the grid opens it over the grid's top right corner, the focus in its
+input - see [Find](19-find.md). Outside the grid Ctrl+F is the browser's.
+
+| key | does |
+| --- | --- |
+| typing | finds the text when the typing stops: the cells are marked, the grid scrolls to the current match |
+| Enter, F3 | the next match, wrapping to the first. The focus stays in the input |
+| Shift+Enter, Shift+F3 | the previous match, wrapping to the last |
+| Esc | closes it: the focus goes to the cell of the current match (its row is the current row), else back to where Ctrl+F was pressed. In a modal dialog of your own, the dialog stays open |
+| Ctrl+F, Cmd+F | the focus back in the input, its text selected |
+| Tab / Shift+Tab | the input, previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid |
 
 ### The editor of a multiline cell
 
@@ -180,7 +201,8 @@ A readonly editor (a readonly grid or cell) shows the text, nothing can be typed
 ## Focus
 
 What can have the focus: the cell inputs and checkboxes, the header filters, the column headers, the
-buttons of the group rows, the x of the group chips and the filter chips in the footer. Each gets a
+buttons of the group rows, the x of the group chips, the filter chips in the footer, and the input and
+buttons of the find bar. Each gets a
 visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md#the-keyboard-focus)).
 
 - Sorting from the keyboard and expanding a group rebuild the header or the rows: the focus is put
@@ -189,7 +211,8 @@ visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md
   start or the end of the grid (`tabindex="-1"`, hidden from a screen reader), and the browser's Tab
   goes on from there to what is before or after the grid.
 - The wheel and a swipe take the focus from the cell being edited: its row element is about to show
-  another row. The grid uses a hidden input for it, out of the tab order. They save and close the
+  another row. The grid uses a hidden input for it, out of the tab order. Not from the find bar: no
+  cell is edited, and Enter goes on finding. They save and close the
   editor of a multiline cell too, and a click outside it does: the focus is where the click put it.
 
 ## Labels and translating

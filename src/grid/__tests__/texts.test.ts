@@ -188,6 +188,13 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     // the grid, its footer with the filter. The notes have a marker for a screen reader
     check();
 
+    // the find bar (Ctrl+F): its name, the input, the buttons - the count with matches, and without
+    gridInterface.find('«bob»');
+    check();
+    gridInterface.find('«nobody»');
+    check();
+    gridInterface.closeFind();
+
     // the editor of the notes, and read-only in a readonly grid
     const notes = element.querySelector('input[data-attribute="notes"]') as HTMLInputElement;
     const pressKey = (target: Element, key: string) =>

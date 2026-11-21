@@ -1,6 +1,7 @@
 import type { Entity, GroupRow } from '../datasource/entity';
 import type { FilterOperator } from '../datasource/filterExpression';
 import type { CellRange } from './cellRange';
+import type { FindResult } from './findResult';
 import type { ColumnConfig } from './gridConfig';
 import type { ColType } from './gridFunctions/colType';
 import type { HTMLCellElement } from './gridFunctions/HTMLCellElement';
@@ -199,4 +200,21 @@ export interface GridEvents {
         /** the ranges now, copies: see {@link CellRange} */
         ranges: CellRange[];
     };
+
+    /**
+     * What Find (Ctrl+F in the grid) has found changed: the find bar opened or closed, the text was
+     * typed (sent when the typing stops), the current match moved (Enter, F3, `findNext()` ...), or the
+     * matches were found again after the data changed. Not sent when nothing changed.
+     *
+     * The payload is what `gridInterface.getFind()` gives now, see {@link FindResult}.
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * gridInterface.on('find-change', ({ open, text, count, current }) => {
+     *     console.log(open ? `"${text}": ${count} cells, the current at ${JSON.stringify(current)}` : 'find closed');
+     * });
+     * ```
+     */
+    'find-change': FindResult;
 }

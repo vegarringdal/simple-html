@@ -8,6 +8,7 @@ import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
 import type { CellRange } from './cellRange';
 import type { CsvOptions } from './csv';
+import type { FindResult } from './findResult';
 import type { Grid } from './grid';
 import type {
     ColumnConfig,
@@ -23,6 +24,7 @@ import type {
 import type { GridEvents } from './gridEvents';
 import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
+import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
@@ -1044,6 +1046,121 @@ export class GridInterface<T> {
     }
 
     /**
+     * Finds a text in the cells, as Ctrl+F in the grid does: opens the find bar with the text, marks
+     * every cell that shows it and scrolls to the current match. See {@link FindResult} for what a
+     * match is and their order - the text a cell shows, formatted, in any case.
+     *
+     * The current match is the first one at or after the cell that has the focus (or the first one);
+     * while the bar is open, the current match stays while it still matches, else it is the next one.
+     * The focus does not move: {@link openFind} puts it in the bar, as Ctrl+F does. `find-change` is
+     * sent. Does nothing while the grid is not on the page.
+     *
+     * @param text the text to find. `''` opens the bar with no matches
+     * @returns how many cells show the text
+     * @throws a `TypeError` when the text is not a string
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * const count = gridInterface.find('acme');
+     * console.log(`${count} cells`, gridInterface.getFind().current); // { row: 3, field: 'company' }
+     * gridInterface.findNext();
+     * gridInterface.closeFind();
+     * ```
+     */
+    public find(text: string): number {
+        if (typeof text !== 'string') {
+            throw new TypeError(`find(text): the text is a string, e.g. find('acme'), got ${String(text)}`);
+        }
+        if (this.grid) {
+            openFind(this.grid, { text, focus: false });
+        }
+        return this.getFind().count;
+    }
+
+    /**
+     * Opens the find bar as Ctrl+F does: the focus goes into its input, with the text it had selected,
+     * and the matches of that text show. For a button or a menu entry of your own. Does nothing while
+     * the grid is not on the page.
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * document.getElementById('find-button')!.onclick = () => gridInterface.openFind();
+     * ```
+     */
+    public openFind() {
+        if (this.grid) {
+            openFind(this.grid, { focus: true });
+        }
+    }
+
+    /**
+     * Goes to the next match, as Enter and F3 in the find bar: it is the current one, the grid scrolls
+     * to it. After the last one, the first. Nothing while the find bar is closed or nothing matches.
+     *
+     * @returns the cell of the current match - its row in the displayed rows and its field - or `null`
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * gridInterface.find('norway');
+     * const cell = gridInterface.findNext(); // { row: 12, field: 'country' }
+     * ```
+     */
+    public findNext(): FindResult['current'] {
+        return this.grid ? findStep(this.grid, 1) : null;
+    }
+
+    /**
+     * Goes to the previous match, as Shift+Enter and Shift+F3 in the find bar. Before the first one, the
+     * last. See {@link findNext}.
+     *
+     * @returns the cell of the current match, or `null`
+     *
+     * @example
+     * ```ts
+     * gridInterface.find('norway');
+     * gridInterface.findPrevious(); // the last match: the first one comes before it
+     * ```
+     */
+    public findPrevious(): FindResult['current'] {
+        return this.grid ? findStep(this.grid, -1) : null;
+    }
+
+    /**
+     * Closes the find bar, as Esc in it does: the cells are not marked any more. Its text is kept, Ctrl+F
+     * shows it again. When the focus was in the bar it goes to the cell of the current match. `find-change`
+     * is sent.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('close-find')!.onclick = () => gridInterface.closeFind();
+     * ```
+     */
+    public closeFind() {
+        if (this.grid) {
+            closeFind(this.grid);
+        }
+    }
+
+    /**
+     * What Find has found now: whether the bar is open, its text, how many cells match and the current
+     * match, see {@link FindResult}. A copy. The `find-change` event sends the same each time it changes.
+     *
+     * @example
+     * ```ts
+     * const { open, count, position } = gridInterface.getFind();
+     * if (open) {
+     *     console.log(count ? `${position} of ${count}` : 'no matches');
+     * }
+     * ```
+     */
+    public getFind(): FindResult {
+        return this.grid ? getFindResult(this.grid) : { open: false, text: '', count: 0, position: 0, current: null };
+    }
+
+    /**
      * The rows as an Excel workbook (.xlsx), a Blob: one sheet with a header row of the column labels
      * (bold, frozen, with an autofilter over it and every row), then a row per data row. By default
      * every row the filter lets through, in the sort order, and the columns of the layout in the
@@ -1655,8 +1772,12 @@ export class GridInterface<T> {
                     this.updateRows(grid);
                 }
             }),
-            // values set from code, by undo, by an upsert ...: the rows on screen, in the next frame
-            follow('rows-changed', (data, grid) => requestRowsRender(grid, data.rows))
+            // values set from code, by undo, by an upsert ...: the rows on screen, in the next frame. An
+            // open find bar finds its text again
+            follow('rows-changed', (data, grid) => {
+                requestRowsRender(grid, data.rows);
+                findDataChanged(grid);
+            })
         ];
     }
 
@@ -1692,6 +1813,8 @@ export class GridInterface<T> {
         updateMainElementSizes(grid);
         rebuildFooter(grid);
         triggerScrollEvent(grid);
+        // rows added, removed or moved: an open find bar finds its text again
+        findDataChanged(grid);
     }
 
     /**

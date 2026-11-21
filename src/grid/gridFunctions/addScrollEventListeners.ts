@@ -1,4 +1,5 @@
 import type { Grid } from '../grid';
+import { findBarHasFocus } from './findBar';
 import { getElementByClassName } from './getElementByClassName';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { verticalScrollHandler } from './verticalScrollHandler';
@@ -102,7 +103,7 @@ export function addScrollEventListeners(ctx: Grid) {
      * - up/down scrolls the rows, left/right (a trackpad, Shift+wheel) the middle columns; Ctrl+Shift+wheel
      *   scrolls the columns too, as it did
      * - Ctrl+wheel without Shift is the browser's zoom (and a trackpad's pinch): left alone
-     * - the focus leaves the cell: the cell would scroll away under it
+     * - the focus leaves the cell: the cell would scroll away under it. Not the find bar (findBar.ts)
      * The standard `deltaX` / `deltaY` (Firefox has no `wheelDeltaY`), lines and pages turned into px
      */
     ctx.element.addEventListener(
@@ -125,8 +126,11 @@ export function addScrollEventListeners(ctx: Grid) {
                 middleScroller.scrollLeft = middleScroller.scrollLeft + (deltaY || deltaX);
                 return;
             }
-            ctx.focusElement.focus();
-            ctx.focusElement.blur();
+            // no cell is edited while the find bar has the focus: it keeps it, Enter goes on finding
+            if (!findBarHasFocus(ctx)) {
+                ctx.focusElement.focus();
+                ctx.focusElement.blur();
+            }
             if (deltaY) {
                 bodyScroller.scrollTop = bodyScroller.scrollTop + deltaY;
             }
@@ -163,8 +167,10 @@ export function addScrollEventListeners(ctx: Grid) {
     ctx.element.addEventListener(
         'touchmove',
         (event) => {
-            ctx.focusElement.focus();
-            ctx.focusElement.blur();
+            if (!findBarHasFocus(ctx)) {
+                ctx.focusElement.focus();
+                ctx.focusElement.blur();
+            }
 
             const currentY = event.touches[0].clientY;
             const deltaY = currentY - lastY;

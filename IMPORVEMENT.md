@@ -1477,6 +1477,64 @@ in the console. All passed. Found and fixed:
   and Chromium. They are in `.claude/browser-checks/` now (git-excluded, not committed): new scripts
   are written there
 
+### Find in the grid: Ctrl+F, the matches marked, next / previous (item 42)
+
+* findMatches.ts (no dom): the displayed rows (`getRows()`, group rows skipped - so not the rows of a
+  collapsed group) x the layout fields (`getLayoutFields()`), the text by `cellTextOf` (formatter,
+  `numberOverride`, `dynamicCellTypeColumn`), `toLowerCase().includes()`, boolean cells skipped (a
+  checkbox shows no text), the whole text of a multiline cell. `matchAtOrAfter`: the anchor itself while it
+  matches (by row object + field, so a sort keeps it), else the first match after its row (looked up
+  again, or the row it was at when filtered out), wrapping to 0
+* findBar.ts: the bar is `ctx.findBar`, made on the first open, the first child of the grid element
+  (absolute, top right, z-index 2000 over the cell inputs' 1000; 25px - over the default panel). lit
+  render of input / `role="status"` count / three `<button>`s, `role="search"` on the bar. Keys:
+  Ctrl+F / Cmd+F and F3 on a keydown listener of the grid element (createDom, aborted with the scroll
+  listeners), Enter on the input, Esc on the bar. The letter by `key`, by `code === 'KeyF'` only when
+  the key is no Latin letter (Cyrillic): Dvorak's F is where it types f
+* the search waits FIND_DELAY_MS (150) after the last key and after the last change of the data; Enter
+  in that time runs it and shows the first match (it does not skip it). `find()` runs at once (returns
+  the count). Matches are looked up per cell through `Map<row object, Set<field>>`, not by row index: a
+  render between a sort and the search marks the right cells
+* the classes are set in renderRowCell (showCellFind, next to showCellRange) and on the cells on screen
+  when the matches change (`forEachCellOnScreen`, split from renderRangeClasses in rangeSelection.ts)
+* following the data: `findDataChanged()` from `Grid.rebuild()` (filter, sort, group, expand,
+  collapse, rows set, layout, updateConfig, setState, resize), `updateAfterMerge()` (an upsert) and
+  `rows-changed` (values from code, the user, undo). Not on `current-entity` / `selection-change`: they
+  re-render, they change no text. It never scrolls for a change of the data
+* scrolling: `scrollCellIntoView` (rangeSelection.ts) got a `middle` option - out of view, the row / the
+  middle column in the middle of the view, a column wider than the view at its start - and returns
+  whether it scrolled; then `triggerScrollEvent` renders at once (a jump of more than 500px would else
+  wait 150ms for the scrolling to stop, and Esc could not focus the cell)
+* Esc / the close button: when the focus was in the bar - the current match's cell gets the focus
+  (`focusCellInput`, exported) and its row is made current (as Alt+arrows to another row does); without
+  a match the cell Ctrl+F came from (by row object, scrolled back), else the header filter / column header
+  it came from. The buttons cancel their mousedown: the focus stays in the input
+* the wheel and a swipe took the focus to the hidden focus input (for the cell being edited): not when
+  the find bar has it (addScrollEventListeners.ts) - Enter after the wheel goes on finding
+* the bar is closed in `disconnectElement` (its timer), without moving the focus
+* a narrow grid: the input shrinks to 40px and the count gives way (ellipsis) before the buttons - a
+  grid of 144px still shows ↑ ↓ ✕. Without a panel (`panelHeight: 0`) the bar covers the right end of
+  the labels row (25px), never the rows
+* decisions: the current match is not the current row while stepping (a detail form bound to
+  `current-entity` would load on every Enter) - only on Esc. `find()` does not move the focus,
+  `openFind()` does (for the "Find…" menu entry to come). No option to turn Ctrl+F off. The tint of the
+  other matches is under 3:1 to the rows (a highlighter's), the current match's line is 3:1+
+* colours: match yellow / amber, current orange + a 2px inset line (box-shadow, with an error's border
+  inside it); in a range both tints (two gradients). Contrast checked: text 4.98+ over every tint, row
+  colour, selected row, range and error tint; the line 3.25+ (light and dark, computed and read from the
+  pixels in the browser)
+* texts `find.label`, `find.placeholder`, `find.count`, `find.none`, `find.previous` / `.next` / `.close`
+  and their `.tooltip`; the texts test opens the bar with and without matches
+* tests: find.test.ts (43: formatted text, case, empty, order across pinned/stacked, checkbox, multiline,
+  numberOverride, filter / collapsed groups, the anchor after a sort and a filter, the API and the event,
+  scrolling down / sideways / a wide column, classes on reused cells, Ctrl+F in / outside / with Shift or
+  Alt / Cyrillic / Dvorak / already canceled, typing and the delay, Enter / Shift+Enter / F3, F3 in a cell,
+  Esc and the focus, the buttons, following a filter / sort / edit / layout, aria, texts, the wheel).
+  Browser: `.claude/browser-checks/scripts/find-check.js` 41/41 (in this worktree), screenshots
+  light and dark
+* left: a "Find…" entry in the row menu (after the menus' submenus are merged); Cmd+G / Ctrl+G; match
+  case / whole word
+
 ## Considered, not done
 
 ## Candidates / not started

@@ -250,6 +250,13 @@ see [Undo and redo](05-editing.md#undo-and-redo).
 datasource.undo();
 ```
 
+## Find
+
+Ctrl+F in the grid finds a text in the cells and marks them - a match in a range shows both tints. It
+selects nothing: the ranges and the selected rows stay as they are; Esc in the find bar puts the focus in
+the cell of the current match, which clears the ranges as moving to another cell does. See
+[Find](19-find.md).
+
 ## What a screen reader gets
 
 The cells of a range have `aria-selected="true"`; the other cells have none. The keys are in the

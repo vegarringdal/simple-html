@@ -2,6 +2,7 @@ import type { Entity } from '../datasource/entity';
 import { addMenuListeners } from './gridFunctions/addMenuListeners';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
+import { closeFind, type FindBar, findDataChanged } from './gridFunctions/findBar';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
 import { addClipboardListeners } from './gridFunctions/rangeClipboard';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
@@ -84,6 +85,8 @@ export class Grid {
     public columnChooserMenu?: HTMLElement | null;
     // the editor of a multiline cell, a popover over the cell: see openTextEditor. Null when it is closed
     public textEditor: TextEditor | null = null;
+    // Find (Ctrl+F): the find bar and what it found, see findBar.ts. Null until it opens the first time
+    public findBar: FindBar | null = null;
     /** aborts the document listeners addMenuListeners added, see there */
     public menuListenersAbort?: AbortController;
     /** aborts the document listeners of copy and paste, see addClipboardListeners in rangeClipboard.ts */
@@ -194,6 +197,8 @@ export class Grid {
         closeTextEditor(this);
         removeContextMenu(this);
         closeFilterEditor(this);
+        // the find bar is in the element, its search may wait on a timer: closed, the focus left as it is
+        closeFind(this, false);
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
         // shown for a cell of this grid maybe: it is not in the element either
@@ -280,5 +285,7 @@ export class Grid {
         rebuildTopPanel(this);
         rebuildFooter(this);
         triggerScrollEvent(this);
+        // the rows, the layout or the texts can be others: an open find bar finds the text again
+        findDataChanged(this);
     }
 }

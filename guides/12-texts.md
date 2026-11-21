@@ -147,7 +147,7 @@ Nothing is shown again when a text changes, it is read when what shows it is mad
 
 | what | shows a changed text |
 | --- | --- |
-| the grid: header, rows, footer | after its next rebuild. `updateConfig({ texts })` rebuilds, after `setTexts()` call `gridInterface.rebuild()` |
+| the grid: header, rows, footer, the find bar | after its next rebuild. `updateConfig({ texts })` rebuilds, after `setTexts()` call `gridInterface.rebuild()` |
 | a menu, the column chooser, the filter editor, the date picker | the next time it opens (the filter editor also when it is rendered again after an edit) |
 | `getFilterString()` | on its next call |
 | a validation message | when the value is validated: an edit of the field, or `validate()`. An error already there keeps its text |
@@ -172,9 +172,9 @@ gridInterface.rebuild(); // every grid of the page
 - The placeholders of the date formatters, `YYYY-MM-DD` and `DD.MM.YYYY` in an empty date header
   filter: give the column a `placeholderFilter`, or use a formatter of your own with another
   `placeholder` (see [Formatting](08-formatting.md#a-formatter-of-your-own)).
-- Symbols and numbers: `✕` closes the filter editor, `✓` marks the dimmed values on, `?` a footer
-  chip without a field or operator, `(12)` the count of a value in the
-  value list.
+- Symbols and numbers: `✕` closes the filter editor and the find bar, `↑` and `↓` of the find bar,
+  `✓` marks the dimmed values on, `?` a footer chip without a field or operator, `(12)` the count of a
+  value in the value list.
 - `headerTitle` of a `DateInterface` calendar: your own text.
 
 ## All ids
@@ -435,6 +435,23 @@ filter shows its formatter's format (`YYYY-MM-DD`), a boolean filter is a checkb
 | --- | --- | --- |
 | `filter.placeholder.text` | `Text` | an empty header filter of a text field |
 | `filter.placeholder.number` | `Number` | an empty header filter of a number field |
+
+### Find
+
+The find bar of Ctrl+F in the grid, see [Find](19-find.md).
+
+| id | English | shown |
+| --- | --- | --- |
+| `find.label` | `Find in the grid` | the name of the find bar (a search region) for a screen reader |
+| `find.placeholder` | `Find` | the placeholder of its input, and the input's name for a screen reader |
+| `find.count` | `{current} of {count}` | the count of the matches. `{current}`: the number of the current match, `{count}`: how many cells match |
+| `find.none` | `No matches` | the count when no cell matches the text |
+| `find.previous` | `Previous match` | the `↑` button: its name for a screen reader |
+| `find.previous.tooltip` | `Previous match (Shift+Enter)` | its tooltip |
+| `find.next` | `Next match` | the `↓` button |
+| `find.next.tooltip` | `Next match (Enter)` | its tooltip |
+| `find.close` | `Close` | the `✕` button, closes the find bar |
+| `find.close.tooltip` | `Close (Esc)` | its tooltip |
 
 ### Screen readers
 

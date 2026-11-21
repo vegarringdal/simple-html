@@ -25,6 +25,8 @@ import { filtering } from './samples/filtering';
 import filteringSource from './samples/filtering.ts?raw';
 import { filterOperatorHeader } from './samples/filterOperatorHeader';
 import filterOperatorHeaderSource from './samples/filterOperatorHeader.ts?raw';
+import { find } from './samples/find';
+import findSource from './samples/find.ts?raw';
 import { formatters } from './samples/formatters';
 import formattersSource from './samples/formatters.ts?raw';
 import { gridState } from './samples/gridState';
@@ -75,6 +77,7 @@ export const SAMPLES: Sample[] = [
     { ...sortingGrouping, source: sortingGroupingSource },
     { ...aggregates, source: aggregatesSource },
     { ...filtering, source: filteringSource },
+    { ...find, source: findSource },
     { ...selection, source: selectionSource },
     { ...rowsData, source: rowsDataSource },
     // editing

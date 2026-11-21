@@ -202,6 +202,34 @@ The classes: `simple-html-cell-in-range` on every cell in a range, and `simple-h
 }
 ```
 
+## Find
+
+Find (Ctrl+F in the grid, see [Find](19-find.md)) marks the cells that show the text with a tint, the
+current match with a stronger tint and a 2px line inside its edge:
+
+- `--simple-html-grid-find-match-color` - laid over a cell that matches, under its text: yellow in
+  light, amber in dark. A colour with alpha, so the row's colour and a range's tint show through
+- `--simple-html-grid-find-current-color` - laid over the current match instead: orange
+- `--simple-html-grid-find-current-border-color` - the line around the current match
+
+The defaults keep the text at 4.5:1 or more over both tints (on the rows and on the selected rows), and
+the line at 3:1 or more against the rows, the selected rows and the current match's tint, in light and
+in dark (WCAG 1.4.3 and 1.4.11): the line tells the current match, not the colour alone. The tint of the
+other matches is a highlighter's, not a line - it is not 3:1 against the rows. Keep that when you change
+them.
+
+```css
+.simple-html-grid {
+    --simple-html-grid-find-match-color: light-dark(rgba(34, 197, 94, 0.3), rgba(21, 128, 61, 0.5));
+    --simple-html-grid-find-current-border-color: light-dark(#14532d, #bbf7d0);
+}
+```
+
+The classes: `simple-html-cell-find-match` on every match, `simple-html-cell-find-current` on the
+current one too. The find bar is `simple-html-grid-find`, in the grid's colours: the panel's background
+(`--simple-html-grid-main-bg-color`), the input of the header filters (`--simple-html-grid-sec-bg-color`),
+the frame and shadow of the tooltips.
+
 ## The variables of the grid
 
 On `.simple-html-grid`, in `grid.css`.
@@ -225,6 +253,9 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-focus-color` | the outline of the element with the keyboard focus | `#005fcc` | `#b3d7ff` |
 | `--simple-html-grid-range-bg-color` | laid over the cells of a range of cells, see [Ranges of cells](#ranges-of-cells) | `rgba(37, 99, 235, 0.12)` | `rgba(59, 130, 246, 0.2)` |
 | `--simple-html-grid-range-border-color` | the line around a range of cells | `#1e40af` | `#dbeafe` |
+| `--simple-html-grid-find-match-color` | laid over a cell that matches Find (Ctrl+F), see [Find](#find) | `rgba(250, 204, 21, 0.4)` | `rgba(180, 83, 9, 0.45)` |
+| `--simple-html-grid-find-current-color` | laid over the current match of Find | `rgba(251, 146, 60, 0.6)` | `rgba(194, 65, 12, 0.65)` |
+| `--simple-html-grid-find-current-border-color` | the line around the current match of Find | `#9a3412` | `#fed7aa` |
 | `--simple-html-grid-error-color` | a validation error: the border of the cell, the bar and the exclamation mark of the row selector | `#dc2626` | `#fca5a5` |
 | `--simple-html-grid-error-bg-color` | a validation error: laid over the cell and the row selector | `rgba(220, 38, 38, 0.12)` | `rgba(248, 113, 113, 0.22)` |
 | `--simple-html-grid-edited-color` | the marker of an edited cell, the pencil of an edited row (`editedMarker`, `rowStatus`) | `#9a3412` | `#fdba74` |

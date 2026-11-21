@@ -12,6 +12,7 @@ import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { showCellFind } from './findBar';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
@@ -66,6 +67,7 @@ export function renderRowCell(
         showCellEdited(ctx, cell, null, null);
         showCellMerged(ctx, cell, null, null);
         showCellRange(ctx, cell);
+        showCellFind(ctx, cell, null, null);
         cell.classList.remove('simple-html-cell-deleted');
         return;
     }
@@ -540,4 +542,6 @@ export function renderRowCell(
 
     // in a range of cells or not: the cell is reused for other rows and fields while scrolling
     showCellRange(ctx, cell);
+    // a match of Find (Ctrl+F) or not, the same
+    showCellFind(ctx, cell, entity, attribute || null);
 }

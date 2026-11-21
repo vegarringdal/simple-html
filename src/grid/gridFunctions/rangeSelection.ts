@@ -89,6 +89,15 @@ export function showCellRange(ctx: Grid, cell: HTMLCellElement) {
  * scroll in later get them from renderRowCell.
  */
 export function renderRangeClasses(ctx: Grid) {
+    forEachCellOnScreen(ctx, (cell) => showCellRange(ctx, cell));
+}
+
+/**
+ * Calls `show` for every body cell element that shows a row now - the row and column elements in use,
+ * in the three column sections: for the classes of the cells after the ranges or the matches of Find
+ * changed (renderRangeClasses, findBar.ts), without rendering the cells. Nothing before the dom is made
+ */
+export function forEachCellOnScreen(ctx: Grid, show: (cell: HTMLCellElement) => void) {
     // the ranges can be set before the dom is made, the first render shows them
     if (!ctx.domCreated) {
         return;
@@ -106,7 +115,7 @@ export function renderRangeClasses(ctx: Grid) {
                     return;
                 }
                 for (const cell of columnElement.children) {
-                    showCellRange(ctx, cell as HTMLCellElement);
+                    show(cell as HTMLCellElement);
                 }
             });
         }
@@ -354,7 +363,7 @@ function rangePointerDown(ctx: Grid, down: PointerEvent) {
  * scrollbars, the browser must not scroll them
  * @returns false when the cell is not on screen
  */
-function focusCellInput(ctx: Grid, point: CellPoint): boolean {
+export function focusCellInput(ctx: Grid, point: CellPoint): boolean {
     for (const columnElement of ctx.columns.values()) {
         // a hidden row or column element still has what it showed last on its cells
         const shown = columnElement.style.display !== 'none' && columnElement.parentElement?.style.display !== 'none';
@@ -458,31 +467,44 @@ function nextDataRow(ctx: Grid, row: number, step: number) {
 
 /**
  * Scrolls a cell into view: the rows when it is above or below them, the middle columns when it is in
- * one of them and left or right of what is shown. The scroll events render what scrolls in
+ * one of them and left or right of what is shown. A cell in a pinned column is always shown sideways.
+ * The scroll events render what scrolls in.
+ *
+ * @param middle put a cell that is out of view in the middle of the view, as a browser's find does -
+ * else it goes to the edge it was past, as the next cell of the keys
+ * @returns true when it scrolled
  */
-function scrollCellIntoView(ctx: Grid, row: number, field: string) {
+export function scrollCellIntoView(ctx: Grid, row: number, field: string, middle = false): boolean {
     const gridInterface = ctx.gridInterface;
     const { scrollTops, scrollHeights } = gridInterface.__getScrollState();
     const bodyScroller = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
+    const scrollTop = bodyScroller.scrollTop;
     const top = scrollTops[row];
     const bottom = top + scrollHeights[row];
+    // the top that puts the row in the middle, not above the first row - a row taller than the view at the top
+    const inTheMiddle = Math.max(0, Math.round(top - Math.max(0, bodyScroller.clientHeight - scrollHeights[row]) / 2));
     if (top < bodyScroller.scrollTop) {
-        bodyScroller.scrollTop = top;
+        bodyScroller.scrollTop = middle ? inTheMiddle : top;
     } else if (bottom > bodyScroller.scrollTop + bodyScroller.clientHeight) {
-        bodyScroller.scrollTop = bottom - bodyScroller.clientHeight;
+        bodyScroller.scrollTop = middle ? inTheMiddle : bottom - bodyScroller.clientHeight;
     }
+    const scrolled = bodyScroller.scrollTop !== scrollTop;
 
     const center = gridInterface.__getGridConfig().layout.center;
     const column = center.findIndex((col) => col.fields.includes(field));
     if (column === -1) {
-        return;
+        return scrolled;
     }
     const middleScroller = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
+    const scrollLeft = middleScroller.scrollLeft;
     const left = center.slice(0, column).reduce((sum, col) => sum + col.width, 0);
-    const right = left + center[column].width;
+    const width = center[column].width;
+    // a column wider than the view: its start, where its text is
+    const leftInTheMiddle = Math.max(0, Math.round(left - Math.max(0, middleScroller.clientWidth - width) / 2));
     if (left < middleScroller.scrollLeft) {
-        middleScroller.scrollLeft = left;
-    } else if (right > middleScroller.scrollLeft + middleScroller.clientWidth) {
-        middleScroller.scrollLeft = right - middleScroller.clientWidth;
+        middleScroller.scrollLeft = middle ? leftInTheMiddle : left;
+    } else if (left + width > middleScroller.scrollLeft + middleScroller.clientWidth) {
+        middleScroller.scrollLeft = middle ? leftInTheMiddle : left + width - middleScroller.clientWidth;
     }
+    return scrolled || middleScroller.scrollLeft !== scrollLeft;
 }

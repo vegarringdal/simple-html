@@ -86,6 +86,12 @@
        those */
     --simple-html-grid-range-bg-color: light-dark(rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.2));
     --simple-html-grid-range-border-color: light-dark(#1e40af, #dbeafe);
+    /* Find (Ctrl+F in the grid): laid over a cell that shows the text, a stronger one over the current
+       match, and the 2px line around the current match. The text keeps 4.5:1 over the tints, the line
+       has 3:1 or more to the rows, the selected rows and the tint - in light and dark */
+    --simple-html-grid-find-match-color: light-dark(rgba(250, 204, 21, 0.4), rgba(180, 83, 9, 0.45));
+    --simple-html-grid-find-current-color: light-dark(rgba(251, 146, 60, 0.6), rgba(194, 65, 12, 0.65));
+    --simple-html-grid-find-current-border-color: light-dark(#9a3412, #fed7aa);
     /* shadows: the menus, the filter editor, the tooltips, the scrollbar thumbs. A plain colour is the
        same in light and dark */
     --simple-html-grid-menu-shadow-color: black;
@@ -776,6 +782,119 @@
 
 .simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-right::after {
     border-right-width: 2px;
+}
+
+/**
+ * Find (Ctrl+F in the grid, findBar.ts): a cell that shows the text gets a tint under its input, the
+ * current match a stronger one and a 2px line inside its edge. Over a range's tint (both show) and an
+ * error's. The line is a shadow inside the cell, with an error's border inside it
+ */
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-match {
+    background-image: linear-gradient(var(--simple-html-grid-find-match-color), var(--simple-html-grid-find-match-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-match.simple-html-cell-in-range {
+    background-image:
+        linear-gradient(var(--simple-html-grid-find-match-color), var(--simple-html-grid-find-match-color)),
+        linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current {
+    background-image: linear-gradient(var(--simple-html-grid-find-current-color), var(--simple-html-grid-find-current-color));
+    box-shadow: inset 0 0 0 2px var(--simple-html-grid-find-current-border-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current.simple-html-cell-in-range {
+    background-image:
+        linear-gradient(var(--simple-html-grid-find-current-color), var(--simple-html-grid-find-current-color)),
+        linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current.simple-html-cell-error {
+    box-shadow:
+        inset 0 0 0 2px var(--simple-html-grid-find-current-border-color),
+        inset 0 0 0 3px var(--simple-html-grid-error-color);
+}
+
+/**
+ * the find bar (Ctrl+F, findBar.ts): over the top right corner of the grid - the panel, or the labels
+ * without one - over the inputs of the cells (1000). The input, the count of the matches, previous,
+ * next and close in a row; it gets narrower with the grid
+ */
+.simple-html-grid .simple-html-grid-find {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2000;
+    box-sizing: border-box;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    max-width: 100%;
+    height: 25px;
+    padding: 2px;
+    background-color: var(--simple-html-grid-main-bg-color);
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    box-shadow: 0 2px 6px var(--simple-html-grid-tooltip-shadow-color);
+    color: var(--simple-html-grid-main-font-color);
+    pointer-events: all;
+}
+
+.simple-html-grid .simple-html-grid-find[hidden] {
+    display: none;
+}
+
+.simple-html-grid .simple-html-grid-find-input {
+    flex: 1 1 160px;
+    width: 160px;
+    min-width: 40px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+.simple-html-grid .simple-html-grid-find-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* the count gives way first in a narrow grid, the buttons stay */
+.simple-html-grid .simple-html-grid-find-count {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 0 4px;
+    overflow: hidden;
+    line-height: 19px;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.simple-html-grid .simple-html-grid-find-button {
+    flex: 0 0 auto;
+    width: 21px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-find-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+    border-color: var(--simple-html-grid-pinned-border);
 }
 
 /**
