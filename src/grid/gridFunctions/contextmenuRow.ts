@@ -11,6 +11,7 @@ import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { writeCellValue } from './lookupColumn';
 import { clearRangeCells, pasteText, rangeClipboardText, writeClipboard } from './rangeClipboard';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { placeUnderCell, showMenu } from './showMenu';
@@ -568,7 +569,8 @@ function clearRows(ctx: Grid, attribute: string) {
     const selectedRows = ctx.gridInterface.getDatasource().getSelectedRows();
     selectedRows.forEach((entity) => {
         if (!ctx.gridInterface.__isCellReadonly(entity, attribute)) {
-            entity[attribute] = null;
+            // a lookup column empties the fields of its `set` too
+            writeCellValue(ctx.gridInterface, entity, attribute, null);
         }
     });
 }
@@ -584,7 +586,8 @@ function pasteIntoCells(
     eventData: { cell: HTMLCellElement; row: number; column: number; celno: number; colType: ColType; cellType: string }
 ) {
     const datasource = ctx.gridInterface.getDatasource();
-    const formatter = datasource.getFormatter(attribute);
+    // a lookup column (ColumnConfig.editor) takes a label, copied from it, as the value of its row
+    const formatter = ctx.gridInterface.__getLookupColumn(attribute)?.formatter ?? datasource.getFormatter(attribute);
 
     if (ctx.gridInterface.__getGridConfig().readonly) {
         return;
@@ -595,7 +598,7 @@ function pasteIntoCells(
             return;
         }
 
-        entity[attribute] = formatter.parse(data);
+        writeCellValue(ctx.gridInterface, entity, attribute, formatter.parse(data));
 
         const { cell, row, column, celno, colType, cellType } = eventData;
         ctx.gridInterface.__callSubscribers('paste', { cell, row, column, celno, colType, cellType, attribute, entity });

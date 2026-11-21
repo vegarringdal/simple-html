@@ -7,6 +7,7 @@ import { getCellType } from './getCellType';
 import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { writeCellValue } from './lookupColumn';
 import { focusedCell, hasSelectedText, pointOf } from './rangeSelection';
 
 /**
@@ -267,8 +268,11 @@ function writeCell(ctx: Grid, row: Entity, field: string, text: string) {
     if (ctx.gridInterface.__isCellReadonly(row, field)) {
         return;
     }
-    const formatter = ctx.gridInterface.getDatasource().getFormatter(field, getCellType(ctx, field, row));
-    row[field] = text === '' ? null : formatter.parse(text);
+    // a lookup column (ColumnConfig.editor) takes a label, copied from it, as the value of its row
+    const formatter =
+        ctx.gridInterface.__getLookupColumn(field)?.formatter ??
+        ctx.gridInterface.getDatasource().getFormatter(field, getCellType(ctx, field, row));
+    writeCellValue(ctx.gridInterface, row, field, text === '' ? null : formatter.parse(text));
 }
 
 /**
@@ -287,7 +291,7 @@ export function clearRangeCells(ctx: Grid) {
         for (const row of rows) {
             for (const field of fields) {
                 if (!gridInterface.__isCellReadonly(row, field)) {
-                    row[field] = null;
+                    writeCellValue(gridInterface, row, field, null);
                 }
             }
         }

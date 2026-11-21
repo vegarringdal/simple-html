@@ -116,6 +116,12 @@ export function cellText(gridInterface: GridInterface<any>, field: string, forma
         return (row) => rawValueText(row[field]);
     }
 
+    // a lookup column (ColumnConfig.editor): the label of the value, as the cell shows it
+    const lookupFormatter = gridInterface.__getLookupColumn(field)?.formatter;
+    if (lookupFormatter) {
+        return (row) => lookupFormatter.format(row[field]);
+    }
+
     const datasource = gridInterface.getDatasource();
     const column = gridInterface.__getGridConfig().columns[field];
     const formatter = datasource.getFormatter(field);

@@ -54,6 +54,11 @@
     /* the marker of a cell of several lines (FieldConfig.multiline): there are more lines than it
        shows. At least 3:1 against the rows and a selected row, like the row state */
     --simple-html-grid-multiline-color: light-dark(#475569, #e2e8f0);
+    /* a lookup column (ColumnConfig.editor): the button at the right of the cell - its background and
+       the triangle on it, at least 3:1 against the background - and the active option of its select */
+    --simple-html-grid-lookup-button-bg-color: light-dark(#e9edf2, #374151);
+    --simple-html-grid-lookup-icon-color: light-dark(#475569, #e2e8f0);
+    --simple-html-grid-lookup-active-bg-color: light-dark(#dbe7f3, #2f4f80);
     /* the totals row under the rows (GridConfig.totalsRow): its background and its text */
     --simple-html-grid-totals-bg-color: light-dark(#e8edf3, #2a3441);
     --simple-html-grid-totals-font-color: light-dark(#1f2328, #f9fafb);
@@ -920,6 +925,140 @@
     border-top: 1px solid var(--simple-html-grid-main-bg-border);
     color: var(--simple-html-grid-main-font-color);
     background-color: var(--simple-html-grid-main-bg-color);
+}
+
+/**
+ * a lookup column (ColumnConfig.editor, lookupEditor.ts): the button at the right of a cell that can
+ * be edited opens the list. Over the input (1000), square, the height of the cell. Shown while the
+ * pointer is over the cell and while the cell has the focus - the input's text stops before it either
+ * way, so it does not move when the button shows
+ */
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-lookup {
+    padding-right: 20px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-lookup-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 18px;
+    z-index: 1001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 0;
+    color: var(--simple-html-grid-lookup-icon-color);
+    background-color: var(--simple-html-grid-lookup-button-bg-color);
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-col-cell:hover .simple-html-grid-lookup-button,
+.simple-html-grid .simple-html-grid-col-cell:focus-within .simple-html-grid-lookup-button {
+    display: flex;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-lookup-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-lookup-icon {
+    display: block;
+    width: 8px;
+    height: 8px;
+    fill: currentColor;
+}
+
+/**
+ * the editor of a lookup column: a popover under the cell, like the editor of a multiline cell. The
+ * select is a search field over a list that scrolls, ten options high; the dropdown grid is a grid
+ * element sized by lookupEditor.ts
+ */
+.simple-html-grid.simple-html-grid-lookup {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    box-shadow: 0 2px 8px var(--simple-html-grid-dialog-shadow-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.simple-html-grid-lookup-select {
+    max-width: 360px;
+}
+
+.simple-html-grid .simple-html-grid-lookup-search {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 0;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 0;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    /* .simple-html-grid turns selecting text off */
+    user-select: text;
+}
+
+.simple-html-grid .simple-html-grid-lookup-search::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+.simple-html-grid .simple-html-grid-lookup-list {
+    position: relative;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 2px 0;
+}
+
+.simple-html-grid .simple-html-grid-lookup-option {
+    position: relative;
+    box-sizing: border-box;
+    height: 20px;
+    line-height: 20px;
+    padding: 0 10px 0 22px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--simple-html-grid-main-font-color);
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-lookup-option-active {
+    background-color: var(--simple-html-grid-lookup-active-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-lookup-option-current {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the check of the current value, left of its label */
+.simple-html-grid .simple-html-grid-lookup-check {
+    position: absolute;
+    left: 7px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+}
+
+.simple-html-grid .simple-html-grid-lookup-note {
+    padding: 3px 10px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    color: var(--simple-html-grid-sec-font-color);
 }
 
 /**

@@ -7,6 +7,11 @@ export class Sort {
     private lastSorting: SortArgument[];
     private currentSorting: SortArgument[];
     private localeCompareCode: Intl.Collator | null;
+    /**
+     * the text a field is sorted on instead of its value, by field: see setSortValue. A field not in
+     * it sorts on its value
+     */
+    private sortValues = new Map<string, (value: unknown) => string>();
 
     /**
      * @param fieldType the type of a field, from the datasource's schema: a `date` field sorts on the
@@ -20,6 +25,27 @@ export class Sort {
 
     public setLocaleCompare(code: string, options?: any): void {
         this.localeCompareCode = new Intl.Collator(code, options);
+    }
+
+    /**
+     * Sorts a field on a text made from its value instead of the value: the label the grid shows for
+     * it (a lookup column, the label of the picked row). Values with the same text are sorted on the
+     * value after it, so two values compare as equal only when they are - grouping relies on that.
+     * @param sortValue the text of a value, null to sort the field on its value again
+     */
+    public setSortValue(attribute: string, sortValue: ((value: unknown) => string) | null): void {
+        if (sortValue) {
+            this.sortValues.set(attribute, sortValue);
+        } else {
+            this.sortValues.delete(attribute);
+        }
+    }
+
+    /**
+     * the function setSortValue() was given for a field, undefined without one
+     */
+    public getSortValue(attribute: string): ((value: unknown) => string) | undefined {
+        return this.sortValues.get(attribute);
     }
 
     public reset(defaultSortAttribute?: string): void {
@@ -81,11 +107,20 @@ export class Sort {
         const thisSort = this.getOrderBy();
         // looked up once, not for every compare
         const dayOnly = thisSort.map((sortArg) => this.fieldType(sortArg.attribute) === 'date');
+        const sortValues = thisSort.map((sortArg) => this.sortValues.get(sortArg.attribute));
 
         array.sort((obj1: any, obj2: any) => {
             // first sort argument that tells the rows apart decides
             for (const [i, sortArg] of thisSort.entries()) {
-                const result = this.compareAscending(obj1[sortArg.attribute], obj2[sortArg.attribute], dayOnly[i]);
+                const value1 = obj1[sortArg.attribute];
+                const value2 = obj2[sortArg.attribute];
+                const sortValue = sortValues[i];
+                // the text of the value first (setSortValue), then the value: the same text for two
+                // values is no tie
+                let result = sortValue ? this.compareAscending(sortValue(value1), sortValue(value2), false) : 0;
+                if (result === 0) {
+                    result = this.compareAscending(value1, value2, dayOnly[i]);
+                }
                 if (result !== 0) {
                     // descending is the ascending result flipped, so blanks end up last
                     return sortArg.ascending === true ? result : -result;

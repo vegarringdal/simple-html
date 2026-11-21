@@ -50,13 +50,22 @@ export type { EventHandler } from './emitter';
 export type { CellRange } from './grid/cellRange';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';
-export type { ColumnConfig, GridConfig, GridLayout, GridState, HeaderFilter, LayoutColumn } from './grid/gridConfig';
+export type {
+    ColumnConfig,
+    ColumnEditor,
+    GridConfig,
+    GridLayout,
+    GridState,
+    HeaderFilter,
+    LayoutColumn
+} from './grid/gridConfig';
 export { GridElement } from './grid/gridElement';
 export type { GridCellEventData, GridEvents } from './grid/gridEvents';
 export type { ColType } from './grid/gridFunctions/colType';
 export type { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
 export type { CellClass, GridHooks } from './grid/gridHooks';
 export { GridInterface } from './grid/gridInterface';
+export { type Lookup, type LookupFromDatasource, type LookupFromGridInterface, registerLookup } from './grid/lookup';
 export {
     type GridMenus,
     MENU_IDS,

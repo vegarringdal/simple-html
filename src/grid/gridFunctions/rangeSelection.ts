@@ -127,13 +127,13 @@ export function addRangeListeners(ctx: Grid) {
 /**
  * The body cell of the grid with a field an element is in: null for anything else - a header cell, a
  * group row, the row selector, an empty cell under the last field of a column - and for the focus
- * button and the edited marker of a cell, they are buttons
+ * button, the button of a lookup column and the edited marker of a cell, they are buttons
  */
 export function bodyCellOf(ctx: Grid, target: EventTarget | null): HTMLCellElement | null {
     if (
         !(target instanceof Element) ||
         !ctx.body?.contains(target) ||
-        target.closest('.simple-html-grid-focus-button, .simple-html-cell-edited-marker')
+        target.closest('.simple-html-grid-focus-button, .simple-html-grid-lookup-button, .simple-html-cell-edited-marker')
     ) {
         return null;
     }

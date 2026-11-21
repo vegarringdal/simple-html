@@ -2,6 +2,7 @@ import { and, type FilterExpression, type FilterGroup, isFilterGroup, where } fr
 import { parseFilterText } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
+import { valuesWithLabel } from './lookupColumn';
 
 /**
  * filters columns
@@ -22,9 +23,12 @@ export function filterCallback(
     const datasource = ctx.gridInterface.getDatasource();
     const { type, formatter } = datasource.getField(field);
     const text = typeof value === 'string' ? value : formatter.format(value);
+    // a lookup column (ColumnConfig.editor) shows labels: the text typed finds the lookup rows whose
+    // label matches, the rows are filtered on their values - a text filter, also for a number field
+    const lookupColumn = ctx.gridInterface.__getLookupColumn(field);
 
     let filterValue: unknown;
-    switch (type) {
+    switch (lookupColumn ? 'text' : type) {
         case 'date':
         case 'datetime':
         case 'number':
@@ -47,12 +51,18 @@ export function filterCallback(
      */
     const filter = filterWithoutColumn(datasource.getFilter(), field);
 
+    const operator = getHeaderFilterOperator(ctx, field);
+    // blank or not blank is the cell's own value, not a label
+    const byLabel = lookupColumn && typeof filterValue === 'string' && operator !== 'IS_BLANK' && operator !== 'IS_NOT_BLANK';
+
     // no type on the condition, the datasource reads it from its fields
     if (filterArrayAndValue) {
         // search text from the value list menu, always a contains
         filter.children.push(where(field, 'CONTAINS', filterArrayAndValue));
     } else if (filterValue !== null && filterValue !== undefined && filterValue !== '') {
-        filter.children.push(where(field, getHeaderFilterOperator(ctx, field), filterValue));
+        filter.children.push(
+            byLabel ? where(field, 'IN', valuesWithLabel(lookupColumn, operator, String(filterValue))) : where(field, operator, filterValue)
+        );
     }
 
     if (filterArray) {

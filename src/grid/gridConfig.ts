@@ -399,21 +399,55 @@ export type ColumnConfig = {
 
     /**
      * shows a `...` button at the right of the cell while it has focus; clicking it, or Space in the cell,
-     * sends the `cell-focus-button-click` event - open a dialog or a dropdown from there. When it is
-     * shown: `'SHOW_IF_GRID_NOT_READONLY'` the grid is editable, `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`
-     * the grid and the cell are editable, `'ALWAYS'` always. Not on a boolean (checkbox) cell
+     * sends the `cell-focus-button-click` event - open a dialog or a dropdown of your own from there. When
+     * it is shown: `'SHOW_IF_GRID_NOT_READONLY'` the grid is editable, `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`
+     * the grid and the cell are editable, `'ALWAYS'` always. Not on a boolean (checkbox) cell.
      *
-     * @sample dropdown-grid
+     * To pick the value from a list, `editor` does it all - its button, the keys, writing the value.
+     * A column has one of the two: both throw a `TypeError`
      */
     focusButton?: 'SHOW_IF_GRID_NOT_READONLY' | 'SHOW_IF_GRID_AND_CELL_NOT_READONLY' | 'ALWAYS';
 
     /**
      * the cells can not be typed in, only changed by the row menu's paste and clear (and by your own
-     * code, e.g. a dropdown from `focusButton`). Typed text is undone right away
+     * code, e.g. a dialog from `focusButton`). Typed text is undone right away. A column with an
+     * `editor` is never typed in, its list opens as without this option
      *
      * @sample misc-options
      */
     allowPasteClearOnly?: boolean;
+
+    /**
+     * the value is picked from a list: a select or a dropdown grid, of the rows of a lookup registered
+     * with {@link registerLookup} - see {@link ColumnEditor}. The cell stores the value of the picked
+     * row (the lookup's `valueField`) and shows its label (`labelField`). For a `text` or `number`
+     * field.
+     *
+     * The cell is not typed in: a character opens the list with it as the search, so do the button at
+     * its right, Alt+ArrowDown, F4, F2, Space and a double click. Delete and Backspace empty the cell.
+     * Not in a readonly grid or cell: there it shows the label only.
+     *
+     * Sorting the column sorts on the labels, typing in its header filter finds the rows whose label
+     * matches, the CSV export and copy write the labels - see the lookups guide.
+     *
+     * @sample lookups
+     * @sample dropdown-grid
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * // registerLookup('countries', ...) and registerLookup('customers', ...) when the page loads
+     * const config: GridConfig = {
+     *     readonly: false,
+     *     columns: {
+     *         country: { label: 'Country', editor: { type: 'select', lookup: 'countries' } },
+     *         customerId: { label: 'Customer', editor: { type: 'grid', lookup: 'customers', set: { customerName: 'name' } } }
+     *     },
+     *     layout: { center: [{ fields: ['country'], width: 120 }, { fields: ['customerId'], width: 180 }] }
+     * };
+     * ```
+     */
+    editor?: ColumnEditor;
 
     /**
      * sums the column up: `'sum'`, `'avg'`, `'min'`, `'max'` or `'count'`, see
@@ -446,6 +480,43 @@ export type ColumnConfig = {
      */
     aggregate?: AggregateFunction;
 };
+
+/**
+ * How a column's value is picked from a list, `ColumnConfig.editor`. Plain JSON: the list is a lookup
+ * registered with {@link registerLookup}, named by its id.
+ *
+ * - `type: 'select'` - a list under the cell, with a search field on top: typing finds the rows whose
+ *   label has the text (ignoring case), ArrowUp / ArrowDown, Home / End, PageUp / PageDown move,
+ *   Enter or a click picks, Tab picks and goes to the next cell, Esc closes it.
+ * - `type: 'grid'` - a dropdown grid under the cell: the lookup's datasource in a small grid of its
+ *   own (`Lookup.config`), or the grid interface it links. The filter row searches as you type,
+ *   ArrowDown goes to the rows, Enter or a click on a row picks, Esc closes it.
+ *
+ * Picking writes the value, and the fields of `set`, in one go: one step of the undo history, Ctrl+Z
+ * takes it back.
+ *
+ * @sample lookups
+ * @example
+ * ```ts
+ * import type { ColumnEditor } from '@simple-html/grid';
+ *
+ * const country: ColumnEditor = { type: 'select', lookup: 'countries' };
+ * // the row's customerName gets the picked customer's name, its city the customer's city
+ * const customer: ColumnEditor = { type: 'grid', lookup: 'customers', set: { customerName: 'name', city: 'city' } };
+ * ```
+ */
+export interface ColumnEditor {
+    /** `'select'`: a list with a search field, `'grid'`: a dropdown grid */
+    type: 'select' | 'grid';
+    /** the id of the lookup, see {@link registerLookup}. One that is not registered throws a `TypeError` when the grid is made */
+    lookup: string;
+    /**
+     * more fields to copy from the picked row into the edited row: `{ <field of the row>: <field of the
+     * picked row> }`. `{ customerName: 'name' }` gives the row's `customerName` the picked row's `name`.
+     * Emptying the cell empties them too. Written as data, also where those cells are readonly
+     */
+    set?: Record<string, string>;
+}
 
 /**
  * What the user changes while working with the grid: `gridInterface.getState()` reads it,

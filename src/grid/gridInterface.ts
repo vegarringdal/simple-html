@@ -27,6 +27,7 @@ import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
+import { type LookupColumn, lookupColumnsOf } from './gridFunctions/lookupColumn';
 import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { renderRangeClasses } from './gridFunctions/rangeSelection';
@@ -129,6 +130,18 @@ export class GridInterface<T> {
     private rangeState: RangeState | null = null;
 
     /**
+     * the columns with an `editor`, by field: their lookups, see lookupColumn.ts. Made from the config's
+     * columns when the interface is made and by updateConfig()
+     */
+    private lookupColumns: Map<string, LookupColumn>;
+
+    /**
+     * what this interface sorts its lookup columns on, given to the datasource (__setSortValue): the
+     * label the cell shows. Kept to take them back, see clearSortValues
+     */
+    private sortValues = new Map<string, (value: unknown) => string>();
+
+    /**
      * Most of the time {@link createGrid} makes the interface. Make it yourself for a
      * `<simple-html-grid>` element you place on your own, and connect it with
      * `element.connectInterface()`.
@@ -141,7 +154,8 @@ export class GridInterface<T> {
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
      * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
-     * object of strings, or a column's `aggregate` is no aggregate function or needs a number field
+     * object of strings, a column's `aggregate` is no aggregate function or needs a number field, or a
+     * column's `editor` is wrong - its lookup not registered, see {@link ColumnEditor}
      *
      * @example
      * ```ts
@@ -161,6 +175,7 @@ export class GridInterface<T> {
         assertNoV5Options(gridConfig);
         assertConfigTexts(gridConfig);
         assertAggregates(gridConfig, datasource);
+        this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
         this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.hooks = { ...hooks };
@@ -177,6 +192,8 @@ export class GridInterface<T> {
         // structuredClone, not JSON: it keeps the Dates of a filter
         this.initialState = structuredClone(initialState ?? {});
 
+        // before the start state is applied: it can sort on a lookup column
+        this.setSortValues();
         this.applyState(this.getStartState());
     }
 
@@ -320,7 +337,8 @@ export class GridInterface<T> {
      * @param config the parts of the config to change
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
      * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
-     * strings, or a column's `aggregate` is no aggregate function or needs a number field
+     * strings, a column's `aggregate` is no aggregate function or needs a number field, or a column's
+     * `editor` is wrong - its lookup not registered, see {@link ColumnEditor}
      *
      * @sample misc-options
      * @example
@@ -338,6 +356,8 @@ export class GridInterface<T> {
         assertNoV5Options(config);
         assertConfigTexts(config);
         assertAggregates(config, this.dataSource);
+        // checked before anything changes, like the rest
+        const lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
         const { columns, layout, initialState, ...options } = config;
 
         this.options = { ...this.options, ...options };
@@ -347,6 +367,17 @@ export class GridInterface<T> {
         // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option
         if ('columns' in config) {
             this.gridConfig.columns = structuredClone(columns ?? {});
+        }
+        if (lookupColumns) {
+            // the list open for a column of the old config is closed, the cells are rendered anew
+            this.grid?.lookupEditor?.close(false);
+            this.clearSortValues();
+            this.lookupColumns = lookupColumns;
+            this.setSortValues();
+            // the grid follows the datasources of the lookups, the new ones now
+            if (this.grid) {
+                this.subscribeToDatasource();
+            }
         }
         if ('initialState' in config) {
             this.initialState = structuredClone(initialState ?? {});
@@ -565,6 +596,8 @@ export class GridInterface<T> {
         // the element was not in the dom (then nothing calls it), or shows another interface now
         this.__disconnectGrid();
         this.events.clear();
+        // the datasource can be shown in another grid: it sorts its fields on their values again
+        this.clearSortValues();
     }
 
     /**
@@ -1226,6 +1259,38 @@ export class GridInterface<T> {
 
     /**
      * @internal
+     * The column's editor and lookup when it has an `editor` (ColumnConfig.editor), see lookupColumn.ts
+     */
+    public __getLookupColumn(field: string): LookupColumn | undefined {
+        return this.lookupColumns.get(field);
+    }
+
+    /**
+     * The datasource sorts the lookup columns on the label their cells show, see Datasource.__setSortValue
+     */
+    private setSortValues() {
+        for (const [field, column] of this.lookupColumns) {
+            const sortValue = (value: unknown) => column.formatter.format(value);
+            this.sortValues.set(field, sortValue);
+            this.dataSource.__setSortValue(field, sortValue);
+        }
+    }
+
+    /**
+     * Takes back what setSortValues() gave the datasource - not what another grid on the same
+     * datasource gave it since
+     */
+    private clearSortValues() {
+        for (const [field, sortValue] of this.sortValues) {
+            if (this.dataSource.__getSortValue(field) === sortValue) {
+                this.dataSource.__setSortValue(field, null);
+            }
+        }
+        this.sortValues.clear();
+    }
+
+    /**
+     * @internal
      * The css classes the `cellClass` hook gives the cell, '' for the ones it leaves out
      * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
@@ -1305,6 +1370,21 @@ export class GridInterface<T> {
             // values set from code, by undo, by an upsert ...: the rows on screen, in the next frame
             follow('rows-changed', (data, grid) => requestRowsRender(grid, data.rows))
         ];
+
+        // the rows of a lookup came, went or changed: a cell of any row can show another label now
+        const lookupDatasources = new Set(Array.from(this.lookupColumns.values(), (column) => column.lookup.datasource));
+        for (const lookupDatasource of lookupDatasources) {
+            // once per run of code: rows-changed comes in a microtask. As refresh(), every row on screen
+            const refresh = () => {
+                if (this.grid) {
+                    triggerScrollEvent(this.grid);
+                }
+            };
+            this.datasourceSubscriptions.push(
+                lookupDatasource.on('collection-changed', refresh),
+                lookupDatasource.on('rows-changed', refresh)
+            );
+        }
     }
 
     /**

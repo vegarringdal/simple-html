@@ -31,6 +31,8 @@ import { gridState } from './samples/gridState';
 import gridStateSource from './samples/gridState.ts?raw';
 import { liveData } from './samples/liveData';
 import liveDataSource from './samples/liveData.ts?raw';
+import { lookups } from './samples/lookups';
+import lookupsSource from './samples/lookups.ts?raw';
 import { miscConfig } from './samples/miscConfig';
 import miscConfigSource from './samples/miscConfig.ts?raw';
 import { multiline } from './samples/multiline';
@@ -84,6 +86,7 @@ export const SAMPLES: Sample[] = [
     { ...multiline, source: multilineSource },
     { ...ranges, source: rangesSource },
     { ...contextMenu, source: contextMenuSource },
+    { ...lookups, source: lookupsSource },
     { ...dropdownGrid, source: dropdownGridSource },
     // cells
     { ...dynamicCellTypes, source: dynamicCellTypesSource },

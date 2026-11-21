@@ -214,6 +214,12 @@ const DEFAULTS = {
     'cell.multiline.more': 'More lines, Enter shows all',
     'cell.multiline.hint': 'Ctrl+Enter to save, Esc to cancel',
     'cell.multiline.hintReadonly': 'Esc to close',
+    // a lookup column (ColumnConfig.editor): the button of the cell, for a screen reader, and the select
+    // under the cell - the placeholder of its search, no match, a long list cut off
+    'lookup.open': 'Open the list',
+    'lookup.search': 'Search',
+    'lookup.noMatch': 'No matches',
+    'lookup.more': '{shown} of {count} shown, type to search',
 
     // the date picker: of date cells and date header filters, and a DateInterface of your own
     'datePicker.hours': 'HH',
@@ -327,6 +333,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `grid.*` | labels for screen readers |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |
+ * | `lookup.*` | a lookup column (`ColumnConfig.editor`): the button of the cell, the select under it |
  * | `datePicker.*` | the date picker: the buttons, the names of the months and the days |
  * | `validation.*` | the messages of the built-in validators. Made by the datasource |
  * | `filterString.*` | `datasource.getFilterString()`: AND, OR and the operators. Made by the datasource |

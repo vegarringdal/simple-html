@@ -2385,6 +2385,24 @@ export class Datasource<T = any> {
     }
 
     /**
+     * @internal
+     * Sorts a field on a text made from its value, see Sort.setSortValue: the grid sorts a lookup
+     * column (`ColumnConfig.editor`) on the label it shows. Takes effect on the next sort
+     * @param sortValue the text of a value, null to sort on the value again
+     */
+    public __setSortValue(field: string, sortValue: ((value: unknown) => string) | null): void {
+        this.__sorting.setSortValue(field, sortValue);
+    }
+
+    /**
+     * @internal
+     * the function __setSortValue() was given for a field, undefined without one
+     */
+    public __getSortValue(field: string): ((value: unknown) => string) | undefined {
+        return this.__sorting.getSortValue(field);
+    }
+
+    /**
      * Clears the sort, without sorting: the rows keep their order until the displayed rows are built
      * again (`filter()`, `setData()` ...), then they are in the order they were set - sorted on the
      * grouped fields when grouped, the groups need that. No event is sent.

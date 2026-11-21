@@ -11,6 +11,7 @@ import { rebuildRows } from './gridFunctions/rebuildRows';
 import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { cancelRowsRender } from './gridFunctions/renderChangedRows';
+import { closeLookupEditor, type LookupEditor } from './gridFunctions/lookupEditor';
 import { closeFilterEditor } from './gridFunctions/renderFilterEditor';
 import { closeTextEditor, type TextEditor } from './gridFunctions/textEditor';
 import { hideTooltip } from './gridFunctions/tooltip';
@@ -84,6 +85,8 @@ export class Grid {
     public columnChooserMenu?: HTMLElement | null;
     // the editor of a multiline cell, a popover over the cell: see openTextEditor. Null when it is closed
     public textEditor: TextEditor | null = null;
+    // the editor of a lookup column, a popover under the cell: see openLookupEditor. Null when it is closed
+    public lookupEditor: LookupEditor | null = null;
     /** aborts the document listeners addMenuListeners added, see there */
     public menuListenersAbort?: AbortController;
     /** aborts the document listeners of copy and paste, see addClipboardListeners in rangeClipboard.ts */
@@ -192,6 +195,7 @@ export class Grid {
         // The text of a multiline cell is saved, as a click outside its editor does, while the
         // datasource is still connected
         closeTextEditor(this);
+        closeLookupEditor(this);
         removeContextMenu(this);
         closeFilterEditor(this);
         this.columnChooserMenu?.remove();

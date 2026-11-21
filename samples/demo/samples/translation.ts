@@ -202,6 +202,10 @@ const norwegian: Record<TextId, string> = {
     'cell.multiline.more': 'Flere linjer, Enter viser alt',
     'cell.multiline.hint': 'Ctrl+Enter lagrer, Esc avbryter',
     'cell.multiline.hintReadonly': 'Esc lukker',
+    'lookup.open': 'Åpne listen',
+    'lookup.search': 'Søk',
+    'lookup.noMatch': 'Ingen treff',
+    'lookup.more': '{shown} av {count} vises, skriv for å søke',
 
     // the date picker
     'datePicker.hours': 'TT',

@@ -63,8 +63,8 @@ export interface TextEditorCell {
 }
 
 /**
- * Opens the editor over a cell, the focus in it - and closes the one that is open, saving it, and
- * the open menu. The textarea has the cell's text, the caret at its end. Its label is the column's.
+ * Opens the editor over a cell, the focus in it - and closes the one that is open, saving it, the
+ * editor of a lookup column and the open menu. The textarea has the cell's text, the caret at its end. Its label is the column's.
  *
  * - Esc closes it, the value as it was. Ctrl+Enter (Cmd+Enter) saves and closes. Enter is a new line
  * - Tab saves and closes, and goes on to the next cell as Tab in the cell does (Shift+Tab back)
@@ -81,6 +81,7 @@ export interface TextEditorCell {
  */
 export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
     ctx.textEditor?.close(true, true);
+    ctx.lookupEditor?.close(true);
     removeContextMenu(ctx);
 
     const { cell, row, field, formatter, readonly } = target;

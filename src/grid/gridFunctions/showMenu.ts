@@ -95,12 +95,15 @@ export function moveMenu(menu: HTMLElement, left: number, top: number) {
  * pointerup is outside the menu. So the grid closes its menus itself: on a click outside and on Esc
  * (addMenuListeners), on scroll (autoRemoveContextMenuOnScrollEvent), when another menu opens and
  * when the grid leaves the page. A menu also closes the editor of a multiline cell (textEditor.ts),
- * saving it: one popover of the grid is open at a time.
+ * saving it, and the editor of a lookup column (lookupEditor.ts): one popover of the grid is open at a
+ * time.
  */
 export function openMenuElement(ctx: Grid, menu: HTMLElement, anchor: Element | null) {
     // the editor of a multiline cell is saved and closed, the focus back in its cell first: the menu
     // gives the focus back there when it closes
     ctx.textEditor?.close(true, true);
+    // the editor of a lookup column too, the value as it is
+    ctx.lookupEditor?.close(true);
     removeContextMenu(ctx);
     // gets the focus back when the menu closes with the focus in it, see removeContextMenu
     const returnFocus = document.activeElement;

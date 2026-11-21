@@ -54,7 +54,8 @@ export function contextmenuFilter(
  * The filter menu's default entries, new objects every call. The ids are documented in MENU_IDS.filter
  */
 function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
-    const type = ctx.gridInterface.getDatasource().getField(attribute).type;
+    // a lookup column filters on its labels: the operators of a text (filterCallback)
+    const type = ctx.gridInterface.__getLookupColumn(attribute) ? 'text' : ctx.gridInterface.getDatasource().getField(attribute).type;
 
     // the operator picked before (state), else the column's, else the type's default
     const current = getHeaderFilterOperator(ctx, attribute);

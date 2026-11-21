@@ -16,6 +16,8 @@ import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
+import { writeCellValue } from './lookupColumn';
+import { isLookupEditorOpen, openLookupEditor } from './lookupEditor';
 import { firstLine, hasLineBreak, isMultilineCell } from './multilineText';
 import { rangeDeleteKey } from './rangeClipboard';
 import { rangeCellFocused, rangeKeydown, showCellRange } from './rangeSelection';
@@ -32,6 +34,14 @@ import { undoRedoKey } from './undoRedoKey';
  */
 const MORE_ICON = svg`<svg class="simple-html-grid-cell-more-icon" viewBox="0 0 10 10" aria-hidden="true" focusable="false">
     <path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h5v2H1z" />
+</svg>`;
+
+/**
+ * the button of a lookup column (ColumnConfig.editor): a small triangle pointing down, 8x8px in the
+ * button's colour (--simple-html-grid-lookup-icon-color)
+ */
+const LOOKUP_ICON = svg`<svg class="simple-html-grid-lookup-icon" viewBox="0 0 8 8" aria-hidden="true" focusable="false">
+    <path d="M1 2.5h6L4 6z" />
 </svg>`;
 
 /**
@@ -83,7 +93,10 @@ export function renderRowCell(
         const field = datasource.getField(attribute);
         const fieldType = field.type;
         const cellConfigType = getCellType(ctx, attribute, entity);
-        const formatter = datasource.getFormatter(attribute, cellConfigType);
+        // a lookup column (ColumnConfig.editor) shows the label of the value: its formatter is the
+        // lookup's, for the cell, the marker of an edited cell and its tooltip
+        const lookupColumn = ctx.gridInterface.__getLookupColumn(attribute);
+        const formatter = lookupColumn?.formatter ?? datasource.getFormatter(attribute, cellConfigType);
 
         // after an edit: the field was validated, show its errors and the row's, and whether it is
         // edited now. Not by rendering the cell again, that would put the formatted value back into
@@ -129,7 +142,8 @@ export function renderRowCell(
         const checked = Boolean(entity?.[attribute]);
         let value = formatter.format(entity?.[attribute]);
 
-        if (fieldType === 'number') {
+        // not for a lookup column, it shows a label
+        if (fieldType === 'number' && !lookupColumn) {
             if (cellConfig.numberOverride === 'BLANK_TO_ZERO' && value === '') {
                 value = '0';
             }
@@ -144,7 +158,7 @@ export function renderRowCell(
         // text of several lines (multilineText.ts): the input shows the first line and is readonly,
         // the text editor edits it. `more`: there are lines after the first, the cell has a marker
         // and the whole text in its tooltip
-        const multiline = isMultilineCell(field, cellConfigType, value);
+        const multiline = !lookupColumn && isMultilineCell(field, cellConfigType, value);
         const more = multiline && hasLineBreak(value);
 
         // the validation errors: a class and a tooltip on the cell element
@@ -250,6 +264,29 @@ export function renderRowCell(
             // reader. An id per cell on screen: the row is the displayed row
             const moreId = `${ctx.ariaIdPrefix}-more-${colType}-${row}-${column}-${celno}`;
 
+            // a lookup column: the input is readonly, its editor (a list or a grid under the cell) picks
+            // the value - where the cell can be edited. Its button is at the right of the cell
+            const lookupEditable = !!lookupColumn && !config.readonly && !cellReadOnly;
+            const lookupPopup = lookupColumn?.editor.type === 'grid' ? 'grid' : 'listbox';
+            const openLookup = (search?: string) => {
+                if (!lookupColumn) {
+                    return;
+                }
+                const input = cell.getElementsByClassName('simple-html-grid-cell-input')[0] as HTMLElement;
+                openLookupEditor(
+                    ctx,
+                    {
+                        cell,
+                        input,
+                        row: entity,
+                        field: attribute,
+                        column: lookupColumn,
+                        tab: (event) => cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, event, '')
+                    },
+                    search
+                );
+            };
+
             render(
                 html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
@@ -258,12 +295,15 @@ export function renderRowCell(
                         data-attribute=${attribute}
                         data-repeated-value=${repeated ? 'true' : 'false'}
                         style=${
-                            cellConfigType === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'
+                            cellConfigType === 'number' && !lookupColumn
+                                ? 'text-align: right;width:100%;height:100%;'
+                                : 'width:100%;height:100%;'
                         }
                         .value=${live(multiline ? firstLine(value) : value)}
-                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}`}
-                        .readOnly=${multiline || !!config.readonly || cellReadOnly}
+                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}${lookupEditable ? ' simple-html-grid-cell-lookup' : ''}`}
+                        .readOnly=${multiline || !!lookupColumn || !!config.readonly || cellReadOnly}
                         aria-describedby=${more ? moreId : nothing}
+                        aria-haspopup=${lookupEditable ? lookupPopup : nothing}
                         placeholder=${showPlaceHolder ? cellConfig.placeholderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
@@ -314,6 +354,9 @@ export function renderRowCell(
                         @dblclick=${() => {
                             if (multiline) {
                                 openEditor();
+                            }
+                            if (lookupEditable) {
+                                openLookup();
                             }
                         }}
                         @mousedown=${(e: MouseEvent) => {
@@ -415,6 +458,29 @@ export function renderRowCell(
                                 return;
                             }
 
+                            // a lookup column that can be edited: the keys of a dropdown open its editor - the
+                            // button, Alt+ArrowDown and F4 as in Excel and Windows, F2 as an edit, Space as the
+                            // focus button. A character starts the search. Delete and Backspace empty the cell
+                            if (lookupEditable) {
+                                const plain = !e.altKey && !e.ctrlKey && !e.metaKey;
+                                const altDown = e.key === 'ArrowDown' && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+                                if (altDown || (plain && (e.key === 'F4' || e.key === 'F2' || e.key === ' '))) {
+                                    e.preventDefault();
+                                    openLookup();
+                                    return;
+                                }
+                                if (plain && !e.shiftKey && (e.key === 'Delete' || e.key === 'Backspace')) {
+                                    e.preventDefault();
+                                    writeCellValue(ctx.gridInterface, entity, attribute, null);
+                                    return;
+                                }
+                                if (isTypedCharacter(e) && !e.isComposing) {
+                                    e.preventDefault();
+                                    openLookup(e.key);
+                                    return;
+                                }
+                            }
+
                             // Space in a cell with a focus button: as a click on the button
                             const focusButtonSpace = e.code === 'Space' && hasFocusButton();
                             if (focusButtonSpace) {
@@ -454,8 +520,8 @@ export function renderRowCell(
                         }}
                         @input=${(e: any) => {
                             // the input of a multiline cell is readonly, and its value has no line
-                            // breaks: it must never be written to the row
-                            if (multiline) {
+                            // breaks: it must never be written to the row. Nor is a lookup's label
+                            if (multiline || lookupColumn) {
                                 return;
                             }
                             if (cellConfig.allowPasteClearOnly) {
@@ -471,7 +537,7 @@ export function renderRowCell(
                             }
                         }}
                         @change=${(e: any) => {
-                            if (multiline) {
+                            if (multiline || lookupColumn) {
                                 return;
                             }
                             if (cellConfig.allowPasteClearOnly) {
@@ -485,6 +551,37 @@ export function renderRowCell(
                             }
                         }}
                     />
+                    ${
+                        lookupEditable
+                            ? html`<button
+                                  type="button"
+                                  class="simple-html-grid-lookup-button"
+                                  tabindex="-1"
+                                  aria-label=${gridText(ctx, 'lookup.open')}
+                                  aria-haspopup=${lookupPopup}
+                                  @mousedown=${(e: MouseEvent) => {
+                                      // the focus stays where it is: the cell's input, or it gets it below
+                                      e.preventDefault();
+                                  }}
+                                  @click=${() => {
+                                      // open: a click closes it, the focus back in the cell
+                                      if (isLookupEditorOpen(ctx, cell)) {
+                                          ctx.lookupEditor?.close(true);
+                                          return;
+                                      }
+                                      // the button is shown on hover too: the cell gets the focus first
+                                      const input = cell.getElementsByClassName('simple-html-grid-cell-input')[0] as HTMLElement;
+                                      if (document.activeElement !== input) {
+                                          input.focus({ preventScroll: true });
+                                      }
+                                      ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
+                                      openLookup();
+                                  }}
+                              >
+                                  ${LOOKUP_ICON}
+                              </button>`
+                            : nothing
+                    }
                     ${
                         more
                             ? html`<span class="simple-html-grid-cell-more" id=${moreId} aria-hidden="true"

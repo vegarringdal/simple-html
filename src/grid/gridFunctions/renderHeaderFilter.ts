@@ -2,7 +2,8 @@ import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Entity, GroupRow } from '../../datasource/entity';
 import type { FieldType } from '../../datasource/field';
-import { parseFilterText } from '../../datasource/formatter';
+import { type Formatter, parseFilterText } from '../../datasource/formatter';
+import { TextFormatter } from '../../datasource/textFormatter';
 import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigationCellRowHandler';
@@ -36,7 +37,12 @@ export function renderHeaderFilter(
         const cellConfig = config.columns[attribute];
         // the name of the input for a screen reader; the placeholder says what to type, see below
         const label = gridText(ctx, 'grid.filter', { label: getColumnLabel(ctx, attribute) });
-        const { type, formatter } = ctx.gridInterface.getDatasource().getField(attribute);
+        // a lookup column (ColumnConfig.editor) filters on the labels it shows: a text filter, also for a
+        // number field
+        const field = ctx.gridInterface.getDatasource().getField(attribute);
+        const lookup = !!ctx.gridInterface.__getLookupColumn(attribute);
+        const type = lookup ? 'text' : field.type;
+        const formatter: Formatter = lookup ? TextFormatter : field.formatter;
 
         // the column's own placeholder, else the formatter's (a date's format, YYYY-MM-DD), else the
         // field's type: "Text", "Number" (texts filter.placeholder.*). A boolean filter is a checkbox
