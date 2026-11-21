@@ -150,28 +150,31 @@ The "shown as" below is the English text.
 | `row.copy.column` | Column (selected rows) | |
 | `row.copy.row` | Row (selected rows) | |
 | `row.copy.selectedColumns` | Row (selected rows/col): the selected columns, every column when none is selected | |
+| `row.copy.range` | Range: the last range of cells, as Ctrl+C copies it - see [Selection and clipboard](17-selection-and-clipboard.md#copy) | there are ranges of cells |
 | `row.filter` | Filter: | |
 | `row.filter.replace` | Replace filter (all) | |
 | `row.filter.add` | Add to filter (and) | |
 | `row.view` | View: | |
 | `row.view.dimRepeatedValues` | Use dimmed values, with a ✓ when it is on | |
 | `row.view.changedOnly` | Changed rows only, with a ✓ when it is on: the new, edited and deleted rows of the filter, see [Changed rows only](05-editing.md#changed-rows-only) | |
-| `row.paste` | Paste: | the grid and the cell are editable |
+| `row.paste` | Paste: | the grid and the cell are editable, or the grid is and there are ranges of cells |
 | `row.paste.cell` | Paste cell (selected rows) | the grid and the cell are editable |
-| `row.clear` | Clear: | the grid and the cell are editable |
+| `row.paste.range` | Paste range: the clipboard as Ctrl+V pastes it with ranges - one value into every cell of them, a block from the top left of the last one. Reads the clipboard with `navigator.clipboard.readText()`, the browser may ask the user first | the grid is editable, there are ranges of cells |
+| `row.clear` | Clear: | the grid and the cell are editable, or the grid is and there are ranges of cells |
 | `row.clear.cell` | Clear cell (selected rows) | the grid and the cell are editable |
+| `row.clear.range` | Clear range: every cell of the ranges, as Delete | the grid is editable, there are ranges of cells |
 | `row.delete` | Delete: | the grid is editable |
 | `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows). Greyed out when no selected row is left to mark | the grid is editable |
 | `row.delete.undo` | Undo (selected rows): takes the mark off | the grid is editable, and a selected row is marked for deletion |
 | `row.summary` | Summary: | a number field |
 | `row.summary.count` | Count: the number of selected rows. A click copies the value | a number field |
-| `row.summary.sum` | Sum: of the selected rows | a number field |
-| `row.summary.max` | Max: | a number field |
-| `row.summary.min` | Min: | a number field |
-| `row.summary.avg` | Avg: | a number field |
+| `row.summary.sum` | Sum: of the selected rows' numbers, `datasource.aggregate(field, 'sum', rows)`. With two decimals at most, as max, min and avg | a number field |
+| `row.summary.max` | Max: the largest number | a number field |
+| `row.summary.min` | Min: the smallest number, 0 included | a number field |
+| `row.summary.avg` | Avg: the average of the numbers, a blank is not counted | a number field |
 | `row.export` | Export: | |
-| `row.export.csv` | CSV, all rows: `gridInterface.downloadCsv()`, see [Export](15-export.md) | |
-| `row.export.csvSelected` | CSV, selected rows: `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
+| `row.export.excel` | Excel, all rows: `gridInterface.downloadExcel()`, an .xlsx file, see [Export](15-export.md) | |
+| `row.export.excelSelected` | Excel, selected rows: `downloadExcel('export.xlsx', { rows: 'selected' })`. Greyed out when no row is selected | |
 
 ### Header menu (`MENU_IDS.header`)
 

@@ -1238,10 +1238,101 @@ in the console. All passed. Found and fixed:
 * checked in Chromium at 480x611, 1280x400 and 1280x800 (`menu-place-check.js`): the whole menu inside
   the window in every case; tests for each placement rule
 
+### Header filter placeholders by type (user request)
+
+* an empty text / number header filter showed 🔍; a date one shows its format (YYYY-MM-DD). Now text
+  shows `Text`, number `Number` (texts `filter.placeholder.*`, translated in the Norwegian sample);
+  the column's `placeholderFilter` and the formatter's `placeholder` come first, boolean stays a
+  checkbox. Checked in Chromium light and dark
+
+### Aggregates (item 40)
+
+* `datasource.aggregate()` (src/datasource/aggregate.ts): sum/avg/min/max over finite numbers only,
+  count of non-blanks; Neumaier-compensated sum; cached per group row (WeakMap) and per filtered list,
+  keyed by a per-field change count the container bumps on every set - an edit of a field nobody
+  aggregates recomputes nothing. 100 000 rows / 1000 groups x 3 functions: 42 ms cold, 0.3 ms kept
+* the group row draws its aggregates in its own element, with three section containers that copy the
+  body's geometry (pinned borders, stacked lines), the middle one following the horizontal scroll via
+  `--simple-html-grid-scroll-left` - so renderRowCell / pinnedSection stay untouched. The name stays at
+  the left over the first columns (an aggregate there is covered on screen, read by screen readers)
+* totals row: under the horizontal scrollbar, over the footer; the grid owns it as its last aria row
+* fixed in passing: the row menu summary (max of negatives 0, min skipped 0, avg rounded and counting
+  blanks); totals not updated by the frame that renders every row after the typed-in cell is left
+* merged with the v6_maybe work done meanwhile (texts and the texts guide: both sides kept). The
+  texts-in-the-grid test opens every part of the grid; it timed out at vitest's 5s on a loaded machine
+  (2.6s idle): its describe has 30s now
+* checks: 64 tests; Chromium aggregate-check 27/27 and the other ten scripts on the merged build
+* left: a value too wide for its column ends in an ellipsis with the label first - drop the label
+  before cutting the value; min/max of dates; totals cells not on the Tab path
+
+### v6 phase 6 - cell ranges and the clipboard (items 32, 33)
+
+* a range is `{ fromRow, fromField, toRow, toField }` - displayed row indexes and field names (JSON,
+  readable); cleared whenever the displayed rows or the layout's fields change. A stacked field is a
+  column of its own (getLayoutFields order, like CSV and aria-colindex); the empty cells under a short
+  column belong to the field above, so a range draws as a rectangle
+* a drag inside one cell stays the input's text selection; once on another cell it is a range. The
+  input's selection could not be stopped by user-select, pointer capture or preventDefault in Chrome -
+  collapsing it in a requestAnimationFrame after each move works without flicker
+* keys: Alt+Shift+arrows (plain/Shift arrows stay the input's), Esc clears; typing in a cell or moving
+  the focus clears the ranges (so Backspace never empties a range by surprise)
+* copy/paste listen on the document (Chrome sends a focused checkbox's clipboard events to the body),
+  each grid acts only with the focus in its own cell; TSV through csv.ts with a tab, Excel quoting on
+  paste; one value fills the ranges, a block is written once from the top left, readonly skipped, one
+  undo step; the row menu's copy listener moved to the capture phase so a range copy can not overwrite
+  "Copy: Cell Value" (its test fails without that)
+* checks: 110 + 11 tests; Chromium range-check 60/60, and the other eleven scripts on the merged build
+* merged with v6_maybe (one conflict: the delete ids' neighbours in rowMenuDelete.test.ts)
+* left: Cut (Ctrl+X) of a range; real Excel / Sheets interop untested (format checked only); after the
+  wheel takes the focus from a cell, Ctrl+C/V go to the page
+
+### The wheel over the grid kept scrolling the page (user report)
+
+* the wheel listener set the body scroller's scrollTop but did not cancel the event, so the browser
+  scrolled the page too (the rows' views are overflow hidden, the page was the next thing to scroll);
+  it read the non-standard `wheelDeltaY` (none in Firefox) and ignored a trackpad's deltaX
+* now: cancelled (but Ctrl+wheel - zoom, pinch - is left to the browser), `deltaX`/`deltaY` with
+  line/page modes turned into px, left/right scrolls the middle columns. happy-dom's WheelEvent is a
+  UIEvent without modifier keys: the tests set them on the event
+* Chromium `wheel-check.js` on a guide page with a live grid: the grid scrolls, the page does not -
+  also at the grid's last row - and the page scrolls outside the grid
+
+### Excel export (user request: "Excel, not CSV"; frozen header, autofilter, flat list)
+
+* no dependency: `zip.ts` (APPNOTE local headers, central directory, CRC-32, deflate-raw through
+  CompressionStream - stored when it is missing), `xlsx.ts` (the six SpreadsheetML parts from plain
+  inputs), `gridExcel.ts` (rows and fields as the CSV export picks them). 10 000 rows x 8 columns:
+  441 KB deflated (4.6 MB stored)
+* typed cells: numbers as numbers (General - the formatters show full precision), dates as serials
+  from the local day (1900 system, its leap-year bug), `dd\.mm\.yyyy` for the DDMMYYYY formatters,
+  booleans, inline strings; widths from the grid's px by ECMA-376's Calibri 11 rule
+* always: the header bold and frozen, an autofilter over every row, a flat list (no group rows,
+  outline or totals) - the user's rules
+* checked: 2115 tests; Chromium downloads (buttons and row menu, grouped, aggregates sample) read
+  with python zipfile (CRCs), xml.etree and openpyxl - types, frozen pane, autofilter, widths, values
+  equal to the CSV of the same rows. Real Excel / LibreOffice not available to try
+* live-check.js failed 2 of 19 once on a loaded machine and passed twice after: its conflict steps
+  race the sample's timer - candidate below
+
+### Date picker redesign, no rounded buttons (user request)
+
+* flat and square, the grid's font; one header line « ‹ Month Year › »; today and the selected day
+  look different; square steppers and an equal-width button bar; other-month days and week numbers
+  were too light (1.3:1 / 3.4:1) - darker now; contrast measured in Chromium (30/30)
+* every border-radius in grid.css / date.css is 0 (buttons, chips, the filter editor, the tooltip)
+* the generic class names (`.main`, `.year`, `.icon` ...) picked up page css (the docs site's `.main`
+  boxed the month name): prefixed
+* merged cleanly with v6_maybe; all checks and eleven browser scripts on the merged build
+* left: changing the hour jumps the view back to the picked date's month; a day of the month before
+  or after is picked but not shown as selected; Firefox number spinners hidden by
+  `appearance: textfield`, checked in Chromium only
+
 ## Considered, not done
 
 ## Candidates / not started
 
+* **live-check.js races the live sample's timer** under load (2 of 19 failed once, passed on reruns):
+  wait for the timer's tick instead of a fixed delay.
 * **A flaky test under load**: one full run in ten or so fails one test while other test runs or
   builds load the machine (agents saw `datePickerCell.test.ts`); it passes on rerun. Find it and make it
   not depend on timing.

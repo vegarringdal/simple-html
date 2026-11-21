@@ -487,7 +487,7 @@ describe('columns', () => {
 
         expect(headerLabel(element, 'firstname')).toEqual('First');
         expect(headerLabel(element, 'lastname')).toEqual('Lastname');
-        expect(headerFilterInput(element, 'lastname').placeholder).toEqual('🔍');
+        expect(headerFilterInput(element, 'lastname').placeholder).toEqual('Text');
         typeInHeaderFilter(element, 'lastname', 'last2');
         expect(datasource.getDataRows().map((row) => row.firstname)).toEqual(['first2']);
         // age is a number field: its header filter defaults to >=

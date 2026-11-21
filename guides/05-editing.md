@@ -371,6 +371,8 @@ datasource.redo(); // 'Changed' again
 
 - what the user typed in one cell, from when it got the focus until the focus left it
 - a paste or a clear from the row menu, over every selected row
+- a paste (Ctrl+V), a Delete or a clear of ranges of cells, see
+  [Selection and clipboard](17-selection-and-clipboard.md)
 - a delete or its undo: `markForDeletion()`, `markAllForDeletion()`, `unmarkForDeletion()`,
   `unmarkAllForDeletion()` - from the row menu or from code
 - a revert: `resetField()`, `resetRows()`, `resetDataSelectionOnly()`

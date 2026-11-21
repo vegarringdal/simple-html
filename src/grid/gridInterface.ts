@@ -1,3 +1,4 @@
+import { AGGREGATE_FUNCTIONS, isAggregateFunction } from '../datasource/aggregate';
 import { assertOptions } from '../datasource/assertOptions';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
@@ -5,6 +6,7 @@ import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FilterOperator } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
+import type { CellRange } from './cellRange';
 import type { CsvOptions } from './csv';
 import type { Grid } from './grid';
 import type {
@@ -18,13 +20,17 @@ import type {
     ParsedGridOptions
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
+import { aggregateLines } from './gridFunctions/aggregates';
 import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
+import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
+import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
+import { renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
@@ -36,6 +42,7 @@ import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
+import type { ExcelOptions } from './xlsx';
 
 /**
  * The grid: its config, its datasource and its state. What you call to work with a grid - read and
@@ -113,6 +120,17 @@ export class GridInterface<T> {
     private headerFilters: Record<string, HeaderFilter> = {};
 
     /**
+     * the ranges of cells, see getRanges(): copies of what was set
+     */
+    private ranges: CellRange[] = [];
+
+    /**
+     * the ranges in indexes, with the layout they were made in - what the cells need to show them.
+     * null without ranges. See cellRanges.ts
+     */
+    private rangeState: RangeState | null = null;
+
+    /**
      * Most of the time {@link createGrid} makes the interface. Make it yourself for a
      * `<simple-html-grid>` element you place on your own, and connect it with
      * `element.connectInterface()`.
@@ -124,8 +142,8 @@ export class GridInterface<T> {
      * @param hooks optional: the functions - `isReadonly`, `cellClass`, `menus`, see {@link GridHooks}.
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
-     * hooks), a column has v5's `mandatory` (it is the field's `required` rule), or `texts` is not an
-     * object of strings
+     * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
+     * object of strings, or a column's `aggregate` is no aggregate function or needs a number field
      *
      * @example
      * ```ts
@@ -144,6 +162,7 @@ export class GridInterface<T> {
         assertNoHooks(gridConfig);
         assertNoV5Options(gridConfig);
         assertConfigTexts(gridConfig);
+        assertAggregates(gridConfig, datasource);
         this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.hooks = { ...hooks };
@@ -302,8 +321,8 @@ export class GridInterface<T> {
      *
      * @param config the parts of the config to change
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
-     * a column has v5's `mandatory` (it is the field's `required` rule), or `texts` is not an object of
-     * strings
+     * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
+     * strings, or a column's `aggregate` is no aggregate function or needs a number field
      *
      * @sample misc-options
      * @example
@@ -320,6 +339,7 @@ export class GridInterface<T> {
         assertNoHooks(config);
         assertNoV5Options(config);
         assertConfigTexts(config);
+        assertAggregates(config, this.dataSource);
         const { columns, layout, initialState, ...options } = config;
 
         this.options = { ...this.options, ...options };
@@ -394,7 +414,8 @@ export class GridInterface<T> {
             }
         }
 
-        if (state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups) {
+        const datasourceParts = state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups;
+        if (datasourceParts) {
             // what is not given: the datasource's own, it replaces these when it is given new ones
             const datasource = this.getDatasource();
             const filter = state.filter !== undefined ? state.filter : datasource.getFilter();
@@ -424,6 +445,13 @@ export class GridInterface<T> {
 
         this.suppressEvents = false;
 
+        // the displayed rows can be others now, the ranges of cells were made for the rows as they were.
+        // The datasource's events that clear them otherwise were skipped. A new layout clears them in
+        // __dataSourceUpdated()
+        if (datasourceParts) {
+            this.clearRanges();
+        }
+
         if (this.grid) {
             this.grid.rebuild();
         } else {
@@ -439,6 +467,9 @@ export class GridInterface<T> {
     public connectGrid(grid: Grid) {
         this.grid = grid;
         this.lastGrid = grid;
+        // the datasource was not followed while no grid was connected: its displayed rows can be
+        // others than the ranges of cells were made for
+        this.clearRanges();
         this.subscribeToDatasource();
         this.__callSubscribers('grid-connected', {});
     }
@@ -642,11 +673,184 @@ export class GridInterface<T> {
     }
 
     /**
+     * The ranges of cells the user selected - by dragging over the cells, Shift+click, Ctrl/Cmd+click
+     * for another one, Alt+Shift+arrows - or that {@link setRanges} set. See {@link CellRange}: rows
+     * are indexes in the displayed rows, fields are field names. The last range is the one made last,
+     * its `fromRow` / `fromField` is the active cell. `[]` when no cells are selected.
+     *
+     * Copies: changing them changes nothing in the grid.
+     *
+     * The ranges are cleared when the displayed rows change - a filter, a sort, grouping, a group
+     * expanded or collapsed, rows added or removed (`setData()`, `upsert()` that adds or removes
+     * rows, rows marked for deletion) - and when the fields of the layout change: a column moved,
+     * pinned, hidden or added. A column resized keeps them, and so does an edit: the rows stay where
+     * they are. `range-change` is sent every time they change.
+     *
+     * The row selection of the datasource (`datasource.getSelectedRows()`) is something else: a
+     * range does not select rows, selecting rows changes no range.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * const ranges = gridInterface.getRanges();
+     * if (ranges.length) {
+     *     const { fromRow, fromField, toRow, toField } = ranges[ranges.length - 1];
+     *     console.log(`from row ${fromRow} ${fromField} to row ${toRow} ${toField}`);
+     * }
+     * ```
+     */
+    public getRanges(): CellRange[] {
+        return this.ranges.map((range) => ({ ...range }));
+    }
+
+    /**
+     * Selects ranges of cells, replacing the ones there are - as if the user had selected them. See
+     * {@link CellRange}. The cells show them, `range-change` is sent. The focus does not move and the
+     * grid does not scroll to them.
+     *
+     * The grid keeps copies, with only the four keys of a range. They are cleared when the displayed
+     * rows or the layout change, see {@link getRanges}.
+     *
+     * @param ranges the ranges, the last one is the active one. `[]` clears them, as {@link clearRanges}
+     * @throws a `TypeError` for a range with a row that is not displayed (0 to `datasource.length() - 1`)
+     * or a field that is not in the layout
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * // rows 0 to 4, the fields from name to age
+     * gridInterface.setRanges([{ fromRow: 0, fromField: 'name', toRow: 4, toField: 'age' }]);
+     *
+     * // two ranges, as Ctrl+click makes them
+     * gridInterface.setRanges([
+     *     { fromRow: 0, fromField: 'name', toRow: 0, toField: 'name' },
+     *     { fromRow: 5, fromField: 'age', toRow: 9, toField: 'age' }
+     * ]);
+     * ```
+     */
+    public setRanges(ranges: CellRange[]) {
+        assertRanges(this, ranges);
+        this.__setRanges(ranges);
+    }
+
+    /**
+     * Clears the ranges of cells: no cell is selected. Sends `range-change` when there were ranges.
+     * The rows selected in the datasource stay selected.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * document.getElementById('clear-selection')!.onclick = () => gridInterface.clearRanges();
+     * ```
+     */
+    public clearRanges() {
+        this.__setRanges([]);
+    }
+
+    /**
+     * @internal
+     * Sets the ranges, for the grid's mouse and keys and for setRanges() (which checks them first): the
+     * cells on screen show them, and `range-change` is sent. Nothing happens when they are the ranges
+     * there are - a pointer moving within a cell
+     */
+    public __setRanges(ranges: CellRange[]) {
+        const copies = ranges.map(({ fromRow, fromField, toRow, toField }) => ({ fromRow, fromField, toRow, toField }));
+        if (sameRanges(this.ranges, copies)) {
+            return;
+        }
+        this.ranges = copies;
+        this.rangeState = rangeState(this.gridConfig, copies);
+        if (this.grid) {
+            renderRangeClasses(this.grid);
+        }
+        this.__callSubscribers('range-change', { ranges: this.getRanges() });
+    }
+
+    /**
+     * @internal
+     * the ranges in indexes, for the cells: see RangeState. null without ranges
+     */
+    public __getRangeState(): RangeState | null {
+        return this.rangeState;
+    }
+
+    /**
+     * The rows as an Excel workbook (.xlsx), a Blob: one sheet with a header row of the column labels
+     * (bold, frozen, with an autofilter over it and every row), then a row per data row. By default
+     * every row the filter lets through, in the sort order, and the columns of the layout in the
+     * order the user sees them, as wide as in the grid. See {@link ExcelOptions} for what can be
+     * changed: the selected rows, the selected range of cells, the fields, the sheet name.
+     *
+     * - **Typed cells**, so Excel can sum, sort and filter: a number field gives numbers, a date or
+     *   datetime field Excel dates (the local date and time the grid shows), a boolean field TRUE /
+     *   FALSE, text text - with wrapped lines when it has a line break. A value that is not of its
+     *   field's type (text in a number field) is written as the text the cell shows. Blanks are empty
+     *   cells.
+     * - **A flat list**: when grouped, every data row in the grouped order - the rows of collapsed
+     *   groups too - and no group rows, no outline, no totals. Rows marked for deletion are rows of the
+     *   grid until they are saved, they are exported too.
+     * - **No formulas**: text is never a formula in an .xlsx file, a value a user typed
+     *   (`=HYPERLINK(...)`) shows as the text it is.
+     * - **The values when called**: the rows and values are read before the promise is returned, the
+     *   file is zipped after (with the browser's `CompressionStream`, so this is async).
+     *
+     * Works without the grid on the page too: it reads the config and the datasource.
+     *
+     * @param options what to export, see {@link ExcelOptions}. Every option is optional
+     * @returns the .xlsx file, of the type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+     * @throws (the promise rejects with) a `TypeError` for an option it does not know or a value an
+     * option does not take (`rows: 'some'`, a sheet name Excel does not take), a `RangeError` for more
+     * rows (1 048 576 with the header) or columns (16 384) than an Excel sheet holds
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * // the file, for code of your own: upload it, attach it to a mail ...
+     * const blob = await gridInterface.getExcel();
+     * await fetch('/api/reports', { method: 'POST', body: blob });
+     *
+     * // the selected rows, two fields, on a sheet named People
+     * const people = await gridInterface.getExcel({ rows: 'selected', fields: ['name', 'born'], sheetName: 'People' });
+     *
+     * // the cells the user selected (the last range of cells)
+     * const cells = await gridInterface.getExcel({ rows: 'range' });
+     * ```
+     */
+    public getExcel(options: ExcelOptions = {}): Promise<Blob> {
+        return gridExcel(this, 'getExcel', options);
+    }
+
+    /**
+     * Saves the rows as an Excel file (.xlsx): the browser downloads it, as from a link. The file is
+     * {@link getExcel}'s. The row menu's *Excel, all rows* and *Excel, selected rows* call this.
+     *
+     * @param filename the name the file is saved as, default `'export.xlsx'`. Give it the `.xlsx`
+     * ending yourself, it is not added
+     * @param options what to export, see {@link ExcelOptions}
+     * @returns a promise that is fulfilled once the download is started
+     * @throws (the promise rejects with) a `TypeError` when the filename is not a text
+     * (`downloadExcel({ rows: 'selected' })`: the filename comes first), for an option it does not
+     * know or a value an option does not take
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * document.getElementById('export')!.onclick = () => gridInterface.downloadExcel();
+     *
+     * // the selected rows, on a sheet named Orders
+     * await gridInterface.downloadExcel('orders.xlsx', { rows: 'selected', sheetName: 'Orders' });
+     * ```
+     */
+    public downloadExcel(filename: string = 'export.xlsx', options: ExcelOptions = {}): Promise<void> {
+        return downloadGridExcel(this, filename, options);
+    }
+
+    /**
      * The rows as CSV text (RFC 4180): a header line with the column labels, then a line per row,
      * every line ended with CRLF. By default every row the filter lets through, in the sort order, and
      * the columns of the layout in the order the user sees them, each value as the grid shows it. See
-     * {@link CsvOptions} for what can be changed: the selected rows, the fields, the separator
-     * (`';'` for Excel in Norway), raw values ...
+     * {@link CsvOptions} for what can be changed: the selected rows, the selected range of cells, the
+     * fields, the separator (`';'` for Excel in Norway), raw values ...
      *
      * - **The rows**: when grouped, every data row in the grouped order - the rows of collapsed groups
      *   too, no group rows. Rows marked for deletion are rows of the grid until they are saved, they
@@ -660,7 +864,7 @@ export class GridInterface<T> {
      * @param options what to export and how, see {@link CsvOptions}. Every option is optional
      * @returns the CSV text, `''` when there are no columns
      * @throws a `TypeError` for an option it does not know or a value an option does not take
-     * (`rows: 'range'`)
+     * (`rows: 'some'`)
      *
      * @sample export
      * @example
@@ -672,6 +876,9 @@ export class GridInterface<T> {
      *
      * // two fields, no header line
      * const names = gridInterface.getCsv({ fields: ['name', 'email'], header: false });
+     *
+     * // the cells of the range the user selected, see getRanges()
+     * const range = gridInterface.getCsv({ rows: 'range' });
      * ```
      */
     public getCsv(options: CsvOptions = {}): string {
@@ -901,6 +1108,15 @@ export class GridInterface<T> {
                 }
             }
         }
+
+        /**
+         * the aggregates (aggregates.ts): a group row is one line, more when an aggregate it shows is
+         * on a lower line of a column with stacked fields. The totals row has the lines it needs, at
+         * least one
+         */
+        const aggregateLineCount = aggregateLines(config);
+        config.__groupRowHeight = config.cellHeight * (config.groupAggregates ? Math.max(1, aggregateLineCount) : 1);
+        config.__totalsRowHeight = config.totalsRow ? config.cellHeight * Math.max(1, aggregateLineCount) : 0;
     }
 
     /**
@@ -1025,18 +1241,24 @@ export class GridInterface<T> {
      */
     public __dataSourceUpdated() {
         this.__parseConfig();
+        // the layout changed since the ranges of cells were made - a column moved, pinned, hidden: the
+        // fields between their ends are others now. Every change of the layout comes here (a rebuild,
+        // or applyState() without a grid)
+        if (this.rangeState && this.rangeState.key !== layoutKey(this.gridConfig)) {
+            this.clearRanges();
+        }
         this.scrollTops = [];
         this.scrollHeights = [];
         this.scrollHeight = 0;
 
         // lets make a index if datasource is > 1000k, and store top for each k
 
-        const cell = this.gridConfig.cellHeight;
+        const groupRow = this.gridConfig.__groupRowHeight;
         const row = this.gridConfig.__rowHeight;
         let count = 0;
 
         this.dataSource.getRows().forEach((ent) => {
-            const height = isGroupRow(ent) ? cell : row;
+            const height = isGroupRow(ent) ? groupRow : row;
             this.scrollTops.push(count);
             this.scrollHeights.push(height);
             count = count + height;
@@ -1104,19 +1326,42 @@ export class GridInterface<T> {
                 }
             });
 
+        // the displayed rows are others after these: the ranges of cells were made for the rows as they
+        // were, they are cleared first
         this.datasourceSubscriptions = [
             follow('collection-filtered', (data, grid) => {
+                this.clearRanges();
                 // '__internalUpdate, forced' comes before a collection-changed, that one rebuilds
                 if (data.info !== '__internalUpdate, forced') {
                     grid.rebuild(false);
                 }
             }),
-            follow('collection-sorted', (_data, grid) => grid.rebuild()),
-            follow('collection-grouped', (_data, grid) => grid.rebuild()),
-            follow('collection-expand', (_data, grid) => grid.rebuild()),
-            follow('collection-collapse', (_data, grid) => grid.rebuild()),
-            // an upsert keeps the row elements: the input the user types in stays, with its focus
-            follow('collection-changed', (data, grid) => (data.info === 'upsert' ? this.updateAfterMerge(grid) : grid.rebuild())),
+            follow('collection-sorted', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-grouped', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-expand', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-collapse', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            // an upsert keeps the row elements: the input the user types in stays, with its focus. One
+            // that only changed values sends rows-changed, not this: the ranges stay
+            follow('collection-changed', (data, grid) => {
+                this.clearRanges();
+                if (data.info === 'upsert') {
+                    this.updateAfterMerge(grid);
+                } else {
+                    grid.rebuild();
+                }
+            }),
             follow('current-entity', (_data, grid) => this.updateRows(grid)),
             follow('selection-change', (_data, grid) => this.updateRows(grid)),
             follow('select', (data, grid) => this.scrollToRow(grid, data.row)),
@@ -1223,7 +1468,9 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         tooltips: options.tooltips ?? true,
         rowStatus: options.rowStatus ?? true,
         editedMarker: options.editedMarker ?? true,
-        placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true
+        placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
+        groupAggregates: options.groupAggregates ?? true,
+        totalsRow: options.totalsRow ?? false
     };
 }
 
@@ -1313,6 +1560,32 @@ function assertConfigTexts(config: Partial<GridConfig>) {
 }
 
 /**
+ * A column's `aggregate` is one of the functions, and `sum`, `avg`, `min` and `max` are for a number
+ * field: TypeScript catches neither in a config from plain JavaScript or JSON, and the grid would show
+ * nothing (a text field has no numbers to sum) without a word
+ * @throws a `TypeError` naming the column and what it takes
+ */
+function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<any>) {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        const fn: unknown = column?.aggregate;
+        if (fn === undefined) {
+            continue;
+        }
+        if (!isAggregateFunction(fn)) {
+            throw new TypeError(
+                `GridConfig: columns.${field}.aggregate is ${JSON.stringify(fn)}, it is one of ${AGGREGATE_FUNCTIONS.map((name) => `'${name}'`).join(', ')}`
+            );
+        }
+        const type = datasource.getField(field).type;
+        if (fn !== 'count' && type !== 'number') {
+            throw new TypeError(
+                `GridConfig: columns.${field}.aggregate '${fn}' is for a number field, '${field}' is ${type}: new Datasource({ fields: { ${field}: 'number' } }), or 'count'`
+            );
+        }
+    }
+}
+
+/**
  * The internal sizes before `__parseConfig()` computes them
  */
 const NO_SIZES = {
@@ -1322,7 +1595,9 @@ const NO_SIZES = {
     __leftWidth: 0,
     __rightWidth: 0,
     __scrollbarSize: 0,
-    __selectSizeWidth: 0
+    __selectSizeWidth: 0,
+    __groupRowHeight: 0,
+    __totalsRowHeight: 0
 };
 
 /**

@@ -61,10 +61,10 @@ const fullConfig = (): GridConfig => ({
             operator: 'CONTAINS',
             focusButton: 'SHOW_IF_GRID_NOT_READONLY'
         },
-        age: { label: 'Age', readonly: true, numberOverride: 'ZERO_TO_BLANK' },
+        age: { label: 'Age', readonly: true, numberOverride: 'ZERO_TO_BLANK', aggregate: 'avg' },
         born: { placeholderFilter: 'from' },
         value: { dynamicCellTypeColumn: 'valueType', allowPasteClearOnly: true },
-        country: { label: 'Country' },
+        country: { label: 'Country', aggregate: 'count' },
         // not in the layout: the column chooser can add it
         phone: { label: 'Phone' }
     },
@@ -109,7 +109,9 @@ const fullConfig = (): GridConfig => ({
         showYearInMonth: true,
         datepickerHeight: 300
     },
-    placeholderRowCurrentEntityOnly: false
+    placeholderRowCurrentEntityOnly: false,
+    groupAggregates: true,
+    totalsRow: true
 });
 
 /**
@@ -138,6 +140,11 @@ describe('config as JSON - GridConfig', () => {
         // a sanity check of what is compared: grouped, sorted, filtered and the right pinned column
         expect(shown(fromJson).rows).toEqual(['Norway', 'Bob', 'Ann', 'Sweden']);
         expect(fromJson.gridInterface.getLayoutFields()).toEqual(['name', 'age', 'born', 'valueType', 'value', 'country']);
+        // and the aggregates: in the totals row, over Ann, Bob and Cid, and in the group rows
+        const aggregate = (selector: string) =>
+            fromJson.element.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim();
+        expect(aggregate('.simple-html-grid-totals [data-aggregate="avg:age"]')).toEqual('Avg 35');
+        expect(aggregate('.simple-html-grid-body-row-container-group [data-aggregate="count:country"]')).toEqual('Count 2');
     });
 
     it('expect updateConfig() to take a config part from JSON', async () => {

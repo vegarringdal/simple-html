@@ -383,9 +383,9 @@ built on it.
 
 ## Phase 6 - selection and clipboard
 
-32. [ ] **Cell ranges**: click-drag, shift+click and shift+arrows select a rectangle of cells, across
+32. [x] **Cell ranges**: click-drag, shift+click and shift+arrows select a rectangle of cells, across
         columns and pinned sections; Ctrl/Cmd adds another range. **M-L**
-33. [ ] **Clipboard like a spreadsheet**: copy a range as tab separated text (pastes into
+33. [x] **Clipboard like a spreadsheet**: copy a range as tab separated text (pastes into
         Excel/Sheets), paste one into a range (several rows and columns, respecting readonly and
         validation, one undo step), Delete clears a range. **M**
 34. [ ] **Fill down** (Ctrl+D) and a drag-fill handle. **M**
@@ -410,17 +410,16 @@ Needs phase 4: a merge every second on a large grid has to stay cheap.
 
 39. [ ] **Custom cell rendering** per column (a lit-html template: badges, links, progress bars,
         icons) and conditional formatting (cell/row classes from a function or simple rules). **M**
-40. [ ] **Aggregates**: sum/count/average in each group row, and a totals row in the footer. **M**
+40. [x] **Aggregates**: sum/count/average in each group row, and a totals row in the footer. **M**
 41. [x] **Export** the filtered and sorted rows, or the selected range, as CSV. xlsx later if
-        needed. **S** - done for all / selected rows and in the row menu; `rows: 'range'` comes with
-        item 32
+        needed. **S** - and Excel (.xlsx, the row menu's export) on the user's request - done for all / selected rows, `rows: 'range'`, and in the row menu
 42. [ ] **Find** (Ctrl+F) in the grid: highlight matches, next/previous. **M**
 
 Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** phase 5 (phase 4 and item 28 are done).
+**Now:** items 34, 35 (fill down, selection summary), 38 UI, 39, 42 - the rest is done.
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies

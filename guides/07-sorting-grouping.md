@@ -81,6 +81,9 @@ datasource.group([]); // no grouping. removeGroup() does the same
   group have to be next to each other.
 - `removeGroup(group)` removes one level, found by its field: the object from `getGrouping()` or a
   copy, e.g. from a saved state. A field that is not grouped on changes nothing.
+- **Sums in the group rows**: a column with an `aggregate` (`'sum'`, `'avg'`, `'min'`, `'max'` or
+  `'count'`) shows it in its place in every group row, over the group's rows - collapsed sub groups
+  included. The name stays at the left. See [Aggregates](18-aggregates.md).
 
 The grouping and the expanded groups are part of the grid's [state](03-state.md):
 `getState().grouping` and `expandedGroups`.
@@ -118,7 +121,7 @@ const names = datasource.getDataRows().map((row) => row.name);
 | `__groupID` | the id for `expandGroup(id)` / `collapseGroup(id)`: the value as formatted, e.g. `'Norway'` |
 | `__groupName` | the text the grid shows: `'Country: Norway'` |
 | `__groupLvl` | the level, 0 for the first grouped field. The grid indents by it |
-| `__groupTotal` | the number of data rows in the group, its sub groups included |
+| `__groupTotal` | the number of data rows in the group, its sub groups included. More sums of a group: `datasource.aggregate(field, fn, groupRow)`, see [Aggregates](18-aggregates.md#from-code) |
 | `__groupChildren` | its rows: data rows, or the group rows of the next level |
 | `__groupExpanded` | `true` when the group is expanded |
 

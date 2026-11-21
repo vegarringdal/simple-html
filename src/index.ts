@@ -1,3 +1,4 @@
+export type { AggregateFunction } from './datasource/aggregate';
 export { BooleanFormatter } from './datasource/booleanFormatter';
 export type { Changes, ModifiedEntity } from './datasource/changes';
 export { DateFormatterDDMMYYYY } from './datasource/DateFormatterDDMMYYYY';
@@ -46,6 +47,7 @@ export { DateInterface } from './date/dateInterface';
  */
 export type { IDateConfig, IStyle } from './date/interfaces';
 export type { EventHandler } from './emitter';
+export type { CellRange } from './grid/cellRange';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';
 export type { ColumnConfig, GridConfig, GridLayout, GridState, HeaderFilter, LayoutColumn } from './grid/gridConfig';
@@ -66,4 +68,5 @@ export {
     type MenuSection,
     type MenuSeparator
 } from './grid/gridMenus';
+export type { ExcelOptions } from './grid/xlsx';
 export { setTexts, TEXTS, type TextId, type Texts } from './texts';

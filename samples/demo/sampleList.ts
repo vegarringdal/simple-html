@@ -1,4 +1,6 @@
 import type { DemoSample } from './demoUtils';
+import { aggregates } from './samples/aggregates';
+import aggregatesSource from './samples/aggregates.ts?raw';
 import { basicGrid } from './samples/basicGrid';
 import basicGridSource from './samples/basicGrid.ts?raw';
 import { cellStyling } from './samples/cellStyling';
@@ -33,6 +35,8 @@ import { miscConfig } from './samples/miscConfig';
 import miscConfigSource from './samples/miscConfig.ts?raw';
 import { multiline } from './samples/multiline';
 import multilineSource from './samples/multiline.ts?raw';
+import { ranges } from './samples/ranges';
+import rangesSource from './samples/ranges.ts?raw';
 import { requiredPlaceholders } from './samples/requiredPlaceholders';
 import requiredPlaceholdersSource from './samples/requiredPlaceholders.ts?raw';
 import { rowsData } from './samples/rowsData';
@@ -69,6 +73,7 @@ export const SAMPLES: Sample[] = [
     { ...columnLayout, source: columnLayoutSource },
     // datasource
     { ...sortingGrouping, source: sortingGroupingSource },
+    { ...aggregates, source: aggregatesSource },
     { ...filtering, source: filteringSource },
     { ...selection, source: selectionSource },
     { ...rowsData, source: rowsDataSource },
@@ -77,6 +82,7 @@ export const SAMPLES: Sample[] = [
     { ...saving, source: savingSource },
     { ...validation, source: validationSource },
     { ...multiline, source: multilineSource },
+    { ...ranges, source: rangesSource },
     { ...contextMenu, source: contextMenuSource },
     { ...dropdownGrid, source: dropdownGridSource },
     // cells

@@ -97,12 +97,13 @@ Every option of a `ColumnConfig` is optional.
 | `label` | the header text |
 | `readonly` | the cell can not be edited, also when the grid can. Shown with stripes |
 | `placeholderRow` | text shown in an empty cell, by default on the current row only (`placeholderRowCurrentEntityOnly`) |
-| `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else a search icon |
+| `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else the field's type - `Text` or `Number` (texts `filter.placeholder.*`) |
 | `operator` | the operator the header filter starts with. Default `EQUAL` for text (the whole text: `ann` does not find `Anna`), see [Filtering](06-filtering.md#header-filters) |
 | `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed |
 | `allowPasteClearOnly` | typing in the cell does nothing, paste and clear from the row menu work. For a field you set from a dropdown of your own |
 | `focusButton` | shows a `...` button in the focused cell, see [Events](09-events.md#cell-events) |
 | `dynamicCellTypeColumn` | another field of the row holds the type of this cell, see [Formatting](08-formatting.md#the-type-from-another-field) |
+| `aggregate` | sums the column up in the group rows and the totals row: `'sum'`, `'avg'`, `'min'`, `'max'` (number fields) or `'count'`. See [Aggregates](18-aggregates.md) |
 
 `focusButton` takes `'ALWAYS'`, `'SHOW_IF_GRID_NOT_READONLY'` or
 `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`.
@@ -133,6 +134,8 @@ Every option is optional.
 | `texts` | | the texts of this grid by id, e.g. `{ 'row.copy': 'Kopier:' }`: they win over the page's (`setTexts()`). The tooltips are texts too, their ids end with `.tooltip`. See [Texts](12-texts.md) |
 | `datePickerConfig` | | week start and sizes of the date picker: only the fields to change (`Partial<IDateConfig>`), e.g. `{ weekStart: 0, isoWeek: false }`. The rest are the defaults: weeks from monday with their numbers. The names of the months and days are texts |
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |
+| `groupAggregates` | `true` | the group rows show the columns' `aggregate`s. `false`: the name of the group only. See [Aggregates](18-aggregates.md) |
+| `totalsRow` | `false` | a row under the rows with the columns' `aggregate`s over the rows the filter lets through. See [Aggregates](18-aggregates.md#the-totals-row) |
 
 How rows are selected is not a grid option: the datasource has the selection mode, see
 [Datasource](04-datasource.md#the-selection-mode). Readonly cells and css classes from the row, and

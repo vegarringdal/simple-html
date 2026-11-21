@@ -40,6 +40,9 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
 - **A cell** is a `gridcell` with `aria-colindex`; the input (or checkbox) in it is named with the
   column's label, the same as the header shows. The row number is the first cell of a row. A column of
   two fields (`fields: ['a', 'b']`) is two columns here, one per field.
+- **A cell in a range of cells** (see [Selection and clipboard](17-selection-and-clipboard.md)) has
+  `aria-selected="true"`: `gridcell "Company" selected`. The other cells have no `aria-selected`, see
+  [Known limits](#known-limits).
 - **The state of a row** is text in its row number cell, hidden on screen (`simple-html-visually-hidden`):
   `gridcell "3 Marked for deletion"`, `"2 Edited, Error: Age: Must be at least 18"`, `"5 New row"`. A
   row as it was is its number only. The icons on screen are hidden from a screen reader, the text says
@@ -60,6 +63,14 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   `aria-expanded`; a data row is one level below the last grouping. Its one cell spans the columns
   after the row number, with a button that expands and collapses it: named with the text the row
   shows (`Country: Norway (12)`), `aria-expanded` says its state.
+- **The aggregates of a group row** (`ColumnConfig.aggregate`, see [Aggregates](18-aggregates.md)):
+  each is a `gridcell` with the `aria-colindex` of its field, `Sum 1234.5`, so a screen reader reads it
+  with the column's header. The name cell then spans the columns up to the first aggregate. The
+  aggregate of the first column is under the name on screen: it is not a cell of its own, its text is
+  in the name cell (`Country: Norway (12) Count 10`).
+- **The totals row** (`totalsRow`) is the last row of the grid, after the rows on screen: its first
+  cell is a `rowheader`, "Total" (the text `aggregate.total`), then a `gridcell` per aggregate.
+  `aria-rowcount` counts it, its `aria-rowindex` is the last.
 - **The row count** in the footer is a status (`role="status"`): a screen reader reads it out when it
   changes - after a filter, an expand or a collapse.
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
@@ -100,8 +111,14 @@ caret in them; Alt with an arrow moves between the cells.
 | a character | in a multiline cell that can be edited: opens its editor, the character at the end of the text |
 | Space | in a cell with a `focusButton`: sends `cell-focus-button-click`, as a click on the button does. In a checkbox: checks it |
 | Shift+F10, the menu key | the row menu (the browser sends `contextmenu`) |
+| Alt+Shift+arrows | a range of cells: from this cell, the end one cell further each time - a row up or down, a field left or right (the fields of a column of two are two). The focus stays in the cell. See [Selection and clipboard](17-selection-and-clipboard.md#the-keyboard) |
+| Esc | clears the ranges of cells (when there are some, and no menu is open) |
+| Ctrl+C, Cmd+C | with no text selected in the cell: the range of cells as tab separated text, or the cell's value |
+| Ctrl+V, Cmd+V | a block of cells (copied in a spreadsheet, or here) from this cell or the top left of the range; one value into every cell of the ranges. One value with no range is the input's own paste |
+| Delete / Backspace | with a range of more than one cell and no text selected: empties its cells. Else the input's own |
 
-The grid scrolls to the cell the focus goes to.
+The grid scrolls to the cell the focus goes to. Moving to another cell (Tab, Alt+arrows, Enter) clears
+the ranges of cells, and so does typing in a cell.
 
 ### A header filter
 
@@ -221,8 +238,15 @@ setTexts({
 - **Not the keyboard of the grid pattern**: there every cell is reached with the arrow keys and only
   one cell is a stop of Tab. Here every cell input is a stop of Tab for the browser (the grid moves
   the focus on Tab itself), and the plain arrow keys move the caret in the input, Alt+arrows move
-  between the cells. There is no Home / End / Page Up / Page Down / Ctrl+Home in the grid, and no key
-  to select a row or a column. A later version will change this, with selecting ranges of cells.
+  between the cells, Alt+Shift+arrows select a range of cells. There is no Home / End / Page Up / Page
+  Down / Ctrl+Home in the grid, and no key to select a whole row or column (Shift+Space, Ctrl+Space).
+- **Ranges of cells**: only the cells in a range have `aria-selected` (`true`). WAI-ARIA asks for
+  `true` or `false` on every cell that can be selected, in a grid with `aria-multiselectable`: the
+  grid keeps `aria-multiselectable` for the row selection (the selection mode `'multiple'`), and gives
+  the other cells no `false`: every cell of the grid would get a "not selected" state, the way the
+  rows have one with a selection mode. Not tried with a screen reader yet, see above. A range
+  made with Alt+Shift+arrows is not read out while it grows: the focus stays in the active cell. Only
+  the cells on screen are in the dom, so a screen reader reads only those of a large range.
 - **Only the rows on screen are in the dom**: a screen reader reading the page (browse mode) reads
   the rows on screen, not row 400. The counts and the indexes say where they are.
 - **Group rows by keyboard**: Tab and Alt+arrows skip the group rows, so the expand/collapse button
@@ -234,6 +258,8 @@ setTexts({
   screen reader reaches it.
 - **Only the first sort column** has `aria-sort`; the number of a column in a sort on several
   columns is shown, but not read out.
+- **An aggregate of a group row under its name** is covered on screen, a screen reader gets it with
+  the name. Put the aggregated columns after the first column.
 - **The column numbers** under the filters are hidden: selecting a column is for the mouse, and a
   selected column is not read out.
 - **The two scrollbars** are elements of their own, Chrome makes them stops of Tab (an element that

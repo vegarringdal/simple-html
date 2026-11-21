@@ -1,27 +1,38 @@
-// gridInterface.getCsv(options) gives the rows as CSV text, downloadCsv(filename, options) saves them as a file
+// gridInterface.downloadExcel(filename, options) saves the rows as an .xlsx file (getExcel() gives the Blob),
+// getCsv(options) gives them as CSV text, downloadCsv(filename, options) saves that as a file
 import type { CsvOptions, GridConfig } from '@simple-html/grid';
 import { baseFields, baseGridConfig, createStage, type DemoSample, generateRows, mountGrid } from '../demoUtils';
 
 export const exportCsv: DemoSample = {
     id: 'export',
-    title: 'Export to CSV',
+    title: 'Export to Excel and CSV',
     group: 'Export',
     description:
-        "getCsv() gives the rows as CSV text, downloadCsv() saves them as a file (with a BOM, so Excel reads æøå). By default it is what the grid shows: the rows the filter lets through, sorted (when grouped every data row, collapsed groups too), the columns of the layout in their order, each value as the cell shows it. Filter, sort, group or select rows and export again. Use the ; separator for Excel in a locale with a decimal comma, like Norwegian. The first company starts with = : it is written with a ' in front, so a spreadsheet does not run it as a formula.",
+        "downloadExcel() saves the rows as an .xlsx file: typed cells (numbers, dates in local time, booleans, text), the header row frozen with an autofilter, the columns as wide as in the grid, a flat list (when grouped every data row, collapsed groups too, no group rows). The row menu (right click a cell) has the same under Export. getCsv() gives the rows as CSV text, downloadCsv() saves them as a file (with a BOM, so Excel reads æøå), each value as the cell shows it. By default both export what the grid shows: the rows the filter lets through, sorted, the columns of the layout in their order. Filter, sort, group or select rows and export again. Use the ; separator for CSV in a locale with a decimal comma, like Norwegian. The first company starts with = : the CSV writes it with a ' in front, so a spreadsheet does not run it as a formula; in the .xlsx file it is text, never a formula.",
     run(stage) {
         const ui = createStage(stage);
 
         // company pinned left, the rest in the center: the export follows the order the user sees
         const config: GridConfig = baseGridConfig();
         config.layout.left = config.layout.center.splice(0, 1);
+        // a date and time: a datetime cell in Excel, in the local time the grid shows
+        config.layout.center.push({ fields: ['lastLogin'], width: 160 });
 
         const rows = generateRows();
         // a value a user typed that a spreadsheet would run as a formula
         rows[0].company = '=HYPERLINK("http://example.com","click me")';
+        rows.forEach((row, i) => {
+            row.lastLogin = new Date(2026, 10, 1 + (i % 28), 8 + (i % 10), (i * 7) % 60, (i * 13) % 60);
+        });
 
-        // balance with a decimal comma: 1234,5 is quoted with the ',' separator, not with ';'
+        // balance with a decimal comma: the grid shows 1234,5, Excel gets the number 1234.5; the CSV
+        // quotes it with the ',' separator, not with ';'
         const { gridInterface, datasource } = mountGrid(ui.gridHost, config, rows, {
-            fields: { ...baseFields(), balance: { type: 'number', formatter: 'numberComma' } }
+            fields: {
+                ...baseFields(),
+                balance: { type: 'number', formatter: 'numberComma' },
+                lastLogin: { type: 'datetime', label: 'last login' }
+            }
         });
 
         // the options both the preview and the downloads use
@@ -47,6 +58,13 @@ export const exportCsv: DemoSample = {
         }
         datasource.on('history-changed', showPreview);
 
+        ui.button('Download Excel (all rows)', () => {
+            // async: the file is zipped with the browser's CompressionStream
+            gridInterface.downloadExcel('export.xlsx');
+        });
+        ui.button('Download Excel (selected rows)', () => {
+            gridInterface.downloadExcel('selected.xlsx', { rows: 'selected', sheetName: 'Selected' });
+        });
         ui.button('Download CSV (all rows)', () => {
             gridInterface.downloadCsv('export.csv', options);
         });

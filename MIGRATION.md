@@ -2000,6 +2000,21 @@ change:
 * **Tab leaves the grid at its ends**: Tab on the last cell of the last row and Shift+Tab on the first
   header filter used to keep the focus in the grid.
 
+## Cell ranges and the clipboard
+
+New in v6, see [Selection and clipboard](guides/17-selection-and-clipboard.md). What changes for
+existing users and code:
+
+* **Alt+Shift+arrows select a range** - they moved between cells like Alt+arrows. Alt+arrows still move.
+* **Shift+click** on a cell selects a range: it no longer makes the row current or opens the date
+  picker. **Ctrl/Cmd+click** adds a range: it no longer opens the date picker. Modified clicks on a
+  checkbox no longer toggle it.
+* **Esc** in a cell clears the ranges when there are some, and is cancelled then.
+* **Ctrl+C** with no text selected copies the cell's value; with a range, the range as TSV.
+* **Ctrl+V** of cells copied from a spreadsheet pastes them into the grid's cells (it put the whole
+  text into one cell).
+* `MENU_IDS.row` has three more ids (`row.copy.range`, `row.paste.range`, `row.clear.range`).
+
 ## Reactive cells and live data
 
 New in v6, see [Live data](guides/16-live-data.md). What changes for existing code:
@@ -2060,7 +2075,24 @@ New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can cha
 
 ## Other behaviour changes
 
-Found while writing the v6 docs: each did not do what its name or its docs said.
+* **The date picker's class names are prefixed** (`.year` -> `.simple-html-date-year`, `.side` ->
+  `.simple-html-date-time-field`, `.date-flex-col` -> `.simple-html-date-actions` ..., see the
+  changelog) - css of your own that styled the old names needs the new ones. `datepickerHeight`
+  defaults to 282.
+
+* **The row menu exports Excel**: `row.export.csv` / `row.export.csvSelected` are now
+  `row.export.excel` / `row.export.excelSelected` (texts too). CSV is still `getCsv()` /
+  `downloadCsv()`; a `menus` hook can add a CSV entry back.
+
+* **The wheel over the grid no longer scrolls the page**: the grid cancels it. Ctrl+wheel (zoom) is
+  the browser's as before. A test that sent a `wheel` event with `wheelDeltaY` has to send
+  `deltaY` (`new WheelEvent('wheel', { deltaY: 40 })` scrolls the rows down 40px).
+
+* **An empty text or number header filter shows `Text` / `Number`**, not 🔍 - the texts
+  `filter.placeholder.text` / `filter.placeholder.number`. A test that looked for the 🔍 placeholder
+  has to look for those; `placeholderFilter` on a column still wins.
+
+Also found while writing the v6 docs: each did not do what its name or its docs said.
 
 * **`setData()` clears `currentEntity`** (to `null`, and sends `current-entity`) when the current row
   is no longer in the data. Replaced rows are new objects, so this is the case after every

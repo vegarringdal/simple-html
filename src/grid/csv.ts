@@ -1,6 +1,8 @@
 /**
  * CSV text from plain inputs: no grid, no datasource, no DOM. The grid's `getCsv()` and `downloadCsv()`
  * pick the rows, the fields and the texts (see gridFunctions/gridCsv.ts) and build the file with this.
+ * The clipboard of the cell ranges (gridFunctions/rangeClipboard.ts) writes tab separated text with it,
+ * and reads it back with parseTsv().
  *
  * The format is RFC 4180 (https://www.rfc-editor.org/rfc/rfc4180): a line per record, ended with CRLF;
  * a field is put in double quotes when it holds the separator, a double quote, CR or LF, and a double
@@ -25,15 +27,15 @@ export const CSV_SEPARATORS: readonly CsvSeparator[] = [',', ';', '\t'];
  *
  * | option | default | |
  * | --- | --- | --- |
- * | `rows` | `'all'` | `'all'`: every row the filter lets through, in the sort order. `'selected'`: the selected rows |
- * | `fields` | the layout | the fields to export, in order |
+ * | `rows` | `'all'` | `'all'`: every row the filter lets through, in the sort order. `'selected'`: the selected rows. `'range'`: the rows of the selected range of cells |
+ * | `fields` | the layout (`'range'`: the range's) | the fields to export, in order |
  * | `header` | `true` | a first line with the column labels |
  * | `formatted` | `true` | the values as the grid shows them; `false` the values themselves |
  * | `separator` | `','` | `';'` for Excel in a locale with a decimal comma |
  * | `bom` | `true` for `downloadCsv()`, `false` for `getCsv()` | a UTF-8 byte order mark first |
  * | `escapeFormulas` | `true` | text that starts with `=`, `+`, `-`, `@` ... gets a `'` in front |
  *
- * An option with a value it does not know (`rows: 'range'`, `separator: '|'`), or a key it does not
+ * An option with a value it does not know (`rows: 'some'`, `separator: '|'`), or a key it does not
  * know, throws a `TypeError`.
  *
  * @example
@@ -46,6 +48,9 @@ export const CSV_SEPARATORS: readonly CsvSeparator[] = [',', ';', '\t'];
  *
  * // the selected rows, two fields, the values as they are stored
  * gridInterface.downloadCsv('selected.csv', { rows: 'selected', fields: ['name', 'born'], formatted: false });
+ *
+ * // the cells the user selected (the last range), with a header line of their columns
+ * gridInterface.downloadCsv('range.csv', { rows: 'range' });
  * ```
  */
 export interface CsvOptions {
@@ -57,16 +62,18 @@ export interface CsvOptions {
      * - `'selected'`: the selected rows, in the same order - `datasource.getSelectedRows()`. That is
      *   the selected rows that are displayed: a selected row in a collapsed group is left out, as the
      *   row menu's actions on the selected rows leave it out. Nothing selected gives the header only
-     *
-     * A selected range of cells comes with cell ranges, as a `'range'` value of this option.
+     * - `'range'`: the selected range of cells - the last of `gridInterface.getRanges()`, the one made
+     *   last: its data rows top to bottom (a group row in it is left out) and, unless `fields` is
+     *   given, its fields left to right. No range gives an empty text (no fields, no rows)
      */
-    rows?: 'all' | 'selected';
+    rows?: 'all' | 'selected' | 'range';
 
     /**
      * The fields to export, in this order, a column each. Default the fields of the layout now, in
      * the order the user sees them: pinned left, center, pinned right, and a column of stacked fields
      * gives a CSV column for each of its fields, top to bottom - `gridInterface.getLayoutFields()`.
-     * The hidden columns (`getHiddenFields()`) are not in the layout, so they are left out.
+     * The hidden columns (`getHiddenFields()`) are not in the layout, so they are left out. With
+     * `rows: 'range'` the default is the fields of the range.
      *
      * Any field of the rows can be given, also one that is not in the grid.
      */
@@ -213,4 +220,78 @@ export function buildCsv(header: string[] | null, rows: string[][], options: { s
     });
     const text = lines.map((line) => line + CRLF).join('');
     return options.bom ? CSV_BOM + text : text;
+}
+
+/**
+ * Tab separated text as a block of cells: what Excel and Google Sheets put on the clipboard for a range
+ * of cells, and what the grid puts there itself (buildCsv() with `'\t'`).
+ *
+ * - a line per row, ended by CRLF, LF or CR; one line end at the very end is not a row (Excel ends
+ *   what it copies with one)
+ * - a tab between the cells
+ * - a cell that starts with a double quote is quoted: it goes on to the next quote that is not doubled,
+ *   and can hold tabs and line breaks. `""` in it is one `"`. What comes after the closing quote, up to
+ *   the next tab or line end, is added to the cell as it is
+ * - a quote in a cell that does not start with one is a character like the others
+ *
+ * Rows can have different numbers of cells, the text says how many each has.
+ *
+ * @returns the rows, a text for each cell. `[]` for empty text, and for a line end only
+ *
+ * @example
+ * parseTsv('a\tb\r\nc\td\r\n'); // [['a', 'b'], ['c', 'd']]
+ * parseTsv('"two\nlines"\t"say ""hi"""'); // [['two\nlines', 'say "hi"']]
+ */
+export function parseTsv(text: string): string[][] {
+    // without the line end at the end
+    let end = text.length;
+    if (text.endsWith('\r\n')) {
+        end = end - 2;
+    } else if (text.endsWith('\n') || text.endsWith('\r')) {
+        end = end - 1;
+    }
+    if (end <= 0) {
+        return [];
+    }
+
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let i = 0;
+    while (true) {
+        let cell = '';
+        if (text[i] === '"') {
+            i++;
+            while (i < end) {
+                if (text[i] === '"') {
+                    if (text[i + 1] === '"') {
+                        cell = `${cell}"`;
+                        i = i + 2;
+                        continue;
+                    }
+                    i++;
+                    break;
+                }
+                cell = cell + text[i];
+                i++;
+            }
+        }
+        while (i < end && text[i] !== '\t' && text[i] !== '\r' && text[i] !== '\n') {
+            cell = cell + text[i];
+            i++;
+        }
+        row.push(cell);
+
+        if (i >= end) {
+            rows.push(row);
+            return rows;
+        }
+        if (text[i] === '\t') {
+            i++;
+            continue;
+        }
+        // a line end: CRLF, LF or CR
+        i = i + (text[i] === '\r' && text[i + 1] === '\n' ? 2 : 1);
+        rows.push(row);
+        row = [];
+    }
 }

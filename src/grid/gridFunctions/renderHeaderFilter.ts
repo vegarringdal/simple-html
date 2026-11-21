@@ -1,6 +1,7 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Entity, GroupRow } from '../../datasource/entity';
+import type { FieldType } from '../../datasource/field';
 import { parseFilterText } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
@@ -33,12 +34,13 @@ export function renderHeaderFilter(
 
     if (attribute) {
         const cellConfig = config.columns[attribute];
-        // the name of the input for a screen reader, the placeholder is a 🔍 or a date format
+        // the name of the input for a screen reader; the placeholder says what to type, see below
         const label = gridText(ctx, 'grid.filter', { label: getColumnLabel(ctx, attribute) });
         const { type, formatter } = ctx.gridInterface.getDatasource().getField(attribute);
 
-        // the column's own placeholder, else the formatter's (YYYY-MM-DD), else the search icon
-        const placeholderFilter = cellConfig.placeholderFilter || formatter.placeholder || '🔍';
+        // the column's own placeholder, else the formatter's (a date's format, YYYY-MM-DD), else the
+        // field's type: "Text", "Number" (texts filter.placeholder.*). A boolean filter is a checkbox
+        const placeholderFilter = cellConfig.placeholderFilter || formatter.placeholder || typePlaceholder(ctx, type);
 
         // what the cell shows, from the state's header filters. ?? and not ||: false and 0 are filters too
         let currentValue: unknown = ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? '';
@@ -228,4 +230,18 @@ export function renderHeaderFilter(
     } else {
         render(html`<div class="simple-html-dimmed"></div>`, cell as any);
     }
+}
+
+/**
+ * the placeholder of an empty header filter of a field without one of its own: its type, "Text" or
+ * "Number" - nothing for the other types, a date's formatter has its format as the placeholder
+ */
+function typePlaceholder(ctx: Grid, type: FieldType): string {
+    if (type === 'text') {
+        return gridText(ctx, 'filter.placeholder.text');
+    }
+    if (type === 'number') {
+        return gridText(ctx, 'filter.placeholder.number');
+    }
+    return '';
 }

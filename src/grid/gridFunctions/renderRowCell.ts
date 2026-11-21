@@ -17,6 +17,8 @@ import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
 import { firstLine, hasLineBreak, isMultilineCell } from './multilineText';
+import { rangeDeleteKey } from './rangeClipboard';
+import { rangeCellFocused, rangeKeydown, showCellRange } from './rangeSelection';
 import { renderRowSelectorOf } from './renderRowSelector';
 import { showCellEdited } from './showCellEdited';
 import { showCellErrors } from './showCellErrors';
@@ -59,6 +61,7 @@ export function renderRowCell(
     if (isGroupRow(entity)) {
         showCellErrors(ctx, cell, null, null);
         showCellEdited(ctx, cell, null, null);
+        showCellRange(ctx, cell);
         cell.classList.remove('simple-html-cell-deleted');
         return;
     }
@@ -172,12 +175,25 @@ export function renderRowCell(
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: any) => {
+                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
+                            if (rangeKeydown(ctx, e, row, attribute) || rangeDeleteKey(ctx, e)) {
+                                return;
+                            }
                             if (undoRedoKey(ctx, e, entity, attribute)) {
                                 return;
                             }
                             return cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e, '');
                         }}
-                        @click=${() => {
+                        @focus=${() => rangeCellFocused(ctx, row, attribute)}
+                        @click=${(e: MouseEvent) => {
+                            // Shift+click and Ctrl/Cmd+click make ranges of cells (rangeSelection.ts): the
+                            // checkbox is not checked by them. Shift keeps the active cell, and its row
+                            if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                                e.preventDefault();
+                            }
+                            if (e.shiftKey) {
+                                return;
+                            }
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                             triggerScrollEvent(ctx);
                         }}
@@ -254,9 +270,15 @@ export function renderRowCell(
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @click=${(e: any) => {
+                            // Shift+click makes a range of cells from the active cell (rangeSelection.ts),
+                            // which stays the active cell: its row stays the current row
+                            if (e.shiftKey) {
+                                return;
+                            }
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                             triggerScrollEvent(ctx);
-                            if (!cellReadOnly && !config.readonly) {
+                            // not for a Ctrl/Cmd+click: it adds a range of cells
+                            if (!cellReadOnly && !config.readonly && !e.ctrlKey && !e.metaKey) {
                                 setTimeout(() => {
                                     if (cellConfigType === 'date' || cellConfigType === 'datetime') {
                                         const current = entity[attribute];
@@ -306,6 +328,8 @@ export function renderRowCell(
                             }
 
                             cell.$focused = true;
+                            // another cell than the active one: the ranges of cells are cleared
+                            rangeCellFocused(ctx, row, attribute);
 
                             ctx.gridInterface.__callSubscribers('cell-row-focus', {
                                 cell,
@@ -382,6 +406,10 @@ export function renderRowCell(
                             history.endTyping();
                         }}
                         @keydown=${(e: any) => {
+                            // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
+                            if (rangeKeydown(ctx, e, row, attribute) || rangeDeleteKey(ctx, e)) {
+                                return;
+                            }
                             // Ctrl+Z / Ctrl+Y, unless the user is typing in the cell: then they are the input's
                             if (undoRedoKey(ctx, e, entity, attribute)) {
                                 return;
@@ -436,6 +464,8 @@ export function renderRowCell(
                             }
 
                             if (!config.readonly && !cellReadOnly) {
+                                // typing ends the ranges of cells, as moving to another cell does
+                                ctx.gridInterface.clearRanges();
                                 typeValue(e.target.value);
                                 showEdit();
                             }
@@ -476,4 +506,7 @@ export function renderRowCell(
         render(html`<div data-dimmed-emtpy class="simple-html-dimmed"></div>`, cell as any);
         showCellEdited(ctx, cell, null, null);
     }
+
+    // in a range of cells or not: the cell is reused for other rows and fields while scrolling
+    showCellRange(ctx, cell);
 }

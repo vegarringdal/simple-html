@@ -204,8 +204,11 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     const marked = datasource.getRows().findIndex((row) => row.country === COUNTRIES[5]);
     datasource.select(marked);
     datasource.markForDeletion(datasource.getSelectedRows());
+    // a range of cells: the range entries (marking rows clears the ranges, so after it)
+    gridInterface.setRanges([{ fromRow: 0, fromField: 'name', toRow: 1, toField: 'age' }]);
     openRowMenu(element, 'age', 0);
     check();
+    gridInterface.clearRanges();
 
     // the header menus: pinned left (unpin) and in the center (pin), then the column chooser
     openLabelMenu(element, 'name');
@@ -282,6 +285,17 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
             .slice(0, 3)
             .map((row) => ('__groupName' in row ? String(row.__groupName) : ''))
     );
+
+    // the aggregates: the label of each function in the group rows and the totals row, and "Total"
+    const columns = config().columns ?? {};
+    for (const fn of ['sum', 'avg', 'min', 'max'] as const) {
+        gridInterface.updateConfig({
+            columns: { ...columns, age: { ...columns.age, aggregate: fn }, name: { ...columns.name, aggregate: 'count' } },
+            totalsRow: true
+        });
+        check();
+    }
+    gridInterface.updateConfig({ columns, totalsRow: false });
     datasource.removeGroup();
 
     // getFilterString(), every operator
@@ -315,7 +329,9 @@ afterEach(() => {
     setTexts({});
 });
 
-describe('texts in the grid - every text replaced', () => {
+// showEverything opens every part of the grid one by one (every menu, the editors, the date picker
+// ...): seconds, more on a loaded machine than the 5s vitest gives a test
+describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
     it('expect every text from setTexts(), none left in English, and every id shown', async () => {
         setTexts(fakeTexts(() => true));
         const { seen, check } = checker();

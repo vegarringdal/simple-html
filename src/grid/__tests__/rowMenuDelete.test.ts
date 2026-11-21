@@ -47,7 +47,7 @@ describe('row menu - delete: the ids', () => {
         const ids: readonly string[] = MENU_IDS.row;
         const at = ids.indexOf('row.delete');
         expect(ids.slice(at, at + 3)).toEqual(DELETE_IDS);
-        expect(ids[at - 1]).toEqual('row.clear.cell');
+        expect(ids[at - 1]).toEqual('row.clear.range');
         expect(ids[at + 3]).toEqual('row.summary');
     });
 });

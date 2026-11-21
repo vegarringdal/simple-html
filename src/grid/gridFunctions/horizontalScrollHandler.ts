@@ -1,4 +1,5 @@
 import type { Grid } from '../grid';
+import { followMiddleScroll } from './aggregates';
 import { updateAriaGrid } from './ariaGrid';
 import { assignPool } from './assignPool';
 import type { ColType } from './colType';
@@ -28,6 +29,11 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
     }
 
     ctx.lastScrollLeft = scrollLeft;
+
+    // the aggregates of the middle columns in the group rows and the totals row, see aggregates.ts
+    if (type === MIDDLE_PINNED_COLTYPE) {
+        followMiddleScroll(ctx, scrollLeft);
+    }
 
     const { columns, columnCache, rowCache, viewClass } = pinnedSection(ctx, type);
 

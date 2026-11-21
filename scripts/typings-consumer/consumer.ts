@@ -9,6 +9,7 @@
 import {
     and,
     type CellClass,
+    type CellRange,
     type Changes,
     type ColumnConfig,
     type CreateGridOptions,
@@ -24,6 +25,7 @@ import {
     DateInterface,
     type Entity,
     type EventHandler,
+    type ExcelOptions,
     type Field,
     type FieldConfig,
     type FieldType,
@@ -332,13 +334,40 @@ const selectedCsv: string = created.getCsv(csvOptions);
 created.downloadCsv();
 created.downloadCsv('selected.csv', { rows: 'selected', separator: ';' });
 console.log(csvText, selectedCsv);
-// @ts-expect-error a range comes with cell ranges, not yet
-created.getCsv({ rows: 'range' });
+// the cells of the selected range
+const rangeCsv: string = created.getCsv({ rows: 'range' });
+// @ts-expect-error rows is 'all', 'selected' or 'range'
+created.getCsv({ rows: 'some' });
+// the ranges of cells: plain JSON, field names and displayed rows
+const cellRange: CellRange = { fromRow: 0, fromField: 'name', toRow: 2, toField: 'born' };
+created.setRanges([cellRange]);
+const ranges: CellRange[] = created.getRanges();
+created.clearRanges();
+const offRanges: () => void = created.on('range-change', (data) => console.log(data.ranges.length));
+offRanges();
+// @ts-expect-error a range has its rows and fields, not cells
+created.setRanges([{ from: 0, to: 2 }]);
+console.log(rangeCsv, ranges);
 // @ts-expect-error the separators are ',', ';' and '\t'
 const pipe: CsvOptions = { separator: '|' };
 // @ts-expect-error the filename comes first: downloadCsv('export.csv', { rows: 'selected' })
 created.downloadCsv({ rows: 'selected' });
 console.log(pipe);
+// Excel: a Blob, or a file. Async, the options are plain JSON
+const excelOptions: ExcelOptions = { rows: 'selected', fields: ['name', 'born'], sheetName: 'People' };
+const excelFile: Promise<Blob> = created.getExcel();
+const selectedExcel: Promise<Blob> = created.getExcel(excelOptions);
+const downloaded: Promise<void> = created.downloadExcel();
+created.downloadExcel('selected.xlsx', { rows: 'selected' });
+created.downloadExcel('range.xlsx', { rows: 'range' });
+console.log(excelFile, selectedExcel, downloaded);
+// @ts-expect-error the header row is always there: no header option
+created.getExcel({ header: false });
+// @ts-expect-error the CSV options are not Excel's
+const formattedExcel: ExcelOptions = { formatted: false };
+// @ts-expect-error the filename comes first: downloadExcel('export.xlsx', { rows: 'selected' })
+created.downloadExcel({ rows: 'selected' });
+console.log(formattedExcel);
 created.destroy();
 withHooks.destroy();
 // @ts-expect-error readonlySetter is gone: the isReadonly hook
@@ -751,9 +780,10 @@ const configIsData: HasFunction<GridConfig> extends false ? true : never = true;
 const stateIsData: HasFunction<GridState> extends false ? true : never = true;
 const fieldsAreData: HasFunction<Pick<DatasourceOptions, 'fields' | 'formatters'>> extends false ? true : never = true;
 const csvOptionsAreData: HasFunction<CsvOptions> extends false ? true : never = true;
+const excelOptionsAreData: HasFunction<ExcelOptions> extends false ? true : never = true;
 // boolean: true for the hooks, false for an optional hook left out (undefined)
 const hooksAreFunctions: HasFunction<GridHooks> extends false ? never : true = true;
-console.log(configIsData, stateIsData, fieldsAreData, csvOptionsAreData, hooksAreFunctions);
+console.log(configIsData, stateIsData, fieldsAreData, csvOptionsAreData, excelOptionsAreData, hooksAreFunctions);
 
 // internals are not part of the typings any more
 // @ts-expect-error

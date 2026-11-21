@@ -104,6 +104,7 @@ came from a server.
 | `length()` | `getRows().length` |
 | `getSelectedRows()` | the selected rows, in displayed order |
 | `currentEntity` | the current row, see below |
+| `aggregate(field, fn, rows?)` | the sum, average, smallest or largest number of a field, or how many values it has: over `getDataRows()`, a group row's rows or rows you give. See [Aggregates](18-aggregates.md#from-code) |
 
 `getRows()` and `getRow()` can return a group row when the datasource is grouped. `isGroupRow(row)`
 tells them apart, see [Sorting and grouping](07-sorting-grouping.md#group-rows).

@@ -11,6 +11,7 @@ import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { clearRangeCells, pasteText, rangeClipboardText, writeClipboard } from './rangeClipboard';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { placeUnderCell, showMenu } from './showMenu';
 import { triggerScrollEvent } from './triggerScrollEvent';
@@ -73,6 +74,11 @@ function rowMenuEntries(
     // a group row has no value of its own to filter on
     const filterOnValue = () => !isGroupRow(rowData);
 
+    // the entries of the ranges of cells: when there are ranges. Paste and clear in an editable grid,
+    // the cells of the ranges are checked one by one
+    const hasRanges = () => gridInterface.getRanges().length > 0;
+    const pasteAndClearRanges = () => !gridInterface.__getGridConfig().readonly && hasRanges();
+
     const dimRepeated = gridInterface.__getGridConfig().dimRepeatedValues === true;
     const changedOnly = gridInterface.getDatasource().isChangedOnly();
 
@@ -119,6 +125,17 @@ function rowMenuEntries(
                 gridInterface.__callSubscribers('copy-row-col', eventData);
             }
         },
+        {
+            id: 'row.copy.range',
+            label: text('row.copy.range'),
+            visible: hasRanges,
+            // the last range, as Ctrl+C copies it (rangeClipboard.ts)
+            action: () => {
+                const ranges = gridInterface.getRanges();
+                const { text: tsv, html } = rangeClipboardText(ctx, ranges[ranges.length - 1]);
+                writeClipboard(tsv, html);
+            }
+        },
         { type: 'section', id: 'row.filter', label: text('row.filter'), visible: filterOnValue },
         {
             id: 'row.filter.replace',
@@ -152,7 +169,7 @@ function rowMenuEntries(
             // the grid follows its event
             action: () => gridInterface.getDatasource().filterChangedOnly(!changedOnly)
         },
-        { type: 'section', id: 'row.paste', label: text('row.paste'), visible: pasteAndClear },
+        { type: 'section', id: 'row.paste', label: text('row.paste'), visible: () => pasteAndClear() || pasteAndClearRanges() },
         {
             id: 'row.paste.cell',
             label: text('row.paste.cell'),
@@ -165,7 +182,19 @@ function rowMenuEntries(
                 }
             }
         },
-        { type: 'section', id: 'row.clear', label: text('row.clear'), visible: pasteAndClear },
+        {
+            id: 'row.paste.range',
+            label: text('row.paste.range'),
+            visible: pasteAndClearRanges,
+            // as Ctrl+V with ranges: one value into every cell of them, a block from the top left of
+            // the last one (rangeClipboard.ts)
+            action: async () => {
+                if (navigator.clipboard.readText) {
+                    pasteText(ctx, await navigator.clipboard.readText());
+                }
+            }
+        },
+        { type: 'section', id: 'row.clear', label: text('row.clear'), visible: () => pasteAndClear() || pasteAndClearRanges() },
         {
             id: 'row.clear.cell',
             label: text('row.clear.cell'),
@@ -176,6 +205,13 @@ function rowMenuEntries(
                 gridInterface.__callSubscribers('clear', eventData);
                 triggerScrollEvent(ctx);
             }
+        },
+        {
+            id: 'row.clear.range',
+            label: text('row.clear.range'),
+            visible: pasteAndClearRanges,
+            // as Delete with ranges: every cell of them
+            action: () => clearRangeCells(ctx)
         },
         ...deleteEntries(ctx),
         ...summaryEntries(ctx, attribute),
@@ -307,31 +343,36 @@ function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity): bool
 }
 
 /**
- * Export as a CSV file (gridInterface.downloadCsv): every row the filter lets through, or the selected
- * ones - the columns and values as the grid shows them, see guides/15-export.md. In every grid,
- * readonly ones too: an export changes nothing
+ * Export as an Excel file (gridInterface.downloadExcel): every row the filter lets through, or the
+ * selected ones - the columns of the layout, typed values, see guides/15-export.md. In every grid,
+ * readonly ones too: an export changes nothing. The CSV export is in the API (downloadCsv), not here
  */
 function exportEntries(ctx: Grid): MenuEntry[] {
     const gridInterface = ctx.gridInterface;
     return [
         { type: 'section', id: 'row.export', label: gridText(ctx, 'row.export') },
         {
-            id: 'row.export.csv',
-            label: gridText(ctx, 'row.export.csv'),
-            action: () => gridInterface.downloadCsv()
+            id: 'row.export.excel',
+            label: gridText(ctx, 'row.export.excel'),
+            action: () => gridInterface.downloadExcel()
         },
         {
-            id: 'row.export.csvSelected',
-            label: gridText(ctx, 'row.export.csvSelected'),
+            id: 'row.export.excelSelected',
+            label: gridText(ctx, 'row.export.excelSelected'),
             disabled: () => gridInterface.getDatasource().getSelectedRows().length === 0,
-            action: () => gridInterface.downloadCsv('export.csv', { rows: 'selected' })
+            action: () => gridInterface.downloadExcel('export.xlsx', { rows: 'selected' })
         }
     ];
 }
 
 /**
  * The summary of a number column over the selected rows: count, sum, max, min and average. Clicking
- * one copies its value. Only shown for a number field, the values are only computed for one
+ * one copies its value. Only shown for a number field, the values are only computed for one.
+ *
+ * The values are the datasource's aggregates of the selected rows (`datasource.aggregate()`): the
+ * numbers only, a blank is left out - also of the average, and 0 is a value. Shown with two decimals
+ * at most. Count is the number of selected rows. (Before v6 the largest of negative numbers was 0, a 0
+ * was skipped by min, and the average was rounded to a whole number and counted the blanks.)
  */
 function summaryEntries(ctx: Grid, attribute: string): MenuEntry[] {
     const datasource = ctx.gridInterface.getDatasource();
@@ -340,37 +381,15 @@ function summaryEntries(ctx: Grid, attribute: string): MenuEntry[] {
 
     const summary = { count: 0, sum: '', max: '', min: '', avg: '' };
     if (type === 'number') {
-        const add = (prev: number, cur: unknown) => {
-            let x = parseFloat(String(cur));
-            if (Number.isNaN(x)) {
-                x = 0;
-            }
-            return parseFloat((prev + x).toFixed(5));
-        };
+        const selectedRows = datasource.getSelectedRows();
+        // two decimals at most; null (min, max and avg of no numbers) is shown blank
+        const shown = (value: number | null) => formatter.format(value === null ? null : Math.round(value * 100) / 100);
 
-        const selectedRows = datasource.getSelection().getSelectedRows();
-        const allrows = datasource.getRows();
-
-        let curValue = 0;
-        let maxValue = 0;
-        let minValue: number | null = null;
-        selectedRows.forEach((index: number) => {
-            const x = allrows[index];
-            // a group row has no value of the field, x[attribute] is undefined
-            const value = x && !isGroupRow(x) ? x[attribute] : undefined;
-            if (value) {
-                curValue = add(curValue, value);
-                maxValue = value > maxValue ? value : maxValue;
-                minValue = minValue === null || value < minValue ? value : minValue;
-            }
-        });
-
-        // null * 100 is 0
         summary.count = selectedRows.length;
-        summary.sum = formatter.format(Math.round(curValue * 100) / 100);
-        summary.max = formatter.format(Math.round(maxValue * 100) / 100);
-        summary.min = formatter.format(Math.round((minValue ?? 0) * 100) / 100);
-        summary.avg = formatter.format(Math.round(Math.round(curValue / selectedRows.length) * 100) / 100);
+        summary.sum = shown(datasource.aggregate(attribute, 'sum', selectedRows));
+        summary.max = shown(datasource.aggregate(attribute, 'max', selectedRows));
+        summary.min = shown(datasource.aggregate(attribute, 'min', selectedRows));
+        summary.avg = shown(datasource.aggregate(attribute, 'avg', selectedRows));
     }
 
     const copy = (text: string) => navigator.clipboard.writeText(text);
@@ -511,7 +530,12 @@ function generateCopyPasteData(
 }
 
 /**
- * Copies to the clipboard: tab separated text, plus an html table when more than one row is copied
+ * Copies to the clipboard: tab separated text, plus an html table when more than one row is copied.
+ *
+ * The listener is on the document in the capture phase: it runs before the grid's own copy listener
+ * (rangeClipboard.ts, on the document in the bubble phase), which leaves a copy that is canceled alone.
+ * It would else write the cell with the focus over this - or its html next to the plain text of Cell
+ * Value
  */
 function copyData(ctx: Grid, attributes: string[], onlyCurrentEntity: boolean, overRideCurrentEntity: Entity | null = null) {
     const [html, text] = generateCopyPasteData(ctx, attributes, onlyCurrentEntity, overRideCurrentEntity);
@@ -527,9 +551,9 @@ function copyData(ctx: Grid, attributes: string[], onlyCurrentEntity: boolean, o
 
         e.preventDefault();
     }
-    document.addEventListener('copy', listener);
+    document.addEventListener('copy', listener, true);
     document.execCommand('copy');
-    document.removeEventListener('copy', listener);
+    document.removeEventListener('copy', listener, true);
 }
 
 /**

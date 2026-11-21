@@ -806,3 +806,102 @@ describe('accessibility - the texts', () => {
         );
     });
 });
+
+describe('accessibility - aggregates', () => {
+    /**
+     * pinnedConfig with aggregates: firstname is column 2, lastname and city (stacked) 3 and 4, age 5,
+     * id 6. Bergen: ids 1 and 3, ages 20 and 22; Oslo: ids 2 and 4, ages 21 and 23
+     */
+    const withAggregates = async (columns: GridConfig['columns'], options: Partial<GridConfig> = {}) => {
+        const mounted = await mountGrid(
+            { ...pinnedConfig(), columns: { ...pinnedConfig().columns, ...columns }, ...options },
+            people(4),
+            fields
+        );
+        mounted.datasource.group([{ attribute: 'city', title: 'City' }]);
+        return mounted;
+    };
+    const cellsOf = (row: AriaRow) => row.cells.map((cell) => [cell.role, cell.colindex, cell.text]);
+
+    it('expect a group row: the name cell up to the first aggregate, then a gridcell per aggregate at its column', async () => {
+        const { element } = await withAggregates({ age: { aggregate: 'sum' }, id: { aggregate: 'max' } });
+        const [bergen] = bodyRows(element);
+
+        expect(cellsOf(bergen)).toEqual([
+            ['gridcell', 1, '1'],
+            ['gridcell', 2, 'City: Bergen (2)'],
+            ['gridcell', 5, 'Sum 42'],
+            ['gridcell', 6, 'Max 3']
+        ]);
+        // columns 2, 3 and 4: the name is over the columns before the first aggregate
+        expect(bergen.cells[1].element.getAttribute('aria-colspan')).toEqual('3');
+        expect(bergen.element.getAttribute('aria-level')).toEqual('1');
+        expectInOrder(element, ariaRows(element));
+    });
+
+    it('expect the aggregate of the first column in the name cell, its own cell hidden: the name is over it', async () => {
+        const { element } = await withAggregates({ firstname: { aggregate: 'count' }, age: { aggregate: 'avg' } });
+        const [bergen] = bodyRows(element);
+
+        expect(cellsOf(bergen)).toEqual([
+            ['gridcell', 1, '1'],
+            ['gridcell', 2, 'City: Bergen (2) Count 2'],
+            ['gridcell', 5, 'Avg 21']
+        ]);
+        expect(bergen.cells[1].element.getAttribute('aria-colspan')).toEqual('3');
+        expectInOrder(element, ariaRows(element));
+    });
+
+    it('expect a group row without an aggregate after the name to have the name over every column', async () => {
+        const { element } = await withAggregates({ firstname: { aggregate: 'count' } });
+        const [bergen] = bodyRows(element);
+
+        expect(cellsOf(bergen)).toEqual([
+            ['gridcell', 1, '1'],
+            ['gridcell', 2, 'City: Bergen (2) Count 2']
+        ]);
+        expect(bergen.cells[1].element.getAttribute('aria-colspan')).toEqual('5');
+    });
+
+    it('expect the totals row as the last row of the grid: "Total" its row header, a gridcell per aggregate', async () => {
+        const { element } = await withAggregates({ age: { aggregate: 'sum' }, id: { aggregate: 'count' } }, { totalsRow: true });
+        const rows = ariaRows(element);
+        const totals = rows[rows.length - 1];
+
+        expect(cellsOf(totals)).toEqual([
+            ['rowheader', 1, 'Total'],
+            ['gridcell', 5, 'Sum 86'],
+            ['gridcell', 6, 'Count 4']
+        ]);
+        // 2 header rows, 2 group rows, the totals row
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('5');
+        expect(totals.rowindex).toBe(5);
+        expectInOrder(element, rows);
+    });
+
+    it("expect the totals row's index and the row count to follow an expand and a filter", async () => {
+        const { element, datasource } = await withAggregates({ age: { aggregate: 'sum' } }, { totalsRow: true });
+
+        datasource.expandGroup();
+        let rows = ariaRows(element);
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('9');
+        expect(rows[rows.length - 1].rowindex).toBe(9);
+        expectInOrder(element, rows);
+
+        datasource.filter(where('city', 'EQUAL', 'Oslo'));
+        rows = ariaRows(element);
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('6');
+        expect(cellsOf(rows[rows.length - 1])).toEqual([
+            ['rowheader', 1, 'Total'],
+            ['gridcell', 5, 'Sum 44']
+        ]);
+        expectInOrder(element, rows);
+    });
+
+    it('expect no totals row in the grid when it is off', async () => {
+        const { element } = await withAggregates({ age: { aggregate: 'sum' } });
+
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('4');
+        expect(ariaRows(element).some((row) => row.cells[0]?.role === 'rowheader')).toBe(false);
+    });
+});

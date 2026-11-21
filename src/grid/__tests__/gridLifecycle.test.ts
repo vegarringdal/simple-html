@@ -137,9 +137,7 @@ describe('grid lifecycle - connecting a new interface', () => {
         // the wheel listener sits on the element itself: one tick scrolls once
         const scroller = element.querySelector('.simple-html-grid-body-scroller') as HTMLElement;
         scroller.scrollTop = 0;
-        const wheel = new Event('wheel');
-        (wheel as any).wheelDeltaY = -40;
-        element.dispatchEvent(wheel);
+        element.dispatchEvent(new WheelEvent('wheel', { deltaY: 40 }));
         expect(scroller.scrollTop).toBe(40);
     });
 });

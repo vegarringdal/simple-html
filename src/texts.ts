@@ -15,6 +15,7 @@ const DEFAULTS = {
     'row.copy.row.hint': 'selected rows',
     'row.copy.selectedColumns': 'Row',
     'row.copy.selectedColumns.hint': 'selected rows/col',
+    'row.copy.range': 'Range',
     'row.filter': 'Filter:',
     'row.filter.replace': 'Replace filter',
     'row.filter.replace.hint': 'all',
@@ -26,9 +27,11 @@ const DEFAULTS = {
     'row.paste': 'Paste:',
     'row.paste.cell': 'Paste cell',
     'row.paste.cell.hint': 'selected rows',
+    'row.paste.range': 'Paste range',
     'row.clear': 'Clear:',
     'row.clear.cell': 'Clear cell',
     'row.clear.cell.hint': 'selected rows',
+    'row.clear.range': 'Clear range',
     'row.delete': 'Delete:',
     'row.delete.rows': 'Rows',
     'row.delete.rows.hint': 'selected rows',
@@ -50,8 +53,8 @@ const DEFAULTS = {
     'row.summary.min': 'Min: {min}',
     'row.summary.avg': 'Avg: {avg}',
     'row.export': 'Export:',
-    'row.export.csv': 'CSV, all rows',
-    'row.export.csvSelected': 'CSV, selected rows',
+    'row.export.excel': 'Excel, all rows',
+    'row.export.excelSelected': 'Excel, selected rows',
 
     // the header menu, right click on a header label: MENU_IDS.header
     'header.column': 'Column:',
@@ -174,6 +177,20 @@ const DEFAULTS = {
     'footer.operator.NOT_IN': 'not in',
     'footer.operator.IS_BLANK': 'is blank',
     'footer.operator.IS_NOT_BLANK': 'is not blank',
+
+    // the aggregates of the columns (ColumnConfig.aggregate): the label in front of the value in a group
+    // row and in the totals row, and the label of the totals row
+    'aggregate.sum': 'Sum',
+    'aggregate.avg': 'Avg',
+    'aggregate.min': 'Min',
+    'aggregate.max': 'Max',
+    'aggregate.count': 'Count',
+    'aggregate.total': 'Total',
+
+    // the placeholder of an empty header filter, by the field's type - a date filter shows its
+    // formatter's format (YYYY-MM-DD), a boolean filter is a checkbox
+    'filter.placeholder.text': 'Text',
+    'filter.placeholder.number': 'Number',
 
     // labels for screen readers (aria-label)
     'grid.label': 'Grid',
@@ -311,6 +328,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
+ * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `grid.*` | labels for screen readers |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |

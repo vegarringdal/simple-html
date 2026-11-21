@@ -8,12 +8,11 @@ import type { GridConfig } from '../gridConfig';
 import { REVOKE_URL_AFTER_MS } from '../gridFunctions/gridCsv';
 import { GridInterface } from '../gridInterface';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { openRowMenu } from './interactionTestHelpers';
 
 /**
  * gridInterface.getCsv() and downloadCsv(): which rows and fields, the labels, formatted or raw
  * values, formula escaping, the option checks and the download. The CSV text itself (quoting, CRLF,
- * BOM) is tested in csv.test.ts.
+ * BOM) is tested in csv.test.ts. The row menu exports Excel, not CSV: see gridExcel.test.ts.
  */
 
 beforeAll(() => {
@@ -332,8 +331,8 @@ describe('getCsv - options', () => {
         [null, 'takes an options object'],
         [['rows'], 'takes an options object'],
         [{ row: 'selected' }, "unknown option 'row'"],
-        [{ rows: 'range' }, `rows is 'all' or 'selected', got "range"`],
-        [{ rows: true }, "rows is 'all' or 'selected'"],
+        [{ rows: 'some' }, `rows is 'all', 'selected' or 'range', got "some"`],
+        [{ rows: true }, "rows is 'all', 'selected' or 'range'"],
         [{ fields: 'name' }, 'fields is a list of field names'],
         [{ fields: ['name', 1] }, 'fields is a list of field names'],
         [{ separator: '|' }, "separator is ',', ';' or '\\t'"],
@@ -426,73 +425,5 @@ describe('downloadCsv', () => {
         expect(() => gridInterface.downloadCsv('')).toThrow(TypeError);
         expect(blobs.length).toBe(0);
         expect(clicked.length).toBe(0);
-    });
-});
-
-describe('the row menu - Export', () => {
-    let blobs: Blob[];
-    let downloads: string[];
-    const originalCreate = URL.createObjectURL;
-    const originalRevoke = URL.revokeObjectURL;
-
-    beforeEach(() => {
-        blobs = [];
-        downloads = [];
-        URL.createObjectURL = vi.fn((blob: Blob) => {
-            blobs.push(blob);
-            return `blob:test-${blobs.length}`;
-        });
-        URL.revokeObjectURL = vi.fn();
-        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
-            downloads.push(this.download);
-        });
-    });
-
-    afterEach(() => {
-        URL.createObjectURL = originalCreate;
-        URL.revokeObjectURL = originalRevoke;
-        vi.restoreAllMocks();
-    });
-
-    const entry = (id: string) => document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`) as HTMLElement;
-    const isDisabled = (id: string) => entry(id).classList.contains('simple-html-grid-menu-item-disabled');
-    const config = (readonly: boolean): GridConfig => ({
-        readonly,
-        layout: { center: [{ fields: ['name'], width: 100 }] }
-    });
-    const rows = () => [{ name: 'Ann' }, { name: 'Bob' }, { name: 'Cid' }];
-
-    it('expect the export section in a readonly grid too, the selected rows greyed out with none selected', async () => {
-        const { element } = await mountGrid(config(true), rows());
-
-        openRowMenu(element, 'name', 0);
-
-        expect(entry('row.export').textContent?.trim()).toBe('Export:');
-        expect(entry('row.export.csv').textContent?.replace(/\s+/g, ' ').trim()).toBe('CSV, all rows');
-        expect(entry('row.export.csvSelected').textContent?.replace(/\s+/g, ' ').trim()).toBe('CSV, selected rows');
-        expect(isDisabled('row.export.csv')).toBe(false);
-        expect(isDisabled('row.export.csvSelected')).toBe(true);
-    });
-
-    it('expect "CSV, all rows" to download every row as export.csv', async () => {
-        const { element } = await mountGrid(config(false), rows());
-
-        openRowMenu(element, 'name', 0);
-        entry('row.export.csv').click();
-
-        expect(downloads).toEqual(['export.csv']);
-        expect(await blobs[0].text()).toBe('\ufeffName\r\nAnn\r\nBob\r\nCid\r\n');
-    });
-
-    it('expect "CSV, selected rows" to download the selected rows', async () => {
-        const { element, datasource } = await mountGrid(config(false), rows());
-        selectNames(datasource, 'Ann', 'Cid');
-
-        openRowMenu(element, 'name', 0);
-        expect(isDisabled('row.export.csvSelected')).toBe(false);
-        entry('row.export.csvSelected').click();
-
-        expect(downloads).toEqual(['export.csv']);
-        expect(await blobs[0].text()).toBe('\ufeffName\r\nAnn\r\nCid\r\n');
     });
 });

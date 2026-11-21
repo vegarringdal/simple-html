@@ -16,6 +16,7 @@ const norwegian: Record<TextId, string> = {
     'row.copy.row.hint': 'valgte rader',
     'row.copy.selectedColumns': 'Rad',
     'row.copy.selectedColumns.hint': 'valgte rader/kol',
+    'row.copy.range': 'Område',
     'row.filter': 'Filter:',
     'row.filter.replace': 'Erstatt filter',
     'row.filter.replace.hint': 'alle',
@@ -27,9 +28,11 @@ const norwegian: Record<TextId, string> = {
     'row.paste': 'Lim inn:',
     'row.paste.cell': 'Lim inn celle',
     'row.paste.cell.hint': 'valgte rader',
+    'row.paste.range': 'Lim inn område',
     'row.clear': 'Tøm:',
     'row.clear.cell': 'Tøm celle',
     'row.clear.cell.hint': 'valgte rader',
+    'row.clear.range': 'Tøm område',
     'row.delete': 'Slett:',
     'row.delete.rows': 'Rader',
     'row.delete.rows.hint': 'valgte rader',
@@ -50,8 +53,8 @@ const norwegian: Record<TextId, string> = {
     'row.summary.max': 'Maks: {max}',
     'row.summary.min': 'Min: {min}',
     'row.export': 'Eksport:',
-    'row.export.csv': 'CSV, alle rader',
-    'row.export.csvSelected': 'CSV, valgte rader',
+    'row.export.excel': 'Excel, alle rader',
+    'row.export.excelSelected': 'Excel, valgte rader',
     'row.summary.avg': 'Snitt: {avg}',
 
     // the header menu
@@ -173,9 +176,19 @@ const norwegian: Record<TextId, string> = {
     'footer.operator.IS_BLANK': 'er tom',
     'footer.operator.IS_NOT_BLANK': 'er ikke tom',
 
+    // the aggregates of the columns, in the group rows and the totals row
+    'aggregate.sum': 'Sum',
+    'aggregate.avg': 'Snitt',
+    'aggregate.min': 'Min',
+    'aggregate.max': 'Maks',
+    'aggregate.count': 'Antall',
+    'aggregate.total': 'Totalt',
+
     // for screen readers
     'grid.label': 'Tabell',
     'grid.rowSelector': 'radvelger',
+    'filter.placeholder.text': 'Tekst',
+    'filter.placeholder.number': 'Tall',
     'grid.filter': 'Filtrer {label}',
     'grid.groupToggle': '{name} ({total})',
     'grid.removeGroup': 'Fjern grupperingen på {title}',
