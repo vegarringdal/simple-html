@@ -1205,6 +1205,17 @@ in the console. All passed. Found and fixed:
   gridCsv.ts and renderRowCell.ts - one helper later; `rows: 'selected'` leaves out selected rows
   hidden by the filter or a collapsed group, like every row-menu action on selected rows
 
+### Docs site: light mode is light everywhere
+
+* the sidebar and the code panels (the sample source, the guides' code blocks, the API signatures)
+  were dark in both themes: their colours were written for dark only. Every colour of
+  `samples/demo/index.css` is now a `light-dark()` token on `:root` (like grid.css), and `body.dark`
+  only sets `color-scheme: dark`. Light code uses GitHub's light colours, dark keeps One Dark
+* without a choice made with the button, the site starts in the OS theme (`prefers-color-scheme`)
+* `samples/demo/__tests__/theme.test.ts` guards it: no colour outside the :root tokens (but the
+  scrollbar shadow and two translucent sample backgrounds), every token light-dark(), body.dark only
+  the color-scheme, the OS default and the stored choice. Screenshots light/dark in Chromium
+
 ## Considered, not done
 
 ## Candidates / not started

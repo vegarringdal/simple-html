@@ -30,5 +30,5 @@
             "@simple-html/grid": ["./src"]
         }
     },
-    "exclude": ["node_modules", "dist", "dist_dev", "docs", "config_devserver.ts", "typecheck.js", "scripts"]
+    "exclude": ["node_modules", "dist", "dist_dev", "docs", "config_devserver.ts", "typecheck.js", "scripts", ".claude"]
 }
