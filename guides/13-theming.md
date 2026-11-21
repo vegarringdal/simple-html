@@ -230,6 +230,30 @@ current one too. The find bar is `simple-html-grid-find`, in the grid's colours:
 (`--simple-html-grid-main-bg-color`), the input of the header filters (`--simple-html-grid-sec-bg-color`),
 the frame and shadow of the tooltips.
 
+## Lookup columns
+
+A column whose value is picked from a list (`ColumnConfig.editor`, see [Lookups](20-lookups.md)) has a
+button at the right of its cells, on hover and on the focused cell: square, inside the cell's focus
+outline, `--simple-html-grid-lookup-button-bg-color` with its triangle in
+`--simple-html-grid-lookup-icon-color` - at least 3:1 to the button - and
+`--simple-html-grid-main-bg-selected-even` under the pointer. The select under the cell has the colours
+of the menus (`--simple-html-grid-main-bg-color`), its search field the header filters'
+(`--simple-html-grid-sec-bg-color`), its frame and shadow the editor of a multiline cell's; the active
+option is `--simple-html-grid-lookup-active-bg-color`, the text on it 4.5:1. The dropdown grid is a
+grid, in the grid's colours.
+
+```css
+.simple-html-grid {
+    --simple-html-grid-lookup-icon-color: light-dark(#1d4ed8, #93c5fd);
+    --simple-html-grid-lookup-active-bg-color: light-dark(#fef3c7, #78350f);
+}
+```
+
+The classes: `simple-html-grid-lookup-button` on the button, `simple-html-grid-cell-lookup` on the input
+(its text stops before the button), `simple-html-grid-lookup` on the popover (with
+`simple-html-grid-lookup-select` or `simple-html-grid-lookup-grid`), `simple-html-grid-lookup-option` on
+an option, `-active` and `-current` (the cell's value, bold with a check) on top.
+
 ## The variables of the grid
 
 On `.simple-html-grid`, in `grid.css`.
@@ -264,6 +288,9 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-conflict-color` | a conflict with the server: the arrows of the row number, the marker of a field in conflict | `#6d28d9` | `#ddd6fe` |
 | `--simple-html-grid-merged-color` | the flash of a cell a merge changed (`mergeHighlight`), fading out | `rgba(250, 204, 21, 0.45)` | `rgba(250, 204, 21, 0.35)` |
 | `--simple-html-grid-multiline-color` | the marker of a cell with more lines than it shows (`FieldConfig.multiline`) | `#475569` | `#e2e8f0` |
+| `--simple-html-grid-lookup-button-bg-color` | the button of a lookup column (`ColumnConfig.editor`) | `#e9edf2` | `#374151` |
+| `--simple-html-grid-lookup-icon-color` | the triangle on it, at least 3:1 to it | `#475569` | `#e2e8f0` |
+| `--simple-html-grid-lookup-active-bg-color` | the active option of the select of a lookup column | `#dbe7f3` | `#2f4f80` |
 | `--simple-html-grid-totals-bg-color` | the totals row under the rows (`totalsRow`), see [Aggregates](18-aggregates.md) | `#e8edf3` | `#2a3441` |
 | `--simple-html-grid-totals-font-color` | the text of the totals row | `#1f2328` | `#f9fafb` |
 | `--simple-html-grid-aggregate-label-color` | the label in front of an aggregate (`Sum`) in a group row and the totals row. At least 4.5:1 to both | `#57606a` | `#c9d1d9` |

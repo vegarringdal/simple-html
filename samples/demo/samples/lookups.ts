@@ -92,7 +92,7 @@ export const lookups: DemoSample = {
                 customerId: customer.id,
                 customerName: customer.name,
                 customerCity: customer.city,
-                product: `P${String((i * 37) % 10_000 + 1).padStart(5, '0')}`
+                product: `P${String(((i * 37) % 10_000) + 1).padStart(5, '0')}`
             };
         });
         const { datasource, gridInterface } = mountGrid(ui.gridHost, config, rows, {
@@ -101,7 +101,9 @@ export const lookups: DemoSample = {
 
         datasource.on('rows-changed', ({ rows: changed, fields }) => {
             for (const row of changed) {
-                ui.log(`${[...(fields.get(row) ?? [])].join(', ')}: ${row.countryCode} / ${row.customerId} ${row.customerName} / ${row.product}`);
+                ui.log(
+                    `${[...(fields.get(row) ?? [])].join(', ')}: ${row.countryCode} / ${row.customerId} ${row.customerName} / ${row.product}`
+                );
             }
         });
 

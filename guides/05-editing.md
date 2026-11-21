@@ -53,6 +53,11 @@ for `isReadonly`. Readonly cells of an editable grid are shown with stripes.
 - **Paste and clear** are in the row menu (right click a cell): paste puts the clipboard text into
   that column of every selected row, clear sets it to `null`. Rows where the cell is readonly are
   skipped. The grid sends a `paste` event per row and a `clear` event, see [Events](09-events.md).
+- **Lookup columns** (`editor`): the value is picked from a list - a select, or a dropdown grid - of
+  a lookup registered with `registerLookup()`. The cell shows the label of the value (`Norway` for
+  `NO`) and is not typed in: a character, the button at its right, Alt+ArrowDown or F4 open the list.
+  A pick, with the other fields its `set` copies, is one step of the undo history. See
+  [Lookups](20-lookups.md).
 
 A column with `allowPasteClearOnly: true` can not be typed in, only pasted into and cleared. Use it
 for a field the user sets with a picker of your own, such as a [dropdown grid](10-menus.md#a-dropdown-grid-as-a-block).

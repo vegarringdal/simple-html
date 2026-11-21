@@ -157,7 +157,8 @@ Every option of a `ColumnConfig` is optional.
 | `operator` | the operator the header filter starts with. Default `EQUAL` for text (the whole text: `ann` does not find `Anna`), see [Filtering](06-filtering.md#header-filters) |
 | `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed |
 | `allowPasteClearOnly` | typing in the cell does nothing, paste and clear from the row menu work. For a field you set from a dropdown of your own |
-| `focusButton` | shows a `...` button in the focused cell, see [Events](09-events.md#cell-events) |
+| `editor` | the value is picked from a list: `{ type: 'select' \| 'grid', lookup: '<id>', set? }`, a select or a dropdown grid of a lookup registered with `registerLookup()`. The cell shows the label. See [Lookups](20-lookups.md) |
+| `focusButton` | shows a `...` button in the focused cell, see [Events](09-events.md#cell-events). Not with `editor`, it has its own button |
 | `dynamicCellTypeColumn` | another field of the row holds the type of this cell, see [Formatting](08-formatting.md#the-type-from-another-field) |
 | `aggregate` | sums the column up in the group rows and the totals row: `'sum'`, `'avg'`, `'min'`, `'max'` (number fields) or `'count'`. See [Aggregates](18-aggregates.md) |
 

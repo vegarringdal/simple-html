@@ -57,7 +57,9 @@ export function contextmenuFilter(
  */
 function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     // a lookup column filters on its labels: the operators of a text (filterCallback)
-    const type = ctx.gridInterface.__getLookupColumn(attribute) ? 'text' : ctx.gridInterface.getDatasource().getField(attribute).type;
+    const type = ctx.gridInterface.__getLookupColumn(attribute)
+        ? 'text'
+        : ctx.gridInterface.getDatasource().getField(attribute).type;
 
     // the operator picked before (state), else the column's, else the type's default
     const current = getHeaderFilterOperator(ctx, attribute);

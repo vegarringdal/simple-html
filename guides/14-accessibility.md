@@ -61,6 +61,11 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   under the first one: they are for the eye and hidden from a screen reader, which reads the cell as
   in a row of one line - its first line and the description - and Enter shows all of the text. A
   taller row changes nothing else: the same cells, the same keys.
+- **A lookup cell** (`ColumnConfig.editor`) is a readonly textbox with the label as its value, and
+  `aria-haspopup` - `listbox` or `grid` - where it can be edited: `textbox "Country" readonly:
+  "Norway"`. Its button, `button "Open the list"`, is no stop of Tab; the cell's name is made of
+  both, `gridcell "Norway Open the list"`. See
+  [The list of a lookup column](#the-list-of-a-lookup-column).
 - **The state is not colour only** (WCAG 1.4.1): each state has a shape of its own - a plus, a pencil,
   a trash can, an exclamation mark - and a row marked for deletion is struck through.
 - **A group row**, grouped, is a row with `aria-level` (1 for the first grouping) and
@@ -118,13 +123,15 @@ caret in them; Alt with an arrow moves between the cells.
 | Enter | in a text cell that can be edited: the cell below (Alt+ArrowDown). In a multiline cell: opens its editor, also when the cell is readonly |
 | F2 | in a multiline cell: opens its editor |
 | a character | in a multiline cell that can be edited: opens its editor, the character at the end of the text |
-| Space | in a cell with a `focusButton`: sends `cell-focus-button-click`, as a click on the button does. In a checkbox: checks it |
+| Space | in a cell with a `focusButton`: sends `cell-focus-button-click`, as a click on the button does. In a lookup cell that can be edited: opens its list. In a checkbox: checks it |
+| Alt+ArrowDown, F4, F2 | in a lookup cell (`ColumnConfig.editor`) that can be edited: opens its list - not the cell below. See [below](#the-list-of-a-lookup-column) |
+| a character | in a lookup cell that can be edited: opens its list, the character as its search. The cell is not typed in |
 | Shift+F10, the menu key | the row menu (the browser sends `contextmenu`), the focus on its first item |
 | Alt+Shift+arrows | a range of cells: from this cell, the end one cell further each time - a row up or down, a field left or right (the fields of a column of two are two). The focus stays in the cell. See [Selection and clipboard](17-selection-and-clipboard.md#the-keyboard) |
 | Esc | clears the ranges of cells (when there are some, and no menu is open) |
 | Ctrl+C, Cmd+C | with no text selected in the cell: the range of cells as tab separated text, or the cell's value |
 | Ctrl+V, Cmd+V | a block of cells (copied in a spreadsheet, or here) from this cell or the top left of the range; one value into every cell of the ranges. One value with no range is the input's own paste |
-| Delete / Backspace | with a range of more than one cell and no text selected: empties its cells. Else the input's own |
+| Delete / Backspace | with a range of more than one cell and no text selected: empties its cells. In a lookup cell that can be edited: empties it, and the fields its `set` copies. Else the input's own |
 | Ctrl+F, Cmd+F | opens the find bar, see [below](#the-find-bar). Anywhere in the grid: a header filter, a column header too |
 | F3 / Shift+F3 | while the find bar is open: the next / previous match. Anywhere in the grid |
 | Ctrl+D (Cmd+D) | fill down: each range gets the values of its top row, a range of one row or the cell alone the row above. See [Selection and clipboard](17-selection-and-clipboard.md#fill-down) |
@@ -167,8 +174,28 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | a submenu | ArrowLeft, Esc | closes it, the focus back on its item |
 | a menu | Esc, Tab | closes it, the focus goes back where it was. Tab in the filter menu goes on into its value list: the search field, the checkboxes, Run Search |
 | the editor of a multiline cell | Esc / Ctrl+Enter / Tab | see [below](#the-editor-of-a-multiline-cell) |
+| the list of a lookup column | the arrows, Enter, Tab, Esc | see [below](#the-list-of-a-lookup-column) |
 | the filter editor | Esc | closes it without filtering (a modal dialog) |
 | the find bar | Enter, F3, Esc | the next match, closes it: see [below](#the-find-bar) |
+
+### The list of a lookup column
+
+A select or a dropdown grid under a lookup cell (`ColumnConfig.editor`), see
+[Lookups](20-lookups.md#the-keys) for every key. The cell's input has `aria-haspopup`: `listbox` for
+the select, `grid` for the dropdown grid. Its button, "Open the list" (the text `lookup.open`), is for
+the mouse: it is no stop of Tab.
+
+- **The select** is the WAI-ARIA [combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/)
+  with a listbox popup: the focus is in its search field, a `combobox` named with the column's label
+  (`aria-expanded`, `aria-controls` the list, `aria-autocomplete="list"`). The list is a `listbox` of
+  `option`s; the active option is the search field's `aria-activedescendant` and has
+  `aria-selected="true"`. ArrowDown / ArrowUp, PageDown / PageUp, Home / End move it, Enter picks,
+  Tab picks and goes to the next cell, Esc closes. "No matches" is a `status`. The cell's value is
+  the active option when it opens, marked with a check on screen.
+- **The dropdown grid** is a grid, with the focus in its filter: ArrowDown goes to the highlighted
+  row, ArrowDown / ArrowUp move between the rows (no Alt needed), Enter picks, Esc closes.
+
+After a pick, Enter and Esc the focus is back in the cell; Ctrl+Z there undoes the pick.
 
 ### The find bar
 
@@ -290,6 +317,10 @@ setTexts({
   a screen reader yet. A menu has no name of its own (`aria-label`), a submenu is labelled by its item.
   The field and operator pickers of the filter editor and the column chooser are for the mouse, and
   so is the date picker of a date cell or filter - a date can be typed.
+- **The list of a lookup column**: the select is checked in Chrome's accessibility tree, not with a
+  screen reader yet. The cell's input is a textbox with `aria-haspopup`, not a combobox: it is not
+  `aria-expanded` while its list is open - the focus is in the list then. The select shows at most 500
+  options; the search finds the rest.
 - **The footer** (the Clear button, the filter chips) is not on the way of Tab from the cells. A
   screen reader reaches it.
 - **Only the first sort column** has `aria-sort`; the number of a column in a sort on several

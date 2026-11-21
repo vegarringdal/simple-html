@@ -61,7 +61,9 @@ export function filterCallback(
         filter.children.push(where(field, 'CONTAINS', filterArrayAndValue));
     } else if (filterValue !== null && filterValue !== undefined && filterValue !== '') {
         filter.children.push(
-            byLabel ? where(field, 'IN', valuesWithLabel(lookupColumn, operator, String(filterValue))) : where(field, operator, filterValue)
+            byLabel
+                ? where(field, 'IN', valuesWithLabel(lookupColumn, operator, String(filterValue)))
+                : where(field, operator, filterValue)
         );
     }
 

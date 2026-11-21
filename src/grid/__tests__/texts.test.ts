@@ -10,7 +10,9 @@ import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
 import { setTexts, TEXTS, type Texts } from '../../texts';
 import type { GridConfig } from '../gridConfig';
+import { MAX_OPTIONS } from '../gridFunctions/lookupEditor';
 import { GridInterface } from '../gridInterface';
+import { registerLookup } from '../lookup';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { headerFilterInput, menuTreeEntries, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
 
@@ -62,17 +64,24 @@ const COUNTRIES = Array.from({ length: 102 }, (_, i) => `«c${i}»`);
 // lines and how many more there are
 const NOTES = Array.from({ length: 7 }, (_, i) => `«line ${i + 1}»`).join('\n');
 
+// a lookup column (ColumnConfig.editor): the cells show the labels «o0» ..., the select has more
+// options than it shows - the line that says so
+const CODES = new Datasource();
+CODES.setData(Array.from({ length: MAX_OPTIONS + 1 }, (_, i) => ({ code: `k${i}`, name: `«o${i}»` })));
+registerLookup('texts-codes', { datasource: CODES, valueField: 'code', labelField: 'name' });
+
 const rows = () => [
-    { name: '«ann»', country: COUNTRIES[0], age: 10, born: new Date(2026, 0, 5), active: true, notes: NOTES },
+    { name: '«ann»', country: COUNTRIES[0], age: 10, born: new Date(2026, 0, 5), active: true, notes: NOTES, code: 'k0' },
     // a blank name: "Blank" in the value list, and a validation error
-    { name: null, country: null, age: 20, born: null, active: false, notes: NOTES },
+    { name: null, country: null, age: 20, born: null, active: false, notes: NOTES, code: null },
     ...COUNTRIES.slice(1).map((country, i) => ({
         name: '«bob»',
         country,
         age: 30 + i,
         born: new Date(2026, 1, 1),
         active: true,
-        notes: NOTES
+        notes: NOTES,
+        code: `k${i + 1}`
     }))
 ];
 
@@ -86,7 +95,8 @@ const config = (texts?: Texts): GridConfig => ({
             { fields: ['age'], width: 100 },
             { fields: ['born'], width: 100 },
             { fields: ['active'], width: 100 },
-            { fields: ['notes'], width: 100 }
+            { fields: ['notes'], width: 100 },
+            { fields: ['code'], width: 100 }
         ]
     },
     columns: {
@@ -96,7 +106,8 @@ const config = (texts?: Texts): GridConfig => ({
         // the placeholder of a date filter is the formatter's (YYYY-MM-DD), not a text
         born: { label: '«Born»', placeholderFilter: '«born»' },
         active: { label: '«Active»' },
-        notes: { label: '«Notes»' }
+        notes: { label: '«Notes»' },
+        code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } }
     },
     // a filter on age hides a row: the value list of the other columns has "Filter Available"
     initialState: { filter: and(where('age', 'GREATER_THAN', 10)) },
@@ -207,6 +218,18 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     check();
     pressKey(document.querySelector('.simple-html-grid-text-editor textarea') as HTMLElement, 'Escape');
     gridInterface.updateConfig({ readonly: false });
+
+    // a lookup column: the name of its button (in the grid, checked above), its select - the search,
+    // a list longer than it shows - and a search that finds nothing
+    const code = element.querySelector('input[data-attribute="code"]') as HTMLInputElement;
+    code.focus();
+    pressKey(code, 'F4');
+    check();
+    const lookupSearch = document.querySelector('.simple-html-grid-lookup-search') as HTMLInputElement;
+    lookupSearch.value = 'zz';
+    lookupSearch.dispatchEvent(new Event('input', { bubbles: true }));
+    check();
+    pressKey(lookupSearch, 'Escape');
 
     // the row menu: an editable number cell, a selected row marked for deletion (undo). Not the row
     // with the blank name, a row marked for deletion is not validated

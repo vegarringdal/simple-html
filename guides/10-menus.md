@@ -380,6 +380,10 @@ than the window gets the window's height and scrolls.
 
 ## A dropdown grid as a block
 
+To pick a cell's value from a list, a column's `editor` does it all - a select or a dropdown grid, its
+button, the keys, writing the value as one undo step: see [Lookups](20-lookups.md). This is the way to
+do it yourself, for a picker the editor does not have.
+
 A `MenuBlock` shows an element of yours in the menu: a second grid as a dropdown, a form, a color
 picker. The grid puts it on the page, places it and closes it as any menu - Esc too, also when the
 focus is in the block. A click in the block does not close the menu: call `closeMenu()` when the user
@@ -427,6 +431,3 @@ gridInterface.on('cell-focus-button-click', (data) => {
 Give the element its size, the menu's frame gives it a border and a shadow. The column is readonly,
 so the dropdown is the only way to change the value. `allowPasteClearOnly: true` instead of
 `readonly` keeps paste and clear working too.
-
-```sample dropdown-grid
-```

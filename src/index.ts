@@ -66,7 +66,6 @@ export type { ColType } from './grid/gridFunctions/colType';
 export type { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
 export type { CellClass, GridHooks } from './grid/gridHooks';
 export { GridInterface } from './grid/gridInterface';
-export { type Lookup, type LookupFromDatasource, type LookupFromGridInterface, registerLookup } from './grid/lookup';
 export {
     type GridMenus,
     MENU_IDS,
@@ -79,5 +78,6 @@ export {
     type MenuSeparator,
     type MenuSubmenu
 } from './grid/gridMenus';
+export { type Lookup, type LookupFromDatasource, type LookupFromGridInterface, registerLookup } from './grid/lookup';
 export type { ExcelOptions } from './grid/xlsx';
 export { setTexts, TEXTS, type TextId, type Texts } from './texts';

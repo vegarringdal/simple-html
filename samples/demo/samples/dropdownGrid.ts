@@ -6,7 +6,7 @@ export const dropdownGrid: DemoSample = {
     title: 'Grid as dropdown',
     group: 'Editing',
     description:
-        'The company column picks its value from a grid: editor: { type: "grid", lookup: "companies" }, a lookup registered with registerLookup(). Click the button at the right of a company cell, or press Alt+ArrowDown, F4 or Space in it - or just type: the dropdown grid opens with the text in its filter, which searches as you type. ArrowDown goes to the rows, Enter or a click picks, Esc closes it. A pick is one step of the undo history: Ctrl+Z. The lookups guide has the select, the options and the do-it-yourself way with focusButton and openMenu().',
+        'The company column picks its value from a grid: editor: { type: "grid", lookup: "companies" }, a lookup registered with registerLookup(). Click the button at the right of a company cell, or press Alt+ArrowDown, F4 or Space in it - or just type: the dropdown grid opens with the text in its filter, which searches as you type. Enter picks the first row found, ArrowDown goes to it and the arrows move between the rows, Enter or a click on a row picks it, Esc closes the dropdown. A pick is one step of the undo history: Ctrl+Z. The lookups guide has the select, the options and the do-it-yourself way with focusButton and openMenu().',
     run(stage) {
         const ui = createStage(stage);
 

@@ -1599,6 +1599,33 @@ in the console. All passed. Found and fixed:
   top level, Shift+F10 then ArrowRight / Esc); browser submenu-check.js 38/38 (copy before:
   submenu-check.js.before-undo-submenu), menus-regression-check.js 25/25
 
+### Lookup columns: a select or a dropdown grid (user request)
+
+* the user: the dropdown grid "should look nicer, maybe api also should be better here, so we can with
+  setting set something like this, by linking a gridinterface. And maybe we should have option for
+  selects too, based on linked in gridInterface/or datasource". Done in a worktree by an agent (paused
+  once by the account's usage limit and a reboot), merged here
+* `registerLookup(id, lookup)` like registerFormatter: the config stays JSON, `editor.lookup` names the
+  id; a grid resolves its lookups when it is made and on `updateConfig({ columns })`. Labels follow the
+  lookup's datasource (rows loaded later re-render the cells). Values matched with `===`: a lookup
+  column is a text or number field
+* a linked GridInterface is connected to the dropdown while it is open, disconnected on close, and
+  `resetState()` each time; one already shown in a grid on the page throws (it would take that grid's
+  datasource away). A dropdown grid made from a datasource is destroyed on close; it filters and sorts
+  its datasource, so the guide says to give a lookup one of its own
+* the cell is a readonly input with the label, `aria-haspopup` listbox/grid; while the list is open the
+  cell counts as being edited (`startEditing`), so an `upsert()` of that field is a conflict
+* sorting on labels needed a small internal datasource hook (`Sort.setSortValue`, `__setSortValue`):
+  the label first, the value on ties, so groups stay whole; `destroy()` takes it back
+* the select shows 500 options at most: opening a 10 000 option list took 191ms with all rendered, 14ms
+  with 500 (median of 5 in Chrome)
+* tests: lookups.test.ts (80), sortValue.test.ts (4), a lookup case in gridExcel.test.ts, texts.test.ts
+  opens a select. Browser: .claude/browser-checks/scripts/lookup-check.js 55/55 (light and dark, the
+  a11y tree, a small window, the dropdown grid sample) and lookup-timing.js
+* known: the cell's accessible name includes the button ("Norway Open the list"); the dropdown grid
+  leaves its last filter on the lookup datasource until the next open clears it; the value list, group
+  rows and the filter text show values, not labels
+
 ## Considered, not done
 
 ## Candidates / not started

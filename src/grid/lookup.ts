@@ -300,7 +300,9 @@ function assertLookup(id: string, lookup: unknown): asserts lookup is Lookup {
         throw new TypeError(`${where}: gridInterface is not a GridInterface`);
     }
     if (typeof valueField !== 'string' || valueField === '') {
-        throw new TypeError(`${where}: valueField is the name of the field stored in the cell, got ${JSON.stringify(valueField)}`);
+        throw new TypeError(
+            `${where}: valueField is the name of the field stored in the cell, got ${JSON.stringify(valueField)}`
+        );
     }
     if (labelField !== undefined && (typeof labelField !== 'string' || labelField === '')) {
         throw new TypeError(`${where}: labelField is the name of the field shown, got ${JSON.stringify(labelField)}`);

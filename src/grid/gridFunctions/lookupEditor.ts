@@ -48,6 +48,12 @@ const GRID_ROWS = 9;
 const GRID_MIN_ROWS = 3;
 
 /**
+ * the ms ArrowDown in the dropdown grid's filter waits before it puts the focus in the row, scrolled to
+ * first - as the grid's own Alt+arrows wait for the cell they go to
+ */
+const FOCUS_ROW_MS = 100;
+
+/**
  * the width of a column the dropdown grid makes itself, when the lookup has no config
  */
 const GRID_VALUE_WIDTH = 80;
@@ -182,7 +188,9 @@ export function openLookupEditor(ctx: Grid, target: LookupEditorCell, search = '
         (event) => {
             const path = event.composedPath();
             const inPopover = path.some((node) => node instanceof Element && node.classList.contains('simple-html-grid-popover'));
-            const onButton = path.some((node) => node instanceof Element && node.classList.contains('simple-html-grid-lookup-button'));
+            const onButton = path.some(
+                (node) => node instanceof Element && node.classList.contains('simple-html-grid-lookup-button')
+            );
             if (!inPopover && !(onButton && path.includes(cell))) {
                 editor.close(false);
             }
@@ -468,8 +476,27 @@ function openGrid(
         filter.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
+    // the highlighted row: the selected one - the cell's value when it opened, the first row after a
+    // search - else the first row. Enter in the filter picks it, ArrowDown goes to it
+    const highlighted = (): Entity | null => datasource.getSelectedRows()[0] ?? datasource.getDataRows()[0] ?? null;
+
+    // ArrowDown in a filter: the cell under it in the highlighted row, which is scrolled into view
+    // first. The focus once the grid has rendered it, after a moment as its own Alt+arrows do
+    const focusHighlighted = (filterInput: HTMLInputElement) => {
+        const row = highlighted();
+        const place = /filter-cellpos-([a-z]+-pinned)-\d+-(\d+)-(\d+)/.exec(filterInput.className);
+        if (!row || !place) {
+            return;
+        }
+        const rowIndex = datasource.getRows().indexOf(row);
+        datasource.select(rowIndex + 1, { notify: true });
+        setTimeout(() => {
+            gridElement.querySelector<HTMLInputElement>(`input.cellpos-${place[1]}-${rowIndex}-${place[2]}-${place[3]}`)?.focus();
+        }, FOCUS_ROW_MS);
+    };
+
     // the keys of a picker, before the grid's own (capture). The grid moves between its cells with
-    // Alt+arrows: the plain arrows do it here, sent again with Alt
+    // Alt+arrows: in the rows the plain arrows do it here, sent again with Alt
     element.addEventListener(
         'keydown',
         (event) => {
@@ -486,12 +513,22 @@ function openGrid(
             } else if (event.key === 'Enter' && !modifier) {
                 event.preventDefault();
                 event.stopPropagation();
-                pick(inFilter ? (datasource.getSelectedRows()[0] ?? datasource.getDataRows()[0] ?? null) : focusedRow);
-            } else if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && !modifier) {
+                pick(inFilter ? highlighted() : focusedRow);
+            } else if (event.key === 'ArrowDown' && inFilter && !modifier) {
+                event.preventDefault();
+                event.stopPropagation();
+                focusHighlighted(input);
+            } else if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && !inFilter && !modifier) {
                 event.preventDefault();
                 event.stopPropagation();
                 input.dispatchEvent(
-                    new KeyboardEvent('keydown', { key: event.key, code: event.code, altKey: true, bubbles: true, cancelable: true })
+                    new KeyboardEvent('keydown', {
+                        key: event.key,
+                        code: event.code,
+                        altKey: true,
+                        bubbles: true,
+                        cancelable: true
+                    })
                 );
             }
         },
@@ -501,7 +538,10 @@ function openGrid(
     element.addEventListener(
         'input',
         (event) => {
-            if (event.target instanceof HTMLInputElement && event.target.classList.contains('simple-html-grid-cell-filter-input')) {
+            if (
+                event.target instanceof HTMLInputElement &&
+                event.target.classList.contains('simple-html-grid-cell-filter-input')
+            ) {
                 event.target.dispatchEvent(new Event('change', { bubbles: true }));
             }
         },
@@ -564,7 +604,8 @@ function dropdownSize(gridInterface: GridInterface<any>) {
     const centerWidth = config.layout.center.reduce((sum, column) => sum + (column.width || 100), 0);
     // the border of the grid element, 1px on each side
     const border = 2;
-    const width = config.__selectSizeWidth + config.__leftWidth + centerWidth + config.__rightWidth + config.__scrollbarSize + border;
+    const width =
+        config.__selectSizeWidth + config.__leftWidth + centerWidth + config.__rightWidth + config.__scrollbarSize + border;
 
     // as updateMainElementSizes: the labels and the filters, or one of them
     let headerHeight = config.__rowHeaderHeight;

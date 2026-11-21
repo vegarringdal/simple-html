@@ -1332,6 +1332,29 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Lookup columns: a select or a dropdown grid (user request)
+
+##### Added
+- **Lookup columns**: `ColumnConfig.editor: { type: 'select' | 'grid', lookup, set? }` and
+  `registerLookup(id, lookup)` - a lookup is `{ datasource, valueField, labelField?, config? }` or
+  `{ gridInterface, valueField, labelField? }` (types `Lookup`, `LookupFromDatasource`,
+  `LookupFromGridInterface`, `ColumnEditor`). The cell shows the label (a value not in the lookup as
+  itself) and a square ▾ button; the list opens with the button, Alt+ArrowDown, F4, F2, Space, a double
+  click, or typing (the character is the search). **Select**: a search field over a listbox
+  (combobox, `aria-activedescendant`), at most 500 options shown. **Grid**: the lookup's datasource and
+  config in a dropdown, its label column's filter focused; or a linked `GridInterface`. A pick and its
+  `set` fields are one write, one undo step; Delete empties the cell and its `set` fields. An unknown
+  lookup, a bad `set`, a boolean/date field, `focusButton` or `dynamicCellTypeColumn` next to an editor
+  throw a `TypeError`.
+- Lookup columns sort on their labels, their header filter matches labels (as `IN` of the values), and
+  CSV / Excel export, copy, paste (a label becomes its value), clear, fill down, Find and fit widths use
+  the labels. The filter menu's value list, group rows and the filter's text show the values.
+- Texts `lookup.open`, `lookup.search`, `lookup.noMatch`, `lookup.more`; variables
+  `--simple-html-grid-lookup-button-bg-color`, `--simple-html-grid-lookup-icon-color`,
+  `--simple-html-grid-lookup-active-bg-color`.
+- Guide "Lookups: select and dropdown grid" (20), sample "Lookups"; the "Grid as dropdown" sample is a
+  few lines of config now.
+
 #### Find in the grid (item 42)
 
 ##### Added

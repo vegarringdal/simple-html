@@ -11,7 +11,16 @@ import { rangesClipboard } from '../gridFunctions/rangeClipboard';
 import { GridInterface } from '../gridInterface';
 import { registerLookup } from '../lookup';
 import { mountGrid, renderedColumn, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { gridOf, headerFilterInput, menuEntry, menuTreeIds, openFilterMenu, openRowMenu, sleep, typeInHeaderFilter } from './interactionTestHelpers';
+import {
+    gridOf,
+    headerFilterInput,
+    menuEntry,
+    menuTreeIds,
+    openFilterMenu,
+    openRowMenu,
+    sleep,
+    typeInHeaderFilter
+} from './interactionTestHelpers';
 
 /**
  * Lookup columns (ColumnConfig.editor): the registry of the lookups, the checks of the config, the cell
@@ -90,7 +99,13 @@ const buttonOf = (element: GridElement, field: string, row = 0) =>
 
 /** a keydown on an element, returns the event */
 function press(target: Element, key: string, init: KeyboardEventInit = {}) {
-    const event = new KeyboardEvent('keydown', { key, code: key === ' ' ? 'Space' : key, bubbles: true, cancelable: true, ...init });
+    const event = new KeyboardEvent('keydown', {
+        key,
+        code: key === ' ' ? 'Space' : key,
+        bubbles: true,
+        cancelable: true,
+        ...init
+    });
     target.dispatchEvent(event);
     return event;
 }
@@ -125,7 +140,9 @@ const frame = async () => {
 describe('lookups - registerLookup', () => {
     it('expect a TypeError for an id that is no text', () => {
         expect(() => registerLookup('', { datasource: countries, valueField: 'code' })).toThrow(TypeError);
-        expect(() => registerLookup(JSON.parse('3'), { datasource: countries, valueField: 'code' })).toThrow(/the id must be a text/);
+        expect(() => registerLookup(JSON.parse('3'), { datasource: countries, valueField: 'code' })).toThrow(
+            /the id must be a text/
+        );
     });
 
     it('expect a TypeError for a lookup that is not one: plain js and JSON can give anything', () => {
@@ -140,7 +157,9 @@ describe('lookups - registerLookup', () => {
 
     it('expect a TypeError for both a datasource and a grid interface, or a config with the interface', () => {
         const gridInterface = new GridInterface({ layout: { center: [{ fields: ['name'], width: 100 }] } }, countries);
-        expect(() => registerLookup('bad', { datasource: countries, gridInterface, valueField: 'code' } as any)).toThrow(TypeError);
+        expect(() => registerLookup('bad', { datasource: countries, gridInterface, valueField: 'code' } as any)).toThrow(
+            TypeError
+        );
         expect(() =>
             registerLookup('bad', { gridInterface, valueField: 'code', config: { layout: { center: [] } } } as any)
         ).toThrow(/a gridInterface has its own/);
@@ -149,7 +168,9 @@ describe('lookups - registerLookup', () => {
     it('expect a TypeError for a valueField or labelField that is no field name, or a config that is no object', () => {
         expect(() => registerLookup('bad', { datasource: countries } as any)).toThrow(/valueField/);
         expect(() => registerLookup('bad', { datasource: countries, valueField: '' })).toThrow(/valueField/);
-        expect(() => registerLookup('bad', { datasource: countries, valueField: 'code', labelField: 3 } as any)).toThrow(/labelField/);
+        expect(() => registerLookup('bad', { datasource: countries, valueField: 'code', labelField: 3 } as any)).toThrow(
+            /labelField/
+        );
         expect(() => registerLookup('bad', { datasource: countries, valueField: 'code', config: 'x' } as any)).toThrow(/config/);
     });
 
@@ -166,15 +187,19 @@ describe('lookups - registerLookup', () => {
 });
 
 describe('lookups - the column option', () => {
-    const make = (column: unknown, fieldOptions: DatasourceOptions = fields()) => () =>
-        new GridInterface(
-            { columns: { country: column as ColumnConfig }, layout: { center: [{ fields: ['country'], width: 100 }] } },
-            new Datasource(fieldOptions)
-        );
+    const make =
+        (column: unknown, fieldOptions: DatasourceOptions = fields()) =>
+        () =>
+            new GridInterface(
+                { columns: { country: column as ColumnConfig }, layout: { center: [{ fields: ['country'], width: 100 }] } },
+                new Datasource(fieldOptions)
+            );
 
     it('expect a TypeError for a lookup that is not registered, naming the registered ones', () => {
         expect(make({ editor: { type: 'select', lookup: 'nope' } })).toThrow(TypeError);
-        expect(make({ editor: { type: 'select', lookup: 'nope' } })).toThrow(/columns\.country\.editor\.lookup is "nope".*'countries'/);
+        expect(make({ editor: { type: 'select', lookup: 'nope' } })).toThrow(
+            /columns\.country\.editor\.lookup is "nope".*'countries'/
+        );
         expect(make({ editor: { type: 'select' } })).toThrow(/lookup is undefined/);
     });
 
@@ -191,7 +216,9 @@ describe('lookups - the column option', () => {
 
     it('expect a TypeError for a field that is no text or number: the value is compared with ===', () => {
         const editor = { type: 'select', lookup: 'countries' };
-        expect(make({ editor }, { fields: { country: 'boolean' } })).toThrow(/is for a text or number field, 'country' is boolean/);
+        expect(make({ editor }, { fields: { country: 'boolean' } })).toThrow(
+            /is for a text or number field, 'country' is boolean/
+        );
         expect(make({ editor }, { fields: { country: 'date' } })).toThrow(TypeError);
         expect(make({ editor }, { fields: { country: 'number' } })).not.toThrow();
     });
@@ -258,14 +285,19 @@ describe('lookups - the cell', () => {
         press(focusCell(element, 'country', 0), 'F4');
         expect(editor()).toBeNull();
 
-        gridInterface.updateConfig({ readonly: false, columns: columns({ country: { readonly: true, editor: { type: 'select', lookup: 'countries' } } }) });
+        gridInterface.updateConfig({
+            readonly: false,
+            columns: columns({ country: { readonly: true, editor: { type: 'select', lookup: 'countries' } } })
+        });
         expect(buttonOf(element, 'country', 0)).toBeNull();
         press(focusCell(element, 'country', 0), 'ArrowDown', { altKey: true });
         expect(editor()).toBeNull();
     });
 
     it('expect the isReadonly hook to make a lookup cell readonly too', async () => {
-        const { element } = await mountGrid(config(), data(), fields(), { isReadonly: (row) => (row.name === 'a' ? true : null) });
+        const { element } = await mountGrid(config(), data(), fields(), {
+            isReadonly: (row) => (row.name === 'a' ? true : null)
+        });
         expect(buttonOf(element, 'country', 0)).toBeNull();
         expect(buttonOf(element, 'country', 1)).not.toBeNull();
     });
@@ -483,10 +515,10 @@ describe('lookups - the select', () => {
         const input = focusCell(element, 'country', 0);
         press(input, 'F4');
         press(search(), 'ArrowDown');
-        const escape = press(search(), 'Escape');
+        const escapeKey = press(search(), 'Escape');
 
         // canceled: a modal dialog the grid is in does not close on it
-        expect(escape.defaultPrevented).toBe(true);
+        expect(escapeKey.defaultPrevented).toBe(true);
         expect(editor()).toBeNull();
         expect(datasource.getAllData()[0].country).toEqual('NO');
         expect(document.activeElement).toBe(input);
@@ -707,7 +739,7 @@ describe('lookups - the dropdown grid', () => {
         expect(filterInput()).toBe(headerFilterInput(dropdown(), 'name'));
     });
 
-    it("expect the options of a picker: no panel, no footer, no row state, filters that search anywhere", async () => {
+    it('expect the options of a picker: no panel, no footer, no row state, filters that search anywhere', async () => {
         const { element } = await mount();
         press(focusCell(element, 'customerId', 0), 'F4');
         const parsed = dropdownInterface().__getGridConfig();
@@ -729,7 +761,12 @@ describe('lookups - the dropdown grid', () => {
             config: {
                 footerHeight: 20,
                 columns: { city: { operator: 'BEGIN_WITH' } },
-                layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['city'], width: 90 }] }
+                layout: {
+                    center: [
+                        { fields: ['name'], width: 150 },
+                        { fields: ['city'], width: 90 }
+                    ]
+                }
             }
         });
         const { element } = await mount();
@@ -771,28 +808,33 @@ describe('lookups - the dropdown grid', () => {
         expect(datasource.canUndo()).toBe(false);
     });
 
-    it('expect ArrowDown in the filter to go to the rows, Enter on a row to pick it', async () => {
+    it('expect ArrowDown in the filter to go to the highlighted row, the arrows to move, Enter on a row to pick it', async () => {
         const { element, datasource } = await mount();
         press(focusCell(element, 'customerId', 0), 'F4');
+        const dropdownRow = () => (document.activeElement?.closest('.simple-html-grid-col-cell') as any)?.$row;
 
+        // the cell's value, GLOBEX, is the highlighted row: the second
         expect(press(filterInput(), 'ArrowDown').defaultPrevented).toBe(true);
         await sleep(150);
         expect(document.activeElement?.getAttribute('data-attribute')).toEqual('name');
-        press(document.activeElement as HTMLElement, 'ArrowDown');
+        expect(dropdownRow()).toEqual(1);
+        expect(press(document.activeElement as HTMLElement, 'ArrowDown').defaultPrevented).toBe(true);
         await sleep(150);
+        expect(dropdownRow()).toEqual(2);
         press(document.activeElement as HTMLElement, 'Enter');
-        expect(datasource.getAllData()[0].customerId).toEqual(2);
-        expect(datasource.getAllData()[0].customerName).toEqual('GLOBEX');
-        // the second row of the dropdown: GLOBEX, the value it had - and from the third
+        expect(datasource.getAllData()[0].customerId).toEqual(3);
+        expect(datasource.getAllData()[0].customerName).toEqual('INITECH');
+
+        // after a search: the first row it found. ArrowUp from the first row goes back to the filter
         press(focusCell(element, 'customerId', 1), 'F4');
+        filterInput().value = 'e';
+        filterInput().dispatchEvent(new Event('input', { bubbles: true }));
         press(filterInput(), 'ArrowDown');
         await sleep(150);
-        press(document.activeElement as HTMLElement, 'ArrowDown');
+        expect(dropdownRow()).toEqual(0);
+        press(document.activeElement as HTMLElement, 'ArrowUp');
         await sleep(150);
-        press(document.activeElement as HTMLElement, 'ArrowDown');
-        await sleep(150);
-        press(document.activeElement as HTMLElement, 'Enter');
-        expect(datasource.getAllData()[1].customerId).toEqual(3);
+        expect(document.activeElement?.classList.contains('simple-html-grid-cell-filter-input')).toBe(true);
     });
 
     it('expect a click on a row to pick it', async () => {
@@ -810,8 +852,8 @@ describe('lookups - the dropdown grid', () => {
         const { element, datasource } = await mount();
         const input = focusCell(element, 'customerId', 0);
         press(input, 'F4');
-        const escape = press(filterInput(), 'Escape');
-        expect(escape.defaultPrevented).toBe(true);
+        const escapeKey = press(filterInput(), 'Escape');
+        expect(escapeKey.defaultPrevented).toBe(true);
         expect(editor()).toBeNull();
         expect(datasource.getAllData()[0].customerId).toEqual(2);
         expect(document.activeElement).toBe(input);
@@ -931,7 +973,9 @@ describe('lookups - sorting, filtering, export and clipboard on the label', () =
         // the header filter shows what was typed
         expect(gridInterface.getState().headerFilters).toEqual({ country: { value: 'norway' } });
 
-        gridInterface.updateConfig({ columns: columns({ country: { operator: 'CONTAINS', editor: { type: 'select', lookup: 'countries' } } }) });
+        gridInterface.updateConfig({
+            columns: columns({ country: { operator: 'CONTAINS', editor: { type: 'select', lookup: 'countries' } } })
+        });
         typeInHeaderFilter(element, 'country', 'e');
         expect(renderedColumn(element, 'country')).toEqual(['Sweden']);
         // no label matches: no row
@@ -989,6 +1033,26 @@ describe('lookups - sorting, filtering, export and clipboard on the label', () =
         // one step
         datasource.undo();
         expect([row.country, row.customerId, row.customerName, row.city]).toEqual(['NO', 2, 'GLOBEX', 'Bergen']);
+    });
+
+    it('expect fill down to copy the value and write the fields of set from the lookup, one step', async () => {
+        const { element, datasource, gridInterface } = await mount();
+        // the second row gets the first row's customer
+        press(focusCell(element, 'customerId', 1), 'd', { ctrlKey: true, code: 'KeyD' });
+        const row = datasource.getAllData()[1];
+        expect([row.customerId, row.customerName, row.city]).toEqual([2, 'GLOBEX', 'Bergen']);
+        datasource.undo();
+        expect([row.customerId, row.customerName, row.city]).toEqual([1, 'ACME', 'Oslo']);
+        gridInterface.clearRanges();
+    });
+
+    it('expect Find to find the labels the cells show', async () => {
+        const { gridInterface } = await mount();
+        expect(gridInterface.find('sweden')).toBe(1);
+        expect(gridInterface.find('SE')).toBe(0);
+        // the label of the customer, and its name set into customerName
+        expect(gridInterface.find('initech')).toBe(2);
+        gridInterface.closeFind();
     });
 
     it("expect the row menu's clear to empty the fields of set too", async () => {

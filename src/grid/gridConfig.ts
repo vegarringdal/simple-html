@@ -551,7 +551,8 @@ export type ColumnConfig = {
  *   Enter or a click picks, Tab picks and goes to the next cell, Esc closes it.
  * - `type: 'grid'` - a dropdown grid under the cell: the lookup's datasource in a small grid of its
  *   own (`Lookup.config`), or the grid interface it links. The filter row searches as you type,
- *   ArrowDown goes to the rows, Enter or a click on a row picks, Esc closes it.
+ *   Enter picks the highlighted row (the first one found), ArrowDown goes to it and the arrows move
+ *   between the rows, Enter or a click on a row picks it, Esc closes it.
  *
  * Picking writes the value, and the fields of `set`, in one go: one step of the undo history, Ctrl+Z
  * takes it back.

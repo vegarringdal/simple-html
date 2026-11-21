@@ -1141,9 +1141,9 @@
 
 /**
  * a lookup column (ColumnConfig.editor, lookupEditor.ts): the button at the right of a cell that can
- * be edited opens the list. Over the input (1000), square, the height of the cell. Shown while the
- * pointer is over the cell and while the cell has the focus - the input's text stops before it either
- * way, so it does not move when the button shows
+ * be edited opens the list. Over the input (1000), square corners, inside the 2px of the cell's focus
+ * outline so the outline goes around it. Shown while the pointer is over the cell and while the cell
+ * has the focus - the input's text stops before it either way, so it does not move when it shows
  */
 .simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-lookup {
     padding-right: 20px;
@@ -1151,10 +1151,10 @@
 
 .simple-html-grid .simple-html-grid-col-cell .simple-html-grid-lookup-button {
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 18px;
+    top: 2px;
+    right: 2px;
+    bottom: 2px;
+    width: 16px;
     z-index: 1001;
     display: none;
     align-items: center;
@@ -1163,7 +1163,6 @@
     margin: 0;
     padding: 0;
     border: 0;
-    border-left: 1px solid var(--simple-html-grid-main-bg-border);
     border-radius: 0;
     color: var(--simple-html-grid-lookup-icon-color);
     background-color: var(--simple-html-grid-lookup-button-bg-color);
@@ -1197,7 +1196,7 @@
     overflow: visible;
     border: 1px solid var(--simple-html-grid-pinned-border);
     box-shadow: 0 2px 8px var(--simple-html-grid-dialog-shadow-color);
-    background-color: var(--simple-html-grid-sec-bg-color);
+    background-color: var(--simple-html-grid-main-bg-color);
 }
 
 .simple-html-grid.simple-html-grid-lookup-select {
@@ -1229,7 +1228,8 @@
 
 .simple-html-grid .simple-html-grid-lookup-list {
     position: relative;
-    max-height: 200px;
+    /* ten options and the padding */
+    max-height: 204px;
     overflow-y: auto;
     padding: 2px 0;
 }

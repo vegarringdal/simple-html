@@ -56,7 +56,9 @@ export function lookupColumnsOf(columns: Record<string, ColumnConfig> | undefine
         }
         const where = `columns.${field}.editor`;
         if (typeof editor !== 'object' || editor === null || Array.isArray(editor)) {
-            throw new TypeError(`GridConfig: ${where} is { type: 'select' | 'grid', lookup: '<id>' }, got ${JSON.stringify(editor)}`);
+            throw new TypeError(
+                `GridConfig: ${where} is { type: 'select' | 'grid', lookup: '<id>' }, got ${JSON.stringify(editor)}`
+            );
         }
         const { type, lookup, set } = editor as Record<string, unknown>;
         if (type !== 'select' && type !== 'grid') {
@@ -78,7 +80,9 @@ export function lookupColumnsOf(columns: Record<string, ColumnConfig> | undefine
             );
         }
         if (column.dynamicCellTypeColumn !== undefined) {
-            throw new TypeError(`GridConfig: columns.${field} has an editor and a dynamicCellTypeColumn: a lookup column has one type`);
+            throw new TypeError(
+                `GridConfig: columns.${field} has an editor and a dynamicCellTypeColumn: a lookup column has one type`
+            );
         }
         lookupColumns.set(field, {
             field,
@@ -95,11 +99,15 @@ export function lookupColumnsOf(columns: Record<string, ColumnConfig> | undefine
  */
 function assertSet(set: unknown, field: string, where: string) {
     if (typeof set !== 'object' || set === null || Array.isArray(set)) {
-        throw new TypeError(`GridConfig: ${where}.set is { <field of the row>: <field of the picked row> }, got ${JSON.stringify(set)}`);
+        throw new TypeError(
+            `GridConfig: ${where}.set is { <field of the row>: <field of the picked row> }, got ${JSON.stringify(set)}`
+        );
     }
     for (const [target, source] of Object.entries(set)) {
         if (typeof source !== 'string' || source === '') {
-            throw new TypeError(`GridConfig: ${where}.set.${target} is the name of a field of the picked row, got ${JSON.stringify(source)}`);
+            throw new TypeError(
+                `GridConfig: ${where}.set.${target} is the name of a field of the picked row, got ${JSON.stringify(source)}`
+            );
         }
         if (target === field) {
             throw new TypeError(`GridConfig: ${where}.set sets '${field}', the column's own field: it gets the picked value`);

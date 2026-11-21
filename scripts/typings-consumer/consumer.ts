@@ -12,6 +12,7 @@ import {
     type CellRange,
     type Changes,
     type ColumnConfig,
+    type ColumnEditor,
     type CreateGridOptions,
     type CsvOptions,
     type CsvSeparator,
@@ -50,6 +51,9 @@ import {
     type IDateConfig,
     isGroupRow,
     type LayoutColumn,
+    type Lookup,
+    type LookupFromDatasource,
+    type LookupFromGridInterface,
     MENU_IDS,
     type MenuBlock,
     type MenuContext,
@@ -64,6 +68,7 @@ import {
     NumberFormatterDot,
     or,
     registerFormatter,
+    registerLookup,
     registerValidator,
     type SortArgument,
     setTexts,
@@ -816,3 +821,28 @@ console.log(configIsData, stateIsData, fieldsAreData, csvOptionsAreData, excelOp
 gridInterface.__getGridConfig();
 // @ts-expect-error
 datasource.__select(0);
+
+// lookups: a list to pick a cell's value from, registered by id - the column names it in plain JSON
+const countryRows = new Datasource();
+countryRows.setData([{ code: 'NO', name: 'Norway' }]);
+const countryLookup: LookupFromDatasource = {
+    datasource: countryRows,
+    valueField: 'code',
+    labelField: 'name',
+    config: { layout: { center: [{ fields: ['name'], width: 160 }] } }
+};
+registerLookup('countries', countryLookup);
+const pickerInterface = new GridInterface({ layout: { center: [{ fields: ['name'], width: 200 }] } }, new Datasource());
+const customerLookup: LookupFromGridInterface = { gridInterface: pickerInterface, valueField: 'id', labelField: 'name' };
+const anyLookup: Lookup = customerLookup;
+registerLookup('customers', anyLookup);
+const countryEditor: ColumnEditor = { type: 'select', lookup: 'countries' };
+const lookupColumns: Record<string, ColumnConfig> = {
+    country: { editor: countryEditor },
+    customerId: { editor: { type: 'grid', lookup: 'customers', set: { customerName: 'name' } } }
+};
+// @ts-expect-error a lookup has a datasource or a grid interface, not both
+const bothLookup: Lookup = { datasource: countryRows, gridInterface: pickerInterface, valueField: 'code' };
+// @ts-expect-error the editor is a select or a grid
+const badEditor: ColumnEditor = { type: 'list', lookup: 'countries' };
+console.log(lookupColumns, bothLookup, badEditor);

@@ -8,6 +8,7 @@ import type { GridConfig } from '../gridConfig';
 import { REVOKE_URL_AFTER_MS } from '../gridFunctions/gridCsv';
 import { GridInterface } from '../gridInterface';
 import { MENU_IDS } from '../gridMenus';
+import { registerLookup } from '../lookup';
 import { excelColumnWidth, XLSX_MIME } from '../xlsx';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { menuEntry, openRowMenu } from './interactionTestHelpers';
@@ -727,5 +728,28 @@ describe('the row menu - Export', () => {
         const { element } = await mountGrid({ ...config(false), texts: { 'row.export.excel': 'Excel, alle rader' } }, rows());
         openRowMenu(element, 'name', 0);
         expect(entry('row.export.excel').textContent?.trim()).toBe('Excel, alle rader');
+    });
+});
+
+describe('getExcel - a lookup column', () => {
+    it('expect the label the cell shows, as text - also for a number field', async () => {
+        const ages = new Datasource({ fields: { years: 'number' } });
+        ages.setData([
+            { years: 30, name: 'thirty' },
+            { years: 20, name: 'twenty' }
+        ]);
+        registerLookup('excel-ages', { datasource: ages, valueField: 'years', labelField: 'name' });
+        const config: GridConfig = {
+            ...columns('name', 'age'),
+            columns: { age: { editor: { type: 'select', lookup: 'excel-ages' } } }
+        };
+        const { gridInterface } = await mountGrid(config, people().slice(0, 3), peopleFields);
+        // a value the lookup does not have: the cell shows the value, as text
+        expect(await excelRows(gridInterface)).toEqual([
+            ['Name', 'Age'],
+            ['Ann', 'thirty'],
+            ['Bob', 'twenty'],
+            ['Cid', '50']
+        ]);
     });
 });

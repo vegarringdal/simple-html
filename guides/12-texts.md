@@ -494,6 +494,19 @@ opens over it, see [Editing](05-editing.md#multiline-text).
 | `cell.multiline.hint` | `Ctrl+Enter to save, Esc to cancel` | under the textarea of the editor. Cmd+Enter saves too |
 | `cell.multiline.hintReadonly` | `Esc to close` | under the textarea of the editor of a readonly cell |
 
+### Lookup columns
+
+A column whose value is picked from a list (`ColumnConfig.editor`), see
+[Lookups](20-lookups.md). The dropdown grid has the texts of a grid, the labels of its columns are
+its config's.
+
+| id | English | shown |
+| --- | --- | --- |
+| `lookup.open` | `Open the list` | for a screen reader: the name of the button at the right of the cell |
+| `lookup.search` | `Search` | the placeholder of the search field of the select |
+| `lookup.noMatch` | `No matches` | under the search of the select when no label has the text |
+| `lookup.more` | `{shown} of {count} shown, type to search` | under the list of the select when it has more options than it shows. `{shown}`: the options shown (500), `{count}`: the options the search finds |
+
 ### Date picker
 
 Of a date cell and a date header filter, and a `DateInterface` of your own.
