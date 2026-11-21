@@ -323,8 +323,8 @@ export interface GridMenus {
  * | `row.summary.min` | Min: 10 | a number field |
  * | `row.summary.avg` | Avg: 20 | a number field |
  * | `row.export` | Export: | |
- * | `row.export.csv` | CSV, all rows - `gridInterface.downloadCsv()`: the rows the filter lets through, as the grid shows them | |
- * | `row.export.csvSelected` | CSV, selected rows - `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
+ * | `row.export.excel` | Excel, all rows - `gridInterface.downloadExcel()`: the rows the filter lets through, as an .xlsx file | |
+ * | `row.export.excelSelected` | Excel, selected rows - `downloadExcel('export.xlsx', { rows: 'selected' })`. Greyed out when no row is selected | |
  *
  * Header menu (`GridMenus.header`), right click on a header label:
  *
@@ -418,8 +418,8 @@ export const MENU_IDS = {
         'row.summary.min',
         'row.summary.avg',
         'row.export',
-        'row.export.csv',
-        'row.export.csvSelected'
+        'row.export.excel',
+        'row.export.excelSelected'
     ],
     /** the header menu's ids, right click on a header label */
     header: [

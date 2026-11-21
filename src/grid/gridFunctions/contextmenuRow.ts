@@ -343,24 +343,24 @@ function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity): bool
 }
 
 /**
- * Export as a CSV file (gridInterface.downloadCsv): every row the filter lets through, or the selected
- * ones - the columns and values as the grid shows them, see guides/15-export.md. In every grid,
- * readonly ones too: an export changes nothing
+ * Export as an Excel file (gridInterface.downloadExcel): every row the filter lets through, or the
+ * selected ones - the columns of the layout, typed values, see guides/15-export.md. In every grid,
+ * readonly ones too: an export changes nothing. The CSV export is in the API (downloadCsv), not here
  */
 function exportEntries(ctx: Grid): MenuEntry[] {
     const gridInterface = ctx.gridInterface;
     return [
         { type: 'section', id: 'row.export', label: gridText(ctx, 'row.export') },
         {
-            id: 'row.export.csv',
-            label: gridText(ctx, 'row.export.csv'),
-            action: () => gridInterface.downloadCsv()
+            id: 'row.export.excel',
+            label: gridText(ctx, 'row.export.excel'),
+            action: () => gridInterface.downloadExcel()
         },
         {
-            id: 'row.export.csvSelected',
-            label: gridText(ctx, 'row.export.csvSelected'),
+            id: 'row.export.excelSelected',
+            label: gridText(ctx, 'row.export.excelSelected'),
             disabled: () => gridInterface.getDatasource().getSelectedRows().length === 0,
-            action: () => gridInterface.downloadCsv('export.csv', { rows: 'selected' })
+            action: () => gridInterface.downloadExcel('export.xlsx', { rows: 'selected' })
         }
     ];
 }

@@ -53,8 +53,8 @@ const norwegian: Record<TextId, string> = {
     'row.summary.max': 'Maks: {max}',
     'row.summary.min': 'Min: {min}',
     'row.export': 'Eksport:',
-    'row.export.csv': 'CSV, alle rader',
-    'row.export.csvSelected': 'CSV, valgte rader',
+    'row.export.excel': 'Excel, alle rader',
+    'row.export.excelSelected': 'Excel, valgte rader',
     'row.summary.avg': 'Snitt: {avg}',
 
     // the header menu

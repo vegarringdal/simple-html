@@ -173,8 +173,8 @@ The "shown as" below is the English text.
 | `row.summary.min` | Min: the smallest number, 0 included | a number field |
 | `row.summary.avg` | Avg: the average of the numbers, a blank is not counted | a number field |
 | `row.export` | Export: | |
-| `row.export.csv` | CSV, all rows: `gridInterface.downloadCsv()`, see [Export](15-export.md) | |
-| `row.export.csvSelected` | CSV, selected rows: `downloadCsv('export.csv', { rows: 'selected' })`. Greyed out when no row is selected | |
+| `row.export.excel` | Excel, all rows: `gridInterface.downloadExcel()`, an .xlsx file, see [Export](15-export.md) | |
+| `row.export.excelSelected` | Excel, selected rows: `downloadExcel('export.xlsx', { rows: 'selected' })`. Greyed out when no row is selected | |
 
 ### Header menu (`MENU_IDS.header`)
 

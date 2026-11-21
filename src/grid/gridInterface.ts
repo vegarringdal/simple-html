@@ -28,6 +28,7 @@ import { getElementByClassName } from './gridFunctions/getElementByClassName';
 import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
+import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
@@ -41,6 +42,7 @@ import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
+import type { ExcelOptions } from './xlsx';
 
 /**
  * The grid: its config, its datasource and its state. What you call to work with a grid - read and
@@ -770,6 +772,77 @@ export class GridInterface<T> {
      */
     public __getRangeState(): RangeState | null {
         return this.rangeState;
+    }
+
+    /**
+     * The rows as an Excel workbook (.xlsx), a Blob: one sheet with a header row of the column labels
+     * (bold, frozen, with an autofilter over it and every row), then a row per data row. By default
+     * every row the filter lets through, in the sort order, and the columns of the layout in the
+     * order the user sees them, as wide as in the grid. See {@link ExcelOptions} for what can be
+     * changed: the selected rows, the selected range of cells, the fields, the sheet name.
+     *
+     * - **Typed cells**, so Excel can sum, sort and filter: a number field gives numbers, a date or
+     *   datetime field Excel dates (the local date and time the grid shows), a boolean field TRUE /
+     *   FALSE, text text - with wrapped lines when it has a line break. A value that is not of its
+     *   field's type (text in a number field) is written as the text the cell shows. Blanks are empty
+     *   cells.
+     * - **A flat list**: when grouped, every data row in the grouped order - the rows of collapsed
+     *   groups too - and no group rows, no outline, no totals. Rows marked for deletion are rows of the
+     *   grid until they are saved, they are exported too.
+     * - **No formulas**: text is never a formula in an .xlsx file, a value a user typed
+     *   (`=HYPERLINK(...)`) shows as the text it is.
+     * - **The values when called**: the rows and values are read before the promise is returned, the
+     *   file is zipped after (with the browser's `CompressionStream`, so this is async).
+     *
+     * Works without the grid on the page too: it reads the config and the datasource.
+     *
+     * @param options what to export, see {@link ExcelOptions}. Every option is optional
+     * @returns the .xlsx file, of the type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+     * @throws (the promise rejects with) a `TypeError` for an option it does not know or a value an
+     * option does not take (`rows: 'some'`, a sheet name Excel does not take), a `RangeError` for more
+     * rows (1 048 576 with the header) or columns (16 384) than an Excel sheet holds
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * // the file, for code of your own: upload it, attach it to a mail ...
+     * const blob = await gridInterface.getExcel();
+     * await fetch('/api/reports', { method: 'POST', body: blob });
+     *
+     * // the selected rows, two fields, on a sheet named People
+     * const people = await gridInterface.getExcel({ rows: 'selected', fields: ['name', 'born'], sheetName: 'People' });
+     *
+     * // the cells the user selected (the last range of cells)
+     * const cells = await gridInterface.getExcel({ rows: 'range' });
+     * ```
+     */
+    public getExcel(options: ExcelOptions = {}): Promise<Blob> {
+        return gridExcel(this, 'getExcel', options);
+    }
+
+    /**
+     * Saves the rows as an Excel file (.xlsx): the browser downloads it, as from a link. The file is
+     * {@link getExcel}'s. The row menu's *Excel, all rows* and *Excel, selected rows* call this.
+     *
+     * @param filename the name the file is saved as, default `'export.xlsx'`. Give it the `.xlsx`
+     * ending yourself, it is not added
+     * @param options what to export, see {@link ExcelOptions}
+     * @returns a promise that is fulfilled once the download is started
+     * @throws (the promise rejects with) a `TypeError` when the filename is not a text
+     * (`downloadExcel({ rows: 'selected' })`: the filename comes first), for an option it does not
+     * know or a value an option does not take
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * document.getElementById('export')!.onclick = () => gridInterface.downloadExcel();
+     *
+     * // the selected rows, on a sheet named Orders
+     * await gridInterface.downloadExcel('orders.xlsx', { rows: 'selected', sheetName: 'Orders' });
+     * ```
+     */
+    public downloadExcel(filename: string = 'export.xlsx', options: ExcelOptions = {}): Promise<void> {
+        return downloadGridExcel(this, filename, options);
     }
 
     /**
