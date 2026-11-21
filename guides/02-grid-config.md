@@ -223,7 +223,7 @@ import { createGrid, type GridConfig, type GridHooks } from '@simple-html/grid';
 declare const config: GridConfig;
 
 const hooks: GridHooks = {
-    menus: { row: (defaults) => defaults.filter((entry) => !entry.id.startsWith('row.summary')) }
+    menus: { row: (defaults) => defaults.filter((entry) => !entry.id.startsWith('row.export')) }
 };
 
 const gridInterface = createGrid(host, { config, datasource, hooks });

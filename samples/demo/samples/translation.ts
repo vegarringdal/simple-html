@@ -46,11 +46,6 @@ const norwegian: Record<TextId, string> = {
     'row.edit.revertRow': 'Angre endringer i raden',
     'row.edit.revertRows': 'Angre endringer i radene',
     'row.edit.revertRows.hint': 'valgte rader',
-    'row.summary': 'Sammendrag',
-    'row.summary.count': 'Antall: {count}',
-    'row.summary.sum': 'Sum: {sum}',
-    'row.summary.max': 'Maks: {max}',
-    'row.summary.min': 'Min: {min}',
     'row.size': 'Størrelse',
     'row.size.fitColumn': 'Tilpass kolonnen til cellen',
     'row.size.fitRow': 'Tilpass radhøyden',
@@ -62,7 +57,6 @@ const norwegian: Record<TextId, string> = {
     'row.export': 'Eksport',
     'row.export.excel': 'Excel, alle rader',
     'row.export.excelSelected': 'Excel, valgte rader',
-    'row.summary.avg': 'Snitt: {avg}',
 
     // the header menu
     'header.column.pin': 'Fest',

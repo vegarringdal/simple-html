@@ -1502,6 +1502,32 @@ in the console. All passed. Found and fixed:
 * not done: a "Fill down" entry in the row menu (after the menus' submenus merge); fill up/right; series
   (1, 2, 3 ...) - the handle copies
 
+### Menus: submenus, shorter, the keyboard (user request)
+
+* the user: "our menus is pretty big ... organized better so it uses less height, can expand to the
+  right, many more sub menus". Done in a worktree by an agent, merged here
+* showMenu.ts: `MenuSubmenu` entries render as an item with a chevron; a submenu is its own
+  `popover="manual"` placed beside its item by the placeMenu rules (right, flipped left, over the menu
+  when neither fits, moved up, scrolling); one open per level, hover opens after 150ms (moving to it
+  diagonally does not open the others), ArrowRight/Enter/Space/click open it, ArrowLeft/Esc close it
+* keyboard per the APG menu pattern: roving tabindex, arrows wrap, Home/End, first letter, disabled
+  items focusable but not activated (APG), Tab closes and returns the focus - except in the filter
+  menu, where Tab goes into the value list. The last input (key or pointer, capture listeners) decides
+  whether a menu takes the focus: Shift+F10 sends a contextmenu event with `button: -1` in Chromium
+* the default trees: row menu 762px / 38 rows -> 285px / 14, header 485px / 24 -> 145px / 7, filter
+  menu 537 -> 437px (the value list stays inline). Section ids that became submenus kept their ids;
+  `header.column.pin` (not `header.pin`) so a filter on `header.column` still hides that part
+* the row menu's Summary is removed with the merge (item 35): its regression tests (negative max, 0 as
+  min, average not rounded and without blanks, two decimals) now run on the footer summary
+* tests: gridMenus.test.ts 68 -> 106 (trees, the hook on nested entries, submenus open/close/hover with
+  fake timers/diagonal/nesting, placement, every key, roles); helpers `menuEntry(id)` (opens the
+  submenus on the way), `menuTreeIds`, `openMenus`. Browser: .claude/browser-checks/scripts/
+  submenu-check.js 37/37 and menus-regression-check.js 25/25, screenshots in shots/submenu and
+  shots/menus-regression
+* known: the menus' box-shadow never shows (`.simple-html-grid { overflow: hidden }` clips it on the
+  popover); the top-level menu has no name; the filter editor's pickers, the column chooser and the date
+  picker are still mouse-only
+
 ## Considered, not done
 
 ## Candidates / not started

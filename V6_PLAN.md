@@ -389,9 +389,8 @@ built on it.
         Excel/Sheets), paste one into a range (several rows and columns, respecting readonly and
         validation, one undo step), Delete clears a range. **M**
 34. [x] **Fill down** (Ctrl+D) and a drag-fill handle. **M** - `gridInterface.fillDown()`, the handle fills down only
-35. [ ] **Summary of the selection** in the footer: count, sum, average, min, max. Replaces the row
-        menu summary, which has known bugs. **S** - the footer's summary of the cell ranges is done;
-        the row menu's summary is removed after the menus' submenus are merged
+35. [x] **Summary of the selection** in the footer: count, sum, average, min, max. Replaces the row
+        menu summary, which has known bugs. **S** - of the cell ranges; the row menu's summary is gone
 
 ## Phase 7 - live data
 
@@ -422,7 +421,7 @@ Every feature gets a demo sample and a guide page.
 
 ## Order
 
-**Now:** items 35 (the row menu's summary to remove), 39, 42 - the rest is done.
+**Now:** items 39, 42 - the rest is done.
 
 Phase 0 first: strict mode and the public/internal split make every later refactor safer, and
 the rename pass means users rename once. Then the datasource schema (5-9), which simplifies

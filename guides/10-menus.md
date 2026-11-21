@@ -3,7 +3,8 @@
 The grid has three right click menus:
 
 - the **row menu**, on a cell: undo and redo, then the submenus copy, paste, clear, delete, filter
-  on the value, view, sizes, a summary, export
+  on the value, view, sizes, export. The summary of selected cells is in the footer, see
+  [Selection and clipboard](17-selection-and-clipboard.md#the-summary-in-the-footer)
 - the **header menu**, on a header label: pin, hide, remove sorting, the column chooser, then the
   submenus sizes, aggregates, grouping
 - the **filter menu**, on a header filter: clear, is blank, the operator, the filter editor, the
@@ -98,8 +99,8 @@ const config: GridConfig = {
 const hooks: GridHooks = {
     menus: {
         row: (defaults, context) => [
-            // hide built-in entries by id: here the summary submenu, with what is in it
-            ...defaults.filter((entry) => !entry.id.startsWith('row.summary')),
+            // hide built-in entries by id: here the export submenu, with what is in it
+            ...defaults.filter((entry) => !entry.id.startsWith('row.export')),
             // add your own
             {
                 id: 'my.logRow',
@@ -135,7 +136,7 @@ const gridInterface = createGrid(host, { config, datasource, hooks });
 
 - `defaults` always has every entry of the menu. The ones that do not apply here have a `visible`
   callback that hides them: paste and clear on a readonly cell, delete in a readonly grid, the
-  summary of a column that is not a number, the operators of another type. A submenu with nothing
+  operators of another type. A submenu with nothing
   left to show is hidden too.
 - A section header or a separator is shown as long as it is in the list: hide it together with the
   entries under it.
@@ -215,7 +216,6 @@ Delete ›
 Filter ›
 View ›
 Size ›
-Summary ›
 Export ›
 ```
 
@@ -257,12 +257,6 @@ Export ›
 | `row.size.fitAllRows` | Fit all rows: every row the filter lets through, `fitRows()` | |
 | `row.size.resetRow` | Reset row height: the row right clicked, `resetRowHeights(row)`. Greyed out when it has the height of the layout | |
 | `row.size.resetAllRows` | Reset all row heights: `resetRowHeights()`. Greyed out when no row has a height of its own | |
-| `row.summary` | Summary › - a submenu | a number field |
-| `row.summary.count` | Count: the number of selected rows. A click copies the value | a number field |
-| `row.summary.sum` | Sum: of the selected rows' numbers, `datasource.aggregate(field, 'sum', rows)`. With two decimals at most, as max, min and avg | a number field |
-| `row.summary.max` | Max: the largest number | a number field |
-| `row.summary.min` | Min: the smallest number, 0 included | a number field |
-| `row.summary.avg` | Avg: the average of the numbers, a blank is not counted | a number field |
 | `row.export` | Export › - a submenu | |
 | `row.export.excel` | Excel, all rows: `gridInterface.downloadExcel()`, an .xlsx file, see [Export](15-export.md) | |
 | `row.export.excelSelected` | Excel, selected rows: `downloadExcel('export.xlsx', { rows: 'selected' })`. Greyed out when no row is selected | |

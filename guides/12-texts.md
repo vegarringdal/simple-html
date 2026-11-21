@@ -17,7 +17,7 @@ import { setTexts, type Texts } from '@simple-html/grid';
 // a text for each id to change, the rest stay English
 const norwegian: Texts = {
     'row.copy': 'Kopier',
-    'row.summary.count': 'Antall: {count}',
+    'footer.summary.count': 'Antall: {count}',
     'filterEditor.addCondition.tooltip': 'Legg til betingelse',
     'validation.required': 'Må fylles ut'
 };
@@ -75,14 +75,14 @@ as a whole, `texts: undefined` removes them. The object given is copied by `setT
 
 ## Texts with values
 
-A text with `{name}` in it gets a value when it is shown: `'row.summary.count': 'Count: {count}'`
+A text with `{name}` in it gets a value when it is shown: `'footer.summary.count': 'Count: {count}'`
 shows `Count: 3`. The tables [below](#all-ids) name the values of each text. Keep the names in a
 translation, a value can go anywhere in the text; a name the text has no value for is shown as it is.
 
 ```ts
 import { setTexts } from '@simple-html/grid';
 
-setTexts({ 'row.summary.count': '{count} rader', 'footer.rowCount': 'Viser {shown} av {total}' });
+setTexts({ 'footer.summary.count': '{count} celler', 'footer.rowCount': 'Viser {shown} av {total}' });
 ```
 
 ## The ids
@@ -224,12 +224,6 @@ Right click on a cell.
 | `row.edit.revertRow` | `Undo row edits` | puts the original values of the row right clicked back |
 | `row.edit.revertRows` | `Undo row edits` | puts the original values of the selected rows back |
 | `row.edit.revertRows.hint` | `selected rows` | its hint |
-| `row.summary` | `Summary` | the summary submenu, a number column |
-| `row.summary.count` | `Count: {count}` | `{count}`: the number of selected rows |
-| `row.summary.sum` | `Sum: {sum}` | `{sum}`: their sum, formatted |
-| `row.summary.max` | `Max: {max}` | `{max}`: the largest value, formatted |
-| `row.summary.min` | `Min: {min}` | `{min}`: the smallest value, formatted |
-| `row.summary.avg` | `Avg: {avg}` | `{avg}`: the average, formatted |
 | `row.size` | `Size` | the size submenu |
 | `row.size.fitColumn` | `Fit column to this cell` | the column as wide as the text of the cell right clicked |
 | `row.size.fitRow` | `Fit row height` | the row right clicked as high as its multiline cells need |

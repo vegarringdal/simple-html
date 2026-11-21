@@ -45,12 +45,6 @@ const DEFAULTS = {
     'row.edit.revertRow': 'Undo row edits',
     'row.edit.revertRows': 'Undo row edits',
     'row.edit.revertRows.hint': 'selected rows',
-    'row.summary': 'Summary',
-    'row.summary.count': 'Count: {count}',
-    'row.summary.sum': 'Sum: {sum}',
-    'row.summary.max': 'Max: {max}',
-    'row.summary.min': 'Min: {min}',
-    'row.summary.avg': 'Avg: {avg}',
     'row.size': 'Size',
     'row.size.fitColumn': 'Fit column to this cell',
     'row.size.fitRow': 'Fit row height',
@@ -341,7 +335,7 @@ export type TextId = keyof typeof DEFAULTS;
  *
  * const norwegian: Texts = {
  *     'row.copy': 'Kopier',
- *     'row.summary.count': 'Antall: {count}',
+ *     'footer.summary.count': 'Antall: {count}',
  *     'validation.required': 'Må fylles ut',
  *     'validation.phoneNO': 'Må være 8 siffer' // an id of your own, returned by a validator
  * };
@@ -380,13 +374,13 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * ```ts
  * import { setTexts, TEXTS } from '@simple-html/grid';
  *
- * TEXTS['row.summary.count']; // 'Count: {count}'
+ * TEXTS['footer.summary.count']; // 'Count: {count}'
  *
  * // every id with its English text, e.g. to hand to a translator
  * const english: string = JSON.stringify(TEXTS, null, 2);
  * console.log(english);
  *
- * setTexts({ 'row.summary.count': 'Antall: {count}' });
+ * setTexts({ 'footer.summary.count': 'Antall: {count}' });
  * ```
  */
 export const TEXTS: Readonly<Record<TextId, string>> = Object.freeze(DEFAULTS);
@@ -430,7 +424,7 @@ let pageTexts: Texts = {};
  * // once, before the grids are made
  * setTexts({
  *     'row.copy': 'Kopier',
- *     'row.summary.count': 'Antall: {count}',
+ *     'footer.summary.count': 'Antall: {count}',
  *     'validation.required': 'Må fylles ut'
  * });
  * const gridInterface = createGrid(host, { config, datasource });

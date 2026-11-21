@@ -208,7 +208,6 @@ function rowMenuEntries(
             ]
         },
         sizeSubmenu(ctx, attribute, rowData),
-        summarySubmenu(ctx, attribute),
         exportSubmenu(ctx)
     ];
 }
@@ -494,75 +493,6 @@ function exportSubmenu(ctx: Grid): MenuSubmenu {
                 label: gridText(ctx, 'row.export.excelSelected'),
                 disabled: () => gridInterface.getDatasource().getSelectedRows().length === 0,
                 action: () => gridInterface.downloadExcel('export.xlsx', { rows: 'selected' })
-            }
-        ]
-    };
-}
-
-/**
- * The summary of a number column over the selected rows: count, sum, max, min and average. Clicking
- * one copies its value. Only shown for a number field, the values are only computed for one.
- *
- * The values are the datasource's aggregates of the selected rows (`datasource.aggregate()`): the
- * numbers only, a blank is left out - also of the average, and 0 is a value. Shown with two decimals
- * at most. Count is the number of selected rows. (Before v6 the largest of negative numbers was 0, a 0
- * was skipped by min, and the average was rounded to a whole number and counted the blanks.)
- */
-function summarySubmenu(ctx: Grid, attribute: string): MenuSubmenu {
-    const datasource = ctx.gridInterface.getDatasource();
-    const { type, formatter } = datasource.getField(attribute);
-    const isNumber = () => type === 'number';
-
-    const summary = { count: 0, sum: '', max: '', min: '', avg: '' };
-    if (type === 'number') {
-        const selectedRows = datasource.getSelectedRows();
-        // two decimals at most; null (min, max and avg of no numbers) is shown blank
-        const shown = (value: number | null) => formatter.format(value === null ? null : Math.round(value * 100) / 100);
-
-        summary.count = selectedRows.length;
-        summary.sum = shown(datasource.aggregate(attribute, 'sum', selectedRows));
-        summary.max = shown(datasource.aggregate(attribute, 'max', selectedRows));
-        summary.min = shown(datasource.aggregate(attribute, 'min', selectedRows));
-        summary.avg = shown(datasource.aggregate(attribute, 'avg', selectedRows));
-    }
-
-    const copy = (text: string) => navigator.clipboard.writeText(text);
-
-    return {
-        type: 'submenu',
-        id: 'row.summary',
-        label: gridText(ctx, 'row.summary'),
-        visible: isNumber,
-        entries: [
-            {
-                id: 'row.summary.count',
-                label: gridText(ctx, 'row.summary.count', { count: summary.count }),
-                visible: isNumber,
-                action: () => copy(String(summary.count))
-            },
-            {
-                id: 'row.summary.sum',
-                label: gridText(ctx, 'row.summary.sum', { sum: summary.sum }),
-                visible: isNumber,
-                action: () => copy(summary.sum)
-            },
-            {
-                id: 'row.summary.max',
-                label: gridText(ctx, 'row.summary.max', { max: summary.max }),
-                visible: isNumber,
-                action: () => copy(summary.max)
-            },
-            {
-                id: 'row.summary.min',
-                label: gridText(ctx, 'row.summary.min', { min: summary.min }),
-                visible: isNumber,
-                action: () => copy(summary.min)
-            },
-            {
-                id: 'row.summary.avg',
-                label: gridText(ctx, 'row.summary.avg', { avg: summary.avg || 0 }),
-                visible: isNumber,
-                action: () => copy(summary.avg)
             }
         ]
     };

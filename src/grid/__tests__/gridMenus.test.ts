@@ -131,7 +131,7 @@ describe('menus - the built-in ids', () => {
 
         // and no range of cells: no range entries. No selected rows: no fit of the selected rows
         expect(menuTreeIds()).toEqual(
-            MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|edit|summary)|\.range$|^row\.size\.fitRows$/.test(id))
+            MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|edit)|\.range$|^row\.size\.fitRows$/.test(id))
         );
     });
 
@@ -1058,7 +1058,6 @@ describe('menus - the default menus, short', () => {
             'row.filter',
             'row.view',
             'row.size',
-            'row.summary',
             'row.export'
         ]);
     });

@@ -298,7 +298,7 @@ export interface MenuPosition {
  * own. Called every time the menu opens.
  *
  * - `row`: right click on a cell - undo, then the submenus copy, paste, clear, delete, filter, view,
- *   size, summary, export
+ *   size, export
  * - `header`: right click on a header label - pin, hide, remove sorting, column chooser, then the
  *   submenus size, aggregate, grouping
  * - `filter`: right click on a header filter - clear, the submenus blank and operator, the filter
@@ -320,8 +320,8 @@ export interface MenuPosition {
  * // createGrid(host, { config, datasource, hooks: { menus } })
  * const menus: GridMenus = {
  *     row: (defaults, context) => [
- *         // no summary: the submenu and what is in it
- *         ...defaults.filter((entry) => !entry.id.startsWith('row.summary')),
+ *         // no export: the submenu and what is in it
+ *         ...defaults.filter((entry) => !entry.id.startsWith('row.export')),
  *         { id: 'my.logRow', label: 'Log row', action: () => console.log(context.field, context.row) }
  *     ],
  *     // the value list first, then the rest
@@ -358,8 +358,8 @@ export interface GridMenus {
 /**
  * The ids of the grid's own menu entries, per menu: the `defaults` a {@link GridMenus} function
  * gets. The lists are flat, in the order of the tree: a submenu, then what is in it. Every entry is
- * always in `defaults`: the ones that do not apply (paste on a readonly cell, the summary of a text
- * column ...) have a `visible` callback that hides them, and a submenu with nothing left to show is
+ * always in `defaults`: the ones that do not apply (paste on a readonly cell, the range entries
+ * without a range ...) have a `visible` callback that hides them, and a submenu with nothing left to show is
  * hidden too.
  *
  * The ids are `menu.part.entry`: an entry in a submenu starts with the id of the submenu
@@ -386,7 +386,6 @@ export interface GridMenus {
  * Filter ›
  * View ›
  * Size ›
- * Summary ›
  * Export ›
  * ```
  *
@@ -428,12 +427,6 @@ export interface GridMenus {
  * | `row.size.fitAllRows` | Fit all rows - every row the filter lets through (`fitRows()`) | |
  * | `row.size.resetRow` | Reset row height - the row right clicked (`resetRowHeights(row)`). Greyed out when it has the height of the layout | |
  * | `row.size.resetAllRows` | Reset all row heights (`resetRowHeights()`). Greyed out when no row has a height of its own | |
- * | `row.summary` | Summary › - a submenu | a number field |
- * | `row.summary.count` | Count: 3 - of the selected rows, click to copy | a number field |
- * | `row.summary.sum` | Sum: 60 | a number field |
- * | `row.summary.max` | Max: 30 | a number field |
- * | `row.summary.min` | Min: 10 | a number field |
- * | `row.summary.avg` | Avg: 20 | a number field |
  * | `row.export` | Export › - a submenu | |
  * | `row.export.excel` | Excel, all rows - `gridInterface.downloadExcel()`: the rows the filter lets through, as an .xlsx file | |
  * | `row.export.excelSelected` | Excel, selected rows - `downloadExcel('export.xlsx', { rows: 'selected' })`. Greyed out when no row is selected | |
@@ -540,12 +533,6 @@ export const MENU_IDS = {
         'row.size.fitAllRows',
         'row.size.resetRow',
         'row.size.resetAllRows',
-        'row.summary',
-        'row.summary.count',
-        'row.summary.sum',
-        'row.summary.max',
-        'row.summary.min',
-        'row.summary.avg',
         'row.export',
         'row.export.excel',
         'row.export.excelSelected'

@@ -77,7 +77,7 @@ describe('texts - the lookup', () => {
 
 describe('texts - values', () => {
     it('expect {name} to be filled in from the values', () => {
-        expect(getText('row.summary.count', undefined, { count: 3 })).toEqual('Count: 3');
+        expect(getText('footer.summary.count', undefined, { count: 3 })).toEqual('Count: 3');
         expect(getText('footer.rowCount', undefined, { shown: 2, total: 10 })).toEqual('2/10');
     });
 

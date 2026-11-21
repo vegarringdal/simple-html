@@ -762,7 +762,7 @@ const copyText: string = TEXTS['row.copy'];
 const tooltipId: TextId = 'filterEditor.addCondition.tooltip';
 const norwegian: Texts = {
     'row.copy': 'Kopier:',
-    'row.summary.count': 'Antall: {count}',
+    'footer.summary.count': 'Antall: {count}',
     [tooltipId]: 'Legg til betingelse',
     // an id of your own, for a validator's message
     'validation.phoneNO': 'Må være 8 siffer'
