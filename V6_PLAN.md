@@ -346,10 +346,10 @@ built on it.
 22. [ ] **Accessibility.** There are 7 aria/role attributes in the whole grid today. Needed:
         `role` grid/row/gridcell/columnheader, `aria-sort`, `aria-selected`,
         `aria-rowcount`/`aria-rowindex` (rows are virtual), visible focus. **M-L**
-23. [ ] **Menus and the filter editor on the platform**: `<dialog>` / the popover API give the
+23. [x] **Menus and the filter editor on the platform**: `<dialog>` / the popover API give the
         top layer, Esc to close and focus handling, instead of appending to `document.body` by
         hand and cleaning up afterwards (where the v5 leaks came from). **M**
-24. [ ] **Pointer events**: column resize and drag/drop listen to mouse events only. Pointer events
+24. [x] **Pointer events**: column resize and drag/drop listen to mouse events only. Pointer events
         make them work with touch and pen as well. **S-M**
 25. [ ] **Theming**: 21 CSS variables, but 17 colors are still hardcoded. Finish the variables,
         document them, ship a dark theme (class and/or `prefers-color-scheme`). Fix the known

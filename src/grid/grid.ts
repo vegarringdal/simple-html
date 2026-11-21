@@ -1,4 +1,4 @@
-import { addBodyClickListener } from './gridFunctions/addBodyClickListener';
+import { addMenuListeners } from './gridFunctions/addMenuListeners';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { createDom } from './gridFunctions/createDom';
 import { gridText } from './gridFunctions/gridText';
@@ -9,6 +9,7 @@ import { rebuildRowColumns } from './gridFunctions/rebuildRowColumns';
 import { rebuildRows } from './gridFunctions/rebuildRows';
 import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { closeFilterEditor } from './gridFunctions/renderFilterEditor';
 import { hideTooltip } from './gridFunctions/tooltip';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateHorizontalScrollWidth } from './gridFunctions/updateHorizontalScrollWidth';
@@ -55,13 +56,18 @@ export class Grid {
     public scrollListenersAbort?: AbortController;
     public columnsHeaders: Map<string, HTMLElement> = new Map();
     public skipInitResizeEvent: boolean = false;
-    // not there until a menu/editor is opened, null after it is closed
+    // the open menu, a popover: see openMenuElement. Null when no menu is open
     public contextMenu?: HTMLElement | null;
-    // true from a menu opening until the task that opened it ends, see showMenu
+    // the element that had the focus when the open menu opened, see removeContextMenu
+    public menuReturnFocus: Element | null = null;
+    // true from a menu opening until the task that opened it ends, see openMenuElement
     public menuJustOpened = false;
-    public filterEditorContainer?: HTMLElement | null;
+    // the filter editor, a modal dialog: see renderFilterEditor. Null when it is closed
+    public filterEditor?: HTMLDialogElement | null;
+    // the column chooser, a popover that stays open while columns are dragged from it
     public columnChooserMenu?: HTMLElement | null;
-    public clickListener: any;
+    /** aborts the document listeners addMenuListeners added, see there */
+    public menuListenersAbort?: AbortController;
     // set by createDom
     public focusElement!: HTMLInputElement;
 
@@ -116,7 +122,7 @@ export class Grid {
         }
 
         if (this.domCreated) {
-            addBodyClickListener(this);
+            addMenuListeners(this);
             // catch up on data changed while detached, or the new interface/config
             this.rebuild();
             this.oldHeight = this.element.clientHeight;
@@ -137,20 +143,16 @@ export class Grid {
      * else the grid (and its datasource) can never be garbage collected
      */
     public disconnectElement() {
+        // the menus and the editor are on the body (or in a dialog), not in the element: they would stay.
+        // remove() and not removeChild(), the user can already have closed them
         removeContextMenu(this);
-        // shown for a cell of this grid maybe: it is on document.body, it would stay
-        hideTooltip();
-
-        // remove() and not body.removeChild(), the user can already have closed these
-        this.filterEditorContainer?.remove();
-        this.filterEditorContainer = null;
+        closeFilterEditor(this);
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
+        // shown for a cell of this grid maybe: it is not in the element either
+        hideTooltip();
 
-        if (this.clickListener) {
-            document.removeEventListener('click', this.clickListener);
-            this.clickListener = null;
-        }
+        this.menuListenersAbort?.abort();
 
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;

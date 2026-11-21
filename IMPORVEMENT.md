@@ -988,6 +988,26 @@ Phase 2b is complete with this step: 1211 tests.
 * also: a v5 option in a grid config throws now (`V5_CONFIG_OPTIONS` / `V5_COLUMN_OPTIONS`), not only
   `mandatory` - `tooltipText` from a stored config would otherwise silently fall back to English
 
+#### Step 2 - menus on popover, the filter editor a dialog, pointer events (items 23, 24)
+
+* menus are `popover="manual"`: top layer, no z-index games. Not `auto`: on macOS/Linux the
+  `contextmenu` event fires on press, and the release outside the menu would light-dismiss a
+  right-click menu the moment it opened. The grid keeps its own closing (outside click, scroll, one at
+  a time, grid removed).
+* the filter editor is a modal `<dialog>` (it already blocked the grid with a grey layer, now the
+  keyboard can't reach the grid either); Esc closes it, focus goes in and back. It is rendered again in
+  the same dialog instead of thrown away per edit, so position, size and focus stay.
+* a menu opens inside the closest dialog/popover of the element it opens from - everything outside a
+  modal dialog is inert, so the editor's pickers have to be inside it
+* column drag/drop and resizing use pointer events (`followPointer.ts`): mouse, pen and touch. Mouse
+  and pen drag after 5px of movement (v5: after a 200ms hold); touch drags after holding still 200ms, a
+  swipe scrolls. pointercancel ends cleanly, a cancelled resize restores the width.
+* fixed: menus were off by the page scroll on a scrolled page; the drag ghost was too; a label
+  dropped on another grid's panel grouped its own grid
+* happy-dom has no popover and only attribute-level dialog support - a small `showPopover` stub is
+  loaded for every test (`vitest.config.ts`). What the browser does (top layer, inert, focus, Esc,
+  capture retargeting) is checked against the spec by reading, not in a browser.
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -1036,6 +1056,12 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
   * some menu labels are built when the menu opens ("Count: 5", "✓ Use dimmed values") and the
     value list's own texts have no ids yet - phase 3's texts map needs both
   * in an `openMenu` menu the context fields are placeholders (`field: ''`, `rowIndex: -1`)
+  * the column-drag ghost lives on the body, so it draws under the top-layer column chooser
+  * `touch-action: none` on column chooser items: a finger can not scroll a long chooser by its items
+  * touch scrolling: reads `scrollTop` from the synced view (may lag a move), never prevents the page
+    from scrolling along, the wheel uses non-standard `wheelDeltaY`
+  * key navigation cancels every key briefly after moving, so an Esc in that window does not close
+    a menu (the `waitForFocusTrigger` item above)
 * **Low severity bugs left from the code review** (high and medium are fixed, see *Bug sweep*):
   * row menu summary - max of negatives shows 0, min skips 0, avg is rounded and counts blanks
   * row menu copy - literal `null`/`undefined` for blanks in text/plain, 0 shown blank in the

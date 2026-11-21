@@ -106,7 +106,7 @@ export function addScrollEventListeners(ctx: Grid) {
                 event.preventDefault();
                 const el = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
                 const movement = el.scrollLeft - (event as any).wheelDeltaY;
-                setScrollLeft(getElementByClassName(ctx.element, ' simple-html-grid-middle-scroller'), movement);
+                setScrollLeft(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), movement);
             } else {
                 const el = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
                 ctx.focusElement.focus();
@@ -118,6 +118,18 @@ export function addScrollEventListeners(ctx: Grid) {
         { passive: false, signal }
     );
 
+    /**
+     * touch: the rows and the header are not scroll containers the browser can pan (the views are
+     * overflow hidden, kept in sync with the two scrollers), so a swipe anywhere on the grid moves
+     * the scrollers by the finger's distance - both directions, no momentum. Their scroll events
+     * update the views and the virtual rows, as for the wheel and the scrollbars.
+     *
+     * Touch events, not pointer events: pointer events would need `touch-action: none` on the whole
+     * grid (or the browser cancels the pointer once it pans the page) and give nothing more.
+     *
+     * A finger that drags a column or resizes one (dragEvent.ts, rebuildHeaderColumns.ts) keeps its
+     * touchmove events from these listeners, see followPointer.ts
+     */
     let lastY = 0;
     let lastX = 0;
     ctx.element.addEventListener(
@@ -129,9 +141,6 @@ export function addScrollEventListeners(ctx: Grid) {
         { passive: false, signal }
     );
 
-    /**
-     *wheel event, only way to get it unless we disable pointer events
-     */
     ctx.element.addEventListener(
         'touchmove',
         (event) => {
@@ -149,7 +158,7 @@ export function addScrollEventListeners(ctx: Grid) {
             const deltaX = currentX - lastX;
             lastX = currentX;
             const movementX = x.scrollLeft - deltaX;
-            setScrollLeft(getElementByClassName(ctx.element, ' simple-html-grid-middle-scroller'), movementX);
+            setScrollLeft(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), movementX);
 
             /* 
                 an idea...
@@ -165,7 +174,7 @@ export function addScrollEventListeners(ctx: Grid) {
                     const deltaX = currentX - lastX;
                     lastX = currentX;
                     const movementX = x.scrollLeft - deltaX*5;
-                    setScrollLeft(getElementByClassName(ctx.element, ' simple-html-grid-middle-scroller'), movementX)
+                    setScrollLeft(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), movementX)
                 } */
         },
         { passive: false, signal }

@@ -44,6 +44,16 @@ function gridOf(element: GridElement) {
     return (element as any).grid;
 }
 
+/**
+ * the signal of addEventListener's options, the third argument (a boolean or an options object)
+ */
+function optionsSignal(options: unknown): AbortSignal | undefined {
+    if (options && typeof options === 'object' && 'signal' in options && options.signal instanceof AbortSignal) {
+        return options.signal;
+    }
+    return undefined;
+}
+
 describe('grid lifecycle - moving the element in the dom', () => {
     it('expect a moved grid to keep following its datasource', async () => {
         const { element, datasource, gridInterface } = await mountGrid();
@@ -80,8 +90,13 @@ describe('grid lifecycle - moving the element in the dom', () => {
         document.body.appendChild(host);
         host.appendChild(element);
 
+        // the menu listeners on the document, added again with a new signal
         const grid = gridOf(element);
-        expect(add.mock.calls.some((call) => call[0] === 'click' && call[1] === grid.clickListener)).toBe(true);
+        const signal: AbortSignal = grid.menuListenersAbort.signal;
+        for (const type of ['click', 'keydown']) {
+            expect(add.mock.calls.some((call) => call[0] === type && optionsSignal(call[2]) === signal)).toBe(true);
+        }
+        expect(signal.aborted).toBe(false);
         expect(resizeObserver.current().disconnected).toBe(false);
         expect(resizeObserver.current().observed).toContain(element);
     });
@@ -130,17 +145,18 @@ describe('grid lifecycle - connecting a new interface', () => {
 });
 
 describe('grid lifecycle - removing the element', () => {
-    it('expect the document click listener to be removed', async () => {
+    it('expect the document click and keydown listeners to be removed', async () => {
         const add = vi.spyOn(document, 'addEventListener');
-        const remove = vi.spyOn(document, 'removeEventListener');
         const { element } = await mountGrid();
 
-        const clickListeners = add.mock.calls.filter((call) => call[0] === 'click').map((call) => call[1]);
+        // added with an AbortSignal: aborting it removes them
+        const signals = add.mock.calls
+            .filter((call) => call[0] === 'click' || call[0] === 'keydown')
+            .map((call) => optionsSignal(call[2]));
         element.remove();
-        const removed = remove.mock.calls.filter((call) => call[0] === 'click').map((call) => call[1]);
 
-        expect(clickListeners.length).toBeGreaterThan(0);
-        expect(clickListeners.every((listener) => removed.includes(listener))).toBe(true);
+        expect(signals.length).toBe(2);
+        expect(signals.every((signal) => signal?.aborted)).toBe(true);
     });
 
     it('expect the resize observer to be disconnected', async () => {

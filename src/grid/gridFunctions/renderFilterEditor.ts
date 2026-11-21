@@ -1,4 +1,5 @@
 import { html, render, type TemplateResult } from 'lit-html';
+import { live } from 'lit-html/directives/live.js';
 import type { Datasource } from '../../datasource/dataSource';
 import { isIgnoredCondition } from '../../datasource/filter';
 import {
@@ -12,10 +13,11 @@ import { parseFilterText } from '../../datasource/formatter';
 import { TextFormatter } from '../../datasource/textFormatter';
 import { findText, type TextId } from '../../texts';
 import type { Grid } from '../grid';
+import { asPx } from './asPx';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { contextmenuDate } from './contextmenuDate';
-import { createElement } from './createElement';
+import { followPointer, isPrimaryPress } from './followPointer';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -71,41 +73,22 @@ export function draftToFilter(draft: GroupDraft, datasource: Datasource): Filter
 }
 
 /**
- * internal method to generate html for filter editor
+ * The filter editor: a modal `<dialog class="simple-html-grid filter-editor-content">` on the body,
+ * opened with showModal(). Modal, as the grey layer over the page was before it: the grid behind can
+ * not be used while it is open. The browser puts it in the top layer, makes the page behind it inert,
+ * moves the focus into it (to the dialog itself, it has `autofocus`), closes it on Esc and gives the
+ * focus back to where it was when it closes.
+ *
+ * Every edit renders it again from the start, in the same dialog: lit keeps the elements, so the
+ * dialog stays where the user put it and as big as they made it, and the focus stays where it is.
+ *
  * @param filterArg the root group, the editor's own copy: it is changed in place while editing
  */
 export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
-    /**
-     * the dialog is thrown away and rebuilt on every edit, so remember where the user put
-     * it and how big they made it, otherwise it jumps back to the middle on every click
-     */
-    let savedBox: { left: string; top: string; width: string; height: string } | null = null;
-
     hideTooltip();
 
-    if (ctx.filterEditorContainer) {
-        const previous = ctx.filterEditorContainer.querySelector('.filter-editor-content') as HTMLElement;
-        if (previous?.style.left) {
-            savedBox = {
-                left: previous.style.left,
-                top: previous.style.top,
-                width: previous.style.width,
-                height: previous.style.height
-            };
-        }
-        document.body.removeChild(ctx.filterEditorContainer);
-    }
-    /**
-     * main container holding data/setting center
-     */
-    const filterEditorContainer = createElement('div', 'filter-editor-container');
-    if (tooltipsEnabled(ctx)) {
-        // data-tooltip is always written, this is what renders the built in tooltip for it
-        filterEditorContainer.classList.add('simple-html-grid-tooltips');
-        attachTooltips(filterEditorContainer);
-    }
-    const filterEditorGridCssContext = createElement('div', 'simple-html-grid');
-    filterEditorContainer.appendChild(filterEditorGridCssContext);
+    const opening = !ctx.filterEditor;
+    const dialog = ctx.filterEditor ?? createFilterEditorDialog(ctx);
 
     const label = (attribute: string) => getColumnLabel(ctx, attribute);
     const text = (id: TextId) => gridText(ctx, id);
@@ -256,8 +239,9 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
         const isDate = field?.type === 'date' || field?.type === 'datetime';
         const value = formatter.format(arg.value);
 
+        // live(): the elements are kept between renders, what the user typed is in the input, not in lit
         let filterElement = html`<input
-            .value=${value || ''}
+            .value=${live(value || '')}
             @keydown=${(e: any) => {
                 if (e.key === 'Enter' && isDate) {
                     setTimeout(() => {
@@ -304,7 +288,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                   : String(arg.value);
 
             filterElement = html`<textarea
-                .value=${value || ''}
+                .value=${live(value || '')}
                 @change=${(e: any) => (arg.value = e.target.value.split('\n').filter((e: string) => e !== ''))}
             ></textarea>`;
         }
@@ -488,14 +472,13 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
     /**
      * closes the dialog, used by the titlebar X and the Close button
      */
-    const closeEditor = () => {
-        removeContextMenu(ctx);
-        hideTooltip();
-        filterEditorContainer.parentElement?.removeChild(filterEditorContainer);
-        ctx.filterEditorContainer = null;
-    };
+    const closeEditor = () => closeFilterEditor(ctx);
 
-    const headerTemplate = () => html`<div class="grid-text-title filter-editor-titlebar">
+    // drag the dialog around by its titlebar
+    const headerTemplate = () => html`<div
+        class="grid-text-title filter-editor-titlebar"
+        @pointerdown=${(event: PointerEvent) => moveDialog(dialog, event)}
+    >
         <span data-tooltip=${text('filterEditor.title.tooltip')}>${text('filterEditor.title')}</span>
         <span class="filter-editor-close" data-tooltip=${text('filterEditor.close.tooltip')} @click=${() => closeEditor()}>&#10005;</span>
     </div>`;
@@ -557,57 +540,129 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
      * grab areas for resizing, one per edge and one per corner.
      * css `resize` only gives the bottom right corner, so these are wired up by hand.
      */
-    const resizeHandles = () => html`
-        <div class="simple-html-resize-handle handle-n"></div>
-        <div class="simple-html-resize-handle handle-s"></div>
-        <div class="simple-html-resize-handle handle-w"></div>
-        <div class="simple-html-resize-handle handle-e"></div>
-        <div class="simple-html-resize-handle handle-nw"></div>
-        <div class="simple-html-resize-handle handle-ne"></div>
-        <div class="simple-html-resize-handle handle-sw"></div>
-        <div class="simple-html-resize-handle handle-se"></div>
-    `;
+    const resizeHandles = () =>
+        RESIZE_HANDLES.map(
+            (handle) =>
+                html`<div
+                    class="simple-html-resize-handle handle-${handle.name}"
+                    @pointerdown=${(event: PointerEvent) => resizeDialog(dialog, handle, event)}
+                ></div>`
+        );
 
     /**
      * render dialog
      */
     render(
-        html`<div class="filter-editor-content">
-            <div class="grid-flex-column grid-w-full grid-h-full">
+        html`<div class="grid-flex-column grid-w-full grid-h-full">
                 ${headerTemplate()}
                 <div class="grid-overflow-auto grid-flex-1 simple-html-dialog-scroller">${group(filterArg, null)}</div>
                 ${footerTemplate()}
             </div>
-            ${resizeHandles()}
-        </div>`,
-        filterEditorGridCssContext
+            ${resizeHandles()}`,
+        dialog
     );
 
-    document.body.appendChild(filterEditorContainer);
-
-    ctx.filterEditorContainer = filterEditorContainer;
-
-    /**
-     * position + size.
-     * The css only gives a default size, left/top are set here so the dialog can be
-     * dragged and resized without fighting a translate(-50%, -50%).
-     */
-    const content = filterEditorGridCssContext.querySelector('.filter-editor-content') as HTMLElement;
-    if (content) {
-        if (savedBox) {
-            content.style.left = savedBox.left;
-            content.style.top = savedBox.top;
-            content.style.width = savedBox.width;
-            content.style.height = savedBox.height;
-        } else {
-            // first open, center it on the viewport
-            content.style.left = `${Math.max(0, Math.round((window.innerWidth - content.offsetWidth) / 2))}px`;
-            content.style.top = `${Math.max(0, Math.round((window.innerHeight - content.offsetHeight) / 2))}px`;
-        }
-
-        makeDialogDraggable(content, content.querySelector('.filter-editor-titlebar') as HTMLElement);
-        makeDialogResizable(content);
+    if (opening) {
+        // rendered before it is shown: showModal() moves the focus into what is there
+        dialog.showModal();
+        /**
+         * position + size.
+         * The css only gives a default size, left/top are set here so the dialog can be
+         * dragged and resized without fighting the browser's centering (inset: 0, margin: auto).
+         * Centered on the window, once it is shown and has its size
+         */
+        dialog.style.left = asPx(Math.max(0, Math.round((window.innerWidth - dialog.offsetWidth) / 2)));
+        dialog.style.top = asPx(Math.max(0, Math.round((window.innerHeight - dialog.offsetHeight) / 2)));
     }
+}
+
+/**
+ * Makes the filter editor's dialog and puts it on the body, closed: renderFilterEditor renders it and
+ * shows it.
+ */
+function createFilterEditorDialog(ctx: Grid): HTMLDialogElement {
+    const dialog = document.createElement('dialog');
+    dialog.classList.add('simple-html-grid', 'filter-editor-content');
+    // showModal() moves the focus to the element with autofocus: the dialog itself, not a value field
+    // (which would show the keyboard on a phone). tabindex -1 makes it focusable, Tab goes on into it
+    dialog.setAttribute('autofocus', '');
+    dialog.tabIndex = -1;
+    if (tooltipsEnabled(ctx)) {
+        // data-tooltip is always written, this is what renders the built in tooltip for it
+        dialog.classList.add('simple-html-grid-tooltips');
+        attachTooltips(dialog);
+    }
+    // Esc: the browser closes the dialog (a cancel event, then close). Take it off the page, as the
+    // buttons do. After the buttons, ctx.filterEditor is not this dialog anymore
+    dialog.addEventListener('close', () => {
+        if (ctx.filterEditor === dialog) {
+            closeFilterEditor(ctx);
+        }
+    });
+    document.body.appendChild(dialog);
+    ctx.filterEditor = dialog;
+    return dialog;
+}
+
+/**
+ * Closes the filter editor and takes it off the page. Does nothing when it is not open. Used by its
+ * buttons, after Esc, and when the grid leaves the page.
+ */
+export function closeFilterEditor(ctx: Grid) {
+    const dialog = ctx.filterEditor;
+    if (!dialog) {
+        return;
+    }
+    ctx.filterEditor = null;
+    // a field/operator picker or date picker of the editor is in the dialog
+    removeContextMenu(ctx);
+    hideTooltip();
+    // close() before remove(): closing a modal dialog gives the focus back to the element that had it
+    // when the dialog opened
+    dialog.close();
+    dialog.remove();
+}
+
+/**
+ * the resize handles, and which edges each one moves
+ */
+const RESIZE_HANDLES = [
+    { name: 'n', north: true, south: false, west: false, east: false },
+    { name: 's', north: false, south: true, west: false, east: false },
+    { name: 'w', north: false, south: false, west: true, east: false },
+    { name: 'e', north: false, south: false, west: false, east: true },
+    { name: 'nw', north: true, south: false, west: true, east: false },
+    { name: 'ne', north: true, south: false, west: false, east: true },
+    { name: 'sw', north: false, south: true, west: true, east: false },
+    { name: 'se', north: false, south: true, west: false, east: true }
+] as const;
+
+type ResizeHandle = (typeof RESIZE_HANDLES)[number];
+
+/**
+ * Drags a handle of the dialog (the titlebar, a resize handle) from its pointerdown until the pointer
+ * is let go: `move` gets how far the pointer has moved from where it went down. Pointer events, so a
+ * mouse, a finger and a pen all work (followPointer). The pointer is captured on the handle: its
+ * events keep coming to it when the pointer leaves it, and the window. The handles have
+ * `touch-action: none` in the css, or a finger would scroll the page instead.
+ */
+function dragHandle(down: PointerEvent, move: (dx: number, dy: number) => void) {
+    const handle = down.currentTarget;
+    // the main button (left mouse button, a finger, the pen tip), one pointer at a time
+    if (!(handle instanceof HTMLElement) || !isPrimaryPress(down)) {
+        return;
+    }
+    // no text selection while dragging
+    down.preventDefault();
+    hideTooltip();
+
+    handle.setPointerCapture(down.pointerId);
+    followPointer(handle, down, {
+        move: (event) => move(event.clientX - down.clientX, event.clientY - down.clientY),
+        up: () => {},
+        // the browser took the pointer: the dialog stays where it got to
+        cancel: () => {}
+    });
 }
 
 /**
@@ -616,107 +671,48 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
  * Each handle says which edges it moves: dragging a west or north edge has to move
  * left/top as well as the size, otherwise the opposite edge would walk across the screen.
  */
-function makeDialogResizable(dialog: HTMLElement) {
-    const edges: Record<string, { north: boolean; south: boolean; west: boolean; east: boolean }> = {
-        'handle-n': { north: true, south: false, west: false, east: false },
-        'handle-s': { north: false, south: true, west: false, east: false },
-        'handle-w': { north: false, south: false, west: true, east: false },
-        'handle-e': { north: false, south: false, west: false, east: true },
-        'handle-nw': { north: true, south: false, west: true, east: false },
-        'handle-ne': { north: true, south: false, west: false, east: true },
-        'handle-sw': { north: false, south: true, west: true, east: false },
-        'handle-se': { north: false, south: true, west: false, east: true }
-    };
+function resizeDialog(dialog: HTMLElement, edge: ResizeHandle, event: PointerEvent) {
+    const rect = dialog.getBoundingClientRect();
+    const style = window.getComputedStyle(dialog);
+    const minWidth = Number.parseInt(style.minWidth, 10) || 200;
+    const minHeight = Number.parseInt(style.minHeight, 10) || 120;
 
-    dialog.querySelectorAll('.simple-html-resize-handle').forEach((handle) => {
-        const side = Object.keys(edges).find((name) => handle.classList.contains(name));
-        if (!side) {
-            return;
+    dragHandle(event, (dx, dy) => {
+        if (edge.east) {
+            dialog.style.width = asPx(Math.max(minWidth, rect.width + dx));
         }
-        const edge = edges[side];
-
-        (handle as HTMLElement).addEventListener('mousedown', (event: MouseEvent) => {
-            if (event.button !== 0) {
-                return;
-            }
-            event.preventDefault();
-            event.stopPropagation();
-
-            const startX = event.clientX;
-            const startY = event.clientY;
-            const rect = dialog.getBoundingClientRect();
-
-            const style = window.getComputedStyle(dialog);
-            const minWidth = Number.parseInt(style.minWidth, 10) || 200;
-            const minHeight = Number.parseInt(style.minHeight, 10) || 120;
-
-            const mousemove = (e: MouseEvent) => {
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-
-                if (edge.east) {
-                    dialog.style.width = `${Math.max(minWidth, rect.width + dx)}px`;
-                }
-                if (edge.west) {
-                    // clamp the width first, so the left edge stops instead of pushing past it
-                    const width = Math.max(minWidth, rect.width - dx);
-                    dialog.style.width = `${width}px`;
-                    dialog.style.left = `${Math.round(rect.left + (rect.width - width))}px`;
-                }
-                if (edge.south) {
-                    dialog.style.height = `${Math.max(minHeight, rect.height + dy)}px`;
-                }
-                if (edge.north) {
-                    const height = Math.max(minHeight, rect.height - dy);
-                    dialog.style.height = `${height}px`;
-                    dialog.style.top = `${Math.round(rect.top + (rect.height - height))}px`;
-                }
-            };
-
-            const mouseup = () => {
-                document.removeEventListener('mousemove', mousemove);
-                document.removeEventListener('mouseup', mouseup);
-            };
-
-            document.addEventListener('mousemove', mousemove);
-            document.addEventListener('mouseup', mouseup);
-        });
+        if (edge.west) {
+            // clamp the width first, so the left edge stops instead of pushing past it
+            const width = Math.max(minWidth, rect.width - dx);
+            dialog.style.width = asPx(width);
+            dialog.style.left = asPx(Math.round(rect.left + (rect.width - width)));
+        }
+        if (edge.south) {
+            dialog.style.height = asPx(Math.max(minHeight, rect.height + dy));
+        }
+        if (edge.north) {
+            const height = Math.max(minHeight, rect.height - dy);
+            dialog.style.height = asPx(height);
+            dialog.style.top = asPx(Math.round(rect.top + (rect.height - height)));
+        }
     });
 }
 
 /**
  * drag the dialog around by its titlebar, kept inside the window
  */
-function makeDialogDraggable(dialog: HTMLElement, handle: HTMLElement) {
-    if (!handle) {
+function moveDialog(dialog: HTMLElement, event: PointerEvent) {
+    // let the close button in the titlebar do its own thing
+    if (event.target instanceof Element && event.target.closest('.filter-editor-close')) {
         return;
     }
+    const rect = dialog.getBoundingClientRect();
 
-    handle.addEventListener('mousedown', (event: MouseEvent) => {
-        // let the close button in the titlebar do its own thing
-        if (event.button !== 0 || (event.target as HTMLElement)?.classList.contains('filter-editor-close')) {
-            return;
-        }
-        event.preventDefault();
-
-        const startX = event.clientX;
-        const startY = event.clientY;
-        const rect = dialog.getBoundingClientRect();
-
-        const mousemove = (e: MouseEvent) => {
-            // keep a bit of the dialog on screen so it can always be grabbed again
-            const left = Math.min(Math.max(rect.left + e.clientX - startX, 20 - rect.width), window.innerWidth - 40);
-            const top = Math.min(Math.max(rect.top + e.clientY - startY, 0), window.innerHeight - 30);
-            dialog.style.left = `${Math.round(left)}px`;
-            dialog.style.top = `${Math.round(top)}px`;
-        };
-
-        const mouseup = () => {
-            document.removeEventListener('mousemove', mousemove);
-            document.removeEventListener('mouseup', mouseup);
-        };
-
-        document.addEventListener('mousemove', mousemove);
-        document.addEventListener('mouseup', mouseup);
+    dragHandle(event, (dx, dy) => {
+        // keep a bit of the dialog on screen so it can always be grabbed again
+        const left = Math.min(Math.max(rect.left + dx, 20 - rect.width), window.innerWidth - 40);
+        const top = Math.min(Math.max(rect.top + dy, 0), window.innerHeight - 30);
+        dialog.style.left = asPx(Math.round(left));
+        dialog.style.top = asPx(Math.round(top));
     });
 }

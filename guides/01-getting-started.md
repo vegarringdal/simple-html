@@ -101,7 +101,8 @@ Out of the box the user can:
 
 - sort: click a header label, shift+click to sort on one more column
 - filter: type in the row under the labels and press Enter, see [Filtering](06-filtering.md)
-- resize a column (drag its right edge) and move it (drag its label)
+- resize a column (drag its right edge) and move it (drag its label) - with a mouse, a pen or a
+  finger, see [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns)
 - group: drag a label to the panel above the header, see [Sorting and grouping](07-sorting-grouping.md)
 - right click a cell, a label or a header filter for a menu, see [Menus](10-menus.md)
 

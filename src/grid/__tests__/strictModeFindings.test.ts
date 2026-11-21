@@ -5,6 +5,7 @@ import { Datasource } from '../../datasource/dataSource';
 import type { FilterGroup } from '../../datasource/filterExpression';
 import { GridInterface } from '../gridInterface';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { pointerEvent } from './interactionTestHelpers';
 
 /**
  * Bugs found while turning on TypeScript strict mode.
@@ -45,7 +46,7 @@ describe('grid interface without a connected grid', () => {
 });
 
 describe('header label cells', () => {
-    it('expect mousedown on an empty label cell not to throw', async () => {
+    it('expect a press on an empty label cell not to throw', async () => {
         // the second column has one row, the first two - so it has an empty label cell
         const { element } = await mountGrid(
             {
@@ -64,7 +65,8 @@ describe('header label cells', () => {
         expect(emptyLabel).toBeDefined();
 
         const { errors, stop } = collectErrors();
-        emptyLabel.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+        emptyLabel.dispatchEvent(pointerEvent('pointerdown'));
+        emptyLabel.dispatchEvent(pointerEvent('pointerup'));
         stop();
 
         expect(errors).toEqual([]);

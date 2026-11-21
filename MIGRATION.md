@@ -1810,6 +1810,48 @@ gridInterface.closeMenu();
   delete rows, hide it with the `menus` hook:
   `row: (defaults) => defaults.filter((entry) => !entry.id.startsWith('row.delete'))`.
 
+### The menus are popovers, the filter editor is a modal dialog
+
+The browser shows the menus and the filter editor in the top layer now, over everything on the page:
+a container with `overflow: hidden` does not cut a menu off, and no z-index puts anything over it.
+The popover methods the grid uses (`showPopover()`, `hidePopover()`) are in every browser since April
+2024.
+
+* **The menus are `popover="manual"`** - the right click menus, `openMenu()`, the column chooser, the
+  filter editor's pickers and the date picker - with the class `simple-html-grid-popover`. Their
+  `position: absolute` is in that class, not an inline style; the z-indexes are gone. A z-index of
+  yours meant to go over or under a menu does nothing now.
+* **A menu opened from an element in a `<dialog>` or a popover of yours is put inside it**, not on the
+  body, so it can be used there. Code that looked for the menu as a child of `document.body` should
+  look it up by its class.
+* **Esc closes a menu**, and the filter editor. A menu item does not take the focus from the cell.
+* **The filter editor is `<dialog class="simple-html-grid filter-editor-content">`**, opened with
+  `showModal()`. Css and tests that used its elements:
+
+```css
+/* v5 */
+.filter-editor-container {
+    background-color: rgba(0, 0, 0, 0.4); /* the grey layer */
+}
+.simple-html-grid .filter-editor-content {
+    width: 800px;
+}
+
+/* v6: the grey layer is the dialog's ::backdrop, .filter-editor-content is the dialog itself */
+.simple-html-grid.filter-editor-content::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+}
+.simple-html-grid.filter-editor-content {
+    width: 800px;
+}
+```
+
+* The grid behind the editor can not be used while it is open - as before - and the keyboard can not
+  reach it now either. The focus moves to the dialog when it opens and goes back when it closes.
+* The editor is dragged and resized with pointer events (mouse, finger, pen). A test that moved it with
+  `mousedown` / `mousemove` / `mouseup` sends `pointerdown` / `pointermove` / `pointerup`, see
+  [Column drag/drop and resizing use pointer events](#column-dragdrop-and-resizing-use-pointer-events).
+
 ## Texts
 
 Every text of the grid has an id now, and every one can be changed: the menus, the filter editor, the
@@ -1887,6 +1929,30 @@ setTexts({ 'datePicker.month.january': 'Januar', 'datePicker.month.february': 'F
 
 A `DateInterface` of your own takes its texts in `texts`, or uses the page's: drop `monthHeader` and
 `weekHeader` from its `IDateConfig`.
+
+## Column drag/drop and resizing use pointer events
+
+Moving, resizing and sorting in the header work with a mouse, a pen and a finger now, see
+[Moving and resizing columns](guides/02-grid-config.md#moving-and-resizing-columns). Two things change
+for code that drives the header:
+
+* **Send pointer events, not mouse events.** The header labels, the group chips, the fields of the
+  column chooser and the resize handles listen to `pointerdown` / `pointermove` / `pointerup` /
+  `pointercancel`. `mousedown` / `mousemove` / `mouseup` from a test or a script do nothing now. A
+  browser driver that sends real input (Playwright's `page.mouse` ...) sends pointer events already.
+* **A click is a press that does not move.** It sorts however long it is held; a press that moves 5px
+  is a drag. In v5 a press held for 200ms was a drag, and a quick drag was a click that sorted.
+
+```ts
+// a click on a label, from a test: the primary pointer, the left button
+const options = { bubbles: true, pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0 };
+label.dispatchEvent(new PointerEvent('pointerdown', options));
+label.dispatchEvent(new PointerEvent('pointerup', options));
+```
+
+A drag finds its drop target with `document.elementFromPoint()` (once a press is a drag, the dragged
+cell captures the pointer, so the target of the events is always that cell). A test environment
+without layout - jsdom, happy-dom - has to stub `elementFromPoint` to drag and drop.
 
 ## Other behaviour changes
 

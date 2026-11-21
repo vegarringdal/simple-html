@@ -5,8 +5,9 @@ them from code, and the grid shows the result.
 
 ## Sorting
 
-The user clicks a header label to sort on that column, ascending. A second click sorts it
-descending. Shift+click adds the column to the sort there is. The header menu's "Remove sorting"
+The user clicks (or taps) a header label to sort on that column, ascending. A second click sorts it
+descending. Shift+click adds the column to the sort there is. A press that moves the label is a drag,
+not a click, see [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns). The header menu's "Remove sorting"
 removes the sort, apart from the grouped fields.
 
 From code:

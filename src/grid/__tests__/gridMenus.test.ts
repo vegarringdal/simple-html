@@ -1,10 +1,11 @@
 // @vitest-environment happy-dom
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { isPopoverShown } from '../../__tests__/popoverStub';
 import type { GridElement } from '../gridElement';
 import { type GridMenus, MENU_IDS, type MenuContext, type MenuEntry, type MenuItem } from '../gridMenus';
 import { mountGrid, simpleConfig, simpleData, simpleFields, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { headerFilterInput, menuItem, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
+import { gridOf, headerFilterInput, menuItem, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
 
 /**
  * Menus as data: the menus hook changes the grid's own menus, openMenu() / closeMenu() open and
@@ -182,16 +183,31 @@ describe('menus - rendered as before', () => {
         expect(entry('filter.operator.equal').classList).not.toContain('simple-html-grid-menu-item-selected');
     });
 
-    it('expect the menu on the body, in the grid style', async () => {
+    it('expect the menu on the body, in the grid style, shown as a manual popover', async () => {
         const { element } = await mountGrid();
 
         openRowMenu(element, 'age', 0);
 
         const menu = document.querySelector('.simple-html-grid-menu')?.parentElement as HTMLElement;
         expect(menu.parentElement).toBe(document.body);
-        expect(menu.className).toEqual('simple-html-grid simple-html-grid-reset');
-        expect(menu.style.position).toEqual('absolute');
+        expect(menu.className).toEqual('simple-html-grid simple-html-grid-reset simple-html-grid-popover');
+        // the top layer, without the browser's light dismiss: the grid closes it, see addMenuListeners
+        expect(menu.getAttribute('popover')).toEqual('manual');
+        expect(isPopoverShown(menu)).toBe(true);
+        // position: absolute is in the css now (.simple-html-grid-popover)
+        expect(menu.style.position).toEqual('');
         expect(menu.style.minWidth).toEqual('130px');
+    });
+
+    it('expect an item not to take the focus on mousedown', async () => {
+        const { element } = await mountGrid();
+        openRowMenu(element, 'age', 0);
+
+        const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        entry('row.copy.cell').dispatchEvent(down);
+
+        // the focus stays on the cell, and goes back there from a dialog an item opens
+        expect(down.defaultPrevented).toBe(true);
     });
 });
 
@@ -544,6 +560,134 @@ describe('menus - openMenu() and closeMenu()', () => {
         expect(menuOpen()).toBe(false);
     });
 
+    it('expect a page that is scrolled to be added to the place: a menu moves with the page', async () => {
+        const { gridInterface } = await mountGrid();
+        window.scrollTo(30, 200);
+
+        gridInterface.openMenu({ x: 15, y: 25 }, entries());
+
+        const menu = document.querySelector('.simple-html-grid-menu')?.parentElement as HTMLElement;
+        expect([menu.style.left, menu.style.top]).toEqual(['45px', '225px']);
+        window.scrollTo(0, 0);
+    });
+
+    it('expect a menu opened from an element in a dialog to be put in the dialog', async () => {
+        const { gridInterface } = await mountGrid();
+        // a modal dialog makes everything outside it inert: a menu on the body could not be clicked
+        const dialog = document.createElement('dialog');
+        const button = document.createElement('button');
+        dialog.appendChild(button);
+        document.body.appendChild(dialog);
+        dialog.showModal();
+
+        gridInterface.openMenu(button, entries());
+
+        const menu = document.querySelector('.simple-html-grid-menu')?.parentElement as HTMLElement;
+        expect(menu.parentElement).toBe(dialog);
+        expect(isPopoverShown(menu)).toBe(true);
+    });
+
+    it('expect a menu opened from an element in a popover of the page to be put in the popover', async () => {
+        const { gridInterface } = await mountGrid();
+        // a click in a menu outside a popover="auto" would close that popover
+        const popover = document.createElement('div');
+        popover.popover = 'auto';
+        const button = document.createElement('button');
+        popover.appendChild(button);
+        document.body.appendChild(popover);
+
+        button.addEventListener('click', (event) => gridInterface.openMenu(event, entries()));
+        button.click();
+
+        const menu = document.querySelector('.simple-html-grid-menu')?.parentElement as HTMLElement;
+        expect(menu.parentElement).toBe(popover);
+    });
+});
+
+describe('menus - Esc', () => {
+    const entries = (): MenuEntry[] => [{ id: 'test.a', label: 'A', action: () => {} }];
+    const esc = () => new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+
+    it('expect Esc to close the menu, and to be canceled so nothing else closes on it', async () => {
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, entries());
+
+        const event = esc();
+        document.body.dispatchEvent(event);
+
+        expect(menuOpen()).toBe(false);
+        // a modal dialog behind the menu - the filter editor - stays open
+        expect(event.defaultPrevented).toBe(true);
+    });
+
+    it("expect Esc to close the grid's own menus", async () => {
+        const { element } = await mountGrid();
+        openFilterMenu(element, 'firstname');
+
+        headerFilterInput(element, 'firstname').dispatchEvent(esc());
+
+        expect(menuOpen()).toBe(false);
+    });
+
+    it('expect Esc with no menu open, another key, or an Esc used already, to change nothing', async () => {
+        const { gridInterface } = await mountGrid();
+        const none = esc();
+        document.body.dispatchEvent(none);
+        expect(none.defaultPrevented).toBe(false);
+
+        gridInterface.openMenu({ x: 0, y: 0 }, entries());
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(menuOpen()).toBe(true);
+
+        const used = esc();
+        used.preventDefault();
+        document.body.dispatchEvent(used);
+        expect(menuOpen()).toBe(true);
+    });
+
+    it('expect the focus to go back to the cell when the menu closes with the focus in it', async () => {
+        const { element } = await mountGrid();
+        const cell = headerFilterInput(element, 'firstname');
+        cell.focus();
+        openFilterMenu(element, 'firstname');
+        // the search field of the value list
+        const search = document.querySelector('.simple-html-grid-menu input') as HTMLInputElement;
+        search.focus();
+        expect(document.activeElement).toBe(search);
+
+        document.body.dispatchEvent(esc());
+
+        expect(menuOpen()).toBe(false);
+        expect(document.activeElement).toBe(cell);
+    });
+
+    it('expect the focus to be left where it is when it was not in the menu', async () => {
+        const { element, gridInterface } = await mountGrid();
+        const cell = headerFilterInput(element, 'firstname');
+        cell.focus();
+        gridInterface.openMenu({ x: 0, y: 0 }, entries());
+        const other = headerFilterInput(element, 'age');
+        other.focus();
+
+        gridInterface.closeMenu();
+
+        expect(document.activeElement).toBe(other);
+    });
+
+    it('expect the listeners on the document to be removed with the grid', async () => {
+        const { element, gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, entries());
+        const menu = document.querySelector('.simple-html-grid-menu')?.parentElement as HTMLElement;
+        element.remove();
+        // put back on the page by hand: no grid listens anymore
+        document.body.appendChild(menu);
+
+        document.body.dispatchEvent(esc());
+        document.body.click();
+
+        expect(menu.isConnected).toBe(true);
+    });
+
     it('expect nothing to happen while the grid is not on the page', async () => {
         const { element, gridInterface } = await mountGrid();
         element.remove();
@@ -607,6 +751,24 @@ describe('menus - a block of your own (a dropdown grid)', () => {
         expect(dropdown.isConnected).toBe(false);
     });
 
+    it("expect the dropdown grid's own menu to open on the body, over it, and to leave it open", async () => {
+        const { main, dropdown } = await openDropdown();
+        const outer = dropdown.parentElement?.parentElement as HTMLElement;
+
+        openRowMenu(dropdown, 'company', 0);
+
+        // a manual popover too, shown after it: over it in the top layer
+        const inner = Array.from(document.querySelectorAll('.simple-html-grid-popover')).find((menu) => menu !== outer);
+        expect(inner?.parentElement).toBe(document.body);
+        expect(isPopoverShown(inner ?? null)).toBe(true);
+        expect(isPopoverShown(outer)).toBe(true);
+        expect(dropdown.isConnected).toBe(true);
+
+        // the dropdown grid leaves the page with the outer menu, and closes its own
+        main.gridInterface.closeMenu();
+        expect(inner?.isConnected).toBe(false);
+    });
+
     it("expect the grid's own menus to close it", async () => {
         const { main, dropdown } = await openDropdown();
 
@@ -643,5 +805,82 @@ describe('menus - the value list block', () => {
         // the same element: the menu was not rendered again
         expect(entry('filter.filter.clear')).toBe(clear);
         expect(menuOpen()).toBe(true);
+    });
+});
+
+describe('menus - the column chooser', () => {
+    /** opens the column chooser from the header menu */
+    async function openChooser() {
+        const mounted = await mountGrid();
+        openLabelMenu(mounted.element, 'age');
+        menuItem('Column chooser').click();
+        const chooser = document
+            .querySelector('.simple-html-label-button-menu-bottom')
+            ?.closest('.simple-html-grid') as HTMLElement;
+        return { ...mounted, chooser };
+    }
+
+    it('expect a manual popover of its own on the body, next to the menus', async () => {
+        const { chooser } = await openChooser();
+
+        expect(chooser.parentElement).toBe(document.body);
+        expect(chooser.className).toEqual('simple-html-grid simple-html-grid-reset simple-html-grid-popover');
+        expect(chooser.popover).toEqual('manual');
+        expect(isPopoverShown(chooser)).toBe(true);
+    });
+
+    it('expect it to stay open on a click outside, another menu and Esc outside it: columns are dragged from it', async () => {
+        const { element, chooser } = await openChooser();
+        await sleep(0);
+
+        document.body.click();
+        openRowMenu(element, 'age', 0);
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+
+        expect(chooser.isConnected).toBe(true);
+        // that Esc closed the row menu
+        expect(shownIds()).toEqual([]);
+    });
+
+    it('expect Esc in its search field to close it, and the focus to go back', async () => {
+        const { element } = await mountGrid();
+        // where the focus was before the header menu: an item does not take it
+        const cell = headerFilterInput(element, 'age');
+        cell.focus();
+        openLabelMenu(element, 'age');
+        menuItem('Column chooser').click();
+        const chooser = gridOf(element).columnChooserMenu as HTMLElement;
+        const search = chooser.querySelector('input') as HTMLInputElement;
+        search.focus();
+
+        const esc = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        search.dispatchEvent(esc);
+
+        expect(chooser.isConnected).toBe(false);
+        expect(esc.defaultPrevented).toBe(true);
+        expect(gridOf(element).columnChooserMenu).toBeNull();
+        expect(document.activeElement).toBe(cell);
+    });
+
+    it('expect its Close button to close it', async () => {
+        const { element, chooser } = await openChooser();
+
+        menuItem('Close').click();
+
+        expect(chooser.isConnected).toBe(false);
+        expect(gridOf(element).columnChooserMenu).toBeNull();
+    });
+
+    it('expect one at a time, and removing the grid to close it', async () => {
+        const { element, chooser } = await openChooser();
+        openLabelMenu(element, 'age');
+        menuItem('Column chooser').click();
+
+        expect(chooser.isConnected).toBe(false);
+        const second = gridOf(element).columnChooserMenu as HTMLElement;
+        expect(second.isConnected).toBe(true);
+
+        element.remove();
+        expect(second.isConnected).toBe(false);
     });
 });

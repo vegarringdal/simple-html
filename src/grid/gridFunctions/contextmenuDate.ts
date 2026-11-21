@@ -2,13 +2,12 @@ import type { DateElement } from '../../date/dateElement';
 import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
 import type { Grid } from '../grid';
-import { asPx } from './asPx';
 import { createElement } from './createElement';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { removeContextMenu } from './removeContextMenu';
+import { moveMenu, openMenuElement } from './showMenu';
 
 /**
- * opens the date picker under a cell
+ * opens the date picker under a cell, as the grid's menu (one at a time, closed as the others)
  * @param value the date to open on, anything that is not a valid Date opens on today
  */
 export function contextmenuDate(
@@ -18,8 +17,6 @@ export function contextmenuDate(
     value: unknown,
     callback: (value: Date | null) => void
 ) {
-    removeContextMenu(ctx);
-
     const contextMenu = createElement('div', 'simple-html-grid');
 
     // only the fields given, every field read below has a default
@@ -48,13 +45,6 @@ export function contextmenuDate(
         datepickerDate: value instanceof Date && !Number.isNaN(value.getTime()) ? new Date(value.getTime()) : null
     };
 
-    const rect = cell.getBoundingClientRect();
-    contextMenu.style.position = 'absolute';
-    contextMenu.style.zIndex = '2000';
-    contextMenu.style.top = asPx(rect.bottom + 2);
-    contextMenu.style.left = asPx(rect.left + 2);
-    contextMenu.style.minWidth = asPx(130);
-
     const dateInterface = new DateInterface(dateconfig);
 
     // no need to unsubscribe: removing the menu removes the date element, and that unsubscribes
@@ -67,17 +57,22 @@ export function contextmenuDate(
     dateElement.connectInterface(dateInterface);
     dateInterface.render();
 
+    // in the filter editor's dialog when opened from it: a menu outside a modal dialog can not be
+    // clicked, see popoverParent
+    openMenuElement(ctx, contextMenu, cell);
+
+    // under the cell; above it when the picker (datepickerHeight) does not fit below, moved left when
+    // it sticks out on the right
+    const rect = cell.getBoundingClientRect();
+    let left = rect.left + 2;
+    let top = rect.bottom + 2;
     const width = dateconfig.monthWidth + dateconfig.monthMargin + dateconfig.monthMargin + 10;
     if (rect.left + width > window.innerWidth) {
-        contextMenu.style.left = asPx(window.innerWidth - width);
+        left = window.innerWidth - width;
     }
-
     const height = config.datepickerHeight || 317;
-    // unable to know height before its added, I should add the as option
     if (rect.bottom + height > window.innerHeight) {
-        contextMenu.style.top = asPx(rect.top - height);
+        top = rect.top - height;
     }
-
-    document.body.appendChild(contextMenu);
-    ctx.contextMenu = contextMenu;
+    moveMenu(contextMenu, left, top);
 }

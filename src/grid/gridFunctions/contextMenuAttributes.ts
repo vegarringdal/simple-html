@@ -1,41 +1,25 @@
 import { html, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Grid } from '../grid';
-import { asPx } from './asPx';
 import { createElement } from './createElement';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
-import { removeContextMenu } from './removeContextMenu';
+import { openMenuElement, placeMenu, placeUnderCell } from './showMenu';
 
 // might want to add this as part of context, so I can share it?
 let currentColumnSearchvalue = '';
 
 /**
- * ctx is part of filter editor
+ * the field picker of the filter editor, the grid's menu (one at a time, closed as the others)
  * @param cell
  * @param callback
  */
 export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLElement, callback: (attribute: string) => void) {
-    removeContextMenu(ctx);
-
     const contextMenu = createElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
 
+    // the search renders the list again, the menu stays where it opened
     const reRender = () => {
-        const rect = cell.getBoundingClientRect();
-
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.top = asPx(rect.bottom + 2);
-        contextMenu.style.left = asPx(event.clientX - 65);
-        contextMenu.style.minWidth = asPx(130);
-
-        if (event.clientX + 70 > window.innerWidth) {
-            contextMenu.style.left = asPx(window.innerWidth - 150);
-        }
-        if (event.clientX - 65 < 0) {
-            contextMenu.style.left = asPx(5);
-        }
-
         const attributes = Object.keys(ctx.gridInterface.__getGridConfig().columns) || [];
 
         const searchInput = () => {
@@ -79,6 +63,7 @@ export function contextMenuAttributes(ctx: Grid, event: MouseEvent, cell: HTMLEl
 
     reRender();
 
-    document.body.appendChild(contextMenu);
-    ctx.contextMenu = contextMenu;
+    // in the editor's dialog: a menu outside a modal dialog can not be clicked, see popoverParent
+    openMenuElement(ctx, contextMenu, cell);
+    placeMenu(contextMenu, placeUnderCell(event, cell));
 }

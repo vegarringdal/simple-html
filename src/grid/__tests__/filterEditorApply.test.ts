@@ -16,11 +16,11 @@ import { headerFilterInput, menuItem, typeInHeaderFilter } from './interactionTe
  * so it is looked up each time
  */
 function clickIcon(tooltipText: string, index = 0) {
-    const holder = document.querySelectorAll(`.filter-editor-container [data-tooltip="${tooltipText}"]`)[index] as HTMLElement;
+    const holder = document.querySelectorAll(`.filter-editor-content [data-tooltip="${tooltipText}"]`)[index] as HTMLElement;
     (holder.querySelector('svg') ?? holder).dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
-const editorConditions = () => document.querySelectorAll('.filter-editor-container .grid-condition');
+const editorConditions = () => document.querySelectorAll('.filter-editor-content .grid-condition');
 
 beforeAll(() => {
     stubCanvas();
@@ -56,7 +56,7 @@ describe('filter editor - typed values', () => {
         datasource.filter(and(where('born', 'EQUAL', new Date(2001, 4, 18))));
         gridInterface.openFilterEditor();
 
-        const input = document.querySelector('.filter-editor-container .grid-condition input') as HTMLInputElement;
+        const input = document.querySelector('.filter-editor-content .grid-condition input') as HTMLInputElement;
         input.value = '2001-05-17';
         input.dispatchEvent(new Event('input', { bubbles: true }));
         menuItem('Filter Only').click();
@@ -78,7 +78,7 @@ describe('filter editor - header filter inputs', () => {
 
         gridInterface.openFilterEditor();
         // root group trash icon: clear all
-        const toolbar = document.querySelector('.filter-editor-container .grid-group') as HTMLElement;
+        const toolbar = document.querySelector('.filter-editor-content .grid-group') as HTMLElement;
         toolbar.querySelectorAll('svg')[3].dispatchEvent(new MouseEvent('click', { bubbles: true }));
         menuItem('Filter & Close').click();
 
@@ -132,7 +132,7 @@ describe('filter editor - drafts', () => {
         // switch the first condition to "compare with a column"
         clickIcon('Compare against another column instead of a typed in value');
         expect(
-            document.querySelector('.filter-editor-container [data-tooltip="Pick which column to compare against"]')
+            document.querySelector('.filter-editor-content [data-tooltip="Pick which column to compare against"]')
         ).not.toBeNull();
         menuItem('Filter Only').click();
 
@@ -148,7 +148,7 @@ describe('filter editor - drafts', () => {
         gridInterface.openFilterEditor();
 
         const picker = document.querySelector(
-            '.filter-editor-container [data-tooltip="Pick which column to compare against"]'
+            '.filter-editor-content [data-tooltip="Pick which column to compare against"]'
         ) as HTMLElement;
         expect(picker.textContent?.trim()).toEqual('lastname');
         menuItem('Filter Only').click();

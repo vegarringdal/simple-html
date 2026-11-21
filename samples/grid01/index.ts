@@ -472,7 +472,7 @@ createButton('remove class background favoriteFruit based on cell isDumb', () =>
                 }
             };
 
-            // a menu with the grid as a block: closed on scroll, outside click, another menu
+            // a menu with the grid as a block: closed on scroll, outside click, Esc, another menu
             gridInterface.openMenu(data.cell, [{ type: 'block', id: 'cable-picker', element }]);
 
             setTimeout(() => {

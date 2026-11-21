@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { isPopoverShown } from '../../__tests__/popoverStub';
 // the picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
 import type { IDateConfig } from '../../date/interfaces';
@@ -49,6 +50,34 @@ beforeEach(() => {
 });
 
 describe('grid date picker', () => {
+    it("expect the picker to be the grid's menu: a manual popover on the body, closed on Esc", async () => {
+        const { element } = await mountGrid(config(), data(), fields);
+
+        const picker = await openPicker(element);
+        const menu = picker.parentElement as HTMLElement;
+
+        expect(menu.parentElement).toBe(document.body);
+        expect(menu.className).toEqual('simple-html-grid simple-html-grid-popover');
+        expect(menu.popover).toEqual('manual');
+        expect(isPopoverShown(menu)).toBe(true);
+        // the top layer: no z-index of its own anymore
+        expect(menu.style.zIndex).toEqual('');
+
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+        expect(menu.isConnected).toBe(false);
+    });
+
+    it('expect a click in the picker not to close it, a click outside to close it', async () => {
+        const { element } = await mountGrid(config(), data(), fields);
+        const picker = await openPicker(element);
+
+        (picker.querySelector('.simple-html-date-day') as HTMLElement).click();
+        expect(picker.isConnected).toBe(true);
+
+        document.body.click();
+        expect(picker.isConnected).toBe(false);
+    });
+
     it('expect the picker to open on the date in the cell', async () => {
         const { element } = await mountGrid(config(), data(), fields);
 

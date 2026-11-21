@@ -6,7 +6,7 @@ export const dropdownGrid: DemoSample = {
     title: 'Grid as dropdown',
     group: 'Editing',
     description:
-        'A cell can show a focus button via the focusButton column option. Here clicking it (or hitting Space in the cell) opens a second, filterable grid as a dropdown and writes the picked value back. The dropdown is opened with openMenu() as a block, so the grid closes it as it does its own menus: a click outside, another menu. The company cell itself is readonly, so the dropdown is the only way to change the value.',
+        'A cell can show a focus button via the focusButton column option. Here clicking it (or hitting Space in the cell) opens a second, filterable grid as a dropdown and writes the picked value back. The dropdown is opened with openMenu() as a block, so the grid shows it as it does its own menus - a popover, over everything on the page - and closes it the same way: a click outside, Esc, another menu. The company cell itself is readonly, so the dropdown is the only way to change the value.',
     run(stage) {
         const ui = createStage(stage);
         const config = baseGridConfig();
@@ -75,7 +75,9 @@ export const dropdownGrid: DemoSample = {
                 };
 
                 // a menu with the grid as a block: opened under the cell, kept in the window, and closed
-                // with the grid's menus - a click outside it, another menu opening, closeMenu()
+                // with the grid's menus - a click outside it, Esc, another menu opening, closeMenu().
+                // Esc in the dropdown gives the focus back to the cell, closeMenu() too when the focus
+                // is in the dropdown
                 gridInterface.openMenu(data.cell, [{ type: 'block', id: 'company-picker', element: dropdown }]);
 
                 // focus the filter input in a timeout, so the Space that opened it is not typed into it

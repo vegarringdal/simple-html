@@ -6,7 +6,7 @@ export const contextMenu: DemoSample = {
     title: 'Menus',
     group: 'Editing',
     description:
-        'The right click menus are lists of entries with ids (MENU_IDS lists them): the menus hook hides, reorders or adds entries. Here the row menu drops "Row (selected rows/col)" and gets a "Fruit:" part of its own on the fruit column. Hooks are functions, given next to the config: createGrid(host, { config, datasource, hooks: { menus } }). openMenu() opens a menu of your own: click a cell in the fruit column to pick a value.',
+        'The right click menus are lists of entries with ids (MENU_IDS lists them): the menus hook hides, reorders or adds entries. Here the row menu drops "Row (selected rows/col)" and gets a "Fruit:" part of its own on the fruit column. Hooks are functions, given next to the config: createGrid(host, { config, datasource, hooks: { menus } }). openMenu() opens a menu of your own: click a cell in the fruit column to pick a value. Every menu is a popover, over everything on the page; a click outside or Esc closes it.',
     run(stage) {
         const ui = createStage(stage);
         // a hook, not part of the config: the config stays plain JSON

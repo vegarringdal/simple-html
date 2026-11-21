@@ -4,7 +4,8 @@ import { removeContextMenu } from './removeContextMenu';
 import { type GroupDraft, renderFilterEditor } from './renderFilterEditor';
 
 /**
- * opens filter editor with current filter
+ * opens filter editor with current filter. When it is open already, it starts again from the filter
+ * there is, in the same dialog (where the user put it)
  */
 export function openFilterEditor(ctx: Grid) {
     removeContextMenu(ctx);

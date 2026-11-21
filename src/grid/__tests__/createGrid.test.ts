@@ -215,11 +215,11 @@ describe('gridInterface.destroy()', () => {
     it('expect an open filter editor to be closed', () => {
         const { gridInterface } = create();
         gridInterface.openFilterEditor();
-        expect(document.querySelector('.filter-editor-container')).not.toBeNull();
+        expect(document.querySelector('.filter-editor-content')).not.toBeNull();
 
         gridInterface.destroy();
 
-        expect(document.querySelector('.filter-editor-container')).toBeNull();
+        expect(document.querySelector('.filter-editor-content')).toBeNull();
     });
 
     it('expect the handlers subscribed with on() to be dropped', () => {

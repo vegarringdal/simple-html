@@ -8,33 +8,42 @@ export function tooltipsEnabled(ctx: Grid): boolean {
 }
 
 /**
- * One tooltip element, living on document.body.
- *
- * It has to sit on the body rather than inside the element it describes: the dialog clips
- * its content (`overflow: hidden`, needed for resize), so a tooltip rendered inside it
- * would be cut off at the edges.
+ * One tooltip element, `position: fixed`, on the body - or in the dialog or popover the element it
+ * describes is in (the filter editor, a menu with a dropdown grid, a dialog of your own). Those are in
+ * the top layer, over everything on the body: a tooltip on the body would be hidden behind them.
+ * Inside them it is painted over their content, and as it is `position: fixed` their
+ * `overflow: hidden` (the filter editor's, needed for resize) does not cut it off.
  */
 let tooltipElement: HTMLElement | null = null;
 
-function getTooltipElement(): HTMLElement {
-    if (tooltipElement?.isConnected) {
-        return tooltipElement;
+/**
+ * the tooltip element, moved to `parent` when it is somewhere else
+ */
+function getTooltipElement(parent: HTMLElement): HTMLElement {
+    if (!tooltipElement) {
+        tooltipElement = document.createElement('div');
+        /**
+         * the simple-html-grid class is what carries the css variables and the default font,
+         * and it is also what the dark theme targets. Without it a tooltip sitting on the body
+         * falls back to the browser default font and has no theme colours at all.
+         */
+        tooltipElement.className = 'simple-html-grid simple-html-grid-tooltip';
+        tooltipElement.style.display = 'none';
     }
-    tooltipElement = document.createElement('div');
-    /**
-     * the simple-html-grid class is what carries the css variables and the default font,
-     * and it is also what the dark theme targets. Without it a tooltip sitting on the body
-     * falls back to the browser default font and has no theme colours at all.
-     */
-    tooltipElement.className = 'simple-html-grid simple-html-grid-tooltip';
-    tooltipElement.style.display = 'none';
-    document.body.appendChild(tooltipElement);
+    if (tooltipElement.parentElement !== parent) {
+        parent.appendChild(tooltipElement);
+    }
     return tooltipElement;
 }
 
+/**
+ * hides the tooltip, and takes it out of the document: left in a dialog or menu that closes, it would
+ * keep that (and its grid) in memory. The next tooltip puts it back
+ */
 export function hideTooltip() {
     if (tooltipElement) {
         tooltipElement.style.display = 'none';
+        tooltipElement.remove();
     }
 }
 
@@ -43,7 +52,7 @@ export function hideTooltip() {
  * clamps it inside the window so it is never cut off at an edge
  */
 function showTooltip(target: HTMLElement, text: string) {
-    const el = getTooltipElement();
+    const el = getTooltipElement(target.closest<HTMLElement>('dialog, [popover]') ?? document.body);
     el.textContent = text;
     el.style.display = 'block';
     // measure only after the text is in, the size depends on it

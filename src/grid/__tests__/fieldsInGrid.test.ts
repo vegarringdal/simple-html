@@ -257,7 +257,7 @@ describe('fields in the grid - filter editor', () => {
         datasource.filter(and(where('active', 'EQUAL', null)));
         gridInterface.openFilterEditor();
 
-        const input = document.querySelector('.filter-editor-container .grid-condition input') as HTMLInputElement;
+        const input = document.querySelector('.filter-editor-content .grid-condition input') as HTMLInputElement;
         input.value = 'true';
         input.dispatchEvent(new Event('input', { bubbles: true }));
         menuItem('Filter Only').click();
@@ -277,7 +277,7 @@ describe('fields in the grid - filter editor', () => {
         datasource.filter(and(where('price', 'EQUAL', 3)));
         gridInterface.openFilterEditor();
 
-        const input = document.querySelector('.filter-editor-container .grid-condition input') as HTMLInputElement;
+        const input = document.querySelector('.filter-editor-content .grid-condition input') as HTMLInputElement;
         // the editor shows the value with the field's formatter
         expect(input.value).toEqual('3');
         input.value = '12,5';

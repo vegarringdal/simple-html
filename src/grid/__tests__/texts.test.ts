@@ -156,7 +156,7 @@ function checker() {
 
 /** clicks the icon of the filter editor with this tooltip */
 function clickIcon(tooltip: string) {
-    const holder = document.querySelector(`.filter-editor-container [data-tooltip="${tooltip}"]`) as HTMLElement;
+    const holder = document.querySelector(`.filter-editor-content [data-tooltip="${tooltip}"]`) as HTMLElement;
     (holder.querySelector('svg') ?? holder).dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 100 }));
 }
 

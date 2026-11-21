@@ -5,6 +5,7 @@ import type { ColType, ColumnCache } from './colType';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { dragEvent } from './dragEvent';
+import { followPointer, isPrimaryPress } from './followPointer';
 import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
@@ -87,27 +88,14 @@ export function rebuildHeaderColumns(ctx: Grid) {
                         top = top + config.cellHeaderLabelHeight;
 
                         /**
-                         * next part handles drop zones in cells, but only if they are/have attribute set
+                         * drop zones, they only have a size while a column is dragged. dragEvent
+                         * highlights the one under the pointer
                          */
-                        const addEvent = (child: HTMLElement, parent: HTMLElement) => {
-                            child.onmouseenter = () => {
-                                if ((parent as HTMLCellElement).$attribute) {
-                                    child.classList.toggle('simple-html-grid-col-resize-hover');
-                                }
-                            };
-                            child.onmouseleave = () => {
-                                if ((parent as HTMLCellElement).$attribute) {
-                                    child.classList.toggle('simple-html-grid-col-resize-hover');
-                                }
-                            };
-                            parent.appendChild(child);
-                        };
-
-                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-left'), cell);
-                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-right'), cell);
-                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-top'), cell);
-                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-bottom'), cell);
-                        addEvent(createElement(DIV, 'simple-html-grid-drop-zone-center'), cell);
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-left'));
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-right'));
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-top'));
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-bottom'));
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-center'));
 
                         /**
                          * logic for dragdrop and sort event
@@ -161,12 +149,19 @@ export function rebuildHeaderColumns(ctx: Grid) {
                 columnElement.appendChild(resizeElement);
 
                 /**
-                 * event for resizing
+                 * event for resizing: pointer events, so a mouse, a pen or a finger. The handle
+                 * captures the pointer, its events come to the handle wherever the pointer goes (see
+                 * followPointer). touch-action none: the browser would scroll the page under a finger
                  */
-                resizeElement.onmousedown = (event) => {
-                    // resizing event started, we need to get refID (created column number)
-                    // the target is resizeElement, appended to columnElement above, which has refID set
-                    const refID = parseInt((event.target as HTMLElement).parentElement!.getAttribute('refID')!, 10);
+                resizeElement.style.touchAction = 'none';
+                resizeElement.addEventListener('pointerdown', (event) => {
+                    if (!isPrimaryPress(event)) {
+                        return;
+                    }
+
+                    // the column element is slot i (its refID), the column cache says which
+                    // column of the layout the slot shows now
+                    const refID = i;
 
                     // first section here is to collect data we need
                     const clientX = event.clientX;
@@ -197,13 +192,15 @@ export function rebuildHeaderColumns(ctx: Grid) {
 
                     const originalWidth = col.width;
 
-                    // when user move mouse, we update
-                    const mousemove = (event: MouseEvent) => {
-                        if (col) {
+                    resizeElement.setPointerCapture(event.pointerId);
+
+                    followPointer(resizeElement, event, {
+                        // the edge follows the pointer, the sizes are updated without a rebuild
+                        move: (moveEvent) => {
                             if (coltype === RIGHT_PINNED_COLTYPE) {
-                                col.width = originalWidth - (event.clientX - clientX);
+                                col.width = originalWidth - (moveEvent.clientX - clientX);
                             } else {
-                                col.width = originalWidth + (event.clientX - clientX);
+                                col.width = originalWidth + (moveEvent.clientX - clientX);
                             }
 
                             if (col.width < 25) {
@@ -232,23 +229,18 @@ export function rebuildHeaderColumns(ctx: Grid) {
                             );
 
                             updateHorizontalScrollWidth(ctx);
-                        }
-                    };
-
-                    // when user lets go of mouse button we need to clean up events
-                    const mouseup = () => {
-                        document.removeEventListener('mousemove', mousemove);
-                        document.removeEventListener('mouseup', mouseup);
-
+                        },
                         // narrower columns (or a narrower pinned side) can mean more columns on
                         // screen than the middle section has elements for, rebuild recounts them
-                        ctx.rebuild();
-                    };
-
-                    // add events to when user moves/stops resizing
-                    document.addEventListener('mousemove', mousemove);
-                    document.addEventListener('mouseup', mouseup);
-                };
+                        up: () => ctx.rebuild(),
+                        // the resize did not finish: the column gets its width back
+                        cancel: () => {
+                            col.width = originalWidth;
+                            ctx.gridInterface.__parseConfig();
+                            ctx.rebuild();
+                        }
+                    });
+                });
             }
         }
     };

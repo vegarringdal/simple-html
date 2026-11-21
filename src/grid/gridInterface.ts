@@ -558,6 +558,11 @@ export class GridInterface<T> {
      * filter's menu ("Advanced Filter") or by clicking the filter shown in the footer; call this from a
      * button of your own.
      *
+     * It is a modal `<dialog>` (`showModal()`): over everything on the page, the page behind it can
+     * not be used while it is open. The focus moves to the dialog when it opens and goes back to where
+     * it was when it closes; Esc closes it (a menu open in it first). The user drags it by its title
+     * bar and resizes it from every edge and corner, with the mouse, a finger or a pen.
+     *
      * Does nothing while the grid is not on the page.
      *
      * @example
@@ -629,11 +634,17 @@ export class GridInterface<T> {
      * button, a second grid as a dropdown ({@link MenuBlock}). See {@link MenuEntry} for what it can
      * show. To change the grid's own right click menus, use the `menus` hook ({@link GridHooks}).
      *
+     * The menu is a popover: shown in the top layer, over everything on the page - a container with
+     * `overflow: hidden` does not cut it off, no z-index covers it. Opened from an element in a
+     * `<dialog>` or a popover of your own, it is put inside that element, so it can be used there
+     * (everything outside a modal dialog is inert).
+     *
      * The menu open before is closed: there is one menu at a time. The grid closes this one, as its
-     * own, on a click outside it, when another menu opens, on scroll (with
+     * own, on a click outside it, on Esc, when another menu opens, on scroll (with
      * `autoRemoveContextMenuOnScrollEvent`) and when the grid leaves the page. Clicking an item closes
      * it too, then calls the item's action; clicking in a block does not. {@link closeMenu} closes it
-     * from code.
+     * from code. When the focus is in the menu as it closes (a field in a block), it goes back to the
+     * element that had it when the menu opened.
      *
      * Called from a click handler the menu stays open: the click that opened it does not count as a
      * click outside it.
@@ -698,7 +709,8 @@ export class GridInterface<T> {
 
     /**
      * Closes the menu that is open: one opened with {@link openMenu}, or one of the grid's own right
-     * click menus. Does nothing when no menu is open.
+     * click menus. Does nothing when no menu is open. The focus goes back as when the user closes it,
+     * see {@link openMenu}.
      *
      * Replaces v5's `removeContextMenuElement()`.
      *

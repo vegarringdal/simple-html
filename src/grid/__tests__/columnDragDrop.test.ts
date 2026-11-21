@@ -1,13 +1,22 @@
 // @vitest-environment happy-dom
 
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Datasource } from '../../datasource/dataSource';
 import type { GridConfig } from '../gridConfig';
+import type { GridElement } from '../gridElement';
+import { DRAG_DISTANCE, TOUCH_HOLD } from '../gridFunctions/dragEvent';
 import type { GridInterface } from '../gridInterface';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { dragAndDrop, labelCell, sleep } from './interactionTestHelpers';
+import { dragAndDrop, labelCell, pointerEvent, pointerOver, sleep, touchAt } from './interactionTestHelpers';
 
 /**
- * Column drag/drop in the header and to/from the grouping panel.
+ * Column drag/drop in the header and to/from the grouping panel, and the click on a label that
+ * sorts. Pointer events: mouse, pen and touch.
+ *
+ * The events are sent the way a browser sends them: pointerdown on the element under the pointer,
+ * and once the drag has captured the pointer, the moves and the pointerup on the dragged cell.
+ * happy-dom does no layout, so `pointerOver()` says what the browser's hit test
+ * (document.elementFromPoint) finds under the pointer.
  */
 
 const data = () => [
@@ -15,9 +24,34 @@ const data = () => [
     { firstname: 'b', lastname: 'y', age: 2 }
 ];
 
+const threeColumns = (): GridConfig => ({
+    layout: {
+        center: [
+            { fields: ['firstname'], width: 100 },
+            { fields: ['lastname'], width: 100 },
+            { fields: ['age'], width: 100 }
+        ]
+    }
+});
+
 // the fields of each center column, as the state has them
 const centerRows = (gridInterface: GridInterface<unknown>) =>
     gridInterface.getState().layout.center.map((column) => column.fields);
+
+// a drop zone of the label cell of a field
+const zone = (element: GridElement, attribute: string, side: 'left' | 'right' | 'top' | 'bottom' | 'center') =>
+    labelCell(element, attribute).querySelector(`.simple-html-grid-drop-zone-${side}`) as HTMLElement;
+
+const panelOf = (element: GridElement) => element.querySelector('.simple-html-grid-panel') as HTMLElement;
+const headerOf = (element: GridElement) => element.querySelector('.simple-html-grid-header') as HTMLElement;
+
+// the element that follows the pointer during a drag
+const ghost = () => document.querySelector('.simple-html-draggable-element') as HTMLElement | null;
+
+const sorting = (datasource: Datasource) => datasource.getLastSorting().map((sort) => [sort.attribute, sort.ascending]);
+
+// css class of the drop target under the pointer
+const HOVER = 'simple-html-grid-col-resize-hover';
 
 beforeAll(() => {
     stubCanvas();
@@ -26,6 +60,10 @@ beforeAll(() => {
 
 beforeEach(() => {
     document.body.innerHTML = '';
+});
+
+afterEach(() => {
+    vi.restoreAllMocks();
 });
 
 describe('drag/drop - moving a cell within its own column', () => {
@@ -41,7 +79,7 @@ describe('drag/drop - moving a cell within its own column', () => {
         const { element, gridInterface } = await mountGrid(config, data());
 
         const target = labelCell(element, 'firstname').querySelector('.simple-html-grid-drop-zone-top') as HTMLElement;
-        await dragAndDrop(labelCell(element, 'lastname'), target);
+        dragAndDrop(labelCell(element, 'lastname'), target);
 
         expect(centerRows(gridInterface)).toEqual([['lastname', 'firstname'], ['age']]);
     });
@@ -53,23 +91,13 @@ describe('drag/drop - moving a cell within its own column', () => {
         const { element, gridInterface } = await mountGrid(config, data());
 
         const target = labelCell(element, 'firstname').querySelector('.simple-html-grid-drop-zone-bottom') as HTMLElement;
-        await dragAndDrop(labelCell(element, 'age'), target);
+        dragAndDrop(labelCell(element, 'age'), target);
 
         expect(centerRows(gridInterface)).toEqual([['firstname', 'age', 'lastname']]);
     });
 });
 
 describe('drag/drop - group chips', () => {
-    const threeColumns = (): GridConfig => ({
-        layout: {
-            center: [
-                { fields: ['firstname'], width: 100 },
-                { fields: ['lastname'], width: 100 },
-                { fields: ['age'], width: 100 }
-            ]
-        }
-    });
-
     it('expect a group chip dropped on a column to change no columns', async () => {
         const { element, datasource, gridInterface } = await mountGrid(threeColumns(), data());
         datasource.group([{ attribute: 'lastname', title: 'Lastname' }]);
@@ -77,7 +105,7 @@ describe('drag/drop - group chips', () => {
 
         const chip = element.querySelector('.simple-html-grid-panel-label') as HTMLElement;
         const target = labelCell(element, 'age').querySelector('.simple-html-grid-drop-zone-center') as HTMLElement;
-        await dragAndDrop(chip, target);
+        dragAndDrop(chip, target);
 
         expect(centerRows(gridInterface)).toEqual([['firstname'], ['lastname'], ['age']]);
     });
@@ -89,7 +117,7 @@ describe('drag/drop - group chips', () => {
 
         const chip = element.querySelector('.simple-html-grid-panel-label') as HTMLElement;
         const target = labelCell(element, 'age').querySelector('.simple-html-grid-drop-zone-left') as HTMLElement;
-        await dragAndDrop(chip, target);
+        dragAndDrop(chip, target);
 
         expect(centerRows(gridInterface)).toEqual([['firstname'], ['lastname'], ['age']]);
     });
@@ -100,8 +128,356 @@ describe('drag/drop - group chips', () => {
         await sleep(10);
 
         const panel = element.querySelector('.simple-html-grid-panel') as HTMLElement;
-        await dragAndDrop(labelCell(element, 'lastname'), panel);
+        dragAndDrop(labelCell(element, 'lastname'), panel);
 
         expect(datasource.getGrouping().map((group: any) => group.attribute)).toEqual(['lastname']);
+    });
+});
+
+describe('drag/drop - drop targets', () => {
+    it('expect dropping on the right zone of a column to make the field a column of its own right of it', async () => {
+        const { element, gridInterface } = await mountGrid(threeColumns(), data());
+
+        dragAndDrop(labelCell(element, 'firstname'), zone(element, 'lastname', 'right'));
+
+        expect(centerRows(gridInterface)).toEqual([['lastname'], ['firstname'], ['age']]);
+    });
+
+    it('expect dropping on the center of a cell to swap the two fields', async () => {
+        const { element, gridInterface } = await mountGrid(threeColumns(), data());
+
+        dragAndDrop(labelCell(element, 'firstname'), zone(element, 'age', 'center'));
+
+        expect(centerRows(gridInterface)).toEqual([['age'], ['lastname'], ['firstname']]);
+    });
+
+    it('expect dropping a label on the panel to group on it', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+
+        dragAndDrop(labelCell(element, 'age'), panelOf(element));
+
+        expect(datasource.getGrouping().map((group) => group.attribute)).toEqual(['age']);
+    });
+
+    it('expect a group chip dropped on the left zone of another chip to go before it', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        datasource.group([
+            { attribute: 'lastname', title: 'Lastname' },
+            { attribute: 'age', title: 'Age' }
+        ]);
+        await sleep(10);
+
+        const [lastnameChip, ageChip] = Array.from(element.querySelectorAll('.simple-html-grid-panel-label')) as HTMLElement[];
+        dragAndDrop(ageChip, lastnameChip.querySelector('.simple-html-grid-drop-zone-left-panel') as HTMLElement);
+
+        expect(datasource.getGrouping().map((group) => group.attribute)).toEqual(['age', 'lastname']);
+    });
+
+    it('expect a drop on nothing to change nothing', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(threeColumns(), data());
+
+        // the label itself, not one of its drop zones
+        dragAndDrop(labelCell(element, 'firstname'), labelCell(element, 'age'));
+
+        expect(centerRows(gridInterface)).toEqual([['firstname'], ['lastname'], ['age']]);
+        expect(sorting(datasource)).toEqual([]);
+        expect(ghost()).toBeNull();
+    });
+
+    it('expect the panel of another grid on the page not to be a drop target', async () => {
+        const first = await mountGrid(threeColumns(), data());
+        const second = await mountGrid(threeColumns(), data());
+
+        dragAndDrop(labelCell(first.element, 'age'), panelOf(second.element));
+
+        expect(first.datasource.getGrouping()).toEqual([]);
+        expect(second.datasource.getGrouping()).toEqual([]);
+    });
+});
+
+describe('drag/drop - a click or a drag', () => {
+    it('expect a click on a label to sort on it, and the next click to turn the direction', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'age');
+
+        label.dispatchEvent(pointerEvent('pointerdown'));
+        label.dispatchEvent(pointerEvent('pointerup'));
+        expect(sorting(datasource)).toEqual([['age', true]]);
+
+        // a rebuild after the sort made new label cells
+        labelCell(element, 'age').dispatchEvent(pointerEvent('pointerdown'));
+        labelCell(element, 'age').dispatchEvent(pointerEvent('pointerup'));
+        expect(sorting(datasource)).toEqual([['age', false]]);
+    });
+
+    it('expect shift+click to add the field to the sort', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        datasource.sort({ attribute: 'firstname', ascending: true });
+
+        labelCell(element, 'age').dispatchEvent(pointerEvent('pointerdown', { shiftKey: true }));
+        labelCell(element, 'age').dispatchEvent(pointerEvent('pointerup', { shiftKey: true }));
+
+        expect(sorting(datasource)).toEqual([
+            ['firstname', true],
+            ['age', true]
+        ]);
+    });
+
+    it('expect a slow click to sort too: a mouse has no time limit', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'age');
+
+        label.dispatchEvent(pointerEvent('pointerdown'));
+        await sleep(TOUCH_HOLD + 50);
+        expect(ghost()).toBeNull();
+        label.dispatchEvent(pointerEvent('pointerup'));
+
+        expect(sorting(datasource)).toEqual([['age', true]]);
+    });
+
+    it('expect a press that moves less than DRAG_DISTANCE to be a click', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'age');
+
+        label.dispatchEvent(pointerEvent('pointerdown', { clientX: 10, clientY: 10 }));
+        label.dispatchEvent(pointerEvent('pointermove', { clientX: 10 + DRAG_DISTANCE - 1, clientY: 10 }));
+        expect(ghost()).toBeNull();
+        label.dispatchEvent(pointerEvent('pointerup', { clientX: 10 + DRAG_DISTANCE - 1, clientY: 10 }));
+
+        expect(sorting(datasource)).toEqual([['age', true]]);
+    });
+
+    it('expect a press that moves DRAG_DISTANCE to be a drag, which does not sort', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'age');
+        pointerOver(null);
+
+        label.dispatchEvent(pointerEvent('pointerdown', { clientX: 10, clientY: 10 }));
+        label.dispatchEvent(pointerEvent('pointermove', { clientX: 10, clientY: 10 + DRAG_DISTANCE }));
+        expect(ghost()).not.toBeNull();
+        label.dispatchEvent(pointerEvent('pointerup', { clientX: 10, clientY: 10 + DRAG_DISTANCE }));
+
+        expect(sorting(datasource)).toEqual([]);
+        expect(ghost()).toBeNull();
+    });
+
+    it('expect the dragged cell to capture the pointer once it is a drag, not on the press', async () => {
+        const { element } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'age');
+        pointerOver(null);
+
+        // a click on a child of the cell (the remove icon of a group chip) has to reach that child
+        label.dispatchEvent(pointerEvent('pointerdown', { pointerId: 7, clientX: 10, clientY: 10 }));
+        expect(label.hasPointerCapture(7)).toBe(false);
+
+        label.dispatchEvent(pointerEvent('pointermove', { pointerId: 7, clientX: 50, clientY: 10 }));
+        expect(label.hasPointerCapture(7)).toBe(true);
+        label.dispatchEvent(pointerEvent('pointerup', { pointerId: 7, clientX: 50, clientY: 10 }));
+    });
+
+    it('expect the ghost, the drop zones and the drop target under the pointer to show while dragging', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'firstname');
+        const left = zone(element, 'age', 'left');
+        const panel = panelOf(element);
+        const hitTest = pointerOver(left);
+
+        label.dispatchEvent(pointerEvent('pointerdown', { clientX: 10, clientY: 10 }));
+        label.dispatchEvent(pointerEvent('pointermove', { clientX: 250, clientY: 30 }));
+
+        expect(ghost()?.style.transform).toBe('translate3d(240px, 20px, 0px)');
+        // elementFromPoint must not find the ghost
+        expect(ghost()?.style.pointerEvents).toBe('none');
+        expect(headerOf(element).classList.contains('dragdrop-state')).toBe(true);
+        expect(panel.classList.contains('dragdrop-state')).toBe(true);
+        expect(left.classList.contains(HOVER)).toBe(true);
+
+        hitTest.mockReturnValue(panel);
+        label.dispatchEvent(pointerEvent('pointermove', { clientX: 250, clientY: 5 }));
+        expect(left.classList.contains(HOVER)).toBe(false);
+        expect(panel.classList.contains(HOVER)).toBe(true);
+
+        label.dispatchEvent(pointerEvent('pointerup', { clientX: 250, clientY: 5 }));
+        expect(ghost()).toBeNull();
+        expect(headerOf(element).classList.contains('dragdrop-state')).toBe(false);
+        expect(panel.classList.contains('dragdrop-state')).toBe(false);
+        expect(panel.classList.contains(HOVER)).toBe(false);
+        expect(datasource.getGrouping().map((group) => group.attribute)).toEqual(['firstname']);
+    });
+
+    it('expect the zones of an empty label cell not to be a drop target', async () => {
+        const config: GridConfig = {
+            layout: {
+                center: [
+                    { fields: ['firstname', 'lastname'], width: 100 },
+                    { fields: ['age'], width: 100 }
+                ]
+            }
+        };
+        const { element, gridInterface } = await mountGrid(config, data());
+        const empty = Array.from(element.querySelectorAll('.simple-html-grid-col-cell.simple-html-label')).find(
+            (cell) => cell.getAttribute('type') === 'label' && !(cell as HTMLElement & { $attribute: string | null }).$attribute
+        ) as HTMLElement;
+        const emptyZone = empty.querySelector('.simple-html-grid-drop-zone-center') as HTMLElement;
+        const label = labelCell(element, 'firstname');
+        pointerOver(emptyZone);
+
+        label.dispatchEvent(pointerEvent('pointerdown', { clientX: 10, clientY: 10 }));
+        label.dispatchEvent(pointerEvent('pointermove', { clientX: 150, clientY: 30 }));
+        expect(emptyZone.classList.contains(HOVER)).toBe(false);
+        label.dispatchEvent(pointerEvent('pointerup', { clientX: 150, clientY: 30 }));
+
+        expect(centerRows(gridInterface)).toEqual([['firstname', 'lastname'], ['age']]);
+    });
+
+    it('expect only the left button of the primary pointer to drag or sort', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'firstname');
+        pointerOver(zone(element, 'age', 'center'));
+
+        // right button
+        label.dispatchEvent(pointerEvent('pointerdown', { button: 2, buttons: 2, clientX: 10, clientY: 10 }));
+        label.dispatchEvent(pointerEvent('pointermove', { buttons: 2, clientX: 250, clientY: 10 }));
+        expect(ghost()).toBeNull();
+        label.dispatchEvent(pointerEvent('pointerup', { button: 2, clientX: 250, clientY: 10 }));
+
+        // a second finger
+        label.dispatchEvent(pointerEvent('pointerdown', { pointerId: 2, pointerType: 'touch', isPrimary: false }));
+        label.dispatchEvent(pointerEvent('pointerup', { pointerId: 2, pointerType: 'touch', isPrimary: false }));
+
+        expect(centerRows(gridInterface)).toEqual([['firstname'], ['lastname'], ['age']]);
+        expect(sorting(datasource)).toEqual([]);
+    });
+
+    it('expect the events of another pointer to be ignored', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'age');
+
+        label.dispatchEvent(pointerEvent('pointerdown', { pointerId: 1, clientX: 10, clientY: 10 }));
+        // a pen moving and lifted somewhere else on the page
+        document.body.dispatchEvent(pointerEvent('pointermove', { pointerId: 2, pointerType: 'pen', clientX: 300, clientY: 10 }));
+        document.body.dispatchEvent(pointerEvent('pointerup', { pointerId: 2, pointerType: 'pen' }));
+        expect(ghost()).toBeNull();
+        expect(sorting(datasource)).toEqual([]);
+
+        label.dispatchEvent(pointerEvent('pointerup', { pointerId: 1, clientX: 10, clientY: 10 }));
+        expect(sorting(datasource)).toEqual([['age', true]]);
+    });
+
+    it('expect pointercancel to end the drag without a drop', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'firstname');
+        const center = zone(element, 'age', 'center');
+        pointerOver(center);
+
+        label.dispatchEvent(pointerEvent('pointerdown', { clientX: 10, clientY: 10 }));
+        label.dispatchEvent(pointerEvent('pointermove', { clientX: 250, clientY: 10 }));
+        expect(ghost()).not.toBeNull();
+        label.dispatchEvent(pointerEvent('pointercancel', { clientX: 250, clientY: 10 }));
+
+        expect(ghost()).toBeNull();
+        expect(headerOf(element).classList.contains('dragdrop-state')).toBe(false);
+        expect(center.classList.contains(HOVER)).toBe(false);
+
+        // the gesture is over: a pointerup after it neither drops nor sorts
+        label.dispatchEvent(pointerEvent('pointerup', { clientX: 250, clientY: 10 }));
+        expect(centerRows(gridInterface)).toEqual([['firstname'], ['lastname'], ['age']]);
+        expect(sorting(datasource)).toEqual([]);
+    });
+
+    it('expect a pen to drag like a mouse', async () => {
+        const { element, gridInterface } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'firstname');
+        pointerOver(zone(element, 'age', 'center'));
+
+        label.dispatchEvent(pointerEvent('pointerdown', { pointerType: 'pen', clientX: 10, clientY: 10 }));
+        label.dispatchEvent(pointerEvent('pointermove', { pointerType: 'pen', clientX: 250, clientY: 10 }));
+        label.dispatchEvent(pointerEvent('pointerup', { pointerType: 'pen', clientX: 250, clientY: 10 }));
+
+        expect(centerRows(gridInterface)).toEqual([['age'], ['lastname'], ['firstname']]);
+    });
+
+    it('expect label cells and group chips to keep the browser from scrolling under a finger', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        datasource.group([{ attribute: 'lastname', title: 'Lastname' }]);
+        await sleep(10);
+
+        expect(labelCell(element, 'age').style.touchAction).toBe('none');
+        expect((element.querySelector('.simple-html-grid-panel-label') as HTMLElement).style.touchAction).toBe('none');
+    });
+});
+
+describe('drag/drop - touch', () => {
+    const touch = { pointerType: 'touch' };
+
+    // the touch listeners of the grid (addScrollEventListeners) scroll this element
+    const bodyScroller = (element: GridElement) => element.querySelector('.simple-html-grid-body-scroller') as HTMLElement;
+
+    const touchEvent = (type: 'touchstart' | 'touchmove', target: Element, clientX: number, clientY: number) =>
+        new TouchEvent(type, { bubbles: true, cancelable: true, touches: [touchAt(target, clientX, clientY)] });
+
+    it('expect a tap on a label to sort', async () => {
+        const { element, datasource } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'age');
+
+        label.dispatchEvent(pointerEvent('pointerdown', touch));
+        label.dispatchEvent(pointerEvent('pointerup', touch));
+
+        expect(sorting(datasource)).toEqual([['age', true]]);
+    });
+
+    it('expect a finger held still for TOUCH_HOLD to drag, and the grid not to scroll under it', async () => {
+        const { element, gridInterface } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'firstname');
+        // the finger goes down on the text of the label, the touch events go there
+        const text = label.querySelector('[data-attribute-header]') as HTMLElement;
+        pointerOver(zone(element, 'age', 'center'));
+
+        text.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 10, clientY: 100 }));
+        text.dispatchEvent(touchEvent('touchstart', text, 10, 100));
+        expect(ghost()).toBeNull();
+        await sleep(TOUCH_HOLD + 20);
+        expect(ghost()).not.toBeNull();
+        expect(label.hasPointerCapture(1)).toBe(true);
+
+        // captured: the pointer events go to the label cell, the touch events stay on the text.
+        // Up 40px: a swipe like this scrolls the rows 40px (next test)
+        label.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 250, clientY: 60 }));
+        text.dispatchEvent(touchEvent('touchmove', text, 250, 60));
+        expect(bodyScroller(element).scrollTop).toBe(0);
+
+        label.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 250, clientY: 60 }));
+        expect(centerRows(gridInterface)).toEqual([['age'], ['lastname'], ['firstname']]);
+        expect(ghost()).toBeNull();
+    });
+
+    it('expect a finger that moves before TOUCH_HOLD to scroll the grid, not drag or sort', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'firstname');
+        const text = label.querySelector('[data-attribute-header]') as HTMLElement;
+        pointerOver(zone(element, 'age', 'center'));
+
+        text.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 10, clientY: 100 }));
+        text.dispatchEvent(touchEvent('touchstart', text, 10, 100));
+        text.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 10, clientY: 60 }));
+        text.dispatchEvent(touchEvent('touchmove', text, 10, 60));
+        text.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 10, clientY: 60 }));
+        await sleep(TOUCH_HOLD + 20);
+
+        // swiped up 40px: the rows scroll down 40px
+        expect(bodyScroller(element).scrollTop).toBe(40);
+        expect(ghost()).toBeNull();
+        expect(sorting(datasource)).toEqual([]);
+        expect(centerRows(gridInterface)).toEqual([['firstname'], ['lastname'], ['age']]);
+    });
+
+    it('expect a swipe on the rows to scroll the grid', async () => {
+        const { element } = await mountGrid(threeColumns(), data());
+        const cell = element.querySelector('input[data-attribute="firstname"]') as HTMLElement;
+
+        cell.dispatchEvent(touchEvent('touchstart', cell, 10, 300));
+        cell.dispatchEvent(touchEvent('touchmove', cell, 10, 250));
+
+        expect(bodyScroller(element).scrollTop).toBe(50);
     });
 });

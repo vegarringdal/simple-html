@@ -1,5 +1,5 @@
 import type { Grid } from '../grid';
-import { addBodyClickListener } from './addBodyClickListener';
+import { addMenuListeners } from './addMenuListeners';
 import { addScrollEventListeners } from './addScrollEventListeners';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
@@ -101,7 +101,7 @@ export function createDom(ctx: Grid) {
     rebuildTopPanel(ctx);
     rebuildFooter(ctx);
     addScrollEventListeners(ctx);
-    addBodyClickListener(ctx);
+    addMenuListeners(ctx);
     // the validation messages of the cells and the row selectors. The body is made once, the
     // `tooltips` option is read on every hover: updateConfig() can change it
     attachTooltips(body, () => tooltipsEnabled(ctx));

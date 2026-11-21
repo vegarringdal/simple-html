@@ -704,6 +704,130 @@ translation can be stored with the config in a backend.
   a `Record<TextId, string>` translation, and `@ts-expect-error` checks that `tooltipText`,
   `monthHeader`, a text that is not a string and changing `TEXTS` do not compile
 
+#### Menus and the filter editor on the platform
+
+The menus are popovers and the filter editor is a modal `<dialog>`: the browser shows them in the top
+layer, over everything on the page, and does the focus and Esc of the editor. Before, they were
+elements put on `document.body` by hand, with a z-index, and removed by hand.
+
+- ⚠️ **The menus are `popover="manual"`**: the row, header and filter menus, `openMenu()`, the column
+  chooser, the field and operator pickers of the filter editor and the date picker. In the top layer
+  a container with `overflow: hidden` does not cut them off, and no z-index puts anything over them.
+  They get the class `simple-html-grid-popover`, which undoes the browser's popover style; their
+  `position: absolute` moved from an inline style to it, the `z-index: 500` of `.simple-html-grid-menu`
+  and the date picker's inline `z-index: 2000` are gone. `manual` and not `auto`: where `contextmenu`
+  comes on the button press (macOS, Linux), the pointerup after it is outside the menu, and the
+  browser's light dismiss of an `auto` popover would close a right click menu as soon as it opened.
+  So the grid still closes them itself - one at a time, on a click outside, on scroll, when the grid
+  leaves the page - and `closeMenu()` and the `menus` hook are unchanged.
+- **Esc closes the open menu.** It is canceled (`preventDefault()`), so a modal dialog under the menu -
+  the filter editor - stays open. The column chooser stays open on Esc elsewhere, a click outside and
+  another menu (columns are dragged from it), and closes on Esc in its search field.
+- **A menu item does not take the focus** (its mousedown is canceled): the focus stays on the cell the
+  menu was opened from. When the focus is in a menu as it closes (a search field), it goes back to the
+  element that had it when the menu opened.
+- **A menu opened from an element in a `<dialog>` or a popover of the page is put inside it**, not on
+  the body: outside a modal dialog it would be inert, outside a `popover="auto"` a click in it would
+  close that popover. The filter editor's pickers and date picker are in its dialog.
+- ⚠️ **The filter editor is `<dialog class="simple-html-grid filter-editor-content">`, opened with
+  `showModal()`**. Modal, as the grey layer over the page made it before: the grid behind it can not be
+  used - now the keyboard can not reach it either (the focus used to stay on the cell). The grey layer
+  is its `::backdrop`; the `.filter-editor-container` element and the `.simple-html-grid` element in it
+  are gone, `.filter-editor-content` is the dialog itself. The browser moves the focus to the dialog
+  when it opens (it has `autofocus` and `tabindex="-1"`, so a value field does not get it and show the
+  keyboard on a phone) and gives it back when it closes. Esc closes it (a picker open in it first).
+- **The filter editor is dragged and resized with pointer events**: by its title bar, from every edge
+  and corner, with a mouse, a finger or a pen. The pointer is captured on the handle
+  (`setPointerCapture`), the title bar and the handles have `touch-action: none`. Only the primary
+  pointer with its main button; pointercancel stops where it got to.
+- **The filter editor is rendered again in the same dialog** on every edit (it was thrown away and made
+  again): lit keeps the elements, so the place, the size and the focus stay. The value fields use
+  `live()`. Closed and opened again, it is in the middle of the window.
+- **The tooltip is put in the dialog or popover of the element it describes** (the filter editor, a
+  menu), else on the body as before: on the body it would be behind them. Hidden, it is out of the
+  document, so a closed dialog is not kept in memory by it.
+- Fixed: on a scrolled page the menus were off by the scroll (viewport coordinates on an absolute
+  element). They are placed from the top left of the page, and move with it when it scrolls.
+- The css of the editor's value fields is `.filter-editor-content .grid-condition input` / `textarea`
+  (was `.simple-html-grid .filter-editor-content input`): the menus in the dialog keep their own look.
+- Browser support: `showPopover()` / `hidePopover()` are in every browser since April 2024 (MDN; MDN
+  lists the Popover API as a whole, with parts the grid does not use, as Baseline 2025), `<dialog>`
+  long before.
+- Docs: `guides/10-menus.md` "How a menu opens and closes", the filter editor in
+  `guides/06-filtering.md`, the JSDoc of `openMenu()`, `closeMenu()` and `openFilterEditor()`,
+  `MIGRATION.md` "The menus are popovers, the filter editor is a modal dialog".
+- Internal: `openMenuElement()` (shows an element as the grid's menu), `placeMenu()`, `moveMenu()` and
+  `popoverParent()` in `showMenu.ts`, used by every menu; `closePopover()` in `removeContextMenu.ts`
+  gives the focus back. `addBodyClickListener.ts` is `addMenuListeners.ts`: the click and keydown
+  listeners on the document, removed with an `AbortController` (`Grid.menuListenersAbort`, was
+  `clickListener: any`). `Grid.filterEditorContainer` is `Grid.filterEditor` (the dialog), new
+  `Grid.menuReturnFocus`; `closeFilterEditor()` closes it for its buttons, after Esc (the `close`
+  event) and when the grid leaves the page. The editor's drag and resize use `followPointer()`.
+- tests: happy-dom 20.11 has `<dialog>`'s `show()` / `showModal()` / `close()` (they set `open`,
+  `close()` sends `close` at once), but no top layer, no inert page, no focus moved or given back, and
+  Esc does nothing (no `cancel`). It has the `popover` attribute but no `showPopover()` /
+  `hidePopover()`, no `toggle` events, no light dismiss. `src/__tests__/popoverStub.ts` (loaded by the
+  new `vitest.config.ts`) adds a minimal `showPopover()` / `hidePopover()` that keeps whether a popover
+  is shown (`isPopoverShown()`) and throws as a browser does without the attribute or out of the
+  document. The rest - the top layer, inertness, focus into and out of the dialog, Esc closing it - is
+  checked by reading the HTML spec; the tests check what the grid does around it. `filterEditor.test.ts`
+  (the dialog, modal, autofocus, rendered in place, closing, Esc, its menus in the dialog, drag and
+  resize from all 8 handles by pointer, touch, pointercancel, a second pointer, kept in the window,
+  minimum size), `gridMenus.test.ts` (popover, Esc, focus back, an item keeps the focus, dialogs and
+  popovers of the page, page scroll, the column chooser, a dropdown grid's own menu),
+  `datePickerCell.test.ts` and `gridLifecycle.test.ts` (the document listeners are aborted).
+
+#### Touch and pen
+
+Column drag/drop and resizing listen to pointer events, not mouse events: moving, resizing and
+sorting in the header work with a mouse, a pen and a finger.
+
+- ⚠️ **Pointer events, not mouse events**: the header labels, the group chips, the fields of the column
+  chooser and the resize handles listen to `pointerdown` / `pointermove` / `pointerup` /
+  `pointercancel`. Code that sends them mouse events (tests, scripts) has to send pointer events, see
+  `MIGRATION.md`.
+- ⚠️ **A click is a press that does not move**: it sorts however long it is held, a press that moves
+  5px is a drag. v5 went by time: held for 200ms was a drag, a quick drag was a click and sorted.
+- **Touch**: a finger held still on a label for 200ms drags it, a finger that moves sooner scrolls
+  the grid (as on the rows), a tap sorts. A finger on a resize handle resizes. The grid does not
+  scroll under a finger that drags or resizes. Labels, chips, chooser fields and resize handles get
+  `touch-action: none`, so the browser does not pan the page under them (and cancel the pointer).
+- **Pen**: as a mouse.
+- Only the primary pointer with its main button drags or resizes - the left mouse button, the first
+  finger, the pen's tip. A right click or a second finger does nothing (the resize handle took any
+  mouse button).
+- **pointercancel** (the browser takes the pointer: a system gesture, the pen leaves the screen ...)
+  ends a drag without a drop, and gives a column being resized its width back.
+- The drop target is what the browser's hit test (`elementFromPoint`) finds under the pointer, and the
+  drag highlights it - on touch as well. The drop zones and the panel lost their mouse enter/leave/move
+  handlers.
+- Fixed: the element that follows the pointer was `position: absolute` at viewport coordinates: on a
+  scrolled page it was off by the scroll. It is `position: fixed`, and `pointer-events: none` (inline).
+- Fixed: a label dropped on the panel of another grid on the page grouped its own grid on the field.
+- Touch scrolling is unchanged: touch events, a swipe moves the rows and columns by the finger's
+  distance, without momentum.
+- Docs: `guides/02-grid-config.md` "Moving and resizing columns" (linked from getting started, state and
+  sorting), `MIGRATION.md` "Column drag/drop and resizing use pointer events".
+- Internal: `followPointer()` and `isPrimaryPress()` (`src/grid/gridFunctions/followPointer.ts`) follow
+  one pointer from pointerdown to pointerup/pointercancel, for the drag/drop and the resize handle. The
+  listeners are on the document, filtered by `pointerId`. The dragged cell captures the pointer
+  (`setPointerCapture`) once the press is a drag - before that a click on a child (the remove icon of a
+  group chip) still reaches the child; the resize handle captures on pointerdown.
+- tests: `columnDragDrop.test.ts` - every drop target, click or drag (`DRAG_DISTANCE`, a slow click,
+  shift), the ghost and the highlighted target, capture only once dragging, empty label cells, primary
+  pointer and left button only, the events of another pointer, pointercancel, a pen, another grid's
+  panel, `touch-action`, and touch: a tap, held for `TOUCH_HOLD` then dragged (the grid does not scroll),
+  a swipe (scrolls, no drag, no sort), a swipe on the rows. New `columnResize.test.ts` - follows the
+  pointer, rebuilds once on release, 25px minimum, pinned left and right, pointercancel, primary only, a
+  finger. The helpers `pointerEvent()` (happy-dom's defaults are not a browser's: `isPrimary` false,
+  `pointerId` 0, no bubbling), `pointerOver()` (happy-dom does no layout, `elementFromPoint` is always
+  null), `touchAt()` and `resizeHandle()`; `dragAndDrop()` and `dragResizeHandle()` send pointer events.
+  happy-dom 20.11 has `PointerEvent`, `TouchEvent` and `setPointerCapture` / `hasPointerCapture` /
+  `releasePointerCapture`, but capture is bookkeeping only: no retargeting, no `gotpointercapture` /
+  `lostpointercapture`, no implicit release.
+- the touch scrolling looked up `' simple-html-grid-middle-scroller'` (a leading space); browsers ignore
+  it, happy-dom threw.
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

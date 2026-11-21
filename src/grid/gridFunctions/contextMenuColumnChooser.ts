@@ -7,40 +7,48 @@ import { dragEvent } from './dragEvent';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { removeContextMenu } from './removeContextMenu';
+import { closePopover, removeContextMenu } from './removeContextMenu';
+import { moveMenu, popoverParent } from './showMenu';
 
 // might want to add this as part of context, so I can share it?
 let currentColumnSearchvalue = '';
 
 /**
- * ctx is part of filter editor
- * @param cell
- * @param callback
+ * The column chooser, from the header menu: the fields the grid knows, to drag into the header.
+ *
+ * A `popover="manual"` of its own, apart from the grid's menu (ctx.contextMenu): it stays open while
+ * columns are dragged from it and the grid is used, a click outside or another menu does not close
+ * it. Its Close button does, Esc while the focus is in it (its search field), and the grid leaving
+ * the page.
  */
 export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTMLElement) {
     removeContextMenu(ctx);
+    // one at a time
+    ctx.columnChooserMenu?.remove();
 
     const contextMenu = createElement('div', 'simple-html-grid');
-    contextMenu.classList.add('simple-html-grid-reset');
-    if (ctx.columnChooserMenu?.parentElement) {
-        document.body.removeChild(ctx.columnChooserMenu);
-    }
-
-    let controller = new AbortController();
-
-    const rect = cell.getBoundingClientRect();
-
-    contextMenu.style.position = 'absolute';
-    contextMenu.style.top = asPx(rect.bottom + 50);
-    contextMenu.style.left = asPx(event.clientX - 65);
+    contextMenu.classList.add('simple-html-grid-reset', 'simple-html-grid-popover');
+    contextMenu.popover = 'manual';
     contextMenu.style.minWidth = asPx(130);
 
-    if (event.clientX + 70 > window.innerWidth) {
-        contextMenu.style.left = asPx(window.innerWidth - 150);
-    }
-    if (event.clientX - 65 < 0) {
-        contextMenu.style.left = asPx(5);
-    }
+    // the focus goes back here when the chooser closes with the focus in it, see closePopover
+    const returnFocus = document.activeElement;
+    const close = () => {
+        // or disconnectElement tries to remove it again
+        if (ctx.columnChooserMenu === contextMenu) {
+            ctx.columnChooserMenu = null;
+        }
+        closePopover(contextMenu, returnFocus);
+    };
+    contextMenu.addEventListener('keydown', (keyEvent) => {
+        if (keyEvent.key === 'Escape' && !keyEvent.defaultPrevented) {
+            // not the grid's menu, not a dialog the chooser is in
+            keyEvent.preventDefault();
+            close();
+        }
+    });
+
+    let controller = new AbortController();
 
     const reRender = () => {
         const attributes = Object.keys(ctx.gridInterface.__getGridConfig().columns) || [];
@@ -79,14 +87,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
                 <div class="simple-html-grid-menu-section">${gridText(ctx, 'columnChooser.title')}</div>
                 <hr class="hr-solid" />
                 ${searchInput()} ${list()}
-                <div
-                    class="simple-html-label-button-menu-bottom"
-                    @click=${() => {
-                        contextMenu.remove();
-                        // or disconnectElement tries to remove it again
-                        ctx.columnChooserMenu = null;
-                    }}
-                >
+                <div class="simple-html-label-button-menu-bottom" @click=${() => close()}>
                     ${gridText(ctx, 'columnChooser.close')}
                 </div>
             </div>`,
@@ -99,7 +100,19 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
         }
     };
     ctx.columnChooserMenu = contextMenu;
-    document.body.appendChild(contextMenu);
+    popoverParent(cell).appendChild(contextMenu);
+    contextMenu.showPopover();
+
+    // under the header, around the mouse
+    const rect = cell.getBoundingClientRect();
+    let left = event.clientX - 65;
+    if (event.clientX + 70 > window.innerWidth) {
+        left = window.innerWidth - 150;
+    }
+    if (event.clientX - 65 < 0) {
+        left = 5;
+    }
+    moveMenu(contextMenu, left, rect.bottom + 50);
 
     reRender();
 }

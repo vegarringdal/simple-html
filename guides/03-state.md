@@ -9,7 +9,7 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 
 | part | what it is |
 | --- | --- |
-| `layout` | the column order, pinning and widths: the user drags, pins, hides and resizes columns |
+| `layout` | the column order, pinning and widths: the user drags, pins, hides and resizes columns, see [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns) |
 | `sorting` | the sort, as `datasource.getLastSorting()`. When grouped, the grouped fields come first |
 | `grouping` | the grouping, as `datasource.getGrouping()` |
 | `expandedGroups` | the ids of the expanded groups |

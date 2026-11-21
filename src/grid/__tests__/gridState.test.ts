@@ -63,7 +63,7 @@ const headerLabel = (element: GridElement, field: string) =>
  */
 async function changeEverything(element: GridElement, datasource: Datasource) {
     const target = labelCell(element, 'firstname').querySelector('.simple-html-grid-drop-zone-left') as HTMLElement;
-    await dragAndDrop(labelCell(element, 'lastname'), target);
+    dragAndDrop(labelCell(element, 'lastname'), target);
     dragResizeHandle(element, 0, 50);
     openLabelMenu(element, 'age');
     menuItem('Pin left').click();

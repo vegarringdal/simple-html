@@ -1,11 +1,31 @@
 import type { Grid } from '../grid';
 
+/**
+ * Closes the grid's open menu, see openMenuElement. Does nothing when no menu is open.
+ */
 export function removeContextMenu(ctx: Grid) {
-    if (ctx.contextMenu) {
-        if (ctx.contextMenu.parentElement) {
-            ctx.contextMenu.parentElement.removeChild(ctx.contextMenu);
-        }
+    const menu = ctx.contextMenu;
+    const returnFocus = ctx.menuReturnFocus;
+    ctx.contextMenu = null;
+    ctx.menuReturnFocus = null;
+    if (menu) {
+        closePopover(menu, returnFocus);
+    }
+}
 
-        ctx.contextMenu = null;
+/**
+ * Takes a menu (a popover) off the page: removed from the dom, the browser hides it and takes it out
+ * of the top layer as well.
+ *
+ * When the focus is in it - a search field of the menu - the focus goes back to `returnFocus`, the
+ * element that had it when the menu opened (the cell or header filter it was opened from). Removing
+ * the element with the focus would leave the focus on the body.
+ */
+export function closePopover(popover: HTMLElement, returnFocus: Element | null) {
+    const hadFocus = popover.contains(document.activeElement);
+    popover.remove();
+    if (hadFocus && returnFocus instanceof HTMLElement && returnFocus.isConnected) {
+        // the cell is where it was when the menu opened, the grid must not scroll to it
+        returnFocus.focus({ preventScroll: true });
     }
 }

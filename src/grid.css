@@ -948,11 +948,33 @@ input {
     background-color: var(--simple-html-grid-main-bg-selected-odd);
 }
 
+/**
+ * The menus - the row, header and filter menus, openMenu(), the column chooser, the pickers of the
+ * filter editor and the date picker - are popovers (popover="manual"): shown in the top layer, over
+ * everything on the page, so no z-index. The element is a .simple-html-grid with this class.
+ *
+ * The browser's popover style is undone: it centers a popover (position: fixed, inset: 0,
+ * margin: auto) and gives it padding. The grid sets left/top itself, from the top left of the page
+ * (position: absolute in the top layer), so a menu moves with the page when the page scrolls, as it
+ * did on the body. Border, background and colour come from .simple-html-grid and
+ * .simple-html-grid-reset, as before. Two classes: .simple-html-grid sets position: relative.
+ */
+.simple-html-grid.simple-html-grid-popover {
+    position: absolute;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+}
+
+/* the browser hides a popover that is not open with display: none, .simple-html-grid would show it */
+.simple-html-grid.simple-html-grid-popover:not(:popover-open) {
+    display: none;
+}
+
 .simple-html-grid .simple-html-grid-menu {
     display: flex;
     flex-direction: column;
     position: relative;
-    z-index: 500;
     background-color: var(--simple-html-grid-main-bg-color);
     box-shadow: 10px 5px 5px black;
     border: 1px solid var(--simple-html-grid-main-bg-border);
@@ -1280,27 +1302,20 @@ input {
  * filter editor css
  */
 
-.filter-editor-container {
-    position: fixed;
-    background-color: rgba(129, 127, 127, 0.2);
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    overflow: hidden;
-    z-index: 500;
-}
-
 /**
- * left/top are set from renderFilterEditor so the dialog can be dragged, the size here is
- * only the starting size - the user can resize from the bottom right corner
+ * The filter editor is a modal <dialog class="simple-html-grid filter-editor-content">, opened with
+ * showModal(): in the top layer, over everything on the page, the page behind it inert.
+ * The browser's dialog style is replaced: it centers a dialog (inset: 0, margin: auto), gives it
+ * padding, a border, a max size and its own colours. left/top are set from renderFilterEditor so the
+ * dialog can be dragged, the size here is only the starting size - the user can resize it from every
+ * edge and corner. Two classes: .simple-html-grid sets position: relative and a border.
  */
-.simple-html-grid .filter-editor-content {
+.simple-html-grid.filter-editor-content {
     background-color: var(--simple-html-grid-main-bg-color);
     position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
     width: 650px;
     height: 650px;
     min-width: 460px;
@@ -1314,110 +1329,124 @@ input {
     box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
 }
 
+/* the browser hides a dialog that is not open with display: none, .simple-html-grid would show it */
+.simple-html-grid.filter-editor-content:not([open]) {
+    display: none;
+}
+
+/* the grey layer over the page behind the editor (was the .filter-editor-container element) */
+.simple-html-grid.filter-editor-content::backdrop {
+    background: rgba(129, 127, 127, 0.2);
+}
+
 /**
  * Resize grab areas, one per edge and one per corner.
  * css `resize` only offers the bottom right corner, so these are wired up in
- * renderFilterEditor instead.
+ * renderFilterEditor instead, with pointer events.
  */
-.simple-html-grid .filter-editor-content .simple-html-resize-handle {
+.simple-html-grid.filter-editor-content .simple-html-resize-handle {
     position: absolute;
     z-index: 2;
+    /* a finger on a handle resizes, it does not scroll or zoom the page */
+    touch-action: none;
 }
 
-.simple-html-grid .filter-editor-content .handle-n,
-.simple-html-grid .filter-editor-content .handle-s {
+.simple-html-grid.filter-editor-content .handle-n,
+.simple-html-grid.filter-editor-content .handle-s {
     left: 0;
     right: 0;
     height: 5px;
     cursor: ns-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-n {
+.simple-html-grid.filter-editor-content .handle-n {
     top: 0;
 }
 
-.simple-html-grid .filter-editor-content .handle-s {
+.simple-html-grid.filter-editor-content .handle-s {
     bottom: 0;
 }
 
-.simple-html-grid .filter-editor-content .handle-w,
-.simple-html-grid .filter-editor-content .handle-e {
+.simple-html-grid.filter-editor-content .handle-w,
+.simple-html-grid.filter-editor-content .handle-e {
     top: 0;
     bottom: 0;
     width: 5px;
     cursor: ew-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-w {
+.simple-html-grid.filter-editor-content .handle-w {
     left: 0;
 }
 
-.simple-html-grid .filter-editor-content .handle-e {
+.simple-html-grid.filter-editor-content .handle-e {
     right: 0;
 }
 
 /* corners sit on top of the edges, so the diagonal cursor wins there */
-.simple-html-grid .filter-editor-content .handle-nw,
-.simple-html-grid .filter-editor-content .handle-ne,
-.simple-html-grid .filter-editor-content .handle-sw,
-.simple-html-grid .filter-editor-content .handle-se {
+.simple-html-grid.filter-editor-content .handle-nw,
+.simple-html-grid.filter-editor-content .handle-ne,
+.simple-html-grid.filter-editor-content .handle-sw,
+.simple-html-grid.filter-editor-content .handle-se {
     width: 12px;
     height: 12px;
     z-index: 3;
 }
 
-.simple-html-grid .filter-editor-content .handle-nw {
+.simple-html-grid.filter-editor-content .handle-nw {
     top: 0;
     left: 0;
     cursor: nwse-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-ne {
+.simple-html-grid.filter-editor-content .handle-ne {
     top: 0;
     right: 0;
     cursor: nesw-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-sw {
+.simple-html-grid.filter-editor-content .handle-sw {
     bottom: 0;
     left: 0;
     cursor: nesw-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-se {
+.simple-html-grid.filter-editor-content .handle-se {
     bottom: 0;
     right: 0;
     cursor: nwse-resize;
 }
 
-.simple-html-grid .filter-editor-content .filter-editor-titlebar {
+.simple-html-grid.filter-editor-content .filter-editor-titlebar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: move;
     user-select: none;
+    /* a finger on the titlebar moves the dialog, it does not scroll the page */
+    touch-action: none;
     margin: 0;
     padding: 4px 8px;
 }
 
-.simple-html-grid .filter-editor-content .filter-editor-close {
+.simple-html-grid.filter-editor-content .filter-editor-close {
     cursor: pointer;
     padding: 0 6px;
     border-radius: 3px;
     font-size: var(--simple-html-grid-font-size);
 }
 
-.simple-html-grid .filter-editor-content .filter-editor-close:hover {
+.simple-html-grid.filter-editor-content .filter-editor-close:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .filter-editor-content .filter-editor-footer {
+.simple-html-grid.filter-editor-content .filter-editor-footer {
     border-top: 1px solid var(--simple-html-grid-main-bg-border);
     padding-top: 6px;
     margin-bottom: 8px;
 }
 
-.simple-html-grid .filter-editor-content .grid-button {
+.simple-html-grid.filter-editor-content .grid-button {
     min-width: 100px;
     margin: 2px;
     padding: 3px 6px;
@@ -1427,11 +1456,11 @@ input {
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .filter-editor-content .grid-button:hover {
+.simple-html-grid.filter-editor-content .grid-button:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .filter-editor-content .grid-button-primary {
+.simple-html-grid.filter-editor-content .grid-button-primary {
     font-weight: var(--simple-html-grid-font-weight-header);
     border-color: var(--simple-html-grid-pinned-border);
 }
@@ -1439,7 +1468,7 @@ input {
 /**
  * the "click me to select ..." cells that open the attribute/operator menus
  */
-.simple-html-grid .filter-editor-content .grid-pick {
+.simple-html-grid.filter-editor-content .grid-pick {
     cursor: pointer;
     border-radius: 3px;
     border: 1px dashed var(--simple-html-grid-main-bg-border);
@@ -1447,11 +1476,11 @@ input {
     padding: 1px 2px;
 }
 
-.simple-html-grid .filter-editor-content .grid-pick:hover {
+.simple-html-grid.filter-editor-content .grid-pick:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .filter-editor-content .grid-button-small {
+.simple-html-grid.filter-editor-content .grid-button-small {
     min-width: 40px;
     margin: 2px;
     padding: 1px;
@@ -1460,70 +1489,71 @@ input {
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .filter-editor-content .grid-button-small:hover {
+.simple-html-grid.filter-editor-content .grid-button-small:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .filter-editor-content .grid-flex-reverse {
+.simple-html-grid.filter-editor-content .grid-flex-reverse {
     display: flex;
     flex-direction: row-reverse;
 }
 
-.simple-html-grid .filter-editor-content .grid-flex {
+.simple-html-grid.filter-editor-content .grid-flex {
     display: flex;
 }
 
-.simple-html-grid .filter-editor-content .grid-mt-6 {
+.simple-html-grid.filter-editor-content .grid-mt-6 {
     margin-top: 6px;
 }
 
-.simple-html-grid .filter-editor-content .grid-m-4 {
+.simple-html-grid.filter-editor-content .grid-m-4 {
     margin: 4px;
 }
 
-.simple-html-grid .filter-editor-content .grid-flex-1 {
+.simple-html-grid.filter-editor-content .grid-flex-1 {
     flex: 1 1 0%;
 }
 
-.simple-html-grid .filter-editor-content .grid-flex-column {
+.simple-html-grid.filter-editor-content .grid-flex-column {
     display: flex;
     flex-direction: column;
 }
 
-.simple-html-grid .filter-editor-content .grid-sub-group {
+.simple-html-grid.filter-editor-content .grid-sub-group {
     margin-left: 10px;
 }
 
-.simple-html-grid .filter-editor-content .grid-condition {
+.simple-html-grid.filter-editor-content .grid-condition {
     border-bottom: 1px dashed var(--simple-html-grid-main-bg-border);
     border-left: 1px dashed var(--simple-html-grid-main-bg-border);
     padding: 2px;
     padding-top: 5px;
 }
 
-.simple-html-grid .filter-editor-content .grid-group {
+.simple-html-grid.filter-editor-content .grid-group {
     border-bottom: 1px dashed var(--simple-html-grid-main-bg-border);
     border-left: 1px dashed var(--simple-html-grid-main-bg-border);
     padding: 2px;
     padding-top: 5px;
 }
 
-.simple-html-grid .filter-editor-content .grid-group-indent {
+.simple-html-grid.filter-editor-content .grid-group-indent {
     padding: 2px;
     padding-top: 5px;
 }
 
-.simple-html-grid .filter-editor-content .grid-text-center {
+.simple-html-grid.filter-editor-content .grid-text-center {
     text-align: center;
 }
 
 /**
  * Built in tooltip.
  *
- * The element is created once and lives on document.body, positioned from js - see
- * gridFunctions/tooltip.ts. It cannot be a ::after on the element it describes, because
+ * The element is created once and shown on document.body - or in the dialog or menu of the
+ * element it describes, so it is not hidden behind them in the top layer - positioned from js,
+ * see gridFunctions/tooltip.ts. It cannot be a ::after on the element it describes, because
  * the filter editor clips its content (overflow hidden, needed for resize) and the
- * tooltip would be cut off at the edges.
+ * tooltip would be cut off at the edges; position: fixed is not.
  *
  * data-tooltip is always written to the elements. The `tooltips` grid config option, on
  * by default, decides whether this built in one is rendered - turn it off and hook up
@@ -1552,7 +1582,7 @@ input {
     pointer-events: none;
 }
 
-.simple-html-grid .filter-editor-content .grid-text-title {
+.simple-html-grid.filter-editor-content .grid-text-title {
     font-family: var(--simple-html-grid-font-family);
     font-size: medium;
     font-weight: var(--simple-html-grid-font-weight-cell);
@@ -1561,7 +1591,7 @@ input {
     border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .filter-editor-content .grid-text-label {
+.simple-html-grid.filter-editor-content .grid-text-label {
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
@@ -1585,28 +1615,31 @@ input {
  * fields, but it is a button you click - it should not be dimmed like a caption.
  * Comes after the rule above so it wins on background too.
  */
-.simple-html-grid .filter-editor-content .grid-button-small.grid-text-label {
+.simple-html-grid.filter-editor-content .grid-button-small.grid-text-label {
     filter: none;
     background-color: transparent;
 }
 
-.simple-html-grid .filter-editor-content .grid-button-small.grid-text-label:hover {
+.simple-html-grid.filter-editor-content .grid-button-small.grid-text-label:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .filter-editor-content .grid-overflow-auto {
+.simple-html-grid.filter-editor-content .grid-overflow-auto {
     overflow: auto;
 }
 
-.simple-html-grid .filter-editor-content .grid-w-full {
+.simple-html-grid.filter-editor-content .grid-w-full {
     width: 100%;
 }
 
-.simple-html-grid .filter-editor-content .grid-h-full {
+.simple-html-grid.filter-editor-content .grid-h-full {
     height: 100%;
 }
 
-.simple-html-grid .filter-editor-content input {
+/* the value field of a condition. In .grid-condition: the editor's menus and the date picker are in
+ * the dialog too (see popoverParent), they keep their own look. Two classes, as before: the :focus
+ * rules below still win */
+.filter-editor-content .grid-condition input {
     background-color: var(--simple-html-grid-sec-bg-color);
     outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
@@ -1619,7 +1652,7 @@ input {
     padding: 3px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
-.simple-html-grid .filter-editor-content textarea {
+.filter-editor-content .grid-condition textarea {
     background-color: var(--simple-html-grid-sec-bg-color);
     outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);

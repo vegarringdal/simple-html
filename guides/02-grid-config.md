@@ -60,6 +60,25 @@ The type of a column comes from the datasource's `fields`, not from the config, 
 fill in has the `required` rule, which also shows its empty cells with stripes - see
 [Validation](05-editing.md#validation). The `mandatory` column option of v5 is gone.
 
+### Moving and resizing columns
+
+The user changes the layout in the header, with a mouse, a pen or a finger:
+
+- **Move**: drag a label. While it is dragged the header shows where it can go: the left or right
+  edge of a label makes the field a column of its own on that side, the top or bottom edge stacks it
+  in that column, the middle swaps the two fields. Dropped on the panel above the header, the rows
+  are grouped on it, see [Grouping](07-sorting-grouping.md#grouping). Dragged past the left or right
+  side of the grid, the columns scroll.
+- **Resize**: drag the edge of a column's header - the right edge, the left one for a column pinned
+  right. A column is at least 25px wide.
+- **Sort**: click a label, see [Sorting](07-sorting-grouping.md#sorting).
+
+A press on a label is a click until it is a drag: with a mouse or a pen once it has moved 5px, with a
+finger once it has been held still for 200ms. A finger that moves sooner scrolls the grid, as a swipe
+on the rows does. Only the left mouse button, the first finger or the pen's tip drag and resize.
+
+What the user makes of the layout is part of the grid's [state](03-state.md): `getState().layout`.
+
 ### The column label
 
 A column's header shows the first of:

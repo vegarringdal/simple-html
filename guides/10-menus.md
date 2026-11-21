@@ -11,6 +11,32 @@ The grid has three right click menus:
 Each is a list of entries with ids. The `menus` hook changes them: hide entries, reorder them,
 change their labels, add your own. `openMenu()` opens a menu of your own, in the same style.
 
+## How a menu opens and closes
+
+Every menu of the grid - the three right click menus, `openMenu()`, the column chooser, the field
+and operator pickers of the filter editor and the date picker - is a popover (`popover="manual"`):
+the browser shows it in the top layer, over everything on the page. A container with
+`overflow: hidden` does not cut it off, and no z-index puts something over it. It is on
+`document.body`, or inside the `<dialog>` (the filter editor, or one of yours) or the popover of yours
+that the element it opens from is in: everything outside a modal dialog is inert, a menu there could
+not be clicked. A menu has the classes `simple-html-grid simple-html-grid-popover`.
+
+- There is one menu at a time: opening one closes the one before.
+- It closes on a click outside it, on Esc, when another menu opens, on scroll (with
+  `autoRemoveContextMenuOnScrollEvent: true`) and when the grid leaves the page. Clicking an item
+  closes it too, then runs the item's action; a click in a block does not.
+- An item does not take the focus: it stays on the cell the menu was opened from. When the focus is
+  in the menu as it closes - a search field - it goes back to the element that had it when the menu
+  opened.
+- The column chooser is a panel more than a menu: it stays open while you drag columns from it into
+  the header, and when another menu opens. It closes with its Close button, Esc in its search field,
+  and when the grid leaves the page.
+
+Why `manual` and not `auto`, which would close it on a click outside and Esc by itself: where the
+browser sends `contextmenu` on the button press (macOS, Linux), the pointerup that follows is outside
+the menu, and an `auto` popover would be closed by it the moment a right click opened it. So the grid
+closes its menus itself, the same way everywhere.
+
 ## Changing the grid's menus
 
 The `menus` hook has a function per menu: `row`, `header` and `filter`. It gets the grid's own
@@ -225,9 +251,12 @@ The menu is kept in the window: it opens above when there is no room below, and 
 sticks out on the right.
 
 - There is one menu at a time: opening one closes the one before, the grid's own too.
-- The grid closes it as its own menus: on a click outside it, when another menu opens, on scroll
-  (with `autoRemoveContextMenuOnScrollEvent: true`) and when the grid leaves the page. Opened from a
-  click handler, it stays open: that click does not count as a click outside.
+- The grid closes it as its own menus: on a click outside it, on Esc, when another menu opens, on
+  scroll (with `autoRemoveContextMenuOnScrollEvent: true`) and when the grid leaves the page, see
+  [above](#how-a-menu-opens-and-closes). Opened from a click handler, it stays open: that click does
+  not count as a click outside.
+- Opened from an element in a `<dialog>` of yours, or a popover, it is put in that element, so it can
+  be used there.
 - `gridInterface.closeMenu()` closes the open menu from code.
 - The callbacks of its entries get a context with `menu: 'custom'` and no field, row or cell: let
   them use what they were made for, as `pick` above.
@@ -236,8 +265,9 @@ sticks out on the right.
 ## A dropdown grid as a block
 
 A `MenuBlock` shows an element of yours in the menu: a second grid as a dropdown, a form, a color
-picker. The grid puts it on the page, places it and closes it as any menu. A click in the block does
-not close the menu: call `closeMenu()` when the user has picked.
+picker. The grid puts it on the page, places it and closes it as any menu - Esc too, also when the
+focus is in the block. A click in the block does not close the menu: call `closeMenu()` when the user
+has picked. The dropdown grid's own menus open over it.
 
 ```ts
 import { Datasource, type GridConfig, type GridElement, GridInterface } from '@simple-html/grid';

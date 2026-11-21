@@ -118,6 +118,13 @@ click on AND / OR in a group switches it. "Filter & Close" and "Filter Only" app
 leaves the filter as it was. A condition with no field or operator picked is left out when it is
 applied. Applying it empties the header filter cells.
 
+It is a modal `<dialog>`, over everything on the page: the grid behind it can not be used while it is
+open. The focus moves to the dialog when it opens, and goes back to where it was when it closes. Esc
+closes it - or the field, operator or date picker open in it, then Esc again closes the editor. Drag
+it by its title bar, resize it from any edge or corner: with the mouse, a finger or a pen. It keeps
+its place and size while it is open, and opens in the middle of the window again. The dialog is
+`<dialog class="simple-html-grid filter-editor-content">`, the grey layer behind it its `::backdrop`.
+
 Its texts - the buttons, the labels, the names of the operators, the tooltips - are `filterEditor.*`,
 those of the header filter menu and its value list `filter.*`: see [Texts](12-texts.md#filter-editor).
 

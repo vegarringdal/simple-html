@@ -1,13 +1,12 @@
 import { html, render } from 'lit-html';
 import type { FilterOperator } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
-import { asPx } from './asPx';
 import { createElement } from './createElement';
 import { gridText } from './gridText';
-import { removeContextMenu } from './removeContextMenu';
+import { openMenuElement, placeMenu, placeUnderCell } from './showMenu';
 
 /**
- * the operator picker of the filter editor
+ * the operator picker of the filter editor, the grid's menu (one at a time, closed as the others)
  * @param cell
  * @param callback gets the picked operator
  */
@@ -17,23 +16,8 @@ export function contextMenuOperator(
     cell: HTMLElement,
     callback: (operator: FilterOperator) => void
 ) {
-    removeContextMenu(ctx);
-
     const contextMenu = createElement('div', 'simple-html-grid');
     contextMenu.classList.add('simple-html-grid-reset');
-    const rect = cell.getBoundingClientRect();
-
-    contextMenu.style.position = 'absolute';
-    contextMenu.style.top = asPx(rect.bottom + 2);
-    contextMenu.style.left = asPx(event.clientX - 65);
-    contextMenu.style.minWidth = asPx(130);
-
-    if (event.clientX + 70 > window.innerWidth) {
-        contextMenu.style.left = asPx(window.innerWidth - 150);
-    }
-    if (event.clientX - 65 < 0) {
-        contextMenu.style.left = asPx(5);
-    }
 
     const operators: FilterOperator[] = [
         'EQUAL',
@@ -72,6 +56,7 @@ export function contextMenuOperator(
         contextMenu
     );
 
-    document.body.appendChild(contextMenu);
-    ctx.contextMenu = contextMenu;
+    // in the editor's dialog: a menu outside a modal dialog can not be clicked, see popoverParent
+    openMenuElement(ctx, contextMenu, cell);
+    placeMenu(contextMenu, placeUnderCell(event, cell));
 }
