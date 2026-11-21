@@ -1406,6 +1406,102 @@ in the console. All passed. Found and fixed:
 * tests: status.test.ts (the plan parsing, the section, the links, the remote url, git and the action's
   variables, no git), site.test.ts (the build line and the page in the built site)
 
+### Group rows: a +/- box and the lines of the levels (user request)
+
+* the user: "the + and - looks not very nice, should be more typical + - with border, and the line for
+  grouping should go all the way down"
+* renderRowGroup.ts: the toggle is an 11px svg box (frame + sign, crisp at 1x: half pixel coordinates),
+  centered in the 15px column of its level; `.simple-html-grid-group-levels` (the lines of the groups the
+  row is in) and `.simple-html-grid-group-line` (an expanded group's line from the middle of the name
+  line down; the box's fill covers its top) are in the row's full height container, so they go through
+  the aggregate lines too
+* grid.css: the lines are one background gradient, a 1px line in the middle of each 15px column; the data
+  rows' grouping column (`.simple-html-grid-grouping-row`) has it over all levels, no bottom border and
+  no inset shadow any more, so the lines read as one. `GROUP_LEVEL_WIDTH` (getGroupingWidth.ts) replaces
+  the 15 in the code; grid.css has it too (said in both)
+* new `--simple-html-grid-group-line-color` instead of reusing the unused `--simple-html-grid-grouping-border`:
+  the old dark sample (grid01) sets that one to the row background's dark, the lines would vanish there
+* tests: groupRowLook.test.ts (the box's sign collapsed/expanded, the lines' elements, widths and places by
+  level, after a collapse, the data rows' column per level, with aggregates the lines in the full height
+  container). Browser: group-look.js / group-look2.js screenshots at 3x, light and dark: two levels, a
+  group's end, a collapsed group, a row with aggregates
+
+### Live data: the flash of a merge, the look of a conflict (item 38)
+
+* `GridConfig.mergeHighlight` (default on, harmless without upsert: no merge times): showCellMerged.ts
+  puts `simple-html-cell-merged` on the cell element when it is rendered in the second after the merge
+  (`getMergedAt`), the css fades a `::before` tint out over 1s (`::after` is the range's). A new merge
+  of a cell that still has the class flips `data-merged-again`: an animation of another name starts it
+  again, no forced reflow (a merge of many cells would force one per cell)
+* the conflict marker is the edited marker with a class (showCellEdited.ts): shown with or without
+  `editedMarker`, the user has to choose; in a conflict the field's original is the server's value, so
+  the marker's click (`resetField`) is `resolveConflict(row, field, 'remote')`. No new subscription:
+  a conflict that comes or goes already puts its row in `rows-changed`
+* the row number: `rowStatusIcon(state, hasError, hasConflict)`, the arrows icon, the conflict lines in
+  the tooltip and the screen reader's text (renderRowSelector.ts)
+* the conflict colour is violet: at least 3:1 to the rows, the row numbers and the selected rows, under
+  an error's tint too (light `#6d28d9`, dark `#ddd6fe` - the first picks `#7c3aed` / `#c4b5fd` were
+  2.8:1 under the tint)
+* tests: mergeLook.test.ts (the flash: which cells, not for a value sent unchanged or set from code,
+  gone after the second, started again, off; the conflict: marker, tooltip, classes, the row number
+  and its screen reader text, a row removed on the server, without editedMarker, the click, keep mine,
+  readonly; the icon order); texts.test.ts shows the four new texts on a keyed grid of its own.
+  Browser: live-check.js (26/26: the flash's class and animation, the conflict look, keep mine, the
+  marker's click, the button) and screenshots light and dark
+* not done: "Keep mine" / "Take server's" in the row menu - the menus are being reorganized into
+  submenus, they go in after that
+
+### The summary of the selected cells in the footer (item 35)
+
+* selectionSummary.ts: the rectangle around the ranges cell by cell, a cell counted when it is in a
+  range (overlaps once), data rows only; count = not blank (isBlank: null, undefined, '', an invalid
+  date), numbers = finite numbers of `type: 'number'` fields. A million cells (Ctrl+A on 100 000 rows of
+  10 fields) is some ms
+* rebuildFooter.ts: `renderFooter()` split from `rebuildFooter()` (which also renders the totals row),
+  called on `__setRanges` and after values changed (renderChangedRows, both paths) when there are ranges.
+  The summary is absolute at the right: on the count's line, or with a filter on the chips' line; the
+  chips collapse to one box when their rectangle reaches under it (left of it and right edge past its
+  left - false in happy-dom, where every rect is the same)
+* formatted with the formatter of the first number field in layout order, rounded to 2 decimals like the
+  row menu summary was; mixed number fields with different formatters show the first one's format
+* not a live region: a drag changes it at every cell, a screen reader would talk all the time. A group
+  named "Selected cells"
+* tests: selectionSummary.test.ts (none / one cell, the count of every type, numbers of number fields
+  only, 0 and false, overlapping ranges, the formatter's field, group rows, the footer's items, title and
+  name, clearRanges, an edit, the config's texts). Browser:
+  .claude/browser-checks/scripts/footer-summary-check.js 11/11 (the numbers against the datasource, a
+  drag, an edit, two ranges, one cell, clear of the filter chips), screenshots light and dark
+* left: the row menu's Summary goes when the menus' submenus are merged (that work is in another
+  worktree)
+* the browser checks moved: the machine rebooted and /tmp went with the scratchpad's scripts, playwright
+  and Chromium. They are in `.claude/browser-checks/` now (git-excluded, not committed): new scripts
+  are written there
+
+### Fill down: Ctrl+D and the fill handle (item 34)
+
+* fillDown.ts: `fillDown(gridInterface, active)` - each range's top row into the rows under it
+  (rangeBlock: data rows only), a one-row range or the focused cell alone from the data row above (as
+  Excel). Values copied raw, a Date as a new Date (two rows must not share one object), through the
+  proxy: validated, edited marks, rows-changed, one run of code = one undo step; `endTyping()` first so
+  the typed cell is written and rendered like a paste
+* Ctrl+D / Cmd+D (`fillDownKey`, in the cell's keydown after the range keys); not with Shift/Alt, not in
+  a readonly grid - there it is the browser's bookmark key
+* the fill handle: one element per grid (WeakMap), moved by showCellRange into the cell at the last
+  range's bottom right corner on screen - for a field with empty cells under it (a column next to it
+  stacks more fields) the last empty one, where the range's line turns. Its pointerdown stops the
+  body's range press, keeps the focus, follows the pointer (followPointer, cellPointAt from
+  rangeSelection now exported), grows the range down only, scrolls down past the rows' bottom; let go
+  `fillRows()` repeats the range's rows over the new ones; cancel puts the ranges back. bodyCellOf leaves
+  the handle out like the edited marker
+* tests: fillDown.test.ts (the range, readonly column, dates copied, undo, one row / one cell from above,
+  the first row, Cmd, Ctrl+Shift and a readonly grid left alone, group rows, the API, the handle's cell,
+  a stacked layout, readonly, fillRows repeating + undo). Browser: .claude/browser-checks/scripts/fill-check.js
+  12/12 (Ctrl+D with a readonly column, default prevented, Ctrl+Z, the handle at the line's corner and
+  hit by the pointer, a drag of two rows, the handle at the new corner, the focus kept, Esc), light and
+  dark screenshots
+* not done: a "Fill down" entry in the row menu (after the menus' submenus merge); fill up/right; series
+  (1, 2, 3 ...) - the handle copies
+
 ## Considered, not done
 
 ## Candidates / not started

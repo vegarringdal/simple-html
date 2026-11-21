@@ -10,6 +10,7 @@ import {
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
 import { renderRowColumns } from './pinnedSection';
+import { renderFooter } from './rebuildFooter';
 import { renderCell } from './renderCell';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
@@ -82,6 +83,7 @@ function renderInFrame(ctx: Grid) {
         triggerScrollEvent(ctx);
         if (valuesChanged) {
             renderTotalsRow(ctx);
+            renderSummary(ctx);
         }
         return;
     }
@@ -152,5 +154,16 @@ export function renderChangedRows(ctx: Grid) {
     }
     if (config.__totalsRowHeight) {
         renderTotalsRow(ctx);
+    }
+    renderSummary(ctx);
+}
+
+/**
+ * the summary of the selected cells in the footer, after values changed: it has their numbers. Only
+ * with ranges - without, the footer has none
+ */
+function renderSummary(ctx: Grid) {
+    if (ctx.gridInterface.__getRangeState()) {
+        renderFooter(ctx);
     }
 }

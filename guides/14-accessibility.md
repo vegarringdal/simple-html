@@ -121,6 +121,7 @@ caret in them; Alt with an arrow moves between the cells.
 | Ctrl+C, Cmd+C | with no text selected in the cell: the range of cells as tab separated text, or the cell's value |
 | Ctrl+V, Cmd+V | a block of cells (copied in a spreadsheet, or here) from this cell or the top left of the range; one value into every cell of the ranges. One value with no range is the input's own paste |
 | Delete / Backspace | with a range of more than one cell and no text selected: empties its cells. Else the input's own |
+| Ctrl+D (Cmd+D) | fill down: each range gets the values of its top row, a range of one row or the cell alone the row above. See [Selection and clipboard](17-selection-and-clipboard.md#fill-down) |
 
 The grid scrolls to the cell the focus goes to. Moving to another cell (Tab, Alt+arrows, Enter) clears
 the ranges of cells, and so does typing in a cell.

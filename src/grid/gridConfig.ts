@@ -159,9 +159,25 @@ export type GridConfig = {
      * `false` shows no marker. The cell element has the class `simple-html-cell-edited` either way,
      * for a look of your own. The colour is `--simple-html-grid-edited-color`
      *
+     * A field in conflict - the server changed it while the user had it edited, see
+     * `datasource.getConflicts()` - has the conflict marker instead, with or without this option: its
+     * colour is `--simple-html-grid-conflict-color`, its tooltip has the server's value, a click takes it
+     * (in an editable grid). The cell element has the class `simple-html-cell-conflict`
+     *
      * @sample editing
      */
     editedMarker?: boolean;
+
+    /**
+     * the cells a merge changed flash once, default `true`: a cell whose value `datasource.upsert()`
+     * changed gets the class `simple-html-cell-merged` when it is rendered in the second after, and a
+     * tint that fades out over that second (`--simple-html-grid-merged-color`). A field the user has
+     * edited is not changed by a merge - it is a conflict, the cell has the conflict marker. `false`: no
+     * flash. See the guide "Live data"
+     *
+     * @sample live-data
+     */
+    mergeHighlight?: boolean;
 
     /**
      * a copy of more than one cell starts with a header line of the column labels - ranges (Ctrl+C) and
@@ -593,6 +609,7 @@ export type ParsedGridOptions = GridOptions &
             | 'multilineTooltipLines'
             | 'rowStatus'
             | 'editedMarker'
+            | 'mergeHighlight'
             | 'copyHeaders'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'

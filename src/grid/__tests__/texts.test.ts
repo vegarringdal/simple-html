@@ -4,6 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 // the date picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
 import { Datasource } from '../../datasource/dataSource';
+import type { Entity } from '../../datasource/entity';
 import { and, type FilterCondition, type FilterOperator, or, where } from '../../datasource/filterExpression';
 import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
@@ -324,6 +325,27 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     check();
 }
 
+/**
+ * A conflict with the server, on a grid of its own: an upsert merges by key, and the rows of the other
+ * grid have none. A field the server changed while it was edited (its marker), and a row the server
+ * removed that has changes here (its row number)
+ */
+async function showConflicts(texts: Texts | undefined, check: (more?: string[]) => void) {
+    const keyed = rows().map((row, i) => ({ ...row, id: i + 1 }));
+    const { datasource, gridInterface } = await mountGrid(config(texts), keyed, { ...fields, key: 'id' });
+    // rows on screen: the config's filter hides the first (age 10)
+    const row = (id: number) => datasource.getDataRows().find((entity) => entity.id === id) as Entity;
+    row(3).age = 31;
+    row(4).name = '«x»';
+    // the server changed the age of row 3, and has no row 4 any more
+    datasource.upsert(
+        keyed.filter((entity) => entity.id !== 4).map((entity) => (entity.id === 3 ? { ...entity, age: 32 } : entity)),
+        { removeMissing: true }
+    );
+    gridInterface.refresh();
+    check();
+}
+
 beforeAll(() => {
     stubCanvas();
     stubElementSizes();
@@ -346,6 +368,7 @@ describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
         const { seen, check } = checker();
 
         await showEverything(await mountGrid(config(), rows(), fields), check);
+        await showConflicts(undefined, check);
 
         expect(Object.keys(TEXTS).filter((id) => !seen.has(id))).toEqual([]);
     });
@@ -355,7 +378,9 @@ describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
         setTexts(fakeTexts(isDatasourceText));
         const { seen, check } = checker();
 
-        await showEverything(await mountGrid(config(fakeTexts((id) => !isDatasourceText(id))), rows(), fields), check);
+        const gridTexts = fakeTexts((id) => !isDatasourceText(id));
+        await showEverything(await mountGrid(config(gridTexts), rows(), fields), check);
+        await showConflicts(gridTexts, check);
 
         expect(Object.keys(TEXTS).filter((id) => !seen.has(id))).toEqual([]);
     });

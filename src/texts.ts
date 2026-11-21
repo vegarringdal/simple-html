@@ -179,6 +179,14 @@ const DEFAULTS = {
     'footer.and': 'AND',
     'footer.or': 'OR',
     'footer.changedOnly': 'Changed rows only',
+    // the summary of the selected cells, at the footer's right (ranges of more than one cell): its name
+    // for a screen reader, the cells with a value, and of the numbers the sum, average, smallest, largest
+    'footer.summary': 'Selected cells',
+    'footer.summary.count': 'Count: {count}',
+    'footer.summary.sum': 'Sum: {sum}',
+    'footer.summary.avg': 'Average: {avg}',
+    'footer.summary.min': 'Min: {min}',
+    'footer.summary.max': 'Max: {max}',
     'footer.operator.EQUAL': '=',
     'footer.operator.LESS_THAN_OR_EQUAL_TO': '≤',
     'footer.operator.GREATER_THAN_OR_EQUAL_TO': '≥',
@@ -220,11 +228,18 @@ const DEFAULTS = {
     'rowStatus.edited': 'Edited',
     'rowStatus.deleted': 'Marked for deletion',
     'rowStatus.error': 'Error: {errors}',
+    // a row in conflict (datasource.getConflicts()): the fields the server changed too, as column labels
+    // joined with ', '; a row the server removed that has changes here
+    'rowStatus.conflict': 'Changed on the server too: {fields}',
+    'rowStatus.removedOnServer': 'Removed on the server, it has changes here',
 
     // the marker of an edited cell (GridConfig.editedMarker): its tooltip
     'cell.editedMarker.tooltip': 'Original value: {value}',
     'cell.editedMarker.blank': '(blank)',
     'cell.editedMarker.revert': 'Click to revert',
+    // the marker of a field in conflict: the server's value, and what a click on it does
+    'cell.conflictMarker.tooltip': 'Changed on the server to {value} while you edited it',
+    'cell.conflictMarker.take': "Click to take the server's value",
     // a cell of several lines (FieldConfig.multiline, or a value with a line break): the marker that
     // there is more, for a screen reader, the last line of its tooltip when it has more lines than it
     // shows (GridConfig.multilineTooltipLines), and the hint of the editor over the cell

@@ -12,6 +12,7 @@ import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { fillDownKey } from './fillDown';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
@@ -24,6 +25,7 @@ import { renderRowSelectorOf } from './renderRowSelector';
 import { placeRowCell } from './rowHeights';
 import { showCellEdited } from './showCellEdited';
 import { showCellErrors } from './showCellErrors';
+import { showCellMerged } from './showCellMerged';
 import { openTextEditor } from './textEditor';
 import { triggerScrollEvent } from './triggerScrollEvent';
 import { undoRedoKey } from './undoRedoKey';
@@ -63,6 +65,7 @@ export function renderRowCell(
     if (isGroupRow(entity)) {
         showCellErrors(ctx, cell, null, null);
         showCellEdited(ctx, cell, null, null);
+        showCellMerged(ctx, cell, null, null);
         showCellRange(ctx, cell);
         cell.classList.remove('simple-html-cell-deleted');
         return;
@@ -182,7 +185,11 @@ export function renderRowCell(
                         }}
                         @keydown=${(e: any) => {
                             // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
-                            if (rangeKeydown(ctx, e, row, attribute) || rangeDeleteKey(ctx, e)) {
+                            if (
+                                rangeKeydown(ctx, e, row, attribute) ||
+                                rangeDeleteKey(ctx, e) ||
+                                fillDownKey(ctx, e, row, attribute)
+                            ) {
                                 return;
                             }
                             if (undoRedoKey(ctx, e, entity, attribute)) {
@@ -427,7 +434,11 @@ export function renderRowCell(
                         }}
                         @keydown=${(e: any) => {
                             // the ranges of cells: Alt+Shift+arrows, Esc, Delete (rangeSelection.ts)
-                            if (rangeKeydown(ctx, e, row, attribute) || rangeDeleteKey(ctx, e)) {
+                            if (
+                                rangeKeydown(ctx, e, row, attribute) ||
+                                rangeDeleteKey(ctx, e) ||
+                                fillDownKey(ctx, e, row, attribute)
+                            ) {
                                 return;
                             }
                             // Ctrl+Z / Ctrl+Y, unless the user is typing in the cell: then they are the input's
@@ -527,10 +538,13 @@ export function renderRowCell(
 
         // after the template: a template of another kind removes what is after it, the marker too
         showCellEdited(ctx, cell, entity, attribute, formatter);
+        // the flash of a value a merge changed (upsert)
+        showCellMerged(ctx, cell, entity, attribute);
     } else {
         showCellErrors(ctx, cell, entity, null);
         render(html`<div data-dimmed-emtpy class="simple-html-dimmed"></div>`, cell as any);
         showCellEdited(ctx, cell, null, null);
+        showCellMerged(ctx, cell, null, null);
     }
 
     // in a range of cells or not: the cell is reused for other rows and fields while scrolling

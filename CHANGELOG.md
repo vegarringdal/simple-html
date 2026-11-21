@@ -1300,6 +1300,63 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   rows, greyed out with none selected), in every grid. Texts `row.export*`.
 - Guide "Export" and sample "Export to CSV".
 
+#### Fill down: Ctrl+D and the fill handle (item 34)
+
+##### Added
+- **Ctrl+D** (Cmd+D) in a cell fills down like a spreadsheet: in every range the values of its top row go
+  into the rows under it; a range of one row, or the cell alone, gets the values of the data row above.
+  `gridInterface.fillDown()` does the same from code.
+- **The fill handle**: a small square at the bottom right corner of the last range (`.simple-html-grid-fill-handle`,
+  in the range colour). Dragged down, the range grows with the pointer (the grid scrolls past the
+  bottom), and the rows it grew by get the range's rows, repeated from its top.
+- Values are copied as they are (a date as a new Date), readonly cells skipped, group rows skipped, one
+  undo step; nothing in a readonly grid (no handle, Ctrl+D stays the browser's).
+
+#### The summary of the selected cells in the footer (item 35)
+
+##### Added
+- With cell ranges of more than one cell the footer shows **Count, Sum, Average, Min, Max** at its right,
+  like a spreadsheet's status bar: the cells with a value (any type, `0` and `false` count), and the
+  numbers of the number fields, every cell once, group rows skipped, shown with the formatter of the
+  number field furthest left. It follows the ranges and edits of their values. Texts `footer.summary`
+  (its name for a screen reader), `footer.summary.count` / `.sum` / `.avg` / `.min` / `.max`; the class
+  `.footer-summary`. The filter chips collapse to one box when they would reach under it.
+
+##### Docs
+- Guide "Selection and clipboard": The summary in the footer; its known limits said several ranges copy
+  the last one - they copy as one table since the clipboard change.
+
+#### Live data: the flash of a merge, the look of a conflict (item 38)
+
+##### Added
+- **`GridConfig.mergeHighlight`** (default `true`): a cell whose value `datasource.upsert()` changed
+  flashes once - a tint that fades out over a second (`--simple-html-grid-merged-color`); the cell
+  element has the class `simple-html-cell-merged` meanwhile. The hook in the "Live data" guide is for a
+  look of your own now.
+- **The look of a conflict**: a field the server changed while the user had it edited has a larger
+  marker in the conflict colour (`--simple-html-grid-conflict-color`), with or without `editedMarker`;
+  its tooltip has the server's value and a click takes it (as `resolveConflict(row, field, 'remote')`,
+  undoable). The cell element has the class `simple-html-cell-conflict`, the marker
+  `simple-html-cell-conflict-marker`.
+- **The row number of a row in conflict** shows two arrows (`rowStatus`), its tooltip and the screen
+  reader's text say which fields (`Changed on the server too: Price`) or that the server removed the row.
+  An error wins the icon, then a conflict, then new / edited; a deleted row keeps its trash can.
+- Texts `rowStatus.conflict`, `rowStatus.removedOnServer`, `cell.conflictMarker.tooltip`,
+  `cell.conflictMarker.take`.
+- The "Live data" sample uses the grid's flash, no hook.
+
+#### Group rows: a +/- box and the lines of the levels, like a tree (user request)
+
+##### Changed
+- The `+` / `-` of a group row is a square box with a frame, in the column of its level. The line of an
+  expanded group runs from under its box down through its rows, the lines of the groups a row is in go
+  through it: where a group ends shows. In a row with aggregates the lines go down the aggregate lines too.
+- The grouping columns of the data rows are one column, no line under each row and no inset shadow.
+- New variable `--simple-html-grid-group-line-color` (the lines and the box's frame, at least 3:1 to the
+  group rows). The group row's elements have classes of their own: `.simple-html-grid-group-toggle`
+  (the button), `-group-box` / `-group-box-frame` / `-group-box-sign`, `-group-text`, `-group-levels`,
+  `-group-line`; `.simple-html-grid-grouping-row-group` is the header's grouping columns only.
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

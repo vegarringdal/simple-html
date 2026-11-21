@@ -1,9 +1,10 @@
-import { html, nothing, render, svg } from 'lit-html';
+import { html, nothing, render } from 'lit-html';
 import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import { groupRowAggregates, showsGroupAggregates } from './aggregates';
 import { ariaColCount } from './ariaGrid';
 import type { ColType } from './colType';
+import { GROUP_LEVEL_WIDTH } from './getGroupingWidth';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 
@@ -29,9 +30,6 @@ export function renderRowGroup(
     cell.style.display = 'block';
     cell.style.zIndex = '10';
 
-    // TODO: I do not like how hardcoded grouping indent is
-    // add it as a option
-
     const toggle = () => {
         if (group.__groupID) {
             if (group.__groupExpanded) {
@@ -43,19 +41,33 @@ export function renderRowGroup(
     };
 
     const config = ctx.gridInterface.__getGridConfig();
-    const level = group.__groupLvl;
+    const level = group.__groupLvl || 0;
+    const indent = level * GROUP_LEVEL_WIDTH;
 
-    // the indent of a sub group, the +/- button and the name. The icon is a button: it says whether
+    // the lines of the levels, like a tree: the groups this row is in have their line through it, at
+    // their column left of it (the same lines run through the data rows, see grid.css
+    // .simple-html-grid-grouping-row), and an expanded group's line starts under its box and runs down
+    // its rows. Over the whole height of the row: under the aggregate lines too
+    const lines = html`${
+        level ? html`<div class="simple-html-grid-group-levels" aria-hidden="true" style="width:${indent}px"></div>` : nothing
+    }${
+        group.__groupExpanded
+            ? html`<div
+                  class="simple-html-grid-group-line"
+                  aria-hidden="true"
+                  style="left:${indent}px;top:${Math.floor(config.cellHeight / 2)}px"
+              ></div>`
+            : nothing
+    }`;
+
+    // the +/- box in the column of its level, and the name. The box is a button: it says whether
     // the group is expanded, Enter and Space toggle it like a click. Its name is the text the row
     // shows (the text itself is hidden from a screen reader), so the cell and the button read
     // "Country: Norway (12)" once - and a voice user says what is on screen
-    const name = html`<div
-            class="${group.__groupID ? 'simple-html-grid-grouping-row-group' : 'simple-html-grid-grouping-row'}"
-            style="width:${level * 15 || 0}px;display:${level ? 'block' : 'none'}"
-        ></div>
-        <i
+    const name = html`<i
             role="button"
             tabindex="-1"
+            class="simple-html-grid-group-toggle"
             aria-expanded=${String(group.__groupExpanded)}
             aria-label=${gridText(ctx, 'grid.groupToggle', { name: group.__groupName, total: group.__groupTotal })}
             @click=${toggle}
@@ -68,15 +80,11 @@ export function renderRowGroup(
                 }
             }}
         >
-            <svg class="simple-html-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                ${
-                    group.__groupExpanded
-                        ? svg`<path d="M4.8 7.5h6.5v1H4.8z" />`
-                        : svg`<path d="M7.4 4.8v2.7H4.7v1h2.7v3h1v-3h2.8v-1H8.5V4.8h-1z" />`
-                }
+            <svg class="simple-html-grid-group-box" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11 11">
+                <rect class="simple-html-grid-group-box-frame" x="0.5" y="0.5" width="10" height="10" />
+                <path class="simple-html-grid-group-box-sign" d=${group.__groupExpanded ? 'M3 5.5h5' : 'M3 5.5h5M5.5 3v5'} />
             </svg></i
-        >
-        <span class="" aria-hidden="true"> ${group.__groupName} (${group.__groupTotal})</span>`;
+        ><span class="simple-html-grid-group-text" aria-hidden="true">${group.__groupName} (${group.__groupTotal})</span>`;
 
     if (showsGroupAggregates(config)) {
         // the aggregates of the columns (aggregates.ts), a line each at its column, under the name: the
@@ -87,12 +95,13 @@ export function renderRowGroup(
         const aggregates = groupRowAggregates(ctx, (field, fn) => datasource.aggregate(field, fn, group));
         render(
             html`<div role="none" class="simple-html-absolute-fill simple-html-label-group simple-html-grid-group-aggregates">
+                ${lines}
                 <div
                     role="gridcell"
                     aria-colindex="2"
                     aria-colspan=${Math.max(1, aggregates.nameColSpan)}
                     class="simple-html-grid-group-name"
-                    style="padding-left:${level * 15 || 0}px;height:${config.cellHeight}px"
+                    style="padding-left:${indent}px;height:${config.cellHeight}px"
                 >
                     ${name}
                     ${aggregates.nameText ? html`<span class="simple-html-visually-hidden">${aggregates.nameText}</span>` : nothing}
@@ -112,9 +121,9 @@ export function renderRowGroup(
             aria-colindex="2"
             aria-colspan=${Math.max(1, columns - 1)}
             class="simple-html-absolute-fill simple-html-label-group"
-            style="padding-left:${level * 15 || 0}px"
+            style="padding-left:${indent}px"
         >
-            ${name}
+            ${lines}${name}
         </div>`,
         cell as any
     );
