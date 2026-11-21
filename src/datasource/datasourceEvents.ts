@@ -128,4 +128,27 @@ export interface DatasourceEvents {
         /** the index of the row in the displayed rows, 0 based */
         row: number;
     };
+
+    /**
+     * The undo/redo history changed: read `canUndo()` and `canRedo()`, e.g. to enable Undo and Redo
+     * buttons of your own. `info` says what changed it:
+     *
+     * - `'edit'`: a step was recorded - an edit, a paste, a clear, a (un)mark for deletion, a revert.
+     *   Sent once the code that made it is done (in a microtask): one event per step, also for a paste
+     *   over many rows. Also when what the user typed in a cell went back to the value it started from,
+     *   and its step was dropped
+     * - `'undo'`: `undo()` took a step back. The grid renders its cells again
+     * - `'redo'`: `redo()` did a step again. The grid renders its cells again
+     * - `'clear'`: the history was emptied - `clearHistory()`, `setData()` without `add`,
+     *   `removeAllData()`, `resetData()`, `acceptChanges()`. Only when there was something in it
+     * - `'remove'`: rows were removed for good (`removeData()`, `clearMarkedForDeletion()`, a new row
+     *   removed by `resetDataSelectionOnly()`) and their changes left the history
+     *
+     * The history is the data container's: every datasource on the same container sends it, for a
+     * change made through any of them.
+     */
+    'history-changed': {
+        /** what changed the history, see above */
+        info: 'edit' | 'undo' | 'redo' | 'clear' | 'remove';
+    };
 }

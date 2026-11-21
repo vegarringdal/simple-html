@@ -1039,7 +1039,15 @@ export class GridInterface<T> {
             follow('selection-change', (_data, grid) => this.updateRows(grid)),
             follow('select', (data, grid) => this.scrollToRow(grid, data.row)),
             // the errors are shown on the cells and the row selectors
-            follow('validate', (_data, grid) => this.updateRows(grid))
+            follow('validate', (_data, grid) => this.updateRows(grid)),
+            // undo and redo changed values the cells show, the displayed rows stay as they are. Not
+            // on 'edit': the cells show the edit the user made, and rendering the cell being typed in
+            // would put the formatted value into its input
+            follow('history-changed', (data, grid) => {
+                if (data.info === 'undo' || data.info === 'redo') {
+                    this.updateRows(grid);
+                }
+            })
         ];
     }
 

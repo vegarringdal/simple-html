@@ -300,7 +300,9 @@ right.reloadDatasource(); // right shows the new rows once it rebuilds its own
 ```
 
 - The rows and their edits are the container's: an edit is the same edit in both, and
-  `getChanges()` gives the same result on both.
+  `getChanges()` gives the same result on both. So is the undo history: `undo()` on one takes back
+  an edit made through the other, and both send `history-changed`. The grid of the other one shows
+  an undo too, it renders its cells again on that event.
 - Each datasource keeps its own list of displayed rows. After `setData()`, `removeData()`,
   `acceptChanges()` or `clearMarkedForDeletion()` on one, call `reloadDatasource()` (or `filter()`)
   on the other. Its selection is kept by key: a new row that `acceptChanges({ newKeys })` gave the

@@ -67,6 +67,7 @@ gridInterface.on('paste', onPaste);
 | `selection-change` | the selected rows changed. `deselectAll()` sends it only with `{ notify: true }`, `selectAll()` only in the `'multiple'` selection mode. Also when a method that removes rows removed a selected one, after its own event | `{}`, read `datasource.getSelectedRows()` |
 | `select` | a row was selected from code, the grid scrolls to it | `{ info, row }` |
 | `validate` | `validate()` ran, the grid shows the errors. An edit is validated without an event | `{ errors }`, what `validate()` returned |
+| `history-changed` | the undo history changed: read `canUndo()` and `canRedo()`. Sent by every datasource on the same `DataContainer`, the history is the container's | `{ info }`, see below |
 
 `collection-changed`:
 
@@ -89,6 +90,16 @@ gridInterface.on('paste', onPaste);
 | `'acceptChanges'` | `acceptChanges()`. It sends no `collection-changed`, also when it removed the rows marked for deletion |
 | `'__internalUpdate, forced'` | `setData(rows, { refilter: false })` and `addNewEmpty()` while there is no filter, sort or grouping, before their `collection-changed`. A `setData()` that runs the filter (the default) sends only `collection-changed` |
 
+`history-changed`, by `info` - see [Undo and redo](05-editing.md#undo-and-redo):
+
+| `info` | sent when |
+| --- | --- |
+| `'edit'` | a step was recorded: an edit, what was typed in a cell, a paste, a clear, a (un)mark for deletion, a revert. Sent once the code that made it is done (in a microtask), one event per step. Also when what was typed in a cell went back to the value it started from, and its step was dropped |
+| `'undo'` | `undo()`. The grid renders its cells again |
+| `'redo'` | `redo()`. The grid renders its cells again |
+| `'clear'` | the history was emptied: `clearHistory()`, `setData()` without `add`, `removeAllData()`, `resetData()`, `acceptChanges()`. Only when there was something in it |
+| `'remove'` | rows were removed for good (`removeData()`, `clearMarkedForDeletion()`, a new row `resetDataSelectionOnly()` removed) and their changes left the history |
+
 `select`: `row` is the index in the displayed rows (`getRows()`), 0 based. `info` is
 `'select-first'` (from `select(row, { notify: true })` and `selectFirst()`), `'select-prev'`,
 `'select-next'` or `'select-last'`.
@@ -106,7 +117,8 @@ datasource.on('collection-grouped', (data) => {
 });
 ```
 
-There is no event for an edit of a cell, see [Editing](05-editing.md#how-the-user-edits).
+There is no event with the edit of a cell, see [Editing](05-editing.md#how-the-user-edits):
+`history-changed` says a step was recorded, not what it is.
 
 ## Grid events
 

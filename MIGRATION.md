@@ -2000,6 +2000,21 @@ change:
 * **Tab leaves the grid at its ends**: Tab on the last cell of the last row and Shift+Tab on the first
   header filter used to keep the focus in the grid.
 
+## Undo and redo
+
+New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can change for existing code:
+
+* **A custom entity handler's `onEdit` gets the old value**: `onEdit(row, field, oldValue)`. The
+  history records `oldValue` as the value before the edit; a handler of your own given to
+  `container.overrideEntityHandler()` that leaves it out records `undefined`, and an undo writes that.
+* **Edits from code are in the history** like the user's: a loop that sets values is one undo step (the
+  changes of one synchronous run are one step). `setData()` without `add`, `removeAllData()`,
+  `resetData()` and `acceptChanges()` clear it.
+* **`resetDataSelectionOnly()` is an undo step** (the selected new rows it removes are not brought back
+  by an undo - new rows are never in the history).
+* **The row menu has an "Edit:" section** (Undo, Redo, Revert cell, Revert rows) after Delete. Code that
+  finds an entry by its id is not affected; code that counted on the order is.
+
 ## Other behaviour changes
 
 Found while writing the v6 docs: each did not do what its name or its docs said.

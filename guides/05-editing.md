@@ -56,8 +56,9 @@ for `isReadonly`. Readonly cells of an editable grid are shown with stripes.
 A column with `allowPasteClearOnly: true` can not be typed in, only pasted into and cleared. Use it
 for a field the user sets with a picker of your own, such as a [dropdown grid](10-menus.md#a-dropdown-grid-as-a-block).
 
-The grid sends no event for a single edit. Read the changes when you need them, with
-`getChanges()` or the row's `__rowState` (below).
+The grid sends no event with the edit itself. Read the changes when you need them, with
+`getChanges()` or the row's `__rowState` (below). `history-changed` says that an edit was recorded
+for undo, see [Undo and redo](#undo-and-redo).
 
 ## Edits from code
 
@@ -106,7 +107,7 @@ never saved, there is nothing to send. Unmarked, it is a new row again.
 
 In an editable grid the row menu (right click a cell) has a **Delete:** section: *Rows (selected
 rows)* marks the selected rows, *Undo (selected rows)* takes the mark off - shown when a selected row
-is marked. A row the `isReadonly` hook returns `true` for in every column is locked: the menu does not
+is marked. Ctrl+Z takes a delete back too, see [Undo and redo](#undo-and-redo). A row the `isReadonly` hook returns `true` for in every column is locked: the menu does not
 mark it. The columns' `readonly` option does not lock a row, so a grid of readonly columns can still
 delete rows. The entries are `row.delete`, `row.delete.rows` and `row.delete.undo`, change or hide
 them with the [menus hook](10-menus.md).
@@ -175,7 +176,10 @@ datasource.resetData(); // every edit undone, marked rows unmarked, new rows rem
 datasource.resetDataSelectionOnly(); // the same, for the selected rows only
 ```
 
-To undo a delete and keep the edits, use `unmarkForDeletion(rows)`.
+To undo a delete and keep the edits, use `unmarkForDeletion(rows)`. To revert one cell, or rows
+without removing the new ones, see [Reverting a cell or a row](#reverting-a-cell-or-a-row).
+`resetData()` clears the undo history; `resetDataSelectionOnly()` is a step of it, see
+[Undo and redo](#undo-and-redo).
 
 ### Showing the row state
 
@@ -192,6 +196,110 @@ Or show `__rowState` in a column of its own: put `'__rowState'` in the layout, a
 
 A row with an error gets `simple-html-row-error` on its row number cell, which `grid.css` does
 style, see [How the grid shows the errors](#how-the-grid-shows-the-errors).
+
+## Undo and redo
+
+The datasource keeps a history of the edits: `undo()` takes the last step back, `redo()` does it
+again. In the grid the user has them too:
+
+- **Ctrl+Z** (Cmd+Z on a Mac) undoes, **Ctrl+Y** and **Ctrl+Shift+Z** (Cmd+Shift+Z) redo - with the
+  focus in a cell of an editable grid. Not in the header filters and the filter editor: the keys are
+  the input's own there.
+- **While the user types in a cell, Ctrl+Z is the input's own undo** of the typing. The grid writes
+  every key to the row as it is typed, so what was typed in the cell is the last step of the history;
+  once the typing is undone back to the value the cell started with, or the focus left the cell,
+  Ctrl+Z undoes the history.
+- The row menu (right click a cell) has an **Edit:** section: *Undo (Ctrl+Z)* and *Redo (Ctrl+Y)*,
+  greyed out when there is nothing to undo or redo, and the reverts, see
+  [Reverting a cell or a row](#reverting-a-cell-or-a-row). The ids are `row.edit`, `row.edit.undo`,
+  `row.edit.redo`, `row.edit.revertCell` and `row.edit.revertRows`, change or hide them with the
+  [menus hook](10-menus.md).
+
+```ts
+const row = datasource.getDataRows()[0];
+row.name = 'Changed';
+
+datasource.canUndo(); // true
+datasource.undo(); // the name it had
+datasource.redo(); // 'Changed' again
+```
+
+**A step** is what one undo takes back:
+
+- what the user typed in one cell, from when it got the focus until the focus left it
+- a paste or a clear from the row menu, over every selected row
+- a delete or its undo: `markForDeletion()`, `markAllForDeletion()`, `unmarkForDeletion()`,
+  `unmarkAllForDeletion()` - from the row menu or from code
+- a revert: `resetField()`, `resetRows()`, `resetDataSelectionOnly()`
+- **what code sets on the rows in one synchronous run**: `row.name = 'x'` is an edit like the user's,
+  and is recorded. The changes made before the code awaits are one step, after an `await` the next
+  one starts.
+
+A value set that does not change the field - as the change tracking compares, so a `date` field on
+the day - is not recorded.
+
+**Undo sets the values back the way an edit does**: the change tracking follows (a value back at its
+original is no change, the `__rowState` goes back with it) and so does the validation - an error an
+edit made goes away when it is undone. The displayed rows are not filtered, sorted or grouped again,
+the rows stay where they are, as after an edit. The grid renders its cells again.
+
+**What is not in it**: new rows - `addNewEmpty()`, `setData(rows, { add: true })`. Undo never removes
+a row and never adds one back; the edits of a new row are steps like any other. Rows removed for good
+(`removeData()`, `clearMarkedForDeletion()`, a new row `resetDataSelectionOnly()` removed) take their
+changes out of the history, and a step left without changes is dropped.
+
+**It is cleared** - nothing to undo or redo, the edits stay as they are - by `setData()` without
+`add`, `removeAllData()`, `resetData()`, `acceptChanges()` (after a save the saved values are the
+originals, also when only some rows were accepted) and `clearHistory()`.
+
+**The last 100 steps** are kept. A new step empties what there is to redo.
+
+The history is the `DataContainer`'s, like the edits: datasources that share a container share it.
+
+`history-changed` is sent when the history changes - for Undo and Redo buttons of your own:
+
+```ts
+declare const undoButton: HTMLButtonElement;
+declare const redoButton: HTMLButtonElement;
+
+const showHistory = () => {
+    undoButton.disabled = !datasource.canUndo();
+    redoButton.disabled = !datasource.canRedo();
+};
+datasource.on('history-changed', showHistory);
+showHistory();
+undoButton.onclick = () => datasource.undo();
+redoButton.onclick = () => datasource.redo();
+```
+
+Its `info` says what changed it, see [Events](09-events.md#datasource-events). A new step is told once
+the code that made it is done (`'edit'`, in a microtask): a paste over many rows is one event, and so
+is what is typed in a cell.
+
+## Reverting a cell or a row
+
+`resetField(row, field)` puts one field back to its original value: the value it had when the data
+was set, or when the changes were last accepted. `resetRows(rows)` does it for every field of the
+rows, and takes their deletion marks off:
+
+```ts
+const row = datasource.getDataRows()[0];
+datasource.resetField(row, 'name');
+datasource.resetRows(datasource.getSelectedRows());
+gridInterface.refresh(); // as after any edit from code
+```
+
+- A revert is a step of the history: `undo()` brings the edits back.
+- **A new row stays**, with the values it was added with, still new: a revert can be undone, and
+  undo never adds a row back. To drop a new row, delete it. `resetDataSelectionOnly()` removes the
+  new rows it resets, and undo does not bring those back.
+- The fields are validated as for an edit.
+- A field that is not edited (`getChanges()` would not list it) is left as it is.
+
+The row menu's *Revert cell* reverts the cell right clicked, greyed out while it is not edited, and
+*Revert rows (selected rows)* the selected rows, greyed out while none of them is edited or marked
+for deletion. Like the delete's undo they also work on readonly cells: they put values back,
+readonly is about typing new ones.
 
 ## Validation
 
@@ -318,6 +426,8 @@ the datasources made after.
 - `getErrors(rows?)` and `hasErrors()` read the errors there are now, without validating.
 - `acceptChanges()` and `resetData()` clear the errors, `resetDataSelectionOnly()` those of the
   selected rows.
+- Undo, redo, `resetField()` and `resetRows()` set values the way an edit does: the fields they set
+  are validated.
 - A row marked for deletion is not saved, so it has no errors: `validate()` skips it, `getErrors()`
   and `hasErrors()` leave it out. Its errors are back when it is unmarked.
 

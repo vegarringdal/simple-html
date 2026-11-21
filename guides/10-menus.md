@@ -156,6 +156,11 @@ The "shown as" below is the English text.
 | `row.delete` | Delete: | the grid is editable |
 | `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows). Greyed out when no selected row is left to mark | the grid is editable |
 | `row.delete.undo` | Undo (selected rows): takes the mark off | the grid is editable, and a selected row is marked for deletion |
+| `row.edit` | Edit: | the grid is editable |
+| `row.edit.undo` | Undo (Ctrl+Z): `datasource.undo()`, see [Undo and redo](05-editing.md#undo-and-redo). Greyed out when there is nothing to undo | the grid is editable |
+| `row.edit.redo` | Redo (Ctrl+Y): `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
+| `row.edit.revertCell` | Revert cell: the cell's original value, see [Reverting a cell or a row](05-editing.md#reverting-a-cell-or-a-row). Greyed out when the cell is not edited | the grid is editable |
+| `row.edit.revertRows` | Revert rows (selected rows): their original values, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |
 | `row.summary` | Summary: | a number field |
 | `row.summary.count` | Count: the number of selected rows. A click copies the value | a number field |
 | `row.summary.sum` | Sum: of the selected rows | a number field |

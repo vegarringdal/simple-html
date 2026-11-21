@@ -1,8 +1,9 @@
 import { assertOptions } from './assertOptions';
 import type { Changes, ModifiedEntity } from './changes';
 import type { DataEntity, Entity } from './entity';
-import { EntityHandler } from './entityHandler';
+import { EntityHandler, isSameValue } from './entityHandler';
 import type { FieldType } from './field';
+import { History } from './history';
 import { isBlank } from './isBlank';
 import type { ValidationError } from './validator';
 import { type ResolvedRule, runRules } from './validatorRegistry';
@@ -71,6 +72,15 @@ export class DataContainer {
      * with it
      */
     private __errors = new WeakMap<Entity, Map<string, string[]>>();
+
+    /**
+     * @internal
+     * The undo/redo history of the rows' edits and deletion marks: the container's, like the edits,
+     * so the datasources sharing it share it. `datasource.undo()` ... call it, the grid writes what
+     * the user types through `__history.typing()`. A field compares as the edit tracking does
+     */
+    public readonly __history = new History((field, before, after) => isSameValue(before, after, this.__fieldTypes.get(field)));
+
     /**
      * @param UniqueKeyAttribute the field that identifies a row, e.g. `'id'`. The selection follows it,
      * so it survives replacing the rows with fresh ones from a server. Left out, every row gets a
@@ -244,9 +254,11 @@ export class DataContainer {
      * Replaces the class that wraps every row in a `Proxy` and tracks its edits, for the rows set from
      * now on. An advanced hook: the class gets the {@link EntityHandler} constructor options
      * (`{ key, isNew, fieldType, onEdit }`) and must implement the proxy traps and the fields the grid
-     * reads (`__isNew`, `__isDeleted`, `__edited` ...). Its set trap calls `onEdit(row, field)` after a
-     * field is set, or the fields are not validated on edit. `EntityHandler` is exported as a type
-     * only, so it can not be extended - you write the whole handler.
+     * reads (`__isNew`, `__isDeleted`, `__edited` ...). Its set trap calls `onEdit(row, field, oldValue)`
+     * after a field is set, with the value the field had before: without the call the fields are not
+     * validated on edit and the edits are not in the undo history (`datasource.undo()`), and without
+     * the old value undo can not put it back. `EntityHandler` is exported as a type only, so it can
+     * not be extended - you write the whole handler.
      *
      * @param entityHandler the class to use instead of `EntityHandler`
      *
@@ -259,7 +271,7 @@ export class DataContainer {
      *     key?: string;
      *     isNew?: boolean;
      *     fieldType?: (field: string) => FieldType | undefined;
-     *     onEdit?: (row: object, field: string) => void;
+     *     onEdit?: (row: object, field: string, oldValue: unknown) => void;
      * }) => ProxyHandler<object>;
      *
      * const container = new DataContainer('id');
@@ -381,6 +393,9 @@ export class DataContainer {
      * `datasource.resetDataSelectionOnly()` calls it with the selected rows. Does not rebuild a
      * datasource's displayed rows.
      *
+     * It is one step of the undo history (`datasource.undo()` brings the edits and the marks back),
+     * but a new row it removed does not come back: undo never adds a row.
+     *
      * @param data the rows to reset. Rows that are not in the container are skipped
      *
      * @example
@@ -391,43 +406,67 @@ export class DataContainer {
      * ```
      */
     public resetDataSelection(data: Entity[]) {
-        const newEntities: Entity[] = [];
+        const rows = this.rowsIn(data);
+        this.__resetRows(rows);
+        // the original values are not validated, as resetData()
+        for (const row of rows) {
+            this.__errors.delete(row);
+        }
+        this.removeData(rows.filter((row) => row.__controller.__isNew));
+    }
 
-        if (data) {
-            if (Array.isArray(data)) {
-                data.forEach((d) => {
-                    const i = this.indexOf(d);
-                    if (i !== -1 && this.__collection[i]) {
-                        const row = this.__collection[i];
-                        if (row.__controller.__isDeleted) {
-                            row.__controller.__isDeleted = false;
-                        }
-                        if (row.__controller.__isNew) {
-                            newEntities.push(row);
-                        }
-                        if (row.__controller.__edited) {
-                            for (const k in row.__controller.__originalValues) {
-                                row[k] = row.__controller.__originalValues[k];
-                            }
-                            row.__controller.__editedProps = {};
-                            row.__controller.__edited = false;
-                        }
-                        // after the values are back: setting them validated them again
-                        this.__errors.delete(row);
-                    }
-                });
+    /**
+     * @internal
+     * `datasource.resetRows()`: the rows get their original values back and lose their deletion mark,
+     * through the proxy - one step of the undo history, the fields are validated as for an edit. A
+     * new row stays, with the values it was added with
+     * @param rows a row or a list of rows. Rows that are not in the container are skipped
+     */
+    public __resetRows(rows: Entity | Entity[]) {
+        for (const row of this.rowsIn(rows)) {
+            this.setDeleted(row, false);
+            const controller = row.__controller;
+            if (controller.__edited) {
+                for (const field in controller.__originalValues) {
+                    row[field] = controller.__originalValues[field];
+                }
+                controller.__editedProps = {};
+                controller.__edited = false;
             }
         }
+    }
 
-        this.removeData(newEntities);
+    /**
+     * @internal
+     * `datasource.resetField()`: the field of the row gets its original value back, through the proxy -
+     * one step of the undo history, validated as for an edit. A field that is not edited is left as it is
+     * @param row the row, skipped when it is not in the container
+     * @param field the field
+     */
+    public __resetField(row: Entity, field: string) {
+        const [inContainer] = this.rowsIn(row);
+        const controller = inContainer?.__controller;
+        if (controller?.__editedProps[field]) {
+            inContainer[field] = controller.__originalValues[field];
+        }
+    }
+
+    /**
+     * marks or unmarks a row for deletion, recorded in the undo history when the mark changes
+     */
+    private setDeleted(row: DataEntity, deleted: boolean) {
+        if (Boolean(row.__controller.__isDeleted) !== deleted) {
+            this.__history.record({ row, field: null, before: !deleted, after: deleted });
+            row.__controller.__isDeleted = deleted;
+        }
     }
 
     /**
      * Throws away every change since the data was set: edited rows get their original values back,
      * rows marked for deletion are unmarked, new rows (from `addNewEmpty()`) are removed, and the
      * validation errors are cleared - the original values are not validated. Rows removed for good
-     * (`removeData()`, `clearMarkedForDeletion()`) do not come back. `datasource.resetData()` calls it
-     * and also rebuilds the displayed rows - use that one.
+     * (`removeData()`, `clearMarkedForDeletion()`) do not come back. The undo history is cleared.
+     * `datasource.resetData()` calls it and also rebuilds the displayed rows - use that one.
      *
      * @example
      * ```ts
@@ -438,23 +477,28 @@ export class DataContainer {
     public resetData() {
         const newEntities: Entity[] = [];
 
-        this.__collection.forEach((row) => {
-            if (row.__controller.__isDeleted) {
-                row.__controller.__isDeleted = false;
-            }
-            if (row.__controller.__isNew) {
-                newEntities.push(row);
-            }
-            if (row.__controller.__edited) {
-                for (const k in row.__controller.__originalValues) {
-                    row[k] = row.__controller.__originalValues[k];
+        // no step: the history is cleared below, there is nothing left to undo
+        this.__history.withoutRecording(() => {
+            this.__collection.forEach((row) => {
+                if (row.__controller.__isDeleted) {
+                    row.__controller.__isDeleted = false;
                 }
-                row.__controller.__editedProps = {};
-                row.__controller.__edited = false;
-            }
+                if (row.__controller.__isNew) {
+                    newEntities.push(row);
+                }
+                if (row.__controller.__edited) {
+                    for (const k in row.__controller.__originalValues) {
+                        row[k] = row.__controller.__originalValues[k];
+                    }
+                    row.__controller.__editedProps = {};
+                    row.__controller.__edited = false;
+                }
+            });
         });
         // after the values are back: setting them validated them again
         this.__errors = new WeakMap();
+        // before the new rows go: their changes leave with the rest, one 'clear' event
+        this.__history.clear();
         this.removeData(newEntities);
     }
 
@@ -560,7 +604,7 @@ export class DataContainer {
         // v5 was markForDeletion(data, all)
         assertOptions('markForDeletion', arguments[1], 'markForDeletion(rows), or markAllForDeletion()');
         for (const row of this.rowsIn(rows)) {
-            row.__controller.__isDeleted = true;
+            this.setDeleted(row, true);
         }
     }
 
@@ -577,7 +621,7 @@ export class DataContainer {
      */
     public markAllForDeletion() {
         for (const row of this.__collection) {
-            row.__controller.__isDeleted = true;
+            this.setDeleted(row, true);
         }
     }
 
@@ -604,7 +648,7 @@ export class DataContainer {
      */
     public unmarkForDeletion(rows: Entity | Entity[]) {
         for (const row of this.rowsIn(rows)) {
-            row.__controller.__isDeleted = false;
+            this.setDeleted(row, false);
         }
     }
 
@@ -621,7 +665,7 @@ export class DataContainer {
      */
     public unmarkAllForDeletion() {
         for (const row of this.__collection) {
-            row.__controller.__isDeleted = false;
+            this.setDeleted(row, false);
         }
     }
 
@@ -635,8 +679,9 @@ export class DataContainer {
      * - the row's error (`setErrors()`) and its validation errors are cleared
      *
      * Then `getChanges()` lists none of them, `hasChanges()` is `false` when every row was accepted,
-     * and `resetData()` goes back to these values. `datasource.acceptChanges()` calls it and also
-     * rebuilds the displayed rows - use that one.
+     * and `resetData()` goes back to these values. The undo history is cleared, also when only some
+     * rows were accepted. `datasource.acceptChanges()` calls it and also rebuilds the displayed rows -
+     * use that one.
      *
      * **The keys of new rows.** A new row has a temporary key, a generated negative number: in its key
      * field (`id: -1` with `new DataContainer('id')`), or without a key field as `__KEY` in
@@ -726,13 +771,16 @@ export class DataContainer {
         if (removed.size) {
             this.__collection = this.__collection.filter((row) => !removed.has(row));
         }
+        // the originals are new: undoing past them would make edits of what was saved
+        this.__history.clear();
     }
 
     /**
      * Removes the rows marked for deletion from the container, for good: `getChanges()` no longer lists
-     * them in `deletedEntities` and `resetData()` does not bring them back. Call it once the deletes
-     * are saved - or call {@link acceptChanges}, which also accepts the new and edited rows.
-     * `datasource.clearMarkedForDeletion()` calls it and rebuilds the displayed rows.
+     * them in `deletedEntities` and `resetData()` does not bring them back, and their changes leave the
+     * undo history. Call it once the deletes are saved - or call {@link acceptChanges}, which also
+     * accepts the new and edited rows. `datasource.clearMarkedForDeletion()` calls it and rebuilds the
+     * displayed rows.
      *
      * @example
      * ```ts
@@ -754,11 +802,13 @@ export class DataContainer {
                 this.__collection.splice(i, 1)[0];
             }
         });
+        this.__history.forget(tempArr);
     }
 
     /**
      * Removes rows from the container, for good: they are not marked for deletion, `getChanges()`
-     * does not list them and `resetData()` does not bring them back.
+     * does not list them and `resetData()` does not bring them back. Their changes leave the undo
+     * history: undo never writes into a row that is not there.
      *
      * @param rows a row or a list of rows. Rows that are not in the container are skipped.
      * @returns the rows removed
@@ -780,12 +830,13 @@ export class DataContainer {
                 removed.push(this.__collection.splice(i, 1)[0]);
             }
         }
+        this.__history.forget(removed);
         return removed;
     }
 
     /**
-     * Removes every row from the container, like {@link removeData} with all of them. Was
-     * `removeData(null, true)` in v5.
+     * Removes every row from the container, like {@link removeData} with all of them, and clears the
+     * undo history. Was `removeData(null, true)` in v5.
      *
      * @returns the rows removed
      *
@@ -799,11 +850,14 @@ export class DataContainer {
     public removeAllData(): Entity[] {
         const removed = this.__collection;
         this.__collection = [];
+        this.__history.clear();
         return removed;
     }
 
     /**
-     * Sets the rows. Every row is wrapped in the proxy that tracks its edits, and gets a key.
+     * Sets the rows. Every row is wrapped in the proxy that tracks its edits, and gets a key. Without
+     * `add` the undo history is cleared, the rows start over; added rows are not in the history (undo
+     * never removes a row).
      *
      * @param rows your objects
      * @param options.add `true` to add the rows to the ones there are, default `false`: they replace them
@@ -826,6 +880,7 @@ export class DataContainer {
         const { add = false, isNew = false } = options;
         if (!add) {
             this.__collection = [];
+            this.__history.clear();
         }
 
         const x = Array.from(rows, (o: any | Entity) => this.toEntity(o, isNew));
@@ -837,7 +892,8 @@ export class DataContainer {
     /**
      * Puts rows in at a position in the container, replacing `remove` rows there - `Array.splice` for
      * the container's rows. The new rows are wrapped and get a key like `setData()` gives them, they are
-     * not new rows. Call `datasource.reloadDatasource()` after to show them.
+     * not new rows. The changes of the rows removed leave the undo history. Call
+     * `datasource.reloadDatasource()` after to show them.
      *
      * @param data your objects
      * @param index where they go, 0 based
@@ -853,7 +909,7 @@ export class DataContainer {
     public replace(data: any[], index: number, remove: number) {
         const x = Array.from(data, (o: any | Entity) => this.toEntity(o, false));
 
-        this.__collection.splice(index, remove, ...x);
+        this.__history.forget(this.__collection.splice(index, remove, ...x));
     }
 
     /**
@@ -871,7 +927,10 @@ export class DataContainer {
                       isNew,
                       // read when an edit is made, so a datasource made after the rows were set counts too
                       fieldType: (field) => this.__fieldTypes.get(field),
-                      onEdit: (row, field) => this.validateEdit(row, field)
+                      onEdit: (row, field, oldValue) => {
+                          this.__history.record({ row: row as DataEntity, field, before: oldValue, after: row[field] });
+                          this.validateEdit(row, field);
+                      }
                   }) as any
               );
         if (isBlank(entity.__KEY)) {

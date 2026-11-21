@@ -898,6 +898,37 @@ sorting in the header work with a mouse, a pen and a finger.
 - The filter inputs were named "🔍"; they are "Filter <column label>".
 - Paste and clear in the row menu had the same text.
 
+### Phase 5 - editing
+
+#### Undo and redo (item 28)
+
+##### ⚠️ Breaking changes
+- The custom entity handler hook is `onEdit(row, field, oldValue)` (`DataContainer.overrideEntityHandler`):
+  a handler that leaves out `oldValue` records `undefined` as the value before an edit.
+- Edits from code are recorded in the undo history. `setData()` without `add`, `removeAllData()`,
+  `resetData()` and `acceptChanges()` clear it.
+- `resetDataSelectionOnly()` is an undo step.
+- Row menu: a new "Edit:" section between Delete and Summary - `MENU_IDS.row` has 5 more ids, the ones
+  after it moved.
+
+##### Added
+- **Undo/redo history** on the DataContainer, shared by the datasources on it: `datasource.undo()`,
+  `redo()`, `canUndo()`, `canRedo()`, `clearHistory()`, and the event `history-changed`
+  (`info: 'edit' | 'undo' | 'redo' | 'clear' | 'remove'`). A step is what the user typed in one cell, a
+  paste, a clear, a (un)mark for deletion, a revert, or one synchronous run of code. The last 100 steps
+  are kept. New rows are not in the history: undo never adds or removes a row.
+- **`datasource.resetField(row, field)` and `datasource.resetRows(rows)`**: a cell or rows back to their
+  original values (deletion marks off). Reverts are undo steps; a new row stays, with the values it was
+  added with.
+- **Keys**: Ctrl/Cmd+Z undoes, Ctrl/Cmd+Y and Ctrl/Cmd+Shift+Z redo, in a cell of an editable grid. While
+  typing in a cell Ctrl+Z is the input's own undo, until the typing is undone or the cell is left.
+- **Row menu "Edit:"**: `row.edit.undo`, `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRows`,
+  with text ids `row.edit*`.
+- The grid renders its cells again after an undo or redo, also one from code or from another datasource
+  on the same container.
+- Guides: "Undo and redo" and "Reverting a cell or a row" in the editing guide; the editing sample has
+  Undo/Redo buttons that follow `history-changed`.
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

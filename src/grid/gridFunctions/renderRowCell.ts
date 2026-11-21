@@ -18,6 +18,7 @@ import { isRepeatedValue } from './isRepeatedValue';
 import { renderRowSelectorOf } from './renderRowSelector';
 import { showCellErrors } from './showCellErrors';
 import { triggerScrollEvent } from './triggerScrollEvent';
+import { undoRedoKey } from './undoRedoKey';
 
 export function renderRowCell(
     ctx: Grid,
@@ -62,6 +63,14 @@ export function renderRowCell(
         const showEdit = () => {
             showCellErrors(ctx, cell, entity, attribute);
             renderRowSelectorOf(ctx, row);
+        };
+
+        // the undo history: what the user types in the cell, until the focus leaves it, is one step
+        const history = datasource.getDataContainer().__history;
+        const typeValue = (text: string) => {
+            history.typing(() => {
+                entity[attribute] = formatter.parse(text);
+            });
         };
 
         let showPlaceHolder = true;
@@ -128,6 +137,9 @@ export function renderRowCell(
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
                         }}
                         @keydown=${(e: any) => {
+                            if (undoRedoKey(ctx, e, entity, attribute)) {
+                                return;
+                            }
                             return cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e, '');
                         }}
                         @click=${() => {
@@ -301,8 +313,15 @@ export function renderRowCell(
                             }, 100);
 
                             cell.$focused = false;
+                            // the typing in this cell is done: typing in it again is a new step
+                            history.endTyping();
                         }}
                         @keydown=${(e: any) => {
+                            // Ctrl+Z / Ctrl+Y, unless the user is typing in the cell: then they are the input's
+                            if (undoRedoKey(ctx, e, entity, attribute)) {
+                                return;
+                            }
+
                             // if hidding spcae we want the option to trigger focus button if it exist
                             if (e.code === 'Space') {
                                 switch (cellConfig.focusButton) {
@@ -368,7 +387,7 @@ export function renderRowCell(
                             }
 
                             if (!config.readonly && !cellReadOnly) {
-                                entity[attribute] = formatter.parse(e.target.value);
+                                typeValue(e.target.value);
                                 showEdit();
                             }
                         }}
@@ -379,7 +398,7 @@ export function renderRowCell(
                             }
 
                             if (!config.readonly && !cellReadOnly) {
-                                entity[attribute] = formatter.parse(e.target.value);
+                                typeValue(e.target.value);
                                 showEdit();
                             }
                         }}

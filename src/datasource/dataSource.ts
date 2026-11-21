@@ -447,7 +447,8 @@ export class Datasource<T = any> {
      * after; a removed row leaves the selection (`selection-change`).
      *
      * When the new and edited rows were saved in the same go, call {@link acceptChanges} instead: it
-     * removes the marked rows and accepts the rest.
+     * removes the marked rows and accepts the rest. The changes of the removed rows leave the undo
+     * history.
      *
      * @sample editing
      * @example
@@ -474,7 +475,7 @@ export class Datasource<T = any> {
      * validation errors are cleared. Then the displayed rows are rebuilt. Rows removed for good
      * (`removeData()`, `clearMarkedForDeletion()`) do not come back. A new row that was the current
      * row sets {@link currentEntity} to `null` (`current-entity` is sent after), and leaves the
-     * selection (`selection-change`).
+     * selection (`selection-change`). The undo history is cleared: there is nothing left to undo.
      *
      * The changes are those of the data container, so of every datasource sharing it.
      *
@@ -504,6 +505,10 @@ export class Datasource<T = any> {
      * are unmarked, the new ones are removed, and their validation errors are cleared. The other rows
      * keep their changes.
      *
+     * Unlike `resetData()` it is a step of the undo history: {@link undo} brings the edits and the
+     * deletion marks back - not a new row it removed, undo never adds a row. {@link resetRows} keeps
+     * the new rows.
+     *
      * @example
      * ```ts
      * datasource.select(1); // the first row
@@ -519,6 +524,169 @@ export class Datasource<T = any> {
             this.__callSubscribers('collection-filtered', { info: 'resetData' });
         }
         notify();
+    }
+
+    /**
+     * Reverts one cell: the field of the row gets its original value back - the value it had when the
+     * data was set, or when the changes were last accepted. A field that is not edited (that
+     * `getChanges()` would not list) is left as it is.
+     *
+     * It is an edit like any other: validated, and one step of the undo history - {@link undo} brings
+     * the edited value back. The grid's row menu has it as "Revert cell" (`row.edit.revertCell`). From
+     * code, call `gridInterface.refresh()` after, as for any edit from code.
+     *
+     * @param row the row, one the datasource handed out. A row that is not in the data is skipped
+     * @param field the field
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * const row = datasource.getDataRows()[0];
+     * row.name = 'Changed';
+     *
+     * datasource.resetField(row, 'name'); // the name it had
+     * datasource.undo(); // 'Changed' again
+     * ```
+     */
+    public resetField(row: Entity, field: string): void {
+        this.__dataContainer.__resetField(row, field);
+    }
+
+    /**
+     * Reverts rows: their fields get their original values back and a row marked for deletion is
+     * unmarked - {@link resetDataSelectionOnly}, for the rows given.
+     *
+     * - **A new row stays**, with the values it was added with (`addNewEmpty(row)`), still new. Unlike
+     *   `resetDataSelectionOnly()`, which removes it: a revert can be undone, and undo never adds a row
+     *   back. To get rid of a new row, mark it for deletion.
+     * - It is one step of the undo history: {@link undo} brings the edits and the marks back.
+     * - The fields are validated as for an edit: an error of an edit goes away with it, an original
+     *   value that breaks a rule shows its error.
+     * - The displayed rows are not rebuilt, the rows stay where they are. The grid's row menu has it
+     *   as "Revert rows" (`row.edit.revertRows`, the selected rows). From code, call
+     *   `gridInterface.refresh()` after, as for any edit from code.
+     *
+     * @param rows a row or a list of rows, e.g. `getSelectedRows()`. Rows that are not in the data are
+     * skipped
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * datasource.resetRows(datasource.getSelectedRows());
+     * gridInterface.refresh();
+     * ```
+     */
+    public resetRows(rows: Entity | Entity[]): void {
+        this.__dataContainer.__resetRows(rows);
+    }
+
+    /**
+     * Takes the last step of the undo history back: the values it changed get the values they had
+     * before, a row it marked for deletion is unmarked (and the other way round). The grid does it
+     * with Ctrl+Z (Cmd+Z), and from its row menu.
+     *
+     * **What a step is**: the changes made in one go - what the user typed in one cell until the focus
+     * left it, a paste or a clear over the selected rows, a `markForDeletion()` call, a revert, or what
+     * code sets on the rows in one synchronous run (no `await` in between). Edits from code are
+     * recorded too, they are edits like the user's. New rows (`addNewEmpty()`, `setData(rows, { add:
+     * true })`) are not in the history: undo never removes or adds a row. The last 100 steps are kept.
+     *
+     * The values are set as an edit sets them: the edit tracking follows (a value back at its original
+     * is no edit any more) and so does the validation. The displayed rows are not rebuilt - no filter,
+     * sort or grouping runs, the rows stay where they are - and `history-changed` is sent with
+     * `info: 'undo'`, on which the grid renders its cells again. The history is the data container's,
+     * shared by the datasources on it.
+     *
+     * @returns `false` when there is nothing to undo
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * const row = datasource.getDataRows()[0];
+     * row.name = 'Changed';
+     *
+     * datasource.undo(); // true: the name it had
+     * datasource.redo(); // true: 'Changed' again
+     * datasource.undo();
+     * datasource.undo(); // false, nothing left to undo
+     * ```
+     */
+    public undo(): boolean {
+        return this.__dataContainer.__history.undo();
+    }
+
+    /**
+     * Does the last step {@link undo} took back again. Recording a new step empties what there is to
+     * redo. The grid does it with Ctrl+Y, Ctrl+Shift+Z (Cmd+Shift+Z), and from its row menu. Sends
+     * `history-changed` with `info: 'redo'`.
+     *
+     * @returns `false` when there is nothing to redo
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * if (datasource.canRedo()) {
+     *     datasource.redo();
+     * }
+     * ```
+     */
+    public redo(): boolean {
+        return this.__dataContainer.__history.redo();
+    }
+
+    /**
+     * `true` when there is a step to {@link undo}. With the `history-changed` event, for an Undo button
+     * of your own.
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * declare const undoButton: HTMLButtonElement;
+     * declare const redoButton: HTMLButtonElement;
+     *
+     * datasource.on('history-changed', () => {
+     *     undoButton.disabled = !datasource.canUndo();
+     *     redoButton.disabled = !datasource.canRedo();
+     * });
+     * undoButton.onclick = () => datasource.undo();
+     * redoButton.onclick = () => datasource.redo();
+     * ```
+     */
+    public canUndo(): boolean {
+        return this.__dataContainer.__history.canUndo();
+    }
+
+    /**
+     * `true` when there is a step to {@link redo}: undo took one back, and nothing was recorded since.
+     *
+     * @example
+     * ```ts
+     * declare const redoButton: HTMLButtonElement;
+     *
+     * redoButton.disabled = !datasource.canRedo();
+     * ```
+     */
+    public canRedo(): boolean {
+        return this.__dataContainer.__history.canRedo();
+    }
+
+    /**
+     * Empties the undo history: nothing to undo or redo. The edits stay as they are. Sends
+     * `history-changed` with `info: 'clear'` when there was something in it.
+     *
+     * Done by the datasource itself where undoing past would be wrong: `setData()` without `add`,
+     * `removeAllData()`, `resetData()` and `acceptChanges()` - after a save the saved values are the
+     * originals.
+     *
+     * @example
+     * ```ts
+     * datasource.getDataRows()[0].name = 'Changed';
+     * datasource.clearHistory();
+     * datasource.canUndo(); // false, the name stays 'Changed'
+     * ```
+     */
+    public clearHistory(): void {
+        this.__dataContainer.__history.clear();
     }
 
     /**
@@ -693,6 +861,8 @@ export class Datasource<T = any> {
      * In the grid, the row menu's "Delete:" entries mark and unmark the selected rows, see `MENU_IDS`.
      * To remove rows that are not on a server, without tracking, use {@link removeData}.
      *
+     * A step of the undo history: {@link undo} (Ctrl+Z in the grid) takes the marks off again.
+     *
      * Sends `collection-filtered` with `info: 'markForDeletion'`.
      *
      * @param rows a row or a list of rows, e.g. `getSelectedRows()`
@@ -730,7 +900,7 @@ export class Datasource<T = any> {
     /**
      * Undoes a delete: takes the mark of {@link markForDeletion} off rows again. A row is back as it
      * was before it was marked - with its edits, and a new row as a new row. Unlike `resetData()`, no
-     * edit is undone.
+     * edit is undone. A step of the undo history, like {@link markForDeletion}.
      *
      * Sends `collection-filtered` with `info: 'unmarkForDeletion'`.
      *
@@ -774,8 +944,10 @@ export class Datasource<T = any> {
      * - the row's error (`setErrors()`) and its validation errors are cleared
      *
      * Then `getChanges()` lists none of them, `hasChanges()` is `false` when every row was accepted,
-     * and `resetData()` goes back to these values. The displayed rows are rebuilt and
-     * `collection-filtered` is sent once, with `info: 'acceptChanges'`. When the current row was
+     * and `resetData()` goes back to these values. The undo history is cleared - also when only some
+     * rows were accepted: the saved values are the originals now, undoing past them would make edits
+     * of them. The displayed rows are rebuilt and `collection-filtered` is sent once, with
+     * `info: 'acceptChanges'`. When the current row was
      * removed, {@link currentEntity} is set to `null` and `current-entity` is sent after; a removed
      * row leaves the selection (`selection-change`).
      *
@@ -903,6 +1075,8 @@ export class Datasource<T = any> {
     /**
      * Removes rows for good: they are not marked for deletion, `getChanges()` does not list them and
      * `resetData()` does not bring them back. Use {@link markForDeletion} to delete rows on a server.
+     * Their changes leave the undo history, and a step left without changes is dropped: undo never
+     * writes into a row that is gone.
      *
      * Sends `collection-changed`. A removed row leaves the selection (`selection-change` is sent
      * after), and when it was the current row {@link currentEntity} is set to `null`
@@ -941,7 +1115,7 @@ export class Datasource<T = any> {
     /**
      * Removes every row for good, see {@link removeData}. Was `removeData(null, true)` in v5. Sends
      * the same `collection-changed` event, with `data: null`. The rows leave the selection and
-     * {@link currentEntity} is set to `null`, with their events after it.
+     * {@link currentEntity} is set to `null`, with their events after it. The undo history is cleared.
      *
      * @returns the rows removed
      *
@@ -1043,6 +1217,9 @@ export class Datasource<T = any> {
      * selected. {@link currentEntity} is set to `null` when it is no longer in the data (replaced by new
      * objects), and `current-entity` is sent; a row that is still in the data stays current.
      *
+     * Without `add` the undo history is cleared, the rows start over. Rows added are not in the
+     * history: {@link undo} never removes a row.
+     *
      * Sends `collection-changed`, `{ added }`.
      *
      * @sample rows-data
@@ -1090,6 +1267,9 @@ export class Datasource<T = any> {
      * The row gets a generated key, a negative number: with a key field it is written there
      * (`{ company: 'NEW COMPANY', id: -1 }`), else it is the row's `__KEY`. After the save,
      * `acceptChanges({ newKeys })` gives it the key from the server, see {@link acceptChanges}.
+     *
+     * Adding the row is not a step of the undo history: {@link undo} never removes it. Its edits after
+     * are steps, like any edit.
      *
      * @param row the values of the new row, default none. The object itself becomes the row.
      * @param options.scrollTo `false` to leave the selection as it is, default `true`: the new row is
@@ -1498,6 +1678,10 @@ export class Datasource<T = any> {
      * ```
      */
     public on<Type extends keyof DatasourceEvents>(type: Type, handler: EventHandler<DatasourceEvents[Type]>): () => void {
+        if (type === 'history-changed') {
+            // the history is the container's, shared by the datasources on it - and so is its event
+            return this.__dataContainer.__history.on(handler as EventHandler<DatasourceEvents['history-changed']>);
+        }
         return this.__events.on(type, handler);
     }
 

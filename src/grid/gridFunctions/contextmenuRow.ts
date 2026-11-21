@@ -167,7 +167,67 @@ function rowMenuEntries(
             }
         },
         ...deleteEntries(ctx),
+        ...editEntries(ctx, attribute, rowData),
         ...summaryEntries(ctx, attribute)
+    ];
+}
+
+/**
+ * Undo, redo and revert: the undo history of the datasource, and putting the original values back -
+ * of the clicked cell, or of the selected rows. Only in an editable grid.
+ *
+ * A revert puts values back, so like the delete's undo it is not stopped by readonly cells or rows:
+ * readonly is about typing new values. The values are set from code, the grid renders the cells again
+ * after - undo and redo send history-changed, the grid follows that
+ */
+function editEntries(ctx: Grid, attribute: string, rowData: Entity): MenuEntry[] {
+    const gridInterface = ctx.gridInterface;
+    const datasource = gridInterface.getDatasource();
+    const editable = () => !gridInterface.__getGridConfig().readonly;
+
+    // the selected rows a revert changes: edited, or marked for deletion
+    const toRevert = () =>
+        datasource.getSelectedRows().filter((row) => row.__controller?.__edited || row.__controller?.__isDeleted);
+
+    return [
+        { type: 'section', id: 'row.edit', label: gridText(ctx, 'row.edit'), visible: editable },
+        {
+            id: 'row.edit.undo',
+            label: gridText(ctx, 'row.edit.undo'),
+            hint: gridText(ctx, 'row.edit.undo.hint'),
+            visible: editable,
+            disabled: () => !datasource.canUndo(),
+            action: () => datasource.undo()
+        },
+        {
+            id: 'row.edit.redo',
+            label: gridText(ctx, 'row.edit.redo'),
+            hint: gridText(ctx, 'row.edit.redo.hint'),
+            visible: editable,
+            disabled: () => !datasource.canRedo(),
+            action: () => datasource.redo()
+        },
+        {
+            id: 'row.edit.revertCell',
+            label: gridText(ctx, 'row.edit.revertCell'),
+            visible: editable,
+            disabled: () => !rowData.__controller?.__editedProps[attribute],
+            action: () => {
+                datasource.resetField(rowData, attribute);
+                triggerScrollEvent(ctx);
+            }
+        },
+        {
+            id: 'row.edit.revertRows',
+            label: gridText(ctx, 'row.edit.revertRows'),
+            hint: gridText(ctx, 'row.edit.revertRows.hint'),
+            visible: editable,
+            disabled: () => toRevert().length === 0,
+            action: () => {
+                datasource.resetRows(toRevert());
+                triggerScrollEvent(ctx);
+            }
+        }
     ];
 }
 

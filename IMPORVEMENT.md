@@ -1072,6 +1072,33 @@ in the console. All passed. Found and fixed:
   (every input is a Tab stop, Alt+arrows between cells, no Home/End/PageUp/PageDown); only rendered
   rows are in the dom; menus and the date picker are mouse-only; aria-sort on the first sort only
 
+### v6 phase 5 - editing
+
+#### Undo and redo (item 28)
+
+* the history is in the DataContainer (`src/datasource/history.ts`), so datasources on one container
+  share it; the proxy's `onEdit` now passes the old value and every change is recorded as
+  `{ row, field, before, after }` (field null: the deletion mark)
+* steps: one synchronous run of code is one step (closed in a microtask), so a paste or clear over many
+  rows is one Ctrl+Z. The grid writes every keystroke to the row (`@input`), so its writes go through
+  `history.typing()`: keystrokes in the same cell join one step until the focus leaves it; typed back to
+  the start value the step is dropped. A write that changes nothing (`isSameValue` with the field type)
+  is not recorded
+* undo/redo write through the proxy with recording off, so `__edited`, row state and validation follow
+  as for an edit; the grid re-renders on `history-changed` undo/redo (not on edit: that would rewrite the
+  input being typed in)
+* Ctrl+Z while the cell's own typing is the top step is left to the browser's input undo - its input
+  event writes back into the same step
+* cleared by setData (replace), removeAllData, resetData, acceptChanges; removeData /
+  clearMarkedForDeletion / replace drop the removed rows' changes (a step never writes into a row that
+  is gone). New rows are not in the history
+* `resetRows` keeps new rows (values as added): a revert is undoable, and undo never re-adds a row
+* tests: 50 datasource + 20 grid; Chromium check 22/22 (typing undo vs history undo, delete, paste over
+  3 rows, checkbox, menu entries)
+* the scratchpad was partly wiped by a Claude Code restart; the browser check scripts were rebuilt from
+  the session transcripts. Worth keeping real-browser checks in the repo (needs playwright as a dev
+  dependency) - see candidates
+
 ## Considered, not done
 
 ### `largeScroll` dead branch in horizontal scroll handler
@@ -1083,6 +1110,11 @@ whole `largeScrollLeftTimer` / `delayScrollRender()` mechanism unreachable. Left
 
 ## Candidates / not started
 
+* **Real-browser checks in the repo**: the Chromium checks (menus/dialog/drag, the accessibility
+  tree, undo) live in a scratch folder that a restart can wipe. Moving them to `scripts/browser/` with
+  playwright as a dev dependency would make them a CI job. Chromium download hangs on this dev machine.
+* **Undo**: the menu hints say Ctrl+Z / Ctrl+Y also on a Mac; after an undo the focus stays in the
+  current cell rather than moving to the changed one.
 * **From phase 3 (theming, accessibility):**
   - light colours under WCAG AA kept for pixel-identical light mode: secondary text 3.0:1, date week
     numbers 3.4:1, row numbers at 50% opacity 2.9:1, row-state colours under that opacity

@@ -106,7 +106,7 @@ describe('menus - the built-in ids', () => {
 
         openRowMenu(element, 'firstname', 0);
 
-        expect(shownIds()).toEqual(MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|summary)/.test(id)));
+        expect(shownIds()).toEqual(MENU_IDS.row.filter((id) => !/^row\.(paste|clear|delete|edit|summary)/.test(id)));
     });
 
     it('expect the operators of a text column and the value list in the filter menu', async () => {
