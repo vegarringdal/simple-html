@@ -51,6 +51,9 @@
     --simple-html-grid-edited-color: light-dark(#9a3412, #fdba74);
     --simple-html-grid-new-color: light-dark(#166534, #86efac);
     --simple-html-grid-deleted-color: light-dark(#57534e, #d1d5db);
+    /* the marker of a cell of several lines (FieldConfig.multiline): there are more lines than it
+       shows. At least 3:1 against the rows and a selected row, like the row state */
+    --simple-html-grid-multiline-color: light-dark(#475569, #e2e8f0);
     /* the "too many values" warning of the filter menu's value list */
     --simple-html-grid-warning-font-color: light-dark(red, #fca5a5);
     /* the footer's clear filter button under the pointer: text, border */
@@ -803,8 +806,79 @@
 }
 
 /**
- * text for a screen reader only: the state of a row on its row number. On the page, but 1px and
- * clipped - display: none would hide it from the screen reader too
+ * a cell of several lines (FieldConfig.multiline, or a value with a line break) shows its first line:
+ * the marker at its right says there are more, over the input (1000) like the marker of an edited
+ * cell. The pointer goes through it to the input - its tooltip (the cell's) has the whole text, a
+ * double click opens the editor. The input's text stops before it
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-more {
+    position: absolute;
+    top: calc(50% - 5px);
+    right: 3px;
+    width: 10px;
+    height: 10px;
+    z-index: 1001;
+    pointer-events: none;
+    color: var(--simple-html-grid-multiline-color);
+}
+
+/* the focus button (30px) is at the right edge while the cell has the focus: the marker left of it */
+.simple-html-grid .simple-html-grid-col-cell:has(.simple-html-grid-focus-button) .simple-html-grid-cell-more {
+    right: 33px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-more-icon {
+    display: block;
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-multiline {
+    padding-right: 16px;
+}
+
+/**
+ * the editor of a multiline cell: a popover over the cell (see textEditor.ts), the textarea and a
+ * hint under it. The textarea can be resized, the popover follows its size
+ */
+.simple-html-grid.simple-html-grid-text-editor {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    box-shadow: 0 2px 8px var(--simple-html-grid-dialog-shadow-color);
+}
+
+.simple-html-grid .simple-html-grid-text-editor-input {
+    box-sizing: border-box;
+    display: block;
+    margin: 0;
+    min-width: 120px;
+    min-height: 3em;
+    padding: 3px;
+    border: 0;
+    resize: both;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 1.5;
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    /* .simple-html-grid turns selecting text off */
+    user-select: text;
+}
+
+.simple-html-grid .simple-html-grid-text-editor-hint {
+    padding: 1px 4px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+/**
+ * text for a screen reader only: the state of a row on its row number, the marker of a multiline
+ * cell. On the page, but 1px and clipped - display: none would hide it from the screen reader too
  */
 .simple-html-grid .simple-html-visually-hidden {
     position: absolute;

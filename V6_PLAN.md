@@ -373,7 +373,7 @@ built on it.
 29. [x] **Row status built in**: the row selector shows the row's state - new, edited, deleted
         (struck through), error (with its message) - with proper icons and theme variables. Plus a
         "changed rows only" filter. **S-M**
-30. [ ] **Multiline text**: a field option `multiline`, and automatic for text containing a newline.
+30. [x] **Multiline text**: a field option `multiline`, and automatic for text containing a newline.
         The cell shows the first line with a marker when there is more; editing opens an overlay
         editor anchored at the cell - a bigger textarea, Esc cancels, Ctrl+Enter saves. Rows keep
         a fixed height, virtual scrolling depends on it. **M**

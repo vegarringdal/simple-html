@@ -182,6 +182,9 @@ const norwegian: Record<TextId, string> = {
     'cell.editedMarker.tooltip': 'Opprinnelig verdi: {value}',
     'cell.editedMarker.blank': '(tom)',
     'cell.editedMarker.revert': 'Klikk for å angre',
+    'cell.multiline.more': 'Flere linjer, Enter viser alt',
+    'cell.multiline.hint': 'Ctrl+Enter lagrer, Esc avbryter',
+    'cell.multiline.hintReadonly': 'Esc lukker',
 
     // the date picker
     'datePicker.hours': 'TT',

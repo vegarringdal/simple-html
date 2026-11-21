@@ -188,6 +188,11 @@ const DEFAULTS = {
     'cell.editedMarker.tooltip': 'Original value: {value}',
     'cell.editedMarker.blank': '(blank)',
     'cell.editedMarker.revert': 'Click to revert',
+    // a cell of several lines (FieldConfig.multiline, or a value with a line break): the marker that
+    // there is more, for a screen reader, and the hint of the editor over the cell
+    'cell.multiline.more': 'More lines, Enter shows all',
+    'cell.multiline.hint': 'Ctrl+Enter to save, Esc to cancel',
+    'cell.multiline.hintReadonly': 'Esc to close',
 
     // the date picker: of date cells and date header filters, and a DateInterface of your own
     'datePicker.hours': 'HH',
@@ -299,7 +304,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
  * | `grid.*` | labels for screen readers |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
- * | `cell.*` | the cells: the marker of an edited cell |
+ * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |
  * | `datePicker.*` | the date picker: the buttons, the names of the months and the days |
  * | `validation.*` | the messages of the built-in validators. Made by the datasource |
  * | `filterString.*` | `datasource.getFilterString()`: AND, OR and the operators. Made by the datasource |

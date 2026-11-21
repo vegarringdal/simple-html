@@ -2000,6 +2000,18 @@ change:
 * **Tab leaves the grid at its ends**: Tab on the last cell of the last row and Shift+Tab on the first
   header filter used to keep the focus in the grid.
 
+## Text of several lines
+
+See [Multiline text](guides/05-editing.md#multiline-text).
+
+* **A text cell whose value has a line break is not typed in directly any more**: its input is
+  readonly and shows the first line, with a marker; Enter, F2, a double click or typing opens an editor
+  over the cell (Ctrl/Cmd+Enter saves, Esc cancels). Enter in such a cell no longer moves down. In v5
+  editing it silently dropped the line breaks (an `<input>` strips them).
+* New field option `multiline: true` (text fields only) makes a field always use the editor.
+* `datasource.getField()` returns `multiline` too: code comparing the whole object needs it.
+* A text saved from the editor has LF line breaks.
+
 ## Row state and edited cells are built in
 
 See [Showing the row state](guides/05-editing.md#showing-the-row-state).

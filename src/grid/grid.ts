@@ -9,6 +9,7 @@ import { rebuildRows } from './gridFunctions/rebuildRows';
 import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { closeFilterEditor } from './gridFunctions/renderFilterEditor';
+import { closeTextEditor, type TextEditor } from './gridFunctions/textEditor';
 import { hideTooltip } from './gridFunctions/tooltip';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateHorizontalScrollWidth } from './gridFunctions/updateHorizontalScrollWidth';
@@ -70,6 +71,8 @@ export class Grid {
     public filterEditor?: HTMLDialogElement | null;
     // the column chooser, a popover that stays open while columns are dragged from it
     public columnChooserMenu?: HTMLElement | null;
+    // the editor of a multiline cell, a popover over the cell: see openTextEditor. Null when it is closed
+    public textEditor: TextEditor | null = null;
     /** aborts the document listeners addMenuListeners added, see there */
     public menuListenersAbort?: AbortController;
     // set by createDom
@@ -165,8 +168,11 @@ export class Grid {
      * else the grid (and its datasource) can never be garbage collected
      */
     public disconnectElement() {
-        // the menus and the editor are on the body (or in a dialog), not in the element: they would stay.
-        // remove() and not removeChild(), the user can already have closed them
+        // the menus and the editors are on the body (or in a dialog), not in the element: they would stay.
+        // remove() and not removeChild(), the user can already have closed them.
+        // The text of a multiline cell is saved, as a click outside its editor does, while the
+        // datasource is still connected
+        closeTextEditor(this);
         removeContextMenu(this);
         closeFilterEditor(this);
         this.columnChooserMenu?.remove();

@@ -3,6 +3,7 @@ import type { Formatter } from '../../datasource/formatter';
 import type { Grid } from '../grid';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { tooltipText } from './multilineText';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
@@ -67,7 +68,10 @@ export function showCellEdited(
     // the errors first, as the cell's own tooltip has them: the marker has a tooltip of its own
     const datasource = ctx.gridInterface.getDatasource();
     const errors = datasource.__getRowErrors(entity)?.get(attribute) ?? [];
-    const original = (formatter ?? datasource.getFormatter(attribute)).format(controller.__originalValues[attribute]);
+    // a text of several lines is cut, as in the tooltip of its cell
+    const original = tooltipText(
+        (formatter ?? datasource.getFormatter(attribute)).format(controller.__originalValues[attribute])
+    );
     const lines = [
         ...errors,
         gridText(ctx, 'cell.editedMarker.tooltip', {

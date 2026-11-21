@@ -45,7 +45,8 @@ for `isReadonly`. Readonly cells of an editable grid are shown with stripes.
   date, and **`0` for a number** - the number formatters parse text that is no number as 0. The row
   menu's clear (below) stores `null` in any field. For an emptied number cell to store `null`, give
   the field a formatter of your own, see [Formatting](08-formatting.md#the-defaults-per-type).
-- **Enter** in an editable cell moves to the cell below.
+- **Enter** in an editable cell moves to the cell below - in a cell of several lines it opens the
+  editor, see [Multiline text](#multiline-text).
 - **Date cells** also open a date picker on click, when they are editable: "Use" stores the picked
   date and time, "Clear" stores `null`. The picker needs `@simple-html/grid/date.css`.
 - **Boolean cells** are checkboxes.
@@ -59,6 +60,65 @@ for a field the user sets with a picker of your own, such as a [dropdown grid](1
 The grid sends no event with the edit itself. Read the changes when you need them, with
 `getChanges()` or the row's `__rowState` (below). `history-changed` says that an edit was recorded
 for undo, see [Undo and redo](#undo-and-redo).
+
+## Multiline text
+
+Notes, an address, a comment: a text of several lines. The input of a cell can not hold a line break -
+the browser strips them from the value of `<input type="text">` - so a cell of several lines shows its
+first line, and is edited in an editor over the cell, a bigger textarea.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const datasource = new Datasource({
+    fields: {
+        notes: { label: 'Notes', multiline: true }
+    }
+});
+```
+
+- **The option**: `multiline: true` in the field's `FieldConfig`, for a text field only - on another
+  type it throws when the datasource is made. `getField('notes').multiline` says it.
+- **Automatic**: a text cell whose value has a line break is multiline for that value, without the
+  option. CR LF, CR and LF are line breaks. The option is for a field whose values have no line break
+  yet: its cells are edited in the editor from the start.
+- **The cell** shows the first line, readonly (no typing in it), with a marker at its right when there
+  are more lines. The whole text is its tooltip, after the validation errors when it has any (an empty
+  line between them), cut after 15 lines or 600 characters. The rows keep their height.
+- **Opening the editor**: Enter, F2, a double click - or typing a character, in a cell that can be
+  edited: the editor opens with the text and the character at its end (nothing is replaced). A click
+  only focuses the cell; Tab, Alt+arrows and the row menu (Shift+F10) work as in any cell.
+- **In the editor** the textarea has the text and the focus, the caret at the end. It is as wide as
+  the cell, at least 300px, six lines high, and can be resized. It is put over the cell, its top left
+  corner on the cell's, and kept in the window.
+
+| in the editor | does |
+| --- | --- |
+| Enter | a new line |
+| Ctrl+Enter, Cmd+Enter | saves and closes, the focus back in the cell |
+| Esc | closes without saving, the focus back in the cell |
+| Tab / Shift+Tab | saves and closes, and goes on to the next / previous cell |
+| a click outside it | saves and closes, the focus goes where the click put it |
+| scrolling the grid (the wheel, a swipe, the scrollbars) | saves and closes |
+
+Opening a menu or another editor saves and closes it too - one is open at a time - and so does
+`destroy()`, or the grid leaving the page.
+
+- **Saving** writes the row once, and only when the text changed: one step of the [undo
+  history](#undo-and-redo) (Ctrl+Z in the cell takes it back), validated as an edit, and the cell gets
+  the edited marker. The line breaks of a saved text are LF (`\n`): the textarea gives them so (the
+  HTML spec normalises the value of a textarea to LF), a text from a server with CR LF keeps them
+  until the user changes it. The value goes through the field's formatter (`parse`), as what is typed
+  in a cell.
+- **Readonly**: in a readonly grid, a readonly column or cell (`readonly`, the `isReadonly` hook) and
+  a column with `allowPasteClearOnly`, Enter, F2 and a double click open the editor read-only, to read
+  the whole text: Esc (or Ctrl+Enter, Tab, a click outside) closes it. Typing opens nothing.
+- **Paste** from the row menu writes the clipboard text as it is, line breaks and all.
+- The texts of the editor are `cell.multiline.*`, see [Texts](12-texts.md#multiline-cells), the
+  colour of the marker `--simple-html-grid-multiline-color`, see [Theming](13-theming.md#multiline-text).
+
+```sample multiline
+```
 
 ## Edits from code
 

@@ -23,7 +23,8 @@ describe('schema - getField', () => {
             type: 'text',
             label: 'name',
             formatter: TextFormatter,
-            validate: []
+            validate: [],
+            multiline: false
         });
     });
 
@@ -34,14 +35,16 @@ describe('schema - getField', () => {
             type: 'date',
             label: 'born',
             formatter: DateFormatterYYYYMMDD,
-            validate: []
+            validate: [],
+            multiline: false
         });
         expect(ds.getField('died')).toEqual({
             name: 'died',
             type: 'date',
             label: 'died',
             formatter: DateFormatterYYYYMMDD,
-            validate: []
+            validate: [],
+            multiline: false
         });
     });
 
@@ -52,7 +55,8 @@ describe('schema - getField', () => {
             type: 'number',
             label: 'Price',
             formatter: NumberFormatterComma,
-            validate: []
+            validate: [],
+            multiline: false
         });
     });
 
@@ -80,6 +84,30 @@ describe('schema - getField', () => {
         fields.other = { type: 'number' };
         expect(ds.getField('age').type).toEqual('number');
         expect(ds.getField('other').type).toEqual('text');
+    });
+
+    it('expect multiline on a text field: getField() says it, false by default', () => {
+        const ds = new Datasource({
+            fields: { notes: { multiline: true }, memo: { type: 'text', multiline: true }, name: 'text' }
+        });
+        expect(ds.getField('notes').multiline).toBe(true);
+        expect(ds.getField('memo').multiline).toBe(true);
+        expect(ds.getField('name').multiline).toBe(false);
+        expect(ds.getField('other').multiline).toBe(false);
+    });
+
+    it('expect multiline on a field that is not text to throw, false to be allowed', () => {
+        expect(() => new Datasource({ fields: { age: { type: 'number', multiline: true } } })).toThrow(
+            "field 'age' is multiline, that is for text fields only, not 'number'"
+        );
+        expect(() => new Datasource({ fields: { born: { type: 'date', multiline: true } } })).toThrow(/text fields only/);
+        expect(new Datasource({ fields: { age: { type: 'number', multiline: false } } }).getField('age').multiline).toBe(false);
+    });
+
+    it('expect multiline that is not true or false to throw', () => {
+        // plain JSON from a backend can have anything
+        const fields = JSON.parse('{ "notes": { "multiline": "yes" } }') as Record<string, FieldConfig>;
+        expect(() => new Datasource({ fields })).toThrow("field 'notes' has multiline 'yes', it is true or false");
     });
 
     it('expect an unknown type to throw', () => {

@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html, nothing, render, svg } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import { isMissingValue } from '../../datasource/validatorRegistry';
@@ -13,13 +13,34 @@ import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
+import { firstLine, hasLineBreak, isMultilineCell } from './multilineText';
 import { renderRowSelectorOf } from './renderRowSelector';
 import { showCellEdited } from './showCellEdited';
 import { showCellErrors } from './showCellErrors';
+import { openTextEditor } from './textEditor';
 import { triggerScrollEvent } from './triggerScrollEvent';
 import { undoRedoKey } from './undoRedoKey';
+
+/**
+ * the marker of a multiline cell with more lines than it shows: lines of text, 10x10px like the
+ * icons of the row status, in the marker's colour (--simple-html-grid-multiline-color)
+ */
+const MORE_ICON = svg`<svg class="simple-html-grid-cell-more-icon" viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+    <path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h5v2H1z" />
+</svg>`;
+
+/**
+ * true for a key that types a character: `key` is one character (an emoji too, two code units),
+ * without Ctrl, Alt or Cmd - or with Ctrl and Alt both, AltGr on Windows (@ on a Norwegian keyboard
+ * is AltGr+2). Alt alone is a shortcut on Windows and Linux; a character typed with Option on a Mac
+ * is left out with it
+ */
+function isTypedCharacter(event: KeyboardEvent): boolean {
+    return Array.from(event.key).length === 1 && !event.metaKey && event.ctrlKey === event.altKey;
+}
 
 export function renderRowCell(
     ctx: Grid,
@@ -42,9 +63,6 @@ export function renderRowCell(
         return;
     }
 
-    // the validation errors: a class and a tooltip on the cell element
-    showCellErrors(ctx, cell, entity, attribute || null);
-
     // the cell element is the gridcell, the input in it the widget. A column with fewer fields than
     // the tallest one has empty cells under its last field: those are no cells for a screen reader
     const config = ctx.gridInterface.__getGridConfig();
@@ -66,7 +84,7 @@ export function renderRowCell(
 
         // after an edit: the field was validated, show its errors and the row's, and whether it is
         // edited now. Not by rendering the cell again, that would put the formatted value back into
-        // the input while the user types
+        // the input while the user types. Not for a multiline cell, it is edited in the text editor
         const showEdit = () => {
             showCellErrors(ctx, cell, entity, attribute);
             showCellEdited(ctx, cell, entity, attribute, formatter);
@@ -120,6 +138,15 @@ export function renderRowCell(
         // the name of the input for a screen reader: the column's label, as in the header
         const label = getColumnLabel(ctx, attribute);
 
+        // text of several lines (multilineText.ts): the input shows the first line and is readonly,
+        // the text editor edits it. `more`: there are lines after the first, the cell has a marker
+        // and the whole text in its tooltip
+        const multiline = isMultilineCell(field, cellConfigType, value);
+        const more = multiline && hasLineBreak(value);
+
+        // the validation errors: a class and a tooltip on the cell element
+        showCellErrors(ctx, cell, entity, attribute, more ? value : undefined);
+
         // the classes of the cellClass hook, '' without one
         const cellClass = ctx.gridInterface.__getCellClass(entity, attribute);
         const backgroundClass = `${dimmed} ${cellClass.background}`;
@@ -172,6 +199,41 @@ export function renderRowCell(
             );
         } else {
             let skipFocus = false;
+
+            // the column's focus button is shown in this cell (ColumnConfig.focusButton)
+            const hasFocusButton = () => {
+                switch (cellConfig.focusButton) {
+                    case 'SHOW_IF_GRID_NOT_READONLY':
+                        return !config.readonly;
+                    case 'SHOW_IF_GRID_AND_CELL_NOT_READONLY':
+                        return !config.readonly && !cellReadOnly;
+                    case 'ALWAYS':
+                        return true;
+                    default:
+                        return false;
+                }
+            };
+
+            // the text editor of a multiline cell: readonly where the cell can not be typed in
+            const editable = !config.readonly && !cellReadOnly && !cellConfig.allowPasteClearOnly;
+            const openEditor = (typed?: string) =>
+                openTextEditor(
+                    ctx,
+                    {
+                        cell,
+                        row: entity,
+                        field: attribute,
+                        formatter,
+                        readonly: !editable,
+                        tab: (event) => cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, event, '')
+                    },
+                    typed
+                );
+
+            // the marker of a multiline cell with more lines, it describes the input for a screen
+            // reader. An id per cell on screen: the row is the displayed row
+            const moreId = `${ctx.ariaIdPrefix}-more-${colType}-${row}-${column}-${celno}`;
+
             render(
                 html` <div style="width:100%;height:100%;">
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
@@ -182,9 +244,10 @@ export function renderRowCell(
                         style=${
                             cellConfigType === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'
                         }
-                        .value=${live(value)}
-                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}`}
-                        .readOnly=${config.readonly ? config.readonly : cellReadOnly}
+                        .value=${live(multiline ? firstLine(value) : value)}
+                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}`}
+                        .readOnly=${multiline || !!config.readonly || cellReadOnly}
+                        aria-describedby=${more ? moreId : nothing}
                         placeholder=${showPlaceHolder ? cellConfig.placeholderRow : ''}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
@@ -225,6 +288,11 @@ export function renderRowCell(
                                     originalEvent: e //incase user want to reuse
                                 });
                             });
+                        }}
+                        @dblclick=${() => {
+                            if (multiline) {
+                                openEditor();
+                            }
                         }}
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {
@@ -287,19 +355,8 @@ export function renderRowCell(
                                 cell.appendChild(el);
                             };
 
-                            switch (cellConfig.focusButton) {
-                                case 'SHOW_IF_GRID_NOT_READONLY':
-                                    if (!config.readonly) {
-                                        addFocusButton();
-                                    }
-                                    break;
-                                case 'SHOW_IF_GRID_AND_CELL_NOT_READONLY':
-                                    if (!config.readonly && !cellReadOnly) {
-                                        addFocusButton();
-                                    }
-                                    break;
-                                case 'ALWAYS':
-                                    addFocusButton();
+                            if (hasFocusButton()) {
+                                addFocusButton();
                             }
 
                             renderRowCell(ctx, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -330,55 +387,34 @@ export function renderRowCell(
                                 return;
                             }
 
-                            // if hidding spcae we want the option to trigger focus button if it exist
-                            if (e.code === 'Space') {
-                                switch (cellConfig.focusButton) {
-                                    case 'SHOW_IF_GRID_NOT_READONLY':
-                                        if (!config.readonly) {
-                                            ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
-                                                cell,
-                                                row,
-                                                column,
-                                                celno,
-                                                colType,
-                                                cellType,
-                                                attribute,
-                                                rowData,
-                                                target: e.target,
-                                                originalEvent: e //incase user want to reuse
-                                            });
-                                        }
-                                        break;
-                                    case 'SHOW_IF_GRID_AND_CELL_NOT_READONLY':
-                                        if (!config.readonly && !cellReadOnly) {
-                                            ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
-                                                cell,
-                                                row,
-                                                column,
-                                                celno,
-                                                colType,
-                                                cellType,
-                                                attribute,
-                                                rowData,
-                                                target: e.target,
-                                                originalEvent: e //incase user want to reuse
-                                            });
-                                        }
-                                        break;
-                                    case 'ALWAYS':
-                                        ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
-                                            cell,
-                                            row,
-                                            column,
-                                            celno,
-                                            colType,
-                                            cellType,
-                                            attribute,
-                                            rowData,
-                                            target: e.target,
-                                            originalEvent: e //incase user want to reuse
-                                        });
-                                }
+                            // Space in a cell with a focus button: as a click on the button
+                            const focusButtonSpace = e.code === 'Space' && hasFocusButton();
+                            if (focusButtonSpace) {
+                                ctx.gridInterface.__callSubscribers('cell-focus-button-click', {
+                                    cell,
+                                    row,
+                                    column,
+                                    celno,
+                                    colType,
+                                    cellType,
+                                    attribute,
+                                    rowData,
+                                    target: e.target,
+                                    originalEvent: e //incase user want to reuse
+                                });
+                            }
+
+                            // a multiline cell: Enter and F2 open the text editor, and so does typing a
+                            // character where the cell can be edited - the character goes at the end
+                            if (multiline && !e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'Enter' || e.key === 'F2')) {
+                                e.preventDefault();
+                                openEditor();
+                                return;
+                            }
+                            if (multiline && editable && !focusButtonSpace && isTypedCharacter(e)) {
+                                e.preventDefault();
+                                openEditor(e.key);
+                                return;
                             }
 
                             let overrideKey = '';
@@ -389,6 +425,11 @@ export function renderRowCell(
                             return cellRowKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e, overrideKey);
                         }}
                         @input=${(e: any) => {
+                            // the input of a multiline cell is readonly, and its value has no line
+                            // breaks: it must never be written to the row
+                            if (multiline) {
+                                return;
+                            }
                             if (cellConfig.allowPasteClearOnly) {
                                 e.target.value = formatter.format(entity[attribute]);
                                 return;
@@ -400,6 +441,9 @@ export function renderRowCell(
                             }
                         }}
                         @change=${(e: any) => {
+                            if (multiline) {
+                                return;
+                            }
                             if (cellConfig.allowPasteClearOnly) {
                                 e.target.value = formatter.format(entity[attribute]);
                                 return;
@@ -411,6 +455,15 @@ export function renderRowCell(
                             }
                         }}
                     />
+                    ${
+                        more
+                            ? html`<span class="simple-html-grid-cell-more" id=${moreId} aria-hidden="true"
+                                  >${MORE_ICON}<span class="simple-html-visually-hidden"
+                                      >${gridText(ctx, 'cell.multiline.more')}</span
+                                  ></span
+                              >`
+                            : nothing
+                    }
                 </div>`,
                 cell as any
             );
@@ -419,6 +472,7 @@ export function renderRowCell(
         // after the template: a template of another kind removes what is after it, the marker too
         showCellEdited(ctx, cell, entity, attribute, formatter);
     } else {
+        showCellErrors(ctx, cell, entity, null);
         render(html`<div data-dimmed-emtpy class="simple-html-dimmed"></div>`, cell as any);
         showCellEdited(ctx, cell, null, null);
     }

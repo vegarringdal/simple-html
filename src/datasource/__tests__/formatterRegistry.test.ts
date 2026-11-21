@@ -51,7 +51,8 @@ describe('formatter registry - registerFormatter()', () => {
             type: 'number',
             label: 'price',
             formatter: money,
-            validate: []
+            validate: [],
+            multiline: false
         });
     });
 

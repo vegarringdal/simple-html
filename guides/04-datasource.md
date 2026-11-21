@@ -171,7 +171,7 @@ labelled with its name.
 
 | type | value | sorts and filters | shown as | edited with |
 | --- | --- | --- | --- | --- |
-| `'text'` | string | as text, filters ignore case | the text | an input |
+| `'text'` | string | as text, filters ignore case | the text; the first line of a text of several lines | an input; the editor over the cell for a text of several lines |
 | `'number'` | number | as numbers | `12.5`, right aligned | an input |
 | `'boolean'` | boolean | true / false | a checkbox | the checkbox |
 | `'date'` | `Date` | on the day, the time is ignored | `2026-11-20` | an input and a date picker |
@@ -184,8 +184,9 @@ grouping, and a change of the time is an edit (to the second).
 
 A `FieldConfig` can also have a `label` (the grid's column label falls back to it, and so does
 `getFilterString()`), a `formatter`: the id of a registered formatter, see
-[Formatting](08-formatting.md), and `validate`: the field's validation rules, see below.
-`getField()` and `getFormatter()` give the formatter object.
+[Formatting](08-formatting.md), `validate`: the field's validation rules, see below, and
+`multiline`: a text of several lines, a text field only - see [Multiline
+text](05-editing.md#multiline-text). `getField()` and `getFormatter()` give the formatter object.
 
 ```ts
 import { Datasource } from '@simple-html/grid';
@@ -193,12 +194,14 @@ import { Datasource } from '@simple-html/grid';
 const datasource = new Datasource({
     fields: {
         born: { type: 'date', label: 'Born' },
-        price: { type: 'number', formatter: 'numberComma', validate: ['required', { id: 'min', value: 0 }] }
+        price: { type: 'number', formatter: 'numberComma', validate: ['required', { id: 'min', value: 0 }] },
+        notes: { multiline: true }
     }
 });
 
-datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [] }
-datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [] }
+datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [], multiline: false }
+datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [], multiline: false }
+datasource.getField('notes').multiline; // true
 datasource.getField('price').validate; // [{ id: 'required' }, { id: 'min', value: 0 }]
 datasource.getFormatter('born').format(new Date(2026, 10, 20)); // '2026-11-20'
 datasource.getFormatter('price').format(12.5); // '12,5'

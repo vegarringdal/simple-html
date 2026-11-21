@@ -305,6 +305,13 @@ export class Datasource<T = any> {
             if (config.type !== undefined && !isFieldType(config.type)) {
                 throw new Error(`Datasource: field '${name}' has an unknown type '${config.type}'`);
             }
+            // the grid edits a multiline field as text: on another type the option would do nothing
+            if (config.multiline !== undefined && typeof config.multiline !== 'boolean') {
+                throw new Error(`Datasource: field '${name}' has multiline '${config.multiline}', it is true or false`);
+            }
+            if (config.multiline && (config.type ?? 'text') !== 'text') {
+                throw new Error(`Datasource: field '${name}' is multiline, that is for text fields only, not '${config.type}'`);
+            }
             if (config.formatter !== undefined) {
                 this.__fieldFormatters.set(name, getRegisteredFormatter(config.formatter, `field '${name}'`));
             }
@@ -351,9 +358,9 @@ export class Datasource<T = any> {
     }
 
     /**
-     * A field as the datasource sees it: its type, label, formatter and validation rules, with every
-     * default filled in. A field that is not listed in `fields` is a `'text'` field labelled with its
-     * name, without rules.
+     * A field as the datasource sees it: its type, label, formatter, validation rules and whether it
+     * is multiline, with every default filled in. A field that is not listed in `fields` is a `'text'`
+     * field labelled with its name, without rules.
      *
      * @param name the field name, the property on the row
      *
@@ -363,8 +370,8 @@ export class Datasource<T = any> {
      *
      * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
      *
-     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [] }
-     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [] }
+     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [], multiline: false }
+     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [], multiline: false }
      * // formatter: the formatter object, looked up by its id when the datasource was made
      * ```
      */
@@ -375,7 +382,8 @@ export class Datasource<T = any> {
             type: config?.type ?? 'text',
             label: config?.label || name,
             formatter: this.getFormatter(name),
-            validate: this.__fieldRules.get(name) ?? NO_RULES
+            validate: this.__fieldRules.get(name) ?? NO_RULES,
+            multiline: config?.multiline === true
         };
     }
 

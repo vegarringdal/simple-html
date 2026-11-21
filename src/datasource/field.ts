@@ -65,7 +65,8 @@ export function isFieldType(value: unknown): value is FieldType {
  *         born: 'date',
  *         age: { type: 'number', label: 'Age (years)', validate: ['required', { id: 'min', value: 0 }] },
  *         price: { type: 'number', formatter: 'numberComma' }, // a built-in formatter, by its id
- *         company: { label: 'Company name', validate: ['required'] } // a text field with a label
+ *         company: { label: 'Company name', validate: ['required'] }, // a text field with a label
+ *         notes: { label: 'Notes', multiline: true } // a text of several lines
  *     }
  * });
  * ```
@@ -101,6 +102,21 @@ export interface FieldConfig {
      * @sample validation
      */
     validate?: ValidationRule[];
+
+    /**
+     * a text of several lines: notes, an address. The grid shows the first line of the cell, with a
+     * marker when there is more, and the whole text in its tooltip. Enter, F2, a double click or
+     * typing opens an editor over the cell, a bigger textarea: Ctrl+Enter saves, Esc cancels. See the
+     * editing guide.
+     *
+     * A text cell whose value has a line break is shown and edited like this without the option too:
+     * the input of a cell can not hold a line break (the browser strips them). The option is for a
+     * field of several lines whose values have none yet. Text fields only: `true` on another type
+     * throws when the datasource is made. Default `false`
+     *
+     * @sample multiline
+     */
+    multiline?: boolean;
 }
 
 /**
@@ -127,4 +143,9 @@ export interface Field {
      * `[]` when the field has none. The datasource's own list, do not change it
      */
     validate: readonly ValidationRuleObject[];
+    /**
+     * `true` when `fields` gave the field `multiline: true`. The grid also shows a value with a line
+     * break as multiline text, in any text field
+     */
+    multiline: boolean;
 }

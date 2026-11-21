@@ -128,6 +128,16 @@ The icons and the marker are graphics: the new, edited and deleted colours have 
 tint (WCAG 1.4.11). Keep that when you change them. Each state has a shape of its own too, the colour is
 not the only thing that tells them apart.
 
+## Multiline text
+
+A cell of several lines (see [Multiline text](05-editing.md#multiline-text)) has a marker at its
+right, lines of text, in `--simple-html-grid-multiline-color` - at least 3:1 to the rows and the
+selected rows too. The editor that opens over the cell uses the colours of the rest: the textarea is
+`--simple-html-grid-sec-bg-color` with `--simple-html-grid-main-font-color`, its hint
+`--simple-html-grid-main-bg-color`, its frame `--simple-html-grid-pinned-border` and its shadow
+`--simple-html-grid-dialog-shadow-color`. The editor is on the body (or in the dialog the grid is in),
+like the menus: a theme set on `.simple-html-grid` reaches it, one set on the grid's container does not.
+
 ```css
 .simple-html-grid {
     --simple-html-grid-edited-color: light-dark(#1d4ed8, #93c5fd);
@@ -180,6 +190,7 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-edited-color` | the marker of an edited cell, the pencil of an edited row (`editedMarker`, `rowStatus`) | `#9a3412` | `#fdba74` |
 | `--simple-html-grid-new-color` | the plus of a new row (`rowStatus`) | `#166534` | `#86efac` |
 | `--simple-html-grid-deleted-color` | the trash can of a row marked for deletion (`rowStatus`) | `#57534e` | `#d1d5db` |
+| `--simple-html-grid-multiline-color` | the marker of a cell with more lines than it shows (`FieldConfig.multiline`) | `#475569` | `#e2e8f0` |
 | `--simple-html-grid-warning-font-color` | the "too many values" warning of the filter menu | `red` | `#fca5a5` |
 | `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text | `#c0392b` | `#fecaca` |
 | `--simple-html-grid-danger-border` | the footer's Clear filter button under the pointer: its border | `#d98282` | `#f87171` |

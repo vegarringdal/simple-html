@@ -411,6 +411,17 @@ tooltip's first line and the text a screen reader reads with the row number.
 | `cell.editedMarker.blank` | `(blank)` | the `{value}` of an original value that is blank |
 | `cell.editedMarker.revert` | `Click to revert` | the tooltip's last line, in an editable grid: a click on the marker puts the original value back |
 
+### Multiline cells
+
+A cell of several lines (`FieldConfig.multiline`, or a value with a line break) and the editor that
+opens over it, see [Editing](05-editing.md#multiline-text).
+
+| id | English | shown |
+| --- | --- | --- |
+| `cell.multiline.more` | `More lines, Enter shows all` | for a screen reader: the description of a cell that shows the first of its lines. Hidden on screen, the cell has a marker |
+| `cell.multiline.hint` | `Ctrl+Enter to save, Esc to cancel` | under the textarea of the editor. Cmd+Enter saves too |
+| `cell.multiline.hintReadonly` | `Esc to close` | under the textarea of the editor of a readonly cell |
+
 ### Date picker
 
 Of a date cell and a date header filter, and a `DateInterface` of your own.

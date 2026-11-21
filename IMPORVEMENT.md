@@ -1138,6 +1138,24 @@ in the console. All passed. Found and fixed:
   (saving, validation, column-layout, grid01) still have their own RS column; the marker has no
   keyboard path (Ctrl+Z and the row menu do)
 
+#### Multiline text (item 30)
+
+* an `<input type=text>` strips line breaks from its value (HTML value sanitization), and the grid
+  wrote the input back on every keystroke: editing a cell with a line break dropped them. A multiline
+  cell's input is now readonly (still focusable, Tab / Alt+arrows / Shift+F10 work) and its @input /
+  @change return early; a test fails without that guard
+* the editor is a `popover="manual"` over the cell (`popoverParent`, so it works in a dialog), one at a
+  time (`ctx.textEditor`); opening a menu or the filter editor, a click outside (on mousedown, focus
+  left where the click put it), scrolling, `destroy()` all save it. It listens to the two scrollers
+  only: the browser scrolls the row views itself when a half-hidden cell takes focus, and listening to
+  them closed a fast double click
+* a typed character opens the editor and is added at the end - one key must not wipe a long note
+* saving writes `formatter.parse(text)` once, only when the text changed: one undo step; a CR LF value
+  from a server that is not edited stays CR LF
+* checks: 35 tests; Chromium `multiline-check.js` 62/62 (every key and click path, the edges, dark)
+* left: scrolling a container around the grid (not the page) does not close the editor; the row menu's
+  tab-separated copy does not quote a value with line breaks (as before)
+
 ### v6 phase 8 - more
 
 #### CSV export (item 41)

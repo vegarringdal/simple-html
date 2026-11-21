@@ -57,11 +57,21 @@ function fakeTexts(only: (id: string) => boolean): Texts {
 // 102 countries, 101 of them let through by the filter on age: the value list is cut off at 100
 const COUNTRIES = Array.from({ length: 102 }, (_, i) => `«c${i}»`);
 
+// notes of two lines: the marker of a multiline cell, and its editor
+const NOTES = '«line 1»\n«line 2»';
+
 const rows = () => [
-    { name: '«ann»', country: COUNTRIES[0], age: 10, born: new Date(2026, 0, 5), active: true },
+    { name: '«ann»', country: COUNTRIES[0], age: 10, born: new Date(2026, 0, 5), active: true, notes: NOTES },
     // a blank name: "Blank" in the value list, and a validation error
-    { name: null, country: null, age: 20, born: null, active: false },
-    ...COUNTRIES.slice(1).map((country, i) => ({ name: '«bob»', country, age: 30 + i, born: new Date(2026, 1, 1), active: true }))
+    { name: null, country: null, age: 20, born: null, active: false, notes: NOTES },
+    ...COUNTRIES.slice(1).map((country, i) => ({
+        name: '«bob»',
+        country,
+        age: 30 + i,
+        born: new Date(2026, 1, 1),
+        active: true,
+        notes: NOTES
+    }))
 ];
 
 const config = (texts?: Texts): GridConfig => ({
@@ -73,7 +83,8 @@ const config = (texts?: Texts): GridConfig => ({
             { fields: ['country'], width: 100 },
             { fields: ['age'], width: 100 },
             { fields: ['born'], width: 100 },
-            { fields: ['active'], width: 100 }
+            { fields: ['active'], width: 100 },
+            { fields: ['notes'], width: 100 }
         ]
     },
     columns: {
@@ -82,7 +93,8 @@ const config = (texts?: Texts): GridConfig => ({
         age: { label: '«Age»' },
         // the placeholder of a date filter is the formatter's (YYYY-MM-DD), not a text
         born: { label: '«Born»', placeholderFilter: '«born»' },
-        active: { label: '«Active»' }
+        active: { label: '«Active»' },
+        notes: { label: '«Notes»' }
     },
     // a filter on age hides a row: the value list of the other columns has "Filter Available"
     initialState: { filter: and(where('age', 'GREATER_THAN', 10)) },
@@ -103,7 +115,8 @@ const fields = {
             ]
         },
         born: 'date' as const,
-        active: 'boolean' as const
+        active: 'boolean' as const,
+        notes: { multiline: true }
     }
 };
 
@@ -170,8 +183,21 @@ const conditions = (operators: FilterOperator[]): FilterCondition[] =>
  * Opens every part of the grid that shows a text, and checks each
  */
 async function showEverything({ element, datasource, gridInterface }: MountedGrid, check: (more?: string[]) => void) {
-    // the grid, its footer with the filter
+    // the grid, its footer with the filter. The notes have a marker for a screen reader
     check();
+
+    // the editor of the notes, and read-only in a readonly grid
+    const notes = element.querySelector('input[data-attribute="notes"]') as HTMLInputElement;
+    const pressKey = (target: Element, key: string) =>
+        target.dispatchEvent(new KeyboardEvent('keydown', { key, code: key, bubbles: true, cancelable: true }));
+    pressKey(notes, 'Enter');
+    check();
+    pressKey(document.querySelector('.simple-html-grid-text-editor textarea') as HTMLElement, 'Escape');
+    gridInterface.updateConfig({ readonly: true });
+    pressKey(element.querySelector('input[data-attribute="notes"]') as HTMLElement, 'Enter');
+    check();
+    pressKey(document.querySelector('.simple-html-grid-text-editor textarea') as HTMLElement, 'Escape');
+    gridInterface.updateConfig({ readonly: false });
 
     // the row menu: an editable number cell, a selected row marked for deletion (undo). Not the row
     // with the blank name, a row marked for deletion is not validated

@@ -49,6 +49,11 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
 - **An edited cell**: its marker is hidden from a screen reader and is no stop of Tab; the row's state
   says the row is edited. Ctrl+Z takes an edit back, the row menu's *Revert cell* and a click on the
   marker are for the mouse.
+- **A cell of several lines** (`FieldConfig.multiline`, or a value with a line break) is a readonly
+  textbox with its first line as the value. When it has more lines, its description
+  (`aria-describedby`) says so: `textbox "Notes" readonly: "Call back on Monday"`, described "More
+  lines, Enter shows all" (the text `cell.multiline.more`). The marker on screen is hidden from a
+  screen reader. Enter opens the editor, see [The editor of a multiline cell](#the-editor-of-a-multiline-cell).
 - **The state is not colour only** (WCAG 1.4.1): each state has a shape of its own - a plus, a pencil,
   a trash can, an exclamation mark - and a row marked for deletion is struck through.
 - **A group row**, grouped, is a row with `aria-level` (1 for the first grouping) and
@@ -90,7 +95,9 @@ caret in them; Alt with an arrow moves between the cells.
 | Tab / Shift+Tab | the next / previous cell, across the sections, then the next / previous row. Group rows are skipped. Shift+Tab in the first row goes up to the header filters. Tab on the last cell of the last row, and Shift+Tab on the first cell with the filters hidden, leave the grid |
 | Alt+ArrowLeft / Alt+ArrowRight | the cell to the left / right, across the sections. Past the end of a row: the next row |
 | Alt+ArrowUp / Alt+ArrowDown | the cell above / below: the next field of a column of two fields, then the next row. Up from the first row: the header filter |
-| Enter | in a text cell that can be edited: the cell below (Alt+ArrowDown) |
+| Enter | in a text cell that can be edited: the cell below (Alt+ArrowDown). In a multiline cell: opens its editor, also when the cell is readonly |
+| F2 | in a multiline cell: opens its editor |
+| a character | in a multiline cell that can be edited: opens its editor, the character at the end of the text |
 | Space | in a cell with a `focusButton`: sends `cell-focus-button-click`, as a click on the button does. In a checkbox: checks it |
 | Shift+F10, the menu key | the row menu (the browser sends `contextmenu`) |
 
@@ -127,7 +134,26 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | the x of a group chip in the panel | Enter / Space | removes the grouping. It is in the tab order, before the grid |
 | the filter chips in the footer | Enter / Space | opens the filter editor |
 | a menu | Esc | closes it, the focus goes back where it was |
+| the editor of a multiline cell | Esc / Ctrl+Enter / Tab | see [below](#the-editor-of-a-multiline-cell) |
 | the filter editor | Esc | closes it without filtering (a modal dialog) |
+
+### The editor of a multiline cell
+
+A textarea in a popover over the cell, see [Multiline text](05-editing.md#multiline-text). It gets the
+focus when it opens: a `textbox` named with the column's label (`Notes`), multi-line, described by the
+hint under it (`Ctrl+Enter to save, Esc to cancel`, `Esc to close` when it is readonly - the texts
+`cell.multiline.hint` and `cell.multiline.hintReadonly`).
+
+| key | does |
+| --- | --- |
+| Enter | a new line |
+| Ctrl+Enter, Cmd+Enter | saves and closes it, the focus goes back to the cell |
+| Esc | closes it without saving, the focus goes back to the cell. In a modal dialog of your own, the dialog stays open |
+| Tab / Shift+Tab | saves and closes it, and goes on to the next / previous cell as Tab in the cell does |
+
+The keys of an input method (IME) are its own while it composes: Enter and Esc go to it. The other
+keys are the textarea's own: the arrows move the caret, Ctrl+Z is the textarea's undo while it is open.
+A readonly editor (a readonly grid or cell) shows the text, nothing can be typed in it.
 
 ## Focus
 
@@ -141,7 +167,8 @@ visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md
   start or the end of the grid (`tabindex="-1"`, hidden from a screen reader), and the browser's Tab
   goes on from there to what is before or after the grid.
 - The wheel and a swipe take the focus from the cell being edited: its row element is about to show
-  another row. The grid uses a hidden input for it, out of the tab order.
+  another row. The grid uses a hidden input for it, out of the tab order. They save and close the
+  editor of a multiline cell too, and a click outside it does: the focus is where the click put it.
 
 ## Labels and translating
 

@@ -998,6 +998,31 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Guides: "Undo and redo" and "Reverting a cell or a row" in the editing guide; the editing sample has
   Undo/Redo buttons that follow `history-changed`.
 
+#### Multiline text (item 30)
+
+##### ⚠️ Breaking changes
+- `datasource.getField()` returns a `multiline` property.
+- A text cell whose value has a line break is no longer typed in directly: its input is readonly and
+  shows the first line, Enter opens the editor instead of moving down.
+
+##### Added
+- `FieldConfig.multiline` (text fields only; throws on another type or a non-boolean) and
+  `Field.multiline`. Automatic for any text value with a line break.
+- Multiline cells show the first line, a marker, the whole text as the tooltip (errors first, cut at
+  15 lines / 600 characters) and `aria-describedby` for screen readers.
+- The editor over the cell (a popover, works inside a dialog): Enter / F2 / double click / typing a
+  character open it (a typed character goes at the end, never replaces the text); Ctrl/Cmd+Enter saves,
+  Esc cancels, Enter is a new line, Tab / Shift+Tab save and move on; a click outside, scrolling, a
+  menu, the filter editor or `destroy()` save and close it. One undo step, LF line breaks, validation;
+  read-only in readonly grids and cells.
+- Texts `cell.multiline.more`, `cell.multiline.hint`, `cell.multiline.hintReadonly`; theme variable
+  `--simple-html-grid-multiline-color`; the sample "Multiline text".
+
+##### Fixed
+- Line breaks in a text value were lost when its cell was edited (the input strips them, and the
+  stripped value was written back).
+- The edited-cell marker's tooltip cuts a long original value.
+
 ### Phase 8 - more
 
 #### CSV export (item 41)
