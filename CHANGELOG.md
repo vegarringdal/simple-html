@@ -1332,6 +1332,11 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Docs site: Developer Guide and User Guide (user request)
+
+##### Docs
+- The sidebar's "Guides - DEV" is **Developer Guide**, "User guide" **User Guide**.
+
 #### Dates: a range picker for Between, the date picker in the filter menu (user request)
 
 ##### Added

@@ -72,8 +72,8 @@ describe('docs site', { timeout: 30_000 }, () => {
         const sections = [...document.querySelectorAll('.nav-section-title')].map((el) => el.textContent);
         expect(sections).toEqual(
             guideFiles.length
-                ? ['Status', 'Guides - DEV', 'User guide', 'Samples', 'API']
-                : ['Status', 'User guide', 'Samples', 'API']
+                ? ['Status', 'Developer Guide', 'User Guide', 'Samples', 'API']
+                : ['Status', 'User Guide', 'Samples', 'API']
         );
 
         expect(routesOf('#sample/').length).toBeGreaterThan(0);

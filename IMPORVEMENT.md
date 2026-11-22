@@ -3404,6 +3404,12 @@ in the console. All passed. Found and fixed:
   script is in this worktree's `.claude/browser-checks/scripts/`, its screenshots in
   `.claude/browser-checks/shots/date-range/`
 
+### Docs site: Developer Guide, User Guide (user request)
+
+* the user: "Guides DEV could be called Developer Guide, and User guide, called User Guide"
+* samples/demo/index.ts (the sections), pages.ts (the user guide's title), site.test.ts; the shared
+  full-grid-check.js expects "Developer Guide" (backup `.before-guide-rename`): 11/11, sidebar-toggle 15/15
+
 ## Considered, not done
 
 ## Candidates / not started
