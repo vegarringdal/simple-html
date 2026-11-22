@@ -1332,6 +1332,25 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Dates: a range picker for Between, the date picker in the filter menu (user request)
+
+##### Added
+- **A range picker**: `IDateConfig.rangepicker` (with `datepicker: true`) shows two months side by side - one
+  on a window narrower than two months - with « ‹ › » once for the pair. The first day clicked is From, the
+  next To (swapped when it is before), a third starts again; the days between are marked
+  (`simple-html-date-day-in-range`, `--simple-html-date-in-range-bg-color`). A From / To line and Clear / Use
+  under the months. `IDateConfig.datepickerRange` is the range it opens on; the `range-select` event sends
+  `[from, to]` (an end not picked is null, open) or null for Clear. Texts `datePicker.from`, `datePicker.to`,
+  `datePicker.rangeOpen`.
+- **A date header filter with Between** opens the range picker on its from..to; Use filters, Clear empties it
+  (the operator stays Between). A `datetime` range is whole days: from 00:00:00 to 23:59:59.
+- **The filter menu's range block**: a click in the value input of a date or datetime column opens the date
+  picker, in From or To with Between the range picker - inside the filter menu, which stays open. Use fills
+  the inputs, Apply still applies; Esc closes the picker only.
+
+##### Changed
+- `DateInterface.clearSelection()` clears a range too.
+
 #### Aggregates: lines of text, the values not bold (user request)
 
 ##### Changed
