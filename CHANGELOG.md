@@ -1332,6 +1332,35 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Touch: swipes with momentum, the long press, menus for a finger (user request)
+
+##### Added
+- **A long press opens the context menu**: a finger held still 500ms on a cell, a header label, the
+  filter row or a column number opens its menu, as a right click does (Safari on iOS sends no
+  `contextmenu` for it). One menu where the browser sends its own too (Android); the finger let go after
+  it is no tap (no row selected, no focus, no keyboard). Your own `contextmenu` listeners in the grid get
+  it too; an element in a popover of its own needs `addLongPress(element, signal)` (internal helper,
+  longPress.ts).
+- **Momentum**: a swipe keeps going after the finger lets go, slowing down as on iOS; a new touch stops it
+  (and is no tap).
+- `@media (pointer: coarse)`: menu and submenu items, the column chooser, the value list and the filter
+  editor's buttons get 36px rows; the filter editor's resize edges 10px, its corners 20px.
+
+##### Changed
+- A swipe locks to the axis it moved most on after 10px (no sideways drift), and the grid or the page
+  takes it: the grid while it can scroll that way, the page at the grid's edge - for the whole swipe.
+- The focus leaves the cell once a swipe (it went into the grid and out on every move, and focusing the
+  hidden input could show a phone's keyboard).
+- The column chooser scrolls with a finger; a field drags after a 200ms hold. The ghost of a dragged
+  column is a popover, above the chooser and above a dialog the grid is in.
+- A touch outside an open menu closes it.
+- `touch-action: manipulation` on the grid: a double tap opens a cell's editor instead of zooming.
+
+##### Fixed
+- A swipe scrolled further than the finger moved (it read the scroll position a frame late) and drifted
+  sideways; at the first row a swipe down moved neither the grid nor the page.
+- A long press on a header label started a drag and sorted on lift; it opens the header menu now.
+
 #### Filters: match case, operators per type, BETWEEN (user request)
 
 ##### ⚠️ Breaking changes
