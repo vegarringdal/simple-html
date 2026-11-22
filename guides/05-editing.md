@@ -115,7 +115,10 @@ gridInterface.fitRows();
 - **Taller rows**: `gridInterface.fitRows()`, or "Fit row height" / "Fit all rows" in the row menu,
   makes a row as many lines high as its multiline cells have (at most 20); `resetRowHeights()` and
   "Reset row height" take it back. In a taller row the cell shows its lines under the first one, as
-  many as there is room for, and the marker only when some are not shown. See
+  many as there is room for, and the marker only when some are not shown. The lines read as a
+  paragraph: the first is the cell's input, `cellHeight` high, each line after it
+  `multilineLineHeight` (15px, about 1.35 times the font) - so a note of three lines is a row of
+  52px. The editor has the same line height. See
   [Column widths and row heights](02-grid-config.md#column-widths-and-row-heights).
 - **Opening the editor**: Enter, F2, a double click - or typing a character, in a cell that can be
   edited: the editor opens with the text and the character at its end (nothing is replaced). A click

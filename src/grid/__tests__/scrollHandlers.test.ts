@@ -400,15 +400,17 @@ describe('scrolling - rows and columns on screen, grouped', () => {
 
 describe('scrolling - rows made taller with fitRows', () => {
     // every 7th row has a name of 3 lines, every 11th (that is not a 7th) a total of 2 lines: fitRows()
-    // makes them 3 and 2 lines high. A multiline cell's input shows its first line
+    // makes them 3 and 2 lines high - the first line a cell (22), each other a line of text (15, the
+    // default multilineLineHeight): 52 and 37. A multiline cell's input shows its first line
     const ROWS = 500;
+    const TEXT_LINE = 15;
     const data: Record<string, any>[] = wideData(ROWS).map((row, i) => ({
         ...row,
         name: i % 7 === 0 ? `n${i}\nsecond\nthird` : row.name,
         total: i % 11 === 0 ? `t${i}\nsecond` : row.total
     }));
     const lines = (row: number) => (row % 7 === 0 ? 3 : row % 11 === 0 ? 2 : 1);
-    const heights = data.map((_, row) => lines(row) * CELL_HEIGHT);
+    const heights = data.map((_, row) => CELL_HEIGHT + (lines(row) - 1) * TEXT_LINE);
     const valuesOf = (row: number, field: string) => {
         if (/^\d+$/.test(field)) {
             return [data[row][`f${field}`]];

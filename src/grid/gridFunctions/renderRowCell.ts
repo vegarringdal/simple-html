@@ -27,7 +27,7 @@ import { firstLine, hasLineBreak, isMultilineCell, textLines } from './multiline
 import { rangeDeleteKey } from './rangeClipboard';
 import { rangeCellFocused, rangeKeydown, showCellRange } from './rangeSelection';
 import { renderRowSelectorOf } from './renderRowSelector';
-import { placeRowCell } from './rowHeights';
+import { cellHeightOf, lastLineMiddle, linesUnderTop, placeRowCell } from './rowHeights';
 import { showCellEdited } from './showCellEdited';
 import { showCellErrors } from './showCellErrors';
 import { showCellMerged } from './showCellMerged';
@@ -89,9 +89,9 @@ export function renderRowCell(
     const lines = placeRowCell(ctx, cell, row, entity, colType, column, celno);
     // a cell taller than a line keeps its text on the first line: the input fills the cell (the pointer
     // finds it anywhere in it), its padding pushes the text up - the text of an input is in the middle
-    // of its content box
+    // of its content box. The padding is the cell's other lines, text lines (cellHeightOf)
     const config = ctx.gridInterface.__getGridConfig();
-    const firstLinePadding = lines > 1 ? `padding-bottom:${asPx((lines - 1) * config.cellHeight)};` : '';
+    const firstLinePadding = lines > 1 ? `padding-bottom:${asPx(cellHeightOf(config, lines) - config.cellHeight)};` : '';
 
     // the cell element is the gridcell, the input in it the widget. A column with fewer fields than
     // the tallest one has empty cells under its last field: those are no cells for a screen reader
@@ -350,12 +350,13 @@ export function renderRowCell(
                     <div data-attribute-dimmed=${attribute} class=${backgroundClass}></div>
                     ${
                         // the other lines of a multiline cell in a taller row: under the input, which is
-                        // transparent and gets the pointer. A screen reader has the marker's description
+                        // transparent and gets the pointer. A screen reader has the marker's description.
+                        // A text line apart, the first of them a text line under the input's (linesUnderTop)
                         linesUnder.length
                             ? html`<div
                                   class=${`simple-html-grid-cell-lines ${cellClass.input}${repeatedClass}`}
                                   aria-hidden="true"
-                                  style=${`top:${asPx(config.cellHeight)};line-height:${asPx(config.cellHeight)};`}
+                                  style=${`top:${asPx(linesUnderTop(config))};line-height:${asPx(config.multilineLineHeight)};`}
                               >${linesUnder.join('\n')}</div>`
                             : nothing
                     }
@@ -664,13 +665,14 @@ export function renderRowCell(
                     }
                     ${
                         // the marker describes the input for a screen reader also when every line is
-                        // shown: the input has the first line. In a taller cell it is on the last line
+                        // shown: the input has the first line. In a taller cell it is on the last line,
+                        // its middle (10px high) on the line's
                         more
                             ? html`<span
                                   class="simple-html-grid-cell-more"
                                   id=${moreId}
                                   aria-hidden="true"
-                                  style=${lines > 1 ? `top:${asPx((lines - 0.5) * config.cellHeight - 5)};` : nothing}
+                                  style=${lines > 1 ? `top:${asPx(lastLineMiddle(config, lines) - 5)};` : nothing}
                                   >${showMarker ? MORE_ICON : nothing}<span class="simple-html-visually-hidden"
                                       >${gridText(ctx, 'cell.multiline.more')}</span
                                   ></span

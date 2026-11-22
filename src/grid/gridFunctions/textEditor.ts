@@ -147,6 +147,11 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
     const cellRect = cell.getBoundingClientRect();
     const viewportWidth = document.documentElement.clientWidth;
     textarea.style.width = asPx(Math.min(Math.max(cellRect.width, MIN_WIDTH), viewportWidth));
+    // the lines as far apart as in a taller cell (GridConfig.multilineLineHeight): the text looks the
+    // same in the editor. The input of one line keeps the css's line height
+    if (!singleLine) {
+        textarea.style.lineHeight = asPx(ctx.gridInterface.__getGridConfig().multilineLineHeight);
+    }
 
     popoverParent(cell).appendChild(element);
     element.showPopover();

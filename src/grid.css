@@ -1115,9 +1115,11 @@
 
 /**
  * the other lines of a multiline cell in a row made taller (gridInterface.fitRows): under the input,
- * which has the first line. A line is cellHeight high, the element gets its top and line-height from
- * renderRowCell. The input is transparent and over it, the pointer finds the input. The text starts
- * and stops where the input's does: its padding, the room for the marker at the right
+ * which has the first line. A line of text is GridConfig.multilineLineHeight high (15px by default),
+ * the element gets its top and line-height from renderRowCell (rowHeights.ts, linesUnderTop): the
+ * lines read as a paragraph, the first under the input's line as far as the others are apart. The
+ * input is transparent and over it, the pointer finds the input. The text starts and stops where the
+ * input's does: its padding, the room for the marker at the right
  */
 .simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-lines {
     position: absolute;

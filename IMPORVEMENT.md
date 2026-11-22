@@ -2239,6 +2239,47 @@ in the console. All passed. Found and fixed:
 * tests: scripts/__tests__/githubPackage.test.ts (the release, the beta, branch slugs, the errors); the
   script run on a copy of package.json. The workflows themselves run on GitHub only
 
+### Multiline rows: the lines a text line apart (user report)
+
+* the user (a screenshot of a note of three lines in a fitted row): "multiline rows have unnormal padding
+  between rows, looks just strange". Every line of a taller row was a whole `cellHeight` (22px): 11px text
+  22px apart, measured in Chromium 12px of air between the lines - double spaced
+* **the design**: a row of `lines` lines is the layout's row (`__columnCells` lines of `cellHeight`, the
+  inputs) and `multilineLineHeight` px for each line more (`rowHeightOf`); a cell of `lines` lines is
+  `cellHeight` + (lines - 1) x `multilineLineHeight` (`cellHeightOf`). The interface still keeps lines per
+  row key (not px), so a row follows a change of either option without fitting again; the stacked fields
+  are divided in lines as before (`columnCellLines` unchanged), only the px of a line changed. The row
+  heights are not part of the state (they never were): nothing saved changes shape
+* **the source of truth**: a new grid option `multilineLineHeight` (default 15, a whole number of 1 or
+  more, else a `TypeError` as `multilineTooltipLines`). The js needs the px to place the rows; reading a css
+  variable would need a measured element and would go stale - the option is written inline on the lines
+  element (`line-height`), as `cellHeight` was. 15 is about 1.35 x the default 11px font; looked at against
+  the screenshots, the lines read as a paragraph. A larger font needs a larger value, documented with
+  `cellHeight` (guides 02, 05, 13)
+* **the first line**: the input's text is in the middle of its first `cellHeight`, so the lines under it
+  start at (cellHeight + lineHeight) / 2 (`linesUnderTop`), not at `cellHeight`: the second line is a text
+  line under the first, as the third is under the second. At half a px (22 / 15: 18.5) Chromium put the
+  second line a px closer than the third (14 / 15 apart, also 30 / 19: 18 / 19); rounded to a whole px it
+  is 15 / 15 and 19 / 19 - so it is rounded. The marker of more lines has its middle on the last line's
+  (`lastLineMiddle`); the input's padding-bottom is the text lines; the editor's textarea gets the same
+  line height (the text looks the same when it opens), the one line editor of a custom cell keeps the css's
+* measured (Chromium, the tops of the ink of each line): before 22 / 22 apart, a row of three lines 66px;
+  after 15 / 15, the row 52px; the full grid's notes 15 / 15 in 52px; cellHeight 30 15 / 15 in 60px;
+  font 14px with `multilineLineHeight: 19` 19 / 19 in 68px; the editor 15 / 15 / 15 / 15
+* tests: rowHeights.test.ts changed on purpose to the new heights (every height, top, cell, padding, the
+  lines' top and line height, the marker, the grouped tops - the group row of e is now in the viewport) and
+  +4 (the option at runtime on the cells, cellHeight 30 / 19, a custom cell's padding, the px helpers, the
+  `TypeError`, the heights following both options before the grid is on the page); scrollHandlers.test.ts
+  (the fitted heights 52 / 37); multiline.test.ts +1 (the editor's line height), customCell.test.ts (the one
+  line editor keeps the css's); configJson.test.ts and the typings consumer have the option
+* browser (Chromium 1148, 1300x1400): new `.claude/browser-checks/scripts/multiline-lines-check.js`
+  128/128 (light and dark: the multiline sample, every section, the pinned address, a one line cell of the
+  row, 10 lines, the marker, the editor, a range and the focus, PageDown / PageUp, stacked fields, cellHeight
+  30, a 14px font, the full grid sample); keyboard 52/52, full grid 11/11, find 68/68, fill 12/12, custom
+  cells 39/39. Before / after screenshots in .claude/browser-checks/shots/multiline-lines
+* worth knowing: the editor's textarea (six lines) is 96px high now, 105px with the css's 1.5 line height
+  before; a row fitted before keeps its lines, it is shorter now with the same text shown
+
 ## Considered, not done
 
 ## Candidates / not started

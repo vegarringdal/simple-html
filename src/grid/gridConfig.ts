@@ -92,9 +92,37 @@ export type GridConfig = {
     /**
      * height of a cell in px, default 22. A row is a line of cells this high, or one per field of a
      * column with stacked fields. `gridInterface.fitRows()` makes a row as many lines high as its
-     * multiline cells need
+     * multiline cells need: the first line of a cell this high, each line after it
+     * `multilineLineHeight`
      */
     cellHeight?: number;
+    /**
+     * the height in px of a line of text of a multiline cell, default `15`: in a row made taller
+     * (`gridInterface.fitRows()`) the lines of a cell's text after its first are this far apart - the
+     * first line is in the cell's input, `cellHeight` high. So the text reads as a paragraph, and a row
+     * of a note of three lines is `cellHeight + 2 * multilineLineHeight` high (52px by default). The
+     * editor of a multiline cell has the same line height.
+     *
+     * 15 is about 1.35 times the default font size (11px). With a larger font
+     * (`--simple-html-grid-font-size`) make it larger too, as `cellHeight`: the grid needs it in px to
+     * place the rows, it does not read the css.
+     *
+     * A whole number of 1 or more, anything else throws a `TypeError` when the grid is made or
+     * `updateConfig()` is given it.
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['notes'], width: 200 }] },
+     *     cellHeight: 28,
+     *     multilineLineHeight: 18 // for --simple-html-grid-font-size: 13px
+     * };
+     * ```
+     */
+    multilineLineHeight?: number;
     /** height of the top panel (grouping) in px, default 25 */
     panelHeight?: number;
     /**
@@ -700,6 +728,7 @@ export type ParsedGridOptions = GridOptions &
         Pick<
             GridConfig,
             | 'cellHeight'
+            | 'multilineLineHeight'
             | 'cellHeaderLabelHeight'
             | 'panelHeight'
             | 'footerHeight'

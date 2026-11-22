@@ -756,6 +756,8 @@ describe('custom cells - editing a cell the renderer only draws', () => {
         expect(document.activeElement).toBe(input);
         expect(input.getAttribute('aria-label')).toEqual('Price');
         expect(editorHint()).toEqual('Enter to save, Esc to cancel');
+        // one line: the css's line height, not multilineLineHeight (the lines of a multiline text)
+        expect(input.style.lineHeight).toEqual('');
 
         input.value = '42,5';
         expect(press(input, 'Enter').defaultPrevented).toBe(true);

@@ -43,7 +43,7 @@ import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
 import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
-import { fitRowLinesOf, layoutColumns } from './gridFunctions/rowHeights';
+import { fitRowLinesOf, layoutColumns, MULTILINE_LINE_HEIGHT, rowHeightOf } from './gridFunctions/rowHeights';
 import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
@@ -172,10 +172,10 @@ export class GridInterface<T> {
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
      * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
-     * object of strings, `multilineTooltipLines` is not a whole number of 1 or more, a column's
-     * `aggregate` is no aggregate function or needs a number field, a column's `editor` is wrong - its
-     * lookup not registered, see {@link ColumnEditor} - or a column's `renderer` is not the id of a
-     * registered cell renderer, or is given with an `editor`
+     * object of strings, `multilineTooltipLines` or `multilineLineHeight` is not a whole number of 1 or
+     * more, a column's `aggregate` is no aggregate function or needs a number field, a column's
+     * `editor` is wrong - its lookup not registered, see {@link ColumnEditor} - or a column's `renderer`
+     * is not the id of a registered cell renderer, or is given with an `editor`
      *
      * @example
      * ```ts
@@ -195,6 +195,7 @@ export class GridInterface<T> {
         assertNoV5Options(gridConfig);
         assertConfigTexts(gridConfig);
         assertTooltipLines(gridConfig);
+        assertLineHeight(gridConfig);
         assertAggregates(gridConfig, datasource);
         assertRenderers(gridConfig);
         this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
@@ -364,10 +365,10 @@ export class GridInterface<T> {
      * @param config the parts of the config to change
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
      * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
-     * strings, `multilineTooltipLines` is not a whole number of 1 or more, a column's `aggregate` is no
-     * aggregate function or needs a number field, a column's `editor` is wrong - its lookup not
-     * registered, see {@link ColumnEditor} - or a column's `renderer` is not the id of a registered cell
-     * renderer, or is given with an `editor`
+     * strings, `multilineTooltipLines` or `multilineLineHeight` is not a whole number of 1 or more, a
+     * column's `aggregate` is no aggregate function or needs a number field, a column's `editor` is
+     * wrong - its lookup not registered, see {@link ColumnEditor} - or a column's `renderer` is not the
+     * id of a registered cell renderer, or is given with an `editor`
      *
      * @sample misc-options
      * @example
@@ -385,6 +386,7 @@ export class GridInterface<T> {
         assertNoV5Options(config);
         assertConfigTexts(config);
         assertTooltipLines(config);
+        assertLineHeight(config);
         assertAggregates(config, this.dataSource);
         assertRenderers(config);
         // checked before anything changes, like the rest
@@ -765,11 +767,16 @@ export class GridInterface<T> {
 
     /**
      * Makes rows as high as their multiline cells need to show every line, like Excel's AutoFit of a
-     * row: each row as many lines (of `cellHeight` px) as its tallest column needs - a multiline cell
-     * the lines of its text (the empty lines at its end left out), every other cell one line, the
-     * fields of a column with stacked fields added up. At most 20 lines. A row that needs no more lines
-     * than the layout gives a row goes back to that height. The user does the same from the row menu:
-     * "Fit row height", "Fit all rows".
+     * row: each row as many lines as its tallest column needs - a multiline cell the lines of its text
+     * (the empty lines at its end left out), every other cell one line, the fields of a column with
+     * stacked fields added up. At most 20 lines. A row that needs no more lines than the layout gives a
+     * row goes back to that height. The user does the same from the row menu: "Fit row height", "Fit
+     * all rows".
+     *
+     * - **The height**: the lines of the layout's row are `cellHeight` px each, every line more is a
+     *   line of text, `multilineLineHeight` px (default 15): the lines of a note read as a paragraph. A
+     *   row of one field with a note of three lines is `cellHeight + 2 * multilineLineHeight` px, 52 by
+     *   default.
      *
      * - **Cheap**: it counts the line breaks of the cells' text, nothing is measured. A long line is
      *   not wrapped, it is cut at the cell's edge as in a row of one line.
@@ -1737,10 +1744,10 @@ export class GridInterface<T> {
 
         const groupRow = this.gridConfig.__groupRowHeight;
         const row = this.gridConfig.__rowHeight;
-        // the rows made taller by fitRows(): their lines, a row is at least as high as the layout makes it
+        // the rows made taller by fitRows(): their lines, a row is at least as high as the layout makes it.
+        // A line more than the layout's is a line of text, multilineLineHeight px (rowHeightOf)
         const rowLines = this.rowLines;
         const cells = this.gridConfig.__columnCells;
-        const cellHeight = this.gridConfig.cellHeight;
         let count = 0;
 
         this.dataSource.getRows().forEach((ent) => {
@@ -1750,7 +1757,7 @@ export class GridInterface<T> {
             } else if (rowLines.size) {
                 const lines = rowLines.get(String(ent.__KEY));
                 if (lines !== undefined && lines > cells) {
-                    height = lines * cellHeight;
+                    height = rowHeightOf(this.gridConfig, lines);
                 }
             }
             this.scrollTops.push(count);
@@ -2021,6 +2028,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
     return {
         ...options,
         cellHeight,
+        multilineLineHeight: options.multilineLineHeight ?? MULTILINE_LINE_HEIGHT,
         cellHeaderLabelHeight: options.cellHeaderLabelHeight ?? cellHeight,
         panelHeight: options.panelHeight ?? 25,
         footerHeight: options.footerHeight ?? 45,
@@ -2133,6 +2141,22 @@ function assertTooltipLines(config: Partial<GridConfig>) {
     const lines: unknown = config.multilineTooltipLines;
     if (lines !== undefined && !(Number.isInteger(lines) && (lines as number) >= 1)) {
         throw new TypeError(`GridConfig: multilineTooltipLines is ${JSON.stringify(lines)}, it is a whole number of 1 or more`);
+    }
+}
+
+/**
+ * `multilineLineHeight` is a whole number of px, 1 or more: TypeScript does not catch `0`, `-1` or
+ * `15.5`, nor a text from plain JavaScript or JSON - a row would be no taller than its first line, the
+ * lines of a cell on top of each other, or the rows at half px (blurred lines between them). Left out or
+ * undefined is the default
+ * @throws a `TypeError` naming the option and what it takes
+ */
+function assertLineHeight(config: Partial<GridConfig>) {
+    const height: unknown = config.multilineLineHeight;
+    if (height !== undefined && !(Number.isInteger(height) && (height as number) >= 1)) {
+        throw new TypeError(
+            `GridConfig: multilineLineHeight is ${JSON.stringify(height)}, it is a whole number of px, 1 or more`
+        );
     }
 }
 

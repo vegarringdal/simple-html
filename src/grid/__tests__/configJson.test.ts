@@ -85,6 +85,7 @@ const fullConfig = (): GridConfig => ({
         headerFilters: { age: { value: 17 }, name: { value: null, operator: 'BEGIN_WITH' } }
     },
     cellHeight: 24,
+    multilineLineHeight: 18,
     panelHeight: 26,
     cellHeaderLabelHeight: 30,
     footerHeight: 40,

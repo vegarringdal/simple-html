@@ -1332,6 +1332,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Multiline rows: the lines of a note a text line apart (user request)
+
+##### Changed
+- A multiline cell in a row made taller by `fitRows()` shows its lines a text line apart instead of a whole
+  `cellHeight` each: a note of three lines is a row of 52px, not 66px, and reads as a paragraph. The first
+  line is as far from the second as the others are from each other. A row fitted before keeps its number
+  of lines and gets shorter.
+- The multiline cell editor's textarea uses the same line height (it was the css's 1.5).
+
+##### Added
+- `GridConfig.multilineLineHeight` (default 15): the px height of each line after the first in a
+  multiline cell of a fitted row, and the editor's line height. A whole number of 1 or more, else a
+  `TypeError`. Raise it with `cellHeight` for a larger `--simple-html-grid-font-size`.
+
 #### Undo and redo in the filter editor (user request)
 
 ##### Added

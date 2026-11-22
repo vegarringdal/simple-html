@@ -326,6 +326,18 @@ describe('multiline - opening the editor', () => {
         );
     });
 
+    it("expect the editor's lines as far apart as a taller cell's: multilineLineHeight", async () => {
+        const { element, gridInterface } = await mountGrid(config(), data(), multilineFields());
+
+        openWithEnter(element, 'notes', 0);
+        expect(textarea().style.lineHeight).toEqual('15px');
+        press(textarea(), 'Escape');
+
+        gridInterface.updateConfig({ multilineLineHeight: 20 });
+        openWithEnter(element, 'notes', 0);
+        expect(textarea().style.lineHeight).toEqual('20px');
+    });
+
     it('expect F2 and a double click to open it, and Enter not to move to the cell below', async () => {
         const { element } = await mountGrid(config(), data(), multilineFields());
 

@@ -100,7 +100,7 @@ gridInterface.resetRowHeights(); // every row one line again
 | `fitColumns(fields?, { rows? })` | each column as wide as the widest text of its fields - every line of a multiline text, the widest field of a column with stacked fields - and its header label. 25px to 750px. Without fields: every column |
 | `fitColumns([field], { rows: [row] })` | the column as wide as the text of these rows' cells, the label left out: a column fitted to a cell |
 | `resetColumnWidths(fields?)` | the width the column has in the layout `resetState()` goes back to (`initialState.layout`, else the config's `layout`). A column added from the column chooser: 100px |
-| `fitRows(rows?)` | each row as many lines (of `cellHeight`) high as its tallest column needs: a multiline cell the lines of its text, every other cell a line, stacked fields added up. At most 20 lines. Without rows: every row the filter lets through |
+| `fitRows(rows?)` | each row as many lines high as its tallest column needs: a multiline cell the lines of its text, every other cell a line, stacked fields added up. At most 20 lines. The lines of the layout's row are `cellHeight` each, every line more `multilineLineHeight` (a line of text). Without rows: every row the filter lets through |
 | `resetRowHeights(rows?)` | the rows back to the height of the layout. Without rows: every row |
 
 The user does the same with the mouse:
@@ -123,6 +123,10 @@ What to know:
 - **A row's height** is a number of lines. Fitting counts the line breaks of the cells' text, nothing
   is measured: about 0.1s for every row of 100 000. A long line is not wrapped, it is cut at the
   edge of the cell as in a row of one line.
+- **A line of text** after the first is `multilineLineHeight` px (15), not a whole `cellHeight`: the
+  first line of a cell is its input, `cellHeight` high, the lines under it read as a paragraph. A note
+  of three lines makes a row of 22 + 15 + 15 = 52px. With a larger font make both larger, e.g.
+  `cellHeight: 28, multilineLineHeight: 18` for `--simple-html-grid-font-size: 13px`.
 - **In a taller row** a multiline cell shows as many lines as it has room for, under its first line,
   and its marker when some are not shown. Every other cell has its text on the first line. Editing
   is the same: Enter, F2 or a double click opens the editor over the cell.
@@ -176,6 +180,7 @@ Every option is optional.
 | --- | --- | --- |
 | `readonly` | `true` | the whole grid is readonly. Set `false` to edit, see [Editing](05-editing.md) |
 | `cellHeight` | `22` | height of a cell in px |
+| `multilineLineHeight` | `15` | the height in px of a line of text after the first in a multiline cell of a row made taller (`fitRows()`), and in its editor. A whole number of 1 or more, see [Column widths and row heights](#column-widths-and-row-heights) |
 | `cellHeaderLabelHeight` | `cellHeight` | height of a header label cell, make it taller for labels that wrap |
 | `panelHeight` | `25` | height of the grouping panel above the header |
 | `footerHeight` | `45` | height of the footer: the row count and the filter |

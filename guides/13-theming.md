@@ -140,7 +140,9 @@ A cell of several lines (see [Multiline text](05-editing.md#multiline-text)) has
 right, lines of text, in `--simple-html-grid-multiline-color` - at least 3:1 to the rows and the
 selected rows too. In a row made taller (`fitRows()`) the cell shows its other lines under the first
 one, in the cell's text colour (`--simple-html-grid-main-font-color`): an element of their own,
-`simple-html-grid-cell-lines`, with the classes the `cellClass` hook gives the input. The editor that
+`simple-html-grid-cell-lines`, with the classes the `cellClass` hook gives the input. Their line
+height is the grid option `multilineLineHeight` (15px), not a css variable: the grid needs it to
+place the rows. With a larger `--simple-html-grid-font-size` make it and `cellHeight` larger too. The editor that
 opens over the cell uses the colours of the rest: the textarea is
 `--simple-html-grid-sec-bg-color` with `--simple-html-grid-main-font-color`, its hint
 `--simple-html-grid-main-bg-color`, its frame `--simple-html-grid-pinned-border` and its shadow
@@ -325,7 +327,7 @@ The fonts:
 | variable | for | default |
 | --- | --- | --- |
 | `--simple-html-grid-font-family` | all text | `'Roboto', 'Helvetica', 'Arial', 'sans-serif'` |
-| `--simple-html-grid-font-size` | all text | `11px` |
+| `--simple-html-grid-font-size` | all text | `11px`. A larger font needs a larger `cellHeight` and `multilineLineHeight` (grid options, in px) |
 | `--simple-html-grid-font-weight` | the cells, the inputs | `500` |
 | `--simple-html-grid-font-weight-header` | the labels, the menu sections, group rows, buttons | `700` |
 | `--simple-html-grid-font-weight-cell` | the menu items, the filter editor's title and captions | `--simple-html-grid-font-weight` |

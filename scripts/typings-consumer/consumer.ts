@@ -335,6 +335,7 @@ created.resetRowHeights();
 // @ts-expect-error the fields are a list
 created.fitColumns('name');
 created.updateConfig({ multilineTooltipLines: 10 });
+created.updateConfig({ cellHeight: 28, multilineLineHeight: 18 });
 created.openFilterEditor();
 const layoutFields: string[] = created.getLayoutFields();
 const selectedFields: string[] = created.getLayoutFields({ selectedOnly: true });

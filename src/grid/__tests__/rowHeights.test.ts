@@ -5,9 +5,10 @@ import { Datasource } from '../../datasource/dataSource';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import { where } from '../../datasource/filterExpression';
+import { registerCellRenderer } from '../cellRendererRegistry';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
-import { columnCellLines } from '../gridFunctions/rowHeights';
+import { cellHeightOf, columnCellLines, lastLineMiddle, linesUnderTop, rowHeightOf } from '../gridFunctions/rowHeights';
 import { GridInterface } from '../gridInterface';
 import { displayedRowOf, mountGrid, shownRowElements, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { menuEntry, menuTreeIds, openRowMenu } from './interactionTestHelpers';
@@ -16,10 +17,14 @@ import { menuEntry, menuTreeIds, openRowMenu } from './interactionTestHelpers';
  * Rows taller than a line: `fitRows()` makes a row as high as its multiline cells need,
  * `resetRowHeights()` takes it back, and the row menu's "Size:" entries do the same. The heights are
  * kept by the row's key, the scroll state places the rows, and in a taller row a multiline cell shows
- * its lines under its input. See rowHeights.ts.
+ * its lines under its input. A row's first line is `cellHeight` (22), each line more a line of text,
+ * `multilineLineHeight` (15). See rowHeights.ts.
  */
 
+/** a line of the layout's row: `cellHeight`, the input */
 const LINE = 22;
+/** a line of text more: the default `multilineLineHeight` */
+const TEXT = 15;
 
 const TWENTY_FIVE = Array.from({ length: 25 }, (_, i) => `line ${i + 1}`).join('\n');
 
@@ -105,9 +110,11 @@ describe('fitRows - the heights', () => {
 
         gridInterface.fitRows(a);
 
-        expect(heights(gridInterface)).toEqual([3 * LINE, LINE, LINE, LINE, LINE]);
-        expect(tops(gridInterface)).toEqual([0, 66, 88, 110, 132]);
-        expect(gridInterface.__getScrollState().scrollHeight).toEqual(154);
+        // its first line 22, its two other lines 15 each: 52, not 3 x 22
+        expect(heights(gridInterface)).toEqual([LINE + 2 * TEXT, LINE, LINE, LINE, LINE]);
+        expect(heights(gridInterface)[0]).toEqual(52);
+        expect(tops(gridInterface)).toEqual([0, 52, 74, 96, 118]);
+        expect(gridInterface.__getScrollState().scrollHeight).toEqual(140);
         expect(gridInterface.__hasRowHeight(a)).toBe(true);
     });
 
@@ -117,7 +124,8 @@ describe('fitRows - the heights', () => {
         gridInterface.fitRows();
 
         // b: its address has 2 lines, no option needed. d: 25 lines, 20 at most. e: 'x' and empty lines
-        expect(heights(gridInterface)).toEqual([3 * LINE, 2 * LINE, LINE, 20 * LINE, LINE]);
+        expect(heights(gridInterface)).toEqual([LINE + 2 * TEXT, LINE + TEXT, LINE, LINE + 19 * TEXT, LINE]);
+        expect(heights(gridInterface)).toEqual([52, 37, 22, 307, 22]);
         // a row that needs one line has no height of its own
         expect(gridInterface.__hasRowHeight(datasource.getDataRows()[2])).toBe(false);
         expect(gridInterface.__hasRowHeight(datasource.getDataRows()[4])).toBe(false);
@@ -137,8 +145,10 @@ describe('fitRows - the heights', () => {
 
         gridInterface.fitRows();
 
-        // a: notes 3 + company 1. b: address 2 + the empty cell under it 1. d: 25 + 1, at most 20
-        expect(heights(gridInterface)).toEqual([4 * LINE, 3 * LINE, 2 * LINE, 20 * LINE, 2 * LINE]);
+        // a: notes 3 + company 1. b: address 2 + the empty cell under it 1. d: 25 + 1, at most 20. The
+        // two lines of the layout's row are 22 each, every line more a text line
+        expect(heights(gridInterface)).toEqual([2 * LINE + 2 * TEXT, 2 * LINE + TEXT, 2 * LINE, 2 * LINE + 18 * TEXT, 2 * LINE]);
+        expect(heights(gridInterface)).toEqual([74, 59, 44, 314, 44]);
     });
 
     it('expect resetRowHeights() of a row and of every row', async () => {
@@ -147,11 +157,11 @@ describe('fitRows - the heights', () => {
         gridInterface.fitRows();
 
         gridInterface.resetRowHeights(a);
-        expect(heights(gridInterface)).toEqual([LINE, 2 * LINE, LINE, 20 * LINE, LINE]);
+        expect(heights(gridInterface)).toEqual([LINE, LINE + TEXT, LINE, LINE + 19 * TEXT, LINE]);
         expect(gridInterface.__hasRowHeight(a)).toBe(false);
 
         gridInterface.resetRowHeights([b]);
-        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, 20 * LINE, LINE]);
+        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE + 19 * TEXT, LINE]);
 
         gridInterface.resetRowHeights();
         expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, LINE]);
@@ -163,16 +173,16 @@ describe('fitRows - the heights', () => {
         gridInterface.fitRows(datasource.getDataRows()[0]);
 
         datasource.sort([{ attribute: 'name', ascending: false }]);
-        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, 3 * LINE]);
+        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, LINE + 2 * TEXT]);
 
         datasource.filter(where('name', 'NOT_EQUAL_TO', 'a'));
         expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE]);
         datasource.filter(null);
-        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, 3 * LINE]);
+        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, LINE + 2 * TEXT]);
 
         // a reload: new objects, the same keys
         datasource.setData(data());
-        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, 3 * LINE]);
+        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, LINE + 2 * TEXT]);
     });
 
     it('expect a datasource without a key field to keep the height by the key it generated', async () => {
@@ -180,7 +190,7 @@ describe('fitRows - the heights', () => {
         gridInterface.fitRows(datasource.getDataRows()[0]);
 
         datasource.sort([{ attribute: 'name', ascending: false }]);
-        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, 3 * LINE]);
+        expect(heights(gridInterface)).toEqual([LINE, LINE, LINE, LINE, LINE + 2 * TEXT]);
 
         // new rows are new keys
         datasource.setData(data());
@@ -217,11 +227,11 @@ describe('fitRows - the heights', () => {
                 isGroupRow(row)
                     ? LINE
                     : row.name === 'a'
-                      ? 3 * LINE
+                      ? LINE + 2 * TEXT
                       : row.name === 'b'
-                        ? 2 * LINE
+                        ? LINE + TEXT
                         : row.name === 'd'
-                          ? 20 * LINE
+                          ? LINE + 19 * TEXT
                           : LINE
             )
         );
@@ -236,16 +246,60 @@ describe('fitRows - the heights', () => {
         expect(gridInterface.__hasRowHeight()).toBe(false);
     });
 
-    it('expect it to work before the grid is on the page, and the lines to follow cellHeight', () => {
+    it('expect it to work before the grid is on the page, and the lines to follow cellHeight and multilineLineHeight', () => {
         const datasource = new Datasource(fields());
         datasource.setData(data());
         const gridInterface = new GridInterface(config(), datasource);
 
         gridInterface.fitRows(datasource.getDataRows()[0]);
-        expect(heights(gridInterface)[0]).toEqual(3 * LINE);
+        expect(heights(gridInterface)[0]).toEqual(LINE + 2 * TEXT);
 
+        // the row keeps its lines: its first line is the new cellHeight, the text lines stay 15
         gridInterface.updateConfig({ cellHeight: 30 });
-        expect(heights(gridInterface)).toEqual([90, 30, 30, 30, 30]);
+        expect(heights(gridInterface)).toEqual([60, 30, 30, 30, 30]);
+
+        gridInterface.updateConfig({ multilineLineHeight: 20 });
+        expect(heights(gridInterface)).toEqual([70, 30, 30, 30, 30]);
+
+        // undefined: back to the defaults
+        gridInterface.updateConfig({ cellHeight: undefined, multilineLineHeight: undefined });
+        expect(heights(gridInterface)).toEqual([52, 22, 22, 22, 22]);
+    });
+
+    it('expect a TypeError for multilineLineHeight that is not a whole number of 1 or more', async () => {
+        const { gridInterface } = await mountGrid(config(), data(), fields());
+        for (const height of [0, -1, 15.5, Number.NaN, Number.POSITIVE_INFINITY, '15', null]) {
+            expect(() => gridInterface.updateConfig({ multilineLineHeight: height as any }), String(height)).toThrow(
+                /multilineLineHeight is .*, it is a whole number of px, 1 or more/
+            );
+            expect(
+                () => new GridInterface({ ...config(), multilineLineHeight: height as any }, new Datasource()),
+                String(height)
+            ).toThrow(TypeError);
+        }
+        // the grid kept the default
+        expect(gridInterface.__getGridConfig().multilineLineHeight).toEqual(15);
+    });
+
+    it('expect the px of a row, a cell, the lines under the first and the middle of the last line', () => {
+        const sizes = { cellHeight: 22, multilineLineHeight: 15, __rowHeight: 22, __columnCells: 1 };
+        // a row: the layout's lines are 22 each, every line more 15. Fewer lines: the layout's row
+        expect(rowHeightOf(sizes, 1)).toEqual(22);
+        expect(rowHeightOf(sizes, 3)).toEqual(52);
+        expect(rowHeightOf(sizes, 0)).toEqual(22);
+        expect(rowHeightOf({ ...sizes, __rowHeight: 44, __columnCells: 2 }, 4)).toEqual(74);
+        // a cell: its first line 22, every other one 15
+        expect(cellHeightOf(sizes, 1)).toEqual(22);
+        expect(cellHeightOf(sizes, 3)).toEqual(52);
+        // the second line's middle a text line under the middle of the first (11 + 15 = 26, 18.5 + 7.5):
+        // the lines start at 18.5, a whole px half a px up
+        expect(linesUnderTop(sizes)).toEqual(19);
+        expect(linesUnderTop({ cellHeight: 22, multilineLineHeight: 16 })).toEqual(19);
+        expect(linesUnderTop({ cellHeight: 30, multilineLineHeight: 19 })).toEqual(25);
+        // the middle of the last line: the input's middle, a text line further per line
+        expect(lastLineMiddle(sizes, 1)).toEqual(11);
+        expect(lastLineMiddle(sizes, 3)).toEqual(41);
+        expect(lastLineMiddle({ cellHeight: 30, multilineLineHeight: 19 }, 2)).toEqual(34);
     });
 
     it('expect the lines of each cell of a column: one each, the lines wanted from the top, the rest to the last', () => {
@@ -266,11 +320,11 @@ describe('fitRows - every section', () => {
         gridInterface.fitRows();
 
         const expected = [
-            [0, 0, '66px'],
-            [1, 66, '44px'],
-            [2, 110, '22px'],
-            [3, 132, '440px'],
-            [4, 572, '22px']
+            [0, 0, '52px'],
+            [1, 52, '37px'],
+            [2, 89, '22px'],
+            [3, 111, '307px'],
+            [4, 418, '22px']
         ];
         for (const section of ['selector', 'pinned-left', 'pinned-middle', 'pinned-right']) {
             expect(sectionRows(element, section), section).toEqual(expected);
@@ -290,9 +344,9 @@ describe('fitRows - every section', () => {
         expect(sectionRows(element, 'pinned-right')).toEqual(middle);
         // the group section shows the group rows, between the data rows
         const groupRows = sectionRows(element, 'group');
-        // the group row of e is at 660, under the viewport (600)
-        expect(groupRows.map(([row]) => row)).toEqual([0, 2, 4, 6]);
-        expect(groupRows.map(([, top]) => top)).toEqual([0, 88, 154, 198]);
+        // a: 52, b: 37, c: 22, d: 307 - the group row of e is at 506, in the viewport (600)
+        expect(groupRows.map(([row]) => row)).toEqual([0, 2, 4, 6, 8]);
+        expect(groupRows.map(([, top]) => top)).toEqual([0, 74, 133, 177, 506]);
         expect(groupRows.map(([row, top]) => [row, top])).toEqual(
             groupRows.map(([row]) => [row, tops(gridInterface)[row as number]])
         );
@@ -307,15 +361,17 @@ describe('fitRows - the cells of a taller row', () => {
 
         const notes = cellOf(element, 'middle-pinned', 0, 0);
         expect(notes.style.top).toEqual('0px');
-        expect(notes.style.height).toEqual('66px');
+        expect(notes.style.height).toEqual('52px');
         expect(input(element, 'middle-pinned', 0, 0).value).toEqual('n1');
         expect(linesUnder(notes)).toEqual('n2\nn3');
         const lines = notes.querySelector('.simple-html-grid-cell-lines') as HTMLElement;
         expect(lines.getAttribute('aria-hidden')).toEqual('true');
-        expect(lines.style.top).toEqual('22px');
-        expect(lines.style.lineHeight).toEqual('22px');
+        // a text line apart: the middle of the second line (19 + 7.5) a text line under the middle of
+        // the input's (11), as the third is under the second
+        expect(lines.style.top).toEqual('19px');
+        expect(lines.style.lineHeight).toEqual('15px');
         // the input fills the cell, its padding keeps its text on the first line
-        expect(input(element, 'middle-pinned', 0, 0).style.paddingBottom).toEqual('44px');
+        expect(input(element, 'middle-pinned', 0, 0).style.paddingBottom).toEqual('30px');
         // every line is shown: the marker is there for a screen reader, without its icon
         const marker = notes.querySelector('.simple-html-grid-cell-more') as HTMLElement;
         expect(marker.querySelector('svg')).toBeNull();
@@ -326,7 +382,9 @@ describe('fitRows - the cells of a taller row', () => {
         expect(linesUnder(long)?.split('\n')).toEqual(Array.from({ length: 19 }, (_, i) => `line ${i + 2}`));
         const longMarker = long.querySelector('.simple-html-grid-cell-more') as HTMLElement;
         expect(longMarker.querySelector('svg')).not.toBeNull();
-        expect(longMarker.style.top).toEqual(`${19.5 * LINE - 5}px`);
+        // its middle (10px high) on the middle of the 20th line: 11 + 19 x 15
+        expect(long.style.height).toEqual('307px');
+        expect(longMarker.style.top).toEqual(`${11 + 19 * TEXT - 5}px`);
 
         // the address pinned right, no option: its line break makes it multiline
         expect(linesUnder(cellOf(element, 'right-pinned', 1, 0))).toEqual('0155 Oslo');
@@ -338,8 +396,8 @@ describe('fitRows - the cells of a taller row', () => {
         gridInterface.fitRows();
 
         const company = cellOf(element, 'middle-pinned', 0, 1);
-        expect(company.style.height).toEqual('66px');
-        expect(input(element, 'middle-pinned', 0, 1).style.paddingBottom).toEqual('44px');
+        expect(company.style.height).toEqual('52px');
+        expect(input(element, 'middle-pinned', 0, 1).style.paddingBottom).toEqual('30px');
         expect(linesUnder(company)).toBeNull();
         const checkbox = input(element, 'middle-pinned', 0, 2);
         expect(checkbox.type).toEqual('checkbox');
@@ -366,18 +424,81 @@ describe('fitRows - the cells of a taller row', () => {
 
         gridInterface.fitRows();
 
-        expect(heights(gridInterface)[0]).toEqual(5 * LINE);
+        // 5 lines: the 2 of the layout's row and 3 text lines
+        expect(heights(gridInterface)[0]).toEqual(2 * LINE + 3 * TEXT);
         const notes = cellOf(element, 'middle-pinned', 0, 0, 0);
         const company = cellOf(element, 'middle-pinned', 0, 0, 1);
-        expect([notes.style.top, notes.style.height]).toEqual(['0px', '66px']);
-        // the last cell has the lines left over
-        expect([company.style.top, company.style.height]).toEqual(['66px', '44px']);
-        // the active column has one field: its empty second cell fills the row under it
+        // notes 3 lines: 22 + 2 x 15
+        expect([notes.style.top, notes.style.height]).toEqual(['0px', '52px']);
+        // the last cell has the lines left over: 2, 22 + 15
+        expect([company.style.top, company.style.height]).toEqual(['52px', '37px']);
+        expect(input(element, 'middle-pinned', 0, 0, 1).style.paddingBottom).toEqual('15px');
+        // the active column has one field: its empty second cell fills the row under it, 4 lines
         const activeCells = Array.from(cellOf(element, 'middle-pinned', 0, 1, 0).parentElement?.children ?? []) as HTMLElement[];
         expect(activeCells.map((cell) => [cell.style.top, cell.style.height])).toEqual([
             ['0px', '22px'],
-            ['22px', '88px']
+            ['22px', '67px']
         ]);
+        // the address pinned right: its 4 lines and the empty cell under it
+        const address = cellOf(element, 'right-pinned', 0, 0, 0);
+        expect([address.style.top, address.style.height]).toEqual(['0px', '67px']);
+        expect(linesUnder(address)).toEqual('l2\nl3\nl4');
+    });
+
+    it('expect the cells to follow multilineLineHeight and cellHeight: their heights, the lines, the padding, the marker', async () => {
+        const { element, gridInterface } = await mountGrid(config(), data(), fields());
+        gridInterface.fitRows();
+
+        gridInterface.updateConfig({ multilineLineHeight: 20 });
+
+        expect(heights(gridInterface)).toEqual([62, 42, 22, 22 + 19 * 20, 22]);
+        const notes = cellOf(element, 'middle-pinned', 0, 0);
+        expect(notes.style.height).toEqual('62px');
+        const lines = notes.querySelector('.simple-html-grid-cell-lines') as HTMLElement;
+        // (22 + 20) / 2: the middle of the second line 20 under the middle of the first (11)
+        expect([lines.style.top, lines.style.lineHeight]).toEqual(['21px', '20px']);
+        expect(input(element, 'middle-pinned', 0, 0).style.paddingBottom).toEqual('40px');
+        const longMarker = cellOf(element, 'middle-pinned', 3, 0).querySelector('.simple-html-grid-cell-more') as HTMLElement;
+        expect(longMarker.style.top).toEqual(`${11 + 19 * 20 - 5}px`);
+
+        gridInterface.updateConfig({ cellHeight: 30, multilineLineHeight: 19 });
+
+        expect(heights(gridInterface).slice(0, 2)).toEqual([68, 49]);
+        const tall = cellOf(element, 'middle-pinned', 0, 0);
+        expect(tall.style.height).toEqual('68px');
+        const tallLines = tall.querySelector('.simple-html-grid-cell-lines') as HTMLElement;
+        // (30 + 19) / 2 = 24.5: a whole px, half a px up
+        expect([tallLines.style.top, tallLines.style.lineHeight]).toEqual(['25px', '19px']);
+        expect(input(element, 'middle-pinned', 0, 0).style.paddingBottom).toEqual('38px');
+        // the focus button and the checkbox stay on the first line, a cell high
+        expect(input(element, 'middle-pinned', 0, 2).style.height).toEqual('30px');
+    });
+
+    it('expect a custom cell of a taller row to have its content on the first line: the padding of the text lines', async () => {
+        const id = 'row-heights-badge';
+        registerCellRenderer(id, (host) => {
+            const span = document.createElement('span');
+            host.appendChild(span);
+            return {
+                update({ text }) {
+                    span.textContent = text;
+                }
+            };
+        });
+        const { element, gridInterface } = await mountGrid(
+            { ...config(), columns: { company: { renderer: id } } },
+            data(),
+            fields()
+        );
+        const host = () => element.querySelector('.simple-html-grid-cell-custom.cellpos-middle-pinned-0-1-0') as HTMLElement;
+        expect(host().style.paddingBottom).toEqual('');
+
+        gridInterface.fitRows();
+
+        // a's notes are 3 lines: the row is 22 + 2 x 15, the host fills it, its content on the first 22px
+        expect(cellOf(element, 'middle-pinned', 0, 0).style.height).toEqual('52px');
+        expect(host().textContent).toEqual('Acme');
+        expect(host().style.paddingBottom).toEqual('30px');
     });
 
     it('expect the cells back to a line each when the row element shows a row of one line again', async () => {
@@ -408,13 +529,13 @@ describe('fitRows - the cells of a taller row', () => {
         press(textarea, 'Enter', { ctrlKey: true });
 
         expect(datasource.getDataRows()[0].notes).toEqual('n1\nn2\nn3\nn4');
-        expect(heights(gridInterface)[0]).toEqual(3 * LINE);
+        expect(heights(gridInterface)[0]).toEqual(LINE + 2 * TEXT);
         // a line more than there is room for: the marker
         expect(linesUnder(cellOf(element, 'middle-pinned', 0, 0))).toEqual('n2\nn3');
         expect(cellOf(element, 'middle-pinned', 0, 0).querySelector('.simple-html-grid-cell-more svg')).not.toBeNull();
 
         gridInterface.fitRows(datasource.getDataRows()[0]);
-        expect(heights(gridInterface)[0]).toEqual(4 * LINE);
+        expect(heights(gridInterface)[0]).toEqual(LINE + 3 * TEXT);
         expect(linesUnder(cellOf(element, 'middle-pinned', 0, 0))).toEqual('n2\nn3\nn4');
     });
 
@@ -454,7 +575,7 @@ describe('fitRows - the row menu', () => {
         expect(disabled('row.size.resetRow')).toBe(true);
         expect(disabled('row.size.resetAllRows')).toBe(true);
         menuEntry('row.size.fitRow').click();
-        expect(heights(gridInterface)).toEqual([3 * LINE, LINE, LINE, LINE, LINE]);
+        expect(heights(gridInterface)).toEqual([LINE + 2 * TEXT, LINE, LINE, LINE, LINE]);
 
         openRowMenu(element, 'company', 0);
         expect(disabled('row.size.resetRow')).toBe(false);
@@ -467,7 +588,7 @@ describe('fitRows - the row menu', () => {
 
         openRowMenu(element, 'company', 2);
         menuEntry('row.size.fitAllRows').click();
-        expect(heights(gridInterface)).toEqual([3 * LINE, 2 * LINE, LINE, 20 * LINE, LINE]);
+        expect(heights(gridInterface)).toEqual([LINE + 2 * TEXT, LINE + TEXT, LINE, LINE + 19 * TEXT, LINE]);
 
         openRowMenu(element, 'company', 2);
         // the row right clicked has no height of its own, others have
@@ -484,12 +605,12 @@ describe('fitRows - the row menu', () => {
         openRowMenu(element, 'company', 2);
         expect(shownIds()).toContain('row.size.fitRows');
         menuEntry('row.size.fitRows').click();
-        expect(heights(gridInterface)).toEqual([LINE, 2 * LINE, LINE, LINE, LINE]);
+        expect(heights(gridInterface)).toEqual([LINE, LINE + TEXT, LINE, LINE, LINE]);
 
         datasource.deselectAll();
         gridInterface.setRanges([{ fromRow: 3, fromField: 'notes', toRow: 0, toField: 'company' }]);
         openRowMenu(element, 'company', 2);
         menuEntry('row.size.fitRows').click();
-        expect(heights(gridInterface)).toEqual([3 * LINE, 2 * LINE, LINE, 20 * LINE, LINE]);
+        expect(heights(gridInterface)).toEqual([LINE + 2 * TEXT, LINE + TEXT, LINE, LINE + 19 * TEXT, LINE]);
     });
 });
