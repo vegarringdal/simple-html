@@ -671,3 +671,31 @@ describe('toSqlWhere on SQLite selects the rows the grid selects', () => {
         expect(stats.some / stats.filters).toBeGreaterThan(0.75);
     });
 });
+
+describe('toSqlWhere on SQLite: texts that JavaScript and SQLite fold differently', () => {
+    // a value of ASCII only is folded before it is bound, another by SQLite as its column is: JavaScript
+    // folds ß to SS and Æ to æ, SQLite's UPPER() / LOWER() fold the ASCII letters only
+    const names = ['Ærø', 'ærø', 'Straße', 'STRASSE', 'Oslo', 'OSLO', null, ''];
+    const db = new DatabaseSync(':memory:');
+    db.exec('CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)');
+    for (const [index, name] of names.entries()) {
+        db.prepare('INSERT INTO t VALUES (?, ?)').run(index + 1, name);
+    }
+    const select = (filter: FilterExpression) => {
+        const { sql, params } = toSqlWhere(filter, { dialect: 'sqlite', columns: { name: 'name' } });
+        return db
+            .prepare(`SELECT name FROM t WHERE ${sql} ORDER BY id`)
+            .all(...(params as string[]))
+            .map((row) => row.name);
+    };
+
+    it('expect a text to match the same text, and an ASCII value every case of it', () => {
+        expect(select({ field: 'name', operator: 'IN', value: ['Ærø', 'oslo'] })).toEqual(['Ærø', 'Oslo', 'OSLO']);
+        expect(select({ field: 'name', operator: 'IN', value: ['Straße'] })).toEqual(['Straße']);
+        expect(select({ field: 'name', operator: 'EQUAL', value: 'straße' })).toEqual(['Straße']);
+        expect(select({ field: 'name', operator: 'CONTAINS', value: 'Rø' })).toEqual(['Ærø', 'ærø']);
+        // SQLite folds no letter that is not ASCII (guide 22): Ø is not ø there, the grid finds both
+        expect(select({ field: 'name', operator: 'CONTAINS', value: 'RØ' })).toEqual([]);
+        expect(select({ field: 'name', operator: 'BEGIN_WITH', value: 'os' })).toEqual(['Oslo', 'OSLO']);
+    });
+});

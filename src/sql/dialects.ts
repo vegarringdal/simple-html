@@ -19,11 +19,17 @@ export interface Dialect {
     anyText: string;
     /** text for a pattern, with the characters the pattern takes as wildcards or escapes escaped */
     patternLiteral(text: string): string;
-    /** `column` matches the pattern parameter `pattern`. Both lower case, or as they are */
+    /**
+     * `column` matches the pattern parameter `pattern`. The column in lower case, or as it is; `pattern` is
+     * folded already (`$1` bound in lower case, or `LOWER($1)`, see foldedParam in buildWhere.ts)
+     */
     match(column: string, pattern: string, caseSensitive: boolean): string;
     /** an expression compared code point by code point, case as it is: no collation of the database */
     binary(expression: string): string;
-    /** `column` is one of the text parameters (upper case, or as they are) */
+    /**
+     * `column` is one of the text parameters: the column in upper case, or as it is; the parameters are
+     * folded already (`$1` bound in upper case, or `UPPER($1)`, see foldedParam in buildWhere.ts)
+     */
     inList(column: string, placeholders: string[], caseSensitive: boolean): string;
     /** the parameter value of a text of an IN list: the text, or a pattern without wildcards (mssql) */
     listValue(text: string): string;
@@ -77,7 +83,7 @@ function dateValue(milliseconds: number, storage: SqlDateStorage, separator: ' '
 const escapeWithBang = (text: string) => text.replace(/[!_]/g, '!$&');
 
 /**
- * PostgreSQL. LIKE is case-sensitive, `LOWER()` both sides ignores case. `COLLATE "C"` compares bytes,
+ * PostgreSQL. LIKE is case-sensitive, `LOWER()` of the column and a folded value ignore case. `COLLATE "C"` compares bytes,
  * which is code point order in UTF-8
  */
 const postgres: Dialect = {
@@ -85,10 +91,10 @@ const postgres: Dialect = {
     quote: (name) => `"${name}"`,
     anyText: '%',
     patternLiteral: escapeWithBang,
-    match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} LIKE ${fold(pattern, caseSensitive)} ESCAPE '!'`,
+    match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} LIKE ${pattern} ESCAPE '!'`,
     binary: (expression) => `${expression} COLLATE "C"`,
     inList: (column, placeholders, caseSensitive) =>
-        `${postgres.binary(fold(column, caseSensitive, true))} IN (${placeholders.map((p) => fold(p, caseSensitive, true)).join(', ')})`,
+        `${postgres.binary(fold(column, caseSensitive, true))} IN (${placeholders.join(', ')})`,
     listValue: (text) => text,
     textBlank: (column) => `(${column} IS NULL OR ${column} = '')`,
     textNotBlank: (column) => `(${column} IS NOT NULL AND ${column} <> '')`,
@@ -116,12 +122,12 @@ const oracle: Dialect = {
     quote: (name) => `"${name}"`,
     anyText: '%',
     patternLiteral: escapeWithBang,
-    match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} LIKE ${fold(pattern, caseSensitive)} ESCAPE '!'`,
+    match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} LIKE ${pattern} ESCAPE '!'`,
     binary: (expression) => expression,
     inList: (column, placeholders, caseSensitive) => {
         const lists: string[] = [];
         for (let start = 0; start < placeholders.length; start += 1000) {
-            const list = placeholders.slice(start, start + 1000).map((p) => fold(p, caseSensitive, true));
+            const list = placeholders.slice(start, start + 1000);
             lists.push(`${fold(column, caseSensitive, true)} IN (${list.join(', ')})`);
         }
         return lists.length === 1 ? lists[0] : `(${lists.join(' OR ')})`;
@@ -147,7 +153,7 @@ const oracle: Dialect = {
 
 /**
  * SQLite. LIKE ignores the case of ASCII letters and has no way to keep it, so patterns are GLOB: it
- * keeps the case, `LOWER()` both sides ignores it (ASCII letters only, as SQLite's LOWER). Dates are
+ * keeps the case, `LOWER()` of the column and a folded value ignore it (ASCII letters only, as SQLite's LOWER). Dates are
  * text or numbers: julianday() reads every ISO 8601 text, with or without `T`, seconds or `Z`
  */
 const sqlite: Dialect = {
@@ -156,10 +162,10 @@ const sqlite: Dialect = {
     anyText: '*',
     // GLOB has no escape: a special character is literal in brackets
     patternLiteral: (text) => text.replace(/[?[]/g, '[$&]'),
-    match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} GLOB ${fold(pattern, caseSensitive)}`,
+    match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} GLOB ${pattern}`,
     binary: (expression) => `${expression} COLLATE BINARY`,
     inList: (column, placeholders, caseSensitive) =>
-        `${sqlite.binary(fold(column, caseSensitive, true))} IN (${placeholders.map((p) => fold(p, caseSensitive, true)).join(', ')})`,
+        `${sqlite.binary(fold(column, caseSensitive, true))} IN (${placeholders.join(', ')})`,
     listValue: (text) => text,
     textBlank: (column) => `(${column} IS NULL OR ${column} = '')`,
     textNotBlank: (column) => `(${column} IS NOT NULL AND ${column} <> '')`,
@@ -182,13 +188,10 @@ const mssql: Dialect = {
     quote: (name) => `[${name}]`,
     anyText: '%',
     patternLiteral: (text) => text.replace(/[_[]/g, '[$&]'),
-    match: (column, pattern, caseSensitive) =>
-        `${mssql.binary(fold(column, caseSensitive))} LIKE ${fold(pattern, caseSensitive)}`,
+    match: (column, pattern, caseSensitive) => `${mssql.binary(fold(column, caseSensitive))} LIKE ${pattern}`,
     binary: (expression) => `${expression} COLLATE Latin1_General_100_BIN2`,
     inList: (column, placeholders, caseSensitive) => {
-        const matches = placeholders.map(
-            (p) => `${mssql.binary(fold(column, caseSensitive, true))} LIKE ${fold(p, caseSensitive, true)}`
-        );
+        const matches = placeholders.map((p) => `${mssql.binary(fold(column, caseSensitive, true))} LIKE ${p}`);
         return matches.length === 1 ? matches[0] : `(${matches.join(' OR ')})`;
     },
     // an IN value is matched with LIKE: all its wildcards are literal

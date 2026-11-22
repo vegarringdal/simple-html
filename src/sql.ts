@@ -84,7 +84,7 @@ export function toSqlWhere(filter: unknown, options: SqlOptions): SqlWhere {
  * import { toSqlWhere } from '@simple-html/grid/sql';
  *
  * toSqlWhere({ field: 'name', operator: 'EQUAL', value: 'Ann' }, { dialect: 'mssql', columns: { name: 'name' } });
- * // { sql: '([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1))', params: ['Ann'] }
+ * // { sql: '([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1)', params: ['ann'] }
  * ```
  */
 export type SqlDialect = 'postgres' | 'oracle' | 'sqlite' | 'mssql';

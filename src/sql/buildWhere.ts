@@ -347,11 +347,10 @@ function compareText(context: Context, column: Column, operator: FilterOperator,
     const blankMatches = blankRowMatches('text', operator, text, exact);
     const comparison = COMPARISON[operator];
     if (comparison && operator !== 'EQUAL' && operator !== 'NOT_EQUAL_TO') {
-        const placeholder = param(context, text);
         return nullable(
             column.sql,
             blankMatches,
-            `${dialect.binary(fold(column.sql, exact))} ${comparison} ${fold(placeholder, exact)}`
+            `${dialect.binary(fold(column.sql, exact))} ${comparison} ${foldedParam(context, text, exact)}`
         );
     }
     // EQUAL, an operator of plain js that is none, CONTAINS, BEGIN_WITH, END_WITH and their NOT
@@ -360,7 +359,7 @@ function compareText(context: Context, column: Column, operator: FilterOperator,
     const any = dialect.anyText;
     const literal = text.split(/[*%]/).map(dialect.patternLiteral).join(any);
     const pattern = `${fromStart ? '' : any}${literal}${toEnd ? '' : any}`;
-    const match = dialect.match(column.sql, param(context, pattern), exact);
+    const match = dialect.match(column.sql, foldedParam(context, pattern, exact), exact);
     const negated = operator === 'NOT_EQUAL_TO' || operator === 'DOES_NOT_CONTAIN';
     return nullable(column.sql, blankMatches, negated ? `NOT (${match})` : match);
 }
@@ -531,7 +530,7 @@ function inList(context: Context, column: Column, value: unknown, exact: boolean
 
     if (column.type === 'text') {
         const texts = [...new Set(values as string[])];
-        const placeholders = texts.map((text) => param(context, dialect.listValue(text)));
+        const placeholders = texts.map((text) => foldedParam(context, dialect.listValue(text), exact, true));
         const match = placeholders.length ? dialect.inList(name, placeholders, exact) : null;
         if (hasBlank) {
             return match ? `(${dialect.textBlank(name)} OR ${match})` : dialect.textBlank(name);
@@ -778,6 +777,34 @@ function wrap(sql: string): string {
 /** `LOWER(x)`, or x when the case is kept */
 function fold(sql: string, exact: boolean): string {
     return exact ? sql : `LOWER(${sql})`;
+}
+
+/** true for a text of ASCII characters only: its case is folded the same by JavaScript and every database */
+function isAscii(text: string): boolean {
+    for (let index = 0; index < text.length; index++) {
+        if (text.charCodeAt(index) > 127) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * A text parameter compared ignoring case (`exact` false): folded here, before it is bound - `'FINLAND'`
+ * for `$1`, not `UPPER($1)` - when it is ASCII only, as A-Z and a-z fold the same in JavaScript and in
+ * every database. Another text is folded by the database, `UPPER($1)`, as its column is: JavaScript and
+ * the database fold `ß`, and SQLite every letter that is not ASCII, differently, and a text must match
+ * the same text. With `exact` the text is bound as it is
+ * @param upper `UPPER` (the IN lists, as the grid), else `LOWER`
+ */
+function foldedParam(context: Context, text: string, exact: boolean, upper = false): string {
+    if (exact) {
+        return param(context, text);
+    }
+    if (isAscii(text)) {
+        return param(context, upper ? text.toUpperCase() : text.toLowerCase());
+    }
+    return `${upper ? 'UPPER' : 'LOWER'}(${param(context, text)})`;
 }
 
 function clockOf(context: Context): TimeZoneClock {

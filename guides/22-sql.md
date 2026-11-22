@@ -35,7 +35,7 @@ const { sql, params } = toSqlWhere(filter, {
     },
     timeZone: 'Europe/Oslo' // the user's, for the dates
 });
-// sql:    (("customer_name" IS NOT NULL AND LOWER("customer_name") LIKE LOWER($1) ESCAPE '!')
+// sql:    (("customer_name" IS NOT NULL AND LOWER("customer_name") LIKE $1 ESCAPE '!')
 //          AND ("age" IS NOT NULL AND "age" > $2))
 // params: ['an%', 18]
 ```
@@ -160,7 +160,13 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
 
 ### Text
 
-- **Case**: ignored by default, with `LOWER()` on both sides (`UPPER()` for `IN`, as the grid);
+- **Case**: ignored by default: the column in `LOWER()` (`UPPER()` for `IN`, as the grid), and the
+  value folded before it is bound when it is ASCII only - `UPPER("country") IN ($1, $2)` with the
+  params `['FINLAND', 'FRANCE']`. A value with a letter that is not ASCII is folded by the database, as
+  its column is - `UPPER($1)` - since JavaScript and the database fold some letters differently
+  (`ß` is `SS` in JavaScript, SQLite folds no letter that is not ASCII) and a text must always match
+  the same text. A to Z and a to z fold the same everywhere, except in a Turkish collation, where `i`
+  and `I` are not a pair: there use `caseSensitive`, or fold the column yourself.
   `caseSensitive: true` compares as they are.
 - **`*` and `%` are wildcards**, any text: they become the wildcard of `LIKE` (`%`), or of `GLOB` on
   SQLite (`*`). Every other character is literal: `_` and the escape are escaped in the parameter.

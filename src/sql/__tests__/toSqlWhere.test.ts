@@ -197,10 +197,10 @@ describe('placeholders, names and groups', () => {
 });
 
 describe('text', () => {
-    it('expect case to be ignored with LOWER on both sides, and kept with caseSensitive', () => {
+    it('expect case to be ignored with LOWER on the column and the value folded before it is bound, kept with caseSensitive', () => {
         expect(sql(where('name', 'EQUAL', 'Ann'))).toEqual({
-            sql: `("name" IS NOT NULL AND LOWER("name") LIKE LOWER($1) ESCAPE '!')`,
-            params: ['Ann']
+            sql: `("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')`,
+            params: ['ann']
         });
         expect(sql(where('name', 'EQUAL', 'Ann', { caseSensitive: true }))).toEqual({
             sql: `("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')`,
@@ -213,8 +213,8 @@ describe('text', () => {
 
     it('expect sqlite to match with GLOB, which keeps case, and LOWER for ignoring it', () => {
         expect(sql(where('name', 'CONTAINS', 'An'), 'sqlite')).toEqual({
-            sql: '("name" IS NOT NULL AND LOWER("name") GLOB LOWER(?))',
-            params: ['*An*']
+            sql: '("name" IS NOT NULL AND LOWER("name") GLOB ?)',
+            params: ['*an*']
         });
         expect(sql(where('name', 'CONTAINS', 'An', { caseSensitive: true }), 'sqlite').sql).toBe(
             '("name" IS NOT NULL AND "name" GLOB ?)'
@@ -223,7 +223,7 @@ describe('text', () => {
 
     it('expect mssql to match with LIKE in a binary collation: case and trailing spaces count', () => {
         expect(sql(where('name', 'EQUAL', 'Ann'), 'mssql').sql).toBe(
-            '([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1))'
+            '([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1)'
         );
         expect(sql(where('name', 'EQUAL', 'Ann', { caseSensitive: true }), 'mssql').sql).toBe(
             '([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)'
@@ -249,17 +249,17 @@ describe('text', () => {
 
     it('expect NOT_EQUAL_TO and DOES_NOT_CONTAIN to match the blank rows, in every dialect', () => {
         expect(sql(where('name', 'NOT_EQUAL_TO', 'x'), 'oracle').sql).toBe(
-            `("name" IS NULL OR NOT (LOWER("name") LIKE LOWER(:1) ESCAPE '!'))`
+            `("name" IS NULL OR NOT (LOWER("name") LIKE :1 ESCAPE '!'))`
         );
         expect(sql(where('name', 'DOES_NOT_CONTAIN', 'x'), 'mssql').sql).toBe(
-            '([name] IS NULL OR NOT (LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1)))'
+            '([name] IS NULL OR NOT (LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1))'
         );
     });
 
     it("expect a blank row to match a pattern of wildcards only - '' matches '*'", () => {
-        expect(sql(where('name', 'EQUAL', '*')).sql).toBe(`("name" IS NULL OR LOWER("name") LIKE LOWER($1) ESCAPE '!')`);
+        expect(sql(where('name', 'EQUAL', '*')).sql).toBe(`("name" IS NULL OR LOWER("name") LIKE $1 ESCAPE '!')`);
         expect(sql(where('name', 'NOT_EQUAL_TO', '%')).sql).toBe(
-            `("name" IS NOT NULL AND NOT (LOWER("name") LIKE LOWER($1) ESCAPE '!'))`
+            `("name" IS NOT NULL AND NOT (LOWER("name") LIKE $1 ESCAPE '!'))`
         );
     });
 
@@ -285,19 +285,17 @@ describe('text', () => {
     });
 
     it('expect the comparisons a text does not offer to compare code point by code point', () => {
-        expect(sql(where('name', 'LESS_THAN', 'm'), 'postgres').sql).toBe(
-            '("name" IS NULL OR LOWER("name") COLLATE "C" < LOWER($1))'
-        );
+        expect(sql(where('name', 'LESS_THAN', 'm'), 'postgres').sql).toBe('("name" IS NULL OR LOWER("name") COLLATE "C" < $1)');
         expect(sql(where('name', 'GREATER_THAN', 'm', { caseSensitive: true }), 'postgres').sql).toBe(
             '("name" IS NOT NULL AND "name" COLLATE "C" > $1)'
         );
         expect(sql(where('name', 'LESS_THAN_OR_EQUAL_TO', 'm'), 'sqlite').sql).toBe(
-            '("name" IS NULL OR LOWER("name") COLLATE BINARY <= LOWER(?))'
+            '("name" IS NULL OR LOWER("name") COLLATE BINARY <= ?)'
         );
         expect(sql(where('name', 'GREATER_THAN_OR_EQUAL_TO', 'm'), 'mssql').sql).toBe(
-            '([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 >= LOWER(@p1))'
+            '([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 >= @p1)'
         );
-        expect(sql(where('name', 'LESS_THAN', 'm'), 'oracle').sql).toBe('("name" IS NULL OR LOWER("name") < LOWER(:1))');
+        expect(sql(where('name', 'LESS_THAN', 'm'), 'oracle').sql).toBe('("name" IS NULL OR LOWER("name") < :1)');
         // no wildcards there
         expect(sql(where('name', 'LESS_THAN', 'm*')).params).toEqual(['m*']);
     });
@@ -305,7 +303,7 @@ describe('text', () => {
     it('expect a BETWEEN of texts to be the two comparisons', () => {
         // a blank row is '': not >= 'a', but <= 'm'
         expect(sql(where('name', 'BETWEEN', ['a', 'm']))).toEqual({
-            sql: '(("name" IS NOT NULL AND LOWER("name") COLLATE "C" >= LOWER($1)) AND ("name" IS NULL OR LOWER("name") COLLATE "C" <= LOWER($2)))',
+            sql: '(("name" IS NOT NULL AND LOWER("name") COLLATE "C" >= $1) AND ("name" IS NULL OR LOWER("name") COLLATE "C" <= $2))',
             params: ['a', 'm']
         });
     });
@@ -321,16 +319,16 @@ describe('text', () => {
 describe('IN and NOT_IN', () => {
     it('expect a text IN to compare in upper case, NULL as the blanks', () => {
         expect(sql(where('name', 'IN', ['Ann', 'NULL']))).toEqual({
-            sql: `(("name" IS NULL OR "name" = '') OR UPPER("name") COLLATE "C" IN (UPPER($1), UPPER($2)))`,
-            params: ['Ann', 'NULL']
+            sql: `(("name" IS NULL OR "name" = '') OR UPPER("name") COLLATE "C" IN ($1, $2))`,
+            params: ['ANN', 'NULL']
         });
         expect(sql(where('name', 'IN', ['Ann', 'b']))).toEqual({
-            sql: '("name" IS NOT NULL AND UPPER("name") COLLATE "C" IN (UPPER($1), UPPER($2)))',
-            params: ['Ann', 'b']
+            sql: '("name" IS NOT NULL AND UPPER("name") COLLATE "C" IN ($1, $2))',
+            params: ['ANN', 'B']
         });
         expect(sql(where('name', 'NOT_IN', ['Ann']))).toEqual({
-            sql: 'NOT ("name" IS NOT NULL AND UPPER("name") COLLATE "C" IN (UPPER($1)))',
-            params: ['Ann']
+            sql: 'NOT ("name" IS NOT NULL AND UPPER("name") COLLATE "C" IN ($1))',
+            params: ['ANN']
         });
     });
 
@@ -348,16 +346,31 @@ describe('IN and NOT_IN', () => {
     });
 
     it('expect a text with one value per line, numbers and booleans as their text', () => {
-        expect(sql(where('name', 'IN', 'a\nb\nNULL')).params).toEqual(['a', 'b', 'NULL']);
-        expect(sql(where('name', 'IN', [5, true, 'x', 'x'])).params).toEqual(['5', 'true', 'x']);
+        expect(sql(where('name', 'IN', 'a\nb\nNULL')).params).toEqual(['A', 'B', 'NULL']);
+        expect(sql(where('name', 'IN', [5, true, 'x', 'x'])).params).toEqual(['5', 'TRUE', 'X']);
         expect(sql(where('name', 'IN', 7)).params).toEqual(['7']);
     });
 
     it('expect mssql to match each value with LIKE, its wildcards literal', () => {
         expect(sql(where('name', 'IN', ['a%', 'b_[c]']), 'mssql')).toEqual({
-            sql: '([name] IS NOT NULL AND (UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE UPPER(@p1) OR UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE UPPER(@p2)))',
-            params: ['a[%]', 'b[_][[]c]']
+            sql: '([name] IS NOT NULL AND (UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1 OR UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p2))',
+            params: ['A[%]', 'B[_][[]C]']
         });
+    });
+
+    it('expect a value that is not ASCII only to be folded by the database, as its column: the same text matches', () => {
+        // JavaScript folds ß to SS and SQLite folds ASCII letters only: the database folds both sides
+        expect(sql(where('name', 'IN', ['Ærø', 'Oslo']))).toEqual({
+            sql: '("name" IS NOT NULL AND UPPER("name") COLLATE "C" IN (UPPER($1), $2))',
+            params: ['Ærø', 'OSLO']
+        });
+        expect(sql(where('name', 'CONTAINS', 'Straße'), 'sqlite')).toEqual({
+            sql: '("name" IS NOT NULL AND LOWER("name") GLOB LOWER(?))',
+            params: ['*Straße*']
+        });
+        expect(sql(where('name', 'LESS_THAN', 'Å'), 'oracle').sql).toBe('("name" IS NULL OR LOWER("name") < LOWER(:1))');
+        // kept as it is with caseSensitive
+        expect(sql(where('name', 'IN', ['Ærø'], { caseSensitive: true })).params).toEqual(['Ærø']);
     });
 
     it('expect oracle to split a list of more than 1000 values', () => {
@@ -368,7 +381,7 @@ describe('IN and NOT_IN', () => {
         });
         expect(result.params).toHaveLength(2500);
         expect(result.sql.match(/ IN \(/g)).toHaveLength(3);
-        expect(result.sql).toContain('UPPER(:1000)) OR UPPER("name") IN (UPPER(:1001)');
+        expect(result.sql).toContain(':1000) OR UPPER("name") IN (:1001');
     });
 
     it('expect a number IN to compare numbers, NULL the null rows', () => {
