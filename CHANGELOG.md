@@ -1332,6 +1332,26 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### A finger multi-selects: taps toggle, Select › in the menus (user request)
+
+##### Added
+- **A finger's tap on a row number toggles the row**, as Ctrl+click does (selection mode `'multiple'`;
+  `'single'` selects the one row as before); on a column number it toggles the column. A tap is told
+  from a click by the click's `pointerType` (the `pointerdown`'s in browsers whose click is no
+  PointerEvent). The mouse and the pen are unchanged.
+- **Select ›** in the row menu (after Undo / Redo ›): This row (✓ when selected), Rows from N to here
+  (from the anchor, as Shift+click), All rows, a line, Range from the active cell to here (Shift+click on
+  a cell), Add this cell to the ranges (Ctrl+click on a cell), a line, Clear selection (the rows and the
+  ranges). Ids `row.select.*`. In selection mode `'none'` the row entries are left out.
+- **Select ›** in the column menu (first): This column, Columns from N to here, All columns, Clear column
+  selection. Ids `column.select.*`, `column.copy.separator`.
+- **The row numbers open the row menu**: right click, long press, Shift+F10. `MenuContext.field` is `''`
+  there and the entries of a cell are greyed out. A group row's number has none.
+- Every entry is greyed out, not hidden, when it can not act. Texts `row.select.*`, `column.select.*`.
+
+##### Fixed
+- Ctrl+click and then Shift+click on a row number above the anchor selected nothing.
+
 #### SQL from a filter: `toSqlWhere()` for Postgres, Oracle, SQLite and SQL Server (user request)
 
 ##### Added
