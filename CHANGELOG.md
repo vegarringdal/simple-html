@@ -1332,6 +1332,33 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Column settings: formats, text templates and links in a dialog (user request)
+
+##### Added
+- **The column settings dialog**: a gear at the right end of the footer (`GridConfig.settingsButton`,
+  default `true`), *Column settings…* in the header menu (`header.settings`) and
+  `gridInterface.openColumnSettings(field?)`. A list of the layout's columns; per column its display
+  format (the choices of Format ›) or, for a text column, the text shown and a link; a preview of the
+  current row; Reset column, Reset all, Cancel, Apply, Apply & close. Apply sets `GridState.formats`, so
+  `getState()` / `saveState()` keep it; a developer's defaults are `ColumnConfig.format`.
+- `ColumnFormat.text`: a template of a text column's cells - `'{firstname} {lastname}'`, `'{value} kg'`.
+  `{field}` placeholders only (`{value}` is the cell's own value), no code.
+- `ColumnFormat.link` (`LinkFormat { url, newTab? }`): the cells as links, their text the column's `text`
+  (or the value). The address starts with `https://`, `http://`, `mailto:` or `tel:`, or is one placeholder
+  that holds a whole address; values are encoded and the address is checked with `new URL()` - a row without
+  an allowed address shows its text, no link. A click on the text (or Ctrl/Cmd+click) or **Alt+Enter** opens
+  it; Enter, F2, typing and a double click beside the text edit the value. Copy, CSV, Excel, sorting and
+  filters use the value. New-tab links get `rel="noopener noreferrer"`.
+- `--simple-html-grid-link-color` (default and TreDeSpace themes, WCAG AA). 47 texts `columnSettings.*` and
+  more.
+
+##### Changed
+- The footer's last Tab stop is the settings button.
+
+##### Fixed
+- The footer's filter chips collapsed only when they started left of the selection summary; now in every
+  overlap.
+
 #### Touch: less padding (user request)
 
 ##### Changed
