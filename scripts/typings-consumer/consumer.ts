@@ -6,6 +6,8 @@
  * this file (with skipLibCheck: false, so every .d.ts is checked) is what catches that.
  * Add to it when the public API grows.
  */
+
+import { type SqlOptions, type SqlWhere, toSqlWhere } from '@simple-html/grid/sql';
 import {
     and,
     type CellClass,
@@ -914,3 +916,10 @@ registerCellRenderer('nothing', () => ({}));
 // @ts-expect-error the column names the renderer by its id
 const rendererObject: ColumnConfig = { renderer: badgeRenderer };
 console.log(rendererColumns, rendererObject);
+
+// the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
+// a filter of the grid is a filter toSqlWhere takes
+const sqlFilter: FilterExpression = and(where('age', 'GREATER_THAN', 18), where('name', 'IN', ['Ann', 'NULL']));
+const sqlOptions: SqlOptions = { dialect: 'sqlite', columns: { age: { column: 'age', type: 'number' }, name: 'name' } };
+const sqlWhere: SqlWhere = toSqlWhere(sqlFilter, sqlOptions);
+console.log(sqlWhere.sql, sqlWhere.params);

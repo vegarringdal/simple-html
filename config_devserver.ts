@@ -93,7 +93,8 @@ const checker_client = TypeChecker({
             experimentalDecorators: true,
             rootDir: '',
             paths: {
-                '@simple-html/grid': ['./src']
+                '@simple-html/grid': ['./src'],
+                '@simple-html/grid/sql': ['./src/sql.ts']
             }
         },
         // node scripts have no business in a browser typecheck, and build output is not source

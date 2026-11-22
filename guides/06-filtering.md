@@ -356,7 +356,8 @@ datasource.getFilter(); // the filter that is set, null when there is none
 ## The filter format
 
 A filter is a `FilterExpression`: a condition or a group. It is plain data, so it can be stored and
-compared like any object, and stored as JSON.
+compared like any object, and stored as JSON - and sent to a backend, which makes the `WHERE` of a SQL
+query of it with `toSqlWhere()`, see [SQL](22-sql.md).
 
 ```ts
 import type { FilterCondition, FilterExpression, FilterGroup } from '@simple-html/grid';
@@ -420,7 +421,8 @@ The field's type (the datasource's `fields`, `text` when the field is not listed
 condition compares the row's value - *row* below - with its value. This is the exact rule set: a
 backend that filters the same rows (a SQL `WHERE` made from the filter) has to follow it. The SQL in
 the tables is a sketch of the meaning, `col` the column and `:v` the value: case, collation and how a
-database compares texts are the backend's.
+database compares texts are the backend's. `toSqlWhere()` of `@simple-html/grid/sql` writes that `WHERE`
+for PostgreSQL, Oracle, SQLite and SQL Server, its values as parameters, see [SQL](22-sql.md).
 
 Two rules come first:
 

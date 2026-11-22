@@ -18,7 +18,8 @@ const KIND = td.ReflectionKind;
 async function convertProject(options = {}) {
     const app = await td.Application.bootstrapWithPlugins(
         {
-            entryPoints: [path.join(ROOT, 'src/index.ts')],
+            // the package and its sql entry (@simple-html/grid/sql), each a module of the project
+            entryPoints: [path.join(ROOT, 'src/index.ts'), path.join(ROOT, 'src/sql.ts')],
             tsconfig: path.join(ROOT, 'tsconfig-typedoc.json'),
             options: path.join(ROOT, 'typedoc.json'),
             ...options
@@ -221,14 +222,39 @@ function memberLines(member, ownerName) {
 // ------------------------------------------------------------------ the model
 
 /**
+ * The groups of the API model: typedoc's groups of each module (Classes, Interfaces ...) of
+ * src/index.ts, and one group of the exports of src/sql.ts, '@simple-html/grid/sql'.
+ * A project of one entry point has the groups itself, of more a module for each.
+ * @returns {{ title: string, children: td.Reflection[] }[]}
+ */
+function apiGroups(project) {
+    const modules = project.children?.filter((child) => child.kind === KIND.Module) || [];
+    if (!modules.length) {
+        return project.groups || [];
+    }
+    // toSqlWhere first, then its options
+    const functionsFirst = (a, b) => (b.title === 'Functions') - (a.title === 'Functions');
+    return modules.flatMap((module) =>
+        module.name === 'sql'
+            ? [
+                  {
+                      title: '@simple-html/grid/sql',
+                      children: [...(module.groups || [])].sort(functionsFirst).flatMap((group) => group.children)
+                  }
+              ]
+            : module.groups || []
+    );
+}
+
+/**
  * The model the API pages render (samples/demo/docs.d.ts has its types):
- * every export of src/index.ts, in typedoc's groups (Classes, Interfaces ...), with its
- * signatures as text, its JSDoc as html, the samples it names, and its members.
- * Inherited members are left out, the "extends" in the signature links to them.
+ * every export of src/index.ts and src/sql.ts, in typedoc's groups (Classes, Interfaces ...; the sql
+ * entry one group), with its signatures as text, its JSDoc as html, the samples it names, and its
+ * members. Inherited members are left out, the "extends" in the signature links to them.
  */
 function buildApiModel(project) {
     const symbols = [];
-    for (const group of project.groups || []) {
+    for (const group of apiGroups(project)) {
         for (const r of group.children) {
             if (!r.isDeclaration()) {
                 continue;

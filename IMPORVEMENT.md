@@ -2483,6 +2483,99 @@ in the console. All passed. Found and fixed:
 * seen too, not changed: the run warns that actions/checkout@v4 and actions/setup-node@v4 target Node 20,
   which GitHub forces onto Node 24 now (v7 of both is out)
 
+### SQL from the filter: `@simple-html/grid/sql` (user request)
+
+* the user: "we also want helper functions to turn a filter into sql postgres, oracle, sqlite, mssql, so its
+  easy for others to do in backend, only where clause. sql injection is important here"
+* **the API**: `toSqlWhere(filter, { dialect, columns, timeZone?, dateStorage?, firstParam?, limits? })` ->
+  `{ sql, params }`, as proposed. `filter` is `unknown` (JSON from a browser, checked); `columns` is the
+  whitelist, `'column'` or `{ column, type, dateStorage?, booleanValues? }`. One function, no builder: the
+  options are checked on every call (a typo like `timezone` throws, so a wrong config fails the first
+  request, not silently). Placeholders `$1` / `:1` / `?` / `@p1`, names `"x"` / `[x]`
+* **a separate entry**: `src/sql.ts` holds the whole public API (types + the function), the code is in
+  `src/sql/` (buildWhere, dialects, sqlDates, show) and uses only the datasource's filter rules
+  (filterExpression, objectFilter - `rangeOperator` exported @internal for it, isBlank). build.js bundles it
+  with esbuild into `dist/sql.mjs` + `dist/sql.cjs` (fails the build if anything else gets in) and copies
+  the one-file typings to `sql.d.mts` / `sql.d.cts`; `exports["./sql"]` has `import` / `require`, each with
+  its `types`. Proved from `npm pack`: installed into a scratch folder, `node -e "require(...)"`, an ESM
+  import, a `.cjs` script that runs the SQL in node:sqlite, and tsc with `node16` (resolves sql.d.mts /
+  sql.d.cts; lib es2022 only, no @types/node, skipLibCheck false) and `bundler`. `check:typings` runs
+  `scripts/typings-consumer/tsconfig.sql.json` (node16, through the package's own exports) too
+* **decisions**:
+  * no condition left -> `1=1` (valid after WHERE everywhere); an empty IN -> `1=0`, NOT_IN -> `1=1`. The SQL
+    is one term (brackets when it has parts): `AND ${sql}` is safe
+  * **two-valued**: each condition decides the null rows itself, `col IS NULL OR ...` / `col IS NOT NULL AND
+    ...`, and which one is the grid's answer for a blank row - `objectFilter({ value: null }, ...)`, the
+    grid's own code, when the SQL is made. `NOT (sql)` is the other rows exactly (tested on SQLite for every
+    filter)
+  * **numbers**: the blank-is-0 decided at build time instead of `COALESCE(col, 0)`: the same rows, the
+    column's index used. PostgreSQL: a parameter takes the column's type (pg sends text), so a number that is
+    not whole is `CAST($n AS numeric)` (`'12.5'` fails on an integer column); whole numbers bare
+  * **text**: LOWER both sides (UPPER for IN, as the grid), the database folding both - self-consistent
+    (`'Æ'` finds `'Æ'` on SQLite, where JS-folding the value would not). Patterns: LIKE `ESCAPE '!'` on
+    PostgreSQL / Oracle (only `%`, `_`, `!` may follow it on Oracle, ORA-01424), GLOB on SQLite (its LIKE can
+    not keep case; literals in brackets), LIKE in `Latin1_General_100_BIN2` on SQL Server with bracket escapes
+    (`=` ignores trailing spaces and follows the column's collation; nvarchar LIKE counts them;
+    `DATALENGTH` for the blank). Oracle never compares with `''`. A number / Date / boolean value on a text
+    column throws (the grid would compare numbers; a cast in SQL can fail). Legacy `<` `>` on text in a
+    binary collation (`COLLATE "C"`, `BINARY`, BIN2; Oracle's default NLS_COMP=BINARY)
+  * **dates**: `timeZone` (IANA, required with a date column) is the user's; a date is a range
+    `[start, next)` of the day / second, index-friendly. `dateStorage` says what the column holds: `local`
+    (default, the wall clock of timeZone), `utc`, `zoned` (instants: timestamptz, datetimeoffset, TSTZ, ISO
+    with Z), `epochSeconds`, `epochMillis`. Parameters are text with an explicit conversion, no session
+    setting involved: `CAST($1 AS timestamp|timestamptz)`, `TO_DATE` (not TO_TIMESTAMP: a DATE column
+    stays indexed) / `TO_TIMESTAMP_TZ`, `CAST(@p1 AS datetime2(0)|datetimeoffset(0))` with the `T` form
+    (DATEFORMAT-proof), `julianday(col) >= julianday(?)` on SQLite (every ISO text form; an expression index
+    works). Wall clock <-> instant with `Intl.DateTimeFormat` and JavaScript's rules (`new Date(y, m, d, h)`:
+    a skipped time moves on, a repeated one is the first). Date-only text in a comparison is UTC midnight,
+    as the grid's `new Date('2026-11-22')`; in an IN list it is that local day (the text the grid shows).
+    Years 1000-9998
+  * **booleans**: true/false on postgres and mssql, 1/0 on oracle and sqlite, `booleanValues` for `'Y'/'N'`
+  * **IN**: 'NULL' / null are the blanks; numbers compare as numbers, dates as days / seconds, booleans
+    TRUE/FALSE/NULL. Oracle lists split at 1000; SQL Server matches each text with LIKE (trailing spaces)
+  * **valueField**: number (COALESCE 0 both sides), text (EQUAL, NOT_EQUAL_TO, comparisons; a blank is '';
+    patterns throw), boolean, date (needs `local`: the day of an instant needs the time zone) / datetime (as
+    stored). Different types or storages throw
+  * **strict where the grid is lenient**: unknown operator, `'or'`, unknown properties, 'abc' on a number,
+    a malformed BETWEEN, non-ISO date text, NUL and lone surrogates -> TypeError. A condition the grid
+    ignores (no field / operator / value) is left out, but a field not in `columns` always throws
+  * **limits** (RangeError): depth 10, conditions + groups 100, IN list 1000, text 1000, params 2000 (SQL
+    Server: 2100 per request). Messages show at most 40 characters of the input
+* **the differences from the grid**, documented in the guide's table and tested where they are: non-ASCII
+  case (SQLite folds ASCII only), IN on numbers / dates (the grid compares formatted text), a datetime stored
+  as an instant in the repeated hour (the SQL takes the first 02:30), datetime valueField milliseconds, text
+  valueField wildcards, SQL Server `=` in a text valueField, UTF-16 vs code point order past U+FFFF
+* docs: `guides/22-sql.md` (the API, the security model and what the caller still must do, each dialect and
+  its driver, every type, dates and time zones, the differences, a client + Express example), links from
+  guide 06; the API pages have an `@simple-html/grid/sql` group (typedoc gets both entry points,
+  `scripts/site/api.js` reads the modules); the demo sample "SQL from the filter" (`#sample/sql`): the
+  WHERE and params of the four dialects under a grid, live as it filters, the error of a field that is not
+  a column. Paths for `@simple-html/grid/sql` in tsconfig.json, samples/tsconfig.json, the dev server's
+  checker and check:docs
+* tests (125, in `src/sql/__tests__`): sqlSqlite.test.ts (6) - **the grid's Datasource against node:sqlite**,
+  400 rows with blanks, case, lines, wildcards in the data, numbers around 0, null booleans, dates around
+  midnight and both DST changes in Oslo stored five ways (wall clock text, UTC text, ISO with Z, epoch ms,
+  epoch s): 13 526 filters (every field x operator x value x case, BETWEEN / IN / NOT_IN with blanks, every
+  valueField pair, 3 000 random nested groups), 84% of them selecting some rows but not all, each also run
+  as `NOT (sql)`; three mutations of the code (blank text, date-only text, the DST gap) each fail it.
+  sqlDates.test.ts (27): the clock against JavaScript's Date in 13 time zones (Oslo, New York, Santiago,
+  Sao Paulo's skipped midnight, Havana, Lord Howe, Kolkata, Chatham, St Johns, Apia's skipped day, Dublin,
+  Casablanca, UTC), the ISO reading. toSqlWhere.test.ts (67): a snapshot per dialect of every operator x
+  type x case, and each rule. sqlInjection.test.ts (25): hostile values (quotes, comments, backslashes,
+  `%` `_` `[` `!`, unicode quotes, NUL, 1000 characters) in a strict token grammar of the SQL and as data in
+  SQLite, hostile fields and columns, `__proto__` / `constructor`, a polluted prototype, 46 wrong shapes,
+  a getter read once, the limits (100 000 nested groups stop at the depth), a seeded fuzz of 20 000 JSON
+  values (only SQL of the grammar, a TypeError or a RangeError)
+* browser (Chromium 1148, 1400x1000, Europe/Oslo): the sample and the guide, light and dark - no filter
+  `1=1`, the buttons, the date in the browser's zone, the hostile text only in the params, the error of a
+  field that is not a column, a header filter typed in, the sample in the guide: 17/17, no page errors (the
+  script is in the session's scratchpad: the shared browser-checks folder is outside this worktree)
+* not done, open: no PostgreSQL / Oracle / SQL Server server here, their SQL is checked as text against
+  their docs (the guide links each); SQL Server `Latin1_General_100_BIN2` on a varchar column of another
+  code page; Oracle with NLS_COMP=LINGUISTIC or a case-insensitive column collation follows that; no second
+  truncation for a datetime valueField (needs a function per dialect and type); a `Date` in an IN list is
+  read as its day (the grid matches nothing)
+
 ## Considered, not done
 
 ## Candidates / not started

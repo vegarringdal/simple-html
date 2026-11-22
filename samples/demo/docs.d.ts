@@ -34,7 +34,7 @@ declare module 'docs:api' {
         samples: string[];
     }
     export interface ApiSymbol extends ApiMember {
-        /** typedoc's group: Classes, Interfaces, Type Aliases, Variables, Functions */
+        /** typedoc's group: Classes, Interfaces, Type Aliases, Variables, Functions - '@simple-html/grid/sql' for the sql entry */
         group: string;
         /** Class, Interface, Type Alias, Variable, Function */
         kind: string;

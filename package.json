@@ -10,6 +10,16 @@
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         },
+        "./sql": {
+            "import": {
+                "types": "./dist/sql.d.mts",
+                "default": "./dist/sql.mjs"
+            },
+            "require": {
+                "types": "./dist/sql.d.cts",
+                "default": "./dist/sql.cjs"
+            }
+        },
         "./grid.css": "./dist/grid.css",
         "./date.css": "./dist/date.css",
         "./package.json": "./package.json"
@@ -28,7 +38,7 @@
         "build:demo": "node ./scripts/buildDemo",
         "prepare": "npm run build",
         "typecheck": "node typecheck",
-        "check:typings": "npm run build && tsc -p scripts/typings-consumer",
+        "check:typings": "npm run build && tsc -p scripts/typings-consumer && tsc -p scripts/typings-consumer/tsconfig.sql.json",
         "check:docs": "npm run build && node scripts/checkDocs.js",
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
@@ -36,7 +46,7 @@
         "test": "vitest run",
         "test:coverage": "vitest run --coverage.enabled --coverage.provider=v8 --coverage.include=src/** --coverage.reporter=text",
         "test:watch": "vitest",
-        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/grid ./src/index.ts"
+        "typedoc-grid": "npx typedoc --tsconfig tsconfig-typedoc.json --cleanOutputDir --out docs/grid ./src/index.ts ./src/sql.ts"
     },
     "author": "Vegar Ringdal <vegar.ringdal@gmail.com>",
     "license": "MIT",

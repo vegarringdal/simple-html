@@ -55,6 +55,8 @@ import { selection } from './samples/selection';
 import selectionSource from './samples/selection.ts?raw';
 import { sortingGrouping } from './samples/sortingGrouping';
 import sortingGroupingSource from './samples/sortingGrouping.ts?raw';
+import { sqlWhere } from './samples/sqlWhere';
+import sqlWhereSource from './samples/sqlWhere.ts?raw';
 import { theming } from './samples/theming';
 import themingSource from './samples/theming.ts?raw';
 import { tooltips } from './samples/tooltips';
@@ -84,6 +86,7 @@ export const SAMPLES: Sample[] = [
     { ...sortingGrouping, source: sortingGroupingSource },
     { ...aggregates, source: aggregatesSource },
     { ...filtering, source: filteringSource },
+    { ...sqlWhere, source: sqlWhereSource },
     { ...find, source: findSource },
     { ...selection, source: selectionSource },
     { ...rowsData, source: rowsDataSource },

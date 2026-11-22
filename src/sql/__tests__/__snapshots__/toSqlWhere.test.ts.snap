@@ -1,0 +1,1093 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the SQL of every operator, type and case > expect the SQL of mssql to be the snapshot 1`] = `
+"name EQUAL
+  ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1))
+  ["an%n[_]a!"]
+name EQUAL caseSensitive
+  ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)
+  ["an%n[_]a!"]
+name NOT_EQUAL_TO
+  ([name] IS NULL OR NOT (LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1)))
+  ["an%n[_]a!"]
+name NOT_EQUAL_TO caseSensitive
+  ([name] IS NULL OR NOT ([name] COLLATE Latin1_General_100_BIN2 LIKE @p1))
+  ["an%n[_]a!"]
+name LESS_THAN
+  ([name] IS NULL OR LOWER([name]) COLLATE Latin1_General_100_BIN2 < LOWER(@p1))
+  ["an*n_a!"]
+name LESS_THAN caseSensitive
+  ([name] IS NULL OR [name] COLLATE Latin1_General_100_BIN2 < @p1)
+  ["an*n_a!"]
+name LESS_THAN_OR_EQUAL_TO
+  ([name] IS NULL OR LOWER([name]) COLLATE Latin1_General_100_BIN2 <= LOWER(@p1))
+  ["an*n_a!"]
+name LESS_THAN_OR_EQUAL_TO caseSensitive
+  ([name] IS NULL OR [name] COLLATE Latin1_General_100_BIN2 <= @p1)
+  ["an*n_a!"]
+name GREATER_THAN
+  ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 > LOWER(@p1))
+  ["an*n_a!"]
+name GREATER_THAN caseSensitive
+  ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 > @p1)
+  ["an*n_a!"]
+name GREATER_THAN_OR_EQUAL_TO
+  ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 >= LOWER(@p1))
+  ["an*n_a!"]
+name GREATER_THAN_OR_EQUAL_TO caseSensitive
+  ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 >= @p1)
+  ["an*n_a!"]
+name BETWEEN
+  (([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 >= LOWER(@p1)) AND ([name] IS NULL OR LOWER([name]) COLLATE Latin1_General_100_BIN2 <= LOWER(@p2)))
+  ["a","m"]
+name BETWEEN caseSensitive
+  (([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 >= @p1) AND ([name] IS NULL OR [name] COLLATE Latin1_General_100_BIN2 <= @p2))
+  ["a","m"]
+name CONTAINS
+  ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1))
+  ["%an%n[_]a!%"]
+name CONTAINS caseSensitive
+  ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)
+  ["%an%n[_]a!%"]
+name DOES_NOT_CONTAIN
+  ([name] IS NULL OR NOT (LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1)))
+  ["%an%n[_]a!%"]
+name DOES_NOT_CONTAIN caseSensitive
+  ([name] IS NULL OR NOT ([name] COLLATE Latin1_General_100_BIN2 LIKE @p1))
+  ["%an%n[_]a!%"]
+name BEGIN_WITH
+  ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1))
+  ["an%n[_]a!%"]
+name BEGIN_WITH caseSensitive
+  ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)
+  ["an%n[_]a!%"]
+name END_WITH
+  ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE LOWER(@p1))
+  ["%an%n[_]a!"]
+name END_WITH caseSensitive
+  ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)
+  ["%an%n[_]a!"]
+name IN
+  (([name] IS NULL OR DATALENGTH([name]) = 0) OR (UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE UPPER(@p1) OR UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE UPPER(@p2) OR UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE UPPER(@p3)))
+  ["Ann","NULL","b[%][_][[]x]"]
+name IN caseSensitive
+  (([name] IS NULL OR DATALENGTH([name]) = 0) OR ([name] COLLATE Latin1_General_100_BIN2 LIKE @p1 OR [name] COLLATE Latin1_General_100_BIN2 LIKE @p2 OR [name] COLLATE Latin1_General_100_BIN2 LIKE @p3))
+  ["Ann","NULL","b[%][_][[]x]"]
+name NOT_IN
+  NOT (([name] IS NULL OR DATALENGTH([name]) = 0) OR (UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE UPPER(@p1) OR UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE UPPER(@p2) OR UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE UPPER(@p3)))
+  ["Ann","NULL","b[%][_][[]x]"]
+name NOT_IN caseSensitive
+  NOT (([name] IS NULL OR DATALENGTH([name]) = 0) OR ([name] COLLATE Latin1_General_100_BIN2 LIKE @p1 OR [name] COLLATE Latin1_General_100_BIN2 LIKE @p2 OR [name] COLLATE Latin1_General_100_BIN2 LIKE @p3))
+  ["Ann","NULL","b[%][_][[]x]"]
+name IS_BLANK
+  ([name] IS NULL OR DATALENGTH([name]) = 0)
+  []
+name IS_BLANK caseSensitive
+  ([name] IS NULL OR DATALENGTH([name]) = 0)
+  []
+name IS_NOT_BLANK
+  ([name] IS NOT NULL AND DATALENGTH([name]) > 0)
+  []
+name IS_NOT_BLANK caseSensitive
+  ([name] IS NOT NULL AND DATALENGTH([name]) > 0)
+  []
+age EQUAL
+  ([age] IS NOT NULL AND [age] = @p1)
+  [5]
+age NOT_EQUAL_TO
+  ([age] IS NULL OR [age] <> @p1)
+  [5]
+age LESS_THAN
+  ([age] IS NULL OR [age] < @p1)
+  [5]
+age LESS_THAN_OR_EQUAL_TO
+  ([age] IS NULL OR [age] <= @p1)
+  [5]
+age GREATER_THAN
+  ([age] IS NOT NULL AND [age] > @p1)
+  [5]
+age GREATER_THAN_OR_EQUAL_TO
+  ([age] IS NOT NULL AND [age] >= @p1)
+  [5]
+age BETWEEN
+  ([age] IS NOT NULL AND [age] >= @p1)
+  [10]
+age CONTAINS
+  ([age] IS NOT NULL AND [age] >= @p1)
+  [5]
+age DOES_NOT_CONTAIN
+  ([age] IS NULL OR [age] < @p1)
+  [5]
+age BEGIN_WITH
+  ([age] IS NOT NULL AND [age] >= @p1)
+  [5]
+age END_WITH
+  ([age] IS NULL OR [age] <= @p1)
+  [5]
+age IN
+  ([age] IS NULL OR [age] IN (@p1, @p2))
+  [1,2.5]
+age NOT_IN
+  NOT ([age] IS NULL OR [age] IN (@p1, @p2))
+  [1,2.5]
+age IS_BLANK
+  ([age] IS NULL OR [age] = 0)
+  []
+age IS_NOT_BLANK
+  ([age] IS NOT NULL AND [age] <> 0)
+  []
+active EQUAL
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active NOT_EQUAL_TO
+  ([active] IS NULL OR [active] <> @p1)
+  [true]
+active LESS_THAN
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active LESS_THAN_OR_EQUAL_TO
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active GREATER_THAN
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active GREATER_THAN_OR_EQUAL_TO
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active BETWEEN
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active CONTAINS
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active DOES_NOT_CONTAIN
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active BEGIN_WITH
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active END_WITH
+  ([active] IS NOT NULL AND [active] = @p1)
+  [true]
+active IN
+  ([active] IS NULL OR [active] IN (@p1))
+  [true]
+active NOT_IN
+  NOT ([active] IS NULL OR [active] IN (@p1))
+  [true]
+active IS_BLANK
+  [active] IS NULL
+  []
+active IS_NOT_BLANK
+  [active] IS NOT NULL
+  []
+born EQUAL
+  ([born] IS NOT NULL AND [born] >= CAST(@p1 AS datetime2(0)) AND [born] < CAST(@p2 AS datetime2(0)))
+  ["2026-11-22T00:00:00","2026-11-23T00:00:00"]
+born NOT_EQUAL_TO
+  ([born] IS NULL OR [born] < CAST(@p1 AS datetime2(0)) OR [born] >= CAST(@p2 AS datetime2(0)))
+  ["2026-11-22T00:00:00","2026-11-23T00:00:00"]
+born LESS_THAN
+  ([born] IS NOT NULL AND [born] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+born LESS_THAN_OR_EQUAL_TO
+  ([born] IS NOT NULL AND [born] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-23T00:00:00"]
+born GREATER_THAN
+  ([born] IS NOT NULL AND [born] >= CAST(@p1 AS datetime2(0)))
+  ["2026-11-23T00:00:00"]
+born GREATER_THAN_OR_EQUAL_TO
+  ([born] IS NOT NULL AND [born] >= CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+born BETWEEN
+  ([born] IS NOT NULL AND [born] >= CAST(@p1 AS datetime2(0)) AND [born] < CAST(@p2 AS datetime2(0)))
+  ["2026-11-01T00:00:00","2026-12-01T00:00:00"]
+born CONTAINS
+  ([born] IS NOT NULL AND [born] >= CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+born DOES_NOT_CONTAIN
+  ([born] IS NOT NULL AND [born] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+born BEGIN_WITH
+  ([born] IS NOT NULL AND [born] >= CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+born END_WITH
+  ([born] IS NOT NULL AND [born] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-23T00:00:00"]
+born IN
+  ([born] IS NULL OR ([born] >= CAST(@p1 AS datetime2(0)) AND [born] < CAST(@p2 AS datetime2(0))))
+  ["2026-11-22T00:00:00","2026-11-23T00:00:00"]
+born NOT_IN
+  NOT ([born] IS NULL OR ([born] >= CAST(@p1 AS datetime2(0)) AND [born] < CAST(@p2 AS datetime2(0))))
+  ["2026-11-22T00:00:00","2026-11-23T00:00:00"]
+born IS_BLANK
+  [born] IS NULL
+  []
+born IS_NOT_BLANK
+  [born] IS NOT NULL
+  []
+seen EQUAL
+  ([seen] IS NOT NULL AND [seen] >= CAST(@p1 AS datetime2(0)) AND [seen] < CAST(@p2 AS datetime2(0)))
+  ["2026-11-22T00:00:00","2026-11-22T00:00:01"]
+seen NOT_EQUAL_TO
+  ([seen] IS NULL OR [seen] < CAST(@p1 AS datetime2(0)) OR [seen] >= CAST(@p2 AS datetime2(0)))
+  ["2026-11-22T00:00:00","2026-11-22T00:00:01"]
+seen LESS_THAN
+  ([seen] IS NOT NULL AND [seen] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+seen LESS_THAN_OR_EQUAL_TO
+  ([seen] IS NOT NULL AND [seen] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:01"]
+seen GREATER_THAN
+  ([seen] IS NOT NULL AND [seen] >= CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:01"]
+seen GREATER_THAN_OR_EQUAL_TO
+  ([seen] IS NOT NULL AND [seen] >= CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+seen BETWEEN
+  ([seen] IS NOT NULL AND [seen] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-30T12:00:01"]
+seen CONTAINS
+  ([seen] IS NOT NULL AND [seen] >= CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+seen DOES_NOT_CONTAIN
+  ([seen] IS NOT NULL AND [seen] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+seen BEGIN_WITH
+  ([seen] IS NOT NULL AND [seen] >= CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:00"]
+seen END_WITH
+  ([seen] IS NOT NULL AND [seen] < CAST(@p1 AS datetime2(0)))
+  ["2026-11-22T00:00:01"]
+seen IN
+  ([seen] IS NOT NULL AND ([seen] >= CAST(@p1 AS datetime2(0)) AND [seen] < CAST(@p2 AS datetime2(0))))
+  ["2026-11-22T10:00:00","2026-11-22T10:00:01"]
+seen NOT_IN
+  NOT ([seen] IS NOT NULL AND ([seen] >= CAST(@p1 AS datetime2(0)) AND [seen] < CAST(@p2 AS datetime2(0))))
+  ["2026-11-22T10:00:00","2026-11-22T10:00:01"]
+seen IS_BLANK
+  [seen] IS NULL
+  []
+seen IS_NOT_BLANK
+  [seen] IS NOT NULL
+  []"
+`;
+
+exports[`the SQL of every operator, type and case > expect the SQL of oracle to be the snapshot 1`] = `
+"name EQUAL
+  ("name" IS NOT NULL AND LOWER("name") LIKE LOWER(:1) ESCAPE '!')
+  ["an%n!_a!!"]
+name EQUAL caseSensitive
+  ("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!')
+  ["an%n!_a!!"]
+name NOT_EQUAL_TO
+  ("name" IS NULL OR NOT (LOWER("name") LIKE LOWER(:1) ESCAPE '!'))
+  ["an%n!_a!!"]
+name NOT_EQUAL_TO caseSensitive
+  ("name" IS NULL OR NOT ("name" LIKE :1 ESCAPE '!'))
+  ["an%n!_a!!"]
+name LESS_THAN
+  ("name" IS NULL OR LOWER("name") < LOWER(:1))
+  ["an*n_a!"]
+name LESS_THAN caseSensitive
+  ("name" IS NULL OR "name" < :1)
+  ["an*n_a!"]
+name LESS_THAN_OR_EQUAL_TO
+  ("name" IS NULL OR LOWER("name") <= LOWER(:1))
+  ["an*n_a!"]
+name LESS_THAN_OR_EQUAL_TO caseSensitive
+  ("name" IS NULL OR "name" <= :1)
+  ["an*n_a!"]
+name GREATER_THAN
+  ("name" IS NOT NULL AND LOWER("name") > LOWER(:1))
+  ["an*n_a!"]
+name GREATER_THAN caseSensitive
+  ("name" IS NOT NULL AND "name" > :1)
+  ["an*n_a!"]
+name GREATER_THAN_OR_EQUAL_TO
+  ("name" IS NOT NULL AND LOWER("name") >= LOWER(:1))
+  ["an*n_a!"]
+name GREATER_THAN_OR_EQUAL_TO caseSensitive
+  ("name" IS NOT NULL AND "name" >= :1)
+  ["an*n_a!"]
+name BETWEEN
+  (("name" IS NOT NULL AND LOWER("name") >= LOWER(:1)) AND ("name" IS NULL OR LOWER("name") <= LOWER(:2)))
+  ["a","m"]
+name BETWEEN caseSensitive
+  (("name" IS NOT NULL AND "name" >= :1) AND ("name" IS NULL OR "name" <= :2))
+  ["a","m"]
+name CONTAINS
+  ("name" IS NOT NULL AND LOWER("name") LIKE LOWER(:1) ESCAPE '!')
+  ["%an%n!_a!!%"]
+name CONTAINS caseSensitive
+  ("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!')
+  ["%an%n!_a!!%"]
+name DOES_NOT_CONTAIN
+  ("name" IS NULL OR NOT (LOWER("name") LIKE LOWER(:1) ESCAPE '!'))
+  ["%an%n!_a!!%"]
+name DOES_NOT_CONTAIN caseSensitive
+  ("name" IS NULL OR NOT ("name" LIKE :1 ESCAPE '!'))
+  ["%an%n!_a!!%"]
+name BEGIN_WITH
+  ("name" IS NOT NULL AND LOWER("name") LIKE LOWER(:1) ESCAPE '!')
+  ["an%n!_a!!%"]
+name BEGIN_WITH caseSensitive
+  ("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!')
+  ["an%n!_a!!%"]
+name END_WITH
+  ("name" IS NOT NULL AND LOWER("name") LIKE LOWER(:1) ESCAPE '!')
+  ["%an%n!_a!!"]
+name END_WITH caseSensitive
+  ("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!')
+  ["%an%n!_a!!"]
+name IN
+  ("name" IS NULL OR UPPER("name") IN (UPPER(:1), UPPER(:2), UPPER(:3)))
+  ["Ann","NULL","b%_[x]"]
+name IN caseSensitive
+  ("name" IS NULL OR "name" IN (:1, :2, :3))
+  ["Ann","NULL","b%_[x]"]
+name NOT_IN
+  NOT ("name" IS NULL OR UPPER("name") IN (UPPER(:1), UPPER(:2), UPPER(:3)))
+  ["Ann","NULL","b%_[x]"]
+name NOT_IN caseSensitive
+  NOT ("name" IS NULL OR "name" IN (:1, :2, :3))
+  ["Ann","NULL","b%_[x]"]
+name IS_BLANK
+  "name" IS NULL
+  []
+name IS_BLANK caseSensitive
+  "name" IS NULL
+  []
+name IS_NOT_BLANK
+  "name" IS NOT NULL
+  []
+name IS_NOT_BLANK caseSensitive
+  "name" IS NOT NULL
+  []
+age EQUAL
+  ("age" IS NOT NULL AND "age" = :1)
+  [5]
+age NOT_EQUAL_TO
+  ("age" IS NULL OR "age" <> :1)
+  [5]
+age LESS_THAN
+  ("age" IS NULL OR "age" < :1)
+  [5]
+age LESS_THAN_OR_EQUAL_TO
+  ("age" IS NULL OR "age" <= :1)
+  [5]
+age GREATER_THAN
+  ("age" IS NOT NULL AND "age" > :1)
+  [5]
+age GREATER_THAN_OR_EQUAL_TO
+  ("age" IS NOT NULL AND "age" >= :1)
+  [5]
+age BETWEEN
+  ("age" IS NOT NULL AND "age" >= :1)
+  [10]
+age CONTAINS
+  ("age" IS NOT NULL AND "age" >= :1)
+  [5]
+age DOES_NOT_CONTAIN
+  ("age" IS NULL OR "age" < :1)
+  [5]
+age BEGIN_WITH
+  ("age" IS NOT NULL AND "age" >= :1)
+  [5]
+age END_WITH
+  ("age" IS NULL OR "age" <= :1)
+  [5]
+age IN
+  ("age" IS NULL OR "age" IN (:1, :2))
+  [1,2.5]
+age NOT_IN
+  NOT ("age" IS NULL OR "age" IN (:1, :2))
+  [1,2.5]
+age IS_BLANK
+  ("age" IS NULL OR "age" = 0)
+  []
+age IS_NOT_BLANK
+  ("age" IS NOT NULL AND "age" <> 0)
+  []
+active EQUAL
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active NOT_EQUAL_TO
+  ("active" IS NULL OR "active" <> :1)
+  [1]
+active LESS_THAN
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active LESS_THAN_OR_EQUAL_TO
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active GREATER_THAN
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active GREATER_THAN_OR_EQUAL_TO
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active BETWEEN
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active CONTAINS
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active DOES_NOT_CONTAIN
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active BEGIN_WITH
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active END_WITH
+  ("active" IS NOT NULL AND "active" = :1)
+  [1]
+active IN
+  ("active" IS NULL OR "active" IN (:1))
+  [1]
+active NOT_IN
+  NOT ("active" IS NULL OR "active" IN (:1))
+  [1]
+active IS_BLANK
+  "active" IS NULL
+  []
+active IS_NOT_BLANK
+  "active" IS NOT NULL
+  []
+born EQUAL
+  ("born" IS NOT NULL AND "born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "born" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born NOT_EQUAL_TO
+  ("born" IS NULL OR "born" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') OR "born" >= TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born LESS_THAN
+  ("born" IS NOT NULL AND "born" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+born LESS_THAN_OR_EQUAL_TO
+  ("born" IS NOT NULL AND "born" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-23 00:00:00"]
+born GREATER_THAN
+  ("born" IS NOT NULL AND "born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-23 00:00:00"]
+born GREATER_THAN_OR_EQUAL_TO
+  ("born" IS NOT NULL AND "born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+born BETWEEN
+  ("born" IS NOT NULL AND "born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "born" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-01 00:00:00","2026-12-01 00:00:00"]
+born CONTAINS
+  ("born" IS NOT NULL AND "born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+born DOES_NOT_CONTAIN
+  ("born" IS NOT NULL AND "born" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+born BEGIN_WITH
+  ("born" IS NOT NULL AND "born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+born END_WITH
+  ("born" IS NOT NULL AND "born" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-23 00:00:00"]
+born IN
+  ("born" IS NULL OR ("born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "born" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS')))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born NOT_IN
+  NOT ("born" IS NULL OR ("born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "born" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS')))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born IS_BLANK
+  "born" IS NULL
+  []
+born IS_NOT_BLANK
+  "born" IS NOT NULL
+  []
+seen EQUAL
+  ("seen" IS NOT NULL AND "seen" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "seen" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00","2026-11-22 00:00:01"]
+seen NOT_EQUAL_TO
+  ("seen" IS NULL OR "seen" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') OR "seen" >= TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00","2026-11-22 00:00:01"]
+seen LESS_THAN
+  ("seen" IS NOT NULL AND "seen" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+seen LESS_THAN_OR_EQUAL_TO
+  ("seen" IS NOT NULL AND "seen" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:01"]
+seen GREATER_THAN
+  ("seen" IS NOT NULL AND "seen" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:01"]
+seen GREATER_THAN_OR_EQUAL_TO
+  ("seen" IS NOT NULL AND "seen" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+seen BETWEEN
+  ("seen" IS NOT NULL AND "seen" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-30 12:00:01"]
+seen CONTAINS
+  ("seen" IS NOT NULL AND "seen" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+seen DOES_NOT_CONTAIN
+  ("seen" IS NOT NULL AND "seen" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+seen BEGIN_WITH
+  ("seen" IS NOT NULL AND "seen" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:00"]
+seen END_WITH
+  ("seen" IS NOT NULL AND "seen" < TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS'))
+  ["2026-11-22 00:00:01"]
+seen IN
+  ("seen" IS NOT NULL AND ("seen" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "seen" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS')))
+  ["2026-11-22 10:00:00","2026-11-22 10:00:01"]
+seen NOT_IN
+  NOT ("seen" IS NOT NULL AND ("seen" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "seen" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS')))
+  ["2026-11-22 10:00:00","2026-11-22 10:00:01"]
+seen IS_BLANK
+  "seen" IS NULL
+  []
+seen IS_NOT_BLANK
+  "seen" IS NOT NULL
+  []"
+`;
+
+exports[`the SQL of every operator, type and case > expect the SQL of postgres to be the snapshot 1`] = `
+"name EQUAL
+  ("name" IS NOT NULL AND LOWER("name") LIKE LOWER($1) ESCAPE '!')
+  ["an%n!_a!!"]
+name EQUAL caseSensitive
+  ("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')
+  ["an%n!_a!!"]
+name NOT_EQUAL_TO
+  ("name" IS NULL OR NOT (LOWER("name") LIKE LOWER($1) ESCAPE '!'))
+  ["an%n!_a!!"]
+name NOT_EQUAL_TO caseSensitive
+  ("name" IS NULL OR NOT ("name" LIKE $1 ESCAPE '!'))
+  ["an%n!_a!!"]
+name LESS_THAN
+  ("name" IS NULL OR LOWER("name") COLLATE "C" < LOWER($1))
+  ["an*n_a!"]
+name LESS_THAN caseSensitive
+  ("name" IS NULL OR "name" COLLATE "C" < $1)
+  ["an*n_a!"]
+name LESS_THAN_OR_EQUAL_TO
+  ("name" IS NULL OR LOWER("name") COLLATE "C" <= LOWER($1))
+  ["an*n_a!"]
+name LESS_THAN_OR_EQUAL_TO caseSensitive
+  ("name" IS NULL OR "name" COLLATE "C" <= $1)
+  ["an*n_a!"]
+name GREATER_THAN
+  ("name" IS NOT NULL AND LOWER("name") COLLATE "C" > LOWER($1))
+  ["an*n_a!"]
+name GREATER_THAN caseSensitive
+  ("name" IS NOT NULL AND "name" COLLATE "C" > $1)
+  ["an*n_a!"]
+name GREATER_THAN_OR_EQUAL_TO
+  ("name" IS NOT NULL AND LOWER("name") COLLATE "C" >= LOWER($1))
+  ["an*n_a!"]
+name GREATER_THAN_OR_EQUAL_TO caseSensitive
+  ("name" IS NOT NULL AND "name" COLLATE "C" >= $1)
+  ["an*n_a!"]
+name BETWEEN
+  (("name" IS NOT NULL AND LOWER("name") COLLATE "C" >= LOWER($1)) AND ("name" IS NULL OR LOWER("name") COLLATE "C" <= LOWER($2)))
+  ["a","m"]
+name BETWEEN caseSensitive
+  (("name" IS NOT NULL AND "name" COLLATE "C" >= $1) AND ("name" IS NULL OR "name" COLLATE "C" <= $2))
+  ["a","m"]
+name CONTAINS
+  ("name" IS NOT NULL AND LOWER("name") LIKE LOWER($1) ESCAPE '!')
+  ["%an%n!_a!!%"]
+name CONTAINS caseSensitive
+  ("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')
+  ["%an%n!_a!!%"]
+name DOES_NOT_CONTAIN
+  ("name" IS NULL OR NOT (LOWER("name") LIKE LOWER($1) ESCAPE '!'))
+  ["%an%n!_a!!%"]
+name DOES_NOT_CONTAIN caseSensitive
+  ("name" IS NULL OR NOT ("name" LIKE $1 ESCAPE '!'))
+  ["%an%n!_a!!%"]
+name BEGIN_WITH
+  ("name" IS NOT NULL AND LOWER("name") LIKE LOWER($1) ESCAPE '!')
+  ["an%n!_a!!%"]
+name BEGIN_WITH caseSensitive
+  ("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')
+  ["an%n!_a!!%"]
+name END_WITH
+  ("name" IS NOT NULL AND LOWER("name") LIKE LOWER($1) ESCAPE '!')
+  ["%an%n!_a!!"]
+name END_WITH caseSensitive
+  ("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')
+  ["%an%n!_a!!"]
+name IN
+  (("name" IS NULL OR "name" = '') OR UPPER("name") COLLATE "C" IN (UPPER($1), UPPER($2), UPPER($3)))
+  ["Ann","NULL","b%_[x]"]
+name IN caseSensitive
+  (("name" IS NULL OR "name" = '') OR "name" COLLATE "C" IN ($1, $2, $3))
+  ["Ann","NULL","b%_[x]"]
+name NOT_IN
+  NOT (("name" IS NULL OR "name" = '') OR UPPER("name") COLLATE "C" IN (UPPER($1), UPPER($2), UPPER($3)))
+  ["Ann","NULL","b%_[x]"]
+name NOT_IN caseSensitive
+  NOT (("name" IS NULL OR "name" = '') OR "name" COLLATE "C" IN ($1, $2, $3))
+  ["Ann","NULL","b%_[x]"]
+name IS_BLANK
+  ("name" IS NULL OR "name" = '')
+  []
+name IS_BLANK caseSensitive
+  ("name" IS NULL OR "name" = '')
+  []
+name IS_NOT_BLANK
+  ("name" IS NOT NULL AND "name" <> '')
+  []
+name IS_NOT_BLANK caseSensitive
+  ("name" IS NOT NULL AND "name" <> '')
+  []
+age EQUAL
+  ("age" IS NOT NULL AND "age" = $1)
+  [5]
+age NOT_EQUAL_TO
+  ("age" IS NULL OR "age" <> $1)
+  [5]
+age LESS_THAN
+  ("age" IS NULL OR "age" < $1)
+  [5]
+age LESS_THAN_OR_EQUAL_TO
+  ("age" IS NULL OR "age" <= $1)
+  [5]
+age GREATER_THAN
+  ("age" IS NOT NULL AND "age" > $1)
+  [5]
+age GREATER_THAN_OR_EQUAL_TO
+  ("age" IS NOT NULL AND "age" >= $1)
+  [5]
+age BETWEEN
+  ("age" IS NOT NULL AND "age" >= $1)
+  [10]
+age CONTAINS
+  ("age" IS NOT NULL AND "age" >= $1)
+  [5]
+age DOES_NOT_CONTAIN
+  ("age" IS NULL OR "age" < $1)
+  [5]
+age BEGIN_WITH
+  ("age" IS NOT NULL AND "age" >= $1)
+  [5]
+age END_WITH
+  ("age" IS NULL OR "age" <= $1)
+  [5]
+age IN
+  ("age" IS NULL OR "age" IN ($1, CAST($2 AS numeric)))
+  [1,2.5]
+age NOT_IN
+  NOT ("age" IS NULL OR "age" IN ($1, CAST($2 AS numeric)))
+  [1,2.5]
+age IS_BLANK
+  ("age" IS NULL OR "age" = 0)
+  []
+age IS_NOT_BLANK
+  ("age" IS NOT NULL AND "age" <> 0)
+  []
+active EQUAL
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active NOT_EQUAL_TO
+  ("active" IS NULL OR "active" <> $1)
+  [true]
+active LESS_THAN
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active LESS_THAN_OR_EQUAL_TO
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active GREATER_THAN
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active GREATER_THAN_OR_EQUAL_TO
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active BETWEEN
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active CONTAINS
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active DOES_NOT_CONTAIN
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active BEGIN_WITH
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active END_WITH
+  ("active" IS NOT NULL AND "active" = $1)
+  [true]
+active IN
+  ("active" IS NULL OR "active" IN ($1))
+  [true]
+active NOT_IN
+  NOT ("active" IS NULL OR "active" IN ($1))
+  [true]
+active IS_BLANK
+  "active" IS NULL
+  []
+active IS_NOT_BLANK
+  "active" IS NOT NULL
+  []
+born EQUAL
+  ("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp) AND "born" < CAST($2 AS timestamp))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born NOT_EQUAL_TO
+  ("born" IS NULL OR "born" < CAST($1 AS timestamp) OR "born" >= CAST($2 AS timestamp))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born LESS_THAN
+  ("born" IS NOT NULL AND "born" < CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+born LESS_THAN_OR_EQUAL_TO
+  ("born" IS NOT NULL AND "born" < CAST($1 AS timestamp))
+  ["2026-11-23 00:00:00"]
+born GREATER_THAN
+  ("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp))
+  ["2026-11-23 00:00:00"]
+born GREATER_THAN_OR_EQUAL_TO
+  ("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+born BETWEEN
+  ("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp) AND "born" < CAST($2 AS timestamp))
+  ["2026-11-01 00:00:00","2026-12-01 00:00:00"]
+born CONTAINS
+  ("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+born DOES_NOT_CONTAIN
+  ("born" IS NOT NULL AND "born" < CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+born BEGIN_WITH
+  ("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+born END_WITH
+  ("born" IS NOT NULL AND "born" < CAST($1 AS timestamp))
+  ["2026-11-23 00:00:00"]
+born IN
+  ("born" IS NULL OR ("born" >= CAST($1 AS timestamp) AND "born" < CAST($2 AS timestamp)))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born NOT_IN
+  NOT ("born" IS NULL OR ("born" >= CAST($1 AS timestamp) AND "born" < CAST($2 AS timestamp)))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born IS_BLANK
+  "born" IS NULL
+  []
+born IS_NOT_BLANK
+  "born" IS NOT NULL
+  []
+seen EQUAL
+  ("seen" IS NOT NULL AND "seen" >= CAST($1 AS timestamp) AND "seen" < CAST($2 AS timestamp))
+  ["2026-11-22 00:00:00","2026-11-22 00:00:01"]
+seen NOT_EQUAL_TO
+  ("seen" IS NULL OR "seen" < CAST($1 AS timestamp) OR "seen" >= CAST($2 AS timestamp))
+  ["2026-11-22 00:00:00","2026-11-22 00:00:01"]
+seen LESS_THAN
+  ("seen" IS NOT NULL AND "seen" < CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+seen LESS_THAN_OR_EQUAL_TO
+  ("seen" IS NOT NULL AND "seen" < CAST($1 AS timestamp))
+  ["2026-11-22 00:00:01"]
+seen GREATER_THAN
+  ("seen" IS NOT NULL AND "seen" >= CAST($1 AS timestamp))
+  ["2026-11-22 00:00:01"]
+seen GREATER_THAN_OR_EQUAL_TO
+  ("seen" IS NOT NULL AND "seen" >= CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+seen BETWEEN
+  ("seen" IS NOT NULL AND "seen" < CAST($1 AS timestamp))
+  ["2026-11-30 12:00:01"]
+seen CONTAINS
+  ("seen" IS NOT NULL AND "seen" >= CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+seen DOES_NOT_CONTAIN
+  ("seen" IS NOT NULL AND "seen" < CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+seen BEGIN_WITH
+  ("seen" IS NOT NULL AND "seen" >= CAST($1 AS timestamp))
+  ["2026-11-22 00:00:00"]
+seen END_WITH
+  ("seen" IS NOT NULL AND "seen" < CAST($1 AS timestamp))
+  ["2026-11-22 00:00:01"]
+seen IN
+  ("seen" IS NOT NULL AND ("seen" >= CAST($1 AS timestamp) AND "seen" < CAST($2 AS timestamp)))
+  ["2026-11-22 10:00:00","2026-11-22 10:00:01"]
+seen NOT_IN
+  NOT ("seen" IS NOT NULL AND ("seen" >= CAST($1 AS timestamp) AND "seen" < CAST($2 AS timestamp)))
+  ["2026-11-22 10:00:00","2026-11-22 10:00:01"]
+seen IS_BLANK
+  "seen" IS NULL
+  []
+seen IS_NOT_BLANK
+  "seen" IS NOT NULL
+  []"
+`;
+
+exports[`the SQL of every operator, type and case > expect the SQL of sqlite to be the snapshot 1`] = `
+"name EQUAL
+  ("name" IS NOT NULL AND LOWER("name") GLOB LOWER(?))
+  ["an*n_a!"]
+name EQUAL caseSensitive
+  ("name" IS NOT NULL AND "name" GLOB ?)
+  ["an*n_a!"]
+name NOT_EQUAL_TO
+  ("name" IS NULL OR NOT (LOWER("name") GLOB LOWER(?)))
+  ["an*n_a!"]
+name NOT_EQUAL_TO caseSensitive
+  ("name" IS NULL OR NOT ("name" GLOB ?))
+  ["an*n_a!"]
+name LESS_THAN
+  ("name" IS NULL OR LOWER("name") COLLATE BINARY < LOWER(?))
+  ["an*n_a!"]
+name LESS_THAN caseSensitive
+  ("name" IS NULL OR "name" COLLATE BINARY < ?)
+  ["an*n_a!"]
+name LESS_THAN_OR_EQUAL_TO
+  ("name" IS NULL OR LOWER("name") COLLATE BINARY <= LOWER(?))
+  ["an*n_a!"]
+name LESS_THAN_OR_EQUAL_TO caseSensitive
+  ("name" IS NULL OR "name" COLLATE BINARY <= ?)
+  ["an*n_a!"]
+name GREATER_THAN
+  ("name" IS NOT NULL AND LOWER("name") COLLATE BINARY > LOWER(?))
+  ["an*n_a!"]
+name GREATER_THAN caseSensitive
+  ("name" IS NOT NULL AND "name" COLLATE BINARY > ?)
+  ["an*n_a!"]
+name GREATER_THAN_OR_EQUAL_TO
+  ("name" IS NOT NULL AND LOWER("name") COLLATE BINARY >= LOWER(?))
+  ["an*n_a!"]
+name GREATER_THAN_OR_EQUAL_TO caseSensitive
+  ("name" IS NOT NULL AND "name" COLLATE BINARY >= ?)
+  ["an*n_a!"]
+name BETWEEN
+  (("name" IS NOT NULL AND LOWER("name") COLLATE BINARY >= LOWER(?)) AND ("name" IS NULL OR LOWER("name") COLLATE BINARY <= LOWER(?)))
+  ["a","m"]
+name BETWEEN caseSensitive
+  (("name" IS NOT NULL AND "name" COLLATE BINARY >= ?) AND ("name" IS NULL OR "name" COLLATE BINARY <= ?))
+  ["a","m"]
+name CONTAINS
+  ("name" IS NOT NULL AND LOWER("name") GLOB LOWER(?))
+  ["*an*n_a!*"]
+name CONTAINS caseSensitive
+  ("name" IS NOT NULL AND "name" GLOB ?)
+  ["*an*n_a!*"]
+name DOES_NOT_CONTAIN
+  ("name" IS NULL OR NOT (LOWER("name") GLOB LOWER(?)))
+  ["*an*n_a!*"]
+name DOES_NOT_CONTAIN caseSensitive
+  ("name" IS NULL OR NOT ("name" GLOB ?))
+  ["*an*n_a!*"]
+name BEGIN_WITH
+  ("name" IS NOT NULL AND LOWER("name") GLOB LOWER(?))
+  ["an*n_a!*"]
+name BEGIN_WITH caseSensitive
+  ("name" IS NOT NULL AND "name" GLOB ?)
+  ["an*n_a!*"]
+name END_WITH
+  ("name" IS NOT NULL AND LOWER("name") GLOB LOWER(?))
+  ["*an*n_a!"]
+name END_WITH caseSensitive
+  ("name" IS NOT NULL AND "name" GLOB ?)
+  ["*an*n_a!"]
+name IN
+  (("name" IS NULL OR "name" = '') OR UPPER("name") COLLATE BINARY IN (UPPER(?), UPPER(?), UPPER(?)))
+  ["Ann","NULL","b%_[x]"]
+name IN caseSensitive
+  (("name" IS NULL OR "name" = '') OR "name" COLLATE BINARY IN (?, ?, ?))
+  ["Ann","NULL","b%_[x]"]
+name NOT_IN
+  NOT (("name" IS NULL OR "name" = '') OR UPPER("name") COLLATE BINARY IN (UPPER(?), UPPER(?), UPPER(?)))
+  ["Ann","NULL","b%_[x]"]
+name NOT_IN caseSensitive
+  NOT (("name" IS NULL OR "name" = '') OR "name" COLLATE BINARY IN (?, ?, ?))
+  ["Ann","NULL","b%_[x]"]
+name IS_BLANK
+  ("name" IS NULL OR "name" = '')
+  []
+name IS_BLANK caseSensitive
+  ("name" IS NULL OR "name" = '')
+  []
+name IS_NOT_BLANK
+  ("name" IS NOT NULL AND "name" <> '')
+  []
+name IS_NOT_BLANK caseSensitive
+  ("name" IS NOT NULL AND "name" <> '')
+  []
+age EQUAL
+  ("age" IS NOT NULL AND "age" = ?)
+  [5]
+age NOT_EQUAL_TO
+  ("age" IS NULL OR "age" <> ?)
+  [5]
+age LESS_THAN
+  ("age" IS NULL OR "age" < ?)
+  [5]
+age LESS_THAN_OR_EQUAL_TO
+  ("age" IS NULL OR "age" <= ?)
+  [5]
+age GREATER_THAN
+  ("age" IS NOT NULL AND "age" > ?)
+  [5]
+age GREATER_THAN_OR_EQUAL_TO
+  ("age" IS NOT NULL AND "age" >= ?)
+  [5]
+age BETWEEN
+  ("age" IS NOT NULL AND "age" >= ?)
+  [10]
+age CONTAINS
+  ("age" IS NOT NULL AND "age" >= ?)
+  [5]
+age DOES_NOT_CONTAIN
+  ("age" IS NULL OR "age" < ?)
+  [5]
+age BEGIN_WITH
+  ("age" IS NOT NULL AND "age" >= ?)
+  [5]
+age END_WITH
+  ("age" IS NULL OR "age" <= ?)
+  [5]
+age IN
+  ("age" IS NULL OR "age" IN (?, ?))
+  [1,2.5]
+age NOT_IN
+  NOT ("age" IS NULL OR "age" IN (?, ?))
+  [1,2.5]
+age IS_BLANK
+  ("age" IS NULL OR "age" = 0)
+  []
+age IS_NOT_BLANK
+  ("age" IS NOT NULL AND "age" <> 0)
+  []
+active EQUAL
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active NOT_EQUAL_TO
+  ("active" IS NULL OR "active" <> ?)
+  [1]
+active LESS_THAN
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active LESS_THAN_OR_EQUAL_TO
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active GREATER_THAN
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active GREATER_THAN_OR_EQUAL_TO
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active BETWEEN
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active CONTAINS
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active DOES_NOT_CONTAIN
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active BEGIN_WITH
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active END_WITH
+  ("active" IS NOT NULL AND "active" = ?)
+  [1]
+active IN
+  ("active" IS NULL OR "active" IN (?))
+  [1]
+active NOT_IN
+  NOT ("active" IS NULL OR "active" IN (?))
+  [1]
+active IS_BLANK
+  "active" IS NULL
+  []
+active IS_NOT_BLANK
+  "active" IS NOT NULL
+  []
+born EQUAL
+  (julianday("born") IS NOT NULL AND julianday("born") >= julianday(?) AND julianday("born") < julianday(?))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born NOT_EQUAL_TO
+  (julianday("born") IS NULL OR julianday("born") < julianday(?) OR julianday("born") >= julianday(?))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born LESS_THAN
+  (julianday("born") IS NOT NULL AND julianday("born") < julianday(?))
+  ["2026-11-22 00:00:00"]
+born LESS_THAN_OR_EQUAL_TO
+  (julianday("born") IS NOT NULL AND julianday("born") < julianday(?))
+  ["2026-11-23 00:00:00"]
+born GREATER_THAN
+  (julianday("born") IS NOT NULL AND julianday("born") >= julianday(?))
+  ["2026-11-23 00:00:00"]
+born GREATER_THAN_OR_EQUAL_TO
+  (julianday("born") IS NOT NULL AND julianday("born") >= julianday(?))
+  ["2026-11-22 00:00:00"]
+born BETWEEN
+  (julianday("born") IS NOT NULL AND julianday("born") >= julianday(?) AND julianday("born") < julianday(?))
+  ["2026-11-01 00:00:00","2026-12-01 00:00:00"]
+born CONTAINS
+  (julianday("born") IS NOT NULL AND julianday("born") >= julianday(?))
+  ["2026-11-22 00:00:00"]
+born DOES_NOT_CONTAIN
+  (julianday("born") IS NOT NULL AND julianday("born") < julianday(?))
+  ["2026-11-22 00:00:00"]
+born BEGIN_WITH
+  (julianday("born") IS NOT NULL AND julianday("born") >= julianday(?))
+  ["2026-11-22 00:00:00"]
+born END_WITH
+  (julianday("born") IS NOT NULL AND julianday("born") < julianday(?))
+  ["2026-11-23 00:00:00"]
+born IN
+  (julianday("born") IS NULL OR (julianday("born") >= julianday(?) AND julianday("born") < julianday(?)))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born NOT_IN
+  NOT (julianday("born") IS NULL OR (julianday("born") >= julianday(?) AND julianday("born") < julianday(?)))
+  ["2026-11-22 00:00:00","2026-11-23 00:00:00"]
+born IS_BLANK
+  julianday("born") IS NULL
+  []
+born IS_NOT_BLANK
+  julianday("born") IS NOT NULL
+  []
+seen EQUAL
+  (julianday("seen") IS NOT NULL AND julianday("seen") >= julianday(?) AND julianday("seen") < julianday(?))
+  ["2026-11-22 00:00:00","2026-11-22 00:00:01"]
+seen NOT_EQUAL_TO
+  (julianday("seen") IS NULL OR julianday("seen") < julianday(?) OR julianday("seen") >= julianday(?))
+  ["2026-11-22 00:00:00","2026-11-22 00:00:01"]
+seen LESS_THAN
+  (julianday("seen") IS NOT NULL AND julianday("seen") < julianday(?))
+  ["2026-11-22 00:00:00"]
+seen LESS_THAN_OR_EQUAL_TO
+  (julianday("seen") IS NOT NULL AND julianday("seen") < julianday(?))
+  ["2026-11-22 00:00:01"]
+seen GREATER_THAN
+  (julianday("seen") IS NOT NULL AND julianday("seen") >= julianday(?))
+  ["2026-11-22 00:00:01"]
+seen GREATER_THAN_OR_EQUAL_TO
+  (julianday("seen") IS NOT NULL AND julianday("seen") >= julianday(?))
+  ["2026-11-22 00:00:00"]
+seen BETWEEN
+  (julianday("seen") IS NOT NULL AND julianday("seen") < julianday(?))
+  ["2026-11-30 12:00:01"]
+seen CONTAINS
+  (julianday("seen") IS NOT NULL AND julianday("seen") >= julianday(?))
+  ["2026-11-22 00:00:00"]
+seen DOES_NOT_CONTAIN
+  (julianday("seen") IS NOT NULL AND julianday("seen") < julianday(?))
+  ["2026-11-22 00:00:00"]
+seen BEGIN_WITH
+  (julianday("seen") IS NOT NULL AND julianday("seen") >= julianday(?))
+  ["2026-11-22 00:00:00"]
+seen END_WITH
+  (julianday("seen") IS NOT NULL AND julianday("seen") < julianday(?))
+  ["2026-11-22 00:00:01"]
+seen IN
+  (julianday("seen") IS NOT NULL AND (julianday("seen") >= julianday(?) AND julianday("seen") < julianday(?)))
+  ["2026-11-22 10:00:00","2026-11-22 10:00:01"]
+seen NOT_IN
+  NOT (julianday("seen") IS NOT NULL AND (julianday("seen") >= julianday(?) AND julianday("seen") < julianday(?)))
+  ["2026-11-22 10:00:00","2026-11-22 10:00:01"]
+seen IS_BLANK
+  julianday("seen") IS NULL
+  []
+seen IS_NOT_BLANK
+  julianday("seen") IS NOT NULL
+  []"
+`;

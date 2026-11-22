@@ -9,11 +9,12 @@ const { headingIds, repoFile, siteHref, tsCodeBlocks } = require('./site/markdow
 /**
  * `npm run check:docs` (it builds dist first): the docs can not rot.
  *
- * 1. typedoc validation, warnings are errors: every export documented, no broken {@link}s,
+ * 1. typedoc validation (src/index.ts and src/sql.ts), warnings are errors: every export documented, no broken {@link}s,
  *    nothing in the public API that uses a type that is not exported, no unknown tags.
  * 2. every ```ts block in guides/*.md (not ```ts nocheck) and every ```ts block of an @example in
  *    the JSDoc is written to a module of its own in a temp folder, and typechecked against the
- *    published typings: '@simple-html/grid' is dist/index.d.ts, as for `npm run check:typings`.
+ *    published typings: '@simple-html/grid' is dist/index.d.ts, '@simple-html/grid/sql' dist/sql.d.ts, as
+ *    for `npm run check:typings`.
  *    A block may use `datasource`, `gridInterface` and `host` without declaring them (GLOBALS), and
  *    import 'lit-html' (the grid's dependency).
  * 3. the samples a guide (```sample <id>) or a JSDoc (@sample <id>) names exist, and so do the
@@ -49,6 +50,7 @@ const COMPILER_OPTIONS = {
     // lit-html is the grid's dependency, a user has it: the custom cells guide renders with it
     paths: {
         '@simple-html/grid': [path.join(ROOT, 'dist/index.d.ts')],
+        '@simple-html/grid/sql': [path.join(ROOT, 'dist/sql.d.ts')],
         'lit-html': [path.join(ROOT, 'node_modules/lit-html/lit-html.d.ts')]
     }
 };

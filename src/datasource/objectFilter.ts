@@ -157,11 +157,13 @@ export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
 }
 
 /**
+ * @internal
  * The operator a number or a date compares with: the text operators a number or date field does not
  * offer are taken as before (v5) - `CONTAINS` and `BEGIN_WITH` (and any other) as
- * `GREATER_THAN_OR_EQUAL_TO`, `END_WITH` as `LESS_THAN_OR_EQUAL_TO`, `DOES_NOT_CONTAIN` as `LESS_THAN`
+ * `GREATER_THAN_OR_EQUAL_TO`, `END_WITH` as `LESS_THAN_OR_EQUAL_TO`, `DOES_NOT_CONTAIN` as `LESS_THAN`.
+ * toSqlWhere (src/sql) uses it too, so the SQL takes them the same way
  */
-function rangeOperator(operator: FilterOperator): FilterOperator {
+export function rangeOperator(operator: FilterOperator): FilterOperator {
     switch (operator) {
         case 'EQUAL':
         case 'NOT_EQUAL_TO':

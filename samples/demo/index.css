@@ -447,6 +447,31 @@ body {
     min-height: 140px;
 }
 
+/* the SQL sample: the WHERE of each dialect under the grid */
+.demo-sql {
+    display: grid;
+    /* two by two, one under the other on a narrow screen */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.demo-sql-block {
+    margin: 0;
+    max-height: 220px;
+    overflow: auto;
+    padding: 6px 9px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--demo-text);
+    background: var(--demo-panel);
+    border: 1px solid var(--demo-border);
+    border-radius: 5px;
+}
+
 /* a full page sample (fullPage): the grid is most of the window high, also when the page scrolls */
 .stage-full .demo-grid-host {
     min-height: calc(100vh - 190px);
