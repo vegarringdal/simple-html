@@ -1332,6 +1332,24 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The footer: "No filter" opens the filter editor (user request)
+
+##### Added
+- Without a filter the footer shows a **No filter** button where Clear and the chips are: a click, Enter or
+  Space opens the filter editor - no menu needed. Texts `footer.noFilter`, `footer.noFilter.tooltip`. Not
+  shown with `footerHeight: 0` (the lookup dropdown grids); shown with `hideFilter` and in readonly grids.
+
+##### Changed
+- The row count is always in the band at the top of the footer, with the filter's line under it: nothing
+  moves when a filter comes or goes.
+- Clear and No filter are one button: the focus stays on it, and the filter editor gives it back to it.
+- Keyboard: without a filter, Tab from the last row stops at No filter before it leaves the grid.
+
+##### Fixed
+- Clear was a submit button: inside a form it submitted it. It is `type="button"`.
+- On a narrow grid the selected cells' summary was drawn over the collapsed chips and the row count; it is
+  cut where the filter's line ends (all of it in its tooltip).
+
 #### Menus: a drop shadow (user request)
 
 ##### Fixed

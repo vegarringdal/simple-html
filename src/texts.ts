@@ -233,6 +233,9 @@ const DEFAULTS = {
     'footer.rowCount': '{shown}/{total}',
     'footer.clear': '✕ Clear',
     'footer.clear.tooltip': 'Clear filter',
+    // the button in Clear's place while the rows are not filtered: it opens the filter editor
+    'footer.noFilter': 'No filter',
+    'footer.noFilter.tooltip': 'Open the filter editor',
     'footer.filter.tooltip': 'Edit filter',
     'footer.collapsed.one': '{count} filter — click to edit',
     'footer.collapsed.other': '{count} filters — click to edit',
@@ -458,7 +461,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `row.*`, `header.*`, `filter.*`, `column.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu, `filter.range.*` its range block |
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
- * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
+ * | `footer.*` | the footer: the row count, the filter chips, the "No filter" button. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
  * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `grid.*` | labels for screen readers |
  * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, "Filter rows", the buttons |

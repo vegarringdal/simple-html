@@ -96,8 +96,8 @@ function renderChildren(ctx: Grid, group: FilterGroupNode) {
  * and of the numbers the sum, average, smallest and largest - shown with the formatter of the first
  * number field, two decimals at most. All of it in its tooltip too, when it is cut. null when the
  * ranges are one cell or none
- * @param top where it starts: on the line of the filter chips under the horizontal scrollbar's band
- *   when there is a filter, else the whole height - in the middle, like the row count
+ * @param top where it starts: on the line of the filter's row (Clear and the chips, or "No filter")
+ *   under the horizontal scrollbar's band, else the whole height - in the middle, like the row count
  */
 function summaryTemplate(ctx: Grid, top: number) {
     const summary = selectionSummary(ctx);
@@ -141,6 +141,28 @@ function chipsUnderSummary(footer: HTMLElement): boolean {
     return chipsRect.left < summaryRect.left && chipsRect.right > summaryRect.left;
 }
 
+// the space in px between the filter's row and the summary of the selected cells, as between the summary's items
+const SUMMARY_GAP = 12;
+
+/**
+ * The summary of the selected cells is cut where the filter's row ends - the button "No filter", or
+ * Clear and the chips (collapsed by then) - so it is never painted over them on a narrow grid. Its
+ * tooltip has all of it. renderFooter gives it its width from the css back before it paints: lit keeps
+ * the element, and the chips are measured against the summary as wide as the css makes it
+ */
+function fitSummary(footer: HTMLElement) {
+    const row = footer.querySelector('.footer-filter');
+    const summary = footer.querySelector<HTMLElement>('.footer-summary');
+    if (!row || !summary) {
+        return;
+    }
+    const rowRight = row.getBoundingClientRect().right;
+    const summaryRect = summary.getBoundingClientRect();
+    if (rowRight + SUMMARY_GAP > summaryRect.left) {
+        summary.style.maxWidth = `${Math.max(0, summaryRect.right - rowRight - SUMMARY_GAP)}px`;
+    }
+}
+
 /**
  * The totals row and the footer, for a rebuild
  */
@@ -152,10 +174,18 @@ export function rebuildFooter(ctx: Grid) {
 
 /**
  * The footer: the row count, the filter, the summary of the selected cells. On its own when the ranges
- * or the values in them change (see GridInterface.__setRanges, renderChangedRows)
+ * or the values in them change (see GridInterface.__setRanges, renderChangedRows).
+ *
+ * The count is in the band of the horizontal scrollbar at its top, the filter's row under it: "✕ Clear"
+ * and the filter as chips while the rows are filtered, else a button "No filter" in Clear's place that
+ * opens the filter editor - as a click on the chips and the filter menu's "Advanced Filter…" do. The same
+ * layout with and without a filter: nothing moves when a filter comes or goes. A footer of no height
+ * (`footerHeight: 0`, the dropdown grid of a lookup column) has no "No filter": nothing would show it,
+ * and Tab skips its buttons (tabExit.ts). Its count is alone then, in the middle
  */
 export function renderFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
+    const config = ctx.gridInterface.__getGridConfig();
     const totalRows = ctx.gridInterface.getDatasource().getAllData().length;
     const filteredRows = ctx.gridInterface.getDatasource().length();
     // a lookup column (ColumnConfig.editor) shows the labels of its values, as its cells do
@@ -163,7 +193,7 @@ export function renderFooter(ctx: Grid) {
         (field) => getColumnLabel(ctx, field),
         (field) => ctx.gridInterface.__getLookupColumn(field)?.formatter
     );
-    const scrollbarHeight = ctx.gridInterface.__getGridConfig().__scrollbarSize;
+    const scrollbarHeight = config.__scrollbarSize;
     // "changed rows only" (datasource.filterChangedOnly()) is not part of the filter: a chip of its own,
     // in front of the filter's. The footer shows the filter row for either
     const changedOnly = ctx.gridInterface.getDatasource().isChangedOnly();
@@ -172,26 +202,41 @@ export function renderFooter(ctx: Grid) {
     const findFilterText = findFilterRowsText(ctx);
     const findChip = findFilterText === null ? null : gridText(ctx, 'footer.findFilter', { text: findFilterText });
     const filtered = filterTree !== null || changedOnly || findChip !== null;
+    // the filter's row: Clear and the chips, or the button "No filter"
+    const hasRow = filtered || config.footerHeight > 0;
     const and = html`<span class="footer-filter-connector">${gridText(ctx, 'footer.and')}</span>`;
 
     const conditionCount = filterTree ? countConditions(filterTree) : 0;
-    const summary = summaryTemplate(ctx, filtered ? scrollbarHeight : 0);
+    const summary = summaryTemplate(ctx, hasRow ? scrollbarHeight : 0);
+    // the summary of the last render is kept by lit: as wide as the css makes it again, fitSummary cuts it below
+    const shownSummary = footer.querySelector<HTMLElement>('.footer-summary');
+    if (shownSummary) {
+        shownSummary.style.maxWidth = '';
+    }
 
     // `collapse` replaces the chips with a single summary box - used both when there are more
     // conditions than the cap and (see below) when the chips do not fit the grid width.
     const paint = (collapse: boolean) => {
-        const filterRow = filtered
+        // the first button is "✕ Clear" with a filter, "No filter" without one: one element, its class,
+        // text and click change. So the focus stays on it when the filter comes or goes - the filter
+        // editor opened with it gives the focus back to it when it closes, after its filter is applied
+        const filterRow = hasRow
             ? html`
                   <div class="footer-filter">
                       <button
-                          class="footer-filter-clear"
-                          title=${gridText(ctx, 'footer.clear.tooltip')}
+                          type="button"
+                          class=${filtered ? 'footer-filter-clear' : 'footer-filter-none'}
+                          title=${gridText(ctx, filtered ? 'footer.clear.tooltip' : 'footer.noFilter.tooltip')}
                           @click=${(e: MouseEvent) => {
                               e.stopPropagation();
-                              clearAllColumnFilters(ctx);
+                              if (filtered) {
+                                  clearAllColumnFilters(ctx);
+                              } else {
+                                  openFilterEditor(ctx);
+                              }
                           }}
                       >
-                          ${gridText(ctx, 'footer.clear')}
+                          ${gridText(ctx, filtered ? 'footer.clear' : 'footer.noFilter')}
                       </button>
                       ${changedOnly ? html`<span class="footer-filter-chip footer-filter-changed-only">${gridText(ctx, 'footer.changedOnly')}</span>` : null}
                       ${changedOnly && (findChip !== null || filterTree) ? and : null}
@@ -235,21 +280,21 @@ export function renderFooter(ctx: Grid) {
               `
             : null;
 
-        // with a filter the count floats in the scrollbar band at the very top (painted in
-        // front of the scrollbar via z-index), so it costs no vertical space and the chips
-        // only have to clear the scrollbar. without a filter it just centers.
+        // with the filter's row the count floats in the scrollbar band at the very top (painted in
+        // front of the scrollbar via z-index), so it costs no vertical space and the row only has
+        // to clear the scrollbar. without it (a footer of no height) it just centers.
         // The count is a status (a polite live region): a screen reader reads it out when it
         // changes, after a filter or when a group is expanded or collapsed
         render(
             html`
                 <div
-                    class="footer-inner ${filtered ? 'has-filter' : ''}"
-                    style=${filtered ? `padding-top:${scrollbarHeight}px;` : ''}
+                    class="footer-inner ${filtered ? 'has-filter' : ''} ${hasRow && !filtered ? 'no-filter' : ''}"
+                    style=${hasRow ? `padding-top:${scrollbarHeight}px;` : ''}
                 >
                     <span
                         class="footer-count"
                         role="status"
-                        style=${filtered ? `height:${scrollbarHeight}px;line-height:${scrollbarHeight}px;` : ''}
+                        style=${hasRow ? `height:${scrollbarHeight}px;line-height:${scrollbarHeight}px;` : ''}
                         >${gridText(ctx, 'footer.rowCount', { shown: filteredRows, total: totalRows })}</span
                     >
                     ${filterRow} ${summary}
@@ -270,4 +315,5 @@ export function renderFooter(ctx: Grid) {
             paint(true);
         }
     }
+    fitSummary(footer);
 }

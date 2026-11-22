@@ -197,8 +197,9 @@ of a spreadsheet: `Count: 20   Sum: 201   Average: 40.2   Min: 26   Max: 53`.
   shows none.
 
 It is a group named "Selected cells" for a screen reader, its tooltip has all of it when a narrow grid
-cuts it. The texts are `footer.summary.*`, see [Texts](12-texts.md). The filter chips collapse to one box
-when they would reach under it.
+cuts it. The texts are `footer.summary.*`, see [Texts](12-texts.md). It is on the line of the filter
+(Clear and the chips, or the button "No filter"): the filter chips collapse to one box when they would
+reach under it, and the summary is cut where that line ends.
 
 ### When the ranges are cleared
 

@@ -575,7 +575,8 @@ describe('changed rows only in the grid', () => {
         expect(datasource.isChangedOnly()).toBe(false);
         expect(datasource.getFilter()).toBeNull();
         expect(datasource.getRows()).toHaveLength(4);
-        expect(footerText(element)).toEqual('4/4');
+        // no chip left: the button "No filter" in Clear's place
+        expect(footerText(element).replace(/\s+/g, ' ')).toEqual('4/4 No filter');
     });
 
     it("expect the filter menu's Clear All Filters to turn it off too", async () => {

@@ -922,8 +922,8 @@ export class GridInterface<T> {
     /**
      * Opens the filter editor, the dialog where the user builds a filter of conditions and AND/OR
      * groups. It starts with the filter the datasource has now. The user opens it from the header
-     * filter's menu ("Advanced Filter") or by clicking the filter shown in the footer; call this from a
-     * button of your own.
+     * filter's menu ("Advanced Filter") or by clicking the filter shown in the footer - or "No filter"
+     * there while the rows are not filtered; call this from a button of your own.
      *
      * It is a modal `<dialog>` (`showModal()`): over everything on the page, the page behind it can
      * not be used while it is open. The focus moves to the dialog when it opens and goes back to where

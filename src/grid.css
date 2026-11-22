@@ -2344,14 +2344,18 @@
     line-height: 1.2;
 }
 
-/* filter active - float the count in the scrollbar band, painted in front of the horizontal
- * scrollbar (which is a later sibling and would otherwise cover it), so it costs no vertical
- * space and the chips keep the rest of the height */
-.simple-html-grid .footer-inner.has-filter {
+/* the filter's row under the count - Clear and the chips with a filter (has-filter), the button "No
+ * filter" without one (no-filter): float the count in the scrollbar band, painted in front of the
+ * horizontal scrollbar (which is a later sibling and would otherwise cover it), so it costs no vertical
+ * space and the row keeps the rest of the height. The same with and without a filter: the count does
+ * not move when a filter comes or goes */
+.simple-html-grid .footer-inner.has-filter,
+.simple-html-grid .footer-inner.no-filter {
     justify-content: center;
 }
 
-.simple-html-grid .footer-inner.has-filter .footer-count {
+.simple-html-grid .footer-inner.has-filter .footer-count,
+.simple-html-grid .footer-inner.no-filter .footer-count {
     position: absolute;
     top: 0;
     left: 0;
@@ -2370,9 +2374,10 @@
 }
 
 /* the summary of the selected cells (ranges of more than one cell, selectionSummary.ts): at the right,
- * like the status bar of a spreadsheet - on the line of the row count, or with a filter on the line of
- * its chips (its top is set to the horizontal scrollbar's band). The filter chips collapse to one box when they would reach under it. Cut on a narrow
- * grid, its tooltip has all of it */
+ * like the status bar of a spreadsheet - on the line of the filter's row, Clear and the chips or "No
+ * filter" (its top is set to the horizontal scrollbar's band). The filter chips collapse to one box when
+ * they would reach under it, and it is cut where the row ends (fitSummary in rebuildFooter.ts). Cut on
+ * a narrow grid, its tooltip has all of it */
 .simple-html-grid .footer-summary {
     position: absolute;
     right: 8px;
@@ -2429,7 +2434,11 @@
     pointer-events: all;
 }
 
-.simple-html-grid .footer-filter-clear {
+/* "✕ Clear" while the rows are filtered, and "No filter" in its place without a filter (it opens the
+ * filter editor): one look, square. Under the pointer Clear turns red, "No filter" gets the hover of
+ * the grid's buttons */
+.simple-html-grid .footer-filter-clear,
+.simple-html-grid .footer-filter-none {
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
@@ -2451,7 +2460,12 @@
     color: var(--simple-html-grid-danger-font-color);
 }
 
-.simple-html-grid .footer-filter-clear:active {
+.simple-html-grid .footer-filter-none:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .footer-filter-clear:active,
+.simple-html-grid .footer-filter-none:active {
     background-color: var(--simple-html-grid-main-bg-color);
 }
 

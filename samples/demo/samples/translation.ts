@@ -223,6 +223,8 @@ const norwegian: Record<TextId, string> = {
     'footer.rowCount': '{shown} av {total}',
     'footer.clear': '✕ Fjern',
     'footer.clear.tooltip': 'Fjern filteret',
+    'footer.noFilter': 'Ingen filter',
+    'footer.noFilter.tooltip': 'Åpne filterredigeringen',
     'footer.filter.tooltip': 'Rediger filteret',
     'footer.collapsed.one': '{count} filter — klikk for å redigere',
     'footer.collapsed.other': '{count} filtre — klikk for å redigere',
