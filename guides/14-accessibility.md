@@ -472,9 +472,11 @@ setTexts({
   The field and operator pickers of the filter editor are menus of the grid too: buttons
   (`aria-haspopup="menu"`, named `Field: Country`) that open them, the keys above in them. The
   column chooser is for the mouse, and so is the date picker of a date cell or filter - a date can be
-  typed. The date picker opens on a click in the cell, under it at the end of the page's body: no key
-  opens it and Tab does not get into it (its days have no keys, so taking the focus into it would leave
-  a keyboard user in a calendar that can not pick a day).
+  typed - and its range picker. The date picker opens on a click in the cell, under it at the end of the
+  page's body: no key opens it and Tab does not get into it (its days have no keys, so taking the focus
+  into it would leave a keyboard user in a calendar that can not pick a day). Opened from an input of
+  the filter menu's range block it leaves the focus in the input: type, Enter applies; Esc closes the
+  picker. The From and To line of the range picker is read out when it changes (`aria-live`).
 - **The list of a lookup column**: the select is checked in Chrome's accessibility tree, not with a
   screen reader yet. The cell's input is a textbox with `aria-haspopup`, not a combobox: it is not
   `aria-expanded` while its list is open - the focus is in the list then. The select shows at most 500

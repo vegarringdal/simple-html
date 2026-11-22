@@ -753,7 +753,9 @@ A cell drawn by a renderer of your own (`ColumnConfig.renderer`), see [Custom ce
 
 ### Date picker
 
-Of a date cell and a date header filter, and a `DateInterface` of your own.
+Of a date cell, a date header filter and the filter menu's range block, and a `DateInterface` of your
+own. The range picker shows its From and To as the day, the month's name and the year: `22 November
+2026`.
 
 | id | English | shown |
 | --- | --- | --- |
@@ -762,7 +764,10 @@ Of a date cell and a date header filter, and a `DateInterface` of your own.
 | `datePicker.week` | `W` | header of the week numbers |
 | `datePicker.clear` | `Clear` | button, empties the date |
 | `datePicker.now` | `Now` | button, goes to now |
-| `datePicker.use` | `Use` | button, picks the date |
+| `datePicker.use` | `Use` | button, picks the date (the range of a range picker) |
+| `datePicker.from` | `From` | a range picker (a date header filter with Between, From and To of the filter menu): the label over the first day picked |
+| `datePicker.to` | `To` | a range picker: the label over the last day picked |
+| `datePicker.rangeOpen` | `–` | a range picker: under From or To while that day is not picked, an open end |
 | `datePicker.previousYear` | `Previous year` | the « button left of the month: its name for a screen reader and its tooltip |
 | `datePicker.previousMonth` | `Previous month` | the ‹ button left of the month |
 | `datePicker.nextMonth` | `Next month` | the › button right of the month |

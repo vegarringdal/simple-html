@@ -272,6 +272,37 @@ dateInterface.on('date-select', (date) => {
 });
 ```
 
+A range picker - `rangepicker: true` with `datepicker: true` - picks From and To: two months side by
+side (one in a window too narrow for two), the first day clicked is From, the next one To. It sends
+`range-select`: "Use" sends `[from, to]`, the days at 00:00 - an end not picked is `null`, an open end
+- and "Clear" sends `null`. `datepickerRange` is the range it opens on.
+
+```ts
+import { type DateElement, DateInterface, type IDateConfig } from '@simple-html/grid';
+
+declare const config: IDateConfig; // as above
+
+const rangeInterface = new DateInterface({
+    ...config,
+    datepicker: true,
+    rangepicker: true,
+    datepickerRange: [new Date(2026, 10, 22), new Date(2026, 10, 28)]
+});
+const rangeElement = document.createElement('simple-html-date') as DateElement;
+rangeElement.classList.add('simple-html-date');
+rangeElement.connectInterface(rangeInterface);
+host.appendChild(rangeElement);
+
+rangeInterface.on('range-select', (range) => {
+    if (!range) {
+        console.log('cleared');
+        return;
+    }
+    const [from, to] = range;
+    console.log(from?.toDateString() ?? 'open', to?.toDateString() ?? 'open');
+});
+```
+
 The names of the months and days and the buttons are texts, `datePicker.*`: the page's
 (`setTexts()`), or the picker's own in `texts` of its config - see [Texts](12-texts.md#date-picker).
 

@@ -19,6 +19,7 @@ import { registerLookup } from '../lookup';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import {
     headerFilterInput,
+    menuEntry,
     menuTreeEntries,
     openColumnMenu,
     openFilterMenu,
@@ -526,6 +527,18 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
         check();
     }
     gridInterface.closeMenu();
+
+    // the range picker of a date header filter with Between: From and To not picked, then From picked
+    openFilterMenu(element, 'born');
+    menuEntry('filter.operator.between').click();
+    headerFilterInput(element, 'born').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await sleep(20);
+    check();
+    (document.querySelector('simple-html-date .simple-html-date-day:not(.simple-html-date-day-dimmed)') as HTMLElement).click();
+    check();
+    gridInterface.closeMenu();
+    openFilterMenu(element, 'born');
+    menuEntry('filter.operator.greaterThanOrEqualTo').click();
 
     // the validation messages: on the cell and the row number
     datasource.filter(null);

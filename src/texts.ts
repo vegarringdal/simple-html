@@ -481,6 +481,10 @@ const DEFAULTS = {
     'datePicker.clear': 'Clear',
     'datePicker.now': 'Now',
     'datePicker.use': 'Use',
+    // a range picker (IDateConfig.rangepicker): the labels of the days picked, and an end not picked yet
+    'datePicker.from': 'From',
+    'datePicker.to': 'To',
+    'datePicker.rangeOpen': '–',
     // the buttons beside the month and year: their name for a screen reader, and their tooltip
     'datePicker.previousYear': 'Previous year',
     'datePicker.previousMonth': 'Previous month',
@@ -598,7 +602,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |
  * | `lookup.*` | a lookup column (`ColumnConfig.editor`): the button of the cell, the select under it |
- * | `datePicker.*` | the date picker: the buttons, the names of the months and the days |
+ * | `datePicker.*` | the date picker: the buttons, the names of the months and the days, From and To of a range picker |
  * | `validation.*` | the messages of the built-in validators. Made by the datasource |
  * | `filterString.*` | `datasource.getFilterString()`: AND, OR and the operators. Made by the datasource |
  * | `grouping.blank` | the value in the name of the group of blank values. Made by the datasource |

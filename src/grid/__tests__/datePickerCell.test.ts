@@ -9,7 +9,7 @@ import type { IDateConfig } from '../../date/interfaces';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { headerFilterInput, sleep, typeInHeaderFilter } from './interactionTestHelpers';
+import { headerFilterInput, menuEntry, openFilterMenu, sleep, typeInHeaderFilter } from './interactionTestHelpers';
 
 /**
  * The date picker the grid opens when a date cell is clicked.
@@ -220,5 +220,152 @@ describe('grid date picker - a header filter', () => {
         expect(gridInterface.getState().headerFilters).toEqual({});
         expect(datasource.getFilter()).toEqual(and());
         expect(headerFilterInput(element, 'born').value).toEqual('');
+    });
+});
+
+describe('grid date picker - a header filter with BETWEEN: the range picker', () => {
+    /**
+     * clicks the header filter of born and waits for its picker, see openPicker
+     */
+    async function openFilterPicker(element: GridElement) {
+        headerFilterInput(element, 'born').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const picker = await vi.waitFor(() => {
+            const found = document.querySelector('simple-html-date');
+            if (!found) {
+                throw new Error('the picker is not open yet');
+            }
+            return found as HTMLElement;
+        });
+        await sleep(0);
+        return picker;
+    }
+
+    /** born's header filter with Between, as picked in its menu (Filter › Operator ›) */
+    function between(element: GridElement) {
+        openFilterMenu(element, 'born');
+        menuEntry('filter.operator.between').click();
+    }
+
+    /** the days of the first month shown, not the dimmed days of the months around it */
+    const days = (picker: HTMLElement) =>
+        Array.from(
+            picker
+                .querySelector('.simple-html-date-month')
+                ?.querySelectorAll<HTMLElement>('.simple-html-date-day:not(.simple-html-date-day-dimmed)') ?? []
+        );
+    const clickDay = (picker: HTMLElement, day: number) => days(picker)[day - 1].click();
+    const marked = (picker: HTMLElement, className: string) =>
+        days(picker)
+            .filter((cell) => cell.classList.contains(className))
+            .map((cell) => Number(cell.textContent?.trim()));
+    const button = (picker: HTMLElement, text: string) =>
+        Array.from(picker.querySelectorAll<HTMLElement>('.simple-html-date-range button')).find(
+            (candidate) => candidate.textContent?.trim() === text
+        ) as HTMLElement;
+
+    it('expect the range picker, on the from..to of the cell: two months, From and To picked', async () => {
+        const { element } = await mountGrid(config(), data(), fields);
+        between(element);
+        typeInHeaderFilter(element, 'born', '2001-05-10..2001-05-20');
+
+        const picker = await openFilterPicker(element);
+
+        expect(picker.querySelector('.simple-html-date-range')).not.toBeNull();
+        expect(picker.querySelectorAll('.simple-html-date-month')).toHaveLength(2);
+        expect(picker.querySelector('.simple-html-date-month-title')?.textContent?.replace(/\s+/g, ' ').trim()).toEqual(
+            'May 2001'
+        );
+        expect(marked(picker, 'simple-html-date-day-selected')).toEqual([10, 20]);
+        expect(marked(picker, 'simple-html-date-day-in-range')).toEqual([11, 12, 13, 14, 15, 16, 17, 18, 19]);
+        // the grid's menu, as the date picker
+        expect(isPopoverShown(picker.parentElement)).toBe(true);
+    });
+
+    it('expect two days picked and Use to filter from..to, the cell to show it, the picker to close', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(config(), data(), fields);
+        between(element);
+        typeInHeaderFilter(element, 'born', '2001-05-10..2001-05-20');
+        const picker = await openFilterPicker(element);
+
+        // From and To were picked: the next day starts again
+        clickDay(picker, 12);
+        clickDay(picker, 17);
+        button(picker, 'Use').click();
+
+        const range = [new Date(2001, 4, 12), new Date(2001, 4, 17)];
+        expect(gridInterface.getState().headerFilters.born).toEqual({ value: range, operator: 'BETWEEN' });
+        expect(datasource.getFilter()).toEqual(and(where('born', 'BETWEEN', range)));
+        expect(headerFilterInput(element, 'born').value).toEqual('2001-05-12..2001-05-17');
+        expect(picker.isConnected).toBe(false);
+        expect(datasource.getDataRows().map((row) => row.name)).toEqual(['a']);
+    });
+
+    it('expect one day picked to be an open end: from..', async () => {
+        const { element, datasource } = await mountGrid(config(), data(), fields);
+        between(element);
+        typeInHeaderFilter(element, 'born', '2001-05-10..2001-05-20');
+        const picker = await openFilterPicker(element);
+
+        clickDay(picker, 18);
+        button(picker, 'Use').click();
+
+        expect(headerFilterInput(element, 'born').value).toEqual('2001-05-18..');
+        expect(datasource.getFilter()).toEqual(and(where('born', 'BETWEEN', [new Date(2001, 4, 18), null])));
+    });
+
+    it('expect Clear to clear the filter, the operator kept', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(config(), data(), fields);
+        between(element);
+        typeInHeaderFilter(element, 'born', '2001-05-10..2001-05-20');
+        const picker = await openFilterPicker(element);
+
+        button(picker, 'Clear').click();
+
+        expect(gridInterface.getState().headerFilters.born).toEqual({ value: null, operator: 'BETWEEN' });
+        expect(datasource.getFilter()).toEqual(and());
+        expect(headerFilterInput(element, 'born').value).toEqual('');
+        expect(picker.isConnected).toBe(false);
+    });
+
+    it('expect an empty BETWEEN cell to open on today, nothing picked', async () => {
+        const { element } = await mountGrid(config(), data(), fields);
+        between(element);
+
+        const picker = await openFilterPicker(element);
+
+        const today = new Date();
+        expect(picker.querySelector('.simple-html-date-year')?.textContent?.trim()).toEqual(String(today.getFullYear()));
+        expect(picker.querySelectorAll('.simple-html-date-day-selected')).toHaveLength(0);
+    });
+
+    it('expect a datetime range to be whole days: From at 00:00, To at 23:59:59', async () => {
+        const rows = [
+            { name: 'early', born: new Date(2001, 4, 12, 0, 0, 0) },
+            { name: 'late', born: new Date(2001, 4, 17, 23, 59, 30) },
+            { name: 'after', born: new Date(2001, 4, 18, 0, 0, 0) }
+        ];
+        const { element, datasource } = await mountGrid(config(), rows, { fields: { born: 'datetime' as const } });
+        between(element);
+        typeInHeaderFilter(element, 'born', '2001-05-10..2001-05-20');
+        const picker = await openFilterPicker(element);
+
+        clickDay(picker, 12);
+        clickDay(picker, 17);
+        button(picker, 'Use').click();
+
+        expect(headerFilterInput(element, 'born').value).toEqual('2001-05-12T00:00:00..2001-05-17T23:59:59');
+        expect(datasource.getDataRows().map((row) => row.name)).toEqual(['early', 'late']);
+    });
+
+    it('expect another operator after Between to open the date picker again', async () => {
+        const { element } = await mountGrid(config(), data(), fields);
+        between(element);
+        openFilterMenu(element, 'born');
+        menuEntry('filter.operator.lessThan').click();
+
+        const picker = await openFilterPicker(element);
+
+        expect(picker.querySelector('.simple-html-date-range')).toBeNull();
+        expect(picker.querySelector('.simple-html-date-time')).not.toBeNull();
     });
 });

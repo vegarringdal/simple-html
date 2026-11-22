@@ -1,16 +1,18 @@
-import { html, render } from 'lit-html';
+import { html, nothing, render } from 'lit-html';
 import { Emitter, type EventHandler } from '../emitter';
 import type { DateElement } from './dateElement';
 import type { DateEvents } from './dateEvents';
 import type { IDateConfig, IStyle } from './interfaces';
 import { header } from './templates/header';
 import { month } from './templates/month';
+import { rangeFooter } from './templates/range';
+import { isRangePicker, rangeDays, rangeMonths } from './utils/rangePicker';
 
 /**
- * A date picker or a calendar: its config, the selected dates and the `date-select` event. It is shown in
- * a `<simple-html-date>` element ({@link DateElement}). The grid uses one for its date cells and date
- * header filters; make one yourself for a date picker or calendar outside a grid. See {@link IDateConfig}
- * for the two modes.
+ * A date picker, a range picker or a calendar: its config, the selected dates and the `date-select` and
+ * `range-select` events. It is shown in a `<simple-html-date>` element ({@link DateElement}). The grid uses
+ * one for its date cells and date header filters; make one yourself for a date picker or calendar outside
+ * a grid. See {@link IDateConfig} for the modes.
  *
  * Import `@simple-html/grid/date.css` for its styles. `@simple-html/grid/theme-tredespace.css` gives it
  * the TreDeSpace theme too, under `data-grid-theme="tredespace"` (see the theming guide).
@@ -36,8 +38,9 @@ import { month } from './templates/month';
 export class DateInterface {
     /**
      * The selected dates, as timestamps (`date.getTime()`: the day at 00:00 for a day clicked in a
-     * calendar, the picked time in a date picker). A day is shown selected when a timestamp falls on it,
-     * whatever its time. Read it with {@link getSelected}, set it with {@link setSelected}.
+     * calendar, the picked time in a date picker, From and To in a range picker). A day is shown selected
+     * when a timestamp falls on it, whatever its time. Read it with {@link getSelected}, set it with
+     * {@link setSelected}.
      */
     public selected = new Set<number>();
     /**
@@ -101,10 +104,20 @@ export class DateInterface {
 
     /**
      * Called when the element connects: in a date picker it sets the start month and year, the hour and
-     * the minutes from `datepickerDate` (today when it is blank) and selects that date. Does nothing in a
-     * calendar. You do not need to call it.
+     * the minutes from `datepickerDate` (today when it is blank) and selects that date. In a range picker
+     * it makes `datepickerRange` days (see {@link IDateConfig.datepickerRange}), shows the month of From
+     * and selects From and To. Does nothing in a calendar. You do not need to call it.
      */
     checkDatePicker() {
+        if (isRangePicker(this.config)) {
+            const range = rangeDays(this.config.datepickerRange);
+            const shown = range[0] ?? range[1] ?? new Date();
+            this.config.datepickerRange = range;
+            this.config.startYear = shown.getFullYear();
+            this.config.startMonth = shown.getMonth();
+            this.selected = new Set(range.flatMap((day) => (day ? [day.getTime()] : [])));
+            return;
+        }
         if (this.config.datepicker) {
             if (!this.config.datepickerDate) {
                 this.config.datepickerDate = new Date();
@@ -206,7 +219,8 @@ export class DateInterface {
     }
 
     /**
-     * Unselects every day and renders the picker again.
+     * Unselects every day and renders the picker again. In a range picker From and To too: the range
+     * picked is `[null, null]`.
      *
      * @example
      * ```ts
@@ -220,6 +234,9 @@ export class DateInterface {
      */
     clearSelection() {
         this.selected = new Set();
+        if (isRangePicker(this.config)) {
+            this.config.datepickerRange = [null, null];
+        }
         this.render();
     }
 
@@ -371,9 +388,11 @@ export class DateInterface {
             return;
         }
 
+        // a date picker shows one month, a range picker two - one in a narrow window
         if (this.config.datepicker) {
-            this.config.monthsToShow = 1;
-            this.config.monthColumns = 1;
+            const months = isRangePicker(this.config) ? rangeMonths(this.config) : 1;
+            this.config.monthsToShow = months;
+            this.config.monthColumns = months;
         }
 
         let currentMonth = this.config.startMonth;
@@ -390,7 +409,7 @@ export class DateInterface {
                 // add to i so we dont get to many
                 i++;
                 if (i <= this.config.monthsToShow) {
-                    const template = month(this, this.config, currentYear, currentMonth);
+                    const template = month(this, this.config, currentYear, currentMonth, i - 1);
 
                     // push up month
                     if (currentMonth === 11) {
@@ -417,7 +436,10 @@ export class DateInterface {
                 <!-- create a block for each month -->
                 ${monthTemplates.map((x) => {
                     return x;
-                })} `,
+                })}
+
+                <!-- a range picker: From and To picked, Clear / Use - under the months, across them -->
+                ${isRangePicker(this.config) ? rangeFooter(this, this.config) : nothing} `,
             this.element
         );
     }

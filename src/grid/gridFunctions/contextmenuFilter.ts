@@ -9,6 +9,7 @@ import type { MenuBlock, MenuContext, MenuEntry } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
 import { columnOperators, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
+import { type DateRange, filterDate, openDateInMenu, openDateRangeInMenu, rangeEndTexts } from './contextmenuDate';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData, type ValueListEntry } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
@@ -372,6 +373,10 @@ const OPERATOR_SYMBOLS: Partial<Record<FilterOperator, string>> = {
  * (parseFilter); the cell is rendered again and shows it. An input left empty is no filter on the column,
  * as an empty cell. The placeholder of an input is the formatter's (a date's format), else "Number".
  *
+ * A date or datetime column: a click in the input opens the grid's date picker, From or To of Between the
+ * range picker - beside the input, the menu stays open (see openPicker in it). What is picked fills the
+ * inputs, a draft as what is typed.
+ *
  * The keyboard: Tab goes on from the menu's items into it (see itemKeydown in showMenu), Shift+Tab back.
  * The operators are radio buttons, one stop of Tab: the arrows move between them, as in any radio group.
  * Picked with the mouse, the focus goes on to the input: a click, the value, Enter. Enter in an input or
@@ -456,10 +461,61 @@ function rangeBlock(
     };
 
     /**
+     * The date picker open from an input of a date or datetime column: the function that closes it, null
+     * while none is open
+     */
+    let closePicker: (() => void) | null = null;
+    const pickerClosed = () => {
+        closePicker = null;
+    };
+
+    /**
+     * A click in an input of a date or datetime column opens the grid's date picker beside the menu's
+     * input, the menu stays open (openDateInMenu): on the date the input holds, Use puts the date picked in
+     * it - Clear empties it. From and To of Between open the range picker under them, on the two dates
+     * they hold: Use puts From and To in them (a datetime's To at 23:59:59, the range is whole days).
+     * Picking only fills the draft: Apply applies. A click in the input while the picker is open leaves
+     * it as it is
+     */
+    const openPicker = (event: MouseEvent, index: number) => {
+        if ((type !== 'date' && type !== 'datetime') || closePicker) {
+            return;
+        }
+        const input = event.currentTarget as HTMLInputElement;
+        if (state.operator === 'BETWEEN') {
+            const ends = input.closest<HTMLElement>('.simple-html-grid-range-ends') ?? input;
+            const range: DateRange = [filterDate(formatter, state.texts[0]), filterDate(formatter, state.texts[1])];
+            closePicker = openDateRangeInMenu(
+                ctx,
+                ends,
+                range,
+                (picked) => {
+                    state.texts = rangeEndTexts(formatter, type, picked);
+                    reRender();
+                },
+                pickerClosed
+            );
+            return;
+        }
+        closePicker = openDateInMenu(
+            ctx,
+            input,
+            filterDate(formatter, state.texts[index]),
+            (date) => {
+                state.texts[index] = formatter.format(date);
+                reRender();
+            },
+            pickerClosed
+        );
+    };
+
+    /**
      * Another operator in the draft. Picked with the mouse (the last input was no key) the focus goes on
-     * to the input: the arrows of the keyboard stay in the group
+     * to the input: the arrows of the keyboard stay in the group. A date picker open from the input
+     * before closes: it was for the inputs of the operator before
      */
     const pick = (operator: FilterOperator) => {
+        closePicker?.();
         state.operator = operator;
         singleValue();
         reRender();
@@ -497,6 +553,7 @@ function rangeBlock(
                 @input=${(event: Event) => {
                     state.texts[index] = (event.target as HTMLInputElement).value;
                 }}
+                @click=${(event: MouseEvent) => openPicker(event, index)}
             />`;
 
         /**

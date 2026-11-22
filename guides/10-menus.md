@@ -30,7 +30,9 @@ the browser shows it in the top layer, over everything on the page. A container 
 `overflow: hidden` does not cut it off, and no z-index puts something over it. It is on
 `document.body`, or inside the `<dialog>` (the filter editor, or one of yours) or the popover of yours
 that the element it opens from is in: everything outside a modal dialog is inert, a menu there could
-not be clicked. A menu has the classes `simple-html-grid simple-html-grid-popover`.
+not be clicked. A menu has the classes `simple-html-grid simple-html-grid-popover`. A submenu, and the
+date picker opened from an input of the filter menu's range block, are popovers put in the menu's
+popover: the menu stays open while they are, and they close with it.
 
 - There is one menu at a time: opening one closes the one before.
 - It closes on a click outside it, a finger touching the page outside it, on Esc, when another menu
