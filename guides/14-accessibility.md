@@ -225,6 +225,12 @@ The keys of a spreadsheet that go further than the next cell, in the table above
 | PageDown | the cell under the filter in the last row on screen |
 | Home / End | the input's: the caret |
 | Shift+F10, the menu key | the filter menu, the focus on its first item |
+| F4 | the operator choice under the operator indicator (under the cell of a column too narrow for one), the focus on its first item: Enter picks, the focus back in the filter; Esc closes it. Nothing on a column with one operator, nor with `filterOperatorIndicator: false`. See [Filtering](06-filtering.md#the-operator-in-the-cell) |
+
+The operator indicator in the cell - the symbol of the filter's operator - is a button (`aria-haspopup="menu"`,
+named `Operator: Contains`) that is no stop of Tab: F4 does what its click does. The input is described
+by it (`aria-describedby`): a screen reader reads `Filter Company, Operator: Contains`. On a column
+with one operator it is no button, the input is described by it still.
 
 The current row stays as it is when the focus goes up into the filters (Alt+ArrowUp, Shift+Tab,
 Alt+ArrowLeft from the first row): the filter row is no row of the data.
@@ -353,7 +359,8 @@ the one stop of the WAI-ARIA grid pattern (see [Known limits](#known-limits)):
 5. out of the grid
 
 Shift+Tab goes the same way back. The column headers are no stops (Alt+ArrowUp from a filter gets
-there), nor are the button of a lookup cell, the marker of an edited cell and the focus button.
+there), nor are the button of a lookup cell, the operator indicator of a header filter (F4 opens its
+choice), the marker of an edited cell and the focus button.
 
 - Sorting from the keyboard and expanding a group rebuild the header or the rows: the focus is put
   back on the new column header / group button.

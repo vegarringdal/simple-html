@@ -527,6 +527,9 @@ export interface GridMenus {
  * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column - with `IN` |
  * | `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. A {@link MenuBlock}, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
  *
+ * The items of Operator › are the operator choice of the header filter's operator indicator too
+ * (`GridConfig.filterOperatorIndicator`), a menu of its own: `GridMenus.filter` is not called for it.
+ *
  * Column menu (`GridMenus.column`), right click on a column number - the row of numbers under the
  * header filters - or Shift+F10 on one with the focus. Select ›, then the copies, flat: a Copy › around
  * them would only add a step. The columns are copied as the row menu copies rows - tab separated text

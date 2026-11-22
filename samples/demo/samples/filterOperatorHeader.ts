@@ -5,7 +5,7 @@ export const filterOperatorHeader: DemoSample = {
     title: 'Filter operator in header',
     group: 'Events',
     description:
-        'Right-click a filter cell (the row under the headers) and pick an operator under "Filter › Operator ›" (the operators of the column\'s type: equal, contains, begins with ... for text, less/greater than and between - typed as 10..20 - for numbers and dates; a text column has "Match case" next to it). The grid fires a filter-operator-change event with the field, the operator, the column\'s options and a rebuildHeader() helper, so you can e.g. write the active operator into the filter placeholder as feedback. The operator picked is state: getState().headerFilters has it, columns[field].operator in the config is only the one a header filter starts with.',
+        'Click the operator symbol in a filter cell (the row under the headers: = on the right of a text filter, ≥ on the left of a number or date filter; F4 from the keyboard), or right-click the cell and pick an operator under "Filter › Operator ›" (the operators of the column\'s type: equal, contains, begins with ... for text, less/greater than and between - typed as 10..20 - for numbers and dates; a text column has "Match case" next to it). The grid fires a filter-operator-change event with the field, the operator, the column\'s options and a rebuildHeader() helper, so you can e.g. write the active operator into the filter placeholder as feedback. The operator picked is state: getState().headerFilters has it, columns[field].operator in the config is only the one a header filter starts with.',
     run(stage) {
         const ui = createStage(stage);
         const config = baseGridConfig();
@@ -22,6 +22,6 @@ export const filterOperatorHeader: DemoSample = {
             ui.log(`headerFilters: ${JSON.stringify(gridInterface.getState().headerFilters)}`);
         });
 
-        ui.log('right-click a filter cell and pick an operator');
+        ui.log('click the operator symbol in a filter cell (or right-click the cell) and pick an operator');
     }
 };

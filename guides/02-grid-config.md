@@ -192,6 +192,7 @@ Every option is optional.
 | `selectSizeHeight` | `18` | height of the row of column numbers under the header filters (click one to select a column). `0` hides the row |
 | `hideLabels` | `false` | hides the row of header labels |
 | `hideFilter` | `false` | hides the row of header filters |
+| `filterOperatorIndicator` | `true` | shows the operator of each header filter as a small symbol in its cell (`=`, `≥`, `*a*` ...): on the right of a text filter, on the left of a number or date filter. A click (F4 in the filter) opens the operator choice. Not on a boolean column nor on a column under 60px. See [Filtering](06-filtering.md#the-operator-in-the-cell) |
 | `dimRepeatedValues` | `false` | dims a cell that has the same value as the row above. The row menu can toggle it |
 | `rowStatus` | `true` | shows the state of each row on its row number: new, edited, marked for deletion, an error. The row numbers are 14px wider for the icon. See [Showing the row state](05-editing.md#showing-the-row-state) |
 | `copyHeaders` | `true` | a copy of more than one cell starts with a line of the column labels (Word and Excel show the headers); pasted into the grid that line is skipped. See [Selection and clipboard](17-selection-and-clipboard.md) |

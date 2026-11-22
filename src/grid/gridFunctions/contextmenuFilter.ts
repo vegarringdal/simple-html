@@ -5,21 +5,16 @@ import { and, type FilterExpression, type FilterOperator, isFilterGroup, where }
 import { isBlank } from '../../datasource/isBlank';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
-import type { MenuBlock, MenuContext, MenuEntry, MenuItem } from '../gridMenus';
+import type { MenuBlock, MenuContext, MenuEntry } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
-import {
-    columnOperators,
-    headerFilterType,
-    headerOperators,
-    isAlwaysCaseSensitive,
-    isHeaderOperator
-} from './columnFilterOptions';
+import { columnOperators, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData, type ValueListEntry } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { HEADER_OPERATOR_TEXTS, headerOperatorItems, operatorPicked } from './headerOperatorMenu';
 import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
@@ -59,24 +54,6 @@ export function contextmenuFilter(
 }
 
 /**
- * The text of each operator of the header filter's Operator ›, its id in MENU_IDS.filter too, in the
- * order of the menu. The operators the header filter's input takes (isHeaderOperator)
- */
-const OPERATOR_TEXTS: Partial<Record<FilterOperator, TextId>> = {
-    EQUAL: 'filter.operator.equal',
-    NOT_EQUAL_TO: 'filter.operator.notEqualTo',
-    LESS_THAN: 'filter.operator.lessThan',
-    LESS_THAN_OR_EQUAL_TO: 'filter.operator.lessThanOrEqualTo',
-    GREATER_THAN: 'filter.operator.greaterThan',
-    GREATER_THAN_OR_EQUAL_TO: 'filter.operator.greaterThanOrEqualTo',
-    BETWEEN: 'filter.operator.between',
-    CONTAINS: 'filter.operator.contains',
-    DOES_NOT_CONTAIN: 'filter.operator.doesNotContain',
-    BEGIN_WITH: 'filter.operator.beginWith',
-    END_WITH: 'filter.operator.endWith'
-};
-
-/**
  * The filter menu's default entries, new objects every call: the submenu Filter (`filter.filter`) -
  * the submenu operator, "Match case", the submenu blank, clear, clear all, a line, the filter editor -
  * then the main tool, not in a submenu: the value list of a text or lookup column, the range block of a
@@ -93,25 +70,15 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     const column = ctx.gridInterface.__getGridConfig().columns[attribute];
     const offered = columnOperators(column, type);
 
-    // the operator picked before (state), else the column's, else the type's default
+    // the operator picked before (state), else the column's, else the type's default: the range block's
     const current = getHeaderFilterOperator(ctx, attribute);
     // "Match case": always for a filterCaseSensitive column, the toggle can not turn it off
     const caseSensitive = isHeaderFilterCaseSensitive(ctx, attribute);
     const alwaysCaseSensitive = isAlwaysCaseSensitive(column, type);
 
     /**
-     * the operator picked is state, the filter runs again with the value the cell has
-     */
-    const setOperator = (picked: FilterOperator) => {
-        ctx.gridInterface.__setHeaderFilterOperator(attribute, picked);
-        filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
-        // the cell shows its value for the operator (a BETWEEN's from..to) and its placeholder
-        rebuildHeaderColumns(ctx);
-        operatorPicked(ctx, attribute, picked);
-    };
-
-    /**
      * "Match case" is state too, the filter runs again with it: as picking an operator does
+     * (setHeaderFilterOperator)
      */
     const setCaseSensitive = () => {
         ctx.gridInterface.__setHeaderFilterCaseSensitive(attribute, !caseSensitive);
@@ -121,16 +88,8 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     const text = (id: TextId) => gridText(ctx, id);
 
     // every one of them, shown when the column offers it - not on a boolean column: its header filter is
-    // a checkbox. The id of the entry is the id of its text
-    const operatorItems = Object.entries(OPERATOR_TEXTS).map(
-        ([operator, id]): MenuItem => ({
-            id,
-            label: text(id),
-            visible: () => type !== 'boolean' && offered.some((op) => op === operator && isHeaderOperator(op)),
-            selected: () => current === operator,
-            action: () => setOperator(operator as FilterOperator)
-        })
-    );
+    // a checkbox. The items of the operator indicator of the header filter too (filterOperatorIndicator.ts)
+    const operatorItems = headerOperatorItems(ctx, attribute);
 
     return [
         {
@@ -188,19 +147,6 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
         valueListBlock(ctx, attribute, offered),
         rangeBlock(ctx, attribute, type, headerOperators(column, type), current)
     ];
-}
-
-/**
- * The `filter-operator-change` event: an operator picked in Operator ›, or applied with the range block
- * (rangeBlock). After the filter ran with it and the header was rendered again
- */
-function operatorPicked(ctx: Grid, attribute: string, operator: FilterOperator) {
-    ctx.gridInterface.__callSubscribers('filter-operator-change', {
-        field: attribute,
-        operator,
-        column: ctx.gridInterface.__getGridConfig().columns[attribute],
-        rebuildHeader: () => rebuildHeaderColumns(ctx)
-    });
 }
 
 /**
@@ -463,7 +409,7 @@ function rangeBlock(
     const group = `${ctx.ariaIdPrefix}-range`;
     // each operator with its name - for a screen reader and the tooltip - and its symbol
     const choices = operators.flatMap((operator) => {
-        const id = OPERATOR_TEXTS[operator];
+        const id = HEADER_OPERATOR_TEXTS[operator];
         return id ? [{ operator, name: text(id), symbol: OPERATOR_SYMBOLS[operator] }] : [];
     });
 

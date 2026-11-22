@@ -753,6 +753,16 @@ describe('lookups - the dropdown grid', () => {
         expect(parsed.columns.name.operator).toEqual('CONTAINS');
     });
 
+    it('expect no operator indicator in a picker, and F4 in its filter to open no operator choice: it has no menus', async () => {
+        const { element } = await mount();
+        press(focusCell(element, 'customerId', 0), 'F4');
+        expect(dropdownInterface().__getGridConfig().filterOperatorIndicator).toBe(false);
+        expect(dropdown().querySelectorAll('.simple-html-grid-filter-operator')).toHaveLength(0);
+
+        press(headerFilterInput(dropdown(), 'name'), 'F4');
+        expect(document.querySelectorAll('.simple-html-grid-menu')).toHaveLength(0);
+    });
+
     it("expect the lookup's config to be used, its operators kept", async () => {
         registerLookup('customers', {
             datasource: customers,

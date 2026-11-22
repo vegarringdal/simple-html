@@ -1252,6 +1252,66 @@
 }
 
 /**
+ * The operator indicator of a header filter (GridConfig.filterOperatorIndicator,
+ * filterOperatorIndicator.ts): the symbol of its operator, on the right of a text filter, on the left
+ * of a number or date filter. 1.8em wide, the widest symbol (a..b) fits; the input's padding on that
+ * side keeps the text typed clear of it. Inside the 2px of the input's focus outline, square corners.
+ * Over the input (1000) and the column's resize handle (1001): a column is resized from its label or
+ * its column number there. Quiet, in the colour of a placeholder; one that can be clicked (a button)
+ * has the text colour and a background under the pointer and with the keyboard focus
+ */
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-filter-input-operator-right {
+    padding-right: calc(1.8em + 5px);
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-filter-input-operator-left {
+    padding-left: calc(1.8em + 5px);
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    width: 1.8em;
+    z-index: 1002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 1;
+    color: var(--simple-html-grid-sec-font-color);
+    background-color: transparent;
+    user-select: none;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator-right {
+    right: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator-left {
+    left: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell button.simple-html-grid-filter-operator {
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-col-cell button.simple-html-grid-filter-operator:hover,
+.simple-html-grid .simple-html-grid-col-cell button.simple-html-grid-filter-operator:focus-visible {
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-lookup-button-bg-color);
+}
+
+/**
  * the editor of a lookup column: a popover under the cell, like the editor of a multiline cell. The
  * select is a search field over a list that scrolls, ten options high; the dropdown grid is a grid
  * element sized by lookupEditor.ts

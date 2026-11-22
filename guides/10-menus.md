@@ -390,6 +390,12 @@ the selection work. A group row's number has no menu.
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 
+The operator indicator in a header filter cell opens a menu of its own, the operator choice: the
+items of Operator › (`filter.operator.*`), with the context of the filter menu (`menu: 'filter'`). The
+`filter` function of the `menus` hook is not called for it: it changes the filter menu only. Offer
+fewer operators with the column's `filterOperators`, both show those; turn the indicator off with
+`filterOperatorIndicator: false`. See [Filtering](06-filtering.md#the-operator-in-the-cell).
+
 ### Column menu (`MENU_IDS.column`)
 
 Right click on a column number, the row of numbers under the header filters, or Shift+F10 on one with

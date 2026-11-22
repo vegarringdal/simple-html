@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html, nothing, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { FieldType } from '../../datasource/field';
 import { type Formatter, parseFilterText } from '../../datasource/formatter';
@@ -10,6 +10,7 @@ import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
 import { contextmenuFilter } from './contextmenuFilter';
 import { filterCallback, headerFilterText } from './filterCallback';
+import { canChooseOperator, openOperatorChoice, operatorIndicator } from './filterOperatorIndicator';
 import { getColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
@@ -115,21 +116,47 @@ export function renderHeaderFilter(
 
                 let lastFilter = currentText;
                 let skipFocus = false;
+
+                /**
+                 * before a menu of the cell opens: the text typed is filtered on, when it is not what the
+                 * cell filtered on last - the menu's filter runs again with the cell's value
+                 */
+                const filterTyped = () => {
+                    const input = cell.querySelector<HTMLInputElement>('input.simple-html-grid-cell-filter-input');
+                    if (input) {
+                        if (lastFilter !== input.value) {
+                            filterCallback(ctx, input.value, attribute);
+                        }
+                        lastFilter = input.value;
+                    }
+                };
+
+                /**
+                 * the filter menu: a right click, a long press, Shift+F10 - on the input and on the
+                 * operator indicator
+                 */
+                const openFilterMenu = (e: MouseEvent) => {
+                    e.preventDefault();
+                    filterTyped();
+                    contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute);
+                };
+
+                // the symbol of the operator beside the input, a click on it opens the operator choice
+                const indicator = operatorIndicator(ctx, cell, colType, column, attribute, filterTyped, openFilterMenu);
+                let inputClass = `simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`;
+                if (indicator) {
+                    inputClass += ` simple-html-grid-cell-filter-input-operator-${indicator.side}`;
+                }
+
                 render(
                     html`<input
                         aria-label=${label}
-                        class=${`simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`}
+                        aria-describedby=${indicator ? indicator.id : nothing}
+                        class=${inputClass}
                         style=${type === 'number' ? 'text-align: right;width:100%;height:100%;' : 'width:100%;height:100%;'}
                         .value=${live(currentText)}
                         placeholder=${placeholderFilter}
-                        @contextmenu=${(e: MouseEvent) => {
-                            e.preventDefault();
-                            if (lastFilter !== (e.target as any).value) {
-                                filterCallback(ctx, (e.target as any).value, attribute);
-                            }
-                            lastFilter = (e.target as any).value;
-                            contextmenuFilter(ctx, e, cell, row, column, celno, colType, cellType, attribute);
-                        }}
+                        @contextmenu=${openFilterMenu}
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {
                                 skipFocus = true;
@@ -180,6 +207,17 @@ export function renderHeaderFilter(
                             });
                         }}
                         @keydown=${(e: KeyboardEvent) => {
+                            // F4, as the list of a lookup cell opens: the operator choice, under the
+                            // indicator - under the cell of a column too narrow for one. The focus goes
+                            // into it. Not with the indicators turned off (a picker's dropdown grid)
+                            const plain = !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+                            if (e.key === 'F4' && plain && config.filterOperatorIndicator && canChooseOperator(ctx, attribute)) {
+                                e.preventDefault();
+                                filterTyped();
+                                const anchor = cell.querySelector<HTMLElement>('.simple-html-grid-filter-operator') ?? cell;
+                                openOperatorChoice(ctx, cell, attribute, anchor);
+                                return;
+                            }
                             const keycode = e.keyCode ? e.keyCode : e.which;
                             if (keycode === 13) {
                                 e.preventDefault();
@@ -222,7 +260,7 @@ export function renderHeaderFilter(
                                 filterRunning = false;
                             }
                         }}
-                    />`,
+                    />${indicator ? indicator.template : nothing}`,
                     cell as any
                 );
             }

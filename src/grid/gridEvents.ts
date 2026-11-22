@@ -113,9 +113,10 @@ export interface GridEvents {
     };
 
     /**
-     * An operator was picked in the header filter's menu - in Filter › Operator ›, or another one
-     * applied with the range block of a number or date column - and the filter ran with it. The
-     * operator is state, `getState().headerFilters[field].operator`.
+     * An operator was picked for a header filter - in the filter menu's Filter › Operator ›, another one
+     * applied with the range block of a number or date column, or picked in the choice the header
+     * filter's operator indicator opens (`GridConfig.filterOperatorIndicator`) - and the filter ran with
+     * it. The operator is state, `getState().headerFilters[field].operator`.
      *
      * - `field`: the column's field
      * - `operator`: the operator picked

@@ -2143,6 +2143,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         editedMarker: options.editedMarker ?? true,
         mergeHighlight: options.mergeHighlight ?? true,
         copyHeaders: options.copyHeaders ?? true,
+        filterOperatorIndicator: options.filterOperatorIndicator ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false

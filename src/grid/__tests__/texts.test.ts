@@ -328,6 +328,19 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     openFilterMenu(element, 'age');
     check();
     gridInterface.closeMenu();
+    // the operator indicator of each operator: its symbol, its name and its tooltip - the text
+    // operators on name, the comparisons on age
+    const textOperators: FilterOperator[] = ['EQUAL', 'NOT_EQUAL_TO', 'CONTAINS', 'DOES_NOT_CONTAIN', 'BEGIN_WITH', 'END_WITH'];
+    const numberOperators: FilterOperator[] = ['LESS_THAN', 'LESS_THAN_OR_EQUAL_TO', 'GREATER_THAN', 'GREATER_THAN_OR_EQUAL_TO'];
+    textOperators.forEach((operator, i) => {
+        gridInterface.setState({
+            headerFilters: {
+                name: { value: null, operator },
+                age: { value: null, operator: numberOperators[i] ?? 'EQUAL' }
+            }
+        });
+        check();
+    });
     gridInterface.setState({ headerFilters: {} });
 
     // the filter editor: AND with an OR group, a condition compared with a field not picked yet. A text
