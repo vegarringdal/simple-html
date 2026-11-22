@@ -56,9 +56,9 @@ export function contextmenuRow(
 
 /**
  * Opens the row menu on a row number: a right click, a long press (longPress.ts), Shift+F10 or the menu
- * key on a number with the focus. The same menu as on a cell of the row, without a cell: the context's
- * `field` is `''`, and the entries that need a cell - its value, its column - are greyed out (see
- * rowMenuEntries). The row's entries and Select › work.
+ * key on a number with the focus. The menu of a cell of the row, without a cell: the context's `field` is
+ * `''`, and only what is about rows is in it - Undo / Redo ›, Select ›, Copy ›, Delete › and Size › - see
+ * rowMenuEntries.
  * @param cell the cell of the row number
  * @param row the displayed row, a data row (a group row's number has no menu)
  */
@@ -84,10 +84,11 @@ interface RowMenuEventData {
  * The row menu's default entries, new objects every call: the edit entries, then a submenu per part.
  * The ids are documented in MENU_IDS.row.
  *
- * Opened on a row number (`attribute` `''`) there is no cell: the entries of the cell and of its column
- * are greyed out - Undo cell edit (its edited value is never there), Copy › Cell Value and Column, Paste
- * cell and Clear cell (both), Filter ›, Size › Fit column to this cell, Select ›'s cell entries. Greyed
- * out, not hidden: the menu keeps its shape
+ * Opened on a row number (`attribute` `''`) there is no cell, and the menu is about rows (the user: "row
+ * number context menu have too many options that does not belong there"): what needs a cell, or is not
+ * about rows, is not in it (`visible`) - Paste ›, Clear ›, Filter ›, View ›, Export ›, Undo cell edit,
+ * Copy › Cell Value, Column and Range, Select ›'s cell entries, Size › Fit column to this cell. The
+ * entries of a selection are greyed out without one, as on a cell: the menu keeps its shape
  */
 function rowMenuEntries(
     ctx: Grid,
@@ -113,8 +114,8 @@ function rowMenuEntries(
     const cellReadonly = () => gridInterface.__isCellReadonly(rowData, attribute);
     const noSelectedRows = () => gridInterface.getDatasource().getSelectedRows().length === 0;
     const noRanges = () => gridInterface.getRanges().length === 0;
-    // opened on a row number: no cell, see the top
-    const noCell = () => attribute === '';
+    // a cell, not a row number: see the top
+    const onCell = () => attribute !== '';
 
     // a group row has no value of its own to filter on
     const filterOnValue = () => !isGroupRow(rowData);
@@ -134,12 +135,12 @@ function rowMenuEntries(
             type: 'submenu',
             id: 'row.paste',
             label: text('row.paste'),
-            visible: editable,
+            visible: () => editable() && onCell(),
             entries: [
                 {
                     id: 'row.paste.current',
                     label: text('row.paste.current'),
-                    disabled: () => noCell() || cellReadonly(),
+                    disabled: cellReadonly,
                     action: async () => {
                         if (navigator.clipboard.readText) {
                             const data = await navigator.clipboard.readText();
@@ -151,7 +152,7 @@ function rowMenuEntries(
                     id: 'row.paste.cell',
                     label: text('row.paste.cell'),
                     hint: text('row.paste.cell.hint'),
-                    disabled: () => noCell() || noSelectedRows(),
+                    disabled: noSelectedRows,
                     action: async () => {
                         if (navigator.clipboard.readText) {
                             const data = await navigator.clipboard.readText();
@@ -177,12 +178,12 @@ function rowMenuEntries(
             type: 'submenu',
             id: 'row.clear',
             label: text('row.clear'),
-            visible: editable,
+            visible: () => editable() && onCell(),
             entries: [
                 {
                     id: 'row.clear.current',
                     label: text('row.clear.current'),
-                    disabled: () => noCell() || cellReadonly(),
+                    disabled: cellReadonly,
                     action: () => {
                         clearRows(ctx, attribute, [rowData]);
                         gridInterface.__callSubscribers('clear', eventData);
@@ -193,7 +194,7 @@ function rowMenuEntries(
                     id: 'row.clear.cell',
                     label: text('row.clear.cell'),
                     hint: text('row.clear.cell.hint'),
-                    disabled: () => noCell() || noSelectedRows(),
+                    disabled: noSelectedRows,
                     action: () => {
                         clearRows(ctx, attribute, gridInterface.getDatasource().getSelectedRows());
                         gridInterface.__callSubscribers('clear', eventData);
@@ -214,14 +215,13 @@ function rowMenuEntries(
             type: 'submenu',
             id: 'row.filter',
             label: text('row.filter'),
-            visible: filterOnValue,
+            visible: () => filterOnValue() && onCell(),
             entries: [
                 {
                     id: 'row.filter.replace',
                     label: text('row.filter.replace'),
                     hint: text('row.filter.replace.hint'),
                     visible: filterOnValue,
-                    disabled: noCell,
                     action: () => replaceFilter(ctx, attribute, rowData)
                 },
                 {
@@ -229,7 +229,6 @@ function rowMenuEntries(
                     label: text('row.filter.add'),
                     hint: text('row.filter.add.hint'),
                     visible: filterOnValue,
-                    disabled: noCell,
                     action: () => addToFilter(ctx, attribute, rowData)
                 }
             ]
@@ -238,6 +237,8 @@ function rowMenuEntries(
             type: 'submenu',
             id: 'row.view',
             label: text('row.view'),
+            // the grid's view, not a row's
+            visible: onCell,
             entries: [
                 {
                     id: 'row.view.dimRepeatedValues',
@@ -260,7 +261,8 @@ function rowMenuEntries(
             ]
         },
         sizeSubmenu(ctx, attribute, rowData),
-        exportSubmenu(ctx)
+        // every row or the selected ones, not this row: a cell's menu
+        { ...exportSubmenu(ctx), visible: onCell }
     ];
 }
 
@@ -275,13 +277,14 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
     const hasRanges = () => gridInterface.getRanges().length > 0;
     // the entries of the selected rows are listed without them too, greyed out
     const noSelectedRows = () => gridInterface.getDatasource().getSelectedRows().length === 0;
-    const noCell = () => attribute === '';
+    // a cell, not a row number: the cell, its column and the ranges of cells are not about rows
+    const onCell = () => attribute !== '';
     const text = (id: TextId) => gridText(ctx, id);
     return [
         {
             id: 'row.copy.cell',
             label: text('row.copy.cell'),
-            disabled: noCell,
+            visible: onCell,
             action: () => {
                 // the value only, as the cell shows it: no header, no line end
                 writeClipboard(cellText(gridInterface, attribute, true)(rowData), '');
@@ -292,7 +295,8 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
             id: 'row.copy.column',
             label: text('row.copy.column'),
             hint: text('row.copy.column.hint'),
-            disabled: () => noCell() || noSelectedRows(),
+            visible: onCell,
+            disabled: noSelectedRows,
             action: () => {
                 copyRows(ctx, [attribute]);
                 gridInterface.__callSubscribers('copy-column', eventData);
@@ -323,6 +327,7 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
         {
             id: 'row.copy.range',
             label: text('row.copy.range'),
+            visible: onCell,
             disabled: () => !hasRanges(),
             // every range as one table, as Ctrl+C copies them (rangeClipboard.ts)
             action: () => {
@@ -406,10 +411,12 @@ function selectSubmenu(ctx: Grid, row: number, attribute: string): MenuSubmenu {
                 disabled: () => !multiple() || allRowsSelected(),
                 action: () => datasource.selectAll()
             },
-            { type: 'separator', id: 'row.select.cellsSeparator', visible: rowsSelectable },
+            // the cell's entries: not on a row number
+            { type: 'separator', id: 'row.select.cellsSeparator', visible: () => rowsSelectable() && point !== null },
             {
                 id: 'row.select.rangeTo',
                 label: text('row.select.rangeTo'),
+                visible: () => point !== null,
                 disabled: () => {
                     const start = rangeStart();
                     return !point || !start || samePoint(start, point);
@@ -424,6 +431,7 @@ function selectSubmenu(ctx: Grid, row: number, attribute: string): MenuSubmenu {
             {
                 id: 'row.select.addCell',
                 label: text('row.select.addCell'),
+                visible: () => point !== null,
                 disabled: () => !point || inARange(point),
                 action: () => {
                     if (point) {
@@ -491,7 +499,8 @@ function editSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
             {
                 id: 'row.edit.revertCell',
                 label: gridText(ctx, 'row.edit.revertCell'),
-                visible: editable,
+                // a row number has no cell
+                visible: () => editable() && attribute !== '',
                 disabled: () => !rowData.__controller?.__editedProps[attribute],
                 action: () => {
                     datasource.resetField(rowData, attribute);
@@ -603,7 +612,7 @@ function sizeSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
                 id: 'row.size.fitColumn',
                 label: gridText(ctx, 'row.size.fitColumn'),
                 // a row number has no column
-                disabled: () => attribute === '',
+                visible: () => attribute !== '',
                 action: () => gridInterface.fitColumns([attribute], { rows: [rowData] })
             },
             {

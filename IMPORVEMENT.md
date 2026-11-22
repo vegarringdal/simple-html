@@ -3410,6 +3410,19 @@ in the console. All passed. Found and fixed:
 * samples/demo/index.ts (the sections), pages.ts (the user guide's title), site.test.ts; the shared
   full-grid-check.js expects "Developer Guide" (backup `.before-guide-rename`): 11/11, sidebar-toggle 15/15
 
+### The row menu of a row number: rows only (user request)
+
+* the user, a screenshot of the menu on a row number (Undo / Redo, Select, Copy, Paste, Clear, Delete,
+  Filter, View, Size, Export): "row number context menu have too many options that does not belong there"
+* contextmenuRow.ts: `onCell` (the field is not `''`) in `visible` of Paste ›, Clear ›, Filter ›, View ›,
+  Export ›, Undo cell edit, Copy › Cell Value / Column / Range, Select ›'s cell separator, Range to here and
+  Add this cell, Size › Fit column to this cell; the `noCell` greying in them went (never shown without a
+  cell). Left: Undo / Redo, Select, Copy, Delete, Size - about as a spreadsheet's row header
+* selectMenu.test.ts: the menu tree of a row number is MENU_IDS.row without those, the five submenus, the
+  hook still gets `row.filter`; the cell entries are not there (were greyed out). Guides 10, 17
+* browser: new `row-number-menu-check.js` 7/7 (light and dark: the five on a row number, Copy › the rows
+  only, on a cell the whole menu)
+
 ## Considered, not done
 
 ## Candidates / not started

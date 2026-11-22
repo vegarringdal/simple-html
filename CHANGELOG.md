@@ -1332,6 +1332,14 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The row menu of a row number: rows only (user request)
+
+##### Changed
+- **On a row number the row menu is about rows**: Undo / Redo ›, Select ›, Copy ›, Delete › and Size ›. What
+  needs a cell or is not about rows is left out - Paste ›, Clear ›, Filter ›, View ›, Export ›, Undo cell
+  edit, Copy › Cell Value / Column / Range, Select ›'s cell entries, Fit column to this cell - where they were
+  greyed out. They are hidden with `visible`: a `menus.row` hook still gets them. On a cell nothing changed.
+
 #### Docs site: Developer Guide and User Guide (user request)
 
 ##### Docs
