@@ -1332,6 +1332,39 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Find: Match case, and the find for SQL (user request)
+
+##### Added
+- **Match case** in the find bar: the `Aa` button between the count and *Filter rows* (Alt+C in the bar,
+  `aria-pressed`): the matches, the count, the marks and *Filter rows* follow it; the footer's chip gets the
+  `Aa` marker. `find(text, { caseSensitive })`, `getFind().caseSensitive`, in `find-change` too. Kept when
+  the bar closes, as the text.
+- **`gridInterface.getFindFilter({ fields? })`**: *Filter rows* as a `FilterExpression` a backend gives
+  `toSqlWhere()` - an OR of a condition per field of the layout where SQL can match what the cell shows: a
+  text field `CONTAINS` (literal, case as Match case), a lookup column `IN` the values whose label has the
+  text, a number `EQUAL` the number when its cell shows the text, a date the day / second when the text is
+  the whole cell. It never selects a row the grid would not show; on numbers and dates it can select fewer
+  (the grid also finds part of a number or a date) - see the find and SQL guides. null while *Filter rows*
+  shows every row. The event **`find-filter-change`** `{ filter }` when it changes.
+- **`FilterCondition.literal`** (`where(field, op, value, { literal: true })`): `*`, `%` and `_` of the value
+  are plain characters - in the datasource and in `toSqlWhere()` (escaped per dialect). The filter editor
+  does not keep it (it rebuilds a condition).
+- The SQL sample shows the find's SQL ANDed in when *Filter rows* is on.
+
+##### Changed
+- The find input's least width is 24px (was 40px): five buttons fit a narrow grid.
+
+#### Column settings: Multiline and Read only (user request)
+
+##### Added
+- **Multiline** for a text column in the grid config dialog (`ColumnFormat.multiline`): its cells are text of
+  several lines - the first line shown, the text editor to edit - or, off, of one line; wins over the
+  field's `multiline`. Not with checkboxes, not for a lookup column.
+- **Read only** for every column (`ColumnFormat.readonly`): its cells are not edited, also in an editable
+  grid - or, off, a `readonly` column of the config is editable. Wins over `ColumnConfig.readonly`; the
+  `isReadonly` hook gets it and has the last word. Both start as the column has them; set back to that,
+  they are left out of the format. Badges *Multiline* / *Read only* in the list of the columns.
+
 #### Column settings: a label, a placeholder, blank / 0, checkboxes (user request)
 
 ##### Added

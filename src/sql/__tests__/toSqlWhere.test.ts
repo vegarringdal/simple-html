@@ -322,6 +322,79 @@ describe('text', () => {
     });
 });
 
+describe('literal: the wildcards of the grid as characters', () => {
+    const literal = { literal: true };
+
+    it("expect *, % and _ to be characters of each dialect's pattern, escaped where they are its wildcards", () => {
+        const value = 'a*b%c_d!e[f]g?h';
+        // LIKE ESCAPE '!': % and _ escaped, * is no wildcard of LIKE
+        expect(sql(where('name', 'EQUAL', value, literal), 'postgres').params).toEqual(['a*b!%c!_d!!e[f]g?h']);
+        expect(sql(where('name', 'EQUAL', value, literal), 'oracle').params).toEqual(['a*b!%c!_d!!e[f]g?h']);
+        // LIKE without an escape: in brackets
+        expect(sql(where('name', 'EQUAL', value, literal), 'mssql').params).toEqual(['a*b[%]c[_]d!e[[]f]g?h']);
+        // GLOB: * in brackets, % and _ are no wildcards of it
+        expect(sql(where('name', 'EQUAL', value, literal), 'sqlite').params).toEqual(['a[*]b%c_d!e[[]f]g[?]h']);
+    });
+
+    it('expect the pattern of each operator: the wildcards of the dialect around the text, the text as it is', () => {
+        const patterns = (dialect: SqlDialect) =>
+            (['EQUAL', 'NOT_EQUAL_TO', 'CONTAINS', 'DOES_NOT_CONTAIN', 'BEGIN_WITH', 'END_WITH'] as const).map(
+                (operator) => sql(where('name', operator, '50%', literal), dialect).params[0]
+            );
+        expect(patterns('postgres')).toEqual(['50!%', '50!%', '%50!%%', '%50!%%', '50!%%', '%50!%']);
+        expect(patterns('sqlite')).toEqual(['50%', '50%', '*50%*', '*50%*', '50%*', '*50%']);
+        expect(patterns('mssql')).toEqual(['50[%]', '50[%]', '%50[%]%', '%50[%]%', '50[%]%', '%50[%]']);
+    });
+
+    it("expect a blank row to match a text of wildcards no more: '' does not contain '%'", () => {
+        expect(sql(where('name', 'CONTAINS', '%')).sql).toBe(`("name" IS NULL OR LOWER("name") LIKE $1 ESCAPE '!')`);
+        expect(sql(where('name', 'CONTAINS', '%', literal)).sql).toBe(
+            `("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')`
+        );
+        expect(sql(where('name', 'DOES_NOT_CONTAIN', '%', literal)).sql).toBe(
+            `("name" IS NULL OR NOT (LOWER("name") LIKE $1 ESCAPE '!'))`
+        );
+    });
+
+    it('expect it with caseSensitive, and on a value that is not ASCII', () => {
+        expect(sql(where('name', 'CONTAINS', 'A_b', { caseSensitive: true, literal: true }))).toEqual({
+            sql: `("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')`,
+            params: ['%A!_b%']
+        });
+        expect(sql(where('name', 'CONTAINS', 'Æ_', literal))).toEqual({
+            sql: `("name" IS NOT NULL AND LOWER("name") LIKE LOWER($1) ESCAPE '!')`,
+            params: ['%Æ!_%']
+        });
+    });
+
+    it('expect it ignored where there are no wildcards: IN, a comparison, a number, a valueField', () => {
+        for (const [condition, other] of [
+            [where('name', 'IN', ['a_b', '%'], literal), where('name', 'IN', ['a_b', '%'])],
+            [where('name', 'LESS_THAN', 'a_b', literal), where('name', 'LESS_THAN', 'a_b')],
+            [where('age', 'EQUAL', 5, literal), where('age', 'EQUAL', 5)],
+            [
+                where('name', 'EQUAL', undefined, { valueField: 'code', literal: true }),
+                where('name', 'EQUAL', undefined, { valueField: 'code' })
+            ]
+        ]) {
+            for (const dialect of DIALECTS) {
+                expect(sql(condition, dialect), JSON.stringify(condition)).toEqual(sql(other, dialect));
+            }
+        }
+    });
+
+    it('expect anything but true, false or null to throw', () => {
+        expect(sql(where('name', 'CONTAINS', '%', { literal: false }))).toEqual(sql(where('name', 'CONTAINS', '%')));
+        expect(sql(where('name', 'CONTAINS', '%', { literal: null }))).toEqual(sql(where('name', 'CONTAINS', '%')));
+        for (const bad of ['true', 1, {}]) {
+            expect(() => sql(where('name', 'CONTAINS', '%', { literal: bad })), String(bad)).toThrow(/literal is true or false/);
+        }
+        expect(() => sql(where('name', 'CONTAINS', '%', { literall: true }))).toThrow(
+            /takes field, operator, value, valueField, caseSensitive, literal/
+        );
+    });
+});
+
 describe('IN and NOT_IN', () => {
     it('expect a text IN to compare in upper case, NULL as the blanks', () => {
         expect(sql(where('name', 'IN', ['Ann', 'NULL']))).toEqual({

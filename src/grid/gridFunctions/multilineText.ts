@@ -1,5 +1,6 @@
 import type { Field, FieldType } from '../../datasource/field';
 import type { Grid } from '../grid';
+import type { ColumnConfig } from '../gridConfig';
 import { gridText } from './gridText';
 
 /**
@@ -73,9 +74,20 @@ export function normalizeLineBreaks(text: string): string {
  * @param field the cell's field
  * @param cellType the type the cell is shown as, see getCellType
  * @param text the cell's value, formatted
+ * @param column the cell's column: its format can make it multiline or not (multilineOf)
  */
-export function isMultilineCell(field: Field, cellType: FieldType, text: string): boolean {
-    return cellType === 'text' && (field.multiline || hasLineBreak(text));
+export function isMultilineCell(field: Field, cellType: FieldType, text: string, column?: ColumnConfig): boolean {
+    return cellType === 'text' && (multilineOf(field, column) || hasLineBreak(text));
+}
+
+/**
+ * true when a field's cells are text of several lines by their settings: the user's
+ * (`ColumnFormat.multiline`, the grid config dialog), else the field's `multiline`. A value with a line
+ * break is shown as several lines also without, see isMultilineCell
+ * @param column the column of the field, its format has the user's
+ */
+export function multilineOf(field: Field, column: ColumnConfig | undefined): boolean {
+    return column?.format?.multiline ?? field.multiline === true;
 }
 
 /**

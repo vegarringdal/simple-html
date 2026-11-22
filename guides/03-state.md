@@ -174,7 +174,7 @@ gridInterface.setState({ formats });
 - The rest of what the user sets in the grid config dialog is in a column's format too - its
   `label`, the header filter's `placeholder` / `placeholderLabel`, a number column's `numberOverride`,
   `checkbox` - so it is saved and given back with the formats, see
-  [Label, placeholder, blank / 0, checkboxes](08-formatting.md#label-placeholder-blank--0-checkboxes).
+  [Label, placeholder, blank / 0, checkboxes, multiline, read only](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only).
 
 ## The detail form in the state
 

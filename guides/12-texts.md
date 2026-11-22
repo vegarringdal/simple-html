@@ -106,8 +106,8 @@ The ids are grouped by area, the area first. Within an area:
   from the platform the browser gives (`navigator.userAgentData.platform`, else `navigator.platform`).
   The grid takes both keys everywhere (Ctrl+Z and Cmd+Z), the texts say what a user there presses.
   Translate both: a `.mac` text left out shows its English default on a Mac. They are
-  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `cell.multiline.hint`,
-  `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
+  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `find.matchCase.tooltip`,
+  `cell.multiline.hint`, `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
 
 ### The names of the months and days
 
@@ -609,6 +609,10 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.badge.text` | `Text` | the column has a template of its text |
 | `columnSettings.badge.link` | `Link` | the column is a link |
 | `columnSettings.badge.problem` | `Error` | a template or a checkbox value of the column has a problem: Apply waits for it |
+| `columnSettings.badge.multiline` | `Multiline` | in the list of the columns: a text column made multiline |
+| `columnSettings.badge.readonly` | `Read only` | in the list of the columns: a column made read only |
+| `columnSettings.multiline` | `Multiline` | the checkbox of a text column: its cells are text of several lines (`ColumnFormat.multiline`) |
+| `columnSettings.readonly` | `Read only` | the checkbox of every column: its cells are not edited, also in an editable grid (`ColumnFormat.readonly`) |
 | `columnSettings.badge.checkbox` | `Checkbox` | the column is shown as checkboxes |
 | `columnSettings.badge.numberOverride` | `Blank / 0` | the column shows a blank as 0, or 0 as blank (or neither, over its `numberOverride`) |
 | `columnSettings.badge.label` | `Label` | the column has a label of the user's |
@@ -739,6 +743,10 @@ The find bar of Ctrl+F in the grid, see [Find](19-find.md).
 | `find.placeholder` | `Find` | the placeholder of its input, and the input's name for a screen reader |
 | `find.count` | `{current} of {count}` | the count of the matches. `{current}`: the number of the current match, `{count}`: how many cells match |
 | `find.none` | `No matches` | the count when no cell matches the text |
+| `find.matchCase` | `Match case` | the `Aa` button, a toggle: its name for a screen reader |
+| `find.matchCase.text` | `Aa` | what the button shows |
+| `find.matchCase.tooltip` | `Match case (Alt+C)` | its tooltip |
+| `find.matchCase.tooltip.mac` | `Match case` | its tooltip on a Mac: Option+C types `ç` there, it is no key of the bar |
 | `find.filterRows` | `Filter rows` | the funnel button, a toggle: its name for a screen reader |
 | `find.filterRows.tooltip` | `Show only the rows with a match` | its tooltip |
 | `find.previous` | `Previous match` | the `↑` button: its name for a screen reader |

@@ -11,6 +11,7 @@ import { type GridConfigTab, tabId, tabPanelId } from './gridConfigTabs';
 import { gridText } from './gridText';
 import { DRAG_HANDLE_ICON } from './icons';
 import { keyText } from './keyText';
+import { multilineOf } from './multilineText';
 import { hideTooltip } from './tooltip';
 
 /**
@@ -458,7 +459,10 @@ function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update
             >
                 ${draft.order.map((field, at) => {
                     const included = draft.included.has(field);
-                    const multiline = gridInterface.getDatasource().getField(field).multiline;
+                    const multiline = multilineOf(
+                        gridInterface.getDatasource().getField(field),
+                        gridInterface.__getGridConfig().columns[field]
+                    );
                     return html`<div
                         class="column-settings-option detail-form-settings-option"
                         role="option"

@@ -268,6 +268,11 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
         checkbox(index).checked = !checkbox(index).checked;
         checkbox(index).dispatchEvent(new Event('change', { bubbles: true }));
     };
+    /** toggles the checkbox whose text has the id: the texts are their ids here */
+    const toggleText = (id: string) => {
+        const labels = Array.from(dialog().querySelectorAll<HTMLElement>('.column-settings-check'));
+        toggle(labels.findIndex((label) => label.textContent?.includes(id)));
+    };
     const option = (label: string) =>
         Array.from(dialog().querySelectorAll<HTMLElement>('[role="option"]')).find((element) =>
             element.textContent?.includes(label)
@@ -297,6 +302,9 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     // the address from a field that holds no address: the first row shown has the age 20
     type('url', '{age}');
     check();
+    // Multiline: its badge
+    toggleText('columnSettings.multiline');
+    check();
     // a number column: its format picker and the menu of the formats - one picked, the badge
     option('«Age»').click();
     check();
@@ -310,7 +318,10 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     type('label', '«age2»');
     type('placeholder', '«x»');
     check();
-    toggle(3);
+    toggleText('columnSettings.placeholderLabel');
+    check();
+    // Read only: its badge
+    toggleText('columnSettings.readonly');
     check();
     // shown as checkboxes: the two values, their hint, each problem of them
     toggle(0);

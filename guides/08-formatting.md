@@ -541,8 +541,9 @@ left end has the resets of the tab shown.
 The Columns tab:
 
 - **The columns** of the layout are at the left, in their order, each with its label, its type and
-  what it has set - *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*, or
-  *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a click too.
+  what it has set - *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*,
+  *Multiline*, *Read only*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a
+  click too.
 - **Label**, every column: the column's label - empty is the column's own, which the input shows. The ✎ of
   the column chooser sets it too ([The column chooser](10-menus.md#the-column-chooser)). It
   is the label wherever the grid names the column, the exports' headers too.
@@ -559,6 +560,13 @@ The Columns tab:
   checkbox shows no text: while it is on, the template and the link of a text column, the format and
   blank / 0 of a number column are gone from the column and from the dialog. A checked value that is
   empty, the same two values, a value of a number column that is no number are problems.
+- **Multiline**, a text column that is not shown as checkboxes: its cells are text of several lines -
+  the first line shown, the text editor to edit it (Enter a new line), taller rows with `fitRows()`. It
+  starts as the field has it (`multiline` of its field); off, only a value with a line break is shown
+  as several lines, as always.
+- **Read only**, every column: its cells can not be edited, also in an editable grid - or, unchecked, a
+  column that is `readonly` in the config can. It starts as the column has it. The `isReadonly` hook
+  still has the last word.
 - **Filter placeholder**, for every column but a checkbox: the placeholder of the column's header
   filter - empty is the one it has without, which the input shows - or *Use the column label*: the
   label is the placeholder, the input is off.
@@ -589,7 +597,7 @@ A developer sets the formats the grid starts with in `ColumnConfig.format`; what
 dialog is the state. To keep the user's settings, save `getState()` (or its `formats`) and give it back
 with `setState()` the next time.
 
-## Label, placeholder, blank / 0, checkboxes
+## Label, placeholder, blank / 0, checkboxes, multiline, read only
 
 The rest of what the grid config dialog sets is in the column's format too - so the state keeps it
 with the formats, and a developer can start a column with it in `ColumnConfig.format`:
@@ -626,11 +634,13 @@ const config: GridConfig = {
 | `placeholderLabel` | `true`: the placeholder is the column's label - not with `placeholder` | the same |
 | `numberOverride` | a `number` column: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'`, or `'NONE'` - neither | `ColumnConfig.numberOverride`: `'NONE'` turns it off |
 | `checkbox` | a `text` or `number` column: its cells are checkboxes, see below | |
+| `multiline` | a `text` column: `true` text of several lines, `false` one line (a value with a line break is shown as several lines still) - not with `checkbox` | the field's `multiline` (`FieldConfig`) |
+| `readonly` | any column: `true` its cells are not edited, also in an editable grid; `false` they are | `ColumnConfig.readonly` - the `isReadonly` hook gets this and has the last word |
 
 Each is checked as the rest of a format: an empty label or placeholder, a placeholder of a checkbox
 column, `numberOverride` on another type, checkboxes on a date column throw a `TypeError` when the grid
-is made, or `updateConfig()` or `setState()` is given it. A lookup column (`editor`) takes a label and
-a placeholder, not the rest.
+is made, or `updateConfig()` or `setState()` is given it. A lookup column (`editor`) takes a label,
+a placeholder and `readonly`, not the rest.
 
 ### Checkboxes
 
@@ -699,6 +709,6 @@ The column option `numberOverride` changes what a number cell shows, not the val
 `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` an empty cell as `0`. See
 [Grid config](02-grid-config.md#column-options). The user sets it in the grid config dialog (*Show
 blank as 0*, *Show 0 as blank*): `format.numberOverride` in the state, which wins over the column's -
-`'NONE'` turns it off, see [Label, placeholder, blank / 0, checkboxes](#label-placeholder-blank--0-checkboxes).
+`'NONE'` turns it off, see [Label, placeholder, blank / 0, checkboxes, multiline, read only](#label-placeholder-blank--0-checkboxes-multiline-read-only).
 With a display format the 0 is the format's: `'BLANK_TO_ZERO'` with two decimals shows `0,00`, and
 `'ZERO_TO_BLANK'` empties what shows as `0,00`.

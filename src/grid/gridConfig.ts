@@ -640,7 +640,7 @@ export type ColumnConfig = {
     /**
      * makes the column's cells readonly while the grid is editable (`GridConfig.readonly: false`). The
      * grid draws red stripes behind them. The `isReadonly` hook ({@link GridHooks}) can decide per row
-     * instead
+     * instead. The user's from the grid config dialog (`format.readonly`, Read only) wins
      */
     readonly?: boolean;
 

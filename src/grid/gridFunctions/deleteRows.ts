@@ -1,4 +1,5 @@
 import { type Entity, isGroupRow } from '../../datasource/entity';
+import { readonlyOf } from '../columnFormat';
 import type { Grid } from '../grid';
 import { getLayoutFields } from './getLayoutFields';
 import { undoRedoAction, undoRedoInGrid } from './undoRedoKey';
@@ -21,7 +22,7 @@ export function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity
     return (
         hooks.isReadonly !== undefined &&
         fields.length > 0 &&
-        fields.every((field) => hooks.isReadonly?.(row, field, columns[field]?.readonly ?? false) === true)
+        fields.every((field) => hooks.isReadonly?.(row, field, readonlyOf(columns[field])) === true)
     );
 }
 

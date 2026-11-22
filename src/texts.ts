@@ -300,6 +300,11 @@ const DEFAULTS = {
     'columnSettings.badge.text': 'Text',
     'columnSettings.badge.link': 'Link',
     'columnSettings.badge.problem': 'Error',
+    'columnSettings.badge.multiline': 'Multiline',
+    'columnSettings.badge.readonly': 'Read only',
+    // editing: a text column's text of several lines, any column not edited in an editable grid
+    'columnSettings.multiline': 'Multiline',
+    'columnSettings.readonly': 'Read only',
     'columnSettings.badge.checkbox': 'Checkbox',
     'columnSettings.badge.numberOverride': 'Blank / 0',
     'columnSettings.badge.label': 'Label',
@@ -493,11 +498,16 @@ const DEFAULTS = {
     'grid.removeGroup': 'Remove the grouping on {title}',
 
     // Find (Ctrl+F in the grid): the find bar - its name for a screen reader, the input, the count of the
-    // matches and the buttons, with their tooltips. "Filter rows" is a toggle: only the rows with a match
+    // matches and the buttons, with their tooltips. "Match case" (its name, the text it shows, its
+    // tooltip) and "Filter rows" (only the rows with a match) are toggles
     'find.label': 'Find in the grid',
     'find.placeholder': 'Find',
     'find.count': '{current} of {count}',
     'find.none': 'No matches',
+    'find.matchCase': 'Match case',
+    'find.matchCase.text': 'Aa',
+    'find.matchCase.tooltip': 'Match case (Alt+C)',
+    'find.matchCase.tooltip.mac': 'Match case',
     'find.filterRows': 'Filter rows',
     'find.filterRows.tooltip': 'Show only the rows with a match',
     'find.previous': 'Previous match',
@@ -666,7 +676,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `format.*` | the display formats of the columns (`ColumnConfig.format`): `format.locale` the language of the names of a date, a BCP 47 tag for `Intl.DateTimeFormat` (`'en-US'`; not shown, `'nb-NO'` shows `søndag 22. november 2026`), and how a week and a quarter are written |
  * | `grid.*` | labels for screen readers |
- * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, "Filter rows", the buttons |
+ * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, "Match case", "Filter rows", the buttons |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |
  * | `lookup.*` | a lookup column (`ColumnConfig.editor`): the button of the cell, the select under it |

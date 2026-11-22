@@ -34,23 +34,31 @@ export interface FindAnchor {
 }
 
 /**
+ * A text as Find compares it: as it is with Match case (`caseSensitive`), else in lower case - in any
+ * case, `acme` finds `ACME CORP`
+ */
+function findCase(text: string, caseSensitive: boolean): string {
+    return caseSensitive ? text : text.toLowerCase();
+}
+
+/**
  * For a field, whether its cell shows a text for a row: the text the cell shows - its value through the
  * field's formatter, with the column's `numberOverride`, as renderRowCell shows it (cellTextOf) - holds
- * the text, in any case. The whole text of a cell of several lines, not only its first line. Not a
- * checkbox: a `boolean` cell shows no text.
- * @param needle the text to find, lower case, not empty
+ * the text, in any case or as it is with Match case. The whole text of a cell of several lines, not only
+ * its first line. Not a checkbox: a `boolean` cell shows no text.
+ * @param needle the text to find, through findCase, not empty
  */
-function cellShowsText(ctx: Pick<Grid, 'gridInterface'>, field: string, needle: string): (row: Entity) => boolean {
+function cellShowsText(
+    ctx: Pick<Grid, 'gridInterface'>,
+    field: string,
+    needle: string,
+    caseSensitive: boolean
+): (row: Entity) => boolean {
     const textOf = cellTextOf(ctx, field);
     return (row) => {
         const cell = textOf(row);
         // a formatter of plain JavaScript can give something else than text
-        return (
-            cell.type !== 'boolean' &&
-            String(cell.text ?? '')
-                .toLowerCase()
-                .includes(needle)
-        );
+        return cell.type !== 'boolean' && findCase(String(cell.text ?? ''), caseSensitive).includes(needle);
     };
 }
 
@@ -65,14 +73,15 @@ function cellShowsText(ctx: Pick<Grid, 'gridInterface'>, field: string, needle: 
  * Every cell's text is made: 100 000 rows of 10 fields are a million texts, some hundred ms.
  * @param ctx the grid, or an object with the grid's interface
  * @param text the text to find. An empty text finds nothing
+ * @param caseSensitive Match case: the text as it is, `Acme` does not find `ACME`. Default any case
  */
-export function findMatches(ctx: Pick<Grid, 'gridInterface'>, text: string): FindMatch[] {
-    const needle = text.toLowerCase();
+export function findMatches(ctx: Pick<Grid, 'gridInterface'>, text: string, caseSensitive = false): FindMatch[] {
+    const needle = findCase(text, caseSensitive);
     if (needle === '') {
         return [];
     }
     const fields = getLayoutFields(ctx.gridInterface);
-    const shows = fields.map((field) => cellShowsText(ctx, field, needle));
+    const shows = fields.map((field) => cellShowsText(ctx, field, needle, caseSensitive));
     const matches: FindMatch[] = [];
 
     ctx.gridInterface
@@ -98,10 +107,11 @@ export function findMatches(ctx: Pick<Grid, 'gridInterface'>, text: string): Fin
  * rows with a match.
  * @param ctx the grid, or an object with the grid's interface
  * @param text the text to find, not empty
+ * @param caseSensitive Match case, as findMatches
  */
-export function findRowFilter(ctx: Pick<Grid, 'gridInterface'>, text: string): (row: Entity) => boolean {
-    const needle = text.toLowerCase();
-    const shows = getLayoutFields(ctx.gridInterface).map((field) => cellShowsText(ctx, field, needle));
+export function findRowFilter(ctx: Pick<Grid, 'gridInterface'>, text: string, caseSensitive = false): (row: Entity) => boolean {
+    const needle = findCase(text, caseSensitive);
+    const shows = getLayoutFields(ctx.gridInterface).map((field) => cellShowsText(ctx, field, needle, caseSensitive));
     return (row) => shows.some((show) => show(row));
 }
 

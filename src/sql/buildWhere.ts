@@ -250,12 +250,13 @@ function buildGroup(node: Record<string, unknown>, context: Context, depth: numb
 }
 
 function buildCondition(node: Record<string, unknown>, context: Context, where: string): string | null {
-    checkKeys(node, ['field', 'operator', 'value', 'valueField', 'caseSensitive'], where);
+    checkKeys(node, ['field', 'operator', 'value', 'valueField', 'caseSensitive', 'literal'], where);
     // each is read once: a getter can not give one value to the check and another to the SQL
     const field = readName(own(node, 'field'), `${where}.field`);
     const operator = own(node, 'operator');
     const valueField = readName(own(node, 'valueField'), `${where}.valueField`);
     const caseSensitive = own(node, 'caseSensitive');
+    const literal = own(node, 'literal');
     const value = own(node, 'value');
 
     if (
@@ -268,6 +269,9 @@ function buildCondition(node: Record<string, unknown>, context: Context, where: 
     }
     if (caseSensitive !== undefined && caseSensitive !== null && typeof caseSensitive !== 'boolean') {
         throw new TypeError(`toSqlWhere: ${where}.caseSensitive is true or false, not ${show(caseSensitive)}`);
+    }
+    if (literal !== undefined && literal !== null && typeof literal !== 'boolean') {
+        throw new TypeError(`toSqlWhere: ${where}.literal is true or false, not ${show(literal)}`);
     }
     // the names are checked first: a field that is not in the columns throws, also in a condition the
     // grid would leave out
@@ -299,7 +303,7 @@ function buildCondition(node: Record<string, unknown>, context: Context, where: 
         // no value: the grid ignores it. A blank value never means "is blank", that is IS_BLANK
         return null;
     }
-    return compare(context, column, op, value, exact, `${where}.value`);
+    return compare(context, column, op, value, exact, `${where}.value`, literal === true);
 }
 
 /** a field or valueField: a text, or nothing (undefined, null, '') */
@@ -323,11 +327,22 @@ function columnOf(context: Context, field: string, where: string): Column {
 
 // ------------------------------------------------------------------ the conditions
 
-/** a condition with a value: field operator value */
-function compare(context: Context, column: Column, operator: FilterOperator, value: unknown, exact: boolean, where: string) {
+/**
+ * a condition with a value: field operator value
+ * @param literal FilterCondition.literal: `*`, `%` and `_` of a text are characters, not wildcards
+ */
+function compare(
+    context: Context,
+    column: Column,
+    operator: FilterOperator,
+    value: unknown,
+    exact: boolean,
+    where: string,
+    literal = false
+) {
     switch (column.type) {
         case 'text':
-            return compareText(context, column, operator, readText(context, value, where), exact);
+            return compareText(context, column, operator, readText(context, value, where), exact, literal);
         case 'number':
             return compareNumber(context, column, rangeOperator(operator), readNumber(value, where));
         case 'boolean':
@@ -339,12 +354,20 @@ function compare(context: Context, column: Column, operator: FilterOperator, val
 
 /**
  * Text: the pattern operators with LIKE (GLOB on sqlite) - `*` and `%` are wildcards (any text), `_` one
- * character, the rest is literal - and the comparisons a text does not offer (LESS_THAN ...) code point by code point. Whether a
- * blank row (null, `''`) matches is the grid's answer for `''`
+ * character, the rest is literal; with `literal` all of it is - and the comparisons a text does not offer
+ * (LESS_THAN ...) code point by code point. Whether a blank row (null, `''`) matches is the grid's answer
+ * for `''`
  */
-function compareText(context: Context, column: Column, operator: FilterOperator, text: string, exact: boolean): string {
+function compareText(
+    context: Context,
+    column: Column,
+    operator: FilterOperator,
+    text: string,
+    exact: boolean,
+    literal: boolean
+): string {
     const { dialect } = context;
-    const blankMatches = blankRowMatches('text', operator, text, exact);
+    const blankMatches = blankRowMatches('text', operator, text, exact, literal);
     const comparison = COMPARISON[operator];
     if (comparison && operator !== 'EQUAL' && operator !== 'NOT_EQUAL_TO') {
         return nullable(
@@ -357,12 +380,14 @@ function compareText(context: Context, column: Column, operator: FilterOperator,
     const fromStart = operator !== 'CONTAINS' && operator !== 'DOES_NOT_CONTAIN' && operator !== 'END_WITH';
     const toEnd = operator !== 'CONTAINS' && operator !== 'DOES_NOT_CONTAIN' && operator !== 'BEGIN_WITH';
     const any = dialect.anyText;
-    // split on the wildcards, kept: the text between them at the even places, the wildcards at the odd
-    const literal = text
+    // split on the wildcards, kept: the text between them at the even places, the wildcards at the odd -
+    // characters of the pattern with `literal`
+    const wildcard = (part: string) => (literal ? dialect.wildcardLiteral(part) : part === '_' ? dialect.oneChar : any);
+    const body = text
         .split(/([*%_])/)
-        .map((part, index) => (index % 2 === 0 ? dialect.patternLiteral(part) : part === '_' ? dialect.oneChar : any))
+        .map((part, index) => (index % 2 === 0 ? dialect.patternLiteral(part) : wildcard(part)))
         .join('');
-    const pattern = `${fromStart ? '' : any}${literal}${toEnd ? '' : any}`;
+    const pattern = `${fromStart ? '' : any}${body}${toEnd ? '' : any}`;
     const match = dialect.match(column.sql, foldedParam(context, pattern, exact), exact);
     const negated = operator === 'NOT_EQUAL_TO' || operator === 'DOES_NOT_CONTAIN';
     return nullable(column.sql, blankMatches, negated ? `NOT (${match})` : match);
@@ -750,8 +775,14 @@ function nullable(column: string, blankMatches: boolean, match: string): string 
 }
 
 /** what the grid's filter does with a blank (null) row: decides the null branch of the SQL */
-function blankRowMatches(type: SqlColumnType, operator: FilterOperator, value: unknown, caseSensitive: boolean): boolean {
-    return objectFilter({ value: null }, { field: 'value', operator, value, type, caseSensitive });
+function blankRowMatches(
+    type: SqlColumnType,
+    operator: FilterOperator,
+    value: unknown,
+    caseSensitive: boolean,
+    literal = false
+): boolean {
+    return objectFilter({ value: null }, { field: 'value', operator, value, type, caseSensitive, literal });
 }
 
 function not(sql: string): string {
