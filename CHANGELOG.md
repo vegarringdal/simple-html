@@ -1332,6 +1332,27 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Grid config: the tabs Columns and Detail form, a detail form of the current row (user request)
+
+##### Added
+- **The detail form**: a form of the current row at the right of the rows - a label and a field per chosen
+  field, in the chosen order; a multiline text in full (a field as tall as its text), a checkbox for a
+  boolean, the link of a link column under its value, the errors of validation under a field. It edits the
+  row as the cells do: the same readonly rules, the formatter parses, validation, one undo step a field
+  (Ctrl+Z / Ctrl+Y in the form); a lookup column is read only in it. It follows the current row, edits,
+  filters and sorting; "No row" without one. On a narrow grid it goes under the rows.
+- `GridConfig.detailForm` (the developer's default) and `GridState.detailForm` (`DetailForm`:
+  `{ show, fields, width? }`, width 300 by default, at least 150): getState / setState / resetState and JSON
+  keep it, `initialState.detailForm` too; an invalid one throws a `TypeError`.
+- `gridInterface.openDetailFormSettings()`: the dialog on its Detail form tab.
+- Sample `#sample/detail-form`; texts `columnSettings.tab.*`, `columnSettings.detailForm.*`, `detailForm.*`.
+
+##### Changed
+- **The column settings dialog is "Grid config"**, with the tabs *Columns* (what it had) and *Detail form*
+  (show it, its width, the fields checked and moved up / down - Alt+↑ / Alt+↓). Apply applies both tabs,
+  Cancel neither; the resets are those of the tab shown. The gear's name is "Grid config" too
+  (`columnSettings.title`, `footer.settings`); the header menu's entry stays *Column settings…*.
+
 #### The row menu of a row number: rows only (user request)
 
 ##### Changed
