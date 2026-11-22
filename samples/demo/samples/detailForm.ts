@@ -20,7 +20,7 @@ export const detailForm: DemoSample = {
     title: 'Detail form',
     group: 'Editing',
     description:
-        'The detail form (GridConfig.detailForm): the current row as a form at the right of the rows - a label and a value for each field picked, in their order. Notes has several lines and is not in the layout: the form shows all of it, in a field as tall as its lines. Click a row, or move with the arrows: the form follows. Edit in the form as in a cell - Ctrl+Z undoes - and the cells follow. The gear at the right end of the footer opens the grid config dialog: its tab Detail form turns the form on and off, sets its width and picks the fields and their order (Move up / Move down, Alt+↑ / Alt+↓). It is part of the state: Save and Restore keep it. Where the rows would get too little room beside it (a phone), the form is under them.',
+        'The detail form (GridConfig.detailForm): the current row as a form at the right of the rows - a label and a value for each field picked, in their order. Notes has several lines and is not in the layout: the form shows all of it, in a field as tall as its lines. Click a row, or move with the arrows: the form follows. Edit in the form as in a cell - Ctrl+Z undoes - and the cells follow. Its title collapses it to a narrow strip, and expands it again. Drag its left edge to make it wider or narrower (200 to 600px here: minWidth, maxWidth) - or Tab to the edge and use ArrowLeft / ArrowRight. The gear at the right end of the footer opens the grid config dialog: its tab Detail form turns the form on and off, expands it, sets its width, min and max and picks the fields and their order (drag a field by its handle, Move up / Move down, Alt+↑ / Alt+↓). It is part of the state: Save and Restore keep it - the width dragged and collapsed too. Where the rows would get too little room beside it (a phone), the form is under them.',
     run(stage) {
         const ui = createStage(stage);
 
@@ -39,8 +39,15 @@ export const detailForm: DemoSample = {
                     { fields: ['isActive'], width: 70 }
                 ]
             },
-            // the form the grid starts with: notes is a column of the config, not in the layout
-            detailForm: { show: true, fields: ['company', 'notes', 'country', 'date1', 'isActive'], width: 280 }
+            // the form the grid starts with: notes is a column of the config, not in the layout. Its edge is
+            // dragged between 200 and 600px
+            detailForm: {
+                show: true,
+                fields: ['company', 'notes', 'country', 'date1', 'isActive'],
+                width: 280,
+                minWidth: 200,
+                maxWidth: 600
+            }
         };
 
         const rows = generateRows(200).map((row, i) => ({ ...row, notes: NOTES[i % NOTES.length] }));
@@ -54,6 +61,11 @@ export const detailForm: DemoSample = {
         ui.button('Show / hide', () => {
             const form = gridInterface.getState().detailForm;
             gridInterface.setState({ detailForm: { ...form, show: !form.show } });
+        });
+        // what the button of its title does: expanded is part of the state
+        ui.button('Collapse / expand', () => {
+            const form = gridInterface.getState().detailForm;
+            gridInterface.setState({ detailForm: { ...form, expanded: form.expanded === false } });
         });
         let readonly = false;
         ui.button('Editing on / off', () => {

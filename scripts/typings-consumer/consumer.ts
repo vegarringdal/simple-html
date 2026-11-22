@@ -32,6 +32,7 @@ import {
     type DateFormat,
     DateFormatterYYYYMMDD,
     DateInterface,
+    type DetailForm,
     type Entity,
     type EventHandler,
     type ExcelOptions,
@@ -984,6 +985,23 @@ const zeroOverride: ColumnFormat = { numberOverride: 'ZERO' };
 // @ts-expect-error the values of a checkbox are text, also for a number field
 const numberChecked: CheckboxFormat = { checked: 1 };
 console.log(settingsColumns, zeroOverride, numberChecked);
+
+// the detail form: collapsed or expanded, its width between a least and a most - plain JSON, state
+const collapsedForm: DetailForm = {
+    show: true,
+    fields: ['name', 'notes'],
+    width: 320,
+    expanded: false,
+    minWidth: 200,
+    maxWidth: 600
+};
+gridInterface.setState({ detailForm: collapsedForm });
+const formExpanded: boolean | undefined = gridInterface.getState().detailForm.expanded;
+// @ts-expect-error expanded is true or false
+const expandedText: DetailForm = { show: true, fields: [], expanded: 'yes' };
+// @ts-expect-error the least width is a number of px
+const minWidthText: DetailForm = { show: true, fields: [], minWidth: '200px' };
+console.log(formExpanded, expandedText, minWidthText);
 
 // the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
 // a filter of the grid is a filter toSqlWhere takes

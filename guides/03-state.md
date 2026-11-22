@@ -17,8 +17,8 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case |
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
-| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format › and the grid config dialog change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
-| `detailForm` | the detail form: whether it is shown, its fields in their order and its width (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog changes, see [The detail form](02-grid-config.md#the-detail-form) |
+| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format ›, the grid config dialog and the column chooser's ✎ (a label) change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `detailForm` | the detail form: whether it is shown, its fields in their order, its width (dragged too) and its least and most width, expanded or collapsed (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog, the form's edge and its title change, see [The detail form](02-grid-config.md#the-detail-form) |
 
 ```ts
 const state = gridInterface.getState();
@@ -174,16 +174,22 @@ gridInterface.setState({ formats });
 - The rest of what the user sets in the grid config dialog is in a column's format too - its
   `label`, the header filter's `placeholder` / `placeholderLabel`, a number column's `numberOverride`,
   `checkbox` - so it is saved and given back with the formats, see
-  [Label, placeholder, blank / 0, checkboxes](08-formatting.md#label-placeholder-blank--0-checkboxes).
+  [Label, placeholder, blank / 0, checkboxes, multiline, read only](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only).
 
 ## The detail form in the state
 
 `detailForm` is the detail form at the right of the rows: whether it is shown, the fields it shows in
-their order, and its width - a view setting of the user, like the columns.
+their order, its width and its least and most width, and whether it is expanded or collapsed - a view
+setting of the user, like the columns.
 
 ```ts
 gridInterface.setState({ detailForm: { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 } });
 gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 }
+
+// collapsed to a strip, dragged between 200 and 500px
+gridInterface.setState({
+    detailForm: { show: true, fields: ['company', 'notes'], width: 300, expanded: false, minWidth: 200, maxWidth: 500 }
+});
 ```
 
 - It starts as `GridConfig.detailForm` (or `initialState.detailForm`), none by default
@@ -191,9 +197,15 @@ gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes
   sets it, `updateConfig()` without it keeps the user's.
 - The user changes it in the grid config dialog, tab *Detail form*: its Apply is a
   `setState({ detailForm })`. Save `getState()` to keep it.
+- And on the form itself: the width dragged at its left edge (or its arrow keys) is `width`, the button
+  of its title sets `expanded` - `false` collapsed, `true` expanded; left out it is expanded. The
+  dialog's *Expanded* is the same `expanded`: one setting, what the form is now.
+- `width` is laid out between `minWidth` (at least 150) and `maxWidth`, the state keeps what it was
+  given. `minWidth` and `maxWidth` are left out when they are none, `expanded` when it was not set.
 - A field is listed once; a field that is no column is shown too, labelled as the column chooser
-  labels it. `show` that is not a boolean, `fields` that is not a list of names or a `width` that is no
-  number of px throws a `TypeError`, and nothing of the state changes.
+  labels it. `show` or `expanded` that is not a boolean, `fields` that is not a list of names, a
+  `width`, `minWidth` or `maxWidth` that is no number of px, or a `minWidth` more than the `maxWidth`
+  throws a `TypeError`, and nothing of the state changes.
 - It is plain JSON.
 
 ## Header filters in the state

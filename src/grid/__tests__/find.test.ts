@@ -316,6 +316,7 @@ describe('find - the API', () => {
             open: true,
             text: 'acme',
             filterRows: false,
+            caseSensitive: false,
             count: 4,
             position: 1,
             current: { row: 2, field: 'name' }
@@ -347,6 +348,7 @@ describe('find - the API', () => {
             open: false,
             text: 'acme',
             filterRows: false,
+            caseSensitive: false,
             count: 0,
             position: 0,
             current: null
@@ -391,9 +393,25 @@ describe('find - the API', () => {
         mounted.gridInterface.closeFind();
 
         expect(events).toEqual([
-            { open: true, text: 'acme', filterRows: false, count: 4, position: 1, current: { row: 2, field: 'name' } },
-            { open: true, text: 'acme', filterRows: false, count: 4, position: 2, current: { row: 5, field: 'name' } },
-            { open: false, text: 'acme', filterRows: false, count: 0, position: 0, current: null }
+            {
+                open: true,
+                text: 'acme',
+                filterRows: false,
+                caseSensitive: false,
+                count: 4,
+                position: 1,
+                current: { row: 2, field: 'name' }
+            },
+            {
+                open: true,
+                text: 'acme',
+                filterRows: false,
+                caseSensitive: false,
+                count: 4,
+                position: 2,
+                current: { row: 5, field: 'name' }
+            },
+            { open: false, text: 'acme', filterRows: false, caseSensitive: false, count: 0, position: 0, current: null }
         ]);
     });
 
@@ -702,7 +720,7 @@ describe('find - the buttons', () => {
         ctrlF(inputAt(element, 0, 'city'));
         typeFind(element, 'acme');
         await afterDelay();
-        const [, previous, next, close] = findButtons(element);
+        const [, , previous, next, close] = findButtons(element);
 
         const press = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
         next.dispatchEvent(press);
@@ -798,7 +816,8 @@ describe('find - what a screen reader gets, the texts', () => {
         expect(findInput(element).getAttribute('aria-label')).toBe('Find');
         expect(findInput(element).getAttribute('placeholder')).toBe('Find');
         expect(bar(element).querySelector('.simple-html-grid-find-count')?.getAttribute('role')).toBe('status');
-        // in this order, which is the order of Tab: "Filter rows" first, after the input and the count
+        // in this order, which is the order of Tab: "Match case" and "Filter rows" first, after the input
+        // and the count
         expect(
             findButtons(element).map((button) => [
                 button.type,
@@ -807,6 +826,7 @@ describe('find - what a screen reader gets, the texts', () => {
                 button.getAttribute('aria-pressed')
             ])
         ).toEqual([
+            ['button', 'Match case', 'Match case (Alt+C)', 'false'],
             ['button', 'Filter rows', 'Show only the rows with a match', 'false'],
             ['button', 'Previous match', 'Previous match (Shift+Enter)', null],
             ['button', 'Next match', 'Next match (Enter)', null],
@@ -885,6 +905,7 @@ describe('find - filter rows', () => {
             open: true,
             text: 'acme',
             filterRows: true,
+            caseSensitive: false,
             count: 4,
             position: 1,
             current: { row: 0, field: 'name' }
@@ -896,7 +917,12 @@ describe('find - filter rows', () => {
         expect(filterButton(element).getAttribute('aria-pressed')).toBe('false');
         expect(shownIds(mounted)).toHaveLength(60);
         expect(footerCount(element)).toBe('60/60');
-        expect(gridInterface.getFind()).toMatchObject({ filterRows: false, count: 4, current: { row: 2, field: 'name' } });
+        expect(gridInterface.getFind()).toMatchObject({
+            filterRows: false,
+            caseSensitive: false,
+            count: 4,
+            current: { row: 2, field: 'name' }
+        });
     });
 
     it('expect the rows shown to be the rows of the marked cells: the text as the cells show it', async () => {
@@ -1168,7 +1194,15 @@ describe('find - filter rows: closing turns it off', () => {
         expect(shownIds(mounted)).toHaveLength(60);
         expect(document.activeElement).toBe(inputAt(element, 5, 'name'));
         expect(datasource.currentEntity).toBe(datasource.getRow(5));
-        expect(events.at(-1)).toEqual({ open: false, text: 'acme', filterRows: false, count: 0, position: 0, current: null });
+        expect(events.at(-1)).toEqual({
+            open: false,
+            text: 'acme',
+            filterRows: false,
+            caseSensitive: false,
+            count: 0,
+            position: 0,
+            current: null
+        });
         expect(findChip(element)).toBeNull();
 
         // open again: off
@@ -1182,7 +1216,7 @@ describe('find - filter rows: closing turns it off', () => {
         const { element, gridInterface, datasource } = mounted;
 
         gridInterface.find('acme', { filterRows: true });
-        findButtons(element)[3].click();
+        findButtons(element)[4].click();
         expect(shownIds(mounted)).toHaveLength(60);
 
         gridInterface.find('acme', { filterRows: true });
@@ -1310,5 +1344,183 @@ describe('find - filter rows: the API, the texts', () => {
         expect(filterButton(element).getAttribute('aria-label')).toBe('Filtrer rader');
         expect(filterButton(element).title).toBe('Vis bare radene med treff');
         expect(findChip(element)?.textContent?.trim()).toBe('Søk: acme');
+    });
+});
+
+/** the "Match case" toggle of the bar */
+const caseButton = (element: GridElement) => bar(element).querySelector('.simple-html-grid-find-case') as HTMLButtonElement;
+
+/** the matches as row:field */
+const matchCells = (mounted: MountedGrid, text: string, caseSensitive: boolean) =>
+    findMatches({ gridInterface: mounted.gridInterface }, text, caseSensitive).map((match) => `${match.row}:${match.field}`);
+
+describe('find - match case', () => {
+    it('expect the text as it is: the matches, the count and the marks', async () => {
+        const mounted = await mount();
+        const { element, gridInterface } = mounted;
+
+        // the names are "Acme 2", "Acme 5", "Acme 50", the city of row 5 "ACME town"
+        expect(matchCells(mounted, 'Acme', true)).toEqual(['2:name', '5:name', '50:name']);
+        expect(matchCells(mounted, 'ACME', true)).toEqual(['5:city']);
+        expect(matchCells(mounted, 'acme', true)).toEqual([]);
+        expect(matchCells(mounted, 'acme', false)).toEqual(['2:name', '5:name', '5:city', '50:name']);
+        // every line of a multiline cell, as it is
+        expect(matchCells(mounted, 'Banana', true)).toEqual(['7:notes']);
+        expect(matchCells(mounted, 'banana', true)).toEqual([]);
+
+        expect(gridInterface.find('ACME', { caseSensitive: true })).toBe(1);
+        expect(findCount(element)).toBe('1 of 1');
+        expect(matchesOnScreen(element)).toEqual(['5:city']);
+        expect(currentOnScreen(element)).toEqual(['5:city']);
+        expect(gridInterface.getFind()).toEqual({
+            open: true,
+            text: 'ACME',
+            filterRows: false,
+            caseSensitive: true,
+            count: 1,
+            position: 1,
+            current: { row: 5, field: 'city' }
+        });
+        expect(gridInterface.find('acme', { caseSensitive: true })).toBe(0);
+        expect(findCount(element)).toBe('No matches');
+    });
+
+    it('expect the toggle Aa to turn it on and off: pressed, the count, the focus left in the input', async () => {
+        const mounted = await mount();
+        const { element } = mounted;
+        const events = findEvents(mounted);
+        ctrlF(inputAt(element, 0, 'city'));
+        typeFind(element, 'Acme');
+        await afterDelay();
+        expect(findCount(element)).toBe('1 of 4');
+        expect(caseButton(element).getAttribute('aria-pressed')).toBe('false');
+
+        // a press keeps the focus where it is, as the other buttons
+        const press = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        caseButton(element).dispatchEvent(press);
+        expect(press.defaultPrevented).toBe(true);
+        caseButton(element).click();
+
+        expect(caseButton(element).getAttribute('aria-pressed')).toBe('true');
+        expect(findCount(element)).toBe('1 of 3');
+        expect(matchesOnScreen(element)).toEqual(['2:name', '5:name']);
+        expect(document.activeElement).toBe(findInput(element));
+        expect(events.at(-1)).toMatchObject({ caseSensitive: true, count: 3 });
+
+        caseButton(element).click();
+        expect(caseButton(element).getAttribute('aria-pressed')).toBe('false');
+        expect(findCount(element)).toBe('1 of 4');
+        expect(events.at(-1)).toMatchObject({ caseSensitive: false, count: 4 });
+    });
+
+    it('expect Alt+C in the bar to turn it on and off - not Ctrl+Alt+C (AltGr), not Option+C on a Mac (ç)', async () => {
+        const { element, gridInterface } = await mount();
+        ctrlF(inputAt(element, 0, 'city'));
+        typeFind(element, 'ACME');
+        const input = findInput(element);
+
+        const altC = key(input, 'c', { code: 'KeyC', altKey: true });
+        expect(altC.defaultPrevented).toBe(true);
+        expect(gridInterface.getFind()).toMatchObject({ caseSensitive: true, count: 1 });
+        expect(document.activeElement).toBe(input);
+
+        // on a button of the bar too, with Caps Lock
+        key(caseButton(element), 'C', { code: 'KeyC', altKey: true });
+        expect(gridInterface.getFind()).toMatchObject({ caseSensitive: false, count: 4 });
+
+        // AltGr on Windows is Ctrl+Alt, Option+C types ç on a Mac, Alt+Shift+C is another key
+        expect(key(input, 'c', { code: 'KeyC', altKey: true, ctrlKey: true }).defaultPrevented).toBe(false);
+        expect(key(input, 'ç', { code: 'KeyC', altKey: true }).defaultPrevented).toBe(false);
+        expect(key(input, 'C', { code: 'KeyC', altKey: true, shiftKey: true }).defaultPrevented).toBe(false);
+        expect(gridInterface.getFind().caseSensitive).toBe(false);
+    });
+
+    it('expect it first of the buttons: Tab from the input goes to it', async () => {
+        const { element } = await mount();
+        ctrlF(inputAt(element, 0, 'city'));
+
+        expect(findButtons(element)[0]).toBe(caseButton(element));
+        expect(caseButton(element).previousElementSibling?.classList.contains('simple-html-grid-find-count')).toBe(true);
+        expect(caseButton(element).tabIndex).toBe(0);
+    });
+
+    it('expect find(text) to leave it as it is, and the bar to keep it when it closes', async () => {
+        const { element, gridInterface } = await mount();
+
+        gridInterface.find('Acme', { caseSensitive: true });
+        expect(gridInterface.find('ACME')).toBe(1);
+
+        gridInterface.closeFind();
+        expect(gridInterface.getFind()).toMatchObject({ open: false, caseSensitive: true, count: 0 });
+
+        // Ctrl+F opens it with Match case on
+        ctrlF(inputAt(element, 0, 'city'));
+        expect(caseButton(element).getAttribute('aria-pressed')).toBe('true');
+        expect(gridInterface.getFind()).toMatchObject({ open: true, caseSensitive: true, count: 1 });
+
+        expect(gridInterface.find('ACME', { caseSensitive: false })).toBe(4);
+        // left out: as it is
+        expect(gridInterface.find('ACME', {})).toBe(4);
+    });
+
+    it('expect nothing while the grid is not on the page', async () => {
+        const mounted = await mount();
+        mounted.element.remove();
+
+        expect(mounted.gridInterface.find('acme', { caseSensitive: true })).toBe(0);
+        expect(mounted.gridInterface.getFind()).toMatchObject({ open: false, caseSensitive: false });
+    });
+
+    it('expect "Filter rows" to follow it: the rows of the marked cells, filtered again when it changes', async () => {
+        const mounted = await mount();
+        const { element, gridInterface } = mounted;
+
+        gridInterface.find('ACME', { filterRows: true });
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+
+        caseButton(element).click();
+        expect(shownIds(mounted)).toEqual([5]);
+        expect(footerCount(element)).toBe('1/60');
+
+        gridInterface.find('Acme');
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+        expect(matchesOnScreen(element)).toEqual(['0:name', '1:name', '2:name']);
+
+        gridInterface.find('Acme', { caseSensitive: false });
+        expect(shownIds(mounted)).toEqual([2, 5, 50]);
+        expect(matchesOnScreen(element)).toEqual(['0:name', '1:city', '1:name', '2:name']);
+    });
+
+    it('expect the chip of "Filter rows" to show that it matches case', async () => {
+        const { element, gridInterface } = await mount();
+
+        gridInterface.find('Acme', { filterRows: true });
+        expect(findChip(element)?.querySelector('.footer-filter-case')).toBeNull();
+
+        gridInterface.find('Acme', { caseSensitive: true });
+        const marker = findChip(element)?.querySelector('.footer-filter-case') as HTMLElement;
+        expect(marker.textContent?.trim()).toBe('Aa');
+        expect(marker.title).toBe('Match case');
+        expect(findChip(element)?.textContent?.replace(/\s+/g, '')).toBe('Find:AcmeAa');
+    });
+
+    it("expect the grid's texts: its name, what it shows and its tooltip - the Mac's without the key", async () => {
+        const texts = {
+            'find.matchCase': 'Skill store og små bokstaver',
+            'find.matchCase.text': 'Ss',
+            'find.matchCase.tooltip': 'Skill store og små (Alt+C)',
+            'find.matchCase.tooltip.mac': 'Skill store og små'
+        };
+        const { element, gridInterface } = await mount(config({ texts }));
+        gridInterface.find('acme');
+
+        expect(caseButton(element).getAttribute('aria-label')).toBe('Skill store og små bokstaver');
+        expect(caseButton(element).textContent?.trim()).toBe('Ss');
+        expect(caseButton(element).title).toBe('Skill store og små (Alt+C)');
+
+        // the platform the browser says it runs on, see isMacPlatform: read at each render
+        vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+        gridInterface.find('acme', { caseSensitive: true });
+        expect(caseButton(element).title).toBe('Skill store og små');
     });
 });

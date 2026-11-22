@@ -20,9 +20,10 @@ import { type SqlColumn, type SqlDateStorage, toSqlWhere } from '../../sql';
  * WHERE is two-valued: `NOT (sql)` selects exactly the other rows - no predicate is ever null.
  *
  * The data has every kind of value: blanks (null, '', 0), case, lines, the characters LIKE and GLOB
- * treat specially, numbers around 0, booleans with null, dates around midnight and both changes of the
- * clock in Oslo, stored five ways (SQLite text as a wall clock, as UTC, with Z; epoch milliseconds and
- * seconds). The grid gets each date as the app would read it from the database.
+ * treat specially (matched as wildcards, and as characters by a `literal` condition), numbers around 0,
+ * booleans with null, dates around midnight and both changes of the clock in Oslo, stored five ways
+ * (SQLite text as a wall clock, as UTC, with Z; epoch milliseconds and seconds). The grid gets each date
+ * as the app would read it from the database.
  *
  * Left out, documented in the SQL guide and tested on their own in toSqlWhere.test.ts: case of non-ASCII
  * letters (SQLite's LOWER and UPPER fold ASCII only, so the values that ignore case are ASCII), a
@@ -614,6 +615,25 @@ describe('toSqlWhere on SQLite selects the rows the grid selects', () => {
         }
         expect(mismatches.slice(0, 5)).toEqual([]);
         expect(count).toBeGreaterThan(5000);
+    });
+
+    it('expect a literal condition - the wildcards of the grid as characters - to select the same rows', () => {
+        const mismatches: Mismatch[] = [];
+        let count = 0;
+        const operators = ['EQUAL', 'NOT_EQUAL_TO', 'CONTAINS', 'DOES_NOT_CONTAIN', 'BEGIN_WITH', 'END_WITH'] as const;
+        for (const field of ['name', 'code']) {
+            for (const operator of operators) {
+                for (const caseSensitive of [false, true]) {
+                    for (const value of ASCII_TEXTS) {
+                        const extra = caseSensitive ? { caseSensitive: true } : {};
+                        check(data, { field, operator, value, literal: true, ...extra }, mismatches);
+                        count++;
+                    }
+                }
+            }
+        }
+        expect(mismatches.slice(0, 5)).toEqual([]);
+        expect(count).toBeGreaterThan(900);
     });
 
     it('expect BETWEEN, IN and NOT_IN to select the same rows, also with blanks and open ends', () => {

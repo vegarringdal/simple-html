@@ -268,6 +268,11 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
         checkbox(index).checked = !checkbox(index).checked;
         checkbox(index).dispatchEvent(new Event('change', { bubbles: true }));
     };
+    /** toggles the checkbox whose text has the id: the texts are their ids here */
+    const toggleText = (id: string) => {
+        const labels = Array.from(dialog().querySelectorAll<HTMLElement>('.column-settings-check'));
+        toggle(labels.findIndex((label) => label.textContent?.includes(id)));
+    };
     const option = (label: string) =>
         Array.from(dialog().querySelectorAll<HTMLElement>('[role="option"]')).find((element) =>
             element.textContent?.includes(label)
@@ -297,6 +302,9 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     // the address from a field that holds no address: the first row shown has the age 20
     type('url', '{age}');
     check();
+    // Multiline: its badge
+    toggleText('columnSettings.multiline');
+    check();
     // a number column: its format picker and the menu of the formats - one picked, the badge
     option('«Age»').click();
     check();
@@ -306,11 +314,14 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     check();
     // Show blank as 0 (Show as checkbox, Filter as shown, Show blank as 0, Show 0 as blank, Use the column
     // label, Filter as you type), a label and a placeholder of the user's: their badges
-    toggle(2);
+    toggleText('columnSettings.blankToZero');
     type('label', '«age2»');
     type('placeholder', '«x»');
     check();
-    toggle(4);
+    toggleText('columnSettings.placeholderLabel');
+    check();
+    // Read only: its badge
+    toggleText('columnSettings.readonly');
     check();
     // shown as checkboxes: the two values, their hint, each problem of them
     toggle(0);
@@ -351,13 +362,15 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
 }
 
 /**
- * The detail form - with a row, without one, without fields - and the Detail form tab of the grid config
- * dialog: a field of several lines and one that is not in the layout in its list, on a Mac too
+ * The detail form - with a row, without one, without fields, collapsed - and the Detail form tab of the
+ * grid config dialog: a field of several lines and one that is not in the layout in its list, on a Mac too
  */
 function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () => void) {
     const before = gridInterface.getState().detailForm;
-    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'] } });
+    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'], expanded: false } });
     datasource.setRowAsCurrentEntity(0);
+    check();
+    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'] } });
     check();
 
     gridInterface.openDetailFormSettings();
@@ -479,6 +492,12 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     checkMenu();
     (document.querySelector('[data-menu-id="header.column.chooser"]') as HTMLElement).click();
     check();
+    // the ✎ of a field: its label an input, then Esc
+    (document.querySelector('.simple-html-grid-chooser-rename') as HTMLElement).click();
+    check();
+    document
+        .querySelector('.simple-html-grid-chooser-label-input')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
 
     // the column menu, on a column number: with a column selected, so every entry is usable
     gridInterface.selectColumns([1]);

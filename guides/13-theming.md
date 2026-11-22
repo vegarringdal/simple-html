@@ -347,8 +347,9 @@ them.
 The classes: `simple-html-cell-find-match` on every match, `simple-html-cell-find-current` on the
 current one too. The find bar is `simple-html-grid-find`, in the grid's colours: the panel's background
 (`--simple-html-grid-main-bg-color`), the input of the header filters (`--simple-html-grid-sec-bg-color`),
-the frame and shadow of the tooltips. Its *Filter rows* button (`simple-html-grid-find-filter`) is
-filled with `--simple-html-grid-accent-color` while it is on (`aria-pressed="true"`), its funnel in
+the frame and shadow of the tooltips. Its *Match case* button (`simple-html-grid-find-case`, the text
+`Aa`) and *Filter rows* button (`simple-html-grid-find-filter`) are filled with
+`--simple-html-grid-accent-color` while they are on (`aria-pressed="true"`), the `Aa` and the funnel in
 `--simple-html-grid-accent-font-color`.
 
 ## Lookup columns
@@ -382,8 +383,8 @@ On `.simple-html-grid`, in `grid.css`.
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
 | `--simple-html-grid-main-bg-color` | the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor and the grid config dialog | `#f5f5f5` | `#374151` |
-| `--simple-html-grid-sec-bg-color` | the filter row, the inputs, pickers and buttons of the filter editor and the value list, the value list's box, the filter chips, the list of the columns and the preview of the column settings, the tooltips (through `--simple-html-grid-tooltip-bg-color`) | `#ffffff` | `#4b5563` |
-| `--simple-html-grid-alt-bg-color` | scrollbar tracks, the search input of the column chooser, the focus button of a cell | `#ffffff` | `#4b5563` |
+| `--simple-html-grid-sec-bg-color` | the filter row, the inputs, pickers and buttons of the filter editor and the value list, the value list's box, the column chooser's search, the fields of the detail form, the filter chips, the list of the columns and the preview of the column settings, the tooltips (through `--simple-html-grid-tooltip-bg-color`) | `#ffffff` | `#4b5563` |
+| `--simple-html-grid-alt-bg-color` | scrollbar tracks, the focus button of a cell | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-even` | the even rows | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-odd` | the odd rows | `#f7f7f7` | `#5a6370` |
 | `--simple-html-grid-main-bg-selected-odd` | selected rows (odd), the number of a selected column, scrollbar thumbs (through `--simple-html-grid-scrollbar-thumb-color`) | `#bdd4e7` | `#234882` |
@@ -392,13 +393,14 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-pinned-border` | the lines at the pinned columns and under the header, the frame of the filter editor, the tooltips (through `--simple-html-grid-tooltip-border-color`) and the column chooser's button, the line of a group (the bracket) in the filter editor | `#d1d0d0` | `#1f2937` |
 | `--simple-html-grid-sec-bg-border` | the line right of the grouping columns | `#e6e5e5` | `#1f2937` |
 | `--simple-html-grid-main-font-color` | the text | `#2e2d2d` | `#f9f7f7` |
-| `--simple-html-grid-sec-font-color` | placeholders - the filter row, the search boxes, a picker of the filter editor with nothing picked - the AND/OR between the filter chips, the "too many conditions" box | `#6b6b6b` | `#c8c8c8` |
+| `--simple-html-grid-sec-font-color` | placeholders - the filter row, the search boxes, a picker of the filter editor with nothing picked - the AND/OR between the filter chips, the "too many conditions" box, the drag handles of the column chooser and the Detail form tab, the column chooser's magnifying glass and ✎ | `#6b6b6b` | `#c8c8c8` |
 | `--simple-html-grid-boxshadow` | the inset shadow of the labels, the panel and the row selector | `#fffdfd` | `#4b5563` |
 | `--simple-html-grid-dropzone-color` | where a dragged column can go, the resize handle under the pointer | `rgba(129, 127, 127, 0.7)` | `rgba(151, 148, 148, 0.4)` |
 | `--simple-html-grid-focus-color` | the outline of the element with the keyboard focus | `#005fcc` | `#b3d7ff` |
-| `--simple-html-grid-accent-color` | the filled controls of the filter menu's value list and the filter editor: Apply and Apply & close, the AND / OR a group uses, the checkboxes of the value list (`accent-color`), the find bar's *Filter rows* while it is on. At least 3:1 to the menus and the dialog | `#2563eb` | `#93c5fd` |
+| `--simple-html-grid-accent-color` | the filled controls of the filter menu's value list and the filter editor: Apply and Apply & close, the AND / OR a group uses, the checkboxes of the value list (`accent-color`), the find bar's *Match case* and *Filter rows* while they are on. At least 3:1 to the menus and the dialog | `#2563eb` | `#93c5fd` |
 | `--simple-html-grid-accent-font-color` | the text on the accent colour, at least 4.5:1 to it | `#ffffff` | `#111827` |
-| `--simple-html-grid-control-border-color` | the frame of the controls of the value list and the filter editor: the search boxes, the pickers, the value inputs, the buttons. At least 3:1 to the menus and the dialog (WCAG 1.4.11) | `#8c8c8c` | `#9ca3af` |
+| `--simple-html-grid-control-border-color` | the frame of the controls of the value list and the filter editor: the search boxes (the column chooser's too), the pickers, the value inputs, the buttons; a field of the detail form under the pointer and with the focus. At least 3:1 to the menus and the dialog (WCAG 1.4.11) | `#8c8c8c` | `#9ca3af` |
+| `--simple-html-grid-detail-input-border-color` | the frame of a field of the detail form at rest: quiet, near the form's background - the field is seen by its own background (`--simple-html-grid-sec-bg-color`). The controls' frame under the pointer, the focus outline with the focus, the error colour with an error | `#d4d4d4` | `#5f6b7a` |
 | `--simple-html-grid-range-bg-color` | laid over the cells of a range of cells, see [Ranges of cells](#ranges-of-cells) | `rgba(37, 99, 235, 0.12)` | `rgba(59, 130, 246, 0.2)` |
 | `--simple-html-grid-range-border-color` | the line around a range of cells | `#1e40af` | `#dbeafe` |
 | `--simple-html-grid-find-match-color` | laid over a cell that matches Find (Ctrl+F), see [Find](#find) | `rgba(250, 204, 21, 0.4)` | `rgba(180, 83, 9, 0.45)` |

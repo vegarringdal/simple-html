@@ -210,10 +210,15 @@ const DEFAULTS = {
     'column.select.all': 'All columns',
     'column.select.clear': 'Clear column selection',
 
-    // the column chooser, from the header menu
+    // the column chooser, from the header menu: its search, the tooltip of a field's drag handle, the ✎ of a
+    // field and the input it opens - {label} the column's label, as the list shows it
     'columnChooser.title': 'All Fields:',
-    'columnChooser.search': 'search',
+    'columnChooser.search': 'Search',
     'columnChooser.close': 'Close',
+    'columnChooser.drag': 'Drag it into the header to add the column',
+    'columnChooser.rename': 'Rename {label}',
+    'columnChooser.label': 'Label of {label}',
+    'columnChooser.label.hint': 'Enter saves, Esc cancels. Empty: the column has its own label',
 
     // the filter editor
     'filterEditor.title': 'Filter Editor',
@@ -298,6 +303,11 @@ const DEFAULTS = {
     'columnSettings.badge.text': 'Text',
     'columnSettings.badge.link': 'Link',
     'columnSettings.badge.problem': 'Error',
+    'columnSettings.badge.multiline': 'Multiline',
+    'columnSettings.badge.readonly': 'Read only',
+    // editing: a text column's text of several lines, any column not edited in an editable grid
+    'columnSettings.multiline': 'Multiline',
+    'columnSettings.readonly': 'Read only',
     'columnSettings.badge.checkbox': 'Checkbox',
     'columnSettings.badge.numberOverride': 'Blank / 0',
     'columnSettings.badge.label': 'Label',
@@ -374,11 +384,21 @@ const DEFAULTS = {
     'columnSettings.tab.columns': 'Columns',
     'columnSettings.tab.detailForm': 'Detail form',
     'columnSettings.detailForm.show': 'Show the detail form',
+    'columnSettings.detailForm.expanded': 'Expanded',
+    'columnSettings.detailForm.expanded.hint':
+        'Collapsed, the form is a narrow strip: the button of its title expands it, and collapses it again',
     'columnSettings.detailForm.width': 'Width (px)',
-    'columnSettings.detailForm.width.hint': 'Where the rows would get too little room beside it, the form is under them',
+    'columnSettings.detailForm.minWidth': 'Min width (px)',
+    'columnSettings.detailForm.maxWidth': 'Max width (px)',
+    'columnSettings.detailForm.maxWidth.none': 'None',
+    'columnSettings.detailForm.width.hint':
+        'At least 150, between the min and the max width - a drag of the left edge of the form changes it too. Where the rows would get too little room beside it, the form is under them',
     'columnSettings.detailForm.fields': 'Fields of the form',
-    'columnSettings.detailForm.fields.hint': 'Space puts a field in the form or takes it out, Alt+↑ and Alt+↓ move it',
-    'columnSettings.detailForm.fields.hint.mac': 'Space puts a field in the form or takes it out, ⌥↑ and ⌥↓ move it',
+    'columnSettings.detailForm.fields.hint':
+        'Space puts a field in the form or takes it out, Alt+↑ and Alt+↓ move it - or drag it by its handle',
+    'columnSettings.detailForm.fields.hint.mac':
+        'Space puts a field in the form or takes it out, ⌥↑ and ⌥↓ move it - or drag it by its handle',
+    'columnSettings.detailForm.drag': 'Drag to move it',
     'columnSettings.detailForm.multiline': 'Several lines',
     'columnSettings.detailForm.hidden': 'Hidden',
     'columnSettings.detailForm.moveUp': 'Move up',
@@ -387,11 +407,15 @@ const DEFAULTS = {
     'columnSettings.detailForm.reset.tooltip': 'The detail form the grid starts with',
 
     // the detail form (GridConfig.detailForm): its title, the row it shows - {row} its number, as the row
-    // numbers show it - and what it says without a row or without fields
+    // numbers show it - and what it says without a row or without fields. The tooltips of the button of
+    // its title, the name of the splitter of its left edge
     'detailForm.title': 'Details',
     'detailForm.row': 'Row {row}',
     'detailForm.noRow': 'No row',
     'detailForm.noFields': 'No fields: pick them with the gear in the footer, tab Detail form',
+    'detailForm.collapse': 'Collapse the details',
+    'detailForm.expand': 'Expand the details',
+    'detailForm.resize': 'Width of the details',
 
     // the footer: the row count and the filter as chips
     'footer.rowCount': '{shown}/{total}',
@@ -489,11 +513,16 @@ const DEFAULTS = {
     'grid.removeGroup': 'Remove the grouping on {title}',
 
     // Find (Ctrl+F in the grid): the find bar - its name for a screen reader, the input, the count of the
-    // matches and the buttons, with their tooltips. "Filter rows" is a toggle: only the rows with a match
+    // matches and the buttons, with their tooltips. "Match case" (its name, the text it shows, its
+    // tooltip) and "Filter rows" (only the rows with a match) are toggles
     'find.label': 'Find in the grid',
     'find.placeholder': 'Find',
     'find.count': '{current} of {count}',
     'find.none': 'No matches',
+    'find.matchCase': 'Match case',
+    'find.matchCase.text': 'Aa',
+    'find.matchCase.tooltip': 'Match case (Alt+C)',
+    'find.matchCase.tooltip.mac': 'Match case',
     'find.filterRows': 'Filter rows',
     'find.filterRows.tooltip': 'Show only the rows with a match',
     'find.previous': 'Previous match',
@@ -662,7 +691,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `format.*` | the display formats of the columns (`ColumnConfig.format`): `format.locale` the language of the names of a date, a BCP 47 tag for `Intl.DateTimeFormat` (`'en-US'`; not shown, `'nb-NO'` shows `søndag 22. november 2026`), and how a week and a quarter are written |
  * | `grid.*` | labels for screen readers |
- * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, "Filter rows", the buttons |
+ * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, "Match case", "Filter rows", the buttons |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |
  * | `cell.*` | the cells: the marker of an edited cell, a cell of several lines and its editor |
  * | `lookup.*` | a lookup column (`ColumnConfig.editor`): the button of the cell, the select under it |

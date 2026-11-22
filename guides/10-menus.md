@@ -44,13 +44,32 @@ popover: the menu stays open while they are, and they close with it.
   [The keyboard](#the-keyboard). When the focus is in the menu as it closes - an item, a search
   field - it goes back to the element that had it when the menu opened.
 - The column chooser is a panel more than a menu: it stays open while you drag columns from it into
-  the header, and when another menu opens. It closes with its Close button, Esc in its search field,
-  and when the grid leaves the page.
+  the header, and when another menu opens. It closes with its Close button, Esc in its search field
+  (or on a ✎), and when the grid leaves the page. See [The column chooser](#the-column-chooser).
 
 Why `manual` and not `auto`, which would close it on a click outside and Esc by itself: where the
 browser sends `contextmenu` on the button press (macOS, Linux), the pointerup that follows is outside
 the menu, and an `auto` popover would be closed by it the moment a right click opened it. So the grid
 closes its menus itself, the same way everywhere.
+
+### The column chooser
+
+*Column chooser…* in the header menu opens a list of every column of the config, by their labels, in
+the order of the labels:
+
+- **The search** at its top is framed as the inputs of the dialogs, a magnifying glass in front of
+  *Search*. It finds a column by its label - a label the user gave it too - or its field name, in any
+  case: `fir` finds *Firm* and *first_name*.
+- **A field** has a drag handle at its left, the six dots of the Detail form tab's handles: the whole
+  row is dragged into the header to add the column, see
+  [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns).
+- **The ✎** at the right of a field (under the pointer and with the focus; always on a touch screen)
+  turns its label into an input with the label. Enter - or leaving the input - gives the column that
+  label, Esc leaves it as it was, and an empty input gives the column its own label again (the
+  input's placeholder). It is the label of the grid config dialog's *Label*: `ColumnFormat.label` in
+  `GridState.formats`, the other parts of the column's format kept - the header and everything that
+  names the column follow, `getState()` keeps it, `resetState()` takes it away. The ✎ is a button named
+  *Rename Firm*, a stop of Tab after the search.
 
 ### Submenus
 
@@ -87,12 +106,13 @@ An item with a `›` opens a submenu beside it:
   [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns)): still held at 500ms
   the header menu opens and the drag ends, nothing moves.
 - **Bigger targets**: on a touch screen (css `@media (pointer: coarse)`) the items of the menus and
-  submenus, the column chooser's fields, search and Close, and the rows of the filter menu's value list
+  submenus, the column chooser's fields and Close, and the rows of the filter menu's value list
   are 28px high (`--simple-html-grid-touch-row-height`), and the filter editor's edges and corners a finger can take (10px, 20px). The buttons,
-  the range block's operators and inputs and the searches keep their size, 24px - the WCAG 2.2 minimum
+  the range block's operators and inputs and the searches (the column chooser's too) keep their size, 24px - the WCAG 2.2 minimum
   target - in line with the rest of a dialog. With a mouse everything stays as it is.
 - **The column chooser**: its list scrolls with a finger; a field held still for 200ms is dragged, and
-  is shown over the chooser while it is (the dragged field is a popover too).
+  is shown over the chooser while it is (the dragged field is a popover too). The ✎ of each field is
+  always shown, 24px.
 
 ### The keyboard
 

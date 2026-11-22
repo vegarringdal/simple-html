@@ -1,8 +1,10 @@
 import { html, render, svg } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { Entity } from '../../datasource/entity';
+import type { FilterExpression } from '../../datasource/filterExpression';
 import type { FindResult } from '../findResult';
 import type { Grid } from '../grid';
+import { findFilter } from './findFilter';
 import { type FindAnchor, type FindMatch, findMatches, findRowFilter, matchAtOrAfter } from './findMatches';
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
@@ -13,8 +15,9 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
  * Find in the grid: Ctrl+F (Cmd+F) with the focus in the grid opens a find bar over its top right
- * corner - a text input, the count ("3 of 17"), "Filter rows", previous and next, close. The model
- * (which cells match, in which order) is findMatches.ts.
+ * corner - a text input, the count ("3 of 17"), "Match case" (Aa), "Filter rows", previous and next,
+ * close. The model (which cells match, in which order) is findMatches.ts, the filter a backend gets for
+ * "Filter rows" findFilter.ts.
  *
  * - typing finds as it goes, FIND_DELAY_MS after the last key: the cells that show the text get the
  *   class `simple-html-cell-find-match`, the current one `simple-html-cell-find-current`, and the grid
@@ -31,7 +34,12 @@ import { triggerScrollEvent } from './triggerScrollEvent';
  *   the datasource on top of its filter (`datasource.__setRowFilter()`, findRowFilter). The rows are
  *   filtered again when the text changes (after the typing stops), when the fields of the layout change,
  *   and whenever the datasource filters them - not for an edit, as for every filter. Closing the bar
- *   turns it off, every row is shown again; the footer shows a chip for it, its Clear turns it off too
+ *   turns it off, every row is shown again; the footer shows a chip for it, its Clear turns it off too.
+ *   `find-filter-change` is sent when the rows it filters with change: on, off, another text, Match
+ *   case, other fields - getFindFilter() gives the filter for a backend
+ * - "Match case" (Aa, a toggle button, Alt+C in the bar): the text as it is, `Acme` does not find `ACME`.
+ *   The matches, the count, the marks and "Filter rows" follow it. It stays as it is when the bar
+ *   closes, as the text
  *
  * The bar is an element of the grid, the first child of the grid element (absolute, over the panel):
  * the theme reaches it, and it scrolls with the page. Made the first time it opens, then hidden and
@@ -81,11 +89,14 @@ export interface FindBar {
     sent: string;
     /** "Filter rows" is on - the toggle is pressed. Off when the bar closes */
     filterRows: boolean;
+    /** "Match case" is on - its toggle (Aa) is pressed: the text is found as it is. Kept when the bar closes */
+    caseSensitive: boolean;
     /**
-     * what the rows are filtered with now: the text and the fields of the layout it was looked for in.
-     * null while "Filter rows" shows every row - it is off, the bar is closed or the text is empty
+     * what the rows are filtered with now: the text, Match case and the fields of the layout it was
+     * looked for in. null while "Filter rows" shows every row - it is off, the bar is closed or the text
+     * is empty
      */
-    rowFilter: { text: string; fields: string[] } | null;
+    rowFilter: { text: string; caseSensitive: boolean; fields: string[] } | null;
 }
 
 /**
@@ -120,6 +131,15 @@ export function findKeydown(ctx: Grid, event: KeyboardEvent) {
 }
 
 /**
+ * Alt+C in the find bar: Match case on or off, as in the find bars of Firefox and VS Code. By the letter
+ * the key types: on a Mac Option+C types `ç`, it stays a letter there (Tab to the toggle, Space). Not
+ * Ctrl+Alt, which is AltGr on Windows
+ */
+function isMatchCaseKey(event: KeyboardEvent): boolean {
+    return event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.key.toLowerCase() === 'c';
+}
+
+/**
  * Does an element of the find bar have the focus: the wheel and a swipe leave it there
  * (addScrollEventListeners, touchScroll), Esc and the close button move it into the grid
  */
@@ -135,8 +155,9 @@ export function findBarHasFocus(ctx: Grid): boolean {
  * @param options.text the text to find, else the one it had
  * @param options.focus the focus into the input, its text selected - as Ctrl+F does
  * @param options.filterRows "Filter rows" on or off, else as it is
+ * @param options.caseSensitive "Match case" on or off, else as it is
  */
-export function openFind(ctx: Grid, options: { text?: string; focus: boolean; filterRows?: boolean }) {
+export function openFind(ctx: Grid, options: { text?: string; focus: boolean; filterRows?: boolean; caseSensitive?: boolean }) {
     if (!ctx.domCreated) {
         return;
     }
@@ -157,6 +178,9 @@ export function openFind(ctx: Grid, options: { text?: string; focus: boolean; fi
     if (options.filterRows !== undefined) {
         bar.filterRows = options.filterRows;
     }
+    if (options.caseSensitive !== undefined) {
+        bar.caseSensitive = options.caseSensitive;
+    }
     // now, not after a wait: the count is returned, and Ctrl+F shows what the text finds right away
     runFind(ctx, true);
     if (options.focus) {
@@ -167,10 +191,11 @@ export function openFind(ctx: Grid, options: { text?: string; focus: boolean; fi
 }
 
 /**
- * Closes the find bar: the matches are not shown any more, the text is kept for the next time. "Filter
- * rows" is turned off: every row the filter lets through is shown again. When the focus was in the bar
- * (Esc, the close button) it goes to the cell of the current match - the active cell now, its row the
- * current row - else back to the cell (or what else in the grid) it came from. `find-change` is sent.
+ * Closes the find bar: the matches are not shown any more, the text and Match case are kept for the next
+ * time. "Filter rows" is turned off: every row the filter lets through is shown again. When the focus
+ * was in the bar (Esc, the close button) it goes to the cell of the current match - the active cell now,
+ * its row the current row - else back to the cell (or what else in the grid) it came from.
+ * `find-change` is sent.
  * @param moveFocus false: the focus is left where it is - the grid leaves the page (disconnectElement)
  */
 export function closeFind(ctx: Grid, moveFocus = true) {
@@ -245,13 +270,14 @@ export function findDataChanged(ctx: Grid) {
 export function getFindResult(ctx: Grid): FindResult {
     const bar = ctx.findBar;
     if (!bar) {
-        return { open: false, text: '', filterRows: false, count: 0, position: 0, current: null };
+        return { open: false, text: '', filterRows: false, caseSensitive: false, count: 0, position: 0, current: null };
     }
     const match = bar.matches[bar.index];
     return {
         open: bar.open,
         text: bar.text,
         filterRows: bar.filterRows,
+        caseSensitive: bar.caseSensitive,
         count: bar.matches.length,
         position: bar.index + 1,
         current: match ? { row: match.row, field: match.field } : null
@@ -273,6 +299,20 @@ export function setFindFilterRows(ctx: Grid, on: boolean) {
 }
 
 /**
+ * Turns "Match case" on or off - the toggle of the bar (Aa, Alt+C), `gridInterface.find(text, {
+ * caseSensitive })`: the text is found again now, the grid scrolls to the current match. "Filter rows"
+ * filters the rows again with it. Nothing while the bar is closed
+ */
+export function setFindCaseSensitive(ctx: Grid, on: boolean) {
+    const bar = ctx.findBar;
+    if (!bar?.open) {
+        return;
+    }
+    bar.caseSensitive = on;
+    runFind(ctx, true);
+}
+
+/**
  * Turns "Filter rows" off without filtering the rows: for the footer's Clear and the filter menu's
  * Clear All Filters (clearAllColumnFilters), which filter the rows once after it. The bar stays open,
  * its matches stay
@@ -287,6 +327,7 @@ export function clearFindFilterRows(ctx: Grid) {
     ctx.gridInterface.getDatasource().__setRowFilter(null);
     renderFindBar(ctx, bar);
     sendChange(ctx, bar);
+    sendFilterChange(ctx);
 }
 
 /**
@@ -295,6 +336,33 @@ export function clearFindFilterRows(ctx: Grid) {
  */
 export function findFilterRowsText(ctx: Grid): string | null {
     return ctx.findBar?.rowFilter?.text ?? null;
+}
+
+/**
+ * "Filter rows" filters with Match case now, for the chip in the footer: false while it shows every row
+ */
+export function findFilterRowsCaseSensitive(ctx: Grid): boolean {
+    return ctx.findBar?.rowFilter?.caseSensitive === true;
+}
+
+/**
+ * The filter of the rows "Filter rows" shows now, for a backend: `gridInterface.getFindFilter()` and
+ * `find-filter-change`, see findFilter.ts. null while it shows every row - off, the bar closed, an
+ * empty text. The text, Match case and the fields are the ones the rows were filtered with: after the
+ * typing stopped
+ * @param fields the fields the filter may name - a backend's columns. Default the fields Find searched
+ */
+export function getFindFilter(ctx: Grid, fields?: readonly string[]): FilterExpression | null {
+    const rowFilter = ctx.findBar?.rowFilter;
+    if (!rowFilter) {
+        return null;
+    }
+    if (!fields) {
+        return findFilter(ctx, rowFilter.text, rowFilter.caseSensitive, rowFilter.fields);
+    }
+    // the fields Find searched that the backend has, and the condition of no row on one it has
+    const named = rowFilter.fields.filter((field) => fields.includes(field));
+    return findFilter(ctx, rowFilter.text, rowFilter.caseSensitive, named, fields[0]);
 }
 
 /**
@@ -330,11 +398,18 @@ function makeFindBar(ctx: Grid): FindBar {
     element.className = 'simple-html-grid-find';
     element.setAttribute('role', 'search');
     element.hidden = true;
-    // Esc in the input or on a button closes it. Canceled: a modal dialog the grid is in stays open
+    // Esc in the input or on a button closes it. Canceled: a modal dialog the grid is in stays open.
+    // Alt+C turns Match case on or off, the focus stays where it is
     element.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !event.isComposing && !event.defaultPrevented) {
+        if (event.isComposing || event.defaultPrevented) {
+            return;
+        }
+        if (event.key === 'Escape') {
             event.preventDefault();
             closeFind(ctx);
+        } else if (isMatchCaseKey(event) && ctx.findBar) {
+            event.preventDefault();
+            setFindCaseSensitive(ctx, !ctx.findBar.caseSensitive);
         }
     });
     ctx.element.prepend(element);
@@ -352,6 +427,7 @@ function makeFindBar(ctx: Grid): FindBar {
         scrollWhenFound: false,
         sent: '',
         filterRows: false,
+        caseSensitive: false,
         rowFilter: null
     };
     return ctx.findBar;
@@ -457,7 +533,7 @@ function runFind(ctx: Grid, scroll: boolean) {
     bar.timer = null;
     bar.scrollWhenFound = false;
 
-    bar.matches = findMatches(ctx, bar.text);
+    bar.matches = findMatches(ctx, bar.text, bar.caseSensitive);
     bar.cells = new Map();
     for (const match of bar.matches) {
         const fields = bar.cells.get(match.entity) ?? new Set<string>();
@@ -477,8 +553,9 @@ function runFind(ctx: Grid, scroll: boolean) {
  * "Filter rows": the rows the datasource shows follow the find - the rows with a match (findRowFilter)
  * while the bar is open, the toggle is on and the text is not empty, every row else. The rows are
  * filtered again (`datasource.filter()`, the filter runs with it) only when that changed: turned on or
- * off, another text, other fields in the layout. An edit does not filter them again, as for every
- * filter: a row edited so it no longer matches stays until the rows are filtered next.
+ * off, another text, Match case, other fields in the layout - and `find-filter-change` is sent. An edit
+ * does not filter them again, as for every filter: a row edited so it no longer matches stays until the
+ * rows are filtered next.
  *
  * The function the datasource gets is made anew every time all the same: when the datasource filters
  * on its own (a filter, setData, an upsert) it reads the columns as they are now
@@ -491,16 +568,28 @@ function filterRows(ctx: Grid, bar: FindBar) {
             bar.rowFilter = null;
             datasource.__setRowFilter(null);
             datasource.filter();
+            sendFilterChange(ctx);
         }
         return;
     }
     const fields = getLayoutFields(ctx.gridInterface);
-    const same = bar.rowFilter?.text === bar.text && bar.rowFilter.fields.join('\n') === fields.join('\n');
-    bar.rowFilter = { text: bar.text, fields };
-    datasource.__setRowFilter(findRowFilter(ctx, bar.text));
+    const same =
+        bar.rowFilter?.text === bar.text &&
+        bar.rowFilter.caseSensitive === bar.caseSensitive &&
+        bar.rowFilter.fields.join('\n') === fields.join('\n');
+    bar.rowFilter = { text: bar.text, caseSensitive: bar.caseSensitive, fields };
+    datasource.__setRowFilter(findRowFilter(ctx, bar.text, bar.caseSensitive));
     if (!same) {
         datasource.filter();
+        sendFilterChange(ctx);
     }
+}
+
+/**
+ * `find-filter-change`: the rows "Filter rows" filters with changed, the filter a backend gets now
+ */
+function sendFilterChange(ctx: Grid) {
+    ctx.gridInterface.__callSubscribers('find-filter-change', { filter: getFindFilter(ctx) });
 }
 
 /**
@@ -531,9 +620,9 @@ function sendChange(ctx: Grid, bar: FindBar) {
 
 /**
  * The bar: the input, the count (a status, read out when it changes - after the typing stopped, or a
- * step), "Filter rows" (a toggle button: `aria-pressed`), previous, next and close. The buttons keep the
- * focus where it is when they are clicked: in the input, so Enter goes on from there. The texts are read
- * on every render, a rebuild shows changed ones
+ * step), "Match case" and "Filter rows" (toggle buttons: `aria-pressed`), previous, next and close. The
+ * buttons keep the focus where it is when they are clicked: in the input, so Enter goes on from there.
+ * The texts are read on every render, a rebuild shows changed ones
  */
 function renderFindBar(ctx: Grid, bar: FindBar) {
     bar.element.setAttribute('aria-label', gridText(ctx, 'find.label'));
@@ -573,6 +662,16 @@ function renderFindBar(ctx: Grid, bar: FindBar) {
                     }
                 }}
             /><span class="simple-html-grid-find-count" role="status">${status}</span
+            ><button
+                type="button"
+                class="simple-html-grid-find-button simple-html-grid-find-case"
+                aria-label=${gridText(ctx, 'find.matchCase')}
+                aria-pressed=${bar.caseSensitive ? 'true' : 'false'}
+                title=${keyText(ctx, 'find.matchCase.tooltip')}
+                @mousedown=${keepFocus}
+                @click=${() => setFindCaseSensitive(ctx, !bar.caseSensitive)}
+            >
+                ${gridText(ctx, 'find.matchCase.text')}</button
             ><button
                 type="button"
                 class="simple-html-grid-find-button simple-html-grid-find-filter"

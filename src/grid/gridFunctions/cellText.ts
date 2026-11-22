@@ -117,6 +117,6 @@ export function cellTextOf(
         const formatted = type === fieldConfig.type ? textOf(row) : datasource.getFormatter(field, type).format(row[field]);
         // as the cell: by the field's type, numberOverride is an option of a number column
         const text = fieldConfig.type === 'number' ? overrideNumberText(formatted, numberOverride, zero) : formatted;
-        return { type, text, multiline: isMultilineCell(fieldConfig, type, text) };
+        return { type, text, multiline: isMultilineCell(fieldConfig, type, text, column) };
     };
 }

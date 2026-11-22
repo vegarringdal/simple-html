@@ -32,7 +32,7 @@
     /* slate-950: an input in a bar or a menu (the search field of the library's Select): the filter
        row, the inputs, the value list, the filter chips */
     --simple-html-grid-sec-bg-color: light-dark(#f1f5f9, #080f21);
-    /* slate-900: the scrollbar tracks (the library's scrollbars), the search of the column chooser */
+    /* slate-900: the scrollbar tracks (the library's scrollbars) */
     --simple-html-grid-alt-bg-color: light-dark(#f8fafc, #172033);
     /* slate-950: the rows, on the ground of the page (--dock-bg). The other rows half a step lighter:
        midway to slate-900, as the library lifts its own surfaces */
@@ -109,6 +109,9 @@
     /* slate-500: the frame of the controls of the value list and the filter editor. The library's
        fields have slate-700, under 3:1 to the menus: slate-500 is the first of its scale with 3:1 */
     --simple-html-grid-control-border-color: light-dark(#64748b, oklch(55.4% 0.046 257.417));
+    /* slate-700 (slate-300 in light): the frame of a field of the detail form at rest - the library's
+       fields have it, the field is seen by its background. slate-500 under the pointer, as above */
+    --simple-html-grid-detail-input-border-color: light-dark(#cbd5e1, oklch(37.2% 0.044 257.287));
     /* a range of cells: a blue-500 tint at 15% (the library's info chip) and a blue-400 line */
     --simple-html-grid-range-bg-color: oklch(62.3% 0.214 259.815 / 0.15);
     --simple-html-grid-range-border-color: light-dark(#2563eb, oklch(70.7% 0.165 254.624));

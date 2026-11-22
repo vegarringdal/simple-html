@@ -457,6 +457,12 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         if (set?.placeholder !== undefined || set?.placeholderLabel) {
             marks.push('columnSettings.badge.placeholder');
         }
+        if (set?.multiline) {
+            marks.push('columnSettings.badge.multiline');
+        }
+        if (set?.readonly) {
+            marks.push('columnSettings.badge.readonly');
+        }
         return marks;
     };
 
@@ -908,6 +914,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     delete next.link;
                     delete next.number;
                     delete next.numberOverride;
+                    delete next.multiline;
                     next.checkbox = { checked: CHECKED_VALUE, unchecked: UNCHECKED_VALUE };
                 } else {
                     delete next.checkbox;
@@ -1009,6 +1016,33 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         </div>`;
     };
 
+    /**
+     * Editing (the user: "for text we should also be able to set if it's multiline or not, and readonly in
+     * edit mode"): *Multiline* for a text column that is not shown as checkboxes (`ColumnFormat.multiline`)
+     * and *Read only* for every column (`ColumnFormat.readonly`: not edited, also in an editable grid). Each
+     * starts as the column has it - the field's `multiline`, the column's `readonly` - and set back to that
+     * it is left out of the format
+     */
+    const editingSettings = () => {
+        const own = {
+            multiline: gridInterface.getDatasource().getField(field).multiline === true,
+            readonly: gridInterface.__getGridConfig().columns[field]?.readonly === true
+        };
+        const set = (key: 'multiline' | 'readonly', on: boolean) =>
+            change((next) => {
+                if (on === own[key]) {
+                    delete next[key];
+                } else {
+                    next[key] = on;
+                }
+            });
+        const multiline =
+            kind === 'text' && format?.checkbox === undefined
+                ? checkbox('columnSettings.multiline', format?.multiline ?? own.multiline, (on) => set('multiline', on))
+                : nothing;
+        return html`${multiline} ${checkbox('columnSettings.readonly', format?.readonly ?? own.readonly, (on) => set('readonly', on))}`;
+    };
+
     const settingsOf = () => {
         // shown as checkboxes: no text to format
         const checkboxes = format?.checkbox !== undefined;
@@ -1103,7 +1137,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         <span class="column-settings-heading-label">${labelOf(field)}</span>
                         <span class="column-settings-option-type">${typeName(field)}</span>
                     </div>
-                    ${labelSettings()} ${settingsOf()} ${placeholderSettings()} ${operatorSettings()} ${preview()}
+                    ${labelSettings()} ${settingsOf()} ${editingSettings()} ${placeholderSettings()} ${operatorSettings()} ${preview()}
                 </div>
             </div>
             ${detailFormTabPanel(ctx, dialog, settings.detailForm, settings.tab, update)}

@@ -391,3 +391,72 @@ describe('column format - the checkboxes of a text or number column', () => {
         });
     });
 });
+
+describe('column format - multiline and read only of the user', () => {
+    const fields = (): DatasourceOptions => ({ fields: { age: 'number', notes: { type: 'text', multiline: true } } });
+    const people = () => [
+        { name: 'Ann', age: 30, notes: 'one' },
+        { name: 'Bob', age: 0, notes: 'two' }
+    ];
+
+    it("expect multiline: true to make a text column of several lines, false to take the field's away", async () => {
+        const { gridInterface, datasource } = await mountGrid(columns({}, 'name', 'notes'), people(), fields());
+        const row = datasource.getAllData()[0];
+        const multiline = (field: string) => cellTextOf({ gridInterface }, field)(row).multiline;
+        expect([multiline('name'), multiline('notes')]).toEqual([false, true]);
+
+        gridInterface.setState({ formats: { name: { multiline: true }, notes: { multiline: false } } });
+        expect([multiline('name'), multiline('notes')]).toEqual([true, false]);
+        // a value with a line break is of several lines still: what it shows
+        row.notes = 'one\ntwo';
+        expect(multiline('notes')).toBe(true);
+    });
+
+    it('expect readonly: true to make the cells read only in an editable grid, false to make a readonly column editable', async () => {
+        const { element, gridInterface, datasource } = await mountGrid(
+            columns({ age: { readonly: true } }, 'name', 'age'),
+            people(),
+            fields()
+        );
+        const row = datasource.getAllData()[0];
+        expect([gridInterface.__isCellReadonly(row, 'name'), gridInterface.__isCellReadonly(row, 'age')]).toEqual([false, true]);
+
+        gridInterface.setState({ formats: { name: { readonly: true }, age: { readonly: false } } });
+        expect([gridInterface.__isCellReadonly(row, 'name'), gridInterface.__isCellReadonly(row, 'age')]).toEqual([true, false]);
+        expect(cells(element, 'name')[0].readOnly).toBe(true);
+        expect(cells(element, 'age')[0].readOnly).toBe(false);
+    });
+
+    it('expect the isReadonly hook to get the readonly of the user, and to have the last word', async () => {
+        const seen: boolean[] = [];
+        const { gridInterface, datasource } = await mountGrid(columns({}, 'name'), people(), fields(), {
+            isReadonly: (_row, _field, readonly) => {
+                seen.push(readonly);
+                return false;
+            }
+        });
+        gridInterface.setState({ formats: { name: { readonly: true } } });
+        seen.length = 0;
+        expect(gridInterface.__isCellReadonly(datasource.getAllData()[0], 'name')).toBe(false);
+        expect(seen).toEqual([true]);
+    });
+
+    it('expect a TypeError for multiline on a field that is not text, with checkbox, on a lookup column; readonly true or false', async () => {
+        const { gridInterface } = await mountGrid(columns({}, 'name', 'age'), people(), fields());
+        expect(() => gridInterface.setState({ formats: { age: { multiline: true } } })).toThrow(
+            "setState: formats.age.multiline is for a text field, 'age' is number"
+        );
+        expect(() => gridInterface.setState({ formats: { name: { multiline: true, checkbox: {} } } })).toThrow(
+            'a checkbox shows no text, it is the one or the other'
+        );
+        expect(() => gridInterface.setState({ formats: { name: { multiline: 'yes' as unknown as boolean } } })).toThrow(
+            'multiline is "yes", it is true or false'
+        );
+        expect(() => gridInterface.setState({ formats: { age: { readonly: 1 as unknown as boolean } } })).toThrow(
+            'readonly is 1, it is true or false'
+        );
+        // a readonly of any type
+        gridInterface.setState({ formats: { age: { readonly: true } } });
+        expect(gridInterface.getState().formats.age).toEqual({ readonly: true });
+    });
+});

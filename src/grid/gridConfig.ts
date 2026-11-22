@@ -400,9 +400,9 @@ export type GridConfig = {
      * it all. The cells' values can be edited there too, see {@link DetailForm}.
      *
      * Part of the grid's state (`GridState.detailForm`): the user turns it on, picks the fields and
-     * their order in the grid config dialog (the gear in the footer, tab *Detail form*), and
-     * `getState()` has what they picked, to save. `resetState()` goes back to this one (unless
-     * `initialState.detailForm` is given).
+     * their order in the grid config dialog (the gear in the footer, tab *Detail form*), drags its width
+     * and collapses it, and `getState()` has what they did, to save. `resetState()` goes back to this one
+     * (unless `initialState.detailForm` is given). `expanded: false` starts it collapsed.
      *
      * @sample detail-form
      * @example
@@ -412,7 +412,7 @@ export type GridConfig = {
      * const config: GridConfig = {
      *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['city'], width: 120 }] },
      *     // the notes are not in the layout: the form shows them, all their lines
-     *     detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320 }
+     *     detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320, minWidth: 200, maxWidth: 600 }
      * };
      * ```
      */
@@ -438,8 +438,13 @@ export type GridConfig = {
  * - **A narrow grid** - where the rows would get less room than the form beside it, or the scrolling
  *   columns less than 150px (a phone, wide pinned columns) - has the form under the rows instead, 40 % of
  *   the grid's height.
+ * - **Collapsed** (`expanded: false`) it is a narrow strip at the right of the rows - a bar over the
+ *   footer under them - with its title: the button of its title bar expands it, and collapses it again.
+ * - **Its width**: the user drags the form's left edge (or its arrow keys) between `minWidth` and
+ *   `maxWidth`, and sets all three in the grid config dialog. The width dragged is `width`.
  *
- * Plain JSON, part of the state: `getState()` gives it, `setState({ detailForm })` sets it.
+ * Plain JSON, part of the state: `getState()` gives it, `setState({ detailForm })` sets it - what the user
+ * changed with it: the fields, the width dragged, collapsed or expanded.
  *
  * @sample detail-form
  * @example
@@ -449,6 +454,9 @@ export type GridConfig = {
  * const detailForm: DetailForm = { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 };
  * gridInterface.setState({ detailForm });
  * gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 }
+ *
+ * // collapsed to a strip, between 200 and 500px when the user drags it wider
+ * gridInterface.setState({ detailForm: { ...detailForm, expanded: false, minWidth: 200, maxWidth: 500 } });
  * ```
  */
 export interface DetailForm {
@@ -456,8 +464,21 @@ export interface DetailForm {
     show: boolean;
     /** the fields it shows, in this order: fields of the columns, or any field of the rows */
     fields: string[];
-    /** its width in px, default 300 - at least 150 */
+    /**
+     * its width in px, default 300 - laid out between `minWidth` and `maxWidth`. The user changes it by
+     * dragging the form's left edge
+     */
     width?: number;
+    /**
+     * `false`: collapsed, a narrow strip with the form's title - the button in its title bar expands it.
+     * Default `true`. The button changes it, so a saved state keeps what the user made it last; the grid
+     * config dialog has it too (*Expanded*)
+     */
+    expanded?: boolean;
+    /** the least width in px a drag (and `width`) gives the form, default and at least 150 */
+    minWidth?: number;
+    /** the most width in px a drag (and `width`) gives the form, default none - the rows keep their room */
+    maxWidth?: number;
 }
 
 /**
@@ -658,7 +679,7 @@ export type ColumnConfig = {
     /**
      * makes the column's cells readonly while the grid is editable (`GridConfig.readonly: false`). The
      * grid draws red stripes behind them. The `isReadonly` hook ({@link GridHooks}) can decide per row
-     * instead
+     * instead. The user's from the grid config dialog (`format.readonly`, Read only) wins
      */
     readonly?: boolean;
 
@@ -945,9 +966,9 @@ export interface GridState {
      */
     formats: Record<string, ColumnFormat>;
     /**
-     * the detail form - whether it is shown, its fields in their order and its width - what
-     * `GridConfig.detailForm` starts with and the grid config dialog (tab *Detail form*) changes. See
-     * {@link DetailForm}
+     * the detail form - whether it is shown, its fields in their order, its width (dragged too), whether
+     * it is expanded or collapsed - what `GridConfig.detailForm` starts with and the user changes: the
+     * grid config dialog (tab *Detail form*), the form's edge and its title bar. See {@link DetailForm}
      */
     detailForm: DetailForm;
 }

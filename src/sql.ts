@@ -28,8 +28,9 @@ import { buildWhere } from './sql/buildWhere';
  * `WHERE tenant_id = $1 AND ${sql}`, with `firstParam: 2`.
  *
  * The rules are the grid's, see the filtering guide "Operators": a text ignores case unless the
- * condition is `caseSensitive` (`*` and `%` are wildcards, `_` one character), a blank number is 0, a
- * blank boolean false, a blank date is no date, a date is its day in the user's `timeZone`. A condition
+ * condition is `caseSensitive` (`*` and `%` are wildcards, `_` one character, unless it is `literal`), a
+ * blank number is 0, a blank boolean false, a blank date is no date, a date is its day in the user's
+ * `timeZone`. Find's filter (`gridInterface.getFindFilter()`) is a filter like any other. A condition
  * the grid ignores (no field, no operator, no value) is left out. Where SQL does not do exactly what the
  * grid does, the SQL guide says so.
  *
@@ -94,7 +95,7 @@ export type SqlDialect = 'postgres' | 'oracle' | 'sqlite' | 'mssql';
  * field of that type - the same names as the grid's `FieldType`.
  *
  * - `'text'` - texts, ignoring case unless the condition is `caseSensitive`, `*` and `%` are wildcards,
- *   `_` one character
+ *   `_` one character - characters like any other when the condition is `literal`
  * - `'number'` - numbers, a blank (null) is 0
  * - `'boolean'` - true and false, a blank is false
  * - `'date'` - the day, in the user's time zone (`SqlOptions.timeZone`)

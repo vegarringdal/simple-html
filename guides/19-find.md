@@ -3,9 +3,11 @@
 Ctrl+F (Cmd+F on a Mac) with the focus in the grid opens a find bar over the grid's top right corner:
 type a text, and every cell that shows it is marked - the current match more - with the count beside
 it, `3 of 17`. Enter goes to the next match, Shift+Enter to the previous one, and the grid scrolls to
-it. Esc closes the bar and puts the focus in the cell of the current match. The funnel button,
-*Filter rows*, shows only the rows with a match (see [below](#filter-rows)). A browser's find does not
-work in a grid: only the rows on screen are in the page, and the text is in inputs.
+it. Esc closes the bar and puts the focus in the cell of the current match. The button `Aa`, *Match
+case*, finds the text as it is typed (see [below](#match-case)); the funnel button, *Filter rows*, shows
+only the rows with a match (see [below](#filter-rows)) - and a backend can load the same rows with SQL
+(see [Filter rows on a backend](#filter-rows-on-a-backend)). A browser's find does not work in a grid:
+only the rows on screen are in the page, and the text is in inputs.
 
 ```sample find
 ```
@@ -32,20 +34,25 @@ In the find bar:
 | Enter, F3 | the next match. After the last one, the first. Right after typing, before the matches showed: the first match |
 | Shift+Enter, Shift+F3 | the previous match. Before the first one, the last |
 | Esc | closes the bar. The focus goes to the cell of the current match, which is the active cell then and its row the current row - as moving to it with the keys makes it. Without a match, back to the cell (or the header filter) Ctrl+F was pressed in. *Filter rows* is turned off |
-| Tab, Shift+Tab | the buttons: *Filter rows* (the funnel), previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid, Tab from the close button goes on to the header filters |
-| Space, Enter | on *Filter rows*: turns it on or off |
+| Alt+C | *Match case* on or off, the focus stays where it is - as in the find bars of Firefox and VS Code. Not on a Mac: Option+C types `ç` there |
+| Tab, Shift+Tab | the buttons: *Match case* (`Aa`), *Filter rows* (the funnel), previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid, Tab from the close button goes on to the header filters |
+| Space, Enter | on *Match case* or *Filter rows*: turns it on or off |
 
 The focus stays in the input while you go from match to match, as in a browser: a click on ↑ or ↓
-(or the funnel) keeps it there too. *Filter rows* has no key of its own: Tab from the input, Space,
-Shift+Tab back. Alt+R would type `®` on a Mac (Option+R), and is the key of regular expressions in
-other find bars (VS Code). The wheel scrolls the grid and leaves the focus in the bar. A click in a cell puts
-the focus there and leaves the bar open; Ctrl+F gets back to it.
+(or `Aa`, the funnel) keeps it there too. *Filter rows* has no key of its own: Tab from the input,
+Space, Shift+Tab back. Alt+R would type `®` on a Mac (Option+R), and is the key of regular expressions in
+other find bars (VS Code). On a Mac *Match case* is Tab and Space too, its tooltip leaves out Alt+C. The
+wheel scrolls the grid and leaves the focus in the bar. A click in a cell puts the focus there and leaves
+the bar open; Ctrl+F gets back to it.
 
 ## What is found
 
 - **The text a cell shows**: its value through the field's formatter - a date as `2026-03-14` (or
   `14.03.2026` with that formatter), `12,5` with a decimal comma, a `0` shown blank (`numberOverride`)
-  not as `0`. The text contains what you typed, in any case: `acme` finds `ACME CORP`.
+  not as `0`. The text contains what you typed, in any case: `acme` finds `ACME CORP` - with *Match
+  case* as it is typed.
+- **The text as it is typed**: `*`, `%`, `_` and `?` are characters, no wildcards - `50%` finds
+  `50% off`, not `500`.
 - **Every line** of a cell of several lines, also those it does not show.
 - **The displayed rows**: after the filter, in the sort order. When grouped, the rows of the expanded
   groups; the rows of a collapsed group are not displayed, they are not found. The group rows (their
@@ -59,6 +66,29 @@ the focus there and leaves the bar open; Ctrl+F gets back to it.
   it - else the first match. While you type, the current match stays while it still matches (`acm`,
   `acme`), else it is the next one after it.
 - An empty text finds nothing.
+
+## Match case
+
+The button `Aa` in the bar, *Match case*, is a toggle (`aria-pressed`), filled in the accent colour while
+it is on - as *Filter rows*. On, the text is found as it is typed: `Acme` finds `Acme 2`, not `ACME
+CORP` or `acme`. Off (the default), in any case.
+
+- **Everything follows it**: the matches, the count, the marked cells, the current match (it stays while
+  it still matches, else the next one) - and *Filter rows*, which filters the rows again with it. The
+  grid scrolls to the current match, as for typing.
+- **Alt+C** in the bar turns it on and off, Space or Enter on the button; a click keeps the focus in the
+  input.
+- **It is kept** when the bar closes, as the text: Ctrl+F opens the bar with it as it was. It is not
+  part of the grid's state.
+- **The chip** of *Filter rows* in the footer has the marker `Aa` (the text `footer.matchCase`) while it
+  matches case, as a condition of the filter that matches case.
+- Case is the case of JavaScript (`toLowerCase()`): `Ø` and `ø` are one letter in any case.
+
+```ts
+gridInterface.find('Acme', { caseSensitive: true }); // Acme as it is, not ACME
+gridInterface.getFind().caseSensitive; // true
+gridInterface.find('acme', { caseSensitive: false }); // in any case again
+```
 
 ## How the matches look
 
@@ -107,6 +137,72 @@ gridInterface.find('norway'); // another text: it stays on
 gridInterface.find('norway', { filterRows: false }); // every row, the bar stays open
 ```
 
+## Filter rows on a backend
+
+*Filter rows* filters the rows the grid has, with the text the cells show: it is not part of the
+filter, so `datasource.getFilter()` and a backend do not see it. When a backend loads the rows (and only
+the rows a filter lets through, with [`toSqlWhere()`](22-sql.md)), **`gridInterface.getFindFilter()`**
+gives *Filter rows* as a filter: AND it to the filter, and the SQL selects the rows with a match.
+
+```ts
+import { and, type FilterExpression } from '@simple-html/grid';
+import { toSqlWhere } from '@simple-html/grid/sql';
+
+gridInterface.find('acme', { filterRows: true });
+const find = gridInterface.getFindFilter();
+// { group: 'OR', children: [
+//     { field: 'company', operator: 'CONTAINS', value: 'acme', literal: true },
+//     { field: 'country', operator: 'CONTAINS', value: 'acme', literal: true } ] }
+
+// in the browser: the filter and the find, sent to the backend as JSON
+const parts = [datasource.getFilter(), find].filter((part): part is FilterExpression => part !== null);
+const body = JSON.stringify({ filter: and(...parts), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+
+// in the backend: a filter like any other
+const { sql, params } = toSqlWhere(JSON.parse(body).filter, {
+    dialect: 'postgres',
+    columns: { company: 'company', country: 'country', age: { column: 'age', type: 'number' } },
+    timeZone: 'Europe/Oslo'
+});
+```
+
+- **`null`** while *Filter rows* shows every row: it is off, the bar is closed, the text is empty. It is
+  the text, *Match case* and the fields the rows were filtered with - after the typing stopped.
+- **`find-filter-change`** is sent each time it changes - *Filter rows* turned on or off, another text
+  (when the typing stops), *Match case*, the columns of the layout - with `{ filter }`, what
+  `getFindFilter()` gives. Not when the data changes or the current match moves: load the rows again on
+  it, without a loop. `setData()` with the rows the backend sent filters them again in the browser too.
+- **`getFindFilter({ fields })`**: the fields the filter may name, the ones the backend has a column
+  for - a field made in the browser is not in the database, and `toSqlWhere()` throws for a field that
+  is not in its `columns`. A field Find searches that is not in the list is left out.
+
+It is an OR group of a condition for each field Find searches (the fields of the layout), where SQL can
+match the cells the way the grid shows them:
+
+| field | the condition | the same rows as Find? |
+| --- | --- | --- |
+| text, shown as it is (the built-in text formatter) | `CONTAINS` the text, `literal: true` - `*`, `%` and `_` are characters, as in Find - and `caseSensitive: true` with *Match case*. Every line of a multiline text | yes |
+| a lookup column (`editor`) | `IN` the values of its lookup whose label holds the text - as the cells show it. A text field's values as they are (`caseSensitive: true`) | yes, but a value the lookup has no row for: the cell shows the value, the filter has not got it |
+| number | `EQUAL` the number the text reads as (the field's formatter), when the cell of that number shows the text: `30` is `EQUAL 30`, `12,5` with a decimal comma 12.5, `30.0` with two decimals 30. Not `0` - `EQUAL 0` would select the blank rows too - unless a blank is shown as `0` (`numberOverride: 'BLANK_TO_ZERO'`) | fewer: Find marks `130` and `30.5` for `30` too, the text of a cell is not in the database |
+| date, datetime | `EQUAL` the day (the second) when the text is all of what its cell shows: `2026-03-14`, `2026-03-14T10:30:00` | fewer: a part of a date (`2026-03`, `14`) is no day, Find marks it |
+| boolean, a column of checkboxes | none: Find does not search a checkbox either | yes |
+| a text field with a formatter or a template (`format.text`) of its own, a column with `dynamicCellTypeColumn` | none: the text a cell shows is not the value in the database | fewer |
+
+So the filter selects **the rows *Filter rows* shows, or fewer - never a row without a match**: the same
+rows on text fields and lookup columns, which the tests check against SQLite. When no field gives a
+condition, it is a condition of no row (`IN []` on the first field, `1=0` in SQL) - as no cell the SQL
+can match shows the text. The rows the backend sends are filtered again in the browser by *Filter rows*,
+so the grid shows the rows with a match whatever the SQL selected. Where SQL and the grid differ (case
+of letters that are not ASCII, a lookup with many matching labels) is in the
+[SQL guide](22-sql.md#where-the-sql-differs-from-the-grid).
+
+*Filter rows* in the grid keeps its own test of the rows - the text the cells show - and does not filter
+with this filter: that one has fewer rows for a number or a date, and the rows shown and the marked cells
+agree.
+
+```sample sql
+```
+
 ## It follows the data
 
 While the bar is open the text is found again when what the grid shows changes: rows set, added or
@@ -133,12 +229,17 @@ gridInterface.findPrevious();
 const result: FindResult = gridInterface.getFind();
 // { open: true, text: 'acme', filterRows: false, count: 17, position: 3, current: { row: 5, field: 'company' } }
 
-// only the rows with a match, as the funnel button of the bar
+// only the rows with a match, as the funnel button of the bar; the text as it is, as Aa
 gridInterface.find('acme', { filterRows: true });
+gridInterface.find('Acme', { caseSensitive: true });
 
 gridInterface.on('find-change', ({ open, count, position }) => {
     console.log(open ? `${position} of ${count}` : 'find closed');
 });
+
+// Filter rows as a filter, for a backend - see above
+gridInterface.on('find-filter-change', ({ filter }) => console.log(filter));
+gridInterface.getFindFilter();
 
 // as Ctrl+F: the focus into the bar - for a button or a menu entry of your own
 gridInterface.openFind();
@@ -153,16 +254,19 @@ gridInterface.closeFind();
 - **`findNext()`** and **`findPrevious()`** move the current match, as Enter and Shift+Enter, and
   return its cell: `{ row, field }`, `row` an index in the displayed rows (`datasource.getRows()`) as in
   the grid events. `null` while the bar is closed or nothing matches.
+- **`find(text, { caseSensitive })`** turns *Match case* on or off; left out, it stays as it is.
 - **`closeFind()`** closes it, as Esc: when the focus was in the bar it goes to the current match.
   *Filter rows* is turned off.
-- **`getFind()`** gives what it has found, see `FindResult`: `open`, `text`, `filterRows`, `count`,
-  `position` (1 to `count`, 0 without a match) and `current`. Plain JSON.
+- **`getFind()`** gives what it has found, see `FindResult`: `open`, `text`, `filterRows`,
+  `caseSensitive`, `count`, `position` (1 to `count`, 0 without a match) and `current`. Plain JSON.
 - **`find-change`** is sent with the same each time it changes: the bar opened or closed, the typing
-  stopped, the current match moved, *Filter rows* turned on or off, the matches were found again after
-  the data changed. Not when nothing changed.
+  stopped, the current match moved, *Filter rows* or *Match case* turned on or off, the matches were
+  found again after the data changed. Not when nothing changed.
+- **`getFindFilter()`** and **`find-filter-change`**: *Filter rows* as a filter for a backend, see
+  [above](#filter-rows-on-a-backend).
 
-Without the grid on the page they do nothing: `find()` returns 0, `getFind()` gives a closed find. The
-matches and *Filter rows* are not part of `getState()`.
+Without the grid on the page they do nothing: `find()` returns 0, `getFind()` gives a closed find,
+`getFindFilter()` null. The matches, *Match case* and *Filter rows* are not part of `getState()`.
 
 ## What a screen reader gets
 
@@ -171,8 +275,9 @@ matches and *Filter rows* are not part of `getState()`.
 - The count is a status (`role="status"`): a screen reader reads it out when it changes - after the
   typing stopped, at each next and previous: `3 of 17`, `No matches`.
 - The buttons are buttons, named "Previous match", "Next match" and "Close", with the key in their
-  tooltip. *Filter rows* is a toggle button named "Filter rows" (`find.filterRows`), `aria-pressed`
-  true while it is on; the funnel is hidden from a screen reader. While it filters, the footer's row
+  tooltip. *Match case* is a toggle button named "Match case" (`find.matchCase`) - it shows `Aa` - and
+  *Filter rows* one named "Filter rows" (`find.filterRows`), `aria-pressed` true while they are on; the
+  funnel is hidden from a screen reader. A change of the count is read out after *Match case* too. While it filters, the footer's row
   count (`3/500`, a status) is read out when it changes.
 - The texts are `find.*`, see [Texts](12-texts.md#find). The keys are in the table of
   [Keyboard and accessibility](14-accessibility.md#the-find-bar).
@@ -184,8 +289,11 @@ matches and *Filter rows* are not part of `getState()`.
   button.
 - **The current match is not read out**, only the count: the focus stays in the input. Esc puts the
   focus in its cell, which is read then.
-- **Contains, in any case**: no match case, whole word or regular expression. Not the group rows, the
-  rows of collapsed groups, the hidden fields, the checkboxes.
+- **Contains**, in any case or with *Match case*: no whole word or regular expression. Not the group
+  rows, the rows of collapsed groups, the hidden fields, the checkboxes.
+- **The find filter of a backend** (`getFindFilter()`) finds a number or a date by its whole value
+  only, and not the cells a formatter of your own writes: fewer rows than *Filter rows*, see
+  [the table](#filter-rows-on-a-backend).
 - **No Cmd+G / Ctrl+G** for the next match: F3, Enter in the bar, `findNext()`.
 - **A large grid**: each search makes the text of every cell, 100 000 rows of 10 fields are a million
   texts - some hundred ms. It runs once the typing (or the changes of the data) stop. *Filter rows*

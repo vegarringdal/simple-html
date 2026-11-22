@@ -1,5 +1,5 @@
 import type { Entity, GroupRow } from '../datasource/entity';
-import type { FilterOperator } from '../datasource/filterExpression';
+import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
 import type { CellRange } from './cellRange';
 import type { FindResult } from './findResult';
 import type { ColumnConfig } from './gridConfig';
@@ -243,4 +243,35 @@ export interface GridEvents {
      * ```
      */
     'find-change': FindResult;
+
+    /**
+     * The rows Find's "Filter rows" shows changed what they are: it was turned on or off, its text
+     * changed (sent when the typing stops), "Match case" was turned on or off, the columns of the layout
+     * changed while it filters. Not when the data changes, nor when the current match moves - so a
+     * backend that loads the rows can load them again on it without a loop.
+     *
+     * `filter` is what `gridInterface.getFindFilter()` gives now: the rows with a match as a filter, for
+     * `toSqlWhere()` - null while "Filter rows" shows every row. See the find guide.
+     *
+     * @sample sql
+     * @example
+     * ```ts
+     * import { and, type FilterExpression } from '@simple-html/grid';
+     *
+     * gridInterface.on('find-filter-change', async ({ filter }) => {
+     *     // the datasource's filter AND the find's: an empty AND is no filter
+     *     const parts = [datasource.getFilter(), filter].filter((part): part is FilterExpression => part !== null);
+     *     const response = await fetch('/api/customers', {
+     *         method: 'POST',
+     *         headers: { 'Content-Type': 'application/json' },
+     *         body: JSON.stringify({ filter: and(...parts) })
+     *     });
+     *     datasource.setData(await response.json());
+     * });
+     * ```
+     */
+    'find-filter-change': {
+        /** the filter of the rows "Filter rows" shows, as `getFindFilter()` gives it - null for every row */
+        filter: FilterExpression | null;
+    };
 }

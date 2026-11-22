@@ -105,7 +105,8 @@ export class Filter {
             operator: expression.operator,
             value: expression.valueField ? rowData[expression.valueField] : expression.value,
             type,
-            caseSensitive
+            caseSensitive,
+            literal: expression.literal === true
         });
     }
 
