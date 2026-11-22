@@ -462,8 +462,7 @@ function editSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
     const editable = () => !gridInterface.__getGridConfig().readonly;
 
     // the selected rows a revert changes: edited, or marked for deletion
-    const toRevert = () =>
-        datasource.getSelectedRows().filter((row) => row.__controller?.__edited || row.__controller?.__isDeleted);
+    const toRevert = () => datasource.getSelectedRows().filter(canRevert);
 
     return {
         type: 'submenu',
@@ -503,7 +502,7 @@ function editSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
                 id: 'row.edit.revertRow',
                 label: gridText(ctx, 'row.edit.revertRow'),
                 visible: editable,
-                disabled: () => !rowData.__controller?.__edited && !rowData.__controller?.__isDeleted,
+                disabled: () => !canRevert(rowData),
                 action: () => {
                     datasource.resetRows(rowData);
                     triggerScrollEvent(ctx);
@@ -522,6 +521,18 @@ function editSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
             }
         ]
     };
+}
+
+/**
+ * true when "Undo row edits" (`datasource.resetRows()`) changes the row: it is edited, it is marked for
+ * deletion - or it is new and not marked yet: a new row is not on the server, the revert marks it
+ */
+function canRevert(row: Entity): boolean {
+    const controller = row.__controller;
+    if (controller?.__edited) {
+        return true;
+    }
+    return controller?.__isNew ? !controller.__isDeleted : Boolean(controller?.__isDeleted);
 }
 
 /**

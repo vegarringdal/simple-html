@@ -601,12 +601,15 @@ export class Datasource<T = any> {
     }
 
     /**
-     * Reverts rows: their fields get their original values back and a row marked for deletion is
-     * unmarked - {@link resetDataSelectionOnly}, for the rows given.
+     * Reverts rows to what the server has: their fields get their original values back and a row
+     * marked for deletion is unmarked - {@link resetDataSelectionOnly}, for the rows given.
      *
-     * - **A new row stays**, with the values it was added with (`addNewEmpty(row)`), still new. Unlike
-     *   `resetDataSelectionOnly()`, which removes it: a revert can be undone, and undo never adds a row
-     *   back. To get rid of a new row, mark it for deletion.
+     * - **A new row is marked for deletion**: it is not on the server. Its fields get the values it was
+     *   added with (`addNewEmpty(row)`) and it is marked - shown struck through, left out of
+     *   `getChanges()` and `hasChanges()`, removed with the other marked rows when the changes are
+     *   saved (`clearMarkedForDeletion()`) or thrown away (`resetData()`). Not removed at once as by
+     *   `resetDataSelectionOnly()`: a revert can be undone, and undo never adds a row back - `undo()`
+     *   brings the new row back, unmarked, with its edits.
      * - It is one step of the undo history: {@link undo} brings the edits and the marks back.
      * - The fields are validated as for an edit: an error of an edit goes away with it, an original
      *   value that breaks a rule shows its error.
@@ -625,7 +628,7 @@ export class Datasource<T = any> {
      * ```
      */
     public resetRows(rows: Entity | Entity[]): void {
-        this.__dataContainer.__resetRows(rows);
+        this.__dataContainer.__resetRows(rows, true);
     }
 
     /**

@@ -490,8 +490,10 @@ datasource.resetRows(datasource.getSelectedRows());
 ```
 
 - A revert is a step of the history: `undo()` brings the edits back.
-- **A new row stays**, with the values it was added with, still new: a revert can be undone, and
-  undo never adds a row back. To drop a new row, delete it. `resetDataSelectionOnly()` removes the
+- **A new row is marked for deletion**, with the values it was added with: it is not on the server,
+  so that is where a revert takes it. Struck through, it is left out of `getChanges()`, and it goes
+  with the other marked rows when the changes are saved. It is not removed at once: a revert can be
+  undone, and `undo()` brings the new row back with its edits. `resetDataSelectionOnly()` removes the
   new rows it resets, and undo does not bring those back.
 - The fields are validated as for an edit.
 - A field that is not edited (`getChanges()` would not list it) is left as it is.

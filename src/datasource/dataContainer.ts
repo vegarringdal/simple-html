@@ -937,13 +937,15 @@ export class DataContainer {
      * @internal
      * `datasource.resetRows()`: the rows get their original values back and lose their deletion mark,
      * through the proxy - one step of the undo history, the fields are validated as for an edit. A
-     * new row stays, with the values it was added with
+     * new row gets the values it was added with
      * @param rows a row or a list of rows. Rows that are not in the container are skipped
+     * @param discardNew `true` (`datasource.resetRows()`): a new row is marked for deletion - as it is on
+     * the server, where it is not. `false` (resetDataSelection, which removes new rows): unmarked too
      */
-    public __resetRows(rows: Entity | Entity[]) {
+    public __resetRows(rows: Entity | Entity[], discardNew = false) {
         for (const row of this.rowsIn(rows)) {
-            this.setDeleted(row, false);
             const controller = row.__controller;
+            this.setDeleted(row, discardNew && controller.__isNew === true);
             if (controller.__edited) {
                 for (const field in controller.__originalValues) {
                     row[field] = controller.__originalValues[field];

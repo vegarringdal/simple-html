@@ -421,8 +421,8 @@ export interface GridMenus {
  * | `row.edit.undo` | Undo last change (Ctrl+Z) - `datasource.undo()`, the last edit, paste, clear, delete or revert. Greyed out when there is nothing to undo | the grid is editable |
  * | `row.edit.redo` | Redo (Ctrl+Y) - `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
  * | `row.edit.revertCell` | Undo cell edit - the cell's original value (`datasource.resetField()`). Greyed out when the cell is not edited | the grid is editable |
- * | `row.edit.revertRow` | Undo row edits - the row right clicked back to its original values, unmarked for deletion (`datasource.resetRows(row)`), no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
- * | `row.edit.revertRows` | Undo row edits (selected rows) - the selected rows back, unmarked for deletion (`datasource.resetRows()`). Greyed out when no selected row is edited or marked | the grid is editable |
+ * | `row.edit.revertRow` | Undo row edits - the row right clicked back to its original values, unmarked for deletion (`datasource.resetRows(row)`), no selection needed; a new row is marked for deletion (it is not on the server). Greyed out when the row is not edited, not marked and not new | the grid is editable |
+ * | `row.edit.revertRows` | Undo row edits (selected rows) - the selected rows back, unmarked for deletion (`datasource.resetRows()`); the new ones marked for deletion. Greyed out when no selected row is edited, marked or new | the grid is editable |
  * | `row.select` | Select › - a submenu: what Shift and Ctrl do with the mouse, for a finger (and every input) | |
  * | `row.select.row` | This row - the row in or out of the selection, as Ctrl+click on its number; a ✓ while it is selected. In `'single'` mode it replaces the row selected | the selection mode is not `'none'` |
  * | `row.select.rowsTo` | Rows from N to here - from the anchor (N, the row selected last without Shift) to this row, as Shift+click on its number. Greyed out without an anchor (N is this row then), when the anchor is this row, and in `'single'` mode | the selection mode is not `'none'` |
