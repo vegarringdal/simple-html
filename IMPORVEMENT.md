@@ -2807,6 +2807,30 @@ in the console. All passed. Found and fixed:
   now. The new and the changed script are in this worktree's `.claude/browser-checks/scripts/` (the shared
   folder could not be written), with `range-block-touch-shot.js` (the 36px targets)
 
+### Undo row edits on new rows (user request)
+
+* the user, on the row menu with new rows selected (`+`, `N`) and "Undo row edits (selected rows)" greyed:
+  "undo on selected rows does not understand there are new rows". `resetRows()` left a new row as it was
+  added (only its edits back) and the menu entries were greyed for a row neither edited nor marked - a new
+  row added with its values had "nothing" to undo
+* now a revert takes a row to what the server has: a new row is not there, so `resetRows()` marks it for
+  deletion (with the values it was added with) - struck through, out of `getChanges()` / `hasChanges()`,
+  removed with the other marked rows on save; not removed at once, so it is one undo step and Ctrl+Z
+  brings it back with its edits (`resetDataSelectionOnly()` still removes new rows, not undoable).
+  `__resetRows(rows, discardNew)`: only `datasource.resetRows()` marks, `resetDataSelection` removes as
+  before. The menu's `row.edit.revertRow` / `row.edit.revertRows` are enabled for a new row not marked yet
+  (`canRevert`, contextmenuRow.ts)
+* tests: history.test.ts (the new row test changed on purpose, +1: a new row not edited marked, one marked
+  already stays), undoRedo.test.ts +2 (the selected new rows: enabled, marked, out of the changes, greyed
+  once marked, Ctrl+Z brings them back; the row right clicked). Guides 05 and 10, MENU_IDS docs
+
+### Docs site: "Guides - DEV", and a User guide to come (user request)
+
+* the user: "Guides should be called Guides - DEV and we should have a user guide later... but under here
+  we just say todo... all features need to be in place first". The sidebar: Status, Guides - DEV, User
+  guide (one page, TODO: written when the features are in place), Samples, API. site.test.ts and
+  full-grid-check.js follow the new title
+
 ### Header filters: the operator in the cell, a click changes it (user request)
 
 * the user, on the filter row: "in filters we should maybe have an operator symbol, right side on text and

@@ -1332,6 +1332,23 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Undo row edits on new rows (user request)
+
+##### Changed
+- `datasource.resetRows()` - the row menu's "Undo row edits" - marks a **new row for deletion** (with the
+  values it was added with): a revert takes a row to what the server has, and a new row is not there.
+  It is struck through and out of `getChanges()`, and removed with the other marked rows on save. One undo
+  step: Ctrl+Z brings it back. It used to stay as a new row.
+
+##### Fixed
+- "Undo row edits" and "Undo row edits (selected rows)" were greyed out for new rows not edited.
+
+#### Docs site: "Guides - DEV" and a User guide (user request)
+
+##### Changed
+- The docs site's guides are "Guides - DEV" (for developers); a "User guide" section follows it, a TODO
+  until every feature is in place.
+
 #### The filter menu: a range block for numbers and dates (user request)
 
 ##### Added

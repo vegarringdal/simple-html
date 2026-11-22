@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Entity } from '../../datasource/entity';
 import { where } from '../../datasource/filterExpression';
 import type { GridConfig } from '../gridConfig';
 import type { HTMLCellElement } from '../gridFunctions/HTMLCellElement';
@@ -378,6 +379,44 @@ describe('undo and redo - the row menu', () => {
         press(cellInput(element, 'age'), 'z');
         expect(firstnames(datasource)).toEqual(['changed', 'b', 'not selected']);
         expect(second.__rowState).toEqual('D');
+    });
+
+    it('expect revert rows for selected new rows, not edited: enabled, they are marked for deletion - undo brings them back', async () => {
+        const { element, datasource } = await mountGrid(editable(), data(), simpleFields());
+        datasource.addNewEmpty({ firstname: 'new 1' });
+        datasource.addNewEmpty({ firstname: 'new 2' });
+        const added = datasource.getAllData().slice(-2);
+        await sleep(0);
+        datasource.deselectAll();
+        datasource.getSelection().selectRowRange(datasource.length() - 2, datasource.length() - 1);
+        expect(datasource.getSelectedRows()).toEqual(added);
+
+        openRowMenu(element, 'firstname', 0);
+        expect(isDisabled('row.edit.revertRows')).toBe(false);
+        entry('row.edit.revertRows').click();
+
+        expect(added.map((row) => row.__rowState)).toEqual(['D', 'D']);
+        expect(datasource.getChanges().newEntities).toEqual([]);
+        // marked already: nothing left to undo for them
+        openRowMenu(element, 'firstname', 0);
+        expect(isDisabled('row.edit.revertRows')).toBe(true);
+
+        await sleep(0);
+        press(cellInput(element, 'age'), 'z');
+        expect(added.map((row) => row.__rowState)).toEqual(['N', 'N']);
+    });
+
+    it('expect undo row edits on a new row, not edited, to be enabled and mark it', async () => {
+        const { element, datasource } = await mountGrid(editable(), data(), simpleFields());
+        datasource.addNewEmpty({ firstname: 'new' });
+        const added = datasource.getAllData().at(-1) as Entity;
+        await sleep(0);
+        const index = datasource.getRows().indexOf(added);
+
+        openRowMenu(element, 'firstname', index);
+        expect(isDisabled('row.edit.revertRow')).toBe(false);
+        entry('row.edit.revertRow').click();
+        expect(added.__rowState).toEqual('D');
     });
 
     it('expect the Undo / Redo submenu first in the menu', async () => {

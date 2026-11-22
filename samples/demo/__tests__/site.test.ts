@@ -66,7 +66,11 @@ describe('docs site', { timeout: 30_000 }, () => {
         const guideFiles = fs.existsSync(guidesDir) ? fs.readdirSync(guidesDir).filter((file) => file.endsWith('.md')) : [];
         expect(routesOf('#guide/').length).toBe(guideFiles.length);
         const sections = [...document.querySelectorAll('.nav-section-title')].map((el) => el.textContent);
-        expect(sections).toEqual(guideFiles.length ? ['Status', 'Guides', 'Samples', 'API'] : ['Status', 'Samples', 'API']);
+        expect(sections).toEqual(
+            guideFiles.length
+                ? ['Status', 'Guides - DEV', 'User guide', 'Samples', 'API']
+                : ['Status', 'User guide', 'Samples', 'API']
+        );
 
         expect(routesOf('#sample/').length).toBeGreaterThan(0);
         expect(routesOf('#api/').length).toBeGreaterThan(0);

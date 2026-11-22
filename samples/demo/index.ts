@@ -4,7 +4,15 @@ import '../../src/date.css';
 import api from 'docs:api';
 import guides from 'docs:guides';
 import status from 'docs:status';
-import { buildLine, renderApiPage, renderGuidePage, renderSamplePage, renderStatusPage, scrollToPlace } from './pages';
+import {
+    buildLine,
+    renderApiPage,
+    renderGuidePage,
+    renderSamplePage,
+    renderStatusPage,
+    renderUserGuidePage,
+    scrollToPlace
+} from './pages';
 import { SAMPLES } from './sampleList';
 import { initTheme, toggleTheme } from './theme';
 
@@ -66,7 +74,7 @@ interface Page {
 const pages = new Map<string, Page>();
 
 /**
- * Guides, Samples, API: a part of the sidebar that folds, with a link to each page in it. The items of
+ * Guides - DEV, User guide, Samples, API: a part of the sidebar that folds, with a link to each page in it. The items of
  * a group (the samples' "Getting started", "Datasource" ...) are a part of their own in it that folds
  * too. Everything starts folded; the parts around the page shown unfold (see show)
  */
@@ -110,9 +118,10 @@ function navSection(
 navSection('Status', [
     { route: 'status/work-in-progress', label: 'Work in progress', render: (main) => renderStatusPage(main, status) }
 ]);
+// the guides for developers; the user guide for the people using a grid comes when the features are done
 if (guides.length) {
     navSection(
-        'Guides',
+        'Guides - DEV',
         guides.map((guide) => ({
             route: `guide/${guide.id}`,
             label: guide.title,
@@ -120,6 +129,7 @@ if (guides.length) {
         }))
     );
 }
+navSection('User guide', [{ route: 'user-guide/todo', label: 'TODO', render: (main) => renderUserGuidePage(main) }]);
 navSection(
     'Samples',
     SAMPLES.map((sample) => ({
