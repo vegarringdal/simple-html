@@ -102,11 +102,20 @@ const DEFAULTS = {
     'filter.filter.isNotBlank': 'Is not blank',
     'filter.filter.advanced': 'Advanced Filter…',
     'filter.operator': 'Operator',
-    'filter.operator.greaterThanOrEqualTo': 'Greater than or equal',
-    'filter.operator.lessThanOrEqualTo': 'Less than or equal',
     'filter.operator.equal': 'Equal',
     'filter.operator.notEqualTo': 'Not Equal',
+    'filter.operator.lessThan': 'Less than',
+    'filter.operator.lessThanOrEqualTo': 'Less than or equal',
+    'filter.operator.greaterThan': 'Greater than',
+    'filter.operator.greaterThanOrEqualTo': 'Greater than or equal',
+    'filter.operator.between': 'Between',
     'filter.operator.contains': 'Contains',
+    'filter.operator.doesNotContain': 'Does not contain',
+    'filter.operator.beginWith': 'Begins with',
+    'filter.operator.endWith': 'Ends with',
+    // the toggle of a text column, in Filter. The hint when the column always matches case
+    'filter.matchCase': 'Match case',
+    'filter.matchCase.hint': 'always',
     // its value list, the block 'filter.values'
     'filter.values.search': 'Search values',
     'filter.values.searchPlaceholder': 'Search values',
@@ -152,6 +161,8 @@ const DEFAULTS = {
     'filterEditor.label.field': 'Field',
     'filterEditor.label.operator': 'Operator',
     'filterEditor.label.value': 'Value',
+    'filterEditor.label.from': 'From',
+    'filterEditor.label.to': 'To',
     'filterEditor.pickAttribute': 'Field',
     'filterEditor.pickAttribute.tooltip': 'Pick which column this condition looks at',
     'filterEditor.pickOperator': 'Operator',
@@ -161,6 +172,10 @@ const DEFAULTS = {
     'filterEditor.deleteCondition.tooltip': 'Delete this condition',
     'filterEditor.useValue.tooltip': 'Compare against a typed in value instead of another column',
     'filterEditor.useAttribute.tooltip': 'Compare against another column instead of a typed in value',
+    // the toggle of a text condition: its text, its tooltip (its name too), the tooltip when the column always matches case
+    'filterEditor.matchCase': 'Aa',
+    'filterEditor.matchCase.tooltip': 'Match case',
+    'filterEditor.matchCaseAlways.tooltip': 'Match case: always, for this column',
     'filterEditor.undo': 'Undo',
     'filterEditor.undo.tooltip': 'Undo (Ctrl+Z)',
     'filterEditor.undo.tooltip.mac': 'Undo (⌘Z)',
@@ -183,6 +198,7 @@ const DEFAULTS = {
     'filterEditor.operator.GREATER_THAN_OR_EQUAL_TO': 'Greater Than Or Equal To',
     'filterEditor.operator.LESS_THAN': 'Less Than',
     'filterEditor.operator.GREATER_THAN': 'Greater Than',
+    'filterEditor.operator.BETWEEN': 'Between',
     'filterEditor.operator.CONTAINS': 'Contains',
     'filterEditor.operator.NOT_EQUAL_TO': 'Not Equal To',
     'filterEditor.operator.DOES_NOT_CONTAIN': 'Does Not Contain',
@@ -203,6 +219,10 @@ const DEFAULTS = {
     'footer.and': 'AND',
     'footer.or': 'OR',
     'footer.changedOnly': 'Changed rows only',
+    // between the ends of a BETWEEN on a chip, and the marker of a condition that matches case
+    'footer.betweenAnd': 'and',
+    'footer.matchCase': 'Aa',
+    'footer.matchCase.tooltip': 'Match case',
     // Find's "Filter rows" while it hides rows: the text the rows are filtered with
     'footer.findFilter': 'Find: {text}',
     // the summary of the selected cells, at the footer's right (ranges of more than one cell): its name
@@ -218,6 +238,7 @@ const DEFAULTS = {
     'footer.operator.GREATER_THAN_OR_EQUAL_TO': '≥',
     'footer.operator.LESS_THAN': '<',
     'footer.operator.GREATER_THAN': '>',
+    'footer.operator.BETWEEN': 'between',
     'footer.operator.CONTAINS': 'contains',
     'footer.operator.NOT_EQUAL_TO': '≠',
     'footer.operator.DOES_NOT_CONTAIN': 'does not contain',
@@ -241,6 +262,8 @@ const DEFAULTS = {
     // formatter's format (YYYY-MM-DD), a boolean filter is a checkbox
     'filter.placeholder.text': 'Text',
     'filter.placeholder.number': 'Number',
+    // a header filter with BETWEEN: the two ends are typed with .. between them
+    'filter.placeholder.between': 'from..to',
 
     // labels for screen readers (aria-label)
     'grid.label': 'Grid',
@@ -347,6 +370,7 @@ const DEFAULTS = {
     'filterString.operator.GREATER_THAN_OR_EQUAL_TO': 'greater_than_or_equal',
     'filterString.operator.LESS_THAN': 'less_than',
     'filterString.operator.GREATER_THAN': 'greater_than',
+    'filterString.operator.BETWEEN': 'between',
     'filterString.operator.CONTAINS': 'contains',
     'filterString.operator.NOT_EQUAL_TO': 'not_equal_to',
     'filterString.operator.DOES_NOT_CONTAIN': 'does_not_contain',
@@ -356,6 +380,9 @@ const DEFAULTS = {
     'filterString.operator.NOT_IN': 'NOT_IN',
     'filterString.operator.IS_BLANK': 'IS_BLANK',
     'filterString.operator.IS_NOT_BLANK': 'IS_NOT_BLANK',
+    // between the ends of a BETWEEN, and after a condition that matches case
+    'filterString.betweenAnd': 'and',
+    'filterString.matchCase': 'match_case',
     // the value of the group of blank values in a group row's name
     'grouping.blank': 'blank'
 } satisfies Record<string, string>;

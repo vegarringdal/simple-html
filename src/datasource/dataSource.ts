@@ -8,12 +8,13 @@ import type { DatasourceEvents } from './datasourceEvents';
 import type { DatasourceOptions } from './datasourceOptions';
 import { type Entity, type GroupRow, isGroupRow } from './entity';
 import { type Field, type FieldConfig, type FieldType, isFieldType } from './field';
-import { Filter, isIgnoredCondition } from './filter';
-import { type FilterCondition, type FilterExpression, isFilterGroup } from './filterExpression';
+import { Filter, isCaseSensitive, isIgnoredCondition } from './filter';
+import { type FilterCondition, type FilterExpression, isFilterGroup, isRange } from './filterExpression';
 import type { Formatter } from './formatter';
 import { DEFAULT_FORMATTER_IDS, getRegisteredFormatter } from './formatterRegistry';
 import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
+import { isBlank } from './isBlank';
 import type { Conflict, UpsertOptions, UpsertResult } from './liveData';
 import { Selection } from './selection';
 import type { SelectionMode } from './selectionMode';
@@ -70,11 +71,19 @@ export interface FilterConditionNode {
     operator: string;
     /**
      * the value as text: formatted with the field's formatter, the values of `IN` / `NOT_IN` joined by
-     * `', '`, a `valueField` as `[label]`. `''` for `IS_BLANK` / `IS_NOT_BLANK`
+     * `', '`, a `valueField` as `[label]`. `''` for `IS_BLANK` / `IS_NOT_BLANK`. For `BETWEEN` the
+     * start, `from`, and `valueTo` the end - `''` for an open end
      */
     value: string;
+    /** the end of a `BETWEEN` as text, `''` for an open end. Only on a `BETWEEN` */
+    valueTo?: string;
     /** `false` for `IS_BLANK` / `IS_NOT_BLANK`, they take no value */
     hasValue: boolean;
+    /**
+     * `true` when the condition compares text with upper and lower case as they are: it has
+     * `caseSensitive: true` and compares text, see {@link FilterCondition}
+     */
+    caseSensitive: boolean;
 }
 
 /**
@@ -2695,8 +2704,11 @@ export class Datasource<T = any> {
 
     /**
      * The filter as text, e.g. `([NAME] <<EQUAL_TO>> 'X')`, upper case. Values are shown with the
-     * field's formatter, a `valueField` as `[LABEL]`. What the filter ignores - incomplete conditions,
-     * empty groups - is left out, and `''` is returned when nothing is left (or no filter is set).
+     * field's formatter, a `valueField` as `[LABEL]`, a `BETWEEN` as `'10' <<AND>> '20'` (`''` for an
+     * open end). A condition that matches case (`caseSensitive`) keeps the case of its value and ends
+     * with `<<MATCH_CASE>>`: `[NAME] <<EQUAL_TO>> 'Ann' <<MATCH_CASE>>`. What the filter ignores -
+     * incomplete conditions, empty groups - is left out, and `''` is returned when nothing is left (or
+     * no filter is set).
      *
      * The operators and AND / OR are texts, the ids `filterString.*` of {@link TEXTS}: change them with
      * {@link setTexts} (`'filterString.operator.EQUAL': 'equal_to'` is shown as `<<EQUAL_TO>>`).
@@ -2717,6 +2729,9 @@ export class Datasource<T = any> {
      *
      * datasource.filter(and(where('a', 'EQUAL', 'x'), or(where('b', 'EQUAL', 'y'), where('b', 'EQUAL', 'z'))));
      * datasource.getFilterString(); // "([A] <<EQUAL_TO>> 'X' AND ([B] <<EQUAL_TO>> 'Y' OR [B] <<EQUAL_TO>> 'Z'))"
+     *
+     * datasource.filter(where('a', 'EQUAL', 'Ann', { caseSensitive: true }));
+     * datasource.getFilterString(); // "([A] <<EQUAL_TO>> 'Ann' <<MATCH_CASE>>)"
      * ```
      */
     public getFilterString(label: (field: string) => string = (field) => this.getField(field).label): string {
@@ -2725,35 +2740,47 @@ export class Datasource<T = any> {
             return '';
         }
 
+        // upper case, all of it but the values of a condition that matches case
+        const upper = (text: string) => text.toUpperCase();
         const parser = (expression: FilterExpression): string => {
             if (isFilterGroup(expression)) {
                 // the filter treats anything but OR as AND
-                const operator = getText(expression.group === 'OR' ? 'filterString.or' : 'filterString.and');
+                const operator = upper(getText(expression.group === 'OR' ? 'filterString.or' : 'filterString.and'));
                 const children = expression.children.filter((child) => this.__isShown(child));
                 return `(${children.map(parser).join(` ${operator} `)})`;
             }
 
+            const type = this.getField(expression.field).type;
+            const exact = isCaseSensitive(expression, type);
+            const shown = (value: unknown) => `'${exact ? String(value) : upper(String(value))}'`;
+            // after the value: <<MATCH_CASE>>
+            const matchCase = exact ? ` <<${upper(getText('filterString.matchCase'))}>>` : '';
             // an operator of plain js that is not one is shown as it is
-            const operator = findText(`filterString.operator.${expression.operator}`) ?? expression.operator;
-            const condition = `[${label(expression.field)}] <<${operator}>>`;
+            const operator = upper(findText(`filterString.operator.${expression.operator}`) ?? expression.operator);
+            const condition = `[${upper(label(expression.field))}] <<${operator}>>`;
             if (expression.operator === 'IS_BLANK' || expression.operator === 'IS_NOT_BLANK') {
                 return condition;
             }
             if (expression.operator === 'IN' || expression.operator === 'NOT_IN') {
                 // a list, or a string with one value per line
                 const values = Array.isArray(expression.value) ? expression.value : String(expression.value).split('\n');
-                return `${condition} [${values.map((value) => `'${value}'`).join(',')}]`;
+                return `${condition} [${values.map(shown).join(',')}]${matchCase}`;
+            }
+            const formatter = this.getFormatter(expression.field, type);
+            if (expression.operator === 'BETWEEN' && isRange(expression.value)) {
+                // an open end is ''
+                const [from, to] = expression.value.map((end) => (isBlank(end) ? '' : formatter.format(end)));
+                const and = upper(getText('filterString.betweenAnd'));
+                return `${condition} ${shown(from)} <<${and}>> ${shown(to)}${matchCase}`;
             }
             if (expression.valueField) {
-                return `${condition} [${label(expression.valueField)}]`;
+                return `${condition} [${upper(label(expression.valueField))}]${matchCase}`;
             }
-            const type = this.getField(expression.field).type;
-            return `${condition} '${this.getFormatter(expression.field, type).format(expression.value)}'`;
+            return `${condition} ${shown(formatter.format(expression.value))}${matchCase}`;
         };
 
         // a single condition is in parentheses too, like a group of one
-        const text = isFilterGroup(filter) ? parser(filter) : `(${parser(filter)})`;
-        return text.toUpperCase();
+        return isFilterGroup(filter) ? parser(filter) : `(${parser(filter)})`;
     }
 
     /**
@@ -2781,7 +2808,7 @@ export class Datasource<T = any> {
      *
      * datasource.getFilterTree();
      * // { kind: 'group', group: 'AND', children: [
-     * //     { kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true }
+     * //     { kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true, caseSensitive: false }
      * // ] }
      *
      * // the codes of country shown as names
@@ -2789,7 +2816,7 @@ export class Datasource<T = any> {
      * const countryName: Formatter = { ...TextFormatter, format: (value) => names[String(value)] ?? TextFormatter.format(value) };
      * datasource.filter(where('country', 'IN', ['NO', 'SE']));
      * datasource.getFilterTree(undefined, (field) => (field === 'country' ? countryName : undefined));
-     * // ... { kind: 'condition', label: 'country', operator: 'IN', value: 'Norway, Sweden', hasValue: true } ...
+     * // ... { kind: 'condition', label: 'country', operator: 'IN', value: 'Norway, Sweden', hasValue: true, caseSensitive: false } ...
      * ```
      */
     public getFilterTree(
@@ -2816,31 +2843,37 @@ export class Datasource<T = any> {
                 return null;
             }
 
+            const type = this.getField(expression.field).type;
+            const caseSensitive = isCaseSensitive(expression, type);
             const blank = expression.operator === 'IS_BLANK' || expression.operator === 'IS_NOT_BLANK';
             const formatter = formatterOf(expression.field);
-            let value = '';
-            if (!blank) {
-                if (expression.operator === 'IN' || expression.operator === 'NOT_IN') {
-                    const list = Array.isArray(expression.value) ? expression.value : String(expression.value ?? '').split('\n');
-                    // 'NULL' is the blanks (see IN), not a value to format
-                    const shown = (item: unknown) =>
-                        formatter && String(item).toUpperCase() !== 'NULL' ? formatter.format(item) : item;
-                    value = list.map(shown).join(', ');
-                } else if (expression.valueField) {
-                    value = `[${label(expression.valueField)}]`;
-                } else {
-                    const type = this.getField(expression.field).type;
-                    value = (formatter ?? this.getFormatter(expression.field, type)).format(expression.value);
-                }
-            }
-
-            return {
+            const node: FilterConditionNode = {
                 kind: 'condition',
                 label: label(expression.field),
                 operator: expression.operator,
-                value,
-                hasValue: !blank
+                value: '',
+                hasValue: !blank,
+                caseSensitive
             };
+            if (blank) {
+                return node;
+            }
+            if (expression.operator === 'IN' || expression.operator === 'NOT_IN') {
+                const list = Array.isArray(expression.value) ? expression.value : String(expression.value ?? '').split('\n');
+                // 'NULL' is the blanks (see IN), not a value to format - as it is when the list matches case
+                const isNull = (item: unknown) => (caseSensitive ? String(item) : String(item).toUpperCase()) === 'NULL';
+                const shown = (item: unknown) => (formatter && !isNull(item) ? formatter.format(item) : item);
+                node.value = list.map(shown).join(', ');
+            } else if (expression.operator === 'BETWEEN' && isRange(expression.value)) {
+                // not ignored, so one end is there. An open end is ''
+                const ofEnd = formatter ?? this.getFormatter(expression.field, type);
+                [node.value, node.valueTo] = expression.value.map((end) => (isBlank(end) ? '' : ofEnd.format(end)));
+            } else if (expression.valueField) {
+                node.value = `[${label(expression.valueField)}]`;
+            } else {
+                node.value = (formatter ?? this.getFormatter(expression.field, type)).format(expression.value);
+            }
+            return node;
         };
 
         const root = build(filter);
@@ -2852,10 +2885,10 @@ export class Datasource<T = any> {
     }
 
     /**
-     * true if the filter ignores the condition, see isIgnoredCondition. Its type is the field's type
+     * true if the filter ignores the condition, see isIgnoredCondition
      */
     private __isIgnored(condition: FilterCondition): boolean {
-        return isIgnoredCondition(condition, this.getField(condition.field).type);
+        return isIgnoredCondition(condition);
     }
 
     /**

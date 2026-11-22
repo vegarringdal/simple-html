@@ -572,7 +572,9 @@ function openGrid(
 /**
  * The config of a dropdown grid made for a lookup: its `config`, or one column of the label (the value
  * and the label when they differ) - with the options of a picker for what it leaves out: no grouping
- * panel, no footer, no column numbers, no row state, and the header filters search anywhere in the text
+ * panel, no footer, no column numbers, no row state, and the header filters of its text columns search
+ * anywhere in the text (CONTAINS, when the column offers it). A number column keeps its default, it has
+ * no CONTAINS
  */
 function dropdownConfig(lookup: RegisteredLookup): GridConfig {
     const given: Partial<GridConfig> = lookup.config ?? {};
@@ -588,7 +590,11 @@ function dropdownConfig(lookup: RegisteredLookup): GridConfig {
     const columns = { ...given.columns };
     for (const column of [...(layout.left ?? []), ...layout.center, ...(layout.right ?? [])]) {
         for (const field of column.fields) {
-            columns[field] = { operator: 'CONTAINS', ...columns[field] };
+            const column = columns[field];
+            const offersContains = !column?.filterOperators || column.filterOperators.includes('CONTAINS');
+            if (lookup.datasource.getField(field).type === 'text' && offersContains) {
+                columns[field] = { operator: 'CONTAINS', ...column };
+            }
         }
     }
     return { panelHeight: 0, footerHeight: 0, selectSizeHeight: 0, rowStatus: false, ...given, columns, layout };

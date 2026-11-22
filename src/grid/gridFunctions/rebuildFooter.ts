@@ -44,13 +44,36 @@ function countConditions(node: FilterNode): number {
 // the filter editor caps a filter at 5 statements; past that the footer just summarises
 const MAX_FOOTER_CONDITIONS = 5;
 
+/**
+ * A chip: the label, the operator and the value. A BETWEEN with both ends: `between`, the start, `and`
+ * (the text `footer.betweenAnd`) and the end; with one end it is shown as what it is, `≥ 10` or
+ * `≤ 20`. A condition that matches case has "Aa" after its value
+ */
 function renderNode(ctx: Grid, node: FilterNode): unknown {
     if (node.kind === 'condition') {
+        const valueSpan = (text: string) => html`<span class="footer-filter-value">${text}</span>`;
+        let operator = operatorLabel(ctx, node.operator);
+        let value: unknown = node.hasValue ? valueSpan(node.value) : null;
+        if (node.operator === 'BETWEEN' && node.value !== '' && node.valueTo) {
+            value = html`${valueSpan(node.value)} <span class="footer-filter-op">${gridText(ctx, 'footer.betweenAnd')}</span>
+                ${valueSpan(node.valueTo)}`;
+        } else if (node.operator === 'BETWEEN') {
+            const from = node.value !== '';
+            operator = operatorLabel(ctx, from ? 'GREATER_THAN_OR_EQUAL_TO' : 'LESS_THAN_OR_EQUAL_TO');
+            value = valueSpan(from ? node.value : (node.valueTo ?? ''));
+        }
         return html`
             <span class="footer-filter-chip">
                 <span class="footer-filter-attr">${node.label || UNKNOWN}</span>
-                <span class="footer-filter-op">${operatorLabel(ctx, node.operator)}</span>
-                ${node.hasValue ? html`<span class="footer-filter-value">${node.value}</span>` : null}
+                <span class="footer-filter-op">${operator}</span>
+                ${value}
+                ${
+                    node.caseSensitive
+                        ? html`<span class="footer-filter-case" title=${gridText(ctx, 'footer.matchCase.tooltip')}
+                              >${gridText(ctx, 'footer.matchCase')}</span
+                          >`
+                        : null
+                }
             </span>
         `;
     }

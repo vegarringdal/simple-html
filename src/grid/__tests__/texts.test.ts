@@ -38,6 +38,7 @@ const OPERATORS: FilterOperator[] = [
     'GREATER_THAN_OR_EQUAL_TO',
     'LESS_THAN',
     'GREATER_THAN',
+    'BETWEEN',
     'CONTAINS',
     'NOT_EQUAL_TO',
     'DOES_NOT_CONTAIN',
@@ -117,7 +118,8 @@ const config = (texts?: Texts): GridConfig => ({
     },
     columns: {
         name: { label: '«Name»' },
-        country: { label: '«Country»', renderer: 'texts-test' },
+        // always matches case: the hint of Match case, the tooltip of the editor's toggle
+        country: { label: '«Country»', renderer: 'texts-test', filterCaseSensitive: true },
         age: { label: '«Age»' },
         // the placeholder of a date filter is the formatter's (YYYY-MM-DD), not a text
         born: { label: '«Born»', placeholderFilter: '«born»' },
@@ -202,11 +204,15 @@ function clickIcon(tooltip: string) {
     (holder.querySelector('svg') ?? holder).dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 100 }));
 }
 
-/** a condition on name for each operator */
+/** a condition on name for each operator, matching case: the marker on the chips and in the text */
 const conditions = (operators: FilterOperator[]): FilterCondition[] =>
-    operators.map((operator) =>
-        operator === 'IN' || operator === 'NOT_IN' ? where('name', operator, ['«ann»']) : where('name', operator, '«ann»')
-    );
+    operators.map((operator) => {
+        const options = { caseSensitive: true };
+        if (operator === 'IN' || operator === 'NOT_IN') {
+            return where('name', operator, ['«ann»'], options);
+        }
+        return where('name', operator, operator === 'BETWEEN' ? ['«ann»', '«bob»'] : '«ann»', options);
+    });
 
 /**
  * Opens every part of the grid that shows a text, and checks each
@@ -316,11 +322,33 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
         checkMenu();
     }
 
-    // the filter editor: AND with an OR group, a condition compared with a field not picked yet
+    // a header filter with BETWEEN: its placeholder
+    gridInterface.setState({ headerFilters: { age: { value: null, operator: 'BETWEEN' } } });
+    check();
+    gridInterface.setState({ headerFilters: {} });
+
+    // the filter editor: AND with an OR group, a condition compared with a field not picked yet. A text
+    // condition has the Match case toggle, of a column that always matches case its other tooltip, a
+    // BETWEEN its inputs from and to
     const compareWithField: FilterCondition = { field: 'age', operator: 'EQUAL', valueField: '' };
-    datasource.setFilter(and(where('name', 'EQUAL', '«ann»'), compareWithField, or(where('age', 'LESS_THAN', 5))));
+    datasource.setFilter(
+        and(
+            where('name', 'EQUAL', '«ann»'),
+            where('country', 'EQUAL', '«x»'),
+            compareWithField,
+            where('age', 'BETWEEN', [1, 2]),
+            or(where('age', 'LESS_THAN', 5))
+        )
+    );
     gridInterface.openFilterEditor();
     check();
+    // the operators of a number
+    const between = Array.from(document.querySelectorAll<HTMLElement>('.filter-editor-pick-operator')).find((picker) =>
+        picker.getAttribute('aria-label')?.includes('filterEditor.operator.BETWEEN')
+    ) as HTMLElement;
+    between.click();
+    check();
+    gridInterface.closeMenu();
     // a new condition: no field and no operator picked
     clickIcon('«filterEditor.addCondition.tooltip»');
     check();

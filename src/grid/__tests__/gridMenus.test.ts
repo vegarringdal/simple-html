@@ -174,11 +174,15 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'firstname');
 
-        expect(menuTreeIds()).toEqual(
-            MENU_IDS.filter.filter(
-                (id) => id !== 'filter.operator.greaterThanOrEqualTo' && id !== 'filter.operator.lessThanOrEqualTo'
-            )
-        );
+        // not the operators of a number
+        const numberOnly = [
+            'filter.operator.lessThan',
+            'filter.operator.lessThanOrEqualTo',
+            'filter.operator.greaterThan',
+            'filter.operator.greaterThanOrEqualTo',
+            'filter.operator.between'
+        ];
+        expect(menuTreeIds()).toEqual(MENU_IDS.filter.filter((id) => !numberOnly.includes(id)));
     });
 
     it('expect the range operators of a number column, without the value list', async () => {
@@ -186,11 +190,16 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'age');
 
-        expect(menuTreeIds()).toEqual(
-            MENU_IDS.filter.filter(
-                (id) => id !== 'filter.operator.notEqualTo' && id !== 'filter.operator.contains' && id !== 'filter.values'
-            )
-        );
+        // not the operators of a text, Match case and the value list
+        const textOnly = [
+            'filter.operator.contains',
+            'filter.operator.doesNotContain',
+            'filter.operator.beginWith',
+            'filter.operator.endWith',
+            'filter.matchCase',
+            'filter.values'
+        ];
+        expect(menuTreeIds()).toEqual(MENU_IDS.filter.filter((id) => !textOnly.includes(id)));
     });
 
     it('expect pin left and unpin to follow where the column is', async () => {
@@ -1180,6 +1189,7 @@ describe('menus - the default menus, short', () => {
         const submenu = openMenus()[1];
         expect(Array.from(submenu.children, (child) => child.getAttribute('data-menu-id'))).toEqual([
             'filter.operator',
+            'filter.matchCase',
             'filter.filter.blank',
             'filter.filter.clear',
             'filter.filter.clearAll',
@@ -1226,11 +1236,12 @@ describe('menus - the default menus, short', () => {
                         : entry.id === 'filter.filter.blank'
                           ? 'filter.filter.'
                           : `${entry.id}.`;
-                // the operator submenu is in Filter with the id it had before
+                // the operator submenu is in Filter with the id it had before, Match case next to it
+                const inFilter = ['filter.operator', 'filter.matchCase'];
                 outOfPlace.push(
                     ...entry.entries
                         .map((inner) => inner.id)
-                        .filter((id) => !id.startsWith(start) && !(entry.id === 'filter.filter' && id === 'filter.operator'))
+                        .filter((id) => !id.startsWith(start) && !(entry.id === 'filter.filter' && inFilter.includes(id)))
                 );
                 check(entry.entries);
             }

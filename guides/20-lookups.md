@@ -196,8 +196,8 @@ interface, shown as it is.
 - **The config**: without one, a column of the label, or of the value and the label when they differ.
   What the config leaves out is set for a picker: no grouping panel (`panelHeight: 0`), no footer
   (`footerHeight: 0`), no column numbers (`selectSizeHeight: 0`), no row state (`rowStatus: false`),
-  and a column without an `operator` searches anywhere in the text (`CONTAINS`). It is readonly, as
-  every grid by default.
+  and a text column without an `operator` searches anywhere in the text (`CONTAINS`) - a number column
+  keeps `GREATER_THAN_OR_EQUAL_TO`, it has no `CONTAINS`. It is readonly, as every grid by default.
 - **Its size** follows its columns, and it is nine rows high (fewer when the lookup has fewer rows, at
   least three) with its header.
 - **It filters and sorts the datasource**: a grid applies its state to its datasource, its config's
@@ -229,7 +229,10 @@ works with what the cell shows:
   the lookup rows whose label matches with the column's operator (`EQUAL` by default, the whole label
   ignoring case; set `operator: 'CONTAINS'` to search in it), and the rows are filtered on their values
   - the condition is `IN` the values found. A value no lookup row has does not match a typed text. The
-  filter menu offers the operators of a text; its Is blank / Is not blank are on the cell's value.
+  filter menu offers the operators of a text and its Match case: on, the label is matched with its case
+  and the `IN` of the values found has `caseSensitive: true`. Its Is blank / Is not blank are on the
+  cell's value. In the filter editor a lookup column's condition is on the values: the operators of the
+  field's type (a lookup on a number field: the number operators, not the column's `filterOperators`).
 - **The value list of the filter menu** lists the labels (`Denmark`, `Norway`, `Sweden`), in their
   order, and its search searches them - also on a number field, which has no value list without a
   lookup. Two values with one label are one entry. Apply filters on the values behind the checked

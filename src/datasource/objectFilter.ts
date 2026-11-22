@@ -6,20 +6,25 @@ import { isBlank } from './isBlank';
 /**
  * @internal
  * one complete condition as objectFilter tests it: the value to compare with is resolved already
- * (a `valueField` read from the row), and `type` is the field's type from the datasource
+ * (a `valueField` read from the row), and `type` is the field's type from the datasource. Not `IN` /
+ * `NOT_IN` and `BETWEEN`, the filter tests those itself (filter.ts)
  */
 export interface ResolvedCondition {
     field: string;
     operator: FilterOperator;
     value: unknown;
     type: FieldType;
+    /** `true`: a text is compared as it is, see FilterCondition.caseSensitive. Used by text only */
+    caseSensitive?: boolean;
 }
 
 /**
  * @internal
  * tests one row against one condition.
  * `filter.type` is the field type: a `date` compares on the day (the time is ignored on both the row
- * value and the filter value), a `datetime` on the full timestamp (milliseconds ignored)
+ * value and the filter value), a `datetime` on the full timestamp (milliseconds ignored). A number
+ * value compares as a number and a Date as a date, whatever the type. The rules are in the filtering
+ * guide, "Operators"
  */
 export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
     let result = true;
@@ -27,9 +32,7 @@ export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
     // vars
     let rowValue: any;
     let filterValue: any;
-    type filterExtended = ('REGEX' | 'REGEX-NOT') | FilterOperator;
-    let filterOperator: filterExtended = filter.operator;
-    let newFilterOperator: filterExtended;
+    let filterOperator: FilterOperator = filter.operator;
     let type: FieldType = filter.type;
 
     if (filter.value instanceof Date && type !== 'datetime') {
@@ -79,25 +82,7 @@ export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
         case 'datetime':
             rowValue = toFilterTime(rowValue, type === 'date');
             filterValue = toFilterTime(filter.value, type === 'date');
-
-            if (filterOperator === 'END_WITH') {
-                filterOperator = 'LESS_THAN_OR_EQUAL_TO';
-            }
-
-            if (filterOperator === 'DOES_NOT_CONTAIN') {
-                filterOperator = 'LESS_THAN';
-            }
-
-            if (
-                filterOperator !== 'EQUAL' &&
-                filterOperator !== 'NOT_EQUAL_TO' &&
-                filterOperator !== 'GREATER_THAN' &&
-                filterOperator !== 'GREATER_THAN_OR_EQUAL_TO' &&
-                filterOperator !== 'LESS_THAN' &&
-                filterOperator !== 'LESS_THAN_OR_EQUAL_TO'
-            ) {
-                filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
-            }
+            filterOperator = rangeOperator(filterOperator);
 
             // a blank row date is not on, before or after any date, it only matches NOT_EQUAL_TO.
             // Checked after the remapping above, so END_WITH, DOES_NOT_CONTAIN etc. follow the same rule
@@ -117,118 +102,21 @@ export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
             } catch {
                 // conversion failed, keep rowValue as it was
             }
-
-            if (filterOperator === 'END_WITH') {
-                filterOperator = 'LESS_THAN_OR_EQUAL_TO';
-            }
-
-            if (filterOperator === 'DOES_NOT_CONTAIN') {
-                filterOperator = 'LESS_THAN';
-            }
-
-            if (
-                filterOperator !== 'EQUAL' &&
-                filterOperator !== 'NOT_EQUAL_TO' &&
-                filterOperator !== 'GREATER_THAN' &&
-                filterOperator !== 'GREATER_THAN_OR_EQUAL_TO' &&
-                filterOperator !== 'LESS_THAN' &&
-                filterOperator !== 'LESS_THAN_OR_EQUAL_TO'
-            ) {
-                filterOperator = 'GREATER_THAN_OR_EQUAL_TO';
-            }
+            filterOperator = rangeOperator(filterOperator);
             break;
-        case 'text': {
-            if (rowValue === null || rowValue === undefined) {
-                rowValue = '';
-            } else {
-                rowValue = `${rowValue}`; // incase we got something else
-                rowValue = rowValue.toLowerCase();
-            }
-
-            filterValue = `${filter.value}`; // incase we got something else
-            filterValue = filterValue.toLowerCase();
-            filterOperator = filterOperator || 'BEGIN_WITH';
-            newFilterOperator = filterOperator;
-
-            function updateRegex(input: string) {
-                return input
-                    .replace(/[.^$+?()[\]{}\\|]/g, '\\$&')
-                    .replace(/\*/g, '.*')
-                    .replace(/%/g, '.*');
-            }
-
-            // I need to check for wildcards, old method did not support wildcard in the middle
-            switch (filterOperator) {
-                case 'BEGIN_WITH':
-                    newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(`^${updateRegex(filterValue as string)}.*`, 'gim');
-                    break;
-                case 'CONTAINS':
-                    newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(`.*${updateRegex(filterValue as string)}.*`, 'gim');
-                    break;
-                case 'END_WITH':
-                    newFilterOperator = 'REGEX';
-                    filterValue = new RegExp(`.*${updateRegex(filterValue as string)}$`, 'gim');
-                    break;
-                case 'DOES_NOT_CONTAIN':
-                    newFilterOperator = 'REGEX-NOT';
-                    filterValue = new RegExp(`.*${updateRegex(filterValue as string)}`, 'gim');
-                    break;
-                case 'NOT_EQUAL_TO': {
-                    newFilterOperator = 'REGEX-NOT';
-                    let start = '';
-                    if (filterValue[0] !== '*' || filterValue[0] !== '%') {
-                        start = '^';
-                    }
-                    let end = '';
-                    if (filterValue[filterValue.length] !== '*' || filterValue[filterValue.length] !== '%') {
-                        end = '$';
-                    }
-                    filterValue = new RegExp(`${start}${updateRegex(filterValue as string)}${end}`, 'gim');
-                    break;
-                }
-                default:
-                    if (filterValue.split('*').length > 1 || filterValue.split('%').length > 1) {
-                        newFilterOperator = 'REGEX';
-                        let start = '';
-                        if (filterValue[0] !== '*' || filterValue[0] !== '%') {
-                            start = '^';
-                        }
-                        let end = '';
-                        if (filterValue[filterValue.length] !== '*' || filterValue[filterValue.length] !== '%') {
-                            end = '$';
-                        }
-                        filterValue = new RegExp(`${start}${updateRegex(filterValue as string)}${end}`, 'gim');
-                    }
-            }
-
-            // set the filteroperator from new if changed
-            if (filterOperator !== newFilterOperator) {
-                filterOperator = newFilterOperator;
-            }
-            break;
-        }
+        case 'text':
+            return compareText(rowValue, filter.value, filterOperator, filter.caseSensitive === true);
         case 'boolean':
+            // a blank is false (see "0 is blank" on FilterOperator): the cell shows it unchecked
+            rowValue = rowValue === '' || rowValue === 0 || rowValue === null || rowValue === undefined ? false : rowValue;
             filterValue = filter.value;
-            filterOperator = 'EQUAL';
+            // a boolean has EQUAL and NOT_EQUAL_TO, anything else compares as EQUAL (as v5 did)
+            filterOperator = filterOperator === 'NOT_EQUAL_TO' ? 'NOT_EQUAL_TO' : 'EQUAL';
             break;
     }
 
     // filter from what operator used
     switch (filterOperator) {
-        case 'REGEX':
-            // contains any type of wildcard
-            if (!filterValue.test(rowValue)) {
-                result = false;
-            }
-            break;
-        case 'REGEX-NOT':
-            // not contains with any type of wildcard
-            if (filterValue.test(rowValue)) {
-                result = false;
-            }
-            break;
         case 'EQUAL':
             if (rowValue !== filterValue) {
                 result = false;
@@ -254,28 +142,8 @@ export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
                 result = false;
             }
             break;
-        case 'CONTAINS':
-            if (rowValue.indexOf(filterValue) === -1) {
-                result = false;
-            }
-            break;
         case 'NOT_EQUAL_TO':
             if (rowValue === filterValue) {
-                result = false;
-            }
-            break;
-        case 'DOES_NOT_CONTAIN':
-            if (rowValue.indexOf(filterValue) !== -1) {
-                result = false;
-            }
-            break;
-        case 'BEGIN_WITH':
-            if (rowValue.substring(0, filterValue.length) !== filterValue) {
-                result = false;
-            }
-            break;
-        case 'END_WITH':
-            if (rowValue.substring(rowValue.length - filterValue.length, rowValue.length) !== filterValue) {
                 result = false;
             }
             break;
@@ -286,6 +154,78 @@ export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
     }
 
     return result;
+}
+
+/**
+ * The operator a number or a date compares with: the text operators a number or date field does not
+ * offer are taken as before (v5) - `CONTAINS` and `BEGIN_WITH` (and any other) as
+ * `GREATER_THAN_OR_EQUAL_TO`, `END_WITH` as `LESS_THAN_OR_EQUAL_TO`, `DOES_NOT_CONTAIN` as `LESS_THAN`
+ */
+function rangeOperator(operator: FilterOperator): FilterOperator {
+    switch (operator) {
+        case 'EQUAL':
+        case 'NOT_EQUAL_TO':
+        case 'LESS_THAN':
+        case 'LESS_THAN_OR_EQUAL_TO':
+        case 'GREATER_THAN':
+        case 'GREATER_THAN_OR_EQUAL_TO':
+            return operator;
+        case 'END_WITH':
+            return 'LESS_THAN_OR_EQUAL_TO';
+        case 'DOES_NOT_CONTAIN':
+            return 'LESS_THAN';
+        default:
+            return 'GREATER_THAN_OR_EQUAL_TO';
+    }
+}
+
+/**
+ * A text condition. The row value as text - a blank (null, undefined) is `''`, anything else
+ * `String(value)` - and the value as text, both in lower case unless `caseSensitive`. `*` and `%` in
+ * the value are wildcards: any text, none too, line breaks too. The rest of the value is taken as it
+ * is, there is no escape. The text `LESS_THAN` ... (a text field does not offer them) compare the two
+ * texts as JavaScript does, code unit by code unit, without wildcards
+ */
+function compareText(rowValue: unknown, value: unknown, operator: FilterOperator, caseSensitive: boolean): boolean {
+    const asText = (from: unknown) => {
+        const text = from === null || from === undefined ? '' : String(from);
+        return caseSensitive ? text : text.toLowerCase();
+    };
+    const row = asText(rowValue);
+    const text = asText(value);
+
+    switch (operator) {
+        case 'NOT_EQUAL_TO':
+            return !matchesText(row, text, true, true);
+        case 'CONTAINS':
+            return matchesText(row, text, false, false);
+        case 'DOES_NOT_CONTAIN':
+            return !matchesText(row, text, false, false);
+        case 'BEGIN_WITH':
+            return matchesText(row, text, true, false);
+        case 'END_WITH':
+            return matchesText(row, text, false, true);
+        case 'LESS_THAN':
+            return row < text;
+        case 'LESS_THAN_OR_EQUAL_TO':
+            return row <= text;
+        case 'GREATER_THAN':
+            return row > text;
+        case 'GREATER_THAN_OR_EQUAL_TO':
+            return row >= text;
+        default:
+            // EQUAL, and an operator of plain js that is none
+            return matchesText(row, text, true, true);
+    }
+}
+
+/**
+ * true when `row` has `text` in it, `*` and `%` in `text` standing for any text (`s`: line breaks
+ * too). `fromStart`: at the start of `row`, `toEnd`: at its end - both: the whole of `row`
+ */
+function matchesText(row: string, text: string, fromStart: boolean, toEnd: boolean): boolean {
+    const pattern = text.replace(/[.^$+?()[\]{}\\|]/g, '\\$&').replace(/[*%]/g, '.*');
+    return new RegExp(`${fromStart ? '^' : ''}${pattern}${toEnd ? '$' : ''}`, 's').test(row);
 }
 
 /**

@@ -2329,6 +2329,69 @@ in the console. All passed. Found and fixed:
   Ctrl+C, Esc, a layout change); menus regression 25/25, submenu 40/40, keyboard 52/52, full grid 11/11,
   row delete 6/6
 
+### Filters: match case, the operators of each type, BETWEEN (user request)
+
+* the user: "improve Advanced filter to support case sensitive filters? ... Maybe we should be able to set
+  supported filter types, so one column is forced to be case sensitive? Some types only should be for text,
+  some for numbers and some for dates, atm I think text might have too many"; then: a `BETWEEN` for
+  numbers and dates, and the blank rules kept as they are (null, undefined, '' and 0 are blank, a boolean
+  null is false). SQL helpers are to be built on the model next: its rules are written down exactly
+* **the model** (filterExpression.ts): `FilterCondition.caseSensitive?: boolean`, `where(field, operator,
+  value?, { caseSensitive })` (the property only when true, `assertOptions` for a boolean), `BETWEEN`
+  (`value: [from, to]`, `where()` throws for anything else), `operatorsFor(type)` - one list per type, the
+  grid's only source: text has EQUAL, NOT_EQUAL_TO, CONTAINS, DOES_NOT_CONTAIN, BEGIN_WITH, END_WITH, IN,
+  NOT_IN, IS_BLANK, IS_NOT_BLANK; number / date / datetime EQUAL, NOT_EQUAL_TO, <, <=, >, >=, BETWEEN, IN,
+  NOT_IN, IS_BLANK, IS_NOT_BLANK; boolean EQUAL, NOT_EQUAL_TO, IS_BLANK, IS_NOT_BLANK
+* **the filter** (objectFilter.ts, filter.ts): a text compare of its own (`compareText`): both texts in
+  lower case, or as they are with caseSensitive; the wildcards one regex without the `m` flag and with
+  `s` - a text of several lines is one text (BEGIN_WITH was "a line starts with", EQUAL with a wildcard
+  matched a line, NOT_EQUAL_TO left out a text whose line matched); the text `<` `>` without wildcards
+  (with one it was EQUAL). IN / NOT_IN keep the list as it is with caseSensitive on a text field.
+  BETWEEN is `>= from` AND `<= to` with each type's rules, a blank end open, from > to no row (as SQL)
+* **fixed on the way**: a boolean's NOT_EQUAL_TO was taken as EQUAL - it is "not equal" now, and a blank
+  boolean compares as false (EQUAL false finds it, the cell shows it unchecked). A condition with a blank
+  value (null, undefined, '', invalid Date) and no valueField is ignored for every type - it was for dates
+  only: a text condition without a value compared with the text 'undefined' ('null'), an empty text value
+  input of the editor filtered to the empty rows, an empty number one to 0. The editor's empty value input
+  is no value now
+* **legacy operators**: kept as they filtered (CONTAINS / BEGIN_WITH on a number or date is >=, END_WITH
+  <=, DOES_NOT_CONTAIN <; the text `<` `>`; a boolean's others EQUAL), not offered: a saved v5 filter or
+  state keeps working, throwing would break restoring a view. The editor shows one and keeps it
+* **the grid**: Filter › Operator › offers the column's operators the header input takes (new: Less than,
+  Greater than, Between, Does not contain, Begins with, Ends with), "Match case" (`filter.matchCase`, a ✓,
+  state `headerFilters[field].caseSensitive`), Blank › and the value list per the column's operators. The
+  value list keeps case variants apart while Match case is on, its IN / NOT_IN match case. BETWEEN in the
+  header is typed `from..to` (`10..`, `..20`, `10` = 10..10; placeholder `from..to`, the state value
+  `[from, to]`). The filter editor: the picker offers the field's operators (a text's before a field is
+  picked; a field of another type drops an operator it does not have), "Aa" per text condition
+  (aria-pressed, the icon's room kept on the other rows so the rows line up), BETWEEN's From / To inputs.
+  The footer: `Age between 10 and 20` (an open end `≥ 10`), "Aa" after a value that matches case;
+  getFilterString `<<MATCH_CASE>>` and the value's own case, `'10' <<AND>> '20'`; getFilterTree
+  `caseSensitive`, `valueTo`
+* **the column options**: `filterOperators` (in the type's order; TypeError for another type's operator, an
+  empty list, none for the header input) and `filterCaseSensitive` (the header filter, the value list, the
+  row menu's filter and the editor always match case; Match case shown on, greyed out, "(always)"; text
+  columns only). `operator` is checked now too: a header operator of the column. assertFilterOptions in
+  the constructor and updateConfig. The lookup dropdown grid's CONTAINS default only on its text columns
+* texts: `filter.operator.{lessThan,greaterThan,between,doesNotContain,beginWith,endWith}`,
+  `filter.matchCase(.hint)`, `filterEditor.label.{from,to}`, `filterEditor.matchCase(.tooltip)`,
+  `filterEditor.matchCaseAlways.tooltip`, `filterEditor.operator.BETWEEN`, `footer.betweenAnd`,
+  `footer.matchCase(.tooltip)`, `footer.operator.BETWEEN`, `filter.placeholder.between`,
+  `filterString.operator.BETWEEN`, `filterString.betweenAnd`, `filterString.matchCase`; the Norwegian sample
+* docs: guide 06 (the header filters, Match case, the operators a column offers, the editor, the format and
+  what is ignored, Operators rewritten per type with SQL sketches, BETWEEN, IN, case, legacy, the blank
+  table), 02, 03, 10, 12, 20; the filtering and operator samples
+* tests: filterOperatorsByType.test.ts (60: every operator x type, with and without caseSensitive,
+  wildcards, lines, IN and NULL, blanks, BETWEEN ends, legacy, ignored, string / tree, JSON),
+  filterCaseAndOperators.test.ts (41: the menus, Match case and its state, the forced column, the value
+  list, lookups, filterOperators, the config checks, header BETWEEN, the footer, the editor's toggle,
+  pickers and BETWEEN). Changed on purpose: filterEditor (the toggle in a row, the number order), gridMenus
+  (the new ids), texts, configJson (the options as JSON), the tree nodes' `caseSensitive`
+* browser (Chromium 1148, 1300x1400): new `.claude/browser-checks/scripts/filter-case-check.js` 73/73
+  (light and dark); filter-ui 117/117 (two checks follow the change: Match case in Filter ›, the number
+  order in the editor), value list 51/51, filter editor undo 72/72, lookups 55/55, find 68/68, menus
+  regression 25/25, submenu 40/40
+
 ### Touch: swipes with momentum, the long press, menus for a finger (user request)
 
 * the user: "touch support needs to be better". Looked at with Chromium's touch emulation (a phone, 390 x

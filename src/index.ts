@@ -19,6 +19,7 @@ export {
     type FilterExpression,
     type FilterGroup,
     type FilterOperator,
+    operatorsFor,
     or,
     where
 } from './datasource/filterExpression';

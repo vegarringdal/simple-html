@@ -440,10 +440,15 @@ export type ColumnConfig = {
     placeholderFilter?: string;
     /**
      * the operator the column's header filter starts with. Default `'GREATER_THAN_OR_EQUAL_TO'` for
-     * number and date fields, `'EQUAL'` for the rest. For text `'EQUAL'` is the whole text, ignoring
-     * case: `ann` finds `Ann`, not `Anna`. Set `'CONTAINS'` for a search anywhere in the text,
-     * `'BEGIN_WITH'` for the start. The operator the user picks in the header filter's menu is state:
-     * `GridState.headerFilters[field].operator`
+     * number and date fields, `'EQUAL'` for the rest (the first of `filterOperators` when they do not
+     * have it). For text `'EQUAL'` is the whole text, ignoring case: `ann` finds `Ann`, not `Anna`. Set
+     * `'CONTAINS'` for a search anywhere in the text, `'BEGIN_WITH'` for the start. The operator the
+     * user picks in the header filter's menu is state: `GridState.headerFilters[field].operator`.
+     *
+     * One the header filter's input can take, of the column's operators (`filterOperators`, else the
+     * type's, see {@link operatorsFor}) - not `IN`, `NOT_IN`, `IS_BLANK` or `IS_NOT_BLANK`, those are
+     * the value list's and the Blank submenu's. Anything else throws a `TypeError` when the grid is made
+     * or `updateConfig()` is given the column. A lookup column (`editor`) filters as text.
      *
      * @sample filter-operator-header
      * @example
@@ -457,6 +462,46 @@ export type ColumnConfig = {
      * ```
      */
     operator?: FilterOperator;
+    /**
+     * the operators the column offers in the grid: in the header filter's menu (Operator ›, Blank ›,
+     * the value list needs `IN`) and the filter editor's operator picker. A list of operators of the
+     * column's type (see {@link operatorsFor}), shown in the type's order. Default: every operator of
+     * the type.
+     *
+     * A `TypeError` when the grid is made or `updateConfig()` is given the column: an operator the type
+     * does not have, an empty list, or one without an operator the header filter's input takes (any
+     * but `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK`). `operator` must be one of them. A lookup column
+     * (`editor`) filters as text in its header; in the filter editor a lookup on a number field offers
+     * the number operators. It limits what the user picks, not the filter: `datasource.filter()` and a
+     * state from `setState()` can hold any condition.
+     *
+     * @sample filtering
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: {
+     *         name: { filterOperators: ['CONTAINS', 'BEGIN_WITH', 'IS_BLANK'] }, // starts with CONTAINS
+     *         age: { filterOperators: ['EQUAL', 'BETWEEN'], operator: 'BETWEEN' }
+     *     },
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['age'], width: 80 }] }
+     * };
+     * ```
+     */
+    filterOperators?: FilterOperator[];
+    /**
+     * `true`: the grid's conditions on the column match case - `Ann` does not find `ANN`. The header
+     * filter (the value typed and the value list) and the row menu's filter give their conditions
+     * `caseSensitive: true`, the filter editor's toggle (Aa) is on for it and can not be turned off,
+     * and so is the header menu's "Match case". Default `false`: the user turns "Match case" on per
+     * column in the header filter's menu (`GridState.headerFilters[field].caseSensitive`). For a text
+     * column (and a lookup column), `true` on another type throws a `TypeError` when the grid is made.
+     * See {@link FilterCondition} `caseSensitive`
+     *
+     * @sample filtering
+     */
+    filterCaseSensitive?: boolean;
     /**
      * the name of another column whose value in the row is the type of this cell -
      * `'text' | 'number' | 'boolean' | 'date' | 'datetime'`. A number/text/date etc in the same
@@ -676,8 +721,9 @@ export interface GridState {
     /** the filter, `datasource.getFilter()`: the header filters' conditions are part of it */
     filter: FilterExpression | null;
     /**
-     * what the header filter cells show, keyed by field: the value typed or picked, and the operator
-     * picked in the header filter's menu. Only the columns that have one are listed.
+     * what the header filter cells show, keyed by field: the value typed or picked, the operator
+     * picked in the header filter's menu and whether its "Match case" is on. Only the columns that have
+     * one of them are listed.
      *
      * The rows are filtered by `filter`: these are what the header shows, the conditions they made are
      * in `filter` already. A state from `getState()` has both.
@@ -702,17 +748,26 @@ export interface GridState {
  * import type { HeaderFilter } from '@simple-html/grid';
  *
  * const headerFilters: Record<string, HeaderFilter> = {
- *     name: { value: 'ann*' }, // typed in the name column, with the column's operator
+ *     name: { value: 'Ann*', caseSensitive: true }, // typed in the name column, "Match case" on
  *     age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' }, // the operator picked in the menu
+ *     balance: { value: [1000, 5000], operator: 'BETWEEN' }, // typed as 1000..5000
  *     active: { value: true } // a boolean column's checkbox
  * };
  * ```
  */
 export interface HeaderFilter {
-    /** what the header filter cell shows: the text typed, the date picked, `true`/`false` for a checkbox. null is empty */
+    /**
+     * what the header filter cell shows: the text typed, the date picked, `true`/`false` for a
+     * checkbox, `[from, to]` for `BETWEEN` (an open end null). null is empty
+     */
     value: unknown;
-    /** the operator picked in the header filter's menu. Left out, the column's `operator` is used */
+    /**
+     * the operator picked in the header filter's menu. Left out, the column's `operator` is used - and
+     * so it is when the column does not offer this one (`filterOperators`)
+     */
     operator?: FilterOperator;
+    /** `true` when "Match case" is on in the header filter's menu, see `ColumnConfig.filterCaseSensitive` */
+    caseSensitive?: boolean;
 }
 
 /**

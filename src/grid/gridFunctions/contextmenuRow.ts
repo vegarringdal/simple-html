@@ -4,6 +4,7 @@ import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
 import type { ColType } from './colType';
+import { isAlwaysCaseSensitive } from './columnFilterOptions';
 import { isLockedByHook, rowsToMark, rowsToUnmark } from './deleteRows';
 import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
@@ -583,13 +584,16 @@ function pasteIntoCells(ctx: Grid, attribute: string, data: string, eventData: R
 }
 
 /**
- * The condition the row menu filters on: the cell's value, IS_BLANK for an empty cell (EQUAL '' would
- * match nothing useful)
+ * The condition the row menu filters on: the cell's value, IS_BLANK for an empty cell (a blank value
+ * is no value, the filter would ignore EQUAL ''). On a column that always matches case
+ * (filterCaseSensitive) it matches case: `Ann` does not find `ANN`
  */
-function conditionForCell(attribute: string, rowData: Entity) {
+function conditionForCell(ctx: Grid, attribute: string, rowData: Entity) {
     const value = rowData?.[attribute];
     const isBlank = value === null || value === undefined || value === '';
-    return isBlank ? where(attribute, 'IS_BLANK') : where(attribute, 'EQUAL', value);
+    const type = ctx.gridInterface.getDatasource().getField(attribute).type;
+    const caseSensitive = isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[attribute], type);
+    return isBlank ? where(attribute, 'IS_BLANK') : where(attribute, 'EQUAL', value, { caseSensitive });
 }
 
 function applyFilter(ctx: Grid, filter: FilterGroup, clearHeaderFilters: boolean) {
@@ -605,7 +609,7 @@ function applyFilter(ctx: Grid, filter: FilterGroup, clearHeaderFilters: boolean
  * Filter on the value of the right clicked cell, throwing away whatever filter is there
  */
 function replaceFilter(ctx: Grid, attribute: string, rowData: Entity) {
-    applyFilter(ctx, and(conditionForCell(attribute, rowData)), true);
+    applyFilter(ctx, and(conditionForCell(ctx, attribute, rowData)), true);
 }
 
 /**
@@ -626,5 +630,5 @@ function addToFilter(ctx: Grid, attribute: string, rowData: Entity) {
 
     // the existing conditions are kept, header filters included, so the header inputs
     // keep their text
-    applyFilter(ctx, and(conditionForCell(attribute, rowData), ...existing), false);
+    applyFilter(ctx, and(conditionForCell(ctx, attribute, rowData), ...existing), false);
 }

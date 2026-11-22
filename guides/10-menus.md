@@ -237,10 +237,11 @@ Copy ›                            Hide column                     the value li
 Paste ›                           Remove sorting
 Clear ›                           ----                            in Filter ›:
 Delete ›                          Column chooser…                 Operator ›
-Filter ›                          Size ›                          Blank ›
-View ›                            Aggregate ›                     Clear Filter
-Size ›                            Grouping ›                      Clear All Filters
-Export ›                                                          ----
+Filter ›                          Size ›                          Match case
+View ›                            Aggregate ›                     Blank ›
+Size ›                            Grouping ›                      Clear Filter
+Export ›                                                          Clear All Filters
+                                                                  ----
                                                                   Advanced Filter…
 column menu
 Copy column (all rows)
@@ -333,20 +334,27 @@ Copy selected header names
 | id | shown as | shown when |
 | --- | --- | --- |
 | `filter.filter` | Filter › - a submenu, first in the menu: the entries below up to the value list | |
-| `filter.operator` | Operator › - a submenu in Filter ›, the operator in use has a ✓ | not a boolean field |
-| `filter.operator.greaterThanOrEqualTo` | Greater than or equal | a number, date or datetime field |
-| `filter.operator.lessThanOrEqualTo` | Less than or equal | a number, date or datetime field |
+| `filter.operator` | Operator › - a submenu in Filter ›, the operator in use has a ✓. The column's operators the header filter's input takes: its `filterOperators`, else its type's | not a boolean field |
 | `filter.operator.equal` | Equal | not a boolean field |
-| `filter.operator.notEqualTo` | Not Equal | a text field |
+| `filter.operator.notEqualTo` | Not Equal | not a boolean field |
+| `filter.operator.lessThan` | Less than | a number, date or datetime field |
+| `filter.operator.lessThanOrEqualTo` | Less than or equal | a number, date or datetime field |
+| `filter.operator.greaterThan` | Greater than | a number, date or datetime field |
+| `filter.operator.greaterThanOrEqualTo` | Greater than or equal | a number, date or datetime field |
+| `filter.operator.between` | Between: typed as `from..to` | a number, date or datetime field |
 | `filter.operator.contains` | Contains | a text field |
+| `filter.operator.doesNotContain` | Does not contain | a text field |
+| `filter.operator.beginWith` | Begins with | a text field |
+| `filter.operator.endWith` | Ends with | a text field |
+| `filter.matchCase` | Match case - a toggle with a ✓ (`headerFilters[field].caseSensitive`). On and greyed out, with the hint "always", for a column with `filterCaseSensitive` | a text field, a lookup column |
 | `filter.filter.blank` | Blank › - a submenu in Filter › | |
-| `filter.filter.isBlank` | Is blank | |
-| `filter.filter.isNotBlank` | Is not blank | |
+| `filter.filter.isBlank` | Is blank | the column has `IS_BLANK` |
+| `filter.filter.isNotBlank` | Is not blank | the column has `IS_NOT_BLANK` |
 | `filter.filter.clear` | Clear Filter: the column's conditions | |
 | `filter.filter.clearAll` | Clear All Filters | |
 | `filter.filter.advancedSeparator` | a line | |
 | `filter.filter.advanced` | Advanced Filter…: opens the filter editor | |
-| `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field, a lookup column |
+| `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field, a lookup column - that has `IN` |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 
