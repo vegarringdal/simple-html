@@ -3594,6 +3594,27 @@ in the console. All passed. Found and fixed:
   column-settings-operator 13/13, display-format 39/39, full-grid 11/11, custom-cells 39/39. The new script
   is in this worktree's `.claude/browser-checks/scripts/`
 
+### Column settings: Multiline and Read only (user request)
+
+* the user, a screenshot of the Columns tab on a text column: "for text we should also be able to set if
+  its multiline or not, and readonly in edit mode"
+* columnFormat.ts: `ColumnFormat.multiline` (a text field, not with checkbox, not on a lookup column) and
+  `ColumnFormat.readonly` (any column, a lookup column too), checked in assertColumnFormat; `readonlyOf(column)`
+  - the user's over `ColumnConfig.readonly` - in `__isCellReadonly` (before the isReadonly hook) and
+  deleteRows' isLockedByHook. multilineText.ts: `multilineOf(field, column)` - the user's over the field's -
+  in isMultilineCell (cellText.ts, renderRowCell.ts pass the column) and the detail form tab's badge
+* columnSettings.ts `editingSettings`: the two checkboxes after the type's settings, starting as the column
+  has them, left out of the format when set back to that; Show as checkbox takes multiline away; badges
+* tests: columnFormatOptions.test.ts +4 (multiline true / false and a value with a line break, readonly both
+  ways and the input, the hook gets it and wins, the TypeErrors), columnSettings.test.ts +2 (the checkboxes,
+  the format, back to nothing, every type, checkbox mode), columnFormat.test.ts (the keys), texts.test.ts
+  (the badges - and the checkbox of Use the column label by its text, the new one moved the indexes)
+* browser: new `column-settings-edit-check.js` 9/9 (light and dark: Company read only - typing changes
+  nothing; City multiline - Enter opens the text editor; both off again); column-settings 144/144,
+  column-settings-more 141/141, column-settings-operator 13/13, detail-form 91/91, full-grid 11/11
+* guides 08 (the dialog, the section of the parts - its anchor renamed, links in 02 and 03), 12; JSDoc of
+  `ColumnConfig.readonly`, `FieldConfig.multiline`
+
 ## Considered, not done
 
 ## Candidates / not started

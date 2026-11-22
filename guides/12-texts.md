@@ -602,6 +602,10 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.badge.text` | `Text` | the column has a template of its text |
 | `columnSettings.badge.link` | `Link` | the column is a link |
 | `columnSettings.badge.problem` | `Error` | a template or a checkbox value of the column has a problem: Apply waits for it |
+| `columnSettings.badge.multiline` | `Multiline` | in the list of the columns: a text column made multiline |
+| `columnSettings.badge.readonly` | `Read only` | in the list of the columns: a column made read only |
+| `columnSettings.multiline` | `Multiline` | the checkbox of a text column: its cells are text of several lines (`ColumnFormat.multiline`) |
+| `columnSettings.readonly` | `Read only` | the checkbox of every column: its cells are not edited, also in an editable grid (`ColumnFormat.readonly`) |
 | `columnSettings.badge.checkbox` | `Checkbox` | the column is shown as checkboxes |
 | `columnSettings.badge.numberOverride` | `Blank / 0` | the column shows a blank as 0, or 0 as blank (or neither, over its `numberOverride`) |
 | `columnSettings.badge.label` | `Label` | the column has a label of the user's |

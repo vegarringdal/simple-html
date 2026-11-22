@@ -2,6 +2,7 @@ import type { FieldType } from '../datasource/field';
 import type { Formatter } from '../datasource/formatter';
 import { fillText, getText, type Texts } from '../texts';
 import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTemplate';
+import type { ColumnConfig } from './gridConfig';
 
 /**
  * The display formats of a column: how its cells show the value, picked by the user in the header
@@ -337,6 +338,28 @@ export interface ColumnFormat {
      * `text`, `link`, `number` or `numberOverride`: a checkbox shows no text
      */
     checkbox?: CheckboxFormat;
+    /**
+     * a `text` column's cells as text of several lines (`true`) - shown on their first line, edited in the
+     * text editor, Enter a new line, taller with `fitRows()` - or of one line (`false`): only a value with a
+     * line break is shown as several lines then, as always. Wins over the field's `multiline`
+     * (`FieldConfig.multiline`). Left out: the field's. Not for a lookup column, not with `checkbox`
+     */
+    multiline?: boolean;
+    /**
+     * `true`: the column's cells can not be edited, also in an editable grid; `false`: they can, as the
+     * grid's other cells. Any column. Wins over `ColumnConfig.readonly`. Left out: the column's
+     * `readonly`. The `isReadonly` hook still has the last word, it gets this as its `readonly`
+     */
+    readonly?: boolean;
+}
+
+/**
+ * true when a column's cells are read only by its settings: the user's (`format.readonly`, the grid config
+ * dialog), else the column's `readonly` - what the `isReadonly` hook gets, it has the last word
+ * (`gridInterface.__isCellReadonly`)
+ */
+export function readonlyOf(column: ColumnConfig | undefined): boolean {
+    return column?.format?.readonly ?? column?.readonly ?? false;
 }
 
 /**
@@ -678,7 +701,9 @@ const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = [
     'placeholder',
     'placeholderLabel',
     'numberOverride',
-    'checkbox'
+    'checkbox',
+    'multiline',
+    'readonly'
 ];
 
 /**
@@ -721,7 +746,8 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * - `numberOverride` for a `number` field: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'` or `'NONE'`
  * - `checkbox` for a `text` or `number` field: a {@link CheckboxFormat} (checkboxProblem), not with
  *   `text`, `link`, `number` or `numberOverride`
- * - a lookup column (`editor`: its cells show a label) takes `label` and the placeholder only
+ * - `multiline` true or false, for a `text` field, not with `checkbox`; `readonly` true or false, any
+ * - a lookup column (`editor`: its cells show a label) takes `label`, the placeholder and `readonly` only
  * @param name how the message names it: `GridConfig: columns.born.format`, `setState: formats.born`
  * @throws a `TypeError` naming it, what it has and what it takes
  */
@@ -740,11 +766,25 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
             throw new TypeError(`${name} has '${key}', a format has ${FORMAT_KEYS.join(', ')}`);
         }
     }
-    const { date, number, text, link, numberOverride, checkbox } = format;
-    if (lookup && [date, number, text, link, numberOverride, checkbox].some((part) => part !== undefined)) {
+    const { date, number, text, link, numberOverride, checkbox, multiline, readonly } = format;
+    if (lookup && [date, number, text, link, numberOverride, checkbox, multiline].some((part) => part !== undefined)) {
         throw new TypeError(
-            `${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format - a label and a placeholder only`
+            `${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format - a label, a placeholder and readonly only`
         );
+    }
+    if (readonly !== undefined && typeof readonly !== 'boolean') {
+        throw new TypeError(`${name}.readonly is ${JSON.stringify(readonly)}, it is true or false`);
+    }
+    if (multiline !== undefined) {
+        if (typeof multiline !== 'boolean') {
+            throw new TypeError(`${name}.multiline is ${JSON.stringify(multiline)}, it is true or false`);
+        }
+        if (type !== 'text') {
+            throw new TypeError(`${name}.multiline is for a text field, '${field}' is ${type}`);
+        }
+        if (checkbox !== undefined) {
+            throw new TypeError(`${name} has checkbox and multiline: a checkbox shows no text, it is the one or the other`);
+        }
     }
     assertLabelParts(format, field, type, lookup, name);
     if (numberOverride !== undefined) {

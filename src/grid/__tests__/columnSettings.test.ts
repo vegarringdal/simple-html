@@ -905,3 +905,56 @@ describe('column settings - the label, the placeholder, blank / 0, the checkboxe
         expect(formats(gridInterface)).toEqual({ born: { date: 'norwegian' }, name: { label: 'Person' } });
     });
 });
+
+describe('column settings - multiline and read only', () => {
+    const badgesOf = (field: string) =>
+        Array.from(
+            options()
+                .find((option) => option.dataset.field === field)
+                ?.querySelectorAll('.column-settings-badge') ?? [],
+            (badge) => badge.textContent?.trim()
+        );
+
+    it('expect Multiline and Read only on a text column, as the column has them; set back, left out of the format', async () => {
+        const { gridInterface } = await mountGrid(
+            config({ columns: { ...config().columns, name: { label: 'Name', readonly: true } } }),
+            rows(),
+            fields()
+        );
+        gridInterface.openColumnSettings('name');
+        expect([checkbox('Multiline').checked, checkbox('Read only').checked]).toEqual([false, true]);
+
+        toggle('Multiline');
+        toggle('Read only');
+        expect(badgesOf('name')).toEqual(['Multiline']);
+        button('Apply').click();
+        expect(gridInterface.getState().formats.name).toEqual({ multiline: true, readonly: false });
+
+        // back to what the column has: nothing of the user's
+        toggle('Multiline');
+        toggle('Read only');
+        button('Apply').click();
+        expect(gridInterface.getState().formats.name).toBeUndefined();
+    });
+
+    it('expect Read only on every column, Multiline on a text column only - not while it is shown as checkboxes', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        for (const field of ['born', 'balance', 'active', 'code']) {
+            gridInterface.openColumnSettings(field);
+            expect([field, checkbox('Read only') !== undefined, checkbox('Multiline') !== undefined]).toEqual([
+                field,
+                true,
+                false
+            ]);
+        }
+        gridInterface.openColumnSettings('company');
+        toggle('Read only');
+        expect(badgesOf('company')).toEqual(['Read only']);
+        toggle('Multiline');
+        // shown as checkboxes: no text of several lines - the setting goes with it
+        toggle('Show as checkbox');
+        expect(checkbox('Multiline')).toBeUndefined();
+        button('Apply').click();
+        expect(gridInterface.getState().formats.company).toEqual({ readonly: true, checkbox: { checked: '1', unchecked: '0' } });
+    });
+});

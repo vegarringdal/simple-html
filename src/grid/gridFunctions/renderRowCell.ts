@@ -182,7 +182,7 @@ export function renderRowCell(
         // text of several lines (multilineText.ts): the input shows the first line and is readonly,
         // the text editor edits it. `more`: there are lines after the first, the cell has a marker
         // and the whole text in its tooltip
-        const multiline = !lookupColumn && isMultilineCell(field, cellConfigType, value);
+        const multiline = !lookupColumn && isMultilineCell(field, cellConfigType, value, cellConfig);
         const more = multiline && hasLineBreak(value);
         // while the cell is edited - its input has the focus - it shows the formatter's formatForEdit
         // when it has one: the plain value to type over, '12345.6' for '12 345.60'. Not a cell that can
