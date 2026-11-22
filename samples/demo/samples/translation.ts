@@ -319,7 +319,7 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.checked': 'Verdi når avkrysset',
     'columnSettings.unchecked': 'Verdi når ikke avkrysset',
     'columnSettings.checkbox.hint': 'Et klikk skriver den andre verdien. En tom verdi for ikke avkrysset tømmer cellen',
-    'columnSettings.placeholder': 'Plassholder i filteret',
+    'columnSettings.placeholder': 'Plassholder',
     'columnSettings.placeholderLabel': 'Bruk kolonnens navn',
     'columnSettings.operator': 'Filteroperator',
     'columnSettings.operator.tooltip': 'Operatoren kolonnens filter i overskriften bruker',

@@ -974,11 +974,11 @@ const bareLink: ColumnFormat = { link: 'https://x.com' };
 const linkLabel: LinkFormat = { url: 'https://x.com', label: '{name}' };
 console.log(linkColumns, bareLink, linkLabel);
 
-// the rest of the column settings: a label, the header filter's placeholder, blank / 0, checkboxes
+// the rest of the column settings: a label, the empty cells' placeholder, blank / 0, checkboxes
 const yesNo: CheckboxFormat = { checked: 'Y', unchecked: 'N' };
 const settingsColumns: Record<string, ColumnConfig> = {
-    company: { format: { label: 'Firm', placeholderLabel: true } },
-    city: { format: { placeholder: 'Search the cities' } },
+    company: { format: { label: 'Firm', placeholderRowLabel: true } },
+    city: { format: { placeholderRow: 'Name of the city' } },
     discount: { format: { numberOverride: 'NONE' } },
     newsletter: { format: { checkbox: {} } },
     approved: { format: { checkbox: yesNo } }

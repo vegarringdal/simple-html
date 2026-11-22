@@ -1332,6 +1332,25 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Edit permissions: add, change, delete (user request)
+
+##### Added
+- **`GridConfig.edit`** (`EditPermissions`: `{ add?, change?, delete? }`, each `true` when left out): what an
+  editable grid lets the user do. A developer's setting - not in the state, no menu or dialog can grant it;
+  `updateConfig({ edit })` replaces it (and closes an open editor, menu or picker); a `TypeError` for anything
+  else.
+  - `change: false`: the rows that were there are locked - typing, the multiline editor, the date picker,
+    lookups, checkboxes, custom cells (`readonly`), paste, clear, fill down, the detail form; the `isReadonly`
+    hook and a column's Read only can not unlock them. **A new row stays editable while `add` is allowed**,
+    until `acceptChanges()`.
+  - `delete: false`: Delete › Row / Rows greyed out on existing rows, Delete on a row number leaves them; a new
+    row can still be removed (it was never saved).
+  - `add: false`: the grid has no add-row UI of its own - it is for your own add button, and a new row your
+    code adds is not editable when `change` is false too.
+  - Undo / redo and the reverts keep working; your own code (`addNewEmpty()`, `markForDeletion()`, setting
+    values) is not stopped - `fillDown()` follows the permissions.
+- Sample *Edit permissions*.
+
 #### Colour rules: conditional colours of a column (user request)
 
 ##### Added
@@ -1439,8 +1458,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   winning over the column's own option - and a developer can set them in `ColumnConfig.format`:
   - **Label** (`ColumnFormat.label`): the column's label everywhere the grid names it - the header, the
     menus, the filter editor, the footer's chips, the headers of copy, CSV and Excel.
-  - **Filter placeholder** (`placeholder`) or **Use the column label** (`placeholderLabel: true`): the
-    header filter's placeholder, over `placeholderFilter` and Between's "from..to".
+  - **Placeholder** (`placeholderRow`) or **Use the column label** (`placeholderRowLabel: true`): the
+    placeholder of the column's empty cells, over `ColumnConfig.placeholderRow` (on the current row only by
+    default, `placeholderRowCurrentEntityOnly`). The header filter keeps its own placeholder.
   - **Show blank as 0** / **Show 0 as blank** for a number column (`numberOverride`: `'BLANK_TO_ZERO'`,
     `'ZERO_TO_BLANK'`, or `'NONE'` to turn the column's own off).
   - **Show as checkbox** for a text or number column of `1` / `0` (`checkbox: { checked?, unchecked? }`,
