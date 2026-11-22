@@ -176,6 +176,8 @@ const DEFAULTS = {
     'filter.values.search': 'Search values',
     'filter.values.searchPlaceholder': 'Search values',
     'filter.values.availableOnly': 'Only values in filtered rows',
+    // the search box's text as the filter (CONTAINS), not the values found: {text} is the text typed
+    'filter.values.textSearch': 'Filter on the text: contains "{text}"',
     'filter.values.rowsFound': '{count} values',
     'filter.values.rowsFound.one': '{count} value',
     'filter.values.truncated': 'Only the first {max} values are shown',

@@ -374,6 +374,7 @@ and a lookup column.
 | `filter.values.search` | `Search values` | the name of the search box, for a screen reader |
 | `filter.values.searchPlaceholder` | `Search values` | the placeholder of the search box |
 | `filter.values.availableOnly` | `Only values in filtered rows` | the checkbox that lists only the values the other filters let through |
+| `filter.values.textSearch` | `Filter on the text: contains "{text}"` | the checkbox under the search box that filters on the text typed (`CONTAINS`), not the values found; `{text}` is the text |
 | `filter.values.rowsFound` | `{count} values` | under the search box, `{count}`: the number of values listed |
 | `filter.values.rowsFound.one` | `{count} value` | the same, when one value is listed |
 | `filter.values.truncated` | `Only the first {max} values are shown` | instead, `{max}`: the most values listed (100), when there are more |

@@ -3294,6 +3294,25 @@ in the console. All passed. Found and fixed:
   without - what is on top at its middle and corners: the tooltip; it was 7/11 before the fix);
   filter-case 73/73, column-settings 144/144
 
+### The value list: a text search (user request)
+
+* the user, a screenshot of the value list with "den" searched (Denmark, Sweden): "if search in box like this,
+  we need to be able to click its a text search only too". Apply was always an `IN` of the values found
+* contextmenuFilter.ts valueListBlock: with text in the search box and `CONTAINS` among the column's operators,
+  a checkbox *Filter on the text: contains "…"* (`.simple-html-grid-value-text-search`, the row style of
+  *Only values in filtered rows*). Checked, Apply and Enter call applyTextSearch: `CONTAINS` in the header
+  filter's state when it was another (`filter-operator-change`), filterCallback with the text, the header
+  rendered again - what rangeBlock's apply does. The values are a preview: checked and disabled, the box
+  `.simple-html-grid-value-preview` at 60% opacity, its rows without pointer events (the box still scrolls);
+  unchecked the draft of the values is as it was
+* tests: filterContextMenu.test.ts +6 (the option only with text, the preview and back, Apply: the filter,
+  the state, the cell, the event once, a row added later; Enter and `_`; no option without CONTAINS; a
+  lookup column's labels); texts.test.ts types a search (a digit) so the text is shown
+* browser: new `value-list-text-search-check.js` 33/33 (light, dark, TreDeSpace dark, a phone: the option,
+  the preview, Apply → CONTAINS "den", the cell and `*a*`, every row has den); value-list 51/51,
+  filter-submenu-close 17/17, menus-regression 25/25
+* guides: filtering (the value list), texts
+
 ## Considered, not done
 
 ## Candidates / not started

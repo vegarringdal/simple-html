@@ -239,6 +239,11 @@ checkbox per value, as in a spreadsheet:
   every row.
 - The search box narrows the list to the texts with the search text in them, ignoring case (`*` and
   `%` are left out); Blank, which has no text, is not listed then.
+- **Filter on the text: contains "…"**, under the search box when it has text: checked, Apply filters
+  on the **text**, not the values - the header filter gets the operator `CONTAINS` (*Contains*, the `*a*`
+  in the cell) and the text, as if picked in Operator › and typed in the cell, and so rows added later
+  with the text are found too. `*`, `%` and `_` are wildcards there. The list stays as a preview of the
+  values with the text, greyed out. Not for a column whose `filterOperators` have no `CONTAINS`.
 - **Select all**, the header of the list, is checked when every value is, mixed when some are: a
   click checks every value, or none when every value is checked.
 - **Apply** filters the column on the **values** behind the checked texts - a filter as any other:

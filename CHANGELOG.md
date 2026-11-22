@@ -1332,6 +1332,15 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The value list: filter on the text searched (user request)
+
+##### Added
+- **Filter on the text: contains "…"** under the value list's search box, when it has text (and the column
+  offers `CONTAINS`): checked, Apply (or Enter) filters on the text instead of the values found - the header
+  filter gets `CONTAINS` and the text, as if picked in Operator › and typed in the cell, so rows added later
+  are found too; `*`, `%` and `_` are wildcards. The list stays as a greyed out preview. Text
+  `filter.values.textSearch`.
+
 #### Tooltips over every field (user request)
 
 ##### Fixed

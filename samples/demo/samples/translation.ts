@@ -169,6 +169,7 @@ const norwegian: Record<TextId, string> = {
     'filter.values.search': 'Søk i verdiene',
     'filter.values.searchPlaceholder': 'Søk i verdiene',
     'filter.values.availableOnly': 'Bare verdier i filtrerte rader',
+    'filter.values.textSearch': 'Filtrer på teksten: inneholder «{text}»',
     'filter.values.rowsFound': '{count} verdier',
     'filter.values.rowsFound.one': '{count} verdi',
     'filter.values.truncated': 'Bare de første {max} verdiene vises',
