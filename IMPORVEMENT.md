@@ -2670,6 +2670,18 @@ in the console. All passed. Found and fixed:
   guide pages (65 grids) shows 15 rows or more, at 1400x900 and 1000x600; before: 4 grids 13 rows, and the
   guides' with a log or SQL fewer
 
+### Menus: a block in use closes the submenu beside it (user request)
+
+* the user, on the filter menu with Filter › open beside the value list: "when I start using other parts of
+  filter, then filter menu should close". Only another item closed an open submenu; the value list is a
+  block, not an item. `watchBlock` (showMenu.ts): the block taking the focus (its search clicked or typed
+  in, Tab into it) or a press (a checkbox) closes the submenu open in its menu at once; the pointer resting
+  on it closes it after `SUBMENU_DELAY`, as on an item without a submenu, and the pointer crossing it into
+  the submenu keeps it (entering the submenu stops the timer). Back on Filter › it opens again
+* tests: gridMenus.test.ts +4 (focus, press, resting pointer, crossing pointer). Browser: new
+  `.claude/browser-checks/scripts/filter-submenu-close-check.js` 17/17 (light and dark, the Filtering
+  sample); submenu 40/40, menus regression 25/25, value list 51/51, filter ui 117/117, filter case 73/73
+
 ## Considered, not done
 
 ## Candidates / not started

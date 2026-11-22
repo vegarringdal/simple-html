@@ -1332,6 +1332,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Menus: the value list in use closes Filter › (user request)
+
+##### Changed
+- A block of a menu - the filter menu's value list - closes the submenu open beside it when it is used:
+  at once when it takes the focus or a press (its search, a checkbox), after the hover delay when the
+  pointer rests on it. The pointer crossing it on its way into the submenu keeps the submenu.
+
 #### SQL: values folded before they are bound (user request)
 
 ##### Changed

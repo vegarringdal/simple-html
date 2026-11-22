@@ -397,8 +397,40 @@ function renderLevel(ctx: Grid, tree: MenuTree, entries: MenuEntry[], depth: num
     }
     // the submenu open in this menu would stay where it opened, apart from its item
     popover.addEventListener('scroll', () => closeLevels(tree, depth + 1));
+    for (const entry of entries) {
+        if (entry.type === 'block') {
+            watchBlock(tree, depth, entry.element);
+        }
+    }
 
     return { popover, menu, opener, hasBlock: entries.some((entry) => entry.type === 'block') };
+}
+
+/**
+ * A block of the menu at `depth` in use - the filter menu's value list: the submenu open in this menu
+ * closes (the user: "when I start using other parts of filter, then filter menu should close"). At once
+ * when the block takes the focus or a press (its search typed in, a checkbox clicked); {@link SUBMENU_DELAY}
+ * after the pointer moved onto it, as onto an item without a submenu - see hoverItem. The pointer back on
+ * the item opens its submenu again
+ */
+function watchBlock(tree: MenuTree, depth: number, block: HTMLElement) {
+    const closeNow = () => {
+        clearTimeout(tree.timer);
+        tree.hovered = block;
+        closeLevels(tree, depth + 1);
+    };
+    block.addEventListener('focusin', closeNow);
+    block.addEventListener('pointerdown', closeNow);
+    block.addEventListener('mousemove', () => {
+        if (tree.hovered === block) {
+            return;
+        }
+        tree.hovered = block;
+        clearTimeout(tree.timer);
+        if (tree.levels[depth + 1]) {
+            tree.timer = setTimeout(() => closeLevels(tree, depth + 1), SUBMENU_DELAY);
+        }
+    });
 }
 
 /**

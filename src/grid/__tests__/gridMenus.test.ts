@@ -1590,6 +1590,66 @@ const press = (target: Element, key: string, init: KeyboardEventInit = {}) => {
 /** the data-menu-id of the element with the focus */
 const focusedId = () => document.activeElement?.getAttribute('data-menu-id');
 
+describe('menus - a block in use closes the submenu open beside it', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    // the filter menu's shape: a submenu, then a block with an input (the value list's search)
+    async function openWithBlock() {
+        const { gridInterface } = await mountGrid();
+        const block = document.createElement('div');
+        const input = document.createElement('input');
+        block.appendChild(input);
+        const entries: MenuEntry[] = [...tree(), { type: 'block', id: 'test.block', element: block }];
+        gridInterface.openMenu({ x: 0, y: 0 }, entries);
+        entry('test.more').click();
+        expect(openMenus()).toHaveLength(2);
+        return { block, input };
+    }
+
+    it('expect the focus going into the block to close it at once - typing in its search', async () => {
+        const { input } = await openWithBlock();
+        input.focus();
+        expect(openMenus()).toHaveLength(1);
+        expect(entry('test.more').getAttribute('aria-expanded')).toEqual('false');
+        // the menu stays, the focus in the block
+        expect(menuOpen()).toBe(true);
+        expect(document.activeElement).toBe(input);
+    });
+
+    it('expect a press in the block to close it at once - a checkbox clicked', async () => {
+        const { block } = await openWithBlock();
+        block.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        expect(openMenus()).toHaveLength(1);
+    });
+
+    it(`expect the pointer resting on the block to close it after ${SUBMENU_DELAY}ms, as on an item`, async () => {
+        const { block } = await openWithBlock();
+        vi.useFakeTimers();
+        pointerOn(block);
+        vi.advanceTimersByTime(SUBMENU_DELAY - 1);
+        expect(openMenus()).toHaveLength(2);
+        vi.advanceTimersByTime(1);
+        expect(openMenus()).toHaveLength(1);
+
+        // back on the item: it opens again
+        pointerOn(entry('test.more'));
+        vi.advanceTimersByTime(SUBMENU_DELAY);
+        expect(openMenus()).toHaveLength(2);
+    });
+
+    it('expect the pointer crossing the block on its way into the submenu to keep it', async () => {
+        const { block } = await openWithBlock();
+        vi.useFakeTimers();
+        pointerOn(block);
+        vi.advanceTimersByTime(SUBMENU_DELAY - 50);
+        openMenus()[1].parentElement?.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(SUBMENU_DELAY);
+        expect(openMenus()).toHaveLength(2);
+    });
+});
+
 describe('menus - the keyboard', () => {
     /**
      * openMenu() from the keyboard: a key first, as Enter on a button. The focus on a header filter,
