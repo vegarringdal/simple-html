@@ -1332,6 +1332,29 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Colour rules: conditional colours of a column (user request)
+
+##### Added
+- **`ColumnFormat.rules`** (`ColorRule[]`, `PaletteColor`): a column's cells get a text colour, a background
+  and / or bold when their value matches a rule - `{ operator: 'LESS_THAN', value: '0', color: 'red' }`. The
+  operators of the column's header filter (Equal, Contains, Does not contain, Begins with, Greater than,
+  Between, Is blank ... - not In / Not In), the value as it is typed there and tested as the header filter
+  tests it (a lookup column its label). The first rule that matches wins. Any column; in the state with the
+  formats, a developer's in `ColumnConfig.format`; a `TypeError` for a rule that is not one.
+- **A palette**, not free colours (a hex colour is not readable in light and dark): red, orange, yellow,
+  green, blue, purple, grey - `--simple-html-grid-palette-<colour>-color` / `-bg-color`, in the default and
+  the TreDeSpace theme, light and dark, every text colour at least 4.5:1 on the rows, a selection, a range.
+  The cells get `simple-html-grid-cell-text-<colour>`, `-bg-<colour>`, `simple-html-grid-cell-bold`.
+- **Colour rules in the grid config dialog**: a rule per group - its operator, its value (From / To for
+  Between, none for the blank ones, Checked for a checkbox column), *Text colour* and *Background* as rows of
+  swatches, *Bold*, move up / down, remove, *Add rule*; the preview in the colours; the badge *Colours*.
+- The detail form's fields show them too. Not the exports.
+- The full grid sample: Balance < 0 in red text, Status = waiting on orange.
+
+##### Notes
+- A cell with a validation error or a Find match shows without its rule's colours; a range's tint is laid
+  over the background. The default dark look's text colours are pale - its rows are mid grey.
+
 #### Header filters: filter as the cells show it, filter as you type (user request)
 
 ##### Added
