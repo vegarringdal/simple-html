@@ -1332,6 +1332,34 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Display formats: Format › in the header menu (user request)
+
+##### Added
+- **Format ›** in the header menu of date, datetime and number columns, the one picked checked, Default
+  for the field's own formatter:
+  - dates: ISO `2026-11-22`, Norwegian `22.11.2026` / `22.11.26`, US `11/22/2026`, UK `22/11/2026`, named
+    (`22. nov. 2026`, `22. november 2026`, `søndag 22. november 2026` in Norwegian), day of week, ISO week
+    (`2026-W47`), US week (Excel's `WEEKNUM`), month, quarter, year, days until; a datetime also with the
+    time (with or without seconds) and the time alone
+  - numbers: decimals as is or 0 to 4, thousands separator (none, space, comma, dot, apostrophe), decimal
+    mark (dot, comma), the presets Norwegian `1 234 567,89`, English, Swiss, Plain, and percent
+- A **view setting**, kept like a column's width: `ColumnConfig.format` (the one a column starts with) and
+  `GridState.formats` (`getState()` / `setState()` / `resetState()`), one object per column -
+  `{ date: 'weekIso' }`, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` - so more rules fit
+  later. A format that does not fit the field throws a `TypeError`. Types `ColumnFormat`, `DateFormat`,
+  `NumberFormat`.
+- **Only the display changes**: the cells, aggregates and the totals row, the selection summary, Find,
+  `fitColumns`. Editing shows the value (a cell showing `2026-W47` is edited as `2026-11-22`), the header
+  filter is typed as before, sorting, grouping, copy and CSV keep the value. The Excel export writes the
+  value with a matching Excel number format where there is one.
+- The language of day and month names is the text `format.locale` (default `'en-US'`; set it with the
+  other texts, the Norwegian sample uses `'nb-NO'`). Texts `header.format.*`, `format.weekIso`,
+  `format.weekUs`, `format.quarter` (the patterns of week and quarter, translatable).
+
+##### Changed
+- `GridState` has a `formats` key: TypeScript code that writes a whole `GridState` (not a `Partial`) adds it.
+- `MENU_IDS.header` has the Format › entries before `header.aggregate`.
+
 #### Header filters: the operator in the cell (user request)
 
 ##### Added
