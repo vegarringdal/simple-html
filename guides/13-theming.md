@@ -91,6 +91,8 @@ a screen shows it.
 | the other selected rows | midway blue-950 - blue-900 | `#cde2fe` | `#192f72` |
 | focus outline, the line of a range, Apply, the value list's checkboxes | blue-400 (`--dock-accent`) | `#2563eb` | `#51a2ff` |
 | links (a link column, the column settings' preview) | blue-800, blue-100 | `#1e40af` | `#dbeafe` |
+| the colour rules' text colours | red, blue, purple 800, orange, yellow, green 900, slate-700 in light; their 300 in dark | `#9f0712` ... | `#ffa2a2` ... |
+| the colour rules' backgrounds | red, orange, yellow, green, sky, purple 200 and slate-300 in light; their 950, slate-800 in dark. Blue is sky: blue-200 and blue-950 are the selected rows | `#ffc9c9` ... | `#460809` ... |
 | text on Apply | slate-950 (its picked day) | `#f1f5f9` | `#080f21` |
 | frames of the controls of the value list and the filter editor | slate-500 | `#64748b` | `#62748e` |
 | a range's tint | blue-500 at 15% (its info chip) | | |
@@ -375,6 +377,51 @@ The classes: `simple-html-grid-lookup-button` on the button, `simple-html-grid-c
 `simple-html-grid-lookup-select` or `simple-html-grid-lookup-grid`), `simple-html-grid-lookup-option` on
 an option, `-active` and `-current` (the cell's value, bold with a check) on top.
 
+## Colour rules
+
+The [colour rules](08-formatting.md#colour-rules) of a column colour its cells from a palette: seven
+colours, each a text colour and a background - two variables of the theme each, light and dark:
+
+- `--simple-html-grid-palette-<colour>-color` - the text colour: red, orange, yellow, green, blue,
+  purple, grey. At least 4.5:1 to the rows and the selected rows, under a range's tint too, to the
+  inputs (the detail form, the dialog's preview) and to every background of the palette
+- `--simple-html-grid-palette-<colour>-bg-color` - the background: the grid's text and a link at least
+  4.5:1 on it, under a range's tint too; the focus outline, the row state, the marker of an edited cell
+  and of more lines 3:1
+
+So any text colour on any background stays readable, in light and in dark. The rows of the default
+theme's dark look are grey (`#4b5563`, `#5a6370`): 4.5:1 to them is a light tint of a colour, so its
+text colours are pale there - the backgrounds show the colours better. TreDeSpace's dark rows are near
+black: its text colours are stronger (Tailwind 300). The grid writes no colour of its own: a rule
+takes a name of the palette, never a hex colour - that would be one colour in light and dark.
+
+Keep those contrasts when you change one:
+
+```css
+/* a lighter orange background in light, a stronger one in dark */
+.simple-html-grid {
+    --simple-html-grid-palette-orange-bg-color: light-dark(#ffedd5, #9a3412);
+}
+```
+
+The classes, on the cell element (`simple-html-grid-col-cell`) and on a value of the detail form:
+`simple-html-grid-cell-text` and `simple-html-grid-cell-text-<colour>` for a text colour,
+`simple-html-grid-cell-bg` and `simple-html-grid-cell-bg-<colour>` for a background,
+`simple-html-grid-cell-bold` for bold. The cell's text - its input, the lines of a multiline cell, a
+custom cell's host, a link - takes the cell's colour (`color: inherit`). A cell with a validation error
+(`simple-html-cell-error`) or a match of Find (`simple-html-cell-find-match`) shows as without a rule:
+the classes are there, the colours wait. A rule of your own can restyle them:
+
+```css
+/* the cells with grey text in italics too */
+.simple-html-grid .simple-html-grid-cell-text-grey input {
+    font-style: italic;
+}
+```
+
+The swatches of the grid config dialog are `column-settings-swatch` radio buttons, square, in the
+palette's variables.
+
 ## The variables of the grid
 
 On `.simple-html-grid`, in `grid.css`.
@@ -416,6 +463,20 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-lookup-icon-color` | the triangle on it, at least 3:1 to it | `#475569` | `#e2e8f0` |
 | `--simple-html-grid-lookup-active-bg-color` | the active option of the select of a lookup column | `#dbe7f3` | `#2f4f80` |
 | `--simple-html-grid-link-color` | the text of a link: a cell of a link column ([Templates and links](08-formatting.md#templates-and-links)), underlined, and the link in the preview of the column settings. At least 4.5:1 to the rows, the selected rows, under the tints of an error, a range and Find, and to the inputs and the bars | `#1e3a8a` | `#e8f1ff` |
+| `--simple-html-grid-palette-red-color` | the text colours of the [colour rules](#colour-rules): red. At least 4.5:1 to the rows, the selected rows (a range's tint over them too), the inputs and every background of the palette | `#90101a` | `#ffe4dd` |
+| `--simple-html-grid-palette-orange-color` | orange | `#7c2f00` | `#ffe7c4` |
+| `--simple-html-grid-palette-yellow-color` | yellow | `#654100` | `#ffec6c` |
+| `--simple-html-grid-palette-green-color` | green | `#00541c` | `#9dffb3` |
+| `--simple-html-grid-palette-blue-color` | blue | `#12429f` | `#ccf1ff` |
+| `--simple-html-grid-palette-purple-color` | purple | `#681aa4` | `#fae2ff` |
+| `--simple-html-grid-palette-grey-color` | grey | `#414853` | `#e3ecf9` |
+| `--simple-html-grid-palette-red-bg-color` | the backgrounds of the colour rules: red. The text and a link at least 4.5:1 on it, the marks 3:1 | `#fecaca` | `#7f1d1d` |
+| `--simple-html-grid-palette-orange-bg-color` | orange | `#fed7aa` | `#7c2d12` |
+| `--simple-html-grid-palette-yellow-bg-color` | yellow | `#fef08a` | `#713f12` |
+| `--simple-html-grid-palette-green-bg-color` | green | `#bbf7d0` | `#14532d` |
+| `--simple-html-grid-palette-blue-bg-color` | blue | `#bae6fd` | `#0c4a6e` |
+| `--simple-html-grid-palette-purple-bg-color` | purple | `#e9d5ff` | `#581c87` |
+| `--simple-html-grid-palette-grey-bg-color` | grey | `#d1d5db` | `#2b3544` |
 | `--simple-html-grid-totals-bg-color` | the totals row under the rows (`totalsRow`), see [Aggregates](18-aggregates.md) | `#e8edf3` | `#2a3441` |
 | `--simple-html-grid-totals-font-color` | the text of the totals row | `#1f2328` | `#f9fafb` |
 | `--simple-html-grid-aggregate-label-color` | the label in front of an aggregate (`Sum`) in a group row and the totals row. At least 4.5:1 to both | `#57606a` | `#c9d1d9` |

@@ -254,7 +254,8 @@ const conditions = (operators: FilterOperator[]): FilterCondition[] =>
  * The column settings dialog: the list of every kind of column, the settings of a text column - its
  * template, a link and each problem of an address - of a number column (its format picker, blank / 0, a
  * label and a placeholder, its checkboxes and each problem of their values), of a checkbox and a lookup
- * column, and the preview of the current row, the first row and none
+ * column, the colour rules (a rule's parts, its problems, a value a date column does not read, a checkbox
+ * column's value), and the preview of the current row, the first row and none
  */
 function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: () => void) {
     const dialog = () => document.querySelector('dialog.column-settings') as HTMLDialogElement;
@@ -325,6 +326,27 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     option('«Active»').click();
     check();
     option('«Code»').click();
+    check();
+    // colour rules (a column without, above): one added - its operator, value, swatches, Bold and
+    // buttons, the problem of no value - then a value (the badge), then no colour and not bold
+    const byId = (part: string) => dialog().querySelector(`[id$="-settings-${part}"]`) as HTMLElement;
+    byId('rules-add').click();
+    check();
+    type('rule-0-value', '«o1»');
+    check();
+    for (const kind of ['color', 'background']) {
+        const none = dialog().querySelector(`input[name$="-rule-0-${kind}"].column-settings-swatch-none`) as HTMLInputElement;
+        none.checked = true;
+        none.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    check();
+    // a date column: a value it does not read. A checkbox column: the value is a checkbox
+    option('«Born»').click();
+    byId('rules-add').click();
+    type('rule-0-value', '«x»');
+    check();
+    option('«Active»').click();
+    byId('rules-add').click();
     check();
     (
         Array.from(dialog().querySelectorAll('button')).find((button) =>

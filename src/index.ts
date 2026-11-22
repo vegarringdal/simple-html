@@ -55,6 +55,7 @@ export {
     type CellRendererInstance,
     registerCellRenderer
 } from './grid/cellRendererRegistry';
+export type { ColorRule, PaletteColor } from './grid/colorRules';
 export type { CheckboxFormat, ColumnFormat, DateFormat, LinkFormat, NumberFormat } from './grid/columnFormat';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';

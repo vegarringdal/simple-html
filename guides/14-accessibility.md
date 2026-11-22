@@ -108,7 +108,12 @@ grid "Grid"  aria-rowcount=503  aria-colcount=10
   `listbox` (its picked column `aria-selected`, `aria-activedescendant` on the list), each setting an
   input or a checkbox with its `<label>`, the hint and the problems of a template its description
   (`aria-describedby`), `aria-invalid` while it has a problem; the problems and the preview's are live
-  regions (`aria-live="polite"`): read out as they come while typing.
+  regions (`aria-live="polite"`): read out as they come while typing. The colour rules are a `group`
+  named *Colour rules* and described by its hint, each rule a `group` (*Rule 1*): its operator picker,
+  its value input(s), the swatches of its text colour and of its background - radio buttons in a
+  `radiogroup` named by its label, each named by its colour (*None*, *Red* ...), not by the colour
+  alone - Bold, and Move up / Move down / Remove rule, named and with a tooltip (`aria-disabled` past an
+  end).
 - **The detail form** (see [The detail form](02-grid-config.md#the-detail-form)): a `region` named by
   its title, *Details*; each value an input, a textarea or a checkbox with its `<label>`, `aria-readonly`
   / `readonly` where it can not be edited, `aria-required`, its errors its description
@@ -305,6 +310,7 @@ of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
 | the list of the fields on the Detail form tab | ArrowDown / ArrowUp, Home / End, PageDown / PageUp, Space, Alt+ArrowUp / Alt+ArrowDown | picks a field, puts it in the form or takes it out, moves it up / down - Move up / Move down are buttons too |
 | the grid config dialog | Tab, Enter / Space, Esc | the `✕`, the tabs (one stop), the list of the columns (one stop), the settings of the column picked - a format picker, or the text, its `{ }` field button, Show as link, the address and its `{ }`, Open in a new tab - the link of the preview, then Reset column, Reset all, Cancel, Apply, Apply & close. The focus is on the dialog when it opens, Esc closes the menu open in it, else the dialog without applying (a modal dialog); the focus goes back to where it was |
 | the list of the columns in the column settings | ArrowDown / ArrowUp, Home / End, PageDown / PageUp, a letter | picks the next / previous / first / last column, ten further, the next one whose label starts with the letter |
+| the swatches of a colour rule | ArrowRight / ArrowDown, ArrowLeft / ArrowUp | picks the next / previous colour (the browser's radio buttons): one stop of Tab, the colour picked |
 | the find bar | Enter, F3, Esc | the next match, closes it: see [below](#the-find-bar) |
 
 ### The list of a lookup column

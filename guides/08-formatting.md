@@ -14,8 +14,9 @@ How a column *shows* its values - a date as `22.11.2026` or as the week `2026-W4
 `1 234 567,89` - the user can pick in the header menu, without a formatter of your own: see
 [Display formats](#display-formats). A text column can show a template of the row's fields,
 `{firstname} {lastname}`, and be a link, `https://crm.example.com/customer/{id}` or `mailto:{email}`:
-see [Templates and links](#templates-and-links). The user sets all of them in the
-[grid config dialog](#the-grid-config-dialog), the gear in the footer.
+see [Templates and links](#templates-and-links). A cell can take a colour from its value - red text
+below 0, an orange background for `waiting`: see [Colour rules](#colour-rules). The user sets all of
+them in the [grid config dialog](#the-grid-config-dialog), the gear in the footer.
 
 ## What a formatter does
 
@@ -539,8 +540,8 @@ left end has the resets of the tab shown.
 The Columns tab:
 
 - **The columns** of the layout are at the left, in their order, each with its label, its type and
-  what it has set - *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*, or
-  *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a click too.
+  what it has set - *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*,
+  *Colours*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a click too.
 - **Label**, every column: the column's label - empty is the column's own, which the input shows. It
   is the label wherever the grid names the column, the exports' headers too.
 - **A date, datetime or number column** has its format: a picker that opens the entries of Format ›,
@@ -563,13 +564,24 @@ The Columns tab:
   picker of the operators it offers - the same as Filter › Operator › - with *Default:* and the operator
   the column starts with under it (its `operator`, else the type's: `≥` for a number or date, `=` for a
   text). A column with one operator (`filterOperators`) shows it, there is nothing to pick.
-- **The preview** shows what the cell shows in the current row (else the first row shown): the text,
-  the link - a click opens it in a new tab - and its address, and why the row has no link (a field
-  that is empty in it, an address that is not allowed, a field that does not exist).
+- **Colour rules**, every column: the [colour rules](#colour-rules) of its cells, in their order - the
+  first that matches wins. Each rule is a group: its operator (a picker of the operators the column's
+  filter offers, not In / Not In), its value as it is typed in the header filter - *From* and *To* for
+  Between, none for Is Blank, a checkbox *Checked* for a checkbox column - then *Text colour* and
+  *Background*, a row of square swatches each (*None* and the palette; one stop of Tab, the arrows
+  pick, each named by its colour for a screen reader and in its tooltip) and *Bold*. *Move up*, *Move
+  down* and *Remove rule* at its right, *Add rule* under the rules (red text on a red background, the
+  column's header filter operator; the focus goes to its operator). A rule without its value, or with
+  nothing to colour, is a problem; a value the column does not read (a date of another format) is said,
+  it colours no cell.
+- **The preview** shows what the cell shows in the current row (else the first row shown), in the
+  colours of the rule its value matches: the text, the link - a click opens it in a new tab - and its
+  address, and why the row has no link (a field that is empty in it, an address that is not allowed, a
+  field that does not exist). A checkbox and a lookup column have one when they have rules.
 - **A problem of a template** is shown under it at once: no address, one that does not start with its
   scheme, `javascript:` and the other schemes that are not allowed, a field of the grid's own - and so
-  is a problem of the checkbox values. The column is marked *Error*, and Apply does nothing until it is
-  fixed.
+  is a problem of the checkbox values and of a colour rule. The column is marked *Error*, and Apply
+  does nothing until it is fixed.
 - **Apply** sets the formats of the state, `setState({ formats })`: `getState()` has them - to save
   them, see [Saving it](03-state.md#saving-it). A filter operator that changed is switched as Operator ›
   does it: the header filter's value is filtered on again with it, the state has it
@@ -648,6 +660,88 @@ a database keeps as `1` / `0`, `'Y'` / `'N'`.
   another type in a `dynamicCellTypeColumn` is shown as its type.
 - The checked value is not `''`, the two are not the same, and a number field takes numbers - `'1'`,
   `'-1'`, `''` for the unchecked one: else a `TypeError`.
+
+## Colour rules
+
+A column's colour rules colour a cell from its value - its text, its background, bold: a negative
+balance in red, the orders that wait on an orange background. No code: a rule is a condition - an
+operator and a value, as the column's header filter has them - and a style from a palette. The user
+makes them in the [grid config dialog](#the-grid-config-dialog) (*Colour rules*), a developer starts a
+column with them in `ColumnConfig.format`:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        // red text below 0
+        balance: { format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }] } },
+        // the first rule that matches wins
+        status: {
+            format: {
+                rules: [
+                    { operator: 'EQUAL', value: 'waiting', background: 'orange' },
+                    { operator: 'CONTAINS', value: 'late', color: 'red', bold: true }
+                ]
+            }
+        },
+        // both ends included, an end '' is open
+        due: { format: { rules: [{ operator: 'BETWEEN', value: ['2026-11-01', '2026-11-30'], background: 'yellow' }] } },
+        // empty - or 0, as in the filter
+        notes: { format: { rules: [{ operator: 'IS_BLANK', background: 'grey' }] } }
+    },
+    layout: {
+        center: [
+            { fields: ['balance'], width: 100 },
+            { fields: ['status'], width: 100 },
+            { fields: ['due'], width: 100 },
+            { fields: ['notes'], width: 150 }
+        ]
+    }
+};
+```
+
+| part of a rule | |
+| --- | --- |
+| `operator` | how the value is compared: an operator of the column's type - `EQUAL`, `NOT_EQUAL_TO`, `CONTAINS`, `BEGIN_WITH`, `LESS_THAN`, `GREATER_THAN_OR_EQUAL_TO`, `BETWEEN`, `IS_BLANK`, `IS_NOT_BLANK` ... ([Operators](06-filtering.md#operators)). Not `IN` / `NOT_IN`: a rule compares one value, give each value a rule |
+| `value` | what it is compared with, text as it is typed in the header filter: `'100'`, `'late'`, `'2026-11-22'`, `'true'` / `'false'` for a checkbox column. `[from, to]` for `BETWEEN`. Left out for `IS_BLANK` / `IS_NOT_BLANK` |
+| `color` | the text colour: `'red'`, `'orange'`, `'yellow'`, `'green'`, `'blue'`, `'purple'` or `'grey'` |
+| `background` | the background, a colour of the same palette |
+| `bold` | `true`: bold text |
+
+- **The condition is the header filter's.** The value is read as the column's header filter reads what
+  is typed in it: a text as it is - `*`, `%` and `_` are wildcards, case is ignored unless the column
+  has `filterCaseSensitive` - a number or a date with the field's formatter (`1,5` with a decimal comma,
+  `2026-11-22`, the day of a date), a Between's two ends each. Then the datasource's own filter tests
+  it: `≥ 100` or *Contains* `late` keeps the cells the header filter would keep, and 0 is blank as there
+  ([0 is blank](06-filtering.md#0-is-blank)) - a blank number is 0, `< 1` colours it.
+- **A lookup column** (`editor`) compares the label its cells show, with a text's operators - as its
+  header filter does; a value no row of the lookup has matches no rule that compares. Is Blank / Is Not
+  Blank look at the value.
+- **The first rule that matches wins**: the order of the list, *Move up* / *Move down* in the dialog. A
+  cell no rule matches has the grid's colours.
+- **A value the column does not read** - a date of another format, `22.11.2026` in a `YYYY-MM-DD`
+  column - matches no cell (the header filter filters nothing with it); the dialog says so.
+- **The palette is the theme's**: each colour is a text colour and a background, css variables with a
+  light and a dark colour, in both themes - readable: a text colour has 4.5:1 to the rows, the selected
+  rows and every background of the palette, the grid's text 4.5:1 to the backgrounds. There are no free
+  colours (`'#ff0000'` throws a `TypeError`): a hex colour is one colour in light and in dark, it can
+  not be readable in both. A theme changes the palette, see
+  [Theming, colour rules](13-theming.md#colour-rules).
+- **Where**: every cell of the column - an input, a multiline cell, a link (the rule's text colour in
+  place of the link's, still underlined), a template, a custom cell (its text takes the colour; a
+  renderer that sets a colour of its own keeps it), a checkbox (its background). The values of the
+  [detail form](02-grid-config.md#the-detail-form) and the dialog's preview have them too. Not the
+  CSV and Excel exports - they write the values - nor a group row or the totals row.
+- **What wins over a rule**: a cell with a validation error and a match of Find show as without it -
+  their tint and the grid's text - so they stand out; a range's tint is laid over the rule's
+  background. A selected row keeps its colour in the other cells; the rule's background is the cell's,
+  over it. The focus outline, the marker of an edited cell and of more lines are on top. Bold stays.
+- **Checked** as the rest of a format: an operator the type does not have, `IN` / `NOT_IN`, a rule
+  without the value its operator needs, one that colours nothing, a colour that is not in the palette
+  throw a `TypeError` when the grid is made, or `updateConfig()` or `setState()` is given it.
+- **It is state** with the rest of the column's format: Apply in the dialog, `getState()`, a state
+  saved as JSON (the value is text, a date too), Reset column / Reset all to the config's.
 
 ## The type from another field
 

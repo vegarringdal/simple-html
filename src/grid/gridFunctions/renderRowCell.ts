@@ -30,6 +30,7 @@ import { rangeDeleteKey } from './rangeClipboard';
 import { rangeCellFocused, rangeKeydown, showCellRange } from './rangeSelection';
 import { renderRowSelectorOf } from './renderRowSelector';
 import { cellHeightOf, lastLineMiddle, linesUnderTop, placeRowCell } from './rowHeights';
+import { showCellColor } from './showCellColor';
 import { showCellEdited } from './showCellEdited';
 import { showCellErrors } from './showCellErrors';
 import { showCellMerged } from './showCellMerged';
@@ -83,6 +84,7 @@ export function renderRowCell(
         showCellMerged(ctx, cell, null, null);
         showCellRange(ctx, cell);
         showCellFind(ctx, cell, null, null);
+        showCellColor(ctx, cell, null, null);
         cell.classList.remove('simple-html-cell-deleted');
         return;
     }
@@ -125,6 +127,8 @@ export function renderRowCell(
         const showEdit = () => {
             showCellErrors(ctx, cell, entity, attribute);
             showCellEdited(ctx, cell, entity, attribute, formatter);
+            // the colour rule of the new value (ColumnFormat.rules)
+            showCellColor(ctx, cell, entity, attribute);
             renderRowSelectorOf(ctx, row);
         };
 
@@ -728,4 +732,6 @@ export function renderRowCell(
     showCellRange(ctx, cell);
     // a match of Find (Ctrl+F) or not, the same
     showCellFind(ctx, cell, entity, attribute || null);
+    // the colours of the column's colour rule that matches the value (ColumnFormat.rules), or none
+    showCellColor(ctx, cell, entity, attribute || null);
 }

@@ -103,9 +103,14 @@ function config(readonly: boolean): GridConfig {
             // a flag stored as the text '1' / '0': the column settings' Show as checkbox shows it as checkboxes
             newsletter: { label: 'Newsletter' },
             countryCode: { label: 'Country', editor: { type: 'select', lookup: 'full-grid-countries' } },
-            status: { renderer: 'full-grid-status' },
+            // colour rules - a condition as the header filter has it, a colour of the palette; the first that
+            // matches wins. The grid config's Colour rules change them
+            status: {
+                renderer: 'full-grid-status',
+                format: { rules: [{ operator: 'EQUAL', value: 'waiting', background: 'orange' }] }
+            },
             age: { aggregate: 'avg' },
-            balance: { aggregate: ['sum', 'avg'] },
+            balance: { aggregate: ['sum', 'avg'], format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }] } },
             // display formats: what the cells show, the value stays - right click a column label, Format ›
             credit: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } },
             dueDate: { format: { date: 'weekIso' } },
@@ -160,7 +165,8 @@ function makeRows(count: number, start: number) {
             city: pick(CITIES),
             status: pick(STATUSES),
             age: 20 + Math.floor(rnd() * 45),
-            balance: Math.round(rnd() * 5_000_000) / 100,
+            // one in eleven below 0: red, a colour rule
+            balance: Math.round(rnd() * 5_500_000 - 500_000) / 100,
             credit: Math.round(rnd() * 1_000_000) / 100,
             discount: Math.floor(rnd() * 30),
             orderDate: new Date(2026, 0, 1 + Math.floor(rnd() * 365)),
@@ -212,7 +218,7 @@ export const fullGrid: DemoSample = {
     group: 'Getting started',
     fullPage: true,
     description:
-        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Credit, Due Date and Updated have display formats (Format › in the header menu). City shows a template, Fruit, Email and Phone are links, Newsletter is 1 / 0 as text: change them with the gear at the right end of the footer, the grid config - a label, a placeholder, blank / 0, Show as checkbox; its tab Detail form shows the current row as a form. Save formats keeps them. Add 5 000 rows at a time, edit, group, filter, sort, select ranges, export to Excel, Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
+        "50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, multiline notes, monthly sales with aggregates - pinned left and right. Credit, Due Date and Updated have display formats (header menu, Format ›). City shows a template, Fruit, Email and Phone are links, Newsletter is 1 / 0 as text, Balance and Status have colour rules: change them with the gear at the footer's right end, the grid config - a label, a placeholder, blank / 0, checkboxes, colours; its tab Detail form shows the current row. Save formats keeps them. Add 5 000 rows, edit, group, filter, sort, select ranges, export to Excel, Ctrl+F, Ctrl+D, Ctrl+Z, right click for menus.",
     run(stage) {
         const style = document.createElement('style');
         style.textContent = STYLE;
@@ -267,7 +273,11 @@ export const fullGrid: DemoSample = {
                     ...gridInterface.getState().formats,
                     orderDate: { date: 'norwegian' },
                     dueDate: { date: 'daysUntil' },
-                    balance: { number: { decimals: 2, thousands: ' ', decimal: ',' } },
+                    // the column's colour rules kept: a format is one object
+                    balance: {
+                        ...gridInterface.getState().formats.balance,
+                        number: { decimals: 2, thousands: ' ', decimal: ',' }
+                    },
                     kpi1: { number: { decimals: 1, decimal: ',' } }
                 }
             });

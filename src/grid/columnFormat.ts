@@ -2,6 +2,7 @@ import type { FieldType } from '../datasource/field';
 import type { Formatter } from '../datasource/formatter';
 import { fillText, getText, type Texts } from '../texts';
 import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTemplate';
+import { assertColorRules, type ColorRule } from './colorRules';
 
 /**
  * The display formats of a column: how its cells show the value, picked by the user in the header
@@ -18,7 +19,8 @@ import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTempl
  * The format has the rest of what the user sets for a column in the grid config dialog too: the
  * column's label (`label`, read by getColumnLabel), the placeholder of its header filter (`placeholder`,
  * `placeholderLabel` - headerFilterPlaceholder.ts), a number column's blank / 0 (`numberOverride`,
- * numberOverrideOf in cellText.ts) and the checkboxes of a text or number column (`checkbox`).
+ * numberOverrideOf in cellText.ts) and the checkboxes of a text or number column (`checkbox`). And its
+ * colour rules (`rules`, colorRules.ts): a cell's colours from its value.
  */
 
 /**
@@ -264,7 +266,8 @@ export interface CheckboxFormat {
  * keeps it with the rest: the column's `label` and the `placeholder` of its header filter (any column),
  * a number column's `numberOverride` (blank as 0, 0 as blank), and `checkbox` - the cells of a text or
  * number column as checkboxes. Each wins over the column's own option (`ColumnConfig.label`,
- * `placeholderFilter`, `numberOverride`).
+ * `placeholderFilter`, `numberOverride`). And `rules`, the colour rules of any column: a cell's text
+ * colour, background and bold from its value.
  *
  * @example
  * ```ts
@@ -279,7 +282,9 @@ export interface CheckboxFormat {
  *         name: { format: { text: '{name} ({id})' } }, // Ann (12)
  *         company: { format: { link: { url: 'https://duckduckgo.com/?q={company}', newTab: true } } },
  *         stock: { format: { label: 'In stock', placeholderLabel: true, numberOverride: 'ZERO_TO_BLANK' } },
- *         newsletter: { format: { checkbox: { checked: '1', unchecked: '0' } } } // '1' is checked
+ *         newsletter: { format: { checkbox: { checked: '1', unchecked: '0' } } }, // '1' is checked
+ *         // red text for a negative number, the first rule that matches wins
+ *         total: { format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }] } }
  *     },
  *     layout: {
  *         center: [
@@ -289,7 +294,8 @@ export interface CheckboxFormat {
  *             { fields: ['name'], width: 120 },
  *             { fields: ['company'], width: 150 },
  *             { fields: ['stock'], width: 80 },
- *             { fields: ['newsletter'], width: 80 }
+ *             { fields: ['newsletter'], width: 80 },
+ *             { fields: ['total'], width: 100 }
  *         ]
  *     }
  * };
@@ -337,6 +343,13 @@ export interface ColumnFormat {
      * `text`, `link`, `number` or `numberOverride`: a checkbox shows no text
      */
     checkbox?: CheckboxFormat;
+    /**
+     * the colour rules of the column, any column: when a cell's value matches a rule's condition - the
+     * header filter's operator and text - the cell has its text colour, background or bold. The first
+     * rule that matches wins, see {@link ColorRule}:
+     * `[{ operator: 'LESS_THAN', value: '0', color: 'red' }]`. Left out: the grid's colours
+     */
+    rules?: ColorRule[];
 }
 
 /**
@@ -678,7 +691,8 @@ const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = [
     'placeholder',
     'placeholderLabel',
     'numberOverride',
-    'checkbox'
+    'checkbox',
+    'rules'
 ];
 
 /**
@@ -721,7 +735,8 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * - `numberOverride` for a `number` field: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'` or `'NONE'`
  * - `checkbox` for a `text` or `number` field: a {@link CheckboxFormat} (checkboxProblem), not with
  *   `text`, `link`, `number` or `numberOverride`
- * - a lookup column (`editor`: its cells show a label) takes `label` and the placeholder only
+ * - `rules` for any column: a list of {@link ColorRule}s, see assertColorRules
+ * - a lookup column (`editor`: its cells show a label) takes `label`, the placeholder and `rules` only
  * @param name how the message names it: `GridConfig: columns.born.format`, `setState: formats.born`
  * @throws a `TypeError` naming it, what it has and what it takes
  */
@@ -743,10 +758,13 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
     const { date, number, text, link, numberOverride, checkbox } = format;
     if (lookup && [date, number, text, link, numberOverride, checkbox].some((part) => part !== undefined)) {
         throw new TypeError(
-            `${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format - a label and a placeholder only`
+            `${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format - a label, a placeholder and rules only`
         );
     }
     assertLabelParts(format, field, type, lookup, name);
+    if (format.rules !== undefined) {
+        assertColorRules(format.rules, type, lookup, `${name}.rules`);
+    }
     if (numberOverride !== undefined) {
         if (type !== 'number') {
             throw new TypeError(`${name}.numberOverride is for a number field, '${field}' is ${type}`);

@@ -205,6 +205,9 @@ A link column ([Templates and links](08-formatting.md#templates-and-links)) is w
 copy and the CSV export write it: no `HYPERLINK` formula, no hyperlink, not the text of its template -
 `Acme Corp`, not `Acme Corp (12)`.
 
+The [colour rules](08-formatting.md#colour-rules) of a column are not written: the cells of the sheet
+have no fill or font colour, the CSV has none at all.
+
 ### The Excel options
 
 `ExcelOptions`, every option optional. It is plain JSON: it can be stored, or come from a menu of

@@ -76,6 +76,25 @@
        column settings' preview, underlined. At least 4.5:1 against the rows and the selected rows -
        under the tints of an error, a range and Find too - the inputs and the bars */
     --simple-html-grid-link-color: light-dark(#1e3a8a, #e8f1ff);
+    /* the palette of the colour rules (ColumnFormat.rules): a text colour and a background of each colour,
+       on the cells and the detail form's values. A text colour has 4.5:1 or more to the rows, the selected
+       rows - under a range's tint too - the inputs and every background of the palette; the text and a
+       link 4.5:1 to the backgrounds, the focus outline, the row state and the markers 3:1. The rows of the
+       dark look are grey: its text colours are light tints, 4.5:1 asks it */
+    --simple-html-grid-palette-red-color: light-dark(#90101a, #ffe4dd);
+    --simple-html-grid-palette-orange-color: light-dark(#7c2f00, #ffe7c4);
+    --simple-html-grid-palette-yellow-color: light-dark(#654100, #ffec6c);
+    --simple-html-grid-palette-green-color: light-dark(#00541c, #9dffb3);
+    --simple-html-grid-palette-blue-color: light-dark(#12429f, #ccf1ff);
+    --simple-html-grid-palette-purple-color: light-dark(#681aa4, #fae2ff);
+    --simple-html-grid-palette-grey-color: light-dark(#414853, #e3ecf9);
+    --simple-html-grid-palette-red-bg-color: light-dark(#fecaca, #7f1d1d);
+    --simple-html-grid-palette-orange-bg-color: light-dark(#fed7aa, #7c2d12);
+    --simple-html-grid-palette-yellow-bg-color: light-dark(#fef08a, #713f12);
+    --simple-html-grid-palette-green-bg-color: light-dark(#bbf7d0, #14532d);
+    --simple-html-grid-palette-blue-bg-color: light-dark(#bae6fd, #0c4a6e);
+    --simple-html-grid-palette-purple-bg-color: light-dark(#e9d5ff, #581c87);
+    --simple-html-grid-palette-grey-bg-color: light-dark(#d1d5db, #2b3544);
     /* the totals row under the rows (GridConfig.totalsRow): its background and its text */
     --simple-html-grid-totals-bg-color: light-dark(#e8edf3, #2a3441);
     --simple-html-grid-totals-font-color: light-dark(#1f2328, #f9fafb);
@@ -3419,6 +3438,11 @@
     overflow-wrap: anywhere;
 }
 
+/* the preview in the colours of a colour rule: a little room around the text on its background */
+.simple-html-grid.filter-editor-content .column-settings-preview-cell.simple-html-grid-cell-bg {
+    padding: 1px 4px;
+}
+
 .simple-html-grid.filter-editor-content .column-settings-preview-link {
     color: var(--simple-html-grid-link-color);
     text-decoration: underline;
@@ -3428,6 +3452,170 @@
     color: var(--simple-html-grid-sec-font-color);
     font-family: ui-monospace, monospace;
     overflow-wrap: anywhere;
+}
+
+/**
+ * The colour rules of a column (columnSettingsRules.ts): each rule a box of the dialog's lines - its
+ * operator picker, value and buttons on a line (they wrap when the dialog is narrow), a row of swatches
+ * for its text colour and one for its background, Bold, its problems
+ */
+.simple-html-grid.filter-editor-content .column-settings-rules {
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rules-empty {
+    color: var(--simple-html-grid-sec-font-color);
+    font-style: italic;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-condition {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-condition > .column-settings-rule-operator {
+    flex: 0 1 170px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-value {
+    flex: 1 1 140px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-buttons {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+}
+
+/* Move up at the first rule, Move down at the last: greyed out, aria-disabled - they keep the focus */
+.simple-html-grid.filter-editor-content .column-settings-rule-button[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-button[aria-disabled='true']:hover {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-style {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 8px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-style-label {
+    flex: 0 0 90px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* a swatch: a radio button drawn as a square of its colour in the controls' frame, 20px and 4px apart -
+ * 24px from one to the next (WCAG 2.5.8). The one picked has a frame of the text's colour, 2px, inside
+ * a ring of the input's colour: it is said by its shape too, not by a colour only. None is crossed out */
+.simple-html-grid.filter-editor-content .column-settings-swatch {
+    appearance: none;
+    -webkit-appearance: none;
+    flex: none;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch:checked {
+    border: 2px solid var(--simple-html-grid-main-font-color);
+    box-shadow: inset 0 0 0 2px var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch:focus-visible {
+    outline-offset: 1px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-none {
+    background-image: linear-gradient(
+        to top right,
+        transparent calc(50% - 1px),
+        var(--simple-html-grid-main-font-color) calc(50% - 1px),
+        var(--simple-html-grid-main-font-color) calc(50% + 1px),
+        transparent calc(50% + 1px)
+    );
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-red {
+    background-color: var(--simple-html-grid-palette-red-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-orange {
+    background-color: var(--simple-html-grid-palette-orange-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-yellow {
+    background-color: var(--simple-html-grid-palette-yellow-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-green {
+    background-color: var(--simple-html-grid-palette-green-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-blue {
+    background-color: var(--simple-html-grid-palette-blue-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-purple {
+    background-color: var(--simple-html-grid-palette-purple-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-grey {
+    background-color: var(--simple-html-grid-palette-grey-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-red {
+    background-color: var(--simple-html-grid-palette-red-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-orange {
+    background-color: var(--simple-html-grid-palette-orange-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-yellow {
+    background-color: var(--simple-html-grid-palette-yellow-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-green {
+    background-color: var(--simple-html-grid-palette-green-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-blue {
+    background-color: var(--simple-html-grid-palette-blue-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-purple {
+    background-color: var(--simple-html-grid-palette-purple-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-grey {
+    background-color: var(--simple-html-grid-palette-grey-bg-color);
 }
 
 /* Reset column, Reset all: at the left end of the footer, the buttons that apply at the right */
@@ -3705,6 +3893,91 @@
 .simple-html-grid .simple-html-grid-detail-form-empty {
     color: var(--simple-html-grid-sec-font-color);
     font-style: italic;
+}
+
+/**
+ * The colour rules of a column (ColumnFormat.rules, colorRules.ts): the classes of the rule that matches a
+ * cell's value, on the cell element (showCellColor.ts) - and on a value of the detail form and the preview
+ * of the grid config dialog. The colours are the palette's variables, no others: readable in light and
+ * dark. The background is the element's: over the row's colour (a selected row's too), under a range's
+ * tint. The text colour is the element's, the text of a cell takes it - its input, the lines of a
+ * multiline cell, a custom cell, a link (inherit); a custom cell that sets a colour of its own keeps it.
+ * An error and a match of Find win: such a cell shows as without a rule, the error's or Find's tint over
+ * the row and the grid's text. Bold stays
+ */
+.simple-html-grid .simple-html-grid-cell-text-red:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-red-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-orange:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-orange-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-yellow:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-yellow-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-green:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-green-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-blue:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-blue-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-purple:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-purple-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-grey:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-grey-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-red:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-red-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-orange:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-orange-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-yellow:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-yellow-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-green:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-green-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-blue:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-blue-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-purple:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-purple-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-grey:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-grey-bg-color);
+}
+
+/* the text of a cell takes the cell's colour: its input, the lines under it, a custom cell's host, a link -
+ * and the link of the dialog's preview */
+.simple-html-grid
+    .simple-html-grid-cell-text:not(.simple-html-cell-error, .simple-html-cell-find-match)
+    :is(
+        input,
+        .simple-html-grid-cell-lines,
+        .simple-html-grid-cell-custom,
+        .simple-html-grid-cell-link[href],
+        .column-settings-preview-link
+    ) {
+    color: inherit;
+}
+
+.simple-html-grid .simple-html-grid-cell-bold,
+.simple-html-grid .simple-html-grid-cell-bold :is(input, .simple-html-grid-cell-lines, .simple-html-grid-cell-custom) {
+    font-weight: var(--simple-html-grid-font-weight-header);
 }
 
 /**

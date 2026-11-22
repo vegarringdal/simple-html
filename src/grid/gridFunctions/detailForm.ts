@@ -1,6 +1,7 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
+import { colorRuleClasses, colorRuleOf } from '../colorRules';
 import type { Grid } from '../grid';
 import type { DetailForm, ParsedGridConfig } from '../gridConfig';
 import { asPx } from './asPx';
@@ -28,7 +29,8 @@ import { undoRedoAction } from './undoRedoKey';
  * - **The values** as the cells show them (cellTextOf: the display format, a template, a lookup's
  *   label, numberOverride). A text of several lines (multilineText.ts) is a textarea as tall as its
  *   lines: all of it can be read. A checkbox for a boolean cell. A row with a link (ColumnFormat.link)
- *   has the link after the value.
+ *   has the link after the value. A value has the colours of its column's colour rule
+ *   (ColumnFormat.rules) as its cell has them - not a checkbox.
  * - **Editing**, where the cell can be edited (the grid's `readonly`, `__isCellReadonly` - the column's
  *   `readonly` and the `isReadonly` hook - and `allowPasteClearOnly`), the way a cell is: every keystroke
  *   is written to the row with the formatter's `parse` inside `History.typing()` - what is typed in a
@@ -308,6 +310,11 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
     const errors = datasource.__getRowErrors(row)?.get(field) ?? [];
     const required = datasource.getField(field).validate.some((rule) => rule.id === 'required');
     const link = cell.type === 'text' && !lookup ? gridInterface.__getCellLink(field, row) : null;
+    // the colours of the column's colour rule that matches the value (ColumnFormat.rules), as the cell has
+    // them: on the input or the textarea
+    const colors = colorRuleClasses(colorRuleOf(gridInterface, field, row))
+        .map((name) => ` ${name}`)
+        .join('');
 
     // the element of the last render: the one the user may be typing in
     const root = ctx.element.getRootNode() as Partial<DocumentOrShadowRoot>;
@@ -384,7 +391,7 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
         const lines = Math.min(Math.max(textLines(text).length + 1, MIN_LINES), MAX_LINES);
         control = html`<textarea
             id=${id}
-            class="simple-html-grid-detail-form-input simple-html-grid-detail-form-text"
+            class=${`simple-html-grid-detail-form-input simple-html-grid-detail-form-text${colors}`}
             rows=${lines}
             .value=${live(text)}
             .readOnly=${readonly}
@@ -399,7 +406,7 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
     } else {
         control = html`<input
             id=${id}
-            class="simple-html-grid-detail-form-input"
+            class=${`simple-html-grid-detail-form-input${colors}`}
             type="text"
             spellcheck="false"
             autocomplete="off"

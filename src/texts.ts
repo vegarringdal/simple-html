@@ -299,6 +299,7 @@ const DEFAULTS = {
     'columnSettings.badge.numberOverride': 'Blank / 0',
     'columnSettings.badge.label': 'Label',
     'columnSettings.badge.placeholder': 'Placeholder',
+    'columnSettings.badge.rules': 'Colours',
     // every column: its label, empty the column's own (the input shows it)
     'columnSettings.label': 'Label',
     // a date, datetime or number column: the picker of its format, the entries of Format ›
@@ -332,6 +333,33 @@ const DEFAULTS = {
     'columnSettings.operator': 'Filter operator',
     'columnSettings.operator.tooltip': 'The operator the header filter of the column uses',
     'columnSettings.operator.hint': 'Default: {operator}',
+    // every column: its colour rules (ColumnFormat.rules). A rule's operators have the header filter's
+    // names (filter.operator.*, filter.filter.isBlank / isNotBlank), its label and value inputs the filter
+    // editor's (filterEditor.label.*). {number} is the rule's place, 1 the first; {value} the value as typed
+    'columnSettings.rules': 'Colour rules',
+    'columnSettings.rules.hint':
+        'The first rule that matches colours the cell. The value is compared as the header filter compares it',
+    'columnSettings.rules.empty': 'No rules',
+    'columnSettings.rules.add': 'Add rule',
+    'columnSettings.rules.rule': 'Rule {number}',
+    'columnSettings.rules.checked': 'Checked',
+    'columnSettings.rules.textColor': 'Text colour',
+    'columnSettings.rules.background': 'Background',
+    'columnSettings.rules.bold': 'Bold',
+    'columnSettings.rules.none': 'None',
+    'columnSettings.rules.color.red': 'Red',
+    'columnSettings.rules.color.orange': 'Orange',
+    'columnSettings.rules.color.yellow': 'Yellow',
+    'columnSettings.rules.color.green': 'Green',
+    'columnSettings.rules.color.blue': 'Blue',
+    'columnSettings.rules.color.purple': 'Purple',
+    'columnSettings.rules.color.grey': 'Grey',
+    'columnSettings.rules.moveUp': 'Move up',
+    'columnSettings.rules.moveDown': 'Move down',
+    'columnSettings.rules.remove': 'Remove rule',
+    'columnSettings.rules.problem.value': 'Write the value to compare with',
+    'columnSettings.rules.problem.style': 'Pick a text colour, a background or bold',
+    'columnSettings.rules.unread': 'The column does not read {value}: the rule colours no cell',
     // the preview: the row it shows, and what is wrong with a template - {field} is the field as written
     // in braces, or the label of the column that is empty
     'columnSettings.preview.current': 'Preview, the current row',

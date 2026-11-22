@@ -606,6 +606,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.badge.numberOverride` | `Blank / 0` | the column shows a blank as 0, or 0 as blank (or neither, over its `numberOverride`) |
 | `columnSettings.badge.label` | `Label` | the column has a label of the user's |
 | `columnSettings.badge.placeholder` | `Placeholder` | the column's header filter has a placeholder of the user's |
+| `columnSettings.badge.rules` | `Colours` | the column has colour rules |
 | `columnSettings.label` | `Label` | the label of the input of the column's label, every column: empty is the column's own, the input shows it |
 | `columnSettings.format` | `Format` | the label of the format picker of a date or number column |
 | `columnSettings.format.tooltip` | `How the cells show the value` | its tooltip |
@@ -631,6 +632,29 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.operator` | `Filter operator` | the label of the operator picker, every column but a checkbox |
 | `columnSettings.operator.tooltip` | `The operator the header filter of the column uses` | its tooltip |
 | `columnSettings.operator.hint` | `Default: {operator}` | under it: the operator the column starts with, its name |
+| `columnSettings.rules` | `Colour rules` | the heading of the column's colour rules, every column, and their name for a screen reader. A rule's operator picker has the header filter's names of the operators (`filter.operator.*`, `filter.filter.isBlank`, `filter.filter.isNotBlank`), its label and the value inputs the filter editor's (`filterEditor.label.*`) |
+| `columnSettings.rules.hint` | `The first rule that matches colours the cell. The value is compared as the header filter compares it` | under it |
+| `columnSettings.rules.empty` | `No rules` | a column without rules |
+| `columnSettings.rules.add` | `Add rule` | the button that adds a rule at the end |
+| `columnSettings.rules.rule` | `Rule {number}` | the name of a rule for a screen reader, `{number}` its place: 1 is the first |
+| `columnSettings.rules.checked` | `Checked` | the value of a rule of a boolean column: a checkbox |
+| `columnSettings.rules.textColor` | `Text colour` | the label of a rule's text colours, a row of swatches |
+| `columnSettings.rules.background` | `Background` | the label of its backgrounds |
+| `columnSettings.rules.bold` | `Bold` | the checkbox: the text is bold |
+| `columnSettings.rules.none` | `None` | the first swatch: no text colour, no background - the name and tooltip |
+| `columnSettings.rules.color.red` | `Red` | a swatch of the palette: its name and tooltip |
+| `columnSettings.rules.color.orange` | `Orange` | |
+| `columnSettings.rules.color.yellow` | `Yellow` | |
+| `columnSettings.rules.color.green` | `Green` | |
+| `columnSettings.rules.color.blue` | `Blue` | |
+| `columnSettings.rules.color.purple` | `Purple` | |
+| `columnSettings.rules.color.grey` | `Grey` | |
+| `columnSettings.rules.moveUp` | `Move up` | the button that moves a rule before the one above it: its name and tooltip |
+| `columnSettings.rules.moveDown` | `Move down` | after the one under it |
+| `columnSettings.rules.remove` | `Remove rule` | the ✕ of a rule |
+| `columnSettings.rules.problem.value` | `Write the value to compare with` | a rule's operator compares, its value is empty (a Between: both) |
+| `columnSettings.rules.problem.style` | `Pick a text colour, a background or bold` | a rule that colours nothing |
+| `columnSettings.rules.unread` | `The column does not read {value}: the rule colours no cell` | `{value}`: a value the field's formatter does not read - a date of another format. Apply is not held back |
 | `columnSettings.preview.current` | `Preview, the current row` | the title of the preview of the current row |
 | `columnSettings.preview.first` | `Preview, the first row` | of the first row, without a current row |
 | `columnSettings.preview.none` | `No rows to preview` | without rows |

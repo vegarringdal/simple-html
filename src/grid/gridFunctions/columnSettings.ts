@@ -11,6 +11,7 @@ import {
     urlTemplateProblem,
     VALUE_PLACEHOLDER
 } from '../cellTemplate';
+import { colorRuleClasses, colorRuleOf } from '../colorRules';
 import {
     CHECKED_VALUE,
     type CheckboxFormat,
@@ -27,6 +28,7 @@ import type { Grid } from '../grid';
 import type { MenuItem } from '../gridMenus';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
 import { defaultHeaderOperator, headerFilterType, headerOperators } from './columnFilterOptions';
+import { colorRuleSettings, colorRulesHaveProblem } from './columnSettingsRules';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import {
     applyDetailForm,
@@ -67,7 +69,7 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  *
  * - **Left**: the columns of the layout, in their order - a listbox, one stop of Tab, the arrows, Home,
  *   End, PageUp / PageDown and a letter pick one. Each has its label, its type and what it has set:
- *   Format, Text, Link, Checkbox, Blank / 0, Label, Placeholder - or Error.
+ *   Format, Text, Link, Checkbox, Blank / 0, Label, Placeholder, Colours - or Error.
  * - **Right**, the column picked: its label (`ColumnFormat.label`, empty the column's own). A date, datetime
  *   or number column has its format, a picker that opens the entries of Format › (formatSubmenu.ts - one
  *   list of the formats); a number column Show blank as 0 and Show 0 as blank too (`numberOverride`, one or
@@ -78,9 +80,10 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  *   gone, a checkbox shows no text. A template's ⟨{ }⟩ button puts a field in it at the caret, from a menu
  *   of the fields of the columns and the row. Then, for every column but a checkbox, the header filter:
  *   its placeholder (a text, or Use the column label - `placeholder`, `placeholderLabel`) and its
- *   operator - a picker of the operators it offers, the column's default said under it. Under it the
- *   preview: what the cell shows in the current row (else the first), the link and its address, and why
- *   a row has no link.
+ *   operator - a picker of the operators it offers, the column's default said under it. Then its colour
+ *   rules (`ColumnFormat.rules`, columnSettingsRules.ts), any column. Under it the preview: what the cell
+ *   shows in the current row (else the first) in the colours of its rule, the link and its address, and
+ *   why a row has no link.
  * - **The footer**: Reset column and Reset all go back to the formats the grid starts with (the config's
  *   `ColumnConfig.format`, or `initialState.formats` - the label, the placeholder, blank / 0 and the
  *   checkboxes are in them) and the column's default operator, Cancel closes,
@@ -379,7 +382,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         Object.keys(settings.formats).filter(
             (name) =>
                 formatProblems(settings.formats[name]).length ||
-                (fields.includes(name) && checkboxProblems(settings.formats[name], kindOf(ctx, name)).length)
+                (fields.includes(name) && checkboxProblems(settings.formats[name], kindOf(ctx, name)).length) ||
+                (fields.includes(name) && colorRulesHaveProblem(settings.formats[name]?.rules))
         )
     );
 
@@ -431,6 +435,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         }
         if (set?.placeholder !== undefined || set?.placeholderLabel) {
             marks.push('columnSettings.badge.placeholder');
+        }
+        if (set?.rules?.length) {
+            marks.push('columnSettings.badge.rules');
         }
         return marks;
     };
@@ -859,9 +866,27 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             </div>`;
     };
 
+    /** the colour rules of the column (ColumnFormat.rules), any column: columnSettingsRules.ts */
+    const ruleSettings = () =>
+        colorRuleSettings(ctx, {
+            dialog,
+            field,
+            rules: format?.rules ?? [],
+            write: (rules) =>
+                change((next) => {
+                    if (rules.length) {
+                        next.rules = rules;
+                    } else {
+                        delete next.rules;
+                    }
+                }),
+            idOf: (part) => idOf(ctx, part)
+        });
+
     /** what the cell shows in the row of the preview, its link and why it has none */
     const preview = () => {
-        if (kind === 'boolean' || kind === 'lookup') {
+        // a checkbox and a lookup column have nothing to preview but the colours of their rules
+        if ((kind === 'boolean' || kind === 'lookup') && !format?.rules?.length) {
             return nothing;
         }
         const titleId = idOf(ctx, 'preview');
@@ -871,17 +896,27 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 : 'columnSettings.preview.first'
             : 'columnSettings.preview.none';
         let content: TemplateResult | typeof nothing = nothing;
-        if (at && format?.checkbox) {
+        // the colours of the rule that matches the row's value (the dialog's rules), as the cell will have them
+        const colors = at
+            ? colorRuleClasses(colorRuleOf(gridInterface, field, at.row, format))
+                  .map((name) => ` ${name}`)
+                  .join('')
+            : '';
+        const lookupColumn = gridInterface.__getLookupColumn(field);
+        if (at && (format?.checkbox || kind === 'boolean')) {
             // a checkbox, checked as the cell will be
-            content = html`<div class="column-settings-preview-cell">
+            content = html`<div class=${`column-settings-preview-cell${colors}`}>
                 <input
                     type="checkbox"
                     class="column-settings-preview-checkbox"
                     disabled
                     aria-label=${labelOf(field)}
-                    .checked=${isCheckedValue(at.row[field], format.checkbox)}
+                    .checked=${format?.checkbox ? isCheckedValue(at.row[field], format.checkbox) : Boolean(at.row[field])}
                 />
             </div>`;
+        } else if (at && lookupColumn) {
+            // the label of the value, as the cell shows it
+            content = html`<div class=${`column-settings-preview-cell${colors}`}>${lookupColumn.formatter.format(at.row[field])}</div>`;
         } else if (at) {
             // the format of the dialog through the grid's own code, as the cell will show it - with the
             // blank / 0 of a number column
@@ -895,7 +930,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             const link = formatProblems(format).length ? null : gridInterface.__getLinkResult(field, at.row, format);
             const href = link && 'href' in link ? link.href : null;
             const problems = formatProblems(format).length ? [] : rowProblems(ctx, field, format, at.row, link);
-            content = html`<div class="column-settings-preview-cell">
+            content = html`<div class=${`column-settings-preview-cell${colors}`}>
                     ${
                         // the link as the cell has it, in a new tab: the dialog stays
                         href
@@ -1008,7 +1043,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         <span class="column-settings-heading-label">${labelOf(field)}</span>
                         <span class="column-settings-option-type">${typeName(field)}</span>
                     </div>
-                    ${labelSettings()} ${settingsOf()} ${placeholderSettings()} ${operatorSettings()} ${preview()}
+                    ${labelSettings()} ${settingsOf()} ${placeholderSettings()} ${operatorSettings()} ${ruleSettings()}
+                    ${preview()}
                 </div>
             </div>
             ${detailFormTabPanel(ctx, dialog, settings.detailForm, settings.tab, update)}

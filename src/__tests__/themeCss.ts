@@ -263,6 +263,42 @@ const on = (fg: string, min: number, backgrounds: (string | string[])[], alpha?:
 
 const under = (tint: string, backgrounds: string[]) => backgrounds.map((background) => [tint, background]);
 
+/** the colours of the palette of the colour rules (ColumnFormat.rules) */
+const PALETTE = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'grey'];
+/** the backgrounds of the palette: a cell's, laid over the row - under a range's tint too */
+const PALETTE_BACKGROUNDS = PALETTE.map((colour) => `grid-palette-${colour}-bg-color`);
+
+/**
+ * The contrasts of the palette of the colour rules. An error and a match of Find show as without a rule
+ * (grid.css): not under their tints. A text colour on the rows, the selected rows, a range's tint over
+ * them, the inputs (the detail form, the dialog's preview) and every background of the palette; the
+ * text, a link, the marks on the backgrounds
+ */
+const PALETTE_PAIRS: ContrastPair[] = [
+    ...PALETTE.flatMap((colour) =>
+        on(`grid-palette-${colour}-color`, 4.5, [
+            ...ROWS_AND_SELECTED,
+            ...under('grid-range-bg-color', ROWS_AND_SELECTED),
+            'grid-sec-bg-color',
+            'grid-main-bg-color',
+            ...PALETTE_BACKGROUNDS,
+            ...under('grid-range-bg-color', PALETTE_BACKGROUNDS)
+        ])
+    ),
+    ...['grid-main-font-color', 'grid-link-color'].flatMap((text) =>
+        on(text, 4.5, [...PALETTE_BACKGROUNDS, ...under('grid-range-bg-color', PALETTE_BACKGROUNDS)])
+    ),
+    ...[
+        'grid-focus-color',
+        'grid-edited-color',
+        'grid-new-color',
+        'grid-deleted-color',
+        'grid-conflict-color',
+        'grid-multiline-color',
+        'grid-range-border-color'
+    ].flatMap((mark) => on(mark, 3, PALETTE_BACKGROUNDS))
+];
+
 /**
  * The contrasts of the grid and the date picker - what the theming guide promises for the default
  * theme (theme.test.ts, IMPORVEMENT.md "contrast"), every theme keeps them, light and dark
@@ -335,7 +371,9 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     ...on('date-dimmed-color', 4.5, ['date-main-bg-color']),
     ...on('date-week-color', 4.5, ['date-main-bg-color']),
     ...on('date-selected-border', 3, ['date-main-bg-color', 'date-main-bg-selected', 'date-in-range-bg-color']),
-    ...on('date-today-color', 3, ['date-main-bg-color', 'date-main-bg-selected', 'date-in-range-bg-color'])
+    ...on('date-today-color', 3, ['date-main-bg-color', 'date-main-bg-selected', 'date-in-range-bg-color']),
+    // the palette of the colour rules: the text colours, the backgrounds
+    ...PALETTE_PAIRS
 ];
 
 /**

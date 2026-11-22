@@ -3594,6 +3594,115 @@ in the console. All passed. Found and fixed:
   column-settings-operator 13/13, display-format 39/39, full-grid 11/11, custom-cells 39/39. The new script
   is in this worktree's `.claude/browser-checks/scripts/`
 
+### Column settings: colour rules (user request)
+
+* the user: "In column settings, I would like us to be able to add conditional coloring. So it's easy to be
+  able to set color on text, or bg based on it."
+* **the rule** (new colorRules.ts, exported types `ColorRule`, `PaletteColor`): `ColumnFormat.rules?:
+  ColorRule[]`, `{ operator, value?, color?, background?, bold? }` - a part of the column's format, so the
+  state keeps it with the rest: Apply, Cancel, Reset column / Reset all, `getState()`, JSON, `initialState`,
+  and the developer's `ColumnConfig.format`. Any column, a lookup column too. **The first rule that
+  matches wins**
+* **the condition is the header filter's**: `value` is text as typed in the header filter (JSON-safe, a
+  date too), read as filterCallback reads it - a text as it is (wildcards, case unless the column's
+  `filterCaseSensitive`), a number / date with the field's formatter (`parseFilter`, else `parse`), a
+  BETWEEN's ends each (`[from, to]`, an end `''` open), a boolean `'true'` / `'false'` - then tested by the
+  datasource's own `Filter` (one module instance; `isIgnoredCondition` first: a rule without a value
+  matches nothing, not everything). So `≥ 100`, *contains late*, 0 is blank mean what the header filter
+  means. **A lookup column** compares the label of the lookup row of its value, as valuesWithLabel does for
+  its header filter (a value the lookup has not never matches); Is Blank / Is Not Blank the value.
+  Operators: the type's (`operatorsFor`, a lookup's a text's) without IN / NOT_IN (a list; one rule per
+  value). A value the field's formatter does not read (`22.11.2026` in a `YYYY-MM-DD` column) matches no
+  cell - the header filter filters nothing with it; the dialog says so
+* **checked** (`assertColorRules`, from assertColumnFormat, `TypeError`, config and setState): a list of
+  objects of the five keys, an operator of the type (IN / NOT_IN told to make a rule per value; a lookup
+  column told it compares labels), `value` text / `[from, to]` of text / none for the blank operators, a
+  value there for an operator that compares, `color` / `background` of the palette ("no hex colours"),
+  `bold` boolean, something to colour. `colorRuleProblem()` is shared with the dialog
+* **the cells** (new showCellColor.ts): the classes of the rule on the cell element -
+  `simple-html-grid-cell-text` + `-text-<colour>`, `simple-html-grid-cell-bg` + `-bg-<colour>`,
+  `simple-html-grid-cell-bold` - toggled on every render (a recycled cell loses the old ones), none on a
+  group row and an empty cell, and in `showEdit` (the colour follows the value as it is typed). On the cell
+  element, so every kind of cell has them: input, multiline (its lines), checkbox (boolean and
+  `format.checkbox`), link, template, a custom cell (its host's text inherits; a renderer's own colour wins -
+  the sample's badge keeps its colour on the orange). The detail form's input / textarea get the classes
+  (not a checkbox). Not the exports (said in guide 15), not group rows or the totals row
+* **css** (grid.css): the colour classes set `color` / `background-color` from the palette's variables; the
+  text of a cell takes it (`color: inherit` on its input, lines, custom host, link, the preview's link).
+  **What wins**: an error and a match of Find - `:not()`ed out of the colour rules, such a cell shows as
+  without a rule (its tint, the grid's text): they stand out, and Find's yellow is never taken for a yellow
+  rule; a range's tint is a background-image over the rule's background; the selected row keeps its colour
+  in the other cells, the rule's background is the cell's over it; focus outline, edited and multiline
+  markers on top; bold stays. No border-radius
+* **the palette**: 14 variables `--simple-html-grid-palette-<colour>-color` / `-bg-color` (red, orange,
+  yellow, green, blue, purple, grey), light-dark(), in grid.css and theme-tredespace.css. Contrast pairs
+  added to CONTRAST_PAIRS (+245, both themes, light and dark): a text colour 4.5:1 on the rows, the selected
+  rows, a range's tint over them, the inputs, every background of the palette (and a range over it); the
+  text and a link 4.5:1 on every background (+ range); focus, row state, conflict, multiline, range line 3:1
+  on the backgrounds. Picked with a solver over OKLCH (a scratch script): the most vivid colour of each hue
+  that keeps the pairs. Default light: dark text (`#90101a` ...), 200-level backgrounds. Default dark: the
+  rows are mid grey (`#4b5563` / `#5a6370`), 4.5:1 there leaves only light tints for the text colours
+  (`#ffe4dd` ...) - the 900-level backgrounds carry the colour. TreDeSpace: the library's Tailwind steps -
+  text red / blue / purple 800, orange / yellow / green 900, slate-700 (light), 300 (dark); backgrounds 200 /
+  slate-300 (light), 950 / slate-800 (dark); blue's background is **sky**: blue-100 / 200 / 950 are
+  TreDeSpace's selected rows. A grey background is not the line colour (a cell's lines stay)
+* **the dialog** (new columnSettingsRules.ts; columnSettings.ts got `ruleSettings()` before the preview, a
+  badge *Colours*, the rules' problems in `withProblems`, the preview's classes): *Colour rules* (a group
+  with its hint), *No rules*, each rule a group *Rule n*: the operator picker (the header filter's names -
+  `filter.operator.*`, `filter.filter.isBlank` / `isNotBlank` - the column's `filterOperators`, a ✓ on the
+  one in use), its value (From / To for Between, none for blank, a checkbox *Checked* for a boolean column),
+  Move up / Move down / Remove rule (aria-disabled past an end, the focus follows the rule moved, to the next
+  Remove or Add rule after a remove), *Text colour* and *Background*: native radio buttons drawn as 20px
+  squares (`appearance: none`), a `radiogroup` each, named by colour (*None*, *Red* ...) with a tooltip, one
+  stop of Tab, the browser's arrows; the picked one a 2px frame in the text colour inside a ring (shape, not
+  colour only); *None* crossed out. *Bold*. *Add rule*: the column's header filter operator, red text on red
+  (a spreadsheet's first highlight), the focus on its operator. Problems under the rule at once (no value,
+  nothing to colour: Error, Apply held), the unread value too (not held). The draft's rules are written in
+  ColorRule's key order (a saved state reads the same). The preview shows the colours of the matching rule;
+  a checkbox and a lookup column get a preview when they have rules (the checkbox, the label)
+* texts: 24 new (`columnSettings.badge.rules`, `columnSettings.rules.*` with the seven colour names), guide
+  12's table, Norwegian in the translation sample; texts.test's walk shows them all (a rule on a lookup, a
+  date and a checkbox column)
+* docs: 08 (*Colour rules*: the parts, the condition, lookups, first wins, the palette, where, what wins,
+  checks, state; the dialog's list; the intro), 13 (*Colour rules*: the variables, the dark default's pale
+  text and why, the classes, error / Find; the variables table; TreDeSpace's table), 02 (`format`'s parts,
+  the detail form), 03 (state), 14 (the dialog's groups and swatches, the keys), 15 (not exported), 21 (a
+  custom cell); JSDoc of `ColorRule`, `PaletteColor`, `ColumnFormat.rules` and its example; typings
+  consumer (a hex colour and a number value are type errors). The full grid sample: Balance < 0 red text (its
+  data has one balance in eleven below 0 now), Status = waiting an orange background (the custom badge
+  cell); *Formats: Norwegian* keeps Balance's rules; the description mentions them at the same length (719
+  characters, was 720)
+* tests: new colorRules.test.ts (28: every operator of every type against the header filter itself -
+  filterCallback - and the datasource's filter: text, case sensitive, number with Between, date, datetime,
+  lookup labels, checkbox, blanks / 0; the condition, the problems, the classes; first match wins; the cells
+  of every kind, recycled while scrolling, typing / undo / code, setState / updateConfig / resetState, group
+  rows, error and Find classes beside them, the detail form, JSON; the TypeErrors; grid.css's selectors),
+  columnSettingsRules.test.ts (16: the section on every kind, the config's rules, the swatches, Add rule and
+  its problem, the operators offered, Between / blank / back, swatches and Bold, Move up / down and the
+  focus, Remove and the focus, a checkbox column, an unread date, the preview, Apply / Cancel, Reset, JSON);
+  columnFormat (the keys), texts (the walk), theme contrast pairs. The equivalence tests mount a grid of one
+  column: each header filter run renders the grid, eleven columns ran the worker out of memory.
+  3596 tests, 156 files (was 3552, 154)
+* browser (Chromium 1148, port 8093): new `color-rules-check.js` 90/90 in the four looks + a phone - the
+  sample's rules drawn in the palette's colours of the look (computed against the variables, 4.5:1+), the
+  custom badge on orange; a rule by mouse (Add rule -> the focus on its operator, a value, swatches, Bold,
+  the badge, 20px square swatches, no rounded corners, Apply & close -> Age >= 60 green and bold, the
+  state); a rule by keyboard (Enter on Add rule, Enter on the operator, arrows + Enter pick Less than, Tab
+  past Move up / Move down / Remove to the text colours, ArrowRight picks Orange with an outline, the
+  backgrounds, Bold by Space, Move up / Remove by Enter with the focus following, Apply & close by Enter ->
+  Credit < 1000 orange and bold); scrolling keeps each Balance cell's colour; a selected row and the focused
+  cell (the red text 4.5:1 on the selected blue, the outline 3:1); the detail form's value in red; Find's
+  matches without the orange; a phone (390px): the rules wrap inside the dialog. The screenshots looked
+  at: clear colours in light and in
+  TreDeSpace dark; the default dark's red text a pale pink, as the contrast asks. Shared checks:
+  column-settings 144/144, column-settings-more 141/141, column-settings-operator 13/13, full-grid 11/11,
+  detail-form 91/91, custom-cells 39/39. The new script is in this worktree's
+  `.claude/browser-checks/scripts/`
+* not done, candidates: Excel fills / font colours (the export writes no style per cell yet); a rule
+  compared with another field (`valueField`); IN lists in one rule; a whole row's colour from a rule (the
+  `rowClass` hook does it in code); `fitColumns()` measures the normal weight - a bold cell can be a few px
+  wider; a date picker for a rule's date value
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -3652,9 +3761,7 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Features
 
-* **Column settings, more** (see *Column settings* above): conditional colour rules (a cell's colour by its
-  value - `{ when: { operator, value }, class }`, checked as the templates are, no code); a template and a
-  link on a number or date column (`{value} kg` on a number, a link from an order number); relative
+* **Column settings, more** (see *Column settings* above): a template and a link on a number or date column (`{value} kg` on a number, a link from an order number); relative
   addresses within the app (resolved against a base the config gives, the base's origin kept); an "Open link"
   entry in the row menu; a `HYPERLINK` in the Excel export (a formula of data, Excel's 255 characters); the
   dialog's own undo (the filter editor has one); `placeholderRow` and `focusButton` on a link cell; more of

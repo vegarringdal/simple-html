@@ -262,8 +262,9 @@ text input of your own, say, where Ctrl+Z is the input's undo and the arrows mov
 What the grid puts on the cell element shows on a custom cell as on any other: the red border and tooltip
 of a validation error, the edited marker, a range of cells and its fill handle, the tint of a match of
 Find, the readonly and required stripes, the `cellClass` hook's `background` class (behind the host) and
-`input` class (on the host), the flash of a merge. A row marked for deletion strikes the host's text
-through. A repeated value (`dimRepeatedValues`) dims the host, your content with it.
+`input` class (on the host), the flash of a merge, the colours of a [colour rule](08-formatting.md#colour-rules)
+(the background behind the host, the host's text in the rule's colour - what you give a colour of your
+own keeps it). A row marked for deletion strikes the host's text through. A repeated value (`dimRepeatedValues`) dims the host, your content with it.
 
 The host fills the cell: `position: absolute`, a flex row with its content in the middle of the line and
 3px of padding at the left, the grid's font and text colour, `overflow: hidden`. In a row made taller by

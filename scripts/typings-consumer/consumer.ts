@@ -17,6 +17,7 @@ import {
     type CellRendererInstance,
     type Changes,
     type CheckboxFormat,
+    type ColorRule,
     type ColumnConfig,
     type ColumnEditor,
     type ColumnFormat,
@@ -77,6 +78,7 @@ import {
     NumberFormatterComma,
     NumberFormatterDot,
     or,
+    type PaletteColor,
     registerCellRenderer,
     registerFormatter,
     registerLookup,
@@ -984,6 +986,26 @@ const zeroOverride: ColumnFormat = { numberOverride: 'ZERO' };
 // @ts-expect-error the values of a checkbox are text, also for a number field
 const numberChecked: CheckboxFormat = { checked: 1 };
 console.log(settingsColumns, zeroOverride, numberChecked);
+
+// colour rules: a condition as the header filter has it, a colour of the palette - the first that matches wins
+const negativeRed: ColorRule = { operator: 'LESS_THAN', value: '0', color: 'red' };
+const warmColour: PaletteColor = 'orange';
+const ruleColumns: Record<string, ColumnConfig> = {
+    balance: { format: { rules: [negativeRed, { operator: 'BETWEEN', value: ['0', '100'], background: 'yellow', bold: true }] } },
+    status: {
+        format: {
+            rules: [
+                { operator: 'EQUAL', value: 'waiting', background: warmColour },
+                { operator: 'IS_BLANK', background: 'grey' }
+            ]
+        }
+    }
+};
+// @ts-expect-error no free colours: a hex colour is not readable in both light and dark
+const hexColour: ColorRule = { operator: 'EQUAL', value: '1', color: '#ff0000' };
+// @ts-expect-error the value is text as typed in the header filter
+const numberValue: ColorRule = { operator: 'EQUAL', value: 1, color: 'red' };
+console.log(ruleColumns, hexColour, numberValue);
 
 // the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
 // a filter of the grid is a filter toSqlWhere takes

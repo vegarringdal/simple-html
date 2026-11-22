@@ -83,6 +83,25 @@
     /* the text of a link, underlined: blue-800 in light, blue-100 in dark - the library's blue-400
        accent is under 4.5:1 to the tints of Find and a range on a selected row, its blue-600 in light */
     --simple-html-grid-link-color: light-dark(#1e40af, oklch(93.2% 0.032 255.585));
+    /* the palette of the colour rules (ColumnFormat.rules), from the library's Tailwind scale: the text
+       red, blue and purple 800, orange, yellow and green 900, slate-700 in light - their 800 is under
+       4.5:1 under a range's tint on a grey background - and 300 in dark; the backgrounds 200 and
+       slate-300 in light, 950 and slate-800 in dark. Blue's background is sky: blue-200 and blue-950 are
+       the selected rows. The contrasts of grid.css's palette */
+    --simple-html-grid-palette-red-color: light-dark(oklch(44.4% 0.177 26.899), oklch(80.8% 0.114 19.571));
+    --simple-html-grid-palette-orange-color: light-dark(oklch(40.8% 0.123 38.172), oklch(83.7% 0.128 66.29));
+    --simple-html-grid-palette-yellow-color: light-dark(oklch(42.1% 0.095 57.708), oklch(90.5% 0.182 98.111));
+    --simple-html-grid-palette-green-color: light-dark(oklch(39.3% 0.095 152.535), oklch(87.1% 0.15 154.449));
+    --simple-html-grid-palette-blue-color: light-dark(oklch(42.4% 0.199 265.638), oklch(80.9% 0.105 251.813));
+    --simple-html-grid-palette-purple-color: light-dark(oklch(43.8% 0.218 303.724), oklch(82.7% 0.119 306.383));
+    --simple-html-grid-palette-grey-color: light-dark(oklch(37.2% 0.044 257.287), oklch(86.9% 0.022 252.894));
+    --simple-html-grid-palette-red-bg-color: light-dark(oklch(88.5% 0.062 18.334), oklch(25.8% 0.092 26.042));
+    --simple-html-grid-palette-orange-bg-color: light-dark(oklch(90.1% 0.076 70.697), oklch(26.6% 0.079 36.259));
+    --simple-html-grid-palette-yellow-bg-color: light-dark(oklch(94.5% 0.129 101.54), oklch(28.6% 0.066 53.813));
+    --simple-html-grid-palette-green-bg-color: light-dark(oklch(92.5% 0.084 155.995), oklch(26.6% 0.065 152.934));
+    --simple-html-grid-palette-blue-bg-color: light-dark(oklch(90.1% 0.058 230.902), oklch(29.3% 0.066 243.157));
+    --simple-html-grid-palette-purple-bg-color: light-dark(oklch(90.2% 0.063 306.703), oklch(29.1% 0.149 302.717));
+    --simple-html-grid-palette-grey-bg-color: light-dark(oklch(86.9% 0.022 252.894), oklch(27.9% 0.041 260.031));
     /* the totals row: slate-800 as the library's title bars, its text slate-100 (--dock-text-hi) */
     --simple-html-grid-totals-bg-color: light-dark(#e2e8f0, #283548);
     --simple-html-grid-totals-font-color: light-dark(#0f172a, oklch(96.8% 0.007 247.896));
