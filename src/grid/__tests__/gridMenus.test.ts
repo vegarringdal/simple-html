@@ -1131,9 +1131,10 @@ describe('menus - the default menus, short', () => {
 
         openRowMenu(element, 'age', 0);
 
-        // no submenu open: what the menu itself shows, 9 rows - 35 before the submenus
+        // no submenu open: what the menu itself shows, 10 rows - 35 before the submenus
         expect(shownIds()).toEqual([
             'row.edit',
+            'row.select',
             'row.copy',
             'row.paste',
             'row.clear',
@@ -1150,7 +1151,7 @@ describe('menus - the default menus, short', () => {
 
         openRowMenu(element, 'firstname', 0);
 
-        expect(shownIds()).toEqual(['row.copy', 'row.filter', 'row.view', 'row.size', 'row.export']);
+        expect(shownIds()).toEqual(['row.select', 'row.copy', 'row.filter', 'row.view', 'row.size', 'row.export']);
     });
 
     it('expect the header menu: pin, hide, remove sorting, the column chooser, then the submenus', async () => {
@@ -1656,7 +1657,7 @@ describe('menus - the keyboard', () => {
 
         const down = press(cell, 'ArrowDown');
         expect(down.defaultPrevented).toBe(true);
-        expect(focusedId()).toEqual('row.copy');
+        expect(focusedId()).toEqual('row.select');
 
         press(document.activeElement as HTMLElement, 'Escape');
         expect(document.activeElement).toBe(cell);

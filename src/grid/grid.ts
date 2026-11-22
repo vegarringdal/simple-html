@@ -5,6 +5,7 @@ import { createDom } from './gridFunctions/createDom';
 import { releaseAllRenderers } from './gridFunctions/customCell';
 import { closeFind, type FindBar, findDataChanged } from './gridFunctions/findBar';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
+import type { LastPress } from './gridFunctions/lastPress';
 import { closeLookupEditor, type LookupEditor } from './gridFunctions/lookupEditor';
 import { addClipboardListeners } from './gridFunctions/rangeClipboard';
 import { rebuildFooter } from './gridFunctions/rebuildFooter';
@@ -87,6 +88,9 @@ export class Grid {
     // true when the last input was a key, false after a pointer press: a menu opened from the
     // keyboard takes the focus, see showMenu and addMenuListeners
     public keyboardUsed = false;
+    // the last press of a pointer in the grid, null before any: its pointerType (a click is a finger's
+    // tap) and the cell that had the focus then (the active cell of a menu), see lastPress.ts
+    public lastPress: LastPress | null = null;
     // the filter editor, a modal dialog: see renderFilterEditor. Null when it is closed
     public filterEditor?: HTMLDialogElement | null;
     // the column chooser, a popover that stays open while columns are dragged from it

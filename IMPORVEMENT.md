@@ -2576,6 +2576,70 @@ in the console. All passed. Found and fixed:
   truncation for a datetime valueField (needs a function per dialect and type); a `Date` in an IN list is
   read as its day (the grid matches nothing)
 
+### Multi-select with a finger: taps toggle, Select › in the row and column menus (user request)
+
+* the user: a finger has no Shift or Ctrl, so on a phone only one row / column could be selected and no
+  range of cells at all - and the menu entries of a selection ("Copy selected rows", "Copy selected
+  columns", the range entries) stayed greyed out. Decided by the user: a tap toggles like Ctrl+click, the
+  menu is the finger's Shift and Ctrl (for every input), the row numbers get the row menu
+* **a tap toggles** (lastPress.ts, new): a finger's tap on a row number toggles the row as Ctrl+click
+  (`Selection.toggleRow`, 'multiple' mode; in 'single' a tap selects as a click), on a group row's number it
+  adds the group's rows, on a column number it toggles the column in every mode (the columns have no mode,
+  Ctrl+click selects more in every mode). The mouse and the pen unchanged. How a tap is told: checked, not
+  guessed - MDN browser-compat-data `api.Element.click_event.type_pointerevent`: `click` is a PointerEvent
+  in Chrome 92, Firefox 129, Safari 18.2 (iOS mirrors); Chromium 131 here: a tap's click is a PointerEvent
+  with `pointerType: 'touch'`, a mouse click `'mouse'`, `element.click()` `''`. Before those versions the
+  click is a MouseEvent: the pointerType of the last pointerdown in the grid (`ctx.lastPress`, a capture
+  listener) is taken
+* **the row numbers have the row menu** (`contextmenuRowNumber`): right click, long press (longPress.ts
+  dispatches `contextmenu` on the number - delegated, no change there), Shift+F10. `context.field` is `''`,
+  `context.cell` the number's cell; the entries of a cell and its column are greyed out (Undo cell edit,
+  Copy › Cell Value / Column, Paste cell and Clear cell both, Filter ›, Fit column to this cell, the cell
+  entries of Select ›). A group row's number has none (its long press stays a tap)
+* **Select › in the row menu** (after Undo / Redo ›): This row (a checkbox item), Rows from N to here
+  (`Selection.selectRowsTo`, N the anchor `Selection.getAnchorRow()` - greyed out without one (N is this
+  row then), on it, in 'single'), All rows, a line, Range from the active cell to here (Shift+click on a
+  cell), Add this cell to the ranges (Ctrl+click), a line, Clear selection (the rows and the ranges).
+  Greyed out when they can do nothing, not hidden; in 'none' mode the rows' entries and their line are
+  hidden. **In the column menu**: Select › first, a line, then the copies - This column, Columns from N to
+  here, All columns, Clear column selection. Texts `row.select.*`, `column.select.*` (English, the
+  Norwegian sample)
+* **the active cell of a menu**: a right click moves the focus to the cell clicked first (its mousedown,
+  measured in Chromium: the focus moves, the ranges stay - the `skipFocus` of a right mousedown), so with
+  the mouse "Range from the active cell to here" was always the cell itself. The cell with the focus when
+  the pointer went down is kept (`ctx.lastPress.active`); after a key (Shift+F10) the cell with the focus
+* **one model of Shift and Ctrl on a cell**: `shiftRangeStart`, `shiftRanges`, `ctrlRanges` (and
+  `samePoint`, `oneCell`) moved to cellRanges.ts; rangePointerDown and the menu use them
+* **a bug fixed on the way**: Ctrl+click then Shift+click on a row above the anchor selected nothing
+  (`selectRange(anchor, row)` counted up from the anchor) - the path a finger takes (tap, then Rows from N
+  to here). Either way now
+* docs: guide 17 (With a finger: taps, both Select › tables, how a finger makes a range; the column menu,
+  the row number's menu, Known limits), 10 (the menus, the trees, the Select › ids, the row menu of a row
+  number, With a finger), 01 (Touch: Selecting), 12 (the texts), 14 (Shift+F10 on a row number); JSDoc of
+  MENU_IDS (tree and tables), MenuContext, GridMenus, Selection, the files
+* tests: selectMenu.test.ts (36: taps on row numbers - Chromium's PointerEvent click and the MouseEvent
+  fallback, 'single', the mouse and the pen and a click without a pointer unchanged, a group row; taps on
+  column numbers in every mode; the row menu of a row number - context, greyed and usable entries, Delete ›
+  Row, no menu on a group row, the long press; every Select › entry - enabled / greyed, the label's N,
+  what it selects, the anchor rules, 'single' and 'none', the events, Copy › Row / Range / selected
+  columns usable after; the active cell of a long press, a right click and Shift+F10; the model of Shift
+  and Ctrl); selectionModifierKeys.test.ts +7 (the anchor, toggleRow, selectRowsTo, Shift after Ctrl above
+  the anchor). Changed on purpose: gridMenus (Select › in the row menu's shape, the first item), column
+  selection (Select › in the column menu), rangeClipboard (menuItem('Row') found "Rows from …": by id
+  now), MENU_IDS and the texts guide. 3047 -> 3090 tests
+* browser (Chromium 1148): new `touch-select-check.js` 66/66 - a phone (390 x 844, CDP touches), light and
+  dark: taps toggle rows and columns, the long press on a row number (the row menu, the lift selects
+  nothing, the cell entries greyed), Rows from N to here, Copy › Row usable, This row, All rows, Clear; a
+  range by a tap and a long press, Add this cell, Copy › Range usable, Clear; the column Select ›; the mouse:
+  a click replaces, Ctrl+click adds, the row number's menu, a right click's active cell, Shift+click after
+  it. touch-check.js 61/61 and column-menu-check.js 81/81 with their expectations changed on purpose (a
+  long press on a row number opens the menu now; Select › is the column menu's first entry - the changed
+  copies are in this worktree's `.claude/browser-checks/scripts/`, the shared folder is outside it);
+  submenu-check.js 40/40, menus-regression-check.js 25/25
+* open: a second Shift+click after Ctrl+clicks (or taps) drops the rows they selected - the rows' Shift
+  keeps no `kept` as the column numbers do (in the candidates); a Cmd+click on a row number still does not
+  toggle (`highlightRow` reads `ctrlKey`)
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -2585,8 +2649,8 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 ### Bugs
 
 * **The row numbers and Cmd**: Ctrl+click toggles a row, Cmd+click does not (`highlightRow` reads
-  `ctrlKey`); a second Shift+click after Ctrl+clicks drops the rows the Ctrl+clicks selected. The column
-  numbers do both
+  `ctrlKey`); a second Shift+click after Ctrl+clicks drops the rows the Ctrl+clicks selected - the same
+  after a finger's taps and two Rows from N to here. The column numbers do both
 * **Touch, not tried on a device**: the touch work was checked in Chromium's emulation only. Safari on
   iOS (no `contextmenu`, the long press timed by the grid; a canceled touchend dropping the click; the
   callout and the loupe on a cell's input under `-webkit-touch-callout: none`) and Chrome on Android (its
@@ -2634,8 +2698,9 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Features
 
-* **Touch, smaller things**: a finger makes no range of cells (a long press is the row menu; a hold and a
-  drag could be one), so the fill handle (7px) is only there for ranges made by the keyboard; the editor
+* **Touch, smaller things**: a finger makes ranges of cells with the row menu's Select › (Range from the
+  active cell to here, Add this cell) but drags none (a hold and a drag could be one); the fill handle
+  (7px) is small for a finger; the editor
   of a multiline cell hints "Ctrl+Enter to save, Esc to cancel", keys a phone has not (a tap outside
   saves); the date picker's days are 22px rows (`datePickerConfig.rowHeight`), the filter editor's AND /
   OR and icon buttons 24px - small for a finger; the docs site is not made for a phone (its sidebar takes

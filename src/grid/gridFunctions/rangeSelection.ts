@@ -2,7 +2,7 @@ import { isGroupRow } from '../../datasource/entity';
 import type { CellRange } from '../cellRange';
 import type { Grid } from '../grid';
 import { setAria } from './ariaGrid';
-import { type CellPoint, rangeEdges } from './cellRanges';
+import { type CellPoint, ctrlRanges, oneCell, rangeEdges, samePoint, shiftRanges } from './cellRanges';
 import type { ColType } from './colType';
 import { showFillHandle } from './fillDown';
 import { followPointer, isPrimaryPress } from './followPointer';
@@ -187,17 +187,6 @@ export function pointOf(cell: HTMLCellElement): CellPoint {
     return { row: cell.$row, field: cell.$attribute as string };
 }
 
-function samePoint(a: CellPoint, b: CellPoint) {
-    return a.row === b.row && a.field === b.field;
-}
-
-/**
- * a range of one cell
- */
-function oneCell(point: CellPoint): CellRange {
-    return { fromRow: point.row, fromField: point.field, toRow: point.row, toField: point.field };
-}
-
 /**
  * The text selected in an input: what its own copy, cut and Delete work on. A checkbox has none
  * (`selectionStart` is null for it)
@@ -267,18 +256,17 @@ function rangePointerDown(ctx: Grid, down: PointerEvent) {
     const active = focusedCell(ctx);
     const activePoint = active ? pointOf(active.cell) : null;
     const ranges = gridInterface.getRanges();
-    const last = ranges.at(-1);
+    // from where the last range starts, or the active cell, to the cell pressed (cellRanges.ts)
+    const shifted = down.shiftKey ? shiftRanges(ranges, activePoint, point) : null;
 
     // the ranges before the one the pointer makes, and that one: its end follows the pointer
     let others: CellRange[] = [];
     let current: CellRange | null = null;
 
-    if (down.shiftKey && (last || (activePoint && !samePoint(activePoint, point)))) {
-        // from where the last range starts, or the active cell, to the cell pressed
-        others = last ? ranges.slice(0, -1) : [];
-        const from = last ? { row: last.fromRow, field: last.fromField } : (activePoint as CellPoint);
-        current = { fromRow: from.row, fromField: from.field, toRow: point.row, toField: point.field };
-        gridInterface.__setRanges([...others, current]);
+    if (shifted) {
+        others = shifted.slice(0, -1);
+        current = shifted[shifted.length - 1];
+        gridInterface.__setRanges(shifted);
         // the focus stays in the active cell, with its caret. A canceled pointerdown has no mousedown
         // after it (Pointer Events, compatibility mouse events), and the focus moves on the mousedown.
         // With no cell focused (the wheel takes the focus away) the cell pressed gets it: the keys work
@@ -287,9 +275,10 @@ function rangePointerDown(ctx: Grid, down: PointerEvent) {
         }
     } else if (down.ctrlKey || down.metaKey) {
         // another range: the active cell stays selected as Excel keeps it, a range of its own
-        others = ranges.length ? ranges : activePoint && !samePoint(activePoint, point) ? [oneCell(activePoint)] : [];
-        current = oneCell(point);
-        gridInterface.__setRanges([...others, current]);
+        const added = ctrlRanges(ranges, activePoint, point);
+        others = added.slice(0, -1);
+        current = added[added.length - 1];
+        gridInterface.__setRanges(added);
     } else {
         gridInterface.clearRanges();
     }

@@ -121,16 +121,21 @@ On a phone or a tablet the grid works with a finger, nothing to set:
   the page instead, as a scroll box of the browser does; the grid keeps a swipe it started to the end.
   Two fingers are the browser's: a pinch zooms the page.
 - **Menus**: a long press (held still for half a second) opens the menu a right click opens - of a
-  cell, a header label, a header filter, a column number. In a menu a tap opens a submenu, a tap
-  outside closes it. On a touch screen (css `pointer: coarse`) the items are 36px high, see
-  [With a finger](10-menus.md#with-a-finger).
+  cell, a row number, a header label, a header filter, a column number. In a menu a tap opens a
+  submenu, a tap outside closes it. On a touch screen (css `pointer: coarse`) the items are 36px high,
+  see [With a finger](10-menus.md#with-a-finger).
+- **Selecting**: a finger has no Shift and no Ctrl. A tap on a row number toggles the row - the first
+  tap selects, more taps add or remove (in `'single'` mode a tap selects the one row) - and a tap on a
+  column number toggles the column. *Select ›* in the row and column menus does the rest: rows or
+  columns from the last one to here, all, a range of cells from the active cell to here, a cell added
+  to the ranges, clear - see [With a finger](17-selection-and-clipboard.md#with-a-finger).
 - **Columns**: a label held still for 200ms is dragged, a tap sorts, see
   [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns). The column chooser's
   list scrolls with a finger, a field held still is dragged out of it.
-- **The rest**: a tap on a row number selects the row; a tap on a cell puts the focus in it - a
-  phone's keyboard opens only where the cell can be edited (a readonly cell's input is `readOnly`).
-  The filter editor is moved by its title bar and resized by its edges and corners. A finger makes no
-  range of cells: see [The mouse](17-selection-and-clipboard.md#the-mouse).
+- **The rest**: a tap on a cell puts the focus in it - a phone's keyboard opens only where the cell
+  can be edited (a readonly cell's input is `readOnly`). The filter editor is moved by its title bar
+  and resized by its edges and corners. A finger drags no range of cells, it makes them with
+  *Select ›*.
 
 Tried in Chromium's touch emulation (Chrome on Android is Chromium); Safari on iOS is not tried on a
 device. iOS sends no `contextmenu` for a long press, the grid times it itself.

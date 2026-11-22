@@ -1,7 +1,7 @@
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
-import type { MenuContext, MenuEntry } from '../gridMenus';
-import { columnFields, columnNumber } from './columnSelection';
+import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
+import { columnFields, columnNumber, numberedColumns } from './columnSelection';
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -29,7 +29,8 @@ export function contextmenuColumn(ctx: Grid, event: MouseEvent, cell: HTMLCellEl
         datasource: gridInterface.getDatasource()
     };
 
-    const defaults = columnMenuEntries(ctx, fields);
+    const number = columnNumber(gridInterface.__getGridConfig(), cell.$coltype, cell.$column);
+    const defaults = columnMenuEntries(ctx, fields, number);
     const entries = gridInterface.__getHooks().menus?.column?.(defaults, context) ?? defaults;
 
     showMenu(ctx, entries, context, placeUnderCell(event, cell));
@@ -44,13 +45,14 @@ function numberFields(ctx: Grid, cell: HTMLCellElement): string[] {
 }
 
 /**
- * The column menu's default entries, new objects every call: the copies of the columns, a line, the
- * copies of their names. Flat, no submenu: every entry is a copy, a Copy › around them would only add
- * a step. The entries of the selected columns are greyed out with none selected, as the row menu's of
- * the selected rows. The ids are documented in MENU_IDS.column
+ * The column menu's default entries, new objects every call: Select ›, a line, the copies of the
+ * columns, a line, the copies of their names. The copies are flat, no submenu: every entry is a copy, a
+ * Copy › around them would only add a step. The entries of the selected columns are greyed out with
+ * none selected, as the row menu's of the selected rows. The ids are documented in MENU_IDS.column
  * @param fields the fields of the column right clicked
+ * @param number its number
  */
-function columnMenuEntries(ctx: Grid, fields: string[]): MenuEntry[] {
+function columnMenuEntries(ctx: Grid, fields: string[], number: number): MenuEntry[] {
     const gridInterface = ctx.gridInterface;
     const selectedFields = () => getLayoutFields(gridInterface, { selectedOnly: true });
     const noneSelected = () => gridInterface.getSelectedColumns().length === 0;
@@ -63,6 +65,8 @@ function columnMenuEntries(ctx: Grid, fields: string[]): MenuEntry[] {
     const copyNames = (nameFields: string[]) => writeClipboard(labelsClipboard(ctx, nameFields), '');
 
     return [
+        selectSubmenu(ctx, number),
+        { type: 'separator', id: 'column.copy.separator' },
         {
             id: 'column.copy.column',
             label: text('column.copy.column'),
@@ -94,6 +98,58 @@ function columnMenuEntries(ctx: Grid, fields: string[]): MenuEntry[] {
             action: () => copyNames(selectedFields())
         }
     ];
+}
+
+/**
+ * Select ›: what Ctrl and Shift do on a column number with the mouse, for a finger - which has neither
+ * - and for every other input too (see columnSelection.ts):
+ * - This column: the column in or out, the others stay - as Ctrl+click. A ✓ while it is selected
+ * - Columns from N to here: from the anchor - the column clicked last without Shift - to this one, as
+ *   Shift+click. N is the anchor's number; greyed out with no anchor (N is this column's number then),
+ *   and when the anchor is this column
+ * - All columns, greyed out when every column is selected; Clear column selection, greyed out with
+ *   none selected
+ *
+ * The column numbers have no selection mode: Ctrl+click selects more columns in every mode of the
+ * rows, so these entries are always shown. `column-selection-change` is sent when the selection changed
+ * @param number the number of the column right clicked
+ */
+function selectSubmenu(ctx: Grid, number: number): MenuSubmenu {
+    const gridInterface = ctx.gridInterface;
+    const text = (id: TextId) => gridText(ctx, id);
+    const anchor = gridInterface.__getColumnAnchor();
+    const count = numberedColumns(gridInterface.__getGridConfig()).length;
+    return {
+        type: 'submenu',
+        id: 'column.select',
+        label: text('column.select'),
+        entries: [
+            {
+                id: 'column.select.column',
+                label: text('column.select.column'),
+                selected: () => gridInterface.__isColumnSelected(number),
+                action: () => gridInterface.__clickColumn(number, { toggle: true, range: false })
+            },
+            {
+                id: 'column.select.columnsTo',
+                label: gridText(ctx, 'column.select.columnsTo', { column: anchor ?? number }),
+                disabled: () => anchor === null || anchor === number,
+                action: () => gridInterface.__clickColumn(number, { toggle: false, range: true })
+            },
+            {
+                id: 'column.select.all',
+                label: text('column.select.all'),
+                disabled: () => gridInterface.getSelectedColumns().length === count,
+                action: () => gridInterface.selectColumns(Array.from({ length: count }, (_, i) => i + 1))
+            },
+            {
+                id: 'column.select.clear',
+                label: text('column.select.clear'),
+                disabled: () => gridInterface.getSelectedColumns().length === 0,
+                action: () => gridInterface.selectColumns([])
+            }
+        ]
+    };
 }
 
 /**

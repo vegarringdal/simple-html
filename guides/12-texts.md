@@ -190,7 +190,7 @@ gridInterface.rebuild(); // every grid of the page
 
 ### Row menu
 
-Right click on a cell.
+Right click on a cell or a row number.
 
 | id | English | shown |
 | --- | --- | --- |
@@ -249,6 +249,13 @@ Right click on a cell.
 | `row.export` | `Export` | the export submenu |
 | `row.export.excel` | `Excel, all rows` | downloads the rows the filter lets through as an .xlsx file |
 | `row.export.excelSelected` | `Excel, selected rows` | downloads the selected rows as an .xlsx file |
+| `row.select` | `Select` | the select submenu: what Shift and Ctrl do with the mouse, for a finger |
+| `row.select.row` | `This row` | the row in or out of the selection, with a ✓ in front while it is selected |
+| `row.select.rowsTo` | `Rows from {row} to here` | selects the rows from the anchor to this row, `{row}`: the anchor's row number |
+| `row.select.allRows` | `All rows` | selects every row |
+| `row.select.rangeTo` | `Range from the active cell to here` | a range of cells from the active cell to this cell, as Shift+click |
+| `row.select.addCell` | `Add this cell to the ranges` | a range of this cell added, as Ctrl+click |
+| `row.select.clear` | `Clear selection` | no row selected, no range of cells |
 
 ### Header menu
 
@@ -341,6 +348,11 @@ Right click on a column number, the row of numbers under the header filters.
 | `column.copy.headers` | `Copy header names` | copies the label of every column |
 | `column.copy.header` | `Copy header name` | copies the label of the column right clicked |
 | `column.copy.selectedHeaders` | `Copy selected header names` | copies the labels of the selected columns |
+| `column.select` | `Select` | the select submenu: what Shift and Ctrl do on a column number, for a finger |
+| `column.select.column` | `This column` | the column in or out of the selection, with a ✓ in front while it is selected |
+| `column.select.columnsTo` | `Columns from {column} to here` | selects the columns from the anchor to this one, `{column}`: the anchor's number |
+| `column.select.all` | `All columns` | selects every column |
+| `column.select.clear` | `Clear column selection` | selects no column |
 
 ### Column chooser
 

@@ -63,7 +63,18 @@ export class Selection {
         }
     }
 
-    public highlightRow(e: MouseEvent, currentRow: number, overrideSelectionMode?: 'none' | 'single' | 'multiple'): void {
+    /**
+     * A click on a row number: selects, adds or removes rows by the keys held - see SelectionMode. A plain
+     * click selects the row only, Ctrl+click toggles it, Shift+click selects from the anchor (see
+     * {@link getAnchorRow}) to it. The row is made the current entity, `selection-change` is sent
+     * @param e the keys held: a MouseEvent, or `{ ctrlKey: true }` for a click without the keyboard - a
+     * finger's tap ({@link toggleRow}), the row menu's Select › (selectRowsTo)
+     */
+    public highlightRow(
+        e: { shiftKey?: boolean; ctrlKey?: boolean },
+        currentRow: number,
+        overrideSelectionMode?: 'none' | 'single' | 'multiple'
+    ): void {
         if (overrideSelectionMode === 'none') {
             return;
         }
@@ -121,7 +132,11 @@ export class Selection {
 
                         case this.lastKeyCodeUsed === 'ctrl' && currentKeyCode === 'shift': {
                             const oldSel = this.getSelectedRows();
-                            this.selectRange(this.lastRowSelected, currentRow);
+                            // either way: a row above the anchor selected nothing
+                            this.selectRange(
+                                Math.min(this.lastRowSelected, currentRow),
+                                Math.max(this.lastRowSelected, currentRow)
+                            );
                             const newSel = this.getSelectedRows();
                             this.setSelectedRows(oldSel.concat(newSel));
 
@@ -200,6 +215,58 @@ export class Selection {
             }
             // update selection on rows
             this.dataSource.__callSubscribers('selection-change', {});
+        }
+    }
+
+    /**
+     * The row a Shift+click on a row number selects from, the anchor: the row selected last without
+     * Shift - after a plain click the row clicked (the first selected), after a Ctrl+click the row
+     * clicked, in or out. -1 when there is none, or it is no displayed row any more. For the row menu's
+     * Select › (contextmenuRow.ts)
+     */
+    public getAnchorRow(): number {
+        let anchor = this.lastRowSelected;
+        // a plain click does not set lastRowSelected: Shift+click takes the first selected row, see highlightRow
+        if (this.lastKeyCodeUsed === 'none') {
+            const selected = this.getSelectedRows();
+            if (selected.length > 0) {
+                anchor = selected[0];
+            }
+        }
+        return anchor >= 0 && anchor < this.dataSource.length() ? anchor : -1;
+    }
+
+    /**
+     * Ctrl+click on a row number, without the keyboard: a finger's tap on a row number, the row menu's
+     * Select › This row. The row is made the current entity and `selection-change` is sent:
+     * - `'multiple'`: the row in or out of the selection, the others stay - as Ctrl+click, it is the
+     *   anchor of a Shift+click after it
+     * - `'single'`: a row not selected replaces the one selected, the row selected is deselected
+     * - `'none'`: nothing
+     */
+    public toggleRow(row: number): void {
+        const mode = this.dataSource.getSelectionMode();
+        if (mode === 'multiple') {
+            this.highlightRow({ ctrlKey: true }, row);
+        } else if (mode === 'single' && this.isDataRow(row)) {
+            if (this.isSelected(row)) {
+                this.dataSource.__select(row);
+                this.deselect(row);
+                this.dataSource.__callSubscribers('selection-change', {});
+            } else {
+                this.highlightRow({}, row);
+            }
+        }
+    }
+
+    /**
+     * Shift+click on a row number, without the keyboard: the row menu's Select › Rows from N to here -
+     * the rows from the anchor ({@link getAnchorRow}) to this one. Only in `'multiple'` mode, see
+     * highlightRow
+     */
+    public selectRowsTo(row: number): void {
+        if (this.dataSource.getSelectionMode() === 'multiple') {
+            this.highlightRow({ shiftKey: true }, row);
         }
     }
 

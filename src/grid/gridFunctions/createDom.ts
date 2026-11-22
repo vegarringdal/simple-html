@@ -7,6 +7,7 @@ import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { findKeydown } from './findBar';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { trackPresses } from './lastPress';
 import { addLongPress } from './longPress';
 import { addClipboardListeners } from './rangeClipboard';
 import { addRangeListeners } from './rangeSelection';
@@ -129,6 +130,9 @@ export function createDom(ctx: Grid) {
     addMenuListeners(ctx);
     // a long press of a finger opens the context menu of what it is on, as a right click does
     addLongPress(ctx.element, ctx.scrollListenersAbort?.signal);
+    // a tap on a row or column number toggles it, as Ctrl+click; the active cell of a menu: the last
+    // press, see lastPress.ts
+    trackPresses(ctx);
     // Find: Ctrl+F (Cmd+F) and F3 anywhere in the grid, see findBar.ts
     ctx.element.addEventListener('keydown', (event) => findKeydown(ctx, event), { signal: ctx.scrollListenersAbort?.signal });
     // Tab in the footer: out of the grid after its last button, back to the rows before its first, see tabExit.ts

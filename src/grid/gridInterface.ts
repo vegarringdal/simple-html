@@ -1777,6 +1777,16 @@ export class GridInterface<T> {
     /**
      * @internal
      * @private
+     * the column number a Shift+click selects from (the last one clicked without Shift), null before
+     * any: the column menu's Select › Columns from N to here
+     */
+    public __getColumnAnchor(): number | null {
+        return this.columnSelection.anchor;
+    }
+
+    /**
+     * @internal
+     * @private
      * true when the column with this number (1 based, as the header shows it) is selected
      */
     public __isColumnSelected(number: number) {

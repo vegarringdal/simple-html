@@ -3,11 +3,15 @@ import { columnNumber } from './columnSelection';
 import { contextmenuColumn, copyColumnsKey } from './contextmenuColumn';
 import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { isFingerClick } from './lastPress';
 import { renderCell } from './renderCell';
 
 /**
  * The column numbers, the row of numbers under the header filters: a click selects columns (see
- * columnSelection.ts), a right click opens the column menu (contextmenuColumn.ts). A number takes the
+ * columnSelection.ts), a right click opens the column menu (contextmenuColumn.ts). A finger's tap
+ * toggles the column as Ctrl+click does - a finger has no Ctrl (lastPress.ts) - in every selection
+ * mode: the column numbers have none, Ctrl+click selects more columns in every mode. A long press
+ * opens the column menu, its Select › is Shift for a finger. A number takes the
  * focus on a click, as a row number does - not a stop of Tab - and has keys of its own there:
  *
  * - Shift+F10, the menu key: the column menu (the browser sends `contextmenu` to the element with the
@@ -28,7 +32,9 @@ export function addColumnNumberListeners(ctx: Grid, cell: HTMLCellElement) {
         // the focus on the number, for its keys. The grid scrolls the header itself
         cell.focus({ preventScroll: true });
         const number = columnNumber(ctx.gridInterface.__getGridConfig(), cell.$coltype, cell.$column);
-        ctx.gridInterface.__clickColumn(number, { toggle: event.ctrlKey || event.metaKey, range: event.shiftKey });
+        // a finger's tap is a Ctrl+click: it adds or removes
+        const toggle = event.ctrlKey || event.metaKey || isFingerClick(ctx, event);
+        ctx.gridInterface.__clickColumn(number, { toggle, range: event.shiftKey });
     });
     cell.addEventListener('contextmenu', (event) => {
         event.preventDefault();

@@ -156,6 +156,7 @@ Ctrl is Cmd on a Mac, Alt is Option.
 | Ctrl+C, Cmd+C | with no text selected in the cell: the range of cells as tab separated text, or the cell's value |
 | Ctrl+V, Cmd+V | a block of cells (copied in a spreadsheet, or here) from this cell or the top left of the range; one value into every cell of the ranges. One value with no range is the input's own paste |
 | Delete / Backspace on a row number | marks the selected rows for deletion (the number's row alone when it is not selected); a click on a row number puts the focus there. See [Deleting rows](05-editing.md#deleting-rows) |
+| Shift+F10, the menu key on a row number | the row menu of the row, without a cell (the entries of a cell are greyed out), the focus on its first item. Its *Select ›* adds the row, or the rows from the anchor - see [With a finger](17-selection-and-clipboard.md#with-a-finger) |
 | Delete / Backspace | with a range of more than one cell and no text selected: empties its cells. In a lookup cell that can be edited: empties it, and the fields its `set` copies. Else the input's own |
 | Ctrl+F, Cmd+F | opens the find bar, see [below](#the-find-bar). Anywhere in the grid: a header filter, a column header too |
 | F3 / Shift+F3 | while the find bar is open: the next / previous match. Anywhere in the grid |

@@ -65,6 +65,14 @@ const DEFAULTS = {
     'row.export': 'Export',
     'row.export.excel': 'Excel, all rows',
     'row.export.excelSelected': 'Excel, selected rows',
+    // Select ›: what Shift and Ctrl do with the mouse, for a finger
+    'row.select': 'Select',
+    'row.select.row': 'This row',
+    'row.select.rowsTo': 'Rows from {row} to here',
+    'row.select.allRows': 'All rows',
+    'row.select.rangeTo': 'Range from the active cell to here',
+    'row.select.addCell': 'Add this cell to the ranges',
+    'row.select.clear': 'Clear selection',
 
     // the header menu, right click on a header label: MENU_IDS.header
     'header.column.pin': 'Pin',
@@ -136,6 +144,11 @@ const DEFAULTS = {
     'column.copy.headers': 'Copy header names',
     'column.copy.header': 'Copy header name',
     'column.copy.selectedHeaders': 'Copy selected header names',
+    'column.select': 'Select',
+    'column.select.column': 'This column',
+    'column.select.columnsTo': 'Columns from {column} to here',
+    'column.select.all': 'All columns',
+    'column.select.clear': 'Clear column selection',
 
     // the column chooser, from the header menu
     'columnChooser.title': 'All Fields:',
@@ -435,7 +448,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  *
  * | ids | where |
  * | --- | --- |
- * | `row.*`, `header.*`, `filter.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu |
+ * | `row.*`, `header.*`, `filter.*`, `column.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu |
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |

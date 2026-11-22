@@ -14,7 +14,12 @@ cells copied there into the grid, or empty them with Delete.
 A click on the row number selects the row, Ctrl+click adds one, Shift+click selects the rows in
 between - the datasource's selection, `datasource.getSelectedRows()`. See
 [Selection](04-datasource.md#selection). The row menu's Copy, Paste cell, Clear cell, Delete and the
-export of the selected rows work on these rows.
+export of the selected rows work on these rows. A finger's tap adds or removes a row, and the row
+menu's *Select ›* does what Shift and Ctrl do, see [With a finger](#with-a-finger).
+
+A right click on a row number - Shift+F10 or the menu key on one with the focus, a long press - opens
+the row menu of the row, without a cell: the entries of a cell and its column are greyed out, see
+[Row menu](10-menus.md#row-menu-menu_idsrow).
 
 A range of cells selects no rows, and selecting rows changes no range: they are two things.
 
@@ -51,8 +56,9 @@ every column when none is selected.
 
 ### The column menu
 
-A right click on a column number - Shift+F10 or the menu key on one with the focus - opens the column
-menu, the copies of columns:
+A right click on a column number - Shift+F10 or the menu key on one with the focus, a long press -
+opens the column menu: *Select ›* (what Ctrl and Shift do on a number, see
+[With a finger](#with-a-finger)), then the copies of columns:
 
 | entry | copies |
 | --- | --- |
@@ -73,10 +79,10 @@ menu, the copies of columns:
   them: they are what is copied.
 - A right click does not change the selection: the column right clicked is copied, selected or not.
 
-The menu is flat, without a submenu: every entry is a copy, a *Copy ›* around them would only add a
-step. Its ids are `column.copy.*` (`MENU_IDS.column`), the `menus` hook changes it with its `column`
-function - see [Menus](10-menus.md#the-built-in-ids) - and the texts are `column.copy.*`, see
-[Texts](12-texts.md#column-menu).
+The copies are flat, without a submenu: every entry is a copy, a *Copy ›* around them would only add
+a step. Its ids are `column.select.*` and `column.copy.*` (`MENU_IDS.column`), the `menus` hook
+changes it with its `column` function - see [Menus](10-menus.md#the-built-in-ids) - and the texts have
+the same ids, see [Texts](12-texts.md#column-menu).
 
 ### The API of the columns
 
@@ -133,8 +139,8 @@ not make the row clicked the current row (the active cell stays where it was), C
 Shift+click do not open the date picker of a date cell and do not check a checkbox.
 
 **A pen** works as the mouse, where the browser does not take its drag for scrolling. **A finger**
-makes no range: a swipe scrolls the grid, and a long press opens the row menu, see
-[Touch](01-getting-started.md#touch). Use `setRanges()` from a button of your own, or a keyboard.
+does not drag a range - a swipe scrolls the grid - it makes ranges with the row menu's *Select ›*,
+see [With a finger](#with-a-finger).
 
 ### The keyboard
 
@@ -239,6 +245,55 @@ const csv = gridInterface.getCsv({ rows: 'range' });
   range is not part of `getState()`.
 - **The export**: `getCsv({ rows: 'range' })` and `downloadCsv(filename, { rows: 'range' })` export
   the last range, see [Export](15-export.md#the-rows).
+
+## With a finger
+
+A finger has no Shift and no Ctrl. So on a phone or a tablet:
+
+- **A tap on a row number toggles the row**, as Ctrl+click does: the first tap selects it, more taps
+  add rows or take them out again - as in a phone's own lists. In `'single'` mode a tap selects the
+  row as a click does (the one selected before is not). A tap on a group row's number adds the rows of
+  the group.
+- **A tap on a column number toggles the column**, in every selection mode: the column numbers have
+  none, Ctrl+click selects more columns in every mode.
+- **The menus are Shift and Ctrl**: a long press on a cell or a row number opens the row menu, on a
+  column number the column menu - both have **Select ›**. The mouse and the keyboard have it too.
+
+The mouse and the pen are not changed: a plain click selects the one row or column. The grid tells a
+finger's tap by the click's `pointerType` (`'touch'`): a click is a `PointerEvent` in Chrome 92,
+Firefox 129 and Safari 18.2 and later; before that, the pointer that pressed last in the grid.
+
+*Select ›* in the row menu, opened on a cell or a row number:
+
+| entry | does | greyed out |
+| --- | --- | --- |
+| This row | the row in or out of the selection, as Ctrl+click on its number. A ✓ while it is selected. In `'single'` mode it replaces the row selected | |
+| Rows from N to here | the rows from the anchor - N, the row selected last without Shift - to this one, as Shift+click on its number. After taps (or *This row*) the range is added to the rows they selected | without an anchor (N is this row then), when the anchor is this row, in `'single'` mode |
+| All rows | every row, `datasource.selectAll()` | when every row is selected, in `'single'` mode |
+| Range from the active cell to here | a range of cells, as Shift+click on the cell: from where the last range starts, or from the active cell - the cell with the focus (the one tapped last) - to this cell | when there is neither, when it would start at this cell, on a row number |
+| Add this cell to the ranges | a range of this cell, as Ctrl+click on it. With no range yet the active cell stays selected, a range of its own | when the cell is in a range, on a row number |
+| Clear selection | no row selected and no range of cells | when there is neither |
+
+In `'none'` mode rows can not be selected: *This row*, *Rows from N to here* and *All rows* are left
+out, the ranges and *Clear selection* stay. Otherwise an entry that can do nothing is greyed out, not
+left out: the menu keeps its shape.
+
+So a finger makes a range of cells: tap the first cell (it gets the focus), long press the last one,
+*Select › Range from the active cell to here*. Or long press the first cell, *Add this cell to the
+ranges*, then the last one, *Range from the active cell to here*. *Copy › Range*, *Paste range*,
+*Clear range* work on them.
+
+*Select ›* in the column menu, opened on a column number:
+
+| entry | does | greyed out |
+| --- | --- | --- |
+| This column | the column in or out, as Ctrl+click. A ✓ while it is selected | |
+| Columns from N to here | the columns from the anchor - N, the column clicked last without Shift - to this one, as Shift+click | without an anchor (N is this column then), when the anchor is this column |
+| All columns | every column | when every column is selected |
+| Clear column selection | no column selected, `selectColumns([])` | with none selected |
+
+The entries send what a click sends: `selection-change`, `column-selection-change`, `range-change`.
+Their ids are `row.select.*` and `column.select.*`, see [Menus](10-menus.md#the-built-in-ids).
 
 ## Copy
 
@@ -386,7 +441,8 @@ while it grows, the focus stays in the active cell.
 
 ## Known limits
 
-- **No ranges by touch**, see [The mouse](#the-mouse).
+- **A finger drags no range**: it makes them with the row menu's *Select ›*, see
+  [With a finger](#with-a-finger).
 - **Copy and paste listen while the focus is in a cell of the grid.** The wheel takes the focus from
   the cell (its row element is reused for other rows), then Ctrl+C goes to the page: use the row
   menu's *Copy › Range*, or Shift+click the cell at the end of the range again - the range stays as it

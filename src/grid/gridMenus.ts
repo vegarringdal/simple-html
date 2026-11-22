@@ -240,18 +240,20 @@ export interface MenuBlock {
  */
 export interface MenuContext {
     /**
-     * which menu: `'row'` (right click on a cell), `'header'` (on a header label), `'filter'` (on a
-     * header filter), `'column'` (on a column number, under the header filters) or `'custom'` (opened
-     * with `gridInterface.openMenu()`)
+     * which menu: `'row'` (right click on a cell or a row number), `'header'` (on a header label),
+     * `'filter'` (on a header filter), `'column'` (on a column number, under the header filters) or
+     * `'custom'` (opened with `gridInterface.openMenu()`)
      */
     menu: 'row' | 'header' | 'filter' | 'column' | 'custom';
     /**
      * the field of the cell the menu was opened on: in the column menu the column's first field (a
-     * column of stacked fields has more). `''` in a menu opened with `openMenu()`
+     * column of stacked fields has more). `''` in the row menu of a row number - it has no cell - and
+     * in a menu opened with `openMenu()`
      */
     field: string;
     /**
-     * - row menu: the row of the cell, always a data row (a group row has no cells)
+     * - row menu: the row of the cell or the row number, always a data row (a group row has no cells,
+     *   its number no menu)
      * - header, filter and column menus: the first displayed row, a {@link GroupRow} when the
      *   datasource is grouped and `undefined` when no rows are shown - as `cell-header-focus` sends it
      * - `openMenu()`: `undefined`
@@ -264,7 +266,10 @@ export interface MenuContext {
      * column menus, -1 in a menu opened with `openMenu()`
      */
     rowIndex: number;
-    /** the cell the menu was opened on, `undefined` in a menu opened with `openMenu()` */
+    /**
+     * the cell the menu was opened on - the row number's in the row menu of a row number -
+     * `undefined` in a menu opened with `openMenu()`
+     */
     cell: HTMLElement | undefined;
     /** the grid */
     gridInterface: GridInterface<unknown>;
@@ -301,14 +306,14 @@ export interface MenuPosition {
  * was opened on, and returns the entries to show - hide some, reorder them, change them, add your
  * own. Called every time the menu opens.
  *
- * - `row`: right click on a cell - undo, then the submenus copy, paste, clear, delete, filter, view,
- *   size, export
+ * - `row`: right click on a cell or a row number - the submenus undo, select, copy, paste, clear,
+ *   delete, filter, view, size, export
  * - `header`: right click on a header label - pin, hide, remove sorting, column chooser, then the
  *   submenus size, aggregate, grouping
  * - `filter`: right click on a header filter - clear, the submenus blank and operator, the filter
  *   editor, the value list
  * - `column`: right click on a column number (the row of numbers under the header filters) - the
- *   copies of the column, of the selected columns and of their header names
+ *   select submenu, the copies of the column, of the selected columns and of their header names
  *
  * `defaults` is a tree: most entries are in a submenu ({@link MenuSubmenu}), whose id is the start of
  * theirs - `row.copy.cell` is in `row.copy`. A filter on `defaults` sees the top of the menu: hiding
@@ -353,7 +358,7 @@ export interface MenuPosition {
  * ```
  */
 export interface GridMenus {
-    /** the menu of a cell */
+    /** the menu of a cell and of a row number */
     row?: (defaults: MenuEntry[], context: MenuContext) => MenuEntry[];
     /** the menu of a header label */
     header?: (defaults: MenuEntry[], context: MenuContext) => MenuEntry[];
@@ -382,25 +387,31 @@ export interface GridMenus {
  * ```text
  * row menu                          header menu                     filter menu
  * Undo / Redo ›                     Pin ›                           Filter ›
- * Copy ›                            Hide column                     the value list
- * Paste ›                           Remove sorting
- * Clear ›                           ----                            in Filter ›:
- * Delete ›                          Column chooser…                 Operator ›
- * Filter ›                          Size ›                          Blank ›
- * View ›                            Aggregate ›                     Clear Filter
- * Size ›                            Grouping ›                      Clear All Filters
- * Export ›                                                          ----
- *                                                                   Advanced Filter…
- * column menu
- * Copy column (all rows)
- * Copy selected columns (all rows)
- * ----
- * Copy header names
- * Copy header name
- * Copy selected header names
+ * Select ›                          Hide column                     the value list
+ * Copy ›                            Remove sorting
+ * Paste ›                           ----                            in Filter ›:
+ * Clear ›                           Column chooser…                 Operator ›
+ * Delete ›                          Size ›                          Blank ›
+ * Filter ›                          Aggregate ›                     Clear Filter
+ * View ›                            Grouping ›                      Clear All Filters
+ * Size ›                                                            ----
+ * Export ›                                                          Advanced Filter…
+ *
+ * column menu                       in Select › of the row menu:     in Select › of the column menu:
+ * Select ›                          This row                        This column
+ * ----                              Rows from N to here             Columns from N to here
+ * Copy column (all rows)            All rows                        All columns
+ * Copy selected columns (all rows)  ----                            Clear column selection
+ * ----                              Range from the active cell to here
+ * Copy header names                 Add this cell to the ranges
+ * Copy header name                  ----
+ * Copy selected header names        Clear selection
  * ```
  *
- * Row menu (`GridMenus.row`), right click on a cell:
+ * Row menu (`GridMenus.row`), right click on a cell - or on a row number: the same menu without a cell,
+ * `context.field` is `''`, the entries of the cell and its column are greyed out (Undo cell edit, Copy
+ * › Cell Value and Column, Paste cell and Clear cell, Filter ›, Fit column to this cell, the cell
+ * entries of Select ›):
  *
  * | id | shown as | shown when |
  * | --- | --- | --- |
@@ -410,6 +421,15 @@ export interface GridMenus {
  * | `row.edit.revertCell` | Undo cell edit - the cell's original value (`datasource.resetField()`). Greyed out when the cell is not edited | the grid is editable |
  * | `row.edit.revertRow` | Undo row edits - the row right clicked back to its original values, unmarked for deletion (`datasource.resetRows(row)`), no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
  * | `row.edit.revertRows` | Undo row edits (selected rows) - the selected rows back, unmarked for deletion (`datasource.resetRows()`). Greyed out when no selected row is edited or marked | the grid is editable |
+ * | `row.select` | Select › - a submenu: what Shift and Ctrl do with the mouse, for a finger (and every input) | |
+ * | `row.select.row` | This row - the row in or out of the selection, as Ctrl+click on its number; a ✓ while it is selected. In `'single'` mode it replaces the row selected | the selection mode is not `'none'` |
+ * | `row.select.rowsTo` | Rows from N to here - from the anchor (N, the row selected last without Shift) to this row, as Shift+click on its number. Greyed out without an anchor (N is this row then), when the anchor is this row, and in `'single'` mode | the selection mode is not `'none'` |
+ * | `row.select.allRows` | All rows - `datasource.selectAll()`. Greyed out in `'single'` mode and when every row is selected | the selection mode is not `'none'` |
+ * | `row.select.cellsSeparator` | a line | the selection mode is not `'none'` |
+ * | `row.select.rangeTo` | Range from the active cell to here - as Shift+click on the cell: the last range from where it starts, or from the cell with the focus, to this cell. Greyed out when there is neither, when it would start at this cell, and on a row number | |
+ * | `row.select.addCell` | Add this cell to the ranges - as Ctrl+click on the cell: a range of the cell, the active cell kept as a range when there is none yet. Greyed out when the cell is in a range, and on a row number | |
+ * | `row.select.clearSeparator` | a line | |
+ * | `row.select.clear` | Clear selection - no row selected, no range of cells. Greyed out when there is neither | |
  * | `row.copy` | Copy › - a submenu | |
  * | `row.copy.cell` | Cell Value | |
  * | `row.copy.column` | Column (selected rows). Greyed out with no row selected | |
@@ -505,12 +525,19 @@ export interface GridMenus {
  * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column - with `IN` |
  *
  * Column menu (`GridMenus.column`), right click on a column number - the row of numbers under the
- * header filters - or Shift+F10 on one with the focus. Flat, no submenu: every entry is a copy. The
- * columns are copied as the row menu copies rows - tab separated text and an html table, a header line
- * of the labels with `copyHeaders` - the names as one line of text, a tab between them:
+ * header filters - or Shift+F10 on one with the focus. Select ›, then the copies, flat: a Copy › around
+ * them would only add a step. The columns are copied as the row menu copies rows - tab separated text
+ * and an html table, a header line of the labels with `copyHeaders` - the names as one line of text, a
+ * tab between them. The column numbers have no selection mode: Select › is always shown:
  *
  * | id | shown as | shown when |
  * | --- | --- | --- |
+ * | `column.select` | Select › - a submenu: what Shift and Ctrl do on a column number, for a finger (and every input) | |
+ * | `column.select.column` | This column - the column in or out, as Ctrl+click; a ✓ while it is selected | |
+ * | `column.select.columnsTo` | Columns from N to here - from the anchor (N, the column clicked last without Shift) to this one, as Shift+click. Greyed out without an anchor (N is this column then) and when the anchor is this column | |
+ * | `column.select.all` | All columns - `selectColumns()` with every number. Greyed out when every column is selected | |
+ * | `column.select.clear` | Clear column selection - `selectColumns([])`. Greyed out with none selected | |
+ * | `column.copy.separator` | a line | |
  * | `column.copy.column` | Copy column (all rows) - the column right clicked, every displayed data row. A column of stacked fields: each of them | |
  * | `column.copy.selectedColumns` | Copy selected columns (all rows) - the selected columns (`getSelectedColumns()`), every displayed data row. Greyed out with no column selected | |
  * | `column.copy.namesSeparator` | a line | |
@@ -532,7 +559,7 @@ export interface GridMenus {
  * ```
  */
 export const MENU_IDS = {
-    /** the row menu's ids, right click on a cell */
+    /** the row menu's ids, right click on a cell or a row number */
     row: [
         'row.edit',
         'row.edit.undo',
@@ -540,6 +567,15 @@ export const MENU_IDS = {
         'row.edit.revertCell',
         'row.edit.revertRow',
         'row.edit.revertRows',
+        'row.select',
+        'row.select.row',
+        'row.select.rowsTo',
+        'row.select.allRows',
+        'row.select.cellsSeparator',
+        'row.select.rangeTo',
+        'row.select.addCell',
+        'row.select.clearSeparator',
+        'row.select.clear',
         'row.copy',
         'row.copy.cell',
         'row.copy.column',
@@ -632,6 +668,12 @@ export const MENU_IDS = {
     ],
     /** the column menu's ids, right click on a column number */
     column: [
+        'column.select',
+        'column.select.column',
+        'column.select.columnsTo',
+        'column.select.all',
+        'column.select.clear',
+        'column.copy.separator',
         'column.copy.column',
         'column.copy.selectedColumns',
         'column.copy.namesSeparator',

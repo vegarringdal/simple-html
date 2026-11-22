@@ -2,16 +2,23 @@ import { html, nothing, render } from 'lit-html';
 import { type Entity, type GroupRow, isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import type { ColType } from './colType';
+import { contextmenuRowNumber } from './contextmenuRow';
 import { rowNumberKeydown } from './deleteRows';
 import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { isFingerClick } from './lastPress';
 import { ROW_STATE_TEXT, rowStateOf, rowStatusIcon, rowStatusIconTemplate } from './rowStatus';
 
 /**
  * The row number of a row: the first cell of the row, a click selects the row (a group row: the rows
- * of the group). It shows the row's errors - the class `simple-html-row-error` (a red bar), the
+ * of the group) - Ctrl+click adds or removes it, Shift+click selects from the anchor (selection.ts). A
+ * finger has neither key: in `'multiple'` mode its tap toggles the row as Ctrl+click does, the first tap
+ * selects and more taps add or remove (lastPress.ts); in `'single'` mode a tap selects as a click. A
+ * right click, a long press (longPress.ts) and Shift+F10 open the row menu, without a cell
+ * (contextmenuRowNumber) - its Select › is Shift and Ctrl for a finger. A group row's number has no
+ * menu. It shows the row's errors - the class `simple-html-row-error` (a red bar), the
  * messages as the tooltip - and, with `GridConfig.rowStatus` (the default), the row's state: an icon
  * in front of the number (see rowStatus.ts), the state as the tooltip's first line, the number struck
  * through for a row marked for deletion, and the state and the errors as text for a screen reader.
@@ -66,11 +73,21 @@ export function renderRowSelector(
             data-tooltip=${tooltip || nothing}
             tabindex="-1"
             @keydown=${(e: KeyboardEvent) => rowNumberKeydown(ctx, e, row)}
+            @contextmenu=${(e: MouseEvent) => {
+                // the row menu, without a cell. A group row's number has none: the browser's own menu, a
+                // long press there stays a tap
+                if (rowData && !isGroupRow(rowData)) {
+                    e.preventDefault();
+                    contextmenuRowNumber(ctx, e, cell, row, rowData);
+                }
+            }}
             @click=${(e: MouseEvent) => {
                 // the focus on the number, as a spreadsheet's row header: Delete marks the selected rows
                 // for deletion (deleteRows.ts). Not a stop of Tab
                 (e.currentTarget as HTMLElement).focus({ preventScroll: true });
                 const ds = ctx.gridInterface.getDatasource();
+                // a finger's tap is a Ctrl+click in 'multiple' mode: it adds or removes
+                const toggle = ds.getSelectionMode() === 'multiple' && isFingerClick(ctx, e);
                 if (isGroupRow(rowData)) {
                     // selects the data rows of the group, up to the next group row
                     const rows = ds.getRows();
@@ -84,11 +101,13 @@ export function renderRowSelector(
                         selectRows.push(i);
                     }
                     if (selectRows.length) {
-                        ds.getSelection().selectRowRange(selectRows[0], selectRows[selectRows.length - 1], e.ctrlKey);
+                        ds.getSelection().selectRowRange(selectRows[0], selectRows[selectRows.length - 1], e.ctrlKey || toggle);
                         ctx.rebuild();
                     }
+                } else if (toggle) {
+                    ds.getSelection().toggleRow(row);
                 } else {
-                    ds.getSelection().highlightRow(e as any, row);
+                    ds.getSelection().highlightRow(e, row);
                 }
             }}
         >

@@ -2,16 +2,21 @@
 
 The grid has four right click menus:
 
-- the **row menu**, on a cell: undo and redo, then the submenus copy, paste, clear, delete, filter
-  on the value, view, sizes, export. The summary of selected cells is in the footer, see
+- the **row menu**, on a cell or a row number: the submenus undo and redo, select, copy, paste,
+  clear, delete, filter on the value, view, sizes, export. On a row number it has no cell: the
+  entries of a cell are greyed out. The summary of selected cells is in the footer, see
   [Selection and clipboard](17-selection-and-clipboard.md#the-summary-in-the-footer)
 - the **header menu**, on a header label: pin, hide, remove sorting, the column chooser, then the
   submenus sizes, aggregates, grouping
 - the **filter menu**, on a header filter: the submenu filter (the operator, is blank, clear, the
   filter editor), then the value list
-- the **column menu**, on a column number (the row of numbers under the header filters): copy the
-  column, the selected columns, the header names - see
+- the **column menu**, on a column number (the row of numbers under the header filters): the
+  submenu select, then copy the column, the selected columns, the header names - see
   [Selection and clipboard](17-selection-and-clipboard.md#the-column-menu)
+
+*Select ›*, in the row menu and the column menu, does what Shift and Ctrl do with the mouse - for a
+finger, which has neither, and for every other input too: see
+[With a finger](17-selection-and-clipboard.md#with-a-finger).
 
 Each is a tree of entries with ids: most entries are in submenus, so a menu is short and opens
 beside it what you point at. The `menus` hook changes them: hide entries, reorder them, change their
@@ -69,7 +74,11 @@ An item with a `›` opens a submenu beside it:
   element the finger is on, so a `contextmenu` listener of your own in the grid works with a finger as
   it is. Safari on iOS sends no `contextmenu` for a long press; Chrome on Android does - whichever comes
   first opens the menu, the other is canceled: one menu. A long press on an element without a menu (a
-  row number) stays a tap.
+  group row's number) stays a tap.
+- **Select ›** of the row menu and the column menu is the finger's Shift and Ctrl: rows from the
+  anchor to here, a range of cells from the active cell to here, a cell added to the ranges - and a
+  tap on a row or column number toggles it, see
+  [With a finger](17-selection-and-clipboard.md#with-a-finger).
 - **Taps**: a tap on an item with a `›` opens its submenu, a tap on an item runs it, a tap outside
   closes the menu (as soon as the finger touches the page, a swipe of the page too).
 - On a label the hold makes a drag first (200ms, see
@@ -233,26 +242,35 @@ The menus as they open, a `›` is a submenu:
 ```text
 row menu                          header menu                     filter menu
 Undo / Redo ›                     Pin ›                           Filter ›
-Copy ›                            Hide column                     the value list
-Paste ›                           Remove sorting
-Clear ›                           ----                            in Filter ›:
-Delete ›                          Column chooser…                 Operator ›
-Filter ›                          Size ›                          Match case
-View ›                            Aggregate ›                     Blank ›
-Size ›                            Grouping ›                      Clear Filter
-Export ›                                                          Clear All Filters
-                                                                  ----
+Select ›                          Hide column                     the value list
+Copy ›                            Remove sorting
+Paste ›                           ----                            in Filter ›:
+Clear ›                           Column chooser…                 Operator ›
+Delete ›                          Size ›                          Match case
+Filter ›                          Aggregate ›                     Blank ›
+View ›                            Grouping ›                      Clear Filter
+Size ›                                                            Clear All Filters
+Export ›                                                          ----
                                                                   Advanced Filter…
-column menu
-Copy column (all rows)
-Copy selected columns (all rows)
-----
-Copy header names
-Copy header name
-Copy selected header names
+
+column menu                       in Select › of the row menu:    in Select › of the column menu:
+Select ›                          This row                        This column
+----                              Rows from N to here             Columns from N to here
+Copy column (all rows)            All rows                        All columns
+Copy selected columns (all rows)  ----                            Clear column selection
+----                              Range from the active cell to here
+Copy header names                 Add this cell to the ranges
+Copy header name                  ----
+Copy selected header names        Clear selection
 ```
 
 ### Row menu (`MENU_IDS.row`)
+
+Right click on a cell, or on a row number. On a row number the menu has no cell: `context.field` is
+`''` and `context.cell` is the row number's cell. The entries of a cell and its column are greyed out
+there - *Undo cell edit*, *Copy › Cell Value* and *Column*, *Paste cell* and *Clear cell* (both),
+*Filter ›*, *Fit column to this cell*, the cell entries of *Select ›* - the entries of the row and of
+the selection work. A group row's number has no menu.
 
 | id | shown as | shown when |
 | --- | --- | --- |
@@ -262,6 +280,15 @@ Copy selected header names
 | `row.edit.revertCell` | Undo cell edit: the cell's original value, see [Reverting a cell or a row](05-editing.md#reverting-a-cell-or-a-row). Greyed out when the cell is not edited | the grid is editable |
 | `row.edit.revertRow` | Undo row edits: the row right clicked back to its original values, its deletion mark taken off - no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
 | `row.edit.revertRows` | Undo row edits (selected rows): the selected rows back, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |
+| `row.select` | Select › - a submenu: what Shift and Ctrl do with the mouse, for a finger and every input, see [With a finger](17-selection-and-clipboard.md#with-a-finger) | |
+| `row.select.row` | This row: the row in or out of the selection, as Ctrl+click on its number, a ✓ while it is selected. In `'single'` mode it replaces the row selected | the selection mode is not `'none'` |
+| `row.select.rowsTo` | Rows from N to here: from the anchor (N, the row selected last without Shift) to this row, as Shift+click on its number. Greyed out without an anchor (N is this row then), when the anchor is this row, and in `'single'` mode | the selection mode is not `'none'` |
+| `row.select.allRows` | All rows: `datasource.selectAll()`. Greyed out when every row is selected, and in `'single'` mode | the selection mode is not `'none'` |
+| `row.select.cellsSeparator` | a line | the selection mode is not `'none'` |
+| `row.select.rangeTo` | Range from the active cell to here: as Shift+click on the cell - from where the last range starts, or from the cell with the focus, to this cell. Greyed out when there is neither, when it would start at this cell, and on a row number | |
+| `row.select.addCell` | Add this cell to the ranges: as Ctrl+click on the cell - the active cell kept as a range when there is none yet. Greyed out when the cell is in a range, and on a row number | |
+| `row.select.clearSeparator` | a line | |
+| `row.select.clear` | Clear selection: no row selected, no range of cells. Greyed out when there is neither | |
 | `row.copy` | Copy › - a submenu | |
 | `row.copy.cell` | Cell Value | |
 | `row.copy.column` | Column (selected rows). Greyed out with no row selected | |
@@ -361,13 +388,20 @@ See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu
 ### Column menu (`MENU_IDS.column`)
 
 Right click on a column number, the row of numbers under the header filters, or Shift+F10 on one with
-the focus. Flat, without a submenu: every entry is a copy, a *Copy ›* around them would only add a
-step. The columns are copied as the row menu copies rows - tab separated text and an html table, a
-header line of the labels with `copyHeaders` - every displayed data row; the names as one line of
-text, a tab between them. See [Selection and clipboard](17-selection-and-clipboard.md#the-column-menu).
+the focus. *Select ›*, then the copies, flat: a *Copy ›* around them would only add a step. The
+columns are copied as the row menu copies rows - tab separated text and an html table, a header line
+of the labels with `copyHeaders` - every displayed data row; the names as one line of text, a tab
+between them. See [Selection and clipboard](17-selection-and-clipboard.md#the-column-menu). The column
+numbers have no selection mode: *Select ›* is always there.
 
 | id | shown as | shown when |
 | --- | --- | --- |
+| `column.select` | Select › - a submenu: what Shift and Ctrl do on a column number, for a finger and every input | |
+| `column.select.column` | This column: the column in or out, as Ctrl+click, a ✓ while it is selected | |
+| `column.select.columnsTo` | Columns from N to here: from the anchor (N, the column clicked last without Shift) to this one, as Shift+click. Greyed out without an anchor (N is this column then) and when the anchor is this column | |
+| `column.select.all` | All columns. Greyed out when every column is selected | |
+| `column.select.clear` | Clear column selection: `selectColumns([])`. Greyed out with none selected | |
+| `column.copy.separator` | a line | |
 | `column.copy.column` | Copy column (all rows): the column right clicked. A column of stacked fields: each of its fields | |
 | `column.copy.selectedColumns` | Copy selected columns (all rows): the selected columns, `getSelectedColumns()`. Greyed out with no column selected | |
 | `column.copy.namesSeparator` | a line | |

@@ -3,14 +3,17 @@ import { and, type FilterExpression, type FilterGroup, isFilterGroup, where } fr
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
+import { type CellPoint, ctrlRanges, inRanges, samePoint, shiftRangeStart, shiftRanges } from './cellRanges';
 import type { ColType } from './colType';
 import { isAlwaysCaseSensitive } from './columnFilterOptions';
 import { isLockedByHook, rowsToMark, rowsToUnmark } from './deleteRows';
+import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { keyText } from './keyText';
+import { activeCellOfMenu } from './lastPress';
 import { writeCellValue } from './lookupColumn';
 import { clearRangeCells, pasteText, rangesClipboard, rowsClipboard, writeClipboard } from './rangeClipboard';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
@@ -19,8 +22,9 @@ import { triggerScrollEvent } from './triggerScrollEvent';
 import { undoRedoInGrid } from './undoRedoKey';
 
 /**
- * Opens the row menu, the right click menu of a cell: the default entries (see MENU_IDS.row), changed
- * by the `menus.row` hook.
+ * Opens the row menu, the right click menu of a cell - and of a row number, see
+ * {@link contextmenuRowNumber}: the default entries (see MENU_IDS.row), changed by the `menus.row` hook.
+ * @param attribute the field of the cell, `''` for a row number: it has no cell
  */
 export function contextmenuRow(
     ctx: Grid,
@@ -51,6 +55,18 @@ export function contextmenuRow(
 }
 
 /**
+ * Opens the row menu on a row number: a right click, a long press (longPress.ts), Shift+F10 or the menu
+ * key on a number with the focus. The same menu as on a cell of the row, without a cell: the context's
+ * `field` is `''`, and the entries that need a cell - its value, its column - are greyed out (see
+ * rowMenuEntries). The row's entries and Select › work.
+ * @param cell the cell of the row number
+ * @param row the displayed row, a data row (a group row's number has no menu)
+ */
+export function contextmenuRowNumber(ctx: Grid, event: MouseEvent, cell: HTMLCellElement, row: number, rowData: Entity) {
+    contextmenuRow(ctx, event, cell, row, 0, 0, SELECTOR_COLTYPE, '', '', rowData);
+}
+
+/**
  * The right clicked cell, what the events of the row menu send (copy-cell, paste, clear ...)
  */
 interface RowMenuEventData {
@@ -66,7 +82,12 @@ interface RowMenuEventData {
 
 /**
  * The row menu's default entries, new objects every call: the edit entries, then a submenu per part.
- * The ids are documented in MENU_IDS.row
+ * The ids are documented in MENU_IDS.row.
+ *
+ * Opened on a row number (`attribute` `''`) there is no cell: the entries of the cell and of its column
+ * are greyed out - Undo cell edit (its edited value is never there), Copy › Cell Value and Column, Paste
+ * cell and Clear cell (both), Filter ›, Size › Fit column to this cell, Select ›'s cell entries. Greyed
+ * out, not hidden: the menu keeps its shape
  */
 function rowMenuEntries(
     ctx: Grid,
@@ -92,6 +113,8 @@ function rowMenuEntries(
     const cellReadonly = () => gridInterface.__isCellReadonly(rowData, attribute);
     const noSelectedRows = () => gridInterface.getDatasource().getSelectedRows().length === 0;
     const noRanges = () => gridInterface.getRanges().length === 0;
+    // opened on a row number: no cell, see the top
+    const noCell = () => attribute === '';
 
     // a group row has no value of its own to filter on
     const filterOnValue = () => !isGroupRow(rowData);
@@ -104,6 +127,8 @@ function rowMenuEntries(
     return [
         // first: in an editable grid, taking an edit back is what the menu is opened for most
         editSubmenu(ctx, attribute, rowData),
+        // the finger's Shift and Ctrl, before what works on what they select
+        selectSubmenu(ctx, row, attribute),
         { type: 'submenu', id: 'row.copy', label: text('row.copy'), entries: copyEntries(ctx, eventData) },
         {
             type: 'submenu',
@@ -114,7 +139,7 @@ function rowMenuEntries(
                 {
                     id: 'row.paste.current',
                     label: text('row.paste.current'),
-                    disabled: cellReadonly,
+                    disabled: () => noCell() || cellReadonly(),
                     action: async () => {
                         if (navigator.clipboard.readText) {
                             const data = await navigator.clipboard.readText();
@@ -126,7 +151,7 @@ function rowMenuEntries(
                     id: 'row.paste.cell',
                     label: text('row.paste.cell'),
                     hint: text('row.paste.cell.hint'),
-                    disabled: noSelectedRows,
+                    disabled: () => noCell() || noSelectedRows(),
                     action: async () => {
                         if (navigator.clipboard.readText) {
                             const data = await navigator.clipboard.readText();
@@ -157,7 +182,7 @@ function rowMenuEntries(
                 {
                     id: 'row.clear.current',
                     label: text('row.clear.current'),
-                    disabled: cellReadonly,
+                    disabled: () => noCell() || cellReadonly(),
                     action: () => {
                         clearRows(ctx, attribute, [rowData]);
                         gridInterface.__callSubscribers('clear', eventData);
@@ -168,7 +193,7 @@ function rowMenuEntries(
                     id: 'row.clear.cell',
                     label: text('row.clear.cell'),
                     hint: text('row.clear.cell.hint'),
-                    disabled: noSelectedRows,
+                    disabled: () => noCell() || noSelectedRows(),
                     action: () => {
                         clearRows(ctx, attribute, gridInterface.getDatasource().getSelectedRows());
                         gridInterface.__callSubscribers('clear', eventData);
@@ -196,6 +221,7 @@ function rowMenuEntries(
                     label: text('row.filter.replace'),
                     hint: text('row.filter.replace.hint'),
                     visible: filterOnValue,
+                    disabled: noCell,
                     action: () => replaceFilter(ctx, attribute, rowData)
                 },
                 {
@@ -203,6 +229,7 @@ function rowMenuEntries(
                     label: text('row.filter.add'),
                     hint: text('row.filter.add.hint'),
                     visible: filterOnValue,
+                    disabled: noCell,
                     action: () => addToFilter(ctx, attribute, rowData)
                 }
             ]
@@ -239,7 +266,7 @@ function rowMenuEntries(
 
 /**
  * The copy submenu's entries: the cell, the column or the row of the selected rows, the ranges of
- * cells
+ * cells. On a row number the cell and the column are greyed out: there is no cell
  * @param eventData the right clicked cell, what the copy events send
  */
 function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
@@ -248,11 +275,13 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
     const hasRanges = () => gridInterface.getRanges().length > 0;
     // the entries of the selected rows are listed without them too, greyed out
     const noSelectedRows = () => gridInterface.getDatasource().getSelectedRows().length === 0;
+    const noCell = () => attribute === '';
     const text = (id: TextId) => gridText(ctx, id);
     return [
         {
             id: 'row.copy.cell',
             label: text('row.copy.cell'),
+            disabled: noCell,
             action: () => {
                 // the value only, as the cell shows it: no header, no line end
                 writeClipboard(cellText(gridInterface, attribute, true)(rowData), '');
@@ -263,7 +292,7 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
             id: 'row.copy.column',
             label: text('row.copy.column'),
             hint: text('row.copy.column.hint'),
-            disabled: noSelectedRows,
+            disabled: () => noCell() || noSelectedRows(),
             action: () => {
                 copyRows(ctx, [attribute]);
                 gridInterface.__callSubscribers('copy-column', eventData);
@@ -302,6 +331,120 @@ function copyEntries(ctx: Grid, eventData: RowMenuEventData): MenuEntry[] {
             }
         }
     ];
+}
+
+/**
+ * Select ›: what Shift and Ctrl do with the mouse, for a finger - which has neither - and for every
+ * other input too. The rows (the datasource's selection, as Ctrl+click and Shift+click on the row
+ * numbers), then the ranges of cells (as Ctrl+click and Shift+click on a cell), then Clear selection.
+ *
+ * - This row: the row in or out of the selection (Selection.toggleRow), a ✓ while it is selected
+ * - Rows from N to here: from the anchor - the row selected last without Shift - to this row
+ *   (Selection.selectRowsTo). N is the anchor's number; greyed out with no anchor (N is this row's
+ *   number then), when the anchor is this row, and in `'single'` mode
+ * - All rows: `datasource.selectAll()`. Greyed out in `'single'` mode and when every row is selected
+ * - Range from the active cell to here: as Shift+click on the cell - the last range from where it
+ *   starts, else from the active cell (the one with the focus when the menu was asked for: before the
+ *   right click moved it, see lastPress.ts), to this cell. Greyed out when there is neither, when it
+ *   would start at this cell, and on a row number
+ * - Add this cell to the ranges: as Ctrl+click on the cell - a range of the cell, the active cell kept
+ *   as a range of its own when there is no range yet. Greyed out when the cell is in a range already,
+ *   and on a row number
+ * - Clear selection: no row selected, no range. Greyed out when there is neither
+ *
+ * In `'none'` mode the rows can not be selected: their entries and the line under them are hidden, the
+ * ranges and Clear selection stay. Greyed out, not hidden, in the other cases: the menu keeps its
+ * shape. The anchor and the active cell are read when the menu opens: a menu opened from the keyboard
+ * has the focus while it is open
+ * @param attribute the field of the cell, `''` on a row number
+ */
+function selectSubmenu(ctx: Grid, row: number, attribute: string): MenuSubmenu {
+    const gridInterface = ctx.gridInterface;
+    const datasource = gridInterface.getDatasource();
+    const selection = datasource.getSelection();
+    const text = (id: TextId) => gridText(ctx, id);
+    const multiple = () => datasource.getSelectionMode() === 'multiple';
+    const rowsSelectable = () => datasource.getSelectionMode() !== 'none';
+
+    const anchor = selection.getAnchorRow();
+    // the cell, none on a row number; the active cell, none when the focus was elsewhere (lastPress.ts)
+    const point: CellPoint | null = attribute ? { row, field: attribute } : null;
+    const active = activeCellOfMenu(ctx);
+
+    const rangeStart = () => (point ? shiftRangeStart(gridInterface.getRanges(), active, point) : null);
+    const inARange = (cell: CellPoint) => {
+        const state = gridInterface.__getRangeState();
+        return !!state && inRanges(gridInterface, state, cell.row, state.layout.fields.indexOf(cell.field));
+    };
+    const allRowsSelected = () =>
+        datasource.getSelectedRows().length === datasource.getRows().filter((entity) => !isGroupRow(entity)).length;
+    const nothingSelected = () => datasource.getSelectedRows().length === 0 && gridInterface.getRanges().length === 0;
+
+    return {
+        type: 'submenu',
+        id: 'row.select',
+        label: text('row.select'),
+        entries: [
+            {
+                id: 'row.select.row',
+                label: text('row.select.row'),
+                visible: rowsSelectable,
+                selected: () => selection.isSelected(row),
+                action: () => selection.toggleRow(row)
+            },
+            {
+                id: 'row.select.rowsTo',
+                label: gridText(ctx, 'row.select.rowsTo', { row: (anchor === -1 ? row : anchor) + 1 }),
+                visible: rowsSelectable,
+                disabled: () => !multiple() || anchor === -1 || anchor === row,
+                action: () => selection.selectRowsTo(row)
+            },
+            {
+                id: 'row.select.allRows',
+                label: text('row.select.allRows'),
+                visible: rowsSelectable,
+                disabled: () => !multiple() || allRowsSelected(),
+                action: () => datasource.selectAll()
+            },
+            { type: 'separator', id: 'row.select.cellsSeparator', visible: rowsSelectable },
+            {
+                id: 'row.select.rangeTo',
+                label: text('row.select.rangeTo'),
+                disabled: () => {
+                    const start = rangeStart();
+                    return !point || !start || samePoint(start, point);
+                },
+                action: () => {
+                    const ranges = point ? shiftRanges(gridInterface.getRanges(), active, point) : null;
+                    if (ranges) {
+                        gridInterface.__setRanges(ranges);
+                    }
+                }
+            },
+            {
+                id: 'row.select.addCell',
+                label: text('row.select.addCell'),
+                disabled: () => !point || inARange(point),
+                action: () => {
+                    if (point) {
+                        gridInterface.__setRanges(ctrlRanges(gridInterface.getRanges(), active, point));
+                    }
+                }
+            },
+            { type: 'separator', id: 'row.select.clearSeparator' },
+            {
+                id: 'row.select.clear',
+                label: text('row.select.clear'),
+                disabled: nothingSelected,
+                action: () => {
+                    if (datasource.getSelectedRows().length) {
+                        datasource.deselectAll({ notify: true });
+                    }
+                    gridInterface.clearRanges();
+                }
+            }
+        ]
+    };
 }
 
 /**
@@ -448,6 +591,8 @@ function sizeSubmenu(ctx: Grid, attribute: string, rowData: Entity): MenuSubmenu
             {
                 id: 'row.size.fitColumn',
                 label: gridText(ctx, 'row.size.fitColumn'),
+                // a row number has no column
+                disabled: () => attribute === '',
                 action: () => gridInterface.fitColumns([attribute], { rows: [rowData] })
             },
             {

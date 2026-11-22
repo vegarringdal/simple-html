@@ -643,7 +643,7 @@ describe('clipboard - the row menu', () => {
         gridInterface.setRanges([range(0, 'name', 1, 'city')]);
 
         openRowMenu(element, 'name', 0);
-        menuItem('Range').click();
+        menuEntry('row.copy.range').click();
 
         expect(written.map(({ text }) => text)).toEqual(['Name\tCity\r\nn0\tc0\r\nn1\tc1\r\n']);
     });
@@ -655,9 +655,9 @@ describe('clipboard - the row menu', () => {
         datasource.getSelection().selectRowRange(1, 2);
 
         openRowMenu(element, 'born', 1);
-        menuItem('Column').click();
+        menuEntry('row.copy.column').click();
         openRowMenu(element, 'born', 1);
-        menuItem('Row').click();
+        menuEntry('row.copy.row').click();
 
         expect(written[0].text).toBe('Born\r\n2026-01-02\r\n2026-01-03\r\n');
         expect(written[0].html).toContain('<thead><tr><th style="border:1px solid #999;padding:2px 4px">Born</th></tr></thead>');

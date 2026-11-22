@@ -203,6 +203,58 @@ export function rangeBlock(gridInterface: GridInterface<any>, range: CellRange):
 }
 
 /**
+ * true when the two are the same cell
+ */
+export function samePoint(a: CellPoint, b: CellPoint) {
+    return a.row === b.row && a.field === b.field;
+}
+
+/**
+ * a range of one cell
+ */
+export function oneCell(point: CellPoint): CellRange {
+    return { fromRow: point.row, fromField: point.field, toRow: point.row, toField: point.field };
+}
+
+/**
+ * Where a Shift+click on a cell makes its range from: where the last range starts, else the active
+ * cell (the one with the focus) - null when there is neither, or it is the active cell clicked with no
+ * range: Shift does not make a range then. For the mouse (rangeSelection.ts) and the row menu's
+ * Select › Range from the active cell to here (contextmenuRow.ts)
+ * @param active the active cell, null when no cell has the focus
+ * @param point the cell clicked
+ */
+export function shiftRangeStart(ranges: CellRange[], active: CellPoint | null, point: CellPoint): CellPoint | null {
+    const last = ranges.at(-1);
+    if (last) {
+        return { row: last.fromRow, field: last.fromField };
+    }
+    return active && !samePoint(active, point) ? active : null;
+}
+
+/**
+ * The ranges after a Shift+click on a cell: the last range from where it starts to the cell clicked -
+ * with no range from the active cell, see {@link shiftRangeStart}. null when Shift makes no range
+ */
+export function shiftRanges(ranges: CellRange[], active: CellPoint | null, point: CellPoint): CellRange[] | null {
+    const from = shiftRangeStart(ranges, active, point);
+    if (!from) {
+        return null;
+    }
+    const others = ranges.length ? ranges.slice(0, -1) : [];
+    return [...others, { fromRow: from.row, fromField: from.field, toRow: point.row, toField: point.field }];
+}
+
+/**
+ * The ranges after a Ctrl+click (Cmd+click) on a cell: another range, of the cell clicked. With no
+ * range yet the active cell stays selected, a range of its own, as Excel keeps it
+ */
+export function ctrlRanges(ranges: CellRange[], active: CellPoint | null, point: CellPoint): CellRange[] {
+    const others = ranges.length ? ranges : active && !samePoint(active, point) ? [oneCell(active)] : [];
+    return [...others, oneCell(point)];
+}
+
+/**
  * true for a range of one cell
  */
 export function isOneCell(range: CellRange) {

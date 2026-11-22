@@ -63,6 +63,13 @@ const norwegian: Record<TextId, string> = {
     'row.export': 'Eksport',
     'row.export.excel': 'Excel, alle rader',
     'row.export.excelSelected': 'Excel, valgte rader',
+    'row.select': 'Velg',
+    'row.select.row': 'Denne raden',
+    'row.select.rowsTo': 'Rader fra {row} hit',
+    'row.select.allRows': 'Alle rader',
+    'row.select.rangeTo': 'Område fra den aktive cellen hit',
+    'row.select.addCell': 'Legg denne cellen til områdene',
+    'row.select.clear': 'Fjern valget',
 
     // the header menu
     'header.column.pin': 'Fest',
@@ -132,6 +139,11 @@ const norwegian: Record<TextId, string> = {
     'column.copy.headers': 'Kopier kolonnenavnene',
     'column.copy.header': 'Kopier kolonnenavnet',
     'column.copy.selectedHeaders': 'Kopier navnene på valgte kolonner',
+    'column.select': 'Velg',
+    'column.select.column': 'Denne kolonnen',
+    'column.select.columnsTo': 'Kolonner fra {column} hit',
+    'column.select.all': 'Alle kolonner',
+    'column.select.clear': 'Fjern kolonnevalget',
 
     // the column chooser
     'columnChooser.title': 'Alle felt:',

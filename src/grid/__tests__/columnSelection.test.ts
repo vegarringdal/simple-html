@@ -364,7 +364,7 @@ describe('column selection - the keys on a number', () => {
         cell.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
 
         expect(openMenus().length).toBe(1);
-        expect(document.activeElement?.getAttribute('data-menu-id')).toEqual('column.copy.column');
+        expect(document.activeElement?.getAttribute('data-menu-id')).toEqual('column.select');
     });
 });
 
@@ -385,25 +385,29 @@ describe('column selection - the column menu', () => {
     const disabled = (id: string) =>
         document.querySelector(`.simple-html-grid-menu [data-menu-id="${id}"]`)?.getAttribute('aria-disabled') === 'true';
 
-    it('expect the entries of MENU_IDS.column, flat, on a right click on a number', async () => {
+    it('expect the entries of MENU_IDS.column on a right click on a number: Select ›, then the copies flat', async () => {
         const { element, seen } = await mountCapturing();
 
         openColumnMenu(element, 2);
 
-        expect(seen[0].defaults.map((entry) => entry.id)).toEqual(MENU_IDS.column);
-        expect(menuTreeIds()).toEqual(MENU_IDS.column);
-        expect(seen[0].defaults.some((entry) => entry.type === 'submenu')).toBe(false);
+        // a submenu, then what is in it
+        const flatIds = (entries: MenuEntry[]): string[] =>
+            entries.flatMap((entry) => [entry.id, ...(entry.type === 'submenu' ? flatIds(entry.entries) : [])]);
+        expect(flatIds(seen[0].defaults)).toEqual(MENU_IDS.column);
+        expect(seen[0].defaults.filter((entry) => entry.type === 'submenu').map((entry) => entry.id)).toEqual(['column.select']);
         expect(
             Array.from(document.querySelectorAll('.simple-html-grid-menu-item'), (item) =>
                 item.textContent?.replace(/\s+/g, ' ').trim()
             )
         ).toEqual([
+            'Select',
             'Copy column (all rows)',
             'Copy selected columns (all rows)',
             'Copy header names',
             'Copy header name',
             'Copy selected header names'
         ]);
+        expect(menuTreeIds()).toEqual(MENU_IDS.column);
     });
 
     it('expect the context of the column right clicked: its first field, the first row, the cell', async () => {
@@ -453,6 +457,12 @@ describe('column selection - the column menu', () => {
 
         openColumnMenu(element, 4);
         expect(menuTreeIds()).toEqual([
+            'column.select',
+            'column.select.column',
+            'column.select.columnsTo',
+            'column.select.all',
+            'column.select.clear',
+            'column.copy.separator',
             'column.copy.column',
             'column.copy.namesSeparator',
             'column.copy.headers',
