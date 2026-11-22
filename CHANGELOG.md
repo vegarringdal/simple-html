@@ -1332,6 +1332,12 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Docs site: a sample page scrolls
+
+##### Fixed
+- A sample page taller than the window was cut off and could not be scrolled - the full grid sample's grid
+  footer was below the window. The page scrolls, and the full grid sample's grid fills the height left.
+
 #### Touch: less padding (user request)
 
 ##### Changed

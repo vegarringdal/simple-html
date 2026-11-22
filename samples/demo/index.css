@@ -379,6 +379,9 @@ body.sidebar-hidden .main {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    /* a page taller than the window scrolls: a sample's grid is 15 rows at least, with its description and
+       buttons above it a short window has no room for it (the body does not scroll, overflow: hidden) */
+    overflow-y: auto;
     background: var(--demo-bg);
     color: var(--demo-text);
 }
@@ -589,11 +592,11 @@ body.sidebar-hidden .main {
     border-radius: 5px;
 }
 
-/* a full page sample (fullPage): the grid is most of the window high, also when the page scrolls - and
-   15 rows at least, in a low window too */
+/* a full page sample (fullPage): the grid fills the height the page leaves under its description and
+   buttons (the stage and the host grow, flex: 1), 15 rows at least - the page scrolls in a low window. Not
+   100vh less a guess of what is above it: a longer description cut the grid's footer off */
 .stage-full .demo-grid-host {
     max-height: none;
-    min-height: max(var(--demo-grid-height), calc(100vh - 190px));
 }
 
 /* cell background classes for the cellClass sample -
